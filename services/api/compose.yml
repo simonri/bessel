@@ -1,0 +1,37 @@
+services:
+  redis:
+    image: redis
+    ports:
+      - "${METRON_REDIS_PORT}:6379"
+
+  db:
+    image: postgres:15.1-bullseye
+    environment:
+      - POSTGRES_USER=${METRON_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${METRON_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${METRON_POSTGRES_DB}
+      - POSTGRES_PORT=${METRON_POSTGRES_PORT}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "${METRON_POSTGRES_PORT}:5432"
+    expose:
+      - ${METRON_POSTGRES_PORT}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-q",
+          "-d",
+          "${METRON_POSTGRES_DB}",
+          "-U",
+          "${METRON_POSTGRES_USER}",
+        ]
+      timeout: 40s
+      interval: 2s
+      retries: 20
+
+volumes:
+  postgres_data:
+  localstack_data:

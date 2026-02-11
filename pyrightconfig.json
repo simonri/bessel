@@ -1,0 +1,19 @@
+{
+  "include": ["services/**/*"],
+  "exclude": ["**/node_modules", "**/__pycache__", "**/.git", "**/.venv"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "pythonPlatform": "Linux",
+  "venvPath": ".",
+  "venv": ".venv",
+  "stubPath": "./.venv/lib/python3.12/site-packages",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "pythonVersion": "3.12"
+    }
+  ]
+}

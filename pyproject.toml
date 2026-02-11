@@ -1,0 +1,114 @@
+[project]
+name = "metron"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "asyncpg>=0.31.0",
+  "mypy-boto3-s3>=1.42.3",
+  "openapi-python-client>=0.28.0",
+]
+
+[tool.uv.workspace]
+members = [
+  "services/*",
+  "packages/python_client"
+]
+exclude = [
+  "**/__pycache__",
+  "**/.venv",
+  "**/.pytest_cache",
+  "**/.mypy_cache",
+  "**/.ruff_cache",
+]
+
+# ============================================
+# RUFF CONFIGURATION
+# ============================================
+[tool.ruff]
+indent-width = 2
+line-length = 160
+target-version = "py312"
+
+exclude = [
+  ".venv",
+  "**/__pycache__",
+  "**/proto/**",
+  "**/.pytest_cache",
+  "**/.mypy_cache",
+  "**/.ruff_cache",
+  "**/node_modules",
+  "**/.git",
+]
+
+[tool.ruff.lint]
+select = [
+  "E", "F", "W",      # pycodestyle + pyflakes
+  "PIE", "C4", "ISC", # misc improvements
+  "A", "B",           # flake8-builtins + bugbear
+  "NPY",              # numpy-specific rules
+  "UP",               # pyupgrade
+  "I",                # import ordering
+  "TRY203", "TRY400", "TRY401", # try/except best practices
+  "RUF008", "RUF100", # ruff-specific rules
+  "TID251",           # banned imports
+  "PLR1704",          # pylint rules
+]
+
+ignore = [
+  "E741",   # ambiguous variable name
+  "E402",   # module level import not at top
+  "C408",   # unnecessary dict call
+  "ISC003", # explicit string concatenation
+  "B027",   # empty method without abstract decorator
+  "B024",   # abstract base class without abstract methods
+  "NPY002", # old numpy random syntax (we prefer it)
+]
+
+[tool.ruff.lint.flake8-implicit-str-concat]
+allow-multiline = false
+
+[tool.ruff.format]
+quote-style = "preserve"
+docstring-code-format = true
+line-ending = "auto"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+# ============================================
+# MYPY CONFIGURATION
+# ============================================
+[tool.mypy]
+python_version = "3.12"
+disable_error_code = ["import-untyped"]
+explicit_package_bases = true
+check_untyped_defs = true
+
+exclude = [
+  "tests",
+  "proto",
+  ".venv",
+  "__pycache__",
+]
+
+# ============================================
+# PYTEST CONFIGURATION
+# ============================================
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+python_files = "test_*.py"
+testpaths = ["tests"]
+
+# ============================================
+# CODESPELL CONFIGURATION
+# ============================================
+[tool.codespell]
+skip = "*__pycache__*,.mypy_cache,.ruff_cache,.git,pyproject.toml,test,*.pyi,*.lock"
+
+# ============================================
+# PYRIGHT CONFIGURATION
+# ============================================
+[tool.pyright]
+include = ["services/*"]
+exclude = ["**/proto/**", "**/__pycache__", "**/.venv"]

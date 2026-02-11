@@ -1,0 +1,23 @@
+{
+  "name": "@metron/client",
+  "private": true,
+  "scripts": {
+    "generate-openapi": "openapi-ts"
+  },
+  "exports": {
+    "./client": "./src/client/index.ts",
+    "./instance": "./src/client.gen.ts",
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.90.2",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.16",
+    "prettier": "^3.7.4"
+  }
+}

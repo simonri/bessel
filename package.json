@@ -1,0 +1,35 @@
+{
+  "name": "metron",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "turbo test --parallel",
+    "test:watch": "turbo test:watch --parallel",
+    "typecheck": "turbo typecheck",
+    "dev": "turbo dev --parallel --filter=@metron/web --filter=@metron/api --filter=@metron/worker",
+    "dev:web": "turbo dev --filter=@metron/web --parallel",
+    "dev:api": "turbo dev --filter=@metron/api --parallel",
+    "build": "turbo build --parallel",
+    "format": "biome format --write .",
+    "cleanup:s3": "bun run scripts/cleanup-s3-files.ts",
+    "cleanup:s3:dry-run": "DRY_RUN=true bun run scripts/cleanup-s3-files.ts",
+    "update-deps": "bunx npm-check-updates --format group --deep -i -p bun",
+    "upgrade": "pnpm update -r --latest -i"
+  },
+  "dependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "@tanstack/react-table": "^8.21.3",
+    "date-fns": "^4.1.0",
+    "emoji-regex": "^10.6.0",
+    "turbo": "^2.7.3",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.24.0",
+  "overrides": {
+    "date-fns": "^4.1.0"
+  }
+}
