@@ -7,16 +7,37 @@ import {
   type TDataShape,
 } from "./client";
 import { client } from "./client.gen";
-import { listTransactionsV1TransactionsGetResponseTransformer } from "./transformers.gen";
+import {
+  createBankAccountV1BankAccountsPostResponseTransformer,
+  getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+  listBankAccountsV1BankAccountsGetResponseTransformer,
+  listTransactionsV1TransactionsGetResponseTransformer,
+  updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+} from "./transformers.gen";
 import type {
+  CreateBankAccountV1BankAccountsPostData,
+  CreateBankAccountV1BankAccountsPostErrors,
+  CreateBankAccountV1BankAccountsPostResponses,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
+  GetBankAccountV1BankAccountsBankAccountIdGetData,
+  GetBankAccountV1BankAccountsBankAccountIdGetErrors,
+  GetBankAccountV1BankAccountsBankAccountIdGetResponses,
   HealthzHealthzGetData,
   HealthzHealthzGetResponses,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostErrors,
   ImportTransactionsV1TransactionsImportPostResponses,
+  ListBankAccountsV1BankAccountsGetData,
+  ListBankAccountsV1BankAccountsGetErrors,
+  ListBankAccountsV1BankAccountsGetResponses,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
 } from "./types.gen";
 
 export type Options<
@@ -47,6 +68,121 @@ export const healthzHealthzGet = <ThrowOnError extends boolean = false>(
     unknown,
     ThrowOnError
   >({ url: "/healthz", ...options });
+
+/**
+ * List Bank Accounts
+ *
+ * List all bank accounts.
+ */
+export const listBankAccountsV1BankAccountsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListBankAccountsV1BankAccountsGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListBankAccountsV1BankAccountsGetResponses,
+    ListBankAccountsV1BankAccountsGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listBankAccountsV1BankAccountsGetResponseTransformer,
+    url: "/v1/bank-accounts",
+    ...options,
+  });
+
+/**
+ * Create Bank Account
+ *
+ * Create a new bank account.
+ */
+export const createBankAccountV1BankAccountsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateBankAccountV1BankAccountsPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateBankAccountV1BankAccountsPostResponses,
+    CreateBankAccountV1BankAccountsPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createBankAccountV1BankAccountsPostResponseTransformer,
+    url: "/v1/bank-accounts",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Bank Account
+ *
+ * Delete a bank account.
+ */
+export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
+    DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/bank-accounts/{bank_account_id}", ...options });
+
+/**
+ * Get Bank Account
+ *
+ * Get a bank account by ID.
+ */
+export const getBankAccountV1BankAccountsBankAccountIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetBankAccountV1BankAccountsBankAccountIdGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    GetBankAccountV1BankAccountsBankAccountIdGetResponses,
+    GetBankAccountV1BankAccountsBankAccountIdGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+    url: "/v1/bank-accounts/{bank_account_id}",
+    ...options,
+  });
+
+/**
+ * Update Bank Account
+ *
+ * Update a bank account.
+ */
+export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
+    UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+    url: "/v1/bank-accounts/{bank_account_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
 /**
  * List Transactions

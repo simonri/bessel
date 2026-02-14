@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Upload } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -14,23 +14,37 @@ import {
 import { Input } from "@metron/ui/components/input";
 import { Label } from "@metron/ui/components/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@metron/ui/components/select";
+import {
   importTransactionsV1TransactionsImportPostMutation,
   listTransactionsV1TransactionsGetQueryKey,
+  listBankAccountsV1BankAccountsGetOptions,
 } from "@metron/client";
 import { client } from "@/lib/client";
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [bankAccountId, setBankAccountId] = useState(
-    import.meta.env.VITE_TENANT_ID ?? "",
-  );
+  const [bankAccountId, setBankAccountId] = useState("");
   const [result, setResult] = useState<{
     created: number;
     skipped: number;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  const { data: accountsData } = useQuery(
+    listBankAccountsV1BankAccountsGetOptions({
+      client,
+      query: { limit: 100, sorting: ["name"] },
+    }),
+  );
+  const accounts = accountsData?.items ?? [];
 
   const mutation = useMutation({
     ...importTransactionsV1TransactionsImportPostMutation({ client }),
@@ -60,6 +74,7 @@ export function ImportDialog() {
   const handleClose = () => {
     setOpen(false);
     setFile(null);
+    setBankAccountId("");
     setResult(null);
     mutation.reset();
   };
@@ -76,20 +91,25 @@ export function ImportDialog() {
         <DialogHeader>
           <DialogTitle>Import Transactions</DialogTitle>
           <DialogDescription>
-            Upload a Marginalen bank CSV export to import transactions.
+            Upload a bank CSV export to import transactions.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="bank-account-id">Bank Account ID</Label>
-            <Input
-              id="bank-account-id"
-              value={bankAccountId}
-              onChange={(e) => setBankAccountId(e.target.value)}
-              placeholder="UUID of the bank account"
-              required
-            />
+            <Label htmlFor="bank-account">Bank Account</Label>
+            <Select value={bankAccountId} onValueChange={setBankAccountId}>
+              <SelectTrigger id="bank-account" className="w-full">
+                <SelectValue placeholder="Select an account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name} ({account.currency})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -132,7 +152,7 @@ export function ImportDialog() {
               {result ? "Done" : "Cancel"}
             </Button>
             {!result && (
-              <Button type="submit" disabled={mutation.isPending || !file}>
+              <Button type="submit" disabled={mutation.isPending || !file || !bankAccountId}>
                 {mutation.isPending ? "Importing..." : "Import"}
               </Button>
             )}

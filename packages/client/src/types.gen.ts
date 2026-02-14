@@ -5,6 +5,141 @@ export type ClientOptions = {
 };
 
 /**
+ * BankAccountCreate
+ */
+export type BankAccountCreate = {
+  /**
+   * Name
+   *
+   * Display name of the bank account.
+   */
+  name: string;
+  /**
+   * Currency
+   *
+   * ISO 4217 currency code.
+   */
+  currency: string;
+  /**
+   * Base Balance
+   *
+   * Starting balance in minor units (cents).
+   */
+  base_balance?: number;
+  /**
+   * Subtype
+   *
+   * Account subtype, e.g. 'checking', 'savings'.
+   */
+  subtype: string;
+};
+
+/**
+ * BankAccountListResponse
+ */
+export type BankAccountListResponse = {
+  /**
+   * Items
+   */
+  items: Array<BankAccountSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * BankAccountSchema
+ */
+export type BankAccountSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   *
+   * Display name of the bank account.
+   */
+  name: string;
+  /**
+   * Currency
+   *
+   * ISO 4217 currency code.
+   */
+  currency: string;
+  /**
+   * Base Balance
+   *
+   * Starting balance in minor units (cents).
+   */
+  base_balance: number;
+  /**
+   * Subtype
+   *
+   * Account subtype, e.g. 'checking', 'savings'.
+   */
+  subtype: string;
+};
+
+/**
+ * BankAccountSortProperty
+ */
+export const BankAccountSortProperty = {
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  NAME: "name",
+  "-NAME": "-name",
+} as const;
+
+/**
+ * BankAccountSortProperty
+ */
+export type BankAccountSortProperty =
+  (typeof BankAccountSortProperty)[keyof typeof BankAccountSortProperty];
+
+/**
+ * BankAccountUpdate
+ */
+export type BankAccountUpdate = {
+  /**
+   * Name
+   *
+   * Display name of the bank account.
+   */
+  name?: string | null;
+  /**
+   * Currency
+   *
+   * ISO 4217 currency code.
+   */
+  currency?: string | null;
+  /**
+   * Base Balance
+   *
+   * Starting balance in minor units (cents).
+   */
+  base_balance?: number | null;
+  /**
+   * Subtype
+   *
+   * Account subtype, e.g. 'checking', 'savings'.
+   */
+  subtype?: string | null;
+};
+
+/**
  * Body_import_transactions_v1_transactions_import_post
  */
 export type BodyImportTransactionsV1TransactionsImportPost = {
@@ -191,6 +326,175 @@ export type HealthzHealthzGetResponses = {
    */
   200: unknown;
 };
+
+export type ListBankAccountsV1BankAccountsGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<BankAccountSortProperty> | null;
+  };
+  url: "/v1/bank-accounts";
+};
+
+export type ListBankAccountsV1BankAccountsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListBankAccountsV1BankAccountsGetError =
+  ListBankAccountsV1BankAccountsGetErrors[keyof ListBankAccountsV1BankAccountsGetErrors];
+
+export type ListBankAccountsV1BankAccountsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: BankAccountListResponse;
+};
+
+export type ListBankAccountsV1BankAccountsGetResponse =
+  ListBankAccountsV1BankAccountsGetResponses[keyof ListBankAccountsV1BankAccountsGetResponses];
+
+export type CreateBankAccountV1BankAccountsPostData = {
+  body: BankAccountCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/bank-accounts";
+};
+
+export type CreateBankAccountV1BankAccountsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateBankAccountV1BankAccountsPostError =
+  CreateBankAccountV1BankAccountsPostErrors[keyof CreateBankAccountV1BankAccountsPostErrors];
+
+export type CreateBankAccountV1BankAccountsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: BankAccountSchema;
+};
+
+export type CreateBankAccountV1BankAccountsPostResponse =
+  CreateBankAccountV1BankAccountsPostResponses[keyof CreateBankAccountV1BankAccountsPostResponses];
+
+export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Bank Account Id
+     */
+    bank_account_id: string;
+  };
+  query?: never;
+  url: "/v1/bank-accounts/{bank_account_id}";
+};
+
+export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteError =
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors[keyof DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors];
+
+export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse =
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses[keyof DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses];
+
+export type GetBankAccountV1BankAccountsBankAccountIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Bank Account Id
+     */
+    bank_account_id: string;
+  };
+  query?: never;
+  url: "/v1/bank-accounts/{bank_account_id}";
+};
+
+export type GetBankAccountV1BankAccountsBankAccountIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetBankAccountV1BankAccountsBankAccountIdGetError =
+  GetBankAccountV1BankAccountsBankAccountIdGetErrors[keyof GetBankAccountV1BankAccountsBankAccountIdGetErrors];
+
+export type GetBankAccountV1BankAccountsBankAccountIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: BankAccountSchema;
+};
+
+export type GetBankAccountV1BankAccountsBankAccountIdGetResponse =
+  GetBankAccountV1BankAccountsBankAccountIdGetResponses[keyof GetBankAccountV1BankAccountsBankAccountIdGetResponses];
+
+export type UpdateBankAccountV1BankAccountsBankAccountIdPatchData = {
+  body: BankAccountUpdate;
+  path: {
+    /**
+     * Bank Account Id
+     */
+    bank_account_id: string;
+  };
+  query?: never;
+  url: "/v1/bank-accounts/{bank_account_id}";
+};
+
+export type UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateBankAccountV1BankAccountsBankAccountIdPatchError =
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors];
+
+export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: BankAccountSchema;
+};
+
+export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse =
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses];
 
 export type ListTransactionsV1TransactionsGetData = {
   body?: never;

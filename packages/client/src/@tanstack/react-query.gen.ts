@@ -10,19 +10,39 @@ import {
 
 import { client } from "../client.gen";
 import {
+  createBankAccountV1BankAccountsPost,
+  deleteBankAccountV1BankAccountsBankAccountIdDelete,
+  getBankAccountV1BankAccountsBankAccountIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
+  listBankAccountsV1BankAccountsGet,
   listTransactionsV1TransactionsGet,
   type Options,
+  updateBankAccountV1BankAccountsBankAccountIdPatch,
 } from "../sdk.gen";
 import type {
+  CreateBankAccountV1BankAccountsPostData,
+  CreateBankAccountV1BankAccountsPostError,
+  CreateBankAccountV1BankAccountsPostResponse,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+  GetBankAccountV1BankAccountsBankAccountIdGetData,
+  GetBankAccountV1BankAccountsBankAccountIdGetError,
+  GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   HealthzHealthzGetData,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostError,
   ImportTransactionsV1TransactionsImportPostResponse,
+  ListBankAccountsV1BankAccountsGetData,
+  ListBankAccountsV1BankAccountsGetError,
+  ListBankAccountsV1BankAccountsGetResponse,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
 } from "../types.gen";
 
 export type QueryKey<TOptions extends Options> = [
@@ -93,26 +113,26 @@ export const healthzHealthzGetOptions = (
     queryKey: healthzHealthzGetQueryKey(options),
   });
 
-export const listTransactionsV1TransactionsGetQueryKey = (
-  options?: Options<ListTransactionsV1TransactionsGetData>,
-) => createQueryKey("listTransactionsV1TransactionsGet", options);
+export const listBankAccountsV1BankAccountsGetQueryKey = (
+  options?: Options<ListBankAccountsV1BankAccountsGetData>,
+) => createQueryKey("listBankAccountsV1BankAccountsGet", options);
 
 /**
- * List Transactions
+ * List Bank Accounts
  *
- * List transactions.
+ * List all bank accounts.
  */
-export const listTransactionsV1TransactionsGetOptions = (
-  options?: Options<ListTransactionsV1TransactionsGetData>,
+export const listBankAccountsV1BankAccountsGetOptions = (
+  options?: Options<ListBankAccountsV1BankAccountsGetData>,
 ) =>
   queryOptions<
-    ListTransactionsV1TransactionsGetResponse,
-    ListTransactionsV1TransactionsGetError,
-    ListTransactionsV1TransactionsGetResponse,
-    ReturnType<typeof listTransactionsV1TransactionsGetQueryKey>
+    ListBankAccountsV1BankAccountsGetResponse,
+    ListBankAccountsV1BankAccountsGetError,
+    ListBankAccountsV1BankAccountsGetResponse,
+    ReturnType<typeof listBankAccountsV1BankAccountsGetQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTransactionsV1TransactionsGet({
+      const { data } = await listBankAccountsV1BankAccountsGet({
         ...options,
         ...queryKey[0],
         signal,
@@ -120,7 +140,7 @@ export const listTransactionsV1TransactionsGetOptions = (
       });
       return data;
     },
-    queryKey: listTransactionsV1TransactionsGetQueryKey(options),
+    queryKey: listBankAccountsV1BankAccountsGetQueryKey(options),
   });
 
 const createInfiniteParams = <
@@ -156,6 +176,211 @@ const createInfiniteParams = <
   }
   return params as unknown as typeof page;
 };
+
+export const listBankAccountsV1BankAccountsGetInfiniteQueryKey = (
+  options?: Options<ListBankAccountsV1BankAccountsGetData>,
+): QueryKey<Options<ListBankAccountsV1BankAccountsGetData>> =>
+  createQueryKey("listBankAccountsV1BankAccountsGet", options, true);
+
+/**
+ * List Bank Accounts
+ *
+ * List all bank accounts.
+ */
+export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
+  options?: Options<ListBankAccountsV1BankAccountsGetData>,
+) =>
+  infiniteQueryOptions<
+    ListBankAccountsV1BankAccountsGetResponse,
+    ListBankAccountsV1BankAccountsGetError,
+    InfiniteData<ListBankAccountsV1BankAccountsGetResponse>,
+    QueryKey<Options<ListBankAccountsV1BankAccountsGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListBankAccountsV1BankAccountsGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListBankAccountsV1BankAccountsGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listBankAccountsV1BankAccountsGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listBankAccountsV1BankAccountsGetInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Bank Account
+ *
+ * Create a new bank account.
+ */
+export const createBankAccountV1BankAccountsPostMutation = (
+  options?: Partial<Options<CreateBankAccountV1BankAccountsPostData>>,
+): UseMutationOptions<
+  CreateBankAccountV1BankAccountsPostResponse,
+  CreateBankAccountV1BankAccountsPostError,
+  Options<CreateBankAccountV1BankAccountsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateBankAccountV1BankAccountsPostResponse,
+    CreateBankAccountV1BankAccountsPostError,
+    Options<CreateBankAccountV1BankAccountsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createBankAccountV1BankAccountsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Bank Account
+ *
+ * Delete a bank account.
+ */
+export const deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation = (
+  options?: Partial<
+    Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
+  >,
+): UseMutationOptions<
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+  DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
+  Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+    DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
+    Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteBankAccountV1BankAccountsBankAccountIdDelete(
+        {
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        },
+      );
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getBankAccountV1BankAccountsBankAccountIdGetQueryKey = (
+  options: Options<GetBankAccountV1BankAccountsBankAccountIdGetData>,
+) => createQueryKey("getBankAccountV1BankAccountsBankAccountIdGet", options);
+
+/**
+ * Get Bank Account
+ *
+ * Get a bank account by ID.
+ */
+export const getBankAccountV1BankAccountsBankAccountIdGetOptions = (
+  options: Options<GetBankAccountV1BankAccountsBankAccountIdGetData>,
+) =>
+  queryOptions<
+    GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+    GetBankAccountV1BankAccountsBankAccountIdGetError,
+    GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+    ReturnType<typeof getBankAccountV1BankAccountsBankAccountIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getBankAccountV1BankAccountsBankAccountIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getBankAccountV1BankAccountsBankAccountIdGetQueryKey(options),
+  });
+
+/**
+ * Update Bank Account
+ *
+ * Update a bank account.
+ */
+export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
+  options?: Partial<
+    Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
+  >,
+): UseMutationOptions<
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+  UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
+  Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+    UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
+    Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateBankAccountV1BankAccountsBankAccountIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listTransactionsV1TransactionsGetQueryKey = (
+  options?: Options<ListTransactionsV1TransactionsGetData>,
+) => createQueryKey("listTransactionsV1TransactionsGet", options);
+
+/**
+ * List Transactions
+ *
+ * List transactions.
+ */
+export const listTransactionsV1TransactionsGetOptions = (
+  options?: Options<ListTransactionsV1TransactionsGetData>,
+) =>
+  queryOptions<
+    ListTransactionsV1TransactionsGetResponse,
+    ListTransactionsV1TransactionsGetError,
+    ListTransactionsV1TransactionsGetResponse,
+    ReturnType<typeof listTransactionsV1TransactionsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTransactionsV1TransactionsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTransactionsV1TransactionsGetQueryKey(options),
+  });
 
 export const listTransactionsV1TransactionsGetInfiniteQueryKey = (
   options?: Options<ListTransactionsV1TransactionsGetData>,

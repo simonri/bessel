@@ -21,7 +21,7 @@ import {
 const navItems = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/" as const },
   { title: "Transactions", icon: ArrowLeftRight, href: "/transactions" as const },
-  { title: "Accounts", icon: Landmark, href: "/accounts" as string },
+  { title: "Accounts", icon: Landmark, href: "/accounts" as const },
   { title: "Reports", icon: PieChart, href: "/reports" as string },
 ];
 
