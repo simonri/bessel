@@ -1,11 +1,13 @@
 from .bank_account import BankAccount
 from .base import Model
+from .import_batch import ImportBatch
+from .raw_transaction import RawTransaction
 from .transaction import Transaction
-from .user import User
 
 __all__ = [
   "BankAccount",
+  "ImportBatch",
   "Model",
+  "RawTransaction",
   "Transaction",
-  "User",
 ]

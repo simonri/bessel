@@ -52,20 +52,6 @@ class ValidationError(MetronError):
     super().__init__(message, status_code)
 
 
-class UnauthorizedError(MetronError):
-  """Authentication required or failed."""
-
-  def __init__(self, message: str = "Unauthorized", status_code: int = 401) -> None:
-    super().__init__(message, status_code, headers={"WWW-Authenticate": "Bearer"})
-
-
-class ForbiddenError(MetronError):
-  """Access to resource is forbidden."""
-
-  def __init__(self, message: str = "Forbidden", status_code: int = 403) -> None:
-    super().__init__(message, status_code)
-
-
 class ConflictError(MetronError):
   """Resource already exists or state conflict."""
 

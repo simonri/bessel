@@ -66,11 +66,6 @@ class Settings(BaseSettings):
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000
 
-  # Auth0
-  AUTH0_DOMAIN: str = ""
-  AUTH0_AUDIENCE: str = ""
-  AUTH0_ALGORITHMS: list[str] = ["RS256"]
-
   model_config = SettingsConfigDict(env_prefix="metron_", env_file_encoding="utf-8", case_sensitive=False, env_file=env_file, extra="allow")
 
   def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:
@@ -115,12 +110,6 @@ class Settings(BaseSettings):
         missing.append("POSTGRES_USER")
       if not self.POSTGRES_PASSWORD:
         missing.append("POSTGRES_PASSWORD")
-
-      # Required Auth0 settings
-      if not self.AUTH0_DOMAIN:
-        missing.append("AUTH0_DOMAIN")
-      if not self.AUTH0_AUDIENCE:
-        missing.append("AUTH0_AUDIENCE")
 
       if missing:
         raise ValueError(f"Missing required environment variables for production: {', '.join(missing)}")
