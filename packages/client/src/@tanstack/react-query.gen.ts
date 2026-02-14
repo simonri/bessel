@@ -11,23 +11,34 @@ import {
 import { client } from "../client.gen";
 import {
   createBankAccountV1BankAccountsPost,
+  createCategoryV1CategoriesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
+  deleteCategoryV1CategoriesCategoryIdDelete,
   deleteTransactionsV1TransactionsDelete,
   getBankAccountV1BankAccountsBankAccountIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
   listBankAccountsV1BankAccountsGet,
+  listCategoriesV1CategoriesGet,
   listTransactionsV1TransactionsGet,
   type Options,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
+  updateCategoryV1CategoriesCategoryIdPatch,
+  updateTransactionV1TransactionsTransactionIdPatch,
 } from "../sdk.gen";
 import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateCategoryV1CategoriesPostData,
+  CreateCategoryV1CategoriesPostError,
+  CreateCategoryV1CategoriesPostResponse,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+  DeleteCategoryV1CategoriesCategoryIdDeleteData,
+  DeleteCategoryV1CategoriesCategoryIdDeleteError,
+  DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
@@ -41,12 +52,21 @@ import type {
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetError,
   ListBankAccountsV1BankAccountsGetResponse,
+  ListCategoriesV1CategoriesGetData,
+  ListCategoriesV1CategoriesGetError,
+  ListCategoriesV1CategoriesGetResponse,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+  UpdateCategoryV1CategoriesCategoryIdPatchData,
+  UpdateCategoryV1CategoriesCategoryIdPatchError,
+  UpdateCategoryV1CategoriesCategoryIdPatchResponse,
+  UpdateTransactionV1TransactionsTransactionIdPatchData,
+  UpdateTransactionV1TransactionsTransactionIdPatchError,
+  UpdateTransactionV1TransactionsTransactionIdPatchResponse,
 } from "../types.gen";
 
 export type QueryKey<TOptions extends Options> = [
@@ -356,6 +376,175 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
   return mutationOptions;
 };
 
+export const listCategoriesV1CategoriesGetQueryKey = (
+  options?: Options<ListCategoriesV1CategoriesGetData>,
+) => createQueryKey("listCategoriesV1CategoriesGet", options);
+
+/**
+ * List Categories
+ *
+ * List all categories.
+ */
+export const listCategoriesV1CategoriesGetOptions = (
+  options?: Options<ListCategoriesV1CategoriesGetData>,
+) =>
+  queryOptions<
+    ListCategoriesV1CategoriesGetResponse,
+    ListCategoriesV1CategoriesGetError,
+    ListCategoriesV1CategoriesGetResponse,
+    ReturnType<typeof listCategoriesV1CategoriesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCategoriesV1CategoriesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCategoriesV1CategoriesGetQueryKey(options),
+  });
+
+export const listCategoriesV1CategoriesGetInfiniteQueryKey = (
+  options?: Options<ListCategoriesV1CategoriesGetData>,
+): QueryKey<Options<ListCategoriesV1CategoriesGetData>> =>
+  createQueryKey("listCategoriesV1CategoriesGet", options, true);
+
+/**
+ * List Categories
+ *
+ * List all categories.
+ */
+export const listCategoriesV1CategoriesGetInfiniteOptions = (
+  options?: Options<ListCategoriesV1CategoriesGetData>,
+) =>
+  infiniteQueryOptions<
+    ListCategoriesV1CategoriesGetResponse,
+    ListCategoriesV1CategoriesGetError,
+    InfiniteData<ListCategoriesV1CategoriesGetResponse>,
+    QueryKey<Options<ListCategoriesV1CategoriesGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListCategoriesV1CategoriesGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListCategoriesV1CategoriesGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listCategoriesV1CategoriesGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listCategoriesV1CategoriesGetInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Category
+ *
+ * Create a new category.
+ */
+export const createCategoryV1CategoriesPostMutation = (
+  options?: Partial<Options<CreateCategoryV1CategoriesPostData>>,
+): UseMutationOptions<
+  CreateCategoryV1CategoriesPostResponse,
+  CreateCategoryV1CategoriesPostError,
+  Options<CreateCategoryV1CategoriesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCategoryV1CategoriesPostResponse,
+    CreateCategoryV1CategoriesPostError,
+    Options<CreateCategoryV1CategoriesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createCategoryV1CategoriesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Category
+ *
+ * Delete a category. Transactions using this category will be uncategorized.
+ */
+export const deleteCategoryV1CategoriesCategoryIdDeleteMutation = (
+  options?: Partial<Options<DeleteCategoryV1CategoriesCategoryIdDeleteData>>,
+): UseMutationOptions<
+  DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
+  DeleteCategoryV1CategoriesCategoryIdDeleteError,
+  Options<DeleteCategoryV1CategoriesCategoryIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
+    DeleteCategoryV1CategoriesCategoryIdDeleteError,
+    Options<DeleteCategoryV1CategoriesCategoryIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteCategoryV1CategoriesCategoryIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Category
+ *
+ * Update a category.
+ */
+export const updateCategoryV1CategoriesCategoryIdPatchMutation = (
+  options?: Partial<Options<UpdateCategoryV1CategoriesCategoryIdPatchData>>,
+): UseMutationOptions<
+  UpdateCategoryV1CategoriesCategoryIdPatchResponse,
+  UpdateCategoryV1CategoriesCategoryIdPatchError,
+  Options<UpdateCategoryV1CategoriesCategoryIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCategoryV1CategoriesCategoryIdPatchResponse,
+    UpdateCategoryV1CategoriesCategoryIdPatchError,
+    Options<UpdateCategoryV1CategoriesCategoryIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCategoryV1CategoriesCategoryIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Delete Transactions
  *
@@ -488,6 +677,37 @@ export const importTransactionsV1TransactionsImportPostMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await importTransactionsV1TransactionsImportPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Transaction
+ *
+ * Update a transaction.
+ */
+export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
+  options?: Partial<
+    Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
+  >,
+): UseMutationOptions<
+  UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+  UpdateTransactionV1TransactionsTransactionIdPatchError,
+  Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+    UpdateTransactionV1TransactionsTransactionIdPatchError,
+    Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateTransactionV1TransactionsTransactionIdPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,

@@ -8,33 +8,25 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
-from ..types import UNSET, Unset
-
-T = TypeVar("T", bound="BankAccountSchema")
+T = TypeVar("T", bound="CategorySchema")
 
 
 @_attrs_define
-class BankAccountSchema:
+class CategorySchema:
   """
   Attributes:
       created_at (datetime.datetime): Creation timestamp of the object.
       modified_at (datetime.datetime | None): Last modification timestamp of the object.
       id (str): The ID of the object.
-      name (str): Display name of the bank account.
-      currency (str): ISO 4217 currency code.
-      base_balance (int): Starting balance in minor units (cents).
-      subtype (str): Account subtype, e.g. 'checking', 'savings'.
-      current_balance (int | Unset): Current balance in minor units (base_balance + credits - debits). Default: 0.
+      name (str): Category name.
+      color (str): Hex color code for UI display.
   """
 
   created_at: datetime.datetime
   modified_at: datetime.datetime | None
   id: str
   name: str
-  currency: str
-  base_balance: int
-  subtype: str
-  current_balance: int | Unset = 0
+  color: str
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -50,13 +42,7 @@ class BankAccountSchema:
 
     name = self.name
 
-    currency = self.currency
-
-    base_balance = self.base_balance
-
-    subtype = self.subtype
-
-    current_balance = self.current_balance
+    color = self.color
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -66,13 +52,9 @@ class BankAccountSchema:
         "modified_at": modified_at,
         "id": id,
         "name": name,
-        "currency": currency,
-        "base_balance": base_balance,
-        "subtype": subtype,
+        "color": color,
       }
     )
-    if current_balance is not UNSET:
-      field_dict["current_balance"] = current_balance
 
     return field_dict
 
@@ -100,27 +82,18 @@ class BankAccountSchema:
 
     name = d.pop("name")
 
-    currency = d.pop("currency")
+    color = d.pop("color")
 
-    base_balance = d.pop("base_balance")
-
-    subtype = d.pop("subtype")
-
-    current_balance = d.pop("current_balance", UNSET)
-
-    bank_account_schema = cls(
+    category_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
       id=id,
       name=name,
-      currency=currency,
-      base_balance=base_balance,
-      subtype=subtype,
-      current_balance=current_balance,
+      color=color,
     )
 
-    bank_account_schema.additional_properties = d
-    return bank_account_schema
+    category_schema.additional_properties = d
+    return category_schema
 
   @property
   def additional_keys(self) -> list[str]:

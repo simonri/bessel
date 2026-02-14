@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -23,6 +23,7 @@ const columns: ColumnDef<BankAccountSchema>[] = [
   },
   {
     accessorKey: "subtype",
+    size: 100,
     header: "Type",
     cell: ({ row }) => (
       <span className="capitalize">{row.original.subtype}</span>
@@ -30,10 +31,12 @@ const columns: ColumnDef<BankAccountSchema>[] = [
   },
   {
     accessorKey: "currency",
+    size: 80,
     header: "Currency",
   },
   {
     accessorKey: "current_balance",
+    size: 120,
     header: () => <div className="text-right">Balance</div>,
     cell: ({ row }) => {
       const amount = row.original.current_balance / 100;
@@ -49,11 +52,13 @@ const columns: ColumnDef<BankAccountSchema>[] = [
   },
   {
     accessorKey: "created_at",
+    size: 120,
     header: "Created",
     cell: ({ row }) => format(row.original.created_at, "yyyy-MM-dd"),
   },
   {
     id: "actions",
+    size: 60,
     cell: ({ row }) => (
       <div className="text-right">
         <EditAccountDialog account={row.original} />
@@ -66,8 +71,8 @@ function Accounts() {
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  const { data, isLoading } = useQuery(
-    listBankAccountsV1BankAccountsGetOptions({
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    ...listBankAccountsV1BankAccountsGetOptions({
       client,
       query: {
         page,
@@ -75,7 +80,8 @@ function Accounts() {
         sorting: ["name"],
       },
     }),
-  );
+    placeholderData: keepPreviousData,
+  });
 
   const accounts = data?.items ?? [];
   const maxPage = data?.pagination.max_page ?? 1;
@@ -101,7 +107,9 @@ function Accounts() {
         </div>
       ) : (
         <>
-          <DataTable columns={columns} data={accounts} />
+          <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
+            <DataTable columns={columns} data={accounts} />
+          </div>
 
           {maxPage > 1 && (
             <div className="flex items-center justify-end gap-2">
@@ -109,7 +117,7 @@ function Accounts() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
+                disabled={page <= 1 || isPlaceholderData}
               >
                 <ChevronLeft className="size-4" />
                 Previous
@@ -121,7 +129,7 @@ function Accounts() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                disabled={page >= maxPage}
+                disabled={page >= maxPage || isPlaceholderData}
               >
                 Next
                 <ChevronRight className="size-4" />

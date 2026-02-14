@@ -12,11 +12,15 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   transaction_date: date
   direction: TransactionDirection
   description: str | None
-  category: str | None
+  category_id: UUID4 | None
   transaction_type: str | None
   dedup_hash: str
   bank_account_id: UUID4
   raw_id: UUID4 | None
+
+
+class TransactionUpdate(Schema):
+  category_id: UUID4 | None = Field(default=None, description="Category ID to assign.")
 
 
 class TransactionListResponse(ListResource[TransactionSchema]):

@@ -51,7 +51,7 @@ export function ImportDialog() {
     onSuccess: (data) => {
       setResult(data);
       queryClient.invalidateQueries({
-        queryKey: listTransactionsV1TransactionsGetQueryKey(),
+        queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
       });
     },
   });

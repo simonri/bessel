@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Landmark,
+  Tag,
   PieChart,
   Settings,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const navItems = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/" as const },
   { title: "Transactions", icon: ArrowLeftRight, href: "/transactions" as const },
   { title: "Accounts", icon: Landmark, href: "/accounts" as const },
+  { title: "Categories", icon: Tag, href: "/categories" as string },
   { title: "Reports", icon: PieChart, href: "/reports" as string },
 ];
 

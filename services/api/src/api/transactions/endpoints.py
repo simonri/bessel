@@ -9,7 +9,7 @@ from api.models.bank_profile import BankProfile
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.csv_parser import parse_csv
-from api.transactions.schemas import BulkDeleteRequest, ImportResponse, TransactionListResponse, TransactionSchema
+from api.transactions.schemas import BulkDeleteRequest, ImportResponse, TransactionListResponse, TransactionSchema, TransactionUpdate
 from api.transactions.service import transaction_service
 from fastapi import APIRouter, Depends, Query, UploadFile
 from sqlalchemy import delete, select
@@ -21,6 +21,7 @@ class TransactionSortProperty(StrEnum):
   created_at = "created_at"
   transaction_date = "transaction_date"
   amount = "amount"
+  description = "description"
 
 
 sorting_getter = SortingGetter(TransactionSortProperty, default_sorting=["-transaction_date"])
@@ -98,6 +99,31 @@ async def import_transactions(
   )
 
   return ImportResponse(created=created, skipped=skipped)
+
+
+@router.patch(
+  "/{transaction_id}",
+  summary="Update Transaction",
+  response_model=TransactionSchema,
+)
+async def update_transaction(
+  transaction_id: UUID,
+  body: TransactionUpdate,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> TransactionSchema:
+  """Update a transaction."""
+  from api.transactions.repository import TransactionRepository
+
+  repo = TransactionRepository.from_session(session)
+  transaction = await repo.get_by_id(transaction_id)
+  if transaction is None:
+    raise ResourceNotFound("Transaction not found")
+
+  update_dict = body.model_dump(exclude_unset=True)
+  if update_dict:
+    await repo.update(transaction, update_dict=update_dict)
+
+  return TransactionSchema.model_validate(transaction)
 
 
 @router.delete(

@@ -208,6 +208,127 @@ export const BulkDeleteRequestSchema = {
   title: "BulkDeleteRequest",
 } as const;
 
+export const CategoryCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      title: "Name",
+      description: "Category name.",
+    },
+    color: {
+      type: "string",
+      maxLength: 7,
+      title: "Color",
+      description: "Hex color code.",
+      default: "#6B7280",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "CategoryCreate",
+} as const;
+
+export const CategoryListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/CategorySchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "CategoryListResponse",
+} as const;
+
+export const CategorySchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+      description: "Category name.",
+    },
+    color: {
+      type: "string",
+      title: "Color",
+      description: "Hex color code for UI display.",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "name", "color"],
+  title: "CategorySchema",
+} as const;
+
+export const CategorySortPropertySchema = {
+  type: "string",
+  enum: ["created_at", "-created_at", "name", "-name"],
+  title: "CategorySortProperty",
+} as const;
+
+export const CategoryUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "Category name.",
+    },
+    color: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 7,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color",
+      description: "Hex color code.",
+    },
+  },
+  type: "object",
+  title: "CategoryUpdate",
+} as const;
+
 export const HTTPValidationErrorSchema = {
   properties: {
     detail: {
@@ -335,16 +456,17 @@ export const TransactionSchemaSchema = {
       ],
       title: "Description",
     },
-    category: {
+    category_id: {
       anyOf: [
         {
           type: "string",
+          format: "uuid4",
         },
         {
           type: "null",
         },
       ],
-      title: "Category",
+      title: "Category Id",
     },
     transaction_type: {
       anyOf: [
@@ -389,7 +511,7 @@ export const TransactionSchemaSchema = {
     "transaction_date",
     "direction",
     "description",
-    "category",
+    "category_id",
     "transaction_type",
     "dedup_hash",
     "bank_account_id",
@@ -407,8 +529,30 @@ export const TransactionSortPropertySchema = {
     "-transaction_date",
     "amount",
     "-amount",
+    "description",
+    "-description",
   ],
   title: "TransactionSortProperty",
+} as const;
+
+export const TransactionUpdateSchema = {
+  properties: {
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+      description: "Category ID to assign.",
+    },
+  },
+  type: "object",
+  title: "TransactionUpdate",
 } as const;
 
 export const ValidationErrorSchema = {

@@ -24,6 +24,9 @@ class TransactionSchema:
       currency (str):
       transaction_date (datetime.date):
       direction (TransactionDirection):
+      description (None | str):
+      category_id (None | str):
+      transaction_type (None | str):
       dedup_hash (str):
       bank_account_id (str):
       raw_id (None | str):
@@ -36,6 +39,9 @@ class TransactionSchema:
   currency: str
   transaction_date: datetime.date
   direction: TransactionDirection
+  description: None | str
+  category_id: None | str
+  transaction_type: None | str
   dedup_hash: str
   bank_account_id: str
   raw_id: None | str
@@ -60,6 +66,15 @@ class TransactionSchema:
 
     direction = self.direction.value
 
+    description: None | str
+    description = self.description
+
+    category_id: None | str
+    category_id = self.category_id
+
+    transaction_type: None | str
+    transaction_type = self.transaction_type
+
     dedup_hash = self.dedup_hash
 
     bank_account_id = self.bank_account_id
@@ -78,6 +93,9 @@ class TransactionSchema:
         "currency": currency,
         "transaction_date": transaction_date,
         "direction": direction,
+        "description": description,
+        "category_id": category_id,
+        "transaction_type": transaction_type,
         "dedup_hash": dedup_hash,
         "bank_account_id": bank_account_id,
         "raw_id": raw_id,
@@ -116,6 +134,27 @@ class TransactionSchema:
 
     direction = TransactionDirection(d.pop("direction"))
 
+    def _parse_description(data: object) -> None | str:
+      if data is None:
+        return data
+      return cast(None | str, data)
+
+    description = _parse_description(d.pop("description"))
+
+    def _parse_category_id(data: object) -> None | str:
+      if data is None:
+        return data
+      return cast(None | str, data)
+
+    category_id = _parse_category_id(d.pop("category_id"))
+
+    def _parse_transaction_type(data: object) -> None | str:
+      if data is None:
+        return data
+      return cast(None | str, data)
+
+    transaction_type = _parse_transaction_type(d.pop("transaction_type"))
+
     dedup_hash = d.pop("dedup_hash")
 
     bank_account_id = d.pop("bank_account_id")
@@ -135,6 +174,9 @@ class TransactionSchema:
       currency=currency,
       transaction_date=transaction_date,
       direction=direction,
+      description=description,
+      category_id=category_id,
+      transaction_type=transaction_type,
       dedup_hash=dedup_hash,
       bank_account_id=bank_account_id,
       raw_id=raw_id,

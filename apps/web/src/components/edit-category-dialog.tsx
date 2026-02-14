@@ -13,36 +13,32 @@ import {
 } from "@metron/ui/components/dialog";
 import { Input } from "@metron/ui/components/input";
 import { Label } from "@metron/ui/components/label";
-import type { BankAccountSchema } from "@metron/client";
+import type { CategorySchema } from "@metron/client";
 import {
-  updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
-  listBankAccountsV1BankAccountsGetQueryKey,
+  updateCategoryV1CategoriesCategoryIdPatchMutation,
+  listCategoriesV1CategoriesGetQueryKey,
 } from "@metron/client";
 import { client } from "@/lib/client";
 
-export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
+export function EditCategoryDialog({ category }: { category: CategorySchema }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(account.name);
-  const [currency, setCurrency] = useState(account.currency);
-  const [subtype, setSubtype] = useState(account.subtype);
-  const [baseBalance, setBaseBalance] = useState(String(account.base_balance));
+  const [name, setName] = useState(category.name);
+  const [color, setColor] = useState(category.color);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...updateBankAccountV1BankAccountsBankAccountIdPatchMutation({ client }),
+    ...updateCategoryV1CategoriesCategoryIdPatchMutation({ client }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
+        queryKey: listCategoriesV1CategoriesGetQueryKey({ client }),
       });
       setOpen(false);
     },
   });
 
   const handleOpen = () => {
-    setName(account.name);
-    setCurrency(account.currency);
-    setSubtype(account.subtype);
-    setBaseBalance(String(account.base_balance));
+    setName(category.name);
+    setColor(category.color);
     setOpen(true);
   };
 
@@ -52,13 +48,8 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
 
     mutation.mutate({
       client,
-      path: { bank_account_id: account.id },
-      body: {
-        name,
-        currency,
-        subtype,
-        base_balance: parseInt(baseBalance, 10) || 0,
-      },
+      path: { category_id: category.id },
+      body: { name, color },
     });
   };
 
@@ -71,60 +62,45 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Bank Account</DialogTitle>
+          <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Update the bank account details.
+            Update the category details.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-name">Name</Label>
+            <Label htmlFor="edit-category-name">Name</Label>
             <Input
-              id="edit-name"
+              id="edit-category-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-currency">Currency</Label>
-              <Input
-                id="edit-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                maxLength={3}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-subtype">Type</Label>
-              <Input
-                id="edit-subtype"
-                value={subtype}
-                onChange={(e) => setSubtype(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor="edit-base-balance">Base Balance (minor units)</Label>
-            <Input
-              id="edit-base-balance"
-              type="number"
-              value={baseBalance}
-              onChange={(e) => setBaseBalance(e.target.value)}
-              required
-            />
+            <Label htmlFor="edit-category-color">Color</Label>
+            <div className="flex items-center gap-3">
+              <input
+                id="edit-category-color"
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-9 w-12 cursor-pointer rounded border p-1"
+              />
+              <Input
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                maxLength={7}
+                className="flex-1"
+              />
+            </div>
           </div>
 
           {mutation.isError && (
             <p className="text-destructive text-sm">
-              Failed to update account. Please try again.
+              Failed to update category. Please try again.
             </p>
           )}
 

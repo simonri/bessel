@@ -2,10 +2,14 @@
 
 import type {
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateCategoryV1CategoriesPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
+  ListCategoriesV1CategoriesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+  UpdateCategoryV1CategoriesCategoryIdPatchResponse,
+  UpdateTransactionV1TransactionsTransactionIdPatchResponse,
 } from "./types.gen";
 
 const bankAccountSchemaSchemaResponseTransformer = (data: any) => {
@@ -53,6 +57,43 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransforme
     return data;
   };
 
+const categorySchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+const categoryListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    categorySchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listCategoriesV1CategoriesGetResponseTransformer = async (
+  data: any,
+): Promise<ListCategoriesV1CategoriesGetResponse> => {
+  data = categoryListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createCategoryV1CategoriesPostResponseTransformer = async (
+  data: any,
+): Promise<CreateCategoryV1CategoriesPostResponse> => {
+  data = categorySchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCategoryV1CategoriesCategoryIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpdateCategoryV1CategoriesCategoryIdPatchResponse> => {
+    data = categorySchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
 const transactionSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
@@ -75,3 +116,11 @@ export const listTransactionsV1TransactionsGetResponseTransformer = async (
   data = transactionListResponseSchemaResponseTransformer(data);
   return data;
 };
+
+export const updateTransactionV1TransactionsTransactionIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpdateTransactionV1TransactionsTransactionIdPatchResponse> => {
+    data = transactionSchemaSchemaResponseTransformer(data);
+    return data;
+  };

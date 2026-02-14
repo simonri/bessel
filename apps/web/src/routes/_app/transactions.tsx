@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
@@ -8,6 +13,7 @@ import type { TransactionSchema } from "@metron/client";
 import {
   listTransactionsV1TransactionsGetOptions,
   listTransactionsV1TransactionsGetQueryKey,
+  listCategoriesV1CategoriesGetOptions,
   deleteTransactionsV1TransactionsDeleteMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
@@ -20,47 +26,92 @@ import {
 } from "@metron/ui/components/dropdown-menu";
 import { DataTable } from "@/components/data-table";
 import { ImportDialog } from "@/components/import-dialog";
+import { CategoryCell } from "@/components/category-cell";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/transactions")({
   component: Transactions,
 });
 
+const TransactionActions = memo(function TransactionActions({
+  id,
+  onDelete,
+}: {
+  id: string;
+  onDelete: (ids: string[]) => void;
+}) {
+  return (
+    <div className="text-right">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => onDelete([id])}
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+});
+
 function Transactions() {
   const [page, setPage] = useState(1);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const limit = 20;
+  const limit = 12;
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(
-    listTransactionsV1TransactionsGetOptions({
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    ...listTransactionsV1TransactionsGetOptions({
       client,
       query: {
         page,
         limit,
-        sorting: ["-transaction_date"],
+        sorting: ["-transaction_date", "description"],
       },
     }),
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: categoriesData } = useQuery(
+    listCategoriesV1CategoriesGetOptions({
+      client,
+      query: { limit: 100, sorting: ["name"] },
+    }),
   );
+  const categories = categoriesData?.items ?? [];
 
   const deleteMutation = useMutation({
     ...deleteTransactionsV1TransactionsDeleteMutation({ client }),
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: listTransactionsV1TransactionsGetQueryKey(),
+        queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
       });
       setRowSelection({});
     },
   });
 
-  const handleDeleteRows = (ids: string[]) => {
-    if (ids.length === 0) return;
-    deleteMutation.mutate({ body: { ids } });
-  };
+  const handleDeleteRows = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return;
+      deleteMutation.mutate({ body: { ids } });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mutate is stable
+    [deleteMutation.mutate],
+  );
 
   const columns: ColumnDef<TransactionSchema>[] = [
     {
       id: "select",
+      size: 40,
       header: ({ table }) => (
         <Checkbox
           checked={
@@ -83,6 +134,7 @@ function Transactions() {
     },
     {
       accessorKey: "transaction_date",
+      size: 80,
       header: "Date",
       cell: ({ row }) => format(row.original.transaction_date, "MMM d"),
     },
@@ -96,13 +148,26 @@ function Transactions() {
       ),
     },
     {
+      id: "category",
+      size: 160,
+      header: "Category",
+      cell: ({ row }) => (
+        <CategoryCell
+          transactionId={row.original.id}
+          categoryId={row.original.category_id}
+          categories={categories}
+        />
+      ),
+    },
+    {
       accessorKey: "amount",
+      size: 120,
       header: () => <div className="text-right">Amount</div>,
       cell: ({ row }) => {
         const amount = row.original.amount / 100;
         const sign = row.original.direction === "debit" ? "-" : "+";
         return (
-          <div className="text-right font-mono tabular-nums">
+          <div className={`text-right font-mono tabular-nums ${row.original.direction === "credit" ? "text-green-600" : "text-red-600"}`}>
             {sign}
             {Math.abs(amount).toLocaleString("sv-SE", {
               minimumFractionDigits: 2,
@@ -114,27 +179,10 @@ function Transactions() {
     },
     {
       id: "actions",
+      size: 60,
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => (
-        <div className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8">
-              <MoreHorizontal className="size-4" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => handleDeleteRows([row.original.id])}
-            >
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        </div>
+        <TransactionActions id={row.original.id} onDelete={handleDeleteRows} />
       ),
     },
   ];
@@ -164,13 +212,15 @@ function Transactions() {
         </div>
       ) : (
         <>
-          <DataTable
-            columns={columns}
-            data={transactions}
-            getRowId={(row) => row.id}
-            rowSelection={rowSelection}
-            onRowSelectionChange={setRowSelection}
-          />
+          <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
+            <DataTable
+              columns={columns}
+              data={transactions}
+              getRowId={(row) => row.id}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="text-muted-foreground text-sm">
@@ -196,7 +246,7 @@ function Transactions() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
+                  disabled={page <= 1 || isPlaceholderData}
                 >
                   <ChevronLeft className="size-4" />
                   Previous
@@ -208,7 +258,7 @@ function Transactions() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                  disabled={page >= maxPage}
+                  disabled={page >= maxPage || isPlaceholderData}
                 >
                   Next
                   <ChevronRight className="size-4" />

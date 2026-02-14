@@ -14,23 +14,22 @@ import {
 import { Input } from "@metron/ui/components/input";
 import { Label } from "@metron/ui/components/label";
 import {
-  createBankAccountV1BankAccountsPostMutation,
-  listBankAccountsV1BankAccountsGetQueryKey,
+  createCategoryV1CategoriesPostMutation,
+  listCategoriesV1CategoriesGetQueryKey,
 } from "@metron/client";
 import { client } from "@/lib/client";
 
-export function CreateAccountDialog() {
+export function CreateCategoryDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [currency, setCurrency] = useState("SEK");
-  const [subtype, setSubtype] = useState("checking");
+  const [color, setColor] = useState("#6B7280");
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...createBankAccountV1BankAccountsPostMutation({ client }),
+    ...createCategoryV1CategoriesPostMutation({ client }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
+        queryKey: listCategoriesV1CategoriesGetQueryKey({ client }),
       });
       handleClose();
     },
@@ -42,20 +41,14 @@ export function CreateAccountDialog() {
 
     mutation.mutate({
       client,
-      body: {
-        name,
-        currency,
-        subtype,
-        base_balance: 0,
-      },
+      body: { name, color },
     });
   };
 
   const handleClose = () => {
     setOpen(false);
     setName("");
-    setCurrency("SEK");
-    setSubtype("checking");
+    setColor("#6B7280");
     mutation.reset();
   };
 
@@ -64,57 +57,51 @@ export function CreateAccountDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          Add Account
+          Add Category
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Bank Account</DialogTitle>
+          <DialogTitle>Create Category</DialogTitle>
           <DialogDescription>
-            Add a new bank account to track transactions.
+            Add a new category to organize transactions.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="account-name">Name</Label>
+            <Label htmlFor="category-name">Name</Label>
             <Input
-              id="account-name"
+              id="category-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Marginalen Savings"
+              placeholder="e.g. Groceries"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="account-currency">Currency</Label>
-              <Input
-                id="account-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                placeholder="SEK"
-                maxLength={3}
-                required
+          <div className="space-y-2">
+            <Label htmlFor="category-color">Color</Label>
+            <div className="flex items-center gap-3">
+              <input
+                id="category-color"
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-9 w-12 cursor-pointer rounded border p-1"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="account-subtype">Type</Label>
               <Input
-                id="account-subtype"
-                value={subtype}
-                onChange={(e) => setSubtype(e.target.value)}
-                placeholder="e.g. checking, savings"
-                required
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                maxLength={7}
+                className="flex-1"
               />
             </div>
           </div>
 
           {mutation.isError && (
             <p className="text-destructive text-sm">
-              Failed to create account. Please try again.
+              Failed to create category. Please try again.
             </p>
           )}
 
