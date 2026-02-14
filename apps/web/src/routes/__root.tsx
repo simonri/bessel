@@ -58,7 +58,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <html lang="en" className="font-sans">
+    <html lang="en" className="dark font-sans">
       <head>
         <HeadContent />
       </head>

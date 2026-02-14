@@ -5,6 +5,16 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_import_transactions_v1_transactions_import_post
+ */
+export type BodyImportTransactionsV1TransactionsImportPost = {
+  /**
+   * File
+   */
+  file: Blob | File;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -15,54 +25,130 @@ export type HttpValidationError = {
 };
 
 /**
- * UnsubscribeResponse
+ * ImportResponse
  */
-export type UnsubscribeResponse = {
+export type ImportResponse = {
   /**
-   * Success
+   * Created
+   *
+   * Number of new transactions imported.
    */
-  success: boolean;
+  created: number;
   /**
-   * Message
+   * Skipped
+   *
+   * Number of duplicate transactions skipped.
    */
-  message: string;
+  skipped: number;
 };
 
 /**
- * UserEmailResponse
+ * Pagination
  */
-export type UserEmailResponse = {
+export type Pagination = {
   /**
-   * Email
+   * Total Count
    */
-  email: string;
+  total_count: number;
+  /**
+   * Max Page
+   */
+  max_page: number;
 };
 
 /**
- * UserInfo
+ * TransactionDirection
  */
-export type UserInfo = {
+export const TransactionDirection = {
+  DEBIT: "debit",
+  CREDIT: "credit",
+} as const;
+
+/**
+ * TransactionDirection
+ */
+export type TransactionDirection =
+  (typeof TransactionDirection)[keyof typeof TransactionDirection];
+
+/**
+ * TransactionListResponse
+ */
+export type TransactionListResponse = {
   /**
-   * Sub
+   * Items
    */
-  sub: string;
-  /**
-   * Email
-   */
-  email?: string | null;
-  /**
-   * Name
-   */
-  name?: string | null;
-  /**
-   * Picture
-   */
-  picture?: string | null;
-  /**
-   * Roles
-   */
-  roles?: Array<string>;
+  items: Array<TransactionSchema>;
+  pagination: Pagination;
 };
+
+/**
+ * TransactionSchema
+ */
+export type TransactionSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  direction: TransactionDirection;
+  /**
+   * Dedup Hash
+   */
+  dedup_hash: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Raw Id
+   */
+  raw_id: string | null;
+};
+
+/**
+ * TransactionSortProperty
+ */
+export const TransactionSortProperty = {
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  TRANSACTION_DATE: "transaction_date",
+  "-TRANSACTION_DATE": "-transaction_date",
+  AMOUNT: "amount",
+  "-AMOUNT": "-amount",
+} as const;
+
+/**
+ * TransactionSortProperty
+ */
+export type TransactionSortProperty =
+  (typeof TransactionSortProperty)[keyof typeof TransactionSortProperty];
 
 /**
  * ValidationError
@@ -106,83 +192,94 @@ export type HealthzHealthzGetResponses = {
   200: unknown;
 };
 
-export type GetMeV1AuthMeGetData = {
+export type ListTransactionsV1TransactionsGetData = {
   body?: never;
   path?: never;
-  query?: never;
-  url: "/v1/auth/me";
-};
-
-export type GetMeV1AuthMeGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: UserInfo;
-};
-
-export type GetMeV1AuthMeGetResponse =
-  GetMeV1AuthMeGetResponses[keyof GetMeV1AuthMeGetResponses];
-
-export type UnsubscribeV1UsersUnsubscribeTokenGetData = {
-  body?: never;
-  path: {
+  query?: {
     /**
-     * Token
+     * Bank Account Id
+     *
+     * Filter by bank account ID.
      */
-    token: string;
+    bank_account_id?: string | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<TransactionSortProperty> | null;
   };
-  query?: never;
-  url: "/v1/users/unsubscribe/{token}";
+  url: "/v1/transactions";
 };
 
-export type UnsubscribeV1UsersUnsubscribeTokenGetErrors = {
+export type ListTransactionsV1TransactionsGetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UnsubscribeV1UsersUnsubscribeTokenGetError =
-  UnsubscribeV1UsersUnsubscribeTokenGetErrors[keyof UnsubscribeV1UsersUnsubscribeTokenGetErrors];
+export type ListTransactionsV1TransactionsGetError =
+  ListTransactionsV1TransactionsGetErrors[keyof ListTransactionsV1TransactionsGetErrors];
 
-export type UnsubscribeV1UsersUnsubscribeTokenGetResponses = {
+export type ListTransactionsV1TransactionsGetResponses = {
   /**
    * Successful Response
    */
-  200: UnsubscribeResponse;
+  200: TransactionListResponse;
 };
 
-export type UnsubscribeV1UsersUnsubscribeTokenGetResponse =
-  UnsubscribeV1UsersUnsubscribeTokenGetResponses[keyof UnsubscribeV1UsersUnsubscribeTokenGetResponses];
+export type ListTransactionsV1TransactionsGetResponse =
+  ListTransactionsV1TransactionsGetResponses[keyof ListTransactionsV1TransactionsGetResponses];
 
-export type GetEmailV1UsersEmailTokenGetData = {
-  body?: never;
-  path: {
+export type ImportTransactionsV1TransactionsImportPostData = {
+  body: BodyImportTransactionsV1TransactionsImportPost;
+  path?: never;
+  query: {
     /**
-     * Token
+     * Bank
+     *
+     * Bank identifier, e.g. 'marginalen'.
      */
-    token: string;
+    bank: string;
+    /**
+     * Bank Account Id
+     *
+     * Bank account to attach transactions to.
+     */
+    bank_account_id: string;
   };
-  query?: never;
-  url: "/v1/users/email/{token}";
+  url: "/v1/transactions/import";
 };
 
-export type GetEmailV1UsersEmailTokenGetErrors = {
+export type ImportTransactionsV1TransactionsImportPostErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetEmailV1UsersEmailTokenGetError =
-  GetEmailV1UsersEmailTokenGetErrors[keyof GetEmailV1UsersEmailTokenGetErrors];
+export type ImportTransactionsV1TransactionsImportPostError =
+  ImportTransactionsV1TransactionsImportPostErrors[keyof ImportTransactionsV1TransactionsImportPostErrors];
 
-export type GetEmailV1UsersEmailTokenGetResponses = {
+export type ImportTransactionsV1TransactionsImportPostResponses = {
   /**
    * Successful Response
    */
-  200: UserEmailResponse;
+  200: ImportResponse;
 };
 
-export type GetEmailV1UsersEmailTokenGetResponse =
-  GetEmailV1UsersEmailTokenGetResponses[keyof GetEmailV1UsersEmailTokenGetResponses];
+export type ImportTransactionsV1TransactionsImportPostResponse =
+  ImportTransactionsV1TransactionsImportPostResponses[keyof ImportTransactionsV1TransactionsImportPostResponses];

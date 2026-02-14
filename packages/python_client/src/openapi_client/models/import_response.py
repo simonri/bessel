@@ -6,27 +6,32 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="UserEmailResponse")
+T = TypeVar("T", bound="ImportResponse")
 
 
 @_attrs_define
-class UserEmailResponse:
+class ImportResponse:
   """
   Attributes:
-      email (str):
+      created (int): Number of new transactions imported.
+      skipped (int): Number of duplicate transactions skipped.
   """
 
-  email: str
+  created: int
+  skipped: int
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    email = self.email
+    created = self.created
+
+    skipped = self.skipped
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
-        "email": email,
+        "created": created,
+        "skipped": skipped,
       }
     )
 
@@ -35,14 +40,17 @@ class UserEmailResponse:
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    email = d.pop("email")
+    created = d.pop("created")
 
-    user_email_response = cls(
-      email=email,
+    skipped = d.pop("skipped")
+
+    import_response = cls(
+      created=created,
+      skipped=skipped,
     )
 
-    user_email_response.additional_properties = d
-    return user_email_response
+    import_response.additional_properties = d
+    return import_response
 
   @property
   def additional_keys(self) -> list[str]:

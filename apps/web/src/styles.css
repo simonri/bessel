@@ -1,2 +1,12 @@
 @import "../../../packages/ui/src/styles/globals.css";
 @source "../../../packages/ui/src";
+
+/* Sidebar hover overlay: keep gap narrow while container expands */
+[data-slot="sidebar"][data-hover] [data-slot="sidebar-gap"] {
+  width: var(--sidebar-width-icon) !important;
+}
+
+[data-slot="sidebar"][data-hover] [data-slot="sidebar-container"] {
+  box-shadow: 4px 0 20px oklch(0 0 0 / 30%);
+  z-index: 50;
+}

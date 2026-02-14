@@ -4,13 +4,15 @@ from uuid import UUID
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
-from api.exceptions import ValidationError
+from api.exceptions import ResourceNotFound
+from api.models.bank_profile import BankProfile
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
-from api.transactions.parsers.marginalen import parse_marginalen_csv
+from api.transactions.parsers.csv_parser import parse_csv
 from api.transactions.schemas import ImportResponse, TransactionListResponse, TransactionSchema
 from api.transactions.service import transaction_service
 from fastapi import APIRouter, Depends, Query, UploadFile
+from sqlalchemy import select
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -22,10 +24,6 @@ class TransactionSortProperty(StrEnum):
 
 
 sorting_getter = SortingGetter(TransactionSortProperty, default_sorting=["-transaction_date"])
-
-BANK_PARSERS = {
-  "marginalen": parse_marginalen_csv,
-}
 
 
 @router.get(
@@ -75,9 +73,10 @@ async def import_transactions(
 
   Duplicate transactions (by dedup hash) are automatically skipped.
   """
-  parser = BANK_PARSERS.get(bank)
-  if parser is None:
-    raise ValidationError(f"Unsupported bank: {bank}. Supported: {', '.join(BANK_PARSERS)}")
+  result = await session.execute(select(BankProfile).where(BankProfile.bank_name == bank))
+  profile = result.scalar_one_or_none()
+  if profile is None:
+    raise ResourceNotFound(f"Unknown bank profile: {bank}")
 
   content = await file.read()
   try:
@@ -85,7 +84,7 @@ async def import_transactions(
   except UnicodeDecodeError:
     text = content.decode("latin-1")
 
-  parsed = parser(text)
+  parsed = await parse_csv(text, profile)
 
   created, skipped = await transaction_service.import_transactions(
     session,

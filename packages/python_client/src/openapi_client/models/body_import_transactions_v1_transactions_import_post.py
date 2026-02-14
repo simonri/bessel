@@ -1,56 +1,62 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from io import BytesIO
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="UnsubscribeResponse")
+from .. import types
+from ..types import File
+
+T = TypeVar("T", bound="BodyImportTransactionsV1TransactionsImportPost")
 
 
 @_attrs_define
-class UnsubscribeResponse:
+class BodyImportTransactionsV1TransactionsImportPost:
   """
   Attributes:
-      success (bool):
-      message (str):
+      file (File):
   """
 
-  success: bool
-  message: str
+  file: File
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    success = self.success
-
-    message = self.message
+    file = self.file.to_tuple()
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
-        "success": success,
-        "message": message,
+        "file": file,
       }
     )
 
     return field_dict
 
+  def to_multipart(self) -> types.RequestFiles:
+    files: types.RequestFiles = []
+
+    files.append(("file", self.file.to_tuple()))
+
+    for prop_name, prop in self.additional_properties.items():
+      files.append((prop_name, (None, str(prop).encode(), "text/plain")))
+
+    return files
+
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    success = d.pop("success")
+    file = File(payload=BytesIO(d.pop("file")))
 
-    message = d.pop("message")
-
-    unsubscribe_response = cls(
-      success=success,
-      message=message,
+    body_import_transactions_v1_transactions_import_post = cls(
+      file=file,
     )
 
-    unsubscribe_response.additional_properties = d
-    return unsubscribe_response
+    body_import_transactions_v1_transactions_import_post.additional_properties = d
+    return body_import_transactions_v1_transactions_import_post
 
   @property
   def additional_keys(self) -> list[str]:

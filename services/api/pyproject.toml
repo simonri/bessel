@@ -34,11 +34,13 @@ dependencies = [
   "aio-pika>=9.5.8",
   "openapi-python-client>=0.28.0",
   "ffmpeg-python>=0.2.0",
+  "aiocsv>=1.3.2",
   "aiofiles>=24.1.0",
   "aiohttp>=3.11.0",
   "pydantic-settings>=2.12.0",
   "asgi-ratelimit>=0.10.0",
   "opentelemetry-instrumentation-httpx>=0.60b1",
+  "python-multipart>=0.0.22",
 ]
 
 [dependency-groups]
