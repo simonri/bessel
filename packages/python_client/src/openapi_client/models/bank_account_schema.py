@@ -22,6 +22,7 @@ class BankAccountSchema:
       currency (str): ISO 4217 currency code.
       base_balance (int): Starting balance in minor units (cents).
       subtype (str): Account subtype, e.g. 'checking', 'savings'.
+      current_balance (int): Current balance in minor units (base_balance + credits - debits).
   """
 
   created_at: datetime.datetime
@@ -31,6 +32,7 @@ class BankAccountSchema:
   currency: str
   base_balance: int
   subtype: str
+  current_balance: int
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -52,6 +54,8 @@ class BankAccountSchema:
 
     subtype = self.subtype
 
+    current_balance = self.current_balance
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -63,6 +67,7 @@ class BankAccountSchema:
         "currency": currency,
         "base_balance": base_balance,
         "subtype": subtype,
+        "current_balance": current_balance,
       }
     )
 
@@ -98,6 +103,8 @@ class BankAccountSchema:
 
     subtype = d.pop("subtype")
 
+    current_balance = d.pop("current_balance")
+
     bank_account_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -106,6 +113,7 @@ class BankAccountSchema:
       currency=currency,
       base_balance=base_balance,
       subtype=subtype,
+      current_balance=current_balance,
     )
 
     bank_account_schema.additional_properties = d

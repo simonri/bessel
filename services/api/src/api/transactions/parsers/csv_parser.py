@@ -78,6 +78,8 @@ async def parse_csv(content: str, profile: BankProfile) -> list[ParsedTransactio
         currency=currency,
         direction=direction,
         dedup_hash=dedup_hash,
+        description=description,
+        raw_data=dict(row),
       )
     )
 

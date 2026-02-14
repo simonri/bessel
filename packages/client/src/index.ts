@@ -3,6 +3,7 @@
 export {
   createBankAccountV1BankAccountsPostMutation,
   deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
+  deleteTransactionsV1TransactionsDeleteMutation,
   getBankAccountV1BankAccountsBankAccountIdGetOptions,
   getBankAccountV1BankAccountsBankAccountIdGetQueryKey,
   healthzHealthzGetOptions,
@@ -22,6 +23,7 @@ export {
 export {
   createBankAccountV1BankAccountsPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
+  deleteTransactionsV1TransactionsDelete,
   getBankAccountV1BankAccountsBankAccountIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
@@ -37,6 +39,7 @@ export {
   BankAccountSortProperty,
   type BankAccountUpdate,
   type BodyImportTransactionsV1TransactionsImportPost,
+  type BulkDeleteRequest,
   type ClientOptions,
   type CreateBankAccountV1BankAccountsPostData,
   type CreateBankAccountV1BankAccountsPostError,
@@ -48,6 +51,11 @@ export {
   type DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   type DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
   type DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
+  type DeleteTransactionsV1TransactionsDeleteData,
+  type DeleteTransactionsV1TransactionsDeleteError,
+  type DeleteTransactionsV1TransactionsDeleteErrors,
+  type DeleteTransactionsV1TransactionsDeleteResponse,
+  type DeleteTransactionsV1TransactionsDeleteResponses,
   type GetBankAccountV1BankAccountsBankAccountIdGetData,
   type GetBankAccountV1BankAccountsBankAccountIdGetError,
   type GetBankAccountV1BankAccountsBankAccountIdGetErrors,
@@ -84,4 +92,3 @@ export {
   type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
   type ValidationError,
 } from "./types.gen";
-export { client } from "./client.gen";

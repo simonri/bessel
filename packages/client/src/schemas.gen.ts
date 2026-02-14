@@ -95,6 +95,13 @@ export const BankAccountSchemaSchema = {
       title: "Subtype",
       description: "Account subtype, e.g. 'checking', 'savings'.",
     },
+    current_balance: {
+      type: "integer",
+      title: "Current Balance",
+      description:
+        "Current balance in minor units (base_balance + credits - debits).",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -182,6 +189,23 @@ export const Body_import_transactions_v1_transactions_import_postSchema = {
   type: "object",
   required: ["file"],
   title: "Body_import_transactions_v1_transactions_import_post",
+} as const;
+
+export const BulkDeleteRequestSchema = {
+  properties: {
+    ids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      title: "Ids",
+      description: "List of transaction IDs to delete.",
+    },
+  },
+  type: "object",
+  required: ["ids"],
+  title: "BulkDeleteRequest",
 } as const;
 
 export const HTTPValidationErrorSchema = {
@@ -300,6 +324,39 @@ export const TransactionSchemaSchema = {
     direction: {
       $ref: "#/components/schemas/TransactionDirection",
     },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    category: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category",
+    },
+    transaction_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transaction Type",
+    },
     dedup_hash: {
       type: "string",
       title: "Dedup Hash",
@@ -331,6 +388,9 @@ export const TransactionSchemaSchema = {
     "currency",
     "transaction_date",
     "direction",
+    "description",
+    "category",
+    "transaction_type",
     "dedup_hash",
     "bank_account_id",
     "raw_id",

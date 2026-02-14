@@ -9,6 +9,7 @@ import { listBankAccountsV1BankAccountsGetOptions } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import { DataTable } from "@/components/data-table";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
+import { EditAccountDialog } from "@/components/edit-account-dialog";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/accounts")({
@@ -32,10 +33,10 @@ const columns: ColumnDef<BankAccountSchema>[] = [
     header: "Currency",
   },
   {
-    accessorKey: "base_balance",
-    header: () => <div className="text-right">Base Balance</div>,
+    accessorKey: "current_balance",
+    header: () => <div className="text-right">Balance</div>,
     cell: ({ row }) => {
-      const amount = row.original.base_balance / 100;
+      const amount = row.original.current_balance / 100;
       return (
         <div className="text-right font-mono tabular-nums">
           {amount.toLocaleString("sv-SE", {
@@ -50,6 +51,14 @@ const columns: ColumnDef<BankAccountSchema>[] = [
     accessorKey: "created_at",
     header: "Created",
     cell: ({ row }) => format(row.original.created_at, "yyyy-MM-dd"),
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <div className="text-right">
+        <EditAccountDialog account={row.original} />
+      </div>
+    ),
   },
 ];
 

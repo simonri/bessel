@@ -9,10 +9,10 @@ from api.models.bank_profile import BankProfile
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.csv_parser import parse_csv
-from api.transactions.schemas import ImportResponse, TransactionListResponse, TransactionSchema
+from api.transactions.schemas import BulkDeleteRequest, ImportResponse, TransactionListResponse, TransactionSchema
 from api.transactions.service import transaction_service
 from fastapi import APIRouter, Depends, Query, UploadFile
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -84,12 +84,32 @@ async def import_transactions(
   except UnicodeDecodeError:
     text = content.decode("latin-1")
 
+  # 1. Parse file using bank profile
   parsed = await parse_csv(text, profile)
 
+  # 2-3. Store raw, map & normalize, deduplicate
   created, skipped = await transaction_service.import_transactions(
     session,
     bank_account_id=bank_account_id,
+    bank_name=profile.bank_name,
+    file_format=profile.file_format,
+    raw_content=text,
     parsed=parsed,
   )
 
   return ImportResponse(created=created, skipped=skipped)
+
+
+@router.delete(
+  "",
+  summary="Delete Transactions",
+  status_code=204,
+)
+async def delete_transactions(
+  body: BulkDeleteRequest,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> None:
+  """Delete transactions by IDs."""
+  result = await session.execute(delete(Transaction).where(Transaction.id.in_(body.ids)))
+  if result.rowcount == 0:
+    raise ResourceNotFound("No transactions found")

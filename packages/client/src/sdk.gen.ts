@@ -21,6 +21,9 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
+  DeleteTransactionsV1TransactionsDeleteData,
+  DeleteTransactionsV1TransactionsDeleteErrors,
+  DeleteTransactionsV1TransactionsDeleteResponses,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetErrors,
   GetBankAccountV1BankAccountsBankAccountIdGetResponses,
@@ -177,6 +180,29 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
     responseTransformer:
       updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
     url: "/v1/bank-accounts/{bank_account_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Transactions
+ *
+ * Delete transactions by IDs.
+ */
+export const deleteTransactionsV1TransactionsDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteTransactionsV1TransactionsDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteTransactionsV1TransactionsDeleteResponses,
+    DeleteTransactionsV1TransactionsDeleteErrors,
+    ThrowOnError
+  >({
+    url: "/v1/transactions",
     ...options,
     headers: {
       "Content-Type": "application/json",

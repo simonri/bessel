@@ -1,6 +1,7 @@
 import hashlib
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
 
 from api.models.transaction import TransactionDirection
 
@@ -12,6 +13,8 @@ class ParsedTransaction:
   currency: str
   direction: TransactionDirection
   dedup_hash: str
+  description: str
+  raw_data: dict[str, Any]
 
 
 def compute_dedup_hash(

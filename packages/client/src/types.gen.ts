@@ -91,6 +91,12 @@ export type BankAccountSchema = {
    * Account subtype, e.g. 'checking', 'savings'.
    */
   subtype: string;
+  /**
+   * Current Balance
+   *
+   * Current balance in minor units (base_balance + credits - debits).
+   */
+  current_balance?: number;
 };
 
 /**
@@ -147,6 +153,18 @@ export type BodyImportTransactionsV1TransactionsImportPost = {
    * File
    */
   file: Blob | File;
+};
+
+/**
+ * BulkDeleteRequest
+ */
+export type BulkDeleteRequest = {
+  /**
+   * Ids
+   *
+   * List of transaction IDs to delete.
+   */
+  ids: Array<string>;
 };
 
 /**
@@ -253,6 +271,18 @@ export type TransactionSchema = {
    */
   transaction_date: Date;
   direction: TransactionDirection;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Category
+   */
+  category: string | null;
+  /**
+   * Transaction Type
+   */
+  transaction_type: string | null;
   /**
    * Dedup Hash
    */
@@ -495,6 +525,33 @@ export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses = {
 
 export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse =
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses];
+
+export type DeleteTransactionsV1TransactionsDeleteData = {
+  body: BulkDeleteRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions";
+};
+
+export type DeleteTransactionsV1TransactionsDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteTransactionsV1TransactionsDeleteError =
+  DeleteTransactionsV1TransactionsDeleteErrors[keyof DeleteTransactionsV1TransactionsDeleteErrors];
+
+export type DeleteTransactionsV1TransactionsDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteTransactionsV1TransactionsDeleteResponse =
+  DeleteTransactionsV1TransactionsDeleteResponses[keyof DeleteTransactionsV1TransactionsDeleteResponses];
 
 export type ListTransactionsV1TransactionsGetData = {
   body?: never;

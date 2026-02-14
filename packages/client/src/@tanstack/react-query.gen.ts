@@ -12,6 +12,7 @@ import { client } from "../client.gen";
 import {
   createBankAccountV1BankAccountsPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
+  deleteTransactionsV1TransactionsDelete,
   getBankAccountV1BankAccountsBankAccountIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
@@ -27,6 +28,9 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+  DeleteTransactionsV1TransactionsDeleteData,
+  DeleteTransactionsV1TransactionsDeleteError,
+  DeleteTransactionsV1TransactionsDeleteResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetError,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -342,6 +346,35 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateBankAccountV1BankAccountsBankAccountIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Transactions
+ *
+ * Delete transactions by IDs.
+ */
+export const deleteTransactionsV1TransactionsDeleteMutation = (
+  options?: Partial<Options<DeleteTransactionsV1TransactionsDeleteData>>,
+): UseMutationOptions<
+  DeleteTransactionsV1TransactionsDeleteResponse,
+  DeleteTransactionsV1TransactionsDeleteError,
+  Options<DeleteTransactionsV1TransactionsDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteTransactionsV1TransactionsDeleteResponse,
+    DeleteTransactionsV1TransactionsDeleteError,
+    Options<DeleteTransactionsV1TransactionsDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteTransactionsV1TransactionsDelete({
         ...options,
         ...fnOptions,
         throwOnError: true,

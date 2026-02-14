@@ -34,12 +34,12 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" tooltip="Metron" asChild>
+            <SidebarMenuButton tooltip="Metron" asChild>
               <Link to="/">
                 <img
                   src="/logo.jpeg"
                   alt="Metron"
-                  className="size-8 rounded-md"
+                  className="size-4 rounded"
                 />
                 <span className="font-semibold">Metron</span>
               </Link>

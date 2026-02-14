@@ -9,6 +9,7 @@ class BankAccountSchema(IDSchema, TimestampedSchema):
   currency: str = Field(description="ISO 4217 currency code.")
   base_balance: int = Field(description="Starting balance in minor units (cents).")
   subtype: str = Field(description="Account subtype, e.g. 'checking', 'savings'.")
+  current_balance: int = Field(default=0, description="Current balance in minor units (base_balance + credits - debits).")
 
 
 class BankAccountCreate(Schema):

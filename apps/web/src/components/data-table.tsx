@@ -1,5 +1,7 @@
 import {
   type ColumnDef,
+  type OnChangeFn,
+  type RowSelectionState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -16,16 +18,27 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  getRowId?: (row: TData) => string;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  getRowId,
+  rowSelection,
+  onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
+    onRowSelectionChange,
+    state: {
+      ...(rowSelection !== undefined && { rowSelection }),
+    },
   });
 
   return (
@@ -50,7 +63,10 @@ export function DataTable<TData, TValue>({
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
