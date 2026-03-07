@@ -3,12 +3,15 @@
 import type {
   CreateBankAccountV1BankAccountsPostResponse,
   CreateCategoryV1CategoriesPostResponse,
+  CreatePlaceV1PlacesPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
+  ListPlacesV1PlacesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateCategoryV1CategoriesCategoryIdPatchResponse,
+  UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
 } from "./types.gen";
 
@@ -93,6 +96,45 @@ export const updateCategoryV1CategoriesCategoryIdPatchResponseTransformer =
     data = categorySchemaSchemaResponseTransformer(data);
     return data;
   };
+
+const placeSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.visited_at) {
+    data.visited_at = new Date(data.visited_at);
+  }
+  return data;
+};
+
+const placeListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    placeSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listPlacesV1PlacesGetResponseTransformer = async (
+  data: any,
+): Promise<ListPlacesV1PlacesGetResponse> => {
+  data = placeListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createPlaceV1PlacesPostResponseTransformer = async (
+  data: any,
+): Promise<CreatePlaceV1PlacesPostResponse> => {
+  data = placeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updatePlaceV1PlacesPlaceIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdatePlaceV1PlacesPlaceIdPatchResponse> => {
+  data = placeSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const transactionSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

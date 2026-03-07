@@ -62,6 +62,9 @@ class Settings(BaseSettings):
   BULK_JOBS_SPREAD_MIN_DELAY_MS: int = 50
   BULK_JOBS_SPREAD_MAX_MS: int = 300_000
 
+  # Google Places
+  GOOGLE_PLACES_API_KEY: str = ""
+
   # Worker
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000

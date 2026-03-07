@@ -10,12 +10,15 @@ import { client } from "./client.gen";
 import {
   createBankAccountV1BankAccountsPostResponseTransformer,
   createCategoryV1CategoriesPostResponseTransformer,
+  createPlaceV1PlacesPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
+  listPlacesV1PlacesGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updateCategoryV1CategoriesCategoryIdPatchResponseTransformer,
+  updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
 } from "./transformers.gen";
 import type {
@@ -25,12 +28,18 @@ import type {
   CreateCategoryV1CategoriesPostData,
   CreateCategoryV1CategoriesPostErrors,
   CreateCategoryV1CategoriesPostResponses,
+  CreatePlaceV1PlacesPostData,
+  CreatePlaceV1PlacesPostErrors,
+  CreatePlaceV1PlacesPostResponses,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
   DeleteCategoryV1CategoriesCategoryIdDeleteData,
   DeleteCategoryV1CategoriesCategoryIdDeleteErrors,
   DeleteCategoryV1CategoriesCategoryIdDeleteResponses,
+  DeletePlaceV1PlacesPlaceIdDeleteData,
+  DeletePlaceV1PlacesPlaceIdDeleteErrors,
+  DeletePlaceV1PlacesPlaceIdDeleteResponses,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
@@ -48,15 +57,24 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
+  ListPlacesV1PlacesGetData,
+  ListPlacesV1PlacesGetErrors,
+  ListPlacesV1PlacesGetResponses,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
+  SearchGooglePlacesV1PlacesSearchGetData,
+  SearchGooglePlacesV1PlacesSearchGetErrors,
+  SearchGooglePlacesV1PlacesSearchGetResponses,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
   UpdateCategoryV1CategoriesCategoryIdPatchData,
   UpdateCategoryV1CategoriesCategoryIdPatchErrors,
   UpdateCategoryV1CategoriesCategoryIdPatchResponses,
+  UpdatePlaceV1PlacesPlaceIdPatchData,
+  UpdatePlaceV1PlacesPlaceIdPatchErrors,
+  UpdatePlaceV1PlacesPlaceIdPatchResponses,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
@@ -287,6 +305,92 @@ export const updateCategoryV1CategoriesCategoryIdPatch = <
     responseTransformer:
       updateCategoryV1CategoriesCategoryIdPatchResponseTransformer,
     url: "/v1/categories/{category_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Places
+ */
+export const listPlacesV1PlacesGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListPlacesV1PlacesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListPlacesV1PlacesGetResponses,
+    ListPlacesV1PlacesGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPlacesV1PlacesGetResponseTransformer,
+    url: "/v1/places",
+    ...options,
+  });
+
+/**
+ * Create Place
+ */
+export const createPlaceV1PlacesPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreatePlaceV1PlacesPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreatePlaceV1PlacesPostResponses,
+    CreatePlaceV1PlacesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createPlaceV1PlacesPostResponseTransformer,
+    url: "/v1/places",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Search Google Places
+ */
+export const searchGooglePlacesV1PlacesSearchGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<SearchGooglePlacesV1PlacesSearchGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    SearchGooglePlacesV1PlacesSearchGetResponses,
+    SearchGooglePlacesV1PlacesSearchGetErrors,
+    ThrowOnError
+  >({ url: "/v1/places/search", ...options });
+
+/**
+ * Delete Place
+ */
+export const deletePlaceV1PlacesPlaceIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeletePlaceV1PlacesPlaceIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeletePlaceV1PlacesPlaceIdDeleteResponses,
+    DeletePlaceV1PlacesPlaceIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/places/{place_id}", ...options });
+
+/**
+ * Update Place
+ */
+export const updatePlaceV1PlacesPlaceIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdatePlaceV1PlacesPlaceIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdatePlaceV1PlacesPlaceIdPatchResponses,
+    UpdatePlaceV1PlacesPlaceIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+    url: "/v1/places/{place_id}",
     ...options,
     headers: {
       "Content-Type": "application/json",

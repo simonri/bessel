@@ -85,12 +85,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     "redis": redis,
   }
 
-  # Close email sender HTTP client if it has one
-  from api.email.sender import email_sender
-
-  if hasattr(email_sender, "close"):
-    await email_sender.close()
-
   await redis.close(True)
   await async_engine.dispose()
   sync_engine.dispose()

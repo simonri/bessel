@@ -267,6 +267,88 @@ export type CategoryUpdate = {
 };
 
 /**
+ * GooglePlaceSearchResponse
+ */
+export type GooglePlaceSearchResponse = {
+  /**
+   * Results
+   */
+  results: Array<GooglePlaceSearchResult>;
+};
+
+/**
+ * GooglePlaceSearchResult
+ */
+export type GooglePlaceSearchResult = {
+  /**
+   * Place Id
+   *
+   * Google Place ID.
+   */
+  place_id: string;
+  /**
+   * Name
+   *
+   * Place name.
+   */
+  name: string;
+  /**
+   * Address
+   *
+   * Formatted address.
+   */
+  address: string;
+  /**
+   * Country
+   *
+   * Country name.
+   */
+  country?: string | null;
+  /**
+   * Latitude
+   *
+   * Latitude.
+   */
+  latitude: number;
+  /**
+   * Longitude
+   *
+   * Longitude.
+   */
+  longitude: number;
+  /**
+   * Plus Code
+   *
+   * Plus Code.
+   */
+  plus_code?: string | null;
+  /**
+   * Category
+   *
+   * Primary type.
+   */
+  category?: string | null;
+  /**
+   * Photo Url
+   *
+   * Photo reference URL.
+   */
+  photo_url?: string | null;
+  /**
+   * Website
+   *
+   * Website.
+   */
+  website?: string | null;
+  /**
+   * Phone
+   *
+   * Phone number.
+   */
+  phone?: string | null;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -306,6 +388,286 @@ export type Pagination = {
    * Max Page
    */
   max_page: number;
+};
+
+/**
+ * PlaceCreate
+ */
+export type PlaceCreate = {
+  /**
+   * Name
+   *
+   * Place name.
+   */
+  name: string;
+  /**
+   * Address
+   */
+  address?: string | null;
+  /**
+   * Country
+   */
+  country?: string | null;
+  /**
+   * Latitude
+   *
+   * Latitude coordinate.
+   */
+  latitude: number;
+  /**
+   * Longitude
+   *
+   * Longitude coordinate.
+   */
+  longitude: number;
+  /**
+   * Google Place Id
+   */
+  google_place_id?: string | null;
+  /**
+   * Plus Code
+   */
+  plus_code?: string | null;
+  status?: PlaceStatus;
+  /**
+   * Rating
+   */
+  rating?: number | null;
+  /**
+   * Visited At
+   */
+  visited_at?: Date | null;
+  /**
+   * Review
+   */
+  review?: string | null;
+  /**
+   * Category
+   */
+  category?: string | null;
+  /**
+   * Photo Url
+   */
+  photo_url?: string | null;
+  /**
+   * Website
+   */
+  website?: string | null;
+  /**
+   * Phone
+   */
+  phone?: string | null;
+};
+
+/**
+ * PlaceListResponse
+ */
+export type PlaceListResponse = {
+  /**
+   * Items
+   */
+  items: Array<PlaceSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * PlaceSchema
+ */
+export type PlaceSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   *
+   * Place name.
+   */
+  name: string;
+  /**
+   * Address
+   *
+   * Full address.
+   */
+  address?: string | null;
+  /**
+   * Country
+   *
+   * Country name.
+   */
+  country?: string | null;
+  /**
+   * Latitude
+   *
+   * Latitude coordinate.
+   */
+  latitude: number;
+  /**
+   * Longitude
+   *
+   * Longitude coordinate.
+   */
+  longitude: number;
+  /**
+   * Google Place Id
+   *
+   * Google Maps place ID.
+   */
+  google_place_id?: string | null;
+  /**
+   * Plus Code
+   *
+   * Google Plus Code.
+   */
+  plus_code?: string | null;
+  /**
+   * Place status.
+   */
+  status?: PlaceStatus;
+  /**
+   * Rating
+   *
+   * Personal rating (1-5).
+   */
+  rating?: number | null;
+  /**
+   * Visited At
+   *
+   * Date when the place was visited.
+   */
+  visited_at?: Date | null;
+  /**
+   * Review
+   *
+   * Personal review/notes.
+   */
+  review?: string | null;
+  /**
+   * Category
+   *
+   * Place category (e.g. restaurant, cafe).
+   */
+  category?: string | null;
+  /**
+   * Photo Url
+   *
+   * Photo URL from Google.
+   */
+  photo_url?: string | null;
+  /**
+   * Website
+   *
+   * Website URL.
+   */
+  website?: string | null;
+  /**
+   * Phone
+   *
+   * Phone number.
+   */
+  phone?: string | null;
+};
+
+/**
+ * PlaceSortProperty
+ */
+export const PlaceSortProperty = {
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  NAME: "name",
+  "-NAME": "-name",
+  RATING: "rating",
+  "-RATING": "-rating",
+  VISITED_AT: "visited_at",
+  "-VISITED_AT": "-visited_at",
+} as const;
+
+/**
+ * PlaceSortProperty
+ */
+export type PlaceSortProperty =
+  (typeof PlaceSortProperty)[keyof typeof PlaceSortProperty];
+
+/**
+ * PlaceStatus
+ */
+export const PlaceStatus = {
+  WANT_TO_GO: "want_to_go",
+  VISITED: "visited",
+} as const;
+
+/**
+ * PlaceStatus
+ */
+export type PlaceStatus = (typeof PlaceStatus)[keyof typeof PlaceStatus];
+
+/**
+ * PlaceUpdate
+ */
+export type PlaceUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Address
+   */
+  address?: string | null;
+  /**
+   * Country
+   */
+  country?: string | null;
+  /**
+   * Latitude
+   */
+  latitude?: number | null;
+  /**
+   * Longitude
+   */
+  longitude?: number | null;
+  status?: PlaceStatus | null;
+  /**
+   * Rating
+   */
+  rating?: number | null;
+  /**
+   * Visited At
+   */
+  visited_at?: Date | null;
+  /**
+   * Review
+   */
+  review?: string | null;
+  /**
+   * Category
+   */
+  category?: string | null;
+  /**
+   * Photo Url
+   */
+  photo_url?: string | null;
+  /**
+   * Website
+   */
+  website?: string | null;
+  /**
+   * Phone
+   */
+  phone?: string | null;
 };
 
 /**
@@ -775,6 +1137,183 @@ export type UpdateCategoryV1CategoriesCategoryIdPatchResponses = {
 
 export type UpdateCategoryV1CategoriesCategoryIdPatchResponse =
   UpdateCategoryV1CategoriesCategoryIdPatchResponses[keyof UpdateCategoryV1CategoriesCategoryIdPatchResponses];
+
+export type ListPlacesV1PlacesGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Status
+     *
+     * Filter by status.
+     */
+    status?: PlaceStatus | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<PlaceSortProperty> | null;
+  };
+  url: "/v1/places";
+};
+
+export type ListPlacesV1PlacesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListPlacesV1PlacesGetError =
+  ListPlacesV1PlacesGetErrors[keyof ListPlacesV1PlacesGetErrors];
+
+export type ListPlacesV1PlacesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PlaceListResponse;
+};
+
+export type ListPlacesV1PlacesGetResponse =
+  ListPlacesV1PlacesGetResponses[keyof ListPlacesV1PlacesGetResponses];
+
+export type CreatePlaceV1PlacesPostData = {
+  body: PlaceCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/places";
+};
+
+export type CreatePlaceV1PlacesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreatePlaceV1PlacesPostError =
+  CreatePlaceV1PlacesPostErrors[keyof CreatePlaceV1PlacesPostErrors];
+
+export type CreatePlaceV1PlacesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: PlaceSchema;
+};
+
+export type CreatePlaceV1PlacesPostResponse =
+  CreatePlaceV1PlacesPostResponses[keyof CreatePlaceV1PlacesPostResponses];
+
+export type SearchGooglePlacesV1PlacesSearchGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Query
+     *
+     * Search query for Google Places.
+     */
+    query: string;
+  };
+  url: "/v1/places/search";
+};
+
+export type SearchGooglePlacesV1PlacesSearchGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SearchGooglePlacesV1PlacesSearchGetError =
+  SearchGooglePlacesV1PlacesSearchGetErrors[keyof SearchGooglePlacesV1PlacesSearchGetErrors];
+
+export type SearchGooglePlacesV1PlacesSearchGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: GooglePlaceSearchResponse;
+};
+
+export type SearchGooglePlacesV1PlacesSearchGetResponse =
+  SearchGooglePlacesV1PlacesSearchGetResponses[keyof SearchGooglePlacesV1PlacesSearchGetResponses];
+
+export type DeletePlaceV1PlacesPlaceIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Place Id
+     */
+    place_id: string;
+  };
+  query?: never;
+  url: "/v1/places/{place_id}";
+};
+
+export type DeletePlaceV1PlacesPlaceIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeletePlaceV1PlacesPlaceIdDeleteError =
+  DeletePlaceV1PlacesPlaceIdDeleteErrors[keyof DeletePlaceV1PlacesPlaceIdDeleteErrors];
+
+export type DeletePlaceV1PlacesPlaceIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeletePlaceV1PlacesPlaceIdDeleteResponse =
+  DeletePlaceV1PlacesPlaceIdDeleteResponses[keyof DeletePlaceV1PlacesPlaceIdDeleteResponses];
+
+export type UpdatePlaceV1PlacesPlaceIdPatchData = {
+  body: PlaceUpdate;
+  path: {
+    /**
+     * Place Id
+     */
+    place_id: string;
+  };
+  query?: never;
+  url: "/v1/places/{place_id}";
+};
+
+export type UpdatePlaceV1PlacesPlaceIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdatePlaceV1PlacesPlaceIdPatchError =
+  UpdatePlaceV1PlacesPlaceIdPatchErrors[keyof UpdatePlaceV1PlacesPlaceIdPatchErrors];
+
+export type UpdatePlaceV1PlacesPlaceIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: PlaceSchema;
+};
+
+export type UpdatePlaceV1PlacesPlaceIdPatchResponse =
+  UpdatePlaceV1PlacesPlaceIdPatchResponses[keyof UpdatePlaceV1PlacesPlaceIdPatchResponses];
 
 export type DeleteTransactionsV1TransactionsDeleteData = {
   body: BulkDeleteRequest;

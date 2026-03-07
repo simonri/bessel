@@ -12,18 +12,23 @@ import { client } from "../client.gen";
 import {
   createBankAccountV1BankAccountsPost,
   createCategoryV1CategoriesPost,
+  createPlaceV1PlacesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCategoryV1CategoriesCategoryIdDelete,
+  deletePlaceV1PlacesPlaceIdDelete,
   deleteTransactionsV1TransactionsDelete,
   getBankAccountV1BankAccountsBankAccountIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
+  listPlacesV1PlacesGet,
   listTransactionsV1TransactionsGet,
   type Options,
+  searchGooglePlacesV1PlacesSearchGet,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCategoryV1CategoriesCategoryIdPatch,
+  updatePlaceV1PlacesPlaceIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
 } from "../sdk.gen";
 import type {
@@ -33,12 +38,18 @@ import type {
   CreateCategoryV1CategoriesPostData,
   CreateCategoryV1CategoriesPostError,
   CreateCategoryV1CategoriesPostResponse,
+  CreatePlaceV1PlacesPostData,
+  CreatePlaceV1PlacesPostError,
+  CreatePlaceV1PlacesPostResponse,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
   DeleteCategoryV1CategoriesCategoryIdDeleteData,
   DeleteCategoryV1CategoriesCategoryIdDeleteError,
   DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
+  DeletePlaceV1PlacesPlaceIdDeleteData,
+  DeletePlaceV1PlacesPlaceIdDeleteError,
+  DeletePlaceV1PlacesPlaceIdDeleteResponse,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
@@ -55,15 +66,24 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetError,
   ListCategoriesV1CategoriesGetResponse,
+  ListPlacesV1PlacesGetData,
+  ListPlacesV1PlacesGetError,
+  ListPlacesV1PlacesGetResponse,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
+  SearchGooglePlacesV1PlacesSearchGetData,
+  SearchGooglePlacesV1PlacesSearchGetError,
+  SearchGooglePlacesV1PlacesSearchGetResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateCategoryV1CategoriesCategoryIdPatchData,
   UpdateCategoryV1CategoriesCategoryIdPatchError,
   UpdateCategoryV1CategoriesCategoryIdPatchResponse,
+  UpdatePlaceV1PlacesPlaceIdPatchData,
+  UpdatePlaceV1PlacesPlaceIdPatchError,
+  UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
@@ -535,6 +555,193 @@ export const updateCategoryV1CategoriesCategoryIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateCategoryV1CategoriesCategoryIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listPlacesV1PlacesGetQueryKey = (
+  options?: Options<ListPlacesV1PlacesGetData>,
+) => createQueryKey("listPlacesV1PlacesGet", options);
+
+/**
+ * List Places
+ */
+export const listPlacesV1PlacesGetOptions = (
+  options?: Options<ListPlacesV1PlacesGetData>,
+) =>
+  queryOptions<
+    ListPlacesV1PlacesGetResponse,
+    ListPlacesV1PlacesGetError,
+    ListPlacesV1PlacesGetResponse,
+    ReturnType<typeof listPlacesV1PlacesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPlacesV1PlacesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPlacesV1PlacesGetQueryKey(options),
+  });
+
+export const listPlacesV1PlacesGetInfiniteQueryKey = (
+  options?: Options<ListPlacesV1PlacesGetData>,
+): QueryKey<Options<ListPlacesV1PlacesGetData>> =>
+  createQueryKey("listPlacesV1PlacesGet", options, true);
+
+/**
+ * List Places
+ */
+export const listPlacesV1PlacesGetInfiniteOptions = (
+  options?: Options<ListPlacesV1PlacesGetData>,
+) =>
+  infiniteQueryOptions<
+    ListPlacesV1PlacesGetResponse,
+    ListPlacesV1PlacesGetError,
+    InfiniteData<ListPlacesV1PlacesGetResponse>,
+    QueryKey<Options<ListPlacesV1PlacesGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListPlacesV1PlacesGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListPlacesV1PlacesGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listPlacesV1PlacesGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listPlacesV1PlacesGetInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Place
+ */
+export const createPlaceV1PlacesPostMutation = (
+  options?: Partial<Options<CreatePlaceV1PlacesPostData>>,
+): UseMutationOptions<
+  CreatePlaceV1PlacesPostResponse,
+  CreatePlaceV1PlacesPostError,
+  Options<CreatePlaceV1PlacesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreatePlaceV1PlacesPostResponse,
+    CreatePlaceV1PlacesPostError,
+    Options<CreatePlaceV1PlacesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createPlaceV1PlacesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const searchGooglePlacesV1PlacesSearchGetQueryKey = (
+  options: Options<SearchGooglePlacesV1PlacesSearchGetData>,
+) => createQueryKey("searchGooglePlacesV1PlacesSearchGet", options);
+
+/**
+ * Search Google Places
+ */
+export const searchGooglePlacesV1PlacesSearchGetOptions = (
+  options: Options<SearchGooglePlacesV1PlacesSearchGetData>,
+) =>
+  queryOptions<
+    SearchGooglePlacesV1PlacesSearchGetResponse,
+    SearchGooglePlacesV1PlacesSearchGetError,
+    SearchGooglePlacesV1PlacesSearchGetResponse,
+    ReturnType<typeof searchGooglePlacesV1PlacesSearchGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchGooglePlacesV1PlacesSearchGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchGooglePlacesV1PlacesSearchGetQueryKey(options),
+  });
+
+/**
+ * Delete Place
+ */
+export const deletePlaceV1PlacesPlaceIdDeleteMutation = (
+  options?: Partial<Options<DeletePlaceV1PlacesPlaceIdDeleteData>>,
+): UseMutationOptions<
+  DeletePlaceV1PlacesPlaceIdDeleteResponse,
+  DeletePlaceV1PlacesPlaceIdDeleteError,
+  Options<DeletePlaceV1PlacesPlaceIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeletePlaceV1PlacesPlaceIdDeleteResponse,
+    DeletePlaceV1PlacesPlaceIdDeleteError,
+    Options<DeletePlaceV1PlacesPlaceIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deletePlaceV1PlacesPlaceIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Place
+ */
+export const updatePlaceV1PlacesPlaceIdPatchMutation = (
+  options?: Partial<Options<UpdatePlaceV1PlacesPlaceIdPatchData>>,
+): UseMutationOptions<
+  UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdatePlaceV1PlacesPlaceIdPatchError,
+  Options<UpdatePlaceV1PlacesPlaceIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdatePlaceV1PlacesPlaceIdPatchResponse,
+    UpdatePlaceV1PlacesPlaceIdPatchError,
+    Options<UpdatePlaceV1PlacesPlaceIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updatePlaceV1PlacesPlaceIdPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,

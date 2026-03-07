@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
@@ -22,6 +23,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTravelRoute = AppTravelRouteImport.update({
+  id: '/travel',
+  path: '/travel',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTransactionsRoute = AppTransactionsRouteImport.update({
@@ -44,12 +50,14 @@ export interface FileRoutesByFullPath {
   '/accounts': typeof AppAccountsRoute
   '/categories': typeof AppCategoriesRoute
   '/transactions': typeof AppTransactionsRoute
+  '/travel': typeof AppTravelRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsRoute
   '/categories': typeof AppCategoriesRoute
   '/transactions': typeof AppTransactionsRoute
+  '/travel': typeof AppTravelRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -58,19 +66,21 @@ export interface FileRoutesById {
   '/_app/accounts': typeof AppAccountsRoute
   '/_app/categories': typeof AppCategoriesRoute
   '/_app/transactions': typeof AppTransactionsRoute
+  '/_app/travel': typeof AppTravelRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/accounts' | '/categories' | '/transactions' | '/'
+  fullPaths: '/accounts' | '/categories' | '/transactions' | '/travel' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/accounts' | '/categories' | '/transactions' | '/'
+  to: '/accounts' | '/categories' | '/transactions' | '/travel' | '/'
   id:
     | '__root__'
     | '/_app'
     | '/_app/accounts'
     | '/_app/categories'
     | '/_app/transactions'
+    | '/_app/travel'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/travel': {
+      id: '/_app/travel'
+      path: '/travel'
+      fullPath: '/travel'
+      preLoaderRoute: typeof AppTravelRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/transactions': {
@@ -122,6 +139,7 @@ interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
+  AppTravelRoute: typeof AppTravelRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -129,6 +147,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
   AppCategoriesRoute: AppCategoriesRoute,
   AppTransactionsRoute: AppTransactionsRoute,
+  AppTravelRoute: AppTravelRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

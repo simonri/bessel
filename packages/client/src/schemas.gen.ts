@@ -329,6 +329,126 @@ export const CategoryUpdateSchema = {
   title: "CategoryUpdate",
 } as const;
 
+export const GooglePlaceSearchResponseSchema = {
+  properties: {
+    results: {
+      items: {
+        $ref: "#/components/schemas/GooglePlaceSearchResult",
+      },
+      type: "array",
+      title: "Results",
+    },
+  },
+  type: "object",
+  required: ["results"],
+  title: "GooglePlaceSearchResponse",
+} as const;
+
+export const GooglePlaceSearchResultSchema = {
+  properties: {
+    place_id: {
+      type: "string",
+      title: "Place Id",
+      description: "Google Place ID.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+      description: "Place name.",
+    },
+    address: {
+      type: "string",
+      title: "Address",
+      description: "Formatted address.",
+    },
+    country: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country",
+      description: "Country name.",
+    },
+    latitude: {
+      type: "number",
+      title: "Latitude",
+      description: "Latitude.",
+    },
+    longitude: {
+      type: "number",
+      title: "Longitude",
+      description: "Longitude.",
+    },
+    plus_code: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Plus Code",
+      description: "Plus Code.",
+    },
+    category: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category",
+      description: "Primary type.",
+    },
+    photo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Photo Url",
+      description: "Photo reference URL.",
+    },
+    website: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Website",
+      description: "Website.",
+    },
+    phone: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Phone",
+      description: "Phone number.",
+    },
+  },
+  type: "object",
+  required: ["place_id", "name", "address", "latitude", "longitude"],
+  title: "GooglePlaceSearchResult",
+} as const;
+
 export const HTTPValidationErrorSchema = {
   properties: {
     detail: {
@@ -375,6 +495,555 @@ export const PaginationSchema = {
   type: "object",
   required: ["total_count", "max_page"],
   title: "Pagination",
+} as const;
+
+export const PlaceCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 255,
+      title: "Name",
+      description: "Place name.",
+    },
+    address: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Address",
+    },
+    country: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country",
+    },
+    latitude: {
+      type: "number",
+      title: "Latitude",
+      description: "Latitude coordinate.",
+    },
+    longitude: {
+      type: "number",
+      title: "Longitude",
+      description: "Longitude coordinate.",
+    },
+    google_place_id: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Google Place Id",
+    },
+    plus_code: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Plus Code",
+    },
+    status: {
+      $ref: "#/components/schemas/PlaceStatus",
+      default: "want_to_go",
+    },
+    rating: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rating",
+    },
+    visited_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Visited At",
+    },
+    review: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Review",
+    },
+    category: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category",
+    },
+    photo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Photo Url",
+    },
+    website: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Website",
+    },
+    phone: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Phone",
+    },
+  },
+  type: "object",
+  required: ["name", "latitude", "longitude"],
+  title: "PlaceCreate",
+} as const;
+
+export const PlaceListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/PlaceSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "PlaceListResponse",
+} as const;
+
+export const PlaceSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+      description: "Place name.",
+    },
+    address: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Address",
+      description: "Full address.",
+    },
+    country: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country",
+      description: "Country name.",
+    },
+    latitude: {
+      type: "number",
+      title: "Latitude",
+      description: "Latitude coordinate.",
+    },
+    longitude: {
+      type: "number",
+      title: "Longitude",
+      description: "Longitude coordinate.",
+    },
+    google_place_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Google Place Id",
+      description: "Google Maps place ID.",
+    },
+    plus_code: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Plus Code",
+      description: "Google Plus Code.",
+    },
+    status: {
+      $ref: "#/components/schemas/PlaceStatus",
+      description: "Place status.",
+      default: "want_to_go",
+    },
+    rating: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rating",
+      description: "Personal rating (1-5).",
+    },
+    visited_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Visited At",
+      description: "Date when the place was visited.",
+    },
+    review: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Review",
+      description: "Personal review/notes.",
+    },
+    category: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category",
+      description: "Place category (e.g. restaurant, cafe).",
+    },
+    photo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Photo Url",
+      description: "Photo URL from Google.",
+    },
+    website: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Website",
+      description: "Website URL.",
+    },
+    phone: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Phone",
+      description: "Phone number.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "latitude",
+    "longitude",
+  ],
+  title: "PlaceSchema",
+} as const;
+
+export const PlaceSortPropertySchema = {
+  type: "string",
+  enum: [
+    "created_at",
+    "-created_at",
+    "name",
+    "-name",
+    "rating",
+    "-rating",
+    "visited_at",
+    "-visited_at",
+  ],
+  title: "PlaceSortProperty",
+} as const;
+
+export const PlaceStatusSchema = {
+  type: "string",
+  enum: ["want_to_go", "visited"],
+  title: "PlaceStatus",
+} as const;
+
+export const PlaceUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    address: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Address",
+    },
+    country: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country",
+    },
+    latitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Latitude",
+    },
+    longitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Longitude",
+    },
+    status: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/PlaceStatus",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    rating: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rating",
+    },
+    visited_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Visited At",
+    },
+    review: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Review",
+    },
+    category: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category",
+    },
+    photo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Photo Url",
+    },
+    website: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Website",
+    },
+    phone: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Phone",
+    },
+  },
+  type: "object",
+  title: "PlaceUpdate",
 } as const;
 
 export const TransactionDirectionSchema = {
