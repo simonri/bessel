@@ -36,11 +36,31 @@ _GENERIC_TYPES = frozenset(
 )
 
 
+# Map Google-specific type names to our canonical categories
+_TYPE_ALIASES: dict[str, str] = {
+  "meal_takeaway": "restaurant",
+  "meal_delivery": "restaurant",
+  "night_club": "nightclub",
+  "shopping_mall": "shopping",
+  "department_store": "shopping",
+  "clothing_store": "shopping",
+  "supermarket": "market",
+  "grocery_or_supermarket": "market",
+  "amusement_park": "park",
+  "hindu_temple": "temple",
+  "movie_theater": "theater",
+  "art_gallery": "gallery",
+  "tourist_attraction": "landmark",
+  "natural_feature": "landmark",
+  "lodging": "hotel",
+}
+
+
 def _best_category(types: list[str]) -> str | None:
   """Pick the most specific category from Google Places types."""
   for t in types:
     if t not in _GENERIC_TYPES:
-      return t
+      return _TYPE_ALIASES.get(t, t)
   return types[0] if types else None
 
 

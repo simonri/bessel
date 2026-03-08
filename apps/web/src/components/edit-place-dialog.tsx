@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
+import { CategorySelect } from "@/components/category-select";
 import { Button } from "@metron/ui/components/button";
 import {
   Dialog,
@@ -131,13 +132,8 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-place-category">Category</Label>
-              <Input
-                id="edit-place-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. restaurant, cafe, museum"
-              />
+              <Label>Category</Label>
+              <CategorySelect value={category || null} onChange={(v) => setCategory(v ?? "")} />
             </div>
           </div>
 

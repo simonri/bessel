@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Plus, Search, MapPin, Loader2 } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
+import { CategorySelect } from "@/components/category-select";
 import { Button } from "@metron/ui/components/button";
 import {
   Dialog,
@@ -254,13 +255,8 @@ export function AddPlaceDialog() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="place-category">Category</Label>
-                <Input
-                  id="place-category"
-                  value={category ?? ""}
-                  onChange={(e) => setCategory(e.target.value || null)}
-                  placeholder="e.g. restaurant"
-                />
+                <Label>Category</Label>
+                <CategorySelect value={category} onChange={setCategory} />
               </div>
             </div>
 
