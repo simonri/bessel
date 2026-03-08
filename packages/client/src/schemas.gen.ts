@@ -208,27 +208,6 @@ export const BulkDeleteRequestSchema = {
   title: "BulkDeleteRequest",
 } as const;
 
-export const CategoryCreateSchema = {
-  properties: {
-    name: {
-      type: "string",
-      maxLength: 100,
-      title: "Name",
-      description: "Category name.",
-    },
-    color: {
-      type: "string",
-      maxLength: 7,
-      title: "Color",
-      description: "Hex color code.",
-      default: "#6B7280",
-    },
-  },
-  type: "object",
-  required: ["name"],
-  title: "CategoryCreate",
-} as const;
-
 export const CategoryListResponseSchema = {
   properties: {
     items: {
@@ -279,54 +258,45 @@ export const CategorySchemaSchema = {
       title: "Name",
       description: "Category name.",
     },
+    slug: {
+      type: "string",
+      title: "Slug",
+      description: "URL-friendly identifier.",
+    },
     color: {
       type: "string",
       title: "Color",
       description: "Hex color code for UI display.",
     },
+    excluded: {
+      type: "boolean",
+      title: "Excluded",
+      description: "Whether this category is excluded from reports.",
+    },
+    parent_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Parent Id",
+      description: "Parent category ID, null for top-level.",
+    },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "name", "color"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "slug",
+    "color",
+    "excluded",
+  ],
   title: "CategorySchema",
-} as const;
-
-export const CategorySortPropertySchema = {
-  type: "string",
-  enum: ["created_at", "-created_at", "name", "-name"],
-  title: "CategorySortProperty",
-} as const;
-
-export const CategoryUpdateSchema = {
-  properties: {
-    name: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 100,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Name",
-      description: "Category name.",
-    },
-    color: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 7,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Color",
-      description: "Hex color code.",
-    },
-  },
-  type: "object",
-  title: "CategoryUpdate",
 } as const;
 
 export const GooglePlaceSearchResponseSchema = {

@@ -12,11 +12,9 @@ import { client } from "../client.gen";
 import {
   completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
-  createCategoryV1CategoriesPost,
   createPlaceV1PlacesPost,
   createTaskV1TasksPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
-  deleteCategoryV1CategoriesCategoryIdDelete,
   deleteEntryV1JournalEntryDateDelete,
   deletePlaceV1PlacesPlaceIdDelete,
   deleteTaskV1TasksTaskIdDelete,
@@ -40,7 +38,6 @@ import {
   reorderTasksV1TasksReorderPatch,
   searchGooglePlacesV1PlacesSearchGet,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
-  updateCategoryV1CategoriesCategoryIdPatch,
   updatePlaceV1PlacesPlaceIdPatch,
   updateTaskV1TasksTaskIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
@@ -53,9 +50,6 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
-  CreateCategoryV1CategoriesPostData,
-  CreateCategoryV1CategoriesPostError,
-  CreateCategoryV1CategoriesPostResponse,
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostError,
   CreatePlaceV1PlacesPostResponse,
@@ -65,9 +59,6 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
-  DeleteCategoryV1CategoriesCategoryIdDeleteData,
-  DeleteCategoryV1CategoriesCategoryIdDeleteError,
-  DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
   DeleteEntryV1JournalEntryDateDeleteData,
   DeleteEntryV1JournalEntryDateDeleteError,
   DeleteEntryV1JournalEntryDateDeleteResponse,
@@ -129,9 +120,6 @@ import type {
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
-  UpdateCategoryV1CategoriesCategoryIdPatchData,
-  UpdateCategoryV1CategoriesCategoryIdPatchError,
-  UpdateCategoryV1CategoriesCategoryIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
@@ -362,7 +350,7 @@ export const createBankAccountV1BankAccountsPostMutation = (
 /**
  * Delete Bank Account
  *
- * Delete a bank account.
+ * Delete a bank account and all its transactions.
  */
 export const deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation = (
   options?: Partial<
@@ -534,93 +522,6 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
       queryKey: listCategoriesV1CategoriesGetInfiniteQueryKey(options),
     },
   );
-
-/**
- * Create Category
- *
- * Create a new category.
- */
-export const createCategoryV1CategoriesPostMutation = (
-  options?: Partial<Options<CreateCategoryV1CategoriesPostData>>,
-): UseMutationOptions<
-  CreateCategoryV1CategoriesPostResponse,
-  CreateCategoryV1CategoriesPostError,
-  Options<CreateCategoryV1CategoriesPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateCategoryV1CategoriesPostResponse,
-    CreateCategoryV1CategoriesPostError,
-    Options<CreateCategoryV1CategoriesPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createCategoryV1CategoriesPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete Category
- *
- * Delete a category. Transactions using this category will be uncategorized.
- */
-export const deleteCategoryV1CategoriesCategoryIdDeleteMutation = (
-  options?: Partial<Options<DeleteCategoryV1CategoriesCategoryIdDeleteData>>,
-): UseMutationOptions<
-  DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
-  DeleteCategoryV1CategoriesCategoryIdDeleteError,
-  Options<DeleteCategoryV1CategoriesCategoryIdDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
-    DeleteCategoryV1CategoriesCategoryIdDeleteError,
-    Options<DeleteCategoryV1CategoriesCategoryIdDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await deleteCategoryV1CategoriesCategoryIdDelete({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update Category
- *
- * Update a category.
- */
-export const updateCategoryV1CategoriesCategoryIdPatchMutation = (
-  options?: Partial<Options<UpdateCategoryV1CategoriesCategoryIdPatchData>>,
-): UseMutationOptions<
-  UpdateCategoryV1CategoriesCategoryIdPatchResponse,
-  UpdateCategoryV1CategoriesCategoryIdPatchError,
-  Options<UpdateCategoryV1CategoriesCategoryIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateCategoryV1CategoriesCategoryIdPatchResponse,
-    UpdateCategoryV1CategoriesCategoryIdPatchError,
-    Options<UpdateCategoryV1CategoriesCategoryIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await updateCategoryV1CategoriesCategoryIdPatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
 
 export const listEntriesV1JournalGetQueryKey = (
   options?: Options<ListEntriesV1JournalGetData>,
@@ -1433,9 +1334,9 @@ export const listTransactionsV1TransactionsGetInfiniteOptions = (
   );
 
 /**
- * Import Transactions from CSV
+ * Import Transactions
  *
- * Import transactions from a bank CSV export.
+ * Import transactions from a bank export (CSV or XLSX).
  *
  * Duplicate transactions (by dedup hash) are automatically skipped.
  */

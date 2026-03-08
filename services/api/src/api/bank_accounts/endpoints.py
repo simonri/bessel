@@ -3,7 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select
 
 from api.bank_accounts.repository import BankAccountRepository
 from api.bank_accounts.schemas import BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
@@ -172,9 +172,10 @@ async def delete_bank_account(
   bank_account_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> None:
-  """Delete a bank account."""
+  """Delete a bank account and all its transactions."""
   repo = BankAccountRepository.from_session(session)
   account = await repo.get_by_id(bank_account_id)
   if account is None:
     raise ResourceNotFound("Bank account not found")
+  await session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id))
   await session.delete(account)

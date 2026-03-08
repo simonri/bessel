@@ -23,7 +23,7 @@ class Transaction(RecordModel):
   currency: Mapped[str] = mapped_column(String(3), nullable=False)
   transaction_date: Mapped[datetime] = mapped_column(Date, nullable=False)
   direction: Mapped[TransactionDirection] = mapped_column(Enum(TransactionDirection), nullable=False)
-  dedup_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+  dedup_hash: Mapped[str] = mapped_column(String(70), nullable=False, unique=True)
   description: Mapped[str | None] = mapped_column(Text, nullable=True)
   transaction_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
 

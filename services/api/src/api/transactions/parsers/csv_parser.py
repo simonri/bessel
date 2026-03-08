@@ -1,4 +1,5 @@
 import io
+from collections import Counter
 from datetime import date
 
 from aiocsv import AsyncDictReader
@@ -33,7 +34,9 @@ async def parse_csv(content: str, profile: BankProfile) -> list[ParsedTransactio
   currency_col = col.get("currency")
   amount_col = col["amount"]
   description_col = col.get("description", "")
+  balance_col = col.get("balance")
 
+  hash_counts: Counter[str] = Counter()
   transactions: list[ParsedTransaction] = []
   async for row in reader:
     date_str = (row.get(date_col) or "").strip()
@@ -63,13 +66,21 @@ async def parse_csv(content: str, profile: BankProfile) -> list[ParsedTransactio
     account_number = (row.get(account_col) or "").strip() if account_col else ""
     description = (row.get(description_col) or "").strip() if description_col else ""
 
-    dedup_hash = compute_dedup_hash(
+    balance_str = (row.get(balance_col) or "").strip() if balance_col else ""
+    dedup_desc = f"{balance_str}:{description}" if balance_str else description
+
+    base_hash = compute_dedup_hash(
       bank=profile.bank_name,
       account_number=account_number,
       date=date_str,
       amount=amount_str,
-      description=description,
+      description=dedup_desc,
     )
+
+    # Append occurrence index so truly identical rows get unique hashes
+    occurrence = hash_counts[base_hash]
+    hash_counts[base_hash] += 1
+    dedup_hash = f"{base_hash}:{occurrence}" if occurrence > 0 else base_hash
 
     transactions.append(
       ParsedTransaction(

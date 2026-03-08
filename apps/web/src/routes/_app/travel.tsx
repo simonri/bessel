@@ -238,25 +238,67 @@ function Travel() {
   });
   const timelinePlaces = timelineData?.items ?? [];
 
+  const queryKey = listPlacesV1PlacesGetQueryKey({ client });
+
   const deleteMutation = useMutation({
     ...deletePlaceV1PlacesPlaceIdDeleteMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listPlacesV1PlacesGetQueryKey({ client }),
+    onMutate: async ({ path }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueriesData({ queryKey });
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.filter((p: any) => p.id !== path.place_id),
+          pagination: {
+            ...old.pagination,
+            total_count: old.pagination.total_count - 1,
+          },
+        };
       });
-      setDeleteTarget(null);
       if (selectedPlace && deleteTarget && selectedPlace.id === deleteTarget.id) {
         setSelectedPlace(null);
       }
+      setDeleteTarget(null);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
   const markVisitedMutation = useMutation({
     ...updatePlaceV1PlacesPlaceIdPatchMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listPlacesV1PlacesGetQueryKey({ client }),
+    onMutate: async ({ path, body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueriesData({ queryKey });
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((p: any) =>
+            p.id === path.place_id ? { ...p, ...body } : p,
+          ),
+        };
       });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 

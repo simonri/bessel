@@ -28,6 +28,11 @@ import {
 } from "@metron/client";
 import { client } from "@/lib/client";
 
+const BANK_OPTIONS = [
+  { value: "marginalen", label: "Marginalen", accept: ".csv" },
+  { value: "skandiabanken", label: "Skandiabanken", accept: ".xlsx" },
+] as const;
+
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<{
@@ -58,17 +63,18 @@ export function ImportDialog() {
   const form = useForm({
     defaultValues: {
       file: null as File | null,
+      bank: "" as string,
       bankAccountId: "",
     },
     onSubmit: ({ value }) => {
-      if (!value.file || !value.bankAccountId) return;
+      if (!value.file || !value.bankAccountId || !value.bank) return;
 
       setResult(null);
       mutation.mutate({
         client,
         body: { file: value.file },
         query: {
-          bank: "marginalen",
+          bank: value.bank,
           bank_account_id: value.bankAccountId,
         },
       });
@@ -82,6 +88,9 @@ export function ImportDialog() {
     mutation.reset();
   };
 
+  const selectedBank = BANK_OPTIONS.find((b) => b.value === form.getFieldValue("bank"));
+  const fileAccept = selectedBank?.accept ?? ".csv,.xlsx";
+
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
       <DialogTrigger asChild>
@@ -94,7 +103,7 @@ export function ImportDialog() {
         <DialogHeader>
           <DialogTitle>Import Transactions</DialogTitle>
           <DialogDescription>
-            Upload a bank CSV export to import transactions.
+            Upload a bank export to import transactions.
           </DialogDescription>
         </DialogHeader>
 
@@ -105,6 +114,37 @@ export function ImportDialog() {
           }}
           className="space-y-4"
         >
+          <form.Field
+            name="bank"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="bank">Bank</Label>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(v) => {
+                    field.handleChange(v);
+                    // Clear file when bank changes since accept type differs
+                    form.setFieldValue("file", null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                >
+                  <SelectTrigger id="bank" className="w-full">
+                    <SelectValue placeholder="Select a bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BANK_OPTIONS.map((bank) => (
+                      <SelectItem key={bank.value} value={bank.value}>
+                        {bank.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          />
+
           <form.Field
             name="bankAccountId"
             children={(field) => (
@@ -130,12 +170,12 @@ export function ImportDialog() {
             name="file"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="csv-file">CSV File</Label>
+                <Label htmlFor="import-file">File</Label>
                 <Input
-                  id="csv-file"
+                  id="import-file"
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv"
+                  accept={fileAccept}
                   onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
                   required
                 />
@@ -172,9 +212,9 @@ export function ImportDialog() {
             </Button>
             {!result && (
               <form.Subscribe
-                selector={(state) => [state.values.file, state.values.bankAccountId] as const}
-                children={([file, bankAccountId]) => (
-                  <Button type="submit" disabled={mutation.isPending || !file || !bankAccountId}>
+                selector={(state) => [state.values.file, state.values.bankAccountId, state.values.bank] as const}
+                children={([file, bankAccountId, bank]) => (
+                  <Button type="submit" disabled={mutation.isPending || !file || !bankAccountId || !bank}>
                     {mutation.isPending ? "Importing..." : "Import"}
                   </Button>
                 )}

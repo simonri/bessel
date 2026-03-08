@@ -3,7 +3,6 @@
 import type {
   CompleteTaskV1TasksTaskIdCompletePostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
-  CreateCategoryV1CategoriesPostResponse,
   CreatePlaceV1PlacesPostResponse,
   CreateTaskV1TasksPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -16,7 +15,6 @@ import type {
   ListTransactionsV1TransactionsGetResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
-  UpdateCategoryV1CategoriesCategoryIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
@@ -89,21 +87,6 @@ export const listCategoriesV1CategoriesGetResponseTransformer = async (
   data = categoryListResponseSchemaResponseTransformer(data);
   return data;
 };
-
-export const createCategoryV1CategoriesPostResponseTransformer = async (
-  data: any,
-): Promise<CreateCategoryV1CategoriesPostResponse> => {
-  data = categorySchemaSchemaResponseTransformer(data);
-  return data;
-};
-
-export const updateCategoryV1CategoriesCategoryIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateCategoryV1CategoriesCategoryIdPatchResponse> => {
-    data = categorySchemaSchemaResponseTransformer(data);
-    return data;
-  };
 
 const journalEntrySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

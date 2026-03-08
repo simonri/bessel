@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CategorySchema } from "@metron/client";
 import {
@@ -11,6 +11,8 @@ import {
   ComboboxContent,
   ComboboxList,
   ComboboxItem,
+  ComboboxGroup,
+  ComboboxLabel,
   ComboboxEmpty,
 } from "@metron/ui/components/combobox";
 import { client } from "@/lib/client";
@@ -21,6 +23,24 @@ interface CategoryCellProps {
   categories: CategorySchema[];
 }
 
+function useGroupedCategories(categories: CategorySchema[]) {
+  return useMemo(() => {
+    const parents = categories.filter((c) => !c.parent_id);
+    const childrenMap = new Map<string, CategorySchema[]>();
+    for (const cat of categories) {
+      if (cat.parent_id) {
+        const list = childrenMap.get(cat.parent_id) ?? [];
+        list.push(cat);
+        childrenMap.set(cat.parent_id, list);
+      }
+    }
+    return parents.map((p) => ({
+      parent: p,
+      children: childrenMap.get(p.id) ?? [],
+    }));
+  }, [categories]);
+}
+
 export function CategoryCell({
   transactionId,
   categoryId,
@@ -28,6 +48,7 @@ export function CategoryCell({
 }: CategoryCellProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const grouped = useGroupedCategories(categories);
 
   const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
 
@@ -116,14 +137,19 @@ export function CategoryCell({
       <ComboboxContent>
         <ComboboxList>
           <ComboboxEmpty>No categories found</ComboboxEmpty>
-          {categories.map((cat) => (
-            <ComboboxItem key={cat.id} value={cat.id} textValue={cat.name}>
-              <span
-                className="size-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: cat.color }}
-              />
-              {cat.name}
-            </ComboboxItem>
+          {grouped.map(({ parent, children }) => (
+            <ComboboxGroup key={parent.id}>
+              <ComboboxLabel>{parent.name}</ComboboxLabel>
+              {children.map((cat) => (
+                <ComboboxItem key={cat.id} value={cat.id} textValue={cat.name}>
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  {cat.name}
+                </ComboboxItem>
+              ))}
+            </ComboboxGroup>
           ))}
         </ComboboxList>
       </ComboboxContent>

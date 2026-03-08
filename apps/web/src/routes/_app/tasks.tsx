@@ -483,43 +483,108 @@ function Tasks() {
     placeholderData: keepPreviousData,
   });
 
+  const queryKey = listTasksV1TasksGetQueryKey({ client });
+
+  const optimisticHelpers = {
+    async cancel() {
+      await queryClient.cancelQueries({ queryKey });
+      return queryClient.getQueriesData({ queryKey });
+    },
+    rollback(context: { previous: [any, any][] } | undefined) {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    invalidate() {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  };
+
   const deleteMutation = useMutation({
     ...deleteTaskV1TasksTaskIdDeleteMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listTasksV1TasksGetQueryKey({ client }),
+    onMutate: async ({ path }) => {
+      const previous = await optimisticHelpers.cancel();
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.filter((t: any) => t.id !== path.task_id),
+          pagination: {
+            ...old.pagination,
+            total_count: old.pagination.total_count - 1,
+          },
+        };
       });
       setDeleteTarget(null);
       setSelectedTask(null);
+      return { previous };
     },
+    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onSettled: () => optimisticHelpers.invalidate(),
   });
 
   const completeMutation = useMutation({
     ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listTasksV1TasksGetQueryKey({ client }),
+    onMutate: async ({ path }) => {
+      const previous = await optimisticHelpers.cancel();
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((t: any) =>
+            t.id === path.task_id
+              ? { ...t, status: "done", completed_at: new Date().toISOString() }
+              : t,
+          ),
+        };
       });
       setSelectedTask(null);
+      return { previous };
     },
+    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onSettled: () => optimisticHelpers.invalidate(),
   });
 
   const reopenMutation = useMutation({
     ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listTasksV1TasksGetQueryKey({ client }),
+    onMutate: async ({ path }) => {
+      const previous = await optimisticHelpers.cancel();
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((t: any) =>
+            t.id === path.task_id
+              ? { ...t, status: "todo", completed_at: null }
+              : t,
+          ),
+        };
       });
+      return { previous };
     },
+    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onSettled: () => optimisticHelpers.invalidate(),
   });
 
   const updateMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listTasksV1TasksGetQueryKey({ client }),
+    onMutate: async ({ path, body }) => {
+      const previous = await optimisticHelpers.cancel();
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((t: any) =>
+            t.id === path.task_id ? { ...t, ...body } : t,
+          ),
+        };
       });
+      return { previous };
     },
+    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onSettled: () => optimisticHelpers.invalidate(),
   });
 
   const handleSelectTask = (task: TaskSchema) => {

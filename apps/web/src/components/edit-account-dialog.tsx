@@ -25,13 +25,34 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  const queryKey = listBankAccountsV1BankAccountsGetQueryKey({ client });
+
   const mutation = useMutation({
     ...updateBankAccountV1BankAccountsBankAccountIdPatchMutation({ client }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
+    onMutate: async ({ path, body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueriesData({ queryKey });
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((a: any) =>
+            a.id === path.bank_account_id ? { ...a, ...body } : a,
+          ),
+        };
       });
       setOpen(false);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 

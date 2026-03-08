@@ -84,18 +84,42 @@ function Transactions() {
   const { data: categoriesData } = useQuery(
     listCategoriesV1CategoriesGetOptions({
       client,
-      query: { limit: 100, sorting: ["name"] },
+      query: { limit: 200 },
     }),
   );
   const categories = categoriesData?.items ?? [];
 
+  const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
+
   const deleteMutation = useMutation({
     ...deleteTransactionsV1TransactionsDeleteMutation({ client }),
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
+    onMutate: async ({ body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueriesData({ queryKey });
+      const idsToDelete = new Set(body.ids);
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.filter((t: any) => !idsToDelete.has(t.id)),
+          pagination: {
+            ...old.pagination,
+            total_count: old.pagination.total_count - idsToDelete.size,
+          },
+        };
       });
       setRowSelection({});
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 

@@ -168,24 +168,6 @@ export type BulkDeleteRequest = {
 };
 
 /**
- * CategoryCreate
- */
-export type CategoryCreate = {
-  /**
-   * Name
-   *
-   * Category name.
-   */
-  name: string;
-  /**
-   * Color
-   *
-   * Hex color code.
-   */
-  color?: string;
-};
-
-/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -225,45 +207,29 @@ export type CategorySchema = {
    */
   name: string;
   /**
+   * Slug
+   *
+   * URL-friendly identifier.
+   */
+  slug: string;
+  /**
    * Color
    *
    * Hex color code for UI display.
    */
   color: string;
-};
-
-/**
- * CategorySortProperty
- */
-export const CategorySortProperty = {
-  CREATED_AT: "created_at",
-  "-CREATED_AT": "-created_at",
-  NAME: "name",
-  "-NAME": "-name",
-} as const;
-
-/**
- * CategorySortProperty
- */
-export type CategorySortProperty =
-  (typeof CategorySortProperty)[keyof typeof CategorySortProperty];
-
-/**
- * CategoryUpdate
- */
-export type CategoryUpdate = {
   /**
-   * Name
+   * Excluded
    *
-   * Category name.
+   * Whether this category is excluded from reports.
    */
-  name?: string | null;
+  excluded: boolean;
   /**
-   * Color
+   * Parent Id
    *
-   * Hex color code.
+   * Parent category ID, null for top-level.
    */
-  color?: string | null;
+  parent_id?: string | null;
 };
 
 /**
@@ -1604,12 +1570,6 @@ export type ListCategoriesV1CategoriesGetData = {
      * Size of a page, defaults to 10. Maximum is 100.
      */
     limit?: number;
-    /**
-     * Sorting
-     *
-     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
-     */
-    sorting?: Array<CategorySortProperty> | null;
   };
   url: "/v1/categories";
 };
@@ -1633,97 +1593,6 @@ export type ListCategoriesV1CategoriesGetResponses = {
 
 export type ListCategoriesV1CategoriesGetResponse =
   ListCategoriesV1CategoriesGetResponses[keyof ListCategoriesV1CategoriesGetResponses];
-
-export type CreateCategoryV1CategoriesPostData = {
-  body: CategoryCreate;
-  path?: never;
-  query?: never;
-  url: "/v1/categories";
-};
-
-export type CreateCategoryV1CategoriesPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type CreateCategoryV1CategoriesPostError =
-  CreateCategoryV1CategoriesPostErrors[keyof CreateCategoryV1CategoriesPostErrors];
-
-export type CreateCategoryV1CategoriesPostResponses = {
-  /**
-   * Successful Response
-   */
-  201: CategorySchema;
-};
-
-export type CreateCategoryV1CategoriesPostResponse =
-  CreateCategoryV1CategoriesPostResponses[keyof CreateCategoryV1CategoriesPostResponses];
-
-export type DeleteCategoryV1CategoriesCategoryIdDeleteData = {
-  body?: never;
-  path: {
-    /**
-     * Category Id
-     */
-    category_id: string;
-  };
-  query?: never;
-  url: "/v1/categories/{category_id}";
-};
-
-export type DeleteCategoryV1CategoriesCategoryIdDeleteErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type DeleteCategoryV1CategoriesCategoryIdDeleteError =
-  DeleteCategoryV1CategoriesCategoryIdDeleteErrors[keyof DeleteCategoryV1CategoriesCategoryIdDeleteErrors];
-
-export type DeleteCategoryV1CategoriesCategoryIdDeleteResponses = {
-  /**
-   * Successful Response
-   */
-  204: void;
-};
-
-export type DeleteCategoryV1CategoriesCategoryIdDeleteResponse =
-  DeleteCategoryV1CategoriesCategoryIdDeleteResponses[keyof DeleteCategoryV1CategoriesCategoryIdDeleteResponses];
-
-export type UpdateCategoryV1CategoriesCategoryIdPatchData = {
-  body: CategoryUpdate;
-  path: {
-    /**
-     * Category Id
-     */
-    category_id: string;
-  };
-  query?: never;
-  url: "/v1/categories/{category_id}";
-};
-
-export type UpdateCategoryV1CategoriesCategoryIdPatchErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type UpdateCategoryV1CategoriesCategoryIdPatchError =
-  UpdateCategoryV1CategoriesCategoryIdPatchErrors[keyof UpdateCategoryV1CategoriesCategoryIdPatchErrors];
-
-export type UpdateCategoryV1CategoriesCategoryIdPatchResponses = {
-  /**
-   * Successful Response
-   */
-  200: CategorySchema;
-};
-
-export type UpdateCategoryV1CategoriesCategoryIdPatchResponse =
-  UpdateCategoryV1CategoriesCategoryIdPatchResponses[keyof UpdateCategoryV1CategoriesCategoryIdPatchResponses];
 
 export type ListEntriesV1JournalGetData = {
   body?: never;

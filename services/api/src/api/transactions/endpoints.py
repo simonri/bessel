@@ -9,6 +9,7 @@ from api.models.bank_profile import BankProfile
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.csv_parser import parse_csv
+from api.transactions.parsers.xlsx_parser import parse_xlsx
 from api.transactions.schemas import BulkDeleteRequest, ImportResponse, TransactionListResponse, TransactionSchema, TransactionUpdate
 from api.transactions.service import transaction_service
 from fastapi import APIRouter, Depends, Query, UploadFile
@@ -61,7 +62,7 @@ async def list_transactions(
 
 @router.post(
   "/import",
-  summary="Import Transactions from CSV",
+  summary="Import Transactions",
   response_model=ImportResponse,
 )
 async def import_transactions(
@@ -70,7 +71,7 @@ async def import_transactions(
   bank_account_id: Annotated[UUID, Query(description="Bank account to attach transactions to.")],
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ImportResponse:
-  """Import transactions from a bank CSV export.
+  """Import transactions from a bank export (CSV or XLSX).
 
   Duplicate transactions (by dedup hash) are automatically skipped.
   """
@@ -80,21 +81,27 @@ async def import_transactions(
     raise ResourceNotFound(f"Unknown bank profile: {bank}")
 
   content = await file.read()
-  try:
-    text = content.decode("utf-8")
-  except UnicodeDecodeError:
-    text = content.decode("latin-1")
 
-  # 1. Parse file using bank profile
-  parsed = await parse_csv(text, profile)
+  if profile.file_format == "xlsx":
+    # Parse Excel file
+    parsed = await parse_xlsx(content, profile)
+    raw_content = f"[xlsx binary, {len(content)} bytes]"
+  else:
+    # Parse CSV file
+    try:
+      text = content.decode("utf-8")
+    except UnicodeDecodeError:
+      text = content.decode("latin-1")
+    parsed = await parse_csv(text, profile)
+    raw_content = text
 
-  # 2-3. Store raw, map & normalize, deduplicate
+  # Store raw, map & normalize, deduplicate
   created, skipped = await transaction_service.import_transactions(
     session,
     bank_account_id=bank_account_id,
     bank_name=profile.bank_name,
     file_format=profile.file_format,
-    raw_content=text,
+    raw_content=raw_content,
     parsed=parsed,
   )
 

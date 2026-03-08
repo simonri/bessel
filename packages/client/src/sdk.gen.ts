@@ -10,7 +10,6 @@ import { client } from "./client.gen";
 import {
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
-  createCategoryV1CategoriesPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
@@ -23,7 +22,6 @@ import {
   listTransactionsV1TransactionsGetResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
-  updateCategoryV1CategoriesCategoryIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
@@ -36,9 +34,6 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
-  CreateCategoryV1CategoriesPostData,
-  CreateCategoryV1CategoriesPostErrors,
-  CreateCategoryV1CategoriesPostResponses,
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
@@ -48,9 +43,6 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
-  DeleteCategoryV1CategoriesCategoryIdDeleteData,
-  DeleteCategoryV1CategoriesCategoryIdDeleteErrors,
-  DeleteCategoryV1CategoriesCategoryIdDeleteResponses,
   DeleteEntryV1JournalEntryDateDeleteData,
   DeleteEntryV1JournalEntryDateDeleteErrors,
   DeleteEntryV1JournalEntryDateDeleteResponses,
@@ -113,9 +105,6 @@ import type {
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
-  UpdateCategoryV1CategoriesCategoryIdPatchData,
-  UpdateCategoryV1CategoriesCategoryIdPatchErrors,
-  UpdateCategoryV1CategoriesCategoryIdPatchResponses,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
@@ -206,7 +195,7 @@ export const createBankAccountV1BankAccountsPost = <
 /**
  * Delete Bank Account
  *
- * Delete a bank account.
+ * Delete a bank account and all its transactions.
  */
 export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
   ThrowOnError extends boolean = false,
@@ -292,74 +281,6 @@ export const listCategoriesV1CategoriesGet = <
     responseTransformer: listCategoriesV1CategoriesGetResponseTransformer,
     url: "/v1/categories",
     ...options,
-  });
-
-/**
- * Create Category
- *
- * Create a new category.
- */
-export const createCategoryV1CategoriesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateCategoryV1CategoriesPostData, ThrowOnError>,
-) =>
-  (options.client ?? client).post<
-    CreateCategoryV1CategoriesPostResponses,
-    CreateCategoryV1CategoriesPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createCategoryV1CategoriesPostResponseTransformer,
-    url: "/v1/categories",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Delete Category
- *
- * Delete a category. Transactions using this category will be uncategorized.
- */
-export const deleteCategoryV1CategoriesCategoryIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteCategoryV1CategoriesCategoryIdDeleteData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).delete<
-    DeleteCategoryV1CategoriesCategoryIdDeleteResponses,
-    DeleteCategoryV1CategoriesCategoryIdDeleteErrors,
-    ThrowOnError
-  >({ url: "/v1/categories/{category_id}", ...options });
-
-/**
- * Update Category
- *
- * Update a category.
- */
-export const updateCategoryV1CategoriesCategoryIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateCategoryV1CategoriesCategoryIdPatchData, ThrowOnError>,
-) =>
-  (options.client ?? client).patch<
-    UpdateCategoryV1CategoriesCategoryIdPatchResponses,
-    UpdateCategoryV1CategoriesCategoryIdPatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      updateCategoryV1CategoriesCategoryIdPatchResponseTransformer,
-    url: "/v1/categories/{category_id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
   });
 
 /**
@@ -746,9 +667,9 @@ export const listTransactionsV1TransactionsGet = <
   });
 
 /**
- * Import Transactions from CSV
+ * Import Transactions
  *
- * Import transactions from a bank CSV export.
+ * Import transactions from a bank export (CSV or XLSX).
  *
  * Duplicate transactions (by dedup hash) are automatically skipped.
  */
