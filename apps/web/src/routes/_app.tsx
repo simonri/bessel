@@ -8,12 +8,12 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={false} className="!min-h-0 h-svh">
       <AppSidebar />
-      <SidebarInset>
-        <main className="flex-1 overflow-auto p-6">
+      <SidebarInset className="min-h-0 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col p-6">
           <Outlet />
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

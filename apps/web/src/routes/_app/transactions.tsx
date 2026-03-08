@@ -1,17 +1,17 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import type { TransactionSchema } from "@metron/client";
 import {
-  listTransactionsV1TransactionsGetOptions,
+  listTransactionsV1TransactionsGetInfiniteOptions,
   listTransactionsV1TransactionsGetQueryKey,
   listCategoriesV1CategoriesGetOptions,
   listBankAccountsV1BankAccountsGetOptions,
@@ -36,14 +36,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@metron/ui/components/dropdown-menu";
-import { DataTable } from "@/components/data-table";
+import { VirtualDataTable } from "@/components/virtual-data-table";
 import { ImportDialog } from "@/components/import-dialog";
 import { CategoryCell, type BulkSuggestion } from "@/components/category-cell";
+import {
+  TransactionFiltersPopover,
+  ActiveFilters,
+  type TransactionFilters,
+} from "@/components/transaction-filters";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/transactions")({
   component: Transactions,
 });
+
+const PAGE_SIZE = 50;
 
 const TransactionActions = memo(function TransactionActions({
   id,
@@ -76,22 +83,37 @@ const TransactionActions = memo(function TransactionActions({
 });
 
 function Transactions() {
-  const [page, setPage] = useState(1);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(null);
-  const limit = 12;
+  const [filters, setFilters] = useState<TransactionFilters>({});
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
-    ...listTransactionsV1TransactionsGetOptions({
+  const handleFiltersChange = useCallback((next: TransactionFilters) => {
+    setFilters(next);
+    setRowSelection({});
+  }, []);
+
+  const {
+    data: infiniteData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...listTransactionsV1TransactionsGetInfiniteOptions({
       client,
       query: {
-        page,
-        limit,
+        limit: PAGE_SIZE,
         sorting: ["-transaction_date", "description"],
+        ...filters,
       },
     }),
-    placeholderData: keepPreviousData,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      const currentPage = typeof lastPageParam === "number" ? lastPageParam : 1;
+      if (currentPage >= lastPage.pagination.max_page) return undefined;
+      return currentPage + 1;
+    },
   });
 
   const { data: categoriesData } = useQuery(
@@ -125,14 +147,17 @@ function Transactions() {
       const previous = queryClient.getQueriesData({ queryKey });
       const idsToDelete = new Set(body.ids);
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
+        if (!old?.pages) return old;
         return {
           ...old,
-          items: old.items.filter((t: any) => !idsToDelete.has(t.id)),
-          pagination: {
-            ...old.pagination,
-            total_count: old.pagination.total_count - idsToDelete.size,
-          },
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.filter((t: any) => !idsToDelete.has(t.id)),
+            pagination: {
+              ...page.pagination,
+              total_count: page.pagination.total_count - idsToDelete.size,
+            },
+          })),
         };
       });
       setRowSelection({});
@@ -156,14 +181,17 @@ function Transactions() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
+        if (!old?.pages) return old;
         return {
           ...old,
-          items: old.items.map((t: any) =>
-            t.description === body.description
-              ? { ...t, category_id: body.category_id }
-              : t,
-          ),
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((t: any) =>
+              t.description === body.description
+                ? { ...t, category_id: body.category_id }
+                : t,
+            ),
+          })),
         };
       });
       return { previous };
@@ -296,13 +324,15 @@ function Transactions() {
     },
   ];
 
-  const transactions = data?.items ?? [];
-  const maxPage = data?.pagination.max_page ?? 1;
-  const totalCount = data?.pagination.total_count ?? 0;
+  const transactions = useMemo(
+    () => infiniteData?.pages.flatMap((p) => p.items) ?? [],
+    [infiniteData],
+  );
+  const totalCount = infiniteData?.pages[0]?.pagination.total_count ?? 0;
   const selectedCount = Object.keys(rowSelection).length;
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Transactions</h2>
@@ -312,8 +342,22 @@ function Transactions() {
             </p>
           )}
         </div>
-        <ImportDialog />
+        <div className="flex items-center gap-2">
+          <TransactionFiltersPopover
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            accounts={accountsData?.items ?? []}
+            categories={categories}
+          />
+          <ImportDialog />
+        </div>
       </div>
+      <ActiveFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        accounts={accountsData?.items ?? []}
+        categories={categories}
+      />
 
       {isLoading ? (
         <div className="text-muted-foreground flex h-24 items-center justify-center">
@@ -321,60 +365,33 @@ function Transactions() {
         </div>
       ) : (
         <>
-          <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
-            <DataTable
-              columns={columns}
-              data={transactions}
-              getRowId={(row) => row.id}
-              rowSelection={rowSelection}
-              onRowSelectionChange={setRowSelection}
-            />
-          </div>
+          <VirtualDataTable
+            columns={columns}
+            data={transactions}
+            getRowId={(row) => row.id}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            onEndReached={fetchNextPage}
+            hasMore={hasNextPage}
+            isFetchingMore={isFetchingNextPage}
+          />
 
-          <div className="flex items-center justify-between">
-            <div className="text-muted-foreground text-sm">
-              {selectedCount > 0 ? (
-                <div className="flex items-center gap-2">
-                  <span>{selectedCount} row{selectedCount !== 1 ? "s" : ""} selected</span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteRows(Object.keys(rowSelection))}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </Button>
-                </div>
-              ) : null}
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {selectedCount} row{selectedCount !== 1 ? "s" : ""} selected
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteRows(Object.keys(rowSelection))}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
             </div>
-
-            {maxPage > 1 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || isPlaceholderData}
-                >
-                  <ChevronLeft className="size-4" />
-                  Previous
-                </Button>
-                <span className="text-muted-foreground text-sm">
-                  Page {page} of {maxPage}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                  disabled={page >= maxPage || isPlaceholderData}
-                >
-                  Next
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
         </>
       )}
 

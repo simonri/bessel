@@ -2416,9 +2416,45 @@ export type ListTransactionsV1TransactionsGetData = {
     /**
      * Bank Account Id
      *
-     * Filter by bank account ID.
+     * Filter by bank account ID(s).
      */
-    bank_account_id?: string | null;
+    bank_account_id?: Array<string> | null;
+    /**
+     * Category Id
+     *
+     * Filter by category ID(s).
+     */
+    category_id?: Array<string> | null;
+    /**
+     * Uncategorized
+     *
+     * If true, only show transactions without a category.
+     */
+    uncategorized?: boolean;
+    /**
+     * Direction
+     *
+     * Filter by direction: 'debit' or 'credit'.
+     */
+    direction?: string | null;
+    /**
+     * Search
+     *
+     * Search in description (case-insensitive).
+     */
+    search?: string | null;
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
     /**
      * Page
      *

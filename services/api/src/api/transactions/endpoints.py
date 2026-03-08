@@ -1,3 +1,4 @@
+from datetime import date
 from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
@@ -46,7 +47,13 @@ async def list_transactions(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TransactionSortProperty]], Depends(sorting_getter)],
-  bank_account_id: UUID | None = Query(None, description="Filter by bank account ID."),
+  bank_account_id: Annotated[list[UUID] | None, Query(description="Filter by bank account ID(s).")] = None,
+  category_id: Annotated[list[UUID] | None, Query(description="Filter by category ID(s).")] = None,
+  uncategorized: bool = Query(False, description="If true, only show transactions without a category."),
+  direction: Annotated[str | None, Query(description="Filter by direction: 'debit' or 'credit'.")] = None,
+  search: Annotated[str | None, Query(description="Search in description (case-insensitive).")] = None,
+  date_from: Annotated[date | None, Query(description="Start date (inclusive).")] = None,
+  date_to: Annotated[date | None, Query(description="End date (inclusive).")] = None,
 ) -> TransactionListResponse:
   """List transactions."""
   from api.transactions.repository import TransactionRepository
@@ -54,8 +61,20 @@ async def list_transactions(
   repo = TransactionRepository.from_session(session)
   statement = repo.get_base_statement()
 
-  if bank_account_id is not None:
-    statement = statement.where(Transaction.bank_account_id == bank_account_id)
+  if bank_account_id:
+    statement = statement.where(Transaction.bank_account_id.in_(bank_account_id))
+  if category_id:
+    statement = statement.where(Transaction.category_id.in_(category_id))
+  if uncategorized:
+    statement = statement.where(Transaction.category_id.is_(None))
+  if direction:
+    statement = statement.where(Transaction.direction == direction)
+  if search:
+    statement = statement.where(Transaction.description.ilike(f"%{search}%"))
+  if date_from:
+    statement = statement.where(Transaction.transaction_date >= date_from)
+  if date_to:
+    statement = statement.where(Transaction.transaction_date <= date_to)
 
   for prop, desc in sorting:
     column = getattr(Transaction, prop.value)
@@ -153,9 +172,7 @@ async def update_transaction(
       )
     )
     if new_category_id:
-      count_stmt = count_stmt.where(
-        or_(Transaction.category_id != new_category_id, Transaction.category_id.is_(None))
-      )
+      count_stmt = count_stmt.where(or_(Transaction.category_id != new_category_id, Transaction.category_id.is_(None)))
     else:
       count_stmt = count_stmt.where(Transaction.category_id.is_not(None))
 
@@ -178,11 +195,7 @@ async def categorize_by_description(
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> BulkCategorizeResponse:
   """Set category for all transactions matching the given description."""
-  stmt = (
-    update(Transaction)
-    .where(Transaction.description == body.description)
-    .values(category_id=body.category_id)
-  )
+  stmt = update(Transaction).where(Transaction.description == body.description).values(category_id=body.category_id)
   result = await session.execute(stmt)
   return BulkCategorizeResponse(updated=result.rowcount)
 
