@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
+import { TagInput } from "@/components/tag-input";
 import { Button } from "@metron/ui/components/button";
 import {
   Dialog,
@@ -36,6 +37,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
   });
   const [review, setReview] = useState(place.review ?? "");
   const [category, setCategory] = useState(place.category ?? "");
+  const [tags, setTags] = useState<string[]>(() => {
+    const val = placeAny.tags;
+    return Array.isArray(val) ? val : [];
+  });
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -58,6 +63,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
     setVisitedAt(val instanceof Date ? val.toISOString().split("T")[0] : val ? String(val) : "");
     setReview(place.review ?? "");
     setCategory(place.category ?? "");
+    setTags(Array.isArray(placeAny.tags) ? placeAny.tags as string[] : []);
     setOpen(true);
   };
 
@@ -77,6 +83,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
         visited_at: visitedAt ? new Date(visitedAt) : null,
         review: review || null,
         category: category || null,
+        tags: tags.length > 0 ? tags : null,
       },
     });
   };
@@ -132,6 +139,11 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 placeholder="e.g. restaurant, cafe, museum"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagInput tags={tags} onChange={setTags} />
           </div>
 
           {/* Status selector */}

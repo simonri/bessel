@@ -13,6 +13,37 @@ from api.postgres import AsyncSession, get_db_session
 from api.settings import settings
 from fastapi import APIRouter, Depends, Query
 
+# Generic Google Places types that don't describe what the place actually is
+_GENERIC_TYPES = frozenset(
+  {
+    "establishment",
+    "point_of_interest",
+    "food",
+    "store",
+    "place_of_worship",
+    "premise",
+    "street_address",
+    "subpremise",
+    "route",
+    "political",
+    "locality",
+    "sublocality",
+    "neighborhood",
+    "health",
+    "general_contractor",
+    "finance",
+  }
+)
+
+
+def _best_category(types: list[str]) -> str | None:
+  """Pick the most specific category from Google Places types."""
+  for t in types:
+    if t not in _GENERIC_TYPES:
+      return t
+  return types[0] if types else None
+
+
 router = APIRouter(prefix="/places", tags=["places"])
 
 
@@ -104,7 +135,7 @@ async def search_google_places(
         latitude=location.get("lat", 0),
         longitude=location.get("lng", 0),
         plus_code=plus_code_data.get("global_code"),
-        category=item.get("types", [None])[0] if item.get("types") else None,
+        category=_best_category(item.get("types", [])),
         photo_url=photo_url,
         website=None,
         phone=None,

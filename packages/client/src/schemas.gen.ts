@@ -615,6 +615,20 @@ export const PlaceCreateSchema = {
       ],
       title: "Category",
     },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+    },
     photo_url: {
       anyOf: [
         {
@@ -818,6 +832,21 @@ export const PlaceSchemaSchema = {
       title: "Category",
       description: "Place category (e.g. restaurant, cafe).",
     },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+      description: "User-defined tags.",
+    },
     photo_url: {
       anyOf: [
         {
@@ -1005,6 +1034,20 @@ export const PlaceUpdateSchema = {
         },
       ],
       title: "Category",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
     },
     photo_url: {
       anyOf: [

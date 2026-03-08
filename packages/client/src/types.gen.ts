@@ -446,6 +446,10 @@ export type PlaceCreate = {
    */
   category?: string | null;
   /**
+   * Tags
+   */
+  tags?: Array<string> | null;
+  /**
    * Photo Url
    */
   photo_url?: string | null;
@@ -563,6 +567,12 @@ export type PlaceSchema = {
    */
   category?: string | null;
   /**
+   * Tags
+   *
+   * User-defined tags.
+   */
+  tags?: Array<string> | null;
+  /**
    * Photo Url
    *
    * Photo URL from Google.
@@ -656,6 +666,10 @@ export type PlaceUpdate = {
    * Category
    */
   category?: string | null;
+  /**
+   * Tags
+   */
+  tags?: Array<string> | null;
   /**
    * Photo Url
    */

@@ -17,10 +17,10 @@ import {
   EyeOff,
   MapPin,
   X,
-  Globe,
   ExternalLink,
   ArrowUpDown,
   Map,
+  Check,
 } from "lucide-react";
 import type { PlaceSchema } from "@metron/client";
 import {
@@ -57,6 +57,7 @@ import { DataTable } from "@/components/data-table";
 import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
 import { PlaceMap } from "@/components/place-map";
+import { TagDisplay } from "@/components/tag-input";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/travel")({
@@ -71,8 +72,8 @@ const STATUS_TABS = [
 
 const SORT_OPTIONS = [
   { label: "Recently added", value: "-created_at" },
-  { label: "Name A-Z", value: "name" },
-  { label: "Name Z-A", value: "-name" },
+  { label: "Name A\u2013Z", value: "name" },
+  { label: "Name Z\u2013A", value: "-name" },
   { label: "Highest rated", value: "-rating" },
   { label: "Recently visited", value: "-visited_at" },
 ] as const;
@@ -90,6 +91,36 @@ function getGoogleMapsUrl(place: PlaceSchema): string {
   }
   return `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`;
 }
+
+function RatingStars({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
+  const s = size === "sm" ? "size-3" : "size-4";
+  return (
+    <div className="flex items-center gap-px">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`${s} ${i < rating ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground/20"}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function getPlaceAny(place: PlaceSchema) {
+  const a = place as Record<string, unknown>;
+  return {
+    country: a.country as string | undefined,
+    status: a.status as string,
+    visitedAt: a.visited_at,
+    googlePlaceId: a.google_place_id as string | undefined,
+    tags: Array.isArray(a.tags) ? (a.tags as string[]) : [],
+  };
+}
+
+const FILTER_EMPTY_MESSAGES: Record<string, string> = {
+  want_to_go: "No places on your wishlist yet.",
+  visited: "No visited places yet.",
+};
 
 function Travel() {
   const [page, setPage] = useState(1);
@@ -155,44 +186,78 @@ function Travel() {
     });
   };
 
+  const handleSelectPlace = (place: PlaceSchema) => {
+    // Toggle: clicking the same place deselects it
+    setSelectedPlace((prev) => (prev?.id === place.id ? null : place));
+  };
+
+  const handleChangeFilter = (value: string | undefined) => {
+    setStatusFilter(value);
+    setSelectedPlace(null);
+    setPage(1);
+  };
+
+  const handleChangeSort = (value: string) => {
+    setSorting(value);
+    setPage(1);
+  };
+
   const columns: ColumnDef<PlaceSchema>[] = [
     {
       accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <button
-          type="button"
-          className="text-left"
-          onClick={() => setSelectedPlace(row.original)}
-        >
-          <div className="font-medium hover:underline">{row.original.name}</div>
-          {row.original.address && (
-            <div className="text-muted-foreground text-xs truncate max-w-[300px]">
-              {row.original.address}
+      header: "Place",
+      cell: ({ row }) => {
+        const place = row.original;
+        const { country, status } = getPlaceAny(place);
+        const isVisited = status === "visited";
+
+        return (
+          <button
+            type="button"
+            className="text-left w-full py-0.5"
+            onClick={() => handleSelectPlace(place)}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`size-2 rounded-full shrink-0 ${
+                  isVisited ? "bg-green-500" : "bg-amber-500"
+                }`}
+                title={isVisited ? "Visited" : "Want to go"}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="font-medium hover:underline truncate">
+                  {place.name}
+                </div>
+                {(country || place.category) && (
+                  <div className="flex items-center gap-1.5 mt-0.5 text-muted-foreground text-xs">
+                    {country && <span>{country}</span>}
+                    {country && place.category && <span className="opacity-40">/</span>}
+                    {place.category && (
+                      <span className="capitalize">{place.category.replace(/_/g, " ")}</span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </button>
-      ),
+          </button>
+        );
+      },
     },
     {
-      accessorKey: "country",
-      header: "Country",
-      size: 100,
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-sm">
-          {(row.original as Record<string, unknown>).country as string ?? "-"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      size: 120,
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-sm capitalize">
-          {row.original.category?.replace(/_/g, " ") ?? "-"}
-        </span>
-      ),
+      id: "labels",
+      header: "Labels",
+      size: 180,
+      cell: ({ row }) => {
+        const { tags } = getPlaceAny(row.original);
+        if (tags.length === 0) return null;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <TagDisplay key={tag} tags={[tag]} />
+            ))}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "rating",
@@ -200,29 +265,19 @@ function Travel() {
       size: 100,
       cell: ({ row }) => {
         const rating = row.original.rating;
-        if (!rating) return <span className="text-muted-foreground">-</span>;
-        return (
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`size-3.5 ${i < rating ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground/30"}`}
-              />
-            ))}
-          </div>
-        );
+        if (!rating) return <span className="text-muted-foreground/30 text-xs">\u2014</span>;
+        return <RatingStars rating={rating} />;
       },
     },
     {
       accessorKey: "status",
       header: "Status",
-      size: 130,
+      size: 140,
       cell: ({ row }) => {
-        const status = (row.original as Record<string, unknown>).status as string;
-        const visitedAt = (row.original as Record<string, unknown>).visited_at;
+        const { status, visitedAt } = getPlaceAny(row.original);
         const isVisited = status === "visited";
         return (
-          <div className="flex flex-col gap-0.5">
+          <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
               <span
                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -237,15 +292,15 @@ function Travel() {
                 <button
                   type="button"
                   title="Mark as visited"
-                  className="text-muted-foreground hover:text-green-500 transition-colors"
+                  className="text-muted-foreground/50 hover:text-green-500 transition-colors"
                   onClick={() => handleQuickMarkVisited(row.original)}
                 >
-                  <MapPin className="size-3.5" />
+                  <Check className="size-3.5" />
                 </button>
               )}
             </div>
             {isVisited && visitedAt ? (
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-[11px] leading-none">
                 {formatVisitedDate(visitedAt)}
               </span>
             ) : null}
@@ -255,17 +310,27 @@ function Travel() {
     },
     {
       id: "actions",
-      size: 100,
+      header: "",
+      size: 110,
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-0.5">
+          <a
+            href={getGoogleMapsUrl(row.original)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open in Google Maps"
+            className="inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <Map className="size-3.5" />
+          </a>
           <EditPlaceDialog place={row.original} />
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 text-destructive"
+            className="size-8 text-muted-foreground hover:text-destructive"
             onClick={() => setDeleteTarget(row.original)}
           >
-            <Trash2 className="size-4" />
+            <Trash2 className="size-3.5" />
           </Button>
         </div>
       ),
@@ -276,9 +341,15 @@ function Travel() {
   const maxPage = data?.pagination.max_page ?? 1;
   const totalCount = data?.pagination.total_count ?? 0;
   const currentSortLabel = SORT_OPTIONS.find((o) => o.value === sorting)?.label ?? "Sort";
+  const sel = selectedPlace ? getPlaceAny(selectedPlace) : null;
+
+  const emptyMessage = statusFilter
+    ? FILTER_EMPTY_MESSAGES[statusFilter] ?? "No results."
+    : "No results.";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Travel</h2>
@@ -294,29 +365,26 @@ function Travel() {
             size="sm"
             onClick={() => setShowMap((v) => !v)}
           >
-            {showMap ? <EyeOff className="size-4 mr-1" /> : <Eye className="size-4 mr-1" />}
+            {showMap ? <EyeOff className="size-4 mr-1.5" /> : <Eye className="size-4 mr-1.5" />}
             {showMap ? "Hide Map" : "Show Map"}
           </Button>
           <AddPlaceDialog />
         </div>
       </div>
 
-      {/* Status filter tabs + sort */}
+      {/* Tabs + sort */}
       <div className="flex items-center justify-between border-b">
-        <div className="flex gap-1">
+        <div className="flex">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.label}
               type="button"
-              className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 statusFilter === tab.value
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
-              onClick={() => {
-                setStatusFilter(tab.value);
-                setPage(1);
-              }}
+              onClick={() => handleChangeFilter(tab.value)}
             >
               {tab.label}
             </button>
@@ -325,19 +393,16 @@ function Travel() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground -mb-px">
-              <ArrowUpDown className="size-3.5" />
-              {currentSortLabel}
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground -mb-px">
+              <ArrowUpDown className="size-3" />
+              <span className="text-xs">{currentSortLabel}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {SORT_OPTIONS.map((option) => (
               <DropdownMenuItem
                 key={option.value}
-                onClick={() => {
-                  setSorting(option.value);
-                  setPage(1);
-                }}
+                onClick={() => handleChangeSort(option.value)}
                 className={sorting === option.value ? "font-medium" : ""}
               >
                 {option.label}
@@ -347,152 +412,9 @@ function Travel() {
         </DropdownMenu>
       </div>
 
-      {showMap && places.length > 0 && (
-        <div className="flex gap-4">
-          <div className={`h-[400px] rounded-lg border overflow-hidden ${selectedPlace ? "flex-1" : "w-full"}`}>
-            <PlaceMap
-              places={places}
-              onSelectPlace={setSelectedPlace}
-              selectedPlaceId={selectedPlace?.id ?? null}
-            />
-          </div>
-
-          {/* Detail panel */}
-          {selectedPlace && (
-            <div className="w-[320px] shrink-0 rounded-lg border p-4 space-y-3 overflow-y-auto h-[400px]">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg leading-tight">{selectedPlace.name}</h3>
-                  {selectedPlace.category && (
-                    <p className="text-muted-foreground text-sm capitalize mt-0.5">
-                      {selectedPlace.category.replace(/_/g, " ")}
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedPlace(null)}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-
-              {selectedPlace.photo_url && (
-                <img
-                  src={selectedPlace.photo_url}
-                  alt={selectedPlace.name}
-                  className="w-full h-32 object-cover rounded-md"
-                />
-              )}
-
-              <div className="space-y-2 text-sm">
-                {selectedPlace.address && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="text-muted-foreground size-4 mt-0.5 shrink-0" />
-                    <span>{selectedPlace.address}</span>
-                  </div>
-                )}
-                {(() => {
-                  const country = (selectedPlace as Record<string, unknown>).country as string | undefined;
-                  if (!country) return null;
-                  return (
-                    <div className="flex items-center gap-2">
-                      <Globe className="text-muted-foreground size-4 shrink-0" />
-                      <span>{country}</span>
-                    </div>
-                  );
-                })()}
-                {selectedPlace.website && (
-                  <div className="flex items-center gap-2">
-                    <ExternalLink className="text-muted-foreground size-4 shrink-0" />
-                    <a href={selectedPlace.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
-                      {selectedPlace.website}
-                    </a>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Map className="text-muted-foreground size-4 shrink-0" />
-                  <a
-                    href={getGoogleMapsUrl(selectedPlace)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline text-xs"
-                  >
-                    Open in Google Maps
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-1">
-                {(() => {
-                  const status = (selectedPlace as Record<string, unknown>).status as string;
-                  const isVisited = status === "visited";
-                  return (
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      isVisited ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
-                    }`}>
-                      {isVisited ? "Visited" : "Want to go"}
-                    </span>
-                  );
-                })()}
-                {(() => {
-                  const visitedAt = (selectedPlace as Record<string, unknown>).visited_at;
-                  if (!visitedAt) return null;
-                  return (
-                    <span className="text-muted-foreground text-xs">
-                      {formatVisitedDate(visitedAt)}
-                    </span>
-                  );
-                })()}
-              </div>
-
-              {selectedPlace.rating && (
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`size-4 ${i < selectedPlace.rating! ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground/30"}`}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {selectedPlace.review && (
-                <div className="pt-2 border-t">
-                  <p className="text-sm whitespace-pre-wrap">{selectedPlace.review}</p>
-                </div>
-              )}
-
-              <div className="pt-2 border-t flex gap-2">
-                <EditPlaceDialog place={selectedPlace} />
-                {(selectedPlace as Record<string, unknown>).status !== "visited" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleQuickMarkVisited(selectedPlace)}
-                    disabled={markVisitedMutation.isPending}
-                  >
-                    <MapPin className="size-3.5 mr-1" />
-                    Mark visited
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive ml-auto"
-                  onClick={() => setDeleteTarget(selectedPlace)}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Main content: map + table on left, detail panel on right */}
       {isLoading ? (
-        <div className="text-muted-foreground flex h-24 items-center justify-center">
+        <div className="text-muted-foreground flex h-32 items-center justify-center">
           Loading...
         </div>
       ) : places.length === 0 && !statusFilter ? (
@@ -509,37 +431,195 @@ function Travel() {
           <AddPlaceDialog />
         </Empty>
       ) : (
-        <>
-          <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
-            <DataTable columns={columns} data={places} />
+        <div className="flex gap-4 items-start">
+          {/* Left: map + table + pagination */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {showMap && places.length > 0 && (
+              <div className="h-[360px] rounded-lg border overflow-hidden">
+                <PlaceMap
+                  places={places}
+                  onSelectPlace={handleSelectPlace}
+                  selectedPlaceId={selectedPlace?.id ?? null}
+                />
+              </div>
+            )}
+
+            <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
+              <DataTable
+                columns={columns}
+                data={places}
+                getRowId={(row) => row.id}
+                activeRowId={selectedPlace?.id}
+                emptyMessage={emptyMessage}
+              />
+            </div>
+
+            {maxPage > 1 && (
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || isPlaceholderData}
+                >
+                  <ChevronLeft className="size-4" />
+                  Previous
+                </Button>
+                <span className="text-muted-foreground text-sm tabular-nums">
+                  {page} / {maxPage}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                  disabled={page >= maxPage || isPlaceholderData}
+                >
+                  Next
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
-          {maxPage > 1 && (
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1 || isPlaceholderData}
-              >
-                <ChevronLeft className="size-4" />
-                Previous
-              </Button>
-              <span className="text-muted-foreground text-sm">
-                Page {page} of {maxPage}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                disabled={page >= maxPage || isPlaceholderData}
-              >
-                Next
-                <ChevronRight className="size-4" />
-              </Button>
+          {/* Right: detail panel */}
+          {selectedPlace && sel && (
+            <div className="w-[300px] shrink-0 rounded-lg border bg-card sticky top-4">
+              {/* Photo */}
+              {selectedPlace.photo_url && (
+                <img
+                  src={selectedPlace.photo_url}
+                  alt={selectedPlace.name}
+                  className="w-full h-36 object-cover rounded-t-lg"
+                />
+              )}
+
+              <div className="p-4 space-y-3">
+                {/* Title + close */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold leading-tight">{selectedPlace.name}</h3>
+                    {(sel.country || selectedPlace.category) && (
+                      <p className="text-muted-foreground text-xs mt-0.5">
+                        {[
+                          sel.country,
+                          selectedPlace.category?.replace(/_/g, " "),
+                        ]
+                          .filter(Boolean)
+                          .join(" \u00b7 ")}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlace(null)}
+                    className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                {/* Status + rating row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      sel.status === "visited"
+                        ? "bg-green-500/10 text-green-500"
+                        : "bg-amber-500/10 text-amber-500"
+                    }`}
+                  >
+                    {sel.status === "visited" ? "Visited" : "Want to go"}
+                  </span>
+                  {sel.visitedAt ? (
+                    <span className="text-muted-foreground text-xs">
+                      {formatVisitedDate(sel.visitedAt)}
+                    </span>
+                  ) : null}
+                  {selectedPlace.rating && (
+                    <div className="ml-auto">
+                      <RatingStars rating={selectedPlace.rating} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Tags */}
+                {(() => {
+                  const tags = Array.isArray((selectedPlace as Record<string, unknown>).tags)
+                    ? ((selectedPlace as Record<string, unknown>).tags as string[])
+                    : [];
+                  return tags.length > 0 ? <TagDisplay tags={tags} /> : null;
+                })()}
+
+                {/* Info rows */}
+                <div className="space-y-1.5 text-sm">
+                  {selectedPlace.address && (
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <MapPin className="size-3.5 mt-0.5 shrink-0" />
+                      <span className="text-foreground text-xs leading-relaxed">{selectedPlace.address}</span>
+                    </div>
+                  )}
+                  {selectedPlace.website && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <ExternalLink className="size-3.5 shrink-0" />
+                      <a
+                        href={selectedPlace.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-xs truncate"
+                      >
+                        {selectedPlace.website.replace(/^https?:\/\/(www\.)?/, "")}
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Map className="size-3.5 shrink-0" />
+                    <a
+                      href={getGoogleMapsUrl(selectedPlace)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline text-xs"
+                    >
+                      View on Google Maps
+                    </a>
+                  </div>
+                </div>
+
+                {/* Review */}
+                {selectedPlace.review && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                      {selectedPlace.review}
+                    </p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="pt-2 border-t flex items-center gap-1.5">
+                  <EditPlaceDialog place={selectedPlace} />
+                  {sel.status !== "visited" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => handleQuickMarkVisited(selectedPlace)}
+                      disabled={markVisitedMutation.isPending}
+                    >
+                      <Check className="size-3 mr-1" />
+                      Mark visited
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-muted-foreground hover:text-destructive ml-auto"
+                    onClick={() => setDeleteTarget(selectedPlace)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Delete confirmation */}
@@ -548,7 +628,7 @@ function Travel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete place?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{deleteTarget?.name}" will be permanently removed. This can't be undone.
+              &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed. This can&rsquo;t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

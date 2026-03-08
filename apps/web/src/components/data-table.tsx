@@ -21,6 +21,8 @@ interface DataTableProps<TData, TValue> {
   getRowId?: (row: TData) => string;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  activeRowId?: string;
+  emptyMessage?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -29,6 +31,8 @@ export function DataTable<TData, TValue>({
   getRowId,
   rowSelection,
   onRowSelectionChange,
+  activeRowId,
+  emptyMessage = "No results.",
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -72,7 +76,13 @@ export function DataTable<TData, TValue>({
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
-                data-state={row.getIsSelected() && "selected"}
+                data-state={
+                  row.getIsSelected()
+                    ? "selected"
+                    : activeRowId && row.id === activeRowId
+                      ? "selected"
+                      : undefined
+                }
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
@@ -84,7 +94,7 @@ export function DataTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                {emptyMessage}
               </TableCell>
             </TableRow>
           )}

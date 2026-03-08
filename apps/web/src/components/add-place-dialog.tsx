@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Plus, Search, MapPin, Loader2 } from "lucide-react";
+import { TagInput } from "@/components/tag-input";
 import { Button } from "@metron/ui/components/button";
 import {
   Dialog,
@@ -41,6 +42,7 @@ export function AddPlaceDialog() {
   const [plusCode, setPlusCode] = useState<string | null>(null);
   const [category, setCategory] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [status, setStatus] = useState<"want_to_go" | "visited">("want_to_go");
   const [rating, setRating] = useState<number | null>(null);
   const [visitedAt, setVisitedAt] = useState("");
@@ -106,6 +108,7 @@ export function AddPlaceDialog() {
         plus_code: plusCode,
         category,
         photo_url: photoUrl,
+        tags: tags.length > 0 ? tags : null,
         status,
         rating,
         visited_at: visitedAt ? new Date(visitedAt) : null,
@@ -128,6 +131,7 @@ export function AddPlaceDialog() {
     setPlusCode(null);
     setCategory(null);
     setPhotoUrl(null);
+    setTags([]);
     setStatus("want_to_go");
     setRating(null);
     setVisitedAt("");
@@ -258,6 +262,11 @@ export function AddPlaceDialog() {
                   placeholder="e.g. restaurant"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              <TagInput tags={tags} onChange={setTags} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

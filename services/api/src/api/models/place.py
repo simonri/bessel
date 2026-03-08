@@ -1,6 +1,7 @@
 from datetime import date
 
 from sqlalchemy import Date, Float, Integer, String, Text
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from api.models.base import RecordModel
@@ -21,6 +22,7 @@ class Place(RecordModel):
   visited_at: Mapped[date | None] = mapped_column(Date, nullable=True)
   review: Mapped[str | None] = mapped_column(Text, nullable=True)
   category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+  tags: Mapped[list[str] | None] = mapped_column(ARRAY(String(50)), nullable=True)
   photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
   website: Mapped[str | None] = mapped_column(String(500), nullable=True)
   phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
