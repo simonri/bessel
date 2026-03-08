@@ -3,31 +3,26 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { PlaceSchema } from "@metron/client";
 
-function createSvgIcon(color: string, selected = false) {
-  const size = selected ? 36 : 28;
-  const strokeWidth = selected ? 2.5 : 1.5;
-  const filter = selected
-    ? `<defs><filter id="g"><feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="${color}" flood-opacity="0.7"/></filter></defs>`
-    : "";
-  const filterAttr = selected ? ' filter="url(#g)"' : "";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="${size}" height="${size * 1.5}">
-    ${filter}
-    <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="${color}" stroke="#fff" stroke-width="${strokeWidth}"${filterAttr}/>
-    <circle cx="12" cy="12" r="${selected ? 4 : 5}" fill="#fff"/>
+function createDotIcon(color: string, selected = false) {
+  const r = selected ? 6 : 4;
+  const stroke = selected ? 2 : 1.5;
+  const total = (r + stroke) * 2;
+  const center = total / 2;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="${total}">
+    <circle cx="${center}" cy="${center}" r="${r}" fill="${color}" stroke="#fff" stroke-width="${stroke}"${selected ? ` filter="drop-shadow(0 0 3px ${color})"` : ""}/>
   </svg>`;
-  const iconSize = selected ? [36, 54] : [28, 42];
   return L.icon({
     iconUrl: `data:image/svg+xml;base64,${btoa(svg)}`,
-    iconSize: iconSize as [number, number],
-    iconAnchor: [iconSize[0] / 2, iconSize[1]] as [number, number],
+    iconSize: [total, total] as [number, number],
+    iconAnchor: [center, center] as [number, number],
   });
 }
 
 const icons = {
-  want_to_go: createSvgIcon("#f59e0b"),
-  visited: createSvgIcon("#22c55e"),
-  want_to_go_selected: createSvgIcon("#f59e0b", true),
-  visited_selected: createSvgIcon("#22c55e", true),
+  want_to_go: createDotIcon("#f59e0b"),
+  visited: createDotIcon("#22c55e"),
+  want_to_go_selected: createDotIcon("#f59e0b", true),
+  visited_selected: createDotIcon("#22c55e", true),
 };
 
 function getIcon(status: string, selected: boolean) {
@@ -55,8 +50,8 @@ export function PlaceMap({ places, onSelectPlace, selectedPlaceId }: PlaceMapPro
 
     const map = L.map(mapRef.current, { scrollWheelZoom: true });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      attribution: "&copy; Esri",
       maxZoom: 19,
     }).addTo(map);
 

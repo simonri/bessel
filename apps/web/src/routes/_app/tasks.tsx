@@ -10,7 +10,6 @@ import { format, isToday, isTomorrow, isPast, isYesterday, addDays } from "date-
 import {
   CheckSquare,
   Trash2,
-  X,
   Repeat,
   Calendar,
   ChevronLeft,
@@ -22,6 +21,8 @@ import {
   CalendarClock,
   XCircle,
   RotateCcw,
+  Folder,
+  Layers,
 } from "lucide-react";
 import type { TaskSchema } from "@metron/client";
 import {
@@ -33,6 +34,12 @@ import {
   updateTaskV1TasksTaskIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@metron/ui/components/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,7 +74,6 @@ const VIEW_TABS: { label: string; value: ViewTab }[] = [
 
 const BOARD_COLUMNS = ["todo", "in_progress", "scheduled"] as const;
 
-/** Number of days before due date when a scheduled task becomes visible in Todo. */
 const SCHEDULED_THRESHOLD_DAYS = 7;
 
 function isScheduledTask(task: TaskSchema): boolean {
@@ -84,33 +90,17 @@ const STATUS_CONFIG: Record<
   in_progress: { label: "In Progress", icon: Clock, color: "text-blue-500" },
   scheduled: { label: "Scheduled", icon: CalendarClock, color: "text-violet-500" },
   done: { label: "Done", icon: CheckCircle2, color: "text-green-500" },
-  cancelled: {
-    label: "Cancelled",
-    icon: XCircle,
-    color: "text-muted-foreground",
-  },
+  cancelled: { label: "Cancelled", icon: XCircle, color: "text-muted-foreground" },
 };
 
 const PRIORITY_CONFIG: Record<
   number,
   { label: string; color: string; border: string }
 > = {
-  0: {
-    label: "None",
-    color: "text-muted-foreground/30",
-    border: "border-l-transparent",
-  },
-  1: {
-    label: "Low",
-    color: "text-muted-foreground",
-    border: "border-l-muted-foreground/40",
-  },
+  0: { label: "None", color: "text-muted-foreground/30", border: "border-l-transparent" },
+  1: { label: "Low", color: "text-muted-foreground", border: "border-l-muted-foreground/40" },
   2: { label: "Medium", color: "text-blue-500", border: "border-l-blue-500" },
-  3: {
-    label: "High",
-    color: "text-orange-500",
-    border: "border-l-orange-500",
-  },
+  3: { label: "High", color: "text-orange-500", border: "border-l-orange-500" },
   4: { label: "Urgent", color: "text-red-500", border: "border-l-red-500" },
 };
 
@@ -169,12 +159,10 @@ function formatRecurrence(task: TaskSchema): string | null {
 
 function TaskCard({
   task,
-  isSelected,
   onSelect,
   onComplete,
 }: {
   task: TaskSchema;
-  isSelected: boolean;
   onSelect: () => void;
   onComplete: () => void;
 }) {
@@ -186,11 +174,7 @@ function TaskCard({
 
   return (
     <div
-      className={`rounded-md border border-l-2 bg-card p-3 transition-colors cursor-pointer ${priorityConfig.border} ${
-        isSelected
-          ? "ring-2 ring-primary/50 border-primary"
-          : "hover:border-foreground/20"
-      }`}
+      className={`rounded-md border border-l-2 bg-card p-3 transition-colors cursor-pointer hover:border-foreground/20 ${priorityConfig.border}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -208,9 +192,7 @@ function TaskCard({
           <div className="text-sm font-medium leading-snug">{task.title}</div>
           <div className="flex items-center gap-2 flex-wrap">
             {dueLabel && (
-              <span
-                className={`flex items-center gap-1 text-[11px] ${dueColor}`}
-              >
+              <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
                 <Calendar className="size-3" />
                 {dueLabel}
               </span>
@@ -248,13 +230,11 @@ function TaskCard({
 function BoardColumn({
   status,
   tasks,
-  selectedTaskId,
   onSelectTask,
   onCompleteTask,
 }: {
   status: string;
   tasks: TaskSchema[];
-  selectedTaskId: string | null;
   onSelectTask: (task: TaskSchema) => void;
   onCompleteTask: (task: TaskSchema) => void;
 }) {
@@ -275,18 +255,200 @@ function BoardColumn({
           <TaskCard
             key={task.id}
             task={task}
-            isSelected={selectedTaskId === task.id}
             onSelect={() => onSelectTask(task)}
             onComplete={() => onCompleteTask(task)}
           />
         ))}
         {tasks.length === 0 && (
-          <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground/50">
+          <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground/50">
             No tasks
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Task Detail Dialog
+// ---------------------------------------------------------------------------
+
+function TaskDetailDialog({
+  task,
+  onComplete,
+  onReopen,
+  onDelete,
+  onStatusChange,
+  onPriorityChange,
+  completePending,
+  reopenPending,
+}: {
+  task: TaskSchema;
+  onComplete: () => void;
+  onReopen: () => void;
+  onDelete: () => void;
+  onStatusChange: (status: string) => void;
+  onPriorityChange: (priority: number) => void;
+  completePending: boolean;
+  reopenPending: boolean;
+}) {
+  const status = task.status ?? "todo";
+  const priority = task.priority ?? 0;
+  const isDone = status === "done" || status === "cancelled";
+  const recurrence = formatRecurrence(task);
+
+  return (
+    <DialogContent className="max-w-md gap-0 p-0">
+      <DialogHeader className="px-5 pt-5 pb-0">
+        <DialogTitle className="text-base leading-snug pr-6">{task.title}</DialogTitle>
+      </DialogHeader>
+
+      <div className="px-5 py-4 space-y-5">
+        {/* Properties grid */}
+        <div className="grid grid-cols-[100px_1fr] gap-y-3 gap-x-3 text-sm items-center">
+          {/* Status */}
+          <span className="text-muted-foreground text-xs">Status</span>
+          <div className="flex gap-1">
+            {(["todo", "in_progress"] as const).map((s) => {
+              const sc = STATUS_CONFIG[s];
+              const Icon = sc.icon;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+                    status === s
+                      ? "border-foreground/20 bg-accent"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  }`}
+                  onClick={() => onStatusChange(s)}
+                >
+                  <Icon className={`size-3 ${sc.color}`} />
+                  {sc.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Priority */}
+          <span className="text-muted-foreground text-xs">Priority</span>
+          <div className="flex gap-0.5">
+            {[0, 1, 2, 3, 4].map((p) => {
+              const pc = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG[0];
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                    priority === p
+                      ? "border-foreground/20 bg-accent font-medium"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  }`}
+                  onClick={() => onPriorityChange(p)}
+                >
+                  {p === 0 ? (
+                    "\u2013"
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <Flag className={`size-3 ${pc.color}`} />
+                      {pc.label}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Due date */}
+          {task.due_date && (
+            <>
+              <span className="text-muted-foreground text-xs">Due</span>
+              <div className={`flex items-center gap-1.5 text-sm ${getDueDateColor(task.due_date)}`}>
+                <Calendar className="size-3.5" />
+                {formatDueDate(task.due_date)}
+              </div>
+            </>
+          )}
+
+          {/* Recurrence */}
+          {task.is_recurring && recurrence && (
+            <>
+              <span className="text-muted-foreground text-xs">Recurrence</span>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Repeat className="size-3.5" />
+                {recurrence}
+              </div>
+            </>
+          )}
+
+          {/* Project */}
+          {task.project && (
+            <>
+              <span className="text-muted-foreground text-xs">Project</span>
+              <div className="flex items-center gap-1.5 text-sm">
+                <Folder className="size-3.5 text-muted-foreground" />
+                {task.project}
+              </div>
+            </>
+          )}
+
+          {/* Area */}
+          {task.area && (
+            <>
+              <span className="text-muted-foreground text-xs">Area</span>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Layers className="size-3.5" />
+                {task.area}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Description */}
+        {task.description && (
+          <div className="border-t pt-3">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+              {task.description}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer actions */}
+      <div className="border-t px-5 py-3 flex items-center gap-2">
+        {!isDone ? (
+          <Button
+            size="sm"
+            className="h-8 text-xs"
+            onClick={onComplete}
+            disabled={completePending}
+          >
+            <CheckCircle2 className="size-3.5 mr-1.5" />
+            Complete
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            onClick={onReopen}
+            disabled={reopenPending}
+          >
+            <RotateCcw className="size-3.5 mr-1.5" />
+            Reopen
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs text-muted-foreground hover:text-destructive ml-auto"
+          onClick={onDelete}
+        >
+          <Trash2 className="size-3.5 mr-1.5" />
+          Delete
+        </Button>
+      </div>
+    </DialogContent>
   );
 }
 
@@ -302,8 +464,7 @@ function Tasks() {
   const limit = 100;
   const queryClient = useQueryClient();
 
-  const statusFilter =
-    viewTab === "done" ? ("done" as const) : undefined;
+  const statusFilter = viewTab === "done" ? ("done" as const) : undefined;
   const sortingValue =
     viewTab === "done"
       ? (["-completed_at" as "-created_at"])
@@ -329,13 +490,7 @@ function Tasks() {
         queryKey: listTasksV1TasksGetQueryKey({ client }),
       });
       setDeleteTarget(null);
-      if (
-        selectedTask &&
-        deleteTarget &&
-        selectedTask.id === deleteTarget.id
-      ) {
-        setSelectedTask(null);
-      }
+      setSelectedTask(null);
     },
   });
 
@@ -345,6 +500,7 @@ function Tasks() {
       queryClient.invalidateQueries({
         queryKey: listTasksV1TasksGetQueryKey({ client }),
       });
+      setSelectedTask(null);
     },
   });
 
@@ -367,12 +523,11 @@ function Tasks() {
   });
 
   const handleSelectTask = (task: TaskSchema) => {
-    setSelectedTask((prev) => (prev?.id === task.id ? null : task));
+    setSelectedTask(task);
   };
 
   const handleCompleteTask = (task: TaskSchema) => {
     completeMutation.mutate({ client, path: { task_id: task.id } });
-    if (selectedTask?.id === task.id) setSelectedTask(null);
   };
 
   const handleReopenTask = (task: TaskSchema) => {
@@ -393,12 +548,19 @@ function Tasks() {
     setSelectedTask({ ...task, status: newStatus as "todo" });
   };
 
+  const handlePriorityChange = (task: TaskSchema, newPriority: number) => {
+    updateMutation.mutate({
+      client,
+      path: { task_id: task.id },
+      body: { priority: newPriority },
+    });
+    setSelectedTask({ ...task, priority: newPriority });
+  };
+
   const allTasks = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
   const maxPage = data?.pagination.max_page ?? 1;
 
-  // For board view, split tasks into columns.
-  // "Scheduled" is a virtual column: tasks with status=todo but due date >7 days away.
   const boardTasks =
     viewTab === "board"
       ? {
@@ -411,10 +573,6 @@ function Tasks() {
           ),
         }
       : null;
-
-  const sel = selectedTask;
-  const selStatus = sel?.status ?? "todo";
-  const selPriority = sel?.priority ?? 0;
 
   return (
     <div className="space-y-5">
@@ -444,7 +602,6 @@ function Tasks() {
             }`}
             onClick={() => {
               setViewTab(tab.value);
-              setSelectedTask(null);
               setPage(1);
             }}
           >
@@ -472,322 +629,149 @@ function Tasks() {
           <CreateTaskDialog />
         </Empty>
       ) : (
-        <div className="flex gap-4 items-start">
-          {/* Left: board or list */}
-          <div className="flex-1 min-w-0">
-            {viewTab === "board" && boardTasks ? (
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {BOARD_COLUMNS.map((col) => (
-                  <BoardColumn
-                    key={col}
-                    status={col}
-                    tasks={boardTasks[col]}
-                    selectedTaskId={selectedTask?.id ?? null}
-                    onSelectTask={handleSelectTask}
-                    onCompleteTask={handleCompleteTask}
-                  />
-                ))}
-              </div>
-            ) : (
-              /* Done / All list view */
-              <div className="space-y-1">
-                {allTasks.map((task) => {
-                  const status = task.status ?? "todo";
-                  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
-                  const StatusIcon = config.icon;
-                  const isDone =
-                    status === "done" || status === "cancelled";
-                  const priority = task.priority ?? 0;
+        <>
+          {viewTab === "board" && boardTasks ? (
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {BOARD_COLUMNS.map((col) => (
+                <BoardColumn
+                  key={col}
+                  status={col}
+                  tasks={boardTasks[col]}
+                  onSelectTask={handleSelectTask}
+                  onCompleteTask={handleCompleteTask}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Done / All list view */
+            <div className="space-y-1">
+              {allTasks.map((task) => {
+                const status = task.status ?? "todo";
+                const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
+                const StatusIcon = config.icon;
+                const isDone = status === "done" || status === "cancelled";
+                const priority = task.priority ?? 0;
 
-                  return (
-                    <div
-                      key={task.id}
-                      className={`flex items-center gap-3 rounded-md border px-3 py-2.5 transition-colors cursor-pointer ${
-                        selectedTask?.id === task.id
-                          ? "ring-2 ring-primary/50 border-primary"
-                          : "hover:border-foreground/20"
-                      }`}
-                      onClick={() => handleSelectTask(task)}
-                    >
-                      {isDone ? (
-                        <button
-                          type="button"
-                          title="Reopen"
-                          className="text-muted-foreground/40 hover:text-foreground transition-colors shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReopenTask(task);
-                          }}
-                        >
-                          <RotateCcw className="size-4" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-muted-foreground/40 hover:text-green-500 transition-colors shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompleteTask(task);
-                          }}
-                        >
-                          <Circle className="size-4" />
-                        </button>
+                return (
+                  <div
+                    key={task.id}
+                    className="flex items-center gap-3 rounded-md border px-3 py-2.5 transition-colors cursor-pointer hover:border-foreground/20"
+                    onClick={() => handleSelectTask(task)}
+                  >
+                    {isDone ? (
+                      <button
+                        type="button"
+                        title="Reopen"
+                        className="text-muted-foreground/40 hover:text-foreground transition-colors shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReopenTask(task);
+                        }}
+                      >
+                        <RotateCcw className="size-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-muted-foreground/40 hover:text-green-500 transition-colors shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCompleteTask(task);
+                        }}
+                      >
+                        <Circle className="size-4" />
+                      </button>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span
+                        className={`text-sm ${isDone ? "line-through text-muted-foreground" : "font-medium"}`}
+                      >
+                        {task.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {task.is_recurring && (
+                        <Repeat className="size-3 text-muted-foreground" />
                       )}
-                      <div className="min-w-0 flex-1">
-                        <span
-                          className={`text-sm ${isDone ? "line-through text-muted-foreground" : "font-medium"}`}
-                        >
-                          {task.title}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {task.is_recurring && (
-                          <Repeat className="size-3 text-muted-foreground" />
-                        )}
-                        {priority >= 3 && (
-                          <Flag
-                            className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
-                          />
-                        )}
-                        <StatusIcon
-                          className={`size-3.5 ${config.color}`}
+                      {priority >= 3 && (
+                        <Flag
+                          className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
                         />
-                        {task.due_date && (
-                          <span
-                            className={`text-[11px] ${getDueDateColor(task.due_date)}`}
-                          >
-                            {formatDueDate(task.due_date)}
-                          </span>
-                        )}
-                        {isDone && task.completed_at && (
-                          <span className="text-[11px] text-muted-foreground">
-                            {format(
-                              task.completed_at instanceof Date
-                                ? task.completed_at
-                                : new Date(String(task.completed_at)),
-                              "MMM d",
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                {allTasks.length === 0 && (
-                  <div className="text-muted-foreground text-center text-sm py-8">
-                    {viewTab === "done"
-                      ? "No completed tasks yet."
-                      : "No tasks."}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Pagination for done/all */}
-            {viewTab !== "board" && maxPage > 1 && (
-              <div className="flex items-center justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                >
-                  <ChevronLeft className="size-4" />
-                  Previous
-                </Button>
-                <span className="text-muted-foreground text-sm tabular-nums">
-                  {page} / {maxPage}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                  disabled={page >= maxPage}
-                >
-                  Next
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Right: detail panel */}
-          {sel && (
-            <div className="w-[300px] shrink-0 rounded-lg border bg-card sticky top-4">
-              <div className="p-4 space-y-4">
-                {/* Title + close */}
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold leading-tight">{sel.title}</h3>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTask(null)}
-                    className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-
-                {/* Status */}
-                <div className="space-y-1.5">
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {(["todo", "in_progress"] as const).map((s) => {
-                      const sc = STATUS_CONFIG[s];
-                      const Icon = sc.icon;
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-                            selStatus === s
-                              ? "border-foreground/20 bg-accent"
-                              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                          }`}
-                          onClick={() => handleStatusChange(sel, s)}
-                        >
-                          <Icon className={`size-3 ${sc.color}`} />
-                          {sc.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Priority */}
-                <div className="space-y-1.5">
-                  <span className="text-xs text-muted-foreground">
-                    Priority
-                  </span>
-                  <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4].map((p) => {
-                      const pc = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG[0];
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          className={`rounded-md border px-2 py-1 text-xs transition-colors ${
-                            selPriority === p
-                              ? "border-foreground/20 bg-accent font-medium"
-                              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                          }`}
-                          onClick={() => {
-                            updateMutation.mutate({
-                              client,
-                              path: { task_id: sel.id },
-                              body: { priority: p },
-                            });
-                            setSelectedTask({ ...sel, priority: p });
-                          }}
-                        >
-                          {p === 0 ? (
-                            "\u2013"
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Flag className={`size-3 ${pc.color}`} />
-                              {pc.label}
-                            </span>
+                      )}
+                      <StatusIcon className={`size-3.5 ${config.color}`} />
+                      {task.due_date && (
+                        <span className={`text-[11px] ${getDueDateColor(task.due_date)}`}>
+                          {formatDueDate(task.due_date)}
+                        </span>
+                      )}
+                      {isDone && task.completed_at && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {format(
+                            task.completed_at instanceof Date
+                              ? task.completed_at
+                              : new Date(String(task.completed_at)),
+                            "MMM d",
                           )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Due date */}
-                {sel.due_date && (
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Due</span>
-                    <div
-                      className={`flex items-center gap-1.5 text-sm ${getDueDateColor(sel.due_date)}`}
-                    >
-                      <Calendar className="size-3.5" />
-                      {formatDueDate(sel.due_date)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recurrence */}
-                {sel.is_recurring && (
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">
-                      Recurrence
-                    </span>
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Repeat className="size-3.5" />
-                      {formatRecurrence(sel) ?? "Recurring"}
-                    </div>
-                  </div>
-                )}
-
-                {/* Project / Area */}
-                {(sel.project || sel.area) && (
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">
-                      Organization
-                    </span>
-                    <div className="flex items-center gap-2 text-sm">
-                      {sel.project && (
-                        <span className="bg-muted rounded px-1.5 py-0.5 text-xs">
-                          {sel.project}
-                        </span>
-                      )}
-                      {sel.area && (
-                        <span className="text-xs text-muted-foreground">
-                          {sel.area}
                         </span>
                       )}
                     </div>
                   </div>
-                )}
-
-                {/* Description */}
-                {sel.description && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
-                      {sel.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="pt-2 border-t flex items-center gap-1.5">
-                  {selStatus !== "done" && selStatus !== "cancelled" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs"
-                      onClick={() => handleCompleteTask(sel)}
-                      disabled={completeMutation.isPending}
-                    >
-                      <CheckCircle2 className="size-3 mr-1" />
-                      Complete
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs"
-                      onClick={() => handleReopenTask(sel)}
-                      disabled={reopenMutation.isPending}
-                    >
-                      <RotateCcw className="size-3 mr-1" />
-                      Reopen
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:text-destructive ml-auto"
-                    onClick={() => setDeleteTarget(sel)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                );
+              })}
+              {allTasks.length === 0 && (
+                <div className="text-muted-foreground text-center text-sm py-8">
+                  {viewTab === "done" ? "No completed tasks yet." : "No tasks."}
                 </div>
-              </div>
+              )}
             </div>
           )}
-        </div>
+
+          {/* Pagination for done/all */}
+          {viewTab !== "board" && maxPage > 1 && (
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                <ChevronLeft className="size-4" />
+                Previous
+              </Button>
+              <span className="text-muted-foreground text-sm tabular-nums">
+                {page} / {maxPage}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                disabled={page >= maxPage}
+              >
+                Next
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
+
+      {/* Task detail dialog */}
+      <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
+        {selectedTask && (
+          <TaskDetailDialog
+            task={selectedTask}
+            onComplete={() => handleCompleteTask(selectedTask)}
+            onReopen={() => handleReopenTask(selectedTask)}
+            onDelete={() => {
+              setDeleteTarget(selectedTask);
+            }}
+            onStatusChange={(s) => handleStatusChange(selectedTask, s)}
+            onPriorityChange={(p) => handlePriorityChange(selectedTask, p)}
+            completePending={completeMutation.isPending}
+            reopenPending={reopenMutation.isPending}
+          />
+        )}
+      </Dialog>
 
       {/* Delete confirmation */}
       <AlertDialog

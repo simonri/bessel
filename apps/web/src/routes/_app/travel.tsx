@@ -7,20 +7,17 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   ChevronLeft,
   ChevronRight,
   Trash2,
   Star,
-  Eye,
-  EyeOff,
   MapPin,
   X,
-  ExternalLink,
-  ArrowUpDown,
   Map,
   Check,
+  Plane,
 } from "lucide-react";
 import type { PlaceSchema } from "@metron/client";
 import {
@@ -30,12 +27,8 @@ import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@metron/ui/components/dropdown-menu";
+
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,19 +57,6 @@ export const Route = createFileRoute("/_app/travel")({
   component: Travel,
 });
 
-const STATUS_TABS = [
-  { label: "All", value: undefined },
-  { label: "Want to go", value: "want_to_go" as const },
-  { label: "Visited", value: "visited" as const },
-] as const;
-
-const SORT_OPTIONS = [
-  { label: "Recently added", value: "-created_at" },
-  { label: "Name A\u2013Z", value: "name" },
-  { label: "Name Z\u2013A", value: "-name" },
-  { label: "Highest rated", value: "-rating" },
-  { label: "Recently visited", value: "-visited_at" },
-] as const;
 
 function formatVisitedDate(value: unknown): string {
   if (!value) return "";
@@ -117,17 +97,117 @@ function getPlaceAny(place: PlaceSchema) {
   };
 }
 
-const FILTER_EMPTY_MESSAGES: Record<string, string> = {
-  want_to_go: "No places on your wishlist yet.",
-  visited: "No visited places yet.",
-};
+// ---------------------------------------------------------------------------
+// Travel Timeline
+// ---------------------------------------------------------------------------
+
+function TravelTimeline({
+  places,
+  onSelectPlace,
+}: {
+  places: PlaceSchema[];
+  onSelectPlace: (place: PlaceSchema) => void;
+}) {
+  if (places.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-4">
+        <Plane className="size-8 text-muted-foreground/20 mb-2" />
+        <p className="text-xs text-muted-foreground">No visited places yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto px-3 py-3">
+      <div className="flex items-center gap-2 mb-3 px-1">
+        <Plane className="size-3.5 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Recent Visits
+        </span>
+      </div>
+      <div className="relative">
+        {/* Vertical line */}
+        <div className="absolute left-[11px] top-2 bottom-2 w-px bg-border" />
+
+        <div className="space-y-0.5">
+          {places.map((place, i) => {
+            const a = place as Record<string, unknown>;
+            const visitedAt = a.visited_at;
+            const country = a.country as string | undefined;
+            const isFirst = i === 0;
+
+            let timeLabel = "";
+            if (visitedAt) {
+              try {
+                const d = visitedAt instanceof Date ? visitedAt : new Date(String(visitedAt));
+                timeLabel = formatDistanceToNow(d, { addSuffix: true });
+              } catch {
+                timeLabel = "";
+              }
+            }
+
+            return (
+              <button
+                key={place.id}
+                type="button"
+                className="relative flex items-start gap-3 w-full rounded-md px-1 py-2 text-left transition-colors hover:bg-accent/50 group"
+                onClick={() => onSelectPlace(place)}
+              >
+                {/* Dot */}
+                <div className="relative z-10 mt-1 shrink-0">
+                  <div
+                    className={`size-[9px] rounded-full ring-2 ring-background ${
+                      isFirst ? "bg-green-500" : "bg-muted-foreground/30"
+                    }`}
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="min-w-0 flex-1 -mt-0.5">
+                  <div className="text-sm font-medium leading-snug truncate group-hover:text-foreground">
+                    {place.name}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {country && (
+                      <span className="text-[11px] text-muted-foreground truncate">
+                        {country}
+                      </span>
+                    )}
+                    {country && place.category && (
+                      <span className="text-muted-foreground/30 text-[11px]">/</span>
+                    )}
+                    {place.category && (
+                      <span className="text-[11px] text-muted-foreground/60 capitalize truncate">
+                        {place.category.replace(/_/g, " ")}
+                      </span>
+                    )}
+                  </div>
+                  {timeLabel && (
+                    <span className="text-[10px] text-muted-foreground/50 mt-0.5 block">
+                      {timeLabel}
+                    </span>
+                  )}
+                </div>
+
+                {/* Rating */}
+                {place.rating && (
+                  <div className="shrink-0 mt-0.5">
+                    <RatingStars rating={place.rating} />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function Travel() {
   const [page, setPage] = useState(1);
-  const [showMap, setShowMap] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
-  const [sorting, setSorting] = useState("-created_at");
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
   const limit = 20;
   const queryClient = useQueryClient();
@@ -138,12 +218,25 @@ function Travel() {
       query: {
         page,
         limit,
-        sorting: [sorting as "-created_at"],
-        ...(statusFilter ? { status: statusFilter as "want_to_go" | "visited" } : {}),
+        sorting: ["-created_at" as "-created_at"],
       },
     }),
     placeholderData: keepPreviousData,
   });
+
+  // Timeline: recently visited places
+  const { data: timelineData } = useQuery({
+    ...listPlacesV1PlacesGetOptions({
+      client,
+      query: {
+        page: 1,
+        limit: 10,
+        sorting: ["-visited_at" as "-created_at"],
+        status: "visited" as "want_to_go" | "visited",
+      },
+    }),
+  });
+  const timelinePlaces = timelineData?.items ?? [];
 
   const deleteMutation = useMutation({
     ...deletePlaceV1PlacesPlaceIdDeleteMutation({ client }),
@@ -191,16 +284,6 @@ function Travel() {
     setSelectedPlace((prev) => (prev?.id === place.id ? null : place));
   };
 
-  const handleChangeFilter = (value: string | undefined) => {
-    setStatusFilter(value);
-    setSelectedPlace(null);
-    setPage(1);
-  };
-
-  const handleChangeSort = (value: string) => {
-    setSorting(value);
-    setPage(1);
-  };
 
   const columns: ColumnDef<PlaceSchema>[] = [
     {
@@ -340,12 +423,7 @@ function Travel() {
   const places = data?.items ?? [];
   const maxPage = data?.pagination.max_page ?? 1;
   const totalCount = data?.pagination.total_count ?? 0;
-  const currentSortLabel = SORT_OPTIONS.find((o) => o.value === sorting)?.label ?? "Sort";
   const sel = selectedPlace ? getPlaceAny(selectedPlace) : null;
-
-  const emptyMessage = statusFilter
-    ? FILTER_EMPTY_MESSAGES[statusFilter] ?? "No results."
-    : "No results.";
 
   return (
     <div className="space-y-5">
@@ -359,65 +437,15 @@ function Travel() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowMap((v) => !v)}
-          >
-            {showMap ? <EyeOff className="size-4 mr-1.5" /> : <Eye className="size-4 mr-1.5" />}
-            {showMap ? "Hide Map" : "Show Map"}
-          </Button>
-          <AddPlaceDialog />
-        </div>
+        <AddPlaceDialog />
       </div>
 
-      {/* Tabs + sort */}
-      <div className="flex items-center justify-between border-b">
-        <div className="flex">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.label}
-              type="button"
-              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                statusFilter === tab.value
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => handleChangeFilter(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground -mb-px">
-              <ArrowUpDown className="size-3" />
-              <span className="text-xs">{currentSortLabel}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {SORT_OPTIONS.map((option) => (
-              <DropdownMenuItem
-                key={option.value}
-                onClick={() => handleChangeSort(option.value)}
-                className={sorting === option.value ? "font-medium" : ""}
-              >
-                {option.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Main content: map + table on left, detail panel on right */}
+      {/* Main content */}
       {isLoading ? (
         <div className="text-muted-foreground flex h-32 items-center justify-center">
           Loading...
         </div>
-      ) : places.length === 0 && !statusFilter ? (
+      ) : places.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -434,13 +462,23 @@ function Travel() {
         <div className="flex gap-4 items-start">
           {/* Left: map + table + pagination */}
           <div className="flex-1 min-w-0 space-y-4">
-            {showMap && places.length > 0 && (
-              <div className="h-[360px] rounded-lg border overflow-hidden">
-                <PlaceMap
-                  places={places}
-                  onSelectPlace={handleSelectPlace}
-                  selectedPlaceId={selectedPlace?.id ?? null}
-                />
+            {places.length > 0 && (
+              <div className="flex gap-4 h-[360px]">
+                {/* Timeline */}
+                <div className="w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
+                  <TravelTimeline
+                    places={timelinePlaces}
+                    onSelectPlace={handleSelectPlace}
+                  />
+                </div>
+                {/* Map */}
+                <div className="flex-1 rounded-lg border overflow-hidden">
+                  <PlaceMap
+                    places={places}
+                    onSelectPlace={handleSelectPlace}
+                    selectedPlaceId={selectedPlace?.id ?? null}
+                  />
+                </div>
               </div>
             )}
 
@@ -450,7 +488,7 @@ function Travel() {
                 data={places}
                 getRowId={(row) => row.id}
                 activeRowId={selectedPlace?.id}
-                emptyMessage={emptyMessage}
+                emptyMessage="No places yet."
               />
             </div>
 
@@ -481,7 +519,7 @@ function Travel() {
             )}
           </div>
 
-          {/* Right: detail panel */}
+          {/* Right: detail sidebar */}
           {selectedPlace && sel && (
             <div className="w-[300px] shrink-0 rounded-lg border bg-card sticky top-4">
               {/* Photo */}
@@ -505,7 +543,7 @@ function Travel() {
                           selectedPlace.category?.replace(/_/g, " "),
                         ]
                           .filter(Boolean)
-                          .join(" \u00b7 ")}
+                          .join(" · ")}
                       </p>
                     )}
                   </div>
@@ -518,7 +556,7 @@ function Travel() {
                   </button>
                 </div>
 
-                {/* Status + rating row */}
+                {/* Status + rating */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -555,19 +593,6 @@ function Travel() {
                     <div className="flex items-start gap-2 text-muted-foreground">
                       <MapPin className="size-3.5 mt-0.5 shrink-0" />
                       <span className="text-foreground text-xs leading-relaxed">{selectedPlace.address}</span>
-                    </div>
-                  )}
-                  {selectedPlace.website && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <ExternalLink className="size-3.5 shrink-0" />
-                      <a
-                        href={selectedPlace.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline text-xs truncate"
-                      >
-                        {selectedPlace.website.replace(/^https?:\/\/(www\.)?/, "")}
-                      </a>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-muted-foreground">
