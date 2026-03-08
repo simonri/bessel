@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { Pencil } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -22,10 +23,6 @@ import { client } from "@/lib/client";
 
 export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(account.name);
-  const [currency, setCurrency] = useState(account.currency);
-  const [subtype, setSubtype] = useState(account.subtype);
-  const [baseBalance, setBaseBalance] = useState(String(account.base_balance));
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -38,28 +35,35 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
     },
   });
 
+  const form = useForm({
+    defaultValues: {
+      name: account.name,
+      currency: account.currency,
+      subtype: account.subtype,
+      baseBalance: String(account.base_balance),
+    },
+    onSubmit: ({ value }) => {
+      mutation.mutate({
+        client,
+        path: { bank_account_id: account.id },
+        body: {
+          name: value.name,
+          currency: value.currency,
+          subtype: value.subtype,
+          base_balance: parseInt(value.baseBalance, 10) || 0,
+        },
+      });
+    },
+  });
+
   const handleOpen = () => {
-    setName(account.name);
-    setCurrency(account.currency);
-    setSubtype(account.subtype);
-    setBaseBalance(String(account.base_balance));
-    setOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name) return;
-
-    mutation.mutate({
-      client,
-      path: { bank_account_id: account.id },
-      body: {
-        name,
-        currency,
-        subtype,
-        base_balance: parseInt(baseBalance, 10) || 0,
-      },
+    form.reset({
+      name: account.name,
+      currency: account.currency,
+      subtype: account.subtype,
+      baseBalance: String(account.base_balance),
     });
+    setOpen(true);
   };
 
   return (
@@ -77,50 +81,80 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-name">Name</Label>
-            <Input
-              id="edit-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.Field
+            name="name"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  required
+                />
+              </div>
+            )}
+          />
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-currency">Currency</Label>
-              <Input
-                id="edit-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                maxLength={3}
-                required
-              />
-            </div>
+            <form.Field
+              name="currency"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-currency">Currency</Label>
+                  <Input
+                    id="edit-currency"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    maxLength={3}
+                    required
+                  />
+                </div>
+              )}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-subtype">Type</Label>
-              <Input
-                id="edit-subtype"
-                value={subtype}
-                onChange={(e) => setSubtype(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-base-balance">Base Balance (minor units)</Label>
-            <Input
-              id="edit-base-balance"
-              type="number"
-              value={baseBalance}
-              onChange={(e) => setBaseBalance(e.target.value)}
-              required
+            <form.Field
+              name="subtype"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-subtype">Type</Label>
+                  <Input
+                    id="edit-subtype"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    required
+                  />
+                </div>
+              )}
             />
           </div>
+
+          <form.Field
+            name="baseBalance"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="edit-base-balance">Base Balance (minor units)</Label>
+                <Input
+                  id="edit-base-balance"
+                  type="number"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  required
+                />
+              </div>
+            )}
+          />
 
           {mutation.isError && (
             <p className="text-destructive text-sm">
@@ -132,9 +166,14 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isPending || !name}>
-              {mutation.isPending ? "Saving..." : "Save"}
-            </Button>
+            <form.Subscribe
+              selector={(state) => [state.values.name] as const}
+              children={([name]) => (
+                <Button type="submit" disabled={mutation.isPending || !name}>
+                  {mutation.isPending ? "Saving..." : "Save"}
+                </Button>
+              )}
+            />
           </DialogFooter>
         </form>
       </DialogContent>

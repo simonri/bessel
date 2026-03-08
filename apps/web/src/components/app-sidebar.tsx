@@ -7,6 +7,7 @@ import {
   PieChart,
   MapPin,
   CheckSquare,
+  BookOpen,
   Settings,
 } from "lucide-react";
 import {
@@ -27,6 +28,7 @@ const navItems = [
   { title: "Accounts", icon: Landmark, href: "/accounts" as const },
   { title: "Categories", icon: Tag, href: "/categories" as string },
   { title: "Tasks", icon: CheckSquare, href: "/tasks" as string },
+  { title: "Journal", icon: BookOpen, href: "/journal" as string },
   { title: "Travel", icon: MapPin, href: "/travel" as string },
   { title: "Reports", icon: PieChart, href: "/reports" as string },
 ];

@@ -17,15 +17,20 @@ import {
   createTaskV1TasksPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCategoryV1CategoriesCategoryIdDelete,
+  deleteEntryV1JournalEntryDateDelete,
   deletePlaceV1PlacesPlaceIdDelete,
   deleteTaskV1TasksTaskIdDelete,
   deleteTransactionsV1TransactionsDelete,
   getBankAccountV1BankAccountsBankAccountIdGet,
+  getCalendarV1JournalCalendarGet,
+  getEntryV1JournalEntryDateGet,
+  getStreakV1JournalStreakGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
+  listEntriesV1JournalGet,
   listPlacesV1PlacesGet,
   listProjectsV1TasksProjectsGet,
   listTasksV1TasksGet,
@@ -39,6 +44,7 @@ import {
   updatePlaceV1PlacesPlaceIdPatch,
   updateTaskV1TasksTaskIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
+  upsertEntryV1JournalEntryDatePut,
 } from "../sdk.gen";
 import type {
   CompleteTaskV1TasksTaskIdCompletePostData,
@@ -62,6 +68,9 @@ import type {
   DeleteCategoryV1CategoriesCategoryIdDeleteData,
   DeleteCategoryV1CategoriesCategoryIdDeleteError,
   DeleteCategoryV1CategoriesCategoryIdDeleteResponse,
+  DeleteEntryV1JournalEntryDateDeleteData,
+  DeleteEntryV1JournalEntryDateDeleteError,
+  DeleteEntryV1JournalEntryDateDeleteResponse,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
@@ -74,6 +83,14 @@ import type {
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetError,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+  GetCalendarV1JournalCalendarGetData,
+  GetCalendarV1JournalCalendarGetError,
+  GetCalendarV1JournalCalendarGetResponse,
+  GetEntryV1JournalEntryDateGetData,
+  GetEntryV1JournalEntryDateGetError,
+  GetEntryV1JournalEntryDateGetResponse,
+  GetStreakV1JournalStreakGetData,
+  GetStreakV1JournalStreakGetResponse,
   HealthzHealthzGetData,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostError,
@@ -86,6 +103,9 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetError,
   ListCategoriesV1CategoriesGetResponse,
+  ListEntriesV1JournalGetData,
+  ListEntriesV1JournalGetError,
+  ListEntriesV1JournalGetResponse,
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetError,
   ListPlacesV1PlacesGetResponse,
@@ -121,6 +141,9 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+  UpsertEntryV1JournalEntryDatePutData,
+  UpsertEntryV1JournalEntryDatePutError,
+  UpsertEntryV1JournalEntryDatePutResponse,
 } from "../types.gen";
 
 export type QueryKey<TOptions extends Options> = [
@@ -589,6 +612,222 @@ export const updateCategoryV1CategoriesCategoryIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateCategoryV1CategoriesCategoryIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listEntriesV1JournalGetQueryKey = (
+  options?: Options<ListEntriesV1JournalGetData>,
+) => createQueryKey("listEntriesV1JournalGet", options);
+
+/**
+ * List Journal Entries
+ */
+export const listEntriesV1JournalGetOptions = (
+  options?: Options<ListEntriesV1JournalGetData>,
+) =>
+  queryOptions<
+    ListEntriesV1JournalGetResponse,
+    ListEntriesV1JournalGetError,
+    ListEntriesV1JournalGetResponse,
+    ReturnType<typeof listEntriesV1JournalGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listEntriesV1JournalGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listEntriesV1JournalGetQueryKey(options),
+  });
+
+export const listEntriesV1JournalGetInfiniteQueryKey = (
+  options?: Options<ListEntriesV1JournalGetData>,
+): QueryKey<Options<ListEntriesV1JournalGetData>> =>
+  createQueryKey("listEntriesV1JournalGet", options, true);
+
+/**
+ * List Journal Entries
+ */
+export const listEntriesV1JournalGetInfiniteOptions = (
+  options?: Options<ListEntriesV1JournalGetData>,
+) =>
+  infiniteQueryOptions<
+    ListEntriesV1JournalGetResponse,
+    ListEntriesV1JournalGetError,
+    InfiniteData<ListEntriesV1JournalGetResponse>,
+    QueryKey<Options<ListEntriesV1JournalGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListEntriesV1JournalGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListEntriesV1JournalGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listEntriesV1JournalGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listEntriesV1JournalGetInfiniteQueryKey(options),
+    },
+  );
+
+export const getCalendarV1JournalCalendarGetQueryKey = (
+  options: Options<GetCalendarV1JournalCalendarGetData>,
+) => createQueryKey("getCalendarV1JournalCalendarGet", options);
+
+/**
+ * Get Calendar Data
+ */
+export const getCalendarV1JournalCalendarGetOptions = (
+  options: Options<GetCalendarV1JournalCalendarGetData>,
+) =>
+  queryOptions<
+    GetCalendarV1JournalCalendarGetResponse,
+    GetCalendarV1JournalCalendarGetError,
+    GetCalendarV1JournalCalendarGetResponse,
+    ReturnType<typeof getCalendarV1JournalCalendarGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCalendarV1JournalCalendarGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCalendarV1JournalCalendarGetQueryKey(options),
+  });
+
+export const getStreakV1JournalStreakGetQueryKey = (
+  options?: Options<GetStreakV1JournalStreakGetData>,
+) => createQueryKey("getStreakV1JournalStreakGet", options);
+
+/**
+ * Get Streak Info
+ */
+export const getStreakV1JournalStreakGetOptions = (
+  options?: Options<GetStreakV1JournalStreakGetData>,
+) =>
+  queryOptions<
+    GetStreakV1JournalStreakGetResponse,
+    DefaultError,
+    GetStreakV1JournalStreakGetResponse,
+    ReturnType<typeof getStreakV1JournalStreakGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStreakV1JournalStreakGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStreakV1JournalStreakGetQueryKey(options),
+  });
+
+/**
+ * Delete Journal Entry
+ */
+export const deleteEntryV1JournalEntryDateDeleteMutation = (
+  options?: Partial<Options<DeleteEntryV1JournalEntryDateDeleteData>>,
+): UseMutationOptions<
+  DeleteEntryV1JournalEntryDateDeleteResponse,
+  DeleteEntryV1JournalEntryDateDeleteError,
+  Options<DeleteEntryV1JournalEntryDateDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteEntryV1JournalEntryDateDeleteResponse,
+    DeleteEntryV1JournalEntryDateDeleteError,
+    Options<DeleteEntryV1JournalEntryDateDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteEntryV1JournalEntryDateDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getEntryV1JournalEntryDateGetQueryKey = (
+  options: Options<GetEntryV1JournalEntryDateGetData>,
+) => createQueryKey("getEntryV1JournalEntryDateGet", options);
+
+/**
+ * Get Journal Entry
+ */
+export const getEntryV1JournalEntryDateGetOptions = (
+  options: Options<GetEntryV1JournalEntryDateGetData>,
+) =>
+  queryOptions<
+    GetEntryV1JournalEntryDateGetResponse,
+    GetEntryV1JournalEntryDateGetError,
+    GetEntryV1JournalEntryDateGetResponse,
+    ReturnType<typeof getEntryV1JournalEntryDateGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEntryV1JournalEntryDateGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEntryV1JournalEntryDateGetQueryKey(options),
+  });
+
+/**
+ * Upsert Journal Entry
+ */
+export const upsertEntryV1JournalEntryDatePutMutation = (
+  options?: Partial<Options<UpsertEntryV1JournalEntryDatePutData>>,
+): UseMutationOptions<
+  UpsertEntryV1JournalEntryDatePutResponse,
+  UpsertEntryV1JournalEntryDatePutError,
+  Options<UpsertEntryV1JournalEntryDatePutData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpsertEntryV1JournalEntryDatePutResponse,
+    UpsertEntryV1JournalEntryDatePutError,
+    Options<UpsertEntryV1JournalEntryDatePutData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await upsertEntryV1JournalEntryDatePut({
         ...options,
         ...fnOptions,
         throwOnError: true,

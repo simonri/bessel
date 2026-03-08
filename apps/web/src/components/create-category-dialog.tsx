@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { Plus } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -21,8 +22,6 @@ import { client } from "@/lib/client";
 
 export function CreateCategoryDialog() {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("#6B7280");
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -35,20 +34,22 @@ export function CreateCategoryDialog() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name) return;
-
-    mutation.mutate({
-      client,
-      body: { name, color },
-    });
-  };
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      color: "#6B7280",
+    },
+    onSubmit: ({ value }) => {
+      mutation.mutate({
+        client,
+        body: { name: value.name, color: value.color },
+      });
+    },
+  });
 
   const handleClose = () => {
     setOpen(false);
-    setName("");
-    setColor("#6B7280");
+    form.reset();
     mutation.reset();
   };
 
@@ -68,36 +69,53 @@ export function CreateCategoryDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="category-name">Name</Label>
-            <Input
-              id="category-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Groceries"
-              required
-            />
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.Field
+            name="name"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="category-name">Name</Label>
+                <Input
+                  id="category-name"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  placeholder="e.g. Groceries"
+                  required
+                />
+              </div>
+            )}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="category-color">Color</Label>
-            <div className="flex items-center gap-3">
-              <input
-                id="category-color"
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-9 w-12 cursor-pointer rounded border p-1"
-              />
-              <Input
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                maxLength={7}
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <form.Field
+            name="color"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="category-color">Color</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="category-color"
+                    type="color"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className="h-9 w-12 cursor-pointer rounded border p-1"
+                  />
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    maxLength={7}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+            )}
+          />
 
           {mutation.isError && (
             <p className="text-destructive text-sm">
@@ -109,9 +127,14 @@ export function CreateCategoryDialog() {
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isPending || !name}>
-              {mutation.isPending ? "Creating..." : "Create"}
-            </Button>
+            <form.Subscribe
+              selector={(state) => [state.values.name] as const}
+              children={([name]) => (
+                <Button type="submit" disabled={mutation.isPending || !name}>
+                  {mutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              )}
+            />
           </DialogFooter>
         </form>
       </DialogContent>

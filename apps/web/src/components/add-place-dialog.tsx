@@ -4,6 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { Plus, Search, MapPin, Loader2 } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
 import { CategorySelect } from "@/components/category-select";
@@ -32,23 +33,6 @@ export function AddPlaceDialog() {
   const [step, setStep] = useState<"search" | "form">("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchEnabled, setSearchEnabled] = useState(false);
-
-  // Form state
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [country, setCountry] = useState("");
-  const [latitude, setLatitude] = useState(0);
-  const [longitude, setLongitude] = useState(0);
-  const [googlePlaceId, setGooglePlaceId] = useState<string | null>(null);
-  const [plusCode, setPlusCode] = useState<string | null>(null);
-  const [category, setCategory] = useState<string | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [tags, setTags] = useState<string[]>([]);
-  const [status, setStatus] = useState<"want_to_go" | "visited">("want_to_go");
-  const [rating, setRating] = useState<number | null>(null);
-  const [visitedAt, setVisitedAt] = useState("");
-  const [review, setReview] = useState("");
-
   const queryClient = useQueryClient();
 
   const { data: searchResults, isLoading: isSearching } = useQuery({
@@ -69,6 +53,46 @@ export function AddPlaceDialog() {
     },
   });
 
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      address: "",
+      country: "",
+      latitude: 0,
+      longitude: 0,
+      googlePlaceId: null as string | null,
+      plusCode: null as string | null,
+      category: null as string | null,
+      photoUrl: null as string | null,
+      tags: [] as string[],
+      status: "want_to_go" as "want_to_go" | "visited",
+      rating: null as number | null,
+      visitedAt: "",
+      review: "",
+    },
+    onSubmit: ({ value }) => {
+      mutation.mutate({
+        client,
+        body: {
+          name: value.name,
+          address: value.address || null,
+          country: value.country || null,
+          latitude: value.latitude,
+          longitude: value.longitude,
+          google_place_id: value.googlePlaceId,
+          plus_code: value.plusCode,
+          category: value.category,
+          photo_url: value.photoUrl,
+          tags: value.tags.length > 0 ? value.tags : null,
+          status: value.status,
+          rating: value.rating,
+          visited_at: value.visitedAt ? new Date(value.visitedAt) : null,
+          review: value.review || null,
+        },
+      });
+    },
+  });
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.length >= 2) {
@@ -77,15 +101,15 @@ export function AddPlaceDialog() {
   };
 
   const handleSelectPlace = (result: GooglePlaceSearchResult) => {
-    setName(result.name);
-    setAddress(result.address);
-    setCountry((result as Record<string, unknown>).country as string ?? "");
-    setLatitude(result.latitude);
-    setLongitude(result.longitude);
-    setGooglePlaceId(result.place_id);
-    setPlusCode(result.plus_code ?? null);
-    setCategory(result.category ?? null);
-    setPhotoUrl(result.photo_url ?? null);
+    form.setFieldValue("name", result.name);
+    form.setFieldValue("address", result.address);
+    form.setFieldValue("country", ((result as Record<string, unknown>).country as string) ?? "");
+    form.setFieldValue("latitude", result.latitude);
+    form.setFieldValue("longitude", result.longitude);
+    form.setFieldValue("googlePlaceId", result.place_id);
+    form.setFieldValue("plusCode", result.plus_code ?? null);
+    form.setFieldValue("category", result.category ?? null);
+    form.setFieldValue("photoUrl", result.photo_url ?? null);
     setStep("form");
   };
 
@@ -93,50 +117,12 @@ export function AddPlaceDialog() {
     setStep("form");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !latitude || !longitude) return;
-
-    mutation.mutate({
-      client,
-      body: {
-        name,
-        address: address || null,
-        country: country || null,
-        latitude,
-        longitude,
-        google_place_id: googlePlaceId,
-        plus_code: plusCode,
-        category,
-        photo_url: photoUrl,
-        tags: tags.length > 0 ? tags : null,
-        status,
-        rating,
-        visited_at: visitedAt ? new Date(visitedAt) : null,
-        review: review || null,
-      },
-    });
-  };
-
   const handleClose = () => {
     setOpen(false);
     setStep("search");
     setSearchQuery("");
     setSearchEnabled(false);
-    setName("");
-    setAddress("");
-    setCountry("");
-    setLatitude(0);
-    setLongitude(0);
-    setGooglePlaceId(null);
-    setPlusCode(null);
-    setCategory(null);
-    setPhotoUrl(null);
-    setTags([]);
-    setStatus("want_to_go");
-    setRating(null);
-    setVisitedAt("");
-    setReview("");
+    form.reset();
     mutation.reset();
   };
 
@@ -222,151 +208,222 @@ export function AddPlaceDialog() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="place-name">Name</Label>
-              <Input
-                id="place-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Place name"
-                required
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+            className="space-y-4"
+          >
+            <form.Field
+              name="name"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="place-name">Name</Label>
+                  <Input
+                    id="place-name"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder="Place name"
+                    required
+                  />
+                </div>
+              )}
+            />
+
+            <form.Field
+              name="address"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="place-address">Address</Label>
+                  <Input
+                    id="place-address"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder="Full address"
+                  />
+                </div>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <form.Field
+                name="country"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="place-country">Country</Label>
+                    <Input
+                      id="place-country"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      placeholder="e.g. Japan"
+                    />
+                  </div>
+                )}
+              />
+              <form.Field
+                name="category"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <CategorySelect value={field.state.value} onChange={field.handleChange} />
+                  </div>
+                )}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="place-address">Address</Label>
-              <Input
-                id="place-address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Full address"
+            <form.Field
+              name="tags"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <TagInput tags={field.state.value} onChange={field.handleChange} />
+                </div>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <form.Field
+                name="latitude"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="place-lat">Latitude</Label>
+                    <Input
+                      id="place-lat"
+                      type="number"
+                      step="any"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+                )}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="place-country">Country</Label>
-                <Input
-                  id="place-country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="e.g. Japan"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <CategorySelect value={category} onChange={setCategory} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <TagInput tags={tags} onChange={setTags} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="place-lat">Latitude</Label>
-                <Input
-                  id="place-lat"
-                  type="number"
-                  step="any"
-                  value={latitude}
-                  onChange={(e) => setLatitude(Number(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="place-lng">Longitude</Label>
-                <Input
-                  id="place-lng"
-                  type="number"
-                  step="any"
-                  value={longitude}
-                  onChange={(e) => setLongitude(Number(e.target.value))}
-                  required
-                />
-              </div>
+              <form.Field
+                name="longitude"
+                children={(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="place-lng">Longitude</Label>
+                    <Input
+                      id="place-lng"
+                      type="number"
+                      step="any"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+                )}
+              />
             </div>
 
             {/* Status selector */}
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                    status === "want_to_go"
-                      ? "border-amber-500 bg-amber-500/10 text-amber-500"
-                      : "border-border text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => setStatus("want_to_go")}
-                >
-                  Want to go
-                </button>
-                <button
-                  type="button"
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                    status === "visited"
-                      ? "border-green-500 bg-green-500/10 text-green-500"
-                      : "border-border text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => {
-                    setStatus("visited");
-                    if (!visitedAt) setVisitedAt(new Date().toISOString().split("T")[0]);
-                  }}
-                >
-                  Visited
-                </button>
-              </div>
-            </div>
-
-            {/* Show rating, date, review when visited */}
-            {status === "visited" && (
-              <>
+            <form.Field
+              name="status"
+              children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="place-visited-at">Date visited</Label>
-                  <Input
-                    id="place-visited-at"
-                    type="date"
-                    value={visitedAt}
-                    onChange={(e) => setVisitedAt(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Rating</Label>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        className={`text-xl transition-colors ${
-                          rating && star <= rating
-                            ? "text-yellow-500"
-                            : "text-muted-foreground/30 hover:text-yellow-500/50"
-                        }`}
-                        onClick={() => setRating(rating === star ? null : star)}
-                      >
-                        {"\u2605"}
-                      </button>
-                    ))}
+                  <Label>Status</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                        field.state.value === "want_to_go"
+                          ? "border-amber-500 bg-amber-500/10 text-amber-500"
+                          : "border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() => field.handleChange("want_to_go")}
+                    >
+                      Want to go
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                        field.state.value === "visited"
+                          ? "border-green-500 bg-green-500/10 text-green-500"
+                          : "border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() => {
+                        field.handleChange("visited");
+                        if (!form.getFieldValue("visitedAt")) {
+                          form.setFieldValue("visitedAt", new Date().toISOString().split("T")[0]);
+                        }
+                      }}
+                    >
+                      Visited
+                    </button>
                   </div>
                 </div>
+              )}
+            />
 
-                <div className="space-y-2">
-                  <Label htmlFor="place-review">Notes / Review</Label>
-                  <textarea
-                    id="place-review"
-                    value={review}
-                    onChange={(e) => setReview(e.target.value)}
-                    placeholder="Your thoughts, tips, what you ordered..."
-                    className="border-input bg-background placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm"
-                  />
-                </div>
-              </>
-            )}
+            {/* Show rating, date, review when visited */}
+            <form.Subscribe
+              selector={(state) => [state.values.status] as const}
+              children={([status]) =>
+                status === "visited" ? (
+                  <>
+                    <form.Field
+                      name="visitedAt"
+                      children={(field) => (
+                        <div className="space-y-2">
+                          <Label htmlFor="place-visited-at">Date visited</Label>
+                          <Input
+                            id="place-visited-at"
+                            type="date"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    />
+
+                    <form.Field
+                      name="rating"
+                      children={(field) => (
+                        <div className="space-y-2">
+                          <Label>Rating</Label>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                className={`text-xl transition-colors ${
+                                  field.state.value && star <= field.state.value
+                                    ? "text-yellow-500"
+                                    : "text-muted-foreground/30 hover:text-yellow-500/50"
+                                }`}
+                                onClick={() => field.handleChange(field.state.value === star ? null : star)}
+                              >
+                                {"\u2605"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    />
+
+                    <form.Field
+                      name="review"
+                      children={(field) => (
+                        <div className="space-y-2">
+                          <Label htmlFor="place-review">Notes / Review</Label>
+                          <textarea
+                            id="place-review"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Your thoughts, tips, what you ordered..."
+                            className="border-input bg-background placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm"
+                          />
+                        </div>
+                      )}
+                    />
+                  </>
+                ) : null
+              }
+            />
 
             {mutation.isError && (
               <p className="text-destructive text-sm">
@@ -378,9 +435,14 @@ export function AddPlaceDialog() {
               <Button type="button" variant="outline" onClick={() => setStep("search")}>
                 Back
               </Button>
-              <Button type="submit" disabled={mutation.isPending || !name}>
-                {mutation.isPending ? "Saving..." : "Save Place"}
-              </Button>
+              <form.Subscribe
+                selector={(state) => [state.values.name] as const}
+                children={([name]) => (
+                  <Button type="submit" disabled={mutation.isPending || !name}>
+                    {mutation.isPending ? "Saving..." : "Save Place"}
+                  </Button>
+                )}
+              />
             </DialogFooter>
           </form>
         )}

@@ -14,8 +14,10 @@ import {
   createPlaceV1PlacesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+  getCalendarV1JournalCalendarGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
+  listEntriesV1JournalGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
@@ -25,6 +27,7 @@ import {
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
+  upsertEntryV1JournalEntryDatePutResponseTransformer,
 } from "./transformers.gen";
 import type {
   CompleteTaskV1TasksTaskIdCompletePostData,
@@ -48,6 +51,9 @@ import type {
   DeleteCategoryV1CategoriesCategoryIdDeleteData,
   DeleteCategoryV1CategoriesCategoryIdDeleteErrors,
   DeleteCategoryV1CategoriesCategoryIdDeleteResponses,
+  DeleteEntryV1JournalEntryDateDeleteData,
+  DeleteEntryV1JournalEntryDateDeleteErrors,
+  DeleteEntryV1JournalEntryDateDeleteResponses,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
@@ -60,6 +66,14 @@ import type {
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetErrors,
   GetBankAccountV1BankAccountsBankAccountIdGetResponses,
+  GetCalendarV1JournalCalendarGetData,
+  GetCalendarV1JournalCalendarGetErrors,
+  GetCalendarV1JournalCalendarGetResponses,
+  GetEntryV1JournalEntryDateGetData,
+  GetEntryV1JournalEntryDateGetErrors,
+  GetEntryV1JournalEntryDateGetResponses,
+  GetStreakV1JournalStreakGetData,
+  GetStreakV1JournalStreakGetResponses,
   HealthzHealthzGetData,
   HealthzHealthzGetResponses,
   ImportTransactionsV1TransactionsImportPostData,
@@ -73,6 +87,9 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
+  ListEntriesV1JournalGetData,
+  ListEntriesV1JournalGetErrors,
+  ListEntriesV1JournalGetResponses,
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetErrors,
   ListPlacesV1PlacesGetResponses,
@@ -108,6 +125,9 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
+  UpsertEntryV1JournalEntryDatePutData,
+  UpsertEntryV1JournalEntryDatePutErrors,
+  UpsertEntryV1JournalEntryDatePutResponses,
 } from "./types.gen";
 
 export type Options<
@@ -335,6 +355,104 @@ export const updateCategoryV1CategoriesCategoryIdPatch = <
     responseTransformer:
       updateCategoryV1CategoriesCategoryIdPatchResponseTransformer,
     url: "/v1/categories/{category_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Journal Entries
+ */
+export const listEntriesV1JournalGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListEntriesV1JournalGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListEntriesV1JournalGetResponses,
+    ListEntriesV1JournalGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listEntriesV1JournalGetResponseTransformer,
+    url: "/v1/journal",
+    ...options,
+  });
+
+/**
+ * Get Calendar Data
+ */
+export const getCalendarV1JournalCalendarGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetCalendarV1JournalCalendarGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetCalendarV1JournalCalendarGetResponses,
+    GetCalendarV1JournalCalendarGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCalendarV1JournalCalendarGetResponseTransformer,
+    url: "/v1/journal/calendar",
+    ...options,
+  });
+
+/**
+ * Get Streak Info
+ */
+export const getStreakV1JournalStreakGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetStreakV1JournalStreakGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetStreakV1JournalStreakGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/journal/streak", ...options });
+
+/**
+ * Delete Journal Entry
+ */
+export const deleteEntryV1JournalEntryDateDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteEntryV1JournalEntryDateDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteEntryV1JournalEntryDateDeleteResponses,
+    DeleteEntryV1JournalEntryDateDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/journal/{entry_date}", ...options });
+
+/**
+ * Get Journal Entry
+ */
+export const getEntryV1JournalEntryDateGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetEntryV1JournalEntryDateGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetEntryV1JournalEntryDateGetResponses,
+    GetEntryV1JournalEntryDateGetErrors,
+    ThrowOnError
+  >({ url: "/v1/journal/{entry_date}", ...options });
+
+/**
+ * Upsert Journal Entry
+ */
+export const upsertEntryV1JournalEntryDatePut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpsertEntryV1JournalEntryDatePutData, ThrowOnError>,
+) =>
+  (options.client ?? client).put<
+    UpsertEntryV1JournalEntryDatePutResponses,
+    UpsertEntryV1JournalEntryDatePutErrors,
+    ThrowOnError
+  >({
+    responseTransformer: upsertEntryV1JournalEntryDatePutResponseTransformer,
+    url: "/v1/journal/{entry_date}",
     ...options,
     headers: {
       "Content-Type": "application/json",

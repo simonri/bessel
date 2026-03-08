@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { Upload } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -29,8 +30,6 @@ import { client } from "@/lib/client";
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [bankAccountId, setBankAccountId] = useState("");
   const [result, setResult] = useState<{
     created: number;
     skipped: number;
@@ -56,25 +55,29 @@ export function ImportDialog() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !bankAccountId) return;
+  const form = useForm({
+    defaultValues: {
+      file: null as File | null,
+      bankAccountId: "",
+    },
+    onSubmit: ({ value }) => {
+      if (!value.file || !value.bankAccountId) return;
 
-    setResult(null);
-    mutation.mutate({
-      client,
-      body: { file },
-      query: {
-        bank: "marginalen",
-        bank_account_id: bankAccountId,
-      },
-    });
-  };
+      setResult(null);
+      mutation.mutate({
+        client,
+        body: { file: value.file },
+        query: {
+          bank: "marginalen",
+          bank_account_id: value.bankAccountId,
+        },
+      });
+    },
+  });
 
   const handleClose = () => {
     setOpen(false);
-    setFile(null);
-    setBankAccountId("");
+    form.reset();
     setResult(null);
     mutation.reset();
   };
@@ -95,34 +98,50 @@ export function ImportDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="bank-account">Bank Account</Label>
-            <Select value={bankAccountId} onValueChange={setBankAccountId}>
-              <SelectTrigger id="bank-account" className="w-full">
-                <SelectValue placeholder="Select an account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name} ({account.currency})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.Field
+            name="bankAccountId"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="bank-account">Bank Account</Label>
+                <Select value={field.state.value} onValueChange={field.handleChange}>
+                  <SelectTrigger id="bank-account" className="w-full">
+                    <SelectValue placeholder="Select an account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name} ({account.currency})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="csv-file">CSV File</Label>
-            <Input
-              id="csv-file"
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              required
-            />
-          </div>
+          <form.Field
+            name="file"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="csv-file">CSV File</Label>
+                <Input
+                  id="csv-file"
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
+                  required
+                />
+              </div>
+            )}
+          />
 
           {result && (
             <div className="text-sm rounded-md border p-3">
@@ -152,9 +171,14 @@ export function ImportDialog() {
               {result ? "Done" : "Cancel"}
             </Button>
             {!result && (
-              <Button type="submit" disabled={mutation.isPending || !file || !bankAccountId}>
-                {mutation.isPending ? "Importing..." : "Import"}
-              </Button>
+              <form.Subscribe
+                selector={(state) => [state.values.file, state.values.bankAccountId] as const}
+                children={([file, bankAccountId]) => (
+                  <Button type="submit" disabled={mutation.isPending || !file || !bankAccountId}>
+                    {mutation.isPending ? "Importing..." : "Import"}
+                  </Button>
+                )}
+              />
             )}
           </DialogFooter>
         </form>

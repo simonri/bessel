@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { Plus } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -21,9 +22,6 @@ import { client } from "@/lib/client";
 
 export function CreateAccountDialog() {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [currency, setCurrency] = useState("SEK");
-  const [subtype, setSubtype] = useState("checking");
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -36,26 +34,28 @@ export function CreateAccountDialog() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name) return;
-
-    mutation.mutate({
-      client,
-      body: {
-        name,
-        currency,
-        subtype,
-        base_balance: 0,
-      },
-    });
-  };
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      currency: "SEK",
+      subtype: "checking",
+    },
+    onSubmit: ({ value }) => {
+      mutation.mutate({
+        client,
+        body: {
+          name: value.name,
+          currency: value.currency,
+          subtype: value.subtype,
+          base_balance: 0,
+        },
+      });
+    },
+  });
 
   const handleClose = () => {
     setOpen(false);
-    setName("");
-    setCurrency("SEK");
-    setSubtype("checking");
+    form.reset();
     mutation.reset();
   };
 
@@ -75,41 +75,65 @@ export function CreateAccountDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="account-name">Name</Label>
-            <Input
-              id="account-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Marginalen Savings"
-              required
-            />
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.Field
+            name="name"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="account-name">Name</Label>
+                <Input
+                  id="account-name"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  placeholder="e.g. Marginalen Savings"
+                  required
+                />
+              </div>
+            )}
+          />
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="account-currency">Currency</Label>
-              <Input
-                id="account-currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                placeholder="SEK"
-                maxLength={3}
-                required
-              />
-            </div>
+            <form.Field
+              name="currency"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="account-currency">Currency</Label>
+                  <Input
+                    id="account-currency"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder="SEK"
+                    maxLength={3}
+                    required
+                  />
+                </div>
+              )}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="account-subtype">Type</Label>
-              <Input
-                id="account-subtype"
-                value={subtype}
-                onChange={(e) => setSubtype(e.target.value)}
-                placeholder="e.g. checking, savings"
-                required
-              />
-            </div>
+            <form.Field
+              name="subtype"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="account-subtype">Type</Label>
+                  <Input
+                    id="account-subtype"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder="e.g. checking, savings"
+                    required
+                  />
+                </div>
+              )}
+            />
           </div>
 
           {mutation.isError && (
@@ -122,9 +146,14 @@ export function CreateAccountDialog() {
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isPending || !name}>
-              {mutation.isPending ? "Creating..." : "Create"}
-            </Button>
+            <form.Subscribe
+              selector={(state) => [state.values.name] as const}
+              children={([name]) => (
+                <Button type="submit" disabled={mutation.isPending || !name}>
+                  {mutation.isPending ? "Creating..." : "Create"}
+                </Button>
+              )}
+            />
           </DialogFooter>
         </form>
       </DialogContent>

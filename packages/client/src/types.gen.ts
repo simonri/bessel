@@ -377,6 +377,257 @@ export type ImportResponse = {
 };
 
 /**
+ * JournalCalendarDay
+ */
+export type JournalCalendarDay = {
+  /**
+   * Entry Date
+   */
+  entry_date: Date;
+  /**
+   * Mood
+   */
+  mood?: number | null;
+  /**
+   * Word Count
+   */
+  word_count?: number;
+  /**
+   * Has Wins
+   */
+  has_wins?: boolean;
+  /**
+   * Has Learnings
+   */
+  has_learnings?: boolean;
+};
+
+/**
+ * JournalCalendarResponse
+ */
+export type JournalCalendarResponse = {
+  /**
+   * Days
+   */
+  days: Array<JournalCalendarDay>;
+};
+
+/**
+ * JournalEntryListResponse
+ */
+export type JournalEntryListResponse = {
+  /**
+   * Items
+   */
+  items: Array<JournalEntrySchema>;
+  pagination: Pagination;
+};
+
+/**
+ * JournalEntrySchema
+ */
+export type JournalEntrySchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Entry Date
+   *
+   * Calendar date for this entry.
+   */
+  entry_date: Date;
+  /**
+   * Body
+   *
+   * Free-form markdown body.
+   */
+  body?: string | null;
+  /**
+   * Mood
+   *
+   * Mood rating 1-5.
+   */
+  mood?: number | null;
+  /**
+   * Energy
+   *
+   * Energy rating 1-5.
+   */
+  energy?: number | null;
+  /**
+   * Focus
+   *
+   * Focus quality 1-5.
+   */
+  focus?: number | null;
+  /**
+   * Sleep Hours
+   *
+   * Hours of sleep.
+   */
+  sleep_hours?: number | null;
+  /**
+   * Wins
+   *
+   * Wins for the day.
+   */
+  wins?: string | null;
+  /**
+   * Blockers
+   *
+   * Blockers / challenges.
+   */
+  blockers?: string | null;
+  /**
+   * Learnings
+   *
+   * Key learnings.
+   */
+  learnings?: string | null;
+  /**
+   * Gratitude
+   *
+   * Gratitude notes.
+   */
+  gratitude?: string | null;
+  /**
+   * Intention
+   *
+   * Intention for tomorrow.
+   */
+  intention?: string | null;
+  /**
+   * Decisions
+   *
+   * Decisions log.
+   */
+  decisions?: Array<{
+    [key: string]: unknown;
+  }> | null;
+  /**
+   * Tags
+   *
+   * Tags.
+   */
+  tags?: Array<string> | null;
+  /**
+   * Word Count
+   *
+   * Word count of body.
+   */
+  word_count?: number;
+};
+
+/**
+ * JournalEntryUpsert
+ */
+export type JournalEntryUpsert = {
+  /**
+   * Body
+   */
+  body?: string | null;
+  /**
+   * Mood
+   */
+  mood?: number | null;
+  /**
+   * Energy
+   */
+  energy?: number | null;
+  /**
+   * Focus
+   */
+  focus?: number | null;
+  /**
+   * Sleep Hours
+   */
+  sleep_hours?: number | null;
+  /**
+   * Wins
+   */
+  wins?: string | null;
+  /**
+   * Blockers
+   */
+  blockers?: string | null;
+  /**
+   * Learnings
+   */
+  learnings?: string | null;
+  /**
+   * Gratitude
+   */
+  gratitude?: string | null;
+  /**
+   * Intention
+   */
+  intention?: string | null;
+  /**
+   * Decisions
+   */
+  decisions?: Array<{
+    [key: string]: unknown;
+  }> | null;
+  /**
+   * Tags
+   */
+  tags?: Array<string> | null;
+};
+
+/**
+ * JournalSortProperty
+ */
+export const JournalSortProperty = {
+  ENTRY_DATE: "entry_date",
+  "-ENTRY_DATE": "-entry_date",
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  MOOD: "mood",
+  "-MOOD": "-mood",
+  ENERGY: "energy",
+  "-ENERGY": "-energy",
+} as const;
+
+/**
+ * JournalSortProperty
+ */
+export type JournalSortProperty =
+  (typeof JournalSortProperty)[keyof typeof JournalSortProperty];
+
+/**
+ * JournalStreakResponse
+ */
+export type JournalStreakResponse = {
+  /**
+   * Current Streak
+   */
+  current_streak: number;
+  /**
+   * Longest Streak
+   */
+  longest_streak: number;
+  /**
+   * Total Entries
+   */
+  total_entries: number;
+};
+
+/**
  * Pagination
  */
 export type Pagination = {
@@ -1473,6 +1724,219 @@ export type UpdateCategoryV1CategoriesCategoryIdPatchResponses = {
 
 export type UpdateCategoryV1CategoriesCategoryIdPatchResponse =
   UpdateCategoryV1CategoriesCategoryIdPatchResponses[keyof UpdateCategoryV1CategoriesCategoryIdPatchResponses];
+
+export type ListEntriesV1JournalGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Tag
+     *
+     * Filter by tag.
+     */
+    tag?: string | null;
+    /**
+     * Search
+     *
+     * Search body text.
+     */
+    search?: string | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<JournalSortProperty> | null;
+  };
+  url: "/v1/journal";
+};
+
+export type ListEntriesV1JournalGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListEntriesV1JournalGetError =
+  ListEntriesV1JournalGetErrors[keyof ListEntriesV1JournalGetErrors];
+
+export type ListEntriesV1JournalGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: JournalEntryListResponse;
+};
+
+export type ListEntriesV1JournalGetResponse =
+  ListEntriesV1JournalGetResponses[keyof ListEntriesV1JournalGetResponses];
+
+export type GetCalendarV1JournalCalendarGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Year
+     *
+     * Year.
+     */
+    year: number;
+    /**
+     * Month
+     *
+     * Month.
+     */
+    month: number;
+  };
+  url: "/v1/journal/calendar";
+};
+
+export type GetCalendarV1JournalCalendarGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetCalendarV1JournalCalendarGetError =
+  GetCalendarV1JournalCalendarGetErrors[keyof GetCalendarV1JournalCalendarGetErrors];
+
+export type GetCalendarV1JournalCalendarGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: JournalCalendarResponse;
+};
+
+export type GetCalendarV1JournalCalendarGetResponse =
+  GetCalendarV1JournalCalendarGetResponses[keyof GetCalendarV1JournalCalendarGetResponses];
+
+export type GetStreakV1JournalStreakGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/journal/streak";
+};
+
+export type GetStreakV1JournalStreakGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: JournalStreakResponse;
+};
+
+export type GetStreakV1JournalStreakGetResponse =
+  GetStreakV1JournalStreakGetResponses[keyof GetStreakV1JournalStreakGetResponses];
+
+export type DeleteEntryV1JournalEntryDateDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Entry Date
+     */
+    entry_date: Date;
+  };
+  query?: never;
+  url: "/v1/journal/{entry_date}";
+};
+
+export type DeleteEntryV1JournalEntryDateDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteEntryV1JournalEntryDateDeleteError =
+  DeleteEntryV1JournalEntryDateDeleteErrors[keyof DeleteEntryV1JournalEntryDateDeleteErrors];
+
+export type DeleteEntryV1JournalEntryDateDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteEntryV1JournalEntryDateDeleteResponse =
+  DeleteEntryV1JournalEntryDateDeleteResponses[keyof DeleteEntryV1JournalEntryDateDeleteResponses];
+
+export type GetEntryV1JournalEntryDateGetData = {
+  body?: never;
+  path: {
+    /**
+     * Entry Date
+     */
+    entry_date: Date;
+  };
+  query?: never;
+  url: "/v1/journal/{entry_date}";
+};
+
+export type GetEntryV1JournalEntryDateGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetEntryV1JournalEntryDateGetError =
+  GetEntryV1JournalEntryDateGetErrors[keyof GetEntryV1JournalEntryDateGetErrors];
+
+export type GetEntryV1JournalEntryDateGetResponses = {
+  /**
+   * Response Get Entry V1 Journal  Entry Date  Get
+   *
+   * Successful Response
+   */
+  200: JournalEntrySchema | null;
+};
+
+export type GetEntryV1JournalEntryDateGetResponse =
+  GetEntryV1JournalEntryDateGetResponses[keyof GetEntryV1JournalEntryDateGetResponses];
+
+export type UpsertEntryV1JournalEntryDatePutData = {
+  body: JournalEntryUpsert;
+  path: {
+    /**
+     * Entry Date
+     */
+    entry_date: Date;
+  };
+  query?: never;
+  url: "/v1/journal/{entry_date}";
+};
+
+export type UpsertEntryV1JournalEntryDatePutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpsertEntryV1JournalEntryDatePutError =
+  UpsertEntryV1JournalEntryDatePutErrors[keyof UpsertEntryV1JournalEntryDatePutErrors];
+
+export type UpsertEntryV1JournalEntryDatePutResponses = {
+  /**
+   * Successful Response
+   */
+  200: JournalEntrySchema;
+};
+
+export type UpsertEntryV1JournalEntryDatePutResponse =
+  UpsertEntryV1JournalEntryDatePutResponses[keyof UpsertEntryV1JournalEntryDatePutResponses];
 
 export type ListPlacesV1PlacesGetData = {
   body?: never;

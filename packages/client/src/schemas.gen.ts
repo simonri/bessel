@@ -481,6 +481,463 @@ export const ImportResponseSchema = {
   title: "ImportResponse",
 } as const;
 
+export const JournalCalendarDaySchema = {
+  properties: {
+    entry_date: {
+      type: "string",
+      format: "date",
+      title: "Entry Date",
+    },
+    mood: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Mood",
+    },
+    word_count: {
+      type: "integer",
+      title: "Word Count",
+      default: 0,
+    },
+    has_wins: {
+      type: "boolean",
+      title: "Has Wins",
+      default: false,
+    },
+    has_learnings: {
+      type: "boolean",
+      title: "Has Learnings",
+      default: false,
+    },
+  },
+  type: "object",
+  required: ["entry_date"],
+  title: "JournalCalendarDay",
+} as const;
+
+export const JournalCalendarResponseSchema = {
+  properties: {
+    days: {
+      items: {
+        $ref: "#/components/schemas/JournalCalendarDay",
+      },
+      type: "array",
+      title: "Days",
+    },
+  },
+  type: "object",
+  required: ["days"],
+  title: "JournalCalendarResponse",
+} as const;
+
+export const JournalEntryListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/JournalEntrySchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "JournalEntryListResponse",
+} as const;
+
+export const JournalEntrySchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    entry_date: {
+      type: "string",
+      format: "date",
+      title: "Entry Date",
+      description: "Calendar date for this entry.",
+    },
+    body: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Body",
+      description: "Free-form markdown body.",
+    },
+    mood: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Mood",
+      description: "Mood rating 1-5.",
+    },
+    energy: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Energy",
+      description: "Energy rating 1-5.",
+    },
+    focus: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Focus",
+      description: "Focus quality 1-5.",
+    },
+    sleep_hours: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sleep Hours",
+      description: "Hours of sleep.",
+    },
+    wins: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wins",
+      description: "Wins for the day.",
+    },
+    blockers: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Blockers",
+      description: "Blockers / challenges.",
+    },
+    learnings: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Learnings",
+      description: "Key learnings.",
+    },
+    gratitude: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Gratitude",
+      description: "Gratitude notes.",
+    },
+    intention: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Intention",
+      description: "Intention for tomorrow.",
+    },
+    decisions: {
+      anyOf: [
+        {
+          items: {
+            additionalProperties: true,
+            type: "object",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Decisions",
+      description: "Decisions log.",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+      description: "Tags.",
+    },
+    word_count: {
+      type: "integer",
+      title: "Word Count",
+      description: "Word count of body.",
+      default: 0,
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "entry_date"],
+  title: "JournalEntrySchema",
+} as const;
+
+export const JournalEntryUpsertSchema = {
+  properties: {
+    body: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Body",
+    },
+    mood: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Mood",
+    },
+    energy: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Energy",
+    },
+    focus: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Focus",
+    },
+    sleep_hours: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 24,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sleep Hours",
+    },
+    wins: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wins",
+    },
+    blockers: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Blockers",
+    },
+    learnings: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Learnings",
+    },
+    gratitude: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Gratitude",
+    },
+    intention: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Intention",
+    },
+    decisions: {
+      anyOf: [
+        {
+          items: {
+            additionalProperties: true,
+            type: "object",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Decisions",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+    },
+  },
+  type: "object",
+  title: "JournalEntryUpsert",
+} as const;
+
+export const JournalSortPropertySchema = {
+  type: "string",
+  enum: [
+    "entry_date",
+    "-entry_date",
+    "created_at",
+    "-created_at",
+    "mood",
+    "-mood",
+    "energy",
+    "-energy",
+  ],
+  title: "JournalSortProperty",
+} as const;
+
+export const JournalStreakResponseSchema = {
+  properties: {
+    current_streak: {
+      type: "integer",
+      title: "Current Streak",
+    },
+    longest_streak: {
+      type: "integer",
+      title: "Longest Streak",
+    },
+    total_entries: {
+      type: "integer",
+      title: "Total Entries",
+    },
+  },
+  type: "object",
+  required: ["current_streak", "longest_streak", "total_entries"],
+  title: "JournalStreakResponse",
+} as const;
+
 export const PaginationSchema = {
   properties: {
     total_count: {

@@ -7,8 +7,10 @@ import type {
   CreatePlaceV1PlacesPostResponse,
   CreateTaskV1TasksPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+  GetCalendarV1JournalCalendarGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
+  ListEntriesV1JournalGetResponse,
   ListPlacesV1PlacesGetResponse,
   ListTasksV1TasksGetResponse,
   ListTransactionsV1TransactionsGetResponse,
@@ -18,6 +20,7 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+  UpsertEntryV1JournalEntryDatePutResponse,
 } from "./types.gen";
 
 const bankAccountSchemaSchemaResponseTransformer = (data: any) => {
@@ -101,6 +104,55 @@ export const updateCategoryV1CategoriesCategoryIdPatchResponseTransformer =
     data = categorySchemaSchemaResponseTransformer(data);
     return data;
   };
+
+const journalEntrySchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.entry_date = new Date(data.entry_date);
+  return data;
+};
+
+const journalEntryListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    journalEntrySchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listEntriesV1JournalGetResponseTransformer = async (
+  data: any,
+): Promise<ListEntriesV1JournalGetResponse> => {
+  data = journalEntryListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const journalCalendarDaySchemaResponseTransformer = (data: any) => {
+  data.entry_date = new Date(data.entry_date);
+  return data;
+};
+
+const journalCalendarResponseSchemaResponseTransformer = (data: any) => {
+  data.days = data.days.map((item: any) =>
+    journalCalendarDaySchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getCalendarV1JournalCalendarGetResponseTransformer = async (
+  data: any,
+): Promise<GetCalendarV1JournalCalendarGetResponse> => {
+  data = journalCalendarResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const upsertEntryV1JournalEntryDatePutResponseTransformer = async (
+  data: any,
+): Promise<UpsertEntryV1JournalEntryDatePutResponse> => {
+  data = journalEntrySchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const placeSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
