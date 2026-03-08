@@ -1089,6 +1089,619 @@ export const PlaceUpdateSchema = {
   title: "PlaceUpdate",
 } as const;
 
+export const RruleFrequencySchema = {
+  type: "string",
+  enum: ["daily", "weekly", "monthly", "yearly"],
+  title: "RruleFrequency",
+} as const;
+
+export const TaskCompleteResponseSchema = {
+  properties: {
+    completed_task: {
+      $ref: "#/components/schemas/TaskSchema",
+    },
+    next_task: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TaskSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Next recurring instance, if applicable.",
+    },
+  },
+  type: "object",
+  required: ["completed_task"],
+  title: "TaskCompleteResponse",
+} as const;
+
+export const TaskCreateSchema = {
+  properties: {
+    title: {
+      type: "string",
+      maxLength: 500,
+      title: "Title",
+      description: "Task title.",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    status: {
+      $ref: "#/components/schemas/TaskStatus",
+      default: "todo",
+    },
+    priority: {
+      type: "integer",
+      maximum: 4,
+      minimum: 0,
+      title: "Priority",
+      default: 0,
+    },
+    due_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Due Date",
+    },
+    project: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Project",
+    },
+    area: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Area",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+    },
+    position: {
+      type: "number",
+      title: "Position",
+      default: 0,
+    },
+    is_recurring: {
+      type: "boolean",
+      title: "Is Recurring",
+      default: false,
+    },
+    rrule_frequency: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RruleFrequency",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    rrule_interval: {
+      anyOf: [
+        {
+          type: "integer",
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Interval",
+    },
+    rrule_day_of_week: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 6,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Day Of Week",
+    },
+    rrule_day_of_month: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 31,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Day Of Month",
+    },
+  },
+  type: "object",
+  required: ["title"],
+  title: "TaskCreate",
+} as const;
+
+export const TaskListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/TaskSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "TaskListResponse",
+} as const;
+
+export const TaskReorderItemSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    position: {
+      type: "number",
+      title: "Position",
+    },
+    status: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TaskStatus",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["id", "position"],
+  title: "TaskReorderItem",
+} as const;
+
+export const TaskSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+      description: "Task title.",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+      description: "Task description.",
+    },
+    status: {
+      $ref: "#/components/schemas/TaskStatus",
+      description: "Task status.",
+      default: "todo",
+    },
+    priority: {
+      type: "integer",
+      title: "Priority",
+      description: "Priority (0=none, 1=low, 2=medium, 3=high, 4=urgent).",
+      default: 0,
+    },
+    due_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Due Date",
+      description: "Due date.",
+    },
+    completed_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Completed At",
+      description: "Completion timestamp.",
+    },
+    project: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Project",
+      description: "Project name.",
+    },
+    area: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Area",
+      description: "Area (e.g. Company, Personal, Travel).",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+      description: "User-defined tags.",
+    },
+    position: {
+      type: "number",
+      title: "Position",
+      description: "Position for ordering within a status column.",
+      default: 0,
+    },
+    is_recurring: {
+      type: "boolean",
+      title: "Is Recurring",
+      description: "Whether this task recurs.",
+      default: false,
+    },
+    rrule_frequency: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RruleFrequency",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Recurrence frequency.",
+    },
+    rrule_interval: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Interval",
+      description: "Recurrence interval.",
+    },
+    rrule_day_of_week: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Day Of Week",
+      description: "Day of week for weekly recurrence (0=Mon, 6=Sun).",
+    },
+    rrule_day_of_month: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Day Of Month",
+      description: "Day of month for monthly recurrence (1-31).",
+    },
+    parent_task_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Parent Task Id",
+      description: "Parent task ID for recurring chain.",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "title"],
+  title: "TaskSchema",
+} as const;
+
+export const TaskSortPropertySchema = {
+  type: "string",
+  enum: [
+    "created_at",
+    "-created_at",
+    "due_date",
+    "-due_date",
+    "priority",
+    "-priority",
+    "title",
+    "-title",
+    "completed_at",
+    "-completed_at",
+    "position",
+    "-position",
+  ],
+  title: "TaskSortProperty",
+} as const;
+
+export const TaskStatusSchema = {
+  type: "string",
+  enum: ["todo", "in_progress", "done", "cancelled"],
+  title: "TaskStatus",
+} as const;
+
+export const TaskUpdateSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    status: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TaskStatus",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    priority: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 4,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Priority",
+    },
+    due_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Due Date",
+    },
+    project: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Project",
+    },
+    area: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Area",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+    },
+    position: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Position",
+    },
+    is_recurring: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Is Recurring",
+    },
+    rrule_frequency: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RruleFrequency",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    rrule_interval: {
+      anyOf: [
+        {
+          type: "integer",
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Interval",
+    },
+    rrule_day_of_week: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 6,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Day Of Week",
+    },
+    rrule_day_of_month: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 31,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rrule Day Of Month",
+    },
+  },
+  type: "object",
+  title: "TaskUpdate",
+} as const;
+
 export const TransactionDirectionSchema = {
   type: "string",
   enum: ["debit", "credit"],

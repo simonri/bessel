@@ -685,6 +685,328 @@ export type PlaceUpdate = {
 };
 
 /**
+ * RruleFrequency
+ */
+export const RruleFrequency = {
+  DAILY: "daily",
+  WEEKLY: "weekly",
+  MONTHLY: "monthly",
+  YEARLY: "yearly",
+} as const;
+
+/**
+ * RruleFrequency
+ */
+export type RruleFrequency =
+  (typeof RruleFrequency)[keyof typeof RruleFrequency];
+
+/**
+ * TaskCompleteResponse
+ */
+export type TaskCompleteResponse = {
+  completed_task: TaskSchema;
+  /**
+   * Next recurring instance, if applicable.
+   */
+  next_task?: TaskSchema | null;
+};
+
+/**
+ * TaskCreate
+ */
+export type TaskCreate = {
+  /**
+   * Title
+   *
+   * Task title.
+   */
+  title: string;
+  /**
+   * Description
+   */
+  description?: string | null;
+  status?: TaskStatus;
+  /**
+   * Priority
+   */
+  priority?: number;
+  /**
+   * Due Date
+   */
+  due_date?: Date | null;
+  /**
+   * Project
+   */
+  project?: string | null;
+  /**
+   * Area
+   */
+  area?: string | null;
+  /**
+   * Tags
+   */
+  tags?: Array<string> | null;
+  /**
+   * Position
+   */
+  position?: number;
+  /**
+   * Is Recurring
+   */
+  is_recurring?: boolean;
+  rrule_frequency?: RruleFrequency | null;
+  /**
+   * Rrule Interval
+   */
+  rrule_interval?: number | null;
+  /**
+   * Rrule Day Of Week
+   */
+  rrule_day_of_week?: number | null;
+  /**
+   * Rrule Day Of Month
+   */
+  rrule_day_of_month?: number | null;
+};
+
+/**
+ * TaskListResponse
+ */
+export type TaskListResponse = {
+  /**
+   * Items
+   */
+  items: Array<TaskSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * TaskReorderItem
+ */
+export type TaskReorderItem = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Position
+   */
+  position: number;
+  status?: TaskStatus | null;
+};
+
+/**
+ * TaskSchema
+ */
+export type TaskSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Title
+   *
+   * Task title.
+   */
+  title: string;
+  /**
+   * Description
+   *
+   * Task description.
+   */
+  description?: string | null;
+  /**
+   * Task status.
+   */
+  status?: TaskStatus;
+  /**
+   * Priority
+   *
+   * Priority (0=none, 1=low, 2=medium, 3=high, 4=urgent).
+   */
+  priority?: number;
+  /**
+   * Due Date
+   *
+   * Due date.
+   */
+  due_date?: Date | null;
+  /**
+   * Completed At
+   *
+   * Completion timestamp.
+   */
+  completed_at?: Date | null;
+  /**
+   * Project
+   *
+   * Project name.
+   */
+  project?: string | null;
+  /**
+   * Area
+   *
+   * Area (e.g. Company, Personal, Travel).
+   */
+  area?: string | null;
+  /**
+   * Tags
+   *
+   * User-defined tags.
+   */
+  tags?: Array<string> | null;
+  /**
+   * Position
+   *
+   * Position for ordering within a status column.
+   */
+  position?: number;
+  /**
+   * Is Recurring
+   *
+   * Whether this task recurs.
+   */
+  is_recurring?: boolean;
+  /**
+   * Recurrence frequency.
+   */
+  rrule_frequency?: RruleFrequency | null;
+  /**
+   * Rrule Interval
+   *
+   * Recurrence interval.
+   */
+  rrule_interval?: number | null;
+  /**
+   * Rrule Day Of Week
+   *
+   * Day of week for weekly recurrence (0=Mon, 6=Sun).
+   */
+  rrule_day_of_week?: number | null;
+  /**
+   * Rrule Day Of Month
+   *
+   * Day of month for monthly recurrence (1-31).
+   */
+  rrule_day_of_month?: number | null;
+  /**
+   * Parent Task Id
+   *
+   * Parent task ID for recurring chain.
+   */
+  parent_task_id?: string | null;
+};
+
+/**
+ * TaskSortProperty
+ */
+export const TaskSortProperty = {
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  DUE_DATE: "due_date",
+  "-DUE_DATE": "-due_date",
+  PRIORITY: "priority",
+  "-PRIORITY": "-priority",
+  TITLE: "title",
+  "-TITLE": "-title",
+  COMPLETED_AT: "completed_at",
+  "-COMPLETED_AT": "-completed_at",
+  POSITION: "position",
+  "-POSITION": "-position",
+} as const;
+
+/**
+ * TaskSortProperty
+ */
+export type TaskSortProperty =
+  (typeof TaskSortProperty)[keyof typeof TaskSortProperty];
+
+/**
+ * TaskStatus
+ */
+export const TaskStatus = {
+  TODO: "todo",
+  IN_PROGRESS: "in_progress",
+  DONE: "done",
+  CANCELLED: "cancelled",
+} as const;
+
+/**
+ * TaskStatus
+ */
+export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
+
+/**
+ * TaskUpdate
+ */
+export type TaskUpdate = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  status?: TaskStatus | null;
+  /**
+   * Priority
+   */
+  priority?: number | null;
+  /**
+   * Due Date
+   */
+  due_date?: Date | null;
+  /**
+   * Project
+   */
+  project?: string | null;
+  /**
+   * Area
+   */
+  area?: string | null;
+  /**
+   * Tags
+   */
+  tags?: Array<string> | null;
+  /**
+   * Position
+   */
+  position?: number | null;
+  /**
+   * Is Recurring
+   */
+  is_recurring?: boolean | null;
+  rrule_frequency?: RruleFrequency | null;
+  /**
+   * Rrule Interval
+   */
+  rrule_interval?: number | null;
+  /**
+   * Rrule Day Of Week
+   */
+  rrule_day_of_week?: number | null;
+  /**
+   * Rrule Day Of Month
+   */
+  rrule_day_of_month?: number | null;
+};
+
+/**
  * TransactionDirection
  */
 export const TransactionDirection = {
@@ -1328,6 +1650,305 @@ export type UpdatePlaceV1PlacesPlaceIdPatchResponses = {
 
 export type UpdatePlaceV1PlacesPlaceIdPatchResponse =
   UpdatePlaceV1PlacesPlaceIdPatchResponses[keyof UpdatePlaceV1PlacesPlaceIdPatchResponses];
+
+export type ListTasksV1TasksGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Status
+     *
+     * Filter by status.
+     */
+    status?: TaskStatus | null;
+    /**
+     * Priority
+     *
+     * Filter by priority.
+     */
+    priority?: number | null;
+    /**
+     * Project
+     *
+     * Filter by project.
+     */
+    project?: string | null;
+    /**
+     * Area
+     *
+     * Filter by area.
+     */
+    area?: string | null;
+    /**
+     * Is Recurring
+     *
+     * Filter by recurring.
+     */
+    is_recurring?: boolean | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<TaskSortProperty> | null;
+  };
+  url: "/v1/tasks";
+};
+
+export type ListTasksV1TasksGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListTasksV1TasksGetError =
+  ListTasksV1TasksGetErrors[keyof ListTasksV1TasksGetErrors];
+
+export type ListTasksV1TasksGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaskListResponse;
+};
+
+export type ListTasksV1TasksGetResponse =
+  ListTasksV1TasksGetResponses[keyof ListTasksV1TasksGetResponses];
+
+export type CreateTaskV1TasksPostData = {
+  body: TaskCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/tasks";
+};
+
+export type CreateTaskV1TasksPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateTaskV1TasksPostError =
+  CreateTaskV1TasksPostErrors[keyof CreateTaskV1TasksPostErrors];
+
+export type CreateTaskV1TasksPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: TaskSchema;
+};
+
+export type CreateTaskV1TasksPostResponse =
+  CreateTaskV1TasksPostResponses[keyof CreateTaskV1TasksPostResponses];
+
+export type DeleteTaskV1TasksTaskIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}";
+};
+
+export type DeleteTaskV1TasksTaskIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteTaskV1TasksTaskIdDeleteError =
+  DeleteTaskV1TasksTaskIdDeleteErrors[keyof DeleteTaskV1TasksTaskIdDeleteErrors];
+
+export type DeleteTaskV1TasksTaskIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteTaskV1TasksTaskIdDeleteResponse =
+  DeleteTaskV1TasksTaskIdDeleteResponses[keyof DeleteTaskV1TasksTaskIdDeleteResponses];
+
+export type UpdateTaskV1TasksTaskIdPatchData = {
+  body: TaskUpdate;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}";
+};
+
+export type UpdateTaskV1TasksTaskIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTaskV1TasksTaskIdPatchError =
+  UpdateTaskV1TasksTaskIdPatchErrors[keyof UpdateTaskV1TasksTaskIdPatchErrors];
+
+export type UpdateTaskV1TasksTaskIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaskSchema;
+};
+
+export type UpdateTaskV1TasksTaskIdPatchResponse =
+  UpdateTaskV1TasksTaskIdPatchResponses[keyof UpdateTaskV1TasksTaskIdPatchResponses];
+
+export type CompleteTaskV1TasksTaskIdCompletePostData = {
+  body?: never;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}/complete";
+};
+
+export type CompleteTaskV1TasksTaskIdCompletePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CompleteTaskV1TasksTaskIdCompletePostError =
+  CompleteTaskV1TasksTaskIdCompletePostErrors[keyof CompleteTaskV1TasksTaskIdCompletePostErrors];
+
+export type CompleteTaskV1TasksTaskIdCompletePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaskCompleteResponse;
+};
+
+export type CompleteTaskV1TasksTaskIdCompletePostResponse =
+  CompleteTaskV1TasksTaskIdCompletePostResponses[keyof CompleteTaskV1TasksTaskIdCompletePostResponses];
+
+export type ReopenTaskV1TasksTaskIdReopenPostData = {
+  body?: never;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}/reopen";
+};
+
+export type ReopenTaskV1TasksTaskIdReopenPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReopenTaskV1TasksTaskIdReopenPostError =
+  ReopenTaskV1TasksTaskIdReopenPostErrors[keyof ReopenTaskV1TasksTaskIdReopenPostErrors];
+
+export type ReopenTaskV1TasksTaskIdReopenPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaskSchema;
+};
+
+export type ReopenTaskV1TasksTaskIdReopenPostResponse =
+  ReopenTaskV1TasksTaskIdReopenPostResponses[keyof ReopenTaskV1TasksTaskIdReopenPostResponses];
+
+export type ReorderTasksV1TasksReorderPatchData = {
+  /**
+   * Body
+   */
+  body: Array<TaskReorderItem>;
+  path?: never;
+  query?: never;
+  url: "/v1/tasks/reorder";
+};
+
+export type ReorderTasksV1TasksReorderPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReorderTasksV1TasksReorderPatchError =
+  ReorderTasksV1TasksReorderPatchErrors[keyof ReorderTasksV1TasksReorderPatchErrors];
+
+export type ReorderTasksV1TasksReorderPatchResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ReorderTasksV1TasksReorderPatchResponse =
+  ReorderTasksV1TasksReorderPatchResponses[keyof ReorderTasksV1TasksReorderPatchResponses];
+
+export type ListProjectsV1TasksProjectsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/tasks/projects";
+};
+
+export type ListProjectsV1TasksProjectsGetResponses = {
+  /**
+   * Response List Projects V1 Tasks Projects Get
+   *
+   * Successful Response
+   */
+  200: Array<string>;
+};
+
+export type ListProjectsV1TasksProjectsGetResponse =
+  ListProjectsV1TasksProjectsGetResponses[keyof ListProjectsV1TasksProjectsGetResponses];
+
+export type ListAreasV1TasksAreasGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/tasks/areas";
+};
+
+export type ListAreasV1TasksAreasGetResponses = {
+  /**
+   * Response List Areas V1 Tasks Areas Get
+   *
+   * Successful Response
+   */
+  200: Array<string>;
+};
+
+export type ListAreasV1TasksAreasGetResponse =
+  ListAreasV1TasksAreasGetResponses[keyof ListAreasV1TasksAreasGetResponses];
 
 export type DeleteTransactionsV1TransactionsDeleteData = {
   body: BulkDeleteRequest;

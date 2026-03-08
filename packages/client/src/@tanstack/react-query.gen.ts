@@ -10,28 +10,40 @@ import {
 
 import { client } from "../client.gen";
 import {
+  completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
   createCategoryV1CategoriesPost,
   createPlaceV1PlacesPost,
+  createTaskV1TasksPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCategoryV1CategoriesCategoryIdDelete,
   deletePlaceV1PlacesPlaceIdDelete,
+  deleteTaskV1TasksTaskIdDelete,
   deleteTransactionsV1TransactionsDelete,
   getBankAccountV1BankAccountsBankAccountIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
+  listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
   listPlacesV1PlacesGet,
+  listProjectsV1TasksProjectsGet,
+  listTasksV1TasksGet,
   listTransactionsV1TransactionsGet,
   type Options,
+  reopenTaskV1TasksTaskIdReopenPost,
+  reorderTasksV1TasksReorderPatch,
   searchGooglePlacesV1PlacesSearchGet,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCategoryV1CategoriesCategoryIdPatch,
   updatePlaceV1PlacesPlaceIdPatch,
+  updateTaskV1TasksTaskIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
 } from "../sdk.gen";
 import type {
+  CompleteTaskV1TasksTaskIdCompletePostData,
+  CompleteTaskV1TasksTaskIdCompletePostError,
+  CompleteTaskV1TasksTaskIdCompletePostResponse,
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
@@ -41,6 +53,9 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostError,
   CreatePlaceV1PlacesPostResponse,
+  CreateTaskV1TasksPostData,
+  CreateTaskV1TasksPostError,
+  CreateTaskV1TasksPostResponse,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
@@ -50,6 +65,9 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
+  DeleteTaskV1TasksTaskIdDeleteData,
+  DeleteTaskV1TasksTaskIdDeleteError,
+  DeleteTaskV1TasksTaskIdDeleteResponse,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
@@ -60,6 +78,8 @@ import type {
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostError,
   ImportTransactionsV1TransactionsImportPostResponse,
+  ListAreasV1TasksAreasGetData,
+  ListAreasV1TasksAreasGetResponse,
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetError,
   ListBankAccountsV1BankAccountsGetResponse,
@@ -69,9 +89,20 @@ import type {
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetError,
   ListPlacesV1PlacesGetResponse,
+  ListProjectsV1TasksProjectsGetData,
+  ListProjectsV1TasksProjectsGetResponse,
+  ListTasksV1TasksGetData,
+  ListTasksV1TasksGetError,
+  ListTasksV1TasksGetResponse,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
+  ReopenTaskV1TasksTaskIdReopenPostData,
+  ReopenTaskV1TasksTaskIdReopenPostError,
+  ReopenTaskV1TasksTaskIdReopenPostResponse,
+  ReorderTasksV1TasksReorderPatchData,
+  ReorderTasksV1TasksReorderPatchError,
+  ReorderTasksV1TasksReorderPatchResponse,
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetError,
   SearchGooglePlacesV1PlacesSearchGetResponse,
@@ -84,6 +115,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdateTaskV1TasksTaskIdPatchData,
+  UpdateTaskV1TasksTaskIdPatchError,
+  UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
@@ -751,6 +785,302 @@ export const updatePlaceV1PlacesPlaceIdPatchMutation = (
   };
   return mutationOptions;
 };
+
+export const listTasksV1TasksGetQueryKey = (
+  options?: Options<ListTasksV1TasksGetData>,
+) => createQueryKey("listTasksV1TasksGet", options);
+
+/**
+ * List Tasks
+ */
+export const listTasksV1TasksGetOptions = (
+  options?: Options<ListTasksV1TasksGetData>,
+) =>
+  queryOptions<
+    ListTasksV1TasksGetResponse,
+    ListTasksV1TasksGetError,
+    ListTasksV1TasksGetResponse,
+    ReturnType<typeof listTasksV1TasksGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTasksV1TasksGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTasksV1TasksGetQueryKey(options),
+  });
+
+export const listTasksV1TasksGetInfiniteQueryKey = (
+  options?: Options<ListTasksV1TasksGetData>,
+): QueryKey<Options<ListTasksV1TasksGetData>> =>
+  createQueryKey("listTasksV1TasksGet", options, true);
+
+/**
+ * List Tasks
+ */
+export const listTasksV1TasksGetInfiniteOptions = (
+  options?: Options<ListTasksV1TasksGetData>,
+) =>
+  infiniteQueryOptions<
+    ListTasksV1TasksGetResponse,
+    ListTasksV1TasksGetError,
+    InfiniteData<ListTasksV1TasksGetResponse>,
+    QueryKey<Options<ListTasksV1TasksGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListTasksV1TasksGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListTasksV1TasksGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listTasksV1TasksGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listTasksV1TasksGetInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Task
+ */
+export const createTaskV1TasksPostMutation = (
+  options?: Partial<Options<CreateTaskV1TasksPostData>>,
+): UseMutationOptions<
+  CreateTaskV1TasksPostResponse,
+  CreateTaskV1TasksPostError,
+  Options<CreateTaskV1TasksPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateTaskV1TasksPostResponse,
+    CreateTaskV1TasksPostError,
+    Options<CreateTaskV1TasksPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createTaskV1TasksPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Task
+ */
+export const deleteTaskV1TasksTaskIdDeleteMutation = (
+  options?: Partial<Options<DeleteTaskV1TasksTaskIdDeleteData>>,
+): UseMutationOptions<
+  DeleteTaskV1TasksTaskIdDeleteResponse,
+  DeleteTaskV1TasksTaskIdDeleteError,
+  Options<DeleteTaskV1TasksTaskIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteTaskV1TasksTaskIdDeleteResponse,
+    DeleteTaskV1TasksTaskIdDeleteError,
+    Options<DeleteTaskV1TasksTaskIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteTaskV1TasksTaskIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Task
+ */
+export const updateTaskV1TasksTaskIdPatchMutation = (
+  options?: Partial<Options<UpdateTaskV1TasksTaskIdPatchData>>,
+): UseMutationOptions<
+  UpdateTaskV1TasksTaskIdPatchResponse,
+  UpdateTaskV1TasksTaskIdPatchError,
+  Options<UpdateTaskV1TasksTaskIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateTaskV1TasksTaskIdPatchResponse,
+    UpdateTaskV1TasksTaskIdPatchError,
+    Options<UpdateTaskV1TasksTaskIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateTaskV1TasksTaskIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Complete Task
+ */
+export const completeTaskV1TasksTaskIdCompletePostMutation = (
+  options?: Partial<Options<CompleteTaskV1TasksTaskIdCompletePostData>>,
+): UseMutationOptions<
+  CompleteTaskV1TasksTaskIdCompletePostResponse,
+  CompleteTaskV1TasksTaskIdCompletePostError,
+  Options<CompleteTaskV1TasksTaskIdCompletePostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CompleteTaskV1TasksTaskIdCompletePostResponse,
+    CompleteTaskV1TasksTaskIdCompletePostError,
+    Options<CompleteTaskV1TasksTaskIdCompletePostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await completeTaskV1TasksTaskIdCompletePost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Reopen Task
+ */
+export const reopenTaskV1TasksTaskIdReopenPostMutation = (
+  options?: Partial<Options<ReopenTaskV1TasksTaskIdReopenPostData>>,
+): UseMutationOptions<
+  ReopenTaskV1TasksTaskIdReopenPostResponse,
+  ReopenTaskV1TasksTaskIdReopenPostError,
+  Options<ReopenTaskV1TasksTaskIdReopenPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReopenTaskV1TasksTaskIdReopenPostResponse,
+    ReopenTaskV1TasksTaskIdReopenPostError,
+    Options<ReopenTaskV1TasksTaskIdReopenPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await reopenTaskV1TasksTaskIdReopenPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Reorder Tasks
+ */
+export const reorderTasksV1TasksReorderPatchMutation = (
+  options?: Partial<Options<ReorderTasksV1TasksReorderPatchData>>,
+): UseMutationOptions<
+  ReorderTasksV1TasksReorderPatchResponse,
+  ReorderTasksV1TasksReorderPatchError,
+  Options<ReorderTasksV1TasksReorderPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReorderTasksV1TasksReorderPatchResponse,
+    ReorderTasksV1TasksReorderPatchError,
+    Options<ReorderTasksV1TasksReorderPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await reorderTasksV1TasksReorderPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listProjectsV1TasksProjectsGetQueryKey = (
+  options?: Options<ListProjectsV1TasksProjectsGetData>,
+) => createQueryKey("listProjectsV1TasksProjectsGet", options);
+
+/**
+ * List Projects
+ */
+export const listProjectsV1TasksProjectsGetOptions = (
+  options?: Options<ListProjectsV1TasksProjectsGetData>,
+) =>
+  queryOptions<
+    ListProjectsV1TasksProjectsGetResponse,
+    DefaultError,
+    ListProjectsV1TasksProjectsGetResponse,
+    ReturnType<typeof listProjectsV1TasksProjectsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listProjectsV1TasksProjectsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listProjectsV1TasksProjectsGetQueryKey(options),
+  });
+
+export const listAreasV1TasksAreasGetQueryKey = (
+  options?: Options<ListAreasV1TasksAreasGetData>,
+) => createQueryKey("listAreasV1TasksAreasGet", options);
+
+/**
+ * List Areas
+ */
+export const listAreasV1TasksAreasGetOptions = (
+  options?: Options<ListAreasV1TasksAreasGetData>,
+) =>
+  queryOptions<
+    ListAreasV1TasksAreasGetResponse,
+    DefaultError,
+    ListAreasV1TasksAreasGetResponse,
+    ReturnType<typeof listAreasV1TasksAreasGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAreasV1TasksAreasGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAreasV1TasksAreasGetQueryKey(options),
+  });
 
 /**
  * Delete Transactions

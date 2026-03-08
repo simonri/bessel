@@ -8,20 +8,28 @@ import {
 } from "./client";
 import { client } from "./client.gen";
 import {
+  completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
   createCategoryV1CategoriesPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
+  createTaskV1TasksPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
+  listTasksV1TasksGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
+  reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updateCategoryV1CategoriesCategoryIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+  updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
 } from "./transformers.gen";
 import type {
+  CompleteTaskV1TasksTaskIdCompletePostData,
+  CompleteTaskV1TasksTaskIdCompletePostErrors,
+  CompleteTaskV1TasksTaskIdCompletePostResponses,
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
@@ -31,6 +39,9 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
+  CreateTaskV1TasksPostData,
+  CreateTaskV1TasksPostErrors,
+  CreateTaskV1TasksPostResponses,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
@@ -40,6 +51,9 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
+  DeleteTaskV1TasksTaskIdDeleteData,
+  DeleteTaskV1TasksTaskIdDeleteErrors,
+  DeleteTaskV1TasksTaskIdDeleteResponses,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
@@ -51,6 +65,8 @@ import type {
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostErrors,
   ImportTransactionsV1TransactionsImportPostResponses,
+  ListAreasV1TasksAreasGetData,
+  ListAreasV1TasksAreasGetResponses,
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetErrors,
   ListBankAccountsV1BankAccountsGetResponses,
@@ -60,9 +76,20 @@ import type {
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetErrors,
   ListPlacesV1PlacesGetResponses,
+  ListProjectsV1TasksProjectsGetData,
+  ListProjectsV1TasksProjectsGetResponses,
+  ListTasksV1TasksGetData,
+  ListTasksV1TasksGetErrors,
+  ListTasksV1TasksGetResponses,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
+  ReopenTaskV1TasksTaskIdReopenPostData,
+  ReopenTaskV1TasksTaskIdReopenPostErrors,
+  ReopenTaskV1TasksTaskIdReopenPostResponses,
+  ReorderTasksV1TasksReorderPatchData,
+  ReorderTasksV1TasksReorderPatchErrors,
+  ReorderTasksV1TasksReorderPatchResponses,
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetErrors,
   SearchGooglePlacesV1PlacesSearchGetResponses,
@@ -75,6 +102,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
+  UpdateTaskV1TasksTaskIdPatchData,
+  UpdateTaskV1TasksTaskIdPatchErrors,
+  UpdateTaskV1TasksTaskIdPatchResponses,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
@@ -397,6 +427,162 @@ export const updatePlaceV1PlacesPlaceIdPatch = <
       ...options.headers,
     },
   });
+
+/**
+ * List Tasks
+ */
+export const listTasksV1TasksGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTasksV1TasksGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListTasksV1TasksGetResponses,
+    ListTasksV1TasksGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTasksV1TasksGetResponseTransformer,
+    url: "/v1/tasks",
+    ...options,
+  });
+
+/**
+ * Create Task
+ */
+export const createTaskV1TasksPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreateTaskV1TasksPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateTaskV1TasksPostResponses,
+    CreateTaskV1TasksPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createTaskV1TasksPostResponseTransformer,
+    url: "/v1/tasks",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Task
+ */
+export const deleteTaskV1TasksTaskIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteTaskV1TasksTaskIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteTaskV1TasksTaskIdDeleteResponses,
+    DeleteTaskV1TasksTaskIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/tasks/{task_id}", ...options });
+
+/**
+ * Update Task
+ */
+export const updateTaskV1TasksTaskIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateTaskV1TasksTaskIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateTaskV1TasksTaskIdPatchResponses,
+    UpdateTaskV1TasksTaskIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateTaskV1TasksTaskIdPatchResponseTransformer,
+    url: "/v1/tasks/{task_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Complete Task
+ */
+export const completeTaskV1TasksTaskIdCompletePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CompleteTaskV1TasksTaskIdCompletePostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CompleteTaskV1TasksTaskIdCompletePostResponses,
+    CompleteTaskV1TasksTaskIdCompletePostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      completeTaskV1TasksTaskIdCompletePostResponseTransformer,
+    url: "/v1/tasks/{task_id}/complete",
+    ...options,
+  });
+
+/**
+ * Reopen Task
+ */
+export const reopenTaskV1TasksTaskIdReopenPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ReopenTaskV1TasksTaskIdReopenPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    ReopenTaskV1TasksTaskIdReopenPostResponses,
+    ReopenTaskV1TasksTaskIdReopenPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
+    url: "/v1/tasks/{task_id}/reopen",
+    ...options,
+  });
+
+/**
+ * Reorder Tasks
+ */
+export const reorderTasksV1TasksReorderPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ReorderTasksV1TasksReorderPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    ReorderTasksV1TasksReorderPatchResponses,
+    ReorderTasksV1TasksReorderPatchErrors,
+    ThrowOnError
+  >({
+    url: "/v1/tasks/reorder",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Projects
+ */
+export const listProjectsV1TasksProjectsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListProjectsV1TasksProjectsGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListProjectsV1TasksProjectsGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/tasks/projects", ...options });
+
+/**
+ * List Areas
+ */
+export const listAreasV1TasksAreasGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListAreasV1TasksAreasGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListAreasV1TasksAreasGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/tasks/areas", ...options });
 
 /**
  * Delete Transactions

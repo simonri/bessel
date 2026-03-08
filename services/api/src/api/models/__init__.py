@@ -5,6 +5,7 @@ from .category import Category
 from .import_batch import ImportBatch
 from .place import Place
 from .raw_transaction import RawTransaction
+from .task import Task
 from .transaction import Transaction
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
   "Model",
   "Place",
   "RawTransaction",
+  "Task",
   "Transaction",
 ]

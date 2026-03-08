@@ -6,6 +6,7 @@ import {
   Tag,
   PieChart,
   MapPin,
+  CheckSquare,
   Settings,
 } from "lucide-react";
 import {
@@ -25,6 +26,7 @@ const navItems = [
   { title: "Transactions", icon: ArrowLeftRight, href: "/transactions" as const },
   { title: "Accounts", icon: Landmark, href: "/accounts" as const },
   { title: "Categories", icon: Tag, href: "/categories" as string },
+  { title: "Tasks", icon: CheckSquare, href: "/tasks" as string },
   { title: "Travel", icon: MapPin, href: "/travel" as string },
   { title: "Reports", icon: PieChart, href: "/reports" as string },
 ];
