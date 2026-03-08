@@ -4,19 +4,27 @@ import type {
   CompleteTaskV1TasksTaskIdCompletePostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
   CreatePlaceV1PlacesPostResponse,
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
+  CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
+  CreateTradeV1InvestmentsTradesPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   GetCalendarV1JournalCalendarGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
   ListEntriesV1JournalGetResponse,
   ListPlacesV1PlacesGetResponse,
+  ListSecuritiesV1InvestmentsSecuritiesGetResponse,
+  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
+  ListTradesV1InvestmentsTradesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
+  UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
   UpsertEntryV1JournalEntryDatePutResponse,
 } from "./types.gen";
@@ -87,6 +95,115 @@ export const listCategoriesV1CategoriesGetResponseTransformer = async (
   data = categoryListResponseSchemaResponseTransformer(data);
   return data;
 };
+
+const securitySchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+const securityListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    securitySchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<ListSecuritiesV1InvestmentsSecuritiesGetResponse> => {
+    data = securityListResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+export const createSecurityV1InvestmentsSecuritiesPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<CreateSecurityV1InvestmentsSecuritiesPostResponse> => {
+    data = securitySchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse> => {
+    data = securitySchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const tradeSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.trade_date = new Date(data.trade_date);
+  return data;
+};
+
+const tradeListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    tradeSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listTradesV1InvestmentsTradesGetResponseTransformer = async (
+  data: any,
+): Promise<ListTradesV1InvestmentsTradesGetResponse> => {
+  data = tradeListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createTradeV1InvestmentsTradesPostResponseTransformer = async (
+  data: any,
+): Promise<CreateTradeV1InvestmentsTradesPostResponse> => {
+  data = tradeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpdateTradeV1InvestmentsTradesTradeIdPatchResponse> => {
+    data = tradeSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const securityPriceSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.price_date = new Date(data.price_date);
+  return data;
+};
+
+const securityPriceListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    securityPriceSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse> => {
+    data = securityPriceListResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse> => {
+    data = securityPriceSchemaSchemaResponseTransformer(data);
+    return data;
+  };
 
 const journalEntrySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

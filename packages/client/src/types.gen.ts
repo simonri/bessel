@@ -5,6 +5,24 @@ export type ClientOptions = {
 };
 
 /**
+ * AssetType
+ */
+export const AssetType = {
+  STOCK: "stock",
+  ETF: "etf",
+  MUTUAL_FUND: "mutual_fund",
+  BOND: "bond",
+  CRYPTO: "crypto",
+  REAL_ESTATE: "real_estate",
+  OTHER: "other",
+} as const;
+
+/**
+ * AssetType
+ */
+export type AssetType = (typeof AssetType)[keyof typeof AssetType];
+
+/**
  * BankAccountCreate
  */
 export type BankAccountCreate = {
@@ -263,6 +281,36 @@ export type CategorySchema = {
 };
 
 /**
+ * CategorySpending
+ */
+export type CategorySpending = {
+  /**
+   * Category Id
+   *
+   * Category ID.
+   */
+  category_id: string;
+  /**
+   * Category Name
+   *
+   * Category name.
+   */
+  category_name: string;
+  /**
+   * Category Color
+   *
+   * Category hex color.
+   */
+  category_color: string;
+  /**
+   * Total
+   *
+   * Total spending in minor units (cents).
+   */
+  total: number;
+};
+
+/**
  * GooglePlaceSearchResponse
  */
 export type GooglePlaceSearchResponse = {
@@ -352,6 +400,81 @@ export type HttpValidationError = {
    * Detail
    */
   detail?: Array<ValidationError>;
+};
+
+/**
+ * HoldingSchema
+ */
+export type HoldingSchema = {
+  /**
+   * Security Id
+   */
+  security_id: string;
+  /**
+   * Security Name
+   */
+  security_name: string;
+  /**
+   * Ticker
+   */
+  ticker: string | null;
+  asset_type: AssetType;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Quantity
+   *
+   * Net quantity in micro-units (x1,000,000).
+   */
+  quantity: number;
+  /**
+   * Avg Cost Per Unit
+   *
+   * Average cost per unit in minor units (cents).
+   */
+  avg_cost_per_unit: number;
+  /**
+   * Cost Basis
+   *
+   * Total cost basis in minor units (cents).
+   */
+  cost_basis: number;
+  /**
+   * Current Price
+   *
+   * Latest price per unit in minor units, or null if no price recorded.
+   */
+  current_price: number | null;
+  /**
+   * Current Value
+   *
+   * Current value in minor units, or null if no price recorded.
+   */
+  current_value: number | null;
+  /**
+   * Gain Loss
+   *
+   * Unrealized gain/loss in minor units, or null if no price.
+   */
+  gain_loss: number | null;
+  /**
+   * Gain Loss Pct
+   *
+   * Unrealized gain/loss percentage, or null if no price or zero cost.
+   */
+  gain_loss_pct: number | null;
+};
+
+/**
+ * HoldingsResponse
+ */
+export type HoldingsResponse = {
+  /**
+   * Items
+   */
+  items: Array<HoldingSchema>;
 };
 
 /**
@@ -621,6 +744,64 @@ export type JournalStreakResponse = {
    * Total Entries
    */
   total_entries: number;
+};
+
+/**
+ * MonthlyFlow
+ */
+export type MonthlyFlow = {
+  /**
+   * Year
+   */
+  year: number;
+  /**
+   * Month
+   */
+  month: number;
+  /**
+   * Income
+   *
+   * Total credit amount in minor units.
+   */
+  income: number;
+  /**
+   * Expenses
+   *
+   * Total debit amount in minor units.
+   */
+  expenses: number;
+};
+
+/**
+ * MonthlyFlowResponse
+ */
+export type MonthlyFlowResponse = {
+  /**
+   * Items
+   *
+   * Monthly income/expenses, ordered chronologically.
+   */
+  items: Array<MonthlyFlow>;
+};
+
+/**
+ * MonthlySpendingResponse
+ */
+export type MonthlySpendingResponse = {
+  /**
+   * Year
+   */
+  year: number;
+  /**
+   * Month
+   */
+  month: number;
+  /**
+   * Items
+   *
+   * Spending per category, sorted descending by total.
+   */
+  items: Array<CategorySpending>;
 };
 
 /**
@@ -948,6 +1129,177 @@ export type RruleFrequency =
   (typeof RruleFrequency)[keyof typeof RruleFrequency];
 
 /**
+ * SecurityCreate
+ */
+export type SecurityCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Ticker
+   */
+  ticker?: string | null;
+  asset_type: AssetType;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+};
+
+/**
+ * SecurityListResponse
+ */
+export type SecurityListResponse = {
+  /**
+   * Items
+   */
+  items: Array<SecuritySchema>;
+  pagination: Pagination;
+};
+
+/**
+ * SecurityPriceCreate
+ */
+export type SecurityPriceCreate = {
+  /**
+   * Price Date
+   */
+  price_date: Date;
+  /**
+   * Price Per Unit
+   *
+   * Price in minor units (cents).
+   */
+  price_per_unit: number;
+  /**
+   * Currency
+   */
+  currency: string;
+};
+
+/**
+ * SecurityPriceListResponse
+ */
+export type SecurityPriceListResponse = {
+  /**
+   * Items
+   */
+  items: Array<SecurityPriceSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * SecurityPriceSchema
+ */
+export type SecurityPriceSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Security Id
+   */
+  security_id: string;
+  /**
+   * Price Date
+   */
+  price_date: Date;
+  /**
+   * Price Per Unit
+   *
+   * Price in minor units (cents).
+   */
+  price_per_unit: number;
+  /**
+   * Currency
+   */
+  currency: string;
+};
+
+/**
+ * SecuritySchema
+ */
+export type SecuritySchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Ticker
+   */
+  ticker: string | null;
+  asset_type: AssetType;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Notes
+   */
+  notes: string | null;
+};
+
+/**
+ * SecurityUpdate
+ */
+export type SecurityUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Ticker
+   */
+  ticker?: string | null;
+  asset_type?: AssetType | null;
+  /**
+   * Currency
+   */
+  currency?: string | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+};
+
+/**
  * TaskCompleteResponse
  */
 export type TaskCompleteResponse = {
@@ -1251,6 +1603,150 @@ export type TaskUpdate = {
    * Rrule Day Of Month
    */
   rrule_day_of_month?: number | null;
+};
+
+/**
+ * TradeCreate
+ */
+export type TradeCreate = {
+  /**
+   * Security Id
+   */
+  security_id: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  trade_type: TradeType;
+  /**
+   * Trade Date
+   */
+  trade_date: Date;
+  /**
+   * Quantity
+   *
+   * Quantity in micro-units (x1,000,000).
+   */
+  quantity: number;
+  /**
+   * Price Per Unit
+   *
+   * Price per unit in minor units (cents).
+   */
+  price_per_unit: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+};
+
+/**
+ * TradeListResponse
+ */
+export type TradeListResponse = {
+  /**
+   * Items
+   */
+  items: Array<TradeSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * TradeSchema
+ */
+export type TradeSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Security Id
+   */
+  security_id: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  trade_type: TradeType;
+  /**
+   * Trade Date
+   */
+  trade_date: Date;
+  /**
+   * Quantity
+   *
+   * Quantity in micro-units (x1,000,000).
+   */
+  quantity: number;
+  /**
+   * Price Per Unit
+   *
+   * Price per unit in minor units (cents).
+   */
+  price_per_unit: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Notes
+   */
+  notes: string | null;
+};
+
+/**
+ * TradeType
+ */
+export const TradeType = { BUY: "buy", SELL: "sell" } as const;
+
+/**
+ * TradeType
+ */
+export type TradeType = (typeof TradeType)[keyof typeof TradeType];
+
+/**
+ * TradeUpdate
+ */
+export type TradeUpdate = {
+  trade_type?: TradeType | null;
+  /**
+   * Trade Date
+   */
+  trade_date?: Date | null;
+  /**
+   * Quantity
+   */
+  quantity?: number | null;
+  /**
+   * Price Per Unit
+   */
+  price_per_unit?: number | null;
+  /**
+   * Currency
+   */
+  currency?: string | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
 };
 
 /**
@@ -1692,6 +2188,375 @@ export type ListCategoriesV1CategoriesGetResponses = {
 
 export type ListCategoriesV1CategoriesGetResponse =
   ListCategoriesV1CategoriesGetResponses[keyof ListCategoriesV1CategoriesGetResponses];
+
+export type ListSecuritiesV1InvestmentsSecuritiesGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/investments/securities";
+};
+
+export type ListSecuritiesV1InvestmentsSecuritiesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListSecuritiesV1InvestmentsSecuritiesGetError =
+  ListSecuritiesV1InvestmentsSecuritiesGetErrors[keyof ListSecuritiesV1InvestmentsSecuritiesGetErrors];
+
+export type ListSecuritiesV1InvestmentsSecuritiesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SecurityListResponse;
+};
+
+export type ListSecuritiesV1InvestmentsSecuritiesGetResponse =
+  ListSecuritiesV1InvestmentsSecuritiesGetResponses[keyof ListSecuritiesV1InvestmentsSecuritiesGetResponses];
+
+export type CreateSecurityV1InvestmentsSecuritiesPostData = {
+  body: SecurityCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/investments/securities";
+};
+
+export type CreateSecurityV1InvestmentsSecuritiesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateSecurityV1InvestmentsSecuritiesPostError =
+  CreateSecurityV1InvestmentsSecuritiesPostErrors[keyof CreateSecurityV1InvestmentsSecuritiesPostErrors];
+
+export type CreateSecurityV1InvestmentsSecuritiesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: SecuritySchema;
+};
+
+export type CreateSecurityV1InvestmentsSecuritiesPostResponse =
+  CreateSecurityV1InvestmentsSecuritiesPostResponses[keyof CreateSecurityV1InvestmentsSecuritiesPostResponses];
+
+export type DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Security Id
+     */
+    security_id: string;
+  };
+  query?: never;
+  url: "/v1/investments/securities/{security_id}";
+};
+
+export type DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError =
+  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors[keyof DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors];
+
+export type DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse =
+  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses[keyof DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses];
+
+export type UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData = {
+  body: SecurityUpdate;
+  path: {
+    /**
+     * Security Id
+     */
+    security_id: string;
+  };
+  query?: never;
+  url: "/v1/investments/securities/{security_id}";
+};
+
+export type UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchError =
+  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors[keyof UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors];
+
+export type UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: SecuritySchema;
+};
+
+export type UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse =
+  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses[keyof UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses];
+
+export type ListTradesV1InvestmentsTradesGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Security Id
+     */
+    security_id?: string | null;
+    /**
+     * Bank Account Id
+     */
+    bank_account_id?: string | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/investments/trades";
+};
+
+export type ListTradesV1InvestmentsTradesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListTradesV1InvestmentsTradesGetError =
+  ListTradesV1InvestmentsTradesGetErrors[keyof ListTradesV1InvestmentsTradesGetErrors];
+
+export type ListTradesV1InvestmentsTradesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TradeListResponse;
+};
+
+export type ListTradesV1InvestmentsTradesGetResponse =
+  ListTradesV1InvestmentsTradesGetResponses[keyof ListTradesV1InvestmentsTradesGetResponses];
+
+export type CreateTradeV1InvestmentsTradesPostData = {
+  body: TradeCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/investments/trades";
+};
+
+export type CreateTradeV1InvestmentsTradesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateTradeV1InvestmentsTradesPostError =
+  CreateTradeV1InvestmentsTradesPostErrors[keyof CreateTradeV1InvestmentsTradesPostErrors];
+
+export type CreateTradeV1InvestmentsTradesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: TradeSchema;
+};
+
+export type CreateTradeV1InvestmentsTradesPostResponse =
+  CreateTradeV1InvestmentsTradesPostResponses[keyof CreateTradeV1InvestmentsTradesPostResponses];
+
+export type DeleteTradeV1InvestmentsTradesTradeIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Trade Id
+     */
+    trade_id: string;
+  };
+  query?: never;
+  url: "/v1/investments/trades/{trade_id}";
+};
+
+export type DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteTradeV1InvestmentsTradesTradeIdDeleteError =
+  DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors[keyof DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors];
+
+export type DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteTradeV1InvestmentsTradesTradeIdDeleteResponse =
+  DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses[keyof DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses];
+
+export type UpdateTradeV1InvestmentsTradesTradeIdPatchData = {
+  body: TradeUpdate;
+  path: {
+    /**
+     * Trade Id
+     */
+    trade_id: string;
+  };
+  query?: never;
+  url: "/v1/investments/trades/{trade_id}";
+};
+
+export type UpdateTradeV1InvestmentsTradesTradeIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTradeV1InvestmentsTradesTradeIdPatchError =
+  UpdateTradeV1InvestmentsTradesTradeIdPatchErrors[keyof UpdateTradeV1InvestmentsTradesTradeIdPatchErrors];
+
+export type UpdateTradeV1InvestmentsTradesTradeIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: TradeSchema;
+};
+
+export type UpdateTradeV1InvestmentsTradesTradeIdPatchResponse =
+  UpdateTradeV1InvestmentsTradesTradeIdPatchResponses[keyof UpdateTradeV1InvestmentsTradesTradeIdPatchResponses];
+
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Security Id
+     */
+    security_id: string;
+  };
+  query?: {
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/investments/securities/{security_id}/prices";
+};
+
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError =
+  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors[keyof ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors];
+
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: SecurityPriceListResponse;
+  };
+
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse =
+  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses[keyof ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses];
+
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData =
+  {
+    body: SecurityPriceCreate;
+    path: {
+      /**
+       * Security Id
+       */
+      security_id: string;
+    };
+    query?: never;
+    url: "/v1/investments/securities/{security_id}/prices";
+  };
+
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError =
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors[keyof CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors];
+
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    201: SecurityPriceSchema;
+  };
+
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse =
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses[keyof CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses];
+
+export type GetHoldingsV1InvestmentsHoldingsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/investments/holdings";
+};
+
+export type GetHoldingsV1InvestmentsHoldingsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: HoldingsResponse;
+};
+
+export type GetHoldingsV1InvestmentsHoldingsGetResponse =
+  GetHoldingsV1InvestmentsHoldingsGetResponses[keyof GetHoldingsV1InvestmentsHoldingsGetResponses];
 
 export type ListEntriesV1JournalGetData = {
   body?: never;
@@ -2598,3 +3463,77 @@ export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResp
 
 export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse =
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses];
+
+export type SpendingByCategoryV1TransactionsSpendingByCategoryGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Year
+     *
+     * Year to query.
+     */
+    year: number;
+    /**
+     * Month
+     *
+     * Month to query (1-12).
+     */
+    month: number;
+  };
+  url: "/v1/transactions/spending-by-category";
+};
+
+export type SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SpendingByCategoryV1TransactionsSpendingByCategoryGetError =
+  SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors[keyof SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors];
+
+export type SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MonthlySpendingResponse;
+};
+
+export type SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse =
+  SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses[keyof SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses];
+
+export type MonthlyFlowV1TransactionsMonthlyFlowGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Months
+     *
+     * Number of months to look back (including current).
+     */
+    months?: number;
+  };
+  url: "/v1/transactions/monthly-flow";
+};
+
+export type MonthlyFlowV1TransactionsMonthlyFlowGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type MonthlyFlowV1TransactionsMonthlyFlowGetError =
+  MonthlyFlowV1TransactionsMonthlyFlowGetErrors[keyof MonthlyFlowV1TransactionsMonthlyFlowGetErrors];
+
+export type MonthlyFlowV1TransactionsMonthlyFlowGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MonthlyFlowResponse;
+};
+
+export type MonthlyFlowV1TransactionsMonthlyFlowGetResponse =
+  MonthlyFlowV1TransactionsMonthlyFlowGetResponses[keyof MonthlyFlowV1TransactionsMonthlyFlowGetResponses];

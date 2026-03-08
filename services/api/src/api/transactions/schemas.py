@@ -47,3 +47,27 @@ class BulkCategorizeRequest(Schema):
 
 class BulkCategorizeResponse(Schema):
   updated: int = Field(description="Number of transactions updated.")
+
+
+class CategorySpending(Schema):
+  category_id: UUID4 = Field(description="Category ID.")
+  category_name: str = Field(description="Category name.")
+  category_color: str = Field(description="Category hex color.")
+  total: int = Field(description="Total spending in minor units (cents).")
+
+
+class MonthlySpendingResponse(Schema):
+  year: int
+  month: int
+  items: list[CategorySpending] = Field(description="Spending per category, sorted descending by total.")
+
+
+class MonthlyFlow(Schema):
+  year: int
+  month: int
+  income: int = Field(description="Total credit amount in minor units.")
+  expenses: int = Field(description="Total debit amount in minor units.")
+
+
+class MonthlyFlowResponse(Schema):
+  items: list[MonthlyFlow] = Field(description="Monthly income/expenses, ordered chronologically.")

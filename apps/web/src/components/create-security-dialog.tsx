@@ -21,22 +21,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@metron/ui/components/select";
+import { Textarea } from "@metron/ui/components/textarea";
 import {
-  createBankAccountV1BankAccountsPostMutation,
-  listBankAccountsV1BankAccountsGetQueryKey,
+  createSecurityV1InvestmentsSecuritiesPostMutation,
+  listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
 } from "@metron/client";
+import { AssetType } from "@metron/client";
 import { client } from "@/lib/client";
 
-export function CreateAccountDialog() {
+const ASSET_TYPE_LABELS: Record<string, string> = {
+  stock: "Stock",
+  etf: "ETF",
+  mutual_fund: "Mutual Fund",
+  bond: "Bond",
+  crypto: "Crypto",
+  real_estate: "Real Estate",
+  other: "Other",
+};
+
+export function CreateSecurityDialog() {
   const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...createBankAccountV1BankAccountsPostMutation({ client }),
+    ...createSecurityV1InvestmentsSecuritiesPostMutation({ client }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
+        queryKey: listSecuritiesV1InvestmentsSecuritiesGetQueryKey({ client }),
       });
       handleClose();
     },
@@ -45,17 +57,20 @@ export function CreateAccountDialog() {
   const form = useForm({
     defaultValues: {
       name: "",
+      ticker: "",
+      asset_type: "stock" as string,
       currency: "SEK",
-      subtype: "checking",
+      notes: "",
     },
     onSubmit: ({ value }) => {
       mutation.mutate({
         client,
         body: {
           name: value.name,
+          ticker: value.ticker || null,
+          asset_type: value.asset_type as AssetType,
           currency: value.currency,
-          subtype: value.subtype,
-          base_balance: 0,
+          notes: value.notes || null,
         },
       });
     },
@@ -72,15 +87,13 @@ export function CreateAccountDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          Add Account
+          Add Security
         </Button>
       </DialogTrigger>
       <DialogContent onOpenAutoFocus={(e) => { e.preventDefault(); nameRef.current?.focus(); }}>
         <DialogHeader>
-          <DialogTitle>Create Bank Account</DialogTitle>
-          <DialogDescription>
-            Add a new bank account to track transactions.
-          </DialogDescription>
+          <DialogTitle>Add Security</DialogTitle>
+          <DialogDescription>Add an investable asset to your catalog.</DialogDescription>
         </DialogHeader>
 
         <form
@@ -94,14 +107,30 @@ export function CreateAccountDialog() {
             name="name"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="account-name">Name</Label>
+                <Label htmlFor="sec-name">Name</Label>
                 <Input
                   ref={nameRef}
-                  id="account-name"
+                  id="sec-name"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="e.g. Marginalen Savings"
+                  placeholder="e.g. Avanza Zero"
                   required
+                />
+              </div>
+            )}
+          />
+
+          <form.Field
+            name="ticker"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="sec-ticker">Ticker (optional)</Label>
+                <Input
+                  id="sec-ticker"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="e.g. AAPL"
+                  maxLength={20}
                 />
               </div>
             )}
@@ -109,24 +138,20 @@ export function CreateAccountDialog() {
 
           <div className="grid grid-cols-2 gap-4">
             <form.Field
-              name="subtype"
+              name="asset_type"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label>Type</Label>
+                  <Label>Asset Type</Label>
                   <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="checking">Checking</SelectItem>
-                      <SelectItem value="savings">Savings</SelectItem>
-                      <SelectItem value="isk">ISK</SelectItem>
-                      <SelectItem value="af">AF</SelectItem>
-                      <SelectItem value="kf">KF</SelectItem>
-                      <SelectItem value="brokerage">Brokerage</SelectItem>
-                      <SelectItem value="credit_card">Credit Card</SelectItem>
-                      <SelectItem value="loan">Loan</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -137,9 +162,9 @@ export function CreateAccountDialog() {
               name="currency"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="account-currency">Currency</Label>
+                  <Label htmlFor="sec-currency">Currency</Label>
                   <Input
-                    id="account-currency"
+                    id="sec-currency"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
                     placeholder="SEK"
@@ -151,10 +176,24 @@ export function CreateAccountDialog() {
             />
           </div>
 
+          <form.Field
+            name="notes"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="sec-notes">Notes (optional)</Label>
+                <Textarea
+                  id="sec-notes"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Any additional details..."
+                  rows={2}
+                />
+              </div>
+            )}
+          />
+
           {mutation.isError && (
-            <p className="text-destructive text-sm">
-              Failed to create account. Please try again.
-            </p>
+            <p className="text-destructive text-sm">Failed to create security. Please try again.</p>
           )}
 
           <DialogFooter>

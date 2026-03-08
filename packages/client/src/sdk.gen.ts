@@ -11,19 +11,27 @@ import {
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
+  createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
+  createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
+  createTradeV1InvestmentsTradesPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   getCalendarV1JournalCalendarGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
   listEntriesV1JournalGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
+  listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
+  listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
+  listTradesV1InvestmentsTradesGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+  updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
+  updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
   upsertEntryV1JournalEntryDatePutResponseTransformer,
 } from "./transformers.gen";
@@ -40,9 +48,18 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
+  CreateSecurityV1InvestmentsSecuritiesPostData,
+  CreateSecurityV1InvestmentsSecuritiesPostErrors,
+  CreateSecurityV1InvestmentsSecuritiesPostResponses,
   CreateTaskV1TasksPostData,
   CreateTaskV1TasksPostErrors,
   CreateTaskV1TasksPostResponses,
+  CreateTradeV1InvestmentsTradesPostData,
+  CreateTradeV1InvestmentsTradesPostErrors,
+  CreateTradeV1InvestmentsTradesPostResponses,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
@@ -52,9 +69,15 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
+  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
+  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
+  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
   DeleteTaskV1TasksTaskIdDeleteData,
   DeleteTaskV1TasksTaskIdDeleteErrors,
   DeleteTaskV1TasksTaskIdDeleteResponses,
+  DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
+  DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
+  DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
@@ -67,6 +90,8 @@ import type {
   GetEntryV1JournalEntryDateGetData,
   GetEntryV1JournalEntryDateGetErrors,
   GetEntryV1JournalEntryDateGetResponses,
+  GetHoldingsV1InvestmentsHoldingsGetData,
+  GetHoldingsV1InvestmentsHoldingsGetResponses,
   GetStreakV1JournalStreakGetData,
   GetStreakV1JournalStreakGetResponses,
   HealthzHealthzGetData,
@@ -90,12 +115,24 @@ import type {
   ListPlacesV1PlacesGetResponses,
   ListProjectsV1TasksProjectsGetData,
   ListProjectsV1TasksProjectsGetResponses,
+  ListSecuritiesV1InvestmentsSecuritiesGetData,
+  ListSecuritiesV1InvestmentsSecuritiesGetErrors,
+  ListSecuritiesV1InvestmentsSecuritiesGetResponses,
+  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData,
+  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors,
+  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses,
   ListTasksV1TasksGetData,
   ListTasksV1TasksGetErrors,
   ListTasksV1TasksGetResponses,
+  ListTradesV1InvestmentsTradesGetData,
+  ListTradesV1InvestmentsTradesGetErrors,
+  ListTradesV1InvestmentsTradesGetResponses,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
+  MonthlyFlowV1TransactionsMonthlyFlowGetData,
+  MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
+  MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostErrors,
   ReopenTaskV1TasksTaskIdReopenPostResponses,
@@ -105,15 +142,24 @@ import type {
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetErrors,
   SearchGooglePlacesV1PlacesSearchGetResponses,
+  SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
+  SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
+  SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
+  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
+  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
+  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
   UpdateTaskV1TasksTaskIdPatchData,
   UpdateTaskV1TasksTaskIdPatchErrors,
   UpdateTaskV1TasksTaskIdPatchResponses,
+  UpdateTradeV1InvestmentsTradesTradeIdPatchData,
+  UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
+  UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
@@ -285,6 +331,236 @@ export const listCategoriesV1CategoriesGet = <
     url: "/v1/categories",
     ...options,
   });
+
+/**
+ * List Securities
+ */
+export const listSecuritiesV1InvestmentsSecuritiesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListSecuritiesV1InvestmentsSecuritiesGetResponses,
+    ListSecuritiesV1InvestmentsSecuritiesGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
+    url: "/v1/investments/securities",
+    ...options,
+  });
+
+/**
+ * Create Security
+ */
+export const createSecurityV1InvestmentsSecuritiesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateSecurityV1InvestmentsSecuritiesPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateSecurityV1InvestmentsSecuritiesPostResponses,
+    CreateSecurityV1InvestmentsSecuritiesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
+    url: "/v1/investments/securities",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Security
+ */
+export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
+    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/investments/securities/{security_id}", ...options });
+
+/**
+ * Update Security
+ */
+export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
+    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
+    url: "/v1/investments/securities/{security_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Trades
+ */
+export const listTradesV1InvestmentsTradesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListTradesV1InvestmentsTradesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListTradesV1InvestmentsTradesGetResponses,
+    ListTradesV1InvestmentsTradesGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTradesV1InvestmentsTradesGetResponseTransformer,
+    url: "/v1/investments/trades",
+    ...options,
+  });
+
+/**
+ * Create Trade
+ */
+export const createTradeV1InvestmentsTradesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateTradeV1InvestmentsTradesPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateTradeV1InvestmentsTradesPostResponses,
+    CreateTradeV1InvestmentsTradesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createTradeV1InvestmentsTradesPostResponseTransformer,
+    url: "/v1/investments/trades",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Trade
+ */
+export const deleteTradeV1InvestmentsTradesTradeIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
+    DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/investments/trades/{trade_id}", ...options });
+
+/**
+ * Update Trade
+ */
+export const updateTradeV1InvestmentsTradesTradeIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateTradeV1InvestmentsTradesTradeIdPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
+    UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
+    url: "/v1/investments/trades/{trade_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Security Prices
+ */
+export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses,
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
+    url: "/v1/investments/securities/{security_id}/prices",
+    ...options,
+  });
+
+/**
+ * Add Security Price
+ */
+export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
+    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
+    url: "/v1/investments/securities/{security_id}/prices",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Holdings
+ */
+export const getHoldingsV1InvestmentsHoldingsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetHoldingsV1InvestmentsHoldingsGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetHoldingsV1InvestmentsHoldingsGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/investments/holdings", ...options });
 
 /**
  * List Journal Entries
@@ -750,3 +1026,38 @@ export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost =
         ...options.headers,
       },
     });
+
+/**
+ * Monthly Spending by Category
+ *
+ * Aggregate debit spending per category for a given month.
+ */
+export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
+    SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
+    ThrowOnError
+  >({ url: "/v1/transactions/spending-by-category", ...options });
+
+/**
+ * Monthly Income & Expenses
+ *
+ * Return income and expenses aggregated per month.
+ */
+export const monthlyFlowV1TransactionsMonthlyFlowGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<MonthlyFlowV1TransactionsMonthlyFlowGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
+    MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
+    ThrowOnError
+  >({ url: "/v1/transactions/monthly-flow", ...options });

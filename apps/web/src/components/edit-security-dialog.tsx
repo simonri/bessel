@@ -2,6 +2,13 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Pencil } from "lucide-react";
+import type { SecuritySchema } from "@metron/client";
+import {
+  updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation,
+  listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
+  getHoldingsV1InvestmentsHoldingsGetOptions,
+} from "@metron/client";
+import { AssetType } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import {
   Dialog,
@@ -10,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@metron/ui/components/dialog";
 import { Input } from "@metron/ui/components/input";
 import { Label } from "@metron/ui/components/label";
@@ -21,93 +27,89 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@metron/ui/components/select";
-import type { BankAccountSchema } from "@metron/client";
-import {
-  updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
-  listBankAccountsV1BankAccountsGetQueryKey,
-} from "@metron/client";
+import { Textarea } from "@metron/ui/components/textarea";
 import { client } from "@/lib/client";
 
-export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
+const ASSET_TYPE_LABELS: Record<string, string> = {
+  stock: "Stock",
+  etf: "ETF",
+  mutual_fund: "Mutual Fund",
+  bond: "Bond",
+  crypto: "Crypto",
+  real_estate: "Real Estate",
+  other: "Other",
+};
+
+export function EditSecurityDialog({ security }: { security: SecuritySchema }) {
   const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const queryKey = listBankAccountsV1BankAccountsGetQueryKey({ client });
-
   const mutation = useMutation({
-    ...updateBankAccountV1BankAccountsBankAccountIdPatchMutation({ client }),
-    onMutate: async ({ path, body }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueriesData({ queryKey });
-      queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
-        return {
-          ...old,
-          items: old.items.map((a: any) =>
-            a.id === path.bank_account_id ? { ...a, ...body } : a,
-          ),
-        };
+    ...updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation({ client }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: listSecuritiesV1InvestmentsSecuritiesGetQueryKey({ client }),
       });
-      setOpen(false);
-      return { previous };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, data] of context.previous) {
-          queryClient.setQueryData(key, data);
-        }
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({
+        queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client }).queryKey,
+      });
+      handleClose();
     },
   });
 
   const form = useForm({
     defaultValues: {
-      name: account.name,
-      currency: account.currency,
-      subtype: account.subtype,
-      baseBalance: String(account.base_balance / 100),
+      name: security.name,
+      ticker: security.ticker ?? "",
+      asset_type: security.asset_type as string,
+      currency: security.currency,
+      notes: security.notes ?? "",
     },
     onSubmit: ({ value }) => {
       mutation.mutate({
         client,
-        path: { bank_account_id: account.id },
+        path: { security_id: security.id },
         body: {
           name: value.name,
+          ticker: value.ticker || null,
+          asset_type: value.asset_type as AssetType,
           currency: value.currency,
-          subtype: value.subtype,
-          base_balance: Math.round(parseFloat(value.baseBalance) * 100) || 0,
+          notes: value.notes || null,
         },
       });
     },
   });
 
-  const handleOpen = () => {
-    form.reset({
-      name: account.name,
-      currency: account.currency,
-      subtype: account.subtype,
-      baseBalance: String(account.base_balance / 100),
-    });
-    setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    mutation.reset();
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <Pencil className="size-4" />
-        </Button>
-      </DialogTrigger>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (v) {
+          form.reset();
+          setOpen(true);
+        } else {
+          handleClose();
+        }
+      }}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-8 text-muted-foreground"
+        onClick={() => setOpen(true)}
+      >
+        <Pencil className="size-3.5" />
+      </Button>
       <DialogContent onOpenAutoFocus={(e) => { e.preventDefault(); nameRef.current?.focus(); }}>
         <DialogHeader>
-          <DialogTitle>Edit Bank Account</DialogTitle>
-          <DialogDescription>
-            Update the details for {account.name}.
-          </DialogDescription>
+          <DialogTitle>Edit Security</DialogTitle>
+          <DialogDescription>Update the details for {security.name}.</DialogDescription>
         </DialogHeader>
 
         <form
@@ -121,10 +123,10 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
             name="name"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-sec-name">Name</Label>
                 <Input
                   ref={nameRef}
-                  id="edit-name"
+                  id="edit-sec-name"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   required
@@ -133,26 +135,37 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
             )}
           />
 
+          <form.Field
+            name="ticker"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="edit-sec-ticker">Ticker (optional)</Label>
+                <Input
+                  id="edit-sec-ticker"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  maxLength={20}
+                />
+              </div>
+            )}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <form.Field
-              name="subtype"
+              name="asset_type"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label>Type</Label>
+                  <Label>Asset Type</Label>
                   <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="checking">Checking</SelectItem>
-                      <SelectItem value="savings">Savings</SelectItem>
-                      <SelectItem value="isk">ISK</SelectItem>
-                      <SelectItem value="af">AF</SelectItem>
-                      <SelectItem value="kf">KF</SelectItem>
-                      <SelectItem value="brokerage">Brokerage</SelectItem>
-                      <SelectItem value="credit_card">Credit Card</SelectItem>
-                      <SelectItem value="loan">Loan</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -163,9 +176,9 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
               name="currency"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="edit-currency">Currency</Label>
+                  <Label htmlFor="edit-sec-currency">Currency</Label>
                   <Input
-                    id="edit-currency"
+                    id="edit-sec-currency"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
                     maxLength={3}
@@ -177,30 +190,26 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           </div>
 
           <form.Field
-            name="baseBalance"
+            name="notes"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="edit-base-balance">Starting Balance</Label>
-                <Input
-                  id="edit-base-balance"
-                  type="number"
-                  step="0.01"
+                <Label htmlFor="edit-sec-notes">Notes (optional)</Label>
+                <Textarea
+                  id="edit-sec-notes"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  required
+                  rows={2}
                 />
               </div>
             )}
           />
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
-              Failed to update account. Please try again.
-            </p>
+            <p className="text-destructive text-sm">Failed to update security.</p>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <form.Subscribe

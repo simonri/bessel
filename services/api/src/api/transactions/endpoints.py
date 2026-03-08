@@ -7,6 +7,7 @@ from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
 from api.exceptions import ResourceNotFound
 from api.models.bank_profile import BankProfile
+from api.models.category import Category
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.csv_parser import parse_csv
@@ -15,7 +16,11 @@ from api.transactions.schemas import (
   BulkCategorizeRequest,
   BulkCategorizeResponse,
   BulkDeleteRequest,
+  CategorySpending,
   ImportResponse,
+  MonthlyFlow,
+  MonthlyFlowResponse,
+  MonthlySpendingResponse,
   TransactionListResponse,
   TransactionSchema,
   TransactionUpdate,
@@ -23,7 +28,7 @@ from api.transactions.schemas import (
 )
 from api.transactions.service import transaction_service
 from fastapi import APIRouter, Depends, Query, UploadFile
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import delete, extract, func, or_, select, update
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -213,3 +218,93 @@ async def delete_transactions(
   result = await session.execute(delete(Transaction).where(Transaction.id.in_(body.ids)))
   if result.rowcount == 0:
     raise ResourceNotFound("No transactions found")
+
+
+@router.get(
+  "/spending-by-category",
+  summary="Monthly Spending by Category",
+  response_model=MonthlySpendingResponse,
+)
+async def spending_by_category(
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  year: int = Query(description="Year to query."),
+  month: int = Query(description="Month to query (1-12)."),
+) -> MonthlySpendingResponse:
+  """Aggregate debit spending per category for a given month."""
+  stmt = (
+    select(
+      Transaction.category_id,
+      Category.name,
+      Category.color,
+      func.sum(Transaction.amount).label("total"),
+    )
+    .join(Category, Transaction.category_id == Category.id)
+    .where(
+      Transaction.direction == "debit",
+      extract("year", Transaction.transaction_date) == year,
+      extract("month", Transaction.transaction_date) == month,
+    )
+    .group_by(Transaction.category_id, Category.name, Category.color)
+    .order_by(func.sum(Transaction.amount).desc())
+  )
+  result = await session.execute(stmt)
+  items = [
+    CategorySpending(
+      category_id=row.category_id,
+      category_name=row.name,
+      category_color=row.color,
+      total=row.total,
+    )
+    for row in result.all()
+  ]
+  return MonthlySpendingResponse(year=year, month=month, items=items)
+
+
+@router.get(
+  "/monthly-flow",
+  summary="Monthly Income & Expenses",
+  response_model=MonthlyFlowResponse,
+)
+async def monthly_flow(
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  months: int = Query(6, description="Number of months to look back (including current)."),
+) -> MonthlyFlowResponse:
+  """Return income and expenses aggregated per month."""
+  from dateutil.relativedelta import relativedelta
+
+  today = date.today()
+  start = today.replace(day=1) - relativedelta(months=months - 1)
+
+  stmt = (
+    select(
+      extract("year", Transaction.transaction_date).label("yr"),
+      extract("month", Transaction.transaction_date).label("mo"),
+      Transaction.direction,
+      func.sum(Transaction.amount).label("total"),
+    )
+    .where(Transaction.transaction_date >= start)
+    .group_by("yr", "mo", Transaction.direction)
+    .order_by("yr", "mo")
+  )
+  result = await session.execute(stmt)
+
+  buckets: dict[tuple[int, int], dict[str, int]] = {}
+  for row in result.all():
+    key = (int(row.yr), int(row.mo))
+    if key not in buckets:
+      buckets[key] = {"income": 0, "expenses": 0}
+    if row.direction == "credit":
+      buckets[key]["income"] = row.total
+    else:
+      buckets[key]["expenses"] = row.total
+
+  # Fill in missing months with zeros
+  items: list[MonthlyFlow] = []
+  cursor = start
+  while cursor <= today:
+    key = (cursor.year, cursor.month)
+    b = buckets.get(key, {"income": 0, "expenses": 0})
+    items.append(MonthlyFlow(year=cursor.year, month=cursor.month, **b))
+    cursor += relativedelta(months=1)
+
+  return MonthlyFlowResponse(items=items)

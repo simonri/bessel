@@ -6,7 +6,10 @@ from .import_batch import ImportBatch
 from .journal_entry import JournalEntry
 from .place import Place
 from .raw_transaction import RawTransaction
+from .security import Security
+from .security_price import SecurityPrice
 from .task import Task
+from .trade import Trade
 from .transaction import Transaction
 
 __all__ = [
@@ -18,6 +21,9 @@ __all__ = [
   "Model",
   "Place",
   "RawTransaction",
+  "Security",
+  "SecurityPrice",
   "Task",
+  "Trade",
   "Transaction",
 ]
