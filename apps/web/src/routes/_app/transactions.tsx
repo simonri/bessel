@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   keepPreviousData,
@@ -14,10 +14,22 @@ import {
   listTransactionsV1TransactionsGetOptions,
   listTransactionsV1TransactionsGetQueryKey,
   listCategoriesV1CategoriesGetOptions,
+  listBankAccountsV1BankAccountsGetOptions,
   deleteTransactionsV1TransactionsDeleteMutation,
+  categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import { Checkbox } from "@metron/ui/components/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@metron/ui/components/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +38,7 @@ import {
 } from "@metron/ui/components/dropdown-menu";
 import { DataTable } from "@/components/data-table";
 import { ImportDialog } from "@/components/import-dialog";
-import { CategoryCell } from "@/components/category-cell";
+import { CategoryCell, type BulkSuggestion } from "@/components/category-cell";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/transactions")({
@@ -66,6 +78,7 @@ const TransactionActions = memo(function TransactionActions({
 function Transactions() {
   const [page, setPage] = useState(1);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(null);
   const limit = 12;
   const queryClient = useQueryClient();
 
@@ -88,6 +101,20 @@ function Transactions() {
     }),
   );
   const categories = categoriesData?.items ?? [];
+
+  const { data: accountsData } = useQuery(
+    listBankAccountsV1BankAccountsGetOptions({
+      client,
+      query: { limit: 100 },
+    }),
+  );
+  const accountMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const acc of accountsData?.items ?? []) {
+      map.set(acc.id, acc.name);
+    }
+    return map;
+  }, [accountsData]);
 
   const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
 
@@ -123,6 +150,37 @@ function Transactions() {
     },
   });
 
+  const bulkCategorizeMutation = useMutation({
+    ...categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation({ client }),
+    onMutate: async ({ body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueriesData({ queryKey });
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((t: any) =>
+            t.description === body.description
+              ? { ...t, category_id: body.category_id }
+              : t,
+          ),
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setBulkSuggestion(null);
+    },
+  });
+
   const handleDeleteRows = useCallback(
     (ids: string[]) => {
       if (ids.length === 0) return;
@@ -131,6 +189,21 @@ function Transactions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mutate is stable
     [deleteMutation.mutate],
   );
+
+  const handleBulkSuggestion = useCallback((info: BulkSuggestion) => {
+    setBulkSuggestion(info);
+  }, []);
+
+  const handleConfirmBulk = () => {
+    if (!bulkSuggestion) return;
+    bulkCategorizeMutation.mutate({
+      client,
+      body: {
+        description: bulkSuggestion.description,
+        category_id: bulkSuggestion.categoryId,
+      },
+    });
+  };
 
   const columns: ColumnDef<TransactionSchema>[] = [
     {
@@ -166,8 +239,18 @@ function Transactions() {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <span className="max-w-[300px] truncate">
-          {row.original.description ?? "—"}
+        <span className="block truncate">
+          {row.original.description ?? "\u2014"}
+        </span>
+      ),
+    },
+    {
+      id: "account",
+      size: 120,
+      header: "Account",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground truncate text-xs">
+          {accountMap.get(row.original.bank_account_id) ?? "\u2014"}
         </span>
       ),
     },
@@ -179,7 +262,9 @@ function Transactions() {
         <CategoryCell
           transactionId={row.original.id}
           categoryId={row.original.category_id}
+          description={row.original.description}
           categories={categories}
+          onBulkSuggestion={handleBulkSuggestion}
         />
       ),
     },
@@ -292,6 +377,30 @@ function Transactions() {
           </div>
         </>
       )}
+
+      <AlertDialog open={!!bulkSuggestion} onOpenChange={(open) => !open && setBulkSuggestion(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply category to similar transactions?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkSuggestion?.count} other transaction{bulkSuggestion?.count !== 1 ? "s" : ""} with
+              description &ldquo;{bulkSuggestion?.description}&rdquo; can be categorized
+              as <strong>{bulkSuggestion?.categoryName}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No thanks</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBulk}
+              disabled={bulkCategorizeMutation.isPending}
+            >
+              {bulkCategorizeMutation.isPending
+                ? "Applying..."
+                : `Apply to ${bulkSuggestion?.count} transaction${bulkSuggestion?.count !== 1 ? "s" : ""}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

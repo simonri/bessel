@@ -10,10 +10,19 @@ from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.csv_parser import parse_csv
 from api.transactions.parsers.xlsx_parser import parse_xlsx
-from api.transactions.schemas import BulkDeleteRequest, ImportResponse, TransactionListResponse, TransactionSchema, TransactionUpdate
+from api.transactions.schemas import (
+  BulkCategorizeRequest,
+  BulkCategorizeResponse,
+  BulkDeleteRequest,
+  ImportResponse,
+  TransactionListResponse,
+  TransactionSchema,
+  TransactionUpdate,
+  TransactionUpdateResponse,
+)
 from api.transactions.service import transaction_service
 from fastapi import APIRouter, Depends, Query, UploadFile
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, or_, select, update
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -51,6 +60,8 @@ async def list_transactions(
   for prop, desc in sorting:
     column = getattr(Transaction, prop.value)
     statement = statement.order_by(column.desc() if desc else column.asc())
+  # Stable tiebreaker so row order never shifts after unrelated updates (e.g. category)
+  statement = statement.order_by(Transaction.id)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return TransactionListResponse.from_paginated_results(
@@ -111,13 +122,13 @@ async def import_transactions(
 @router.patch(
   "/{transaction_id}",
   summary="Update Transaction",
-  response_model=TransactionSchema,
+  response_model=TransactionUpdateResponse,
 )
 async def update_transaction(
   transaction_id: UUID,
   body: TransactionUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> TransactionSchema:
+) -> TransactionUpdateResponse:
   """Update a transaction."""
   from api.transactions.repository import TransactionRepository
 
@@ -130,7 +141,50 @@ async def update_transaction(
   if update_dict:
     await repo.update(transaction, update_dict=update_dict)
 
-  return TransactionSchema.model_validate(transaction)
+  same_description_count = 0
+  if transaction.description and "category_id" in update_dict:
+    new_category_id = update_dict["category_id"]
+    count_stmt = (
+      select(func.count())
+      .select_from(Transaction)
+      .where(
+        Transaction.description == transaction.description,
+        Transaction.id != transaction.id,
+      )
+    )
+    if new_category_id:
+      count_stmt = count_stmt.where(
+        or_(Transaction.category_id != new_category_id, Transaction.category_id.is_(None))
+      )
+    else:
+      count_stmt = count_stmt.where(Transaction.category_id.is_not(None))
+
+    result = await session.execute(count_stmt)
+    same_description_count = result.scalar() or 0
+
+  return TransactionUpdateResponse(
+    **TransactionSchema.model_validate(transaction).model_dump(),
+    same_description_count=same_description_count,
+  )
+
+
+@router.post(
+  "/categorize-by-description",
+  summary="Bulk Categorize by Description",
+  response_model=BulkCategorizeResponse,
+)
+async def categorize_by_description(
+  body: BulkCategorizeRequest,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> BulkCategorizeResponse:
+  """Set category for all transactions matching the given description."""
+  stmt = (
+    update(Transaction)
+    .where(Transaction.description == body.description)
+    .values(category_id=body.category_id)
+  )
+  result = await session.execute(stmt)
+  return BulkCategorizeResponse(updated=result.rowcount)
 
 
 @router.delete(

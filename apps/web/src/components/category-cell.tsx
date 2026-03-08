@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useRef, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CategorySchema } from "@metron/client";
 import {
@@ -13,14 +13,27 @@ import {
   ComboboxItem,
   ComboboxGroup,
   ComboboxLabel,
-  ComboboxEmpty,
 } from "@metron/ui/components/combobox";
 import { client } from "@/lib/client";
+
+export interface BulkSuggestion {
+  description: string;
+  categoryId: string;
+  categoryName: string;
+  count: number;
+}
 
 interface CategoryCellProps {
   transactionId: string;
   categoryId: string | null;
+  description: string | null;
   categories: CategorySchema[];
+  onBulkSuggestion?: (info: BulkSuggestion) => void;
+}
+
+interface GroupedCategory {
+  parent: CategorySchema;
+  children: CategorySchema[];
 }
 
 function useGroupedCategories(categories: CategorySchema[]) {
@@ -34,21 +47,45 @@ function useGroupedCategories(categories: CategorySchema[]) {
         childrenMap.set(cat.parent_id, list);
       }
     }
-    return parents.map((p) => ({
-      parent: p,
-      children: childrenMap.get(p.id) ?? [],
-    }));
+    return parents
+      .map((p) => ({
+        parent: p,
+        children: childrenMap.get(p.id) ?? [],
+      }))
+      .filter((g) => g.children.length > 0);
   }, [categories]);
+}
+
+function filterGroups(
+  groups: GroupedCategory[],
+  query: string,
+): GroupedCategory[] {
+  if (!query) return groups;
+  const q = query.toLowerCase();
+  return groups
+    .map((g) => ({
+      ...g,
+      children: g.children.filter((c) => c.name.toLowerCase().includes(q)),
+    }))
+    .filter((g) => g.children.length > 0);
 }
 
 export function CategoryCell({
   transactionId,
   categoryId,
+  description,
   categories,
+  onBulkSuggestion,
 }: CategoryCellProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const grouped = useGroupedCategories(categories);
+  const filtered = useMemo(
+    () => filterGroups(grouped, search),
+    [grouped, search],
+  );
 
   const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
 
@@ -70,6 +107,23 @@ export function CategoryCell({
       });
       return { previous };
     },
+    onSuccess: (data) => {
+      if (
+        data.same_description_count &&
+        data.same_description_count > 0 &&
+        data.category_id &&
+        description &&
+        onBulkSuggestion
+      ) {
+        const cat = categories.find((c) => c.id === data.category_id);
+        onBulkSuggestion({
+          description,
+          categoryId: data.category_id,
+          categoryName: cat?.name ?? "Unknown",
+          count: data.same_description_count,
+        });
+      }
+    },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
         for (const [key, data] of context.previous) {
@@ -88,6 +142,7 @@ export function CategoryCell({
     const newCategoryId = value || null;
     if (newCategoryId === categoryId) {
       setOpen(false);
+      setSearch("");
       return;
     }
 
@@ -97,6 +152,7 @@ export function CategoryCell({
       body: { category_id: newCategoryId },
     });
     setOpen(false);
+    setSearch("");
   };
 
   if (!open) {
@@ -122,37 +178,60 @@ export function CategoryCell({
   }
 
   return (
-    <Combobox
-      open={open}
-      onOpenChange={setOpen}
-      value={categoryId ?? ""}
-      onValueChange={(val) => handleSelect(val as string | null)}
-    >
-      <ComboboxInput
-        placeholder="Search..."
-        className="h-7 w-[160px] text-sm"
-        autoFocus
-        showClear={!!categoryId}
-      />
-      <ComboboxContent>
+    <div ref={containerRef}>
+      <Combobox
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && containerRef.current?.contains(document.activeElement)) {
+            return;
+          }
+          setOpen(nextOpen);
+          if (!nextOpen) setSearch("");
+        }}
+        value={categoryId ?? ""}
+        onValueChange={(val) => handleSelect(val as string | null)}
+        filter={null}
+        inputValue={search}
+        onInputValueChange={(val) => setSearch(val)}
+      >
+        <ComboboxInput
+          placeholder="Search..."
+          className="h-7 w-[160px] text-sm"
+          autoFocus
+          showTrigger={false}
+        />
+      <ComboboxContent className="min-w-[220px]">
         <ComboboxList>
-          <ComboboxEmpty>No categories found</ComboboxEmpty>
-          {grouped.map(({ parent, children }) => (
-            <ComboboxGroup key={parent.id}>
-              <ComboboxLabel>{parent.name}</ComboboxLabel>
-              {children.map((cat) => (
-                <ComboboxItem key={cat.id} value={cat.id} textValue={cat.name}>
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  {cat.name}
+          {filtered.length === 0 ? (
+            <div className="text-muted-foreground py-2 text-center text-sm">
+              No categories found
+            </div>
+          ) : (
+            <>
+              {categoryId && !search && (
+                <ComboboxItem value="">
+                  <span className="text-muted-foreground">None</span>
                 </ComboboxItem>
+              )}
+              {filtered.map(({ parent, children }) => (
+                <ComboboxGroup key={parent.id}>
+                  <ComboboxLabel>{parent.name}</ComboboxLabel>
+                  {children.map((cat) => (
+                    <ComboboxItem key={cat.id} value={cat.id}>
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      {cat.name}
+                    </ComboboxItem>
+                  ))}
+                </ComboboxGroup>
               ))}
-            </ComboboxGroup>
-          ))}
+            </>
+          )}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
+    </div>
   );
 }

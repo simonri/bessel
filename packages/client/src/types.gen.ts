@@ -156,6 +156,36 @@ export type BodyImportTransactionsV1TransactionsImportPost = {
 };
 
 /**
+ * BulkCategorizeRequest
+ */
+export type BulkCategorizeRequest = {
+  /**
+   * Description
+   *
+   * Exact description to match.
+   */
+  description: string;
+  /**
+   * Category Id
+   *
+   * Category ID to assign.
+   */
+  category_id: string | null;
+};
+
+/**
+ * BulkCategorizeResponse
+ */
+export type BulkCategorizeResponse = {
+  /**
+   * Updated
+   *
+   * Number of transactions updated.
+   */
+  updated: number;
+};
+
+/**
  * BulkDeleteRequest
  */
 export type BulkDeleteRequest = {
@@ -1344,6 +1374,75 @@ export type TransactionUpdate = {
 };
 
 /**
+ * TransactionUpdateResponse
+ */
+export type TransactionUpdateResponse = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  direction: TransactionDirection;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Category Id
+   */
+  category_id: string | null;
+  /**
+   * Transaction Type
+   */
+  transaction_type: string | null;
+  /**
+   * Dedup Hash
+   */
+  dedup_hash: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Raw Id
+   */
+  raw_id: string | null;
+  /**
+   * Same Description Count
+   *
+   * Number of other transactions with the same description not yet assigned this category.
+   */
+  same_description_count?: number;
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -2428,8 +2527,38 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
   /**
    * Successful Response
    */
-  200: TransactionSchema;
+  200: TransactionUpdateResponse;
 };
 
 export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
   UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
+
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData =
+  {
+    body: BulkCategorizeRequest;
+    path?: never;
+    query?: never;
+    url: "/v1/transactions/categorize-by-description";
+  };
+
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError =
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors];
+
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: BulkCategorizeResponse;
+  };
+
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse =
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses];

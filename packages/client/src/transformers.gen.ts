@@ -265,10 +265,19 @@ export const listTransactionsV1TransactionsGetResponseTransformer = async (
   return data;
 };
 
+const transactionUpdateResponseSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.transaction_date = new Date(data.transaction_date);
+  return data;
+};
+
 export const updateTransactionV1TransactionsTransactionIdPatchResponseTransformer =
   async (
     data: any,
   ): Promise<UpdateTransactionV1TransactionsTransactionIdPatchResponse> => {
-    data = transactionSchemaSchemaResponseTransformer(data);
+    data = transactionUpdateResponseSchemaResponseTransformer(data);
     return data;
   };

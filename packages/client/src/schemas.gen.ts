@@ -191,6 +191,45 @@ export const Body_import_transactions_v1_transactions_import_postSchema = {
   title: "Body_import_transactions_v1_transactions_import_post",
 } as const;
 
+export const BulkCategorizeRequestSchema = {
+  properties: {
+    description: {
+      type: "string",
+      title: "Description",
+      description: "Exact description to match.",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+      description: "Category ID to assign.",
+    },
+  },
+  type: "object",
+  required: ["description", "category_id"],
+  title: "BulkCategorizeRequest",
+} as const;
+
+export const BulkCategorizeResponseSchema = {
+  properties: {
+    updated: {
+      type: "integer",
+      title: "Updated",
+      description: "Number of transactions updated.",
+    },
+  },
+  type: "object",
+  required: ["updated"],
+  title: "BulkCategorizeResponse",
+} as const;
+
 export const BulkDeleteRequestSchema = {
   properties: {
     ids: {
@@ -277,6 +316,7 @@ export const CategorySchemaSchema = {
       anyOf: [
         {
           type: "string",
+          format: "uuid4",
         },
         {
           type: "null",
@@ -2305,6 +2345,132 @@ export const TransactionUpdateSchema = {
   },
   type: "object",
   title: "TransactionUpdate",
+} as const;
+
+export const TransactionUpdateResponseSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    transaction_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transaction Type",
+    },
+    dedup_hash: {
+      type: "string",
+      title: "Dedup Hash",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    raw_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Raw Id",
+    },
+    same_description_count: {
+      type: "integer",
+      title: "Same Description Count",
+      description:
+        "Number of other transactions with the same description not yet assigned this category.",
+      default: 0,
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "amount",
+    "currency",
+    "transaction_date",
+    "direction",
+    "description",
+    "category_id",
+    "transaction_type",
+    "dedup_hash",
+    "bank_account_id",
+    "raw_id",
+  ],
+  title: "TransactionUpdateResponse",
 } as const;
 
 export const ValidationErrorSchema = {

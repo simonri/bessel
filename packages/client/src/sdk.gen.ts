@@ -28,6 +28,9 @@ import {
   upsertEntryV1JournalEntryDatePutResponseTransformer,
 } from "./transformers.gen";
 import type {
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostErrors,
   CompleteTaskV1TasksTaskIdCompletePostResponses,
@@ -722,3 +725,28 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
       ...options.headers,
     },
   });
+
+/**
+ * Bulk Categorize by Description
+ *
+ * Set category for all transactions matching the given description.
+ */
+export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
+      ThrowOnError
+    >,
+  ) =>
+    (options.client ?? client).post<
+      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
+      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
+      ThrowOnError
+    >({
+      url: "/v1/transactions/categorize-by-description",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });

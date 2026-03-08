@@ -10,6 +10,7 @@ import {
 
 import { client } from "../client.gen";
 import {
+  categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
   createPlaceV1PlacesPost,
@@ -44,6 +45,9 @@ import {
   upsertEntryV1JournalEntryDatePut,
 } from "../sdk.gen";
 import type {
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostError,
   CompleteTaskV1TasksTaskIdCompletePostResponse,
@@ -1394,3 +1398,38 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
   };
   return mutationOptions;
 };
+
+/**
+ * Bulk Categorize by Description
+ *
+ * Set category for all transactions matching the given description.
+ */
+export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation =
+  (
+    options?: Partial<
+      Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
+    >,
+  ): UseMutationOptions<
+    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
+    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
+    Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
+      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
+      Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            },
+          );
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
