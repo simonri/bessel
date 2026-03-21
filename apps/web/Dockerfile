@@ -27,16 +27,13 @@ RUN pnpm --filter @metron/web build
 # --- Runtime: serve static files with lightweight server ---
 FROM node:22-slim
 
-RUN npm install -g serve@14
-
-RUN groupadd --gid 1000 appgroup && \
-    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+RUN npm install -g serve@14 && apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY --from=builder --chown=appuser:appgroup /app/apps/web/dist/client ./dist
+COPY --from=builder --chown=node:node /app/apps/web/dist/client ./dist
 
-USER appuser
+USER node
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl --fail http://localhost:3000 || exit 1
