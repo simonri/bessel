@@ -1,16 +1,8 @@
 # syntax=docker/dockerfile:1.7
-# Production Dockerfile for the Dramatiq Worker service
-# Shares the same base as API but runs the task queue worker
-
-# ==============================================================================
-# Stage 1: Builder - Install dependencies in isolated environment
-# ==============================================================================
 FROM python:3.12-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
@@ -24,41 +16,16 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-COPY packages/common/ ./packages/common/
 COPY packages/python_client/ ./packages/python_client/
 COPY services/api/ ./services/api/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv venv /opt/venv && \
     . /opt/venv/bin/activate && \
-    uv pip install ./packages/common ./packages/python_client ./services/api
+    uv pip install ./packages/python_client ./services/api
 
-# ==============================================================================
-# Stage 2: Email Builder - Build react-email binary
-# ==============================================================================
-FROM node:22-slim AS email-builder
-
-WORKDIR /emails
-
-# Copy email package files
-COPY services/api/emails/package.json ./
-
-# Install pnpm and dependencies
-RUN corepack enable && \
-    corepack prepare pnpm@latest --activate && \
-    pnpm install
-
-# Copy email source and build configuration
-COPY services/api/emails/src ./src/
-COPY services/api/emails/tsconfig.json services/api/emails/tsup.config.js ./
-
-# Build the react-email binary
-RUN pnpm run build
-
-# ==============================================================================
-# Stage 3: Runtime - Minimal production image for worker
-# ==============================================================================
-FROM python:3.12-slim-bookworm AS runtime
+# --- Runtime ---
+FROM python:3.12-slim-bookworm
 
 RUN groupadd --gid 1000 appgroup && \
     useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
@@ -66,40 +33,26 @@ RUN groupadd --gid 1000 appgroup && \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
-    ffmpeg \
     procps \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH="/app/services/api/src:/app/packages/common/src:/app/packages/python_client/src"
+    PYTHONPATH="/app/services/api/src:/app/packages/python_client/src"
 
 COPY --from=builder --chown=appuser:appgroup /opt/venv /opt/venv
 
-# Copy react-email binary from email-builder
-COPY --from=email-builder --chown=appuser:appgroup /emails/bin/react-email-pkg /app/services/api/src/emails/bin/react-email-pkg
-
 WORKDIR /app
 
-COPY --chown=appuser:appgroup packages/common/src/ ./packages/common/src/
 COPY --chown=appuser:appgroup packages/python_client/src/ ./packages/python_client/src/
 COPY --chown=appuser:appgroup services/api/src/ ./services/api/src/
-COPY --chown=appuser:appgroup services/api/assets/ ./services/api/assets/
 
 USER appuser
-
 WORKDIR /app/services/api
 
-# Health check for worker - verify dramatiq process is running
-# Workers don't expose HTTP, so we check the process
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD pgrep -f "dramatiq" || exit 1
 
-# Dramatiq worker configuration:
-# -p 1: 1 process (scale horizontally with container replicas instead)
-# -t 1: 1 thread per process (prevents GIL contention issues)
-# --queues: Priority-based queue processing
 CMD ["dramatiq", "-p", "1", "-t", "1", "--queues", "high_priority", "medium_priority", "low_priority", "-f", "api.worker.scheduler:start", "api.worker.run"]

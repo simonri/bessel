@@ -1,0 +1,22 @@
+{
+	# No automatic HTTPS — Tailscale handles encryption
+	auto_https off
+}
+
+:80 {
+	# API routes
+	handle /v1/* {
+		reverse_proxy api:8000
+	}
+	handle /healthz {
+		reverse_proxy api:8000
+	}
+	handle /openapi.json {
+		reverse_proxy api:8000
+	}
+
+	# Everything else → web frontend
+	handle {
+		reverse_proxy web:3000
+	}
+}
