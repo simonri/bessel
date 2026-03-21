@@ -710,9 +710,9 @@ function Journal() {
       </div>
 
       {/* Main layout: sidebar + editor */}
-      <div className="flex gap-6 items-start">
+      <div className="flex flex-col md:flex-row gap-6 items-start">
         {/* Left sidebar: calendar + stats */}
-        <div className="w-[260px] shrink-0 space-y-4">
+        <div className="w-full md:w-[260px] shrink-0 space-y-4">
           <div className="rounded-lg border bg-card p-3">
             <MiniCalendar
               selectedDate={selectedDate}
@@ -807,7 +807,7 @@ function Journal() {
             <div className="space-y-5">
               {/* Metrics row */}
               <div className="rounded-lg border bg-card p-4">
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <MetricPicker
                     icon={Sparkles}
                     label="Mood"

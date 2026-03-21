@@ -343,8 +343,7 @@ function Travel() {
       header: "Place Name",
       cell: ({ row }) => {
         const place = row.original;
-        const { country, status } = getPlaceAny(place);
-        const isVisited = status === "visited";
+        const { country } = getPlaceAny(place);
 
         return (
           <button
@@ -512,7 +511,7 @@ function Travel() {
             {places.length > 0 && (
               <div className="flex gap-4 h-[360px] shrink-0">
                 {/* Timeline */}
-                <div className="w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
+                <div className="hidden md:block w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
                   <TravelTimeline
                     places={timelinePlaces}
                     onSelectPlace={handleSelectPlace}
@@ -542,7 +541,7 @@ function Travel() {
 
           {/* Right: detail sidebar */}
           {selectedPlace && sel && (
-            <div className="w-[300px] shrink-0 rounded-lg border bg-card overflow-y-auto">
+            <div className="hidden md:block w-[300px] shrink-0 rounded-lg border bg-card overflow-y-auto">
               {/* Photo */}
               {selectedPlace.photo_url && (
                 <img
