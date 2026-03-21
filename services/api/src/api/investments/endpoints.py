@@ -164,11 +164,7 @@ async def list_security_prices(
   pagination: PaginationParamsQuery,
 ) -> SecurityPriceListResponse:
   repo = SecurityPriceRepository.from_session(session)
-  statement = (
-    repo.get_base_statement()
-    .where(SecurityPrice.security_id == security_id)
-    .order_by(SecurityPrice.price_date.desc())
-  )
+  statement = repo.get_base_statement().where(SecurityPrice.security_id == security_id).order_by(SecurityPrice.price_date.desc())
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return SecurityPriceListResponse.from_paginated_results(
     [SecurityPriceSchema.model_validate(item) for item in items],
@@ -214,21 +210,14 @@ async def get_holdings(
       Trade.security_id,
       func.sum(qty_expr).label("net_quantity"),
       func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity), else_=0)).label("total_buy_qty"),
-      func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity * Trade.price_per_unit), else_=0)).label(
-        "total_buy_cost"
-      ),
+      func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity * Trade.price_per_unit), else_=0)).label("total_buy_cost"),
     )
     .group_by(Trade.security_id)
     .subquery()
   )
 
   # Latest price per security (using a correlated subquery for the max date)
-  latest_price_date = (
-    select(func.max(SecurityPrice.price_date))
-    .where(SecurityPrice.security_id == Security.id)
-    .correlate(Security)
-    .scalar_subquery()
-  )
+  latest_price_date = select(func.max(SecurityPrice.price_date)).where(SecurityPrice.security_id == Security.id).correlate(Security).scalar_subquery()
   latest_price = (
     select(SecurityPrice.price_per_unit)
     .where(SecurityPrice.security_id == Security.id, SecurityPrice.price_date == latest_price_date)

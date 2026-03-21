@@ -21,13 +21,15 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
   """Upgrade schema."""
-  column_map = json.dumps({
-    "transaction_date": "Bokf. datum",
-    "amount": "Belopp",
-    "description": "Beskrivning",
-    "balance": "Saldo",
-    "account_number_cell": "B1",
-  })
+  column_map = json.dumps(
+    {
+      "transaction_date": "Bokf. datum",
+      "amount": "Belopp",
+      "description": "Beskrivning",
+      "balance": "Saldo",
+      "account_number_cell": "B1",
+    }
+  )
   op.execute(
     sa.text(
       """

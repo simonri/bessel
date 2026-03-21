@@ -131,7 +131,7 @@ export function AddPlaceDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          Add Place
+          Add New Place
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">

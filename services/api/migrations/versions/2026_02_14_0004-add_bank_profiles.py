@@ -42,13 +42,15 @@ def upgrade() -> None:
   op.create_index(op.f("ix_bank_profiles_deleted_at"), "bank_profiles", ["deleted_at"], unique=False)
 
   # Seed Marginalen profile
-  column_map = json.dumps({
-    "account_number": "Frånkontonummer",
-    "transaction_date": "Bokföringsdatum",
-    "currency": "Valuta",
-    "amount": "Belopp",
-    "description": "Transaktionstext",
-  })
+  column_map = json.dumps(
+    {
+      "account_number": "Frånkontonummer",
+      "transaction_date": "Bokföringsdatum",
+      "currency": "Valuta",
+      "amount": "Belopp",
+      "description": "Transaktionstext",
+    }
+  )
   op.execute(
     sa.text(
       """

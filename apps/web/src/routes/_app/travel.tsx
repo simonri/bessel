@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -9,8 +9,6 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
 import {
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   Star,
   MapPin,
@@ -22,6 +20,7 @@ import {
 import type { PlaceSchema } from "@metron/client";
 import {
   listPlacesV1PlacesGetOptions,
+  listPlacesV1PlacesGetInfiniteOptions,
   listPlacesV1PlacesGetQueryKey,
   deletePlaceV1PlacesPlaceIdDeleteMutation,
   updatePlaceV1PlacesPlaceIdPatchMutation,
@@ -46,7 +45,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@metron/ui/components/empty";
-import { DataTable } from "@/components/data-table";
+import { VirtualDataTable } from "@/components/virtual-data-table";
 import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
 import { PlaceMap } from "@/components/place-map";
@@ -206,22 +205,31 @@ function TravelTimeline({
 
 
 function Travel() {
-  const [page, setPage] = useState(1);
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
-  const limit = 20;
+  const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
-    ...listPlacesV1PlacesGetOptions({
+  const {
+    data: infiniteData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...listPlacesV1PlacesGetInfiniteOptions({
       client,
       query: {
-        page,
-        limit,
+        limit: PAGE_SIZE,
         sorting: ["-created_at" as "-created_at"],
       },
     }),
-    placeholderData: keepPreviousData,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      const currentPage = typeof lastPageParam === "number" ? lastPageParam : 1;
+      if (currentPage >= lastPage.pagination.max_page) return undefined;
+      return currentPage + 1;
+    },
   });
 
   // Timeline: recently visited places
@@ -246,14 +254,13 @@ function Travel() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
+        if (!old?.pages) return old;
         return {
           ...old,
-          items: old.items.filter((p: any) => p.id !== path.place_id),
-          pagination: {
-            ...old.pagination,
-            total_count: old.pagination.total_count - 1,
-          },
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.filter((p: any) => p.id !== path.place_id),
+          })),
         };
       });
       if (selectedPlace && deleteTarget && selectedPlace.id === deleteTarget.id) {
@@ -280,12 +287,15 @@ function Travel() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
+        if (!old?.pages) return old;
         return {
           ...old,
-          items: old.items.map((p: any) =>
-            p.id === path.place_id ? { ...p, ...body } : p,
-          ),
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((p: any) =>
+              p.id === path.place_id ? { ...p, ...body } : p,
+            ),
+          })),
         };
       });
       return { previous };
@@ -330,7 +340,7 @@ function Travel() {
   const columns: ColumnDef<PlaceSchema>[] = [
     {
       accessorKey: "name",
-      header: "Place",
+      header: "Place Name",
       cell: ({ row }) => {
         const place = row.original;
         const { country, status } = getPlaceAny(place);
@@ -343,23 +353,26 @@ function Travel() {
             onClick={() => handleSelectPlace(place)}
           >
             <div className="flex items-center gap-3">
-              <div
-                className={`size-2 rounded-full shrink-0 ${
-                  isVisited ? "bg-green-500" : "bg-amber-500"
-                }`}
-                title={isVisited ? "Visited" : "Want to go"}
-              />
+              {place.photo_url ? (
+                <img
+                  src={place.photo_url}
+                  alt={place.name}
+                  className="size-8 rounded object-cover shrink-0"
+                />
+              ) : (
+                <div
+                  className={`size-8 rounded shrink-0 flex items-center justify-center bg-muted text-muted-foreground text-xs font-medium`}
+                >
+                  {place.name.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <div className="font-medium hover:underline truncate">
                   {place.name}
                 </div>
-                {(country || place.category) && (
-                  <div className="flex items-center gap-1.5 mt-0.5 text-muted-foreground text-xs">
-                    {country && <span>{country}</span>}
-                    {country && place.category && <span className="opacity-40">/</span>}
-                    {place.category && (
-                      <span className="capitalize">{place.category.replace(/_/g, " ")}</span>
-                    )}
+                {country && (
+                  <div className="text-muted-foreground text-xs mt-0.5">
+                    {country}
                   </div>
                 )}
               </div>
@@ -369,18 +382,17 @@ function Travel() {
       },
     },
     {
-      id: "labels",
-      header: "Labels",
-      size: 180,
+      accessorKey: "category",
+      header: "Category",
+      size: 150,
       cell: ({ row }) => {
-        const { tags } = getPlaceAny(row.original);
-        if (tags.length === 0) return null;
+        const category = row.original.category;
+        if (!category) return <span className="text-muted-foreground/30 text-xs">\u2014</span>;
+        const label = category.replace(/_/g, " ");
         return (
-          <div className="flex flex-wrap gap-1">
-            {tags.map((tag) => (
-              <TagDisplay key={tag} tags={[tag]} />
-            ))}
-          </div>
+          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+            {label.charAt(0).toUpperCase() + label.slice(1)}
+          </span>
         );
       },
     },
@@ -395,42 +407,33 @@ function Travel() {
       },
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: "visited_at",
+      header: "Date Visited",
       size: 140,
       cell: ({ row }) => {
         const { status, visitedAt } = getPlaceAny(row.original);
         const isVisited = status === "visited";
-        return (
-          <div className="space-y-0.5">
+        if (isVisited && visitedAt) {
+          return <span className="text-sm">{formatVisitedDate(visitedAt)}</span>;
+        }
+        if (!isVisited) {
+          return (
             <div className="flex items-center gap-1.5">
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                  isVisited
-                    ? "bg-green-500/10 text-green-500"
-                    : "bg-amber-500/10 text-amber-500"
-                }`}
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-500">
+                Want to go
+              </span>
+              <button
+                type="button"
+                title="Mark as visited"
+                className="text-muted-foreground/50 hover:text-green-500 transition-colors"
+                onClick={() => handleQuickMarkVisited(row.original)}
               >
-                {isVisited ? "Visited" : "Want to go"}
-              </span>
-              {!isVisited && (
-                <button
-                  type="button"
-                  title="Mark as visited"
-                  className="text-muted-foreground/50 hover:text-green-500 transition-colors"
-                  onClick={() => handleQuickMarkVisited(row.original)}
-                >
-                  <Check className="size-3.5" />
-                </button>
-              )}
+                <Check className="size-3.5" />
+              </button>
             </div>
-            {isVisited && visitedAt ? (
-              <span className="text-muted-foreground text-[11px] leading-none">
-                {formatVisitedDate(visitedAt)}
-              </span>
-            ) : null}
-          </div>
-        );
+          );
+        }
+        return <span className="text-muted-foreground/30 text-xs">\u2014</span>;
       },
     },
     {
@@ -462,13 +465,15 @@ function Travel() {
     },
   ];
 
-  const places = data?.items ?? [];
-  const maxPage = data?.pagination.max_page ?? 1;
-  const totalCount = data?.pagination.total_count ?? 0;
+  const places = useMemo(
+    () => infiniteData?.pages.flatMap((p) => p.items) ?? [],
+    [infiniteData],
+  );
+  const totalCount = infiniteData?.pages[0]?.pagination.total_count ?? 0;
   const sel = selectedPlace ? getPlaceAny(selectedPlace) : null;
 
   return (
-    <div className="space-y-5">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -501,11 +506,11 @@ function Travel() {
           <AddPlaceDialog />
         </Empty>
       ) : (
-        <div className="flex gap-4 items-start">
-          {/* Left: map + table + pagination */}
-          <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex gap-4 min-h-0 flex-1">
+          {/* Left: map + table */}
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-4">
             {places.length > 0 && (
-              <div className="flex gap-4 h-[360px]">
+              <div className="flex gap-4 h-[360px] shrink-0">
                 {/* Timeline */}
                 <div className="w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
                   <TravelTimeline
@@ -524,46 +529,20 @@ function Travel() {
               </div>
             )}
 
-            <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
-              <DataTable
-                columns={columns}
-                data={places}
-                getRowId={(row) => row.id}
-                activeRowId={selectedPlace?.id}
-                emptyMessage="No places yet."
-              />
-            </div>
-
-            {maxPage > 1 && (
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || isPlaceholderData}
-                >
-                  <ChevronLeft className="size-4" />
-                  Previous
-                </Button>
-                <span className="text-muted-foreground text-sm tabular-nums">
-                  {page} / {maxPage}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                  disabled={page >= maxPage || isPlaceholderData}
-                >
-                  Next
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-            )}
+            <VirtualDataTable
+              columns={columns}
+              data={places}
+              getRowId={(row) => row.id}
+              emptyMessage="No places yet."
+              onEndReached={fetchNextPage}
+              hasMore={hasNextPage}
+              isFetchingMore={isFetchingNextPage}
+            />
           </div>
 
           {/* Right: detail sidebar */}
           {selectedPlace && sel && (
-            <div className="w-[300px] shrink-0 rounded-lg border bg-card sticky top-4">
+            <div className="w-[300px] shrink-0 rounded-lg border bg-card overflow-y-auto">
               {/* Photo */}
               {selectedPlace.photo_url && (
                 <img

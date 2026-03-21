@@ -2,11 +2,10 @@ from collections import Counter
 from datetime import date
 from io import BytesIO
 
-from openpyxl import load_workbook
-
 from api.models.bank_profile import BankProfile
 from api.models.transaction import TransactionDirection
 from api.transactions.parsers.base import ParsedTransaction, compute_dedup_hash
+from openpyxl import load_workbook
 
 
 async def parse_xlsx(content: bytes, profile: BankProfile) -> list[ParsedTransaction]:

@@ -20,10 +20,10 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
-    op.add_column("places", sa.Column("tags", ARRAY(sa.String(50)), nullable=True))
+  """Upgrade schema."""
+  op.add_column("places", sa.Column("tags", ARRAY(sa.String(50)), nullable=True))
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    op.drop_column("places", "tags")
+  """Downgrade schema."""
+  op.drop_column("places", "tags")

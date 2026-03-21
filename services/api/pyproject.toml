@@ -55,7 +55,7 @@ dev = [
 ]
 
 [tool.taskipy.tasks]
-api = { cmd = "uvicorn src.api.app:app --reload --port 8000 --host 0.0.0.0" }
+api = { cmd = "uvicorn src.api.app:app --reload --port 8100 --host 0.0.0.0" }
 worker = { cmd = "./worker.sh start", help = "start worker" }
 worker_stop = { cmd = "./worker.sh stop", help = "stop worker gracefully" }
 worker_restart = { cmd = "./worker.sh restart", help = "restart worker" }

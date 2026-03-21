@@ -382,6 +382,192 @@ export const CategorySpendingSchema = {
   title: "CategorySpending",
 } as const;
 
+export const EquipmentSchema = {
+  type: "string",
+  enum: [
+    "barbell",
+    "dumbbell",
+    "cable",
+    "machine",
+    "bodyweight",
+    "kettlebell",
+    "band",
+    "other",
+  ],
+  title: "Equipment",
+} as const;
+
+export const ExerciseCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 255,
+      title: "Name",
+    },
+    category: {
+      $ref: "#/components/schemas/MuscleCategory",
+    },
+    equipment: {
+      $ref: "#/components/schemas/Equipment",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+  },
+  type: "object",
+  required: ["name", "category", "equipment"],
+  title: "ExerciseCreate",
+} as const;
+
+export const ExerciseListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/ExerciseSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "ExerciseListResponse",
+} as const;
+
+export const ExercisePRListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/ExercisePRSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+  },
+  type: "object",
+  required: ["items"],
+  title: "ExercisePRListResponse",
+} as const;
+
+export const ExercisePRSchemaSchema = {
+  properties: {
+    exercise_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Exercise Id",
+    },
+    exercise_name: {
+      type: "string",
+      title: "Exercise Name",
+    },
+    reps: {
+      type: "integer",
+      title: "Reps",
+    },
+    weight: {
+      type: "number",
+      title: "Weight",
+    },
+    weight_unit: {
+      type: "string",
+      title: "Weight Unit",
+    },
+    achieved_at: {
+      type: "string",
+      format: "date-time",
+      title: "Achieved At",
+    },
+  },
+  type: "object",
+  required: [
+    "exercise_id",
+    "exercise_name",
+    "reps",
+    "weight",
+    "weight_unit",
+    "achieved_at",
+  ],
+  title: "ExercisePRSchema",
+} as const;
+
+export const ExerciseSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    category: {
+      $ref: "#/components/schemas/MuscleCategory",
+    },
+    equipment: {
+      $ref: "#/components/schemas/Equipment",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    is_custom: {
+      type: "boolean",
+      title: "Is Custom",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "category",
+    "equipment",
+    "description",
+    "is_custom",
+  ],
+  title: "ExerciseSchema",
+} as const;
+
 export const GooglePlaceSearchResponseSchema = {
   properties: {
     results: {
@@ -1184,6 +1370,27 @@ export const MonthlySpendingResponseSchema = {
   type: "object",
   required: ["year", "month", "items"],
   title: "MonthlySpendingResponse",
+} as const;
+
+export const MuscleCategorySchema = {
+  type: "string",
+  enum: [
+    "chest",
+    "back",
+    "shoulders",
+    "biceps",
+    "triceps",
+    "forearms",
+    "core",
+    "quads",
+    "hamstrings",
+    "glutes",
+    "calves",
+    "cardio",
+    "olympic",
+    "other",
+  ],
+  title: "MuscleCategory",
 } as const;
 
 export const PaginationSchema = {
@@ -3299,4 +3506,449 @@ export const ValidationErrorSchema = {
   type: "object",
   required: ["loc", "msg", "type"],
   title: "ValidationError",
+} as const;
+
+export const WorkoutLogCreateSchema = {
+  properties: {
+    started_at: {
+      type: "string",
+      format: "date-time",
+      title: "Started At",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+  },
+  type: "object",
+  required: ["started_at"],
+  title: "WorkoutLogCreate",
+} as const;
+
+export const WorkoutLogDetailSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    started_at: {
+      type: "string",
+      format: "date-time",
+      title: "Started At",
+    },
+    completed_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Completed At",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+    sets: {
+      items: {
+        $ref: "#/components/schemas/WorkoutSetSchema",
+      },
+      type: "array",
+      title: "Sets",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "started_at",
+    "completed_at",
+    "notes",
+    "sets",
+  ],
+  title: "WorkoutLogDetailSchema",
+} as const;
+
+export const WorkoutLogListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/WorkoutLogSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "WorkoutLogListResponse",
+} as const;
+
+export const WorkoutLogSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    started_at: {
+      type: "string",
+      format: "date-time",
+      title: "Started At",
+    },
+    completed_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Completed At",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "started_at",
+    "completed_at",
+    "notes",
+  ],
+  title: "WorkoutLogSchema",
+} as const;
+
+export const WorkoutLogSortPropertySchema = {
+  type: "string",
+  enum: ["created_at", "-created_at", "started_at", "-started_at"],
+  title: "WorkoutLogSortProperty",
+} as const;
+
+export const WorkoutLogUpdateSchema = {
+  properties: {
+    completed_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Completed At",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+  },
+  type: "object",
+  title: "WorkoutLogUpdate",
+} as const;
+
+export const WorkoutSetCreateSchema = {
+  properties: {
+    exercise_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Exercise Id",
+    },
+    set_number: {
+      type: "integer",
+      minimum: 1,
+      title: "Set Number",
+    },
+    reps: {
+      type: "integer",
+      minimum: 0,
+      title: "Reps",
+    },
+    weight: {
+      type: "number",
+      minimum: 0,
+      title: "Weight",
+    },
+    weight_unit: {
+      type: "string",
+      maxLength: 3,
+      title: "Weight Unit",
+      default: "lbs",
+    },
+    rpe: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 10,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rpe",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+  },
+  type: "object",
+  required: ["exercise_id", "set_number", "reps", "weight"],
+  title: "WorkoutSetCreate",
+} as const;
+
+export const WorkoutSetSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    workout_log_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Workout Log Id",
+    },
+    exercise_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Exercise Id",
+    },
+    set_number: {
+      type: "integer",
+      title: "Set Number",
+    },
+    reps: {
+      type: "integer",
+      title: "Reps",
+    },
+    weight: {
+      type: "number",
+      title: "Weight",
+    },
+    weight_unit: {
+      type: "string",
+      title: "Weight Unit",
+    },
+    rpe: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rpe",
+    },
+    is_pr: {
+      type: "boolean",
+      title: "Is Pr",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "workout_log_id",
+    "exercise_id",
+    "set_number",
+    "reps",
+    "weight",
+    "weight_unit",
+    "rpe",
+    "is_pr",
+    "notes",
+  ],
+  title: "WorkoutSetSchema",
+} as const;
+
+export const WorkoutSetUpdateSchema = {
+  properties: {
+    reps: {
+      anyOf: [
+        {
+          type: "integer",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Reps",
+    },
+    weight: {
+      anyOf: [
+        {
+          type: "number",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Weight",
+    },
+    weight_unit: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 3,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Weight Unit",
+    },
+    rpe: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 10,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rpe",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+  },
+  type: "object",
+  title: "WorkoutSetUpdate",
 } as const;

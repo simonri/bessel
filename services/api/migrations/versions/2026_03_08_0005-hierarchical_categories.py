@@ -20,95 +20,179 @@ depends_on: str | Sequence[str] | None = None
 # Parent color -> children inherit the same color
 CATEGORIES = [
   # (slug, name, color, excluded, children)
-  ("revenue", "Revenue", "#22C55E", False, [
-    ("income", "Income", False),
-    ("product-sales", "Product Sales", False),
-    ("service-revenue", "Service Revenue", False),
-    ("consulting-revenue", "Consulting Revenue", False),
-    ("subscription-revenue", "Subscription Revenue", False),
-    ("interest-income", "Interest Income", False),
-    ("other-income", "Other Income", False),
-    ("customer-refunds", "Customer Refunds", False),
-    ("chargebacks-disputes", "Chargebacks & Disputes", False),
-  ]),
-  ("cost-of-goods-sold", "Cost of Goods Sold", "#EF4444", False, [
-    ("inventory", "Inventory", False),
-    ("manufacturing", "Manufacturing", False),
-    ("shipping-inbound", "Shipping (Inbound)", False),
-    ("duties-customs", "Duties & Customs", False),
-  ]),
-  ("sales-marketing", "Sales & Marketing", "#F59E0B", False, [
-    ("marketing", "Marketing", False),
-    ("advertising", "Advertising", False),
-    ("website", "Website", False),
-    ("events", "Events", False),
-    ("promotional-materials", "Promotional Materials", False),
-  ]),
-  ("operations", "Operations", "#3B82F6", False, [
-    ("office-supplies", "Office Supplies", False),
-    ("rent", "Rent", False),
-    ("utilities", "Utilities", False),
-    ("facilities-expenses", "Facilities Expenses", False),
-    ("equipment", "Equipment", False),
-    ("internet-and-telephone", "Internet & Telephone", False),
-    ("shipping", "Shipping", False),
-  ]),
-  ("professional-services", "Professional Services", "#8B5CF6", False, [
-    ("professional-services-fees", "Professional Services Fees", False),
-    ("contractors", "Contractors", False),
-    ("insurance", "Insurance", False),
-  ]),
-  ("human-resources", "Human Resources", "#EC4899", False, [
-    ("salary", "Salary", False),
-    ("training", "Training", False),
-    ("benefits", "Benefits", False),
-  ]),
-  ("travel-entertainment", "Travel & Entertainment", "#14B8A6", False, [
-    ("travel", "Travel", False),
-    ("meals", "Meals", False),
-    ("activity", "Activity", False),
-  ]),
-  ("technology", "Technology", "#6366F1", False, [
-    ("software", "Software", False),
-    ("non-software-subscriptions", "Non-Software Subscriptions", False),
-  ]),
-  ("banking-finance", "Banking & Finance", "#64748B", False, [
-    ("transfer", "Transfer", False),
-    ("credit-card-payment", "Credit Card Payment", True),
-    ("banking-fees", "Banking Fees", False),
-    ("loan-proceeds", "Loan Proceeds", False),
-    ("loan-principal-repayment", "Loan Principal Repayment", False),
-    ("interest-expense", "Interest Expense", False),
-    ("payouts", "Payouts", False),
-    ("processor-fees", "Processor Fees", False),
-    ("fees", "Fees", False),
-  ]),
-  ("assets-capex", "Assets", "#0EA5E9", False, [
-    ("fixed-assets", "Fixed Assets", False),
-    ("prepaid-expenses", "Prepaid Expenses", False),
-  ]),
-  ("liabilities-debt", "Liabilities & Debt", "#F97316", False, [
-    ("leases", "Leases", False),
-    ("deferred-revenue", "Deferred Revenue", False),
-  ]),
-  ("taxes", "Taxes & Government", "#DC2626", False, [
-    ("vat-gst-pst-qst-payments", "VAT/GST/PST/QST Payments", False),
-    ("sales-use-tax-payments", "Sales & Use Tax Payments", False),
-    ("income-tax-payments", "Income Tax Payments", False),
-    ("payroll-tax-remittances", "Payroll Tax Remittances", False),
-    ("employer-taxes", "Employer Taxes", False),
-    ("government-fees", "Government Fees", False),
-  ]),
-  ("owner-equity", "Owner / Equity", "#A855F7", False, [
-    ("owner-draws", "Owner Draws", False),
-    ("capital-investment", "Capital Investment", False),
-    ("charitable-donations", "Charitable Donations", False),
-  ]),
-  ("system", "System", "#6B7280", False, [
-    ("uncategorized", "Uncategorized", False),
-    ("other", "Other", False),
-    ("internal-transfer", "Internal Transfer", True),
-  ]),
+  (
+    "revenue",
+    "Revenue",
+    "#22C55E",
+    False,
+    [
+      ("income", "Income", False),
+      ("product-sales", "Product Sales", False),
+      ("service-revenue", "Service Revenue", False),
+      ("consulting-revenue", "Consulting Revenue", False),
+      ("subscription-revenue", "Subscription Revenue", False),
+      ("interest-income", "Interest Income", False),
+      ("other-income", "Other Income", False),
+      ("customer-refunds", "Customer Refunds", False),
+      ("chargebacks-disputes", "Chargebacks & Disputes", False),
+    ],
+  ),
+  (
+    "cost-of-goods-sold",
+    "Cost of Goods Sold",
+    "#EF4444",
+    False,
+    [
+      ("inventory", "Inventory", False),
+      ("manufacturing", "Manufacturing", False),
+      ("shipping-inbound", "Shipping (Inbound)", False),
+      ("duties-customs", "Duties & Customs", False),
+    ],
+  ),
+  (
+    "sales-marketing",
+    "Sales & Marketing",
+    "#F59E0B",
+    False,
+    [
+      ("marketing", "Marketing", False),
+      ("advertising", "Advertising", False),
+      ("website", "Website", False),
+      ("events", "Events", False),
+      ("promotional-materials", "Promotional Materials", False),
+    ],
+  ),
+  (
+    "operations",
+    "Operations",
+    "#3B82F6",
+    False,
+    [
+      ("office-supplies", "Office Supplies", False),
+      ("rent", "Rent", False),
+      ("utilities", "Utilities", False),
+      ("facilities-expenses", "Facilities Expenses", False),
+      ("equipment", "Equipment", False),
+      ("internet-and-telephone", "Internet & Telephone", False),
+      ("shipping", "Shipping", False),
+    ],
+  ),
+  (
+    "professional-services",
+    "Professional Services",
+    "#8B5CF6",
+    False,
+    [
+      ("professional-services-fees", "Professional Services Fees", False),
+      ("contractors", "Contractors", False),
+      ("insurance", "Insurance", False),
+    ],
+  ),
+  (
+    "human-resources",
+    "Human Resources",
+    "#EC4899",
+    False,
+    [
+      ("salary", "Salary", False),
+      ("training", "Training", False),
+      ("benefits", "Benefits", False),
+    ],
+  ),
+  (
+    "travel-entertainment",
+    "Travel & Entertainment",
+    "#14B8A6",
+    False,
+    [
+      ("travel", "Travel", False),
+      ("meals", "Meals", False),
+      ("activity", "Activity", False),
+    ],
+  ),
+  (
+    "technology",
+    "Technology",
+    "#6366F1",
+    False,
+    [
+      ("software", "Software", False),
+      ("non-software-subscriptions", "Non-Software Subscriptions", False),
+    ],
+  ),
+  (
+    "banking-finance",
+    "Banking & Finance",
+    "#64748B",
+    False,
+    [
+      ("transfer", "Transfer", False),
+      ("credit-card-payment", "Credit Card Payment", True),
+      ("banking-fees", "Banking Fees", False),
+      ("loan-proceeds", "Loan Proceeds", False),
+      ("loan-principal-repayment", "Loan Principal Repayment", False),
+      ("interest-expense", "Interest Expense", False),
+      ("payouts", "Payouts", False),
+      ("processor-fees", "Processor Fees", False),
+      ("fees", "Fees", False),
+    ],
+  ),
+  (
+    "assets-capex",
+    "Assets",
+    "#0EA5E9",
+    False,
+    [
+      ("fixed-assets", "Fixed Assets", False),
+      ("prepaid-expenses", "Prepaid Expenses", False),
+    ],
+  ),
+  (
+    "liabilities-debt",
+    "Liabilities & Debt",
+    "#F97316",
+    False,
+    [
+      ("leases", "Leases", False),
+      ("deferred-revenue", "Deferred Revenue", False),
+    ],
+  ),
+  (
+    "taxes",
+    "Taxes & Government",
+    "#DC2626",
+    False,
+    [
+      ("vat-gst-pst-qst-payments", "VAT/GST/PST/QST Payments", False),
+      ("sales-use-tax-payments", "Sales & Use Tax Payments", False),
+      ("income-tax-payments", "Income Tax Payments", False),
+      ("payroll-tax-remittances", "Payroll Tax Remittances", False),
+      ("employer-taxes", "Employer Taxes", False),
+      ("government-fees", "Government Fees", False),
+    ],
+  ),
+  (
+    "owner-equity",
+    "Owner / Equity",
+    "#A855F7",
+    False,
+    [
+      ("owner-draws", "Owner Draws", False),
+      ("capital-investment", "Capital Investment", False),
+      ("charitable-donations", "Charitable Donations", False),
+    ],
+  ),
+  (
+    "system",
+    "System",
+    "#6B7280",
+    False,
+    [
+      ("uncategorized", "Uncategorized", False),
+      ("other", "Other", False),
+      ("internal-transfer", "Internal Transfer", True),
+    ],
+  ),
 ]
 
 
@@ -147,8 +231,11 @@ def upgrade() -> None:
           "VALUES (gen_random_uuid(), :slug, :name, :color, :excluded, "
           "(SELECT id FROM categories WHERE slug = :parent_slug), now())"
         ).bindparams(
-          slug=child_slug, name=child_name, color=color,
-          excluded=child_excluded, parent_slug=parent_slug,
+          slug=child_slug,
+          name=child_name,
+          color=color,
+          excluded=child_excluded,
+          parent_slug=parent_slug,
         )
       )
 
@@ -171,15 +258,18 @@ def downgrade() -> None:
 
   # Re-seed old flat categories
   old_categories = [
-    ("Groceries", "#22C55E"), ("Transport", "#3B82F6"), ("Salary", "#10B981"),
-    ("Dining", "#F59E0B"), ("Entertainment", "#8B5CF6"), ("Healthcare", "#EF4444"),
-    ("Utilities", "#6366F1"), ("Shopping", "#EC4899"), ("Subscriptions", "#14B8A6"),
+    ("Groceries", "#22C55E"),
+    ("Transport", "#3B82F6"),
+    ("Salary", "#10B981"),
+    ("Dining", "#F59E0B"),
+    ("Entertainment", "#8B5CF6"),
+    ("Healthcare", "#EF4444"),
+    ("Utilities", "#6366F1"),
+    ("Shopping", "#EC4899"),
+    ("Subscriptions", "#14B8A6"),
     ("Transfers", "#6B7280"),
   ]
   for name, color in old_categories:
     op.execute(
-      sa.text(
-        "INSERT INTO categories (id, name, color, created_at) "
-        "VALUES (gen_random_uuid(), :name, :color, now())"
-      ).bindparams(name=name, color=color)
+      sa.text("INSERT INTO categories (id, name, color, created_at) VALUES (gen_random_uuid(), :name, :color, now())").bindparams(name=name, color=color)
     )

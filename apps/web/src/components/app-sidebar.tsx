@@ -8,6 +8,7 @@ import {
   MapPin,
   CheckSquare,
   BookOpen,
+  Dumbbell,
   Settings,
 } from "lucide-react";
 import {
@@ -29,6 +30,7 @@ const navItems = [
   { title: "Investments", icon: TrendingUp, href: "/investments" as string },
   { title: "Tasks", icon: CheckSquare, href: "/tasks" as string },
   { title: "Journal", icon: BookOpen, href: "/journal" as string },
+  { title: "Workout", icon: Dumbbell, href: "/workout" as string },
   { title: "Travel", icon: MapPin, href: "/travel" as string },
   { title: "Reports", icon: PieChart, href: "/reports" as string },
 ];

@@ -311,6 +311,130 @@ export type CategorySpending = {
 };
 
 /**
+ * Equipment
+ */
+export const Equipment = {
+  BARBELL: "barbell",
+  DUMBBELL: "dumbbell",
+  CABLE: "cable",
+  MACHINE: "machine",
+  BODYWEIGHT: "bodyweight",
+  KETTLEBELL: "kettlebell",
+  BAND: "band",
+  OTHER: "other",
+} as const;
+
+/**
+ * Equipment
+ */
+export type Equipment = (typeof Equipment)[keyof typeof Equipment];
+
+/**
+ * ExerciseCreate
+ */
+export type ExerciseCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  category: MuscleCategory;
+  equipment: Equipment;
+  /**
+   * Description
+   */
+  description?: string | null;
+};
+
+/**
+ * ExerciseListResponse
+ */
+export type ExerciseListResponse = {
+  /**
+   * Items
+   */
+  items: Array<ExerciseSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * ExercisePRListResponse
+ */
+export type ExercisePrListResponse = {
+  /**
+   * Items
+   */
+  items: Array<ExercisePrSchema>;
+};
+
+/**
+ * ExercisePRSchema
+ */
+export type ExercisePrSchema = {
+  /**
+   * Exercise Id
+   */
+  exercise_id: string;
+  /**
+   * Exercise Name
+   */
+  exercise_name: string;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Weight
+   */
+  weight: number;
+  /**
+   * Weight Unit
+   */
+  weight_unit: string;
+  /**
+   * Achieved At
+   */
+  achieved_at: Date;
+};
+
+/**
+ * ExerciseSchema
+ */
+export type ExerciseSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  category: MuscleCategory;
+  equipment: Equipment;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Is Custom
+   */
+  is_custom: boolean;
+};
+
+/**
  * GooglePlaceSearchResponse
  */
 export type GooglePlaceSearchResponse = {
@@ -803,6 +927,32 @@ export type MonthlySpendingResponse = {
    */
   items: Array<CategorySpending>;
 };
+
+/**
+ * MuscleCategory
+ */
+export const MuscleCategory = {
+  CHEST: "chest",
+  BACK: "back",
+  SHOULDERS: "shoulders",
+  BICEPS: "biceps",
+  TRICEPS: "triceps",
+  FOREARMS: "forearms",
+  CORE: "core",
+  QUADS: "quads",
+  HAMSTRINGS: "hamstrings",
+  GLUTES: "glutes",
+  CALVES: "calves",
+  CARDIO: "cardio",
+  OLYMPIC: "olympic",
+  OTHER: "other",
+} as const;
+
+/**
+ * MuscleCategory
+ */
+export type MuscleCategory =
+  (typeof MuscleCategory)[keyof typeof MuscleCategory];
 
 /**
  * Pagination
@@ -1964,6 +2114,257 @@ export type ValidationError = {
   ctx?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * WorkoutLogCreate
+ */
+export type WorkoutLogCreate = {
+  /**
+   * Started At
+   */
+  started_at: Date;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+};
+
+/**
+ * WorkoutLogDetailSchema
+ */
+export type WorkoutLogDetailSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Started At
+   */
+  started_at: Date;
+  /**
+   * Completed At
+   */
+  completed_at: Date | null;
+  /**
+   * Notes
+   */
+  notes: string | null;
+  /**
+   * Sets
+   */
+  sets: Array<WorkoutSetSchema>;
+};
+
+/**
+ * WorkoutLogListResponse
+ */
+export type WorkoutLogListResponse = {
+  /**
+   * Items
+   */
+  items: Array<WorkoutLogSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * WorkoutLogSchema
+ */
+export type WorkoutLogSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Started At
+   */
+  started_at: Date;
+  /**
+   * Completed At
+   */
+  completed_at: Date | null;
+  /**
+   * Notes
+   */
+  notes: string | null;
+};
+
+/**
+ * WorkoutLogSortProperty
+ */
+export const WorkoutLogSortProperty = {
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  STARTED_AT: "started_at",
+  "-STARTED_AT": "-started_at",
+} as const;
+
+/**
+ * WorkoutLogSortProperty
+ */
+export type WorkoutLogSortProperty =
+  (typeof WorkoutLogSortProperty)[keyof typeof WorkoutLogSortProperty];
+
+/**
+ * WorkoutLogUpdate
+ */
+export type WorkoutLogUpdate = {
+  /**
+   * Completed At
+   */
+  completed_at?: Date | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+};
+
+/**
+ * WorkoutSetCreate
+ */
+export type WorkoutSetCreate = {
+  /**
+   * Exercise Id
+   */
+  exercise_id: string;
+  /**
+   * Set Number
+   */
+  set_number: number;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Weight
+   */
+  weight: number;
+  /**
+   * Weight Unit
+   */
+  weight_unit?: string;
+  /**
+   * Rpe
+   */
+  rpe?: number | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+};
+
+/**
+ * WorkoutSetSchema
+ */
+export type WorkoutSetSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Workout Log Id
+   */
+  workout_log_id: string;
+  /**
+   * Exercise Id
+   */
+  exercise_id: string;
+  /**
+   * Set Number
+   */
+  set_number: number;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Weight
+   */
+  weight: number;
+  /**
+   * Weight Unit
+   */
+  weight_unit: string;
+  /**
+   * Rpe
+   */
+  rpe: number | null;
+  /**
+   * Is Pr
+   */
+  is_pr: boolean;
+  /**
+   * Notes
+   */
+  notes: string | null;
+};
+
+/**
+ * WorkoutSetUpdate
+ */
+export type WorkoutSetUpdate = {
+  /**
+   * Reps
+   */
+  reps?: number | null;
+  /**
+   * Weight
+   */
+  weight?: number | null;
+  /**
+   * Weight Unit
+   */
+  weight_unit?: string | null;
+  /**
+   * Rpe
+   */
+  rpe?: number | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
 };
 
 export type HealthzHealthzGetData = {
@@ -3537,3 +3938,421 @@ export type MonthlyFlowV1TransactionsMonthlyFlowGetResponses = {
 
 export type MonthlyFlowV1TransactionsMonthlyFlowGetResponse =
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses[keyof MonthlyFlowV1TransactionsMonthlyFlowGetResponses];
+
+export type ListExercisesV1WorkoutsExercisesGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Q
+     *
+     * Search exercises by name.
+     */
+    q?: string | null;
+    /**
+     * Category
+     *
+     * Filter by muscle category.
+     */
+    category?: MuscleCategory | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/workouts/exercises";
+};
+
+export type ListExercisesV1WorkoutsExercisesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListExercisesV1WorkoutsExercisesGetError =
+  ListExercisesV1WorkoutsExercisesGetErrors[keyof ListExercisesV1WorkoutsExercisesGetErrors];
+
+export type ListExercisesV1WorkoutsExercisesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ExerciseListResponse;
+};
+
+export type ListExercisesV1WorkoutsExercisesGetResponse =
+  ListExercisesV1WorkoutsExercisesGetResponses[keyof ListExercisesV1WorkoutsExercisesGetResponses];
+
+export type CreateExerciseV1WorkoutsExercisesPostData = {
+  body: ExerciseCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/workouts/exercises";
+};
+
+export type CreateExerciseV1WorkoutsExercisesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateExerciseV1WorkoutsExercisesPostError =
+  CreateExerciseV1WorkoutsExercisesPostErrors[keyof CreateExerciseV1WorkoutsExercisesPostErrors];
+
+export type CreateExerciseV1WorkoutsExercisesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: ExerciseSchema;
+};
+
+export type CreateExerciseV1WorkoutsExercisesPostResponse =
+  CreateExerciseV1WorkoutsExercisesPostResponses[keyof CreateExerciseV1WorkoutsExercisesPostResponses];
+
+export type ListRecentExercisesV1WorkoutsExercisesRecentGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Limit
+     */
+    limit?: number;
+  };
+  url: "/v1/workouts/exercises/recent";
+};
+
+export type ListRecentExercisesV1WorkoutsExercisesRecentGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListRecentExercisesV1WorkoutsExercisesRecentGetError =
+  ListRecentExercisesV1WorkoutsExercisesRecentGetErrors[keyof ListRecentExercisesV1WorkoutsExercisesRecentGetErrors];
+
+export type ListRecentExercisesV1WorkoutsExercisesRecentGetResponses = {
+  /**
+   * Response List Recent Exercises V1 Workouts Exercises Recent Get
+   *
+   * Successful Response
+   */
+  200: Array<ExerciseSchema>;
+};
+
+export type ListRecentExercisesV1WorkoutsExercisesRecentGetResponse =
+  ListRecentExercisesV1WorkoutsExercisesRecentGetResponses[keyof ListRecentExercisesV1WorkoutsExercisesRecentGetResponses];
+
+export type ListWorkoutsV1WorkoutsGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<WorkoutLogSortProperty> | null;
+  };
+  url: "/v1/workouts";
+};
+
+export type ListWorkoutsV1WorkoutsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListWorkoutsV1WorkoutsGetError =
+  ListWorkoutsV1WorkoutsGetErrors[keyof ListWorkoutsV1WorkoutsGetErrors];
+
+export type ListWorkoutsV1WorkoutsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: WorkoutLogListResponse;
+};
+
+export type ListWorkoutsV1WorkoutsGetResponse =
+  ListWorkoutsV1WorkoutsGetResponses[keyof ListWorkoutsV1WorkoutsGetResponses];
+
+export type CreateWorkoutV1WorkoutsPostData = {
+  body: WorkoutLogCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/workouts";
+};
+
+export type CreateWorkoutV1WorkoutsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateWorkoutV1WorkoutsPostError =
+  CreateWorkoutV1WorkoutsPostErrors[keyof CreateWorkoutV1WorkoutsPostErrors];
+
+export type CreateWorkoutV1WorkoutsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: WorkoutLogSchema;
+};
+
+export type CreateWorkoutV1WorkoutsPostResponse =
+  CreateWorkoutV1WorkoutsPostResponses[keyof CreateWorkoutV1WorkoutsPostResponses];
+
+export type DeleteWorkoutV1WorkoutsWorkoutIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Workout Id
+     */
+    workout_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/{workout_id}";
+};
+
+export type DeleteWorkoutV1WorkoutsWorkoutIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteWorkoutV1WorkoutsWorkoutIdDeleteError =
+  DeleteWorkoutV1WorkoutsWorkoutIdDeleteErrors[keyof DeleteWorkoutV1WorkoutsWorkoutIdDeleteErrors];
+
+export type DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponse =
+  DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponses[keyof DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponses];
+
+export type GetWorkoutV1WorkoutsWorkoutIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Workout Id
+     */
+    workout_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/{workout_id}";
+};
+
+export type GetWorkoutV1WorkoutsWorkoutIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetWorkoutV1WorkoutsWorkoutIdGetError =
+  GetWorkoutV1WorkoutsWorkoutIdGetErrors[keyof GetWorkoutV1WorkoutsWorkoutIdGetErrors];
+
+export type GetWorkoutV1WorkoutsWorkoutIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: WorkoutLogDetailSchema;
+};
+
+export type GetWorkoutV1WorkoutsWorkoutIdGetResponse =
+  GetWorkoutV1WorkoutsWorkoutIdGetResponses[keyof GetWorkoutV1WorkoutsWorkoutIdGetResponses];
+
+export type UpdateWorkoutV1WorkoutsWorkoutIdPatchData = {
+  body: WorkoutLogUpdate;
+  path: {
+    /**
+     * Workout Id
+     */
+    workout_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/{workout_id}";
+};
+
+export type UpdateWorkoutV1WorkoutsWorkoutIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateWorkoutV1WorkoutsWorkoutIdPatchError =
+  UpdateWorkoutV1WorkoutsWorkoutIdPatchErrors[keyof UpdateWorkoutV1WorkoutsWorkoutIdPatchErrors];
+
+export type UpdateWorkoutV1WorkoutsWorkoutIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: WorkoutLogSchema;
+};
+
+export type UpdateWorkoutV1WorkoutsWorkoutIdPatchResponse =
+  UpdateWorkoutV1WorkoutsWorkoutIdPatchResponses[keyof UpdateWorkoutV1WorkoutsWorkoutIdPatchResponses];
+
+export type CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData = {
+  body: WorkoutSetCreate;
+  path: {
+    /**
+     * Workout Id
+     */
+    workout_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/{workout_id}/sets";
+};
+
+export type CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostError =
+  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostErrors[keyof CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostErrors];
+
+export type CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: WorkoutSetSchema;
+};
+
+export type CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse =
+  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponses[keyof CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponses];
+
+export type DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Workout Id
+     */
+    workout_id: string;
+    /**
+     * Set Id
+     */
+    set_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/{workout_id}/sets/{set_id}";
+};
+
+export type DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteError =
+  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteErrors[keyof DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteErrors];
+
+export type DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponse =
+  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponses[keyof DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponses];
+
+export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData = {
+  body: WorkoutSetUpdate;
+  path: {
+    /**
+     * Workout Id
+     */
+    workout_id: string;
+    /**
+     * Set Id
+     */
+    set_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/{workout_id}/sets/{set_id}";
+};
+
+export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchError =
+  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchErrors[keyof UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchErrors];
+
+export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: WorkoutSetSchema;
+};
+
+export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse =
+  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses[keyof UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses];
+
+export type GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/exercises/{exercise_id}/prs";
+};
+
+export type GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetError =
+  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetErrors[keyof GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetErrors];
+
+export type GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ExercisePrListResponse;
+};
+
+export type GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse =
+  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses[keyof GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses];

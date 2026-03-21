@@ -807,7 +807,7 @@ function Journal() {
             <div className="space-y-5">
               {/* Metrics row */}
               <div className="rounded-lg border bg-card p-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <MetricPicker
                     icon={Sparkles}
                     label="Mood"

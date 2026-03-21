@@ -10,9 +10,7 @@ from api.models.security import Security
 
 class SecurityPrice(RecordModel):
   __tablename__ = "security_prices"
-  __table_args__ = (
-    UniqueConstraint("security_id", "price_date", name="security_prices_security_id_price_date_key"),
-  )
+  __table_args__ = (UniqueConstraint("security_id", "price_date", name="security_prices_security_id_price_date_key"),)
 
   security_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("securities.id", ondelete="CASCADE"), nullable=False)
   price_date: Mapped[datetime] = mapped_column(Date, nullable=False)

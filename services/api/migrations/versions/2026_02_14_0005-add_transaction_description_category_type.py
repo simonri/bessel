@@ -19,14 +19,14 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
-    op.add_column("transactions", sa.Column("description", sa.Text(), nullable=True))
-    op.add_column("transactions", sa.Column("category", sa.String(length=255), nullable=True))
-    op.add_column("transactions", sa.Column("transaction_type", sa.String(length=50), nullable=True))
+  """Upgrade schema."""
+  op.add_column("transactions", sa.Column("description", sa.Text(), nullable=True))
+  op.add_column("transactions", sa.Column("category", sa.String(length=255), nullable=True))
+  op.add_column("transactions", sa.Column("transaction_type", sa.String(length=50), nullable=True))
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    op.drop_column("transactions", "transaction_type")
-    op.drop_column("transactions", "category")
-    op.drop_column("transactions", "description")
+  """Downgrade schema."""
+  op.drop_column("transactions", "transaction_type")
+  op.drop_column("transactions", "category")
+  op.drop_column("transactions", "description")

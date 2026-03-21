@@ -19,8 +19,8 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.alter_column("places", "photo_url", type_=sa.Text(), existing_type=sa.String(500))
+  op.alter_column("places", "photo_url", type_=sa.Text(), existing_type=sa.String(500))
 
 
 def downgrade() -> None:
-    op.alter_column("places", "photo_url", type_=sa.String(500), existing_type=sa.Text())
+  op.alter_column("places", "photo_url", type_=sa.String(500), existing_type=sa.Text())

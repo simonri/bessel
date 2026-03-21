@@ -2,6 +2,9 @@ from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
+
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
 from api.common.utils import utc_now
@@ -10,17 +13,7 @@ from api.models.task import Task
 from api.postgres import AsyncSession, get_db_session
 from api.tasks.recurrence import compute_next_due_date
 from api.tasks.repository import TaskRepository
-from api.tasks.schemas import (
-  TaskCompleteResponse,
-  TaskCreate,
-  TaskListResponse,
-  TaskReorderItem,
-  TaskSchema,
-  TaskStatus,
-  TaskUpdate,
-)
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from api.tasks.schemas import TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -230,12 +223,7 @@ async def reorder_tasks(
 async def list_projects(
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[str]:
-  result = await session.execute(
-    select(Task.project)
-    .where(Task.project.is_not(None))
-    .group_by(Task.project)
-    .order_by(func.count().desc())
-  )
+  result = await session.execute(select(Task.project).where(Task.project.is_not(None)).group_by(Task.project).order_by(func.count().desc()))
   return [row[0] for row in result.all()]
 
 
@@ -247,10 +235,5 @@ async def list_projects(
 async def list_areas(
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[str]:
-  result = await session.execute(
-    select(Task.area)
-    .where(Task.area.is_not(None))
-    .group_by(Task.area)
-    .order_by(func.count().desc())
-  )
+  result = await session.execute(select(Task.area).where(Task.area.is_not(None)).group_by(Task.area).order_by(func.count().desc()))
   return [row[0] for row in result.all()]
