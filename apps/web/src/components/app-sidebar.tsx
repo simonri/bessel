@@ -46,11 +46,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Metron" asChild>
               <Link to="/">
-                <img
-                  src="/logo.jpeg"
-                  alt="Metron"
-                  className="size-4 rounded"
-                />
+                <img src="/logo.jpeg" alt="Metron" className="size-4 rounded" />
                 <span className="font-semibold">Metron</span>
               </Link>
             </SidebarMenuButton>
@@ -84,11 +80,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Settings"
-              isActive={currentPath === "/settings"}
-              asChild
-            >
+            <SidebarMenuButton tooltip="Settings" isActive={currentPath === "/settings"} asChild>
               <Link to={"/settings" as string}>
                 <Settings />
                 <span>Settings</span>

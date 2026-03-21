@@ -2,24 +2,11 @@
 name = "metron"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-  "asyncpg>=0.31.0",
-  "mypy-boto3-s3>=1.42.3",
-  "openapi-python-client>=0.28.0",
-]
+dependencies = ["asyncpg>=0.31.0", "mypy-boto3-s3>=1.42.3", "openapi-python-client>=0.28.0"]
 
 [tool.uv.workspace]
-members = [
-  "services/*",
-  "packages/python_client"
-]
-exclude = [
-  "**/__pycache__",
-  "**/.venv",
-  "**/.pytest_cache",
-  "**/.mypy_cache",
-  "**/.ruff_cache",
-]
+members = ["services/*", "packages/python_client"]
+exclude = ["**/__pycache__", "**/.venv", "**/.pytest_cache", "**/.mypy_cache", "**/.ruff_cache"]
 
 # ============================================
 # RUFF CONFIGURATION
@@ -42,25 +29,33 @@ exclude = [
 
 [tool.ruff.lint]
 select = [
-  "E", "F", "W",      # pycodestyle + pyflakes
-  "PIE", "C4", "ISC", # misc improvements
-  "A", "B",           # flake8-builtins + bugbear
-  "NPY",              # numpy-specific rules
-  "UP",               # pyupgrade
-  "I",                # import ordering
-  "TRY203", "TRY400", "TRY401", # try/except best practices
-  "RUF008", "RUF100", # ruff-specific rules
-  "TID251",           # banned imports
-  "PLR1704",          # pylint rules
+  "E",
+  "F",
+  "W", # pycodestyle + pyflakes
+  "PIE",
+  "C4",
+  "ISC", # misc improvements
+  "A",
+  "B", # flake8-builtins + bugbear
+  "NPY", # numpy-specific rules
+  "UP", # pyupgrade
+  "I", # import ordering
+  "TRY203",
+  "TRY400",
+  "TRY401", # try/except best practices
+  "RUF008",
+  "RUF100", # ruff-specific rules
+  "TID251", # banned imports
+  "PLR1704", # pylint rules
 ]
 
 ignore = [
-  "E741",   # ambiguous variable name
-  "E402",   # module level import not at top
-  "C408",   # unnecessary dict call
+  "E741", # ambiguous variable name
+  "E402", # module level import not at top
+  "C408", # unnecessary dict call
   "ISC003", # explicit string concatenation
-  "B027",   # empty method without abstract decorator
-  "B024",   # abstract base class without abstract methods
+  "B027", # empty method without abstract decorator
+  "B024", # abstract base class without abstract methods
   "NPY002", # old numpy random syntax (we prefer it)
 ]
 
@@ -85,12 +80,7 @@ disable_error_code = ["import-untyped"]
 explicit_package_bases = true
 check_untyped_defs = true
 
-exclude = [
-  "tests",
-  "proto",
-  ".venv",
-  "__pycache__",
-]
+exclude = ["tests", "proto", ".venv", "__pycache__"]
 
 # ============================================
 # PYTEST CONFIGURATION

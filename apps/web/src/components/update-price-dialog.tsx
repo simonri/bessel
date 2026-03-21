@@ -19,6 +19,7 @@ import {
 } from "@metron/ui/components/dialog";
 import { Input } from "@metron/ui/components/input";
 import { Label } from "@metron/ui/components/label";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
@@ -29,10 +30,14 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
   const mutation = useMutation({
     ...createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client }).queryKey,
       });
+      toast.success("Price updated");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to update price");
     },
   });
 
@@ -84,19 +89,23 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
       </Button>
       <DialogContent
         className="sm:max-w-sm"
-        onOpenAutoFocus={(e) => { e.preventDefault(); priceRef.current?.focus(); }}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          priceRef.current?.focus();
+        }}
       >
         <DialogHeader>
           <DialogTitle>Update Price</DialogTitle>
           <DialogDescription>
-            {security.name}{security.ticker ? ` (${security.ticker})` : ""} — {security.currency}
+            {security.name}
+            {security.ticker ? ` (${security.ticker})` : ""} — {security.currency}
           </DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -139,7 +148,9 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
           </div>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">Failed to save. A price may already exist for this date.</p>
+            <p className="text-destructive text-sm">
+              Failed to save. A price may already exist for this date.
+            </p>
           )}
 
           <DialogFooter>

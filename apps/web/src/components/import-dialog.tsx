@@ -26,6 +26,7 @@ import {
   listTransactionsV1TransactionsGetQueryKey,
   listBankAccountsV1BankAccountsGetOptions,
 } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 const BANK_OPTIONS = [
@@ -54,9 +55,13 @@ export function ImportDialog() {
     ...importTransactionsV1TransactionsImportPostMutation({ client }),
     onSuccess: (data) => {
       setResult(data);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
       });
+      toast.success(`${data.created} transactions imported`);
+    },
+    onError: () => {
+      toast.error("Import failed");
     },
   });
 
@@ -102,15 +107,13 @@ export function ImportDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Import Transactions</DialogTitle>
-          <DialogDescription>
-            Upload a bank export to import transactions.
-          </DialogDescription>
+          <DialogDescription>Upload a bank export to import transactions.</DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -118,7 +121,9 @@ export function ImportDialog() {
             name="bank"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="bank">Bank</Label>
+                <Label htmlFor="bank">
+                  Bank <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={field.state.value}
                   onValueChange={(v) => {
@@ -149,7 +154,9 @@ export function ImportDialog() {
             name="bankAccountId"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="bank-account">Bank Account</Label>
+                <Label htmlFor="bank-account">
+                  Bank Account <span className="text-destructive">*</span>
+                </Label>
                 <Select value={field.state.value} onValueChange={field.handleChange}>
                   <SelectTrigger id="bank-account" className="w-full">
                     <SelectValue placeholder="Select an account" />
@@ -170,7 +177,9 @@ export function ImportDialog() {
             name="file"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="import-file">File</Label>
+                <Label htmlFor="import-file">
+                  File <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="import-file"
                   ref={fileInputRef}
@@ -186,12 +195,10 @@ export function ImportDialog() {
           {result && (
             <div className="text-sm rounded-md border p-3">
               <p>
-                <span className="font-medium">{result.created}</span>{" "}
-                transactions imported
+                <span className="font-medium">{result.created}</span> transactions imported
               </p>
               <p>
-                <span className="font-medium">{result.skipped}</span>{" "}
-                duplicates skipped
+                <span className="font-medium">{result.skipped}</span> duplicates skipped
               </p>
             </div>
           )}
@@ -203,18 +210,19 @@ export function ImportDialog() {
           )}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-            >
+            <Button type="button" variant="outline" onClick={handleClose}>
               {result ? "Done" : "Cancel"}
             </Button>
             {!result && (
               <form.Subscribe
-                selector={(state) => [state.values.file, state.values.bankAccountId, state.values.bank] as const}
+                selector={(state) =>
+                  [state.values.file, state.values.bankAccountId, state.values.bank] as const
+                }
                 children={([file, bankAccountId, bank]) => (
-                  <Button type="submit" disabled={mutation.isPending || !file || !bankAccountId || !bank}>
+                  <Button
+                    type="submit"
+                    disabled={mutation.isPending || !file || !bankAccountId || !bank}
+                  >
                     {mutation.isPending ? "Importing..." : "Import"}
                   </Button>
                 )}

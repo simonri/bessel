@@ -21,10 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@metron/ui/components/select";
-import {
-  createTaskV1TasksPostMutation,
-  listTasksV1TasksGetQueryKey,
-} from "@metron/client";
+import { createTaskV1TasksPostMutation, listTasksV1TasksGetQueryKey } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 const PRIORITIES = [
@@ -52,10 +50,14 @@ export function CreateTaskDialog() {
   const mutation = useMutation({
     ...createTaskV1TasksPostMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listTasksV1TasksGetQueryKey({ client }),
       });
+      toast.success("Task created");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to create task");
     },
   });
 
@@ -82,10 +84,18 @@ export function CreateTaskDialog() {
           project: value.project || undefined,
           area: value.area || undefined,
           is_recurring: isRecurring,
-          rrule_frequency: isRecurring ? (value.frequency as "daily" | "weekly" | "monthly" | "yearly") : undefined,
+          rrule_frequency: isRecurring
+            ? (value.frequency as "daily" | "weekly" | "monthly" | "yearly")
+            : undefined,
           rrule_interval: isRecurring ? 1 : undefined,
-          rrule_day_of_week: value.frequency === "weekly" && value.rruleDayOfWeek ? Number(value.rruleDayOfWeek) : undefined,
-          rrule_day_of_month: value.frequency === "monthly" && value.rruleDayOfMonth ? Number(value.rruleDayOfMonth) : undefined,
+          rrule_day_of_week:
+            value.frequency === "weekly" && value.rruleDayOfWeek
+              ? Number(value.rruleDayOfWeek)
+              : undefined,
+          rrule_day_of_month:
+            value.frequency === "monthly" && value.rruleDayOfMonth
+              ? Number(value.rruleDayOfMonth)
+              : undefined,
         },
       });
     },
@@ -114,7 +124,7 @@ export function CreateTaskDialog() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -122,7 +132,9 @@ export function CreateTaskDialog() {
             name="title"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="task-title">Title</Label>
+                <Label htmlFor="task-title">
+                  Title <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="task-title"
                   value={field.state.value}
@@ -194,7 +206,10 @@ export function CreateTaskDialog() {
               children={(field) => (
                 <div className="space-y-2">
                   <Label>Area</Label>
-                  <Select value={field.state.value || "none"} onValueChange={(v) => field.handleChange(v === "none" ? "" : v)}>
+                  <Select
+                    value={field.state.value || "none"}
+                    onValueChange={(v) => field.handleChange(v === "none" ? "" : v)}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select area" />
                     </SelectTrigger>
@@ -243,13 +258,24 @@ export function CreateTaskDialog() {
                     children={(field) => (
                       <div className="space-y-2">
                         <Label>Day of week</Label>
-                        <Select value={field.state.value || "none"} onValueChange={(v) => field.handleChange(v === "none" ? "" : v)}>
+                        <Select
+                          value={field.state.value || "none"}
+                          onValueChange={(v) => field.handleChange(v === "none" ? "" : v)}
+                        >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select day" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Same as due date</SelectItem>
-                            {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day, i) => (
+                            {[
+                              "Monday",
+                              "Tuesday",
+                              "Wednesday",
+                              "Thursday",
+                              "Friday",
+                              "Saturday",
+                              "Sunday",
+                            ].map((day, i) => (
                               <SelectItem key={day} value={String(i)}>
                                 {day}
                               </SelectItem>

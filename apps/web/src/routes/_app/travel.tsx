@@ -1,22 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import {
-  Trash2,
-  Star,
-  MapPin,
-  X,
-  Map,
-  Check,
-  Plane,
-} from "lucide-react";
+import { Trash2, Star, MapPin, X, Map, Check, Plane } from "lucide-react";
 import type { PlaceSchema } from "@metron/client";
 import {
   listPlacesV1PlacesGetOptions,
@@ -26,7 +13,6 @@ import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-
 
 import {
   AlertDialog,
@@ -50,22 +36,23 @@ import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
 import { PlaceMap } from "@/components/place-map";
 import { TagDisplay } from "@/components/tag-input";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/travel")({
   component: Travel,
 });
 
-
 function formatVisitedDate(value: unknown): string {
   if (!value) return "";
   if (value instanceof Date) return format(value, "MMM d, yyyy");
-  return format(new Date(String(value)), "MMM d, yyyy");
+  if (typeof value === "string") return format(new Date(value), "MMM d, yyyy");
+  return "";
 }
 
 function getGoogleMapsUrl(place: PlaceSchema): string {
   const placeAny = place as Record<string, unknown>;
-  if (placeAny.google_place_id) {
+  if (typeof placeAny.google_place_id === "string") {
     return `https://www.google.com/maps/place/?q=place_id:${placeAny.google_place_id}`;
   }
   return `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`;
@@ -138,7 +125,7 @@ function TravelTimeline({
             let timeLabel = "";
             if (visitedAt) {
               try {
-                const d = visitedAt instanceof Date ? visitedAt : new Date(String(visitedAt));
+                const d = visitedAt instanceof Date ? visitedAt : new Date(visitedAt as string);
                 timeLabel = formatDistanceToNow(d, { addSuffix: true });
               } catch {
                 timeLabel = "";
@@ -168,9 +155,7 @@ function TravelTimeline({
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {country && (
-                      <span className="text-[11px] text-muted-foreground truncate">
-                        {country}
-                      </span>
+                      <span className="text-[11px] text-muted-foreground truncate">{country}</span>
                     )}
                     {country && place.category && (
                       <span className="text-muted-foreground/30 text-[11px]">/</span>
@@ -203,7 +188,6 @@ function TravelTimeline({
   );
 }
 
-
 function Travel() {
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
@@ -221,7 +205,7 @@ function Travel() {
       client,
       query: {
         limit: PAGE_SIZE,
-        sorting: ["-created_at" as "-created_at"],
+        sorting: ["-created_at" as const],
       },
     }),
     initialPageParam: 1,
@@ -275,9 +259,10 @@ function Travel() {
           queryClient.setQueryData(key, data);
         }
       }
+      toast.error("Failed to delete place");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -292,9 +277,7 @@ function Travel() {
           ...old,
           pages: old.pages.map((page: any) => ({
             ...page,
-            items: page.items.map((p: any) =>
-              p.id === path.place_id ? { ...p, ...body } : p,
-            ),
+            items: page.items.map((p: any) => (p.id === path.place_id ? { ...p, ...body } : p)),
           })),
         };
       });
@@ -306,9 +289,10 @@ function Travel() {
           queryClient.setQueryData(key, data);
         }
       }
+      toast.error("Failed to update place");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -335,7 +319,6 @@ function Travel() {
     // Toggle: clicking the same place deselects it
     setSelectedPlace((prev) => (prev?.id === place.id ? null : place));
   };
-
 
   const columns: ColumnDef<PlaceSchema>[] = [
     {
@@ -366,14 +349,8 @@ function Travel() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="font-medium hover:underline truncate">
-                  {place.name}
-                </div>
-                {country && (
-                  <div className="text-muted-foreground text-xs mt-0.5">
-                    {country}
-                  </div>
-                )}
+                <div className="font-medium hover:underline truncate">{place.name}</div>
+                {country && <div className="text-muted-foreground text-xs mt-0.5">{country}</div>}
               </div>
             </div>
           </button>
@@ -454,6 +431,7 @@ function Travel() {
           <Button
             variant="ghost"
             size="icon"
+            title="Delete"
             className="size-8 text-muted-foreground hover:text-destructive"
             onClick={() => setDeleteTarget(row.original)}
           >
@@ -464,10 +442,7 @@ function Travel() {
     },
   ];
 
-  const places = useMemo(
-    () => infiniteData?.pages.flatMap((p) => p.items) ?? [],
-    [infiniteData],
-  );
+  const places = useMemo(() => infiniteData?.pages.flatMap((p) => p.items) ?? [], [infiniteData]);
   const totalCount = infiniteData?.pages[0]?.pagination.total_count ?? 0;
   const sel = selectedPlace ? getPlaceAny(selectedPlace) : null;
 
@@ -512,10 +487,7 @@ function Travel() {
               <div className="flex gap-4 h-[360px] shrink-0">
                 {/* Timeline */}
                 <div className="hidden md:block w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
-                  <TravelTimeline
-                    places={timelinePlaces}
-                    onSelectPlace={handleSelectPlace}
-                  />
+                  <TravelTimeline places={timelinePlaces} onSelectPlace={handleSelectPlace} />
                 </div>
                 {/* Map */}
                 <div className="flex-1 rounded-lg border overflow-hidden">
@@ -558,10 +530,7 @@ function Travel() {
                     <h3 className="font-semibold leading-tight">{selectedPlace.name}</h3>
                     {(sel.country || selectedPlace.category) && (
                       <p className="text-muted-foreground text-xs mt-0.5">
-                        {[
-                          sel.country,
-                          selectedPlace.category?.replace(/_/g, " "),
-                        ]
+                        {[sel.country, selectedPlace.category?.replace(/_/g, " ")]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
@@ -612,7 +581,9 @@ function Travel() {
                   {selectedPlace.address && (
                     <div className="flex items-start gap-2 text-muted-foreground">
                       <MapPin className="size-3.5 mt-0.5 shrink-0" />
-                      <span className="text-foreground text-xs leading-relaxed">{selectedPlace.address}</span>
+                      <span className="text-foreground text-xs leading-relaxed">
+                        {selectedPlace.address}
+                      </span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -673,7 +644,8 @@ function Travel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete place?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed. This can&rsquo;t be undone.
+              &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed. This can&rsquo;t be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

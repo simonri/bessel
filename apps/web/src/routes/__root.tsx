@@ -1,10 +1,8 @@
-import {
-  createRootRoute,
-  HeadContent,
-  Outlet,
-  Scripts,
-} from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { Toaster } from "sonner";
+import { TooltipProvider } from "@metron/ui/components/tooltip";
 import { ReactQueryProvider } from "@/providers/react-query";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 import appCss from "../styles.css?url";
 
@@ -49,7 +47,7 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap",
-      }
+      },
     ],
   }),
 
@@ -63,9 +61,14 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body className="antialiased">
-        <ReactQueryProvider>
-          <Outlet />
-        </ReactQueryProvider>
+        <ErrorBoundary>
+          <ReactQueryProvider>
+            <TooltipProvider>
+              <Outlet />
+            </TooltipProvider>
+          </ReactQueryProvider>
+        </ErrorBoundary>
+        <Toaster theme="dark" richColors closeButton />
         <Scripts />
       </body>
     </html>

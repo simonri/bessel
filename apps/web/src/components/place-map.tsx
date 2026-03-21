@@ -50,10 +50,13 @@ export function PlaceMap({ places, onSelectPlace, selectedPlaceId }: PlaceMapPro
 
     const map = L.map(mapRef.current, { scrollWheelZoom: true });
 
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      attribution: "&copy; Esri",
-      maxZoom: 19,
-    }).addTo(map);
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution: "&copy; Esri",
+        maxZoom: 19,
+      },
+    ).addTo(map);
 
     mapInstanceRef.current = map;
 

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { BankAccountSchema } from "@metron/client";
 import {
-  listBankAccountsV1BankAccountsGetOptions,
+  listBankAccountsV1BankAccountsGetInfiniteOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
   deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
 } from "@metron/client";
@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@metron/ui/components/alert-dialog";
-import { DataTable } from "@/components/data-table";
+import { VirtualDataTable } from "@/components/virtual-data-table";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
 import { client } from "@/lib/client";
@@ -30,22 +30,32 @@ export const Route = createFileRoute("/_app/accounts")({
   component: Accounts,
 });
 
+const PAGE_SIZE = 50;
+
 function Accounts() {
-  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<BankAccountSchema | null>(null);
-  const limit = 20;
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
-    ...listBankAccountsV1BankAccountsGetOptions({
+  const {
+    data: infiniteData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...listBankAccountsV1BankAccountsGetInfiniteOptions({
       client,
       query: {
-        page,
-        limit,
+        limit: PAGE_SIZE,
         sorting: ["name"],
       },
     }),
-    placeholderData: keepPreviousData,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      const currentPage = typeof lastPageParam === "number" ? lastPageParam : 1;
+      if (currentPage >= lastPage.pagination.max_page) return undefined;
+      return currentPage + 1;
+    },
   });
 
   const queryKey = listBankAccountsV1BankAccountsGetQueryKey({ client });
@@ -56,14 +66,17 @@ function Accounts() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
+        if (!old?.pages) return old;
         return {
           ...old,
-          items: old.items.filter((a: any) => a.id !== path.bank_account_id),
-          pagination: {
-            ...old.pagination,
-            total_count: old.pagination.total_count - 1,
-          },
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.filter((a: any) => a.id !== path.bank_account_id),
+            pagination: {
+              ...page.pagination,
+              total_count: page.pagination.total_count - 1,
+            },
+          })),
         };
       });
       setDeleteTarget(null);
@@ -77,7 +90,7 @@ function Accounts() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -90,9 +103,7 @@ function Accounts() {
       accessorKey: "subtype",
       size: 100,
       header: "Type",
-      cell: ({ row }) => (
-        <span className="capitalize">{row.original.subtype}</span>
-      ),
+      cell: ({ row }) => <span className="capitalize">{row.original.subtype}</span>,
     },
     {
       accessorKey: "currency",
@@ -104,7 +115,7 @@ function Accounts() {
       size: 120,
       header: () => <div className="text-right">Balance</div>,
       cell: ({ row }) => {
-        const amount = row.original.current_balance / 100;
+        const amount = (row.original.current_balance ?? 0) / 100;
         return (
           <div className="text-right font-mono tabular-nums">
             {amount.toLocaleString("sv-SE", {
@@ -140,12 +151,11 @@ function Accounts() {
     },
   ];
 
-  const accounts = data?.items ?? [];
-  const maxPage = data?.pagination.max_page ?? 1;
-  const totalCount = data?.pagination.total_count ?? 0;
+  const accounts = useMemo(() => infiniteData?.pages.flatMap((p) => p.items) ?? [], [infiniteData]);
+  const totalCount = infiniteData?.pages[0]?.pagination.total_count ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Accounts</h2>
@@ -163,37 +173,15 @@ function Accounts() {
           Loading...
         </div>
       ) : (
-        <>
-          <div className={isPlaceholderData ? "opacity-50 transition-opacity" : "transition-opacity"}>
-            <DataTable columns={columns} data={accounts} />
-          </div>
-
-          {maxPage > 1 && (
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1 || isPlaceholderData}
-              >
-                <ChevronLeft className="size-4" />
-                Previous
-              </Button>
-              <span className="text-muted-foreground text-sm">
-                Page {page} of {maxPage}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                disabled={page >= maxPage || isPlaceholderData}
-              >
-                Next
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          )}
-        </>
+        <VirtualDataTable
+          columns={columns}
+          data={accounts}
+          getRowId={(row) => row.id}
+          emptyMessage="No accounts yet."
+          onEndReached={fetchNextPage}
+          hasMore={hasNextPage}
+          isFetchingMore={isFetchingNextPage}
+        />
       )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -201,7 +189,8 @@ function Accounts() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete account?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will be permanently removed. This can&rsquo;t be undone.
+              &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will be permanently
+              removed. This can&rsquo;t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

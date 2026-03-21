@@ -1,14 +1,12 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import { Filter, Search, X } from "lucide-react";
 import type { BankAccountSchema, CategorySchema } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import { Badge } from "@metron/ui/components/badge";
 import { Checkbox } from "@metron/ui/components/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@metron/ui/components/popover";
+import { Input } from "@metron/ui/components/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
 import { Separator } from "@metron/ui/components/separator";
 import { cn } from "@metron/ui/lib/utils";
 
@@ -18,6 +16,8 @@ export interface TransactionFilters {
   uncategorized?: boolean;
   direction?: string;
   search?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
 interface TransactionFiltersProps {
@@ -27,13 +27,14 @@ interface TransactionFiltersProps {
   categories: CategorySchema[];
 }
 
-type FilterField = "account" | "category" | "direction" | "search";
+type FilterField = "account" | "category" | "direction" | "search" | "date";
 
 const FILTER_LABELS: Record<FilterField, string> = {
   account: "Account",
   category: "Category",
   direction: "Direction",
   search: "Search",
+  date: "Date",
 };
 
 function hasActiveFilters(filters: TransactionFilters): boolean {
@@ -42,7 +43,9 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
     filters.category_id?.length ||
     filters.uncategorized ||
     filters.direction ||
-    filters.search
+    filters.search ||
+    filters.date_from ||
+    filters.date_to
   );
 }
 
@@ -52,7 +55,15 @@ function countActiveFilters(filters: TransactionFilters): number {
   if (filters.category_id?.length || filters.uncategorized) count++;
   if (filters.direction) count++;
   if (filters.search) count++;
+  if (filters.date_from || filters.date_to) count++;
   return count;
+}
+
+function formatDateLabel(dateFrom?: string, dateTo?: string): string {
+  const fmt = (d: string) => format(new Date(d + "T00:00:00"), "MMM d");
+  if (dateFrom && dateTo) return `${fmt(dateFrom)} \u2013 ${fmt(dateTo)}`;
+  if (dateFrom) return `From ${fmt(dateFrom)}`;
+  return `Until ${fmt(dateTo!)}`;
 }
 
 export function TransactionFiltersPopover({
@@ -63,20 +74,17 @@ export function TransactionFiltersPopover({
 }: TransactionFiltersProps) {
   const [activeField, setActiveField] = useState<FilterField>("account");
   const [searchInput, setSearchInput] = useState(filters.search ?? "");
+  const [dateFromInput, setDateFromInput] = useState(filters.date_from ?? "");
+  const [dateToInput, setDateToInput] = useState(filters.date_to ?? "");
   const active = hasActiveFilters(filters);
   const activeCount = countActiveFilters(filters);
 
   const parentCategories = categories.filter((c) => !c.parent_id);
   const childCategories = categories.filter((c) => c.parent_id);
 
-  const toggleArrayFilter = (
-    key: "bank_account_id" | "category_id",
-    id: string,
-  ) => {
+  const toggleArrayFilter = (key: "bank_account_id" | "category_id", id: string) => {
     const current = filters[key] ?? [];
-    const next = current.includes(id)
-      ? current.filter((v) => v !== id)
-      : [...current, id];
+    const next = current.includes(id) ? current.filter((v) => v !== id) : [...current, id];
     onFiltersChange({ ...filters, [key]: next.length ? next : undefined });
   };
 
@@ -93,19 +101,18 @@ export function TransactionFiltersPopover({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-auto min-w-[460px] p-0"
-      >
+      <PopoverContent align="start" className="w-auto min-w-[460px] p-0">
         <div className="flex">
           {/* Left panel — field list */}
           <div className="w-[160px] border-r p-1.5">
             {(Object.keys(FILTER_LABELS) as FilterField[]).map((field) => {
               const isFieldActive =
                 (field === "account" && !!filters.bank_account_id?.length) ||
-                (field === "category" && (!!filters.category_id?.length || !!filters.uncategorized)) ||
+                (field === "category" &&
+                  (!!filters.category_id?.length || !!filters.uncategorized)) ||
                 (field === "direction" && !!filters.direction) ||
-                (field === "search" && !!filters.search);
+                (field === "search" && !!filters.search) ||
+                (field === "date" && !!(filters.date_from || filters.date_to));
 
               return (
                 <button
@@ -121,9 +128,7 @@ export function TransactionFiltersPopover({
                   )}
                 >
                   {FILTER_LABELS[field]}
-                  {isFieldActive && (
-                    <span className="bg-primary size-1.5 rounded-full" />
-                  )}
+                  {isFieldActive && <span className="bg-primary size-1.5 rounded-full" />}
                 </button>
               );
             })}
@@ -135,6 +140,8 @@ export function TransactionFiltersPopover({
                   onClick={() => {
                     onFiltersChange({});
                     setSearchInput("");
+                    setDateFromInput("");
+                    setDateToInput("");
                   }}
                   className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-sm transition-colors"
                 >
@@ -178,9 +185,7 @@ export function TransactionFiltersPopover({
             {activeField === "direction" && (
               <DirectionFilter
                 value={filters.direction}
-                onChange={(d) =>
-                  onFiltersChange({ ...filters, direction: d || undefined })
-                }
+                onChange={(d) => onFiltersChange({ ...filters, direction: d || undefined })}
               />
             )}
             {activeField === "search" && (
@@ -196,6 +201,30 @@ export function TransactionFiltersPopover({
                 onClear={() => {
                   setSearchInput("");
                   onFiltersChange({ ...filters, search: undefined });
+                }}
+              />
+            )}
+            {activeField === "date" && (
+              <DateRangeFilter
+                dateFrom={dateFromInput}
+                dateTo={dateToInput}
+                onDateFromChange={setDateFromInput}
+                onDateToChange={setDateToInput}
+                onApply={() =>
+                  onFiltersChange({
+                    ...filters,
+                    date_from: dateFromInput || undefined,
+                    date_to: dateToInput || undefined,
+                  })
+                }
+                onClear={() => {
+                  setDateFromInput("");
+                  setDateToInput("");
+                  onFiltersChange({
+                    ...filters,
+                    date_from: undefined,
+                    date_to: undefined,
+                  });
                 }}
               />
             )}
@@ -216,11 +245,7 @@ function AccountFilter({
   onToggle: (id: string) => void;
 }) {
   if (accounts.length === 0) {
-    return (
-      <p className="text-muted-foreground py-4 text-center text-sm">
-        No accounts
-      </p>
-    );
+    return <p className="text-muted-foreground py-4 text-center text-sm">No accounts</p>;
   }
 
   return (
@@ -230,10 +255,7 @@ function AccountFilter({
           key={acc.id}
           className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors"
         >
-          <Checkbox
-            checked={selected.includes(acc.id)}
-            onCheckedChange={() => onToggle(acc.id)}
-          />
+          <Checkbox checked={selected.includes(acc.id)} onCheckedChange={() => onToggle(acc.id)} />
           <span className="truncate">{acc.name}</span>
         </label>
       ))}
@@ -268,10 +290,7 @@ function CategoryFilter({
   return (
     <div className="max-h-[280px] space-y-0.5 overflow-y-auto">
       <label className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors">
-        <Checkbox
-          checked={uncategorized}
-          onCheckedChange={onToggleUncategorized}
-        />
+        <Checkbox checked={uncategorized} onCheckedChange={onToggleUncategorized} />
         <span className="text-muted-foreground italic">Uncategorized</span>
       </label>
       {parents.map((parent) => {
@@ -379,6 +398,55 @@ function SearchFilter({
   );
 }
 
+function DateRangeFilter({
+  dateFrom,
+  dateTo,
+  onDateFromChange,
+  onDateToChange,
+  onApply,
+  onClear,
+}: {
+  dateFrom: string;
+  dateTo: string;
+  onDateFromChange: (v: string) => void;
+  onDateToChange: (v: string) => void;
+  onApply: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="space-y-1.5">
+        <label className="text-muted-foreground text-xs font-medium">From</label>
+        <Input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => onDateFromChange(e.target.value)}
+          className="h-8 text-sm"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-muted-foreground text-xs font-medium">To</label>
+        <Input
+          type="date"
+          value={dateTo}
+          onChange={(e) => onDateToChange(e.target.value)}
+          className="h-8 text-sm"
+        />
+      </div>
+      <div className="flex gap-1.5">
+        <Button size="sm" className="h-7 text-xs" onClick={onApply}>
+          Apply
+        </Button>
+        {(dateFrom || dateTo) && (
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onClear}>
+            Clear
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ActiveFilters({
   filters,
   onFiltersChange,
@@ -395,8 +463,7 @@ export function ActiveFilters({
       .join(", ");
     pills.push({
       label: `Account: ${names}`,
-      onRemove: () =>
-        onFiltersChange({ ...filters, bank_account_id: undefined }),
+      onRemove: () => onFiltersChange({ ...filters, bank_account_id: undefined }),
     });
   }
 
@@ -406,43 +473,47 @@ export function ActiveFilters({
       .join(", ");
     pills.push({
       label: `Category: ${names}`,
-      onRemove: () =>
-        onFiltersChange({ ...filters, category_id: undefined }),
+      onRemove: () => onFiltersChange({ ...filters, category_id: undefined }),
     });
   }
 
   if (filters.uncategorized) {
     pills.push({
       label: "Uncategorized",
-      onRemove: () =>
-        onFiltersChange({ ...filters, uncategorized: undefined }),
+      onRemove: () => onFiltersChange({ ...filters, uncategorized: undefined }),
     });
   }
 
   if (filters.direction) {
     pills.push({
       label: `Direction: ${filters.direction}`,
-      onRemove: () =>
-        onFiltersChange({ ...filters, direction: undefined }),
+      onRemove: () => onFiltersChange({ ...filters, direction: undefined }),
     });
   }
 
   if (filters.search) {
     pills.push({
       label: `Search: "${filters.search}"`,
+      onRemove: () => onFiltersChange({ ...filters, search: undefined }),
+    });
+  }
+
+  if (filters.date_from || filters.date_to) {
+    pills.push({
+      label: `Date: ${formatDateLabel(filters.date_from, filters.date_to)}`,
       onRemove: () =>
-        onFiltersChange({ ...filters, search: undefined }),
+        onFiltersChange({
+          ...filters,
+          date_from: undefined,
+          date_to: undefined,
+        }),
     });
   }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {pills.map((pill) => (
-        <Badge
-          key={pill.label}
-          variant="secondary"
-          className="gap-1 pr-1"
-        >
+        <Badge key={pill.label} variant="secondary" className="gap-1 pr-1">
           {pill.label}
           <button
             type="button"

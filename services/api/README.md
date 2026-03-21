@@ -1,16 +1,17 @@
 Running the API:
+
 ```
 uv run task api
 ```
 
 Running the worker:
+
 ```
 uv run task worker
 ```
 
 OpenAPI url:
 http://localhost:8000/docs
-
 
 ```
 [

@@ -27,6 +27,7 @@ import {
   listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
 } from "@metron/client";
 import { AssetType } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
@@ -47,10 +48,14 @@ export function CreateSecurityDialog() {
   const mutation = useMutation({
     ...createSecurityV1InvestmentsSecuritiesPostMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listSecuritiesV1InvestmentsSecuritiesGetQueryKey({ client }),
       });
+      toast.success("Security created");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to create security");
     },
   });
 
@@ -90,7 +95,12 @@ export function CreateSecurityDialog() {
           Add Security
         </Button>
       </DialogTrigger>
-      <DialogContent onOpenAutoFocus={(e) => { e.preventDefault(); nameRef.current?.focus(); }}>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Add Security</DialogTitle>
           <DialogDescription>Add an investable asset to your catalog.</DialogDescription>
@@ -99,7 +109,7 @@ export function CreateSecurityDialog() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -107,7 +117,9 @@ export function CreateSecurityDialog() {
             name="name"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="sec-name">Name</Label>
+                <Label htmlFor="sec-name">
+                  Name <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   ref={nameRef}
                   id="sec-name"
@@ -162,7 +174,9 @@ export function CreateSecurityDialog() {
               name="currency"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="sec-currency">Currency</Label>
+                  <Label htmlFor="sec-currency">
+                    Currency <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="sec-currency"
                     value={field.state.value}

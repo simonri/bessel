@@ -1,11 +1,6 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { MoreHorizontal, Trash2 } from "lucide-react";
@@ -44,6 +39,7 @@ import {
   ActiveFilters,
   type TransactionFilters,
 } from "@/components/transaction-filters";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/transactions")({
@@ -69,10 +65,7 @@ const TransactionActions = memo(function TransactionActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={() => onDelete([id])}
-          >
+          <DropdownMenuItem className="text-destructive" onClick={() => onDelete([id])}>
             <Trash2 className="size-4" />
             Delete
           </DropdownMenuItem>
@@ -106,6 +99,8 @@ function Transactions() {
         limit: PAGE_SIZE,
         sorting: ["-transaction_date", "description"],
         ...filters,
+        date_from: filters.date_from ? new Date(filters.date_from + "T00:00:00") : undefined,
+        date_to: filters.date_to ? new Date(filters.date_to + "T00:00:00") : undefined,
       },
     }),
     initialPageParam: 1,
@@ -169,9 +164,10 @@ function Transactions() {
           queryClient.setQueryData(key, data);
         }
       }
+      toast.error("Failed to delete transactions");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -187,9 +183,7 @@ function Transactions() {
           pages: old.pages.map((page: any) => ({
             ...page,
             items: page.items.map((t: any) =>
-              t.description === body.description
-                ? { ...t, category_id: body.category_id }
-                : t,
+              t.description === body.description ? { ...t, category_id: body.category_id } : t,
             ),
           })),
         };
@@ -202,9 +196,10 @@ function Transactions() {
           queryClient.setQueryData(key, data);
         }
       }
+      toast.error("Failed to categorize transactions");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
       setBulkSuggestion(null);
     },
   });
@@ -267,9 +262,7 @@ function Transactions() {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <span className="block truncate">
-          {row.original.description ?? "\u2014"}
-        </span>
+        <span className="block truncate">{row.original.description ?? "\u2014"}</span>
       ),
     },
     {
@@ -304,7 +297,9 @@ function Transactions() {
         const amount = row.original.amount / 100;
         const sign = row.original.direction === "debit" ? "-" : "+";
         return (
-          <div className={`text-right font-mono tabular-nums ${row.original.direction === "credit" ? "text-green-600" : "text-red-600"}`}>
+          <div
+            className={`text-right font-mono tabular-nums ${row.original.direction === "credit" ? "text-green-600" : "text-red-600"}`}
+          >
             {sign}
             {Math.abs(amount).toLocaleString("sv-SE", {
               minimumFractionDigits: 2,
@@ -318,9 +313,7 @@ function Transactions() {
       id: "actions",
       size: 60,
       header: () => <div className="text-right">Actions</div>,
-      cell: ({ row }) => (
-        <TransactionActions id={row.original.id} onDelete={handleDeleteRows} />
-      ),
+      cell: ({ row }) => <TransactionActions id={row.original.id} onDelete={handleDeleteRows} />,
     },
   ];
 
@@ -395,14 +388,17 @@ function Transactions() {
         </>
       )}
 
-      <AlertDialog open={!!bulkSuggestion} onOpenChange={(open) => !open && setBulkSuggestion(null)}>
+      <AlertDialog
+        open={!!bulkSuggestion}
+        onOpenChange={(open) => !open && setBulkSuggestion(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Apply category to similar transactions?</AlertDialogTitle>
             <AlertDialogDescription>
               {bulkSuggestion?.count} other transaction{bulkSuggestion?.count !== 1 ? "s" : ""} with
-              description &ldquo;{bulkSuggestion?.description}&rdquo; can be categorized
-              as <strong>{bulkSuggestion?.categoryName}</strong>.
+              description &ldquo;{bulkSuggestion?.description}&rdquo; can be categorized as{" "}
+              <strong>{bulkSuggestion?.categoryName}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

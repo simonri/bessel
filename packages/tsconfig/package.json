@@ -1,7 +1,7 @@
 {
   "name": "@metron/tsconfig",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
   "exports": {
     "./base.json": "./base.json",
     "./react-library.json": "./react-library.json"

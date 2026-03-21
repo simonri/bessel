@@ -2,106 +2,72 @@
 
 ## Overview
 
-Metron is an open source payment infrastructure platform for developers. It's a monorepo consisting of:
+Metron is a personal life dashboard. Monorepo with:
 
-- **Backend**: Python/FastAPI API server with PostgreSQL, Redis, and S3 storage
-- **Frontend**: Next.js web application with TypeScript
+- **Backend**: Python/FastAPI API server with PostgreSQL, Redis
+- **Frontend**: Vite+ / TanStack Start SPA with TypeScript
 - **Workers**: Dramatiq background job processors
 
 ## Commands
 
-### Backend Development
+### Backend
 
 ```bash
 cd services/api
 
-# Install dependencies (requires uv)
-uv sync
+uv sync                    # Install dependencies
+uv run task api            # Start API server (http://127.0.0.1:8100)
+uv run task db_migrate     # Apply database migrations
+uv run task worker         # Start background worker
+uv run task test           # Run tests with coverage
+uv run task lint           # Format + lint with autofix (ruff)
 
-# Apply database migrations
-uv run task db_migrate
-
-# Start API server (http://127.0.0.1:8000)
-uv run task api
-
-# Start background worker
-uv run task worker
-
-# Run tests
-uv run task test          # with coverage
-uv run task test_fast     # faster, parallel execution
-
-# Linting and formatting
-uv run task lint          # auto-fix
-uv run task lint_check    # check only
-uv run task lint_types    # type checking with mypy
-
-# Generate Alembic migration
-uv run alembic revision --autogenerate -m "<description>"
+uv run alembic revision --autogenerate -m "<description>"  # Generate migration
 ```
 
-### Frontend Development
+### Frontend
 
 ```bash
-cd apps/web-new
+cd apps/web
 
-# Install dependencies (requires pnpm)
-pnpm install
+pnpm install               # Install dependencies
+pnpm dev                   # Start dev server (http://127.0.0.1:3001)
+pnpm build                 # Build production bundle
+```
 
-# Start development server (http://127.0.0.1:3000)
-pnpm dev
+### Client Generation
 
-# Build production bundle
-pnpm build
-
-# Run linting
-pnpm lint
-
-# Generate API client from OpenAPI spec
+```bash
+# From repo root — exports OpenAPI spec then regenerates TS + Python clients
 make clients
 ```
 
-### Docker Services (Backend)
+### Docker Services
 
 ```bash
 cd services/api
-docker compose up -d  # Start PostgreSQL, Redis
+docker compose up -d       # Start PostgreSQL, Redis
 ```
 
 ## Architecture
 
 ### Backend Structure
 
-- **`services/api/`**: Core application code organized into modules
-    - Each module typically contains:
-        - `endpoints.py`: FastAPI route handlers
-        - `service.py`: Business logic layer
-        - `repository.py`: Database access layer (SQLAlchemy)
-        - `schemas.py`: Pydantic models for API validation
-        - `auth.py`: Module-specific authentication
-        - `tasks.py`: Dramatiq background tasks
-    - **`models/`**: Global SQLAlchemy models (exception to modular structure)
-    - **`migrations/`**: Alembic database migrations
+- **`services/api/src/api/`**: Code organized into modules (e.g. `places/`, `workouts/`, `transactions/`)
+  - Each module typically contains:
+    - `endpoints.py`: FastAPI route handlers
+    - `service.py`: Business logic layer
+    - `repository.py`: Database access layer (SQLAlchemy)
+    - `schemas.py`: Pydantic models for API validation
+  - **`models/`**: Global SQLAlchemy models (exception to modular structure)
+  - **`migrations/`**: Alembic database migrations
 
 ### Frontend Structure
 
-- **`apps/web-new/`**: Main Next.js dashboard application
+- **`apps/web/`**: Vite+ / TanStack Start SPA
 - **`packages/`**: Shared packages
-    - `ui/`: React components (Radix UI + Tailwind)
-    - `client/`: Generated TypeScript API client
-
-### Authentication System
-
-- Uses `AuthSubject[T]` type where T can be: User, Organization, Customer, or Anonymous
-- Module-specific authenticators defined in `auth.py` files
-- Scopes control access to operations (e.g., `web_default`, `discounts_write`)
-- Web-specific dependencies: `WebUser`, `WebUserOrAnonymous`, `AdminUser`
-
-## Key Integrations
-
-- **S3**: File storage
-- **Redis**: Cache and job queue
-- **PostgreSQL**: Primary database
+  - `ui/`: shadcn components (Radix UI + Tailwind v4)
+  - `client/`: Auto-generated TypeScript API client (@hey-api/openapi-ts)
 
 ## Development Guidelines
 
@@ -119,17 +85,14 @@ docker compose up -d  # Start PostgreSQL, Redis
 - Use dependency injection for database sessions
 - All DB queries should be in the Repository class. Use the right repository class.
 
-In most cases, you should never call `session.commit()` directly in business logic. We have established patterns for that: the API backend automatically commits the session at the end of each request, and background workers commit the session at the end of each task. It avoids to have a database in an inconsistent state in case of exceptions. If you have a `session.commit()` in your code, it's likely a mistake. Otherwise, please explicitly document why it's necessary.
-
-If you need to ensure that data is flushed to the database, to run constraints or fill server defaults, use `session.flush()` instead. Bear in mind though that it might not be necessary, as SQLAlchemy automatically flushes pending changes before read operations.
+Never call `session.commit()` directly in business logic. The API backend automatically commits the session at the end of each request, and background workers commit the session at the end of each task. Use `session.flush()` if you need to trigger constraints or fill server defaults.
 
 ### Frontend
 
-- Use TanStack Query for data fetching
-- State management with Zustand
-- UI components from shared `@metron/ui` package
-- Follow React Router conventions
-- Tailwind CSS for styling
+- TanStack Query for data fetching, TanStack Router for routing, TanStack Form for forms
+- UI components from shared `@metron/ui` package (shadcn/Radix)
+- Tailwind CSS v4 for styling
+- File-based routing under `src/routes/`
 
 ### Testing
 

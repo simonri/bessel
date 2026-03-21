@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isTomorrow, isPast, isYesterday, addDays } from "date-fns";
 import {
   CheckSquare,
@@ -34,12 +29,7 @@ import {
   updateTaskV1TasksTaskIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@metron/ui/components/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@metron/ui/components/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +48,7 @@ import {
   EmptyDescription,
 } from "@metron/ui/components/empty";
 import { CreateTaskDialog } from "@/components/create-task-dialog";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/tasks")({
@@ -82,10 +73,7 @@ function isScheduledTask(task: TaskSchema): boolean {
   return due > addDays(new Date(), SCHEDULED_THRESHOLD_DAYS);
 }
 
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; icon: React.ElementType; color: string }
-> = {
+const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   todo: { label: "Todo", icon: Circle, color: "text-muted-foreground" },
   in_progress: { label: "In Progress", icon: Clock, color: "text-blue-500" },
   scheduled: { label: "Scheduled", icon: CalendarClock, color: "text-violet-500" },
@@ -93,10 +81,7 @@ const STATUS_CONFIG: Record<
   cancelled: { label: "Cancelled", icon: XCircle, color: "text-muted-foreground" },
 };
 
-const PRIORITY_CONFIG: Record<
-  number,
-  { label: string; color: string; border: string }
-> = {
+const PRIORITY_CONFIG: Record<number, { label: string; color: string; border: string }> = {
   0: { label: "None", color: "text-muted-foreground/30", border: "border-l-transparent" },
   1: { label: "Low", color: "text-muted-foreground", border: "border-l-muted-foreground/40" },
   2: { label: "Medium", color: "text-blue-500", border: "border-l-blue-500" },
@@ -203,19 +188,13 @@ function TaskCard({
                 {recurrence}
               </span>
             )}
-            {priority >= 3 && (
-              <Flag className={`size-3 ${priorityConfig.color}`} />
-            )}
+            {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
             {task.project && (
               <span className="text-[11px] text-muted-foreground bg-muted rounded px-1.5 py-0">
                 {task.project}
               </span>
             )}
-            {task.area && (
-              <span className="text-[11px] text-muted-foreground/60">
-                {task.area}
-              </span>
-            )}
+            {task.area && <span className="text-[11px] text-muted-foreground/60">{task.area}</span>}
           </div>
         </div>
       </div>
@@ -363,7 +342,9 @@ function TaskDetailDialog({
           {task.due_date && (
             <>
               <span className="text-muted-foreground text-xs">Due</span>
-              <div className={`flex items-center gap-1.5 text-sm ${getDueDateColor(task.due_date)}`}>
+              <div
+                className={`flex items-center gap-1.5 text-sm ${getDueDateColor(task.due_date)}`}
+              >
                 <Calendar className="size-3.5" />
                 {formatDueDate(task.due_date)}
               </div>
@@ -417,12 +398,7 @@ function TaskDetailDialog({
       {/* Footer actions */}
       <div className="border-t px-5 py-3 flex items-center gap-2">
         {!isDone ? (
-          <Button
-            size="sm"
-            className="h-8 text-xs"
-            onClick={onComplete}
-            disabled={completePending}
-          >
+          <Button size="sm" className="h-8 text-xs" onClick={onComplete} disabled={completePending}>
             <CheckCircle2 className="size-3.5 mr-1.5" />
             Complete
           </Button>
@@ -467,8 +443,8 @@ function Tasks() {
   const statusFilter = viewTab === "done" ? ("done" as const) : undefined;
   const sortingValue =
     viewTab === "done"
-      ? (["-completed_at" as "-created_at"])
-      : (["-priority" as "-created_at", "due_date" as "-created_at"]);
+      ? ["-completed_at" as "-created_at"]
+      : ["-priority" as "-created_at", "due_date" as "-created_at"];
 
   const { data, isLoading } = useQuery({
     ...listTasksV1TasksGetOptions({
@@ -498,7 +474,7 @@ function Tasks() {
       }
     },
     invalidate() {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   };
 
@@ -521,7 +497,10 @@ function Tasks() {
       setSelectedTask(null);
       return { previous };
     },
-    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onError: (_err, _vars, context) => {
+      optimisticHelpers.rollback(context);
+      toast.error("Action failed");
+    },
     onSettled: () => optimisticHelpers.invalidate(),
   });
 
@@ -543,7 +522,10 @@ function Tasks() {
       setSelectedTask(null);
       return { previous };
     },
-    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onError: (_err, _vars, context) => {
+      optimisticHelpers.rollback(context);
+      toast.error("Action failed");
+    },
     onSettled: () => optimisticHelpers.invalidate(),
   });
 
@@ -556,15 +538,16 @@ function Tasks() {
         return {
           ...old,
           items: old.items.map((t: any) =>
-            t.id === path.task_id
-              ? { ...t, status: "todo", completed_at: null }
-              : t,
+            t.id === path.task_id ? { ...t, status: "todo", completed_at: null } : t,
           ),
         };
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onError: (_err, _vars, context) => {
+      optimisticHelpers.rollback(context);
+      toast.error("Action failed");
+    },
     onSettled: () => optimisticHelpers.invalidate(),
   });
 
@@ -576,14 +559,15 @@ function Tasks() {
         if (!old?.items) return old;
         return {
           ...old,
-          items: old.items.map((t: any) =>
-            t.id === path.task_id ? { ...t, ...body } : t,
-          ),
+          items: old.items.map((t: any) => (t.id === path.task_id ? { ...t, ...body } : t)),
         };
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => optimisticHelpers.rollback(context),
+    onError: (_err, _vars, context) => {
+      optimisticHelpers.rollback(context);
+      toast.error("Action failed");
+    },
     onSettled: () => optimisticHelpers.invalidate(),
   });
 
@@ -629,13 +613,9 @@ function Tasks() {
   const boardTasks =
     viewTab === "board"
       ? {
-          todo: allTasks.filter(
-            (t) => (t.status ?? "todo") === "todo" && !isScheduledTask(t),
-          ),
+          todo: allTasks.filter((t) => (t.status ?? "todo") === "todo" && !isScheduledTask(t)),
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
-          scheduled: allTasks.filter(
-            (t) => (t.status ?? "todo") === "todo" && isScheduledTask(t),
-          ),
+          scheduled: allTasks.filter((t) => (t.status ?? "todo") === "todo" && isScheduledTask(t)),
         }
       : null;
 
@@ -755,9 +735,7 @@ function Tasks() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {task.is_recurring && (
-                        <Repeat className="size-3 text-muted-foreground" />
-                      )}
+                      {task.is_recurring && <Repeat className="size-3 text-muted-foreground" />}
                       {priority >= 3 && (
                         <Flag
                           className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
@@ -839,16 +817,13 @@ function Tasks() {
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete task?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{deleteTarget?.title}&rdquo; will be permanently removed.
-              This can&rsquo;t be undone.
+              &ldquo;{deleteTarget?.title}&rdquo; will be permanently removed. This can&rsquo;t be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

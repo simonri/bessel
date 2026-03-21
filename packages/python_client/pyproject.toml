@@ -22,9 +22,7 @@ packages = ["src/openapi_client"]
 
 [tool.mypy]
 python_version = "3.12"
-files = [
-  "src/openapi_client",
-]
+files = ["src/openapi_client"]
 
 warn_unused_configs = true
 warn_redundant_casts = true

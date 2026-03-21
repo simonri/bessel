@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Plus, Search, MapPin, Loader2 } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
@@ -26,6 +22,7 @@ import {
   searchGooglePlacesV1PlacesSearchGetOptions,
 } from "@metron/client";
 import type { GooglePlaceSearchResult } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export function AddPlaceDialog() {
@@ -46,10 +43,14 @@ export function AddPlaceDialog() {
   const mutation = useMutation({
     ...createPlaceV1PlacesPostMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listPlacesV1PlacesGetQueryKey({ client }),
       });
+      toast.success("Place added");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to add place");
     },
   });
 
@@ -196,9 +197,7 @@ export function AddPlaceDialog() {
             )}
 
             {searchEnabled && searchResults?.results?.length === 0 && (
-              <p className="text-muted-foreground text-center text-sm py-4">
-                No results found.
-              </p>
+              <p className="text-muted-foreground text-center text-sm py-4">No results found.</p>
             )}
 
             <div className="border-t pt-3">
@@ -211,7 +210,7 @@ export function AddPlaceDialog() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              form.handleSubmit();
+              void form.handleSubmit();
             }}
             className="space-y-4"
           >
@@ -395,7 +394,9 @@ export function AddPlaceDialog() {
                                     ? "text-yellow-500"
                                     : "text-muted-foreground/30 hover:text-yellow-500/50"
                                 }`}
-                                onClick={() => field.handleChange(field.state.value === star ? null : star)}
+                                onClick={() =>
+                                  field.handleChange(field.state.value === star ? null : star)
+                                }
                               >
                                 {"\u2605"}
                               </button>
@@ -426,9 +427,7 @@ export function AddPlaceDialog() {
             />
 
             {mutation.isError && (
-              <p className="text-destructive text-sm">
-                Failed to add place. Please try again.
-              </p>
+              <p className="text-destructive text-sm">Failed to add place. Please try again.</p>
             )}
 
             <DialogFooter>

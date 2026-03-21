@@ -2,15 +2,7 @@
 
 export const AssetTypeSchema = {
   type: "string",
-  enum: [
-    "stock",
-    "etf",
-    "mutual_fund",
-    "bond",
-    "crypto",
-    "real_estate",
-    "other",
-  ],
+  enum: ["stock", "etf", "mutual_fund", "bond", "crypto", "real_estate", "other"],
   title: "AssetType",
 } as const;
 
@@ -112,21 +104,12 @@ export const BankAccountSchemaSchema = {
     current_balance: {
       type: "integer",
       title: "Current Balance",
-      description:
-        "Current balance in minor units (base_balance + credits - debits).",
+      description: "Current balance in minor units (base_balance + credits - debits).",
       default: 0,
     },
   },
   type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "name",
-    "currency",
-    "base_balance",
-    "subtype",
-  ],
+  required: ["created_at", "modified_at", "id", "name", "currency", "base_balance", "subtype"],
   title: "BankAccountSchema",
 } as const;
 
@@ -341,15 +324,7 @@ export const CategorySchemaSchema = {
     },
   },
   type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "name",
-    "slug",
-    "color",
-    "excluded",
-  ],
+  required: ["created_at", "modified_at", "id", "name", "slug", "color", "excluded"],
   title: "CategorySchema",
 } as const;
 
@@ -384,16 +359,7 @@ export const CategorySpendingSchema = {
 
 export const EquipmentSchema = {
   type: "string",
-  enum: [
-    "barbell",
-    "dumbbell",
-    "cable",
-    "machine",
-    "bodyweight",
-    "kettlebell",
-    "band",
-    "other",
-  ],
+  enum: ["barbell", "dumbbell", "cable", "machine", "bodyweight", "kettlebell", "band", "other"],
   title: "Equipment",
 } as const;
 
@@ -490,14 +456,7 @@ export const ExercisePRSchemaSchema = {
     },
   },
   type: "object",
-  required: [
-    "exercise_id",
-    "exercise_name",
-    "reps",
-    "weight",
-    "weight_unit",
-    "achieved_at",
-  ],
+  required: ["exercise_id", "exercise_name", "reps", "weight", "weight_unit", "achieved_at"],
   title: "ExercisePRSchema",
 } as const;
 
@@ -756,8 +715,7 @@ export const HoldingSchemaSchema = {
         },
       ],
       title: "Current Price",
-      description:
-        "Latest price per unit in minor units, or null if no price recorded.",
+      description: "Latest price per unit in minor units, or null if no price recorded.",
     },
     current_value: {
       anyOf: [
@@ -769,8 +727,7 @@ export const HoldingSchemaSchema = {
         },
       ],
       title: "Current Value",
-      description:
-        "Current value in minor units, or null if no price recorded.",
+      description: "Current value in minor units, or null if no price recorded.",
     },
     gain_loss: {
       anyOf: [
@@ -794,8 +751,7 @@ export const HoldingSchemaSchema = {
         },
       ],
       title: "Gain Loss Pct",
-      description:
-        "Unrealized gain/loss percentage, or null if no price or zero cost.",
+      description: "Unrealized gain/loss percentage, or null if no price or zero cost.",
     },
   },
   type: "object",
@@ -1797,14 +1753,7 @@ export const PlaceSchemaSchema = {
     },
   },
   type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "name",
-    "latitude",
-    "longitude",
-  ],
+  required: ["created_at", "modified_at", "id", "name", "latitude", "longitude"],
   title: "PlaceSchema",
 } as const;
 
@@ -3596,15 +3545,7 @@ export const WorkoutLogDetailSchemaSchema = {
     },
   },
   type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "started_at",
-    "completed_at",
-    "notes",
-    "sets",
-  ],
+  required: ["created_at", "modified_at", "id", "started_at", "completed_at", "notes", "sets"],
   title: "WorkoutLogDetailSchema",
 } as const;
 
@@ -3683,14 +3624,7 @@ export const WorkoutLogSchemaSchema = {
     },
   },
   type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "started_at",
-    "completed_at",
-    "notes",
-  ],
+  required: ["created_at", "modified_at", "id", "started_at", "completed_at", "notes"],
   title: "WorkoutLogSchema",
 } as const;
 

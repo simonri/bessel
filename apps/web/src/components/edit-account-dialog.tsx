@@ -26,6 +26,7 @@ import {
   updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
   listBankAccountsV1BankAccountsGetQueryKey,
 } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
@@ -44,9 +45,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
         if (!old?.items) return old;
         return {
           ...old,
-          items: old.items.map((a: any) =>
-            a.id === path.bank_account_id ? { ...a, ...body } : a,
-          ),
+          items: old.items.map((a: any) => (a.id === path.bank_account_id ? { ...a, ...body } : a)),
         };
       });
       setOpen(false);
@@ -58,9 +57,10 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           queryClient.setQueryData(key, data);
         }
       }
+      toast.error("Failed to update account");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -98,22 +98,25 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
+        <Button variant="ghost" size="icon" title="Edit" className="size-8">
           <Pencil className="size-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent onOpenAutoFocus={(e) => { e.preventDefault(); nameRef.current?.focus(); }}>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Edit Bank Account</DialogTitle>
-          <DialogDescription>
-            Update the details for {account.name}.
-          </DialogDescription>
+          <DialogDescription>Update the details for {account.name}.</DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -194,9 +197,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           />
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
-              Failed to update account. Please try again.
-            </p>
+            <p className="text-destructive text-sm">Failed to update account. Please try again.</p>
           )}
 
           <DialogFooter>

@@ -1,7 +1,6 @@
 {
   "extends": "@metron/tsconfig/react-library.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@metron/ui/*": ["./src/*"]

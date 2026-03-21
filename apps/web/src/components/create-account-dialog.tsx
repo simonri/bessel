@@ -25,6 +25,7 @@ import {
   createBankAccountV1BankAccountsPostMutation,
   listBankAccountsV1BankAccountsGetQueryKey,
 } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export function CreateAccountDialog() {
@@ -35,10 +36,14 @@ export function CreateAccountDialog() {
   const mutation = useMutation({
     ...createBankAccountV1BankAccountsPostMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
       });
+      toast.success("Account created");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to create account");
     },
   });
 
@@ -75,18 +80,21 @@ export function CreateAccountDialog() {
           Add Account
         </Button>
       </DialogTrigger>
-      <DialogContent onOpenAutoFocus={(e) => { e.preventDefault(); nameRef.current?.focus(); }}>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Create Bank Account</DialogTitle>
-          <DialogDescription>
-            Add a new bank account to track transactions.
-          </DialogDescription>
+          <DialogDescription>Add a new bank account to track transactions.</DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -94,7 +102,9 @@ export function CreateAccountDialog() {
             name="name"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="account-name">Name</Label>
+                <Label htmlFor="account-name">
+                  Name <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   ref={nameRef}
                   id="account-name"
@@ -137,7 +147,9 @@ export function CreateAccountDialog() {
               name="currency"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="account-currency">Currency</Label>
+                  <Label htmlFor="account-currency">
+                    Currency <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="account-currency"
                     value={field.state.value}
@@ -152,9 +164,7 @@ export function CreateAccountDialog() {
           </div>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
-              Failed to create account. Please try again.
-            </p>
+            <p className="text-destructive text-sm">Failed to create account. Please try again.</p>
           )}
 
           <DialogFooter>

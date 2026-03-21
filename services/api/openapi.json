@@ -32,9 +32,7 @@
     },
     "/v1/bank-accounts": {
       "get": {
-        "tags": [
-          "bank-accounts"
-        ],
+        "tags": ["bank-accounts"],
         "summary": "List Bank Accounts",
         "description": "List all bank accounts.",
         "operationId": "list_bank_accounts_v1_bank_accounts_get",
@@ -82,9 +80,7 @@
                 }
               ],
               "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.",
-              "default": [
-                "name"
-              ],
+              "default": ["name"],
               "title": "Sorting"
             },
             "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order."
@@ -114,9 +110,7 @@
         }
       },
       "post": {
-        "tags": [
-          "bank-accounts"
-        ],
+        "tags": ["bank-accounts"],
         "summary": "Create Bank Account",
         "description": "Create a new bank account.",
         "operationId": "create_bank_account_v1_bank_accounts_post",
@@ -156,9 +150,7 @@
     },
     "/v1/bank-accounts/{bank_account_id}": {
       "get": {
-        "tags": [
-          "bank-accounts"
-        ],
+        "tags": ["bank-accounts"],
         "summary": "Get Bank Account",
         "description": "Get a bank account by ID.",
         "operationId": "get_bank_account_v1_bank_accounts__bank_account_id__get",
@@ -198,9 +190,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "bank-accounts"
-        ],
+        "tags": ["bank-accounts"],
         "summary": "Update Bank Account",
         "description": "Update a bank account.",
         "operationId": "update_bank_account_v1_bank_accounts__bank_account_id__patch",
@@ -250,9 +240,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "bank-accounts"
-        ],
+        "tags": ["bank-accounts"],
         "summary": "Delete Bank Account",
         "description": "Delete a bank account and all its transactions.",
         "operationId": "delete_bank_account_v1_bank_accounts__bank_account_id__delete",
@@ -287,9 +275,7 @@
     },
     "/v1/categories": {
       "get": {
-        "tags": [
-          "categories"
-        ],
+        "tags": ["categories"],
         "summary": "List Categories",
         "description": "List all categories.",
         "operationId": "list_categories_v1_categories_get",
@@ -347,9 +333,7 @@
     },
     "/v1/investments/securities": {
       "get": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "List Securities",
         "operationId": "list_securities_v1_investments_securities_get",
         "parameters": [
@@ -404,9 +388,7 @@
         }
       },
       "post": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Create Security",
         "operationId": "create_security_v1_investments_securities_post",
         "requestBody": {
@@ -445,9 +427,7 @@
     },
     "/v1/investments/securities/{security_id}": {
       "patch": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Update Security",
         "operationId": "update_security_v1_investments_securities__security_id__patch",
         "parameters": [
@@ -496,9 +476,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Delete Security",
         "operationId": "delete_security_v1_investments_securities__security_id__delete",
         "parameters": [
@@ -532,9 +510,7 @@
     },
     "/v1/investments/trades": {
       "get": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "List Trades",
         "operationId": "list_trades_v1_investments_trades_get",
         "parameters": [
@@ -623,9 +599,7 @@
         }
       },
       "post": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Create Trade",
         "operationId": "create_trade_v1_investments_trades_post",
         "requestBody": {
@@ -664,9 +638,7 @@
     },
     "/v1/investments/trades/{trade_id}": {
       "patch": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Update Trade",
         "operationId": "update_trade_v1_investments_trades__trade_id__patch",
         "parameters": [
@@ -715,9 +687,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Delete Trade",
         "operationId": "delete_trade_v1_investments_trades__trade_id__delete",
         "parameters": [
@@ -751,9 +721,7 @@
     },
     "/v1/investments/securities/{security_id}/prices": {
       "get": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "List Security Prices",
         "operationId": "list_security_prices_v1_investments_securities__security_id__prices_get",
         "parameters": [
@@ -818,9 +786,7 @@
         }
       },
       "post": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Add Security Price",
         "operationId": "create_security_price_v1_investments_securities__security_id__prices_post",
         "parameters": [
@@ -871,9 +837,7 @@
     },
     "/v1/investments/holdings": {
       "get": {
-        "tags": [
-          "investments"
-        ],
+        "tags": ["investments"],
         "summary": "Get Holdings",
         "operationId": "get_holdings_v1_investments_holdings_get",
         "responses": {
@@ -892,9 +856,7 @@
     },
     "/v1/journal": {
       "get": {
-        "tags": [
-          "journal"
-        ],
+        "tags": ["journal"],
         "summary": "List Journal Entries",
         "operationId": "list_entries_v1_journal_get",
         "parameters": [
@@ -977,9 +939,7 @@
                 }
               ],
               "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.",
-              "default": [
-                "-entry_date"
-              ],
+              "default": ["-entry_date"],
               "title": "Sorting"
             },
             "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order."
@@ -1011,9 +971,7 @@
     },
     "/v1/journal/calendar": {
       "get": {
-        "tags": [
-          "journal"
-        ],
+        "tags": ["journal"],
         "summary": "Get Calendar Data",
         "operationId": "get_calendar_v1_journal_calendar_get",
         "parameters": [
@@ -1068,9 +1026,7 @@
     },
     "/v1/journal/streak": {
       "get": {
-        "tags": [
-          "journal"
-        ],
+        "tags": ["journal"],
         "summary": "Get Streak Info",
         "operationId": "get_streak_v1_journal_streak_get",
         "responses": {
@@ -1089,9 +1045,7 @@
     },
     "/v1/journal/{entry_date}": {
       "get": {
-        "tags": [
-          "journal"
-        ],
+        "tags": ["journal"],
         "summary": "Get Journal Entry",
         "operationId": "get_entry_v1_journal__entry_date__get",
         "parameters": [
@@ -1138,9 +1092,7 @@
         }
       },
       "put": {
-        "tags": [
-          "journal"
-        ],
+        "tags": ["journal"],
         "summary": "Upsert Journal Entry",
         "operationId": "upsert_entry_v1_journal__entry_date__put",
         "parameters": [
@@ -1189,9 +1141,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "journal"
-        ],
+        "tags": ["journal"],
         "summary": "Delete Journal Entry",
         "operationId": "delete_entry_v1_journal__entry_date__delete",
         "parameters": [
@@ -1225,9 +1175,7 @@
     },
     "/v1/places": {
       "get": {
-        "tags": [
-          "places"
-        ],
+        "tags": ["places"],
         "summary": "List Places",
         "operationId": "list_places_v1_places_get",
         "parameters": [
@@ -1292,9 +1240,7 @@
                 }
               ],
               "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.",
-              "default": [
-                "-created_at"
-              ],
+              "default": ["-created_at"],
               "title": "Sorting"
             },
             "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order."
@@ -1324,9 +1270,7 @@
         }
       },
       "post": {
-        "tags": [
-          "places"
-        ],
+        "tags": ["places"],
         "summary": "Create Place",
         "operationId": "create_place_v1_places_post",
         "requestBody": {
@@ -1365,9 +1309,7 @@
     },
     "/v1/places/search": {
       "get": {
-        "tags": [
-          "places"
-        ],
+        "tags": ["places"],
         "summary": "Search Google Places",
         "operationId": "search_google_places_v1_places_search_get",
         "parameters": [
@@ -1409,9 +1351,7 @@
     },
     "/v1/places/{place_id}": {
       "patch": {
-        "tags": [
-          "places"
-        ],
+        "tags": ["places"],
         "summary": "Update Place",
         "operationId": "update_place_v1_places__place_id__patch",
         "parameters": [
@@ -1460,9 +1400,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "places"
-        ],
+        "tags": ["places"],
         "summary": "Delete Place",
         "operationId": "delete_place_v1_places__place_id__delete",
         "parameters": [
@@ -1496,9 +1434,7 @@
     },
     "/v1/tasks": {
       "get": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "List Tasks",
         "operationId": "list_tasks_v1_tasks_get",
         "parameters": [
@@ -1637,9 +1573,7 @@
                 }
               ],
               "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.",
-              "default": [
-                "-created_at"
-              ],
+              "default": ["-created_at"],
               "title": "Sorting"
             },
             "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order."
@@ -1669,9 +1603,7 @@
         }
       },
       "post": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "Create Task",
         "operationId": "create_task_v1_tasks_post",
         "requestBody": {
@@ -1710,9 +1642,7 @@
     },
     "/v1/tasks/{task_id}": {
       "patch": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "Update Task",
         "operationId": "update_task_v1_tasks__task_id__patch",
         "parameters": [
@@ -1761,9 +1691,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "Delete Task",
         "operationId": "delete_task_v1_tasks__task_id__delete",
         "parameters": [
@@ -1797,9 +1725,7 @@
     },
     "/v1/tasks/{task_id}/complete": {
       "post": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "Complete Task",
         "operationId": "complete_task_v1_tasks__task_id__complete_post",
         "parameters": [
@@ -1840,9 +1766,7 @@
     },
     "/v1/tasks/{task_id}/reopen": {
       "post": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "Reopen Task",
         "operationId": "reopen_task_v1_tasks__task_id__reopen_post",
         "parameters": [
@@ -1883,9 +1807,7 @@
     },
     "/v1/tasks/reorder": {
       "patch": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "Reorder Tasks",
         "operationId": "reorder_tasks_v1_tasks_reorder_patch",
         "requestBody": {
@@ -1921,9 +1843,7 @@
     },
     "/v1/tasks/projects": {
       "get": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "List Projects",
         "operationId": "list_projects_v1_tasks_projects_get",
         "responses": {
@@ -1946,9 +1866,7 @@
     },
     "/v1/tasks/areas": {
       "get": {
-        "tags": [
-          "tasks"
-        ],
+        "tags": ["tasks"],
         "summary": "List Areas",
         "operationId": "list_areas_v1_tasks_areas_get",
         "responses": {
@@ -1971,9 +1889,7 @@
     },
     "/v1/transactions": {
       "get": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "List Transactions",
         "description": "List transactions.",
         "operationId": "list_transactions_v1_transactions_get",
@@ -2151,9 +2067,7 @@
                 }
               ],
               "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.",
-              "default": [
-                "-transaction_date"
-              ],
+              "default": ["-transaction_date"],
               "title": "Sorting"
             },
             "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order."
@@ -2183,9 +2097,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "Delete Transactions",
         "description": "Delete transactions by IDs.",
         "operationId": "delete_transactions_v1_transactions_delete",
@@ -2218,9 +2130,7 @@
     },
     "/v1/transactions/import": {
       "post": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "Import Transactions",
         "description": "Import transactions from a bank export (CSV or XLSX).\n\nDuplicate transactions (by dedup hash) are automatically skipped.",
         "operationId": "import_transactions_v1_transactions_import_post",
@@ -2285,9 +2195,7 @@
     },
     "/v1/transactions/{transaction_id}": {
       "patch": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "Update Transaction",
         "description": "Update a transaction.",
         "operationId": "update_transaction_v1_transactions__transaction_id__patch",
@@ -2339,9 +2247,7 @@
     },
     "/v1/transactions/categorize-by-description": {
       "post": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "Bulk Categorize by Description",
         "description": "Set category for all transactions matching the given description.",
         "operationId": "categorize_by_description_v1_transactions_categorize_by_description_post",
@@ -2381,9 +2287,7 @@
     },
     "/v1/transactions/spending-by-category": {
       "get": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "Monthly Spending by Category",
         "description": "Aggregate debit spending per category for a given month.",
         "operationId": "spending_by_category_v1_transactions_spending_by_category_get",
@@ -2437,9 +2341,7 @@
     },
     "/v1/transactions/monthly-flow": {
       "get": {
-        "tags": [
-          "transactions"
-        ],
+        "tags": ["transactions"],
         "summary": "Monthly Income & Expenses",
         "description": "Return income and expenses aggregated per month.",
         "operationId": "monthly_flow_v1_transactions_monthly_flow_get",
@@ -2483,9 +2385,7 @@
     },
     "/v1/workouts/exercises": {
       "get": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "List Exercises",
         "operationId": "list_exercises_v1_workouts_exercises_get",
         "parameters": [
@@ -2576,9 +2476,7 @@
         }
       },
       "post": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Create Custom Exercise",
         "operationId": "create_exercise_v1_workouts_exercises_post",
         "requestBody": {
@@ -2617,9 +2515,7 @@
     },
     "/v1/workouts/exercises/recent": {
       "get": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Recent Exercises",
         "operationId": "list_recent_exercises_v1_workouts_exercises_recent_get",
         "parameters": [
@@ -2666,9 +2562,7 @@
     },
     "/v1/workouts": {
       "get": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "List Workouts",
         "operationId": "list_workouts_v1_workouts_get",
         "parameters": [
@@ -2715,9 +2609,7 @@
                 }
               ],
               "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.",
-              "default": [
-                "-started_at"
-              ],
+              "default": ["-started_at"],
               "title": "Sorting"
             },
             "description": "Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order."
@@ -2747,9 +2639,7 @@
         }
       },
       "post": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Create Workout",
         "operationId": "create_workout_v1_workouts_post",
         "requestBody": {
@@ -2788,9 +2678,7 @@
     },
     "/v1/workouts/{workout_id}": {
       "get": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Get Workout Detail",
         "operationId": "get_workout_v1_workouts__workout_id__get",
         "parameters": [
@@ -2829,9 +2717,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Update Workout",
         "operationId": "update_workout_v1_workouts__workout_id__patch",
         "parameters": [
@@ -2880,9 +2766,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Delete Workout",
         "operationId": "delete_workout_v1_workouts__workout_id__delete",
         "parameters": [
@@ -2916,9 +2800,7 @@
     },
     "/v1/workouts/{workout_id}/sets": {
       "post": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Add Set to Workout",
         "operationId": "create_workout_set_v1_workouts__workout_id__sets_post",
         "parameters": [
@@ -2969,9 +2851,7 @@
     },
     "/v1/workouts/{workout_id}/sets/{set_id}": {
       "patch": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Update Set",
         "operationId": "update_workout_set_v1_workouts__workout_id__sets__set_id__patch",
         "parameters": [
@@ -3030,9 +2910,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Delete Set",
         "operationId": "delete_workout_set_v1_workouts__workout_id__sets__set_id__delete",
         "parameters": [
@@ -3076,9 +2954,7 @@
     },
     "/v1/workouts/exercises/{exercise_id}/prs": {
       "get": {
-        "tags": [
-          "workouts"
-        ],
+        "tags": ["workouts"],
         "summary": "Get PRs for Exercise",
         "operationId": "get_exercise_prs_v1_workouts_exercises__exercise_id__prs_get",
         "parameters": [
@@ -3122,15 +2998,7 @@
     "schemas": {
       "AssetType": {
         "type": "string",
-        "enum": [
-          "stock",
-          "etf",
-          "mutual_fund",
-          "bond",
-          "crypto",
-          "real_estate",
-          "other"
-        ],
+        "enum": ["stock", "etf", "mutual_fund", "bond", "crypto", "real_estate", "other"],
         "title": "AssetType"
       },
       "BankAccountCreate": {
@@ -3159,11 +3027,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "currency",
-          "subtype"
-        ],
+        "required": ["name", "currency", "subtype"],
         "title": "BankAccountCreate"
       },
       "BankAccountListResponse": {
@@ -3180,10 +3044,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "BankAccountListResponse"
       },
       "BankAccountSchema": {
@@ -3254,12 +3115,7 @@
       },
       "BankAccountSortProperty": {
         "type": "string",
-        "enum": [
-          "created_at",
-          "-created_at",
-          "name",
-          "-name"
-        ],
+        "enum": ["created_at", "-created_at", "name", "-name"],
         "title": "BankAccountSortProperty"
       },
       "BankAccountUpdate": {
@@ -3326,9 +3182,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "file"
-        ],
+        "required": ["file"],
         "title": "Body_import_transactions_v1_transactions_import_post"
       },
       "BulkCategorizeRequest": {
@@ -3353,10 +3207,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "description",
-          "category_id"
-        ],
+        "required": ["description", "category_id"],
         "title": "BulkCategorizeRequest"
       },
       "BulkCategorizeResponse": {
@@ -3368,9 +3219,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "updated"
-        ],
+        "required": ["updated"],
         "title": "BulkCategorizeResponse"
       },
       "BulkDeleteRequest": {
@@ -3386,9 +3235,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "ids"
-        ],
+        "required": ["ids"],
         "title": "BulkDeleteRequest"
       },
       "CategoryListResponse": {
@@ -3405,10 +3252,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "CategoryListResponse"
       },
       "CategorySchema": {
@@ -3473,15 +3317,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "created_at",
-          "modified_at",
-          "id",
-          "name",
-          "slug",
-          "color",
-          "excluded"
-        ],
+        "required": ["created_at", "modified_at", "id", "name", "slug", "color", "excluded"],
         "title": "CategorySchema"
       },
       "CategorySpending": {
@@ -3509,12 +3345,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "category_id",
-          "category_name",
-          "category_color",
-          "total"
-        ],
+        "required": ["category_id", "category_name", "category_color", "total"],
         "title": "CategorySpending"
       },
       "Equipment": {
@@ -3557,11 +3388,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "category",
-          "equipment"
-        ],
+        "required": ["name", "category", "equipment"],
         "title": "ExerciseCreate"
       },
       "ExerciseListResponse": {
@@ -3578,10 +3405,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "ExerciseListResponse"
       },
       "ExercisePRListResponse": {
@@ -3595,9 +3419,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "ExercisePRListResponse"
       },
       "ExercisePRSchema": {
@@ -3717,9 +3539,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "results"
-        ],
+        "required": ["results"],
         "title": "GooglePlaceSearchResponse"
       },
       "GooglePlaceSearchResult": {
@@ -3823,13 +3643,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "place_id",
-          "name",
-          "address",
-          "latitude",
-          "longitude"
-        ],
+        "required": ["place_id", "name", "address", "latitude", "longitude"],
         "title": "GooglePlaceSearchResult"
       },
       "HTTPValidationError": {
@@ -3966,9 +3780,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "HoldingsResponse"
       },
       "ImportResponse": {
@@ -3985,10 +3797,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "created",
-          "skipped"
-        ],
+        "required": ["created", "skipped"],
         "title": "ImportResponse"
       },
       "JournalCalendarDay": {
@@ -4026,9 +3835,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "entry_date"
-        ],
+        "required": ["entry_date"],
         "title": "JournalCalendarDay"
       },
       "JournalCalendarResponse": {
@@ -4042,9 +3849,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "days"
-        ],
+        "required": ["days"],
         "title": "JournalCalendarResponse"
       },
       "JournalEntryListResponse": {
@@ -4061,10 +3866,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "JournalEntryListResponse"
       },
       "JournalEntrySchema": {
@@ -4259,12 +4061,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "created_at",
-          "modified_at",
-          "id",
-          "entry_date"
-        ],
+        "required": ["created_at", "modified_at", "id", "entry_date"],
         "title": "JournalEntrySchema"
       },
       "JournalEntryUpsert": {
@@ -4450,11 +4247,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "current_streak",
-          "longest_streak",
-          "total_entries"
-        ],
+        "required": ["current_streak", "longest_streak", "total_entries"],
         "title": "JournalStreakResponse"
       },
       "MonthlyFlow": {
@@ -4479,12 +4272,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "year",
-          "month",
-          "income",
-          "expenses"
-        ],
+        "required": ["year", "month", "income", "expenses"],
         "title": "MonthlyFlow"
       },
       "MonthlyFlowResponse": {
@@ -4499,9 +4287,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "MonthlyFlowResponse"
       },
       "MonthlySpendingResponse": {
@@ -4524,11 +4310,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "year",
-          "month",
-          "items"
-        ],
+        "required": ["year", "month", "items"],
         "title": "MonthlySpendingResponse"
       },
       "MuscleCategory": {
@@ -4563,10 +4345,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "total_count",
-          "max_page"
-        ],
+        "required": ["total_count", "max_page"],
         "title": "Pagination"
       },
       "PlaceCreate": {
@@ -4738,11 +4517,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "latitude",
-          "longitude"
-        ],
+        "required": ["name", "latitude", "longitude"],
         "title": "PlaceCreate"
       },
       "PlaceListResponse": {
@@ -4759,10 +4534,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "PlaceListResponse"
       },
       "PlaceSchema": {
@@ -4962,14 +4734,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "created_at",
-          "modified_at",
-          "id",
-          "name",
-          "latitude",
-          "longitude"
-        ],
+        "required": ["created_at", "modified_at", "id", "name", "latitude", "longitude"],
         "title": "PlaceSchema"
       },
       "PlaceSortProperty": {
@@ -4988,10 +4753,7 @@
       },
       "PlaceStatus": {
         "type": "string",
-        "enum": [
-          "want_to_go",
-          "visited"
-        ],
+        "enum": ["want_to_go", "visited"],
         "title": "PlaceStatus"
       },
       "PlaceUpdate": {
@@ -5167,12 +4929,7 @@
       },
       "RruleFrequency": {
         "type": "string",
-        "enum": [
-          "daily",
-          "weekly",
-          "monthly",
-          "yearly"
-        ],
+        "enum": ["daily", "weekly", "monthly", "yearly"],
         "title": "RruleFrequency"
       },
       "SecurityCreate": {
@@ -5215,11 +4972,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "asset_type",
-          "currency"
-        ],
+        "required": ["name", "asset_type", "currency"],
         "title": "SecurityCreate"
       },
       "SecurityListResponse": {
@@ -5236,10 +4989,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "SecurityListResponse"
       },
       "SecurityPriceCreate": {
@@ -5262,11 +5012,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "price_date",
-          "price_per_unit",
-          "currency"
-        ],
+        "required": ["price_date", "price_per_unit", "currency"],
         "title": "SecurityPriceCreate"
       },
       "SecurityPriceListResponse": {
@@ -5283,10 +5029,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "SecurityPriceListResponse"
       },
       "SecurityPriceSchema": {
@@ -5503,9 +5246,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "completed_task"
-        ],
+        "required": ["completed_task"],
         "title": "TaskCompleteResponse"
       },
       "TaskCreate": {
@@ -5648,9 +5389,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "TaskCreate"
       },
       "TaskListResponse": {
@@ -5667,10 +5406,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "TaskListResponse"
       },
       "TaskReorderItem": {
@@ -5696,10 +5432,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "position"
-        ],
+        "required": ["id", "position"],
         "title": "TaskReorderItem"
       },
       "TaskSchema": {
@@ -5896,12 +5629,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "created_at",
-          "modified_at",
-          "id",
-          "title"
-        ],
+        "required": ["created_at", "modified_at", "id", "title"],
         "title": "TaskSchema"
       },
       "TaskSortProperty": {
@@ -5924,12 +5652,7 @@
       },
       "TaskStatus": {
         "type": "string",
-        "enum": [
-          "todo",
-          "in_progress",
-          "done",
-          "cancelled"
-        ],
+        "enum": ["todo", "in_progress", "done", "cancelled"],
         "title": "TaskStatus"
       },
       "TaskUpdate": {
@@ -6179,10 +5902,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "TradeListResponse"
       },
       "TradeSchema": {
@@ -6274,10 +5994,7 @@
       },
       "TradeType": {
         "type": "string",
-        "enum": [
-          "buy",
-          "sell"
-        ],
+        "enum": ["buy", "sell"],
         "title": "TradeType"
       },
       "TradeUpdate": {
@@ -6357,10 +6074,7 @@
       },
       "TransactionDirection": {
         "type": "string",
-        "enum": [
-          "debit",
-          "credit"
-        ],
+        "enum": ["debit", "credit"],
         "title": "TransactionDirection"
       },
       "TransactionListResponse": {
@@ -6377,10 +6091,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "TransactionListResponse"
       },
       "TransactionSchema": {
@@ -6691,11 +6402,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "WorkoutLogCreate": {
@@ -6718,9 +6425,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "started_at"
-        ],
+        "required": ["started_at"],
         "title": "WorkoutLogCreate"
       },
       "WorkoutLogDetailSchema": {
@@ -6812,10 +6517,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "WorkoutLogListResponse"
       },
       "WorkoutLogSchema": {
@@ -6875,24 +6577,12 @@
           }
         },
         "type": "object",
-        "required": [
-          "created_at",
-          "modified_at",
-          "id",
-          "started_at",
-          "completed_at",
-          "notes"
-        ],
+        "required": ["created_at", "modified_at", "id", "started_at", "completed_at", "notes"],
         "title": "WorkoutLogSchema"
       },
       "WorkoutLogSortProperty": {
         "type": "string",
-        "enum": [
-          "created_at",
-          "-created_at",
-          "started_at",
-          "-started_at"
-        ],
+        "enum": ["created_at", "-created_at", "started_at", "-started_at"],
         "title": "WorkoutLogSortProperty"
       },
       "WorkoutLogUpdate": {
@@ -6978,12 +6668,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "exercise_id",
-          "set_number",
-          "reps",
-          "weight"
-        ],
+        "required": ["exercise_id", "set_number", "reps", "weight"],
         "title": "WorkoutSetCreate"
       },
       "WorkoutSetSchema": {

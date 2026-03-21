@@ -21,13 +21,15 @@ import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
   listPlacesV1PlacesGetQueryKey,
 } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 function getInitialVisitedAt(place: Record<string, unknown>): string {
   const val = place.visited_at;
   if (!val) return "";
   if (val instanceof Date) return val.toISOString().split("T")[0];
-  return String(val);
+  if (typeof val === "string") return val;
+  return "";
 }
 
 export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
@@ -38,10 +40,14 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
   const mutation = useMutation({
     ...updatePlaceV1PlacesPlaceIdPatchMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listPlacesV1PlacesGetQueryKey({ client }),
       });
+      toast.success("Place updated");
       setOpen(false);
+    },
+    onError: () => {
+      toast.error("Failed to update place");
     },
   });
 
@@ -50,7 +56,9 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
       name: place.name,
       address: place.address ?? "",
       country: (placeAny.country as string) ?? "",
-      status: ((placeAny.status as string) === "visited" ? "visited" : "want_to_go") as "want_to_go" | "visited",
+      status: ((placeAny.status as string) === "visited" ? "visited" : "want_to_go") as
+        | "want_to_go"
+        | "visited",
       rating: place.rating ?? (null as number | null),
       visitedAt: getInitialVisitedAt(placeAny),
       review: place.review ?? "",
@@ -94,7 +102,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
+        <Button variant="ghost" size="icon" title="Edit" className="size-8">
           <Pencil className="size-4" />
         </Button>
       </DialogTrigger>
@@ -107,7 +115,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -162,7 +170,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
               children={(field) => (
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <CategorySelect value={field.state.value || null} onChange={(v) => field.handleChange(v ?? "")} />
+                  <CategorySelect
+                    value={field.state.value || null}
+                    onChange={(v) => field.handleChange(v ?? "")}
+                  />
                 </div>
               )}
             />
@@ -281,9 +292,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
           />
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
-              Failed to update place. Please try again.
-            </p>
+            <p className="text-destructive text-sm">Failed to update place. Please try again.</p>
           )}
 
           <DialogFooter>

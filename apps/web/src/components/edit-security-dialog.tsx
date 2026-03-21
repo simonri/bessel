@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@metron/ui/components/select";
 import { Textarea } from "@metron/ui/components/textarea";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
@@ -48,13 +49,17 @@ export function EditSecurityDialog({ security }: { security: SecuritySchema }) {
   const mutation = useMutation({
     ...updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listSecuritiesV1InvestmentsSecuritiesGetQueryKey({ client }),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client }).queryKey,
       });
+      toast.success("Security updated");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to update security");
     },
   });
 
@@ -101,12 +106,18 @@ export function EditSecurityDialog({ security }: { security: SecuritySchema }) {
       <Button
         variant="ghost"
         size="icon"
+        title="Edit"
         className="size-8 text-muted-foreground"
         onClick={() => setOpen(true)}
       >
         <Pencil className="size-3.5" />
       </Button>
-      <DialogContent onOpenAutoFocus={(e) => { e.preventDefault(); nameRef.current?.focus(); }}>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Edit Security</DialogTitle>
           <DialogDescription>Update the details for {security.name}.</DialogDescription>
@@ -115,7 +126,7 @@ export function EditSecurityDialog({ security }: { security: SecuritySchema }) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >

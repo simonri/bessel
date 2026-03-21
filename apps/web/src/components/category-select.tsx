@@ -40,10 +40,7 @@ interface CategorySelectProps {
 
 export function CategorySelect({ value, onChange }: CategorySelectProps) {
   return (
-    <Select
-      value={value ?? ""}
-      onValueChange={(v) => onChange(v || null)}
-    >
+    <Select value={value ?? ""} onValueChange={(v) => onChange(v || null)}>
       <SelectTrigger className="w-full capitalize">
         <SelectValue placeholder="Select category" />
       </SelectTrigger>

@@ -253,8 +253,7 @@ const createQueryKey = <TOptions extends Options>(
 ): [QueryKey<TOptions>[0]] => {
   const params: QueryKey<TOptions>[0] = {
     _id: id,
-    baseUrl:
-      options?.baseUrl || (options?.client ?? client).getConfig().baseUrl,
+    baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl,
   } as QueryKey<TOptions>[0];
   if (infinite) {
     params._infinite = infinite;
@@ -277,22 +276,14 @@ const createQueryKey = <TOptions extends Options>(
   return [params];
 };
 
-export const healthzHealthzGetQueryKey = (
-  options?: Options<HealthzHealthzGetData>,
-) => createQueryKey("healthzHealthzGet", options);
+export const healthzHealthzGetQueryKey = (options?: Options<HealthzHealthzGetData>) =>
+  createQueryKey("healthzHealthzGet", options);
 
 /**
  * Healthz
  */
-export const healthzHealthzGetOptions = (
-  options?: Options<HealthzHealthzGetData>,
-) =>
-  queryOptions<
-    unknown,
-    DefaultError,
-    unknown,
-    ReturnType<typeof healthzHealthzGetQueryKey>
-  >({
+export const healthzHealthzGetOptions = (options?: Options<HealthzHealthzGetData>) =>
+  queryOptions<unknown, DefaultError, unknown, ReturnType<typeof healthzHealthzGetQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await healthzHealthzGet({
         ...options,
@@ -456,9 +447,7 @@ export const createBankAccountV1BankAccountsPostMutation = (
  * Delete a bank account and all its transactions.
  */
 export const deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
-  >,
+  options?: Partial<Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>>,
 ): UseMutationOptions<
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
@@ -470,13 +459,11 @@ export const deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation = (
     Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteBankAccountV1BankAccountsBankAccountIdDelete(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
+      const { data } = await deleteBankAccountV1BankAccountsBankAccountIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -519,9 +506,7 @@ export const getBankAccountV1BankAccountsBankAccountIdGetOptions = (
  * Update a bank account.
  */
 export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
-  >,
+  options?: Partial<Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>>,
 ): UseMutationOptions<
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
@@ -700,8 +685,7 @@ export const listSecuritiesV1InvestmentsSecuritiesGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey:
-        listSecuritiesV1InvestmentsSecuritiesGetInfiniteQueryKey(options),
+      queryKey: listSecuritiesV1InvestmentsSecuritiesGetInfiniteQueryKey(options),
     },
   );
 
@@ -736,9 +720,7 @@ export const createSecurityV1InvestmentsSecuritiesPostMutation = (
  * Delete Security
  */
 export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData>
-  >,
+  options?: Partial<Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData>>,
 ): UseMutationOptions<
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError,
@@ -750,12 +732,11 @@ export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteMutation = (
     Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -766,9 +747,7 @@ export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteMutation = (
  * Update Security
  */
 export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData>
-  >,
+  options?: Partial<Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData>>,
 ): UseMutationOptions<
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchError,
@@ -780,12 +759,11 @@ export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation = (
     Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await updateSecurityV1InvestmentsSecuritiesSecurityIdPatch({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await updateSecurityV1InvestmentsSecuritiesSecurityIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -951,144 +929,111 @@ export const updateTradeV1InvestmentsTradesTradeIdPatchMutation = (
   return mutationOptions;
 };
 
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) =>
-    createQueryKey(
-      "listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet",
-      options,
-    );
+export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey = (
+  options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
+) => createQueryKey("listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet", options);
 
 /**
  * List Security Prices
  */
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetOptions =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) =>
-    queryOptions<
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
-      ReturnType<
-        typeof listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey
+export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetOptions = (
+  options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
+) =>
+  queryOptions<
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
+    ReturnType<typeof listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey(options),
+  });
+
+export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteQueryKey = (
+  options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
+): QueryKey<Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>> =>
+  createQueryKey("listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet", options, true);
+
+/**
+ * List Security Prices
+ */
+export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteOptions = (
+  options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
+) =>
+  infiniteQueryOptions<
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
+    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
+    InfiniteData<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse>,
+    QueryKey<Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>>[0],
+        "body" | "headers" | "path" | "query"
       >
-    >({
-      queryFn: async ({ queryKey, signal }) => {
-        const { data } =
-          await listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true,
-          });
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
         return data;
       },
       queryKey:
-        listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey(
-          options,
-        ),
-    });
-
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteQueryKey =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ): QueryKey<
-    Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-  > =>
-    createQueryKey(
-      "listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet",
-      options,
-      true,
-    );
-
-/**
- * List Security Prices
- */
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteOptions =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) =>
-    infiniteQueryOptions<
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
-      InfiniteData<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse>,
-      QueryKey<
-        Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-      >,
-      | number
-      | Pick<
-          QueryKey<
-            Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-          >[0],
-          "body" | "headers" | "path" | "query"
-        >
-    >(
-      // @ts-ignore
-      {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-          // @ts-ignore
-          const page: Pick<
-            QueryKey<
-              Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-            >[0],
-            "body" | "headers" | "path" | "query"
-          > =
-            typeof pageParam === "object"
-              ? pageParam
-              : {
-                  query: {
-                    page: pageParam,
-                  },
-                };
-          const params = createInfiniteParams(queryKey, page);
-          const { data } =
-            await listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet({
-              ...options,
-              ...params,
-              signal,
-              throwOnError: true,
-            });
-          return data;
-        },
-        queryKey:
-          listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteQueryKey(
-            options,
-          ),
-      },
-    );
+        listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteQueryKey(options),
+    },
+  );
 
 /**
  * Add Security Price
  */
-export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation =
-  (
-    options?: Partial<
-      Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
-    >,
-  ): UseMutationOptions<
+export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation = (
+  options?: Partial<Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>>,
+): UseMutationOptions<
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
+  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
+  Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
     CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
     CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
     Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
-      CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
-      Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
 export const getHoldingsV1InvestmentsHoldingsGetQueryKey = (
   options?: Options<GetHoldingsV1InvestmentsHoldingsGetData>,
@@ -1118,16 +1063,13 @@ export const getHoldingsV1InvestmentsHoldingsGetOptions = (
     queryKey: getHoldingsV1InvestmentsHoldingsGetQueryKey(options),
   });
 
-export const listEntriesV1JournalGetQueryKey = (
-  options?: Options<ListEntriesV1JournalGetData>,
-) => createQueryKey("listEntriesV1JournalGet", options);
+export const listEntriesV1JournalGetQueryKey = (options?: Options<ListEntriesV1JournalGetData>) =>
+  createQueryKey("listEntriesV1JournalGet", options);
 
 /**
  * List Journal Entries
  */
-export const listEntriesV1JournalGetOptions = (
-  options?: Options<ListEntriesV1JournalGetData>,
-) =>
+export const listEntriesV1JournalGetOptions = (options?: Options<ListEntriesV1JournalGetData>) =>
   queryOptions<
     ListEntriesV1JournalGetResponse,
     ListEntriesV1JournalGetError,
@@ -1163,10 +1105,7 @@ export const listEntriesV1JournalGetInfiniteOptions = (
     InfiniteData<ListEntriesV1JournalGetResponse>,
     QueryKey<Options<ListEntriesV1JournalGetData>>,
     | number
-    | Pick<
-        QueryKey<Options<ListEntriesV1JournalGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
+    | Pick<QueryKey<Options<ListEntriesV1JournalGetData>>[0], "body" | "headers" | "path" | "query">
   >(
     // @ts-ignore
     {
@@ -1334,16 +1273,13 @@ export const upsertEntryV1JournalEntryDatePutMutation = (
   return mutationOptions;
 };
 
-export const listPlacesV1PlacesGetQueryKey = (
-  options?: Options<ListPlacesV1PlacesGetData>,
-) => createQueryKey("listPlacesV1PlacesGet", options);
+export const listPlacesV1PlacesGetQueryKey = (options?: Options<ListPlacesV1PlacesGetData>) =>
+  createQueryKey("listPlacesV1PlacesGet", options);
 
 /**
  * List Places
  */
-export const listPlacesV1PlacesGetOptions = (
-  options?: Options<ListPlacesV1PlacesGetData>,
-) =>
+export const listPlacesV1PlacesGetOptions = (options?: Options<ListPlacesV1PlacesGetData>) =>
   queryOptions<
     ListPlacesV1PlacesGetResponse,
     ListPlacesV1PlacesGetError,
@@ -1379,10 +1315,7 @@ export const listPlacesV1PlacesGetInfiniteOptions = (
     InfiniteData<ListPlacesV1PlacesGetResponse>,
     QueryKey<Options<ListPlacesV1PlacesGetData>>,
     | number
-    | Pick<
-        QueryKey<Options<ListPlacesV1PlacesGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
+    | Pick<QueryKey<Options<ListPlacesV1PlacesGetData>>[0], "body" | "headers" | "path" | "query">
   >(
     // @ts-ignore
     {
@@ -1521,16 +1454,13 @@ export const updatePlaceV1PlacesPlaceIdPatchMutation = (
   return mutationOptions;
 };
 
-export const listTasksV1TasksGetQueryKey = (
-  options?: Options<ListTasksV1TasksGetData>,
-) => createQueryKey("listTasksV1TasksGet", options);
+export const listTasksV1TasksGetQueryKey = (options?: Options<ListTasksV1TasksGetData>) =>
+  createQueryKey("listTasksV1TasksGet", options);
 
 /**
  * List Tasks
  */
-export const listTasksV1TasksGetOptions = (
-  options?: Options<ListTasksV1TasksGetData>,
-) =>
+export const listTasksV1TasksGetOptions = (options?: Options<ListTasksV1TasksGetData>) =>
   queryOptions<
     ListTasksV1TasksGetResponse,
     ListTasksV1TasksGetError,
@@ -1557,19 +1487,14 @@ export const listTasksV1TasksGetInfiniteQueryKey = (
 /**
  * List Tasks
  */
-export const listTasksV1TasksGetInfiniteOptions = (
-  options?: Options<ListTasksV1TasksGetData>,
-) =>
+export const listTasksV1TasksGetInfiniteOptions = (options?: Options<ListTasksV1TasksGetData>) =>
   infiniteQueryOptions<
     ListTasksV1TasksGetResponse,
     ListTasksV1TasksGetError,
     InfiniteData<ListTasksV1TasksGetResponse>,
     QueryKey<Options<ListTasksV1TasksGetData>>,
     | number
-    | Pick<
-        QueryKey<Options<ListTasksV1TasksGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
+    | Pick<QueryKey<Options<ListTasksV1TasksGetData>>[0], "body" | "headers" | "path" | "query">
   >(
     // @ts-ignore
     {
@@ -1789,16 +1714,13 @@ export const listProjectsV1TasksProjectsGetOptions = (
     queryKey: listProjectsV1TasksProjectsGetQueryKey(options),
   });
 
-export const listAreasV1TasksAreasGetQueryKey = (
-  options?: Options<ListAreasV1TasksAreasGetData>,
-) => createQueryKey("listAreasV1TasksAreasGet", options);
+export const listAreasV1TasksAreasGetQueryKey = (options?: Options<ListAreasV1TasksAreasGetData>) =>
+  createQueryKey("listAreasV1TasksAreasGet", options);
 
 /**
  * List Areas
  */
-export const listAreasV1TasksAreasGetOptions = (
-  options?: Options<ListAreasV1TasksAreasGetData>,
-) =>
+export const listAreasV1TasksAreasGetOptions = (options?: Options<ListAreasV1TasksAreasGetData>) =>
   queryOptions<
     ListAreasV1TasksAreasGetResponse,
     DefaultError,
@@ -1965,9 +1887,7 @@ export const importTransactionsV1TransactionsImportPostMutation = (
  * Update a transaction.
  */
 export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
-  >,
+  options?: Partial<Options<UpdateTransactionV1TransactionsTransactionIdPatchData>>,
 ): UseMutationOptions<
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
@@ -1995,43 +1915,33 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
  *
  * Set category for all transactions matching the given description.
  */
-export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation =
-  (
-    options?: Partial<
-      Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
-    >,
-  ): UseMutationOptions<
+export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation = (
+  options?: Partial<Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>>,
+): UseMutationOptions<
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
+  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
+  Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
     CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
     CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
     Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
-      Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost(
-            {
-              ...options,
-              ...fnOptions,
-              throwOnError: true,
-            },
-          );
-        return data;
-      },
-    };
-    return mutationOptions;
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
 export const spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey = (
   options: Options<SpendingByCategoryV1TransactionsSpendingByCategoryGetData>,
-) =>
-  createQueryKey(
-    "spendingByCategoryV1TransactionsSpendingByCategoryGet",
-    options,
-  );
+) => createQueryKey("spendingByCategoryV1TransactionsSpendingByCategoryGet", options);
 
 /**
  * Monthly Spending by Category
@@ -2045,22 +1955,18 @@ export const spendingByCategoryV1TransactionsSpendingByCategoryGetOptions = (
     SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
     SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
     SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
-    ReturnType<
-      typeof spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey
-    >
+    ReturnType<typeof spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } =
-        await spendingByCategoryV1TransactionsSpendingByCategoryGet({
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        });
+      const { data } = await spendingByCategoryV1TransactionsSpendingByCategoryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
       return data;
     },
-    queryKey:
-      spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey(options),
+    queryKey: spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey(options),
   });
 
 export const monthlyFlowV1TransactionsMonthlyFlowGetQueryKey = (
@@ -2444,9 +2350,7 @@ export const createWorkoutSetV1WorkoutsWorkoutIdSetsPostMutation = (
  * Delete Set
  */
 export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData>
-  >,
+  options?: Partial<Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData>>,
 ): UseMutationOptions<
   DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponse,
   DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteError,
@@ -2458,13 +2362,11 @@ export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteMutation = (
     Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
+      const { data } = await deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -2475,9 +2377,7 @@ export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteMutation = (
  * Update Set
  */
 export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData>
-  >,
+  options?: Partial<Options<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData>>,
 ): UseMutationOptions<
   UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse,
   UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchError,
@@ -2502,8 +2402,7 @@ export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchMutation = (
 
 export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey = (
   options: Options<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData>,
-) =>
-  createQueryKey("getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet", options);
+) => createQueryKey("getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet", options);
 
 /**
  * Get PRs for Exercise
@@ -2526,6 +2425,5 @@ export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetOptions = (
       });
       return data;
     },
-    queryKey:
-      getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey(options),
+    queryKey: getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey(options),
   });

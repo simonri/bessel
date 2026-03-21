@@ -87,18 +87,12 @@ export function VirtualDataTable<TData, TValue>({
   }, [virtualRows, rows.length, handleEndReached]);
 
   const totalSize = virtualizer.getTotalSize();
-  const paddingTop =
-    virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
   const paddingBottom =
-    virtualRows.length > 0
-      ? totalSize - virtualRows[virtualRows.length - 1].end
-      : 0;
+    virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className="min-h-0 flex-1 overflow-y-auto rounded-md border"
-    >
+    <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto rounded-md border">
       <Table className="table-fixed">
         <TableHeader className="bg-background sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -114,10 +108,7 @@ export function VirtualDataTable<TData, TValue>({
                 >
                   {header.isPlaceholder
                     ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                    : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
               ))}
             </TableRow>
@@ -148,10 +139,7 @@ export function VirtualDataTable<TData, TValue>({
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
                   </TableRow>

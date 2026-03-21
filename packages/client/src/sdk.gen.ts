@@ -237,20 +237,17 @@ export type Options<
 export const healthzHealthzGet = <ThrowOnError extends boolean = false>(
   options?: Options<HealthzHealthzGetData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    HealthzHealthzGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/healthz", ...options });
+  (options?.client ?? client).get<HealthzHealthzGetResponses, unknown, ThrowOnError>({
+    url: "/healthz",
+    ...options,
+  });
 
 /**
  * List Bank Accounts
  *
  * List all bank accounts.
  */
-export const listBankAccountsV1BankAccountsGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listBankAccountsV1BankAccountsGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListBankAccountsV1BankAccountsGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -268,9 +265,7 @@ export const listBankAccountsV1BankAccountsGet = <
  *
  * Create a new bank account.
  */
-export const createBankAccountV1BankAccountsPost = <
-  ThrowOnError extends boolean = false,
->(
+export const createBankAccountV1BankAccountsPost = <ThrowOnError extends boolean = false>(
   options: Options<CreateBankAccountV1BankAccountsPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -295,10 +290,7 @@ export const createBankAccountV1BankAccountsPost = <
 export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
-    ThrowOnError
-  >,
+  options: Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
     DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
@@ -311,21 +303,15 @@ export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
  *
  * Get a bank account by ID.
  */
-export const getBankAccountV1BankAccountsBankAccountIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetBankAccountV1BankAccountsBankAccountIdGetData,
-    ThrowOnError
-  >,
+export const getBankAccountV1BankAccountsBankAccountIdGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetBankAccountV1BankAccountsBankAccountIdGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
     GetBankAccountV1BankAccountsBankAccountIdGetResponses,
     GetBankAccountV1BankAccountsBankAccountIdGetErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+    responseTransformer: getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
     url: "/v1/bank-accounts/{bank_account_id}",
     ...options,
   });
@@ -338,18 +324,14 @@ export const getBankAccountV1BankAccountsBankAccountIdGet = <
 export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
-    ThrowOnError
-  >,
+  options: Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
     UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
     UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+    responseTransformer: updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
     url: "/v1/bank-accounts/{bank_account_id}",
     ...options,
     headers: {
@@ -363,9 +345,7 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
  *
  * List all categories.
  */
-export const listCategoriesV1CategoriesGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listCategoriesV1CategoriesGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListCategoriesV1CategoriesGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -381,9 +361,7 @@ export const listCategoriesV1CategoriesGet = <
 /**
  * List Securities
  */
-export const listSecuritiesV1InvestmentsSecuritiesGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listSecuritiesV1InvestmentsSecuritiesGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -391,8 +369,7 @@ export const listSecuritiesV1InvestmentsSecuritiesGet = <
     ListSecuritiesV1InvestmentsSecuritiesGetErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
+    responseTransformer: listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
     url: "/v1/investments/securities",
     ...options,
   });
@@ -400,9 +377,7 @@ export const listSecuritiesV1InvestmentsSecuritiesGet = <
 /**
  * Create Security
  */
-export const createSecurityV1InvestmentsSecuritiesPost = <
-  ThrowOnError extends boolean = false,
->(
+export const createSecurityV1InvestmentsSecuritiesPost = <ThrowOnError extends boolean = false>(
   options: Options<CreateSecurityV1InvestmentsSecuritiesPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -410,8 +385,7 @@ export const createSecurityV1InvestmentsSecuritiesPost = <
     CreateSecurityV1InvestmentsSecuritiesPostErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
+    responseTransformer: createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
     url: "/v1/investments/securities",
     ...options,
     headers: {
@@ -426,10 +400,7 @@ export const createSecurityV1InvestmentsSecuritiesPost = <
 export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
-    ThrowOnError
-  >,
+  options: Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
     DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
@@ -443,18 +414,14 @@ export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete = <
 export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatch = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
-    ThrowOnError
-  >,
+  options: Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
     UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
     UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
+    responseTransformer: updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
     url: "/v1/investments/securities/{security_id}",
     ...options,
     headers: {
@@ -466,9 +433,7 @@ export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatch = <
 /**
  * List Trades
  */
-export const listTradesV1InvestmentsTradesGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listTradesV1InvestmentsTradesGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListTradesV1InvestmentsTradesGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -484,9 +449,7 @@ export const listTradesV1InvestmentsTradesGet = <
 /**
  * Create Trade
  */
-export const createTradeV1InvestmentsTradesPost = <
-  ThrowOnError extends boolean = false,
->(
+export const createTradeV1InvestmentsTradesPost = <ThrowOnError extends boolean = false>(
   options: Options<CreateTradeV1InvestmentsTradesPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -506,13 +469,8 @@ export const createTradeV1InvestmentsTradesPost = <
 /**
  * Delete Trade
  */
-export const deleteTradeV1InvestmentsTradesTradeIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
-    ThrowOnError
-  >,
+export const deleteTradeV1InvestmentsTradesTradeIdDelete = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTradeV1InvestmentsTradesTradeIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
     DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
@@ -523,21 +481,15 @@ export const deleteTradeV1InvestmentsTradesTradeIdDelete = <
 /**
  * Update Trade
  */
-export const updateTradeV1InvestmentsTradesTradeIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateTradeV1InvestmentsTradesTradeIdPatchData,
-    ThrowOnError
-  >,
+export const updateTradeV1InvestmentsTradesTradeIdPatch = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTradeV1InvestmentsTradesTradeIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
     UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
     UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
+    responseTransformer: updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
     url: "/v1/investments/trades/{trade_id}",
     ...options,
     headers: {
@@ -552,10 +504,7 @@ export const updateTradeV1InvestmentsTradesTradeIdPatch = <
 export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData,
-    ThrowOnError
-  >,
+  options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
     ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses,
@@ -597,9 +546,7 @@ export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost = <
 /**
  * Get Holdings
  */
-export const getHoldingsV1InvestmentsHoldingsGet = <
-  ThrowOnError extends boolean = false,
->(
+export const getHoldingsV1InvestmentsHoldingsGet = <ThrowOnError extends boolean = false>(
   options?: Options<GetHoldingsV1InvestmentsHoldingsGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -627,9 +574,7 @@ export const listEntriesV1JournalGet = <ThrowOnError extends boolean = false>(
 /**
  * Get Calendar Data
  */
-export const getCalendarV1JournalCalendarGet = <
-  ThrowOnError extends boolean = false,
->(
+export const getCalendarV1JournalCalendarGet = <ThrowOnError extends boolean = false>(
   options: Options<GetCalendarV1JournalCalendarGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
@@ -645,23 +590,18 @@ export const getCalendarV1JournalCalendarGet = <
 /**
  * Get Streak Info
  */
-export const getStreakV1JournalStreakGet = <
-  ThrowOnError extends boolean = false,
->(
+export const getStreakV1JournalStreakGet = <ThrowOnError extends boolean = false>(
   options?: Options<GetStreakV1JournalStreakGetData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    GetStreakV1JournalStreakGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/v1/journal/streak", ...options });
+  (options?.client ?? client).get<GetStreakV1JournalStreakGetResponses, unknown, ThrowOnError>({
+    url: "/v1/journal/streak",
+    ...options,
+  });
 
 /**
  * Delete Journal Entry
  */
-export const deleteEntryV1JournalEntryDateDelete = <
-  ThrowOnError extends boolean = false,
->(
+export const deleteEntryV1JournalEntryDateDelete = <ThrowOnError extends boolean = false>(
   options: Options<DeleteEntryV1JournalEntryDateDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
@@ -673,9 +613,7 @@ export const deleteEntryV1JournalEntryDateDelete = <
 /**
  * Get Journal Entry
  */
-export const getEntryV1JournalEntryDateGet = <
-  ThrowOnError extends boolean = false,
->(
+export const getEntryV1JournalEntryDateGet = <ThrowOnError extends boolean = false>(
   options: Options<GetEntryV1JournalEntryDateGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
@@ -687,9 +625,7 @@ export const getEntryV1JournalEntryDateGet = <
 /**
  * Upsert Journal Entry
  */
-export const upsertEntryV1JournalEntryDatePut = <
-  ThrowOnError extends boolean = false,
->(
+export const upsertEntryV1JournalEntryDatePut = <ThrowOnError extends boolean = false>(
   options: Options<UpsertEntryV1JournalEntryDatePutData, ThrowOnError>,
 ) =>
   (options.client ?? client).put<
@@ -745,9 +681,7 @@ export const createPlaceV1PlacesPost = <ThrowOnError extends boolean = false>(
 /**
  * Search Google Places
  */
-export const searchGooglePlacesV1PlacesSearchGet = <
-  ThrowOnError extends boolean = false,
->(
+export const searchGooglePlacesV1PlacesSearchGet = <ThrowOnError extends boolean = false>(
   options: Options<SearchGooglePlacesV1PlacesSearchGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
@@ -759,9 +693,7 @@ export const searchGooglePlacesV1PlacesSearchGet = <
 /**
  * Delete Place
  */
-export const deletePlaceV1PlacesPlaceIdDelete = <
-  ThrowOnError extends boolean = false,
->(
+export const deletePlaceV1PlacesPlaceIdDelete = <ThrowOnError extends boolean = false>(
   options: Options<DeletePlaceV1PlacesPlaceIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
@@ -773,9 +705,7 @@ export const deletePlaceV1PlacesPlaceIdDelete = <
 /**
  * Update Place
  */
-export const updatePlaceV1PlacesPlaceIdPatch = <
-  ThrowOnError extends boolean = false,
->(
+export const updatePlaceV1PlacesPlaceIdPatch = <ThrowOnError extends boolean = false>(
   options: Options<UpdatePlaceV1PlacesPlaceIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
@@ -831,9 +761,7 @@ export const createTaskV1TasksPost = <ThrowOnError extends boolean = false>(
 /**
  * Delete Task
  */
-export const deleteTaskV1TasksTaskIdDelete = <
-  ThrowOnError extends boolean = false,
->(
+export const deleteTaskV1TasksTaskIdDelete = <ThrowOnError extends boolean = false>(
   options: Options<DeleteTaskV1TasksTaskIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
@@ -845,9 +773,7 @@ export const deleteTaskV1TasksTaskIdDelete = <
 /**
  * Update Task
  */
-export const updateTaskV1TasksTaskIdPatch = <
-  ThrowOnError extends boolean = false,
->(
+export const updateTaskV1TasksTaskIdPatch = <ThrowOnError extends boolean = false>(
   options: Options<UpdateTaskV1TasksTaskIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
@@ -867,9 +793,7 @@ export const updateTaskV1TasksTaskIdPatch = <
 /**
  * Complete Task
  */
-export const completeTaskV1TasksTaskIdCompletePost = <
-  ThrowOnError extends boolean = false,
->(
+export const completeTaskV1TasksTaskIdCompletePost = <ThrowOnError extends boolean = false>(
   options: Options<CompleteTaskV1TasksTaskIdCompletePostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -877,8 +801,7 @@ export const completeTaskV1TasksTaskIdCompletePost = <
     CompleteTaskV1TasksTaskIdCompletePostErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      completeTaskV1TasksTaskIdCompletePostResponseTransformer,
+    responseTransformer: completeTaskV1TasksTaskIdCompletePostResponseTransformer,
     url: "/v1/tasks/{task_id}/complete",
     ...options,
   });
@@ -886,9 +809,7 @@ export const completeTaskV1TasksTaskIdCompletePost = <
 /**
  * Reopen Task
  */
-export const reopenTaskV1TasksTaskIdReopenPost = <
-  ThrowOnError extends boolean = false,
->(
+export const reopenTaskV1TasksTaskIdReopenPost = <ThrowOnError extends boolean = false>(
   options: Options<ReopenTaskV1TasksTaskIdReopenPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -904,9 +825,7 @@ export const reopenTaskV1TasksTaskIdReopenPost = <
 /**
  * Reorder Tasks
  */
-export const reorderTasksV1TasksReorderPatch = <
-  ThrowOnError extends boolean = false,
->(
+export const reorderTasksV1TasksReorderPatch = <ThrowOnError extends boolean = false>(
   options: Options<ReorderTasksV1TasksReorderPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
@@ -925,16 +844,13 @@ export const reorderTasksV1TasksReorderPatch = <
 /**
  * List Projects
  */
-export const listProjectsV1TasksProjectsGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listProjectsV1TasksProjectsGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListProjectsV1TasksProjectsGetData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    ListProjectsV1TasksProjectsGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/v1/tasks/projects", ...options });
+  (options?.client ?? client).get<ListProjectsV1TasksProjectsGetResponses, unknown, ThrowOnError>({
+    url: "/v1/tasks/projects",
+    ...options,
+  });
 
 /**
  * List Areas
@@ -942,20 +858,17 @@ export const listProjectsV1TasksProjectsGet = <
 export const listAreasV1TasksAreasGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListAreasV1TasksAreasGetData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<
-    ListAreasV1TasksAreasGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/v1/tasks/areas", ...options });
+  (options?.client ?? client).get<ListAreasV1TasksAreasGetResponses, unknown, ThrowOnError>({
+    url: "/v1/tasks/areas",
+    ...options,
+  });
 
 /**
  * Delete Transactions
  *
  * Delete transactions by IDs.
  */
-export const deleteTransactionsV1TransactionsDelete = <
-  ThrowOnError extends boolean = false,
->(
+export const deleteTransactionsV1TransactionsDelete = <ThrowOnError extends boolean = false>(
   options: Options<DeleteTransactionsV1TransactionsDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
@@ -976,9 +889,7 @@ export const deleteTransactionsV1TransactionsDelete = <
  *
  * List transactions.
  */
-export const listTransactionsV1TransactionsGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listTransactionsV1TransactionsGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListTransactionsV1TransactionsGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -998,13 +909,8 @@ export const listTransactionsV1TransactionsGet = <
  *
  * Duplicate transactions (by dedup hash) are automatically skipped.
  */
-export const importTransactionsV1TransactionsImportPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ImportTransactionsV1TransactionsImportPostData,
-    ThrowOnError
-  >,
+export const importTransactionsV1TransactionsImportPost = <ThrowOnError extends boolean = false>(
+  options: Options<ImportTransactionsV1TransactionsImportPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
     ImportTransactionsV1TransactionsImportPostResponses,
@@ -1028,18 +934,14 @@ export const importTransactionsV1TransactionsImportPost = <
 export const updateTransactionV1TransactionsTransactionIdPatch = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    UpdateTransactionV1TransactionsTransactionIdPatchData,
-    ThrowOnError
-  >,
+  options: Options<UpdateTransactionV1TransactionsTransactionIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
     UpdateTransactionV1TransactionsTransactionIdPatchResponses,
     UpdateTransactionV1TransactionsTransactionIdPatchErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
+    responseTransformer: updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
     url: "/v1/transactions/{transaction_id}",
     ...options,
     headers: {
@@ -1053,25 +955,26 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
  *
  * Set category for all transactions matching the given description.
  */
-export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
-      ThrowOnError
-    >,
-  ) =>
-    (options.client ?? client).post<
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
-      ThrowOnError
-    >({
-      url: "/v1/transactions/categorize-by-description",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
+export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
+    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
+    ThrowOnError
+  >({
+    url: "/v1/transactions/categorize-by-description",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
 /**
  * Monthly Spending by Category
@@ -1081,10 +984,7 @@ export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost =
 export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
-    ThrowOnError
-  >,
+  options: Options<SpendingByCategoryV1TransactionsSpendingByCategoryGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
     SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
@@ -1097,9 +997,7 @@ export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
  *
  * Return income and expenses aggregated per month.
  */
-export const monthlyFlowV1TransactionsMonthlyFlowGet = <
-  ThrowOnError extends boolean = false,
->(
+export const monthlyFlowV1TransactionsMonthlyFlowGet = <ThrowOnError extends boolean = false>(
   options?: Options<MonthlyFlowV1TransactionsMonthlyFlowGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -1111,9 +1009,7 @@ export const monthlyFlowV1TransactionsMonthlyFlowGet = <
 /**
  * List Exercises
  */
-export const listExercisesV1WorkoutsExercisesGet = <
-  ThrowOnError extends boolean = false,
->(
+export const listExercisesV1WorkoutsExercisesGet = <ThrowOnError extends boolean = false>(
   options?: Options<ListExercisesV1WorkoutsExercisesGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
@@ -1129,9 +1025,7 @@ export const listExercisesV1WorkoutsExercisesGet = <
 /**
  * Create Custom Exercise
  */
-export const createExerciseV1WorkoutsExercisesPost = <
-  ThrowOnError extends boolean = false,
->(
+export const createExerciseV1WorkoutsExercisesPost = <ThrowOnError extends boolean = false>(
   options: Options<CreateExerciseV1WorkoutsExercisesPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -1139,8 +1033,7 @@ export const createExerciseV1WorkoutsExercisesPost = <
     CreateExerciseV1WorkoutsExercisesPostErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createExerciseV1WorkoutsExercisesPostResponseTransformer,
+    responseTransformer: createExerciseV1WorkoutsExercisesPostResponseTransformer,
     url: "/v1/workouts/exercises",
     ...options,
     headers: {
@@ -1155,18 +1048,14 @@ export const createExerciseV1WorkoutsExercisesPost = <
 export const listRecentExercisesV1WorkoutsExercisesRecentGet = <
   ThrowOnError extends boolean = false,
 >(
-  options?: Options<
-    ListRecentExercisesV1WorkoutsExercisesRecentGetData,
-    ThrowOnError
-  >,
+  options?: Options<ListRecentExercisesV1WorkoutsExercisesRecentGetData, ThrowOnError>,
 ) =>
   (options?.client ?? client).get<
     ListRecentExercisesV1WorkoutsExercisesRecentGetResponses,
     ListRecentExercisesV1WorkoutsExercisesRecentGetErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer,
+    responseTransformer: listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer,
     url: "/v1/workouts/exercises/recent",
     ...options,
   });
@@ -1190,9 +1079,7 @@ export const listWorkoutsV1WorkoutsGet = <ThrowOnError extends boolean = false>(
 /**
  * Create Workout
  */
-export const createWorkoutV1WorkoutsPost = <
-  ThrowOnError extends boolean = false,
->(
+export const createWorkoutV1WorkoutsPost = <ThrowOnError extends boolean = false>(
   options: Options<CreateWorkoutV1WorkoutsPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
@@ -1212,9 +1099,7 @@ export const createWorkoutV1WorkoutsPost = <
 /**
  * Delete Workout
  */
-export const deleteWorkoutV1WorkoutsWorkoutIdDelete = <
-  ThrowOnError extends boolean = false,
->(
+export const deleteWorkoutV1WorkoutsWorkoutIdDelete = <ThrowOnError extends boolean = false>(
   options: Options<DeleteWorkoutV1WorkoutsWorkoutIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
@@ -1226,9 +1111,7 @@ export const deleteWorkoutV1WorkoutsWorkoutIdDelete = <
 /**
  * Get Workout Detail
  */
-export const getWorkoutV1WorkoutsWorkoutIdGet = <
-  ThrowOnError extends boolean = false,
->(
+export const getWorkoutV1WorkoutsWorkoutIdGet = <ThrowOnError extends boolean = false>(
   options: Options<GetWorkoutV1WorkoutsWorkoutIdGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
@@ -1244,9 +1127,7 @@ export const getWorkoutV1WorkoutsWorkoutIdGet = <
 /**
  * Update Workout
  */
-export const updateWorkoutV1WorkoutsWorkoutIdPatch = <
-  ThrowOnError extends boolean = false,
->(
+export const updateWorkoutV1WorkoutsWorkoutIdPatch = <ThrowOnError extends boolean = false>(
   options: Options<UpdateWorkoutV1WorkoutsWorkoutIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
@@ -1254,8 +1135,7 @@ export const updateWorkoutV1WorkoutsWorkoutIdPatch = <
     UpdateWorkoutV1WorkoutsWorkoutIdPatchErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateWorkoutV1WorkoutsWorkoutIdPatchResponseTransformer,
+    responseTransformer: updateWorkoutV1WorkoutsWorkoutIdPatchResponseTransformer,
     url: "/v1/workouts/{workout_id}",
     ...options,
     headers: {
@@ -1267,21 +1147,15 @@ export const updateWorkoutV1WorkoutsWorkoutIdPatch = <
 /**
  * Add Set to Workout
  */
-export const createWorkoutSetV1WorkoutsWorkoutIdSetsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData,
-    ThrowOnError
-  >,
+export const createWorkoutSetV1WorkoutsWorkoutIdSetsPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData, ThrowOnError>,
 ) =>
   (options.client ?? client).post<
     CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponses,
     CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer,
+    responseTransformer: createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer,
     url: "/v1/workouts/{workout_id}/sets",
     ...options,
     headers: {
@@ -1296,10 +1170,7 @@ export const createWorkoutSetV1WorkoutsWorkoutIdSetsPost = <
 export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData,
-    ThrowOnError
-  >,
+  options: Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData, ThrowOnError>,
 ) =>
   (options.client ?? client).delete<
     DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponses,
@@ -1313,18 +1184,14 @@ export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete = <
 export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData,
-    ThrowOnError
-  >,
+  options: Options<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData, ThrowOnError>,
 ) =>
   (options.client ?? client).patch<
     UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses,
     UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer,
+    responseTransformer: updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer,
     url: "/v1/workouts/{workout_id}/sets/{set_id}",
     ...options,
     headers: {
@@ -1339,18 +1206,14 @@ export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch = <
 export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData,
-    ThrowOnError
-  >,
+  options: Options<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData, ThrowOnError>,
 ) =>
   (options.client ?? client).get<
     GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses,
     GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer,
+    responseTransformer: getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer,
     url: "/v1/workouts/exercises/{exercise_id}/prs",
     ...options,
   });

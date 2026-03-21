@@ -30,6 +30,7 @@ import {
   getHoldingsV1InvestmentsHoldingsGetOptions,
 } from "@metron/client";
 import type { TradeType } from "@metron/client";
+import { toast } from "sonner";
 import { client } from "@/lib/client";
 
 export function CreateTradeDialog() {
@@ -49,13 +50,17 @@ export function CreateTradeDialog() {
   const mutation = useMutation({
     ...createTradeV1InvestmentsTradesPostMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listTradesV1InvestmentsTradesGetQueryKey({ client }),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client }).queryKey,
       });
+      toast.success("Trade recorded");
       handleClose();
+    },
+    onError: () => {
+      toast.error("Failed to record trade");
     },
   });
 
@@ -121,7 +126,7 @@ export function CreateTradeDialog() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
           className="space-y-4"
         >
@@ -130,7 +135,9 @@ export function CreateTradeDialog() {
               name="security_id"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label>Security</Label>
+                  <Label>
+                    Security <span className="text-destructive">*</span>
+                  </Label>
                   <Select value={field.state.value} onValueChange={handleSecurityChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select..." />
@@ -152,7 +159,9 @@ export function CreateTradeDialog() {
               name="bank_account_id"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label>Account</Label>
+                  <Label>
+                    Account <span className="text-destructive">*</span>
+                  </Label>
                   <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select..." />
@@ -227,7 +236,9 @@ export function CreateTradeDialog() {
               name="quantity"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="trade-qty">Quantity</Label>
+                  <Label htmlFor="trade-qty">
+                    Quantity <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="trade-qty"
                     type="number"
@@ -246,7 +257,9 @@ export function CreateTradeDialog() {
               name="price_per_unit"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="trade-price">Price per unit</Label>
+                  <Label htmlFor="trade-price">
+                    Price per unit <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="trade-price"
                     type="number"
@@ -272,7 +285,12 @@ export function CreateTradeDialog() {
             </Button>
             <form.Subscribe
               selector={(state) =>
-                [state.values.security_id, state.values.bank_account_id, state.values.quantity, state.values.price_per_unit] as const
+                [
+                  state.values.security_id,
+                  state.values.bank_account_id,
+                  state.values.quantity,
+                  state.values.price_per_unit,
+                ] as const
               }
               children={([secId, accId, qty, price]) => (
                 <Button

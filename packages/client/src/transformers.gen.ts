@@ -48,9 +48,7 @@ const bankAccountSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const bankAccountListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    bankAccountSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => bankAccountSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -68,21 +66,19 @@ export const createBankAccountV1BankAccountsPostResponseTransformer = async (
   return data;
 };
 
-export const getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<GetBankAccountV1BankAccountsBankAccountIdGetResponse> => {
-    data = bankAccountSchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer = async (
+  data: any,
+): Promise<GetBankAccountV1BankAccountsBankAccountIdGetResponse> => {
+  data = bankAccountSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
-export const updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse> => {
-    data = bankAccountSchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse> => {
+  data = bankAccountSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const categorySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
@@ -93,9 +89,7 @@ const categorySchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const categoryListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    categorySchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => categorySchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -115,35 +109,30 @@ const securitySchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const securityListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    securitySchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => securitySchemaSchemaResponseTransformer(item));
   return data;
 };
 
-export const listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<ListSecuritiesV1InvestmentsSecuritiesGetResponse> => {
-    data = securityListResponseSchemaResponseTransformer(data);
-    return data;
-  };
+export const listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer = async (
+  data: any,
+): Promise<ListSecuritiesV1InvestmentsSecuritiesGetResponse> => {
+  data = securityListResponseSchemaResponseTransformer(data);
+  return data;
+};
 
-export const createSecurityV1InvestmentsSecuritiesPostResponseTransformer =
-  async (
-    data: any,
-  ): Promise<CreateSecurityV1InvestmentsSecuritiesPostResponse> => {
-    data = securitySchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const createSecurityV1InvestmentsSecuritiesPostResponseTransformer = async (
+  data: any,
+): Promise<CreateSecurityV1InvestmentsSecuritiesPostResponse> => {
+  data = securitySchemaSchemaResponseTransformer(data);
+  return data;
+};
 
-export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse> => {
-    data = securitySchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse> => {
+  data = securitySchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const tradeSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
@@ -155,9 +144,7 @@ const tradeSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const tradeListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    tradeSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => tradeSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -175,13 +162,12 @@ export const createTradeV1InvestmentsTradesPostResponseTransformer = async (
   return data;
 };
 
-export const updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateTradeV1InvestmentsTradesTradeIdPatchResponse> => {
-    data = tradeSchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateTradeV1InvestmentsTradesTradeIdPatchResponse> => {
+  data = tradeSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const securityPriceSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
@@ -193,9 +179,7 @@ const securityPriceSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const securityPriceListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    securityPriceSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => securityPriceSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -225,9 +209,7 @@ const journalEntrySchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const journalEntryListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    journalEntrySchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => journalEntrySchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -244,9 +226,7 @@ const journalCalendarDaySchemaResponseTransformer = (data: any) => {
 };
 
 const journalCalendarResponseSchemaResponseTransformer = (data: any) => {
-  data.days = data.days.map((item: any) =>
-    journalCalendarDaySchemaResponseTransformer(item),
-  );
+  data.days = data.days.map((item: any) => journalCalendarDaySchemaResponseTransformer(item));
   return data;
 };
 
@@ -276,9 +256,7 @@ const placeSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const placeListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    placeSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => placeSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -318,9 +296,7 @@ const taskSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const taskListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    taskSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => taskSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -346,9 +322,7 @@ export const updateTaskV1TasksTaskIdPatchResponseTransformer = async (
 };
 
 const taskCompleteResponseSchemaResponseTransformer = (data: any) => {
-  data.completed_task = taskSchemaSchemaResponseTransformer(
-    data.completed_task,
-  );
+  data.completed_task = taskSchemaSchemaResponseTransformer(data.completed_task);
   if (data.next_task) {
     data.next_task = taskSchemaSchemaResponseTransformer(data.next_task);
   }
@@ -379,9 +353,7 @@ const transactionSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const transactionListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    transactionSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => transactionSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -401,13 +373,12 @@ const transactionUpdateResponseSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
-export const updateTransactionV1TransactionsTransactionIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateTransactionV1TransactionsTransactionIdPatchResponse> => {
-    data = transactionUpdateResponseSchemaResponseTransformer(data);
-    return data;
-  };
+export const updateTransactionV1TransactionsTransactionIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateTransactionV1TransactionsTransactionIdPatchResponse> => {
+  data = transactionUpdateResponseSchemaResponseTransformer(data);
+  return data;
+};
 
 const exerciseSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
@@ -418,9 +389,7 @@ const exerciseSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const exerciseListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    exerciseSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => exerciseSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -438,15 +407,12 @@ export const createExerciseV1WorkoutsExercisesPostResponseTransformer = async (
   return data;
 };
 
-export const listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<ListRecentExercisesV1WorkoutsExercisesRecentGetResponse> => {
-    data = data.map((item: any) =>
-      exerciseSchemaSchemaResponseTransformer(item),
-    );
-    return data;
-  };
+export const listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer = async (
+  data: any,
+): Promise<ListRecentExercisesV1WorkoutsExercisesRecentGetResponse> => {
+  data = data.map((item: any) => exerciseSchemaSchemaResponseTransformer(item));
+  return data;
+};
 
 const workoutLogSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
@@ -461,9 +427,7 @@ const workoutLogSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const workoutLogListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    workoutLogSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => workoutLogSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -498,9 +462,7 @@ const workoutLogDetailSchemaSchemaResponseTransformer = (data: any) => {
   if (data.completed_at) {
     data.completed_at = new Date(data.completed_at);
   }
-  data.sets = data.sets.map((item: any) =>
-    workoutSetSchemaSchemaResponseTransformer(item),
-  );
+  data.sets = data.sets.map((item: any) => workoutSetSchemaSchemaResponseTransformer(item));
   return data;
 };
 
@@ -518,21 +480,19 @@ export const updateWorkoutV1WorkoutsWorkoutIdPatchResponseTransformer = async (
   return data;
 };
 
-export const createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer =
-  async (
-    data: any,
-  ): Promise<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse> => {
-    data = workoutSetSchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer = async (
+  data: any,
+): Promise<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse> => {
+  data = workoutSetSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
-export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse> => {
-    data = workoutSetSchemaSchemaResponseTransformer(data);
-    return data;
-  };
+export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse> => {
+  data = workoutSetSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const exercisePrSchemaSchemaResponseTransformer = (data: any) => {
   data.achieved_at = new Date(data.achieved_at);
@@ -540,16 +500,13 @@ const exercisePrSchemaSchemaResponseTransformer = (data: any) => {
 };
 
 const exercisePrListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    exercisePrSchemaSchemaResponseTransformer(item),
-  );
+  data.items = data.items.map((item: any) => exercisePrSchemaSchemaResponseTransformer(item));
   return data;
 };
 
-export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse> => {
-    data = exercisePrListResponseSchemaResponseTransformer(data);
-    return data;
-  };
+export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer = async (
+  data: any,
+): Promise<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse> => {
+  data = exercisePrListResponseSchemaResponseTransformer(data);
+  return data;
+};

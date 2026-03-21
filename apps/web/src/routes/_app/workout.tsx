@@ -1,10 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Plus,
@@ -17,6 +13,7 @@ import {
   Clock,
   X,
   Check,
+  Loader2,
 } from "lucide-react";
 import type {
   ExerciseSchema,
@@ -44,14 +41,8 @@ import { Button } from "@metron/ui/components/button";
 import { Input } from "@metron/ui/components/input";
 import { Badge } from "@metron/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@metron/ui/components/card";
-import { ScrollArea } from "@metron/ui/components/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@metron/ui/components/tabs";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@metron/ui/components/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@metron/ui/components/drawer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,7 +99,7 @@ function useTimer(startedAt: string | null) {
       setElapsed(
         h > 0
           ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
-          : `${m}:${String(s).padStart(2, "0")}`
+          : `${m}:${String(s).padStart(2, "0")}`,
       );
     };
     tick();
@@ -117,6 +108,15 @@ function useTimer(startedAt: string | null) {
   }, [startedAt]);
 
   return elapsed;
+}
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
 }
 
 // --- Main Component ---
@@ -170,7 +170,7 @@ function WorkoutSession() {
     ...createWorkoutV1WorkoutsPostMutation({ client }),
     onSuccess: (data) => {
       setActiveWorkoutId(data.id);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listWorkoutsV1WorkoutsGetQueryKey({ client }),
       });
     },
@@ -180,7 +180,7 @@ function WorkoutSession() {
     ...updateWorkoutV1WorkoutsWorkoutIdPatchMutation({ client }),
     onSuccess: () => {
       setActiveWorkoutId(null);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listWorkoutsV1WorkoutsGetQueryKey({ client }),
       });
     },
@@ -190,7 +190,7 @@ function WorkoutSession() {
     ...deleteWorkoutV1WorkoutsWorkoutIdDeleteMutation({ client }),
     onSuccess: () => {
       setActiveWorkoutId(null);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: listWorkoutsV1WorkoutsGetQueryKey({ client }),
       });
     },
@@ -200,7 +200,7 @@ function WorkoutSession() {
     ...createWorkoutSetV1WorkoutsWorkoutIdSetsPostMutation({ client }),
     onSuccess: () => {
       if (activeWorkoutId) {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: getWorkoutV1WorkoutsWorkoutIdGetQueryKey({
             client,
             path: { workout_id: activeWorkoutId },
@@ -214,7 +214,7 @@ function WorkoutSession() {
     ...deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteMutation({ client }),
     onSuccess: () => {
       if (activeWorkoutId) {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: getWorkoutV1WorkoutsWorkoutIdGetQueryKey({
             client,
             path: { workout_id: activeWorkoutId },
@@ -224,14 +224,18 @@ function WorkoutSession() {
     },
   });
 
-  const elapsed = useTimer(
-    activeWorkoutId && workoutDetail ? workoutDetail.started_at : null
-  );
+  const startedAtStr =
+    activeWorkoutId && workoutDetail
+      ? typeof workoutDetail.started_at === "string"
+        ? workoutDetail.started_at
+        : workoutDetail.started_at.toISOString()
+      : null;
+  const elapsed = useTimer(startedAtStr);
 
   const handleStartWorkout = () => {
     createWorkout.mutate({
       client,
-      body: { started_at: new Date().toISOString() },
+      body: { started_at: new Date() },
     });
   };
 
@@ -240,7 +244,7 @@ function WorkoutSession() {
     finishWorkout.mutate({
       client,
       path: { workout_id: activeWorkoutId },
-      body: { completed_at: new Date().toISOString() },
+      body: { completed_at: new Date() },
     });
   };
 
@@ -248,12 +252,8 @@ function WorkoutSession() {
     if (!activeWorkoutId) return;
     setExerciseDrawerOpen(false);
 
-    const exerciseSets = workoutDetail?.sets?.filter(
-      (s) => s.exercise_id === exercise.id
-    );
-    const lastSet = exerciseSets?.length
-      ? exerciseSets[exerciseSets.length - 1]
-      : null;
+    const exerciseSets = workoutDetail?.sets?.filter((s) => s.exercise_id === exercise.id);
+    const lastSet = exerciseSets?.length ? exerciseSets[exerciseSets.length - 1] : null;
 
     addSet.mutate({
       client,
@@ -432,7 +432,7 @@ function ExerciseGroup({
   const updateSet = useMutation({
     ...updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getWorkoutV1WorkoutsWorkoutIdGetQueryKey({
           client,
           path: { workout_id: workoutId },
@@ -455,7 +455,9 @@ function ExerciseGroup({
             <ChevronRight className="size-4 text-muted-foreground" />
           )}
           <span className="font-semibold">{exerciseName}</span>
-          <Badge variant="secondary">{group.sets.length} {group.sets.length === 1 ? "set" : "sets"}</Badge>
+          <Badge variant="secondary">
+            {group.sets.length} {group.sets.length === 1 ? "set" : "sets"}
+          </Badge>
         </div>
       </button>
 
@@ -474,7 +476,6 @@ function ExerciseGroup({
             <SetRow
               key={set.id}
               set={set}
-              workoutId={workoutId}
               onUpdate={(data) =>
                 updateSet.mutate({
                   client,
@@ -487,12 +488,7 @@ function ExerciseGroup({
           ))}
 
           {/* Add set */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full"
-            onClick={onAddSet}
-          >
+          <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={onAddSet}>
             <Plus className="size-3" />
             Add Set
           </Button>
@@ -506,12 +502,10 @@ function ExerciseGroup({
 
 function SetRow({
   set,
-  workoutId,
   onUpdate,
   onDelete,
 }: {
   set: WorkoutSetSchema;
-  workoutId: string;
   onUpdate: (data: { weight?: number; reps?: number }) => void;
   onDelete: () => void;
 }) {
@@ -622,7 +616,12 @@ function ExerciseSearchDrawer({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const debouncedQuery = useDebouncedValue(searchQuery, 300);
 
   const { data: recentExercises } = useQuery({
     ...listRecentExercisesV1WorkoutsExercisesRecentGetOptions({
@@ -632,154 +631,328 @@ function ExerciseSearchDrawer({
     enabled: open,
   });
 
-  const { data: exerciseList } = useQuery({
+  const { data: exerciseList, isFetching } = useQuery({
     ...listExercisesV1WorkoutsExercisesGetOptions({
       client,
       query: {
-        limit: 100,
+        limit: 200,
         page: 1,
-        q: searchQuery || undefined,
+        q: debouncedQuery || undefined,
         category: (selectedCategory as MuscleCategory) || undefined,
       },
     }),
     enabled: open,
+    placeholderData: (prev) => prev,
   });
 
+  // Reset state when drawer opens
   useEffect(() => {
     if (open) {
       setSearchQuery("");
       setSelectedCategory(null);
-      setTimeout(() => searchInputRef.current?.focus(), 100);
+      setHighlightedIndex(-1);
+      setSelectedId(null);
     }
   }, [open]);
 
+  // Focus search input after drawer animation settles
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  // Build flat list for keyboard navigation
+  const recentIds = useMemo(() => {
+    return new Set((recentExercises ?? []).map((e) => e.id));
+  }, [recentExercises]);
+
   const exercises = exerciseList?.items ?? [];
 
-  // Group by category when not searching
+  const flatList = useMemo(() => {
+    const showRecent =
+      !debouncedQuery && !selectedCategory && recentExercises && recentExercises.length > 0;
+
+    // Deduplicate: if an exercise is in recent, don't show it again in the main list
+    const mainExercises = showRecent ? exercises.filter((ex) => !recentIds.has(ex.id)) : exercises;
+
+    const items: ExerciseSchema[] = [];
+    if (showRecent) {
+      items.push(...recentExercises);
+    }
+    items.push(...mainExercises);
+    return items;
+  }, [exercises, recentExercises, recentIds, debouncedQuery, selectedCategory]);
+
+  // Group for display (only when not searching)
   const grouped = useMemo(() => {
-    if (searchQuery) return null;
+    if (debouncedQuery) return null;
+    const mainExercises =
+      !selectedCategory && recentExercises?.length
+        ? exercises.filter((ex) => !recentIds.has(ex.id))
+        : exercises;
     const map = new Map<string, ExerciseSchema[]>();
-    for (const ex of exercises) {
+    for (const ex of mainExercises) {
       const cat = ex.category;
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat)!.push(ex);
     }
     return map;
-  }, [exercises, searchQuery]);
+  }, [exercises, recentIds, recentExercises, debouncedQuery, selectedCategory]);
+
+  // Reset highlight when results change
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [debouncedQuery, selectedCategory]);
+
+  const handleSelect = useCallback(
+    (exercise: ExerciseSchema) => {
+      setSelectedId(exercise.id);
+      // Brief highlight before closing
+      setTimeout(() => {
+        onSelect(exercise);
+        setSelectedId(null);
+      }, 120);
+    },
+    [onSelect],
+  );
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setHighlightedIndex((i) => Math.min(i + 1, flatList.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setHighlightedIndex((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < flatList.length) {
+        e.preventDefault();
+        handleSelect(flatList[highlightedIndex]);
+      } else if (e.key === "Escape") {
+        if (searchQuery) {
+          e.preventDefault();
+          setSearchQuery("");
+        }
+      }
+    },
+    [flatList, highlightedIndex, handleSelect, searchQuery],
+  );
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex < 0) return;
+    const el = listRef.current?.querySelector(`[data-index="${highlightedIndex}"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex]);
+
+  const showRecent =
+    !debouncedQuery && !selectedCategory && recentExercises && recentExercises.length > 0;
+  const resultCount = exercises.length;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="pb-2">
+      <DrawerContent className="max-h-[85vh] flex flex-col">
+        <DrawerHeader className="pb-2 shrink-0">
           <DrawerTitle>Add Exercise</DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 pb-2">
+        {/* Search input */}
+        <div className="px-4 pb-2 shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               ref={searchInputRef}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Search exercises..."
-              className="pl-9"
+              className="pl-9 pr-9"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  searchInputRef.current?.focus();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Category chips */}
-        {!searchQuery && (
-          <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {/* Category chips — always visible */}
+        <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <Badge
+            variant={!selectedCategory ? "default" : "secondary"}
+            className="cursor-pointer shrink-0"
+            onClick={() => setSelectedCategory(null)}
+          >
+            All
+          </Badge>
+          {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
             <Badge
-              variant={!selectedCategory ? "default" : "secondary"}
+              key={key}
+              variant={selectedCategory === key ? "default" : "secondary"}
               className="cursor-pointer shrink-0"
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => setSelectedCategory(key)}
             >
-              All
+              {label}
             </Badge>
-            {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-              <Badge
-                key={key}
-                variant={selectedCategory === key ? "default" : "secondary"}
-                className="cursor-pointer shrink-0"
-                onClick={() => setSelectedCategory(key)}
-              >
-                {label}
-              </Badge>
-            ))}
+          ))}
+        </div>
+
+        {/* Result count + loading indicator */}
+        {(debouncedQuery || selectedCategory) && (
+          <div className="flex items-center gap-2 px-4 pb-2 shrink-0">
+            <p className="text-xs text-muted-foreground">
+              {resultCount} {resultCount === 1 ? "exercise" : "exercises"}
+            </p>
+            {isFetching && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
           </div>
         )}
 
-        <ScrollArea className="flex-1 px-4 pb-4" style={{ maxHeight: "60vh" }}>
-          {/* Recent exercises */}
-          {!searchQuery && !selectedCategory && recentExercises && recentExercises.length > 0 && (
-            <div className="mb-4">
-              <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                Recent
-              </p>
-              <div className="space-y-0.5">
-                {recentExercises.map((ex) => (
-                  <ExerciseRow key={ex.id} exercise={ex} onSelect={onSelect} />
-                ))}
-              </div>
+        {/* Exercise list */}
+        <div ref={listRef} className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
+          {/* Loading state on first load */}
+          {!exerciseList && isFetching && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
           )}
 
-          {/* Search results */}
-          {searchQuery ? (
-            <div className="space-y-0.5">
-              {exercises.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No exercises found
-                </p>
-              ) : (
-                exercises.map((ex) => (
-                  <ExerciseRow key={ex.id} exercise={ex} onSelect={onSelect} />
-                ))
-              )}
+          {/* Empty state */}
+          {exerciseList && flatList.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="size-8 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">No exercises found</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                {debouncedQuery && selectedCategory
+                  ? `No "${debouncedQuery}" exercises in ${CATEGORY_LABELS[selectedCategory]}`
+                  : debouncedQuery
+                    ? `No results for "${debouncedQuery}"`
+                    : `No exercises in ${CATEGORY_LABELS[selectedCategory ?? ""]}`}
+              </p>
             </div>
-          ) : (
-            /* Grouped by category */
-            grouped &&
-            Array.from(grouped.entries()).map(([category, exs]) => (
-              <div key={category} className="mb-4">
-                <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                  {CATEGORY_LABELS[category] ?? category}
-                </p>
-                <div className="space-y-0.5">
-                  {exs.map((ex) => (
-                    <ExerciseRow key={ex.id} exercise={ex} onSelect={onSelect} />
-                  ))}
-                </div>
-              </div>
-            ))
           )}
-        </ScrollArea>
+
+          {/* Search results — flat list */}
+          {debouncedQuery && exerciseList && flatList.length > 0 && (
+            <div className="space-y-0.5">
+              {flatList.map((ex, i) => (
+                <ExerciseRow
+                  key={ex.id}
+                  exercise={ex}
+                  index={i}
+                  highlighted={highlightedIndex === i}
+                  selected={selectedId === ex.id}
+                  onSelect={handleSelect}
+                  onHover={setHighlightedIndex}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Browse mode — grouped with sections */}
+          {!debouncedQuery && exerciseList && (
+            <>
+              {/* Recent exercises */}
+              {showRecent && (
+                <ExerciseSection title="Recent">
+                  {recentExercises.map((ex) => {
+                    const i = flatList.indexOf(ex);
+                    return (
+                      <ExerciseRow
+                        key={ex.id}
+                        exercise={ex}
+                        index={i}
+                        highlighted={highlightedIndex === i}
+                        selected={selectedId === ex.id}
+                        onSelect={handleSelect}
+                        onHover={setHighlightedIndex}
+                      />
+                    );
+                  })}
+                </ExerciseSection>
+              )}
+
+              {/* Grouped by category */}
+              {grouped &&
+                Array.from(grouped.entries()).map(([category, exs]) => (
+                  <ExerciseSection key={category} title={CATEGORY_LABELS[category] ?? category}>
+                    {exs.map((ex) => {
+                      const i = flatList.indexOf(ex);
+                      return (
+                        <ExerciseRow
+                          key={ex.id}
+                          exercise={ex}
+                          index={i}
+                          highlighted={highlightedIndex === i}
+                          selected={selectedId === ex.id}
+                          onSelect={handleSelect}
+                          onHover={setHighlightedIndex}
+                        />
+                      );
+                    })}
+                  </ExerciseSection>
+                ))}
+            </>
+          )}
+        </div>
       </DrawerContent>
     </Drawer>
   );
 }
 
+function ExerciseSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-3">
+      <div className="sticky top-0 z-10 bg-background pb-1.5 pt-1">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </p>
+      </div>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
 function ExerciseRow({
   exercise,
+  index,
+  highlighted,
+  selected,
   onSelect,
+  onHover,
 }: {
   exercise: ExerciseSchema;
+  index: number;
+  highlighted: boolean;
+  selected: boolean;
   onSelect: (exercise: ExerciseSchema) => void;
+  onHover: (index: number) => void;
 }) {
   return (
     <button
       type="button"
+      data-index={index}
       onClick={() => onSelect(exercise)}
-      className="flex w-full items-center gap-3 rounded-md p-2.5 text-left transition-colors hover:bg-muted"
+      onMouseEnter={() => onHover(index)}
+      className={`flex w-full items-center gap-3 rounded-md p-2.5 text-left transition-colors
+        ${selected ? "bg-primary/10 text-primary" : highlighted ? "bg-muted" : "hover:bg-muted active:bg-muted/80"}`}
     >
       <Dumbbell className="size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium truncate">{exercise.name}</p>
-        <p className="text-xs text-muted-foreground capitalize">
-          {exercise.equipment}
-        </p>
       </div>
+      <Badge variant="secondary" className="shrink-0 capitalize text-[10px]">
+        {exercise.equipment}
+      </Badge>
     </button>
   );
 }
@@ -802,9 +975,7 @@ function CancelWorkoutButton({ onConfirm }: { onConfirm: () => void }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Keep going</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
-            Discard
-          </AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>Discard</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -858,9 +1029,7 @@ function WorkoutHistory() {
               <Clock className="size-10" />
             </EmptyMedia>
             <EmptyTitle>No workouts yet</EmptyTitle>
-            <EmptyDescription>
-              Start logging workouts to see your history here.
-            </EmptyDescription>
+            <EmptyDescription>Start logging workouts to see your history here.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       </div>
@@ -894,11 +1063,7 @@ function WorkoutHistory() {
           </p>
           <div className="space-y-2">
             {dayWorkouts.map((w) => (
-              <WorkoutCard
-                key={w.id}
-                workout={w}
-                onClick={() => setSelectedWorkoutId(w.id)}
-              />
+              <WorkoutCard key={w.id} workout={w} onClick={() => setSelectedWorkoutId(w.id)} />
             ))}
           </div>
         </div>
@@ -907,13 +1072,7 @@ function WorkoutHistory() {
   );
 }
 
-function WorkoutCard({
-  workout,
-  onClick,
-}: {
-  workout: WorkoutLogSchema;
-  onClick: () => void;
-}) {
+function WorkoutCard({ workout, onClick }: { workout: WorkoutLogSchema; onClick: () => void }) {
   const actualDuration = useMemo(() => {
     if (!workout.completed_at || !workout.started_at) return null;
     const start = new Date(workout.started_at).getTime();
@@ -928,9 +1087,7 @@ function WorkoutCard({
   return (
     <Card className="py-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={onClick}>
       <CardContent className="flex items-center justify-between">
-        <p className="text-sm font-medium">
-          {format(new Date(workout.started_at), "h:mm a")}
-        </p>
+        <p className="text-sm font-medium">{format(new Date(workout.started_at), "h:mm a")}</p>
         {actualDuration && (
           <Badge variant="secondary">
             <Clock className="size-3" />
@@ -1020,9 +1177,7 @@ function WorkoutDetailView({
                   </span>
                   <span className="tabular-nums">
                     {set.weight} kg
-                    {set.is_pr && (
-                      <Trophy className="size-3 inline ml-1 text-amber-500" />
-                    )}
+                    {set.is_pr && <Trophy className="size-3 inline ml-1 text-amber-500" />}
                   </span>
                   <span className="tabular-nums">{set.reps}</span>
                 </div>
@@ -1097,7 +1252,10 @@ function ExercisePRCard({ exercise }: { exercise: ExerciseSchema }) {
 
   if (!expanded) {
     return (
-      <Card className="py-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpanded(true)}>
+      <Card
+        className="py-3 cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={() => setExpanded(true)}
+      >
         <CardContent className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Dumbbell className="size-4 text-muted-foreground" />
@@ -1142,9 +1300,7 @@ function ExercisePRCard({ exercise }: { exercise: ExerciseSchema }) {
               >
                 <Badge variant="outline">{pr.reps}RM</Badge>
                 <div className="text-right">
-                  <span className="text-sm font-bold tabular-nums">
-                    {pr.weight} kg
-                  </span>
+                  <span className="text-sm font-bold tabular-nums">{pr.weight} kg</span>
                   <span className="ml-2 text-xs text-muted-foreground">
                     {format(new Date(pr.achieved_at), "MMM d")}
                   </span>

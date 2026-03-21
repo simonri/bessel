@@ -93,9 +93,7 @@ function MetricPicker({
         <Icon className="size-3.5" />
         <span>{label}</span>
         {current > 0 && (
-          <span className="ml-auto text-foreground font-medium">
-            {labels[current]}
-          </span>
+          <span className="ml-auto text-foreground font-medium">{labels[current]}</span>
         )}
       </div>
       <div className="flex gap-1">
@@ -134,11 +132,7 @@ function SleepInput({
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Moon className="size-3.5" />
         <span>Sleep</span>
-        {value != null && (
-          <span className="ml-auto text-foreground font-medium">
-            {value}h
-          </span>
-        )}
+        {value != null && <span className="ml-auto text-foreground font-medium">{value}h</span>}
       </div>
       <div className="flex items-center gap-2">
         <input
@@ -218,10 +212,7 @@ function DecisionLog({
 
   const handleAdd = () => {
     if (!newDecision.trim()) return;
-    onChange([
-      ...decisions,
-      { decision: newDecision.trim(), reasoning: newReasoning.trim() },
-    ]);
+    onChange([...decisions, { decision: newDecision.trim(), reasoning: newReasoning.trim() }]);
     setNewDecision("");
     setNewReasoning("");
     setIsAdding(false);
@@ -256,10 +247,7 @@ function DecisionLog({
       </div>
 
       {decisions.map((d, i) => (
-        <div
-          key={i}
-          className="rounded-md border bg-muted/30 p-2.5 space-y-1 group"
-        >
+        <div key={i} className="rounded-md border bg-muted/30 p-2.5 space-y-1 group">
           <div className="flex items-start justify-between gap-2">
             <p className="text-sm font-medium leading-snug">{d.decision}</p>
             <button
@@ -271,9 +259,7 @@ function DecisionLog({
             </button>
           </div>
           {d.reasoning && (
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {d.reasoning}
-            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{d.reasoning}</p>
           )}
         </div>
       ))}
@@ -379,9 +365,7 @@ function MiniCalendar({
         >
           <ChevronLeft className="size-4" />
         </button>
-        <span className="text-sm font-medium">
-          {format(calendarMonth, "MMMM yyyy")}
-        </span>
+        <span className="text-sm font-medium">{format(calendarMonth, "MMMM yyyy")}</span>
         <button
           type="button"
           className="text-muted-foreground hover:text-foreground transition-colors p-1"
@@ -393,10 +377,7 @@ function MiniCalendar({
 
       <div className="grid grid-cols-7 gap-px text-center">
         {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-          <div
-            key={d}
-            className="text-[10px] text-muted-foreground font-medium py-1"
-          >
+          <div key={d} className="text-[10px] text-muted-foreground font-medium py-1">
             {d}
           </div>
         ))}
@@ -492,13 +473,13 @@ function Journal() {
   const upsertMutation = useMutation({
     ...upsertEntryV1JournalEntryDatePutMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getEntryV1JournalEntryDateGetQueryKey({
           client,
           path: { entry_date: datePath },
         }),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getStreakV1JournalStreakGetQueryKey({ client }),
       });
     },
@@ -508,13 +489,13 @@ function Journal() {
   const deleteMutation = useMutation({
     ...deleteEntryV1JournalEntryDateDeleteMutation({ client }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getEntryV1JournalEntryDateGetQueryKey({
           client,
           path: { entry_date: datePath },
         }),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: getStreakV1JournalStreakGetQueryKey({ client }),
       });
     },
@@ -561,9 +542,7 @@ function Journal() {
     setLearnings(e?.learnings ?? "");
     setGratitude(e?.gratitude ?? "");
     setIntention(e?.intention ?? "");
-    setDecisions(
-      (e?.decisions as Decision[] | null | undefined) ?? []
-    );
+    setDecisions((e?.decisions as Decision[] | null | undefined) ?? []);
     setTags(e?.tags ?? []);
   }, [entry, entryLoading, dateKey]);
 
@@ -629,7 +608,20 @@ function Journal() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [body, mood, energy, focus, sleepHours, wins, blockers, learnings, gratitude, intention, decisions, tags]);
+  }, [
+    body,
+    mood,
+    energy,
+    focus,
+    sleepHours,
+    wins,
+    blockers,
+    learnings,
+    gratitude,
+    intention,
+    decisions,
+    tags,
+  ]);
 
   // Reset change counter when date changes so sync doesn't trigger save
   useEffect(() => {
@@ -644,7 +636,10 @@ function Journal() {
     const prev = new Date(selectedDate);
     prev.setDate(prev.getDate() - 1);
     setSelectedDate(prev);
-    if (prev.getMonth() !== calendarMonth.getMonth() || prev.getFullYear() !== calendarMonth.getFullYear()) {
+    if (
+      prev.getMonth() !== calendarMonth.getMonth() ||
+      prev.getFullYear() !== calendarMonth.getFullYear()
+    ) {
       setCalendarMonth(startOfMonth(prev));
     }
   };
@@ -653,7 +648,10 @@ function Journal() {
     const next = new Date(selectedDate);
     next.setDate(next.getDate() + 1);
     setSelectedDate(next);
-    if (next.getMonth() !== calendarMonth.getMonth() || next.getFullYear() !== calendarMonth.getFullYear()) {
+    if (
+      next.getMonth() !== calendarMonth.getMonth() ||
+      next.getFullYear() !== calendarMonth.getFullYear()
+    ) {
       setCalendarMonth(startOfMonth(next));
     }
   };
@@ -680,9 +678,7 @@ function Journal() {
   };
 
   const isTodaySelected = isToday(selectedDate);
-  const todayLabel = isTodaySelected
-    ? "Today"
-    : format(selectedDate, "EEEE, MMM d, yyyy");
+  const todayLabel = isTodaySelected ? "Today" : format(selectedDate, "EEEE, MMM d, yyyy");
 
   return (
     <div className="space-y-5">
@@ -726,34 +722,22 @@ function Journal() {
           {/* Streak stats */}
           {streakData && (
             <div className="rounded-lg border bg-card p-3 space-y-2">
-              <div className="text-xs text-muted-foreground font-medium">
-                Stats
-              </div>
+              <div className="text-xs text-muted-foreground font-medium">Stats</div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 rounded-md bg-muted/50">
                   <div className="text-lg font-bold text-orange-500 tabular-nums">
                     {streakData.current_streak}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
-                    Current Streak
-                  </div>
+                  <div className="text-[10px] text-muted-foreground">Current Streak</div>
                 </div>
                 <div className="text-center p-2 rounded-md bg-muted/50">
-                  <div className="text-lg font-bold tabular-nums">
-                    {streakData.longest_streak}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground">
-                    Longest Streak
-                  </div>
+                  <div className="text-lg font-bold tabular-nums">{streakData.longest_streak}</div>
+                  <div className="text-[10px] text-muted-foreground">Longest Streak</div>
                 </div>
               </div>
               <div className="text-center p-2 rounded-md bg-muted/50">
-                <div className="text-lg font-bold tabular-nums">
-                  {streakData.total_entries}
-                </div>
-                <div className="text-[10px] text-muted-foreground">
-                  Total Entries
-                </div>
+                <div className="text-lg font-bold tabular-nums">{streakData.total_entries}</div>
+                <div className="text-[10px] text-muted-foreground">Total Entries</div>
               </div>
             </div>
           )}
@@ -790,6 +774,7 @@ function Journal() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  title="Delete entry"
                   className="size-8 text-muted-foreground hover:text-destructive"
                   onClick={handleDelete}
                 >
