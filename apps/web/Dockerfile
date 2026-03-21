@@ -11,8 +11,8 @@ COPY packages/ui/package.json ./packages/ui/
 COPY packages/client/package.json ./packages/client/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (ignore-scripts skips vite-plus prepare hook that needs git)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source
 COPY packages/ ./packages/
