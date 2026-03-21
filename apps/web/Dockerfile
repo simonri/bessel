@@ -24,9 +24,11 @@ COPY apps/web/ ./apps/web/
 COPY tsconfig.json ./
 
 # Build (use vite directly — vp build requires a daemon not available in Docker)
+# vite binary is at root node_modules/.bin (hoisted), not in apps/web
 ARG VITE_API_BASE_URL
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN pnpm --filter @metron/web exec vite build
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
+    PATH="/app/node_modules/.bin:$PATH"
+RUN cd apps/web && vite build
 
 # --- Runtime: serve static files with lightweight server ---
 FROM node:22-slim
