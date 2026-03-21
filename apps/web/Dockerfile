@@ -1,6 +1,7 @@
 FROM node:22-slim AS builder
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/* \
+    && corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
@@ -11,8 +12,11 @@ COPY packages/ui/package.json ./packages/ui/
 COPY packages/client/package.json ./packages/client/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
-# Install dependencies (ignore-scripts skips vite-plus prepare hook that needs git)
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# Init a git repo so vite-plus prepare hook succeeds
+RUN git init
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
 # Copy source
 COPY packages/ ./packages/
