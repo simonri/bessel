@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Pressable,
-  Image,
   ActivityIndicator,
   Alert,
   Linking,
@@ -52,6 +51,7 @@ import {
   GraduationCap,
   Stethoscope,
   Building2,
+  Pencil,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -165,29 +165,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   airport: "#6366f1",
 };
 
-function PlaceIcon({ place }: { place: PlaceSchema }) {
-  const [imgError, setImgError] = useState(false);
+function PlaceIcon({ place, size = 44, iconSize = 20 }: { place: PlaceSchema; size?: number; iconSize?: number }) {
   const category = place.category ?? "";
   const Icon = CATEGORY_ICONS[category] || MapPin;
   const color = CATEGORY_COLORS[category] || "#71717a";
 
-  if (place.photo_url && !imgError) {
-    return (
-      <Image
-        source={{ uri: place.photo_url }}
-        className="h-11 w-11 rounded-xl"
-        resizeMode="cover"
-        onError={() => setImgError(true)}
-      />
-    );
-  }
-
   return (
     <View
-      className="h-11 w-11 rounded-xl items-center justify-center"
-      style={{ backgroundColor: `${color}15` }}
+      className="rounded-xl items-center justify-center"
+      style={{ width: size, height: size, backgroundColor: `${color}15` }}
     >
-      <Icon size={20} color={color} />
+      <Icon size={iconSize} color={color} />
     </View>
   );
 }
@@ -253,123 +241,122 @@ function PlaceDetailSheet({
   onOpenMaps,
   onMarkVisited,
   onDelete,
+  onEdit,
 }: {
   place: PlaceSchema;
   onClose: () => void;
   onOpenMaps: (place: PlaceSchema) => void;
   onMarkVisited: (place: PlaceSchema) => void;
   onDelete: (place: PlaceSchema) => void;
+  onEdit: (place: PlaceSchema) => void;
 }) {
   const { country, status, visitedAt, tags } = getPlaceFields(place);
   const isVisited = status === "visited";
+  const category = place.category ?? "";
+  const color = CATEGORY_COLORS[category] || "#71717a";
 
   return (
     <BottomSheet onDismiss={onClose}>
       <View>
-        {place.photo_url && (
-          <Image
-            source={{ uri: place.photo_url }}
-            className="w-full h-44 rounded-xl mb-4"
-            resizeMode="cover"
-          />
-        )}
-
-        <View className="mb-1">
-          <Text className="text-foreground text-xl font-bold">
-            {place.name}
-          </Text>
-          <View className="flex-row items-center gap-1.5 mt-1">
-            {country && (
-              <Text className="text-muted-foreground text-sm">{country}</Text>
-            )}
-            {country && place.category && (
-              <Text className="text-muted-foreground text-sm">·</Text>
-            )}
-            {place.category && (
-              <Text className="text-muted-foreground text-sm capitalize">
-                {place.category.replace(/_/g, " ")}
-              </Text>
-            )}
+        {/* Header: icon + name */}
+        <View className="flex-row items-center gap-4 mb-4">
+          <PlaceIcon place={place} size={56} iconSize={26} />
+          <View className="flex-1 min-w-0">
+            <Text className="text-foreground text-2xl font-bold" numberOfLines={2}>
+              {place.name}
+            </Text>
+            <View className="flex-row items-center gap-1.5 mt-0.5">
+              {country && (
+                <Text className="text-muted-foreground text-[15px]">{country}</Text>
+              )}
+              {country && place.category && (
+                <Text className="text-muted-foreground text-[15px]">·</Text>
+              )}
+              {place.category && (
+                <Text className="text-[15px] capitalize" style={{ color }}>
+                  {place.category.replace(/_/g, " ")}
+                </Text>
+              )}
+            </View>
           </View>
         </View>
 
-        <View className="flex-row items-center gap-2 flex-wrap mt-3">
-          <View
-            className={`rounded-full px-2.5 py-1 ${
-              isVisited ? "bg-green-500/15" : "bg-amber-500/15"
-            }`}
-          >
-            <Text
-              className={`text-xs font-medium ${
-                isVisited ? "text-green-500" : "text-amber-500"
-              }`}
-            >
-              {isVisited ? "Visited" : "Want to go"}
-            </Text>
-          </View>
+        {/* Rating + visited date row */}
+        <View className="flex-row items-center gap-3 mb-4">
+          {place.rating ? (
+            <RatingStars rating={place.rating} size={16} />
+          ) : null}
           {visitedAt && (
-            <Text className="text-muted-foreground text-xs">
+            <Text className="text-muted-foreground text-sm">
               {formatDate(visitedAt)}
             </Text>
           )}
-          {place.rating && (
-            <View className="ml-auto">
-              <RatingStars rating={place.rating} size={14} />
-            </View>
-          )}
         </View>
 
+        {/* Tags */}
         {tags.length > 0 && (
-          <View className="flex-row flex-wrap gap-1.5 mt-3">
+          <View className="flex-row flex-wrap gap-1.5 mb-4">
             {tags.map((tag) => (
-              <View key={tag} className="rounded-full bg-zinc-700 px-2.5 py-1">
-                <Text className="text-xs text-zinc-300">{tag}</Text>
+              <View key={tag} className="rounded-full bg-zinc-800 px-3 py-1.5">
+                <Text className="text-sm text-zinc-300">{tag}</Text>
               </View>
             ))}
           </View>
         )}
 
+        {/* Address */}
         {place.address && (
-          <View className="flex-row items-start gap-2 mt-4">
-            <MapPin size={14} color="#71717a" />
-            <Text className="text-foreground text-sm flex-1">
+          <View className="flex-row items-start gap-2.5 mb-4 bg-zinc-800/60 rounded-xl px-3.5 py-3">
+            <MapPin size={16} color="#71717a" className="mt-0.5" />
+            <Text className="text-foreground text-[15px] flex-1 leading-snug">
               {place.address}
             </Text>
           </View>
         )}
 
+        {/* Review */}
         {place.review && (
-          <View className="mt-4 pt-4 border-t border-zinc-700">
-            <Text className="text-muted-foreground text-sm leading-relaxed">
+          <View className="mb-4 bg-zinc-800/60 rounded-xl px-3.5 py-3">
+            <Text className="text-zinc-300 text-[15px] leading-relaxed">
               {place.review}
             </Text>
           </View>
         )}
 
-        <View className="flex-row items-center gap-2 mt-5 mb-8">
+        {/* Actions */}
+        <View className="flex-row items-center gap-2 mt-1 mb-6">
+          <Pressable
+            onPress={() => { onEdit(place); onClose(); }}
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
+          >
+            <Pencil size={16} color="#fafafa" />
+            <Text className="text-[15px] font-medium text-foreground">Edit</Text>
+          </Pressable>
+
           <Pressable
             onPress={() => { onOpenMaps(place); onClose(); }}
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-700 py-3"
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
           >
             <Navigation size={16} color="#fafafa" />
-            <Text className="text-sm font-medium text-foreground">Maps</Text>
+            <Text className="text-[15px] font-medium text-foreground">Maps</Text>
           </Pressable>
 
           {!isVisited && (
             <Pressable
               onPress={() => { onMarkVisited(place); onClose(); }}
-              className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-700 py-3"
+              className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
             >
               <Check size={16} color="#22c55e" />
-              <Text className="text-sm font-medium text-foreground">Visited</Text>
+              <Text className="text-[15px] font-medium text-green-500">Visited</Text>
             </Pressable>
           )}
 
           <Pressable
             onPress={() => { onDelete(place); onClose(); }}
-            className="items-center justify-center rounded-xl bg-zinc-700 w-12 h-12"
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
           >
             <Trash2 size={16} color="#ef4444" />
+            <Text className="text-[15px] font-medium text-red-500">Delete</Text>
           </Pressable>
         </View>
       </View>
@@ -445,7 +432,6 @@ function AddPlaceSheet({
         google_place_id: selected.place_id,
         plus_code: selected.plus_code ?? undefined,
         category: selected.category ?? undefined,
-        photo_url: selected.photo_url ?? undefined,
         website: selected.website ?? undefined,
         phone: selected.phone ?? undefined,
         status,
@@ -460,13 +446,13 @@ function AddPlaceSheet({
   const results = searchResults?.results ?? [];
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onClose}>
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View className="flex-1 bg-[#171717]">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           className="flex-1"
         >
-          <SafeAreaView className="flex-1 pt-2">
+          <SafeAreaView className="flex-1 pt-5">
             {/* Header */}
             <View className="flex-row items-center justify-between mb-4 px-5">
               {step === "form" ? (
@@ -685,6 +671,271 @@ function AddPlaceSheet({
 }
 
 // ---------------------------------------------------------------------------
+// Edit Place Modal
+// ---------------------------------------------------------------------------
+
+const CATEGORIES = [
+  "restaurant", "cafe", "bar", "bakery", "hotel", "museum", "park",
+  "temple", "shrine", "beach", "shopping", "market", "landmark",
+  "nightclub", "spa", "gym", "theater", "gallery", "library",
+  "zoo", "aquarium", "airport", "station", "other",
+];
+
+function EditPlaceModal({
+  place,
+  onClose,
+}: {
+  place: PlaceSchema;
+  onClose: () => void;
+}) {
+  const fields = getPlaceFields(place);
+  const [name, setName] = useState(place.name);
+  const [address, setAddress] = useState(place.address ?? "");
+  const [country, setCountry] = useState(fields.country ?? "");
+  const [category, setCategory] = useState(place.category ?? "");
+  const [status, setStatus] = useState<"want_to_go" | "visited">(
+    fields.status as "want_to_go" | "visited"
+  );
+  const [rating, setRating] = useState<number | null>(place.rating ?? null);
+  const [visitedAt, setVisitedAt] = useState(() => {
+    if (!fields.visitedAt) return "";
+    const d = fields.visitedAt instanceof Date ? fields.visitedAt : new Date(fields.visitedAt as string);
+    return d.toISOString().split("T")[0];
+  });
+  const [review, setReview] = useState(place.review ?? "");
+  const [tags, setTags] = useState(fields.tags.join(", "));
+  const queryClient = useQueryClient();
+  const queryKey = listPlacesV1PlacesGetQueryKey({ client });
+
+  const updateMutation = useMutation({
+    ...updatePlaceV1PlacesPlaceIdPatchMutation({ client }),
+    onMutate: async ({ path, body }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueriesData({ queryKey });
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((p: any) =>
+              p.id === path.place_id ? { ...p, ...body } : p
+            ),
+          })),
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
+    onSuccess: () => {
+      onClose();
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
+    updateMutation.mutate({
+      client,
+      path: { place_id: place.id },
+      body: {
+        name: name.trim(),
+        address: address.trim() || null,
+        country: country.trim() || null,
+        category: category || null,
+        status,
+        rating: rating ?? null,
+        visited_at: status === "visited" && visitedAt ? new Date(visitedAt) : null,
+        review: review.trim() || null,
+        tags: parsedTags.length > 0 ? parsedTags : null,
+      },
+    });
+  };
+
+  return (
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View className="flex-1 bg-[#171717]">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          className="flex-1"
+        >
+          <SafeAreaView className="flex-1 pt-5">
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-5 mb-4">
+              <Pressable onPress={onClose}>
+                <Text className="text-primary text-sm">Cancel</Text>
+              </Pressable>
+              <Text className="text-foreground text-lg font-bold">Edit Place</Text>
+              <Pressable onPress={handleSave} disabled={!name.trim() || updateMutation.isPending}>
+                <Text className={`text-sm font-semibold ${name.trim() ? "text-primary" : "text-muted-foreground"}`}>
+                  {updateMutation.isPending ? "Saving..." : "Save"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
+              {/* Name */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Name</Text>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Place name"
+                placeholderTextColor="#71717a"
+                className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
+                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+              />
+
+              {/* Status */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Status</Text>
+              <View className="flex-row gap-2 mb-5">
+                <Pressable
+                  onPress={() => setStatus("want_to_go")}
+                  className={`flex-1 items-center py-2.5 rounded-xl ${
+                    status === "want_to_go" ? "bg-amber-500/15" : "bg-zinc-800"
+                  }`}
+                >
+                  <Text className={`text-sm font-medium ${status === "want_to_go" ? "text-amber-500" : "text-muted-foreground"}`}>
+                    Want to go
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setStatus("visited");
+                    if (!visitedAt) setVisitedAt(new Date().toISOString().split("T")[0]);
+                  }}
+                  className={`flex-1 items-center py-2.5 rounded-xl ${
+                    status === "visited" ? "bg-green-500/15" : "bg-zinc-800"
+                  }`}
+                >
+                  <Text className={`text-sm font-medium ${status === "visited" ? "text-green-500" : "text-muted-foreground"}`}>
+                    Visited
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Rating */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Rating</Text>
+              <View className="flex-row gap-2 mb-5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Pressable
+                    key={star}
+                    onPress={() => setRating(rating === star ? null : star)}
+                    className="p-1"
+                  >
+                    <Star
+                      size={28}
+                      color={rating && star <= rating ? "#eab308" : "#3f3f46"}
+                      fill={rating && star <= rating ? "#eab308" : "transparent"}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Visited date (when visited) */}
+              {status === "visited" && (
+                <>
+                  <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Date Visited</Text>
+                  <TextInput
+                    value={visitedAt}
+                    onChangeText={setVisitedAt}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#71717a"
+                    className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
+                    style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+                  />
+                </>
+              )}
+
+              {/* Review */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Review</Text>
+              <TextInput
+                value={review}
+                onChangeText={setReview}
+                placeholder="Your thoughts, tips..."
+                placeholderTextColor="#71717a"
+                multiline
+                className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
+                style={{ color: "#fafafa", fontSize: 14, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
+              />
+
+              {/* Category */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Category</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-5"
+                contentContainerStyle={{ gap: 8 }}
+              >
+                <Pressable
+                  onPress={() => setCategory("")}
+                  className={`rounded-full px-3 py-1.5 ${!category ? "bg-foreground" : "bg-zinc-800"}`}
+                >
+                  <Text className={`text-xs font-medium ${!category ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                    None
+                  </Text>
+                </Pressable>
+                {CATEGORIES.map((cat) => (
+                  <Pressable
+                    key={cat}
+                    onPress={() => setCategory(cat)}
+                    className={`rounded-full px-3 py-1.5 ${category === cat ? "bg-foreground" : "bg-zinc-800"}`}
+                  >
+                    <Text className={`text-xs font-medium capitalize ${category === cat ? "text-primary-foreground" : "text-muted-foreground"}`}>
+                      {cat}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              {/* Tags */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Tags</Text>
+              <TextInput
+                value={tags}
+                onChangeText={setTags}
+                placeholder="Comma separated, e.g. sushi, date night"
+                placeholderTextColor="#71717a"
+                className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
+                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+              />
+
+              {/* Address + Country */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Address</Text>
+              <TextInput
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Full address"
+                placeholderTextColor="#71717a"
+                className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
+                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+              />
+
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Country</Text>
+              <TextInput
+                value={country}
+                onChangeText={setCountry}
+                placeholder="e.g. Japan"
+                placeholderTextColor="#71717a"
+                className="bg-zinc-800 rounded-xl px-4 py-3 mb-8"
+                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+              />
+            </ScrollView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Travel Screen
 // ---------------------------------------------------------------------------
 
@@ -692,6 +943,7 @@ export default function TravelScreen() {
   const queryClient = useQueryClient();
   const queryKey = listPlacesV1PlacesGetQueryKey({ client });
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
+  const [editingPlace, setEditingPlace] = useState<PlaceSchema | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
 
   const {
@@ -816,6 +1068,7 @@ export default function TravelScreen() {
       const isVisited = status === "visited";
 
       const options = [
+        "Edit",
         "Open in Maps",
         ...(isVisited ? [] : ["Mark as Visited"]),
         "Delete",
@@ -833,7 +1086,9 @@ export default function TravelScreen() {
         },
         (buttonIndex) => {
           const selected = options[buttonIndex];
-          if (selected === "Open in Maps") {
+          if (selected === "Edit") {
+            setEditingPlace(place);
+          } else if (selected === "Open in Maps") {
             handleOpenMaps(place);
           } else if (selected === "Mark as Visited") {
             handleMarkVisited(place);
@@ -949,6 +1204,18 @@ export default function TravelScreen() {
           onOpenMaps={handleOpenMaps}
           onMarkVisited={handleMarkVisited}
           onDelete={handleDelete}
+          onEdit={(place) => {
+            setSelectedPlace(null);
+            setEditingPlace(place);
+          }}
+        />
+      )}
+
+      {/* Edit place modal */}
+      {editingPlace && (
+        <EditPlaceModal
+          place={editingPlace}
+          onClose={() => setEditingPlace(null)}
         />
       )}
 

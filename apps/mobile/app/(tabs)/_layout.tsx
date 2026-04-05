@@ -15,8 +15,8 @@ import {
   PieChart,
   Settings,
 } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useBottomSpacing } from "../../src/lib/safe-area";
 
 const VISIBLE_TABS = ["index", "travel", "tasks", "more"] as const;
 const TAB_ICONS: Record<string, typeof LayoutDashboard> = {
@@ -44,7 +44,7 @@ function FloatingTabBar({
   descriptors: any;
   navigation: any;
 }) {
-  const insets = useSafeAreaInsets();
+  const bottomSpacing = useBottomSpacing();
   const [menuOpen, setMenuOpen] = useState(false);
   const expandAnim = useRef(new Animated.Value(0)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -84,8 +84,6 @@ function FloatingTabBar({
     outputRange: [0.9, 1],
   });
 
-  const bottomPadding = Math.max((insets.bottom - 20) * 2, 4);
-
   return (
     <>
       {/* Backdrop */}
@@ -113,7 +111,7 @@ function FloatingTabBar({
         <Animated.View
           style={{
             position: "absolute",
-            bottom: bottomPadding + 76,
+            bottom: bottomSpacing + 76,
             right: 24,
             opacity: expandAnim,
             transform: [{ translateY: menuTranslateY }, { scale: menuScale }],
@@ -144,7 +142,7 @@ function FloatingTabBar({
       <View
         pointerEvents="none"
         className="absolute bottom-0 left-0 right-0"
-        style={{ height: bottomPadding + 90 }}
+        style={{ height: bottomSpacing + 90 }}
       >
         <LinearGradient
           colors={["transparent", "rgba(9,9,11,0.8)", "#09090b"]}
@@ -155,7 +153,7 @@ function FloatingTabBar({
 
       {/* Tab bar */}
       <View
-        style={{ paddingBottom: bottomPadding }}
+        style={{ paddingBottom: bottomSpacing }}
         className="absolute bottom-0 left-0 right-0 items-center"
       >
         <View

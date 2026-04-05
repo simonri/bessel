@@ -7,7 +7,7 @@ import {
   BottomSheetView,
   type BottomSheetModalProps,
 } from "@gorhom/bottom-sheet";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useBottomSpacing } from "../lib/safe-area";
 
 export interface BottomSheetProps
   extends React.PropsWithChildren,
@@ -23,7 +23,7 @@ export const BottomSheet = ({
   ...props
 }: BottomSheetProps) => {
   const ref = useRef<BottomSheetModal>(null);
-  const insets = useSafeAreaInsets();
+  const bottomSpacing = useBottomSpacing();
 
   useEffect(() => {
     ref.current?.present();
@@ -62,7 +62,7 @@ export const BottomSheet = ({
         <BottomSheetScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: 0,
           }}
         >
           {children}
@@ -71,7 +71,7 @@ export const BottomSheet = ({
         <BottomSheetView
           style={{
             paddingHorizontal: 20,
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: 0,
           }}
         >
           {children}

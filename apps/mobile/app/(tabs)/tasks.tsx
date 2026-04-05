@@ -42,6 +42,7 @@ import {
   ChevronRight,
   X,
   ListTodo,
+  Pencil,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { client } from "@/lib/client";
@@ -113,10 +114,10 @@ function TaskRow({
       {/* Completion circle */}
       <Pressable onPress={() => onToggle(task)} hitSlop={8}>
         {isDone ? (
-          <CheckCircle2 size={22} color="#22c55e" fill="#22c55e" />
+          <CheckCircle2 size={24} color="#22c55e" fill="#22c55e" />
         ) : (
           <Circle
-            size={22}
+            size={24}
             color={priority >= 3 ? PRIORITY_COLORS[priority] : "#3f3f46"}
           />
         )}
@@ -134,7 +135,7 @@ function TaskRow({
           {due.label ? (
             <View className="flex-row items-center gap-1">
               <Calendar size={11} color={due.color} />
-              <Text style={{ color: due.color }} className="text-xs">
+              <Text style={{ color: due.color }} className="text-sm">
                 {due.label}
               </Text>
             </View>
@@ -146,7 +147,7 @@ function TaskRow({
             <View className="flex-row items-center gap-0.5">
               <Flag size={11} color={PRIORITY_COLORS[priority]} fill={priority >= 3 ? PRIORITY_COLORS[priority] : "transparent"} />
               {priority >= 3 && (
-                <Text style={{ color: PRIORITY_COLORS[priority] }} className="text-xs font-medium">
+                <Text style={{ color: PRIORITY_COLORS[priority] }} className="text-sm font-medium">
                   {PRIORITY_LABELS[priority]}
                 </Text>
               )}
@@ -154,11 +155,11 @@ function TaskRow({
           )}
           {task.project && (
             <View className="rounded-full bg-secondary px-1.5 py-0.5">
-              <Text className="text-[10px] text-muted-foreground">{task.project}</Text>
+              <Text className="text-muted-foreground text-xs">{task.project}</Text>
             </View>
           )}
           {task.area && (
-            <Text className="text-[10px] text-muted-foreground">{task.area}</Text>
+            <Text className="text-muted-foreground text-xs">{task.area}</Text>
           )}
         </View>
       </View>
@@ -178,34 +179,18 @@ function TaskDetailSheet({
   onComplete,
   onReopen,
   onDelete,
-  onUpdate,
+  onEdit,
 }: {
   task: TaskSchema;
   onClose: () => void;
   onComplete: (task: TaskSchema) => void;
   onReopen: (task: TaskSchema) => void;
   onDelete: (task: TaskSchema) => void;
-  onUpdate: (task: TaskSchema, body: Record<string, any>) => void;
+  onEdit: (task: TaskSchema) => void;
 }) {
   const isDone = task.status === "done" || task.status === "cancelled";
   const due = formatDueDate(task.due_date);
   const priority = task.priority ?? 0;
-
-  const handleStatusPress = () => {
-    if (isDone) return;
-    const newStatus = task.status === "todo" ? "in_progress" : "todo";
-    onUpdate(task, { status: newStatus });
-  };
-
-  const handlePriorityPress = () => {
-    const options = ["None", "Low", "Medium", "High", "Urgent", "Cancel"];
-    ActionSheetIOS.showActionSheetWithOptions(
-      { options, cancelButtonIndex: 5, title: "Priority" },
-      (index) => {
-        if (index < 5) onUpdate(task, { priority: index });
-      }
-    );
-  };
 
   const recurrenceLabel = task.is_recurring && task.rrule_frequency
     ? `Every ${(task.rrule_interval ?? 1) > 1 ? `${task.rrule_interval} ` : ""}${task.rrule_frequency}`
@@ -215,122 +200,313 @@ function TaskDetailSheet({
     <BottomSheet onDismiss={onClose}>
       <View>
         {/* Title */}
-        <Text className="text-foreground text-xl font-bold mb-4">
+        <Text className="text-foreground text-2xl font-bold mb-1">
           {task.title}
         </Text>
 
-        {/* Properties */}
-        <View className="rounded-xl bg-zinc-800 overflow-hidden mb-4">
-          {/* Status */}
-          <Pressable onPress={handleStatusPress} className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-            <Text className="text-muted-foreground text-sm">Status</Text>
-            <View className="flex-row items-center gap-1.5">
-              <View className={`w-2 h-2 rounded-full ${
-                task.status === "done" ? "bg-green-500" :
-                task.status === "in_progress" ? "bg-blue-500" :
-                task.status === "cancelled" ? "bg-red-500" : "bg-zinc-500"
-              }`} />
-              <Text className="text-foreground text-sm">
-                {STATUS_LABELS[task.status ?? "todo"]}
-              </Text>
-            </View>
-          </Pressable>
-
-          {/* Priority */}
-          <Pressable onPress={handlePriorityPress} className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-            <Text className="text-muted-foreground text-sm">Priority</Text>
-            <View className="flex-row items-center gap-1.5">
-              <Flag size={14} color={PRIORITY_COLORS[priority]} fill={priority >= 3 ? PRIORITY_COLORS[priority] : "transparent"} />
-              <Text className="text-foreground text-sm">{PRIORITY_LABELS[priority]}</Text>
-            </View>
-          </Pressable>
-
-          {/* Due date */}
-          {due.label && (
-            <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-              <Text className="text-muted-foreground text-sm">Due</Text>
-              <View className="flex-row items-center gap-1.5">
-                <Calendar size={14} color={due.color} />
-                <Text style={{ color: due.color }} className="text-sm">{due.label}</Text>
-              </View>
-            </View>
-          )}
-
-          {/* Recurrence */}
-          {recurrenceLabel && (
-            <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-              <Text className="text-muted-foreground text-sm">Recurrence</Text>
-              <View className="flex-row items-center gap-1.5">
-                <Repeat size={14} color="#a1a1aa" />
-                <Text className="text-foreground text-sm capitalize">{recurrenceLabel}</Text>
-              </View>
-            </View>
-          )}
-
-          {/* Project */}
-          {task.project && (
-            <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-              <Text className="text-muted-foreground text-sm">Project</Text>
-              <Text className="text-foreground text-sm">{task.project}</Text>
-            </View>
-          )}
-
-          {/* Area */}
-          {task.area && (
-            <View className="flex-row items-center justify-between px-4 py-3.5">
-              <Text className="text-muted-foreground text-sm">Area</Text>
-              <Text className="text-foreground text-sm">{task.area}</Text>
-              </View>
-            )}
+        {/* Subtitle metadata */}
+        <View className="flex-row items-center gap-2 mb-5 flex-wrap">
+          {/* Status dot + label */}
+          <View className="flex-row items-center gap-1.5">
+            <View className={`w-2.5 h-2.5 rounded-full ${
+              task.status === "done" ? "bg-green-500" :
+              task.status === "in_progress" ? "bg-blue-500" :
+              task.status === "cancelled" ? "bg-red-500" : "bg-zinc-500"
+            }`} />
+            <Text className="text-muted-foreground" style={{ fontSize: 15 }}>
+              {STATUS_LABELS[task.status ?? "todo"]}
+            </Text>
           </View>
-
-          {/* Description */}
-          {task.description && (
-            <View className="mt-2 pt-4 border-t border-zinc-700 mb-4">
-              <Text className="text-muted-foreground text-sm leading-relaxed">
-                {task.description}
-              </Text>
-            </View>
+          {priority >= 1 && (
+            <>
+              <Text className="text-zinc-600">·</Text>
+              <View className="flex-row items-center gap-1">
+                <Flag size={13} color={PRIORITY_COLORS[priority]} fill={priority >= 3 ? PRIORITY_COLORS[priority] : "transparent"} />
+                <Text style={{ color: PRIORITY_COLORS[priority], fontSize: 15 }}>
+                  {PRIORITY_LABELS[priority]}
+                </Text>
+              </View>
+            </>
           )}
-
-          {/* Tags */}
-          {task.tags && task.tags.length > 0 && (
-            <View className="flex-row flex-wrap gap-1.5 mb-4">
-              {task.tags.map((tag) => (
-                <View key={tag} className="rounded-full bg-zinc-700 px-2.5 py-1">
-                  <Text className="text-xs text-zinc-300">{tag}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Actions */}
-          <View className="flex-row items-center gap-2 mt-2 mb-8">
-            {isDone ? (
-              <Pressable
-                onPress={() => { onReopen(task); onClose(); }}
-                className="flex-1 items-center rounded-xl bg-zinc-700 py-3"
-              >
-                <Text className="text-sm font-medium text-foreground">Reopen</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={() => { onComplete(task); onClose(); }}
-                className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-green-600 py-3"
-              >
-                <CheckCircle2 size={16} color="#fff" />
-                <Text className="text-sm font-medium text-white">Complete</Text>
-              </Pressable>
-            )}
-            <Pressable
-              onPress={() => { onDelete(task); onClose(); }}
-              className="items-center justify-center rounded-xl bg-zinc-700 w-12 h-12"
-            >
-              <X size={16} color="#ef4444" />
-            </Pressable>
-          </View>
         </View>
-      </BottomSheet>
+
+        {/* Properties card */}
+        <View className="rounded-xl bg-zinc-800/60 overflow-hidden mb-4">
+          {due.label ? (
+            <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700/50">
+              <Text className="text-muted-foreground" style={{ fontSize: 15 }}>Due</Text>
+              <View className="flex-row items-center gap-1.5">
+                <Calendar size={15} color={due.color} />
+                <Text style={{ color: due.color, fontSize: 15 }}>{due.label}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {recurrenceLabel ? (
+            <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700/50">
+              <Text className="text-muted-foreground" style={{ fontSize: 15 }}>Recurrence</Text>
+              <View className="flex-row items-center gap-1.5">
+                <Repeat size={15} color="#a1a1aa" />
+                <Text className="text-foreground capitalize" style={{ fontSize: 15 }}>{recurrenceLabel}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {task.project ? (
+            <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700/50">
+              <Text className="text-muted-foreground" style={{ fontSize: 15 }}>Project</Text>
+              <Text className="text-foreground" style={{ fontSize: 15 }}>{task.project}</Text>
+            </View>
+          ) : null}
+
+          {task.area ? (
+            <View className="flex-row items-center justify-between px-4 py-3.5">
+              <Text className="text-muted-foreground" style={{ fontSize: 15 }}>Area</Text>
+              <Text className="text-foreground" style={{ fontSize: 15 }}>{task.area}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Description */}
+        {task.description ? (
+          <View className="mb-4 bg-zinc-800/60 rounded-xl px-4 py-3.5">
+            <Text className="text-zinc-300 leading-relaxed" style={{ fontSize: 15 }}>
+              {task.description}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Tags */}
+        {task.tags && task.tags.length > 0 ? (
+          <View className="flex-row flex-wrap gap-1.5 mb-4">
+            {task.tags.map((tag) => (
+              <View key={tag} className="rounded-full bg-zinc-800 px-3 py-1.5">
+                <Text className="text-zinc-300" style={{ fontSize: 13 }}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {/* Actions */}
+        <View className="flex-row items-center gap-2 mt-1 mb-6">
+          <Pressable
+            onPress={() => { onEdit(task); onClose(); }}
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
+          >
+            <Pencil size={16} color="#fafafa" />
+            <Text className="font-medium text-foreground" style={{ fontSize: 15 }}>Edit</Text>
+          </Pressable>
+
+          {isDone ? (
+            <Pressable
+              onPress={() => { onReopen(task); onClose(); }}
+              className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
+            >
+              <Circle size={16} color="#fafafa" />
+              <Text className="font-medium text-foreground" style={{ fontSize: 15 }}>Reopen</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => { onComplete(task); onClose(); }}
+              className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5"
+            >
+              <CheckCircle2 size={16} color="#fff" />
+              <Text className="font-medium text-white" style={{ fontSize: 15 }}>Complete</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => { onDelete(task); onClose(); }}
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
+          >
+            <X size={16} color="#ef4444" />
+            <Text className="font-medium text-red-500" style={{ fontSize: 15 }}>Delete</Text>
+          </Pressable>
+        </View>
+      </View>
+    </BottomSheet>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Edit Task Modal
+// ---------------------------------------------------------------------------
+
+function EditTaskModal({
+  task,
+  onClose,
+}: {
+  task: TaskSchema;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description ?? "");
+  const [priority, setPriority] = useState(task.priority ?? 0);
+  const [area, setArea] = useState<string | null>(task.area ?? null);
+  const [project, setProject] = useState(task.project ?? "");
+  const [status, setStatus] = useState(task.status ?? "todo");
+  const queryClient = useQueryClient();
+  const queryKey = listTasksV1TasksGetQueryKey({ client });
+
+  const { data: areasData } = useQuery({
+    ...listAreasV1TasksAreasGetOptions({ client }),
+  } as any);
+  const areas = (areasData as string[]) ?? [];
+
+  const updateMutation = useMutation({
+    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      onClose();
+    },
+  });
+
+  const handleSave = () => {
+    if (!title.trim()) return;
+    updateMutation.mutate({
+      client,
+      path: { task_id: task.id },
+      body: {
+        title: title.trim(),
+        description: description.trim() || null,
+        priority,
+        area: area || null,
+        project: project.trim() || null,
+        status: status as any,
+      },
+    });
+  };
+
+  const handlePriorityPress = () => {
+    const options = ["None", "Low", "Medium", "High", "Urgent", "Cancel"];
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex: 5, title: "Priority" },
+      (index) => {
+        if (index < 5) setPriority(index);
+      }
+    );
+  };
+
+  const handleAreaPress = () => {
+    const presets = ["Personal", "Company", "Travel"];
+    const allAreas = [...new Set([...presets, ...areas])];
+    const options = ["None", ...allAreas, "Cancel"];
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex: options.length - 1, title: "Area" },
+      (index) => {
+        if (index === 0) setArea(null);
+        else if (index < options.length - 1) setArea(options[index]);
+      }
+    );
+  };
+
+  const handleStatusPress = () => {
+    const options = ["To Do", "In Progress", "Cancel"];
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex: 2, title: "Status" },
+      (index) => {
+        if (index === 0) setStatus("todo");
+        else if (index === 1) setStatus("in_progress");
+      }
+    );
+  };
+
+  return (
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View className="flex-1 bg-[#171717]">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          className="flex-1"
+        >
+          <SafeAreaView className="flex-1 pt-5">
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-5 mb-6">
+              <Pressable onPress={onClose}>
+                <Text className="text-primary" style={{ fontSize: 15 }}>Cancel</Text>
+              </Pressable>
+              <Text className="text-foreground text-lg font-bold">Edit Task</Text>
+              <Pressable onPress={handleSave} disabled={!title.trim() || updateMutation.isPending}>
+                <Text
+                  className={`font-semibold ${title.trim() ? "text-primary" : "text-muted-foreground"}`}
+                  style={{ fontSize: 15 }}
+                >
+                  {updateMutation.isPending ? "Saving..." : "Save"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
+              {/* Title */}
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Task title"
+                placeholderTextColor="#71717a"
+                autoFocus
+                className="mb-6"
+                style={{ color: "#fafafa", fontSize: 20, fontWeight: "500" }}
+                multiline
+              />
+
+              {/* Description */}
+              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Description</Text>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Add details..."
+                placeholderTextColor="#71717a"
+                multiline
+                className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
+                style={{ color: "#fafafa", fontSize: 15, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
+              />
+
+              {/* Properties */}
+              <View className="rounded-xl bg-zinc-800 overflow-hidden mb-5">
+                <Pressable
+                  onPress={handleStatusPress}
+                  className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700"
+                >
+                  <Text className="text-foreground" style={{ fontSize: 15 }}>Status</Text>
+                  <Text className="text-muted-foreground" style={{ fontSize: 15 }}>
+                    {STATUS_LABELS[status] ?? "To Do"}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handlePriorityPress}
+                  className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700"
+                >
+                  <View className="flex-row items-center gap-2.5">
+                    <Flag size={16} color={PRIORITY_COLORS[priority]} fill={priority >= 3 ? PRIORITY_COLORS[priority] : "transparent"} />
+                    <Text className="text-foreground" style={{ fontSize: 15 }}>Priority</Text>
+                  </View>
+                  <Text className="text-muted-foreground" style={{ fontSize: 15 }}>{PRIORITY_LABELS[priority]}</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleAreaPress}
+                  className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700"
+                >
+                  <Text className="text-foreground" style={{ fontSize: 15 }}>Area</Text>
+                  <Text className="text-muted-foreground" style={{ fontSize: 15 }}>{area ?? "None"}</Text>
+                </Pressable>
+
+                <View className="flex-row items-center justify-between px-4 py-3.5">
+                  <Text className="text-foreground" style={{ fontSize: 15 }}>Project</Text>
+                  <TextInput
+                    placeholder="None"
+                    placeholderTextColor="#71717a"
+                    value={project}
+                    onChangeText={setProject}
+                    style={{ color: "#a1a1aa", fontSize: 15, minWidth: 80, textAlign: "right", paddingVertical: 0 }}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
   );
 }
 
@@ -401,13 +577,13 @@ function CreateTaskSheet({
   };
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onClose}>
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View className="flex-1 bg-[#171717]">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           className="flex-1"
         >
-          <SafeAreaView className="flex-1 px-5 pt-2">
+          <SafeAreaView className="flex-1 px-5 pt-5">
             {/* Header */}
             <View className="flex-row items-center justify-between mb-6">
               <View className="w-9" />
@@ -547,6 +723,7 @@ export default function TasksScreen() {
   const queryClient = useQueryClient();
   const queryKey = listTasksV1TasksGetQueryKey({ client });
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskSchema | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [filter, setFilter] = useState<FilterTab>("active");
   const insets = useSafeAreaInsets();
@@ -666,12 +843,6 @@ export default function TasksScreen() {
     },
   });
 
-  const updateMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey });
-    },
-  });
 
   const handleToggle = (task: TaskSchema) => {
     const isDone = task.status === "done" || task.status === "cancelled";
@@ -699,10 +870,6 @@ export default function TasksScreen() {
         onPress: () => deleteMutation.mutate({ client, path: { task_id: task.id } }),
       },
     ]);
-  };
-
-  const handleUpdate = (task: TaskSchema, body: Record<string, any>) => {
-    updateMutation.mutate({ client, path: { task_id: task.id }, body });
   };
 
   const isLoading = filter === "active" ? activeLoading : doneLoading;
@@ -803,10 +970,17 @@ export default function TasksScreen() {
           onComplete={handleComplete}
           onReopen={handleReopen}
           onDelete={handleDelete}
-          onUpdate={handleUpdate}
+          onEdit={setEditingTask}
         />
       )}
 
+      {/* Edit task modal */}
+      {editingTask && (
+        <EditTaskModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
 
       {/* Create task sheet */}
       {showCreate && (

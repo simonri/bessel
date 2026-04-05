@@ -64,7 +64,6 @@ export function AddPlaceDialog() {
       googlePlaceId: null as string | null,
       plusCode: null as string | null,
       category: null as string | null,
-      photoUrl: null as string | null,
       tags: [] as string[],
       status: "want_to_go" as "want_to_go" | "visited",
       rating: null as number | null,
@@ -83,7 +82,6 @@ export function AddPlaceDialog() {
           google_place_id: value.googlePlaceId,
           plus_code: value.plusCode,
           category: value.category,
-          photo_url: value.photoUrl,
           tags: value.tags.length > 0 ? value.tags : null,
           status: value.status,
           rating: value.rating,
@@ -110,7 +108,6 @@ export function AddPlaceDialog() {
     form.setFieldValue("googlePlaceId", result.place_id);
     form.setFieldValue("plusCode", result.plus_code ?? null);
     form.setFieldValue("category", result.category ?? null);
-    form.setFieldValue("photoUrl", result.photo_url ?? null);
     setStep("form");
   };
 

@@ -131,13 +131,6 @@ async def search_google_places(
     location = item.get("geometry", {}).get("location", {})
     plus_code_data = item.get("plus_code", {})
 
-    photo_url = None
-    photos = item.get("photos", [])
-    if photos:
-      photo_ref = photos[0].get("photo_reference")
-      if photo_ref:
-        photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference={photo_ref}&key={api_key}"
-
     # Extract country from formatted_address (last component after comma)
     formatted_address = item.get("formatted_address", "")
     country = None
@@ -156,7 +149,7 @@ async def search_google_places(
         longitude=location.get("lng", 0),
         plus_code=plus_code_data.get("global_code"),
         category=_best_category(item.get("types", [])),
-        photo_url=photo_url,
+        photo_url=None,
         website=None,
         phone=None,
       )

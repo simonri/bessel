@@ -3,7 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { Trash2, Star, MapPin, X, Map, Check, Plane, Pencil } from "lucide-react";
+import {
+  Trash2, Star, MapPin, X, Map, Check, Plane, Pencil,
+  UtensilsCrossed, Coffee, Beer, ShoppingBag, Hotel, Trees, Landmark,
+  Drama, Church, Building2, Dumbbell, Wine, IceCream, Store, type LucideIcon,
+} from "lucide-react";
 import type { PlaceSchema } from "@metron/client";
 import {
   listPlacesV1PlacesGetOptions,
@@ -38,6 +42,32 @@ import { PlaceMap } from "@/components/place-map";
 import { TagDisplay } from "@/components/tag-input";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  restaurant: UtensilsCrossed,
+  cafe: Coffee,
+  bar: Beer,
+  nightclub: Wine,
+  shopping: ShoppingBag,
+  hotel: Hotel,
+  park: Trees,
+  landmark: Landmark,
+  museum: Landmark,
+  theater: Drama,
+  temple: Church,
+  church: Church,
+  mosque: Church,
+  synagogue: Church,
+  gym: Dumbbell,
+  bakery: IceCream,
+  market: Store,
+  gallery: Building2,
+};
+
+function getCategoryIcon(category: string | null | undefined): LucideIcon {
+  if (!category) return MapPin;
+  return CATEGORY_ICONS[category] ?? MapPin;
+}
 
 export const Route = createFileRoute("/_app/travel")({
   component: Travel,
@@ -338,17 +368,14 @@ function Travel() {
             onClick={() => handleSelectPlace(place)}
           >
             <div className="flex items-center gap-3">
-              {place.photo_url ? (
-                <img
-                  src={place.photo_url}
-                  alt={place.name}
-                  className="size-8 rounded object-cover shrink-0"
-                />
-              ) : (
-                <div className="size-8 rounded shrink-0 flex items-center justify-center bg-muted text-muted-foreground text-xs font-medium">
-                  {place.name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              {(() => {
+                const Icon = getCategoryIcon(place.category);
+                return (
+                  <div className="size-8 rounded shrink-0 flex items-center justify-center bg-muted text-muted-foreground">
+                    <Icon className="size-4" />
+                  </div>
+                );
+              })()}
               <div className="min-w-0 flex-1">
                 <div className="font-medium hover:underline truncate">{place.name}</div>
                 {country && <div className="text-muted-foreground text-xs mt-0.5">{country}</div>}
@@ -530,14 +557,15 @@ function Travel() {
           {/* Right: detail sidebar */}
           {selectedPlace && sel && (
             <div className="hidden md:block w-[300px] shrink-0 rounded-lg border bg-card overflow-y-auto">
-              {/* Photo */}
-              {selectedPlace.photo_url && (
-                <img
-                  src={selectedPlace.photo_url}
-                  alt={selectedPlace.name}
-                  className="w-full h-36 object-cover rounded-t-lg"
-                />
-              )}
+              {/* Category icon header */}
+              {(() => {
+                const Icon = getCategoryIcon(selectedPlace.category);
+                return (
+                  <div className="w-full h-24 bg-muted flex items-center justify-center rounded-t-lg">
+                    <Icon className="size-8 text-muted-foreground" />
+                  </div>
+                );
+              })()}
 
               <div className="p-4 space-y-3">
                 {/* Title + close */}
