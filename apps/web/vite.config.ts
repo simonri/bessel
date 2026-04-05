@@ -21,9 +21,6 @@ const config = defineConfig({
           crawlLinks: true,
         },
       },
-      prerender: {
-        failOnError: false,
-      },
     }),
     viteReact(),
   ],
