@@ -2,7 +2,8 @@
 # Production Docker Compose for Metron
 # ==============================================================================
 # Deployed to VPS, accessible only via Tailscale.
-# Co-exists with Nous (separate project, network, and ports).
+# Uses shared Traefik reverse proxy (from Nous stack) with IP allowlist
+# restricting access to Tailscale CGNAT range.
 #
 # Usage:
 #   docker compose -f docker-compose.prod.yml up -d
@@ -10,6 +11,7 @@
 #
 # Prerequisites:
 #   - Create .env with required variables (see .env.example)
+#   - Traefik running on the `web` network (from Nous stack)
 #   - Tailscale running on host
 # ==============================================================================
 
@@ -100,8 +102,19 @@ services:
       METRON_CORS_ORIGINS: ${METRON_CORS_ORIGINS}
       METRON_FRONTEND_BASE_URL: ${METRON_FRONTEND_BASE_URL}
       METRON_GOOGLE_PLACES_API_KEY: ${METRON_GOOGLE_PLACES_API_KEY:-}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      # API routes
+      - "traefik.http.routers.metron-api.rule=Host(`vps`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
+      - "traefik.http.routers.metron-api.entrypoints=tailscale"
+      - "traefik.http.routers.metron-api.middlewares=metron-tailscale@docker"
+      - "traefik.http.services.metron-api.loadbalancer.server.port=8000"
+      # Tailscale-only access
+      - "traefik.http.middlewares.metron-tailscale.ipallowlist.sourcerange=100.64.0.0/10"
     networks:
       - metron-internal
+      - web
 
   # ============================================================================
   # Background Worker
@@ -129,35 +142,25 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      # Catch-all for vps hostname
+      - "traefik.http.routers.metron-web.rule=Host(`vps`)"
+      - "traefik.http.routers.metron-web.entrypoints=tailscale"
+      - "traefik.http.routers.metron-web.middlewares=metron-tailscale@docker"
+      - "traefik.http.routers.metron-web.priority=1"
+      - "traefik.http.services.metron-web.loadbalancer.server.port=3000"
     networks:
       - metron-internal
-
-  # ============================================================================
-  # Reverse Proxy — Caddy
-  # Listens only on Tailscale interface. No public exposure.
-  # ============================================================================
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "${TS_IP:-100.64.0.1}:80:80"
-      - "${TS_IP:-100.64.0.1}:443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - metron_caddy_data:/data
-      - metron_caddy_config:/config
-    depends_on:
-      - api
       - web
-    networks:
-      - metron-internal
 
 volumes:
   metron_postgres_data:
   metron_redis_data:
-  metron_caddy_data:
-  metron_caddy_config:
 
 networks:
   metron-internal:
     driver: bridge
+  web:
+    external: true
