@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type ColumnDef,
   type OnChangeFn,
@@ -8,6 +8,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { cn } from "@metron/ui/lib/utils";
 import {
   Table,
   TableBody,
@@ -32,6 +33,8 @@ interface VirtualDataTableProps<TData, TValue> {
   hasMore?: boolean;
   /** Estimated height of each row in px */
   estimateRowHeight?: number;
+  /** Called on long-press (touch hold) of a row */
+  onRowLongPress?: (row: TData) => void;
 }
 
 const OVERSCAN = 10;
@@ -48,6 +51,7 @@ export function VirtualDataTable<TData, TValue>({
   isFetchingMore,
   hasMore,
   estimateRowHeight = 41,
+  onRowLongPress,
 }: VirtualDataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -131,18 +135,13 @@ export function VirtualDataTable<TData, TValue>({
               {virtualRows.map((virtualRow) => {
                 const row = rows[virtualRow.index];
                 return (
-                  <TableRow
+                  <LongPressRow
                     key={row.id}
-                    ref={virtualizer.measureElement}
-                    data-index={virtualRow.index}
-                    data-state={row.getIsSelected() ? "selected" : undefined}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                    row={row}
+                    virtualRow={virtualRow}
+                    measureElement={virtualizer.measureElement}
+                    onLongPress={onRowLongPress ? () => onRowLongPress(row.original) : undefined}
+                  />
                 );
               })}
               {paddingBottom > 0 && (
@@ -165,5 +164,52 @@ export function VirtualDataTable<TData, TValue>({
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+function LongPressRow<TData>({
+  row,
+  virtualRow,
+  measureElement,
+  onLongPress,
+}: {
+  row: ReturnType<ReturnType<typeof useReactTable<TData>>["getRowModel"]>["rows"][number];
+  virtualRow: { index: number };
+  measureElement: (el: HTMLElement | null) => void;
+  onLongPress?: () => void;
+}) {
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const [pressing, setPressing] = useState(false);
+
+  const handleTouchStart = () => {
+    if (!onLongPress) return;
+    setPressing(true);
+    timerRef.current = setTimeout(() => {
+      setPressing(false);
+      onLongPress();
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setPressing(false);
+  };
+
+  return (
+    <TableRow
+      ref={measureElement}
+      data-index={virtualRow.index}
+      data-state={row.getIsSelected() ? "selected" : undefined}
+      className={cn(pressing && "bg-accent")}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchEnd}
+    >
+      {row.getVisibleCells().map((cell) => (
+        <TableCell key={cell.id}>
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
+    </TableRow>
   );
 }

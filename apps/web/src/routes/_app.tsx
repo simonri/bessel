@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@metron/ui/components/sidebar";
-import { Separator } from "@metron/ui/components/separator";
+import { SidebarProvider, SidebarInset } from "@metron/ui/components/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { MobileNav } from "@/components/mobile-nav";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -12,15 +12,11 @@ function AppLayout() {
     <SidebarProvider defaultOpen={false} className="!min-h-0 h-svh">
       <AppSidebar />
       <SidebarInset className="min-h-0 overflow-auto">
-        <header className="flex items-center gap-2 px-4 py-2 md:hidden border-b shrink-0 sticky top-0 z-10 bg-background">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-4" />
-          <span className="text-sm font-medium">Metron</span>
-        </header>
-        <div className="flex min-h-0 flex-1 flex-col p-4 md:p-6">
+        <div className="flex min-h-0 flex-1 flex-col p-4 pb-24 md:p-6 md:pb-6">
           <Outlet />
         </div>
       </SidebarInset>
+      <MobileNav />
     </SidebarProvider>
   );
 }

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { Trash2, Star, MapPin, X, Map, Check, Plane } from "lucide-react";
+import { Trash2, Star, MapPin, X, Map, Check, Plane, Pencil } from "lucide-react";
 import type { PlaceSchema } from "@metron/client";
 import {
   listPlacesV1PlacesGetOptions,
@@ -13,7 +13,6 @@ import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +30,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@metron/ui/components/empty";
+import { useIsMobile } from "@metron/ui/hooks/use-mobile";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
@@ -189,8 +189,11 @@ function TravelTimeline({
 }
 
 function Travel() {
+  const isMobile = useIsMobile();
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
+  const [longPressPlace, setLongPressPlace] = useState<PlaceSchema | null>(null);
+  const [longPressOpen, setLongPressOpen] = useState(false);
   const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
 
@@ -342,9 +345,7 @@ function Travel() {
                   className="size-8 rounded object-cover shrink-0"
                 />
               ) : (
-                <div
-                  className={`size-8 rounded shrink-0 flex items-center justify-center bg-muted text-muted-foreground text-xs font-medium`}
-                >
+                <div className="size-8 rounded shrink-0 flex items-center justify-center bg-muted text-muted-foreground text-xs font-medium">
                   {place.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -484,9 +485,9 @@ function Travel() {
           {/* Left: map + table */}
           <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-4">
             {places.length > 0 && (
-              <div className="flex gap-4 h-[360px] shrink-0">
+              <div className="hidden md:flex gap-4 h-[360px] shrink-0">
                 {/* Timeline */}
-                <div className="hidden md:block w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
+                <div className="w-[260px] shrink-0 rounded-lg border bg-card overflow-hidden">
                   <TravelTimeline places={timelinePlaces} onSelectPlace={handleSelectPlace} />
                 </div>
                 {/* Map */}
@@ -501,13 +502,28 @@ function Travel() {
             )}
 
             <VirtualDataTable
-              columns={columns}
+              columns={
+                isMobile
+                  ? columns.filter((c) => {
+                      const key = "accessorKey" in c ? c.accessorKey : c.id;
+                      return key !== "visited_at" && key !== "actions";
+                    })
+                  : columns
+              }
               data={places}
               getRowId={(row) => row.id}
               emptyMessage="No places yet."
               onEndReached={fetchNextPage}
               hasMore={hasNextPage}
               isFetchingMore={isFetchingNextPage}
+              onRowLongPress={
+                isMobile
+                  ? (place) => {
+                      setLongPressPlace(place);
+                      setLongPressOpen(true);
+                    }
+                  : undefined
+              }
             />
           </div>
 
@@ -636,6 +652,63 @@ function Travel() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Mobile long-press actions */}
+      {longPressOpen && longPressPlace && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50 animate-in fade-in-0 duration-150"
+            onClick={() => {
+              setLongPressOpen(false);
+              setLongPressPlace(null);
+            }}
+          />
+          <div className="fixed bottom-0 left-0 right-0 z-50 animate-in slide-in-from-bottom duration-200">
+            <div className="bg-background rounded-t-2xl border-t p-2 pb-[env(safe-area-inset-bottom)]">
+              <div className="text-sm font-medium text-muted-foreground px-3 py-2 truncate">
+                {longPressPlace.name}
+              </div>
+              <a
+                href={getGoogleMapsUrl(longPressPlace)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors"
+                onClick={() => {
+                  setLongPressOpen(false);
+                  setLongPressPlace(null);
+                }}
+              >
+                <Map className="size-4 text-muted-foreground" />
+                <span className="text-sm">Open in Maps</span>
+              </a>
+              <button
+                type="button"
+                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors w-full text-left"
+                onClick={() => {
+                  setLongPressOpen(false);
+                  setLongPressPlace(null);
+                  handleSelectPlace(longPressPlace);
+                }}
+              >
+                <Pencil className="size-4 text-muted-foreground" />
+                <span className="text-sm">Edit</span>
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-accent transition-colors w-full text-left text-destructive"
+                onClick={() => {
+                  setLongPressOpen(false);
+                  setDeleteTarget(longPressPlace);
+                  setLongPressPlace(null);
+                }}
+              >
+                <Trash2 className="size-4" />
+                <span className="text-sm">Delete</span>
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Delete confirmation */}
