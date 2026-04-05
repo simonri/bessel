@@ -22,7 +22,9 @@ COPY tsconfig.json ./
 
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN pnpm --filter web build
+RUN pnpm --filter web build && \
+    test -f apps/web/dist/client/index.html || \
+    cp apps/web/dist/client/_shell.html apps/web/dist/client/index.html
 
 # --- Runtime ---
 FROM node:22-slim

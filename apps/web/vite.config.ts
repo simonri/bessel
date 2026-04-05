@@ -18,7 +18,11 @@ const config = defineConfig({
         enabled: true,
         prerender: {
           outputPath: "/index.html",
+          crawlLinks: true,
         },
+      },
+      prerender: {
+        failOnError: false,
       },
     }),
     viteReact(),
