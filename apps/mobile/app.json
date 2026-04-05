@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Metron",
+    "slug": "metron",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "metron",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#09090b",
+    "splash": {
+      "backgroundColor": "#09090b"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.simonri.metron",
+      "appleTeamId": "WQH84QWCFP"
+    }
+  }
+}

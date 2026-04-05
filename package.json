@@ -30,6 +30,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@voidzero-dev/vite-plus-darwin-arm64": "0.1.13",
     "vite-plus": "catalog:"
   },
   "overrides": {
