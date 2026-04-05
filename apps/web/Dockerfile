@@ -12,22 +12,17 @@ COPY packages/ui/package.json ./packages/ui/
 COPY packages/client/package.json ./packages/client/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 
-# Init a git repo so vite-plus prepare hook succeeds
-RUN git init
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Init a git repo so vite-plus prepare hook succeeds, install deps
+RUN git init && pnpm install --frozen-lockfile
 
 # Copy source
 COPY packages/ ./packages/
 COPY apps/web/ ./apps/web/
 COPY tsconfig.json ./
 
-# Build — install stock vite for CLI (workspace catalog overrides it to vite-plus-core
-# which lacks the CLI binary), then run the build from the app directory
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN npm install --no-save vite@latest && cd apps/web && ./../../node_modules/.bin/vite build
+RUN pnpm --filter web build
 
 # --- Runtime ---
 FROM node:22-slim
