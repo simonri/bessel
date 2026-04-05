@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "metron",
+    "icon": "./icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#09090b",
     "splash": {
