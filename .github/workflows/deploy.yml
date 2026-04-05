@@ -206,6 +206,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          network: host
+          allow: network.host
 
   # ============================================================================
   # Deploy to VPS
