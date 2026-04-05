@@ -21,7 +21,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from "@metron/ui/components/sidebar";
+import { useIsMobile } from "@metron/ui/hooks/use-mobile";
 
 const navItems = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/" as const },
@@ -38,6 +40,8 @@ const navItems = [
 export function AppSidebar() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
+  const { setOpenMobile } = useSidebar();
+  const isMobile = useIsMobile();
 
   return (
     <Sidebar collapsible="icon">
@@ -65,7 +69,7 @@ export function AppSidebar() {
                     isActive={currentPath === item.href}
                     asChild
                   >
-                    <Link to={item.href}>
+                    <Link to={item.href} onClick={() => isMobile && setOpenMobile(false)}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -81,7 +85,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings" isActive={currentPath === "/settings"} asChild>
-              <Link to={"/settings" as string}>
+              <Link to={"/settings" as string} onClick={() => isMobile && setOpenMobile(false)}>
                 <Settings />
                 <span>Settings</span>
               </Link>

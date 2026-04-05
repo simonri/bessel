@@ -11,8 +11,8 @@ function AppLayout() {
   return (
     <SidebarProvider defaultOpen={false} className="!min-h-0 h-svh">
       <AppSidebar />
-      <SidebarInset className="min-h-0 overflow-hidden">
-        <header className="flex items-center gap-2 px-4 py-2 md:hidden border-b shrink-0">
+      <SidebarInset className="min-h-0 overflow-auto">
+        <header className="flex items-center gap-2 px-4 py-2 md:hidden border-b shrink-0 sticky top-0 z-10 bg-background">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-4" />
           <span className="text-sm font-medium">Metron</span>
