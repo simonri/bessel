@@ -7,6 +7,7 @@ from api.journal.endpoints import router as journal_router
 from api.places.endpoints import router as places_router
 from api.tasks.endpoints import router as tasks_router
 from api.transactions.endpoints import router as transactions_router
+from api.weather.endpoints import router as weather_router
 from api.workouts.endpoints import router as workouts_router
 
 router = APIRouter(prefix="/v1")
@@ -18,4 +19,5 @@ router.include_router(journal_router)
 router.include_router(places_router)
 router.include_router(tasks_router)
 router.include_router(transactions_router)
+router.include_router(weather_router)
 router.include_router(workouts_router)

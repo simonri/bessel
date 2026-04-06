@@ -12,6 +12,7 @@ from .security_price import SecurityPrice
 from .task import Task
 from .trade import Trade
 from .transaction import Transaction
+from .weather_cache import WeatherCache
 from .workout_log import WorkoutLog
 from .workout_set import WorkoutSet
 
@@ -30,6 +31,7 @@ __all__ = [
   "Task",
   "Trade",
   "Transaction",
+  "WeatherCache",
   "WorkoutLog",
   "WorkoutSet",
 ]
