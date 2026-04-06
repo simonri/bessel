@@ -7,8 +7,10 @@ import { Flag, X, Check } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 import { PRIORITY_COLORS, PRIORITY_LABELS } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function CreateTaskModal({ onClose }: { onClose: () => void }) {
+  const theme = useTheme();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState(0);
   const [area, setArea] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export function CreateTaskModal({ onClose }: { onClose: () => void }) {
           <SafeAreaView className="flex-1 px-5 pt-5">
             <View className="flex-row items-center justify-between mb-6">
               <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
-                <X size={18} color="#a1a1aa" />
+                <X size={18} color={theme.colors.subtext} />
               </Pressable>
               <Text className="text-foreground text-lg font-bold">New Task</Text>
               <Pressable
@@ -59,7 +61,7 @@ export function CreateTaskModal({ onClose }: { onClose: () => void }) {
                 disabled={!title.trim() || createMutation.isPending}
                 className={`w-9 h-9 items-center justify-center rounded-full ${title.trim() ? "bg-foreground" : "bg-zinc-700"}`}
               >
-                <Check size={18} color={title.trim() ? "#09090b" : "#71717a"} />
+                <Check size={18} color={title.trim() ? theme.colors.monochrome : theme.colors.subtext} />
               </Pressable>
             </View>
 
@@ -79,7 +81,7 @@ export function CreateTaskModal({ onClose }: { onClose: () => void }) {
               </Pressable>
               <View className="flex-row items-center justify-between px-4 py-3.5">
                 <Text className="text-foreground text-sm">Project</Text>
-                <Input placeholder="None" value={project} onChangeText={setProject} style={{ color: "#a1a1aa", fontSize: 14, minWidth: 80, textAlign: "right" }} />
+                <Input placeholder="None" value={project} onChangeText={setProject} style={{ color: theme.colors.subtext, fontSize: 14, minWidth: 80, textAlign: "right" }} />
               </View>
             </View>
           </SafeAreaView>

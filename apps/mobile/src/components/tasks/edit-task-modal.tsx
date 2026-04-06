@@ -8,8 +8,10 @@ import { Flag, X, Check } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_LABELS } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function EditTaskModal({ task, onClose }: { task: TaskSchema; onClose: () => void }) {
+  const theme = useTheme();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [priority, setPriority] = useState(task.priority ?? 0);
@@ -66,7 +68,7 @@ export function EditTaskModal({ task, onClose }: { task: TaskSchema; onClose: ()
           <SafeAreaView className="flex-1 pt-5">
             <View className="flex-row items-center justify-between px-5 mb-6">
               <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
-                <X size={18} color="#a1a1aa" />
+                <X size={18} color={theme.colors.subtext} />
               </Pressable>
               <Text className="text-foreground text-lg font-bold">Edit Task</Text>
               <Pressable
@@ -74,7 +76,7 @@ export function EditTaskModal({ task, onClose }: { task: TaskSchema; onClose: ()
                 disabled={!title.trim() || updateMutation.isPending}
                 className={`w-9 h-9 items-center justify-center rounded-full ${title.trim() ? "bg-foreground" : "bg-zinc-700"}`}
               >
-                <Check size={18} color={title.trim() ? "#09090b" : "#71717a"} />
+                <Check size={18} color={title.trim() ? theme.colors.monochrome : theme.colors.subtext} />
               </Pressable>
             </View>
 
@@ -102,7 +104,7 @@ export function EditTaskModal({ task, onClose }: { task: TaskSchema; onClose: ()
                 </Pressable>
                 <View className="flex-row items-center justify-between px-4 py-3.5">
                   <Text className="text-foreground" style={{ fontSize: 15 }}>Project</Text>
-                  <Input placeholder="None" value={project} onChangeText={setProject} style={{ color: "#a1a1aa", fontSize: 15, minWidth: 80, textAlign: "right" }} />
+                  <Input placeholder="None" value={project} onChangeText={setProject} style={{ color: theme.colors.subtext, fontSize: 15, minWidth: 80, textAlign: "right" }} />
                 </View>
               </View>
             </ScrollView>

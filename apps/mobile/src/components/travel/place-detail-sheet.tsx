@@ -1,9 +1,11 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
 import { MapPin, Navigation, Check, Trash2, Pencil } from "lucide-react-native";
+import { Button } from "@/components/shared/button";
 import type { PlaceSchema } from "@metron/client";
 import { BottomSheet } from "@/components/shared/sheet";
 import { PlaceIcon, RatingStars } from "./place-card";
 import { getPlaceFields, formatDate, CATEGORY_COLORS } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function PlaceDetailSheet({
   place,
@@ -20,10 +22,11 @@ export function PlaceDetailSheet({
   onDelete: (place: PlaceSchema) => void;
   onEdit: (place: PlaceSchema) => void;
 }) {
+  const theme = useTheme();
   const { country, status, visitedAt, tags } = getPlaceFields(place);
   const isVisited = status === "visited";
   const category = place.category ?? "";
-  const color = CATEGORY_COLORS[category] || "#71717a";
+  const color = CATEGORY_COLORS[category] || theme.colors.subtext;
 
   return (
     <BottomSheet onDismiss={onClose}>
@@ -65,7 +68,7 @@ export function PlaceDetailSheet({
 
         {place.address && (
           <View className="flex-row items-start gap-2.5 mb-4 bg-zinc-800/60 rounded-xl px-3.5 py-3">
-            <MapPin size={16} color="#71717a" />
+            <MapPin size={16} color={theme.colors.subtext} />
             <Text className="text-foreground text-[15px] flex-1 leading-snug">{place.address}</Text>
           </View>
         )}
@@ -77,39 +80,12 @@ export function PlaceDetailSheet({
         )}
 
         <View className="flex-row items-center gap-2 mt-1">
-          <Pressable
-            onPress={() => { onEdit(place); onClose(); }}
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
-          >
-            <Pencil size={16} color="#fafafa" />
-            <Text className="text-[15px] font-medium text-foreground">Edit</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => { onOpenMaps(place); onClose(); }}
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
-          >
-            <Navigation size={16} color="#fafafa" />
-            <Text className="text-[15px] font-medium text-foreground">Maps</Text>
-          </Pressable>
-
+          <Button flex variant="primary" onPress={() => { onEdit(place); onClose(); }} icon={<Pencil size={16} color={theme.colors.monochrome} />}>Edit</Button>
+          <Button flex variant="primary" onPress={() => { onOpenMaps(place); onClose(); }} icon={<Navigation size={16} color={theme.colors.monochrome} />}>Maps</Button>
           {!isVisited && (
-            <Pressable
-              onPress={() => { onMarkVisited(place); onClose(); }}
-              className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
-            >
-              <Check size={16} color="#22c55e" />
-              <Text className="text-[15px] font-medium text-green-500">Visited</Text>
-            </Pressable>
+            <Button flex variant="secondary" onPress={() => { onMarkVisited(place); onClose(); }} icon={<Check size={16} color={theme.colors.error} />}>Visited</Button>
           )}
-
-          <Pressable
-            onPress={() => { onDelete(place); onClose(); }}
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
-          >
-            <Trash2 size={16} color="#ef4444" />
-            <Text className="text-[15px] font-medium text-red-500">Delete</Text>
-          </Pressable>
+          <Button flex variant="destructive" onPress={() => { onDelete(place); onClose(); }} icon={<Trash2 size={16} color={theme.colors.error} />}>Delete</Button>
         </View>
       </View>
     </BottomSheet>

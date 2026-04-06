@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView } from "react-native";
 import { MapPin, ChevronDown, Check, Search, X } from "lucide-react-native";
 import { BottomSheet } from "@/components/shared/sheet";
 import { Input } from "@/components/shared/input";
+import { useTheme } from "@/design-system";
 
 export function CountryFilterBar({
   countries,
@@ -15,6 +16,7 @@ export function CountryFilterBar({
   onToggle: (country: string) => void;
   onClear: () => void;
 }) {
+  const theme = useTheme();
   const [showPicker, setShowPicker] = useState(false);
   const hasFilter = selectedCountries.length > 0;
 
@@ -39,7 +41,7 @@ export function CountryFilterBar({
             hasFilter ? "bg-foreground" : "bg-zinc-800"
           }`}
         >
-          <MapPin size={13} color={hasFilter ? "#09090b" : "#a1a1aa"} />
+          <MapPin size={13} color={hasFilter ? theme.colors.monochrome : theme.colors.subtext} />
           <Text
             className={`text-sm font-medium ${
               hasFilter ? "text-primary-foreground" : "text-muted-foreground"
@@ -47,7 +49,7 @@ export function CountryFilterBar({
           >
             {label}
           </Text>
-          <ChevronDown size={13} color={hasFilter ? "#09090b" : "#71717a"} />
+          <ChevronDown size={13} color={hasFilter ? theme.colors.monochrome : theme.colors.subtext} />
         </Pressable>
 
         {/* Clear filter chip */}
@@ -56,7 +58,7 @@ export function CountryFilterBar({
             onPress={onClear}
             className="flex-row items-center gap-1 rounded-full px-3 py-2 bg-zinc-800"
           >
-            <X size={13} color="#a1a1aa" />
+            <X size={13} color={theme.colors.subtext} />
             <Text className="text-sm text-muted-foreground">Clear</Text>
           </Pressable>
         )}
@@ -85,6 +87,7 @@ function CountryPickerSheet({
   onToggle: (country: string) => void;
   onClose: () => void;
 }) {
+  const theme = useTheme();
   const [search, setSearch] = useState("");
   const q = search.toLowerCase().trim();
   const filtered = q
@@ -96,7 +99,7 @@ function CountryPickerSheet({
       <Text className="text-foreground text-lg font-bold mb-3">Filter by Country</Text>
 
       <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 mb-4">
-        <Search size={16} color="#71717a" />
+        <Search size={16} color={theme.colors.subtext} />
         <Input
           placeholder="Search countries..."
           value={search}
@@ -107,7 +110,7 @@ function CountryPickerSheet({
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch("")} hitSlop={8}>
-            <X size={16} color="#71717a" />
+            <X size={16} color={theme.colors.subtext} />
           </Pressable>
         )}
       </View>
@@ -126,7 +129,7 @@ function CountryPickerSheet({
               <Text className={`text-[15px] ${isSelected ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                 {country}
               </Text>
-              {isSelected && <Check size={18} color="#22c55e" />}
+              {isSelected && <Check size={18} color={theme.colors.statusGreen} />}
             </Pressable>
           );
         })

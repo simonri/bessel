@@ -14,6 +14,7 @@ import { Plus, ListTodo } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FlashList } from "@shopify/flash-list";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 
 import { TaskRow } from "@/components/tasks/task-row";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
@@ -23,6 +24,7 @@ import { FilterTabs, type FilterTab } from "@/components/tasks/filter-tabs";
 import { PAGE_SIZE } from "@/components/tasks/lib";
 
 export default function TasksScreen() {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const queryKey = listTasksV1TasksGetQueryKey({ client });
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
@@ -100,7 +102,7 @@ export default function TasksScreen() {
   return (
     <View className="flex-1 bg-background">
       {isLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator color="#a1a1aa" /></View>
+        <View className="flex-1 items-center justify-center"><ActivityIndicator color={theme.colors.subtext} /></View>
       ) : (
         <FlashList
           data={tasks}
@@ -112,24 +114,24 @@ export default function TasksScreen() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             <View className="items-center justify-center px-8 pt-20">
-              <ListTodo size={40} color="#27272a" />
+              <ListTodo size={40} color={theme.colors.border} />
               <Text className="text-foreground font-semibold text-lg mt-3">{filter === "active" ? "All clear" : "No completed tasks"}</Text>
               <Text className="text-muted-foreground text-sm text-center mt-1">{filter === "active" ? "You have no active tasks. Tap + to create one." : "Tasks you complete will appear here."}</Text>
             </View>
           }
-          ListFooterComponent={isFetchingNext ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
+          ListFooterComponent={isFetchingNext ? <View className="py-4 items-center"><ActivityIndicator color={theme.colors.subtext} /></View> : null}
         />
       )}
 
       <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
         <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={["#09090b", "transparent"]} style={{ height: 10 }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.monochrome, "transparent"]} style={{ height: 10 }} />
       </View>
 
       <View className="absolute top-0 left-0 right-0 px-4 flex-row items-start justify-between" style={{ paddingTop: insets.top + 12 }}>
         <Text className="text-3xl font-bold text-foreground">Tasks</Text>
         <Pressable onPress={() => setShowCreate(true)} className="items-center justify-center rounded-full w-9 h-9 bg-foreground mt-0.5">
-          <Plus size={18} color="#09090b" />
+          <Plus size={18} color={theme.colors.monochrome} />
         </Pressable>
       </View>
 

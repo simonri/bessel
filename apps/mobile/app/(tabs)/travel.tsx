@@ -10,6 +10,7 @@ import {
 } from "@metron/client";
 import type { PlaceSchema } from "@metron/client";
 import { MapPin, Plus, Search, X } from "lucide-react-native";
+import { Button } from "@/components/shared/button";
 import { LinearGradient } from "expo-linear-gradient";
 import { FlashList } from "@shopify/flash-list";
 import * as Location from "expo-location";
@@ -21,6 +22,7 @@ import { AddPlaceModal } from "@/components/travel/add-place-modal";
 import { EditPlaceModal } from "@/components/travel/edit-place-modal";
 import { CountryFilterBar } from "@/components/travel/country-filter";
 import { getPlaceFields, getGoogleMapsUrl, PAGE_SIZE } from "@/components/travel/lib";
+import { useTheme } from "@/design-system";
 
 function filterPlaces(places: PlaceSchema[], query: string, countries: string[]): PlaceSchema[] {
   let result = places;
@@ -70,6 +72,7 @@ function useCurrentCountry(): string | null {
 }
 
 export default function TravelScreen() {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const queryKey = listPlacesV1PlacesGetQueryKey({ client });
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
@@ -214,16 +217,14 @@ export default function TravelScreen() {
     <View className="flex-1 bg-background">
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#a1a1aa" />
+          <ActivityIndicator color={theme.colors.subtext} />
         </View>
       ) : allPlaces.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
-          <MapPin size={40} color="#27272a" />
+          <MapPin size={40} color={theme.colors.border} />
           <Text className="text-foreground font-semibold text-lg mt-3">No places yet</Text>
           <Text className="text-muted-foreground text-sm text-center mt-1">Start building your travel database by adding places.</Text>
-          <Pressable onPress={() => setShowAddSheet(true)} className="mt-4 bg-foreground rounded-xl px-5 py-2.5">
-            <Text className="text-primary-foreground text-sm font-semibold">Add Place</Text>
-          </Pressable>
+          <Button onPress={() => setShowAddSheet(true)}>Add Place</Button>
         </View>
       ) : (
         <FlashList
@@ -240,33 +241,33 @@ export default function TravelScreen() {
               </View>
             ) : null
           }
-          ListFooterComponent={isFetchingNextPage && !hasActiveFilters ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
+          ListFooterComponent={isFetchingNextPage && !hasActiveFilters ? <View className="py-4 items-center"><ActivityIndicator color={theme.colors.subtext} /></View> : null}
         />
       )}
 
       {/* Header fade */}
       <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
         <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={["#09090b", "transparent"]} style={{ height: 10 }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.monochrome, "transparent"]} style={{ height: 10 }} />
       </View>
 
       {/* Header */}
       <View className="absolute top-0 left-0 right-0" style={{ paddingTop: insets.top + 12 }}>
         {searchActive ? (
           <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 h-11 mx-4">
-            <Search size={16} color="#71717a" />
+            <Search size={16} color={theme.colors.subtext} />
             <TextInput
               ref={searchInputRef}
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Search places..."
-              placeholderTextColor="#71717a"
+              placeholderTextColor={theme.colors.subtext}
               autoFocus
               returnKeyType="search"
-              style={{ flex: 1, color: "#fafafa", fontSize: 15, paddingVertical: 0 }}
+              style={{ flex: 1, color: theme.colors.text, fontSize: 15, paddingVertical: 0 }}
             />
             <Pressable onPress={handleSearchClose} hitSlop={8}>
-              <X size={16} color="#71717a" />
+              <X size={16} color={theme.colors.subtext} />
             </Pressable>
           </View>
         ) : (
@@ -277,10 +278,10 @@ export default function TravelScreen() {
             </View>
             <View className="flex-row items-center gap-2 mt-0.5">
               <Pressable onPress={handleSearchOpen} className="items-center justify-center rounded-full w-9 h-9 bg-zinc-800">
-                <Search size={16} color="#a1a1aa" />
+                <Search size={16} color={theme.colors.subtext} />
               </Pressable>
               <Pressable onPress={() => setShowAddSheet(true)} className="items-center justify-center rounded-full w-9 h-9 bg-foreground">
-                <Plus size={18} color="#09090b" />
+                <Plus size={18} color={theme.colors.monochrome} />
               </Pressable>
             </View>
           </View>

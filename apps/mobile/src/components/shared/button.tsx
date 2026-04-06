@@ -37,6 +37,7 @@ export type ButtonProps = {
   disabled?: boolean
   loading?: boolean
   fullWidth?: boolean
+  flex?: boolean
   icon?: React.ReactNode
 }
 
@@ -48,6 +49,7 @@ export const Button = ({
   disabled = false,
   loading = false,
   fullWidth = false,
+  flex = false,
   icon,
 }: ButtonProps) => {
   const theme = useTheme()
@@ -63,7 +65,7 @@ export const Button = ({
     : variantStyle.textColor
 
   return (
-    <Touchable onPress={onPress} disabled={disabled || loading}>
+    <Touchable onPress={onPress} disabled={disabled || loading} style={flex ? { flex: 1 } : undefined}>
       <Box
         paddingHorizontal={sizeStyle.paddingHorizontal}
         paddingVertical={sizeStyle.paddingVertical}
@@ -88,7 +90,7 @@ export const Button = ({
             />
           </Box>
         ) : null}
-        {icon && !loading ? <Box marginRight="spacing-4">{icon}</Box> : null}
+        {icon && !loading ? <Box style={{ marginRight: 4 }}>{icon}</Box> : null}
         <Text variant={sizeStyle.textVariant} color={textColorToken}>
           {children}
         </Text>

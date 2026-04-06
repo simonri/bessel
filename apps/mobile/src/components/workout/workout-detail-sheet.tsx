@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
+import { Button } from "@/components/shared/button";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkoutV1WorkoutsWorkoutIdGetOptions } from "@metron/client";
 import type { WorkoutLogDetailSchema, WorkoutSetSchema } from "@metron/client";
@@ -6,8 +7,10 @@ import { Trophy } from "lucide-react-native";
 import { BottomSheet } from "@/components/shared/sheet";
 import { client } from "@/lib/client";
 import { formatDuration, formatDate, formatTime } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function WorkoutDetailSheet({ workoutId, onClose, onDelete }: { workoutId: string; onClose: () => void; onDelete: (id: string) => void }) {
+  const theme = useTheme();
   const { data: workout, isLoading } = useQuery({
     ...getWorkoutV1WorkoutsWorkoutIdGetOptions({ client, path: { workout_id: workoutId } }),
   });
@@ -30,7 +33,7 @@ export function WorkoutDetailSheet({ workoutId, onClose, onDelete }: { workoutId
   return (
     <BottomSheet onDismiss={onClose}>
       {isLoading || !w ? (
-        <ActivityIndicator color="#a1a1aa" className="py-8" />
+        <ActivityIndicator color={theme.colors.subtext} className="py-8" />
       ) : (
         <View>
           <Text className="text-foreground text-xl font-bold">{formatDate(w.started_at)}</Text>
@@ -58,7 +61,7 @@ export function WorkoutDetailSheet({ workoutId, onClose, onDelete }: { workoutId
                 <View key={set.id} className="flex-row items-center gap-3 py-1 pl-2">
                   <Text className="text-muted-foreground text-xs w-6">#{set.set_number}</Text>
                   <Text className="text-foreground text-sm">{set.weight}{set.weight_unit} × {set.reps}</Text>
-                  {set.is_pr && <Trophy size={12} color="#eab308" />}
+                  {set.is_pr && <Trophy size={12} color={theme.colors.statusYellow} />}
                 </View>
               ))}
             </View>
@@ -70,9 +73,7 @@ export function WorkoutDetailSheet({ workoutId, onClose, onDelete }: { workoutId
             </View>
           )}
 
-          <Pressable onPress={() => { onDelete(w.id); onClose(); }} className="mt-4 mb-4 items-center py-3 rounded-xl bg-zinc-800">
-            <Text className="text-red-500 text-sm font-medium">Delete Workout</Text>
-          </Pressable>
+          <Button variant="destructive" onPress={() => { onDelete(w.id); onClose(); }} fullWidth>Delete Workout</Button>
         </View>
       )}
     </BottomSheet>

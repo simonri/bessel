@@ -1,8 +1,10 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
 import { Circle, CheckCircle2, Flag, Calendar, Repeat, X, Pencil } from "lucide-react-native";
+import { Button } from "@/components/shared/button";
 import type { TaskSchema } from "@metron/client";
 import { BottomSheet } from "@/components/shared/sheet";
 import { formatDueDate, PRIORITY_COLORS, PRIORITY_LABELS, STATUS_LABELS } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function TaskDetailSheet({
   task,
@@ -19,6 +21,7 @@ export function TaskDetailSheet({
   onDelete: (task: TaskSchema) => void;
   onEdit: (task: TaskSchema) => void;
 }) {
+  const theme = useTheme();
   const isDone = task.status === "done" || task.status === "cancelled";
   const due = formatDueDate(task.due_date);
   const priority = task.priority ?? 0;
@@ -65,7 +68,7 @@ export function TaskDetailSheet({
             <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700/50">
               <Text className="text-muted-foreground" style={{ fontSize: 15 }}>Recurrence</Text>
               <View className="flex-row items-center gap-1.5">
-                <Repeat size={15} color="#a1a1aa" />
+                <Repeat size={15} color={theme.colors.subtext} />
                 <Text className="text-foreground capitalize" style={{ fontSize: 15 }}>{recurrenceLabel}</Text>
               </View>
             </View>
@@ -101,25 +104,13 @@ export function TaskDetailSheet({
         ) : null}
 
         <View className="flex-row items-center gap-2 mt-1">
-          <Pressable onPress={() => { onEdit(task); onClose(); }} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5">
-            <Pencil size={16} color="#fafafa" />
-            <Text className="font-medium text-foreground" style={{ fontSize: 15 }}>Edit</Text>
-          </Pressable>
+          <Button flex variant="primary" onPress={() => { onEdit(task); onClose(); }} icon={<Pencil size={16} color={theme.colors.monochrome} />}>Edit</Button>
           {isDone ? (
-            <Pressable onPress={() => { onReopen(task); onClose(); }} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5">
-              <Circle size={16} color="#fafafa" />
-              <Text className="font-medium text-foreground" style={{ fontSize: 15 }}>Reopen</Text>
-            </Pressable>
+            <Button flex variant="primary" onPress={() => { onReopen(task); onClose(); }} icon={<Circle size={16} color={theme.colors.monochrome} />}>Reopen</Button>
           ) : (
-            <Pressable onPress={() => { onComplete(task); onClose(); }} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5">
-              <CheckCircle2 size={16} color="#fff" />
-              <Text className="font-medium text-white" style={{ fontSize: 15 }}>Complete</Text>
-            </Pressable>
+            <Button flex variant="primary" onPress={() => { onComplete(task); onClose(); }} icon={<CheckCircle2 size={16} color={theme.colors.monochrome} />}>Complete</Button>
           )}
-          <Pressable onPress={() => { onDelete(task); onClose(); }} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5">
-            <X size={16} color="#ef4444" />
-            <Text className="font-medium text-red-500" style={{ fontSize: 15 }}>Delete</Text>
-          </Pressable>
+          <Button flex variant="destructive" onPress={() => { onDelete(task); onClose(); }} icon={<X size={16} color={theme.colors.error} />}>Delete</Button>
         </View>
       </View>
     </BottomSheet>

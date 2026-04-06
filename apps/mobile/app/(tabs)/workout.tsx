@@ -13,8 +13,10 @@ import {
 } from "@metron/client";
 import type { WorkoutLogDetailSchema } from "@metron/client";
 import { Dumbbell, Play } from "lucide-react-native";
+import { Button } from "@/components/shared/button";
 import { LinearGradient } from "expo-linear-gradient";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 
 import { ActiveSession } from "@/components/workout/active-session";
 import { WorkoutCard } from "@/components/workout/workout-card";
@@ -35,6 +37,7 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
 }
 
 export default function WorkoutScreen() {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const listQueryKey = listWorkoutsV1WorkoutsGetQueryKey({ client });
   const insets = useSafeAreaInsets();
@@ -89,17 +92,14 @@ export default function WorkoutScreen() {
           </View>
         ) : (
           <View style={{ paddingTop: headerHeight }} className="flex-1 items-center justify-center px-8">
-            <Dumbbell size={48} color="#27272a" />
+            <Dumbbell size={48} color={theme.colors.border} />
             <Text className="text-foreground font-semibold text-lg mt-4">Ready to train?</Text>
             <Text className="text-muted-foreground text-sm text-center mt-1 mb-6">Start a workout to log your exercises and sets.</Text>
-            <Pressable onPress={handleStartWorkout} disabled={createMutation.isPending} className="flex-row items-center gap-2 bg-foreground rounded-xl px-6 py-3">
-              <Play size={16} color="#09090b" fill="#09090b" />
-              <Text className="text-primary-foreground text-sm font-semibold">{createMutation.isPending ? "Starting..." : "Start Workout"}</Text>
-            </Pressable>
+            <Button onPress={handleStartWorkout} loading={createMutation.isPending} icon={<Play size={16} color={theme.colors.monochrome} fill={theme.colors.monochrome} />}>Start Workout</Button>
           </View>
         )
       ) : historyLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator color="#a1a1aa" /></View>
+        <View className="flex-1 items-center justify-center"><ActivityIndicator color={theme.colors.subtext} /></View>
       ) : (
         <FlashList
           data={workouts}
@@ -110,18 +110,18 @@ export default function WorkoutScreen() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             <View className="items-center justify-center px-8 pt-20">
-              <Dumbbell size={40} color="#27272a" />
+              <Dumbbell size={40} color={theme.colors.border} />
               <Text className="text-foreground font-semibold text-lg mt-3">No workouts yet</Text>
               <Text className="text-muted-foreground text-sm text-center mt-1">Complete a workout and it will show up here.</Text>
             </View>
           }
-          ListFooterComponent={isFetchingNextPage ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
+          ListFooterComponent={isFetchingNextPage ? <View className="py-4 items-center"><ActivityIndicator color={theme.colors.subtext} /></View> : null}
         />
       )}
 
       <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
         <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={["#09090b", "transparent"]} style={{ height: 10 }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.monochrome, "transparent"]} style={{ height: 10 }} />
       </View>
 
       <View className="absolute top-0 left-0 right-0 px-4" style={{ paddingTop: insets.top + 12 }}>

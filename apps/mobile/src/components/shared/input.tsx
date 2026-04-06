@@ -6,11 +6,11 @@ export function Input({ style, ...props }: TextInputProps) {
 
   return (
     <TextInput
-      placeholderTextColor={theme.colors.zinc500}
+      placeholderTextColor={theme.colors.inputPlaceholder}
       {...props}
       style={[
         {
-          color: theme.colors.foreground,
+          color: theme.colors.text,
           fontSize: 14,
           paddingVertical: 0,
         },

@@ -20,6 +20,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 import { getPlaceFields, CATEGORIES } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function EditPlaceModal({
   place,
@@ -28,6 +29,7 @@ export function EditPlaceModal({
   place: PlaceSchema;
   onClose: () => void;
 }) {
+  const theme = useTheme();
   const fields = getPlaceFields(place);
   const [name, setName] = useState(place.name);
   const [address, setAddress] = useState(place.address ?? "");
@@ -105,7 +107,7 @@ export function EditPlaceModal({
           <SafeAreaView className="flex-1 pt-5">
             <View className="flex-row items-center justify-between px-5 mb-4">
               <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
-                <X size={18} color="#a1a1aa" />
+                <X size={18} color={theme.colors.subtext} />
               </Pressable>
               <Text className="text-foreground text-lg font-bold">Edit Place</Text>
               <Pressable
@@ -113,7 +115,7 @@ export function EditPlaceModal({
                 disabled={!name.trim() || updateMutation.isPending}
                 className={`w-9 h-9 items-center justify-center rounded-full ${name.trim() ? "bg-foreground" : "bg-zinc-700"}`}
               >
-                <Check size={18} color={name.trim() ? "#09090b" : "#71717a"} />
+                <Check size={18} color={name.trim() ? theme.colors.monochrome : theme.colors.subtext} />
               </Pressable>
             </View>
 
@@ -141,7 +143,7 @@ export function EditPlaceModal({
               <View className="flex-row gap-2 mb-5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Pressable key={star} onPress={() => setRating(rating === star ? null : star)} className="p-1">
-                    <Star size={28} color={rating && star <= rating ? "#eab308" : "#3f3f46"} fill={rating && star <= rating ? "#eab308" : "transparent"} />
+                    <Star size={28} color={rating && star <= rating ? theme.colors.statusYellow : theme.colors.secondary} fill={rating && star <= rating ? theme.colors.statusYellow : "transparent"} />
                   </Pressable>
                 ))}
               </View>

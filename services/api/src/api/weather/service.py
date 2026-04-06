@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 import httpx
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from api.common.db.postgres import AsyncSession
 from api.models.weather_cache import WeatherCache
@@ -59,17 +60,27 @@ class WeatherService:
       day_date = date.fromisoformat(daily["time"][i])
 
       if day_date not in cached_dates:
-        entry = WeatherCache(
-          date=day_date,
-          lat=rounded_lat,
-          lon=rounded_lon,
-          temperature_max=daily["temperature_2m_max"][i],
-          temperature_min=daily["temperature_2m_min"][i],
-          apparent_temperature_max=daily["apparent_temperature_max"][i],
-          precipitation_probability_max=daily["precipitation_probability_max"][i] or 0,
-          weather_code=daily["weather_code"][i],
+        stmt = (
+          pg_insert(WeatherCache)
+          .values(
+            date=day_date,
+            lat=rounded_lat,
+            lon=rounded_lon,
+            temperature_max=daily["temperature_2m_max"][i],
+            temperature_min=daily["temperature_2m_min"][i],
+            apparent_temperature_max=daily["apparent_temperature_max"][i],
+            precipitation_probability_max=daily["precipitation_probability_max"][i] or 0,
+            weather_code=daily["weather_code"][i],
+          )
+          .on_conflict_do_nothing(index_elements=["date", "lat", "lon"])
+          .returning(WeatherCache)
         )
-        await self.repo.create(entry)
+        result = await self.session.execute(stmt)
+        entry = result.scalar_one_or_none()
+        if entry is None:
+          # Race condition: another request inserted it first, fetch it
+          refetched = await self.repo.get_by_location_and_date_range(rounded_lat, rounded_lon, day_date, day_date)
+          entry = refetched[0]
 
         days.append(self._to_schema(entry))
       else:

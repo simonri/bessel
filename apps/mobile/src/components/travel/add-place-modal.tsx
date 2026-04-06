@@ -20,6 +20,7 @@ import type { GooglePlaceSearchResult } from "@metron/client";
 import { MapPin, Star, Search, X, Check, ChevronLeft } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 
 export function AddPlaceModal({
   onClose,
@@ -28,6 +29,7 @@ export function AddPlaceModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const theme = useTheme();
   const [step, setStep] = useState<"search" | "form">("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchEnabled, setSearchEnabled] = useState(false);
@@ -104,7 +106,7 @@ export function AddPlaceModal({
                 onPress={step === "form" ? () => setStep("search") : onClose}
                 className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700"
               >
-                {step === "form" ? <ChevronLeft size={18} color="#a1a1aa" /> : <X size={18} color="#a1a1aa" />}
+                {step === "form" ? <ChevronLeft size={18} color={theme.colors.subtext} /> : <X size={18} color={theme.colors.subtext} />}
               </Pressable>
               <Text className="text-foreground text-lg font-bold">
                 {step === "search" ? "Search Place" : "Add Place"}
@@ -115,7 +117,7 @@ export function AddPlaceModal({
                   disabled={createMutation.isPending}
                   className={`w-9 h-9 items-center justify-center rounded-full ${createMutation.isPending ? "bg-zinc-700" : "bg-foreground"}`}
                 >
-                  <Check size={18} color={createMutation.isPending ? "#71717a" : "#09090b"} />
+                  <Check size={18} color={createMutation.isPending ? theme.colors.subtext : theme.colors.monochrome} />
                 </Pressable>
               ) : (
                 <View className="w-9" />
@@ -126,7 +128,7 @@ export function AddPlaceModal({
               <View className="flex-1 px-5">
                 <View className="flex-row items-center gap-2 mb-3">
                   <View className="flex-1 flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5">
-                    <Search size={16} color="#71717a" />
+                    <Search size={16} color={theme.colors.subtext} />
                     <Input
                       placeholder="Restaurants, cafes, landmarks..."
                       value={searchQuery}
@@ -138,7 +140,7 @@ export function AddPlaceModal({
                     />
                     {searchQuery.length > 0 && (
                       <Pressable onPress={() => { setSearchQuery(""); setSearchEnabled(false); }}>
-                        <X size={16} color="#71717a" />
+                        <X size={16} color={theme.colors.subtext} />
                       </Pressable>
                     )}
                   </View>
@@ -150,9 +152,9 @@ export function AddPlaceModal({
                     }`}
                   >
                     {isSearching ? (
-                      <ActivityIndicator color="#09090b" size="small" />
+                      <ActivityIndicator color={theme.colors.monochrome} size="small" />
                     ) : (
-                      <Search size={18} color={searchQuery.length >= 2 ? "#09090b" : "#71717a"} />
+                      <Search size={18} color={searchQuery.length >= 2 ? theme.colors.monochrome : theme.colors.subtext} />
                     )}
                   </Pressable>
                 </View>
@@ -165,7 +167,7 @@ export function AddPlaceModal({
                       className="flex-row items-center gap-3 py-3 active:bg-zinc-800/60 rounded-xl px-1"
                     >
                       <View className="h-10 w-10 rounded-xl bg-zinc-800 items-center justify-center">
-                        <MapPin size={16} color="#71717a" />
+                        <MapPin size={16} color={theme.colors.subtext} />
                       </View>
                       <View className="flex-1 min-w-0">
                         <Text className="text-foreground text-sm font-medium" numberOfLines={1}>{result.name}</Text>
@@ -219,7 +221,7 @@ export function AddPlaceModal({
                     <View className="flex-row gap-2 mb-5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Pressable key={star} onPress={() => setRating(rating === star ? null : star)} className="p-1">
-                          <Star size={28} color={rating && star <= rating ? "#eab308" : "#3f3f46"} fill={rating && star <= rating ? "#eab308" : "transparent"} />
+                          <Star size={28} color={rating && star <= rating ? theme.colors.statusYellow : theme.colors.secondary} fill={rating && star <= rating ? theme.colors.statusYellow : "transparent"} />
                         </Pressable>
                       ))}
                     </View>

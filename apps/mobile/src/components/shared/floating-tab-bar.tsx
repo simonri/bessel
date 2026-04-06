@@ -17,6 +17,7 @@ import {
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useBottomSpacing } from "@/lib/safe-area";
+import { useTheme } from "@/design-system";
 
 const VISIBLE_TABS = ["index", "travel", "tasks", "more"] as const;
 const TAB_ICONS: Record<string, typeof LayoutDashboard> = {
@@ -45,6 +46,7 @@ export function FloatingTabBar({
   navigation: any;
 }) {
   const bottomSpacing = useBottomSpacing();
+  const theme = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const expandAnim = useRef(new Animated.Value(0)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
@@ -129,7 +131,7 @@ export function FloatingTabBar({
               onPress={() => handleMenuItemPress(item.href)}
               className="flex-row items-center gap-3 px-4 py-3 rounded-xl active:bg-zinc-700"
             >
-              <item.icon size={20} color="#a1a1aa" />
+              <item.icon size={20} color={theme.colors.subtext} />
               <Text className="text-[15px] font-medium text-foreground">
                 {item.title}
               </Text>
@@ -145,7 +147,7 @@ export function FloatingTabBar({
         style={{ height: bottomSpacing + 90 }}
       >
         <LinearGradient
-          colors={["transparent", "rgba(9,9,11,0.8)", "#09090b"]}
+          colors={["transparent", `${theme.colors.background}cc`, theme.colors.background]}
           locations={[0, 0.5, 1]}
           style={{ flex: 1 }}
         />
@@ -199,7 +201,7 @@ export function FloatingTabBar({
               >
                 <Icon
                   size={21}
-                  color={isFocused || (isMore && menuOpen) ? "#fafafa" : "#71717a"}
+                  color={isFocused || (isMore && menuOpen) ? theme.colors.text : theme.colors.subtext}
                 />
               </Pressable>
             );

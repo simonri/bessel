@@ -2,16 +2,18 @@ import { View, Text, Pressable } from "react-native";
 import { Star, MapPin } from "lucide-react-native";
 import type { PlaceSchema } from "@metron/client";
 import { getPlaceFields, CATEGORY_ICONS, CATEGORY_COLORS } from "./lib";
+import { useTheme } from "@/design-system";
 
 function RatingStars({ rating, size = 10 }: { rating: number; size?: number }) {
+  const theme = useTheme();
   return (
     <View className="flex-row items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
           size={size}
-          color={i < rating ? "#eab308" : "#27272a"}
-          fill={i < rating ? "#eab308" : "transparent"}
+          color={i < rating ? theme.colors.statusYellow : theme.colors.border}
+          fill={i < rating ? theme.colors.statusYellow : "transparent"}
         />
       ))}
     </View>
@@ -29,9 +31,10 @@ export function PlaceIcon({
   size?: number;
   iconSize?: number;
 }) {
+  const theme = useTheme();
   const category = place.category ?? "";
   const Icon = CATEGORY_ICONS[category] || MapPin;
-  const color = CATEGORY_COLORS[category] || "#71717a";
+  const color = CATEGORY_COLORS[category] || theme.colors.subtext;
 
   return (
     <View

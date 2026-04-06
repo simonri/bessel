@@ -14,6 +14,7 @@ import { GoalCard } from "./goal-card";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 import { formatDuration } from "./lib";
+import { useTheme } from "@/design-system";
 
 function LiveTimer({ startedAt }: { startedAt: Date | string }) {
   const [, setTick] = useState(0);
@@ -39,6 +40,7 @@ export function ActiveSession({
   onFinish: () => void;
   onCancel: () => void;
 }) {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const workoutQueryKey = getWorkoutV1WorkoutsWorkoutIdGetQueryKey({ client, path: { workout_id: workout.id } });
   const [currentExIdx, setCurrentExIdx] = useState(0);
@@ -120,7 +122,7 @@ export function ActiveSession({
   if (totalExercises === 0) {
     return (
       <View className="flex-1 items-center justify-center px-8">
-        <Dumbbell size={48} color="#27272a" />
+        <Dumbbell size={48} color={theme.colors.border} />
         <Text className="text-foreground font-semibold mt-4" style={{ fontSize: 18 }}>
           Add your first exercise
         </Text>
@@ -131,7 +133,7 @@ export function ActiveSession({
           onPress={() => setShowPicker(true)}
           className="flex-row items-center gap-2 bg-foreground rounded-xl px-6 py-3"
         >
-          <Plus size={16} color="#09090b" />
+          <Plus size={16} color={theme.colors.monochrome} />
           <Text className="text-primary-foreground font-semibold" style={{ fontSize: 15 }}>
             Add Exercise
           </Text>
@@ -193,6 +195,7 @@ function ExerciseView({
   onAddExercise: () => void;
   onCancel: () => void;
 }) {
+  const theme = useTheme();
   const [note, setNote] = useState("");
   const [extraSets, setExtraSets] = useState(0);
 
@@ -220,7 +223,7 @@ function ExerciseView({
       {/* Timer bar */}
       <View className="mx-4 mb-4 flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
-          <Timer size={14} color="#22c55e" />
+          <Timer size={14} color={theme.colors.statusGreen} />
           <LiveTimer startedAt={workoutStartedAt} />
         </View>
         <Pressable onPress={onCancel}>
@@ -231,7 +234,7 @@ function ExerciseView({
       {/* Exercise header with nav */}
       <View className="mx-4 mb-4 flex-row items-center">
         <Pressable onPress={onPrev} disabled={exerciseIndex === 0} className="p-2" hitSlop={8}>
-          <ChevronLeft size={22} color={exerciseIndex === 0 ? "#27272a" : "#a1a1aa"} />
+          <ChevronLeft size={22} color={exerciseIndex === 0 ? theme.colors.border : theme.colors.subtext} />
         </Pressable>
         <View className="flex-1 items-center">
           <Text className="text-foreground font-bold" style={{ fontSize: 22 }}>
@@ -242,7 +245,7 @@ function ExerciseView({
           </Text>
         </View>
         <Pressable onPress={onNext} disabled={exerciseIndex === totalExercises - 1} className="p-2" hitSlop={8}>
-          <ChevronRight size={22} color={exerciseIndex === totalExercises - 1 ? "#27272a" : "#a1a1aa"} />
+          <ChevronRight size={22} color={exerciseIndex === totalExercises - 1 ? theme.colors.border : theme.colors.subtext} />
         </Pressable>
       </View>
 
@@ -287,7 +290,7 @@ function ExerciseView({
         onPress={() => setExtraSets((s) => s + 1)}
         className="mx-4 mb-4 flex-row items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800"
       >
-        <Plus size={16} color="#a1a1aa" />
+        <Plus size={16} color={theme.colors.subtext} />
         <Text className="text-muted-foreground font-medium" style={{ fontSize: 15 }}>Add Set</Text>
       </Pressable>
 
@@ -317,7 +320,7 @@ function ExerciseView({
             onPress={onAddExercise}
             className="flex-row items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800"
           >
-            <Plus size={16} color="#fafafa" />
+            <Plus size={16} color={theme.colors.text} />
             <Text className="text-foreground font-medium" style={{ fontSize: 15 }}>Add Another Exercise</Text>
           </Pressable>
         )}

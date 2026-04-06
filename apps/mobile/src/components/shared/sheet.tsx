@@ -39,11 +39,11 @@ export const BottomSheet = ({
       enablePanDownToClose
       enableDynamicSizing
       backgroundStyle={{
-        backgroundColor: "#171717",
-        borderRadius: theme.borderRadii["border-radius-24"],
+        backgroundColor: theme.colors.background,
+        borderRadius: theme.borderRadii["border-radius-32"],
       }}
       handleIndicatorStyle={{
-        backgroundColor: "#52525b",
+        backgroundColor: theme.colors.subtext,
       }}
       {...props}
       backdropComponent={(backdropProps) => (
@@ -63,7 +63,7 @@ export const BottomSheet = ({
         <GorhomBottomSheetScrollView
           contentContainerStyle={{
             flex: 1,
-            padding: theme.spacing["spacing-4"],
+            padding: theme.spacing["spacing-20"],
             paddingBottom: safeViewInsets.bottom,
           }}
         >
@@ -73,7 +73,7 @@ export const BottomSheet = ({
         <GorhomBottomSheetView
           style={{
             flex: 1,
-            padding: theme.spacing["spacing-4"],
+            padding: theme.spacing["spacing-20"],
             paddingBottom: safeViewInsets.bottom,
           }}
         >
