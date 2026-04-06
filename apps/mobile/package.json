@@ -7,7 +7,8 @@
     "dev": "expo start",
     "ios": "expo run:ios",
     "build:ios:prod": "expo run:ios --device --configuration Release",
-    "align-deps": "npx expo install --fix"
+    "align-deps": "expo install --fix",
+    "prebuild": "expo prebuild --clean"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.8",
@@ -24,6 +25,7 @@
     "expo-linear-gradient": "^55.0.11",
     "expo-linking": "~55.0.6",
     "expo-location": "~55.1.6",
+    "expo-notifications": "~55.0.16",
     "expo-router": "~55.0.10",
     "expo-splash-screen": "~55.0.11",
     "expo-status-bar": "~55.0.5",

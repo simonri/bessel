@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+from dateutil.parser import isoparse
 
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-  from ..models.journal_entry_upsert_decisions_type_0_item import JournalEntryUpsertDecisionsType0Item
+  from ..models.journal_entry_upsert_captures_type_0_item import JournalEntryUpsertCapturesType0Item
 
 
 T = TypeVar("T", bound="JournalEntryUpsert")
@@ -19,243 +21,204 @@ T = TypeVar("T", bound="JournalEntryUpsert")
 class JournalEntryUpsert:
   """
   Attributes:
-      body (None | str | Unset):
-      mood (int | None | Unset):
-      energy (int | None | Unset):
-      focus (int | None | Unset):
-      sleep_hours (float | None | Unset):
-      wins (None | str | Unset):
-      blockers (None | str | Unset):
-      learnings (None | str | Unset):
-      gratitude (None | str | Unset):
-      intention (None | str | Unset):
-      decisions (list[JournalEntryUpsertDecisionsType0Item] | None | Unset):
-      tags (list[str] | None | Unset):
+      priority (None | str | Unset):
+      friction (None | str | Unset):
+      gratitude_1 (None | str | Unset):
+      gratitude_2 (None | str | Unset):
+      gratitude_3 (None | str | Unset):
+      morning_committed_at (datetime.datetime | None | Unset):
+      captures (list[JournalEntryUpsertCapturesType0Item] | None | Unset):
+      scorecard (int | None | Unset):
+      priority_done (bool | None | Unset):
+      insight (None | str | Unset):
+      seed (None | str | Unset):
   """
 
-  body: None | str | Unset = UNSET
-  mood: int | None | Unset = UNSET
-  energy: int | None | Unset = UNSET
-  focus: int | None | Unset = UNSET
-  sleep_hours: float | None | Unset = UNSET
-  wins: None | str | Unset = UNSET
-  blockers: None | str | Unset = UNSET
-  learnings: None | str | Unset = UNSET
-  gratitude: None | str | Unset = UNSET
-  intention: None | str | Unset = UNSET
-  decisions: list[JournalEntryUpsertDecisionsType0Item] | None | Unset = UNSET
-  tags: list[str] | None | Unset = UNSET
+  priority: None | str | Unset = UNSET
+  friction: None | str | Unset = UNSET
+  gratitude_1: None | str | Unset = UNSET
+  gratitude_2: None | str | Unset = UNSET
+  gratitude_3: None | str | Unset = UNSET
+  morning_committed_at: datetime.datetime | None | Unset = UNSET
+  captures: list[JournalEntryUpsertCapturesType0Item] | None | Unset = UNSET
+  scorecard: int | None | Unset = UNSET
+  priority_done: bool | None | Unset = UNSET
+  insight: None | str | Unset = UNSET
+  seed: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    body: None | str | Unset
-    if isinstance(self.body, Unset):
-      body = UNSET
+    priority: None | str | Unset
+    if isinstance(self.priority, Unset):
+      priority = UNSET
     else:
-      body = self.body
+      priority = self.priority
 
-    mood: int | None | Unset
-    if isinstance(self.mood, Unset):
-      mood = UNSET
+    friction: None | str | Unset
+    if isinstance(self.friction, Unset):
+      friction = UNSET
     else:
-      mood = self.mood
+      friction = self.friction
 
-    energy: int | None | Unset
-    if isinstance(self.energy, Unset):
-      energy = UNSET
+    gratitude_1: None | str | Unset
+    if isinstance(self.gratitude_1, Unset):
+      gratitude_1 = UNSET
     else:
-      energy = self.energy
+      gratitude_1 = self.gratitude_1
 
-    focus: int | None | Unset
-    if isinstance(self.focus, Unset):
-      focus = UNSET
+    gratitude_2: None | str | Unset
+    if isinstance(self.gratitude_2, Unset):
+      gratitude_2 = UNSET
     else:
-      focus = self.focus
+      gratitude_2 = self.gratitude_2
 
-    sleep_hours: float | None | Unset
-    if isinstance(self.sleep_hours, Unset):
-      sleep_hours = UNSET
+    gratitude_3: None | str | Unset
+    if isinstance(self.gratitude_3, Unset):
+      gratitude_3 = UNSET
     else:
-      sleep_hours = self.sleep_hours
+      gratitude_3 = self.gratitude_3
 
-    wins: None | str | Unset
-    if isinstance(self.wins, Unset):
-      wins = UNSET
+    morning_committed_at: None | str | Unset
+    if isinstance(self.morning_committed_at, Unset):
+      morning_committed_at = UNSET
+    elif isinstance(self.morning_committed_at, datetime.datetime):
+      morning_committed_at = self.morning_committed_at.isoformat()
     else:
-      wins = self.wins
+      morning_committed_at = self.morning_committed_at
 
-    blockers: None | str | Unset
-    if isinstance(self.blockers, Unset):
-      blockers = UNSET
-    else:
-      blockers = self.blockers
-
-    learnings: None | str | Unset
-    if isinstance(self.learnings, Unset):
-      learnings = UNSET
-    else:
-      learnings = self.learnings
-
-    gratitude: None | str | Unset
-    if isinstance(self.gratitude, Unset):
-      gratitude = UNSET
-    else:
-      gratitude = self.gratitude
-
-    intention: None | str | Unset
-    if isinstance(self.intention, Unset):
-      intention = UNSET
-    else:
-      intention = self.intention
-
-    decisions: list[dict[str, Any]] | None | Unset
-    if isinstance(self.decisions, Unset):
-      decisions = UNSET
-    elif isinstance(self.decisions, list):
-      decisions = []
-      for decisions_type_0_item_data in self.decisions:
-        decisions_type_0_item = decisions_type_0_item_data.to_dict()
-        decisions.append(decisions_type_0_item)
+    captures: list[dict[str, Any]] | None | Unset
+    if isinstance(self.captures, Unset):
+      captures = UNSET
+    elif isinstance(self.captures, list):
+      captures = []
+      for captures_type_0_item_data in self.captures:
+        captures_type_0_item = captures_type_0_item_data.to_dict()
+        captures.append(captures_type_0_item)
 
     else:
-      decisions = self.decisions
+      captures = self.captures
 
-    tags: list[str] | None | Unset
-    if isinstance(self.tags, Unset):
-      tags = UNSET
-    elif isinstance(self.tags, list):
-      tags = self.tags
-
+    scorecard: int | None | Unset
+    if isinstance(self.scorecard, Unset):
+      scorecard = UNSET
     else:
-      tags = self.tags
+      scorecard = self.scorecard
+
+    priority_done: bool | None | Unset
+    if isinstance(self.priority_done, Unset):
+      priority_done = UNSET
+    else:
+      priority_done = self.priority_done
+
+    insight: None | str | Unset
+    if isinstance(self.insight, Unset):
+      insight = UNSET
+    else:
+      insight = self.insight
+
+    seed: None | str | Unset
+    if isinstance(self.seed, Unset):
+      seed = UNSET
+    else:
+      seed = self.seed
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update({})
-    if body is not UNSET:
-      field_dict["body"] = body
-    if mood is not UNSET:
-      field_dict["mood"] = mood
-    if energy is not UNSET:
-      field_dict["energy"] = energy
-    if focus is not UNSET:
-      field_dict["focus"] = focus
-    if sleep_hours is not UNSET:
-      field_dict["sleep_hours"] = sleep_hours
-    if wins is not UNSET:
-      field_dict["wins"] = wins
-    if blockers is not UNSET:
-      field_dict["blockers"] = blockers
-    if learnings is not UNSET:
-      field_dict["learnings"] = learnings
-    if gratitude is not UNSET:
-      field_dict["gratitude"] = gratitude
-    if intention is not UNSET:
-      field_dict["intention"] = intention
-    if decisions is not UNSET:
-      field_dict["decisions"] = decisions
-    if tags is not UNSET:
-      field_dict["tags"] = tags
+    if priority is not UNSET:
+      field_dict["priority"] = priority
+    if friction is not UNSET:
+      field_dict["friction"] = friction
+    if gratitude_1 is not UNSET:
+      field_dict["gratitude_1"] = gratitude_1
+    if gratitude_2 is not UNSET:
+      field_dict["gratitude_2"] = gratitude_2
+    if gratitude_3 is not UNSET:
+      field_dict["gratitude_3"] = gratitude_3
+    if morning_committed_at is not UNSET:
+      field_dict["morning_committed_at"] = morning_committed_at
+    if captures is not UNSET:
+      field_dict["captures"] = captures
+    if scorecard is not UNSET:
+      field_dict["scorecard"] = scorecard
+    if priority_done is not UNSET:
+      field_dict["priority_done"] = priority_done
+    if insight is not UNSET:
+      field_dict["insight"] = insight
+    if seed is not UNSET:
+      field_dict["seed"] = seed
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-    from ..models.journal_entry_upsert_decisions_type_0_item import JournalEntryUpsertDecisionsType0Item
+    from ..models.journal_entry_upsert_captures_type_0_item import JournalEntryUpsertCapturesType0Item
 
     d = dict(src_dict)
 
-    def _parse_body(data: object) -> None | str | Unset:
+    def _parse_priority(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    body = _parse_body(d.pop("body", UNSET))
+    priority = _parse_priority(d.pop("priority", UNSET))
 
-    def _parse_mood(data: object) -> int | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(int | None | Unset, data)
-
-    mood = _parse_mood(d.pop("mood", UNSET))
-
-    def _parse_energy(data: object) -> int | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(int | None | Unset, data)
-
-    energy = _parse_energy(d.pop("energy", UNSET))
-
-    def _parse_focus(data: object) -> int | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(int | None | Unset, data)
-
-    focus = _parse_focus(d.pop("focus", UNSET))
-
-    def _parse_sleep_hours(data: object) -> float | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(float | None | Unset, data)
-
-    sleep_hours = _parse_sleep_hours(d.pop("sleep_hours", UNSET))
-
-    def _parse_wins(data: object) -> None | str | Unset:
+    def _parse_friction(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    wins = _parse_wins(d.pop("wins", UNSET))
+    friction = _parse_friction(d.pop("friction", UNSET))
 
-    def _parse_blockers(data: object) -> None | str | Unset:
+    def _parse_gratitude_1(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    blockers = _parse_blockers(d.pop("blockers", UNSET))
+    gratitude_1 = _parse_gratitude_1(d.pop("gratitude_1", UNSET))
 
-    def _parse_learnings(data: object) -> None | str | Unset:
+    def _parse_gratitude_2(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    learnings = _parse_learnings(d.pop("learnings", UNSET))
+    gratitude_2 = _parse_gratitude_2(d.pop("gratitude_2", UNSET))
 
-    def _parse_gratitude(data: object) -> None | str | Unset:
+    def _parse_gratitude_3(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    gratitude = _parse_gratitude(d.pop("gratitude", UNSET))
+    gratitude_3 = _parse_gratitude_3(d.pop("gratitude_3", UNSET))
 
-    def _parse_intention(data: object) -> None | str | Unset:
+    def _parse_morning_committed_at(data: object) -> datetime.datetime | None | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
-      return cast(None | str | Unset, data)
+      try:
+        if not isinstance(data, str):
+          raise TypeError()
+        morning_committed_at_type_0 = isoparse(data)
 
-    intention = _parse_intention(d.pop("intention", UNSET))
+        return morning_committed_at_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(datetime.datetime | None | Unset, data)
 
-    def _parse_decisions(data: object) -> list[JournalEntryUpsertDecisionsType0Item] | None | Unset:
+    morning_committed_at = _parse_morning_committed_at(d.pop("morning_committed_at", UNSET))
+
+    def _parse_captures(data: object) -> list[JournalEntryUpsertCapturesType0Item] | None | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
@@ -263,50 +226,68 @@ class JournalEntryUpsert:
       try:
         if not isinstance(data, list):
           raise TypeError()
-        decisions_type_0 = []
-        _decisions_type_0 = data
-        for decisions_type_0_item_data in _decisions_type_0:
-          decisions_type_0_item = JournalEntryUpsertDecisionsType0Item.from_dict(decisions_type_0_item_data)
+        captures_type_0 = []
+        _captures_type_0 = data
+        for captures_type_0_item_data in _captures_type_0:
+          captures_type_0_item = JournalEntryUpsertCapturesType0Item.from_dict(captures_type_0_item_data)
 
-          decisions_type_0.append(decisions_type_0_item)
+          captures_type_0.append(captures_type_0_item)
 
-        return decisions_type_0
+        return captures_type_0
       except (TypeError, ValueError, AttributeError, KeyError):
         pass
-      return cast(list[JournalEntryUpsertDecisionsType0Item] | None | Unset, data)
+      return cast(list[JournalEntryUpsertCapturesType0Item] | None | Unset, data)
 
-    decisions = _parse_decisions(d.pop("decisions", UNSET))
+    captures = _parse_captures(d.pop("captures", UNSET))
 
-    def _parse_tags(data: object) -> list[str] | None | Unset:
+    def _parse_scorecard(data: object) -> int | None | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
-      try:
-        if not isinstance(data, list):
-          raise TypeError()
-        tags_type_0 = cast(list[str], data)
+      return cast(int | None | Unset, data)
 
-        return tags_type_0
-      except (TypeError, ValueError, AttributeError, KeyError):
-        pass
-      return cast(list[str] | None | Unset, data)
+    scorecard = _parse_scorecard(d.pop("scorecard", UNSET))
 
-    tags = _parse_tags(d.pop("tags", UNSET))
+    def _parse_priority_done(data: object) -> bool | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(bool | None | Unset, data)
+
+    priority_done = _parse_priority_done(d.pop("priority_done", UNSET))
+
+    def _parse_insight(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    insight = _parse_insight(d.pop("insight", UNSET))
+
+    def _parse_seed(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    seed = _parse_seed(d.pop("seed", UNSET))
 
     journal_entry_upsert = cls(
-      body=body,
-      mood=mood,
-      energy=energy,
-      focus=focus,
-      sleep_hours=sleep_hours,
-      wins=wins,
-      blockers=blockers,
-      learnings=learnings,
-      gratitude=gratitude,
-      intention=intention,
-      decisions=decisions,
-      tags=tags,
+      priority=priority,
+      friction=friction,
+      gratitude_1=gratitude_1,
+      gratitude_2=gratitude_2,
+      gratitude_3=gratitude_3,
+      morning_committed_at=morning_committed_at,
+      captures=captures,
+      scorecard=scorecard,
+      priority_done=priority_done,
+      insight=insight,
+      seed=seed,
     )
 
     journal_entry_upsert.additional_properties = d

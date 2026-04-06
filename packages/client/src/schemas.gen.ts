@@ -856,30 +856,14 @@ export const JournalCalendarDaySchema = {
       format: "date",
       title: "Entry Date",
     },
-    mood: {
-      anyOf: [
-        {
-          type: "integer",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Mood",
-    },
-    word_count: {
-      type: "integer",
-      title: "Word Count",
-      default: 0,
-    },
-    has_wins: {
+    has_morning: {
       type: "boolean",
-      title: "Has Wins",
+      title: "Has Morning",
       default: false,
     },
-    has_learnings: {
+    has_audit: {
       type: "boolean",
-      title: "Has Learnings",
+      title: "Has Audit",
       default: false,
     },
   },
@@ -954,7 +938,7 @@ export const JournalEntrySchemaSchema = {
       title: "Entry Date",
       description: "Calendar date for this entry.",
     },
-    body: {
+    priority: {
       anyOf: [
         {
           type: "string",
@@ -963,58 +947,10 @@ export const JournalEntrySchemaSchema = {
           type: "null",
         },
       ],
-      title: "Body",
-      description: "Free-form markdown body.",
+      title: "Priority",
+      description: "The one thing today.",
     },
-    mood: {
-      anyOf: [
-        {
-          type: "integer",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Mood",
-      description: "Mood rating 1-5.",
-    },
-    energy: {
-      anyOf: [
-        {
-          type: "integer",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Energy",
-      description: "Energy rating 1-5.",
-    },
-    focus: {
-      anyOf: [
-        {
-          type: "integer",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Focus",
-      description: "Focus quality 1-5.",
-    },
-    sleep_hours: {
-      anyOf: [
-        {
-          type: "number",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Sleep Hours",
-      description: "Hours of sleep.",
-    },
-    wins: {
+    friction: {
       anyOf: [
         {
           type: "string",
@@ -1023,10 +959,10 @@ export const JournalEntrySchemaSchema = {
           type: "null",
         },
       ],
-      title: "Wins",
-      description: "Wins for the day.",
+      title: "Friction",
+      description: "What might stop me.",
     },
-    blockers: {
+    gratitude_1: {
       anyOf: [
         {
           type: "string",
@@ -1035,10 +971,10 @@ export const JournalEntrySchemaSchema = {
           type: "null",
         },
       ],
-      title: "Blockers",
-      description: "Blockers / challenges.",
+      title: "Gratitude 1",
+      description: "Gratitude bullet 1.",
     },
-    learnings: {
+    gratitude_2: {
       anyOf: [
         {
           type: "string",
@@ -1047,10 +983,10 @@ export const JournalEntrySchemaSchema = {
           type: "null",
         },
       ],
-      title: "Learnings",
-      description: "Key learnings.",
+      title: "Gratitude 2",
+      description: "Gratitude bullet 2.",
     },
-    gratitude: {
+    gratitude_3: {
       anyOf: [
         {
           type: "string",
@@ -1059,22 +995,23 @@ export const JournalEntrySchemaSchema = {
           type: "null",
         },
       ],
-      title: "Gratitude",
-      description: "Gratitude notes.",
+      title: "Gratitude 3",
+      description: "Gratitude bullet 3.",
     },
-    intention: {
+    morning_committed_at: {
       anyOf: [
         {
           type: "string",
+          format: "date-time",
         },
         {
           type: "null",
         },
       ],
-      title: "Intention",
-      description: "Intention for tomorrow.",
+      title: "Morning Committed At",
+      description: "When morning was committed.",
     },
-    decisions: {
+    captures: {
       anyOf: [
         {
           items: {
@@ -1087,29 +1024,56 @@ export const JournalEntrySchemaSchema = {
           type: "null",
         },
       ],
-      title: "Decisions",
-      description: "Decisions log.",
+      title: "Captures",
+      description: "Captured thoughts.",
     },
-    tags: {
+    scorecard: {
       anyOf: [
         {
-          items: {
-            type: "string",
-          },
-          type: "array",
+          type: "integer",
         },
         {
           type: "null",
         },
       ],
-      title: "Tags",
-      description: "Tags.",
+      title: "Scorecard",
+      description: "Day rating 1-5.",
     },
-    word_count: {
-      type: "integer",
-      title: "Word Count",
-      description: "Word count of body.",
-      default: 0,
+    priority_done: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Priority Done",
+      description: "Did the priority get done.",
+    },
+    insight: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Insight",
+      description: "What did I learn today.",
+    },
+    seed: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Seed",
+      description: "Problem for tomorrow.",
     },
   },
   type: "object",
@@ -1119,7 +1083,7 @@ export const JournalEntrySchemaSchema = {
 
 export const JournalEntryUpsertSchema = {
   properties: {
-    body: {
+    priority: {
       anyOf: [
         {
           type: "string",
@@ -1128,61 +1092,9 @@ export const JournalEntryUpsertSchema = {
           type: "null",
         },
       ],
-      title: "Body",
+      title: "Priority",
     },
-    mood: {
-      anyOf: [
-        {
-          type: "integer",
-          maximum: 5,
-          minimum: 1,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Mood",
-    },
-    energy: {
-      anyOf: [
-        {
-          type: "integer",
-          maximum: 5,
-          minimum: 1,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Energy",
-    },
-    focus: {
-      anyOf: [
-        {
-          type: "integer",
-          maximum: 5,
-          minimum: 1,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Focus",
-    },
-    sleep_hours: {
-      anyOf: [
-        {
-          type: "number",
-          maximum: 24,
-          minimum: 0,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Sleep Hours",
-    },
-    wins: {
+    friction: {
       anyOf: [
         {
           type: "string",
@@ -1191,9 +1103,9 @@ export const JournalEntryUpsertSchema = {
           type: "null",
         },
       ],
-      title: "Wins",
+      title: "Friction",
     },
-    blockers: {
+    gratitude_1: {
       anyOf: [
         {
           type: "string",
@@ -1202,9 +1114,9 @@ export const JournalEntryUpsertSchema = {
           type: "null",
         },
       ],
-      title: "Blockers",
+      title: "Gratitude 1",
     },
-    learnings: {
+    gratitude_2: {
       anyOf: [
         {
           type: "string",
@@ -1213,9 +1125,9 @@ export const JournalEntryUpsertSchema = {
           type: "null",
         },
       ],
-      title: "Learnings",
+      title: "Gratitude 2",
     },
-    gratitude: {
+    gratitude_3: {
       anyOf: [
         {
           type: "string",
@@ -1224,20 +1136,21 @@ export const JournalEntryUpsertSchema = {
           type: "null",
         },
       ],
-      title: "Gratitude",
+      title: "Gratitude 3",
     },
-    intention: {
+    morning_committed_at: {
       anyOf: [
         {
           type: "string",
+          format: "date-time",
         },
         {
           type: "null",
         },
       ],
-      title: "Intention",
+      title: "Morning Committed At",
     },
-    decisions: {
+    captures: {
       anyOf: [
         {
           items: {
@@ -1250,21 +1163,53 @@ export const JournalEntryUpsertSchema = {
           type: "null",
         },
       ],
-      title: "Decisions",
+      title: "Captures",
     },
-    tags: {
+    scorecard: {
       anyOf: [
         {
-          items: {
-            type: "string",
-          },
-          type: "array",
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
         },
         {
           type: "null",
         },
       ],
-      title: "Tags",
+      title: "Scorecard",
+    },
+    priority_done: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Priority Done",
+    },
+    insight: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Insight",
+    },
+    seed: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Seed",
     },
   },
   type: "object",
@@ -1273,16 +1218,7 @@ export const JournalEntryUpsertSchema = {
 
 export const JournalSortPropertySchema = {
   type: "string",
-  enum: [
-    "entry_date",
-    "-entry_date",
-    "created_at",
-    "-created_at",
-    "mood",
-    "-mood",
-    "energy",
-    "-energy",
-  ],
+  enum: ["entry_date", "-entry_date", "created_at", "-created_at"],
   title: "JournalSortProperty",
 } as const;
 
@@ -1304,6 +1240,97 @@ export const JournalStreakResponseSchema = {
   type: "object",
   required: ["current_streak", "longest_streak", "total_entries"],
   title: "JournalStreakResponse",
+} as const;
+
+export const LastSessionBestSetSchema = {
+  properties: {
+    weight: {
+      type: "number",
+      title: "Weight",
+    },
+    reps: {
+      type: "integer",
+      title: "Reps",
+    },
+    weight_unit: {
+      type: "string",
+      title: "Weight Unit",
+    },
+  },
+  type: "object",
+  required: ["weight", "reps", "weight_unit"],
+  title: "LastSessionBestSet",
+} as const;
+
+export const LastSessionResponseSchema = {
+  properties: {
+    sets: {
+      items: {
+        $ref: "#/components/schemas/LastSessionSetSchema",
+      },
+      type: "array",
+      title: "Sets",
+    },
+    best_set: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/LastSessionBestSet",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["sets", "best_set"],
+  title: "LastSessionResponse",
+} as const;
+
+export const LastSessionSetSchemaSchema = {
+  properties: {
+    set_number: {
+      type: "integer",
+      title: "Set Number",
+    },
+    weight: {
+      type: "number",
+      title: "Weight",
+    },
+    reps: {
+      type: "integer",
+      title: "Reps",
+    },
+    weight_unit: {
+      type: "string",
+      title: "Weight Unit",
+    },
+    rir: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rir",
+    },
+    set_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Set Type",
+    },
+  },
+  type: "object",
+  required: ["set_number", "weight", "reps", "weight_unit", "rir", "set_type"],
+  title: "LastSessionSetSchema",
 } as const;
 
 export const MonthlyFlowSchema = {
@@ -3839,6 +3866,31 @@ export const WorkoutSetCreateSchema = {
       ],
       title: "Rpe",
     },
+    rir: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 4,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rir",
+    },
+    set_type: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^(standard|top|backoff|failure)$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Set Type",
+    },
     notes: {
       anyOf: [
         {
@@ -3920,6 +3972,39 @@ export const WorkoutSetSchemaSchema = {
       ],
       title: "Rpe",
     },
+    rir: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rir",
+    },
+    set_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Set Type",
+    },
+    e1rm: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "E1Rm",
+    },
     is_pr: {
       type: "boolean",
       title: "Is Pr",
@@ -3948,6 +4033,9 @@ export const WorkoutSetSchemaSchema = {
     "weight",
     "weight_unit",
     "rpe",
+    "rir",
+    "set_type",
+    "e1rm",
     "is_pr",
     "notes",
   ],
@@ -4004,6 +4092,31 @@ export const WorkoutSetUpdateSchema = {
         },
       ],
       title: "Rpe",
+    },
+    rir: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 4,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rir",
+    },
+    set_type: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^(standard|top|backoff|failure)$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Set Type",
     },
     notes: {
       anyOf: [

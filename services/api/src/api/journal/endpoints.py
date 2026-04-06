@@ -26,17 +26,9 @@ router = APIRouter(prefix="/journal", tags=["journal"])
 class JournalSortProperty(StrEnum):
   entry_date = "entry_date"
   created_at = "created_at"
-  mood = "mood"
-  energy = "energy"
 
 
 sorting_getter = SortingGetter(JournalSortProperty, default_sorting=["-entry_date"])
-
-
-def _compute_word_count(body: str | None) -> int:
-  if not body:
-    return 0
-  return len(body.split())
 
 
 @router.get(
@@ -48,23 +40,9 @@ async def list_entries(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[JournalSortProperty]], Depends(sorting_getter)],
-  tag: str | None = Query(default=None, description="Filter by tag."),
-  search: str | None = Query(default=None, description="Search body text."),
 ) -> JournalEntryListResponse:
   repo = JournalEntryRepository.from_session(session)
   statement = repo.get_base_statement()
-
-  if tag:
-    statement = statement.where(JournalEntry.tags.any(tag))
-  if search:
-    pattern = f"%{search}%"
-    statement = statement.where(
-      JournalEntry.body.ilike(pattern)
-      | JournalEntry.wins.ilike(pattern)
-      | JournalEntry.learnings.ilike(pattern)
-      | JournalEntry.gratitude.ilike(pattern)
-      | JournalEntry.blockers.ilike(pattern)
-    )
 
   for prop, desc in sorting:
     column = getattr(JournalEntry, prop.value)
@@ -97,10 +75,9 @@ async def get_calendar(
   result = await session.execute(
     select(
       JournalEntry.entry_date,
-      JournalEntry.mood,
-      JournalEntry.word_count,
-      JournalEntry.wins,
-      JournalEntry.learnings,
+      JournalEntry.priority,
+      JournalEntry.morning_committed_at,
+      JournalEntry.scorecard,
     )
     .where(JournalEntry.entry_date >= start, JournalEntry.entry_date < end)
     .order_by(JournalEntry.entry_date)
@@ -109,10 +86,8 @@ async def get_calendar(
   days = [
     JournalCalendarDay(
       entry_date=row.entry_date,
-      mood=row.mood,
-      word_count=row.word_count,
-      has_wins=bool(row.wins),
-      has_learnings=bool(row.learnings),
+      has_morning=row.morning_committed_at is not None or bool(row.priority),
+      has_audit=row.scorecard is not None,
     )
     for row in result.all()
   ]
@@ -133,7 +108,6 @@ async def get_streak(
   if not dates:
     return JournalStreakResponse(current_streak=0, longest_streak=0, total_entries=0)
 
-  # Current streak (from today backwards)
   current = 0
   check = date.today()
   date_set = set(dates)
@@ -141,7 +115,6 @@ async def get_streak(
     current += 1
     check -= timedelta(days=1)
 
-  # Longest streak
   longest = 0
   streak = 1
   sorted_dates = sorted(dates)
@@ -190,7 +163,6 @@ async def upsert_entry(
   entry = await repo.get_by_date(entry_date)
 
   data = body.model_dump(exclude_unset=True)
-  data["word_count"] = _compute_word_count(data.get("body") or (entry.body if entry else None))
 
   if entry is None:
     entry = JournalEntry(entry_date=entry_date, **data)

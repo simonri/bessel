@@ -1,4 +1,6 @@
 PODS:
+  - EXApplication (55.0.12):
+    - ExpoModulesCore
   - EXConstants (55.0.11):
     - ExpoModulesCore
   - EXJSONUtils (55.0.2)
@@ -236,6 +238,8 @@ PODS:
     - React-Core
     - React-runtimescheduler
     - ReactCommon
+  - ExpoNotifications (55.0.16):
+    - ExpoModulesCore
   - ExpoRouter (55.0.10):
     - ExpoModulesCore
     - RNScreens
@@ -2407,6 +2411,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "EXApplication (from `../../../node_modules/.pnpm/expo-application@55.0.12_expo@55.0.11/node_modules/expo-application/ios`)"
   - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@55.0.11_expo@55.0.11_react-native@0.83.4_@babel+core@7.29.0_@react-nativ_ba1aed4dc2f5afc5820bb822bfafd8e8/node_modules/expo-constants/ios`)"
   - "EXJSONUtils (from `../../../node_modules/.pnpm/expo-json-utils@55.0.2/node_modules/expo-json-utils/ios`)"
   - "EXManifests (from `../../../node_modules/.pnpm/expo-manifests@55.0.13_expo@55.0.11_typescript@5.9.3/node_modules/expo-manifests/ios`)"
@@ -2429,6 +2434,7 @@ DEPENDENCIES:
   - "ExpoLogBox (from `../../../node_modules/.pnpm/@expo+log-box@55.0.10_@expo+dom-webview@55.0.5_expo@55.0.11_react-native@0.83.4_@babel+_aec90cecb865c6e3562d9fc4ea6512bc/node_modules/@expo/log-box`)"
   - "ExpoModulesCore (from `../../../node_modules/.pnpm/expo-modules-core@55.0.20_react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-co_a45f356a96929f8d29a9b8634002770e/node_modules/expo-modules-core`)"
   - "ExpoModulesJSI (from `../../../node_modules/.pnpm/expo-modules-core@55.0.20_react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-co_a45f356a96929f8d29a9b8634002770e/node_modules/expo-modules-core`)"
+  - "ExpoNotifications (from `../../../node_modules/.pnpm/expo-notifications@55.0.16_expo@55.0.11_react-native@0.83.4_@babel+core@7.29.0_@react-n_fafc94f8c1c8926261cad34a5418a91e/node_modules/expo-notifications/ios`)"
   - "ExpoRouter (from `../../../node_modules/.pnpm/expo-router@55.0.10_cc589dd641c48b4d1826f4ff51f824e3/node_modules/expo-router/ios`)"
   - "ExpoSplashScreen (from `../../../node_modules/.pnpm/expo-splash-screen@55.0.15_expo@55.0.11_typescript@5.9.3/node_modules/expo-splash-screen/ios`)"
   - "ExpoSymbols (from `../../../node_modules/.pnpm/expo-symbols@55.0.7_expo-font@55.0.6_expo@55.0.11_react-native@0.83.4_@babel+core@7.29._a34a35e832b1844d914de3d77b054cb4/node_modules/expo-symbols/ios`)"
@@ -2526,6 +2532,8 @@ SPEC REPOS:
     - SDWebImageWebPCoder
 
 EXTERNAL SOURCES:
+  EXApplication:
+    :path: "../../../node_modules/.pnpm/expo-application@55.0.12_expo@55.0.11/node_modules/expo-application/ios"
   EXConstants:
     :path: "../../../node_modules/.pnpm/expo-constants@55.0.11_expo@55.0.11_react-native@0.83.4_@babel+core@7.29.0_@react-nativ_ba1aed4dc2f5afc5820bb822bfafd8e8/node_modules/expo-constants/ios"
   EXJSONUtils:
@@ -2570,6 +2578,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/expo-modules-core@55.0.20_react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-co_a45f356a96929f8d29a9b8634002770e/node_modules/expo-modules-core"
   ExpoModulesJSI:
     :path: "../../../node_modules/.pnpm/expo-modules-core@55.0.20_react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-co_a45f356a96929f8d29a9b8634002770e/node_modules/expo-modules-core"
+  ExpoNotifications:
+    :path: "../../../node_modules/.pnpm/expo-notifications@55.0.16_expo@55.0.11_react-native@0.83.4_@babel+core@7.29.0_@react-n_fafc94f8c1c8926261cad34a5418a91e/node_modules/expo-notifications/ios"
   ExpoRouter:
     :path: "../../../node_modules/.pnpm/expo-router@55.0.10_cc589dd641c48b4d1826f4ff51f824e3/node_modules/expo-router/ios"
   ExpoSplashScreen:
@@ -2741,6 +2751,7 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-config@0.84.1_@babel+core@7._7847610923a5de0176238953cd466d2e/node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  EXApplication: 4c1984dfe22040aff943d5ee3711420d2b447237
   EXConstants: 9813b8a316e5b7bb562731c7a45e236f54195185
   EXJSONUtils: 04bc3807d351331a5fe154ce1da596ec15d99169
   EXManifests: 529dcd8344c2992013e3c341eab4386a57fb37c7
@@ -2763,6 +2774,7 @@ SPEC CHECKSUMS:
   ExpoLogBox: a3de999775d423ac9cb85d24bd47628e5392761f
   ExpoModulesCore: b00920acd06301b8c62a265fa4d2f2e3d725c748
   ExpoModulesJSI: a998e176d28567273b540fa568505ff1c9aaacac
+  ExpoNotifications: 71db05b1d1e1aaf6ead79f859faa1adfe3cc09ff
   ExpoRouter: 9d717e9d5b0e1ccff05b1b2fd7c031b6fbecc433
   ExpoSplashScreen: 67f390cdc5cc93c9ca6d55be3e9055a9478541ac
   ExpoSymbols: 8b63e859ba013df1f2fc666f535fddb3d5270569

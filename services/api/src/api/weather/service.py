@@ -36,13 +36,15 @@ class WeatherService:
         params={
           "latitude": rounded_lat,
           "longitude": rounded_lon,
-          "daily": ",".join([
-            "temperature_2m_max",
-            "temperature_2m_min",
-            "apparent_temperature_max",
-            "precipitation_probability_max",
-            "weather_code",
-          ]),
+          "daily": ",".join(
+            [
+              "temperature_2m_max",
+              "temperature_2m_min",
+              "apparent_temperature_max",
+              "precipitation_probability_max",
+              "weather_code",
+            ]
+          ),
           "timezone": "auto",
           "forecast_days": FORECAST_DAYS,
         },

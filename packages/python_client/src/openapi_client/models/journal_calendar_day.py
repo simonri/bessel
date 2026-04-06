@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,33 +18,21 @@ class JournalCalendarDay:
   """
   Attributes:
       entry_date (datetime.date):
-      mood (int | None | Unset):
-      word_count (int | Unset):  Default: 0.
-      has_wins (bool | Unset):  Default: False.
-      has_learnings (bool | Unset):  Default: False.
+      has_morning (bool | Unset):  Default: False.
+      has_audit (bool | Unset):  Default: False.
   """
 
   entry_date: datetime.date
-  mood: int | None | Unset = UNSET
-  word_count: int | Unset = 0
-  has_wins: bool | Unset = False
-  has_learnings: bool | Unset = False
+  has_morning: bool | Unset = False
+  has_audit: bool | Unset = False
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     entry_date = self.entry_date.isoformat()
 
-    mood: int | None | Unset
-    if isinstance(self.mood, Unset):
-      mood = UNSET
-    else:
-      mood = self.mood
+    has_morning = self.has_morning
 
-    word_count = self.word_count
-
-    has_wins = self.has_wins
-
-    has_learnings = self.has_learnings
+    has_audit = self.has_audit
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -53,14 +41,10 @@ class JournalCalendarDay:
         "entry_date": entry_date,
       }
     )
-    if mood is not UNSET:
-      field_dict["mood"] = mood
-    if word_count is not UNSET:
-      field_dict["word_count"] = word_count
-    if has_wins is not UNSET:
-      field_dict["has_wins"] = has_wins
-    if has_learnings is not UNSET:
-      field_dict["has_learnings"] = has_learnings
+    if has_morning is not UNSET:
+      field_dict["has_morning"] = has_morning
+    if has_audit is not UNSET:
+      field_dict["has_audit"] = has_audit
 
     return field_dict
 
@@ -69,27 +53,14 @@ class JournalCalendarDay:
     d = dict(src_dict)
     entry_date = isoparse(d.pop("entry_date")).date()
 
-    def _parse_mood(data: object) -> int | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(int | None | Unset, data)
+    has_morning = d.pop("has_morning", UNSET)
 
-    mood = _parse_mood(d.pop("mood", UNSET))
-
-    word_count = d.pop("word_count", UNSET)
-
-    has_wins = d.pop("has_wins", UNSET)
-
-    has_learnings = d.pop("has_learnings", UNSET)
+    has_audit = d.pop("has_audit", UNSET)
 
     journal_calendar_day = cls(
       entry_date=entry_date,
-      mood=mood,
-      word_count=word_count,
-      has_wins=has_wins,
-      has_learnings=has_learnings,
+      has_morning=has_morning,
+      has_audit=has_audit,
     )
 
     journal_calendar_day.additional_properties = d

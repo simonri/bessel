@@ -6,11 +6,11 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="JournalEntryUpsertDecisionsType0Item")
+T = TypeVar("T", bound="JournalEntrySchemaCapturesType0Item")
 
 
 @_attrs_define
-class JournalEntryUpsertDecisionsType0Item:
+class JournalEntrySchemaCapturesType0Item:
   """ """
 
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -25,10 +25,10 @@ class JournalEntryUpsertDecisionsType0Item:
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    journal_entry_upsert_decisions_type_0_item = cls()
+    journal_entry_schema_captures_type_0_item = cls()
 
-    journal_entry_upsert_decisions_type_0_item.additional_properties = d
-    return journal_entry_upsert_decisions_type_0_item
+    journal_entry_schema_captures_type_0_item.additional_properties = d
+    return journal_entry_schema_captures_type_0_item
 
   @property
   def additional_keys(self) -> list[str]:

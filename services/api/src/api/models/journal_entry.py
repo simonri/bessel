@@ -1,7 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 
-from sqlalchemy import Date, Float, Integer, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy import Boolean, Date, Integer, Text
+from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
 from api.models.base import RecordModel
@@ -10,28 +10,21 @@ from api.models.base import RecordModel
 class JournalEntry(RecordModel):
   __tablename__ = "journal_entries"
 
-  # One entry per calendar date
   entry_date: Mapped[date] = mapped_column(Date, nullable=False, unique=True, index=True)
 
-  # Free-form body (markdown)
-  body: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # Morning Prime
+  priority: Mapped[str | None] = mapped_column(Text, nullable=True)
+  friction: Mapped[str | None] = mapped_column(Text, nullable=True)
+  gratitude_1: Mapped[str | None] = mapped_column(Text, nullable=True)
+  gratitude_2: Mapped[str | None] = mapped_column(Text, nullable=True)
+  gratitude_3: Mapped[str | None] = mapped_column(Text, nullable=True)
+  morning_committed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
-  # Trackable metrics (1-5 scale, all optional)
-  mood: Mapped[int | None] = mapped_column(Integer, nullable=True)
-  energy: Mapped[int | None] = mapped_column(Integer, nullable=True)
-  focus: Mapped[int | None] = mapped_column(Integer, nullable=True)
-  sleep_hours: Mapped[float | None] = mapped_column(Float, nullable=True)
+  # Capture
+  captures: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
-  # Structured reflection (each its own column for queryability)
-  wins: Mapped[str | None] = mapped_column(Text, nullable=True)
-  blockers: Mapped[str | None] = mapped_column(Text, nullable=True)
-  learnings: Mapped[str | None] = mapped_column(Text, nullable=True)
-  gratitude: Mapped[str | None] = mapped_column(Text, nullable=True)
-  intention: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-  # Decisions log — structured as JSON array: [{decision, reasoning, context}]
-  decisions: Mapped[list | None] = mapped_column(JSONB, nullable=True)
-
-  # Organization
-  tags: Mapped[list[str] | None] = mapped_column(ARRAY(String(50)), nullable=True)
-  word_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+  # Evening Audit
+  scorecard: Mapped[int | None] = mapped_column(Integer, nullable=True)
+  priority_done: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+  insight: Mapped[str | None] = mapped_column(Text, nullable=True)
+  seed: Mapped[str | None] = mapped_column(Text, nullable=True)

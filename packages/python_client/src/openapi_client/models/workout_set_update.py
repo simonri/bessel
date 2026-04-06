@@ -19,6 +19,8 @@ class WorkoutSetUpdate:
       weight (float | None | Unset):
       weight_unit (None | str | Unset):
       rpe (int | None | Unset):
+      rir (int | None | Unset):
+      set_type (None | str | Unset):
       notes (None | str | Unset):
   """
 
@@ -26,6 +28,8 @@ class WorkoutSetUpdate:
   weight: float | None | Unset = UNSET
   weight_unit: None | str | Unset = UNSET
   rpe: int | None | Unset = UNSET
+  rir: int | None | Unset = UNSET
+  set_type: None | str | Unset = UNSET
   notes: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -54,6 +58,18 @@ class WorkoutSetUpdate:
     else:
       rpe = self.rpe
 
+    rir: int | None | Unset
+    if isinstance(self.rir, Unset):
+      rir = UNSET
+    else:
+      rir = self.rir
+
+    set_type: None | str | Unset
+    if isinstance(self.set_type, Unset):
+      set_type = UNSET
+    else:
+      set_type = self.set_type
+
     notes: None | str | Unset
     if isinstance(self.notes, Unset):
       notes = UNSET
@@ -71,6 +87,10 @@ class WorkoutSetUpdate:
       field_dict["weight_unit"] = weight_unit
     if rpe is not UNSET:
       field_dict["rpe"] = rpe
+    if rir is not UNSET:
+      field_dict["rir"] = rir
+    if set_type is not UNSET:
+      field_dict["set_type"] = set_type
     if notes is not UNSET:
       field_dict["notes"] = notes
 
@@ -116,6 +136,24 @@ class WorkoutSetUpdate:
 
     rpe = _parse_rpe(d.pop("rpe", UNSET))
 
+    def _parse_rir(data: object) -> int | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(int | None | Unset, data)
+
+    rir = _parse_rir(d.pop("rir", UNSET))
+
+    def _parse_set_type(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    set_type = _parse_set_type(d.pop("set_type", UNSET))
+
     def _parse_notes(data: object) -> None | str | Unset:
       if data is None:
         return data
@@ -130,6 +168,8 @@ class WorkoutSetUpdate:
       weight=weight,
       weight_unit=weight_unit,
       rpe=rpe,
+      rir=rir,
+      set_type=set_type,
       notes=notes,
     )
 

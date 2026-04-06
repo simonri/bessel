@@ -29,11 +29,14 @@ from .journal_calendar_day import JournalCalendarDay
 from .journal_calendar_response import JournalCalendarResponse
 from .journal_entry_list_response import JournalEntryListResponse
 from .journal_entry_schema import JournalEntrySchema
-from .journal_entry_schema_decisions_type_0_item import JournalEntrySchemaDecisionsType0Item
+from .journal_entry_schema_captures_type_0_item import JournalEntrySchemaCapturesType0Item
 from .journal_entry_upsert import JournalEntryUpsert
-from .journal_entry_upsert_decisions_type_0_item import JournalEntryUpsertDecisionsType0Item
+from .journal_entry_upsert_captures_type_0_item import JournalEntryUpsertCapturesType0Item
 from .journal_sort_property import JournalSortProperty
 from .journal_streak_response import JournalStreakResponse
+from .last_session_best_set import LastSessionBestSet
+from .last_session_response import LastSessionResponse
+from .last_session_set_schema import LastSessionSetSchema
 from .monthly_flow import MonthlyFlow
 from .monthly_flow_response import MonthlyFlowResponse
 from .monthly_spending_response import MonthlySpendingResponse
@@ -116,11 +119,14 @@ __all__ = (
   "JournalCalendarResponse",
   "JournalEntryListResponse",
   "JournalEntrySchema",
-  "JournalEntrySchemaDecisionsType0Item",
+  "JournalEntrySchemaCapturesType0Item",
   "JournalEntryUpsert",
-  "JournalEntryUpsertDecisionsType0Item",
+  "JournalEntryUpsertCapturesType0Item",
   "JournalSortProperty",
   "JournalStreakResponse",
+  "LastSessionBestSet",
+  "LastSessionResponse",
+  "LastSessionSetSchema",
   "MonthlyFlow",
   "MonthlyFlowResponse",
   "MonthlySpendingResponse",

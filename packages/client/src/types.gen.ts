@@ -628,21 +628,13 @@ export type JournalCalendarDay = {
    */
   entry_date: Date;
   /**
-   * Mood
+   * Has Morning
    */
-  mood?: number | null;
+  has_morning?: boolean;
   /**
-   * Word Count
+   * Has Audit
    */
-  word_count?: number;
-  /**
-   * Has Wins
-   */
-  has_wins?: boolean;
-  /**
-   * Has Learnings
-   */
-  has_learnings?: boolean;
+  has_audit?: boolean;
 };
 
 /**
@@ -695,85 +687,73 @@ export type JournalEntrySchema = {
    */
   entry_date: Date;
   /**
-   * Body
+   * Priority
    *
-   * Free-form markdown body.
+   * The one thing today.
    */
-  body?: string | null;
+  priority?: string | null;
   /**
-   * Mood
+   * Friction
    *
-   * Mood rating 1-5.
+   * What might stop me.
    */
-  mood?: number | null;
+  friction?: string | null;
   /**
-   * Energy
+   * Gratitude 1
    *
-   * Energy rating 1-5.
+   * Gratitude bullet 1.
    */
-  energy?: number | null;
+  gratitude_1?: string | null;
   /**
-   * Focus
+   * Gratitude 2
    *
-   * Focus quality 1-5.
+   * Gratitude bullet 2.
    */
-  focus?: number | null;
+  gratitude_2?: string | null;
   /**
-   * Sleep Hours
+   * Gratitude 3
    *
-   * Hours of sleep.
+   * Gratitude bullet 3.
    */
-  sleep_hours?: number | null;
+  gratitude_3?: string | null;
   /**
-   * Wins
+   * Morning Committed At
    *
-   * Wins for the day.
+   * When morning was committed.
    */
-  wins?: string | null;
+  morning_committed_at?: Date | null;
   /**
-   * Blockers
+   * Captures
    *
-   * Blockers / challenges.
+   * Captured thoughts.
    */
-  blockers?: string | null;
-  /**
-   * Learnings
-   *
-   * Key learnings.
-   */
-  learnings?: string | null;
-  /**
-   * Gratitude
-   *
-   * Gratitude notes.
-   */
-  gratitude?: string | null;
-  /**
-   * Intention
-   *
-   * Intention for tomorrow.
-   */
-  intention?: string | null;
-  /**
-   * Decisions
-   *
-   * Decisions log.
-   */
-  decisions?: Array<{
+  captures?: Array<{
     [key: string]: unknown;
   }> | null;
   /**
-   * Tags
+   * Scorecard
    *
-   * Tags.
+   * Day rating 1-5.
    */
-  tags?: Array<string> | null;
+  scorecard?: number | null;
   /**
-   * Word Count
+   * Priority Done
    *
-   * Word count of body.
+   * Did the priority get done.
    */
-  word_count?: number;
+  priority_done?: boolean | null;
+  /**
+   * Insight
+   *
+   * What did I learn today.
+   */
+  insight?: string | null;
+  /**
+   * Seed
+   *
+   * Problem for tomorrow.
+   */
+  seed?: string | null;
 };
 
 /**
@@ -781,55 +761,51 @@ export type JournalEntrySchema = {
  */
 export type JournalEntryUpsert = {
   /**
-   * Body
+   * Priority
    */
-  body?: string | null;
+  priority?: string | null;
   /**
-   * Mood
+   * Friction
    */
-  mood?: number | null;
+  friction?: string | null;
   /**
-   * Energy
+   * Gratitude 1
    */
-  energy?: number | null;
+  gratitude_1?: string | null;
   /**
-   * Focus
+   * Gratitude 2
    */
-  focus?: number | null;
+  gratitude_2?: string | null;
   /**
-   * Sleep Hours
+   * Gratitude 3
    */
-  sleep_hours?: number | null;
+  gratitude_3?: string | null;
   /**
-   * Wins
+   * Morning Committed At
    */
-  wins?: string | null;
+  morning_committed_at?: Date | null;
   /**
-   * Blockers
+   * Captures
    */
-  blockers?: string | null;
-  /**
-   * Learnings
-   */
-  learnings?: string | null;
-  /**
-   * Gratitude
-   */
-  gratitude?: string | null;
-  /**
-   * Intention
-   */
-  intention?: string | null;
-  /**
-   * Decisions
-   */
-  decisions?: Array<{
+  captures?: Array<{
     [key: string]: unknown;
   }> | null;
   /**
-   * Tags
+   * Scorecard
    */
-  tags?: Array<string> | null;
+  scorecard?: number | null;
+  /**
+   * Priority Done
+   */
+  priority_done?: boolean | null;
+  /**
+   * Insight
+   */
+  insight?: string | null;
+  /**
+   * Seed
+   */
+  seed?: string | null;
 };
 
 /**
@@ -840,10 +816,6 @@ export const JournalSortProperty = {
   "-ENTRY_DATE": "-entry_date",
   CREATED_AT: "created_at",
   "-CREATED_AT": "-created_at",
-  MOOD: "mood",
-  "-MOOD": "-mood",
-  ENERGY: "energy",
-  "-ENERGY": "-energy",
 } as const;
 
 /**
@@ -868,6 +840,65 @@ export type JournalStreakResponse = {
    * Total Entries
    */
   total_entries: number;
+};
+
+/**
+ * LastSessionBestSet
+ */
+export type LastSessionBestSet = {
+  /**
+   * Weight
+   */
+  weight: number;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Weight Unit
+   */
+  weight_unit: string;
+};
+
+/**
+ * LastSessionResponse
+ */
+export type LastSessionResponse = {
+  /**
+   * Sets
+   */
+  sets: Array<LastSessionSetSchema>;
+  best_set: LastSessionBestSet | null;
+};
+
+/**
+ * LastSessionSetSchema
+ */
+export type LastSessionSetSchema = {
+  /**
+   * Set Number
+   */
+  set_number: number;
+  /**
+   * Weight
+   */
+  weight: number;
+  /**
+   * Reps
+   */
+  reps: number;
+  /**
+   * Weight Unit
+   */
+  weight_unit: string;
+  /**
+   * Rir
+   */
+  rir: number | null;
+  /**
+   * Set Type
+   */
+  set_type: string | null;
 };
 
 /**
@@ -2336,6 +2367,14 @@ export type WorkoutSetCreate = {
    */
   rpe?: number | null;
   /**
+   * Rir
+   */
+  rir?: number | null;
+  /**
+   * Set Type
+   */
+  set_type?: string | null;
+  /**
    * Notes
    */
   notes?: string | null;
@@ -2392,6 +2431,18 @@ export type WorkoutSetSchema = {
    */
   rpe: number | null;
   /**
+   * Rir
+   */
+  rir: number | null;
+  /**
+   * Set Type
+   */
+  set_type: string | null;
+  /**
+   * E1Rm
+   */
+  e1rm: number | null;
+  /**
    * Is Pr
    */
   is_pr: boolean;
@@ -2421,6 +2472,14 @@ export type WorkoutSetUpdate = {
    * Rpe
    */
   rpe?: number | null;
+  /**
+   * Rir
+   */
+  rir?: number | null;
+  /**
+   * Set Type
+   */
+  set_type?: string | null;
   /**
    * Notes
    */
@@ -3023,18 +3082,6 @@ export type ListEntriesV1JournalGetData = {
   body?: never;
   path?: never;
   query?: {
-    /**
-     * Tag
-     *
-     * Filter by tag.
-     */
-    tag?: string | null;
-    /**
-     * Search
-     *
-     * Search body text.
-     */
-    search?: string | null;
     /**
      * Page
      *
@@ -4424,6 +4471,39 @@ export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses = {
 
 export type UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse =
   UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses[keyof UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses];
+
+export type GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData = {
+  body?: never;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+  };
+  query?: never;
+  url: "/v1/workouts/exercises/{exercise_id}/last-session";
+};
+
+export type GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetError =
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors[keyof GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors];
+
+export type GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: LastSessionResponse;
+  };
+
+export type GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse =
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses[keyof GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses];
 
 export type GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData = {
   body?: never;

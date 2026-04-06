@@ -19,6 +19,12 @@
         {
           "locationWhenInUsePermission": "Metron uses your location to show weather for where you are."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
       ]
     ],
     "experiments": {

@@ -8,9 +8,7 @@ from api.models.weather_cache import WeatherCache
 class WeatherCacheRepository(RepositoryBase[WeatherCache]):
   model = WeatherCache
 
-  async def get_by_location_and_date_range(
-    self, lat: float, lon: float, start: date, end: date
-  ) -> Sequence[WeatherCache]:
+  async def get_by_location_and_date_range(self, lat: float, lon: float, start: date, end: date) -> Sequence[WeatherCache]:
     statement = (
       self.get_base_statement()
       .where(

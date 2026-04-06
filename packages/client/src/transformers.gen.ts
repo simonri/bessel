@@ -222,6 +222,9 @@ const journalEntrySchemaSchemaResponseTransformer = (data: any) => {
     data.modified_at = new Date(data.modified_at);
   }
   data.entry_date = new Date(data.entry_date);
+  if (data.morning_committed_at) {
+    data.morning_committed_at = new Date(data.morning_committed_at);
+  }
   return data;
 };
 

@@ -70,3 +70,25 @@ class WorkoutSetRepository(RepositoryBase[WorkoutSet], RepositoryIDMixin[Workout
     statement = select(WorkoutSet.exercise_id).order_by(WorkoutSet.created_at.desc()).distinct().limit(limit)
     result = await self.session.execute(statement)
     return list(result.scalars().all())
+
+  async def get_last_session_sets(self, exercise_id: UUID) -> list[WorkoutSet]:
+    """Get sets from the most recent workout that included this exercise."""
+    latest_workout_id_subq = (
+      select(WorkoutSet.workout_log_id)
+      .where(WorkoutSet.exercise_id == exercise_id)
+      .order_by(WorkoutSet.created_at.desc())
+      .limit(1)
+      .scalar_subquery()
+    )
+
+    statement = (
+      select(WorkoutSet)
+      .where(
+        WorkoutSet.exercise_id == exercise_id,
+        WorkoutSet.workout_log_id == latest_workout_id_subq,
+      )
+      .order_by(WorkoutSet.set_number)
+    )
+
+    result = await self.session.execute(statement)
+    return list(result.scalars().all())

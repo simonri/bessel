@@ -39,6 +39,9 @@ class WorkoutSetSchema(IDSchema, TimestampedSchema):
   weight: float
   weight_unit: str
   rpe: int | None
+  rir: int | None
+  set_type: str | None
+  e1rm: float | None
   is_pr: bool
   notes: str | None
 
@@ -50,6 +53,8 @@ class WorkoutSetCreate(Schema):
   weight: float = Field(ge=0)
   weight_unit: str = Field(default="kg", max_length=3)
   rpe: int | None = Field(default=None, ge=1, le=10)
+  rir: int | None = Field(default=None, ge=0, le=4)
+  set_type: str | None = Field(default=None, pattern="^(standard|top|backoff|failure)$")
   notes: str | None = None
 
 
@@ -58,6 +63,8 @@ class WorkoutSetUpdate(Schema):
   weight: float | None = Field(default=None, ge=0)
   weight_unit: str | None = Field(default=None, max_length=3)
   rpe: int | None = Field(default=None, ge=1, le=10)
+  rir: int | None = Field(default=None, ge=0, le=4)
+  set_type: str | None = Field(default=None, pattern="^(standard|top|backoff|failure)$")
   notes: str | None = None
 
 
@@ -110,3 +117,26 @@ class ExercisePRSchema(Schema):
 
 class ExercisePRListResponse(Schema):
   items: list[ExercisePRSchema]
+
+
+# --- Last Session (Ghost Data) ---
+
+
+class LastSessionSetSchema(Schema):
+  set_number: int
+  weight: float
+  reps: int
+  weight_unit: str
+  rir: int | None
+  set_type: str | None
+
+
+class LastSessionBestSet(Schema):
+  weight: float
+  reps: int
+  weight_unit: str
+
+
+class LastSessionResponse(Schema):
+  sets: list[LastSessionSetSchema]
+  best_set: LastSessionBestSet | None

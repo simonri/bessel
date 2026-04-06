@@ -18,6 +18,9 @@ from api.workouts.schemas import (
   ExercisePRListResponse,
   ExercisePRSchema,
   ExerciseSchema,
+  LastSessionBestSet,
+  LastSessionResponse,
+  LastSessionSetSchema,
   WorkoutLogCreate,
   WorkoutLogDetailSchema,
   WorkoutLogListResponse,
@@ -241,6 +244,7 @@ async def create_workout_set(
 
   workout_set = WorkoutSet(workout_log_id=workout_id, **body.model_dump())
 
+  workout_service.compute_e1rm(workout_set)
   await workout_service.check_and_flag_pr(session, workout_set)
   await set_repo.create(workout_set, flush=True)
 
@@ -267,6 +271,7 @@ async def update_workout_set(
   if update_dict:
     await set_repo.update(workout_set, update_dict=update_dict)
     if "weight" in update_dict or "reps" in update_dict:
+      workout_service.compute_e1rm(workout_set)
       await workout_service.check_and_flag_pr(session, workout_set)
 
   return WorkoutSetSchema.model_validate(workout_set)
@@ -287,6 +292,42 @@ async def delete_workout_set(
   if workout_set is None or workout_set.workout_log_id != workout_id:
     raise ResourceNotFound("Set not found")
   await session.delete(workout_set)
+
+
+# --- Last Session (Ghost Data) ---
+
+
+@router.get(
+  "/exercises/{exercise_id}/last-session",
+  summary="Get Last Session for Exercise",
+  response_model=LastSessionResponse,
+)
+async def get_last_session(
+  exercise_id: UUID,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> LastSessionResponse:
+  set_repo = WorkoutSetRepository.from_session(session)
+
+  last_sets = await set_repo.get_last_session_sets(exercise_id)
+
+  sets = [
+    LastSessionSetSchema(
+      set_number=s.set_number,
+      weight=s.weight,
+      reps=s.reps,
+      weight_unit=s.weight_unit,
+      rir=s.rir,
+      set_type=s.set_type,
+    )
+    for s in last_sets
+  ]
+
+  best_set = None
+  if last_sets:
+    heaviest = max(last_sets, key=lambda s: s.weight)
+    best_set = LastSessionBestSet(weight=heaviest.weight, reps=heaviest.reps, weight_unit=heaviest.weight_unit)
+
+  return LastSessionResponse(sets=sets, best_set=best_set)
 
 
 # --- PRs ---

@@ -6,29 +6,59 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="JournalEntrySchemaDecisionsType0Item")
+T = TypeVar("T", bound="LastSessionBestSet")
 
 
 @_attrs_define
-class JournalEntrySchemaDecisionsType0Item:
-  """ """
+class LastSessionBestSet:
+  """
+  Attributes:
+      weight (float):
+      reps (int):
+      weight_unit (str):
+  """
 
+  weight: float
+  reps: int
+  weight_unit: str
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
+    weight = self.weight
+
+    reps = self.reps
+
+    weight_unit = self.weight_unit
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
+    field_dict.update(
+      {
+        "weight": weight,
+        "reps": reps,
+        "weight_unit": weight_unit,
+      }
+    )
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    journal_entry_schema_decisions_type_0_item = cls()
+    weight = d.pop("weight")
 
-    journal_entry_schema_decisions_type_0_item.additional_properties = d
-    return journal_entry_schema_decisions_type_0_item
+    reps = d.pop("reps")
+
+    weight_unit = d.pop("weight_unit")
+
+    last_session_best_set = cls(
+      weight=weight,
+      reps=reps,
+      weight_unit=weight_unit,
+    )
+
+    last_session_best_set.additional_properties = d
+    return last_session_best_set
 
   @property
   def additional_keys(self) -> list[str]:

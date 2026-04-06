@@ -13,28 +13,12 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
   *,
-  tag: None | str | Unset = UNSET,
-  search: None | str | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[JournalSortProperty] | None | Unset = UNSET,
 ) -> dict[str, Any]:
 
   params: dict[str, Any] = {}
-
-  json_tag: None | str | Unset
-  if isinstance(tag, Unset):
-    json_tag = UNSET
-  else:
-    json_tag = tag
-  params["tag"] = json_tag
-
-  json_search: None | str | Unset
-  if isinstance(search, Unset):
-    json_search = UNSET
-  else:
-    json_search = search
-  params["search"] = json_search
 
   params["page"] = page
 
@@ -93,8 +77,6 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   *,
   client: AuthenticatedClient | Client,
-  tag: None | str | Unset = UNSET,
-  search: None | str | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[JournalSortProperty] | None | Unset = UNSET,
@@ -102,8 +84,6 @@ def sync_detailed(
   """List Journal Entries
 
   Args:
-      tag (None | str | Unset): Filter by tag.
-      search (None | str | Unset): Search body text.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[JournalSortProperty] | None | Unset): Sorting criterion. Several criteria
@@ -119,8 +99,6 @@ def sync_detailed(
   """
 
   kwargs = _get_kwargs(
-    tag=tag,
-    search=search,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -136,8 +114,6 @@ def sync_detailed(
 def sync(
   *,
   client: AuthenticatedClient | Client,
-  tag: None | str | Unset = UNSET,
-  search: None | str | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[JournalSortProperty] | None | Unset = UNSET,
@@ -145,8 +121,6 @@ def sync(
   """List Journal Entries
 
   Args:
-      tag (None | str | Unset): Filter by tag.
-      search (None | str | Unset): Search body text.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[JournalSortProperty] | None | Unset): Sorting criterion. Several criteria
@@ -163,8 +137,6 @@ def sync(
 
   return sync_detailed(
     client=client,
-    tag=tag,
-    search=search,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -174,8 +146,6 @@ def sync(
 async def asyncio_detailed(
   *,
   client: AuthenticatedClient | Client,
-  tag: None | str | Unset = UNSET,
-  search: None | str | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[JournalSortProperty] | None | Unset = UNSET,
@@ -183,8 +153,6 @@ async def asyncio_detailed(
   """List Journal Entries
 
   Args:
-      tag (None | str | Unset): Filter by tag.
-      search (None | str | Unset): Search body text.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[JournalSortProperty] | None | Unset): Sorting criterion. Several criteria
@@ -200,8 +168,6 @@ async def asyncio_detailed(
   """
 
   kwargs = _get_kwargs(
-    tag=tag,
-    search=search,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -215,8 +181,6 @@ async def asyncio_detailed(
 async def asyncio(
   *,
   client: AuthenticatedClient | Client,
-  tag: None | str | Unset = UNSET,
-  search: None | str | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[JournalSortProperty] | None | Unset = UNSET,
@@ -224,8 +188,6 @@ async def asyncio(
   """List Journal Entries
 
   Args:
-      tag (None | str | Unset): Filter by tag.
-      search (None | str | Unset): Search body text.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[JournalSortProperty] | None | Unset): Sorting criterion. Several criteria
@@ -243,8 +205,6 @@ async def asyncio(
   return (
     await asyncio_detailed(
       client=client,
-      tag=tag,
-      search=search,
       page=page,
       limit=limit,
       sorting=sorting,

@@ -1,4 +1,4 @@
-from datetime import date
+import datetime
 from typing import Any
 
 from pydantic import Field
@@ -7,44 +7,50 @@ from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
 
 
+class CaptureItem(Schema):
+  text: str = Field(description="Captured thought.")
+  timestamp: str = Field(description="ISO timestamp of capture.")
+
+
 class JournalEntrySchema(IDSchema, TimestampedSchema):
-  entry_date: date = Field(description="Calendar date for this entry.")
-  body: str | None = Field(default=None, description="Free-form markdown body.")
-  mood: int | None = Field(default=None, description="Mood rating 1-5.")
-  energy: int | None = Field(default=None, description="Energy rating 1-5.")
-  focus: int | None = Field(default=None, description="Focus quality 1-5.")
-  sleep_hours: float | None = Field(default=None, description="Hours of sleep.")
-  wins: str | None = Field(default=None, description="Wins for the day.")
-  blockers: str | None = Field(default=None, description="Blockers / challenges.")
-  learnings: str | None = Field(default=None, description="Key learnings.")
-  gratitude: str | None = Field(default=None, description="Gratitude notes.")
-  intention: str | None = Field(default=None, description="Intention for tomorrow.")
-  decisions: list[dict[str, Any]] | None = Field(default=None, description="Decisions log.")
-  tags: list[str] | None = Field(default=None, description="Tags.")
-  word_count: int = Field(default=0, description="Word count of body.")
+  entry_date: datetime.date = Field(description="Calendar date for this entry.")
+
+  # Morning Prime
+  priority: str | None = Field(default=None, description="The one thing today.")
+  friction: str | None = Field(default=None, description="What might stop me.")
+  gratitude_1: str | None = Field(default=None, description="Gratitude bullet 1.")
+  gratitude_2: str | None = Field(default=None, description="Gratitude bullet 2.")
+  gratitude_3: str | None = Field(default=None, description="Gratitude bullet 3.")
+  morning_committed_at: datetime.datetime | None = Field(default=None, description="When morning was committed.")
+
+  # Capture
+  captures: list[dict[str, Any]] | None = Field(default=None, description="Captured thoughts.")
+
+  # Evening Audit
+  scorecard: int | None = Field(default=None, description="Day rating 1-5.")
+  priority_done: bool | None = Field(default=None, description="Did the priority get done.")
+  insight: str | None = Field(default=None, description="What did I learn today.")
+  seed: str | None = Field(default=None, description="Problem for tomorrow.")
 
 
 class JournalEntryUpsert(Schema):
-  body: str | None = Field(default=None)
-  mood: int | None = Field(default=None, ge=1, le=5)
-  energy: int | None = Field(default=None, ge=1, le=5)
-  focus: int | None = Field(default=None, ge=1, le=5)
-  sleep_hours: float | None = Field(default=None, ge=0, le=24)
-  wins: str | None = Field(default=None)
-  blockers: str | None = Field(default=None)
-  learnings: str | None = Field(default=None)
-  gratitude: str | None = Field(default=None)
-  intention: str | None = Field(default=None)
-  decisions: list[dict[str, Any]] | None = Field(default=None)
-  tags: list[str] | None = Field(default=None)
+  priority: str | None = Field(default=None)
+  friction: str | None = Field(default=None)
+  gratitude_1: str | None = Field(default=None)
+  gratitude_2: str | None = Field(default=None)
+  gratitude_3: str | None = Field(default=None)
+  morning_committed_at: datetime.datetime | None = Field(default=None)
+  captures: list[dict[str, Any]] | None = Field(default=None)
+  scorecard: int | None = Field(default=None, ge=1, le=5)
+  priority_done: bool | None = Field(default=None)
+  insight: str | None = Field(default=None)
+  seed: str | None = Field(default=None)
 
 
 class JournalCalendarDay(Schema):
-  entry_date: date
-  mood: int | None = None
-  word_count: int = 0
-  has_wins: bool = False
-  has_learnings: bool = False
+  entry_date: datetime.date
+  has_morning: bool = False
+  has_audit: bool = False
 
 
 class JournalCalendarResponse(Schema):

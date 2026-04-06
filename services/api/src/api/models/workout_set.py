@@ -18,6 +18,9 @@ class WorkoutSet(RecordModel):
   weight: Mapped[float] = mapped_column(Float, nullable=False)
   weight_unit: Mapped[str] = mapped_column(String(3), nullable=False, default="kg")
   rpe: Mapped[int | None] = mapped_column(Integer, nullable=True)
+  rir: Mapped[int | None] = mapped_column(Integer, nullable=True)
+  set_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
+  e1rm: Mapped[float | None] = mapped_column(Float, nullable=True)
   is_pr: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
   notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 

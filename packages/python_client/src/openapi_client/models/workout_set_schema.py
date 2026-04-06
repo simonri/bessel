@@ -25,6 +25,9 @@ class WorkoutSetSchema:
       weight (float):
       weight_unit (str):
       rpe (int | None):
+      rir (int | None):
+      set_type (None | str):
+      e1rm (float | None):
       is_pr (bool):
       notes (None | str):
   """
@@ -39,6 +42,9 @@ class WorkoutSetSchema:
   weight: float
   weight_unit: str
   rpe: int | None
+  rir: int | None
+  set_type: None | str
+  e1rm: float | None
   is_pr: bool
   notes: None | str
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -69,6 +75,15 @@ class WorkoutSetSchema:
     rpe: int | None
     rpe = self.rpe
 
+    rir: int | None
+    rir = self.rir
+
+    set_type: None | str
+    set_type = self.set_type
+
+    e1rm: float | None
+    e1rm = self.e1rm
+
     is_pr = self.is_pr
 
     notes: None | str
@@ -88,6 +103,9 @@ class WorkoutSetSchema:
         "weight": weight,
         "weight_unit": weight_unit,
         "rpe": rpe,
+        "rir": rir,
+        "set_type": set_type,
+        "e1rm": e1rm,
         "is_pr": is_pr,
         "notes": notes,
       }
@@ -136,6 +154,27 @@ class WorkoutSetSchema:
 
     rpe = _parse_rpe(d.pop("rpe"))
 
+    def _parse_rir(data: object) -> int | None:
+      if data is None:
+        return data
+      return cast(int | None, data)
+
+    rir = _parse_rir(d.pop("rir"))
+
+    def _parse_set_type(data: object) -> None | str:
+      if data is None:
+        return data
+      return cast(None | str, data)
+
+    set_type = _parse_set_type(d.pop("set_type"))
+
+    def _parse_e1rm(data: object) -> float | None:
+      if data is None:
+        return data
+      return cast(float | None, data)
+
+    e1rm = _parse_e1rm(d.pop("e1rm"))
+
     is_pr = d.pop("is_pr")
 
     def _parse_notes(data: object) -> None | str:
@@ -156,6 +195,9 @@ class WorkoutSetSchema:
       weight=weight,
       weight_unit=weight_unit,
       rpe=rpe,
+      rir=rir,
+      set_type=set_type,
+      e1rm=e1rm,
       is_pr=is_pr,
       notes=notes,
     )

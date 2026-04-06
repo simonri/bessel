@@ -35,6 +35,7 @@ import {
   getEntryV1JournalEntryDateGet,
   getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet,
   getHoldingsV1InvestmentsHoldingsGet,
+  getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet,
   getStreakV1JournalStreakGet,
   getWeatherForecastV1WeatherGet,
   getWorkoutV1WorkoutsWorkoutIdGet,
@@ -145,6 +146,9 @@ import type {
   GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponse,
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetError,
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
   GetStreakV1JournalStreakGetData,
   GetStreakV1JournalStreakGetResponse,
   GetWeatherForecastV1WeatherGetData,
@@ -2531,6 +2535,46 @@ export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchMutation = (
   };
   return mutationOptions;
 };
+
+export const getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetQueryKey =
+  (
+    options: Options<GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData>,
+  ) =>
+    createQueryKey(
+      "getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet",
+      options,
+    );
+
+/**
+ * Get Last Session for Exercise
+ */
+export const getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetOptions =
+  (
+    options: Options<GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData>,
+  ) =>
+    queryOptions<
+      GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
+      GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetError,
+      GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
+      ReturnType<
+        typeof getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true,
+          });
+        return data;
+      },
+      queryKey:
+        getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetQueryKey(
+          options,
+        ),
+    });
 
 export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey = (
   options: Options<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData>,

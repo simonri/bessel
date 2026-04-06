@@ -121,6 +121,9 @@ import type {
   GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponses,
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors,
+  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses,
   GetStreakV1JournalStreakGetData,
   GetStreakV1JournalStreakGetResponses,
   GetWeatherForecastV1WeatherGetData,
@@ -1354,6 +1357,23 @@ export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch = <
       ...options.headers,
     },
   });
+
+/**
+ * Get Last Session for Exercise
+ */
+export const getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses,
+    GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors,
+    ThrowOnError
+  >({ url: "/v1/workouts/exercises/{exercise_id}/last-session", ...options });
 
 /**
  * Get PRs for Exercise
