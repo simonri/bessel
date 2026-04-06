@@ -1,4 +1,3 @@
-// @ts-nocheck — query-core version mismatch between @metron/client and mobile app
 import { useState } from "react";
 import {
   View,
@@ -92,7 +91,7 @@ export function EditPlaceModal({
         category: category || null,
         status,
         rating: rating ?? null,
-        visited_at: status === "visited" && visitedAt ? visitedAt : null,
+        visited_at: status === "visited" && visitedAt ? new Date(visitedAt.toISOString().split("T")[0]) : null,
         review: review.trim() || null,
         tags: parsedTags.length > 0 ? parsedTags : null,
       },

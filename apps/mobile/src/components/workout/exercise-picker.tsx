@@ -1,4 +1,3 @@
-// @ts-nocheck — query-core version mismatch
 import { useState } from "react";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useQuery } from "@tanstack/react-query";

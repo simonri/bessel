@@ -1,4 +1,3 @@
-// @ts-nocheck — query-core version mismatch
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkoutV1WorkoutsWorkoutIdGetOptions } from "@metron/client";

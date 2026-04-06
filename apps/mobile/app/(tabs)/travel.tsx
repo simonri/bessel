@@ -1,6 +1,5 @@
-// @ts-nocheck — query-core version mismatch between @metron/client and mobile app
-import { useCallback, useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert, Linking, ActionSheetIOS } from "react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { View, Text, Pressable, ActivityIndicator, Alert, Linking, ActionSheetIOS, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,7 +9,7 @@ import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@metron/client";
 import type { PlaceSchema } from "@metron/client";
-import { MapPin, Plus } from "lucide-react-native";
+import { MapPin, Plus, Search, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FlashList } from "@shopify/flash-list";
 import { client } from "@/lib/client";
@@ -21,12 +20,29 @@ import { AddPlaceModal } from "@/components/travel/add-place-modal";
 import { EditPlaceModal } from "@/components/travel/edit-place-modal";
 import { getPlaceFields, getGoogleMapsUrl, PAGE_SIZE } from "@/components/travel/lib";
 
+function filterPlaces(places: PlaceSchema[], query: string): PlaceSchema[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return places;
+  return places.filter((p) => {
+    const fields = getPlaceFields(p);
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (fields.country?.toLowerCase().includes(q)) ||
+      (p.category?.toLowerCase().includes(q)) ||
+      fields.tags.some((t) => t.toLowerCase().includes(q))
+    );
+  });
+}
+
 export default function TravelScreen() {
   const queryClient = useQueryClient();
   const queryKey = listPlacesV1PlacesGetQueryKey({ client });
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
   const [editingPlace, setEditingPlace] = useState<PlaceSchema | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
   const headerHeight = insets.top + 70;
 
@@ -78,7 +94,7 @@ export default function TravelScreen() {
   });
 
   const handleMarkVisited = (place: PlaceSchema) => {
-    markVisitedMutation.mutate({ client, path: { place_id: place.id }, body: { status: "visited", visited_at: new Date() } });
+    markVisitedMutation.mutate({ client, path: { place_id: place.id }, body: { status: "visited", visited_at: new Date(new Date().toISOString().split("T")[0]) } });
   };
 
   const handleDelete = (place: PlaceSchema) => {
@@ -106,8 +122,20 @@ export default function TravelScreen() {
     );
   }, [deleteMutation, markVisitedMutation]);
 
-  const places = data?.pages.flatMap((p) => p.items) ?? [];
+  const allPlaces = data?.pages.flatMap((p) => p.items) ?? [];
   const totalCount = data?.pages[0]?.pagination.total_count ?? 0;
+  const places = useMemo(() => filterPlaces(allPlaces, searchQuery), [allPlaces, searchQuery]);
+
+  const handleSearchOpen = () => {
+    setSearchActive(true);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
+  };
+
+  const handleSearchClose = () => {
+    setSearchActive(false);
+    setSearchQuery("");
+    searchInputRef.current?.blur();
+  };
 
   return (
     <View className="flex-1 bg-background">
@@ -115,7 +143,7 @@ export default function TravelScreen() {
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#a1a1aa" />
         </View>
-      ) : places.length === 0 ? (
+      ) : allPlaces.length === 0 ? (
         <View className="flex-1 items-center justify-center px-8">
           <MapPin size={40} color="#27272a" />
           <Text className="text-foreground font-semibold text-lg mt-3">No places yet</Text>
@@ -130,9 +158,16 @@ export default function TravelScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PlaceCard place={item} onPress={setSelectedPlace} onLongPress={handleLongPress} />}
           contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: 100 }}
-          onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+          onEndReached={() => { if (hasNextPage && !isFetchingNextPage && !searchQuery) fetchNextPage(); }}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={isFetchingNextPage ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
+          ListEmptyComponent={
+            searchQuery ? (
+              <View className="items-center justify-center px-8 pt-20">
+                <Text className="text-muted-foreground text-sm">No places match "{searchQuery}"</Text>
+              </View>
+            ) : null
+          }
+          ListFooterComponent={isFetchingNextPage && !searchQuery ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
         />
       )}
 
@@ -143,14 +178,40 @@ export default function TravelScreen() {
       </View>
 
       {/* Header */}
-      <View className="absolute top-0 left-0 right-0 px-4 flex-row items-start justify-between" style={{ paddingTop: insets.top + 12 }}>
-        <View>
-          <Text className="text-3xl font-bold text-foreground">Travel</Text>
-          {totalCount > 0 && <Text className="text-muted-foreground text-base mt-0.5">{totalCount} place{totalCount !== 1 ? "s" : ""}</Text>}
-        </View>
-        <Pressable onPress={() => setShowAddSheet(true)} className="items-center justify-center rounded-full w-9 h-9 bg-foreground mt-0.5">
-          <Plus size={18} color="#09090b" />
-        </Pressable>
+      <View className="absolute top-0 left-0 right-0 px-4" style={{ paddingTop: insets.top + 12 }}>
+        {searchActive ? (
+          <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 h-11">
+            <Search size={16} color="#71717a" />
+            <TextInput
+              ref={searchInputRef}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search places..."
+              placeholderTextColor="#71717a"
+              autoFocus
+              returnKeyType="search"
+              style={{ flex: 1, color: "#fafafa", fontSize: 15, paddingVertical: 0 }}
+            />
+            <Pressable onPress={handleSearchClose} hitSlop={8}>
+              <X size={16} color="#71717a" />
+            </Pressable>
+          </View>
+        ) : (
+          <View className="flex-row items-start justify-between">
+            <View>
+              <Text className="text-3xl font-bold text-foreground">Travel</Text>
+              {totalCount > 0 && <Text className="text-muted-foreground text-base mt-0.5">{totalCount} place{totalCount !== 1 ? "s" : ""}</Text>}
+            </View>
+            <View className="flex-row items-center gap-2 mt-0.5">
+              <Pressable onPress={handleSearchOpen} className="items-center justify-center rounded-full w-9 h-9 bg-zinc-800">
+                <Search size={16} color="#a1a1aa" />
+              </Pressable>
+              <Pressable onPress={() => setShowAddSheet(true)} className="items-center justify-center rounded-full w-9 h-9 bg-foreground">
+                <Plus size={18} color="#09090b" />
+              </Pressable>
+            </View>
+          </View>
+        )}
       </View>
 
       {selectedPlace && (

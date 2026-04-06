@@ -1,4 +1,3 @@
-// @ts-nocheck — query-core version mismatch between @metron/client and mobile app
 import type { PlaceSchema } from "@metron/client";
 import {
   MapPin,

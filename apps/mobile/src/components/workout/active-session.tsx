@@ -1,4 +1,3 @@
-// @ts-nocheck — query-core version mismatch
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

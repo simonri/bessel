@@ -1,4 +1,3 @@
-// @ts-nocheck — query-core version mismatch between @metron/client and mobile app
 import { useCallback, useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
