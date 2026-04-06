@@ -81,7 +81,11 @@ export default function JournalScreen() {
 
   const upsertMutation = useMutation({
     ...upsertEntryV1JournalEntryDatePutMutation({ client }),
-    onSuccess: invalidateEntry,
+    // Don't invalidate on auto-save — local state is source of truth while editing.
+    // Only invalidate streak since it depends on whether an entry exists.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: getStreakV1JournalStreakGetQueryKey({ client }) });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -109,10 +113,13 @@ export default function JournalScreen() {
   const changeCountRef = useRef(0);
 
   useEffect(() => {
-    if (syncedDateRef.current === dateKey && !entryLoading) return;
     if (entryLoading) return;
+    // Only sync from server when switching dates — never overwrite local edits
+    // from a refetch on the same date
+    if (syncedDateRef.current === dateKey) return;
     syncedDateRef.current = dateKey;
     isDirtyRef.current = false;
+    changeCountRef.current = 0;
     const e = entry as JournalEntrySchema | null | undefined;
     setPriority(e?.priority ?? "");
     setFriction(e?.friction ?? "");
