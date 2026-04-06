@@ -71,7 +71,7 @@ export function CalendarSheet({
 
   return (
     <BottomSheet onDismiss={onDismiss}>
-      <View className="pb-8">
+      <View>
         <Text className="text-center text-foreground font-semibold mb-5" style={{ fontSize: 17 }}>
           {formatMonth(initYear, initMonth)}
         </Text>

@@ -112,7 +112,7 @@ export function WeatherWidget() {
     return (
       <View className="rounded-2xl bg-card p-4">
         <View className="gap-3">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <View key={i} className="flex-row items-center gap-3">
               <View className="h-4 w-10 rounded bg-muted" />
               <View className="h-5 w-5 rounded-full bg-muted" />
@@ -158,7 +158,7 @@ export function WeatherWidget() {
       </View>
 
       {/* Forecast rows */}
-      {forecast.days.map((day, i) => (
+      {forecast.days.slice(0, 4).map((day, i) => (
         <ForecastRow key={day.date} day={day} index={i} />
       ))}
     </View>

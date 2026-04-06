@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert, Linking, ActionSheetIOS, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,26 +12,61 @@ import type { PlaceSchema } from "@metron/client";
 import { MapPin, Plus, Search, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FlashList } from "@shopify/flash-list";
+import * as Location from "expo-location";
 import { client } from "@/lib/client";
 
 import { PlaceCard } from "@/components/travel/place-card";
 import { PlaceDetailSheet } from "@/components/travel/place-detail-sheet";
 import { AddPlaceModal } from "@/components/travel/add-place-modal";
 import { EditPlaceModal } from "@/components/travel/edit-place-modal";
+import { CountryFilterBar } from "@/components/travel/country-filter";
 import { getPlaceFields, getGoogleMapsUrl, PAGE_SIZE } from "@/components/travel/lib";
 
-function filterPlaces(places: PlaceSchema[], query: string): PlaceSchema[] {
+function filterPlaces(places: PlaceSchema[], query: string, countries: string[]): PlaceSchema[] {
+  let result = places;
+
+  if (countries.length > 0) {
+    const set = new Set(countries.map((c) => c.toLowerCase()));
+    result = result.filter((p) => {
+      const country = getPlaceFields(p).country?.toLowerCase();
+      return country && set.has(country);
+    });
+  }
+
   const q = query.toLowerCase().trim();
-  if (!q) return places;
-  return places.filter((p) => {
-    const fields = getPlaceFields(p);
-    return (
-      p.name.toLowerCase().includes(q) ||
-      (fields.country?.toLowerCase().includes(q)) ||
-      (p.category?.toLowerCase().includes(q)) ||
-      fields.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  });
+  if (q) {
+    result = result.filter((p) => {
+      const fields = getPlaceFields(p);
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (fields.country?.toLowerCase().includes(q)) ||
+        (p.category?.toLowerCase().includes(q)) ||
+        fields.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    });
+  }
+
+  return result;
+}
+
+function useCurrentCountry(): string | null {
+  const [country, setCountry] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") return;
+        const loc = await Location.getLastKnownPositionAsync();
+        const pos = loc ?? await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+        const [place] = await Location.reverseGeocodeAsync({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+        if (place?.country) setCountry(place.country);
+      } catch {}
+    })();
+  }, []);
+  return country;
 }
 
 export default function TravelScreen() {
@@ -42,9 +77,18 @@ export default function TravelScreen() {
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCountries, setSelectedCountries] = useState<string[] | null>(null);
   const searchInputRef = useRef<TextInput>(null);
+  const currentCountry = useCurrentCountry();
+
+  // Default to current country once detected
+  useEffect(() => {
+    if (currentCountry && selectedCountries === null) {
+      setSelectedCountries([currentCountry]);
+    }
+  }, [currentCountry]);
   const insets = useSafeAreaInsets();
-  const headerHeight = insets.top + 70;
+  const headerHeight = insets.top + 110;
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listPlacesV1PlacesGetInfiniteOptions({
@@ -124,7 +168,29 @@ export default function TravelScreen() {
 
   const allPlaces = data?.pages.flatMap((p) => p.items) ?? [];
   const totalCount = data?.pages[0]?.pagination.total_count ?? 0;
-  const places = useMemo(() => filterPlaces(allPlaces, searchQuery), [allPlaces, searchQuery]);
+
+  // Extract unique countries sorted by frequency
+  const allCountries = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of allPlaces) {
+      const c = getPlaceFields(p).country;
+      if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  }, [allPlaces]);
+
+  const activeCountries = selectedCountries ?? [];
+  const places = useMemo(
+    () => filterPlaces(allPlaces, searchQuery, activeCountries),
+    [allPlaces, searchQuery, activeCountries]
+  );
+
+  const handleToggleCountry = (country: string) => {
+    setSelectedCountries((prev) => {
+      const list = prev ?? [];
+      return list.includes(country) ? list.filter((c) => c !== country) : [...list, country];
+    });
+  };
 
   const handleSearchOpen = () => {
     setSearchActive(true);
@@ -136,6 +202,13 @@ export default function TravelScreen() {
     setSearchQuery("");
     searchInputRef.current?.blur();
   };
+
+  const hasActiveFilters = searchQuery || activeCountries.length > 0;
+  const emptyMessage = activeCountries.length > 0 && searchQuery
+    ? `No places match "${searchQuery}" in ${activeCountries.join(", ")}`
+    : activeCountries.length > 0
+    ? `No places in ${activeCountries.join(", ")}`
+    : `No places match "${searchQuery}"`;
 
   return (
     <View className="flex-1 bg-background">
@@ -158,16 +231,16 @@ export default function TravelScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PlaceCard place={item} onPress={setSelectedPlace} onLongPress={handleLongPress} />}
           contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: 100 }}
-          onEndReached={() => { if (hasNextPage && !isFetchingNextPage && !searchQuery) fetchNextPage(); }}
+          onEndReached={() => { if (hasNextPage && !isFetchingNextPage && !hasActiveFilters) fetchNextPage(); }}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
-            searchQuery ? (
+            hasActiveFilters ? (
               <View className="items-center justify-center px-8 pt-20">
-                <Text className="text-muted-foreground text-sm">No places match "{searchQuery}"</Text>
+                <Text className="text-muted-foreground text-sm text-center">{emptyMessage}</Text>
               </View>
             ) : null
           }
-          ListFooterComponent={isFetchingNextPage && !searchQuery ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
+          ListFooterComponent={isFetchingNextPage && !hasActiveFilters ? <View className="py-4 items-center"><ActivityIndicator color="#a1a1aa" /></View> : null}
         />
       )}
 
@@ -178,9 +251,9 @@ export default function TravelScreen() {
       </View>
 
       {/* Header */}
-      <View className="absolute top-0 left-0 right-0 px-4" style={{ paddingTop: insets.top + 12 }}>
+      <View className="absolute top-0 left-0 right-0" style={{ paddingTop: insets.top + 12 }}>
         {searchActive ? (
-          <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 h-11">
+          <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 h-11 mx-4">
             <Search size={16} color="#71717a" />
             <TextInput
               ref={searchInputRef}
@@ -197,7 +270,7 @@ export default function TravelScreen() {
             </Pressable>
           </View>
         ) : (
-          <View className="flex-row items-start justify-between">
+          <View className="flex-row items-start justify-between px-4">
             <View>
               <Text className="text-3xl font-bold text-foreground">Travel</Text>
               {totalCount > 0 && <Text className="text-muted-foreground text-base mt-0.5">{totalCount} place{totalCount !== 1 ? "s" : ""}</Text>}
@@ -212,6 +285,14 @@ export default function TravelScreen() {
             </View>
           </View>
         )}
+        <View className="mt-3">
+          <CountryFilterBar
+            countries={allCountries}
+            selectedCountries={activeCountries}
+            onToggle={handleToggleCountry}
+            onClear={() => setSelectedCountries([])}
+          />
+        </View>
       </View>
 
       {selectedPlace && (

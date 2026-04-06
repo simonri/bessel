@@ -19,7 +19,7 @@ export function TaskRow({
   return (
     <Pressable
       onPress={() => onPress(task)}
-      className="mx-4 mb-1 flex-row items-center gap-3 rounded-xl px-3 py-3.5 active:bg-zinc-800"
+      className="mb-1 flex-row items-center gap-3 rounded-xl px-4 py-3.5 active:bg-zinc-800"
     >
       <Pressable onPress={() => onToggle(task)} hitSlop={8}>
         {isDone ? (

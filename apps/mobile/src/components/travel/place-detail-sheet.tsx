@@ -76,7 +76,7 @@ export function PlaceDetailSheet({
           </View>
         )}
 
-        <View className="flex-row items-center gap-2 mt-1 mb-6">
+        <View className="flex-row items-center gap-2 mt-1">
           <Pressable
             onPress={() => { onEdit(place); onClose(); }}
             className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"

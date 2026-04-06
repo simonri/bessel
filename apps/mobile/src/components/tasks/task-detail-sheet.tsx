@@ -100,7 +100,7 @@ export function TaskDetailSheet({
           </View>
         ) : null}
 
-        <View className="flex-row items-center gap-2 mt-1 mb-6">
+        <View className="flex-row items-center gap-2 mt-1">
           <Pressable onPress={() => { onEdit(task); onClose(); }} className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5">
             <Pencil size={16} color="#fafafa" />
             <Text className="font-medium text-foreground" style={{ fontSize: 15 }}>Edit</Text>

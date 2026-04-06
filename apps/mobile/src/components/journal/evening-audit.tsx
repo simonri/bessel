@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import { Moon, Check } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
+import { Button } from "@/components/shared/button";
 import { StarRating } from "./star-rating";
 
 export function EveningAudit({
@@ -124,15 +125,9 @@ export function EveningAudit({
         </View>
       </View>
 
-      <Pressable
-        onPress={onClose}
-        disabled={isSaving}
-        className="items-center justify-center rounded-xl bg-foreground py-3.5"
-      >
-        <Text className="font-semibold text-background" style={{ fontSize: 15 }}>
-          Close the Day
-        </Text>
-      </Pressable>
+      <Button onPress={onClose} loading={isSaving} fullWidth size="medium">
+        Close the Day
+      </Button>
     </View>
   );
 }

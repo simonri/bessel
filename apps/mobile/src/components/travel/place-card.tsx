@@ -59,7 +59,7 @@ export function PlaceCard({
       onPress={() => onPress(place)}
       onLongPress={() => onLongPress(place)}
       delayLongPress={300}
-      className="mx-4 mb-0.5 flex-row items-center gap-3 rounded-xl px-3 py-3 active:bg-zinc-800/60"
+      className="mb-0.5 flex-row items-center gap-3 rounded-xl px-4 py-3 active:bg-zinc-800/60"
     >
       <PlaceIcon place={place} />
 

@@ -7,6 +7,7 @@ import { ErrorBoundary as ErrorBoundaryComponent } from "react-error-boundary";
 import { useRouter } from "expo-router";
 import { MetronClientProvider } from "@/providers/metron-client-provider";
 import { MetronQueryClientProvider } from "@/providers/metron-query-client-provider";
+import { DarkTheme, ThemeProvider } from '@react-navigation/native'
 
 function RootLayout() {
   const queryClient = useQueryClient();
@@ -49,12 +50,14 @@ function RootLayout() {
 
 export default function Providers() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <MetronClientProvider>
-        <MetronQueryClientProvider>
-          <RootLayout />
-        </MetronQueryClientProvider>
-      </MetronClientProvider>
-    </GestureHandlerRootView>
+    <ThemeProvider value={DarkTheme}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <MetronClientProvider>
+          <MetronQueryClientProvider>
+            <RootLayout />
+          </MetronQueryClientProvider>
+        </MetronClientProvider>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   )
 }

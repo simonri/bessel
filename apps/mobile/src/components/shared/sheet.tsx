@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet } from "react-native";
 import {
-  BottomSheetBackdrop,
   BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-  type BottomSheetModalProps,
-} from "@gorhom/bottom-sheet";
-import { useBottomSpacing } from "@/lib/safe-area";
+  BottomSheetModalProps,
+  BottomSheetBackdrop as GorhomBottomSheetBackdrop,
+  BottomSheetScrollView as GorhomBottomSheetScrollView,
+  BottomSheetView as GorhomBottomSheetView,
+} from '@gorhom/bottom-sheet'
+import { useTheme } from "@/design-system";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export interface BottomSheetProps
   extends React.PropsWithChildren,
@@ -22,60 +23,62 @@ export const BottomSheet = ({
   scrollable = true,
   ...props
 }: BottomSheetProps) => {
-  const ref = useRef<BottomSheetModal>(null);
-  const bottomSpacing = useBottomSpacing();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const theme = useTheme();
+
+  const safeViewInsets = useSafeAreaInsets();
 
   useEffect(() => {
-    ref.current?.present();
+    bottomSheetRef.current?.present();
   }, []);
 
   return (
     <BottomSheetModal
-      ref={ref}
+      ref={bottomSheetRef}
       onDismiss={onDismiss}
       enablePanDownToClose
       enableDynamicSizing
       backgroundStyle={{
         backgroundColor: "#171717",
-        borderRadius: 20,
+        borderRadius: theme.borderRadii["border-radius-24"],
       }}
       handleIndicatorStyle={{
         backgroundColor: "#52525b",
-        width: 36,
-        height: 5,
       }}
       {...props}
       backdropComponent={(backdropProps) => (
-        <BottomSheetBackdrop
+        <GorhomBottomSheetBackdrop
           {...backdropProps}
           enableTouchThrough={false}
           appearsOnIndex={0}
           disappearsOnIndex={-1}
           style={[
-            { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
-            StyleSheet.absoluteFillObject,
+            { flex: 1, backgroundColor: theme.colors.overlay },
+            StyleSheet.absoluteFill,
           ]}
         />
       )}
     >
       {scrollable ? (
-        <BottomSheetScrollView
+        <GorhomBottomSheetScrollView
           contentContainerStyle={{
-            paddingHorizontal: 20,
-            paddingBottom: 0,
+            flex: 1,
+            padding: theme.spacing["spacing-4"],
+            paddingBottom: safeViewInsets.bottom,
           }}
         >
           {children}
-        </BottomSheetScrollView>
+        </GorhomBottomSheetScrollView>
       ) : (
-        <BottomSheetView
+        <GorhomBottomSheetView
           style={{
-            paddingHorizontal: 20,
-            paddingBottom: 0,
+            flex: 1,
+            padding: theme.spacing["spacing-4"],
+            paddingBottom: safeViewInsets.bottom,
           }}
         >
           {children}
-        </BottomSheetView>
+        </GorhomBottomSheetView>
       )}
     </BottomSheetModal>
   );
