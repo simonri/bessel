@@ -23,6 +23,19 @@ config.resolver.unstable_conditionNames = [
   "default",
 ];
 
+// Resolve .js imports to .ts files in workspace packages (e.g. @metron/client
+// imports ./@tanstack/react-query.gen.js but the file is .ts)
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Rewrite .js imports to .ts when resolving workspace packages
+  if (moduleName.endsWith(".js") && !moduleName.includes("node_modules")) {
+    const tsName = moduleName.replace(/\.js$/, ".ts");
+    try {
+      return context.resolveRequest(context, tsName, platform);
+    } catch {}
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 module.exports = withNativeWind(config, {
   input: "./global.css",
 });

@@ -849,7 +849,8 @@ export const JournalSortProperty = {
 /**
  * JournalSortProperty
  */
-export type JournalSortProperty = (typeof JournalSortProperty)[keyof typeof JournalSortProperty];
+export type JournalSortProperty =
+  (typeof JournalSortProperty)[keyof typeof JournalSortProperty];
 
 /**
  * JournalStreakResponse
@@ -950,7 +951,8 @@ export const MuscleCategory = {
 /**
  * MuscleCategory
  */
-export type MuscleCategory = (typeof MuscleCategory)[keyof typeof MuscleCategory];
+export type MuscleCategory =
+  (typeof MuscleCategory)[keyof typeof MuscleCategory];
 
 /**
  * Pagination
@@ -1185,7 +1187,8 @@ export const PlaceSortProperty = {
 /**
  * PlaceSortProperty
  */
-export type PlaceSortProperty = (typeof PlaceSortProperty)[keyof typeof PlaceSortProperty];
+export type PlaceSortProperty =
+  (typeof PlaceSortProperty)[keyof typeof PlaceSortProperty];
 
 /**
  * PlaceStatus
@@ -1272,7 +1275,8 @@ export const RruleFrequency = {
 /**
  * RruleFrequency
  */
-export type RruleFrequency = (typeof RruleFrequency)[keyof typeof RruleFrequency];
+export type RruleFrequency =
+  (typeof RruleFrequency)[keyof typeof RruleFrequency];
 
 /**
  * SecurityCreate
@@ -1677,7 +1681,8 @@ export const TaskSortProperty = {
 /**
  * TaskSortProperty
  */
-export type TaskSortProperty = (typeof TaskSortProperty)[keyof typeof TaskSortProperty];
+export type TaskSortProperty =
+  (typeof TaskSortProperty)[keyof typeof TaskSortProperty];
 
 /**
  * TaskStatus
@@ -1905,7 +1910,8 @@ export const TransactionDirection = {
 /**
  * TransactionDirection
  */
-export type TransactionDirection = (typeof TransactionDirection)[keyof typeof TransactionDirection];
+export type TransactionDirection =
+  (typeof TransactionDirection)[keyof typeof TransactionDirection];
 
 /**
  * TransactionListResponse
@@ -2108,6 +2114,66 @@ export type ValidationError = {
   ctx?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * WeatherDaySchema
+ */
+export type WeatherDaySchema = {
+  /**
+   * Date
+   *
+   * Date of the weather data.
+   */
+  date: Date;
+  /**
+   * Temperature Max
+   *
+   * Maximum temperature in Celsius.
+   */
+  temperature_max: number;
+  /**
+   * Temperature Min
+   *
+   * Minimum temperature in Celsius.
+   */
+  temperature_min: number;
+  /**
+   * Apparent Temperature Max
+   *
+   * Maximum feels-like temperature in Celsius.
+   */
+  apparent_temperature_max: number;
+  /**
+   * Precipitation Probability Max
+   *
+   * Maximum precipitation probability in percent.
+   */
+  precipitation_probability_max: number;
+  /**
+   * Weather Code
+   *
+   * WMO weather interpretation code.
+   */
+  weather_code: number;
+  /**
+   * Weather Label
+   *
+   * Human-readable weather condition.
+   */
+  weather_label: string;
+};
+
+/**
+ * WeatherForecastResponse
+ */
+export type WeatherForecastResponse = {
+  /**
+   * Days
+   *
+   * 10-day weather forecast.
+   */
+  days: Array<WeatherDaySchema>;
 };
 
 /**
@@ -2879,54 +2945,59 @@ export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData = {
   url: "/v1/investments/securities/{security_id}/prices";
 };
 
-export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
 
 export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError =
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors[keyof ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors];
 
-export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: SecurityPriceListResponse;
-};
+export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: SecurityPriceListResponse;
+  };
 
 export type ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse =
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses[keyof ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses];
 
-export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData = {
-  body: SecurityPriceCreate;
-  path: {
-    /**
-     * Security Id
-     */
-    security_id: string;
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData =
+  {
+    body: SecurityPriceCreate;
+    path: {
+      /**
+       * Security Id
+       */
+      security_id: string;
+    };
+    query?: never;
+    url: "/v1/investments/securities/{security_id}/prices";
   };
-  query?: never;
-  url: "/v1/investments/securities/{security_id}/prices";
-};
 
-export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
 
 export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError =
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors[keyof CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors];
 
-export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses = {
-  /**
-   * Successful Response
-   */
-  201: SecurityPriceSchema;
-};
+export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    201: SecurityPriceSchema;
+  };
 
 export type CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse =
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses[keyof CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses];
@@ -3401,7 +3472,8 @@ export type ListTasksV1TasksGetErrors = {
   422: HttpValidationError;
 };
 
-export type ListTasksV1TasksGetError = ListTasksV1TasksGetErrors[keyof ListTasksV1TasksGetErrors];
+export type ListTasksV1TasksGetError =
+  ListTasksV1TasksGetErrors[keyof ListTasksV1TasksGetErrors];
 
 export type ListTasksV1TasksGetResponses = {
   /**
@@ -3823,29 +3895,32 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
 export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
   UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData = {
-  body: BulkCategorizeRequest;
-  path?: never;
-  query?: never;
-  url: "/v1/transactions/categorize-by-description";
-};
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData =
+  {
+    body: BulkCategorizeRequest;
+    path?: never;
+    query?: never;
+    url: "/v1/transactions/categorize-by-description";
+  };
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
 
 export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError =
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors];
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses = {
-  /**
-   * Successful Response
-   */
-  200: BulkCategorizeResponse;
-};
+export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: BulkCategorizeResponse;
+  };
 
 export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse =
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses];
@@ -3923,6 +3998,46 @@ export type MonthlyFlowV1TransactionsMonthlyFlowGetResponses = {
 
 export type MonthlyFlowV1TransactionsMonthlyFlowGetResponse =
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses[keyof MonthlyFlowV1TransactionsMonthlyFlowGetResponses];
+
+export type GetWeatherForecastV1WeatherGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Lat
+     *
+     * Latitude.
+     */
+    lat: number;
+    /**
+     * Lon
+     *
+     * Longitude.
+     */
+    lon: number;
+  };
+  url: "/v1/weather";
+};
+
+export type GetWeatherForecastV1WeatherGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetWeatherForecastV1WeatherGetError =
+  GetWeatherForecastV1WeatherGetErrors[keyof GetWeatherForecastV1WeatherGetErrors];
+
+export type GetWeatherForecastV1WeatherGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: WeatherForecastResponse;
+};
+
+export type GetWeatherForecastV1WeatherGetResponse =
+  GetWeatherForecastV1WeatherGetResponses[keyof GetWeatherForecastV1WeatherGetResponses];
 
 export type ListExercisesV1WorkoutsExercisesGetData = {
   body?: never;

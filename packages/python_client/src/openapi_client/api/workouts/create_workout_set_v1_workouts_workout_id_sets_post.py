@@ -7,23 +7,23 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.category_schema import CategorySchema
-from ...models.category_update import CategoryUpdate
 from ...models.http_validation_error import HTTPValidationError
+from ...models.workout_set_create import WorkoutSetCreate
+from ...models.workout_set_schema import WorkoutSetSchema
 from ...types import Response
 
 
 def _get_kwargs(
-  category_id: UUID,
+  workout_id: UUID,
   *,
-  body: CategoryUpdate,
+  body: WorkoutSetCreate,
 ) -> dict[str, Any]:
   headers: dict[str, Any] = {}
 
   _kwargs: dict[str, Any] = {
-    "method": "patch",
-    "url": "/v1/categories/{category_id}".format(
-      category_id=quote(str(category_id), safe=""),
+    "method": "post",
+    "url": "/v1/workouts/{workout_id}/sets".format(
+      workout_id=quote(str(workout_id), safe=""),
     ),
   }
 
@@ -35,11 +35,11 @@ def _get_kwargs(
   return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> CategorySchema | HTTPValidationError | None:
-  if response.status_code == 200:
-    response_200 = CategorySchema.from_dict(response.json())
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | WorkoutSetSchema | None:
+  if response.status_code == 201:
+    response_201 = WorkoutSetSchema.from_dict(response.json())
 
-    return response_200
+    return response_201
 
   if response.status_code == 422:
     response_422 = HTTPValidationError.from_dict(response.json())
@@ -52,7 +52,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
     return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[CategorySchema | HTTPValidationError]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | WorkoutSetSchema]:
   return Response(
     status_code=HTTPStatus(response.status_code),
     content=response.content,
@@ -62,29 +62,27 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 
 def sync_detailed(
-  category_id: UUID,
+  workout_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryUpdate,
-) -> Response[CategorySchema | HTTPValidationError]:
-  """Update Category
-
-   Update a category.
+  body: WorkoutSetCreate,
+) -> Response[HTTPValidationError | WorkoutSetSchema]:
+  """Add Set to Workout
 
   Args:
-      category_id (UUID):
-      body (CategoryUpdate):
+      workout_id (UUID):
+      body (WorkoutSetCreate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[CategorySchema | HTTPValidationError]
+      Response[HTTPValidationError | WorkoutSetSchema]
   """
 
   kwargs = _get_kwargs(
-    category_id=category_id,
+    workout_id=workout_id,
     body=body,
   )
 
@@ -96,58 +94,54 @@ def sync_detailed(
 
 
 def sync(
-  category_id: UUID,
+  workout_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryUpdate,
-) -> CategorySchema | HTTPValidationError | None:
-  """Update Category
-
-   Update a category.
+  body: WorkoutSetCreate,
+) -> HTTPValidationError | WorkoutSetSchema | None:
+  """Add Set to Workout
 
   Args:
-      category_id (UUID):
-      body (CategoryUpdate):
+      workout_id (UUID):
+      body (WorkoutSetCreate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      CategorySchema | HTTPValidationError
+      HTTPValidationError | WorkoutSetSchema
   """
 
   return sync_detailed(
-    category_id=category_id,
+    workout_id=workout_id,
     client=client,
     body=body,
   ).parsed
 
 
 async def asyncio_detailed(
-  category_id: UUID,
+  workout_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryUpdate,
-) -> Response[CategorySchema | HTTPValidationError]:
-  """Update Category
-
-   Update a category.
+  body: WorkoutSetCreate,
+) -> Response[HTTPValidationError | WorkoutSetSchema]:
+  """Add Set to Workout
 
   Args:
-      category_id (UUID):
-      body (CategoryUpdate):
+      workout_id (UUID):
+      body (WorkoutSetCreate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[CategorySchema | HTTPValidationError]
+      Response[HTTPValidationError | WorkoutSetSchema]
   """
 
   kwargs = _get_kwargs(
-    category_id=category_id,
+    workout_id=workout_id,
     body=body,
   )
 
@@ -157,30 +151,28 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-  category_id: UUID,
+  workout_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryUpdate,
-) -> CategorySchema | HTTPValidationError | None:
-  """Update Category
-
-   Update a category.
+  body: WorkoutSetCreate,
+) -> HTTPValidationError | WorkoutSetSchema | None:
+  """Add Set to Workout
 
   Args:
-      category_id (UUID):
-      body (CategoryUpdate):
+      workout_id (UUID):
+      body (WorkoutSetCreate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      CategorySchema | HTTPValidationError
+      HTTPValidationError | WorkoutSetSchema
   """
 
   return (
     await asyncio_detailed(
-      category_id=category_id,
+      workout_id=workout_id,
       client=client,
       body=body,
     )

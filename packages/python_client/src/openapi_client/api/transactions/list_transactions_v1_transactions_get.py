@@ -1,3 +1,4 @@
+import datetime
 from http import HTTPStatus
 from typing import Any
 from uuid import UUID
@@ -14,7 +15,13 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
   *,
-  bank_account_id: None | Unset | UUID = UNSET,
+  bank_account_id: list[UUID] | None | Unset = UNSET,
+  category_id: list[UUID] | None | Unset = UNSET,
+  uncategorized: bool | Unset = False,
+  direction: None | str | Unset = UNSET,
+  search: None | str | Unset = UNSET,
+  date_from: datetime.date | None | Unset = UNSET,
+  date_to: datetime.date | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -22,14 +29,65 @@ def _get_kwargs(
 
   params: dict[str, Any] = {}
 
-  json_bank_account_id: None | str | Unset
+  json_bank_account_id: list[str] | None | Unset
   if isinstance(bank_account_id, Unset):
     json_bank_account_id = UNSET
-  elif isinstance(bank_account_id, UUID):
-    json_bank_account_id = str(bank_account_id)
+  elif isinstance(bank_account_id, list):
+    json_bank_account_id = []
+    for bank_account_id_type_0_item_data in bank_account_id:
+      bank_account_id_type_0_item = str(bank_account_id_type_0_item_data)
+      json_bank_account_id.append(bank_account_id_type_0_item)
+
   else:
     json_bank_account_id = bank_account_id
   params["bank_account_id"] = json_bank_account_id
+
+  json_category_id: list[str] | None | Unset
+  if isinstance(category_id, Unset):
+    json_category_id = UNSET
+  elif isinstance(category_id, list):
+    json_category_id = []
+    for category_id_type_0_item_data in category_id:
+      category_id_type_0_item = str(category_id_type_0_item_data)
+      json_category_id.append(category_id_type_0_item)
+
+  else:
+    json_category_id = category_id
+  params["category_id"] = json_category_id
+
+  params["uncategorized"] = uncategorized
+
+  json_direction: None | str | Unset
+  if isinstance(direction, Unset):
+    json_direction = UNSET
+  else:
+    json_direction = direction
+  params["direction"] = json_direction
+
+  json_search: None | str | Unset
+  if isinstance(search, Unset):
+    json_search = UNSET
+  else:
+    json_search = search
+  params["search"] = json_search
+
+  json_date_from: None | str | Unset
+  if isinstance(date_from, Unset):
+    json_date_from = UNSET
+  elif isinstance(date_from, datetime.date):
+    json_date_from = date_from.isoformat()
+  else:
+    json_date_from = date_from
+  params["date_from"] = json_date_from
+
+  json_date_to: None | str | Unset
+  if isinstance(date_to, Unset):
+    json_date_to = UNSET
+  elif isinstance(date_to, datetime.date):
+    json_date_to = date_to.isoformat()
+  else:
+    json_date_to = date_to
+  params["date_to"] = json_date_to
 
   params["page"] = page
 
@@ -88,7 +146,13 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   *,
   client: AuthenticatedClient | Client,
-  bank_account_id: None | Unset | UUID = UNSET,
+  bank_account_id: list[UUID] | None | Unset = UNSET,
+  category_id: list[UUID] | None | Unset = UNSET,
+  uncategorized: bool | Unset = False,
+  direction: None | str | Unset = UNSET,
+  search: None | str | Unset = UNSET,
+  date_from: datetime.date | None | Unset = UNSET,
+  date_to: datetime.date | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -98,7 +162,14 @@ def sync_detailed(
    List transactions.
 
   Args:
-      bank_account_id (None | Unset | UUID): Filter by bank account ID.
+      bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
+      category_id (list[UUID] | None | Unset): Filter by category ID(s).
+      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
+          False.
+      direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
+      search (None | str | Unset): Search in description (case-insensitive).
+      date_from (datetime.date | None | Unset): Start date (inclusive).
+      date_to (datetime.date | None | Unset): End date (inclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -115,6 +186,12 @@ def sync_detailed(
 
   kwargs = _get_kwargs(
     bank_account_id=bank_account_id,
+    category_id=category_id,
+    uncategorized=uncategorized,
+    direction=direction,
+    search=search,
+    date_from=date_from,
+    date_to=date_to,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -130,7 +207,13 @@ def sync_detailed(
 def sync(
   *,
   client: AuthenticatedClient | Client,
-  bank_account_id: None | Unset | UUID = UNSET,
+  bank_account_id: list[UUID] | None | Unset = UNSET,
+  category_id: list[UUID] | None | Unset = UNSET,
+  uncategorized: bool | Unset = False,
+  direction: None | str | Unset = UNSET,
+  search: None | str | Unset = UNSET,
+  date_from: datetime.date | None | Unset = UNSET,
+  date_to: datetime.date | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -140,7 +223,14 @@ def sync(
    List transactions.
 
   Args:
-      bank_account_id (None | Unset | UUID): Filter by bank account ID.
+      bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
+      category_id (list[UUID] | None | Unset): Filter by category ID(s).
+      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
+          False.
+      direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
+      search (None | str | Unset): Search in description (case-insensitive).
+      date_from (datetime.date | None | Unset): Start date (inclusive).
+      date_to (datetime.date | None | Unset): End date (inclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -158,6 +248,12 @@ def sync(
   return sync_detailed(
     client=client,
     bank_account_id=bank_account_id,
+    category_id=category_id,
+    uncategorized=uncategorized,
+    direction=direction,
+    search=search,
+    date_from=date_from,
+    date_to=date_to,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -167,7 +263,13 @@ def sync(
 async def asyncio_detailed(
   *,
   client: AuthenticatedClient | Client,
-  bank_account_id: None | Unset | UUID = UNSET,
+  bank_account_id: list[UUID] | None | Unset = UNSET,
+  category_id: list[UUID] | None | Unset = UNSET,
+  uncategorized: bool | Unset = False,
+  direction: None | str | Unset = UNSET,
+  search: None | str | Unset = UNSET,
+  date_from: datetime.date | None | Unset = UNSET,
+  date_to: datetime.date | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -177,7 +279,14 @@ async def asyncio_detailed(
    List transactions.
 
   Args:
-      bank_account_id (None | Unset | UUID): Filter by bank account ID.
+      bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
+      category_id (list[UUID] | None | Unset): Filter by category ID(s).
+      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
+          False.
+      direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
+      search (None | str | Unset): Search in description (case-insensitive).
+      date_from (datetime.date | None | Unset): Start date (inclusive).
+      date_to (datetime.date | None | Unset): End date (inclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -194,6 +303,12 @@ async def asyncio_detailed(
 
   kwargs = _get_kwargs(
     bank_account_id=bank_account_id,
+    category_id=category_id,
+    uncategorized=uncategorized,
+    direction=direction,
+    search=search,
+    date_from=date_from,
+    date_to=date_to,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -207,7 +322,13 @@ async def asyncio_detailed(
 async def asyncio(
   *,
   client: AuthenticatedClient | Client,
-  bank_account_id: None | Unset | UUID = UNSET,
+  bank_account_id: list[UUID] | None | Unset = UNSET,
+  category_id: list[UUID] | None | Unset = UNSET,
+  uncategorized: bool | Unset = False,
+  direction: None | str | Unset = UNSET,
+  search: None | str | Unset = UNSET,
+  date_from: datetime.date | None | Unset = UNSET,
+  date_to: datetime.date | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -217,7 +338,14 @@ async def asyncio(
    List transactions.
 
   Args:
-      bank_account_id (None | Unset | UUID): Filter by bank account ID.
+      bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
+      category_id (list[UUID] | None | Unset): Filter by category ID(s).
+      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
+          False.
+      direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
+      search (None | str | Unset): Search in description (case-insensitive).
+      date_from (datetime.date | None | Unset): Start date (inclusive).
+      date_to (datetime.date | None | Unset): End date (inclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -236,6 +364,12 @@ async def asyncio(
     await asyncio_detailed(
       client=client,
       bank_account_id=bank_account_id,
+      category_id=category_id,
+      uncategorized=uncategorized,
+      direction=direction,
+      search=search,
+      date_from=date_from,
+      date_to=date_to,
       page=page,
       limit=limit,
       sorting=sorting,

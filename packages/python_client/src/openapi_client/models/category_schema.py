@@ -8,6 +8,8 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
+from ..types import UNSET, Unset
+
 T = TypeVar("T", bound="CategorySchema")
 
 
@@ -19,14 +21,20 @@ class CategorySchema:
       modified_at (datetime.datetime | None): Last modification timestamp of the object.
       id (str): The ID of the object.
       name (str): Category name.
+      slug (str): URL-friendly identifier.
       color (str): Hex color code for UI display.
+      excluded (bool): Whether this category is excluded from reports.
+      parent_id (None | str | Unset): Parent category ID, null for top-level.
   """
 
   created_at: datetime.datetime
   modified_at: datetime.datetime | None
   id: str
   name: str
+  slug: str
   color: str
+  excluded: bool
+  parent_id: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -42,7 +50,17 @@ class CategorySchema:
 
     name = self.name
 
+    slug = self.slug
+
     color = self.color
+
+    excluded = self.excluded
+
+    parent_id: None | str | Unset
+    if isinstance(self.parent_id, Unset):
+      parent_id = UNSET
+    else:
+      parent_id = self.parent_id
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -52,9 +70,13 @@ class CategorySchema:
         "modified_at": modified_at,
         "id": id,
         "name": name,
+        "slug": slug,
         "color": color,
+        "excluded": excluded,
       }
     )
+    if parent_id is not UNSET:
+      field_dict["parent_id"] = parent_id
 
     return field_dict
 
@@ -82,14 +104,30 @@ class CategorySchema:
 
     name = d.pop("name")
 
+    slug = d.pop("slug")
+
     color = d.pop("color")
+
+    excluded = d.pop("excluded")
+
+    def _parse_parent_id(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    parent_id = _parse_parent_id(d.pop("parent_id", UNSET))
 
     category_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
       id=id,
       name=name,
+      slug=slug,
       color=color,
+      excluded=excluded,
+      parent_id=parent_id,
     )
 
     category_schema.additional_properties = d

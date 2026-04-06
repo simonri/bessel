@@ -1,80 +1,72 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+from dateutil.parser import isoparse
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="CategoryUpdate")
+T = TypeVar("T", bound="WorkoutLogCreate")
 
 
 @_attrs_define
-class CategoryUpdate:
+class WorkoutLogCreate:
   """
   Attributes:
-      name (None | str | Unset): Category name.
-      color (None | str | Unset): Hex color code.
+      started_at (datetime.datetime):
+      notes (None | str | Unset):
   """
 
-  name: None | str | Unset = UNSET
-  color: None | str | Unset = UNSET
+  started_at: datetime.datetime
+  notes: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    name: None | str | Unset
-    if isinstance(self.name, Unset):
-      name = UNSET
-    else:
-      name = self.name
+    started_at = self.started_at.isoformat()
 
-    color: None | str | Unset
-    if isinstance(self.color, Unset):
-      color = UNSET
+    notes: None | str | Unset
+    if isinstance(self.notes, Unset):
+      notes = UNSET
     else:
-      color = self.color
+      notes = self.notes
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
-    field_dict.update({})
-    if name is not UNSET:
-      field_dict["name"] = name
-    if color is not UNSET:
-      field_dict["color"] = color
+    field_dict.update(
+      {
+        "started_at": started_at,
+      }
+    )
+    if notes is not UNSET:
+      field_dict["notes"] = notes
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
+    started_at = isoparse(d.pop("started_at"))
 
-    def _parse_name(data: object) -> None | str | Unset:
+    def _parse_notes(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    name = _parse_name(d.pop("name", UNSET))
+    notes = _parse_notes(d.pop("notes", UNSET))
 
-    def _parse_color(data: object) -> None | str | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(None | str | Unset, data)
-
-    color = _parse_color(d.pop("color", UNSET))
-
-    category_update = cls(
-      name=name,
-      color=color,
+    workout_log_create = cls(
+      started_at=started_at,
+      notes=notes,
     )
 
-    category_update.additional_properties = d
-    return category_update
+    workout_log_create.additional_properties = d
+    return workout_log_create
 
   @property
   def additional_keys(self) -> list[str]:

@@ -1,11 +1,11 @@
 from enum import Enum
 
 
-class CategorySortProperty(str, Enum):
+class WorkoutLogSortProperty(str, Enum):
   CREATED_AT = "created_at"
-  NAME = "name"
+  STARTED_AT = "started_at"
   VALUE_1 = "-created_at"
-  VALUE_3 = "-name"
+  VALUE_3 = "-started_at"
 
   def __str__(self) -> str:
     return str(self.value)

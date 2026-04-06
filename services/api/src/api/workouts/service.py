@@ -1,4 +1,3 @@
-
 from api.common.db.postgres import AsyncSession
 from api.models.workout_set import WorkoutSet
 from api.workouts.repository import WorkoutSetRepository

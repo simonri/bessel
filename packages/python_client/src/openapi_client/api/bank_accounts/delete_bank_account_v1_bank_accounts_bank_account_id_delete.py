@@ -57,7 +57,7 @@ def sync_detailed(
 ) -> Response[Any | HTTPValidationError]:
   """Delete Bank Account
 
-   Delete a bank account.
+   Delete a bank account and all its transactions.
 
   Args:
       bank_account_id (UUID):
@@ -88,7 +88,7 @@ def sync(
 ) -> Any | HTTPValidationError | None:
   """Delete Bank Account
 
-   Delete a bank account.
+   Delete a bank account and all its transactions.
 
   Args:
       bank_account_id (UUID):
@@ -114,7 +114,7 @@ async def asyncio_detailed(
 ) -> Response[Any | HTTPValidationError]:
   """Delete Bank Account
 
-   Delete a bank account.
+   Delete a bank account and all its transactions.
 
   Args:
       bank_account_id (UUID):
@@ -143,7 +143,7 @@ async def asyncio(
 ) -> Any | HTTPValidationError | None:
   """Delete Bank Account
 
-   Delete a bank account.
+   Delete a bank account and all its transactions.
 
   Args:
       bank_account_id (UUID):

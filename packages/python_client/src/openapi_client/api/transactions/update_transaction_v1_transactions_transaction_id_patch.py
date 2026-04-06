@@ -8,8 +8,8 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...models.transaction_schema import TransactionSchema
 from ...models.transaction_update import TransactionUpdate
+from ...models.transaction_update_response import TransactionUpdateResponse
 from ...types import Response
 
 
@@ -35,9 +35,9 @@ def _get_kwargs(
   return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | TransactionSchema | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | TransactionUpdateResponse | None:
   if response.status_code == 200:
-    response_200 = TransactionSchema.from_dict(response.json())
+    response_200 = TransactionUpdateResponse.from_dict(response.json())
 
     return response_200
 
@@ -52,7 +52,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
     return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | TransactionSchema]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | TransactionUpdateResponse]:
   return Response(
     status_code=HTTPStatus(response.status_code),
     content=response.content,
@@ -66,7 +66,7 @@ def sync_detailed(
   *,
   client: AuthenticatedClient | Client,
   body: TransactionUpdate,
-) -> Response[HTTPValidationError | TransactionSchema]:
+) -> Response[HTTPValidationError | TransactionUpdateResponse]:
   """Update Transaction
 
    Update a transaction.
@@ -80,7 +80,7 @@ def sync_detailed(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[HTTPValidationError | TransactionSchema]
+      Response[HTTPValidationError | TransactionUpdateResponse]
   """
 
   kwargs = _get_kwargs(
@@ -100,7 +100,7 @@ def sync(
   *,
   client: AuthenticatedClient | Client,
   body: TransactionUpdate,
-) -> HTTPValidationError | TransactionSchema | None:
+) -> HTTPValidationError | TransactionUpdateResponse | None:
   """Update Transaction
 
    Update a transaction.
@@ -114,7 +114,7 @@ def sync(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      HTTPValidationError | TransactionSchema
+      HTTPValidationError | TransactionUpdateResponse
   """
 
   return sync_detailed(
@@ -129,7 +129,7 @@ async def asyncio_detailed(
   *,
   client: AuthenticatedClient | Client,
   body: TransactionUpdate,
-) -> Response[HTTPValidationError | TransactionSchema]:
+) -> Response[HTTPValidationError | TransactionUpdateResponse]:
   """Update Transaction
 
    Update a transaction.
@@ -143,7 +143,7 @@ async def asyncio_detailed(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[HTTPValidationError | TransactionSchema]
+      Response[HTTPValidationError | TransactionUpdateResponse]
   """
 
   kwargs = _get_kwargs(
@@ -161,7 +161,7 @@ async def asyncio(
   *,
   client: AuthenticatedClient | Client,
   body: TransactionUpdate,
-) -> HTTPValidationError | TransactionSchema | None:
+) -> HTTPValidationError | TransactionUpdateResponse | None:
   """Update Transaction
 
    Update a transaction.
@@ -175,7 +175,7 @@ async def asyncio(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      HTTPValidationError | TransactionSchema
+      HTTPValidationError | TransactionUpdateResponse
   """
 
   return (

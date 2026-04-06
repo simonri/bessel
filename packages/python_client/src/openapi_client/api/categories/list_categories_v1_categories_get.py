@@ -6,7 +6,6 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.category_list_response import CategoryListResponse
-from ...models.category_sort_property import CategorySortProperty
 from ...models.http_validation_error import HTTPValidationError
 from ...types import UNSET, Response, Unset
 
@@ -15,7 +14,6 @@ def _get_kwargs(
   *,
   page: int | Unset = 1,
   limit: int | Unset = 10,
-  sorting: list[CategorySortProperty] | None | Unset = UNSET,
 ) -> dict[str, Any]:
 
   params: dict[str, Any] = {}
@@ -23,19 +21,6 @@ def _get_kwargs(
   params["page"] = page
 
   params["limit"] = limit
-
-  json_sorting: list[str] | None | Unset
-  if isinstance(sorting, Unset):
-    json_sorting = UNSET
-  elif isinstance(sorting, list):
-    json_sorting = []
-    for sorting_type_0_item_data in sorting:
-      sorting_type_0_item = sorting_type_0_item_data.value
-      json_sorting.append(sorting_type_0_item)
-
-  else:
-    json_sorting = sorting
-  params["sorting"] = json_sorting
 
   params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -79,7 +64,6 @@ def sync_detailed(
   client: AuthenticatedClient | Client,
   page: int | Unset = 1,
   limit: int | Unset = 10,
-  sorting: list[CategorySortProperty] | None | Unset = UNSET,
 ) -> Response[CategoryListResponse | HTTPValidationError]:
   """List Categories
 
@@ -88,9 +72,6 @@ def sync_detailed(
   Args:
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
-      sorting (list[CategorySortProperty] | None | Unset): Sorting criterion. Several criteria
-          can be used simultaneously and will be applied in order. Add a minus sign `-` before the
-          criteria name to sort by descending order.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -103,7 +84,6 @@ def sync_detailed(
   kwargs = _get_kwargs(
     page=page,
     limit=limit,
-    sorting=sorting,
   )
 
   response = client.get_httpx_client().request(
@@ -118,7 +98,6 @@ def sync(
   client: AuthenticatedClient | Client,
   page: int | Unset = 1,
   limit: int | Unset = 10,
-  sorting: list[CategorySortProperty] | None | Unset = UNSET,
 ) -> CategoryListResponse | HTTPValidationError | None:
   """List Categories
 
@@ -127,9 +106,6 @@ def sync(
   Args:
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
-      sorting (list[CategorySortProperty] | None | Unset): Sorting criterion. Several criteria
-          can be used simultaneously and will be applied in order. Add a minus sign `-` before the
-          criteria name to sort by descending order.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -143,7 +119,6 @@ def sync(
     client=client,
     page=page,
     limit=limit,
-    sorting=sorting,
   ).parsed
 
 
@@ -152,7 +127,6 @@ async def asyncio_detailed(
   client: AuthenticatedClient | Client,
   page: int | Unset = 1,
   limit: int | Unset = 10,
-  sorting: list[CategorySortProperty] | None | Unset = UNSET,
 ) -> Response[CategoryListResponse | HTTPValidationError]:
   """List Categories
 
@@ -161,9 +135,6 @@ async def asyncio_detailed(
   Args:
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
-      sorting (list[CategorySortProperty] | None | Unset): Sorting criterion. Several criteria
-          can be used simultaneously and will be applied in order. Add a minus sign `-` before the
-          criteria name to sort by descending order.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -176,7 +147,6 @@ async def asyncio_detailed(
   kwargs = _get_kwargs(
     page=page,
     limit=limit,
-    sorting=sorting,
   )
 
   response = await client.get_async_httpx_client().request(**kwargs)
@@ -189,7 +159,6 @@ async def asyncio(
   client: AuthenticatedClient | Client,
   page: int | Unset = 1,
   limit: int | Unset = 10,
-  sorting: list[CategorySortProperty] | None | Unset = UNSET,
 ) -> CategoryListResponse | HTTPValidationError | None:
   """List Categories
 
@@ -198,9 +167,6 @@ async def asyncio(
   Args:
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
-      sorting (list[CategorySortProperty] | None | Unset): Sorting criterion. Several criteria
-          can be used simultaneously and will be applied in order. Add a minus sign `-` before the
-          criteria name to sort by descending order.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -215,6 +181,5 @@ async def asyncio(
       client=client,
       page=page,
       limit=limit,
-      sorting=sorting,
     )
   ).parsed

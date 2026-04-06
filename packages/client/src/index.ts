@@ -33,6 +33,8 @@ export {
   getHoldingsV1InvestmentsHoldingsGetQueryKey,
   getStreakV1JournalStreakGetOptions,
   getStreakV1JournalStreakGetQueryKey,
+  getWeatherForecastV1WeatherGetOptions,
+  getWeatherForecastV1WeatherGetQueryKey,
   getWorkoutV1WorkoutsWorkoutIdGetOptions,
   getWorkoutV1WorkoutsWorkoutIdGetQueryKey,
   healthzHealthzGetOptions,
@@ -106,7 +108,7 @@ export {
   updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchMutation,
   updateWorkoutV1WorkoutsWorkoutIdPatchMutation,
   upsertEntryV1JournalEntryDatePutMutation,
-} from "./@tanstack/react-query.gen";
+} from "./@tanstack/react-query.gen.js";
 export {
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeTaskV1TasksTaskIdCompletePost,
@@ -134,6 +136,7 @@ export {
   getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet,
   getHoldingsV1InvestmentsHoldingsGet,
   getStreakV1JournalStreakGet,
+  getWeatherForecastV1WeatherGet,
   getWorkoutV1WorkoutsWorkoutIdGet,
   healthzHealthzGet,
   importTransactionsV1TransactionsImportPost,
@@ -166,7 +169,7 @@ export {
   updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch,
   updateWorkoutV1WorkoutsWorkoutIdPatch,
   upsertEntryV1JournalEntryDatePut,
-} from "./sdk.gen";
+} from "./sdk.gen.js";
 export {
   AssetType,
   type BankAccountCreate,
@@ -314,6 +317,11 @@ export {
   type GetStreakV1JournalStreakGetData,
   type GetStreakV1JournalStreakGetResponse,
   type GetStreakV1JournalStreakGetResponses,
+  type GetWeatherForecastV1WeatherGetData,
+  type GetWeatherForecastV1WeatherGetError,
+  type GetWeatherForecastV1WeatherGetErrors,
+  type GetWeatherForecastV1WeatherGetResponse,
+  type GetWeatherForecastV1WeatherGetResponses,
   type GetWorkoutV1WorkoutsWorkoutIdGetData,
   type GetWorkoutV1WorkoutsWorkoutIdGetError,
   type GetWorkoutV1WorkoutsWorkoutIdGetErrors,
@@ -514,6 +522,8 @@ export {
   type UpsertEntryV1JournalEntryDatePutResponse,
   type UpsertEntryV1JournalEntryDatePutResponses,
   type ValidationError,
+  type WeatherDaySchema,
+  type WeatherForecastResponse,
   type WorkoutLogCreate,
   type WorkoutLogDetailSchema,
   type WorkoutLogListResponse,
@@ -523,5 +533,5 @@ export {
   type WorkoutSetCreate,
   type WorkoutSetSchema,
   type WorkoutSetUpdate,
-} from "./types.gen";
+} from "./types.gen.js";
 export { client } from "./client.gen";

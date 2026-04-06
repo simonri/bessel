@@ -1,59 +1,62 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
+if TYPE_CHECKING:
+  from ..models.journal_calendar_day import JournalCalendarDay
 
-T = TypeVar("T", bound="CategoryCreate")
+
+T = TypeVar("T", bound="JournalCalendarResponse")
 
 
 @_attrs_define
-class CategoryCreate:
+class JournalCalendarResponse:
   """
   Attributes:
-      name (str): Category name.
-      color (str | Unset): Hex color code. Default: '#6B7280'.
+      days (list[JournalCalendarDay]):
   """
 
-  name: str
-  color: str | Unset = '#6B7280'
+  days: list[JournalCalendarDay]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    name = self.name
-
-    color = self.color
+    days = []
+    for days_item_data in self.days:
+      days_item = days_item_data.to_dict()
+      days.append(days_item)
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
-        "name": name,
+        "days": days,
       }
     )
-    if color is not UNSET:
-      field_dict["color"] = color
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.journal_calendar_day import JournalCalendarDay
+
     d = dict(src_dict)
-    name = d.pop("name")
+    days = []
+    _days = d.pop("days")
+    for days_item_data in _days:
+      days_item = JournalCalendarDay.from_dict(days_item_data)
 
-    color = d.pop("color", UNSET)
+      days.append(days_item)
 
-    category_create = cls(
-      name=name,
-      color=color,
+    journal_calendar_response = cls(
+      days=days,
     )
 
-    category_create.additional_properties = d
-    return category_create
+    journal_calendar_response.additional_properties = d
+    return journal_calendar_response
 
   @property
   def additional_keys(self) -> list[str]:

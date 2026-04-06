@@ -1,40 +1,36 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.category_create import CategoryCreate
-from ...models.category_schema import CategorySchema
 from ...models.http_validation_error import HTTPValidationError
+from ...models.task_complete_response import TaskCompleteResponse
 from ...types import Response
 
 
 def _get_kwargs(
-  *,
-  body: CategoryCreate,
+  task_id: UUID,
 ) -> dict[str, Any]:
-  headers: dict[str, Any] = {}
 
   _kwargs: dict[str, Any] = {
     "method": "post",
-    "url": "/v1/categories",
+    "url": "/v1/tasks/{task_id}/complete".format(
+      task_id=quote(str(task_id), safe=""),
+    ),
   }
 
-  _kwargs["json"] = body.to_dict()
-
-  headers["Content-Type"] = "application/json"
-
-  _kwargs["headers"] = headers
   return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> CategorySchema | HTTPValidationError | None:
-  if response.status_code == 201:
-    response_201 = CategorySchema.from_dict(response.json())
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | TaskCompleteResponse | None:
+  if response.status_code == 200:
+    response_200 = TaskCompleteResponse.from_dict(response.json())
 
-    return response_201
+    return response_200
 
   if response.status_code == 422:
     response_422 = HTTPValidationError.from_dict(response.json())
@@ -47,7 +43,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
     return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[CategorySchema | HTTPValidationError]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | TaskCompleteResponse]:
   return Response(
     status_code=HTTPStatus(response.status_code),
     content=response.content,
@@ -57,27 +53,25 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 
 def sync_detailed(
+  task_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryCreate,
-) -> Response[CategorySchema | HTTPValidationError]:
-  """Create Category
-
-   Create a new category.
+) -> Response[HTTPValidationError | TaskCompleteResponse]:
+  """Complete Task
 
   Args:
-      body (CategoryCreate):
+      task_id (UUID):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[CategorySchema | HTTPValidationError]
+      Response[HTTPValidationError | TaskCompleteResponse]
   """
 
   kwargs = _get_kwargs(
-    body=body,
+    task_id=task_id,
   )
 
   response = client.get_httpx_client().request(
@@ -88,53 +82,49 @@ def sync_detailed(
 
 
 def sync(
+  task_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryCreate,
-) -> CategorySchema | HTTPValidationError | None:
-  """Create Category
-
-   Create a new category.
+) -> HTTPValidationError | TaskCompleteResponse | None:
+  """Complete Task
 
   Args:
-      body (CategoryCreate):
+      task_id (UUID):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      CategorySchema | HTTPValidationError
+      HTTPValidationError | TaskCompleteResponse
   """
 
   return sync_detailed(
+    task_id=task_id,
     client=client,
-    body=body,
   ).parsed
 
 
 async def asyncio_detailed(
+  task_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryCreate,
-) -> Response[CategorySchema | HTTPValidationError]:
-  """Create Category
-
-   Create a new category.
+) -> Response[HTTPValidationError | TaskCompleteResponse]:
+  """Complete Task
 
   Args:
-      body (CategoryCreate):
+      task_id (UUID):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[CategorySchema | HTTPValidationError]
+      Response[HTTPValidationError | TaskCompleteResponse]
   """
 
   kwargs = _get_kwargs(
-    body=body,
+    task_id=task_id,
   )
 
   response = await client.get_async_httpx_client().request(**kwargs)
@@ -143,28 +133,26 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+  task_id: UUID,
   *,
   client: AuthenticatedClient | Client,
-  body: CategoryCreate,
-) -> CategorySchema | HTTPValidationError | None:
-  """Create Category
-
-   Create a new category.
+) -> HTTPValidationError | TaskCompleteResponse | None:
+  """Complete Task
 
   Args:
-      body (CategoryCreate):
+      task_id (UUID):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      CategorySchema | HTTPValidationError
+      HTTPValidationError | TaskCompleteResponse
   """
 
   return (
     await asyncio_detailed(
+      task_id=task_id,
       client=client,
-      body=body,
     )
   ).parsed

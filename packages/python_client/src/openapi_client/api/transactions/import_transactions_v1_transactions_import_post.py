@@ -74,9 +74,9 @@ def sync_detailed(
   bank: str,
   bank_account_id: UUID,
 ) -> Response[HTTPValidationError | ImportResponse]:
-  """Import Transactions from CSV
+  """Import Transactions
 
-   Import transactions from a bank CSV export.
+   Import transactions from a bank export (CSV or XLSX).
 
   Duplicate transactions (by dedup hash) are automatically skipped.
 
@@ -113,9 +113,9 @@ def sync(
   bank: str,
   bank_account_id: UUID,
 ) -> HTTPValidationError | ImportResponse | None:
-  """Import Transactions from CSV
+  """Import Transactions
 
-   Import transactions from a bank CSV export.
+   Import transactions from a bank export (CSV or XLSX).
 
   Duplicate transactions (by dedup hash) are automatically skipped.
 
@@ -147,9 +147,9 @@ async def asyncio_detailed(
   bank: str,
   bank_account_id: UUID,
 ) -> Response[HTTPValidationError | ImportResponse]:
-  """Import Transactions from CSV
+  """Import Transactions
 
-   Import transactions from a bank CSV export.
+   Import transactions from a bank export (CSV or XLSX).
 
   Duplicate transactions (by dedup hash) are automatically skipped.
 
@@ -184,9 +184,9 @@ async def asyncio(
   bank: str,
   bank_account_id: UUID,
 ) -> HTTPValidationError | ImportResponse | None:
-  """Import Transactions from CSV
+  """Import Transactions
 
-   Import transactions from a bank CSV export.
+   Import transactions from a bank export (CSV or XLSX).
 
   Duplicate transactions (by dedup hash) are automatically skipped.
 

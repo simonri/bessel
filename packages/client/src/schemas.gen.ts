@@ -2,7 +2,15 @@
 
 export const AssetTypeSchema = {
   type: "string",
-  enum: ["stock", "etf", "mutual_fund", "bond", "crypto", "real_estate", "other"],
+  enum: [
+    "stock",
+    "etf",
+    "mutual_fund",
+    "bond",
+    "crypto",
+    "real_estate",
+    "other",
+  ],
   title: "AssetType",
 } as const;
 
@@ -104,12 +112,21 @@ export const BankAccountSchemaSchema = {
     current_balance: {
       type: "integer",
       title: "Current Balance",
-      description: "Current balance in minor units (base_balance + credits - debits).",
+      description:
+        "Current balance in minor units (base_balance + credits - debits).",
       default: 0,
     },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "name", "currency", "base_balance", "subtype"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "currency",
+    "base_balance",
+    "subtype",
+  ],
   title: "BankAccountSchema",
 } as const;
 
@@ -324,7 +341,15 @@ export const CategorySchemaSchema = {
     },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "name", "slug", "color", "excluded"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "slug",
+    "color",
+    "excluded",
+  ],
   title: "CategorySchema",
 } as const;
 
@@ -359,7 +384,16 @@ export const CategorySpendingSchema = {
 
 export const EquipmentSchema = {
   type: "string",
-  enum: ["barbell", "dumbbell", "cable", "machine", "bodyweight", "kettlebell", "band", "other"],
+  enum: [
+    "barbell",
+    "dumbbell",
+    "cable",
+    "machine",
+    "bodyweight",
+    "kettlebell",
+    "band",
+    "other",
+  ],
   title: "Equipment",
 } as const;
 
@@ -456,7 +490,14 @@ export const ExercisePRSchemaSchema = {
     },
   },
   type: "object",
-  required: ["exercise_id", "exercise_name", "reps", "weight", "weight_unit", "achieved_at"],
+  required: [
+    "exercise_id",
+    "exercise_name",
+    "reps",
+    "weight",
+    "weight_unit",
+    "achieved_at",
+  ],
   title: "ExercisePRSchema",
 } as const;
 
@@ -715,7 +756,8 @@ export const HoldingSchemaSchema = {
         },
       ],
       title: "Current Price",
-      description: "Latest price per unit in minor units, or null if no price recorded.",
+      description:
+        "Latest price per unit in minor units, or null if no price recorded.",
     },
     current_value: {
       anyOf: [
@@ -727,7 +769,8 @@ export const HoldingSchemaSchema = {
         },
       ],
       title: "Current Value",
-      description: "Current value in minor units, or null if no price recorded.",
+      description:
+        "Current value in minor units, or null if no price recorded.",
     },
     gain_loss: {
       anyOf: [
@@ -751,7 +794,8 @@ export const HoldingSchemaSchema = {
         },
       ],
       title: "Gain Loss Pct",
-      description: "Unrealized gain/loss percentage, or null if no price or zero cost.",
+      description:
+        "Unrealized gain/loss percentage, or null if no price or zero cost.",
     },
   },
   type: "object",
@@ -1753,7 +1797,14 @@ export const PlaceSchemaSchema = {
     },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "name", "latitude", "longitude"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "latitude",
+    "longitude",
+  ],
   title: "PlaceSchema",
 } as const;
 
@@ -3457,6 +3508,74 @@ export const ValidationErrorSchema = {
   title: "ValidationError",
 } as const;
 
+export const WeatherDaySchemaSchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+      description: "Date of the weather data.",
+    },
+    temperature_max: {
+      type: "number",
+      title: "Temperature Max",
+      description: "Maximum temperature in Celsius.",
+    },
+    temperature_min: {
+      type: "number",
+      title: "Temperature Min",
+      description: "Minimum temperature in Celsius.",
+    },
+    apparent_temperature_max: {
+      type: "number",
+      title: "Apparent Temperature Max",
+      description: "Maximum feels-like temperature in Celsius.",
+    },
+    precipitation_probability_max: {
+      type: "integer",
+      title: "Precipitation Probability Max",
+      description: "Maximum precipitation probability in percent.",
+    },
+    weather_code: {
+      type: "integer",
+      title: "Weather Code",
+      description: "WMO weather interpretation code.",
+    },
+    weather_label: {
+      type: "string",
+      title: "Weather Label",
+      description: "Human-readable weather condition.",
+    },
+  },
+  type: "object",
+  required: [
+    "date",
+    "temperature_max",
+    "temperature_min",
+    "apparent_temperature_max",
+    "precipitation_probability_max",
+    "weather_code",
+    "weather_label",
+  ],
+  title: "WeatherDaySchema",
+} as const;
+
+export const WeatherForecastResponseSchema = {
+  properties: {
+    days: {
+      items: {
+        $ref: "#/components/schemas/WeatherDaySchema",
+      },
+      type: "array",
+      title: "Days",
+      description: "10-day weather forecast.",
+    },
+  },
+  type: "object",
+  required: ["days"],
+  title: "WeatherForecastResponse",
+} as const;
+
 export const WorkoutLogCreateSchema = {
   properties: {
     started_at: {
@@ -3545,7 +3664,15 @@ export const WorkoutLogDetailSchemaSchema = {
     },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "started_at", "completed_at", "notes", "sets"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "started_at",
+    "completed_at",
+    "notes",
+    "sets",
+  ],
   title: "WorkoutLogDetailSchema",
 } as const;
 
@@ -3624,7 +3751,14 @@ export const WorkoutLogSchemaSchema = {
     },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "started_at", "completed_at", "notes"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "started_at",
+    "completed_at",
+    "notes",
+  ],
   title: "WorkoutLogSchema",
 } as const;
 
@@ -3690,7 +3824,7 @@ export const WorkoutSetCreateSchema = {
       type: "string",
       maxLength: 3,
       title: "Weight Unit",
-      default: "lbs",
+      default: "kg",
     },
     rpe: {
       anyOf: [
