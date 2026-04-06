@@ -62,6 +62,9 @@ class Settings(BaseSettings):
   BULK_JOBS_SPREAD_MIN_DELAY_MS: int = 50
   BULK_JOBS_SPREAD_MAX_MS: int = 300_000
 
+  # Sentry
+  SENTRY_DSN: str | None = None
+
   # Google Places
   GOOGLE_PLACES_API_KEY: str = ""
 

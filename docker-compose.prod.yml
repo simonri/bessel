@@ -102,6 +102,7 @@ services:
       METRON_CORS_ORIGINS: ${METRON_CORS_ORIGINS}
       METRON_FRONTEND_BASE_URL: ${METRON_FRONTEND_BASE_URL}
       METRON_GOOGLE_PLACES_API_KEY: ${METRON_GOOGLE_PLACES_API_KEY:-}
+      METRON_SENTRY_DSN: ${METRON_SENTRY_DSN:-}
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -131,6 +132,7 @@ services:
       <<: [*db_env, *redis_env]
       METRON_ENV: production
       METRON_LOG_LEVEL: INFO
+      METRON_SENTRY_DSN: ${METRON_SENTRY_DSN:-}
     networks:
       - metron-internal
 

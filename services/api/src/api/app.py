@@ -21,6 +21,7 @@ from api.middlewares import FlushEnqueuedWorkerJobsMiddleware
 from api.openapi import OPENAPI_PARAMETERS, set_openapi_generator
 from api.postgres import AsyncSessionMiddleware, create_async_engine, create_sync_engine
 from api.redis import Redis, create_redis
+from api.sentry import configure_sentry
 from api.settings import settings
 
 log: Logger = structlog.get_logger()
@@ -109,6 +110,7 @@ def create_app() -> FastAPI:
   return app
 
 
+configure_sentry()
 configure_logging()
 
 app = create_app()
