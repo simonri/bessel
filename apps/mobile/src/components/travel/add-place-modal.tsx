@@ -18,7 +18,7 @@ import {
   searchGooglePlacesV1PlacesSearchGetOptions,
 } from "@metron/client";
 import type { GooglePlaceSearchResult } from "@metron/client";
-import { MapPin, Star, Search, X } from "lucide-react-native";
+import { MapPin, Star, Search, X, Check, ChevronLeft } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 
@@ -101,20 +101,25 @@ export function AddPlaceModal({
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} className="flex-1">
           <SafeAreaView className="flex-1 pt-5">
             <View className="flex-row items-center justify-between mb-4 px-5">
-              <Pressable onPress={step === "form" ? () => setStep("search") : onClose}>
-                <Text className="text-primary text-sm">{step === "form" ? "Back" : "Cancel"}</Text>
+              <Pressable
+                onPress={step === "form" ? () => setStep("search") : onClose}
+                className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700"
+              >
+                {step === "form" ? <ChevronLeft size={18} color="#a1a1aa" /> : <X size={18} color="#a1a1aa" />}
               </Pressable>
               <Text className="text-foreground text-lg font-bold">
                 {step === "search" ? "Search Place" : "Add Place"}
               </Text>
               {step === "form" ? (
-                <Pressable onPress={handleCreate} disabled={createMutation.isPending}>
-                  <Text className={`text-sm font-semibold ${createMutation.isPending ? "text-muted-foreground" : "text-primary"}`}>
-                    {createMutation.isPending ? "Saving..." : "Save"}
-                  </Text>
+                <Pressable
+                  onPress={handleCreate}
+                  disabled={createMutation.isPending}
+                  className={`w-9 h-9 items-center justify-center rounded-full ${createMutation.isPending ? "bg-zinc-700" : "bg-foreground"}`}
+                >
+                  <Check size={18} color={createMutation.isPending ? "#71717a" : "#09090b"} />
                 </Pressable>
               ) : (
-                <View className="w-10" />
+                <View className="w-9" />
               )}
             </View>
 

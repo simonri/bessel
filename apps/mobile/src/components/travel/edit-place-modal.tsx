@@ -16,7 +16,7 @@ import {
   listPlacesV1PlacesGetQueryKey,
 } from "@metron/client";
 import type { PlaceSchema } from "@metron/client";
-import { Star } from "lucide-react-native";
+import { Star, X, Check } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
@@ -105,14 +105,16 @@ export function EditPlaceModal({
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} className="flex-1">
           <SafeAreaView className="flex-1 pt-5">
             <View className="flex-row items-center justify-between px-5 mb-4">
-              <Pressable onPress={onClose}>
-                <Text className="text-primary text-sm">Cancel</Text>
+              <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
+                <X size={18} color="#a1a1aa" />
               </Pressable>
               <Text className="text-foreground text-lg font-bold">Edit Place</Text>
-              <Pressable onPress={handleSave} disabled={!name.trim() || updateMutation.isPending}>
-                <Text className={`text-sm font-semibold ${name.trim() ? "text-primary" : "text-muted-foreground"}`}>
-                  {updateMutation.isPending ? "Saving..." : "Save"}
-                </Text>
+              <Pressable
+                onPress={handleSave}
+                disabled={!name.trim() || updateMutation.isPending}
+                className={`w-9 h-9 items-center justify-center rounded-full ${name.trim() ? "bg-foreground" : "bg-zinc-700"}`}
+              >
+                <Check size={18} color={name.trim() ? "#09090b" : "#71717a"} />
               </Pressable>
             </View>
 

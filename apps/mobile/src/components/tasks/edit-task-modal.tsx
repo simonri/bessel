@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTaskV1TasksTaskIdPatchMutation, listTasksV1TasksGetQueryKey, listAreasV1TasksAreasGetOptions } from "@metron/client";
 import type { TaskSchema } from "@metron/client";
-import { Flag } from "lucide-react-native";
+import { Flag, X, Check } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_LABELS } from "./lib";
@@ -66,12 +66,16 @@ export function EditTaskModal({ task, onClose }: { task: TaskSchema; onClose: ()
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} className="flex-1">
           <SafeAreaView className="flex-1 pt-5">
             <View className="flex-row items-center justify-between px-5 mb-6">
-              <Pressable onPress={onClose}><Text className="text-primary" style={{ fontSize: 15 }}>Cancel</Text></Pressable>
+              <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
+                <X size={18} color="#a1a1aa" />
+              </Pressable>
               <Text className="text-foreground text-lg font-bold">Edit Task</Text>
-              <Pressable onPress={handleSave} disabled={!title.trim() || updateMutation.isPending}>
-                <Text className={`font-semibold ${title.trim() ? "text-primary" : "text-muted-foreground"}`} style={{ fontSize: 15 }}>
-                  {updateMutation.isPending ? "Saving..." : "Save"}
-                </Text>
+              <Pressable
+                onPress={handleSave}
+                disabled={!title.trim() || updateMutation.isPending}
+                className={`w-9 h-9 items-center justify-center rounded-full ${title.trim() ? "bg-foreground" : "bg-zinc-700"}`}
+              >
+                <Check size={18} color={title.trim() ? "#09090b" : "#71717a"} />
               </Pressable>
             </View>
 

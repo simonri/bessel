@@ -4,7 +4,7 @@ import { View, Text, Pressable, Modal, ActionSheetIOS, KeyboardAvoidingView, Pla
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTaskV1TasksPostMutation, listTasksV1TasksGetQueryKey, listAreasV1TasksAreasGetOptions } from "@metron/client";
-import { Flag } from "lucide-react-native";
+import { Flag, X, Check } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
 import { PRIORITY_COLORS, PRIORITY_LABELS } from "./lib";
@@ -51,12 +51,16 @@ export function CreateTaskModal({ onClose }: { onClose: () => void }) {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} className="flex-1">
           <SafeAreaView className="flex-1 px-5 pt-5">
             <View className="flex-row items-center justify-between mb-6">
-              <Pressable onPress={onClose}><Text className="text-primary text-sm">Cancel</Text></Pressable>
+              <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
+                <X size={18} color="#a1a1aa" />
+              </Pressable>
               <Text className="text-foreground text-lg font-bold">New Task</Text>
-              <Pressable onPress={handleCreate} disabled={!title.trim() || createMutation.isPending}>
-                <Text className={`text-sm font-semibold ${title.trim() ? "text-primary" : "text-muted-foreground"}`}>
-                  {createMutation.isPending ? "Saving..." : "Save"}
-                </Text>
+              <Pressable
+                onPress={handleCreate}
+                disabled={!title.trim() || createMutation.isPending}
+                className={`w-9 h-9 items-center justify-center rounded-full ${title.trim() ? "bg-foreground" : "bg-zinc-700"}`}
+              >
+                <Check size={18} color={title.trim() ? "#09090b" : "#71717a"} />
               </Pressable>
             </View>
 
