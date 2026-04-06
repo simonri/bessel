@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, Pressable, Modal, ScrollView, ActionSheetIOS, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Pressable, Modal, ScrollView, ActionSheetIOS, KeyboardAvoidingView, Platform } from "react-native";
+import { Text } from "@/components/shared/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTaskV1TasksTaskIdPatchMutation, listTasksV1TasksGetQueryKey, listAreasV1TasksAreasGetOptions } from "@metron/client";
@@ -63,47 +64,54 @@ export function EditTaskModal({ task, onClose }: { task: TaskSchema; onClose: ()
 
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View className="flex-1 bg-[#171717]">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} className="flex-1">
-          <SafeAreaView className="flex-1 pt-5">
-            <View className="flex-row items-center justify-between px-5 mb-6">
-              <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
+      <View style={{ flex: 1, backgroundColor: theme.colors.card }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1, paddingTop: 20 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 24 }}>
+              <Pressable onPress={onClose} style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center", borderRadius: 9999, backgroundColor: theme.colors.surfaceHover }}>
                 <X size={18} color={theme.colors.subtext} />
               </Pressable>
-              <Text className="text-foreground text-lg font-bold">Edit Task</Text>
+              <Text variant="title" color="text">Edit Task</Text>
               <Pressable
                 onPress={handleSave}
                 disabled={!title.trim() || updateMutation.isPending}
-                className={`w-9 h-9 items-center justify-center rounded-full ${title.trim() ? "bg-foreground" : "bg-zinc-700"}`}
+                style={{
+                  width: 36,
+                  height: 36,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 9999,
+                  backgroundColor: title.trim() ? theme.colors.text : theme.colors.surfaceHover,
+                }}
               >
                 <Check size={18} color={title.trim() ? theme.colors.monochrome : theme.colors.subtext} />
               </Pressable>
             </View>
 
-            <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
-              <Input value={title} onChangeText={setTitle} placeholder="Task title" autoFocus className="mb-6" style={{ fontSize: 20, fontWeight: "500" }} multiline />
+            <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} keyboardShouldPersistTaps="handled">
+              <Input value={title} onChangeText={setTitle} placeholder="Task title" autoFocus style={{ marginBottom: 24, fontSize: 20, fontWeight: "500" }} multiline />
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Description</Text>
-              <Input value={description} onChangeText={setDescription} placeholder="Add details..." multiline className="bg-zinc-800 rounded-xl px-4 py-3 mb-5" style={{ fontSize: 15, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }} />
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Description</Text>
+              <Input value={description} onChangeText={setDescription} placeholder="Add details..." multiline style={{ backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, fontSize: 15, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }} />
 
-              <View className="rounded-xl bg-zinc-800 overflow-hidden mb-5">
-                <Pressable onPress={handleStatusPress} className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-                  <Text className="text-foreground" style={{ fontSize: 15 }}>Status</Text>
-                  <Text className="text-muted-foreground" style={{ fontSize: 15 }}>{STATUS_LABELS[status] ?? "To Do"}</Text>
+              <View style={{ borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, overflow: "hidden", marginBottom: 20 }}>
+                <Pressable onPress={handleStatusPress} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: theme.colors.border }}>
+                  <Text variant="label" color="text">Status</Text>
+                  <Text variant="label" color="subtext">{STATUS_LABELS[status] ?? "To Do"}</Text>
                 </Pressable>
-                <Pressable onPress={handlePriorityPress} className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-                  <View className="flex-row items-center gap-2.5">
+                <Pressable onPress={handlePriorityPress} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: theme.colors.border }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <Flag size={16} color={PRIORITY_COLORS[priority]} fill={priority >= 3 ? PRIORITY_COLORS[priority] : "transparent"} />
-                    <Text className="text-foreground" style={{ fontSize: 15 }}>Priority</Text>
+                    <Text variant="label" color="text">Priority</Text>
                   </View>
-                  <Text className="text-muted-foreground" style={{ fontSize: 15 }}>{PRIORITY_LABELS[priority]}</Text>
+                  <Text variant="label" color="subtext">{PRIORITY_LABELS[priority]}</Text>
                 </Pressable>
-                <Pressable onPress={handleAreaPress} className="flex-row items-center justify-between px-4 py-3.5 border-b border-zinc-700">
-                  <Text className="text-foreground" style={{ fontSize: 15 }}>Area</Text>
-                  <Text className="text-muted-foreground" style={{ fontSize: 15 }}>{area ?? "None"}</Text>
+                <Pressable onPress={handleAreaPress} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: theme.colors.border }}>
+                  <Text variant="label" color="text">Area</Text>
+                  <Text variant="label" color="subtext">{area ?? "None"}</Text>
                 </Pressable>
-                <View className="flex-row items-center justify-between px-4 py-3.5">
-                  <Text className="text-foreground" style={{ fontSize: 15 }}>Project</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14 }}>
+                  <Text variant="label" color="text">Project</Text>
                   <Input placeholder="None" value={project} onChangeText={setProject} style={{ color: theme.colors.subtext, fontSize: 15, minWidth: 80, textAlign: "right" }} />
                 </View>
               </View>

@@ -1,50 +1,53 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Sun, Moon, Star, Check, X, Clock } from "lucide-react-native";
 import type { JournalEntrySchema } from "@metron/client";
+import { useTheme } from "@/design-system";
 
 type CaptureItem = { text: string; timestamp: string };
 
 export function DaySummary({ entry }: { entry: JournalEntrySchema }) {
+  const theme = useTheme();
   const hasMorning = !!(entry.priority || entry.friction || entry.gratitude_1);
   const captures = (entry.captures as CaptureItem[] | null) ?? [];
   const hasAudit = entry.scorecard != null || entry.priority_done != null || entry.insight || entry.seed;
 
   if (!hasMorning && captures.length === 0 && !hasAudit) {
     return (
-      <View className="px-4 items-center py-16">
-        <Text style={{ fontSize: 15, color: "#3f3f46" }}>No entry for this day.</Text>
+      <View style={{ paddingHorizontal: 16, alignItems: "center", paddingVertical: 64 }}>
+        <Text style={{ fontSize: 15, color: theme.colors.border }}>No entry for this day.</Text>
       </View>
     );
   }
 
   return (
-    <View className="px-4 gap-4">
+    <View style={{ paddingHorizontal: 16, gap: 16 }}>
       {hasMorning && (
-        <View className="rounded-xl bg-zinc-800 overflow-hidden">
-          <View className="flex-row items-center gap-2 px-4 pt-3.5 pb-2">
-            <Sun size={16} color="#facc15" />
-            <Text className="text-foreground font-medium" style={{ fontSize: 15 }}>
+        <View style={{ borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, overflow: "hidden" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
+            <Sun size={16} color={theme.colors.statusYellow} />
+            <Text style={{ color: theme.colors.text, fontFamily: "Inter-Medium", fontSize: 15 }}>
               Morning plan
             </Text>
           </View>
           {entry.priority && (
-            <View className="px-4 py-2">
-              <Text className="text-zinc-500" style={{ fontSize: 13 }}>The one thing</Text>
-              <Text className="text-foreground" style={{ fontSize: 15 }}>{entry.priority}</Text>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+              <Text style={{ color: theme.colors.textSubtle, fontSize: 13 }}>The one thing</Text>
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>{entry.priority}</Text>
             </View>
           )}
           {entry.friction && (
-            <View className="px-4 py-2">
-              <Text className="text-zinc-500" style={{ fontSize: 13 }}>Obstacle</Text>
-              <Text className="text-foreground" style={{ fontSize: 15 }}>{entry.friction}</Text>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+              <Text style={{ color: theme.colors.textSubtle, fontSize: 13 }}>Obstacle</Text>
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>{entry.friction}</Text>
             </View>
           )}
           {(entry.gratitude_1 || entry.gratitude_2 || entry.gratitude_3) && (
-            <View className="px-4 py-2 pb-3.5">
-              <Text className="text-zinc-500 mb-1" style={{ fontSize: 13 }}>Gratitude</Text>
+            <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 14 }}>
+              <Text style={{ color: theme.colors.textSubtle, marginBottom: 4, fontSize: 13 }}>Gratitude</Text>
               {[entry.gratitude_1, entry.gratitude_2, entry.gratitude_3].map((g, i) =>
                 g ? (
-                  <Text key={i} className="text-foreground" style={{ fontSize: 15 }}>
+                  <Text key={i} style={{ color: theme.colors.text, fontSize: 15 }}>
                     {i + 1}. {g}
                   </Text>
                 ) : null,
@@ -55,22 +58,28 @@ export function DaySummary({ entry }: { entry: JournalEntrySchema }) {
       )}
 
       {captures.length > 0 && (
-        <View className="rounded-xl bg-zinc-800 overflow-hidden">
-          <View className="flex-row items-center gap-2 px-4 pt-3.5 pb-2">
-            <Clock size={16} color="#a1a1aa" />
-            <Text className="text-foreground font-medium" style={{ fontSize: 15 }}>
+        <View style={{ borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, overflow: "hidden" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
+            <Clock size={16} color={theme.colors.textMuted} />
+            <Text style={{ color: theme.colors.text, fontFamily: "Inter-Medium", fontSize: 15 }}>
               Captures
             </Text>
-            <Text className="text-zinc-600" style={{ fontSize: 13 }}>{captures.length}</Text>
+            <Text style={{ color: theme.colors.textMuted, fontSize: 13 }}>{captures.length}</Text>
           </View>
           {captures.map((item, i) => (
             <View
               key={i}
-              className={`px-4 py-2.5 ${i < captures.length - 1 ? "border-b border-zinc-700" : "pb-3.5"}`}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                ...(i < captures.length - 1
+                  ? { borderBottomWidth: 1, borderColor: theme.colors.border }
+                  : { paddingBottom: 14 }),
+              }}
             >
-              <Text className="text-foreground" style={{ fontSize: 15 }}>{item.text}</Text>
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>{item.text}</Text>
               {item.timestamp && (
-                <Text className="text-zinc-600" style={{ fontSize: 12 }}>
+                <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>
                   {new Date(item.timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                 </Text>
               )}
@@ -80,53 +89,52 @@ export function DaySummary({ entry }: { entry: JournalEntrySchema }) {
       )}
 
       {hasAudit && (
-        <View className="rounded-xl bg-zinc-800 overflow-hidden">
-          <View className="flex-row items-center gap-2 px-4 pt-3.5 pb-2">
-            <Moon size={16} color="#a78bfa" />
-            <Text className="text-foreground font-medium" style={{ fontSize: 15 }}>
+        <View style={{ borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, overflow: "hidden" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
+            <Moon size={16} color={theme.colors.statusPurple} />
+            <Text style={{ color: theme.colors.text, fontFamily: "Inter-Medium", fontSize: 15 }}>
               Reflection
             </Text>
           </View>
           {entry.priority && entry.priority_done != null && (
-            <View className="px-4 py-2 flex-row items-center gap-2">
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
               {entry.priority_done ? (
-                <Check size={14} color="#22c55e" />
+                <Check size={14} color={theme.colors.success} />
               ) : (
-                <X size={14} color="#ef4444" />
+                <X size={14} color={theme.colors.error} />
               )}
               <Text
-                className={entry.priority_done ? "text-green-500" : "text-red-500"}
-                style={{ fontSize: 15 }}
+                style={{ color: entry.priority_done ? theme.colors.success : theme.colors.error, fontSize: 15 }}
               >
                 {entry.priority_done ? "Priority done" : "Priority missed"}
               </Text>
             </View>
           )}
           {entry.scorecard != null && (
-            <View className="px-4 py-2 flex-row items-center gap-1">
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 4 }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <Star
                   key={n}
                   size={16}
-                  color={n <= entry.scorecard! ? "#facc15" : "#3f3f46"}
-                  fill={n <= entry.scorecard! ? "#facc15" : "transparent"}
+                  color={n <= entry.scorecard! ? theme.colors.statusYellow : theme.colors.border}
+                  fill={n <= entry.scorecard! ? theme.colors.statusYellow : "transparent"}
                 />
               ))}
             </View>
           )}
           {entry.insight && (
-            <View className="px-4 py-2">
-              <Text className="text-zinc-500" style={{ fontSize: 13 }}>Key takeaway</Text>
-              <Text className="text-foreground" style={{ fontSize: 15 }}>{entry.insight}</Text>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+              <Text style={{ color: theme.colors.textSubtle, fontSize: 13 }}>Key takeaway</Text>
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>{entry.insight}</Text>
             </View>
           )}
           {entry.seed && (
-            <View className="px-4 py-2 pb-3.5">
-              <Text className="text-zinc-500" style={{ fontSize: 13 }}>Tomorrow's problem</Text>
-              <Text className="text-foreground" style={{ fontSize: 15 }}>{entry.seed}</Text>
+            <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 14 }}>
+              <Text style={{ color: theme.colors.textSubtle, fontSize: 13 }}>Tomorrow's problem</Text>
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>{entry.seed}</Text>
             </View>
           )}
-          {!entry.insight && !entry.seed && <View className="h-2" />}
+          {!entry.insight && !entry.seed && <View style={{ height: 8 }} />}
         </View>
       )}
     </View>

@@ -21,7 +21,7 @@ interface PlaceholderBoxProps {
 export const PlaceholderBox = ({
   width = "100%",
   height = 16,
-  borderRadius = "border-radius-4",
+  borderRadius = "sm",
   style,
   color = "secondary",
 }: PlaceholderBoxProps) => {

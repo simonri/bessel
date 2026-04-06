@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { View, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JournalEntrySchema, JournalEntryUpsert } from "@metron/client";
@@ -14,6 +15,7 @@ import {
 import { Flame, ChevronLeft, ChevronRight, Trash2 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 import { schedulePriorityReminder } from "@/lib/notifications";
 import { PhaseTabs, type Phase } from "@/components/journal/phase-tabs";
 import { MorningPrime } from "@/components/journal/morning-prime";
@@ -51,6 +53,7 @@ function isSameDate(a: Date, b: Date): boolean {
 }
 
 export default function JournalScreen() {
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -214,15 +217,15 @@ export default function JournalScreen() {
   const streakCount = streakData?.current_streak ?? 0;
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {entryLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#a1a1aa" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color={theme.colors.textMuted} />
         </View>
       ) : (
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
           <ScrollView
-            className="flex-1"
+            style={{ flex: 1 }}
             contentContainerStyle={{ paddingTop: headerHeight + 8, paddingBottom: 120 }}
             keyboardShouldPersistTaps="handled"
           >
@@ -273,28 +276,28 @@ export default function JournalScreen() {
               entry ? (
                 <DaySummary entry={entry as JournalEntrySchema} />
               ) : (
-                <View className="items-center py-16">
-                  <Text style={{ fontSize: 15, color: "#3f3f46" }}>No entry for this day.</Text>
+                <View style={{ alignItems: "center", paddingVertical: 64 }}>
+                  <Text color="surfaceHover" style={{ fontSize: 15 }}>No entry for this day.</Text>
                 </View>
               )
             )}
 
             {/* Save indicator (today only) */}
             {isToday && upsertMutation.isPending && (
-              <View className="px-4 mt-4">
-                <Text className="text-center text-muted-foreground" style={{ fontSize: 13 }}>Saving...</Text>
+              <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+                <Text color="textMuted" style={{ textAlign: "center", fontSize: 13 }}>Saving...</Text>
               </View>
             )}
 
             {/* Delete — past days only */}
             {!isToday && entry && (
-              <View className="px-4 mt-5">
+              <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
                 <Pressable
                   onPress={handleDelete}
-                  className="flex-row items-center justify-center gap-2 rounded-xl bg-zinc-800 py-3.5"
+                  style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, paddingVertical: 14 }}
                 >
-                  <Trash2 size={16} color="#ef4444" />
-                  <Text className="font-medium text-red-500" style={{ fontSize: 15 }}>Delete entry</Text>
+                  <Trash2 size={16} color={theme.colors.error} />
+                  <Text color="error" style={{ fontFamily: "Inter-Medium", fontSize: 15 }}>Delete entry</Text>
                 </Pressable>
               </View>
             )}
@@ -303,43 +306,43 @@ export default function JournalScreen() {
       )}
 
       {/* Fixed header — solid bg + gradient fade */}
-      <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
-        <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={["#09090b", "transparent"]} style={{ height: 10 }} />
+      <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: headerHeight + 10 }}>
+        <View pointerEvents="none" style={{ backgroundColor: theme.colors.background, height: headerHeight }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.background, "transparent"]} style={{ height: 10 }} />
       </View>
 
       {/* Fixed header content */}
-      <View className="absolute top-0 left-0 right-0" style={{ paddingTop: insets.top + 12 }}>
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, paddingTop: insets.top + 12 }}>
         {/* Row 1: Title + streak + today button */}
-        <View className="px-4 flex-row items-center justify-between mb-3">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-3xl font-bold text-foreground">Journal</Text>
+        <View style={{ paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text color="text" style={{ fontSize: 30, fontFamily: "Inter-Bold" }}>Journal</Text>
             {streakCount > 0 && (
               <>
-                <Flame size={16} color="#f97316" />
-                <Text className="text-orange-500 font-semibold" style={{ fontSize: 15 }}>{streakCount}</Text>
+                <Flame size={16} color={theme.colors.warning} />
+                <Text color="warning" style={{ fontFamily: "Inter-SemiBold", fontSize: 15 }}>{streakCount}</Text>
               </>
             )}
           </View>
           {!isToday && (
-            <Pressable onPress={goToToday} className="rounded-full bg-zinc-800 px-3.5 py-1.5">
-              <Text className="text-foreground font-medium" style={{ fontSize: 14 }}>Today</Text>
+            <Pressable onPress={goToToday} style={{ borderRadius: 9999, backgroundColor: theme.colors.surfaceRaised, paddingHorizontal: 14, paddingVertical: 6 }}>
+              <Text color="text" style={{ fontFamily: "Inter-Medium", fontSize: 14 }}>Today</Text>
             </Pressable>
           )}
         </View>
 
         {/* Row 2: Date nav — prev / date label / next */}
-        <View className="flex-row items-center px-4 mb-3">
-          <Pressable onPress={goToPrevDay} className="p-1" hitSlop={8}>
-            <ChevronLeft size={20} color="#a1a1aa" />
+        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, marginBottom: 12 }}>
+          <Pressable onPress={goToPrevDay} style={{ padding: 4 }} hitSlop={8}>
+            <ChevronLeft size={20} color={theme.colors.textMuted} />
           </Pressable>
-          <Pressable onPress={() => setShowCalendar(true)} className="flex-1 items-center">
-            <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
+          <Pressable onPress={() => setShowCalendar(true)} style={{ flex: 1, alignItems: "center" }}>
+            <Text color="text" style={{ fontFamily: "Inter-SemiBold", fontSize: 16 }}>
               {formatDateLabel(selectedDate)}
             </Text>
           </Pressable>
-          <Pressable onPress={goToNextDay} className="p-1" hitSlop={8}>
-            <ChevronRight size={20} color="#a1a1aa" />
+          <Pressable onPress={goToNextDay} style={{ padding: 4 }} hitSlop={8}>
+            <ChevronRight size={20} color={theme.colors.textMuted} />
           </Pressable>
         </View>
 

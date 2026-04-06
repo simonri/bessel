@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
+import { Text } from "@/components/shared/text";
 import { MapPin, ChevronDown, Check, Search, X } from "lucide-react-native";
 import { BottomSheet } from "@/components/shared/sheet";
 import { Input } from "@/components/shared/input";
@@ -32,20 +33,25 @@ export function CountryFilterBar({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-        className="mb-1"
+        style={{ marginBottom: 4 }}
       >
         {/* Main filter chip */}
         <Pressable
           onPress={() => setShowPicker(true)}
-          className={`flex-row items-center gap-1.5 rounded-full px-3.5 py-2 ${
-            hasFilter ? "bg-foreground" : "bg-zinc-800"
-          }`}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            borderRadius: 9999,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            backgroundColor: hasFilter ? theme.colors.text : theme.colors.surfaceRaised,
+          }}
         >
           <MapPin size={13} color={hasFilter ? theme.colors.monochrome : theme.colors.subtext} />
           <Text
-            className={`text-sm font-medium ${
-              hasFilter ? "text-primary-foreground" : "text-muted-foreground"
-            }`}
+            variant="body"
+            color={hasFilter ? "monochrome" : "subtext"}
           >
             {label}
           </Text>
@@ -56,10 +62,10 @@ export function CountryFilterBar({
         {hasFilter && (
           <Pressable
             onPress={onClear}
-            className="flex-row items-center gap-1 rounded-full px-3 py-2 bg-zinc-800"
+            style={{ flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 9999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: theme.colors.surfaceRaised }}
           >
             <X size={13} color={theme.colors.subtext} />
-            <Text className="text-sm text-muted-foreground">Clear</Text>
+            <Text variant="label" color="subtext">Clear</Text>
           </Pressable>
         )}
       </ScrollView>
@@ -96,16 +102,16 @@ function CountryPickerSheet({
 
   return (
     <BottomSheet onDismiss={onClose}>
-      <Text className="text-foreground text-lg font-bold mb-3">Filter by Country</Text>
+      <Text variant="title" color="text" style={{ marginBottom: 12 }}>Filter by Country</Text>
 
-      <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5 mb-4">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16 }}>
         <Search size={16} color={theme.colors.subtext} />
         <Input
           placeholder="Search countries..."
           value={search}
           onChangeText={setSearch}
           autoFocus
-          className="flex-1"
+          style={{ flex: 1 }}
           returnKeyType="search"
         />
         {search.length > 0 && (
@@ -116,7 +122,7 @@ function CountryPickerSheet({
       </View>
 
       {filtered.length === 0 ? (
-        <Text className="text-muted-foreground text-sm text-center py-6">No countries found</Text>
+        <Text variant="label" color="subtext" style={{ textAlign: "center", paddingVertical: 24 }}>No countries found</Text>
       ) : (
         filtered.map((country) => {
           const isSelected = selectedCountries.includes(country);
@@ -124,9 +130,9 @@ function CountryPickerSheet({
             <Pressable
               key={country}
               onPress={() => onToggle(country)}
-              className="flex-row items-center justify-between py-3 px-1 active:bg-zinc-800/60 rounded-xl"
+              style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12, paddingHorizontal: 4, borderRadius: 12 }}
             >
-              <Text className={`text-[15px] ${isSelected ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+              <Text variant={isSelected ? "body" : "label"} color={isSelected ? "text" : "subtext"}>
                 {country}
               </Text>
               {isSelected && <Check size={18} color={theme.colors.statusGreen} />}

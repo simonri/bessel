@@ -1,5 +1,6 @@
 import { View, Pressable } from "react-native";
 import { Star } from "lucide-react-native";
+import { useTheme } from "@/design-system";
 
 export function StarRating({
   value,
@@ -8,10 +9,11 @@ export function StarRating({
   value: number | null | undefined;
   onChange: (v: number | null) => void;
 }) {
+  const theme = useTheme();
   const current = value ?? 0;
 
   return (
-    <View className="flex-row gap-2">
+    <View style={{ flexDirection: "row", gap: 8 }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Pressable
           key={n}
@@ -20,8 +22,8 @@ export function StarRating({
         >
           <Star
             size={32}
-            color={n <= current ? "#facc15" : "#3f3f46"}
-            fill={n <= current ? "#facc15" : "transparent"}
+            color={n <= current ? theme.colors.statusYellow : theme.colors.surfaceHover}
+            fill={n <= current ? theme.colors.statusYellow : "transparent"}
           />
         </Pressable>
       ))}

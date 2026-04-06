@@ -1,4 +1,6 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
+import { useTheme } from "@/design-system";
 
 export type Phase = "morning" | "capture" | "audit";
 
@@ -9,6 +11,8 @@ export function PhaseTabs({
   active: Phase;
   onChange: (phase: Phase) => void;
 }) {
+  const theme = useTheme();
+
   const tabs: { key: Phase; label: string }[] = [
     { key: "morning", label: "Plan" },
     { key: "capture", label: "Capture" },
@@ -16,16 +20,24 @@ export function PhaseTabs({
   ];
 
   return (
-    <View className="flex-row mx-4 mb-3 gap-2">
+    <View style={{ flexDirection: "row", marginHorizontal: 16, marginBottom: 12, gap: 8 }}>
       {tabs.map((tab) => (
         <Pressable
           key={tab.key}
           onPress={() => onChange(tab.key)}
-          className={`rounded-full px-4 py-1.5 ${active === tab.key ? "bg-foreground" : "bg-zinc-800"}`}
+          style={{
+            borderRadius: 9999,
+            paddingHorizontal: 16,
+            paddingVertical: 6,
+            backgroundColor: active === tab.key ? theme.colors.text : theme.colors.surfaceRaised,
+          }}
         >
           <Text
-            className={`font-medium ${active === tab.key ? "text-primary-foreground" : "text-muted-foreground"}`}
-            style={{ fontSize: 14 }}
+            style={{
+              fontFamily: "Inter-Medium",
+              fontSize: 14,
+              color: active === tab.key ? theme.colors.background : theme.colors.textMuted,
+            }}
           >
             {tab.label}
           </Text>

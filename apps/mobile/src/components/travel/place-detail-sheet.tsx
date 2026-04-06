@@ -1,4 +1,5 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/shared/text";
 import { MapPin, Navigation, Check, Trash2, Pencil } from "lucide-react-native";
 import { Button } from "@/components/shared/button";
 import type { PlaceSchema } from "@metron/client";
@@ -31,17 +32,17 @@ export function PlaceDetailSheet({
   return (
     <BottomSheet onDismiss={onClose}>
       <View>
-        <View className="flex-row items-center gap-4 mb-4">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 16 }}>
           <PlaceIcon place={place} size={56} iconSize={26} />
-          <View className="flex-1 min-w-0">
-            <Text className="text-foreground text-2xl font-bold" numberOfLines={2}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text variant="headingSmall" color="text" numberOfLines={2}>
               {place.name}
             </Text>
-            <View className="flex-row items-center gap-1.5 mt-0.5">
-              {country && <Text className="text-muted-foreground text-[15px]">{country}</Text>}
-              {country && place.category && <Text className="text-muted-foreground text-[15px]">·</Text>}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
+              {country && <Text variant="label" color="subtext">{country}</Text>}
+              {country && place.category && <Text variant="label" color="subtext">·</Text>}
               {place.category && (
-                <Text className="text-[15px] capitalize" style={{ color }}>
+                <Text variant="label" style={{ textTransform: "capitalize", color }}>
                   {place.category.replace(/_/g, " ")}
                 </Text>
               )}
@@ -49,41 +50,41 @@ export function PlaceDetailSheet({
           </View>
         </View>
 
-        <View className="flex-row items-center gap-3 mb-4">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 }}>
           {place.rating ? <RatingStars rating={place.rating} size={16} /> : null}
           {!!visitedAt && (
-            <Text className="text-muted-foreground text-sm">{formatDate(visitedAt)}</Text>
+            <Text variant="label" color="subtext">{formatDate(visitedAt)}</Text>
           )}
         </View>
 
         {tags.length > 0 && (
-          <View className="flex-row flex-wrap gap-1.5 mb-4">
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
             {tags.map((tag) => (
-              <View key={tag} className="rounded-full bg-zinc-800 px-3 py-1.5">
-                <Text className="text-sm text-zinc-300">{tag}</Text>
+              <View key={tag} style={{ borderRadius: 9999, backgroundColor: theme.colors.surfaceRaised, paddingHorizontal: 12, paddingVertical: 6 }}>
+                <Text variant="label" style={{ color: theme.colors.text }}>{tag}</Text>
               </View>
             ))}
           </View>
         )}
 
         {place.address && (
-          <View className="flex-row items-start gap-2.5 mb-4 bg-zinc-800/60 rounded-xl px-3.5 py-3">
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 16, backgroundColor: theme.colors.overlay12, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 }}>
             <MapPin size={16} color={theme.colors.subtext} />
-            <Text className="text-foreground text-[15px] flex-1 leading-snug">{place.address}</Text>
+            <Text variant="label" color="text" style={{ flex: 1, lineHeight: 20 }}>{place.address}</Text>
           </View>
         )}
 
         {place.review && (
-          <View className="mb-4 bg-zinc-800/60 rounded-xl px-3.5 py-3">
-            <Text className="text-zinc-300 text-[15px] leading-relaxed">{place.review}</Text>
+          <View style={{ marginBottom: 16, backgroundColor: theme.colors.overlay12, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12 }}>
+            <Text variant="label" style={{ color: theme.colors.text, lineHeight: 22 }}>{place.review}</Text>
           </View>
         )}
 
-        <View className="flex-row items-center gap-2 mt-1">
-          <Button flex variant="primary" onPress={() => { onEdit(place); onClose(); }} icon={<Pencil size={16} color={theme.colors.monochrome} />}>Edit</Button>
-          <Button flex variant="primary" onPress={() => { onOpenMaps(place); onClose(); }} icon={<Navigation size={16} color={theme.colors.monochrome} />}>Maps</Button>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
+          <Button flex variant="filled" onPress={() => { onEdit(place); onClose(); }} icon={<Pencil size={16} color={theme.colors.monochrome} />}>Edit</Button>
+          <Button flex variant="filled" onPress={() => { onOpenMaps(place); onClose(); }} icon={<Navigation size={16} color={theme.colors.monochrome} />}>Maps</Button>
           {!isVisited && (
-            <Button flex variant="secondary" onPress={() => { onMarkVisited(place); onClose(); }} icon={<Check size={16} color={theme.colors.error} />}>Visited</Button>
+            <Button flex variant="tinted" onPress={() => { onMarkVisited(place); onClose(); }} icon={<Check size={16} color={theme.colors.error} />}>Visited</Button>
           )}
           <Button flex variant="destructive" onPress={() => { onDelete(place); onClose(); }} icon={<Trash2 size={16} color={theme.colors.error} />}>Delete</Button>
         </View>

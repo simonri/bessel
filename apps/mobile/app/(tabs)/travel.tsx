@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert, Linking, ActionSheetIOS, TextInput } from "react-native";
+import { View, Pressable, ActivityIndicator, Alert, Linking, ActionSheetIOS, TextInput } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -91,7 +92,7 @@ export default function TravelScreen() {
     }
   }, [currentCountry]);
   const insets = useSafeAreaInsets();
-  const headerHeight = insets.top + 110;
+  const headerHeight = insets.top + 150;
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listPlacesV1PlacesGetInfiniteOptions({
@@ -214,16 +215,16 @@ export default function TravelScreen() {
     : `No places match "${searchQuery}"`;
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator color={theme.colors.subtext} />
         </View>
       ) : allPlaces.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
           <MapPin size={40} color={theme.colors.border} />
-          <Text className="text-foreground font-semibold text-lg mt-3">No places yet</Text>
-          <Text className="text-muted-foreground text-sm text-center mt-1">Start building your travel database by adding places.</Text>
+          <Text variant="bodyEmphasis" color="text" style={{ marginTop: 12 }}>No places yet</Text>
+          <Text variant="label" color="subtext" style={{ textAlign: "center", marginTop: 4 }}>Start building your travel database by adding places.</Text>
           <Button onPress={() => setShowAddSheet(true)}>Add Place</Button>
         </View>
       ) : (
@@ -236,25 +237,25 @@ export default function TravelScreen() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
             hasActiveFilters ? (
-              <View className="items-center justify-center px-8 pt-20">
-                <Text className="text-muted-foreground text-sm text-center">{emptyMessage}</Text>
+              <View style={{ alignItems: "center", justifyContent: "center", paddingHorizontal: 32, paddingTop: 80 }}>
+                <Text variant="label" color="subtext" style={{ textAlign: "center" }}>{emptyMessage}</Text>
               </View>
             ) : null
           }
-          ListFooterComponent={isFetchingNextPage && !hasActiveFilters ? <View className="py-4 items-center"><ActivityIndicator color={theme.colors.subtext} /></View> : null}
+          ListFooterComponent={isFetchingNextPage && !hasActiveFilters ? <View style={{ paddingVertical: 16, alignItems: "center" }}><ActivityIndicator color={theme.colors.subtext} /></View> : null}
         />
       )}
 
       {/* Header fade */}
-      <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
-        <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={[theme.colors.monochrome, "transparent"]} style={{ height: 10 }} />
+      <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: headerHeight + 10 }}>
+        <View pointerEvents="none" style={{ backgroundColor: theme.colors.background, height: headerHeight }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.background, "transparent"]} style={{ height: 10 }} />
       </View>
 
       {/* Header */}
-      <View className="absolute top-0 left-0 right-0" style={{ paddingTop: insets.top + 12 }}>
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, paddingTop: insets.top + 12 }}>
         {searchActive ? (
-          <View className="flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 h-11 mx-4">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 12, height: 44, marginHorizontal: 16 }}>
             <Search size={16} color={theme.colors.subtext} />
             <TextInput
               ref={searchInputRef}
@@ -271,22 +272,22 @@ export default function TravelScreen() {
             </Pressable>
           </View>
         ) : (
-          <View className="flex-row items-start justify-between px-4">
+          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingHorizontal: 16 }}>
             <View>
-              <Text className="text-3xl font-bold text-foreground">Travel</Text>
-              {totalCount > 0 && <Text className="text-muted-foreground text-base mt-0.5">{totalCount} place{totalCount !== 1 ? "s" : ""}</Text>}
+              <Text variant="heading" color="text">Travel</Text>
+              {totalCount > 0 && <Text variant="bodyLarge" color="subtext" style={{ marginTop: 2 }}>{totalCount} place{totalCount !== 1 ? "s" : ""}</Text>}
             </View>
-            <View className="flex-row items-center gap-2 mt-0.5">
-              <Pressable onPress={handleSearchOpen} className="items-center justify-center rounded-full w-9 h-9 bg-zinc-800">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
+              <Pressable onPress={handleSearchOpen} style={{ alignItems: "center", justifyContent: "center", borderRadius: 9999, width: 36, height: 36, backgroundColor: theme.colors.surfaceRaised }}>
                 <Search size={16} color={theme.colors.subtext} />
               </Pressable>
-              <Pressable onPress={() => setShowAddSheet(true)} className="items-center justify-center rounded-full w-9 h-9 bg-foreground">
+              <Pressable onPress={() => setShowAddSheet(true)} style={{ alignItems: "center", justifyContent: "center", borderRadius: 9999, width: 36, height: 36, backgroundColor: theme.colors.text }}>
                 <Plus size={18} color={theme.colors.monochrome} />
               </Pressable>
             </View>
           </View>
         )}
-        <View className="mt-3">
+        <View style={{ marginTop: 12 }}>
           <CountryFilterBar
             countries={allCountries}
             selectedCountries={activeCountries}

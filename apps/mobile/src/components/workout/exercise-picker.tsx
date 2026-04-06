@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useQuery } from "@tanstack/react-query";
 import { listExercisesV1WorkoutsExercisesGetInfiniteOptions, listRecentExercisesV1WorkoutsExercisesRecentGetOptions } from "@metron/client";
 import type { ExerciseSchema } from "@metron/client";
@@ -7,8 +8,10 @@ import { Dumbbell, Search } from "lucide-react-native";
 import { BottomSheet } from "@/components/shared/sheet";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 
 export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: ExerciseSchema) => void; onClose: () => void }) {
+  const theme = useTheme();
   const [search, setSearch] = useState("");
   const [searchEnabled, setSearchEnabled] = useState(false);
 
@@ -29,11 +32,11 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Exe
 
   return (
     <BottomSheet onDismiss={onClose}>
-      <Text className="text-foreground text-lg font-bold mb-3">Add Exercise</Text>
+      <Text variant="title" color="text" style={{ marginBottom: 12 }}>Add Exercise</Text>
 
-      <View className="flex-row items-center gap-2 mb-4">
-        <View className="flex-1 flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5">
-          <Search size={16} color="#71717a" />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+          <Search size={16} color={theme.colors.textFaint} />
           <Input
             placeholder="Search exercises..."
             value={search}
@@ -44,26 +47,36 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Exe
             returnKeyType="search"
           />
         </View>
-        <Pressable onPress={handleSearch} className={`w-11 h-11 rounded-xl items-center justify-center ${search.length >= 1 ? "bg-foreground" : "bg-zinc-800"}`}>
-          <Search size={18} color={search.length >= 1 ? "#09090b" : "#71717a"} />
+        <Pressable
+          onPress={handleSearch}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: search.length >= 1 ? theme.colors.text : theme.colors.surfaceRaised,
+          }}
+        >
+          <Search size={18} color={search.length >= 1 ? theme.colors.background : theme.colors.textFaint} />
         </Pressable>
       </View>
 
-      <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">{label}</Text>
+      <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{label}</Text>
 
       {isSearching ? (
-        <ActivityIndicator color="#a1a1aa" className="py-8" />
+        <ActivityIndicator color={theme.colors.textMuted} style={{ paddingVertical: 32 }} />
       ) : exercises.length === 0 ? (
-        <Text className="text-muted-foreground text-sm text-center py-8">{searchEnabled ? "No exercises found" : "No recent exercises"}</Text>
+        <Text variant="label" color="subtext" style={{ textAlign: "center", paddingVertical: 32 }}>{searchEnabled ? "No exercises found" : "No recent exercises"}</Text>
       ) : (
         exercises.map((ex) => (
-          <Pressable key={ex.id} onPress={() => { onSelect(ex); onClose(); }} className="flex-row items-center gap-3 py-3 active:bg-zinc-800/60 rounded-xl">
-            <View className="h-10 w-10 rounded-xl bg-zinc-800 items-center justify-center">
-              <Dumbbell size={16} color="#71717a" />
+          <Pressable key={ex.id} onPress={() => { onSelect(ex); onClose(); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderRadius: 12 }}>
+            <View style={{ height: 40, width: 40, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, alignItems: "center", justifyContent: "center" }}>
+              <Dumbbell size={16} color={theme.colors.textFaint} />
             </View>
-            <View className="flex-1 min-w-0">
-              <Text className="text-foreground text-sm font-medium" numberOfLines={1}>{ex.name}</Text>
-              <Text className="text-muted-foreground text-xs capitalize mt-0.5">{ex.category?.replace(/_/g, " ")}{ex.equipment ? ` · ${ex.equipment}` : ""}</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text variant="body" color="text" numberOfLines={1}>{ex.name}</Text>
+              <Text variant="caption" color="subtext" style={{ textTransform: "capitalize", marginTop: 2 }}>{ex.category?.replace(/_/g, " ")}{ex.equipment ? ` · ${ex.equipment}` : ""}</Text>
             </View>
           </Pressable>
         ))

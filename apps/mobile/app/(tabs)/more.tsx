@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
+import { Text } from "@/components/shared/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
@@ -10,6 +11,7 @@ import {
   PieChart,
   Settings,
 } from "lucide-react-native";
+import { useTheme } from "@/design-system";
 
 const items = [
   { title: "Transactions", icon: ArrowLeftRight, href: "/(tabs)/transactions" },
@@ -22,18 +24,19 @@ const items = [
 ] as const;
 
 export default function MoreScreen() {
+  const theme = useTheme();
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView className="flex-1 p-4">
-        <Text className="text-3xl font-bold text-foreground mb-4">More</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView style={{ flex: 1, padding: 16 }}>
+        <Text variant="heading" color="text" style={{ marginBottom: 16 }}>More</Text>
         {items.map((item) => (
           <Pressable
             key={item.title}
             onPress={() => router.push(item.href as any)}
-            className="flex-row items-center gap-3 rounded-lg px-3 py-3 active:bg-accent"
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12 }}
           >
-            <item.icon size={20} color="#a1a1aa" />
-            <Text className="text-base font-medium text-foreground">
+            <item.icon size={20} color={theme.colors.textMuted} />
+            <Text variant="bodyEmphasis" color="text">
               {item.title}
             </Text>
           </Pressable>

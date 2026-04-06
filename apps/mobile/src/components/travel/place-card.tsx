@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Star, MapPin } from "lucide-react-native";
 import type { PlaceSchema } from "@metron/client";
 import { getPlaceFields, CATEGORY_ICONS, CATEGORY_COLORS } from "./lib";
@@ -7,7 +8,7 @@ import { useTheme } from "@/design-system";
 function RatingStars({ rating, size = 10 }: { rating: number; size?: number }) {
   const theme = useTheme();
   return (
-    <View className="flex-row items-center gap-0.5">
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
@@ -38,8 +39,7 @@ export function PlaceIcon({
 
   return (
     <View
-      className="rounded-xl items-center justify-center"
-      style={{ width: size, height: size, backgroundColor: `${color}15` }}
+      style={{ borderRadius: 12, alignItems: "center", justifyContent: "center", width: size, height: size, backgroundColor: `${color}15` }}
     >
       <Icon size={iconSize} color={color} />
     </View>
@@ -62,19 +62,19 @@ export function PlaceCard({
       onPress={() => onPress(place)}
       onLongPress={() => onLongPress(place)}
       delayLongPress={300}
-      className="mb-0.5 flex-row items-center gap-3 rounded-xl px-4 py-3 active:bg-zinc-800/60"
+      style={{ marginBottom: 2, flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 }}
     >
       <PlaceIcon place={place} />
 
-      <View className="flex-1 min-w-0">
-        <Text className="text-foreground font-medium text-base" numberOfLines={1}>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text variant="bodyEmphasis" color="text" numberOfLines={1}>
           {place.name}
         </Text>
-        <View className="flex-row items-center gap-1.5 mt-0.5">
-          {country && <Text className="text-muted-foreground text-sm">{country}</Text>}
-          {country && place.category && <Text className="text-muted-foreground text-sm">·</Text>}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
+          {country && <Text variant="label" color="subtext">{country}</Text>}
+          {country && place.category && <Text variant="label" color="subtext">·</Text>}
           {place.category && (
-            <Text className="text-muted-foreground text-sm capitalize">
+            <Text variant="label" color="subtext" style={{ textTransform: "capitalize" }}>
               {place.category.replace(/_/g, " ")}
             </Text>
           )}

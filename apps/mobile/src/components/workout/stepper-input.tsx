@@ -1,4 +1,5 @@
-import { View, Text, Pressable, TextInput } from "react-native";
+import { View, Pressable, TextInput } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Minus, Plus } from "lucide-react-native";
 import { useTheme } from "@/design-system";
 
@@ -22,33 +23,33 @@ export function StepperInput({
   const isGhost = value === null;
 
   return (
-    <View className="items-center gap-1">
+    <View style={{ alignItems: "center", gap: 4 }}>
       {label && (
-        <Text className="text-muted-foreground uppercase" style={{ fontSize: 10, fontWeight: "600" }}>
+        <Text style={{ color: theme.colors.textMuted, textTransform: "uppercase", fontSize: 10, fontWeight: "600" }}>
           {label}
         </Text>
       )}
-      <View className="flex-row items-center gap-1">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         <Pressable
           onPress={() => onChange(Math.max(0, display - step))}
-          className="w-11 h-11 items-center justify-center rounded-xl bg-zinc-700"
+          style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: theme.colors.surfaceHover }}
           hitSlop={4}
         >
-          <Minus size={18} color="#a1a1aa" />
+          <Minus size={18} color={theme.colors.textMuted} />
         </Pressable>
         <TextInput
           value={isGhost ? "" : String(display)}
           placeholder={ghostValue != null ? String(ghostValue) : "0"}
-          placeholderTextColor="#52525b"
+          placeholderTextColor={theme.colors.textMuted}
           onChangeText={(t) => {
             const n = parseFloat(t);
             if (!isNaN(n)) onChange(n);
           }}
           keyboardType="numeric"
           returnKeyType="done"
-          className="text-center"
           style={{
-            color: isPB ? "#facc15" : theme.colors.foreground,
+            textAlign: "center",
+            color: isPB ? theme.colors.statusYellow : theme.colors.foreground,
             fontSize: 18,
             fontWeight: "700",
             width: 56,
@@ -58,10 +59,10 @@ export function StepperInput({
         />
         <Pressable
           onPress={() => onChange(display + step)}
-          className="w-11 h-11 items-center justify-center rounded-xl bg-zinc-700"
+          style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: theme.colors.surfaceHover }}
           hitSlop={4}
         >
-          <Plus size={18} color="#a1a1aa" />
+          <Plus size={18} color={theme.colors.textMuted} />
         </Pressable>
       </View>
     </View>

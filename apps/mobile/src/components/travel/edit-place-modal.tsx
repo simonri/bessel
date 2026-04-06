@@ -1,13 +1,13 @@
 import { useState } from "react";
 import {
   View,
-  Text,
   Pressable,
   Modal,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Text } from "@/components/shared/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -102,47 +102,66 @@ export function EditPlaceModal({
 
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View className="flex-1 bg-[#171717]">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} className="flex-1">
-          <SafeAreaView className="flex-1 pt-5">
-            <View className="flex-row items-center justify-between px-5 mb-4">
-              <Pressable onPress={onClose} className="w-9 h-9 items-center justify-center rounded-full bg-zinc-700">
+      <View style={{ flex: 1, backgroundColor: theme.colors.card }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "height" : undefined} style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1, paddingTop: 20 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginBottom: 16 }}>
+              <Pressable onPress={onClose} style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center", borderRadius: 9999, backgroundColor: theme.colors.surfaceHover }}>
                 <X size={18} color={theme.colors.subtext} />
               </Pressable>
-              <Text className="text-foreground text-lg font-bold">Edit Place</Text>
+              <Text variant="title" color="text">Edit Place</Text>
               <Pressable
                 onPress={handleSave}
                 disabled={!name.trim() || updateMutation.isPending}
-                className={`w-9 h-9 items-center justify-center rounded-full ${name.trim() ? "bg-foreground" : "bg-zinc-700"}`}
+                style={{
+                  width: 36,
+                  height: 36,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 9999,
+                  backgroundColor: name.trim() ? theme.colors.text : theme.colors.surfaceHover,
+                }}
               >
                 <Check size={18} color={name.trim() ? theme.colors.monochrome : theme.colors.subtext} />
               </Pressable>
             </View>
 
-            <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Name</Text>
-              <Input value={name} onChangeText={setName} placeholder="Place name" className="bg-zinc-800 rounded-xl px-4 py-3 mb-5" />
+            <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} keyboardShouldPersistTaps="handled">
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Name</Text>
+              <Input value={name} onChangeText={setName} placeholder="Place name" style={{ backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 }} />
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Status</Text>
-              <View className="flex-row gap-2 mb-5">
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Status</Text>
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
                 <Pressable
                   onPress={() => setStatus("want_to_go")}
-                  className={`flex-1 items-center py-2.5 rounded-xl ${status === "want_to_go" ? "bg-amber-500/15" : "bg-zinc-800"}`}
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    backgroundColor: status === "want_to_go" ? "rgba(245,158,11,0.15)" : theme.colors.surfaceRaised,
+                  }}
                 >
-                  <Text className={`text-sm font-medium ${status === "want_to_go" ? "text-amber-500" : "text-muted-foreground"}`}>Want to go</Text>
+                  <Text variant="body" color={status === "want_to_go" ? "statusYellow" : "subtext"}>Want to go</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => { setStatus("visited"); if (!visitedAt) setVisitedAt(new Date()); }}
-                  className={`flex-1 items-center py-2.5 rounded-xl ${status === "visited" ? "bg-green-500/15" : "bg-zinc-800"}`}
+                  style={{
+                    flex: 1,
+                    alignItems: "center",
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    backgroundColor: status === "visited" ? theme.colors.successSubtle : theme.colors.surfaceRaised,
+                  }}
                 >
-                  <Text className={`text-sm font-medium ${status === "visited" ? "text-green-500" : "text-muted-foreground"}`}>Visited</Text>
+                  <Text variant="body" color={status === "visited" ? "statusGreen" : "subtext"}>Visited</Text>
                 </Pressable>
               </View>
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Rating</Text>
-              <View className="flex-row gap-2 mb-5">
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Rating</Text>
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Pressable key={star} onPress={() => setRating(rating === star ? null : star)} className="p-1">
+                  <Pressable key={star} onPress={() => setRating(rating === star ? null : star)} style={{ padding: 4 }}>
                     <Star size={28} color={rating && star <= rating ? theme.colors.statusYellow : theme.colors.secondary} fill={rating && star <= rating ? theme.colors.statusYellow : "transparent"} />
                   </Pressable>
                 ))}
@@ -150,7 +169,7 @@ export function EditPlaceModal({
 
               {status === "visited" && (
                 <>
-                  <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Date Visited</Text>
+                  <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Date Visited</Text>
                   <DateTimePicker
                     value={visitedAt ?? new Date()}
                     mode="date"
@@ -163,36 +182,35 @@ export function EditPlaceModal({
                 </>
               )}
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Review</Text>
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Review</Text>
               <Input
                 value={review}
                 onChangeText={setReview}
                 placeholder="Your thoughts, tips..."
                 multiline
-                className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                style={{ minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
+                style={{ backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
               />
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Category</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-5" contentContainerStyle={{ gap: 8 }}>
-                <Pressable onPress={() => setCategory("")} className={`rounded-full px-3 py-1.5 ${!category ? "bg-foreground" : "bg-zinc-800"}`}>
-                  <Text className={`text-xs font-medium ${!category ? "text-primary-foreground" : "text-muted-foreground"}`}>None</Text>
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Category</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }} contentContainerStyle={{ gap: 8 }}>
+                <Pressable onPress={() => setCategory("")} style={{ borderRadius: 9999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: !category ? theme.colors.text : theme.colors.surfaceRaised }}>
+                  <Text variant="caption" color={!category ? "monochrome" : "subtext"}>None</Text>
                 </Pressable>
                 {CATEGORIES.map((cat) => (
-                  <Pressable key={cat} onPress={() => setCategory(cat)} className={`rounded-full px-3 py-1.5 ${category === cat ? "bg-foreground" : "bg-zinc-800"}`}>
-                    <Text className={`text-xs font-medium capitalize ${category === cat ? "text-primary-foreground" : "text-muted-foreground"}`}>{cat}</Text>
+                  <Pressable key={cat} onPress={() => setCategory(cat)} style={{ borderRadius: 9999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: category === cat ? theme.colors.text : theme.colors.surfaceRaised }}>
+                    <Text variant="caption" color={category === cat ? "monochrome" : "subtext"} style={{ textTransform: "capitalize" }}>{cat}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Tags</Text>
-              <Input value={tags} onChangeText={setTags} placeholder="Comma separated, e.g. sushi, date night" className="bg-zinc-800 rounded-xl px-4 py-3 mb-5" />
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</Text>
+              <Input value={tags} onChangeText={setTags} placeholder="Comma separated, e.g. sushi, date night" style={{ backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 }} />
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Address</Text>
-              <Input value={address} onChangeText={setAddress} placeholder="Full address" className="bg-zinc-800 rounded-xl px-4 py-3 mb-5" />
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Address</Text>
+              <Input value={address} onChangeText={setAddress} placeholder="Full address" style={{ backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 }} />
 
-              <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Country</Text>
-              <Input value={country} onChangeText={setCountry} placeholder="e.g. Japan" className="bg-zinc-800 rounded-xl px-4 py-3 mb-8" />
+              <Text variant="caption" color="subtext" style={{ textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Country</Text>
+              <Input value={country} onChangeText={setCountry} placeholder="e.g. Japan" style={{ backgroundColor: theme.colors.surfaceRaised, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 32 }} />
             </ScrollView>
           </SafeAreaView>
         </KeyboardAvoidingView>

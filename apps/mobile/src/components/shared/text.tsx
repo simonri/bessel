@@ -23,7 +23,7 @@ export const Text = ({
   placeholderText,
   placeholderNumberOfLines = 1,
   placeholderColor,
-  borderRadius = "border-radius-6",
+  borderRadius = "md",
   ...rest
 }: Props) => {
   if (loading) {

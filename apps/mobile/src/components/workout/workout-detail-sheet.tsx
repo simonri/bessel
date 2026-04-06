@@ -1,4 +1,5 @@
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Button } from "@/components/shared/button";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkoutV1WorkoutsWorkoutIdGetOptions } from "@metron/client";
@@ -33,34 +34,34 @@ export function WorkoutDetailSheet({ workoutId, onClose, onDelete }: { workoutId
   return (
     <BottomSheet onDismiss={onClose}>
       {isLoading || !w ? (
-        <ActivityIndicator color={theme.colors.subtext} className="py-8" />
+        <ActivityIndicator color={theme.colors.subtext} style={{ paddingVertical: 32 }} />
       ) : (
         <View>
-          <Text className="text-foreground text-xl font-bold">{formatDate(w.started_at)}</Text>
-          <Text className="text-muted-foreground text-sm mt-0.5">{formatTime(w.started_at)}{duration ? ` · ${duration}` : ""}</Text>
+          <Text variant="title" color="text">{formatDate(w.started_at)}</Text>
+          <Text variant="label" color="subtext" style={{ marginTop: 2 }}>{formatTime(w.started_at)}{duration ? ` · ${duration}` : ""}</Text>
 
-          <View className="flex-row gap-3 mt-4 mb-4">
-            <View className="flex-1 rounded-xl bg-zinc-800 p-3 items-center">
-              <Text className="text-foreground text-lg font-bold">{sets.length}</Text>
-              <Text className="text-muted-foreground text-xs">Sets</Text>
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 16, marginBottom: 16 }}>
+            <View style={{ flex: 1, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, padding: 12, alignItems: "center" }}>
+              <Text variant="title" color="text">{sets.length}</Text>
+              <Text variant="caption" color="subtext">Sets</Text>
             </View>
-            <View className="flex-1 rounded-xl bg-zinc-800 p-3 items-center">
-              <Text className="text-foreground text-lg font-bold">{totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume}</Text>
-              <Text className="text-muted-foreground text-xs">Volume (kg)</Text>
+            <View style={{ flex: 1, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, padding: 12, alignItems: "center" }}>
+              <Text variant="title" color="text">{totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume}</Text>
+              <Text variant="caption" color="subtext">Volume (kg)</Text>
             </View>
-            <View className="flex-1 rounded-xl bg-zinc-800 p-3 items-center">
-              <Text className="text-foreground text-lg font-bold">{exerciseGroups.size}</Text>
-              <Text className="text-muted-foreground text-xs">Exercises</Text>
+            <View style={{ flex: 1, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, padding: 12, alignItems: "center" }}>
+              <Text variant="title" color="text">{exerciseGroups.size}</Text>
+              <Text variant="caption" color="subtext">Exercises</Text>
             </View>
           </View>
 
           {Array.from(exerciseGroups.entries()).map(([exId, group]) => (
-            <View key={exId} className="mb-3">
-              <Text className="text-foreground text-sm font-medium mb-1">{group.name}</Text>
+            <View key={exId} style={{ marginBottom: 12 }}>
+              <Text variant="body" color="text" style={{ marginBottom: 4 }}>{group.name}</Text>
               {group.sets.map((set) => (
-                <View key={set.id} className="flex-row items-center gap-3 py-1 pl-2">
-                  <Text className="text-muted-foreground text-xs w-6">#{set.set_number}</Text>
-                  <Text className="text-foreground text-sm">{set.weight}{set.weight_unit} × {set.reps}</Text>
+                <View key={set.id} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4, paddingLeft: 8 }}>
+                  <Text variant="caption" color="subtext" style={{ width: 24 }}>#{set.set_number}</Text>
+                  <Text variant="label" color="text">{set.weight}{set.weight_unit} × {set.reps}</Text>
                   {set.is_pr && <Trophy size={12} color={theme.colors.statusYellow} />}
                 </View>
               ))}
@@ -68,8 +69,8 @@ export function WorkoutDetailSheet({ workoutId, onClose, onDelete }: { workoutId
           ))}
 
           {w.notes && (
-            <View className="mt-2 pt-3 border-t border-zinc-700">
-              <Text className="text-muted-foreground text-sm">{w.notes}</Text>
+            <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: theme.colors.border }}>
+              <Text variant="label" color="subtext">{w.notes}</Text>
             </View>
           )}
 

@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Check, Trophy } from "lucide-react-native";
 import { StepperInput } from "./stepper-input";
 import { RIRSelector } from "./rir-selector";
+import { useTheme } from "@/design-system";
 
 const SET_TYPES = ["standard", "top", "backoff", "failure"] as const;
 const SET_TYPE_LABELS: Record<string, string> = {
@@ -12,10 +14,10 @@ const SET_TYPE_LABELS: Record<string, string> = {
   failure: "F",
 };
 const SET_TYPE_COLORS: Record<string, string> = {
-  standard: "#a1a1aa",
-  top: "#facc15",
-  backoff: "#60a5fa",
-  failure: "#ef4444",
+  standard: "#5D5D5D",
+  top: "#F2C94C",
+  backoff: "#4EA7FC",
+  failure: "#EB5757",
 };
 
 type GhostSet = { weight: number; reps: number; rir?: number | null; set_type?: string | null };
@@ -35,6 +37,7 @@ export function SetRow({
   isPR: boolean;
   onCommit: (data: { weight: number; reps: number; rir: number | null; set_type: string }) => void;
 }) {
+  const theme = useTheme();
   const [weight, setWeight] = useState<number | null>(null);
   const [reps, setReps] = useState<number | null>(null);
   const [rir, setRir] = useState<number | null>(ghostSet?.rir ?? null);
@@ -60,35 +63,33 @@ export function SetRow({
 
   if (isCommitted) {
     return (
-      <View className="mx-4 mb-2 rounded-xl bg-zinc-800/30 px-4 py-3">
-        <View className="flex-row items-center">
-          <Text className="text-muted-foreground font-bold w-8" style={{ fontSize: 15 }}>{setNumber}</Text>
+      <View style={{ marginHorizontal: 16, marginBottom: 8, borderRadius: 12, backgroundColor: theme.colors.overlay12, paddingHorizontal: 16, paddingVertical: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ color: theme.colors.textMuted, fontWeight: "bold", width: 32, fontSize: 15 }}>{setNumber}</Text>
           <View
-            className="rounded-full px-2 py-0.5 mr-3"
-            style={{ backgroundColor: SET_TYPE_COLORS[setType] + "30" }}
+            style={{ borderRadius: 9999, paddingHorizontal: 8, paddingVertical: 2, marginRight: 12, backgroundColor: SET_TYPE_COLORS[setType] + "30" }}
           >
             <Text style={{ color: SET_TYPE_COLORS[setType], fontSize: 11, fontWeight: "700" }}>
               {SET_TYPE_LABELS[setType] ?? "S"}
             </Text>
           </View>
           <Text
-            className="flex-1 font-bold"
-            style={{ fontSize: 16, color: isPR ? "#facc15" : "#fafafa" }}
+            style={{ flex: 1, fontWeight: "bold", fontSize: 16, color: isPR ? theme.colors.statusYellow : theme.colors.text }}
           >
             {effectiveWeight}kg x {effectiveReps}
           </Text>
           {rir != null && (
-            <Text className="text-muted-foreground mr-3" style={{ fontSize: 13 }}>
+            <Text style={{ color: theme.colors.textMuted, marginRight: 12, fontSize: 13 }}>
               RIR {rir}
             </Text>
           )}
           {isPR ? (
-            <View className="flex-row items-center gap-1">
-              <Trophy size={14} color="#facc15" />
-              <Text style={{ color: "#facc15", fontSize: 11, fontWeight: "700" }}>PB</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <Trophy size={14} color={theme.colors.statusYellow} />
+              <Text style={{ color: theme.colors.statusYellow, fontSize: 11, fontWeight: "700" }}>PB</Text>
             </View>
           ) : (
-            <Check size={18} color="#22c55e" />
+            <Check size={18} color={theme.colors.success} />
           )}
         </View>
       </View>
@@ -96,15 +97,14 @@ export function SetRow({
   }
 
   return (
-    <View className="mx-4 mb-3 rounded-2xl bg-zinc-800 p-4">
+    <View style={{ marginHorizontal: 16, marginBottom: 12, borderRadius: 16, backgroundColor: theme.colors.surfaceRaised, padding: 16 }}>
       {/* Set number + type */}
-      <View className="flex-row items-center justify-between mb-4">
-        <View className="flex-row items-center gap-3">
-          <Text className="text-foreground font-bold" style={{ fontSize: 18 }}>Set {setNumber}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Text style={{ color: theme.colors.text, fontWeight: "bold", fontSize: 18 }}>Set {setNumber}</Text>
           <Pressable
             onPress={cycleSetType}
-            className="rounded-full px-3 py-1"
-            style={{ backgroundColor: SET_TYPE_COLORS[setType] + "30" }}
+            style={{ borderRadius: 9999, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: SET_TYPE_COLORS[setType] + "30" }}
           >
             <Text style={{ color: SET_TYPE_COLORS[setType], fontSize: 13, fontWeight: "700" }}>
               {SET_TYPE_LABELS[setType] ?? "S"}
@@ -112,15 +112,15 @@ export function SetRow({
           </Pressable>
         </View>
         {isPB && (
-          <View className="flex-row items-center gap-1">
-            <Trophy size={14} color="#facc15" />
-            <Text style={{ color: "#facc15", fontSize: 12, fontWeight: "700" }}>PB</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Trophy size={14} color={theme.colors.statusYellow} />
+            <Text style={{ color: theme.colors.statusYellow, fontSize: 12, fontWeight: "700" }}>PB</Text>
           </View>
         )}
       </View>
 
       {/* Weight + Reps steppers */}
-      <View className="flex-row justify-around mb-4">
+      <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 16 }}>
         <StepperInput
           value={weight}
           ghostValue={ghostSet?.weight}
@@ -139,13 +139,13 @@ export function SetRow({
       </View>
 
       {/* RIR + Commit */}
-      <View className="flex-row items-end justify-between">
+      <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
         <RIRSelector value={rir} onChange={setRir} />
         <Pressable
           onPress={handleCommit}
-          className="w-14 h-14 items-center justify-center rounded-2xl bg-green-600"
+          style={{ width: 56, height: 56, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: theme.colors.success }}
         >
-          <Check size={24} color="#fff" />
+          <Check size={24} color={theme.colors.text} />
         </Pressable>
       </View>
     </View>

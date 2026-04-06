@@ -1,7 +1,9 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Circle, CheckCircle2, Flag, Calendar, Repeat, ChevronRight } from "lucide-react-native";
 import type { TaskSchema } from "@metron/client";
 import { formatDueDate, PRIORITY_COLORS, PRIORITY_LABELS } from "./lib";
+import { useTheme } from "@/design-system";
 
 export function TaskRow({
   task,
@@ -12,6 +14,7 @@ export function TaskRow({
   onPress: (task: TaskSchema) => void;
   onToggle: (task: TaskSchema) => void;
 }) {
+  const theme = useTheme();
   const isDone = task.status === "done" || task.status === "cancelled";
   const due = formatDueDate(task.due_date);
   const priority = task.priority ?? 0;
@@ -19,49 +22,51 @@ export function TaskRow({
   return (
     <Pressable
       onPress={() => onPress(task)}
-      className="mb-1 flex-row items-center gap-3 rounded-xl px-4 py-3.5 active:bg-zinc-800"
+      style={{ marginBottom: 4, flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14 }}
     >
       <Pressable onPress={() => onToggle(task)} hitSlop={8}>
         {isDone ? (
-          <CheckCircle2 size={24} color="#22c55e" fill="#22c55e" />
+          <CheckCircle2 size={24} color={theme.colors.success} fill={theme.colors.success} />
         ) : (
-          <Circle size={24} color={priority >= 3 ? PRIORITY_COLORS[priority] : "#3f3f46"} />
+          <Circle size={24} color={priority >= 3 ? PRIORITY_COLORS[priority] : theme.colors.surfaceHover} />
         )}
       </Pressable>
 
-      <View className="flex-1 min-w-0">
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text
-          className={`text-base font-medium ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}
+          variant="bodyEmphasis"
+          color={isDone ? "subtext" : "text"}
+          style={isDone ? { textDecorationLine: "line-through" } : undefined}
           numberOfLines={1}
         >
           {task.title}
         </Text>
-        <View className="flex-row items-center gap-2 mt-0.5 flex-wrap">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
           {due.label ? (
-            <View className="flex-row items-center gap-1">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
               <Calendar size={11} color={due.color} />
-              <Text style={{ color: due.color }} className="text-sm">{due.label}</Text>
+              <Text variant="label" style={{ color: due.color }}>{due.label}</Text>
             </View>
           ) : null}
-          {task.is_recurring && <Repeat size={11} color="#a1a1aa" />}
+          {task.is_recurring && <Repeat size={11} color={theme.colors.textMuted} />}
           {priority >= 1 && !isDone && (
-            <View className="flex-row items-center gap-0.5">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
               <Flag size={11} color={PRIORITY_COLORS[priority]} fill={priority >= 3 ? PRIORITY_COLORS[priority] : "transparent"} />
               {priority >= 3 && (
-                <Text style={{ color: PRIORITY_COLORS[priority] }} className="text-sm font-medium">{PRIORITY_LABELS[priority]}</Text>
+                <Text variant="body" style={{ color: PRIORITY_COLORS[priority] }}>{PRIORITY_LABELS[priority]}</Text>
               )}
             </View>
           )}
           {task.project && (
-            <View className="rounded-full bg-secondary px-1.5 py-0.5">
-              <Text className="text-muted-foreground text-xs">{task.project}</Text>
+            <View style={{ borderRadius: 9999, backgroundColor: theme.colors.surfaceRaised, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text variant="caption" color="subtext">{task.project}</Text>
             </View>
           )}
-          {task.area && <Text className="text-muted-foreground text-xs">{task.area}</Text>}
+          {task.area && <Text variant="caption" color="subtext">{task.area}</Text>}
         </View>
       </View>
 
-      <ChevronRight size={16} color="#3f3f46" />
+      <ChevronRight size={16} color={theme.colors.surfaceHover} />
     </Pressable>
   );
 }

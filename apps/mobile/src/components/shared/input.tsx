@@ -11,6 +11,7 @@ export function Input({ style, ...props }: TextInputProps) {
       style={[
         {
           color: theme.colors.text,
+          fontFamily: "Inter-Regular",
           fontSize: 14,
           paddingVertical: 0,
         },

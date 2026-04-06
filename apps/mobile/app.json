@@ -25,7 +25,8 @@
         {
           "sounds": []
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

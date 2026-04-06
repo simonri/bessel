@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useQuery } from "@tanstack/react-query";
 import { getWeatherForecastV1WeatherGetOptions } from "@metron/client";
 import type { WeatherDaySchema } from "@metron/client";
@@ -17,17 +18,18 @@ import {
 } from "lucide-react-native";
 import * as Location from "expo-location";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 
 function getWeatherIcon(code: number): { icon: LucideIcon; color: string } {
-  if (code === 0) return { icon: Sun, color: "#facc15" };
+  if (code === 0) return { icon: Sun, color: "#F2C94C" };
   if (code <= 3) return { icon: Cloud, color: "#94a3b8" };
   if (code <= 48) return { icon: CloudFog, color: "#94a3b8" };
-  if (code <= 57) return { icon: CloudDrizzle, color: "#60a5fa" };
-  if (code <= 67) return { icon: CloudRain, color: "#3b82f6" };
-  if (code <= 77) return { icon: CloudSnow, color: "#e2e8f0" };
-  if (code <= 82) return { icon: CloudRain, color: "#3b82f6" };
-  if (code <= 86) return { icon: CloudSnow, color: "#e2e8f0" };
-  return { icon: CloudLightning, color: "#a78bfa" };
+  if (code <= 57) return { icon: CloudDrizzle, color: "#4EA7FC" };
+  if (code <= 67) return { icon: CloudRain, color: "#4161DA" };
+  if (code <= 77) return { icon: CloudSnow, color: "#E0E0E0" };
+  if (code <= 82) return { icon: CloudRain, color: "#4161DA" };
+  if (code <= 86) return { icon: CloudSnow, color: "#E0E0E0" };
+  return { icon: CloudLightning, color: "#845AB9" };
 }
 
 function formatDayLabel(date: Date, index: number): string {
@@ -36,32 +38,33 @@ function formatDayLabel(date: Date, index: number): string {
 }
 
 function ForecastRow({ day, index }: { day: WeatherDaySchema; index: number }) {
+  const theme = useTheme();
   const { icon: Icon, color: iconColor } = getWeatherIcon(day.weather_code);
   const hasPrecip = day.precipitation_probability_max > 0;
 
   return (
-    <View className="flex-row items-center py-3">
-      <Text className="w-12 text-sm font-medium text-foreground">
+    <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 12 }}>
+      <Text variant="body" color="text" style={{ width: 48 }}>
         {formatDayLabel(day.date, index)}
       </Text>
-      <View className="w-10 items-center">
+      <View style={{ width: 40, alignItems: "center" }}>
         <Icon size={20} color={iconColor} />
       </View>
-      <View className="w-12 flex-row items-center">
+      <View style={{ width: 48, flexDirection: "row", alignItems: "center" }}>
         {hasPrecip ? (
           <>
-            <Droplets size={12} color="#60a5fa" />
-            <Text className="ml-0.5 text-xs text-blue-400">
+            <Droplets size={12} color={theme.colors.accent} />
+            <Text variant="caption" color="statusBlue" style={{ marginLeft: 2 }}>
               {day.precipitation_probability_max}%
             </Text>
           </>
         ) : null}
       </View>
-      <View className="ml-auto flex-row items-center gap-3">
-        <Text className="w-10 text-right text-sm font-semibold text-foreground">
+      <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Text variant="body" color="text" style={{ width: 40, textAlign: "right" }}>
           {Math.round(day.temperature_max)}°
         </Text>
-        <Text className="w-10 text-right text-sm text-muted-foreground">
+        <Text variant="label" color="subtext" style={{ width: 40, textAlign: "right" }}>
           {Math.round(day.apparent_temperature_max)}°
         </Text>
       </View>
@@ -70,6 +73,7 @@ function ForecastRow({ day, index }: { day: WeatherDaySchema; index: number }) {
 }
 
 export function WeatherWidget() {
+  const theme = useTheme();
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
@@ -110,13 +114,13 @@ export function WeatherWidget() {
 
   if (locationLoading || weatherLoading || !forecast) {
     return (
-      <View className="rounded-2xl bg-card p-4">
-        <View className="gap-3">
+      <View style={{ borderRadius: 16, backgroundColor: theme.colors.card, padding: 16 }}>
+        <View style={{ gap: 12 }}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <View key={i} className="flex-row items-center gap-3">
-              <View className="h-4 w-10 rounded bg-muted" />
-              <View className="h-5 w-5 rounded-full bg-muted" />
-              <View className="ml-auto h-4 w-16 rounded bg-muted" />
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <View style={{ height: 16, width: 40, borderRadius: 4, backgroundColor: theme.colors.surfaceRaised }} />
+              <View style={{ height: 20, width: 20, borderRadius: 9999, backgroundColor: theme.colors.surfaceRaised }} />
+              <View style={{ marginLeft: "auto", height: 16, width: 64, borderRadius: 4, backgroundColor: theme.colors.surfaceRaised }} />
             </View>
           ))}
         </View>
@@ -128,32 +132,32 @@ export function WeatherWidget() {
   const { icon: TodayIcon, color: todayIconColor } = getWeatherIcon(today.weather_code);
 
   return (
-    <View className="rounded-2xl bg-card p-4">
+    <View style={{ borderRadius: 16, backgroundColor: theme.colors.card, padding: 16 }}>
       {/* Today hero */}
-      <View className="flex-row items-center pb-3">
+      <View style={{ flexDirection: "row", alignItems: "center", paddingBottom: 12 }}>
         <TodayIcon size={40} color={todayIconColor} />
-        <View className="ml-3">
-          <Text className="text-3xl font-bold text-foreground">
+        <View style={{ marginLeft: 12 }}>
+          <Text variant="heading" color="text">
             {Math.round(today.temperature_max)}°
           </Text>
-          <Text className="text-sm text-muted-foreground">{today.weather_label}</Text>
+          <Text variant="label" color="subtext">{today.weather_label}</Text>
         </View>
         {locationName && (
-          <View className="ml-auto flex-row items-center gap-1">
-            <MapPin size={12} color="#71717a" />
-            <Text className="text-sm text-muted-foreground">{locationName}</Text>
+          <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <MapPin size={12} color={theme.colors.textSubtle} />
+            <Text variant="label" color="subtext">{locationName}</Text>
           </View>
         )}
       </View>
 
       {/* Column headers */}
-      <View className="flex-row items-center border-b border-border pb-2">
-        <Text className="w-12 text-xs text-muted-foreground">Day</Text>
-        <View className="w-10" />
-        <View className="w-12" />
-        <View className="ml-auto flex-row items-center gap-3">
-          <Text className="w-10 text-right text-xs text-muted-foreground">High</Text>
-          <Text className="w-10 text-right text-xs text-muted-foreground">Feel</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderColor: theme.colors.surfaceRaised, paddingBottom: 8 }}>
+        <Text variant="caption" color="subtext" style={{ width: 48 }}>Day</Text>
+        <View style={{ width: 40 }} />
+        <View style={{ width: 48 }} />
+        <View style={{ marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Text variant="caption" color="subtext" style={{ width: 40, textAlign: "right" }}>High</Text>
+          <Text variant="caption" color="subtext" style={{ width: 40, textAlign: "right" }}>Feel</Text>
         </View>
       </View>
 

@@ -1,100 +1,123 @@
-import { useTheme } from "@/design-system";
-import { Touchable } from "./touchable";
-import { Box } from "./box";
-import { ButtonVariantKey, buttonVariants } from "@/design-system/button-variants";
-import { TextVariantKey } from "@/design-system/text-variants";
-import { DimensionToken, SpacingToken } from "@/design-system/theme";
-import { ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Pressable } from "react-native";
 import { Text } from "./text";
-export type ButtonSize = 'small' | 'medium';
+import { useTheme } from "@/design-system";
+import type { ButtonVariantKey } from "@/design-system/button-variants";
+import { buttonVariants } from "@/design-system/button-variants";
+import type { ColorToken } from "@/design-system/theme";
+
+export type ButtonSize = "small" | "medium" | "large";
 
 type SizeConfig = {
-  height?: DimensionToken;
-  paddingHorizontal: SpacingToken;
-  paddingVertical: SpacingToken;
-  textVariant: TextVariantKey;
+  paddingHorizontal: number;
+  paddingVertical: number;
+  borderRadius: number;
+  fontSize: number;
+  fontFamily: string;
+  lineHeight: number;
 };
 
-const buttonSizes: Record<ButtonSize, SizeConfig> = {
+const SIZES: Record<ButtonSize, SizeConfig> = {
   small: {
-    paddingHorizontal: "spacing-12",
-    paddingVertical: 'spacing-6',
-    textVariant: "bodySmall",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    fontSize: 14,
+    fontFamily: "Inter-Medium",
+    lineHeight: 20,
   },
   medium: {
-    height: "dimension-50",
-    paddingHorizontal: 'spacing-16',
-    paddingVertical: "spacing-10",
-    textVariant: "bodyMedium",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    fontSize: 16,
+    fontFamily: "Inter-Medium",
+    lineHeight: 20,
+  },
+  large: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    fontSize: 16,
+    fontFamily: "Inter-Medium",
+    lineHeight: 20,
   },
 };
 
 export type ButtonProps = {
-  onPress?: () => void
-  children: React.ReactNode
-  variant?: ButtonVariantKey
-  size?: ButtonSize
-  disabled?: boolean
-  loading?: boolean
-  fullWidth?: boolean
-  flex?: boolean
-  icon?: React.ReactNode
-}
+  onPress?: () => void;
+  children: React.ReactNode;
+  variant?: ButtonVariantKey;
+  size?: ButtonSize;
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
+  flex?: boolean;
+  icon?: React.ReactNode;
+  color?: ColorToken;
+};
 
 export const Button = ({
   onPress,
   children,
-  variant = 'primary',
-  size = 'medium',
+  variant = "filled",
+  size = "medium",
   disabled = false,
   loading = false,
   fullWidth = false,
   flex = false,
   icon,
+  color,
 }: ButtonProps) => {
-  const theme = useTheme()
-  const variantStyle = buttonVariants[variant]
-  const sizeStyle = buttonSizes[size]
+  const theme = useTheme();
+  const variantStyle = buttonVariants[variant];
+  const sizeStyle = SIZES[size];
 
-  const backgroundColor = disabled
-    ? variantStyle.disabledBackgroundColor
-    : variantStyle.backgroundColor
+  const bgToken = disabled ? variantStyle.disabledBackgroundColor : variantStyle.backgroundColor;
+  const textToken = disabled ? variantStyle.disabledTextColor : variantStyle.textColor;
 
-  const textColorToken = disabled
-    ? variantStyle.disabledTextColor
-    : variantStyle.textColor
+  const backgroundColor = bgToken === "transparent"
+    ? "transparent"
+    : color && !disabled
+      ? theme.colors[color]
+      : theme.colors[bgToken as ColorToken];
+
+  const textColor = theme.colors[textToken];
 
   return (
-    <Touchable onPress={onPress} disabled={disabled || loading} style={flex ? { flex: 1 } : undefined}>
-      <Box
-        paddingHorizontal={sizeStyle.paddingHorizontal}
-        paddingVertical={sizeStyle.paddingVertical}
-        borderRadius="border-radius-999"
-        alignItems="center"
-        justifyContent="center"
-        flexDirection="row"
-        style={
-          sizeStyle.height
-            ? { height: theme.dimension[sizeStyle.height] }
-            : undefined
-        }
-        opacity={disabled ? 0.7 : 1}
-        backgroundColor={backgroundColor}
-        width={fullWidth ? '100%' : undefined}
+    <Pressable
+      onPress={onPress}
+      disabled={disabled || loading}
+      style={({ pressed }) => ({
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        paddingHorizontal: sizeStyle.paddingHorizontal,
+        paddingVertical: sizeStyle.paddingVertical,
+        borderRadius: sizeStyle.borderRadius,
+        backgroundColor,
+        opacity: pressed ? 0.7 : disabled ? 0.5 : 1,
+        width: fullWidth ? "100%" : undefined,
+        flex: flex ? 1 : undefined,
+      })}
+    >
+      {loading ? (
+        <ActivityIndicator size="small" color={textColor} />
+      ) : icon ? (
+        <View style={{ marginRight: 2 }}>{icon}</View>
+      ) : null}
+      <Text
+        style={{
+          color: textColor,
+          fontSize: sizeStyle.fontSize,
+          fontFamily: sizeStyle.fontFamily,
+          lineHeight: sizeStyle.lineHeight,
+        }}
       >
-        {loading ? (
-          <Box marginRight="spacing-8">
-            <ActivityIndicator
-              size="small"
-              color={theme.colors[textColorToken]}
-            />
-          </Box>
-        ) : null}
-        {icon && !loading ? <Box style={{ marginRight: 4 }}>{icon}</Box> : null}
-        <Text variant={sizeStyle.textVariant} color={textColorToken}>
-          {children}
-        </Text>
-      </Box>
-    </Touchable>
-  )
-}
+        {children}
+      </Text>
+    </Pressable>
+  );
+};
+
+export type { ButtonVariantKey };

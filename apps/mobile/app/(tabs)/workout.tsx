@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
+import { View, Pressable, ActivityIndicator, Alert } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,12 +25,27 @@ import { WorkoutDetailSheet } from "@/components/workout/workout-detail-sheet";
 
 type Tab = "log" | "history";
 
-function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
+function TabBar({ active, onChange, theme }: { active: Tab; onChange: (t: Tab) => void; theme: ReturnType<typeof useTheme> }) {
   return (
-    <View className="flex-row mx-4 mb-3 gap-2">
+    <View style={{ flexDirection: "row", marginHorizontal: 16, marginBottom: 12, gap: 8 }}>
       {(["log", "history"] as const).map((tab) => (
-        <Pressable key={tab} onPress={() => onChange(tab)} className={`rounded-full px-4 py-1.5 ${active === tab ? "bg-foreground" : "bg-zinc-800"}`}>
-          <Text className={`text-sm font-medium capitalize ${active === tab ? "text-primary-foreground" : "text-muted-foreground"}`}>{tab === "log" ? "Workout" : "History"}</Text>
+        <Pressable
+          key={tab}
+          onPress={() => onChange(tab)}
+          style={{
+            borderRadius: 9999,
+            paddingHorizontal: 16,
+            paddingVertical: 6,
+            backgroundColor: active === tab ? theme.colors.text : theme.colors.surfaceRaised,
+          }}
+        >
+          <Text
+            variant="body"
+            color={active === tab ? "monochrome" : "subtext"}
+            style={{ textTransform: "capitalize" }}
+          >
+            {tab === "log" ? "Workout" : "History"}
+          </Text>
         </Pressable>
       ))}
     </View>
@@ -84,22 +100,22 @@ export default function WorkoutScreen() {
   const workouts = historyData?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {tab === "log" ? (
         activeWorkoutId && activeWorkout ? (
-          <View style={{ paddingTop: headerHeight + 8 }} className="flex-1">
+          <View style={{ paddingTop: headerHeight + 8, flex: 1 }}>
             <ActiveSession workout={activeWorkout as WorkoutLogDetailSchema} onFinish={handleFinishWorkout} onCancel={handleCancelWorkout} />
           </View>
         ) : (
-          <View style={{ paddingTop: headerHeight }} className="flex-1 items-center justify-center px-8">
+          <View style={{ paddingTop: headerHeight, flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
             <Dumbbell size={48} color={theme.colors.border} />
-            <Text className="text-foreground font-semibold text-lg mt-4">Ready to train?</Text>
-            <Text className="text-muted-foreground text-sm text-center mt-1 mb-6">Start a workout to log your exercises and sets.</Text>
+            <Text variant="bodyEmphasis" color="text" style={{ marginTop: 16 }}>Ready to train?</Text>
+            <Text variant="label" color="subtext" style={{ textAlign: "center", marginTop: 4, marginBottom: 24 }}>Start a workout to log your exercises and sets.</Text>
             <Button onPress={handleStartWorkout} loading={createMutation.isPending} icon={<Play size={16} color={theme.colors.monochrome} fill={theme.colors.monochrome} />}>Start Workout</Button>
           </View>
         )
       ) : historyLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator color={theme.colors.subtext} /></View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={theme.colors.subtext} /></View>
       ) : (
         <FlashList
           data={workouts}
@@ -109,24 +125,24 @@ export default function WorkoutScreen() {
           onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
-            <View className="items-center justify-center px-8 pt-20">
+            <View style={{ alignItems: "center", justifyContent: "center", paddingHorizontal: 32, paddingTop: 80 }}>
               <Dumbbell size={40} color={theme.colors.border} />
-              <Text className="text-foreground font-semibold text-lg mt-3">No workouts yet</Text>
-              <Text className="text-muted-foreground text-sm text-center mt-1">Complete a workout and it will show up here.</Text>
+              <Text variant="bodyEmphasis" color="text" style={{ marginTop: 12 }}>No workouts yet</Text>
+              <Text variant="label" color="subtext" style={{ textAlign: "center", marginTop: 4 }}>Complete a workout and it will show up here.</Text>
             </View>
           }
-          ListFooterComponent={isFetchingNextPage ? <View className="py-4 items-center"><ActivityIndicator color={theme.colors.subtext} /></View> : null}
+          ListFooterComponent={isFetchingNextPage ? <View style={{ paddingVertical: 16, alignItems: "center" }}><ActivityIndicator color={theme.colors.subtext} /></View> : null}
         />
       )}
 
-      <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
-        <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={[theme.colors.monochrome, "transparent"]} style={{ height: 10 }} />
+      <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: headerHeight + 10 }}>
+        <View pointerEvents="none" style={{ backgroundColor: theme.colors.background, height: headerHeight }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.background, "transparent"]} style={{ height: 10 }} />
       </View>
 
-      <View className="absolute top-0 left-0 right-0 px-4" style={{ paddingTop: insets.top + 12 }}>
-        <Text className="text-3xl font-bold text-foreground mb-3">Workout</Text>
-        <TabBar active={tab} onChange={setTab} />
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: insets.top + 12 }}>
+        <Text variant="heading" color="text" style={{ marginBottom: 12 }}>Workout</Text>
+        <TabBar active={tab} onChange={setTab} theme={theme} />
       </View>
 
       {detailWorkoutId && <WorkoutDetailSheet workoutId={detailWorkoutId} onClose={() => setDetailWorkoutId(null)} onDelete={handleDeleteWorkout} />}

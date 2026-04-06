@@ -1,6 +1,8 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Sun, Check } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
+import { useTheme } from "@/design-system";
 
 export function MorningPrime({
   priority,
@@ -31,21 +33,23 @@ export function MorningPrime({
   onChangeGratitude3: (v: string) => void;
   onCommit: () => void;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="px-4 gap-4">
-      <View className="flex-row items-center gap-2 mb-1">
-        <Sun size={20} color="#facc15" />
-        <Text className="text-foreground font-semibold" style={{ fontSize: 18 }}>
+    <View style={{ paddingHorizontal: 16, gap: 16 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <Sun size={20} color={theme.colors.statusYellow} />
+        <Text style={{ color: theme.colors.text, fontFamily: "Inter-SemiBold", fontSize: 18 }}>
           Good morning
         </Text>
       </View>
 
-      <View className="rounded-xl bg-zinc-800 overflow-hidden">
-        <View className="px-4 py-3.5 border-b border-zinc-700">
-          <Text className="text-foreground font-medium mb-0.5" style={{ fontSize: 15 }}>
+      <View style={{ borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, overflow: "hidden" }}>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderColor: theme.colors.border }}>
+          <Text style={{ color: theme.colors.text, fontFamily: "Inter-Medium", marginBottom: 2, fontSize: 15 }}>
             The one thing
           </Text>
-          <Text className="text-zinc-500 mb-2" style={{ fontSize: 13 }}>
+          <Text style={{ color: theme.colors.textSubtle, marginBottom: 8, fontSize: 13 }}>
             If you could only accomplish one thing today, what would it be?
           </Text>
           <Input
@@ -56,11 +60,11 @@ export function MorningPrime({
             multiline
           />
         </View>
-        <View className="px-4 py-3.5">
-          <Text className="text-foreground font-medium mb-0.5" style={{ fontSize: 15 }}>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Text style={{ color: theme.colors.text, fontFamily: "Inter-Medium", marginBottom: 2, fontSize: 15 }}>
             Obstacle
           </Text>
-          <Text className="text-zinc-500 mb-2" style={{ fontSize: 13 }}>
+          <Text style={{ color: theme.colors.textSubtle, marginBottom: 8, fontSize: 13 }}>
             What could get in the way? Name it so you can plan around it.
           </Text>
           <Input
@@ -73,22 +77,22 @@ export function MorningPrime({
         </View>
       </View>
 
-      <View className="rounded-xl bg-zinc-800 px-4 py-3.5">
-        <Text className="text-foreground font-medium mb-0.5" style={{ fontSize: 15 }}>
+      <View style={{ borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, paddingHorizontal: 16, paddingVertical: 14 }}>
+        <Text style={{ color: theme.colors.text, fontFamily: "Inter-Medium", marginBottom: 2, fontSize: 15 }}>
           Gratitude
         </Text>
-        <Text className="text-zinc-500 mb-3" style={{ fontSize: 13 }}>
+        <Text style={{ color: theme.colors.textSubtle, marginBottom: 12, fontSize: 13 }}>
           Three things you're grateful for right now.
         </Text>
-        <View className="gap-3">
+        <View style={{ gap: 12 }}>
           {[
             { value: gratitude1, onChange: onChangeGratitude1, n: 1 },
             { value: gratitude2, onChange: onChangeGratitude2, n: 2 },
             { value: gratitude3, onChange: onChangeGratitude3, n: 3 },
           ].map(({ value, onChange, n }) => (
-            <View key={n} className="flex-row items-center gap-3">
-              <Text className="text-zinc-600 font-medium" style={{ fontSize: 15 }}>{n}.</Text>
-              <View className="flex-1">
+            <View key={n} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <Text style={{ color: theme.colors.textMuted, fontFamily: "Inter-Medium", fontSize: 15 }}>{n}.</Text>
+              <View style={{ flex: 1 }}>
                 <Input
                   value={value}
                   onChangeText={onChange}
@@ -104,19 +108,23 @@ export function MorningPrime({
       <Pressable
         onPress={onCommit}
         disabled={isSaving}
-        className={`items-center justify-center rounded-xl py-3.5 ${
-          isCommitted ? "bg-zinc-800" : "bg-foreground"
-        }`}
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 12,
+          paddingVertical: 14,
+          backgroundColor: isCommitted ? theme.colors.surfaceRaised : theme.colors.text,
+        }}
       >
         {isCommitted ? (
-          <View className="flex-row items-center gap-2">
-            <Check size={18} color="#22c55e" />
-            <Text className="font-semibold text-green-500" style={{ fontSize: 15 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Check size={18} color={theme.colors.success} />
+            <Text style={{ fontFamily: "Inter-SemiBold", color: theme.colors.success, fontSize: 15 }}>
               Morning locked in
             </Text>
           </View>
         ) : (
-          <Text className="font-semibold text-background" style={{ fontSize: 15 }}>
+          <Text style={{ fontFamily: "Inter-SemiBold", color: theme.colors.background, fontSize: 15 }}>
             Commit & Start Day
           </Text>
         )}

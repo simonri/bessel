@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCalendarV1JournalCalendarGetOptions,
@@ -7,6 +8,7 @@ import {
 import { Flame } from "lucide-react-native";
 import { BottomSheet } from "@/components/shared/sheet";
 import { client } from "@/lib/client";
+import { useTheme } from "@/design-system";
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -39,6 +41,7 @@ export function CalendarSheet({
   onSelectDate: (d: Date) => void;
   onDismiss: () => void;
 }) {
+  const theme = useTheme();
   const initYear = selectedDate.getFullYear();
   const initMonth = selectedDate.getMonth();
 
@@ -72,19 +75,19 @@ export function CalendarSheet({
   return (
     <BottomSheet onDismiss={onDismiss}>
       <View>
-        <Text className="text-center text-foreground font-semibold mb-5" style={{ fontSize: 17 }}>
+        <Text style={{ textAlign: "center", color: theme.colors.text, fontFamily: "Inter-SemiBold", marginBottom: 20, fontSize: 17 }}>
           {formatMonth(initYear, initMonth)}
         </Text>
 
-        <View className="flex-row mb-2">
+        <View style={{ flexDirection: "row", marginBottom: 8 }}>
           {WEEKDAYS.map((d) => (
-            <View key={d} className="flex-1 items-center">
-              <Text className="text-muted-foreground font-medium" style={{ fontSize: 12 }}>{d}</Text>
+            <View key={d} style={{ flex: 1, alignItems: "center" }}>
+              <Text style={{ color: theme.colors.textMuted, fontFamily: "Inter-Medium", fontSize: 12 }}>{d}</Text>
             </View>
           ))}
         </View>
 
-        <View className="flex-row flex-wrap">
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
           {cells.map((day, i) => {
             if (day === null) {
               return <View key={`e-${i}`} style={{ width: "14.28%", height: 44 }} />;
@@ -102,30 +105,37 @@ export function CalendarSheet({
                   onSelectDate(cellDate);
                   onDismiss();
                 }}
-                style={{ width: "14.28%", height: 44 }}
-                className="items-center justify-center"
+                style={{ width: "14.28%", height: 44, alignItems: "center", justifyContent: "center" }}
               >
                 <View
-                  className={`w-9 h-9 items-center justify-center rounded-xl ${
-                    isSelected ? "bg-foreground" : isTodayCell ? "bg-zinc-800" : ""
-                  }`}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 12,
+                    backgroundColor: isSelected ? theme.colors.text : isTodayCell ? theme.colors.surfaceRaised : "transparent",
+                  }}
                 >
                   <Text
-                    className={isSelected ? "font-semibold text-background" : "text-foreground"}
-                    style={{ fontSize: 15 }}
+                    style={{
+                      fontSize: 15,
+                      fontFamily: isSelected ? "Inter-SemiBold" : undefined,
+                      color: isSelected ? theme.colors.background : theme.colors.text,
+                    }}
                   >
                     {day}
                   </Text>
                   {entry && !isSelected && (
-                    <View className="absolute bottom-0.5 flex-row gap-0.5">
+                    <View style={{ position: "absolute", bottom: 2, flexDirection: "row", gap: 2 }}>
                       {entry.hasMorning && (
-                        <View className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+                        <View style={{ height: 6, width: 6, borderRadius: 9999, backgroundColor: theme.colors.statusYellow }} />
                       )}
                       {entry.hasAudit && (
-                        <View className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                        <View style={{ height: 6, width: 6, borderRadius: 9999, backgroundColor: theme.colors.statusPurple }} />
                       )}
                       {!entry.hasMorning && !entry.hasAudit && (
-                        <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#52525b" }} />
+                        <View style={{ height: 6, width: 6, borderRadius: 9999, backgroundColor: theme.colors.textMuted }} />
                       )}
                     </View>
                   )}
@@ -136,27 +146,27 @@ export function CalendarSheet({
         </View>
 
         {streakData && (
-          <View className="mt-5 flex-row gap-2">
-            <View className="flex-1 items-center rounded-xl bg-zinc-800 py-3.5">
-              <View className="flex-row items-center gap-1.5">
-                <Flame size={16} color="#f97316" />
-                <Text className="text-orange-500 font-bold" style={{ fontSize: 20 }}>
+          <View style={{ marginTop: 20, flexDirection: "row", gap: 8 }}>
+            <View style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, paddingVertical: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Flame size={16} color={theme.colors.warning} />
+                <Text style={{ color: theme.colors.warning, fontFamily: "Inter-Bold", fontSize: 20 }}>
                   {streakData.current_streak}
                 </Text>
               </View>
-              <Text className="text-muted-foreground mt-0.5" style={{ fontSize: 12 }}>Current</Text>
+              <Text style={{ color: theme.colors.textMuted, marginTop: 2, fontSize: 12 }}>Current</Text>
             </View>
-            <View className="flex-1 items-center rounded-xl bg-zinc-800 py-3.5">
-              <Text className="text-foreground font-bold" style={{ fontSize: 20 }}>
+            <View style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, paddingVertical: 14 }}>
+              <Text style={{ color: theme.colors.text, fontFamily: "Inter-Bold", fontSize: 20 }}>
                 {streakData.longest_streak}
               </Text>
-              <Text className="text-muted-foreground mt-0.5" style={{ fontSize: 12 }}>Longest</Text>
+              <Text style={{ color: theme.colors.textMuted, marginTop: 2, fontSize: 12 }}>Longest</Text>
             </View>
-            <View className="flex-1 items-center rounded-xl bg-zinc-800 py-3.5">
-              <Text className="text-foreground font-bold" style={{ fontSize: 20 }}>
+            <View style={{ flex: 1, alignItems: "center", borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, paddingVertical: 14 }}>
+              <Text style={{ color: theme.colors.text, fontFamily: "Inter-Bold", fontSize: 20 }}>
                 {streakData.total_entries}
               </Text>
-              <Text className="text-muted-foreground mt-0.5" style={{ fontSize: 12 }}>Entries</Text>
+              <Text style={{ color: theme.colors.textMuted, marginTop: 2, fontSize: 12 }}>Entries</Text>
             </View>
           </View>
         )}

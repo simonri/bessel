@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getWorkoutV1WorkoutsWorkoutIdGetQueryKey,
@@ -23,7 +24,7 @@ function LiveTimer({ startedAt }: { startedAt: Date | string }) {
     return () => clearInterval(i);
   });
   return (
-    <Text className="text-foreground font-bold tabular-nums" style={{ fontSize: 16 }}>
+    <Text variant="titleSmall" color="text" style={{ fontVariant: ["tabular-nums"] }}>
       {formatDuration(new Date(startedAt))}
     </Text>
   );
@@ -121,20 +122,20 @@ export function ActiveSession({
   // No exercises yet — show add exercise prompt
   if (totalExercises === 0) {
     return (
-      <View className="flex-1 items-center justify-center px-8">
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
         <Dumbbell size={48} color={theme.colors.border} />
-        <Text className="text-foreground font-semibold mt-4" style={{ fontSize: 18 }}>
+        <Text variant="bodyEmphasis" color="text" style={{ marginTop: 16 }}>
           Add your first exercise
         </Text>
-        <Text className="text-muted-foreground text-center mt-1 mb-6" style={{ fontSize: 15 }}>
+        <Text variant="label" color="subtext" style={{ textAlign: "center", marginTop: 4, marginBottom: 24 }}>
           Tap below to pick an exercise and start logging.
         </Text>
         <Pressable
           onPress={() => setShowPicker(true)}
-          className="flex-row items-center gap-2 bg-foreground rounded-xl px-6 py-3"
+          style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: theme.colors.text, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
         >
           <Plus size={16} color={theme.colors.monochrome} />
-          <Text className="text-primary-foreground font-semibold" style={{ fontSize: 15 }}>
+          <Text variant="body" color="monochrome">
             Add Exercise
           </Text>
         </Pressable>
@@ -144,7 +145,7 @@ export function ActiveSession({
   }
 
   return (
-    <View className="flex-1">
+    <View style={{ flex: 1 }}>
       <ExerciseView
         key={currentGroup.exerciseId}
         group={currentGroup}
@@ -219,39 +220,39 @@ function ExerciseView({
   const isLastExercise = exerciseIndex === totalExercises - 1;
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
       {/* Timer bar */}
-      <View className="mx-4 mb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2">
+      <View style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Timer size={14} color={theme.colors.statusGreen} />
           <LiveTimer startedAt={workoutStartedAt} />
         </View>
         <Pressable onPress={onCancel}>
-          <Text className="text-muted-foreground" style={{ fontSize: 14 }}>Cancel</Text>
+          <Text variant="label" color="subtext">Cancel</Text>
         </Pressable>
       </View>
 
       {/* Exercise header with nav */}
-      <View className="mx-4 mb-4 flex-row items-center">
-        <Pressable onPress={onPrev} disabled={exerciseIndex === 0} className="p-2" hitSlop={8}>
+      <View style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={onPrev} disabled={exerciseIndex === 0} style={{ padding: 8 }} hitSlop={8}>
           <ChevronLeft size={22} color={exerciseIndex === 0 ? theme.colors.border : theme.colors.subtext} />
         </Pressable>
-        <View className="flex-1 items-center">
-          <Text className="text-foreground font-bold" style={{ fontSize: 22 }}>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text variant="headingSmall" color="text">
             {group.exerciseName}
           </Text>
-          <Text className="text-muted-foreground" style={{ fontSize: 13 }}>
+          <Text variant="caption" color="subtext">
             {exerciseIndex + 1} of {totalExercises}
           </Text>
         </View>
-        <Pressable onPress={onNext} disabled={exerciseIndex === totalExercises - 1} className="p-2" hitSlop={8}>
+        <Pressable onPress={onNext} disabled={exerciseIndex === totalExercises - 1} style={{ padding: 8 }} hitSlop={8}>
           <ChevronRight size={22} color={exerciseIndex === totalExercises - 1 ? theme.colors.border : theme.colors.subtext} />
         </Pressable>
       </View>
 
       {/* Goal to Beat */}
       {bestSet && (
-        <View className="mb-4">
+        <View style={{ marginBottom: 16 }}>
           <GoalCard weight={bestSet.weight} reps={bestSet.reps} unit={bestSet.weight_unit} />
         </View>
       )}
@@ -288,14 +289,14 @@ function ExerciseView({
       {/* Add Set */}
       <Pressable
         onPress={() => setExtraSets((s) => s + 1)}
-        className="mx-4 mb-4 flex-row items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800"
+        style={{ marginHorizontal: 16, marginBottom: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised }}
       >
         <Plus size={16} color={theme.colors.subtext} />
-        <Text className="text-muted-foreground font-medium" style={{ fontSize: 15 }}>Add Set</Text>
+        <Text variant="body" color="subtext">Add Set</Text>
       </Pressable>
 
       {/* Exercise note */}
-      <View className="mx-4 mb-5 rounded-xl bg-zinc-800 px-4 py-3">
+      <View style={{ marginHorizontal: 16, marginBottom: 20, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised, paddingHorizontal: 16, paddingVertical: 12 }}>
         <Input
           value={note}
           onChangeText={setNote}
@@ -305,12 +306,12 @@ function ExerciseView({
       </View>
 
       {/* Finish Exercise / Add Another */}
-      <View className="mx-4 gap-3">
+      <View style={{ marginHorizontal: 16, gap: 12 }}>
         <Pressable
           onPress={onFinishExercise}
-          className="items-center py-4 rounded-xl bg-foreground"
+          style={{ alignItems: "center", paddingVertical: 16, borderRadius: 12, backgroundColor: theme.colors.text }}
         >
-          <Text className="text-background font-semibold" style={{ fontSize: 16 }}>
+          <Text variant="bodyEmphasis" color="monochrome">
             {isLastExercise ? "Finish Workout" : "Finish Exercise"}
           </Text>
         </Pressable>
@@ -318,10 +319,10 @@ function ExerciseView({
         {!isLastExercise ? null : (
           <Pressable
             onPress={onAddExercise}
-            className="flex-row items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800"
+            style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.colors.surfaceRaised }}
           >
             <Plus size={16} color={theme.colors.text} />
-            <Text className="text-foreground font-medium" style={{ fontSize: 15 }}>Add Another Exercise</Text>
+            <Text variant="body" color="text">Add Another Exercise</Text>
           </Pressable>
         )}
       </View>

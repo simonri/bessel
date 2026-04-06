@@ -1,4 +1,6 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
+import { useTheme } from "@/design-system";
 
 const RIR_VALUES = [0, 1, 2, 3, 4];
 const RIR_LABELS = ["0", "1", "2", "3", "4+"];
@@ -10,23 +12,32 @@ export function RIRSelector({
   value: number | null;
   onChange: (v: number | null) => void;
 }) {
+  const theme = useTheme();
   return (
-    <View className="items-center gap-1">
-      <Text className="text-muted-foreground uppercase" style={{ fontSize: 10, fontWeight: "600" }}>
+    <View style={{ alignItems: "center", gap: 4 }}>
+      <Text style={{ color: theme.colors.textMuted, textTransform: "uppercase", fontSize: 10, fontWeight: "600" }}>
         RIR
       </Text>
-      <View className="flex-row gap-1">
+      <View style={{ flexDirection: "row", gap: 4 }}>
         {RIR_VALUES.map((n, i) => (
           <Pressable
             key={n}
             onPress={() => onChange(value === n ? null : n)}
-            className={`w-10 h-10 items-center justify-center rounded-xl ${
-              value === n ? "bg-foreground" : "bg-zinc-700"
-            }`}
+            style={{
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 12,
+              backgroundColor: value === n ? theme.colors.text : theme.colors.surfaceHover,
+            }}
           >
             <Text
-              className={`font-semibold ${value === n ? "text-background" : "text-muted-foreground"}`}
-              style={{ fontSize: 14 }}
+              style={{
+                fontWeight: "600",
+                fontSize: 14,
+                color: value === n ? theme.colors.background : theme.colors.textMuted,
+              }}
             >
               {RIR_LABELS[i]}
             </Text>

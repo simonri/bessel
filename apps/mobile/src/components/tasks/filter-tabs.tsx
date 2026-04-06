@@ -1,4 +1,6 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { Text } from "@/components/shared/text";
+import { useTheme } from "@/design-system";
 
 export type FilterTab = "active" | "done";
 
@@ -13,21 +15,32 @@ export function FilterTabs({
   activeCount: number;
   doneCount: number;
 }) {
+  const theme = useTheme();
   return (
-    <View className="flex-row mx-4 mb-2 gap-2">
+    <View style={{ flexDirection: "row", marginHorizontal: 16, marginBottom: 8, gap: 8 }}>
       <Pressable
         onPress={() => onChange("active")}
-        className={`rounded-full px-3.5 py-1.5 ${active === "active" ? "bg-foreground" : "bg-secondary"}`}
+        style={{
+          borderRadius: 9999,
+          paddingHorizontal: 14,
+          paddingVertical: 6,
+          backgroundColor: active === "active" ? theme.colors.text : theme.colors.surfaceRaised,
+        }}
       >
-        <Text className={`text-sm font-medium ${active === "active" ? "text-primary-foreground" : "text-muted-foreground"}`}>
+        <Text variant="body" color={active === "active" ? "monochrome" : "subtext"}>
           Active{activeCount > 0 ? ` · ${activeCount}` : ""}
         </Text>
       </Pressable>
       <Pressable
         onPress={() => onChange("done")}
-        className={`rounded-full px-3.5 py-1.5 ${active === "done" ? "bg-foreground" : "bg-secondary"}`}
+        style={{
+          borderRadius: 9999,
+          paddingHorizontal: 14,
+          paddingVertical: 6,
+          backgroundColor: active === "done" ? theme.colors.text : theme.colors.surfaceRaised,
+        }}
       >
-        <Text className={`text-sm font-medium ${active === "done" ? "text-primary-foreground" : "text-muted-foreground"}`}>
+        <Text variant="body" color={active === "done" ? "monochrome" : "subtext"}>
           Done{doneCount > 0 ? ` · ${doneCount}` : ""}
         </Text>
       </Pressable>

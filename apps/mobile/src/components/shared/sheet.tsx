@@ -40,7 +40,7 @@ export const BottomSheet = ({
       enableDynamicSizing
       backgroundStyle={{
         backgroundColor: theme.colors.background,
-        borderRadius: theme.borderRadii["border-radius-32"],
+        borderRadius: theme.borderRadii["4xl"],
       }}
       handleIndicatorStyle={{
         backgroundColor: theme.colors.subtext,
@@ -63,7 +63,7 @@ export const BottomSheet = ({
         <GorhomBottomSheetScrollView
           contentContainerStyle={{
             flex: 1,
-            padding: theme.spacing["spacing-20"],
+            padding: theme.spacing["2xl"],
             paddingBottom: safeViewInsets.bottom,
           }}
         >
@@ -73,7 +73,7 @@ export const BottomSheet = ({
         <GorhomBottomSheetView
           style={{
             flex: 1,
-            padding: theme.spacing["spacing-20"],
+            padding: theme.spacing["2xl"],
             paddingBottom: safeViewInsets.bottom,
           }}
         >

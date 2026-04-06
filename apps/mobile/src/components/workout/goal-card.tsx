@@ -1,5 +1,7 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/components/shared/text";
 import { Trophy } from "lucide-react-native";
+import { useTheme } from "@/design-system";
 
 export function GoalCard({
   weight,
@@ -10,14 +12,15 @@ export function GoalCard({
   reps: number;
   unit: string;
 }) {
+  const theme = useTheme();
   return (
-    <View className="mx-4 rounded-xl bg-zinc-800/50 p-4 flex-row items-center gap-3">
-      <Trophy size={20} color="#facc15" />
+    <View style={{ marginHorizontal: 16, borderRadius: 12, backgroundColor: theme.colors.overlay12, padding: 16, flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <Trophy size={20} color={theme.colors.statusYellow} />
       <View>
-        <Text className="text-muted-foreground uppercase" style={{ fontSize: 10, fontWeight: "600" }}>
+        <Text style={{ color: theme.colors.textMuted, textTransform: "uppercase", fontSize: 10, fontWeight: "600" }}>
           Goal to Beat
         </Text>
-        <Text className="text-foreground font-bold" style={{ fontSize: 20 }}>
+        <Text style={{ color: theme.colors.text, fontWeight: "bold", fontSize: 20 }}>
           {weight}{unit} x {reps}
         </Text>
       </View>

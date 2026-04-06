@@ -28,7 +28,7 @@ function RootLayout() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
-          sceneStyle: { backgroundColor: "#09090b" },
+          sceneStyle: { backgroundColor: "#0D0D0D" },
         }}
       >
         <Tabs.Screen name="index" options={{ title: "Dashboard" }} />

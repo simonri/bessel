@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { View, Pressable, Text, Animated } from "react-native";
+import { View, Pressable, Animated } from "react-native";
+import { Text } from "@/components/shared/text";
 import { router } from "expo-router";
 import {
   LayoutDashboard,
@@ -97,7 +98,7 @@ export function FloatingTabBar({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: theme.colors.overlay,
             opacity: backdropAnim,
           }}
         >
@@ -122,17 +123,29 @@ export function FloatingTabBar({
             shadowOpacity: 0.4,
             shadowRadius: 16,
             elevation: 12,
+            backgroundColor: theme.colors.surfaceRaised,
+            borderRadius: 16,
+            paddingVertical: 8,
+            paddingHorizontal: 4,
+            minWidth: 200,
           }}
-          className="bg-zinc-800 rounded-2xl py-2 px-1 min-w-[200px]"
         >
           {MORE_ITEMS.map((item) => (
             <Pressable
               key={item.title}
               onPress={() => handleMenuItemPress(item.href)}
-              className="flex-row items-center gap-3 px-4 py-3 rounded-xl active:bg-zinc-700"
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                borderRadius: 12,
+                backgroundColor: pressed ? theme.colors.surfaceHover : "transparent",
+              })}
             >
               <item.icon size={20} color={theme.colors.subtext} />
-              <Text className="text-[15px] font-medium text-foreground">
+              <Text variant="body" color="text">
                 {item.title}
               </Text>
             </Pressable>
@@ -143,8 +156,7 @@ export function FloatingTabBar({
       {/* Gradient fade behind tab bar */}
       <View
         pointerEvents="none"
-        className="absolute bottom-0 left-0 right-0"
-        style={{ height: bottomSpacing + 90 }}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: bottomSpacing + 90 }}
       >
         <LinearGradient
           colors={["transparent", `${theme.colors.background}cc`, theme.colors.background]}
@@ -155,12 +167,17 @@ export function FloatingTabBar({
 
       {/* Tab bar */}
       <View
-        style={{ paddingBottom: bottomSpacing }}
-        className="absolute bottom-0 left-0 right-0 items-center"
+        style={{ paddingBottom: bottomSpacing, position: "absolute", bottom: 0, left: 0, right: 0, alignItems: "center" }}
       >
         <View
-          className="flex-row items-center bg-zinc-800 rounded-full px-1.5 py-1.5 gap-0.5"
           style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: theme.colors.surfaceRaised,
+            borderRadius: 9999,
+            paddingHorizontal: 6,
+            paddingVertical: 6,
+            gap: 2,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.3,
@@ -194,10 +211,14 @@ export function FloatingTabBar({
               <Pressable
                 key={route.key}
                 onPress={onPress}
-                style={{ width: Math.round(47 * 1.5), height: 47 }}
-                className={`items-center justify-center rounded-full ${
-                  isFocused || (isMore && menuOpen) ? "bg-zinc-700" : ""
-                }`}
+                style={{
+                  width: Math.round(47 * 1.5),
+                  height: 47,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 9999,
+                  backgroundColor: isFocused || (isMore && menuOpen) ? theme.colors.surfaceHover : "transparent",
+                }}
               >
                 <Icon
                   size={21}

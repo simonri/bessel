@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
+import { View, Pressable, ActivityIndicator, Alert } from "react-native";
+import { Text } from "@/components/shared/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -100,9 +101,9 @@ export default function TasksScreen() {
   const isFetchingNext = filter === "active" ? isFetchingActiveNext : isFetchingDoneNext;
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {isLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator color={theme.colors.subtext} /></View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={theme.colors.subtext} /></View>
       ) : (
         <FlashList
           data={tasks}
@@ -113,24 +114,24 @@ export default function TasksScreen() {
           onEndReached={() => { if (hasNext && !isFetchingNext) fetchNext(); }}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
-            <View className="items-center justify-center px-8 pt-20">
+            <View style={{ alignItems: "center", justifyContent: "center", paddingHorizontal: 32, paddingTop: 80 }}>
               <ListTodo size={40} color={theme.colors.border} />
-              <Text className="text-foreground font-semibold text-lg mt-3">{filter === "active" ? "All clear" : "No completed tasks"}</Text>
-              <Text className="text-muted-foreground text-sm text-center mt-1">{filter === "active" ? "You have no active tasks. Tap + to create one." : "Tasks you complete will appear here."}</Text>
+              <Text variant="bodyEmphasis" color="text" style={{ marginTop: 12 }}>{filter === "active" ? "All clear" : "No completed tasks"}</Text>
+              <Text variant="label" color="subtext" style={{ textAlign: "center", marginTop: 4 }}>{filter === "active" ? "You have no active tasks. Tap + to create one." : "Tasks you complete will appear here."}</Text>
             </View>
           }
-          ListFooterComponent={isFetchingNext ? <View className="py-4 items-center"><ActivityIndicator color={theme.colors.subtext} /></View> : null}
+          ListFooterComponent={isFetchingNext ? <View style={{ paddingVertical: 16, alignItems: "center" }}><ActivityIndicator color={theme.colors.subtext} /></View> : null}
         />
       )}
 
-      <View pointerEvents="box-none" className="absolute top-0 left-0 right-0" style={{ height: headerHeight + 10 }}>
-        <View pointerEvents="none" className="bg-background" style={{ height: headerHeight }} />
-        <LinearGradient pointerEvents="none" colors={[theme.colors.monochrome, "transparent"]} style={{ height: 10 }} />
+      <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: headerHeight + 10 }}>
+        <View pointerEvents="none" style={{ backgroundColor: theme.colors.background, height: headerHeight }} />
+        <LinearGradient pointerEvents="none" colors={[theme.colors.background, "transparent"]} style={{ height: 10 }} />
       </View>
 
-      <View className="absolute top-0 left-0 right-0 px-4 flex-row items-start justify-between" style={{ paddingTop: insets.top + 12 }}>
-        <Text className="text-3xl font-bold text-foreground">Tasks</Text>
-        <Pressable onPress={() => setShowCreate(true)} className="items-center justify-center rounded-full w-9 h-9 bg-foreground mt-0.5">
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, paddingHorizontal: 16, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingTop: insets.top + 12 }}>
+        <Text variant="heading" color="text">Tasks</Text>
+        <Pressable onPress={() => setShowCreate(true)} style={{ alignItems: "center", justifyContent: "center", borderRadius: 9999, width: 36, height: 36, backgroundColor: theme.colors.text, marginTop: 2 }}>
           <Plus size={18} color={theme.colors.monochrome} />
         </Pressable>
       </View>
