@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
-import { FloatingTabBar } from "@/components/floating-tab-bar";
+import { FloatingTabBar } from "@/components/shared/floating-tab-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { ErrorFallback } from "@/components/error-fallback";
+import { ErrorFallback } from "@/components/shared/error-fallback";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary as ErrorBoundaryComponent } from "react-error-boundary";
 import { useRouter } from "expo-router";
@@ -27,6 +27,7 @@ function RootLayout() {
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: false,
+          sceneStyle: { backgroundColor: "#09090b" },
         }}
       >
         <Tabs.Screen name="index" options={{ title: "Dashboard" }} />

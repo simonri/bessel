@@ -7,7 +7,7 @@ import {
   BottomSheetView,
   type BottomSheetModalProps,
 } from "@gorhom/bottom-sheet";
-import { useBottomSpacing } from "../lib/safe-area";
+import { useBottomSpacing } from "@/lib/safe-area";
 
 export interface BottomSheetProps
   extends React.PropsWithChildren,
