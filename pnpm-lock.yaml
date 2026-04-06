@@ -57,15 +57,21 @@ importers:
       '@metron/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@react-native-community/datetimepicker':
+        specifier: 8.6.0
+        version: 8.6.0(expo@55.0.11)(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       '@react-navigation/bottom-tabs':
         specifier: ^7.3.14
         version: 7.15.9(@react-navigation/native@7.2.2(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-safe-area-context@5.6.2(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native-screens@4.23.0(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       '@shopify/flash-list':
         specifier: ^2.3.1
         version: 2.3.1(@babel/runtime@7.29.2)(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+      '@shopify/restyle':
+        specifier: ^2.4.5
+        version: 2.4.5(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       '@tanstack/react-query':
-        specifier: ^5.96.2
-        version: 5.96.2(react@19.2.0)
+        specifier: ^5.90.16
+        version: 5.90.16(react@19.2.0)
       expo:
         specifier: ~55.0.11
         version: 55.0.11(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(@expo/metro-runtime@5.0.5(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)))(expo-router@55.0.10)(react-dom@19.2.3(react@19.2.0))(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
@@ -102,6 +108,9 @@ importers:
       react:
         specifier: ^19.2.0
         version: 19.2.0
+      react-error-boundary:
+        specifier: ^6.1.1
+        version: 6.1.1(react@19.2.0)
       react-native:
         specifier: ~0.83.4
         version: 0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)
@@ -3859,6 +3868,19 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
+  '@react-native-community/datetimepicker@8.6.0':
+    resolution: {integrity: sha512-yxPSqNfxgpGaqHQIpatqe6ykeBdU/1pdsk/G3x01mY2bpTflLpmVTLqFSJYd3MiZzxNZcMs/j1dQakUczSjcYA==}
+    peerDependencies:
+      expo: '>=52.0.0'
+      react: '*'
+      react-native: '*'
+      react-native-windows: '*'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+      react-native-windows:
+        optional: true
+
   '@react-native/assets-registry@0.83.4':
     resolution: {integrity: sha512-aqKtpbJDSQeSX/Dwv0yMe1/Rd2QfXi12lnyZDXNn/OEKz59u6+LuPBVgO/9CRyclHmdlvwg8c7PJ9eX2ZMnjWg==}
     engines: {node: '>= 20.19.4'}
@@ -4156,6 +4178,12 @@ packages:
       react: '*'
       react-native: '*'
 
+  '@shopify/restyle@2.4.5':
+    resolution: {integrity: sha512-xV970ytoX0oLac9+fMOMxcXcV9nv5BtwdNk50ZoyhqSLyiGamLJMpL/lMZIQHsmfDT8sksbUx94zQnZBztMgww==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   '@sinclair/typebox@0.27.10':
     resolution: {integrity: sha512-MTBk/3jGLNB2tVxv6uLlFh1iu64iYOQ2PbdOSK3NW8JZsmlaOh2q6sdtKowBhfw8QFLmYNzTW4/oK4uATIi6ZA==}
 
@@ -4382,11 +4410,6 @@ packages:
 
   '@tanstack/react-query@5.90.16':
     resolution: {integrity: sha512-bpMGOmV4OPmif7TNMteU/Ehf/hoC0Kf98PDc0F4BZkFrEapRMEqI/V6YS0lyzwSV6PQpY1y4xxArUIfBW5LVxQ==}
-    peerDependencies:
-      react: ^18 || ^19
-
-  '@tanstack/react-query@5.96.2':
-    resolution: {integrity: sha512-sYyzzJT4G0g02azzJ8o55VFFV31XvFpdUpG+unxS0vSaYsJnSPKGoI6WdPwUucJL1wpgGfwfmntNX/Ub1uOViA==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -7575,6 +7598,11 @@ packages:
     resolution: {integrity: sha512-yELu4WmLPw5Mr/lmeEpox5rw3RETacE++JgHqQzd2dg+YbJuat3jH4ingc+WPZhxaoFzdv9y33G+F7Nl5O0GBg==}
     peerDependencies:
       react: ^19.2.3
+
+  react-error-boundary@6.1.1:
+    resolution: {integrity: sha512-BrYwPOdXi5mqkk5lw+Uvt0ThHx32rCt3BkukS4X23A2AIWDPSGX6iaWTc0y9TU/mHDA/6qOSGel+B2ERkOvD1w==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
@@ -12484,6 +12512,14 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
+  '@react-native-community/datetimepicker@8.6.0(expo@55.0.11)(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      invariant: 2.2.4
+      react: 19.2.0
+      react-native: 0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)
+    optionalDependencies:
+      expo: 55.0.11(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(@expo/metro-runtime@5.0.5(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)))(expo-router@55.0.10)(react-dom@19.2.3(react@19.2.0))(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+
   '@react-native/assets-registry@0.83.4': {}
 
   '@react-native/babel-plugin-codegen@0.83.4(@babel/core@7.29.0)':
@@ -12914,6 +12950,11 @@ snapshots:
       react: 19.2.0
       react-native: 0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)
 
+  '@shopify/restyle@2.4.5(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      react: 19.2.0
+      react-native: 0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0)
+
   '@sinclair/typebox@0.27.10': {}
 
   '@sindresorhus/is@7.2.0': {}
@@ -13143,6 +13184,11 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
+  '@tanstack/react-query@5.90.16(react@19.2.0)':
+    dependencies:
+      '@tanstack/query-core': 5.90.16
+      react: 19.2.0
+
   '@tanstack/react-query@5.90.16(react@19.2.3)':
     dependencies:
       '@tanstack/query-core': 5.90.16
@@ -13152,11 +13198,6 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.90.16
       react: 19.2.4
-
-  '@tanstack/react-query@5.96.2(react@19.2.0)':
-    dependencies:
-      '@tanstack/query-core': 5.96.2
-      react: 19.2.0
 
   '@tanstack/react-router-devtools@1.149.0(@tanstack/react-router@1.147.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(@tanstack/router-core@1.147.1)(csstype@3.2.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -16866,6 +16907,10 @@ snapshots:
     dependencies:
       react: 19.2.4
       scheduler: 0.27.0
+
+  react-error-boundary@6.1.1(react@19.2.0):
+    dependencies:
+      react: 19.2.0
 
   react-fast-compare@3.2.2: {}
 

@@ -1,19 +1,18 @@
 import "../global.css";
 import { Slot } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { ReactQueryProvider } from "@/providers/react-query";
+import { ThemeProvider } from "@shopify/restyle";
+import { theme } from "@/design-system";
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <ReactQueryProvider>
-          <StatusBar style="light" />
+      <ThemeProvider theme={theme}>
+        <BottomSheetModalProvider>
           <Slot />
-        </ReactQueryProvider>
-      </BottomSheetModalProvider>
+        </BottomSheetModalProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

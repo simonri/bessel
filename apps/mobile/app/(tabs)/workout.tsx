@@ -5,11 +5,11 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
-  TextInput,
   ActionSheetIOS,
   ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Input } from "@/components/input";
 import { FlashList } from "@shopify/flash-list";
 import {
   useInfiniteQuery,
@@ -175,14 +175,13 @@ function ExercisePicker({
       <View className="flex-row items-center gap-2 mb-4">
         <View className="flex-1 flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5">
           <Search size={16} color="#71717a" />
-          <TextInput
+          <Input
             placeholder="Search exercises..."
-            placeholderTextColor="#71717a"
             value={search}
-            onChangeText={(t) => { setSearch(t); setSearchEnabled(false); }}
+            onChangeText={(t: string) => { setSearch(t); setSearchEnabled(false); }}
             onSubmitEditing={handleSearch}
             autoFocus
-            style={{ flex: 1, color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+            style={{ flex: 1 }}
             returnKeyType="search"
           />
         </View>

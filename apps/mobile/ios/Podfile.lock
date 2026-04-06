@@ -2110,6 +2110,28 @@ PODS:
     - React-utils (= 0.83.4)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.83.4)
+  - RNDateTimePicker (8.6.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNGestureHandler (2.30.1):
     - hermes-engine
     - RCTRequired
@@ -2482,6 +2504,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - "ReactCommon/turbomodule/core (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-config@0.84.1_@babel+core@7._7847610923a5de0176238953cd466d2e/node_modules/react-native/ReactCommon`)"
   - "ReactNativeDependencies (from `../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-config@0.84.1_@babel+core@7._7847610923a5de0176238953cd466d2e/node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)"
+  - "RNDateTimePicker (from `../../../node_modules/.pnpm/@react-native-community+datetimepicker@8.6.0_expo@55.0.11_react-native@0.83.4_@babel+co_98745449110d69147e9e333c3d33e168/node_modules/@react-native-community/datetimepicker`)"
   - "RNGestureHandler (from `../../../node_modules/.pnpm/react-native-gesture-handler@2.30.1_react-native@0.83.4_@babel+core@7.29.0_@react-nativ_abd131e56c0ee40fd284e3f0ffbc6163/node_modules/react-native-gesture-handler`)"
   - "RNReanimated (from `../../../node_modules/.pnpm/react-native-reanimated@4.2.1_react-native-worklets@0.7.2_@babel+core@7.29.0_react-nati_9e7327ad75933c625e941a5fd4384ab6/node_modules/react-native-reanimated`)"
   - "RNScreens (from `../../../node_modules/.pnpm/react-native-screens@4.23.0_react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-_1f55d3caea898fdd1c31c0f2e9f51652/node_modules/react-native-screens`)"
@@ -2697,6 +2720,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-config@0.84.1_@babel+core@7._7847610923a5de0176238953cd466d2e/node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../../../node_modules/.pnpm/react-native@0.83.4_@babel+core@7.29.0_@react-native+metro-config@0.84.1_@babel+core@7._7847610923a5de0176238953cd466d2e/node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
+  RNDateTimePicker:
+    :path: "../../../node_modules/.pnpm/@react-native-community+datetimepicker@8.6.0_expo@55.0.11_react-native@0.83.4_@babel+co_98745449110d69147e9e333c3d33e168/node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../../../node_modules/.pnpm/react-native-gesture-handler@2.30.1_react-native@0.83.4_@babel+core@7.29.0_@react-nativ_abd131e56c0ee40fd284e3f0ffbc6163/node_modules/react-native-gesture-handler"
   RNReanimated:
@@ -2812,6 +2837,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 1bf61f74384379214df751caba1057533ea0a357
   ReactCommon: c6e81cc1ae185fa84863f3ea1d58caac4be741d7
   ReactNativeDependencies: ed326687a0bf8a7091f439e277a6a218b8c8806b
+  RNDateTimePicker: 9c0a849bbe1c256f0854fea255734b715f5ea876
   RNGestureHandler: 0ea8153746a92b3744d4eaadade647debedf646e
   RNReanimated: ee515d6e4fc67b32fca480b895e10502eb00358d
   RNScreens: 02e62f995ceb94ea465864b3bf4d4767b87f0362

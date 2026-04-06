@@ -9,10 +9,10 @@ import {
   ActionSheetIOS,
   Modal,
   ScrollView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Input } from "@/components/input";
 
 import {
   useInfiniteQuery,
@@ -54,6 +54,7 @@ import {
   Pencil,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { BottomSheet } from "@/components/sheet";
@@ -286,7 +287,7 @@ function PlaceDetailSheet({
           {place.rating ? (
             <RatingStars rating={place.rating} size={16} />
           ) : null}
-          {visitedAt && (
+          {!!visitedAt && (
             <Text className="text-muted-foreground text-sm">
               {formatDate(visitedAt)}
             </Text>
@@ -476,10 +477,9 @@ function AddPlaceSheet({
                 <View className="flex-row items-center gap-2 mb-3">
                   <View className="flex-1 flex-row items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2.5">
                     <Search size={16} color="#71717a" />
-                    <TextInput
+                    <Input
                       placeholder="Restaurants, cafes, landmarks..."
-                      placeholderTextColor="#71717a"
-                      value={searchQuery}
+                        value={searchQuery}
                       onChangeText={(t) => {
                         setSearchQuery(t);
                         setSearchEnabled(false);
@@ -487,7 +487,6 @@ function AddPlaceSheet({
                       onSubmitEditing={handleSearch}
                       autoFocus
                       className="flex-1"
-                      style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
                       returnKeyType="search"
                     />
                     {searchQuery.length > 0 && (
@@ -628,28 +627,25 @@ function AddPlaceSheet({
                     </View>
 
                     <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Review</Text>
-                    <TextInput
+                    <Input
                       placeholder="Your thoughts, tips..."
-                      placeholderTextColor="#71717a"
-                      value={review}
+                        value={review}
                       onChangeText={setReview}
                       multiline
                       className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                      style={{ color: "#fafafa", fontSize: 14, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
+                      style={{ minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
                     />
                   </>
                 )}
 
                 {/* Tags */}
                 <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Tags</Text>
-                <TextInput
+                <Input
                   placeholder="Comma separated, e.g. sushi, date night"
-                  placeholderTextColor="#71717a"
-                  value={tags}
+                    value={tags}
                   onChangeText={setTags}
                   className="bg-zinc-800 rounded-xl px-4 py-3 mb-8"
-                  style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
-                />
+                                  />
 
                 {/* Add button */}
                 <Pressable
@@ -697,10 +693,9 @@ function EditPlaceModal({
     fields.status as "want_to_go" | "visited"
   );
   const [rating, setRating] = useState<number | null>(place.rating ?? null);
-  const [visitedAt, setVisitedAt] = useState(() => {
-    if (!fields.visitedAt) return "";
-    const d = fields.visitedAt instanceof Date ? fields.visitedAt : new Date(fields.visitedAt as string);
-    return d.toISOString().split("T")[0];
+  const [visitedAt, setVisitedAt] = useState<Date | null>(() => {
+    if (!fields.visitedAt) return null;
+    return fields.visitedAt instanceof Date ? fields.visitedAt : new Date(fields.visitedAt as string);
   });
   const [review, setReview] = useState(place.review ?? "");
   const [tags, setTags] = useState(fields.tags.join(", "));
@@ -726,7 +721,7 @@ function EditPlaceModal({
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: any, _vars: any, context: any) => {
       if (context?.previous) {
         for (const [key, data] of context.previous) {
           queryClient.setQueryData(key, data);
@@ -754,7 +749,7 @@ function EditPlaceModal({
         category: category || null,
         status,
         rating: rating ?? null,
-        visited_at: status === "visited" && visitedAt ? new Date(visitedAt) : null,
+        visited_at: status === "visited" && visitedAt ? visitedAt : null,
         review: review.trim() || null,
         tags: parsedTags.length > 0 ? parsedTags : null,
       },
@@ -785,14 +780,12 @@ function EditPlaceModal({
             <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
               {/* Name */}
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Name</Text>
-              <TextInput
+              <Input
                 value={name}
                 onChangeText={setName}
                 placeholder="Place name"
-                placeholderTextColor="#71717a"
                 className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
-              />
+                              />
 
               {/* Status */}
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Status</Text>
@@ -810,7 +803,7 @@ function EditPlaceModal({
                 <Pressable
                   onPress={() => {
                     setStatus("visited");
-                    if (!visitedAt) setVisitedAt(new Date().toISOString().split("T")[0]);
+                    if (!visitedAt) setVisitedAt(new Date());
                   }}
                   className={`flex-1 items-center py-2.5 rounded-xl ${
                     status === "visited" ? "bg-green-500/15" : "bg-zinc-800"
@@ -844,27 +837,27 @@ function EditPlaceModal({
               {status === "visited" && (
                 <>
                   <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Date Visited</Text>
-                  <TextInput
-                    value={visitedAt}
-                    onChangeText={setVisitedAt}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#71717a"
-                    className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                    style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
+                  <DateTimePicker
+                    value={visitedAt ?? new Date()}
+                    mode="date"
+                    display="default"
+                    maximumDate={new Date()}
+                    themeVariant="dark"
+                    onChange={(_event, date) => { if (date) setVisitedAt(date); }}
+                    style={{ alignSelf: "flex-start", marginBottom: 16 }}
                   />
                 </>
               )}
 
               {/* Review */}
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Review</Text>
-              <TextInput
+              <Input
                 value={review}
                 onChangeText={setReview}
                 placeholder="Your thoughts, tips..."
-                placeholderTextColor="#71717a"
                 multiline
                 className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                style={{ color: "#fafafa", fontSize: 14, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
+                style={{ minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
               />
 
               {/* Category */}
@@ -898,35 +891,29 @@ function EditPlaceModal({
 
               {/* Tags */}
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Tags</Text>
-              <TextInput
+              <Input
                 value={tags}
                 onChangeText={setTags}
                 placeholder="Comma separated, e.g. sushi, date night"
-                placeholderTextColor="#71717a"
                 className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
-              />
+                              />
 
               {/* Address + Country */}
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Address</Text>
-              <TextInput
+              <Input
                 value={address}
                 onChangeText={setAddress}
                 placeholder="Full address"
-                placeholderTextColor="#71717a"
                 className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
-              />
+                              />
 
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Country</Text>
-              <TextInput
+              <Input
                 value={country}
                 onChangeText={setCountry}
                 placeholder="e.g. Japan"
-                placeholderTextColor="#71717a"
                 className="bg-zinc-800 rounded-xl px-4 py-3 mb-8"
-                style={{ color: "#fafafa", fontSize: 14, paddingVertical: 0 }}
-              />
+                              />
             </ScrollView>
           </SafeAreaView>
         </KeyboardAvoidingView>
@@ -988,7 +975,7 @@ export default function TravelScreen() {
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: any, _vars: any, context: any) => {
       if (context?.previous) {
         for (const [key, data] of context.previous) {
           queryClient.setQueryData(key, data);
@@ -1019,7 +1006,7 @@ export default function TravelScreen() {
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: any, _vars: any, context: any) => {
       if (context?.previous) {
         for (const [key, data] of context.previous) {
           queryClient.setQueryData(key, data);

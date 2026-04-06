@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,10 @@ import {
   ActionSheetIOS,
   Modal,
   ScrollView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Input } from "@/components/input";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { BottomSheet } from "@/components/sheet";
@@ -437,27 +437,25 @@ function EditTaskModal({
 
             <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
               {/* Title */}
-              <TextInput
+              <Input
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Task title"
-                placeholderTextColor="#71717a"
                 autoFocus
                 className="mb-6"
-                style={{ color: "#fafafa", fontSize: 20, fontWeight: "500" }}
+                style={{ fontSize: 20, fontWeight: "500" }}
                 multiline
               />
 
               {/* Description */}
               <Text className="text-muted-foreground text-xs uppercase tracking-wider mb-2">Description</Text>
-              <TextInput
+              <Input
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Add details..."
-                placeholderTextColor="#71717a"
                 multiline
                 className="bg-zinc-800 rounded-xl px-4 py-3 mb-5"
-                style={{ color: "#fafafa", fontSize: 15, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
+                style={{ fontSize: 15, minHeight: 80, textAlignVertical: "top", paddingTop: 12 }}
               />
 
               {/* Properties */}
@@ -493,12 +491,11 @@ function EditTaskModal({
 
                 <View className="flex-row items-center justify-between px-4 py-3.5">
                   <Text className="text-foreground" style={{ fontSize: 15 }}>Project</Text>
-                  <TextInput
+                  <Input
                     placeholder="None"
-                    placeholderTextColor="#71717a"
-                    value={project}
+                        value={project}
                     onChangeText={setProject}
-                    style={{ color: "#a1a1aa", fontSize: 15, minWidth: 80, textAlign: "right", paddingVertical: 0 }}
+                    style={{ color: "#a1a1aa", fontSize: 15, minWidth: 80, textAlign: "right" }}
                   />
                 </View>
               </View>
@@ -594,14 +591,13 @@ function CreateTaskSheet({
             </View>
 
             {/* Title input */}
-            <TextInput
+            <Input
               placeholder="What needs to be done?"
-              placeholderTextColor="#71717a"
               value={title}
               onChangeText={setTitle}
               autoFocus
               className="mb-6"
-              style={{ color: "#fafafa", fontSize: 20, fontWeight: "500" }}
+              style={{ fontSize: 20, fontWeight: "500" }}
               multiline
               returnKeyType="default"
             />
@@ -629,12 +625,11 @@ function CreateTaskSheet({
 
               <View className="flex-row items-center justify-between px-4 py-3.5">
                 <Text className="text-foreground text-sm">Project</Text>
-                <TextInput
+                <Input
                   placeholder="None"
-                  placeholderTextColor="#71717a"
-                  value={project}
+                    value={project}
                   onChangeText={setProject}
-                  style={{ color: "#a1a1aa", fontSize: 14, minWidth: 80, textAlign: "right", paddingVertical: 0 }}
+                  style={{ color: "#a1a1aa", fontSize: 14, minWidth: 80, textAlign: "right" }}
                 />
               </View>
             </View>
@@ -831,7 +826,7 @@ export default function TasksScreen() {
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err: any, _vars: any, context: any) => {
       if (context?.previous) {
         for (const [key, data] of context.previous) {
           queryClient.setQueryData(key, data);

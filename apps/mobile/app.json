@@ -12,7 +12,8 @@
       "backgroundColor": "#09090b"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
@@ -20,6 +21,9 @@
     "ios": {
       "bundleIdentifier": "com.simonri.metron",
       "appleTeamId": "WQH84QWCFP"
+    },
+    "android": {
+      "package": "com.simonri.metron"
     }
   }
 }
