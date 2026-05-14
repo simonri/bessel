@@ -1,17 +1,17 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Trash2, Star, MapPin, X, Map, Check, Plane, Pencil,
   UtensilsCrossed, Coffee, Beer, ShoppingBag, Hotel, Trees, Landmark,
-  Drama, Church, Building2, Dumbbell, Wine, IceCream, Store, type LucideIcon,
+  Drama, Church, Building2, Dumbbell, Wine, IceCream, Store, ChevronLeft, ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
 import type { PlaceSchema } from "@metron/client";
 import {
   listPlacesV1PlacesGetOptions,
-  listPlacesV1PlacesGetInfiniteOptions,
   listPlacesV1PlacesGetQueryKey,
   deletePlaceV1PlacesPlaceIdDeleteMutation,
   updatePlaceV1PlacesPlaceIdPatchMutation,
@@ -224,29 +224,16 @@ function Travel() {
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
   const [longPressPlace, setLongPressPlace] = useState<PlaceSchema | null>(null);
   const [longPressOpen, setLongPressOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
 
-  const {
-    data: infiniteData,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    ...listPlacesV1PlacesGetInfiniteOptions({
+  const { data: placesData, isLoading } = useQuery({
+    ...listPlacesV1PlacesGetOptions({
       client,
-      query: {
-        limit: PAGE_SIZE,
-        sorting: ["-created_at" as const],
-      },
+      query: { limit: PAGE_SIZE, page, sorting: ["-created_at" as const] },
     }),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
-      const currentPage = typeof lastPageParam === "number" ? lastPageParam : 1;
-      if (currentPage >= lastPage.pagination.max_page) return undefined;
-      return currentPage + 1;
-    },
+    placeholderData: keepPreviousData,
   });
 
   // Timeline: recently visited places
@@ -271,13 +258,10 @@ function Travel() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.pages) return old;
+        if (!old?.items) return old;
         return {
           ...old,
-          pages: old.pages.map((page: any) => ({
-            ...page,
-            items: page.items.filter((p: any) => p.id !== path.place_id),
-          })),
+          items: old.items.filter((p: any) => p.id !== path.place_id),
         };
       });
       if (selectedPlace && deleteTarget && selectedPlace.id === deleteTarget.id) {
@@ -305,13 +289,10 @@ function Travel() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.pages) return old;
+        if (!old?.items) return old;
         return {
           ...old,
-          pages: old.pages.map((page: any) => ({
-            ...page,
-            items: page.items.map((p: any) => (p.id === path.place_id ? { ...p, ...body } : p)),
-          })),
+          items: old.items.map((p: any) => (p.id === path.place_id ? { ...p, ...body } : p)),
         };
       });
       return { previous };
@@ -423,9 +404,7 @@ function Travel() {
         if (!isVisited) {
           return (
             <div className="flex items-center gap-1.5">
-              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-500">
-                Want to go
-              </span>
+              <span className="text-muted-foreground text-xs">Want to go</span>
               <button
                 type="button"
                 title="Mark as visited"
@@ -470,8 +449,9 @@ function Travel() {
     },
   ];
 
-  const places = useMemo(() => infiniteData?.pages.flatMap((p) => p.items) ?? [], [infiniteData]);
-  const totalCount = infiniteData?.pages[0]?.pagination.total_count ?? 0;
+  const places = placesData?.items ?? [];
+  const totalCount = placesData?.pagination.total_count ?? 0;
+  const maxPage = placesData?.pagination.max_page ?? 1;
   const sel = selectedPlace ? getPlaceAny(selectedPlace) : null;
 
   return (
@@ -497,7 +477,7 @@ function Travel() {
       ) : places.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
+            <EmptyMedia >
               <MapPin />
             </EmptyMedia>
             <EmptyTitle>No places yet</EmptyTitle>
@@ -540,9 +520,6 @@ function Travel() {
               data={places}
               getRowId={(row) => row.id}
               emptyMessage="No places yet."
-              onEndReached={fetchNextPage}
-              hasMore={hasNextPage}
-              isFetchingMore={isFetchingNextPage}
               onRowLongPress={
                 isMobile
                   ? (place) => {
@@ -552,6 +529,31 @@ function Travel() {
                   : undefined
               }
             />
+            {maxPage > 1 && (
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="size-4" />
+                  Previous
+                </Button>
+                <span className="text-muted-foreground text-sm tabular-nums">
+                  {page} / {maxPage}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                  disabled={page >= maxPage}
+                >
+                  Next
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Right: detail sidebar */}
@@ -591,13 +593,7 @@ function Travel() {
 
                 {/* Status + rating */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      sel.status === "visited"
-                        ? "bg-green-500/10 text-green-500"
-                        : "bg-amber-500/10 text-amber-500"
-                    }`}
-                  >
+                  <span className="text-xs text-muted-foreground">
                     {sel.status === "visited" ? "Visited" : "Want to go"}
                   </span>
                   {sel.visitedAt ? (

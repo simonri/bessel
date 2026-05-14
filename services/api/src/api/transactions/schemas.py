@@ -17,10 +17,12 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   dedup_hash: str
   bank_account_id: UUID4
   raw_id: UUID4 | None
+  is_business: bool = Field(default=False, description="Whether this is a business transaction.")
 
 
 class TransactionUpdate(Schema):
   category_id: UUID4 | None = Field(default=None, description="Category ID to assign.")
+  is_business: bool | None = Field(default=None, description="Mark as a business transaction.")
 
 
 class TransactionUpdateResponse(TransactionSchema):
@@ -46,6 +48,15 @@ class BulkCategorizeRequest(Schema):
 
 
 class BulkCategorizeResponse(Schema):
+  updated: int = Field(description="Number of transactions updated.")
+
+
+class BulkUpdateRequest(Schema):
+  ids: list[UUID4] = Field(description="List of transaction IDs to update.")
+  category_id: UUID4 | None = Field(default=None, description="Category ID to assign to all.")
+
+
+class BulkUpdateResponse(Schema):
   updated: int = Field(description="Number of transactions updated.")
 
 

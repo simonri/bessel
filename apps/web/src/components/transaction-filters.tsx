@@ -1,13 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { format } from "date-fns";
-import { Filter, Search, X } from "lucide-react";
+import { Search, X, ChevronDown, Briefcase } from "lucide-react";
 import type { BankAccountSchema, CategorySchema } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-import { Badge } from "@metron/ui/components/badge";
 import { Checkbox } from "@metron/ui/components/checkbox";
 import { Input } from "@metron/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
-import { Separator } from "@metron/ui/components/separator";
 import { cn } from "@metron/ui/lib/utils";
 
 export interface TransactionFilters {
@@ -15,27 +13,18 @@ export interface TransactionFilters {
   category_id?: string[];
   uncategorized?: boolean;
   direction?: string;
+  is_business?: boolean;
   search?: string;
   date_from?: string;
   date_to?: string;
 }
 
-interface TransactionFiltersProps {
+interface TransactionFiltersBarProps {
   filters: TransactionFilters;
   onFiltersChange: (filters: TransactionFilters) => void;
   accounts: BankAccountSchema[];
   categories: CategorySchema[];
 }
-
-type FilterField = "account" | "category" | "direction" | "search" | "date";
-
-const FILTER_LABELS: Record<FilterField, string> = {
-  account: "Account",
-  category: "Category",
-  direction: "Direction",
-  search: "Search",
-  date: "Date",
-};
 
 function hasActiveFilters(filters: TransactionFilters): boolean {
   return !!(
@@ -43,243 +32,120 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
     filters.category_id?.length ||
     filters.uncategorized ||
     filters.direction ||
+    filters.is_business !== undefined ||
     filters.search ||
     filters.date_from ||
     filters.date_to
   );
 }
 
-function countActiveFilters(filters: TransactionFilters): number {
-  let count = 0;
-  if (filters.bank_account_id?.length) count++;
-  if (filters.category_id?.length || filters.uncategorized) count++;
-  if (filters.direction) count++;
-  if (filters.search) count++;
-  if (filters.date_from || filters.date_to) count++;
-  return count;
-}
-
 function formatDateLabel(dateFrom?: string, dateTo?: string): string {
   const fmt = (d: string) => format(new Date(d + "T00:00:00"), "MMM d");
-  if (dateFrom && dateTo) return `${fmt(dateFrom)} \u2013 ${fmt(dateTo)}`;
+  if (dateFrom && dateTo) return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
   if (dateFrom) return `From ${fmt(dateFrom)}`;
   return `Until ${fmt(dateTo!)}`;
 }
 
-export function TransactionFiltersPopover({
-  filters,
-  onFiltersChange,
+// ─── Account multi-select ────────────────────────────────────────────────────
+
+function AccountDropdown({
   accounts,
-  categories,
-}: TransactionFiltersProps) {
-  const [activeField, setActiveField] = useState<FilterField>("account");
-  const [searchInput, setSearchInput] = useState(filters.search ?? "");
-  const [dateFromInput, setDateFromInput] = useState(filters.date_from ?? "");
-  const [dateToInput, setDateToInput] = useState(filters.date_to ?? "");
-  const active = hasActiveFilters(filters);
-  const activeCount = countActiveFilters(filters);
-
-  const parentCategories = categories.filter((c) => !c.parent_id);
-  const childCategories = categories.filter((c) => c.parent_id);
-
-  const toggleArrayFilter = (key: "bank_account_id" | "category_id", id: string) => {
-    const current = filters[key] ?? [];
-    const next = current.includes(id) ? current.filter((v) => v !== id) : [...current, id];
-    onFiltersChange({ ...filters, [key]: next.length ? next : undefined });
-  };
+  selected,
+  onToggle,
+  onClear,
+}: {
+  accounts: BankAccountSchema[];
+  selected: string[];
+  onToggle: (id: string) => void;
+  onClear: () => void;
+}) {
+  const label =
+    selected.length === 0
+      ? "Account"
+      : selected.length === 1
+        ? (accounts.find((a) => a.id === selected[0])?.name ?? "Account")
+        : `${selected.length} accounts`;
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Filter className="size-4" />
-          Filter
-          {activeCount > 0 && (
-            <Badge variant="secondary" className="ml-0.5 size-5 rounded-full p-0 text-[10px]">
-              {activeCount}
-            </Badge>
+        <button
+          type="button"
+          className={cn(
+            "flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
+            selected.length > 0
+              ? "border-primary/40 bg-primary/5 text-foreground"
+              : "border-input hover:bg-accent text-muted-foreground",
           )}
-        </Button>
+        >
+          <span className="max-w-[120px] truncate">{label}</span>
+          {selected.length > 0 ? (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" />
+            </span>
+          ) : (
+            <ChevronDown className="size-3" />
+          )}
+        </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto min-w-[460px] p-0">
-        <div className="flex">
-          {/* Left panel — field list */}
-          <div className="w-[160px] border-r p-1.5">
-            {(Object.keys(FILTER_LABELS) as FilterField[]).map((field) => {
-              const isFieldActive =
-                (field === "account" && !!filters.bank_account_id?.length) ||
-                (field === "category" &&
-                  (!!filters.category_id?.length || !!filters.uncategorized)) ||
-                (field === "direction" && !!filters.direction) ||
-                (field === "search" && !!filters.search) ||
-                (field === "date" && !!(filters.date_from || filters.date_to));
-
-              return (
-                <button
-                  key={field}
-                  type="button"
-                  onPointerEnter={() => setActiveField(field)}
-                  onClick={() => setActiveField(field)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-sm px-2.5 py-1.5 text-sm transition-colors",
-                    activeField === field
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50",
-                  )}
-                >
-                  {FILTER_LABELS[field]}
-                  {isFieldActive && <span className="bg-primary size-1.5 rounded-full" />}
-                </button>
-              );
-            })}
-            {active && (
-              <>
-                <Separator className="my-1.5" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    onFiltersChange({});
-                    setSearchInput("");
-                    setDateFromInput("");
-                    setDateToInput("");
-                  }}
-                  className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-sm transition-colors"
-                >
-                  <X className="size-3.5" />
-                  Clear all
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Right panel — filter controls */}
-          <div className="w-[300px] p-2">
-            {activeField === "account" && (
-              <AccountFilter
-                accounts={accounts}
-                selected={filters.bank_account_id ?? []}
-                onToggle={(id) => toggleArrayFilter("bank_account_id", id)}
+      <PopoverContent align="start" className="w-52 p-1.5">
+        {accounts.length === 0 ? (
+          <p className="text-muted-foreground py-2 text-center text-sm">No accounts</p>
+        ) : (
+          accounts.map((acc) => (
+            <label
+              key={acc.id}
+              className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm"
+            >
+              <Checkbox
+                checked={selected.includes(acc.id)}
+                onCheckedChange={() => onToggle(acc.id)}
               />
-            )}
-            {activeField === "category" && (
-              <CategoryFilter
-                parents={parentCategories}
-                children={childCategories}
-                selected={filters.category_id ?? []}
-                uncategorized={filters.uncategorized ?? false}
-                onToggle={(id) => {
-                  if (filters.uncategorized) {
-                    onFiltersChange({ ...filters, uncategorized: undefined });
-                  }
-                  toggleArrayFilter("category_id", id);
-                }}
-                onToggleUncategorized={() => {
-                  onFiltersChange({
-                    ...filters,
-                    uncategorized: !filters.uncategorized ? true : undefined,
-                    category_id: !filters.uncategorized ? undefined : filters.category_id,
-                  });
-                }}
-              />
-            )}
-            {activeField === "direction" && (
-              <DirectionFilter
-                value={filters.direction}
-                onChange={(d) => onFiltersChange({ ...filters, direction: d || undefined })}
-              />
-            )}
-            {activeField === "search" && (
-              <SearchFilter
-                value={searchInput}
-                onChange={setSearchInput}
-                onApply={() =>
-                  onFiltersChange({
-                    ...filters,
-                    search: searchInput.trim() || undefined,
-                  })
-                }
-                onClear={() => {
-                  setSearchInput("");
-                  onFiltersChange({ ...filters, search: undefined });
-                }}
-              />
-            )}
-            {activeField === "date" && (
-              <DateRangeFilter
-                dateFrom={dateFromInput}
-                dateTo={dateToInput}
-                onDateFromChange={setDateFromInput}
-                onDateToChange={setDateToInput}
-                onApply={() =>
-                  onFiltersChange({
-                    ...filters,
-                    date_from: dateFromInput || undefined,
-                    date_to: dateToInput || undefined,
-                  })
-                }
-                onClear={() => {
-                  setDateFromInput("");
-                  setDateToInput("");
-                  onFiltersChange({
-                    ...filters,
-                    date_from: undefined,
-                    date_to: undefined,
-                  });
-                }}
-              />
-            )}
-          </div>
-        </div>
+              <span className="truncate">{acc.name}</span>
+            </label>
+          ))
+        )}
       </PopoverContent>
     </Popover>
   );
 }
 
-function AccountFilter({
-  accounts,
-  selected,
-  onToggle,
-}: {
-  accounts: BankAccountSchema[];
-  selected: string[];
-  onToggle: (id: string) => void;
-}) {
-  if (accounts.length === 0) {
-    return <p className="text-muted-foreground py-4 text-center text-sm">No accounts</p>;
-  }
+// ─── Category multi-select ───────────────────────────────────────────────────
 
-  return (
-    <div className="space-y-0.5">
-      {accounts.map((acc) => (
-        <label
-          key={acc.id}
-          className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors"
-        >
-          <Checkbox checked={selected.includes(acc.id)} onCheckedChange={() => onToggle(acc.id)} />
-          <span className="truncate">{acc.name}</span>
-        </label>
-      ))}
-    </div>
-  );
-}
-
-function CategoryFilter({
-  parents,
-  children,
+function CategoryDropdown({
+  categories,
   selected,
   uncategorized,
   onToggle,
   onToggleUncategorized,
+  onClear,
 }: {
-  parents: CategorySchema[];
-  children: CategorySchema[];
+  categories: CategorySchema[];
   selected: string[];
   uncategorized: boolean;
   onToggle: (id: string) => void;
   onToggleUncategorized: () => void;
+  onClear: () => void;
 }) {
+  const totalActive = selected.length + (uncategorized ? 1 : 0);
+  const label =
+    totalActive === 0
+      ? "Category"
+      : totalActive === 1 && selected.length === 1
+        ? (categories.find((c) => c.id === selected[0])?.name ?? "Category")
+        : uncategorized && totalActive === 1
+          ? "Uncategorized"
+          : `${totalActive} categories`;
+
+  const parents = categories.filter((c) => !c.parent_id);
   const childrenByParent = new Map<string, CategorySchema[]>();
-  for (const cat of children) {
+  for (const cat of categories) {
     if (cat.parent_id) {
       const list = childrenByParent.get(cat.parent_id) ?? [];
       list.push(cat);
@@ -288,67 +154,97 @@ function CategoryFilter({
   }
 
   return (
-    <div className="max-h-[280px] space-y-0.5 overflow-y-auto">
-      <label className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors">
-        <Checkbox checked={uncategorized} onCheckedChange={onToggleUncategorized} />
-        <span className="text-muted-foreground italic">Uncategorized</span>
-      </label>
-      {parents.map((parent) => {
-        const kids = childrenByParent.get(parent.id) ?? [];
-        if (kids.length === 0) return null;
-        return (
-          <div key={parent.id}>
-            <div className="text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium">
-              {parent.name}
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
+            totalActive > 0
+              ? "border-primary/40 bg-primary/5 text-foreground"
+              : "border-input hover:bg-accent text-muted-foreground",
+          )}
+        >
+          <span className="max-w-[120px] truncate">{label}</span>
+          {totalActive > 0 ? (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" />
+            </span>
+          ) : (
+            <ChevronDown className="size-3" />
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="max-h-72 w-56 overflow-y-auto p-1.5">
+        <label className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm">
+          <Checkbox checked={uncategorized} onCheckedChange={onToggleUncategorized} />
+          <span className="text-muted-foreground italic">Uncategorized</span>
+        </label>
+        {parents.map((parent) => {
+          const kids = childrenByParent.get(parent.id) ?? [];
+          if (kids.length === 0) return null;
+          return (
+            <div key={parent.id}>
+              <div className="text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium">
+                {parent.name}
+              </div>
+              {kids.map((cat) => (
+                <label
+                  key={cat.id}
+                  className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm"
+                >
+                  <Checkbox
+                    checked={selected.includes(cat.id)}
+                    onCheckedChange={() => onToggle(cat.id)}
+                  />
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  <span className="truncate">{cat.name}</span>
+                </label>
+              ))}
             </div>
-            {kids.map((cat) => (
-              <label
-                key={cat.id}
-                className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors"
-              >
-                <Checkbox
-                  checked={selected.includes(cat.id)}
-                  onCheckedChange={() => onToggle(cat.id)}
-                />
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: cat.color }}
-                />
-                <span className="truncate">{cat.name}</span>
-              </label>
-            ))}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
   );
 }
 
-function DirectionFilter({
+// ─── Direction toggle ────────────────────────────────────────────────────────
+
+function DirectionToggle({
   value,
   onChange,
 }: {
   value: string | undefined;
   onChange: (v: string | undefined) => void;
 }) {
-  const options = [
-    { value: undefined, label: "All" },
-    { value: "debit", label: "Debit (expenses)" },
-    { value: "credit", label: "Credit (income)" },
-  ] as const;
-
   return (
-    <div className="space-y-0.5">
-      {options.map((opt) => (
+    <div className="border-input flex h-8 overflow-hidden rounded-md border text-sm">
+      {(
+        [
+          { label: "All", value: undefined },
+          { label: "Expenses", value: "debit" },
+          { label: "Income", value: "credit" },
+        ] as const
+      ).map((opt) => (
         <button
           key={opt.label}
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "flex w-full items-center rounded-sm px-2.5 py-1.5 text-sm transition-colors",
+            "px-2.5 transition-colors",
             value === opt.value
-              ? "bg-accent text-accent-foreground font-medium"
-              : "hover:bg-accent/50",
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
           {opt.label}
@@ -358,172 +254,266 @@ function DirectionFilter({
   );
 }
 
-function SearchFilter({
+// ─── Business toggle ─────────────────────────────────────────────────────────
+
+function BusinessToggle({
   value,
   onChange,
-  onApply,
-  onClear,
+}: {
+  value: boolean | undefined;
+  onChange: (v: boolean | undefined) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(value === true ? undefined : true)}
+      title="Show business transactions only"
+      className={cn(
+        "flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm transition-colors",
+        value === true
+          ? "border-primary/40 bg-primary/10 text-primary"
+          : "border-input text-muted-foreground hover:bg-accent hover:text-foreground",
+      )}
+    >
+      <Briefcase className="size-3.5" />
+      Business
+    </button>
+  );
+}
+
+// ─── Search input ────────────────────────────────────────────────────────────
+
+function SearchInput({
+  value,
+  onChange,
 }: {
   value: string;
   onChange: (v: string) => void;
-  onApply: () => void;
-  onClear: () => void;
 }) {
   return (
-    <div className="space-y-2">
-      <div className="relative">
-        <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2" />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onApply();
-          }}
-          placeholder="Search descriptions..."
-          className="border-input bg-background placeholder:text-muted-foreground h-8 w-full rounded-md border pl-8 pr-2 text-sm outline-none focus:ring-1 focus:ring-ring"
-        />
-      </div>
-      <div className="flex gap-1.5">
-        <Button size="sm" className="h-7 text-xs" onClick={onApply}>
-          Apply
-        </Button>
-        {value && (
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onClear}>
-            Clear
-          </Button>
-        )}
-      </div>
+    <div className="relative">
+      <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
+      <Input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search…"
+        className="h-8 w-40 pl-8 text-sm"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
+        >
+          <X className="size-3" />
+        </button>
+      )}
     </div>
   );
 }
 
-function DateRangeFilter({
+// ─── Date range ──────────────────────────────────────────────────────────────
+
+function DateRangeDropdown({
   dateFrom,
   dateTo,
-  onDateFromChange,
-  onDateToChange,
-  onApply,
+  onChange,
   onClear,
 }: {
-  dateFrom: string;
-  dateTo: string;
-  onDateFromChange: (v: string) => void;
-  onDateToChange: (v: string) => void;
-  onApply: () => void;
+  dateFrom: string | undefined;
+  dateTo: string | undefined;
+  onChange: (from: string | undefined, to: string | undefined) => void;
   onClear: () => void;
 }) {
+  const [localFrom, setLocalFrom] = useState(dateFrom ?? "");
+  const [localTo, setLocalTo] = useState(dateTo ?? "");
+  const isActive = !!(dateFrom || dateTo);
+
+  const label = isActive ? formatDateLabel(dateFrom, dateTo) : "Date";
+
   return (
-    <div className="space-y-2">
-      <div className="space-y-1.5">
-        <label className="text-muted-foreground text-xs font-medium">From</label>
-        <Input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => onDateFromChange(e.target.value)}
-          className="h-8 text-sm"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-muted-foreground text-xs font-medium">To</label>
-        <Input
-          type="date"
-          value={dateTo}
-          onChange={(e) => onDateToChange(e.target.value)}
-          className="h-8 text-sm"
-        />
-      </div>
-      <div className="flex gap-1.5">
-        <Button size="sm" className="h-7 text-xs" onClick={onApply}>
-          Apply
-        </Button>
-        {(dateFrom || dateTo) && (
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onClear}>
-            Clear
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
+            isActive
+              ? "border-primary/40 bg-primary/5 text-foreground"
+              : "border-input hover:bg-accent text-muted-foreground",
+          )}
+        >
+          <span className="max-w-[120px] truncate">{label}</span>
+          {isActive ? (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setLocalFrom("");
+                setLocalTo("");
+                onClear();
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" />
+            </span>
+          ) : (
+            <ChevronDown className="size-3" />
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 space-y-3 p-3">
+        <div className="space-y-1">
+          <label className="text-muted-foreground text-xs font-medium">From</label>
+          <Input
+            type="date"
+            value={localFrom}
+            onChange={(e) => setLocalFrom(e.target.value)}
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-muted-foreground text-xs font-medium">To</label>
+          <Input
+            type="date"
+            value={localTo}
+            onChange={(e) => setLocalTo(e.target.value)}
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="h-7 flex-1 text-xs"
+            onClick={() => onChange(localFrom || undefined, localTo || undefined)}
+          >
+            Apply
           </Button>
-        )}
-      </div>
-    </div>
+          {(localFrom || localTo) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => {
+                setLocalFrom("");
+                setLocalTo("");
+                onClear();
+              }}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
-export function ActiveFilters({
+// ─── Main filter bar ─────────────────────────────────────────────────────────
+
+export function TransactionFiltersBar({
   filters,
   onFiltersChange,
   accounts,
   categories,
-}: TransactionFiltersProps) {
-  if (!hasActiveFilters(filters)) return null;
+}: TransactionFiltersBarProps) {
+  const [searchValue, setSearchValue] = useState(filters.search ?? "");
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const active = hasActiveFilters(filters);
 
-  const pills: { label: string; onRemove: () => void }[] = [];
+  const toggleArrayFilter = (key: "bank_account_id" | "category_id", id: string) => {
+    const current = filters[key] ?? [];
+    const next = current.includes(id) ? current.filter((v) => v !== id) : [...current, id];
+    onFiltersChange({ ...filters, [key]: next.length ? next : undefined });
+  };
 
-  if (filters.bank_account_id?.length) {
-    const names = filters.bank_account_id
-      .map((id) => accounts.find((a) => a.id === id)?.name ?? id)
-      .join(", ");
-    pills.push({
-      label: `Account: ${names}`,
-      onRemove: () => onFiltersChange({ ...filters, bank_account_id: undefined }),
-    });
-  }
-
-  if (filters.category_id?.length) {
-    const names = filters.category_id
-      .map((id) => categories.find((c) => c.id === id)?.name ?? id)
-      .join(", ");
-    pills.push({
-      label: `Category: ${names}`,
-      onRemove: () => onFiltersChange({ ...filters, category_id: undefined }),
-    });
-  }
-
-  if (filters.uncategorized) {
-    pills.push({
-      label: "Uncategorized",
-      onRemove: () => onFiltersChange({ ...filters, uncategorized: undefined }),
-    });
-  }
-
-  if (filters.direction) {
-    pills.push({
-      label: `Direction: ${filters.direction}`,
-      onRemove: () => onFiltersChange({ ...filters, direction: undefined }),
-    });
-  }
-
-  if (filters.search) {
-    pills.push({
-      label: `Search: "${filters.search}"`,
-      onRemove: () => onFiltersChange({ ...filters, search: undefined }),
-    });
-  }
-
-  if (filters.date_from || filters.date_to) {
-    pills.push({
-      label: `Date: ${formatDateLabel(filters.date_from, filters.date_to)}`,
-      onRemove: () =>
-        onFiltersChange({
-          ...filters,
-          date_from: undefined,
-          date_to: undefined,
-        }),
-    });
-  }
+  const handleSearchChange = (val: string) => {
+    setSearchValue(val);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      onFiltersChange({ ...filters, search: val.trim() || undefined });
+    }, 300);
+  };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {pills.map((pill) => (
-        <Badge key={pill.label} variant="secondary" className="gap-1 pr-1">
-          {pill.label}
-          <button
-            type="button"
-            onClick={pill.onRemove}
-            className="hover:bg-muted-foreground/20 ml-0.5 rounded-full p-0.5 transition-colors"
-          >
-            <X className="size-3" />
-          </button>
-        </Badge>
-      ))}
+    <div className="flex flex-wrap items-center gap-2">
+      <SearchInput value={searchValue} onChange={handleSearchChange} />
+
+      <AccountDropdown
+        accounts={accounts}
+        selected={filters.bank_account_id ?? []}
+        onToggle={(id) => toggleArrayFilter("bank_account_id", id)}
+        onClear={() => onFiltersChange({ ...filters, bank_account_id: undefined })}
+      />
+
+      <CategoryDropdown
+        categories={categories}
+        selected={filters.category_id ?? []}
+        uncategorized={filters.uncategorized ?? false}
+        onToggle={(id) => {
+          if (filters.uncategorized) {
+            onFiltersChange({ ...filters, uncategorized: undefined });
+          }
+          toggleArrayFilter("category_id", id);
+        }}
+        onToggleUncategorized={() =>
+          onFiltersChange({
+            ...filters,
+            uncategorized: !filters.uncategorized ? true : undefined,
+            category_id: !filters.uncategorized ? undefined : filters.category_id,
+          })
+        }
+        onClear={() =>
+          onFiltersChange({ ...filters, category_id: undefined, uncategorized: undefined })
+        }
+      />
+
+      <DirectionToggle
+        value={filters.direction}
+        onChange={(d) => onFiltersChange({ ...filters, direction: d })}
+      />
+
+      <BusinessToggle
+        value={filters.is_business}
+        onChange={(v) => onFiltersChange({ ...filters, is_business: v })}
+      />
+
+      <DateRangeDropdown
+        dateFrom={filters.date_from}
+        dateTo={filters.date_to}
+        onChange={(from, to) =>
+          onFiltersChange({ ...filters, date_from: from, date_to: to })
+        }
+        onClear={() => onFiltersChange({ ...filters, date_from: undefined, date_to: undefined })}
+      />
+
+      {active && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground h-8 px-2 text-sm"
+          onClick={() => {
+            setSearchValue("");
+            onFiltersChange({});
+          }}
+        >
+          <X className="size-3.5" />
+          Clear
+        </Button>
+      )}
     </div>
   );
 }
+
+// Keep for backward compat if anything else imports ActiveFilters
+export function ActiveFilters(_props: {
+  filters: TransactionFilters;
+  onFiltersChange: (f: TransactionFilters) => void;
+  accounts: BankAccountSchema[];
+  categories: CategorySchema[];
+}) {
+  return null;
+}
+
+// Keep legacy export name for any remaining imports
+export const TransactionFiltersPopover = TransactionFiltersBar;

@@ -261,6 +261,49 @@ export const BulkDeleteRequestSchema = {
   title: "BulkDeleteRequest",
 } as const;
 
+export const BulkUpdateRequestSchema = {
+  properties: {
+    ids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      title: "Ids",
+      description: "List of transaction IDs to update.",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+      description: "Category ID to assign to all.",
+    },
+  },
+  type: "object",
+  required: ["ids"],
+  title: "BulkUpdateRequest",
+} as const;
+
+export const BulkUpdateResponseSchema = {
+  properties: {
+    updated: {
+      type: "integer",
+      title: "Updated",
+      description: "Number of transactions updated.",
+    },
+  },
+  type: "object",
+  required: ["updated"],
+  title: "BulkUpdateResponse",
+} as const;
+
 export const CategoryListResponseSchema = {
   properties: {
     items: {
@@ -3317,6 +3360,12 @@ export const TransactionSchemaSchema = {
       ],
       title: "Raw Id",
     },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "Whether this is a business transaction.",
+      default: false,
+    },
   },
   type: "object",
   required: [
@@ -3366,6 +3415,18 @@ export const TransactionUpdateSchema = {
       ],
       title: "Category Id",
       description: "Category ID to assign.",
+    },
+    is_business: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Is Business",
+      description: "Mark as a business transaction.",
     },
   },
   type: "object",
@@ -3470,6 +3531,12 @@ export const TransactionUpdateResponseSchema = {
         },
       ],
       title: "Raw Id",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "Whether this is a business transaction.",
+      default: false,
     },
     same_description_count: {
       type: "integer",

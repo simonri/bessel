@@ -10,6 +10,7 @@ import {
 
 import { client } from "../client.gen.js";
 import {
+  bulkUpdateTransactionsV1TransactionsBulkPatch,
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
@@ -72,6 +73,9 @@ import {
   upsertEntryV1JournalEntryDatePut,
 } from "../sdk.gen.js";
 import type {
+  BulkUpdateTransactionsV1TransactionsBulkPatchData,
+  BulkUpdateTransactionsV1TransactionsBulkPatchError,
+  BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
@@ -1988,6 +1992,35 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateTransactionV1TransactionsTransactionIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Bulk Update Transactions
+ *
+ * Update category for a list of transactions by ID.
+ */
+export const bulkUpdateTransactionsV1TransactionsBulkPatchMutation = (
+  options?: Partial<Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>>,
+): UseMutationOptions<
+  BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
+  BulkUpdateTransactionsV1TransactionsBulkPatchError,
+  Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
+    BulkUpdateTransactionsV1TransactionsBulkPatchError,
+    Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await bulkUpdateTransactionsV1TransactionsBulkPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,

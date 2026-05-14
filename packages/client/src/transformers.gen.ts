@@ -13,6 +13,7 @@ import type {
   CreateWorkoutV1WorkoutsPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   GetCalendarV1JournalCalendarGetResponse,
+  GetEntryV1JournalEntryDateGetResponse,
   GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
   GetWorkoutV1WorkoutsWorkoutIdGetResponse,
@@ -258,6 +259,15 @@ export const getCalendarV1JournalCalendarGetResponseTransformer = async (
   data: any,
 ): Promise<GetCalendarV1JournalCalendarGetResponse> => {
   data = journalCalendarResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getEntryV1JournalEntryDateGetResponseTransformer = async (
+  data: any,
+): Promise<GetEntryV1JournalEntryDateGetResponse> => {
+  if (data) {
+    data = journalEntrySchemaSchemaResponseTransformer(data);
+  }
   return data;
 };
 

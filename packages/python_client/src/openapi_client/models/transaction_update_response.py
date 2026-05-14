@@ -31,6 +31,7 @@ class TransactionUpdateResponse:
       dedup_hash (str):
       bank_account_id (str):
       raw_id (None | str):
+      is_business (bool | Unset): Whether this is a business transaction. Default: False.
       same_description_count (int | Unset): Number of other transactions with the same description not yet assigned
           this category. Default: 0.
   """
@@ -48,6 +49,7 @@ class TransactionUpdateResponse:
   dedup_hash: str
   bank_account_id: str
   raw_id: None | str
+  is_business: bool | Unset = False
   same_description_count: int | Unset = 0
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -86,6 +88,8 @@ class TransactionUpdateResponse:
     raw_id: None | str
     raw_id = self.raw_id
 
+    is_business = self.is_business
+
     same_description_count = self.same_description_count
 
     field_dict: dict[str, Any] = {}
@@ -107,6 +111,8 @@ class TransactionUpdateResponse:
         "raw_id": raw_id,
       }
     )
+    if is_business is not UNSET:
+      field_dict["is_business"] = is_business
     if same_description_count is not UNSET:
       field_dict["same_description_count"] = same_description_count
 
@@ -174,6 +180,8 @@ class TransactionUpdateResponse:
 
     raw_id = _parse_raw_id(d.pop("raw_id"))
 
+    is_business = d.pop("is_business", UNSET)
+
     same_description_count = d.pop("same_description_count", UNSET)
 
     transaction_update_response = cls(
@@ -190,6 +198,7 @@ class TransactionUpdateResponse:
       dedup_hash=dedup_hash,
       bank_account_id=bank_account_id,
       raw_id=raw_id,
+      is_business=is_business,
       same_description_count=same_description_count,
     )
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   type ColumnDef,
   type OnChangeFn,
@@ -7,7 +7,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@metron/ui/lib/utils";
 import {
   Table,
@@ -18,6 +17,30 @@ import {
   TableRow,
 } from "@metron/ui/components/table";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type GroupHeaderItem = { _kind: "group-header"; label: string };
+type DataItem<TData> = { _kind: "data"; dataIndex: number; data: TData };
+type RenderedItem<TData> = GroupHeaderItem | DataItem<TData>;
+
+function buildRenderedItems<TData>(
+  data: TData[],
+  getGroupLabel?: (item: TData, prev: TData | undefined) => string | null,
+): RenderedItem<TData>[] {
+  if (!getGroupLabel) {
+    return data.map((d, i) => ({ _kind: "data", dataIndex: i, data: d }));
+  }
+  const items: RenderedItem<TData>[] = [];
+  for (let i = 0; i < data.length; i++) {
+    const label = getGroupLabel(data[i], data[i - 1]);
+    if (label !== null) items.push({ _kind: "group-header", label });
+    items.push({ _kind: "data", dataIndex: i, data: data[i] });
+  }
+  return items;
+}
+
+// ─── Props ───────────────────────────────────────────────────────────────────
+
 interface VirtualDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -25,20 +48,20 @@ interface VirtualDataTableProps<TData, TValue> {
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   emptyMessage?: string;
-  /** Called when the user scrolls near the bottom */
-  onEndReached?: () => void;
-  /** Whether more data is currently being fetched */
-  isFetchingMore?: boolean;
-  /** Whether there are more pages to load */
-  hasMore?: boolean;
-  /** Estimated height of each row in px */
-  estimateRowHeight?: number;
-  /** Called on long-press (touch hold) of a row */
   onRowLongPress?: (row: TData) => void;
+  /**
+   * When provided, a group header row is rendered before any data row where
+   * this function returns a non-null string.
+   */
+  getGroupLabel?: (item: TData, prev: TData | undefined) => string | null;
+  // Legacy props — no longer used, kept so callers don't break at runtime
+  onEndReached?: () => void;
+  isFetchingMore?: boolean;
+  hasMore?: boolean;
+  estimateRowHeight?: number;
 }
 
-const OVERSCAN = 10;
-const END_REACHED_THRESHOLD = 5;
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function VirtualDataTable<TData, TValue>({
   columns,
@@ -47,11 +70,8 @@ export function VirtualDataTable<TData, TValue>({
   rowSelection,
   onRowSelectionChange,
   emptyMessage = "No results.",
-  onEndReached,
-  isFetchingMore,
-  hasMore,
-  estimateRowHeight = 41,
   onRowLongPress,
+  getGroupLabel,
 }: VirtualDataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -65,38 +85,10 @@ export function VirtualDataTable<TData, TValue>({
   });
 
   const { rows } = table.getRowModel();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => estimateRowHeight,
-    overscan: OVERSCAN,
-  });
-
-  const virtualRows = virtualizer.getVirtualItems();
-
-  // Trigger onEndReached when scrolling near the bottom
-  const handleEndReached = useCallback(() => {
-    if (!onEndReached || !hasMore || isFetchingMore) return;
-    onEndReached();
-  }, [onEndReached, hasMore, isFetchingMore]);
-
-  useEffect(() => {
-    const lastVirtualRow = virtualRows[virtualRows.length - 1];
-    if (!lastVirtualRow) return;
-    if (lastVirtualRow.index >= rows.length - END_REACHED_THRESHOLD) {
-      handleEndReached();
-    }
-  }, [virtualRows, rows.length, handleEndReached]);
-
-  const totalSize = virtualizer.getTotalSize();
-  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
-  const paddingBottom =
-    virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
+  const renderedItems = buildRenderedItems(data, getGroupLabel);
 
   return (
-    <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto rounded-md border">
+    <div className="rounded-md border">
       <Table className="table-fixed">
         <TableHeader className="bg-background sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -126,40 +118,30 @@ export function VirtualDataTable<TData, TValue>({
               </TableCell>
             </TableRow>
           ) : (
-            <>
-              {paddingTop > 0 && (
-                <tr>
-                  <td style={{ height: paddingTop, padding: 0, border: 0 }} />
-                </tr>
-              )}
-              {virtualRows.map((virtualRow) => {
-                const row = rows[virtualRow.index];
+            renderedItems.map((item, i) => {
+              if (item._kind === "group-header") {
                 return (
-                  <LongPressRow
-                    key={row.id}
-                    row={row}
-                    virtualRow={virtualRow}
-                    measureElement={virtualizer.measureElement}
-                    onLongPress={onRowLongPress ? () => onRowLongPress(row.original) : undefined}
-                  />
+                  <tr key={`group-${i}`}>
+                    <td
+                      colSpan={columns.length}
+                      className="text-muted-foreground border-b px-3 py-1.5 text-xs font-semibold"
+                    >
+                      {item.label}
+                    </td>
+                  </tr>
                 );
-              })}
-              {paddingBottom > 0 && (
-                <tr>
-                  <td style={{ height: paddingBottom, padding: 0, border: 0 }} />
-                </tr>
-              )}
-              {isFetchingMore && (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="text-muted-foreground h-10 text-center text-sm"
-                  >
-                    Loading more...
-                  </TableCell>
-                </TableRow>
-              )}
-            </>
+              }
+
+              const row = rows[item.dataIndex];
+              if (!row) return null;
+              return (
+                <LongPressRow
+                  key={row.id}
+                  row={row}
+                  onLongPress={onRowLongPress ? () => onRowLongPress(row.original) : undefined}
+                />
+              );
+            })
           )}
         </TableBody>
       </Table>
@@ -167,15 +149,13 @@ export function VirtualDataTable<TData, TValue>({
   );
 }
 
+// ─── Long-press row ───────────────────────────────────────────────────────────
+
 function LongPressRow<TData>({
   row,
-  virtualRow,
-  measureElement,
   onLongPress,
 }: {
   row: ReturnType<ReturnType<typeof useReactTable<TData>>["getRowModel"]>["rows"][number];
-  virtualRow: { index: number };
-  measureElement: (el: HTMLElement | null) => void;
   onLongPress?: () => void;
 }) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -197,8 +177,6 @@ function LongPressRow<TData>({
 
   return (
     <TableRow
-      ref={measureElement}
-      data-index={virtualRow.index}
       data-state={row.getIsSelected() ? "selected" : undefined}
       className={cn(pressing && "bg-accent")}
       onTouchStart={handleTouchStart}

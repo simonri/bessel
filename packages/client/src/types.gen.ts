@@ -216,6 +216,36 @@ export type BulkDeleteRequest = {
 };
 
 /**
+ * BulkUpdateRequest
+ */
+export type BulkUpdateRequest = {
+  /**
+   * Ids
+   *
+   * List of transaction IDs to update.
+   */
+  ids: Array<string>;
+  /**
+   * Category Id
+   *
+   * Category ID to assign to all.
+   */
+  category_id?: string | null;
+};
+
+/**
+ * BulkUpdateResponse
+ */
+export type BulkUpdateResponse = {
+  /**
+   * Updated
+   *
+   * Number of transactions updated.
+   */
+  updated: number;
+};
+
+/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -2016,6 +2046,12 @@ export type TransactionSchema = {
    * Raw Id
    */
   raw_id: string | null;
+  /**
+   * Is Business
+   *
+   * Whether this is a business transaction.
+   */
+  is_business?: boolean;
 };
 
 /**
@@ -2048,6 +2084,12 @@ export type TransactionUpdate = {
    * Category ID to assign.
    */
   category_id?: string | null;
+  /**
+   * Is Business
+   *
+   * Mark as a business transaction.
+   */
+  is_business?: boolean | null;
 };
 
 /**
@@ -2111,6 +2153,12 @@ export type TransactionUpdateResponse = {
    * Raw Id
    */
   raw_id: string | null;
+  /**
+   * Is Business
+   *
+   * Whether this is a business transaction.
+   */
+  is_business?: boolean;
   /**
    * Same Description Count
    *
@@ -3829,6 +3877,12 @@ export type ListTransactionsV1TransactionsGetData = {
      */
     date_to?: Date | null;
     /**
+     * Is Business
+     *
+     * Filter by business flag.
+     */
+    is_business?: boolean | null;
+    /**
      * Page
      *
      * Page number, defaults to 1.
@@ -3941,6 +3995,33 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
 
 export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
   UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchData = {
+  body: BulkUpdateRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/bulk";
+};
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchError =
+  BulkUpdateTransactionsV1TransactionsBulkPatchErrors[keyof BulkUpdateTransactionsV1TransactionsBulkPatchErrors];
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkUpdateResponse;
+};
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchResponse =
+  BulkUpdateTransactionsV1TransactionsBulkPatchResponses[keyof BulkUpdateTransactionsV1TransactionsBulkPatchResponses];
 
 export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData =
   {

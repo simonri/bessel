@@ -9,6 +9,7 @@ from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
 from ..models.transaction_direction import TransactionDirection
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="TransactionSchema")
 
@@ -30,6 +31,7 @@ class TransactionSchema:
       dedup_hash (str):
       bank_account_id (str):
       raw_id (None | str):
+      is_business (bool | Unset): Whether this is a business transaction. Default: False.
   """
 
   created_at: datetime.datetime
@@ -45,6 +47,7 @@ class TransactionSchema:
   dedup_hash: str
   bank_account_id: str
   raw_id: None | str
+  is_business: bool | Unset = False
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -82,6 +85,8 @@ class TransactionSchema:
     raw_id: None | str
     raw_id = self.raw_id
 
+    is_business = self.is_business
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -101,6 +106,8 @@ class TransactionSchema:
         "raw_id": raw_id,
       }
     )
+    if is_business is not UNSET:
+      field_dict["is_business"] = is_business
 
     return field_dict
 
@@ -166,6 +173,8 @@ class TransactionSchema:
 
     raw_id = _parse_raw_id(d.pop("raw_id"))
 
+    is_business = d.pop("is_business", UNSET)
+
     transaction_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -180,6 +189,7 @@ class TransactionSchema:
       dedup_hash=dedup_hash,
       bank_account_id=bank_account_id,
       raw_id=raw_id,
+      is_business=is_business,
     )
 
     transaction_schema.additional_properties = d

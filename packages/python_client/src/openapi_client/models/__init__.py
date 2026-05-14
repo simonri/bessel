@@ -10,6 +10,8 @@ from .body_import_transactions_v1_transactions_import_post import BodyImportTran
 from .bulk_categorize_request import BulkCategorizeRequest
 from .bulk_categorize_response import BulkCategorizeResponse
 from .bulk_delete_request import BulkDeleteRequest
+from .bulk_update_request import BulkUpdateRequest
+from .bulk_update_response import BulkUpdateResponse
 from .category_list_response import CategoryListResponse
 from .category_schema import CategorySchema
 from .category_spending import CategorySpending
@@ -100,6 +102,8 @@ __all__ = (
   "BulkCategorizeRequest",
   "BulkCategorizeResponse",
   "BulkDeleteRequest",
+  "BulkUpdateRequest",
+  "BulkUpdateResponse",
   "CategoryListResponse",
   "CategorySchema",
   "CategorySpending",

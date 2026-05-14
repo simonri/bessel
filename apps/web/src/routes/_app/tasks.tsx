@@ -1,4 +1,14 @@
 import { useState } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isTomorrow, isPast, isYesterday, addDays } from "date-fns";
@@ -157,9 +167,22 @@ function TaskCard({
   const dueColor = getDueDateColor(task.due_date);
   const recurrence = formatRecurrence(task);
 
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+    data: { task },
+  });
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
+    : undefined;
+
   return (
     <div
-      className={`rounded-md border border-l-2 bg-card p-3 transition-colors cursor-pointer hover:border-foreground/20 ${priorityConfig.border}`}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`rounded-md border border-l-2 bg-card p-3 transition-colors cursor-grab active:cursor-grabbing hover:border-foreground/20 ${priorityConfig.border}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -219,6 +242,7 @@ function BoardColumn({
 }) {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
   const Icon = config.icon;
+  const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
     <div className="flex-1 min-w-[260px] max-w-[400px]">
@@ -229,7 +253,10 @@ function BoardColumn({
           {tasks.length}
         </span>
       </div>
-      <div className="space-y-2">
+      <div
+        ref={setNodeRef}
+        className={`space-y-2 min-h-[80px] rounded-lg p-1 transition-colors ${isOver ? "bg-accent/50" : ""}`}
+      >
         {tasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -606,6 +633,25 @@ function Tasks() {
     setSelectedTask({ ...task, priority: newPriority });
   };
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const taskId = String(active.id);
+    const newStatus = String(over.id);
+
+    // Map "scheduled" drop zone → status "todo" (scheduled is a view-layer concept)
+    const apiStatus = newStatus === "scheduled" ? "todo" : newStatus;
+
+    updateMutation.mutate({
+      client,
+      path: { task_id: taskId },
+      body: { status: apiStatus as "todo" },
+    });
+  };
+
   const allTasks = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
   const maxPage = data?.pagination.max_page ?? 1;
@@ -656,14 +702,10 @@ function Tasks() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
-        <div className="text-muted-foreground flex h-32 items-center justify-center">
-          Loading...
-        </div>
-      ) : allTasks.length === 0 && viewTab === "board" ? (
+      {isLoading ? null : allTasks.length === 0 && viewTab === "board" ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
+            <EmptyMedia >
               <CheckSquare />
             </EmptyMedia>
             <EmptyTitle>No tasks yet</EmptyTitle>
@@ -676,17 +718,19 @@ function Tasks() {
       ) : (
         <>
           {viewTab === "board" && boardTasks ? (
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {BOARD_COLUMNS.map((col) => (
-                <BoardColumn
-                  key={col}
-                  status={col}
-                  tasks={boardTasks[col]}
-                  onSelectTask={handleSelectTask}
-                  onCompleteTask={handleCompleteTask}
-                />
-              ))}
-            </div>
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                {BOARD_COLUMNS.map((col) => (
+                  <BoardColumn
+                    key={col}
+                    status={col}
+                    tasks={boardTasks[col]}
+                    onSelectTask={handleSelectTask}
+                    onCompleteTask={handleCompleteTask}
+                  />
+                ))}
+              </div>
+            </DndContext>
           ) : (
             /* Done / All list view */
             <div className="space-y-1">

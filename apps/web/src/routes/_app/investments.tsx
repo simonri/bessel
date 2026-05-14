@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Trash2, Search } from "lucide-react";
+import { Trash2, Search, TrendingUp } from "lucide-react";
 import { Input } from "@metron/ui/components/input";
 import type { SecuritySchema, TradeSchema, HoldingSchema } from "@metron/client";
 import {
@@ -27,6 +27,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@metron/ui/components/alert-dialog";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@metron/ui/components/empty";
 import { DataTable } from "@/components/data-table";
 import { CreateSecurityDialog } from "@/components/create-security-dialog";
 import { EditSecurityDialog } from "@/components/edit-security-dialog";
@@ -34,30 +41,18 @@ import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { UpdatePriceDialog } from "@/components/update-price-dialog";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import { formatAmount, formatQuantity } from "@/lib/money";
 
 export const Route = createFileRoute("/_app/investments")({
   component: Investments,
 });
 
-function formatAmount(cents: number) {
-  return (cents / 100).toLocaleString("sv-SE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatQuantity(microUnits: number) {
-  return (microUnits / 1_000_000).toLocaleString("sv-SE", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 6,
-  });
-}
 
 function Investments() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col space-y-4">
+    <div className="flex flex-col space-y-4">
       <h2 className="text-2xl font-bold tracking-tight">Investments</h2>
-      <Tabs defaultValue="holdings" className="flex min-h-0 flex-1 flex-col">
+      <Tabs defaultValue="holdings" className="flex flex-col">
         <TabsList className="w-fit">
           <TabsTrigger value="holdings">Holdings</TabsTrigger>
           <TabsTrigger value="trades">Trades</TabsTrigger>
@@ -157,7 +152,7 @@ function HoldingsTab() {
         const isPositive = gain_loss >= 0;
         return (
           <div
-            className={`text-right font-mono tabular-nums ${isPositive ? "text-green-600" : "text-red-600"}`}
+            className={`text-right font-mono tabular-nums ${isPositive ? "text-income" : "text-expense"}`}
           >
             {isPositive ? "+" : ""}
             {formatAmount(gain_loss)} {currency}
@@ -175,18 +170,64 @@ function HoldingsTab() {
 
   const holdings = data?.items ?? [];
 
-  return isLoading ? (
-    <div className="text-muted-foreground flex h-24 items-center justify-center">Loading...</div>
-  ) : holdings.length === 0 ? (
-    <div className="flex flex-col items-center justify-center h-24 gap-2 text-muted-foreground text-sm">
-      <p>No holdings yet. Add securities and record trades to get started.</p>
-      <div className="flex gap-2">
-        <CreateSecurityDialog />
-        <CreateTradeDialog />
-      </div>
+  // Aggregate by asset_type for the donut chart
+  const allocationData = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const h of holdings) {
+      if (h.current_value != null) {
+        const label = h.asset_type.replace(/_/g, " ");
+        map.set(label, (map.get(label) ?? 0) + h.current_value);
+      }
+    }
+    return [...map.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [holdings]);
+
+  if (isLoading) return null;
+
+  if (holdings.length === 0) {
+    return (
+      <Empty className="border">
+        <EmptyMedia >
+          <TrendingUp />
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>No holdings yet</EmptyTitle>
+          <EmptyDescription>Add securities and record trades to get started.</EmptyDescription>
+        </EmptyHeader>
+        <div className="flex gap-2">
+          <CreateSecurityDialog />
+          <CreateTradeDialog />
+        </div>
+      </Empty>
+    );
+  }
+
+  const totalValue = allocationData.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-150">
+      {/* Allocation strip */}
+      {allocationData.length > 0 && (
+        <div className="flex flex-wrap gap-x-8 gap-y-3 pb-4 border-b">
+          {allocationData.map((item) => {
+            const pct = totalValue > 0 ? Math.round((item.value / totalValue) * 100) : 0;
+            return (
+              <div key={item.name}>
+                <p className="text-muted-foreground text-xs capitalize">{item.name}</p>
+                <p className="mt-0.5 text-base font-medium tabular-nums">
+                  {formatAmount(item.value)}
+                  <span className="ml-1.5 text-xs text-muted-foreground">{pct}%</span>
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <DataTable columns={columns} data={holdings} />
     </div>
-  ) : (
-    <DataTable columns={columns} data={holdings} />
   );
 }
 
@@ -233,7 +274,7 @@ function TradesTab() {
       size: 70,
       cell: ({ row }) => (
         <span
-          className={`font-medium capitalize ${row.original.trade_type === "buy" ? "text-green-600" : "text-red-600"}`}
+          className={`font-medium capitalize ${row.original.trade_type === "buy" ? "text-income" : "text-expense"}`}
         >
           {row.original.trade_type}
         </span>
@@ -306,10 +347,14 @@ function TradesTab() {
         <CreateTradeDialog />
       </div>
 
-      {isLoading ? (
-        <div className="text-muted-foreground flex h-24 items-center justify-center">
-          Loading...
-        </div>
+      {isLoading ? null : trades.length === 0 ? (
+        <Empty className="border">
+          <EmptyMedia ><TrendingUp /></EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>No trades yet</EmptyTitle>
+            <EmptyDescription>Record your first trade to see it here.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <DataTable columns={columns} data={trades} />
       )}
@@ -465,10 +510,14 @@ function SecuritiesTab() {
         <CreateSecurityDialog />
       </div>
 
-      {isLoading ? (
-        <div className="text-muted-foreground flex h-24 items-center justify-center">
-          Loading...
-        </div>
+      {isLoading ? null : securities.length === 0 ? (
+        <Empty className="border">
+          <EmptyMedia ><TrendingUp /></EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle>No securities</EmptyTitle>
+            <EmptyDescription>Add a security to start tracking your portfolio.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <DataTable columns={columns} data={securities} />
       )}

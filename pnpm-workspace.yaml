@@ -2,6 +2,12 @@ packages:
   - packages/*
   - apps/*
 
+allowBuilds:
+  esbuild: true
+  msw: true
+  sharp: true
+  workerd: true
+
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.1.13
   vite-plus: 0.1.13
@@ -10,9 +16,8 @@ catalog:
 overrides:
   vite: 'catalog:'
   vitest: 'catalog:'
-
-patchedDependencies:
-  metro-cache@0.83.5: patches/metro-cache@0.83.5.patch
+  react: '19.2.6'
+  react-dom: '19.2.6'
 
 peerDependencyRules:
   allowAny:

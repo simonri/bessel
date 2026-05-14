@@ -20,6 +20,7 @@ import {
   createWorkoutV1WorkoutsPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   getCalendarV1JournalCalendarGetResponseTransformer,
+  getEntryV1JournalEntryDateGetResponseTransformer,
   getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
   getWorkoutV1WorkoutsWorkoutIdGetResponseTransformer,
@@ -47,6 +48,9 @@ import {
   upsertEntryV1JournalEntryDatePutResponseTransformer,
 } from "./transformers.gen.js";
 import type {
+  BulkUpdateTransactionsV1TransactionsBulkPatchData,
+  BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
+  BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
@@ -224,7 +228,8 @@ import type {
 export type Options<
   TData extends TDataShape = TDataShape,
   ThrowOnError extends boolean = boolean,
-> = Options2<TData, ThrowOnError> & {
+  TResponse = unknown,
+> = Options2<TData, ThrowOnError, TResponse> & {
   /**
    * You can provide a client instance returned by `createClient()` instead of
    * individual options. This might be also useful if you want to implement a
@@ -689,7 +694,11 @@ export const getEntryV1JournalEntryDateGet = <
     GetEntryV1JournalEntryDateGetResponses,
     GetEntryV1JournalEntryDateGetErrors,
     ThrowOnError
-  >({ url: "/v1/journal/{entry_date}", ...options });
+  >({
+    responseTransformer: getEntryV1JournalEntryDateGetResponseTransformer,
+    url: "/v1/journal/{entry_date}",
+    ...options,
+  });
 
 /**
  * Upsert Journal Entry
@@ -1048,6 +1057,32 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
     responseTransformer:
       updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
     url: "/v1/transactions/{transaction_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Bulk Update Transactions
+ *
+ * Update category for a list of transactions by ID.
+ */
+export const bulkUpdateTransactionsV1TransactionsBulkPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    BulkUpdateTransactionsV1TransactionsBulkPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
+    BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
+    ThrowOnError
+  >({
+    url: "/v1/transactions/bulk",
     ...options,
     headers: {
       "Content-Type": "application/json",

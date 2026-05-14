@@ -22,6 +22,7 @@ def _get_kwargs(
   search: None | str | Unset = UNSET,
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
+  is_business: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -89,6 +90,13 @@ def _get_kwargs(
     json_date_to = date_to
   params["date_to"] = json_date_to
 
+  json_is_business: bool | None | Unset
+  if isinstance(is_business, Unset):
+    json_is_business = UNSET
+  else:
+    json_is_business = is_business
+  params["is_business"] = json_is_business
+
   params["page"] = page
 
   params["limit"] = limit
@@ -153,6 +161,7 @@ def sync_detailed(
   search: None | str | Unset = UNSET,
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
+  is_business: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -170,6 +179,7 @@ def sync_detailed(
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
+      is_business (bool | None | Unset): Filter by business flag.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -192,6 +202,7 @@ def sync_detailed(
     search=search,
     date_from=date_from,
     date_to=date_to,
+    is_business=is_business,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -214,6 +225,7 @@ def sync(
   search: None | str | Unset = UNSET,
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
+  is_business: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -231,6 +243,7 @@ def sync(
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
+      is_business (bool | None | Unset): Filter by business flag.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -254,6 +267,7 @@ def sync(
     search=search,
     date_from=date_from,
     date_to=date_to,
+    is_business=is_business,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -270,6 +284,7 @@ async def asyncio_detailed(
   search: None | str | Unset = UNSET,
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
+  is_business: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -287,6 +302,7 @@ async def asyncio_detailed(
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
+      is_business (bool | None | Unset): Filter by business flag.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -309,6 +325,7 @@ async def asyncio_detailed(
     search=search,
     date_from=date_from,
     date_to=date_to,
+    is_business=is_business,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -329,6 +346,7 @@ async def asyncio(
   search: None | str | Unset = UNSET,
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
+  is_business: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -346,6 +364,7 @@ async def asyncio(
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
+      is_business (bool | None | Unset): Filter by business flag.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -370,6 +389,7 @@ async def asyncio(
       search=search,
       date_from=date_from,
       date_to=date_to,
+      is_business=is_business,
       page=page,
       limit=limit,
       sorting=sorting,

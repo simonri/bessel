@@ -15,6 +15,7 @@ import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
 import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
+import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppJournalRouteImport } from './routes/_app/journal'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
@@ -48,6 +49,11 @@ const AppTasksRoute = AppTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppJournalRoute = AppJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
@@ -65,19 +71,21 @@ const AppAccountsRoute = AppAccountsRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AppIndexRoute
   '/accounts': typeof AppAccountsRoute
   '/investments': typeof AppInvestmentsRoute
   '/journal': typeof AppJournalRoute
+  '/reports': typeof AppReportsRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
   '/workout': typeof AppWorkoutRoute
-  '/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsRoute
   '/investments': typeof AppInvestmentsRoute
   '/journal': typeof AppJournalRoute
+  '/reports': typeof AppReportsRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/_app/accounts': typeof AppAccountsRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/journal': typeof AppJournalRoute
+  '/_app/reports': typeof AppReportsRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/travel': typeof AppTravelRoute
@@ -99,19 +108,21 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/accounts'
     | '/investments'
     | '/journal'
+    | '/reports'
     | '/tasks'
     | '/transactions'
     | '/travel'
     | '/workout'
-    | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/accounts'
     | '/investments'
     | '/journal'
+    | '/reports'
     | '/tasks'
     | '/transactions'
     | '/travel'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_app/accounts'
     | '/_app/investments'
     | '/_app/journal'
+    | '/_app/reports'
     | '/_app/tasks'
     | '/_app/transactions'
     | '/_app/travel'
@@ -139,7 +151,7 @@ declare module '@tanstack/react-router' {
     '/_app': {
       id: '/_app'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/journal': {
       id: '/_app/journal'
       path: '/journal'
@@ -206,6 +225,7 @@ interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppJournalRoute: typeof AppJournalRoute
+  AppReportsRoute: typeof AppReportsRoute
   AppTasksRoute: typeof AppTasksRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppTravelRoute: typeof AppTravelRoute
@@ -217,6 +237,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppJournalRoute: AppJournalRoute,
+  AppReportsRoute: AppReportsRoute,
   AppTasksRoute: AppTasksRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppTravelRoute: AppTravelRoute,

@@ -8,47 +8,46 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="TransactionUpdate")
+T = TypeVar("T", bound="BulkUpdateRequest")
 
 
 @_attrs_define
-class TransactionUpdate:
+class BulkUpdateRequest:
   """
   Attributes:
-      category_id (None | str | Unset): Category ID to assign.
-      is_business (bool | None | Unset): Mark as a business transaction.
+      ids (list[str]): List of transaction IDs to update.
+      category_id (None | str | Unset): Category ID to assign to all.
   """
 
+  ids: list[str]
   category_id: None | str | Unset = UNSET
-  is_business: bool | None | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
+    ids = self.ids
+
     category_id: None | str | Unset
     if isinstance(self.category_id, Unset):
       category_id = UNSET
     else:
       category_id = self.category_id
 
-    is_business: bool | None | Unset
-    if isinstance(self.is_business, Unset):
-      is_business = UNSET
-    else:
-      is_business = self.is_business
-
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
-    field_dict.update({})
+    field_dict.update(
+      {
+        "ids": ids,
+      }
+    )
     if category_id is not UNSET:
       field_dict["category_id"] = category_id
-    if is_business is not UNSET:
-      field_dict["is_business"] = is_business
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
+    ids = cast(list[str], d.pop("ids"))
 
     def _parse_category_id(data: object) -> None | str | Unset:
       if data is None:
@@ -59,22 +58,13 @@ class TransactionUpdate:
 
     category_id = _parse_category_id(d.pop("category_id", UNSET))
 
-    def _parse_is_business(data: object) -> bool | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(bool | None | Unset, data)
-
-    is_business = _parse_is_business(d.pop("is_business", UNSET))
-
-    transaction_update = cls(
+    bulk_update_request = cls(
+      ids=ids,
       category_id=category_id,
-      is_business=is_business,
     )
 
-    transaction_update.additional_properties = d
-    return transaction_update
+    bulk_update_request.additional_properties = d
+    return bulk_update_request
 
   @property
   def additional_keys(self) -> list[str]:

@@ -16,6 +16,8 @@ from api.transactions.schemas import (
   BulkCategorizeRequest,
   BulkCategorizeResponse,
   BulkDeleteRequest,
+  BulkUpdateRequest,
+  BulkUpdateResponse,
   CategorySpending,
   ImportResponse,
   MonthlyFlow,
@@ -59,6 +61,7 @@ async def list_transactions(
   search: Annotated[str | None, Query(description="Search in description (case-insensitive).")] = None,
   date_from: Annotated[date | None, Query(description="Start date (inclusive).")] = None,
   date_to: Annotated[date | None, Query(description="End date (inclusive).")] = None,
+  is_business: Annotated[bool | None, Query(description="Filter by business flag.")] = None,
 ) -> TransactionListResponse:
   """List transactions."""
   from api.transactions.repository import TransactionRepository
@@ -80,6 +83,8 @@ async def list_transactions(
     statement = statement.where(Transaction.transaction_date >= date_from)
   if date_to:
     statement = statement.where(Transaction.transaction_date <= date_to)
+  if is_business is not None:
+    statement = statement.where(Transaction.is_business == is_business)
 
   for prop, desc in sorting:
     column = getattr(Transaction, prop.value)
@@ -188,6 +193,25 @@ async def update_transaction(
     **TransactionSchema.model_validate(transaction).model_dump(),
     same_description_count=same_description_count,
   )
+
+
+@router.patch(
+  "/bulk",
+  summary="Bulk Update Transactions",
+  response_model=BulkUpdateResponse,
+)
+async def bulk_update_transactions(
+  body: BulkUpdateRequest,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> BulkUpdateResponse:
+  """Update category for a list of transactions by ID."""
+  stmt = (
+    update(Transaction)
+    .where(Transaction.id.in_(body.ids))
+    .values(category_id=body.category_id)
+  )
+  result = await session.execute(stmt)
+  return BulkUpdateResponse(updated=result.rowcount)
 
 
 @router.post(
