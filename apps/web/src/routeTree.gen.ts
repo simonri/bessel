@@ -16,6 +16,7 @@ import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
+import { Route as AppKlarnaRouteImport } from './routes/_app/klarna'
 import { Route as AppJournalRouteImport } from './routes/_app/journal'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
@@ -54,6 +55,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AppRoute,
 } as any)
+const AppKlarnaRoute = AppKlarnaRouteImport.update({
+  id: '/klarna',
+  path: '/klarna',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppJournalRoute = AppJournalRouteImport.update({
   id: '/journal',
   path: '/journal',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/accounts': typeof AppAccountsRoute
   '/investments': typeof AppInvestmentsRoute
   '/journal': typeof AppJournalRoute
+  '/klarna': typeof AppKlarnaRoute
   '/reports': typeof AppReportsRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsRoute
   '/investments': typeof AppInvestmentsRoute
   '/journal': typeof AppJournalRoute
+  '/klarna': typeof AppKlarnaRoute
   '/reports': typeof AppReportsRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_app/accounts': typeof AppAccountsRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/journal': typeof AppJournalRoute
+  '/_app/klarna': typeof AppKlarnaRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/transactions': typeof AppTransactionsRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/investments'
     | '/journal'
+    | '/klarna'
     | '/reports'
     | '/tasks'
     | '/transactions'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/investments'
     | '/journal'
+    | '/klarna'
     | '/reports'
     | '/tasks'
     | '/transactions'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_app/accounts'
     | '/_app/investments'
     | '/_app/journal'
+    | '/_app/klarna'
     | '/_app/reports'
     | '/_app/tasks'
     | '/_app/transactions'
@@ -197,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/klarna': {
+      id: '/_app/klarna'
+      path: '/klarna'
+      fullPath: '/klarna'
+      preLoaderRoute: typeof AppKlarnaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/journal': {
       id: '/_app/journal'
       path: '/journal'
@@ -225,6 +244,7 @@ interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppJournalRoute: typeof AppJournalRoute
+  AppKlarnaRoute: typeof AppKlarnaRoute
   AppReportsRoute: typeof AppReportsRoute
   AppTasksRoute: typeof AppTasksRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
@@ -237,6 +257,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppJournalRoute: AppJournalRoute,
+  AppKlarnaRoute: AppKlarnaRoute,
   AppReportsRoute: AppReportsRoute,
   AppTasksRoute: AppTasksRoute,
   AppTransactionsRoute: AppTransactionsRoute,

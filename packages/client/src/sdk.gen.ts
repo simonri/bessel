@@ -125,6 +125,9 @@ import type {
   GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponses,
+  GetKlarnaTransactionsV1KlarnaTransactionsGetData,
+  GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
+  GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
   GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
   GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors,
   GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses,
@@ -138,6 +141,9 @@ import type {
   GetWorkoutV1WorkoutsWorkoutIdGetResponses,
   HealthzHealthzGetData,
   HealthzHealthzGetResponses,
+  ImportKlarnaTransactionsV1KlarnaImportPostData,
+  ImportKlarnaTransactionsV1KlarnaImportPostErrors,
+  ImportKlarnaTransactionsV1KlarnaImportPostResponses,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostErrors,
   ImportTransactionsV1TransactionsImportPostResponses,
@@ -1166,6 +1172,52 @@ export const getWeatherForecastV1WeatherGet = <
     responseTransformer: getWeatherForecastV1WeatherGetResponseTransformer,
     url: "/v1/weather",
     ...options,
+  });
+
+/**
+ * Get Klarna Transactions
+ *
+ * Fetch Klarna transactions and return raw GraphQL response.
+ */
+export const getKlarnaTransactionsV1KlarnaTransactionsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetKlarnaTransactionsV1KlarnaTransactionsGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
+    GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
+    ThrowOnError
+  >({ url: "/v1/klarna/transactions", ...options });
+
+/**
+ * Import Klarna Transactions
+ *
+ * Fetch Klarna transactions and import them into Metron.
+ * Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+ */
+export const importKlarnaTransactionsV1KlarnaImportPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ImportKlarnaTransactionsV1KlarnaImportPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    ImportKlarnaTransactionsV1KlarnaImportPostResponses,
+    ImportKlarnaTransactionsV1KlarnaImportPostErrors,
+    ThrowOnError
+  >({
+    url: "/v1/klarna/import",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

@@ -873,6 +873,24 @@ export type JournalStreakResponse = {
 };
 
 /**
+ * KlarnaImportRequest
+ */
+export type KlarnaImportRequest = {
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Authorization
+   */
+  authorization: string;
+  /**
+   * Cookie
+   */
+  cookie?: string | null;
+};
+
+/**
  * LastSessionBestSet
  */
 export type LastSessionBestSet = {
@@ -4166,6 +4184,78 @@ export type GetWeatherForecastV1WeatherGetResponses = {
 
 export type GetWeatherForecastV1WeatherGetResponse =
   GetWeatherForecastV1WeatherGetResponses[keyof GetWeatherForecastV1WeatherGetResponses];
+
+export type GetKlarnaTransactionsV1KlarnaTransactionsGetData = {
+  body?: never;
+  headers: {
+    /**
+     * Authorization
+     *
+     * Klarna Bearer token
+     */
+    authorization: string;
+    /**
+     * Cookie
+     *
+     * Klarna session cookies
+     */
+    cookie?: string | null;
+  };
+  path?: never;
+  query?: never;
+  url: "/v1/klarna/transactions";
+};
+
+export type GetKlarnaTransactionsV1KlarnaTransactionsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetKlarnaTransactionsV1KlarnaTransactionsGetError =
+  GetKlarnaTransactionsV1KlarnaTransactionsGetErrors[keyof GetKlarnaTransactionsV1KlarnaTransactionsGetErrors];
+
+export type GetKlarnaTransactionsV1KlarnaTransactionsGetResponses = {
+  /**
+   * Response Get Klarna Transactions V1 Klarna Transactions Get
+   *
+   * Successful Response
+   */
+  200: {
+    [key: string]: unknown;
+  };
+};
+
+export type GetKlarnaTransactionsV1KlarnaTransactionsGetResponse =
+  GetKlarnaTransactionsV1KlarnaTransactionsGetResponses[keyof GetKlarnaTransactionsV1KlarnaTransactionsGetResponses];
+
+export type ImportKlarnaTransactionsV1KlarnaImportPostData = {
+  body: KlarnaImportRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/klarna/import";
+};
+
+export type ImportKlarnaTransactionsV1KlarnaImportPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ImportKlarnaTransactionsV1KlarnaImportPostError =
+  ImportKlarnaTransactionsV1KlarnaImportPostErrors[keyof ImportKlarnaTransactionsV1KlarnaImportPostErrors];
+
+export type ImportKlarnaTransactionsV1KlarnaImportPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ImportResponse;
+};
+
+export type ImportKlarnaTransactionsV1KlarnaImportPostResponse =
+  ImportKlarnaTransactionsV1KlarnaImportPostResponses[keyof ImportKlarnaTransactionsV1KlarnaImportPostResponses];
 
 export type ListExercisesV1WorkoutsExercisesGetData = {
   body?: never;

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { format } from "date-fns";
+// Note: date range filter removed — month navigation in transactions.tsx handles date scoping
 import { Search, X, ChevronDown, Briefcase } from "lucide-react";
 import type { BankAccountSchema, CategorySchema } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
@@ -15,8 +15,8 @@ export interface TransactionFilters {
   direction?: string;
   is_business?: boolean;
   search?: string;
-  date_from?: string;
-  date_to?: string;
+  year?: number;
+  month?: number;
 }
 
 interface TransactionFiltersBarProps {
@@ -33,17 +33,8 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
     filters.uncategorized ||
     filters.direction ||
     filters.is_business !== undefined ||
-    filters.search ||
-    filters.date_from ||
-    filters.date_to
+    filters.search
   );
-}
-
-function formatDateLabel(dateFrom?: string, dateTo?: string): string {
-  const fmt = (d: string) => format(new Date(d + "T00:00:00"), "MMM d");
-  if (dateFrom && dateTo) return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
-  if (dateFrom) return `From ${fmt(dateFrom)}`;
-  return `Until ${fmt(dateTo!)}`;
 }
 
 // ─── Account multi-select ────────────────────────────────────────────────────
@@ -315,100 +306,6 @@ function SearchInput({
 
 // ─── Date range ──────────────────────────────────────────────────────────────
 
-function DateRangeDropdown({
-  dateFrom,
-  dateTo,
-  onChange,
-  onClear,
-}: {
-  dateFrom: string | undefined;
-  dateTo: string | undefined;
-  onChange: (from: string | undefined, to: string | undefined) => void;
-  onClear: () => void;
-}) {
-  const [localFrom, setLocalFrom] = useState(dateFrom ?? "");
-  const [localTo, setLocalTo] = useState(dateTo ?? "");
-  const isActive = !!(dateFrom || dateTo);
-
-  const label = isActive ? formatDateLabel(dateFrom, dateTo) : "Date";
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
-            isActive
-              ? "border-primary/40 bg-primary/5 text-foreground"
-              : "border-input hover:bg-accent text-muted-foreground",
-          )}
-        >
-          <span className="max-w-[120px] truncate">{label}</span>
-          {isActive ? (
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                setLocalFrom("");
-                setLocalTo("");
-                onClear();
-              }}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3" />
-            </span>
-          ) : (
-            <ChevronDown className="size-3" />
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 space-y-3 p-3">
-        <div className="space-y-1">
-          <label className="text-muted-foreground text-xs font-medium">From</label>
-          <Input
-            type="date"
-            value={localFrom}
-            onChange={(e) => setLocalFrom(e.target.value)}
-            className="h-8 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-muted-foreground text-xs font-medium">To</label>
-          <Input
-            type="date"
-            value={localTo}
-            onChange={(e) => setLocalTo(e.target.value)}
-            className="h-8 text-sm"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="h-7 flex-1 text-xs"
-            onClick={() => onChange(localFrom || undefined, localTo || undefined)}
-          >
-            Apply
-          </Button>
-          {(localFrom || localTo) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs"
-              onClick={() => {
-                setLocalFrom("");
-                setLocalTo("");
-                onClear();
-              }}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 // ─── Main filter bar ─────────────────────────────────────────────────────────
 
 export function TransactionFiltersBar({
@@ -476,15 +373,6 @@ export function TransactionFiltersBar({
       <BusinessToggle
         value={filters.is_business}
         onChange={(v) => onFiltersChange({ ...filters, is_business: v })}
-      />
-
-      <DateRangeDropdown
-        dateFrom={filters.date_from}
-        dateTo={filters.date_to}
-        onChange={(from, to) =>
-          onFiltersChange({ ...filters, date_from: from, date_to: to })
-        }
-        onClear={() => onFiltersChange({ ...filters, date_from: undefined, date_to: undefined })}
       />
 
       {active && (

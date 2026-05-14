@@ -23,66 +23,83 @@ import {
 } from "@metron/ui/components/select";
 import {
   importTransactionsV1TransactionsImportPostMutation,
+  importKlarnaTransactionsV1KlarnaImportPostMutation,
   listTransactionsV1TransactionsGetQueryKey,
   listBankAccountsV1BankAccountsGetOptions,
 } from "@metron/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
-const BANK_OPTIONS = [
+const FILE_BANKS = [
   { value: "marginalen", label: "Marginalen", accept: ".csv" },
   { value: "skandiabanken", label: "Skandiabanken", accept: ".xlsx" },
 ] as const;
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<{
-    created: number;
-    skipped: number;
-  } | null>(null);
+  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: accountsData } = useQuery(
-    listBankAccountsV1BankAccountsGetOptions({
-      client,
-      query: { limit: 100, sorting: ["name"] },
-    }),
+    listBankAccountsV1BankAccountsGetOptions({ client, query: { limit: 100, sorting: ["name"] } }),
   );
   const accounts = accountsData?.items ?? [];
 
-  const mutation = useMutation({
+  const fileMutation = useMutation({
     ...importTransactionsV1TransactionsImportPostMutation({ client }),
     onSuccess: (data) => {
       setResult(data);
-      void queryClient.invalidateQueries({
-        queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
-      });
+      void queryClient.invalidateQueries({ queryKey: listTransactionsV1TransactionsGetQueryKey({ client }) });
       toast.success(`${data.created} transactions imported`);
     },
-    onError: () => {
-      toast.error("Import failed");
-    },
+    onError: () => toast.error("Import failed"),
   });
+
+  const klarnaMutation = useMutation({
+    ...importKlarnaTransactionsV1KlarnaImportPostMutation({ client }),
+    onSuccess: (data) => {
+      setResult(data);
+      void queryClient.invalidateQueries({ queryKey: listTransactionsV1TransactionsGetQueryKey({ client }) });
+      toast.success(`${data.created} transactions imported`);
+    },
+    onError: () => toast.error("Klarna import failed"),
+  });
+
+  const isPending = fileMutation.isPending || klarnaMutation.isPending;
 
   const form = useForm({
     defaultValues: {
-      file: null as File | null,
-      bank: "" as string,
+      source: "" as string,
       bankAccountId: "",
+      file: null as File | null,
+      klarnaToken: "",
+      klarnaCookie: "",
     },
     onSubmit: ({ value }) => {
-      if (!value.file || !value.bankAccountId || !value.bank) return;
-
+      if (!value.bankAccountId || !value.source) return;
       setResult(null);
-      mutation.mutate({
-        client,
-        body: { file: value.file },
-        query: {
-          bank: value.bank,
-          bank_account_id: value.bankAccountId,
-        },
-      });
+
+      if (value.source === "klarna") {
+        const bearer = value.klarnaToken.trim().startsWith("Bearer ")
+          ? value.klarnaToken.trim()
+          : `Bearer ${value.klarnaToken.trim()}`;
+        klarnaMutation.mutate({
+          client,
+          body: {
+            bank_account_id: value.bankAccountId,
+            authorization: bearer,
+            cookie: value.klarnaCookie.trim() || null,
+          },
+        });
+      } else {
+        if (!value.file) return;
+        fileMutation.mutate({
+          client,
+          body: { file: value.file },
+          query: { bank: value.source, bank_account_id: value.bankAccountId },
+        });
+      }
     },
   });
 
@@ -90,11 +107,9 @@ export function ImportDialog() {
     setOpen(false);
     form.reset();
     setResult(null);
-    mutation.reset();
+    fileMutation.reset();
+    klarnaMutation.reset();
   };
-
-  const selectedBank = BANK_OPTIONS.find((b) => b.value === form.getFieldValue("bank"));
-  const fileAccept = selectedBank?.accept ?? ".csv,.xlsx";
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
@@ -107,64 +122,57 @@ export function ImportDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Import Transactions</DialogTitle>
-          <DialogDescription>Upload a bank export to import transactions.</DialogDescription>
+          <DialogDescription>Import from a bank export file or your Klarna account.</DialogDescription>
         </DialogHeader>
 
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void form.handleSubmit();
-          }}
+          onSubmit={(e) => { e.preventDefault(); void form.handleSubmit(); }}
           className="space-y-4"
         >
+          {/* Source */}
           <form.Field
-            name="bank"
+            name="source"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="bank">
-                  Bank <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="source">Source <span className="text-destructive">*</span></Label>
                 <Select
                   value={field.state.value}
                   onValueChange={(v) => {
                     field.handleChange(v);
-                    // Clear file when bank changes since accept type differs
                     form.setFieldValue("file", null);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = "";
-                    }
+                    form.setFieldValue("klarnaToken", "");
+                    form.setFieldValue("klarnaCookie", "");
+                    if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 >
-                  <SelectTrigger id="bank" className="w-full">
-                    <SelectValue placeholder="Select a bank" />
+                  <SelectTrigger id="source" className="w-full">
+                    <SelectValue placeholder="Select source" />
                   </SelectTrigger>
                   <SelectContent>
-                    {BANK_OPTIONS.map((bank) => (
-                      <SelectItem key={bank.value} value={bank.value}>
-                        {bank.label}
-                      </SelectItem>
+                    {FILE_BANKS.map((b) => (
+                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
                     ))}
+                    <SelectItem value="klarna">Klarna</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
           />
 
+          {/* Account */}
           <form.Field
             name="bankAccountId"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="bank-account">
-                  Bank Account <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="bank-account">Account <span className="text-destructive">*</span></Label>
                 <Select value={field.state.value} onValueChange={field.handleChange}>
                   <SelectTrigger id="bank-account" className="w-full">
                     <SelectValue placeholder="Select an account" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.name} ({account.currency})
+                    {accounts.map((acc) => (
+                      <SelectItem key={acc.id} value={acc.id}>
+                        {acc.name} ({acc.currency})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -173,40 +181,86 @@ export function ImportDialog() {
             )}
           />
 
-          <form.Field
-            name="file"
-            children={(field) => (
-              <div className="space-y-2">
-                <Label htmlFor="import-file">
-                  File <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="import-file"
-                  ref={fileInputRef}
-                  type="file"
-                  accept={fileAccept}
-                  onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
-                  required
+          {/* File — shown for file-based banks */}
+          <form.Subscribe
+            selector={(s) => s.values.source}
+            children={(source) =>
+              source && source !== "klarna" ? (
+                <form.Field
+                  name="file"
+                  children={(field) => {
+                    const bank = FILE_BANKS.find((b) => b.value === source);
+                    return (
+                      <div className="space-y-2">
+                        <Label htmlFor="import-file">File <span className="text-destructive">*</span></Label>
+                        <Input
+                          id="import-file"
+                          ref={fileInputRef}
+                          type="file"
+                          accept={bank?.accept ?? ".csv,.xlsx"}
+                          onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
+                        />
+                      </div>
+                    );
+                  }}
                 />
-              </div>
-            )}
+              ) : null
+            }
+          />
+
+          {/* Klarna credentials — shown only when Klarna is selected */}
+          <form.Subscribe
+            selector={(s) => s.values.source}
+            children={(source) =>
+              source === "klarna" ? (
+                <div className="space-y-3">
+                  <form.Field
+                    name="klarnaToken"
+                    children={(field) => (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="klarna-token">
+                          Authorization header <span className="text-destructive">*</span>
+                        </Label>
+                        <textarea
+                          id="klarna-token"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="eyJhbGciOi…"
+                          rows={2}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                        />
+                      </div>
+                    )}
+                  />
+                  <form.Field
+                    name="klarnaCookie"
+                    children={(field) => (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="klarna-cookie">Cookie header</Label>
+                        <textarea
+                          id="klarna-cookie"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="sessionId=…; kdid=…"
+                          rows={2}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                        />
+                      </div>
+                    )}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Devtools → Network → any Klarna request → Headers tab
+                  </p>
+                </div>
+              ) : null
+            }
           />
 
           {result && (
-            <div className="text-sm rounded-md border p-3">
-              <p>
-                <span className="font-medium">{result.created}</span> transactions imported
-              </p>
-              <p>
-                <span className="font-medium">{result.skipped}</span> duplicates skipped
-              </p>
+            <div className="text-sm rounded-md border p-3 space-y-0.5">
+              <p><span className="font-medium">{result.created}</span> transactions imported</p>
+              <p><span className="font-medium">{result.skipped}</span> duplicates skipped</p>
             </div>
-          )}
-
-          {mutation.isError && (
-            <p className="text-destructive text-sm">
-              Import failed. Please check the file and try again.
-            </p>
           )}
 
           <DialogFooter>
@@ -215,17 +269,18 @@ export function ImportDialog() {
             </Button>
             {!result && (
               <form.Subscribe
-                selector={(state) =>
-                  [state.values.file, state.values.bankAccountId, state.values.bank] as const
-                }
-                children={([file, bankAccountId, bank]) => (
-                  <Button
-                    type="submit"
-                    disabled={mutation.isPending || !file || !bankAccountId || !bank}
-                  >
-                    {mutation.isPending ? "Importing..." : "Import"}
-                  </Button>
-                )}
+                selector={(s) => s.values}
+                children={(values) => {
+                  const isKlarna = values.source === "klarna";
+                  const ready = isKlarna
+                    ? !!(values.klarnaToken.trim() && values.bankAccountId)
+                    : !!(values.file && values.bankAccountId && values.source);
+                  return (
+                    <Button type="submit" disabled={isPending || !ready}>
+                      {isPending ? "Importing…" : "Import"}
+                    </Button>
+                  );
+                }}
               />
             )}
           </DialogFooter>

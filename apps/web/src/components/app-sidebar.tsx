@@ -9,6 +9,7 @@ import {
   CheckSquare,
   BookOpen,
   Dumbbell,
+  ShoppingBag,
   Settings,
 } from "lucide-react";
 import {
@@ -33,6 +34,7 @@ const navItems = [
   { title: "Workout", icon: Dumbbell, href: "/workout" as string },
   { title: "Travel", icon: MapPin, href: "/travel" as string },
   { title: "Reports", icon: PieChart, href: "/reports" as string },
+  { title: "Klarna", icon: ShoppingBag, href: "/klarna" as string },
 ];
 
 export function AppSidebar() {

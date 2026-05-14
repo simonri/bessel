@@ -2564,6 +2564,113 @@
         }
       }
     },
+    "/v1/klarna/transactions": {
+      "get": {
+        "tags": [
+          "klarna"
+        ],
+        "summary": "Get Klarna Transactions",
+        "description": "Fetch Klarna transactions and return raw GraphQL response.",
+        "operationId": "get_klarna_transactions_v1_klarna_transactions_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Klarna Bearer token",
+              "title": "Authorization"
+            },
+            "description": "Klarna Bearer token"
+          },
+          {
+            "name": "cookie",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Klarna session cookies",
+              "title": "Cookie"
+            },
+            "description": "Klarna session cookies"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Klarna Transactions V1 Klarna Transactions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/klarna/import": {
+      "post": {
+        "tags": [
+          "klarna"
+        ],
+        "summary": "Import Klarna Transactions",
+        "description": "Fetch Klarna transactions and import them into Metron.\nSkips rejected (isAmountLineThrough), pending, and duplicate transactions.",
+        "operationId": "import_klarna_transactions_v1_klarna_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KlarnaImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/workouts/exercises": {
       "get": {
         "tags": [
@@ -4568,6 +4675,36 @@
           "total_entries"
         ],
         "title": "JournalStreakResponse"
+      },
+      "KlarnaImportRequest": {
+        "properties": {
+          "bank_account_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Bank Account Id"
+          },
+          "authorization": {
+            "type": "string",
+            "title": "Authorization"
+          },
+          "cookie": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cookie"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_account_id",
+          "authorization"
+        ],
+        "title": "KlarnaImportRequest"
       },
       "LastSessionBestSet": {
         "properties": {

@@ -62,6 +62,10 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
     if (typeof v === "string") return [v];
     return undefined;
   };
+  const asInt = (v: unknown): number | undefined => {
+    const n = typeof v === "string" ? parseInt(v, 10) : typeof v === "number" ? v : NaN;
+    return isNaN(n) ? undefined : n;
+  };
   return {
     bank_account_id: asArr(raw.bank_account_id),
     category_id: asArr(raw.category_id),
@@ -69,8 +73,8 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
     direction: typeof raw.direction === "string" ? raw.direction : undefined,
     is_business: raw.is_business === "true" || raw.is_business === true ? true : undefined,
     search: typeof raw.search === "string" ? raw.search : undefined,
-    date_from: typeof raw.date_from === "string" ? raw.date_from : undefined,
-    date_to: typeof raw.date_to === "string" ? raw.date_to : undefined,
+    year: asInt(raw.year),
+    month: asInt(raw.month),
   };
 }
 
@@ -79,7 +83,7 @@ export const Route = createFileRoute("/_app/transactions")({
   component: Transactions,
 });
 
-const PAGE_SIZE = 50;
+const MONTH_LIMIT = 500;
 
 // ─── Date group label ─────────────────────────────────────────────────────────
 
@@ -140,36 +144,69 @@ const TransactionActions = memo(function TransactionActions({
 function Transactions() {
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const [page, setPage] = useState(1);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(null);
   const queryClient = useQueryClient();
 
-  const handleFiltersChange = useCallback(
-    (next: TransactionFilters) => {
-      const clean: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(next)) {
+  // Month navigation — defaults to current month, stored in URL
+  const now = new Date();
+  const year = filters.year ?? now.getFullYear();
+  const month = filters.month ?? (now.getMonth() + 1);
+  const firstDay = new Date(year, month - 1, 1); // local Date, used for label only
+  const mm = String(month).padStart(2, "0");
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDayStr = `${year}-${mm}-01`;
+  const lastDayStr = `${year}-${mm}-${String(daysInMonth).padStart(2, "0")}`;
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+
+  const navigateMonth = useCallback(
+    (delta: -1 | 1) => {
+      const newMonth = month + delta;
+      const newYear = newMonth < 1 ? year - 1 : newMonth > 12 ? year + 1 : year;
+      const clampedMonth = newMonth < 1 ? 12 : newMonth > 12 ? 1 : newMonth;
+      const clean: Record<string, unknown> = { year: newYear, month: clampedMonth };
+      for (const [k, v] of Object.entries(filters)) {
+        if (k === "year" || k === "month") continue;
         if (v === undefined || v === null) continue;
         if (Array.isArray(v) && v.length === 0) continue;
         clean[k] = v;
       }
       navigate({ search: clean as TransactionFilters, replace: true });
-      setPage(1);
       setRowSelection({});
     },
-    [navigate],
+    [year, month, filters, navigate],
+  );
+
+  const handleFiltersChange = useCallback(
+    (next: TransactionFilters) => {
+      const clean: Record<string, unknown> = { year, month };
+      for (const [k, v] of Object.entries(next)) {
+        if (k === "year" || k === "month") continue;
+        if (v === undefined || v === null) continue;
+        if (Array.isArray(v) && v.length === 0) continue;
+        clean[k] = v;
+      }
+      navigate({ search: clean as TransactionFilters, replace: true });
+      setRowSelection({});
+    },
+    [year, month, navigate],
   );
 
   const { data, isLoading } = useQuery({
     ...listTransactionsV1TransactionsGetOptions({
       client,
       query: {
-        limit: PAGE_SIZE,
-        page,
+        limit: MONTH_LIMIT,
+        page: 1,
         sorting: ["-transaction_date", "description"],
-        ...filters,
-        date_from: filters.date_from ? new Date(filters.date_from + "T00:00:00") : undefined,
-        date_to: filters.date_to ? new Date(filters.date_to + "T00:00:00") : undefined,
+        bank_account_id: filters.bank_account_id,
+        category_id: filters.category_id,
+        uncategorized: filters.uncategorized,
+        direction: filters.direction,
+        is_business: filters.is_business,
+        search: filters.search,
+        date_from: firstDayStr as unknown as Date,
+        date_to: lastDayStr as unknown as Date,
       },
     }),
     placeholderData: keepPreviousData,
@@ -445,22 +482,42 @@ function Transactions() {
 
   const transactions = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
-  const maxPage = data?.pagination.max_page ?? 1;
   const selectedCount = Object.keys(rowSelection).length;
+  const monthLabel = format(firstDay, "MMMM yyyy");
 
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Transactions</h2>
-          {totalCount > 0 && (
-            <p className="text-muted-foreground text-sm">
-              {totalCount} transaction{totalCount !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
+        <h2 className="text-2xl font-semibold tracking-tight">Transactions</h2>
         <ImportDialog />
+      </div>
+
+      {/* Month navigation */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigateMonth(-1)}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="size-4" />
+        </button>
+        <span className="text-sm font-medium w-28 text-center tabular-nums">{monthLabel}</span>
+        <button
+          type="button"
+          onClick={() => navigateMonth(1)}
+          disabled={isCurrentMonth}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded disabled:opacity-25 disabled:cursor-not-allowed"
+          aria-label="Next month"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+        {totalCount > 0 && (
+          <span className="text-muted-foreground text-sm pl-2">
+            {totalCount} transaction{totalCount !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
       {/* Inline filter bar */}
@@ -497,31 +554,6 @@ function Transactions() {
             getGroupLabel={getDateGroupLabel}
           />
 
-          {maxPage > 1 && (
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setPage((p) => Math.max(1, p - 1)); setRowSelection({}); }}
-                disabled={page <= 1}
-              >
-                <ChevronLeft className="size-4" />
-                Previous
-              </Button>
-              <span className="text-muted-foreground text-sm tabular-nums">
-                {page} / {maxPage}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setPage((p) => Math.min(maxPage, p + 1)); setRowSelection({}); }}
-                disabled={page >= maxPage}
-              >
-                Next
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          )}
 
           {selectedCount > 0 && (
             <div className="flex items-center gap-2 text-sm">

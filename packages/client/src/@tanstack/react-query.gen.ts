@@ -36,11 +36,13 @@ import {
   getEntryV1JournalEntryDateGet,
   getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet,
   getHoldingsV1InvestmentsHoldingsGet,
+  getKlarnaTransactionsV1KlarnaTransactionsGet,
   getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet,
   getStreakV1JournalStreakGet,
   getWeatherForecastV1WeatherGet,
   getWorkoutV1WorkoutsWorkoutIdGet,
   healthzHealthzGet,
+  importKlarnaTransactionsV1KlarnaImportPost,
   importTransactionsV1TransactionsImportPost,
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
@@ -150,6 +152,9 @@ import type {
   GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponse,
+  GetKlarnaTransactionsV1KlarnaTransactionsGetData,
+  GetKlarnaTransactionsV1KlarnaTransactionsGetError,
+  GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
   GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
   GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetError,
   GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
@@ -162,6 +167,9 @@ import type {
   GetWorkoutV1WorkoutsWorkoutIdGetError,
   GetWorkoutV1WorkoutsWorkoutIdGetResponse,
   HealthzHealthzGetData,
+  ImportKlarnaTransactionsV1KlarnaImportPostData,
+  ImportKlarnaTransactionsV1KlarnaImportPostError,
+  ImportKlarnaTransactionsV1KlarnaImportPostResponse,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostError,
   ImportTransactionsV1TransactionsImportPostResponse,
@@ -2161,6 +2169,66 @@ export const getWeatherForecastV1WeatherGetOptions = (
     },
     queryKey: getWeatherForecastV1WeatherGetQueryKey(options),
   });
+
+export const getKlarnaTransactionsV1KlarnaTransactionsGetQueryKey = (
+  options: Options<GetKlarnaTransactionsV1KlarnaTransactionsGetData>,
+) => createQueryKey("getKlarnaTransactionsV1KlarnaTransactionsGet", options);
+
+/**
+ * Get Klarna Transactions
+ *
+ * Fetch Klarna transactions and return raw GraphQL response.
+ */
+export const getKlarnaTransactionsV1KlarnaTransactionsGetOptions = (
+  options: Options<GetKlarnaTransactionsV1KlarnaTransactionsGetData>,
+) =>
+  queryOptions<
+    GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
+    GetKlarnaTransactionsV1KlarnaTransactionsGetError,
+    GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
+    ReturnType<typeof getKlarnaTransactionsV1KlarnaTransactionsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getKlarnaTransactionsV1KlarnaTransactionsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getKlarnaTransactionsV1KlarnaTransactionsGetQueryKey(options),
+  });
+
+/**
+ * Import Klarna Transactions
+ *
+ * Fetch Klarna transactions and import them into Metron.
+ * Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+ */
+export const importKlarnaTransactionsV1KlarnaImportPostMutation = (
+  options?: Partial<Options<ImportKlarnaTransactionsV1KlarnaImportPostData>>,
+): UseMutationOptions<
+  ImportKlarnaTransactionsV1KlarnaImportPostResponse,
+  ImportKlarnaTransactionsV1KlarnaImportPostError,
+  Options<ImportKlarnaTransactionsV1KlarnaImportPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ImportKlarnaTransactionsV1KlarnaImportPostResponse,
+    ImportKlarnaTransactionsV1KlarnaImportPostError,
+    Options<ImportKlarnaTransactionsV1KlarnaImportPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await importKlarnaTransactionsV1KlarnaImportPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listExercisesV1WorkoutsExercisesGetQueryKey = (
   options?: Options<ListExercisesV1WorkoutsExercisesGetData>,

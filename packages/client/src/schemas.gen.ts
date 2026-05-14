@@ -1285,6 +1285,34 @@ export const JournalStreakResponseSchema = {
   title: "JournalStreakResponse",
 } as const;
 
+export const KlarnaImportRequestSchema = {
+  properties: {
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    authorization: {
+      type: "string",
+      title: "Authorization",
+    },
+    cookie: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Cookie",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id", "authorization"],
+  title: "KlarnaImportRequest",
+} as const;
+
 export const LastSessionBestSetSchema = {
   properties: {
     weight: {
