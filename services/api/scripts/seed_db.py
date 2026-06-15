@@ -1,16 +1,709 @@
+"""
+Seed the database with representative data for local development.
+Truncates all data and rebuilds from scratch.
+
+Run: cd services/api && uv run python -m scripts.seed_db
+"""
+
 import asyncio
+import hashlib
+import sys
+import time
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
-import dramatiq
-import src.api.tasks  # noqa: F401
-from src.api.redis import create_redis
-from src.api.worker import JobQueueManager
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+from api.models import (
+    ActivityEvent,
+    BankAccount,
+    Category,
+    Exercise,
+    JournalEntry,
+    Place,
+    Security,
+    SecurityPrice,
+    Task,
+    Trade,
+    Transaction,
+    WorkoutLog,
+    WorkoutSet,
+)
+from api.models.exercise import Equipment, MuscleCategory
+from api.models.security import AssetType
+from api.models.trade import TradeType
+from api.models.transaction import TransactionDirection
+from api.settings import settings
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
+TODAY = date(2026, 6, 15)
+NOW = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 
 
-async def run() -> None:
-  redis = create_redis("app")
-  async with JobQueueManager.open(dramatiq.get_broker(), redis):
-    print("Done!")
+def d(days_ago: int) -> date:
+    return TODAY - timedelta(days=days_ago)
+
+
+def _hash(s: str) -> str:
+    return hashlib.sha256(s.encode()).hexdigest()[:64]
+
+
+# ── Categories ────────────────────────────────────────────────────────────────
+
+PARENT_CATS = [
+    {"slug": "income", "name": "Income", "color": "#22c55e", "excluded": True},
+    {"slug": "food", "name": "Food & Dining", "color": "#f97316", "excluded": False},
+    {"slug": "housing", "name": "Housing", "color": "#3b82f6", "excluded": False},
+    {"slug": "transport", "name": "Transport", "color": "#14b8a6", "excluded": False},
+    {"slug": "shopping", "name": "Shopping", "color": "#a855f7", "excluded": False},
+    {"slug": "health", "name": "Health", "color": "#ef4444", "excluded": False},
+    {"slug": "entertainment", "name": "Entertainment", "color": "#ec4899", "excluded": False},
+    {"slug": "travel", "name": "Travel", "color": "#eab308", "excluded": False},
+    {"slug": "education", "name": "Education", "color": "#6366f1", "excluded": False},
+    {"slug": "transfer", "name": "Transfers", "color": "#6b7280", "excluded": True},
+]
+
+CHILD_CATS = [
+    {"slug": "salary", "name": "Salary", "color": "#22c55e", "parent": "income"},
+    {"slug": "freelance", "name": "Freelance", "color": "#4ade80", "parent": "income"},
+    {"slug": "groceries", "name": "Groceries", "color": "#fb923c", "parent": "food"},
+    {"slug": "restaurants", "name": "Restaurants", "color": "#f97316", "parent": "food"},
+    {"slug": "coffee", "name": "Coffee & Cafes", "color": "#fdba74", "parent": "food"},
+    {"slug": "rent", "name": "Rent", "color": "#60a5fa", "parent": "housing"},
+    {"slug": "utilities", "name": "Utilities", "color": "#93c5fd", "parent": "housing"},
+    {"slug": "internet", "name": "Internet & Phone", "color": "#bfdbfe", "parent": "housing"},
+    {"slug": "fuel", "name": "Fuel", "color": "#2dd4bf", "parent": "transport"},
+    {"slug": "transit", "name": "Public Transit", "color": "#5eead4", "parent": "transport"},
+    {"slug": "gym", "name": "Gym & Fitness", "color": "#f87171", "parent": "health"},
+    {"slug": "pharmacy", "name": "Pharmacy", "color": "#fca5a5", "parent": "health"},
+    {"slug": "streaming", "name": "Streaming", "color": "#f9a8d4", "parent": "entertainment"},
+    {"slug": "events", "name": "Events", "color": "#ec4899", "parent": "entertainment"},
+    {"slug": "clothing", "name": "Clothing", "color": "#c084fc", "parent": "shopping"},
+    {"slug": "electronics", "name": "Electronics", "color": "#a855f7", "parent": "shopping"},
+]
+
+# ── Exercises ─────────────────────────────────────────────────────────────────
+
+EXERCISES = [
+    ("Barbell Bench Press", "chest", "barbell"),
+    ("Incline Dumbbell Bench Press", "chest", "dumbbell"),
+    ("Cable Fly", "chest", "cable"),
+    ("Push-Up", "chest", "bodyweight"),
+    ("Conventional Deadlift", "back", "barbell"),
+    ("Pull-Up", "back", "bodyweight"),
+    ("Lat Pulldown", "back", "cable"),
+    ("Seated Cable Row", "back", "cable"),
+    ("Barbell Row", "back", "barbell"),
+    ("Overhead Press", "shoulders", "barbell"),
+    ("Lateral Raise", "shoulders", "dumbbell"),
+    ("Face Pull", "back", "cable"),
+    ("Barbell Curl", "biceps", "barbell"),
+    ("Hammer Curl", "biceps", "dumbbell"),
+    ("Skull Crusher", "triceps", "barbell"),
+    ("Tricep Pushdown", "triceps", "cable"),
+    ("Barbell Back Squat", "quads", "barbell"),
+    ("Romanian Deadlift", "hamstrings", "barbell"),
+    ("Leg Press", "quads", "machine"),
+    ("Leg Extension", "quads", "machine"),
+    ("Lying Leg Curl", "hamstrings", "machine"),
+    ("Hip Thrust", "glutes", "barbell"),
+    ("Standing Calf Raise", "calves", "machine"),
+    ("Plank", "core", "bodyweight"),
+    ("Treadmill Run", "cardio", "machine"),
+]
+
+
+def _make_sets(log_id, exercise_id, sets_data):
+    return [
+        WorkoutSet(
+            workout_log_id=log_id,
+            exercise_id=exercise_id,
+            set_number=i,
+            reps=reps,
+            weight=weight,
+            weight_unit="kg",
+        )
+        for i, (reps, weight) in enumerate(sets_data, 1)
+    ]
+
+
+async def seed() -> None:
+    dsn = settings.get_postgres_dsn("asyncpg")
+    engine = create_async_engine(dsn)
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore[call-overload]
+
+    async with async_session() as session:
+
+        # ── 1. Truncate ───────────────────────────────────────────────────────
+        for table in [
+            "activity_events", "workout_sets", "workout_logs",
+            "journal_entries", "tasks", "places",
+            "trades", "security_prices", "securities",
+            "transactions", "raw_transactions", "import_batches",
+            "bank_accounts", "categories", "exercises",
+        ]:
+            await session.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
+        await session.commit()
+        print("Truncated all tables.")
+
+        # ── 2. Categories ─────────────────────────────────────────────────────
+        cat_map: dict[str, Category] = {}
+        for c in PARENT_CATS:
+            obj = Category(name=c["name"], slug=c["slug"], color=c["color"], excluded=c["excluded"])
+            session.add(obj)
+            cat_map[c["slug"]] = obj
+        await session.flush()
+
+        for c in CHILD_CATS:
+            obj = Category(
+                name=c["name"], slug=c["slug"], color=c["color"],
+                excluded=False, parent_id=cat_map[c["parent"]].id,
+            )
+            session.add(obj)
+            cat_map[c["slug"]] = obj
+        await session.flush()
+        print(f"Seeded {len(cat_map)} categories.")
+
+        # ── 3. Bank accounts ──────────────────────────────────────────────────
+        acc_checking = BankAccount(
+            name="DNB Brukskonto", currency="NOK",
+            base_balance=8_500_000,  # 85 000 NOK in øre
+            subtype="checking",
+        )
+        acc_savings = BankAccount(
+            name="DNB Sparekonto", currency="NOK",
+            base_balance=25_000_000,  # 250 000 NOK in øre
+            subtype="savings",
+        )
+        acc_invest = BankAccount(name="Nordnet", currency="NOK", base_balance=0, subtype="investment")
+        session.add_all([acc_checking, acc_savings, acc_invest])
+        await session.flush()
+        print("Seeded 3 bank accounts.")
+
+        # ── 4. Transactions ───────────────────────────────────────────────────
+        # All amounts in minor units (øre = NOK * 100)
+        tx_list: list[Transaction] = []
+        n = 0
+
+        def tx(*, account: BankAccount, cat: str, tx_date: date, desc: str,
+               amount_nok: float, direction: TransactionDirection) -> Transaction:
+            nonlocal n
+            n += 1
+            return Transaction(
+                amount=round(amount_nok * 100),
+                currency="NOK",
+                transaction_date=tx_date,
+                direction=direction,
+                description=desc,
+                dedup_hash=_hash(f"seed:{n}:{desc}:{tx_date}"),
+                bank_account_id=account.id,
+                category_id=cat_map[cat].id,
+            )
+
+        def credit(*, account: BankAccount, cat: str, tx_date: date, desc: str, amount_nok: float) -> Transaction:
+            return tx(account=account, cat=cat, tx_date=tx_date, desc=desc,
+                      amount_nok=amount_nok, direction=TransactionDirection.credit)
+
+        def debit(*, account: BankAccount, cat: str, tx_date: date, desc: str, amount_nok: float) -> Transaction:
+            return tx(account=account, cat=cat, tx_date=tx_date, desc=desc,
+                      amount_nok=amount_nok, direction=TransactionDirection.debit)
+
+        # Monthly recurring — 3 months
+        for m in range(3):
+            month_start = (TODAY.replace(day=1) - timedelta(days=m * 30))
+            off = timedelta(days=0)
+            tx_list += [
+                credit(account=acc_checking, cat="salary", tx_date=month_start + off,
+                       desc="LØNN ARBEIDSGIVER AS", amount_nok=62_000),
+                debit(account=acc_checking, cat="rent", tx_date=month_start + off,
+                      desc="HUSLEIE BOLIGER AS", amount_nok=13_500),
+                debit(account=acc_checking, cat="internet", tx_date=month_start + timedelta(days=2),
+                      desc="TELENOR INTERNETT", amount_nok=699),
+                debit(account=acc_checking, cat="internet", tx_date=month_start + timedelta(days=2),
+                      desc="TELENOR MOBIL", amount_nok=549),
+                debit(account=acc_checking, cat="gym", tx_date=month_start + timedelta(days=3),
+                      desc="SATS TRENINGSSENTER", amount_nok=449),
+                debit(account=acc_checking, cat="streaming", tx_date=month_start + timedelta(days=5),
+                      desc="SPOTIFY PREMIUM", amount_nok=109),
+                debit(account=acc_checking, cat="streaming", tx_date=month_start + timedelta(days=5),
+                      desc="NETFLIX", amount_nok=179),
+            ]
+
+        # Weekly groceries — 12 weeks
+        stores = ["REMA 1000 STORGATA", "KIWI MARKVEIEN", "MENY OSLO S", "COOP EXTRA GRÜNERLØKKA"]
+        amounts = [890, 1120, 750, 1340, 960, 820, 1050, 1200, 680, 1100, 940, 790]
+        for week in range(12):
+            tx_list.append(debit(account=acc_checking, cat="groceries",
+                                 tx_date=d(week * 7 + 1), desc=stores[week % 4],
+                                 amount_nok=amounts[week]))
+
+        # Restaurants
+        for days_ago, name, nok in [
+            (3, "MAAEMO OSLO", 1850),
+            (10, "ILLEGAL BURGER YOUNGSTORGET", 320),
+            (17, "SMALHANS RESTAURANT", 680),
+            (24, "TACO REPUBLICA", 215),
+            (38, "ARAKATAKA", 890),
+            (45, "SENTRALEN RESTAURANT", 1200),
+            (52, "FISKERIET YOUNGSTORGET", 760),
+            (60, "MORMORS STUE", 490),
+            (72, "TORGGATA BOTANISKE", 320),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat="restaurants",
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Coffee
+        for days_ago, name, nok in [
+            (2, "TIM WENDELBOE", 58),
+            (5, "FUGLEN OSLO", 64),
+            (8, "JAVA ESPRESSOBAR", 52),
+            (12, "STOCKFLETHS", 55),
+            (15, "KAFFEBRENNERI OSLO", 61),
+            (19, "HENDRIX IBSEN", 68),
+            (22, "KAFFEBRENNERIET BOGSTADVEIEN", 54),
+            (26, "TIM WENDELBOE", 58),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat="coffee",
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Shopping
+        for days_ago, cat, name, nok in [
+            (7, "clothing", "H&M OSLO CITY", 890),
+            (14, "clothing", "ZARA KARL JOHANS GATE", 1240),
+            (21, "electronics", "POWER AKER BRYGGE", 3490),
+            (35, "clothing", "WEEKDAY OSLO", 650),
+            (50, "electronics", "KOMPLETT.NO", 1290),
+            (62, "clothing", "ARKET OSLO", 2100),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat=cat,
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Fuel
+        for days_ago, name, nok in [
+            (9, "CIRCLE K GRØNLAND", 1380),
+            (23, "SHELL OSLO SENTRUM", 1240),
+            (45, "ESSO TØYEN", 1520),
+            (67, "CIRCLE K MAJORSTUEN", 1150),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat="fuel",
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Transit
+        for days_ago, name, nok in [
+            (1, "RUTER MOBILBILLETT", 37),
+            (4, "RUTER MOBILBILLETT", 37),
+            (7, "RUTER MOBILBILLETT", 37),
+            (11, "RUTER MÅNEDSKORT", 870),
+            (30, "RUTER MÅNEDSKORT", 870),
+            (60, "RUTER MÅNEDSKORT", 870),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat="transit",
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Pharmacy
+        for days_ago, name, nok in [
+            (13, "APOTEK 1 OSLO S", 189),
+            (44, "BOOTS APOTEK KARL JOHAN", 320),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat="pharmacy",
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Travel
+        for days_ago, name, nok in [
+            (40, "SAS BILLETTER OSLO-LONDON", 3200),
+            (41, "AIRBNB LONDON", 4800),
+            (58, "NSB OSLO-BERGEN", 890),
+        ]:
+            tx_list.append(debit(account=acc_checking, cat="travel",
+                                 tx_date=d(days_ago), desc=name, amount_nok=nok))
+
+        # Transfers + freelance
+        tx_list += [
+            debit(account=acc_checking, cat="transfer", tx_date=d(25),
+                  desc="OVERFØRING TIL SPAREKONTO", amount_nok=10_000),
+            credit(account=acc_savings, cat="transfer", tx_date=d(25),
+                   desc="OVERFØRING FRA BRUKSKONTO", amount_nok=10_000),
+            credit(account=acc_checking, cat="freelance", tx_date=d(20),
+                   desc="FAKTURAES CONSULTING SERVICES", amount_nok=15_000),
+        ]
+
+        for t in tx_list:
+            session.add(t)
+        await session.flush()
+        print(f"Seeded {len(tx_list)} transactions.")
+
+        # ── 5. Securities ─────────────────────────────────────────────────────
+        sec_aapl = Security(name="Apple Inc.", ticker="AAPL", asset_type=AssetType.stock, currency="USD")
+        sec_voo = Security(name="Vanguard S&P 500 ETF", ticker="VOO", asset_type=AssetType.etf, currency="USD")
+        sec_btc = Security(name="Bitcoin", ticker="BTC", asset_type=AssetType.crypto, currency="USD")
+        sec_eqnr = Security(name="Equinor ASA", ticker="EQNR", asset_type=AssetType.stock, currency="NOK")
+        sec_sgsac = Security(name="Storebrand Global All Countries A", ticker="SGSAC",
+                             asset_type=AssetType.mutual_fund, currency="NOK")
+        session.add_all([sec_aapl, sec_voo, sec_btc, sec_eqnr, sec_sgsac])
+        await session.flush()
+        print("Seeded 5 securities.")
+
+        # ── 6. Security prices ────────────────────────────────────────────────
+        # Prices in minor units (cents for USD, øre for NOK)
+        for sec, price_points in [
+            (sec_aapl, [(90, 18500), (75, 18700), (60, 19100), (45, 18900), (30, 19300), (15, 19600), (0, 19850)]),
+            (sec_voo,  [(90, 47800), (75, 48200), (60, 49100), (45, 48700), (30, 50100), (15, 51200), (0, 52300)]),
+            (sec_btc,  [(90, 6_500_000), (75, 6_200_000), (60, 6_800_000), (45, 7_100_000),
+                        (30, 6_900_000), (15, 7_300_000), (0, 6_750_000)]),
+            (sec_eqnr, [(90, 27800), (75, 27200), (60, 28100), (45, 27900), (30, 28400), (15, 29100), (0, 28700)]),
+            (sec_sgsac,[(90, 34200), (75, 34800), (60, 35100), (45, 35600), (30, 36200), (15, 36800), (0, 37100)]),
+        ]:
+            for days_ago, price in price_points:
+                session.add(SecurityPrice(
+                    security_id=sec.id, price_date=d(days_ago),
+                    price_per_unit=price, currency=sec.currency,
+                ))
+        await session.flush()
+        print("Seeded security prices.")
+
+        # ── 7. Trades ─────────────────────────────────────────────────────────
+        # quantity in micro-units (shares * 1_000_000); price in minor units (cents/øre)
+        trades = [
+            (sec_aapl, TradeType.buy,  d(85), 5_000_000,   18500,     "USD"),
+            (sec_voo,  TradeType.buy,  d(70), 3_000_000,   47800,     "USD"),
+            (sec_btc,  TradeType.buy,  d(55),   100_000, 6_500_000,   "USD"),
+            (sec_eqnr, TradeType.buy,  d(50), 50_000_000,  27200,     "NOK"),
+            (sec_aapl, TradeType.sell, d(30), 2_000_000,   19300,     "USD"),
+            (sec_sgsac,TradeType.buy,  d(20), 10_000_000,  36200,     "NOK"),
+        ]
+        for sec, trade_type, trade_date, quantity, price, currency in trades:
+            session.add(Trade(
+                security_id=sec.id, bank_account_id=acc_invest.id,
+                trade_type=trade_type, trade_date=trade_date,
+                quantity=quantity, price_per_unit=price, currency=currency,
+            ))
+        await session.flush()
+        print(f"Seeded {len(trades)} trades.")
+
+        # ── 8. Tasks ──────────────────────────────────────────────────────────
+        tasks = [
+            Task(title="Add activity heatmap to Activity page", status="todo", priority=2,
+                 project="Metron Dev", area="Engineering", due_date=d(-7), position=0),
+            Task(title="Implement budget tracking feature", status="todo", priority=1,
+                 project="Metron Dev", area="Engineering", position=1),
+            Task(title="Fix chart responsiveness on mobile", status="in_progress", priority=2,
+                 project="Metron Dev", area="Engineering", position=2),
+            Task(title="Set up systemd monitor timer", status="done", priority=3,
+                 project="Metron Dev", area="Engineering", position=3,
+                 completed_at=datetime(2026, 6, 14, 18, 30, tzinfo=timezone.utc)),
+            Task(title="Implement activity batch endpoint", status="done", priority=3,
+                 project="Metron Dev", area="Engineering", position=4,
+                 completed_at=datetime(2026, 6, 15, 10, 0, tzinfo=timezone.utc)),
+            Task(title="Q2 performance review", status="todo", priority=1,
+                 project="Work", area="Career", due_date=d(-3), position=5),
+            Task(title="Draft project proposal for client", status="in_progress", priority=2,
+                 project="Work", area="Career", due_date=d(2), position=6),
+            Task(title="Team meeting prep", status="done", priority=2,
+                 project="Work", area="Career", position=7,
+                 completed_at=datetime(2026, 6, 13, 9, 0, tzinfo=timezone.utc)),
+            Task(title="Send invoice to Consulting AS", status="done", priority=3,
+                 project="Work", area="Career", position=8,
+                 completed_at=datetime(2026, 6, 10, 15, 0, tzinfo=timezone.utc)),
+            Task(title="Book dentist appointment", status="todo", priority=1,
+                 area="Health", due_date=d(-10), position=9),
+            Task(title="Try new running route – Nordmarka", status="todo", priority=0,
+                 area="Health", tags=["running", "outdoors"], position=10),
+            Task(title="Morning stretch routine", status="todo", priority=1,
+                 area="Health", is_recurring=True, rrule_frequency="daily",
+                 rrule_interval=1, position=11),
+            Task(title="Call mom", status="todo", priority=1, area="Personal",
+                 due_date=d(-1), position=12),
+            Task(title="Read Thinking Fast and Slow", status="in_progress", priority=0,
+                 area="Personal", tags=["books"], position=13),
+            Task(title="Plan summer holiday", status="todo", priority=1,
+                 area="Personal", tags=["travel"], position=14),
+            Task(title="Fix bike brakes", status="done", priority=2,
+                 area="Personal", position=15,
+                 completed_at=datetime(2026, 6, 8, 16, 0, tzinfo=timezone.utc)),
+        ]
+        for task in tasks:
+            session.add(task)
+        await session.flush()
+        print(f"Seeded {len(tasks)} tasks.")
+
+        # ── 9. Journal entries ────────────────────────────────────────────────
+        entries = [
+            JournalEntry(
+                entry_date=d(0),
+                priority="Ship the seed script and test all features in Metron",
+                friction="Too many context switches today",
+                gratitude_1="Good coffee this morning",
+                gratitude_2="Sunny weather in Oslo",
+                gratitude_3="Making real progress on Metron",
+                morning_committed_at=datetime(2026, 6, 15, 7, 30, tzinfo=timezone.utc),
+            ),
+            JournalEntry(
+                entry_date=d(1),
+                priority="Finish monitor integration end-to-end",
+                friction="Debugging async SQLAlchemy session issues",
+                gratitude_1="Productive evening coding session",
+                gratitude_2="Great workout – PRed on deadlift",
+                gratitude_3="Healthy dinner and early bed",
+                morning_committed_at=datetime(2026, 6, 14, 7, 15, tzinfo=timezone.utc),
+                scorecard=8, priority_done=True,
+                insight="Async sessions need careful lifecycle management — always flush before reading IDs",
+                seed="Tackle the hardest thing first tomorrow",
+            ),
+            JournalEntry(
+                entry_date=d(2),
+                priority="Get the Metron theme right — beautiful and readable",
+                friction="OKLCH color space has a learning curve",
+                gratitude_1="Finally found the right color palette",
+                gratitude_2="Coffee with a good friend",
+                gratitude_3="Good sleep",
+                morning_committed_at=datetime(2026, 6, 13, 8, 0, tzinfo=timezone.utc),
+                scorecard=7, priority_done=True,
+                insight="OKLCH is the right color space for UI themes — perceptually uniform",
+                seed="Keep building momentum on the UI",
+            ),
+            JournalEntry(
+                entry_date=d(3),
+                priority="Weekly review and planning",
+                friction="Low energy in the afternoon",
+                gratitude_1="Completed a hard leg session",
+                gratitude_2="Clear weather for a long walk",
+                gratitude_3="Good audiobook while cooking",
+                morning_committed_at=datetime(2026, 6, 12, 7, 45, tzinfo=timezone.utc),
+                scorecard=6, priority_done=False,
+                insight="Weekly review on Sunday morning is the best habit I have",
+                seed="Eat better and sleep by 23:00 this week",
+            ),
+            JournalEntry(
+                entry_date=d(7),
+                priority="Complete the investments module",
+                friction="Complex state management in the trade dialog",
+                gratitude_1="Making real progress on investments",
+                gratitude_2="Good lunch – sushi",
+                gratitude_3="Evening walk by the water",
+                morning_committed_at=datetime(2026, 6, 8, 7, 30, tzinfo=timezone.utc),
+                scorecard=9, priority_done=True,
+                insight="Breaking big features into small PRs keeps momentum up",
+                seed="Don't let perfect be the enemy of good",
+            ),
+            JournalEntry(
+                entry_date=d(10),
+                priority="Write tests for the new API endpoints",
+                friction="Testing async code is tricky",
+                morning_committed_at=datetime(2026, 6, 5, 7, 0, tzinfo=timezone.utc),
+                scorecard=5, priority_done=False,
+                insight="Need to improve test coverage systematically — start with the happy paths",
+            ),
+            JournalEntry(
+                entry_date=d(14),
+                priority="Set up Docker Compose and get all services running",
+                gratitude_1="Clean codebase feels good",
+                gratitude_2="Coffee at Tim Wendelboe",
+                gratitude_3="Clear focus all morning",
+                morning_committed_at=datetime(2026, 6, 1, 8, 30, tzinfo=timezone.utc),
+                scorecard=8, priority_done=True,
+                insight="Getting infra right early saves time later",
+                seed="Keep the infrastructure clean",
+            ),
+        ]
+        for entry in entries:
+            session.add(entry)
+        await session.flush()
+        print(f"Seeded {len(entries)} journal entries.")
+
+        # ── 10. Places ────────────────────────────────────────────────────────
+        places = [
+            Place(name="Tim Wendelboe", address="Grüners gate 1, Oslo", country="Norway",
+                  latitude=59.9196, longitude=10.7585, category="cafe",
+                  status="visited", rating=5, visited_at=d(5),
+                  review="Best espresso in Oslo. Queue out the door on weekends but worth every minute.",
+                  tags=["coffee", "specialty", "oslo"]),
+            Place(name="Maaemo", address="Schweigaards gate 15B, Oslo", country="Norway",
+                  latitude=59.9085, longitude=10.7600, category="restaurant",
+                  status="visited", rating=5, visited_at=d(3),
+                  review="3 Michelin stars. Mind-blowing tasting menu, fully committed to Norwegian produce.",
+                  tags=["fine-dining", "michelin", "nordic"]),
+            Place(name="Nordmarka", address="Oslo, Norway", country="Norway",
+                  latitude=60.0667, longitude=10.6833, category="outdoors",
+                  status="visited", rating=4, visited_at=d(15),
+                  review="Beautiful forest right outside the city. Perfect for trail running and skiing.",
+                  tags=["hiking", "running", "nature", "oslo"]),
+            Place(name="Vigelandsparken", address="Nobels gate 32, Oslo", country="Norway",
+                  latitude=59.9273, longitude=10.6997, category="park",
+                  status="visited", rating=4, visited_at=d(30),
+                  review="Surreal sculpture park. Free entry. Best in summer.",
+                  tags=["oslo", "sculpture", "park", "free"]),
+            Place(name="Stockfleths Bogstadveien", address="Bogstadveien 1, Oslo", country="Norway",
+                  latitude=59.9234, longitude=10.7123, category="cafe",
+                  status="visited", rating=4, visited_at=d(8),
+                  review="Classic Oslo coffee bar. Great people-watching corner spot.",
+                  tags=["coffee", "oslo"]),
+            Place(name="Smalhans", address="Ullevålsveien 43, Oslo", country="Norway",
+                  latitude=59.9280, longitude=10.7425, category="restaurant",
+                  status="want_to_go", tags=["food", "oslo", "neighbourhood"]),
+            Place(name="Lofoten Islands", address="Lofoten, Norway", country="Norway",
+                  latitude=68.1541, longitude=13.9990, category="destination",
+                  status="want_to_go", tags=["travel", "norway", "nature", "fishing"]),
+            Place(name="Molde Jazz Festival", address="Molde, Norway", country="Norway",
+                  latitude=62.7378, longitude=7.1591, category="event",
+                  status="want_to_go", tags=["music", "festival", "jazz", "norway"]),
+            Place(name="The Jane, Antwerp", address="Paradeplein 1, Antwerp", country="Belgium",
+                  latitude=51.2065, longitude=4.3934, category="restaurant",
+                  status="want_to_go", tags=["food", "antwerp", "fine-dining", "michelin"]),
+            Place(name="Fjaerland", address="Fjærland, Norway", country="Norway",
+                  latitude=61.4178, longitude=6.7531, category="destination",
+                  status="want_to_go", tags=["fjord", "norway", "scenic", "books"]),
+        ]
+        for place in places:
+            session.add(place)
+        await session.flush()
+        print(f"Seeded {len(places)} places.")
+
+        # ── 11. Exercises ─────────────────────────────────────────────────────
+        ex_map: dict[str, Exercise] = {}
+        for name, cat, equip in EXERCISES:
+            e = Exercise(name=name, category=MuscleCategory(cat), equipment=Equipment(equip), is_custom=False)
+            session.add(e)
+            ex_map[name] = e
+        await session.flush()
+        print(f"Seeded {len(EXERCISES)} exercises.")
+
+        # ── 12. Workout logs + sets ───────────────────────────────────────────
+        def ex(name: str) -> str:
+            return ex_map[name].id
+
+        # Push day — 3 days ago
+        log_push = WorkoutLog(
+            started_at=datetime(2026, 6, 12, 17, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2026, 6, 12, 18, 30, tzinfo=timezone.utc),
+            notes="Good session. Hit a rep PR on bench.",
+        )
+        session.add(log_push)
+        await session.flush()
+        for ws in (
+            _make_sets(log_push.id, ex("Barbell Bench Press"),        [(5,100),(5,100),(3,105),(3,107.5),(5,100)]) +
+            _make_sets(log_push.id, ex("Incline Dumbbell Bench Press"),[(10,36),(10,36),(10,38),(8,38)]) +
+            _make_sets(log_push.id, ex("Cable Fly"),                  [(12,15),(12,15),(12,15)]) +
+            _make_sets(log_push.id, ex("Overhead Press"),             [(5,75),(5,75),(4,80),(3,82.5)]) +
+            _make_sets(log_push.id, ex("Lateral Raise"),              [(15,12),(15,12),(15,14)]) +
+            _make_sets(log_push.id, ex("Skull Crusher"),              [(10,40),(10,40),(10,42.5)]) +
+            _make_sets(log_push.id, ex("Tricep Pushdown"),            [(12,35),(12,35),(12,37.5)])
+        ):
+            session.add(ws)
+
+        # Pull day — 5 days ago
+        log_pull = WorkoutLog(
+            started_at=datetime(2026, 6, 10, 17, 30, tzinfo=timezone.utc),
+            completed_at=datetime(2026, 6, 10, 19, 0, tzinfo=timezone.utc),
+        )
+        session.add(log_pull)
+        await session.flush()
+        for ws in (
+            _make_sets(log_pull.id, ex("Conventional Deadlift"), [(5,150),(5,155),(3,162.5),(3,165)]) +
+            _make_sets(log_pull.id, ex("Pull-Up"),               [(8,0),(7,0),(6,0),(5,0)]) +
+            _make_sets(log_pull.id, ex("Barbell Row"),           [(8,80),(8,85),(6,90),(6,90)]) +
+            _make_sets(log_pull.id, ex("Lat Pulldown"),          [(10,65),(10,65),(10,70)]) +
+            _make_sets(log_pull.id, ex("Seated Cable Row"),      [(12,60),(12,65),(10,70)]) +
+            _make_sets(log_pull.id, ex("Face Pull"),             [(15,25),(15,27.5),(15,27.5)]) +
+            _make_sets(log_pull.id, ex("Barbell Curl"),          [(10,47.5),(10,47.5),(8,50)]) +
+            _make_sets(log_pull.id, ex("Hammer Curl"),           [(12,20),(12,20),(10,22)])
+        ):
+            session.add(ws)
+
+        # Leg day — 8 days ago
+        log_legs = WorkoutLog(
+            started_at=datetime(2026, 6, 7, 10, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2026, 6, 7, 11, 45, tzinfo=timezone.utc),
+            notes="Squats felt strong today.",
+        )
+        session.add(log_legs)
+        await session.flush()
+        for ws in (
+            _make_sets(log_legs.id, ex("Barbell Back Squat"),   [(5,120),(5,125),(3,132.5),(3,135),(5,125)]) +
+            _make_sets(log_legs.id, ex("Romanian Deadlift"),    [(10,90),(10,95),(8,100),(8,100)]) +
+            _make_sets(log_legs.id, ex("Leg Press"),            [(12,200),(12,220),(10,240)]) +
+            _make_sets(log_legs.id, ex("Leg Extension"),        [(15,55),(15,60),(12,65)]) +
+            _make_sets(log_legs.id, ex("Lying Leg Curl"),       [(12,45),(12,50),(10,55)]) +
+            _make_sets(log_legs.id, ex("Hip Thrust"),           [(10,100),(10,110),(8,120)]) +
+            _make_sets(log_legs.id, ex("Standing Calf Raise"),  [(15,80),(15,85),(15,90),(12,90)])
+        ):
+            session.add(ws)
+
+        # Push day 2 — 11 days ago
+        log_push2 = WorkoutLog(
+            started_at=datetime(2026, 6, 4, 17, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2026, 6, 4, 18, 20, tzinfo=timezone.utc),
+        )
+        session.add(log_push2)
+        await session.flush()
+        for ws in (
+            _make_sets(log_push2.id, ex("Barbell Bench Press"), [(5,97.5),(5,100),(5,100),(4,102.5)]) +
+            _make_sets(log_push2.id, ex("Overhead Press"),      [(5,72.5),(5,75),(4,77.5)]) +
+            _make_sets(log_push2.id, ex("Cable Fly"),           [(12,15),(12,15),(12,17.5)]) +
+            _make_sets(log_push2.id, ex("Lateral Raise"),       [(15,12),(15,12),(12,14)]) +
+            _make_sets(log_push2.id, ex("Tricep Pushdown"),     [(12,32.5),(12,35),(10,37.5)])
+        ):
+            session.add(ws)
+
+        await session.flush()
+        print("Seeded 4 workout logs with sets.")
+
+        # ── 13. Activity events ───────────────────────────────────────────────
+        base_ts = int(time.mktime(datetime(2026, 6, 15, 9, 0).timetuple()))
+        yesterday_ts = base_ts - 86400
+
+        activity_specs = [
+            # Today
+            (base_ts + 0,    "active", "code",     "metron – activity.tsx",           "Metron"),
+            (base_ts + 300,  "active", "code",     "metron – globals.css",            "Metron"),
+            (base_ts + 600,  "idle",   None,        None,                              None),
+            (base_ts + 900,  "active", "browser",  "Claude - claude.ai",              None),
+            (base_ts + 1200, "active", "code",     "metron – seed_db.py",             "Metron"),
+            (base_ts + 1800, "active", "code",     "metron – seed_db.py",             "Metron"),
+            (base_ts + 2400, "idle",   None,        None,                              None),
+            (base_ts + 2700, "active", "terminal", "zsh – services/api",              "Metron"),
+            (base_ts + 3000, "active", "code",     "metron – endpoints.py",           "Metron"),
+            (base_ts + 3600, "active", "browser",  "Stack Overflow",                  None),
+            (base_ts + 3900, "active", "code",     "metron – repository.py",          "Metron"),
+            (base_ts + 4500, "active", "code",     "metron – schemas.py",             "Metron"),
+            # Yesterday
+            (yesterday_ts + 0,    "active", "code",     "metron – transactions.tsx",      "Metron"),
+            (yesterday_ts + 400,  "active", "browser",  "Figma – Metron Design",          "Metron"),
+            (yesterday_ts + 900,  "active", "code",     "metron – button.tsx",            "Metron"),
+            (yesterday_ts + 1500, "idle",   None,        None,                             None),
+            (yesterday_ts + 1800, "active", "code",     "metron – globals.css",           "Metron"),
+            (yesterday_ts + 2400, "active", "terminal", "zsh – packages/ui",              "Metron"),
+            (yesterday_ts + 3000, "active", "browser",  "GitHub – metron",                "Metron"),
+            (yesterday_ts + 3600, "active", "code",     "metron – create-trade-dialog.tsx","Metron"),
+            (yesterday_ts + 4500, "active", "code",     "metron – app-sidebar.tsx",       "Metron"),
+        ]
+
+        for local_id, (ts, state, app_class, title, workspace) in enumerate(activity_specs, 1):
+            session.add(ActivityEvent(
+                ts=ts, state=state, app_class=app_class, title=title,
+                workspace=workspace, source="dev-machine", local_id=local_id,
+            ))
+        await session.flush()
+        print(f"Seeded {len(activity_specs)} activity events.")
+
+        # ── Commit ────────────────────────────────────────────────────────────
+        await session.commit()
+        print(f"\n✅ Database seeded successfully!")
+        print(f"   Categories:    {len(cat_map)}")
+        print(f"   Bank accounts: 3")
+        print(f"   Transactions:  {len(tx_list)}")
+        print(f"   Securities:    5  (35 price points)")
+        print(f"   Trades:        {len(trades)}")
+        print(f"   Tasks:         {len(tasks)}")
+        print(f"   Journal:       {len(entries)}")
+        print(f"   Places:        {len(places)}")
+        print(f"   Exercises:     {len(EXERCISES)}")
+        print(f"   Workout logs:  4  (with sets)")
+        print(f"   Activity:      {len(activity_specs)} events")
+
+    await engine.dispose()
 
 
 if __name__ == "__main__":
-  asyncio.run(run())
+    asyncio.run(seed())

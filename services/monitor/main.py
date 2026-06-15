@@ -427,17 +427,19 @@ def push(source: str, reset_cursor: bool) -> None:
             if not rows:
                 break
 
-            events = [
-                {
+            events = []
+            for row in rows:
+                ts = row[1]
+                if isinstance(ts, str):
+                    ts = int(datetime.fromisoformat(ts).timestamp())
+                events.append({
                     "local_id": row[0],
-                    "ts": row[1],
+                    "ts": ts,
                     "state": row[2],
                     "app_class": row[3],
                     "title": row[4],
                     "workspace": row[5],
-                }
-                for row in rows
-            ]
+                })
 
             payload = json.dumps({"source": source, "events": events}).encode()
             req = urllib.request.Request(
