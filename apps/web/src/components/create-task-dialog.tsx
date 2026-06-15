@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Plus } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@metron/ui/components/dialog";
 import { Input } from "@metron/ui/components/input";
+import { Textarea } from "@metron/ui/components/textarea";
 import { Label } from "@metron/ui/components/label";
 import {
   Select,
@@ -21,7 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@metron/ui/components/select";
-import { createTaskV1TasksPostMutation, listTasksV1TasksGetQueryKey } from "@metron/client";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@metron/ui/components/popover";
+import {
+  createTaskV1TasksPostMutation,
+  listTasksV1TasksGetQueryKey,
+  listProjectsV1TasksProjectsGetOptions,
+} from "@metron/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -43,9 +53,65 @@ const FREQUENCIES = [
   { value: "yearly", label: "Yearly" },
 ];
 
+interface ProjectInputProps {
+  value: string;
+  onChange: (val: string) => void;
+  projects: string[];
+}
+
+function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
+  const [open, setOpen] = useState(false);
+
+  const suggestions = value
+    ? projects.filter((p) => p.toLowerCase().includes(value.toLowerCase()) && p !== value)
+    : projects;
+
+  return (
+    <Popover open={open && suggestions.length > 0} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <Input
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          placeholder="e.g. Website redesign"
+          autoComplete="off"
+        />
+      </PopoverAnchor>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-1"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {suggestions.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault(); // keep focus on input
+              onChange(p);
+              setOpen(false);
+            }}
+            className="flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            {p}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function CreateTaskDialog() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const { data: projects = [] } = useQuery({
+    ...listProjectsV1TasksProjectsGetOptions({ client }),
+  });
 
   const mutation = useMutation({
     ...createTaskV1TasksPostMutation({ client }),
@@ -64,6 +130,7 @@ export function CreateTaskDialog() {
   const form = useForm({
     defaultValues: {
       title: "",
+      description: "",
       dueDate: "",
       priority: "0",
       project: "",
@@ -79,9 +146,10 @@ export function CreateTaskDialog() {
         client,
         body: {
           title: value.title.trim(),
+          description: value.description.trim() || undefined,
           due_date: value.dueDate ? new Date(value.dueDate) : undefined,
           priority: Number(value.priority),
-          project: value.project || undefined,
+          project: value.project.trim() || undefined,
           area: value.area || undefined,
           is_recurring: isRecurring,
           rrule_frequency: isRecurring
@@ -115,7 +183,7 @@ export function CreateTaskDialog() {
           Add Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>New Task</DialogTitle>
           <DialogDescription>Add a new task to your board.</DialogDescription>
@@ -143,6 +211,24 @@ export function CreateTaskDialog() {
                   placeholder="What needs to be done?"
                   autoFocus
                   required
+                />
+              </div>
+            )}
+          />
+
+          <form.Field
+            name="description"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label htmlFor="task-description">Description</Label>
+                <Textarea
+                  id="task-description"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  placeholder="Add more details…"
+                  rows={3}
+                  className="resize-none"
                 />
               </div>
             )}
@@ -190,13 +276,11 @@ export function CreateTaskDialog() {
               name="project"
               children={(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="task-project">Project</Label>
-                  <Input
-                    id="task-project"
+                  <Label>Project</Label>
+                  <ProjectInput
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                    placeholder="e.g. Website redesign"
+                    onChange={field.handleChange}
+                    projects={projects}
                   />
                 </div>
               )}
@@ -312,7 +396,7 @@ export function CreateTaskDialog() {
           />
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">Failed to create task. Please try again.</p>
+            <p className="text-sm text-destructive">Failed to create task. Please try again.</p>
           )}
 
           <DialogFooter>
