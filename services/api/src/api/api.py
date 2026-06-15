@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from api.activity.endpoints import router as activity_router
 from api.bank_accounts.endpoints import router as bank_accounts_router
 from api.categories.endpoints import router as categories_router
 from api.investments.endpoints import router as investments_router
@@ -13,6 +14,7 @@ from api.workouts.endpoints import router as workouts_router
 
 router = APIRouter(prefix="/v1")
 
+router.include_router(activity_router)
 router.include_router(bank_accounts_router)
 router.include_router(categories_router)
 router.include_router(investments_router)

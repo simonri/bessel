@@ -4,12 +4,12 @@ import {
   ArrowLeftRight,
   Landmark,
   TrendingUp,
-  PieChart,
   MapPin,
   CheckSquare,
   BookOpen,
   Dumbbell,
   ShoppingBag,
+  Activity,
   Settings,
 } from "lucide-react";
 import {
@@ -33,7 +33,7 @@ const navItems = [
   { title: "Journal", icon: BookOpen, href: "/journal" as string },
   { title: "Workout", icon: Dumbbell, href: "/workout" as string },
   { title: "Travel", icon: MapPin, href: "/travel" as string },
-  { title: "Reports", icon: PieChart, href: "/reports" as string },
+  { title: "Activity", icon: Activity, href: "/activity" as string },
   { title: "Klarna", icon: ShoppingBag, href: "/klarna" as string },
 ];
 

@@ -7,6 +7,9 @@ from crashes or suspend don't inflate timings in reports.
 
 Usage:
     ./main.py                            # start tracking
+    ./main.py --push                     # sync unsynced events to the API
+    ./main.py --push --reset-cursor      # re-push all events from the start (safe, server dedupes)
+    ./main.py --push --source work-mac   # override machine identifier
     ./main.py --report                   # today's time-per-app summary
     ./main.py --report --date 2026-06-10 # another day
     ./main.py --dump                     # all events as CSV (for analysis)
@@ -18,10 +21,13 @@ import csv
 import json
 import os
 import signal
+import socket
 import sqlite3
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -46,7 +52,11 @@ IDLE_FILE = Path("/tmp/activity-tracker-idle")
 
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "activity-tracker"
 DB_PATH = DATA_DIR / "activity.db"
+CURSOR_PATH = DATA_DIR / "push_cursor"
 _SCHEMA_VERSION = 2
+
+METRON_API_URL = os.environ.get("METRON_API_URL", "http://localhost:8100")
+PUSH_BATCH_SIZE = 500
 # ─────────────────────────────────────────────────────────────────────────────
 
 _running = True
@@ -383,31 +393,116 @@ def dump(target: date | None):
         writer.writerow([ts, iso, state, cls or "", title or "", ws or ""])
 
 
+# ─── push ────────────────────────────────────────────────────────────────────
+
+def _read_cursor() -> int:
+    try:
+        return int(CURSOR_PATH.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+def _write_cursor(value: int) -> None:
+    CURSOR_PATH.write_text(str(value))
+
+
+def push(source: str, reset_cursor: bool) -> None:
+    if not DB_PATH.exists():
+        sys.exit("No data yet — run without --push to start tracking.")
+
+    cursor = 0 if reset_cursor else _read_cursor()
+    conn = _open_db()
+
+    total_inserted = 0
+    total_skipped = 0
+
+    try:
+        while True:
+            rows = conn.execute(
+                "SELECT id, ts, state, app_class, title, workspace "
+                "FROM events WHERE id > ? ORDER BY id LIMIT ?",
+                (cursor, PUSH_BATCH_SIZE),
+            ).fetchall()
+
+            if not rows:
+                break
+
+            events = [
+                {
+                    "local_id": row[0],
+                    "ts": row[1],
+                    "state": row[2],
+                    "app_class": row[3],
+                    "title": row[4],
+                    "workspace": row[5],
+                }
+                for row in rows
+            ]
+
+            payload = json.dumps({"source": source, "events": events}).encode()
+            req = urllib.request.Request(
+                f"{METRON_API_URL}/v1/activity/batch",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    body = json.loads(resp.read())
+            except urllib.error.HTTPError as e:
+                sys.exit(f"API error {e.code}: {e.read().decode()}")
+            except (urllib.error.URLError, OSError) as e:
+                sys.exit(f"Failed to reach API at {METRON_API_URL}: {e}")
+
+            total_inserted += body["inserted"]
+            total_skipped += body["skipped"]
+
+            cursor = rows[-1][0]
+            _write_cursor(cursor)
+
+    finally:
+        conn.close()
+
+    print(
+        f"Push complete — inserted={total_inserted} skipped={total_skipped} cursor={cursor}",
+        flush=True,
+    )
+
+
 # ─── entry point ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Track focused window and active/idle state.")
+    ap.add_argument("--push", action="store_true", help="sync unsynced events to the Metron API")
+    ap.add_argument("--reset-cursor", action="store_true", help="re-push all events from the start (safe, server dedupes)")
+    ap.add_argument("--source", metavar="NAME", default=socket.gethostname(),
+                    help="machine identifier for --push (default: hostname)")
     ap.add_argument("--report", action="store_true", help="print time-per-app summary and exit")
     ap.add_argument("--dump",   action="store_true", help="write raw events as CSV to stdout")
     ap.add_argument("--date", metavar="YYYY-MM-DD",
                     help="target date for --report / --dump (default: today)")
     args = ap.parse_args()
 
-    if args.date:
-        try:
-            target_date = date.fromisoformat(args.date)
-        except ValueError:
-            ap.error(f"invalid date {args.date!r} — expected YYYY-MM-DD")
-    else:
-        target_date = date.today()
-
-    if args.report:
-        report(target_date)
-    elif args.dump:
-        dump(target_date if args.date else None)
-    else:
+    if args.push:
         if args.date:
-            ap.error("--date only applies to --report or --dump")
+            ap.error("--date does not apply to --push")
+        push(source=args.source, reset_cursor=args.reset_cursor)
+    elif args.report or args.dump:
+        if args.date:
+            try:
+                target_date = date.fromisoformat(args.date)
+            except ValueError:
+                ap.error(f"invalid date {args.date!r} — expected YYYY-MM-DD")
+        else:
+            target_date = date.today()
+        if args.report:
+            report(target_date)
+        else:
+            dump(target_date if args.date else None)
+    else:
+        if args.date or args.reset_cursor:
+            ap.error("--date / --reset-cursor only apply to --report, --dump, or --push")
         signal.signal(signal.SIGTERM, _stop)
         signal.signal(signal.SIGINT, _stop)
         track()

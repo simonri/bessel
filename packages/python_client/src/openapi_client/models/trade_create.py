@@ -6,7 +6,6 @@ from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..models.trade_type import TradeType
 from ..types import UNSET, Unset
@@ -86,7 +85,7 @@ class TradeCreate:
 
     trade_type = TradeType(d.pop("trade_type"))
 
-    trade_date = isoparse(d.pop("trade_date")).date()
+    trade_date = datetime.date.fromisoformat(d.pop("trade_date"))
 
     quantity = d.pop("quantity")
 

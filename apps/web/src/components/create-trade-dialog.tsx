@@ -117,7 +117,7 @@ export function CreateTradeDialog() {
           Add Trade
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Record Trade</DialogTitle>
           <DialogDescription>Log a buy or sell transaction.</DialogDescription>
@@ -179,7 +179,7 @@ export function CreateTradeDialog() {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <form.Field
               name="trade_type"
               children={(field) => (
@@ -213,25 +213,9 @@ export function CreateTradeDialog() {
                 </div>
               )}
             />
-
-            <form.Field
-              name="currency"
-              children={(field) => (
-                <div className="space-y-2">
-                  <Label htmlFor="trade-ccy">Currency</Label>
-                  <Input
-                    id="trade-ccy"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
-                    maxLength={3}
-                    required
-                  />
-                </div>
-              )}
-            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-[1fr_1fr_5rem] gap-4">
             <form.Field
               name="quantity"
               children={(field) => (
@@ -268,6 +252,22 @@ export function CreateTradeDialog() {
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     placeholder="0.00"
+                    required
+                  />
+                </div>
+              )}
+            />
+
+            <form.Field
+              name="currency"
+              children={(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor="trade-ccy">CCY</Label>
+                  <Input
+                    id="trade-ccy"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+                    maxLength={3}
                     required
                   />
                 </div>

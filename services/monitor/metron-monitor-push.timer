@@ -1,0 +1,10 @@
+[Unit]
+Description=metron-monitor — push activity events every 10 minutes
+Requires=metron-monitor-push.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

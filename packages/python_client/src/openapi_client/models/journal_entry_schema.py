@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..types import UNSET, Unset
 
@@ -182,7 +181,7 @@ class JournalEntrySchema:
     from ..models.journal_entry_schema_captures_type_0_item import JournalEntrySchemaCapturesType0Item
 
     d = dict(src_dict)
-    created_at = isoparse(d.pop("created_at"))
+    created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
     def _parse_modified_at(data: object) -> datetime.datetime | None:
       if data is None:
@@ -190,7 +189,7 @@ class JournalEntrySchema:
       try:
         if not isinstance(data, str):
           raise TypeError()
-        modified_at_type_0 = isoparse(data)
+        modified_at_type_0 = datetime.datetime.fromisoformat(data)
 
         return modified_at_type_0
       except (TypeError, ValueError, AttributeError, KeyError):
@@ -201,7 +200,7 @@ class JournalEntrySchema:
 
     id = d.pop("id")
 
-    entry_date = isoparse(d.pop("entry_date")).date()
+    entry_date = datetime.date.fromisoformat(d.pop("entry_date"))
 
     def _parse_priority(data: object) -> None | str | Unset:
       if data is None:
@@ -256,7 +255,7 @@ class JournalEntrySchema:
       try:
         if not isinstance(data, str):
           raise TypeError()
-        morning_committed_at_type_0 = isoparse(data)
+        morning_committed_at_type_0 = datetime.datetime.fromisoformat(data)
 
         return morning_committed_at_type_0
       except (TypeError, ValueError, AttributeError, KeyError):

@@ -44,6 +44,7 @@ import {
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
   importTransactionsV1TransactionsImportPost,
+  ingestActivityBatchV1ActivityBatchPost,
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
@@ -173,6 +174,9 @@ import type {
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostError,
   ImportTransactionsV1TransactionsImportPostResponse,
+  IngestActivityBatchV1ActivityBatchPostData,
+  IngestActivityBatchV1ActivityBatchPostError,
+  IngestActivityBatchV1ActivityBatchPostResponse,
   ListAreasV1TasksAreasGetData,
   ListAreasV1TasksAreasGetResponse,
   ListBankAccountsV1BankAccountsGetData,
@@ -324,6 +328,33 @@ export const healthzHealthzGetOptions = (
     },
     queryKey: healthzHealthzGetQueryKey(options),
   });
+
+/**
+ * Ingest Activity Events
+ */
+export const ingestActivityBatchV1ActivityBatchPostMutation = (
+  options?: Partial<Options<IngestActivityBatchV1ActivityBatchPostData>>,
+): UseMutationOptions<
+  IngestActivityBatchV1ActivityBatchPostResponse,
+  IngestActivityBatchV1ActivityBatchPostError,
+  Options<IngestActivityBatchV1ActivityBatchPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    IngestActivityBatchV1ActivityBatchPostResponse,
+    IngestActivityBatchV1ActivityBatchPostError,
+    Options<IngestActivityBatchV1ActivityBatchPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await ingestActivityBatchV1ActivityBatchPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listBankAccountsV1BankAccountsGetQueryKey = (
   options?: Options<ListBankAccountsV1BankAccountsGetData>,

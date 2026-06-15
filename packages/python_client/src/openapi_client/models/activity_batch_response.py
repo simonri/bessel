@@ -1,69 +1,56 @@
 from __future__ import annotations
 
-import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
-T = TypeVar("T", bound="JournalCalendarDay")
+T = TypeVar("T", bound="ActivityBatchResponse")
 
 
 @_attrs_define
-class JournalCalendarDay:
+class ActivityBatchResponse:
   """
   Attributes:
-      entry_date (datetime.date):
-      has_morning (bool | Unset):  Default: False.
-      has_audit (bool | Unset):  Default: False.
+      inserted (int): Number of new events inserted.
+      skipped (int): Number of duplicate events skipped.
   """
 
-  entry_date: datetime.date
-  has_morning: bool | Unset = False
-  has_audit: bool | Unset = False
+  inserted: int
+  skipped: int
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    entry_date = self.entry_date.isoformat()
+    inserted = self.inserted
 
-    has_morning = self.has_morning
-
-    has_audit = self.has_audit
+    skipped = self.skipped
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
-        "entry_date": entry_date,
+        "inserted": inserted,
+        "skipped": skipped,
       }
     )
-    if has_morning is not UNSET:
-      field_dict["has_morning"] = has_morning
-    if has_audit is not UNSET:
-      field_dict["has_audit"] = has_audit
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    entry_date = datetime.date.fromisoformat(d.pop("entry_date"))
+    inserted = d.pop("inserted")
 
-    has_morning = d.pop("has_morning", UNSET)
+    skipped = d.pop("skipped")
 
-    has_audit = d.pop("has_audit", UNSET)
-
-    journal_calendar_day = cls(
-      entry_date=entry_date,
-      has_morning=has_morning,
-      has_audit=has_audit,
+    activity_batch_response = cls(
+      inserted=inserted,
+      skipped=skipped,
     )
 
-    journal_calendar_day.additional_properties = d
-    return journal_calendar_day
+    activity_batch_response.additional_properties = d
+    return activity_batch_response
 
   @property
   def additional_keys(self) -> list[str]:

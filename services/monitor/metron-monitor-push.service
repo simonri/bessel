@@ -1,0 +1,11 @@
+[Unit]
+Description=metron-monitor — push activity events to API
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/uv run --directory %h/dev/metron/services/monitor python main.py --push
+Environment=METRON_API_URL=http://vps:8100
+EnvironmentFile=-%h/.config/metron/monitor.env
+StandardOutput=journal
+StandardError=journal

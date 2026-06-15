@@ -6,7 +6,6 @@ from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 T = TypeVar("T", bound="SecurityPriceCreate")
 
@@ -47,7 +46,7 @@ class SecurityPriceCreate:
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    price_date = isoparse(d.pop("price_date")).date()
+    price_date = datetime.date.fromisoformat(d.pop("price_date"))
 
     price_per_unit = d.pop("price_per_unit")
 

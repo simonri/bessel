@@ -6,7 +6,6 @@ from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 T = TypeVar("T", bound="ExercisePRSchema")
 
@@ -72,7 +71,7 @@ class ExercisePRSchema:
 
     weight_unit = d.pop("weight_unit")
 
-    achieved_at = isoparse(d.pop("achieved_at"))
+    achieved_at = datetime.datetime.fromisoformat(d.pop("achieved_at"))
 
     exercise_pr_schema = cls(
       exercise_id=exercise_id,

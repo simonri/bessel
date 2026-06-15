@@ -6,7 +6,6 @@ from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..models.trade_type import TradeType
 
@@ -94,7 +93,7 @@ class TradeSchema:
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
-    created_at = isoparse(d.pop("created_at"))
+    created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
     def _parse_modified_at(data: object) -> datetime.datetime | None:
       if data is None:
@@ -102,7 +101,7 @@ class TradeSchema:
       try:
         if not isinstance(data, str):
           raise TypeError()
-        modified_at_type_0 = isoparse(data)
+        modified_at_type_0 = datetime.datetime.fromisoformat(data)
 
         return modified_at_type_0
       except (TypeError, ValueError, AttributeError, KeyError):
@@ -119,7 +118,7 @@ class TradeSchema:
 
     trade_type = TradeType(d.pop("trade_type"))
 
-    trade_date = isoparse(d.pop("trade_date")).date()
+    trade_date = datetime.date.fromisoformat(d.pop("trade_date"))
 
     quantity = d.pop("quantity")
 

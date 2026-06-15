@@ -5,6 +5,84 @@ export type ClientOptions = {
 };
 
 /**
+ * ActivityBatchRequest
+ */
+export type ActivityBatchRequest = {
+  /**
+   * Source
+   *
+   * Machine identifier, e.g. hostname.
+   */
+  source: string;
+  /**
+   * Events
+   *
+   * Batch of events to ingest.
+   */
+  events: Array<ActivityEventIn>;
+};
+
+/**
+ * ActivityBatchResponse
+ */
+export type ActivityBatchResponse = {
+  /**
+   * Inserted
+   *
+   * Number of new events inserted.
+   */
+  inserted: number;
+  /**
+   * Skipped
+   *
+   * Number of duplicate events skipped.
+   */
+  skipped: number;
+};
+
+/**
+ * ActivityEventIn
+ */
+export type ActivityEventIn = {
+  /**
+   * Local Id
+   *
+   * Original SQLite id from the source machine.
+   */
+  local_id: number;
+  /**
+   * Ts
+   *
+   * Unix epoch seconds (UTC) when the event was recorded.
+   */
+  ts: number;
+  /**
+   * State
+   *
+   * 'active' or 'idle'.
+   */
+  state: string;
+  /**
+   * App Class
+   *
+   * Window class / app identifier.
+   */
+  app_class?: string | null;
+  /**
+   * Title
+   *
+   * Window title.
+   */
+  title?: string | null;
+  /**
+   * Workspace
+   *
+   * Workspace name or number.
+   */
+  workspace?: string | null;
+};
+
+/**
  * AssetType
  */
 export const AssetType = {
@@ -2565,6 +2643,33 @@ export type HealthzHealthzGetResponses = {
    */
   200: unknown;
 };
+
+export type IngestActivityBatchV1ActivityBatchPostData = {
+  body: ActivityBatchRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/activity/batch";
+};
+
+export type IngestActivityBatchV1ActivityBatchPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type IngestActivityBatchV1ActivityBatchPostError =
+  IngestActivityBatchV1ActivityBatchPostErrors[keyof IngestActivityBatchV1ActivityBatchPostErrors];
+
+export type IngestActivityBatchV1ActivityBatchPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: ActivityBatchResponse;
+};
+
+export type IngestActivityBatchV1ActivityBatchPostResponse =
+  IngestActivityBatchV1ActivityBatchPostResponses[keyof IngestActivityBatchV1ActivityBatchPostResponses];
 
 export type ListBankAccountsV1BankAccountsGetData = {
   body?: never;

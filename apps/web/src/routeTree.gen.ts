@@ -15,10 +15,10 @@ import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
 import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
-import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppKlarnaRouteImport } from './routes/_app/klarna'
 import { Route as AppJournalRouteImport } from './routes/_app/journal'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
+import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
 
 const AppRoute = AppRouteImport.update({
@@ -50,11 +50,6 @@ const AppTasksRoute = AppTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AppRoute,
 } as any)
-const AppReportsRoute = AppReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppKlarnaRoute = AppKlarnaRouteImport.update({
   id: '/klarna',
   path: '/klarna',
@@ -70,6 +65,11 @@ const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
   path: '/investments',
   getParentRoute: () => AppRoute,
 } as any)
+const AppActivityRoute = AppActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAccountsRoute = AppAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
@@ -79,10 +79,10 @@ const AppAccountsRoute = AppAccountsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/accounts': typeof AppAccountsRoute
+  '/activity': typeof AppActivityRoute
   '/investments': typeof AppInvestmentsRoute
   '/journal': typeof AppJournalRoute
   '/klarna': typeof AppKlarnaRoute
-  '/reports': typeof AppReportsRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
@@ -90,10 +90,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsRoute
+  '/activity': typeof AppActivityRoute
   '/investments': typeof AppInvestmentsRoute
   '/journal': typeof AppJournalRoute
   '/klarna': typeof AppKlarnaRoute
-  '/reports': typeof AppReportsRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
@@ -104,10 +104,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/accounts': typeof AppAccountsRoute
+  '/_app/activity': typeof AppActivityRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/journal': typeof AppJournalRoute
   '/_app/klarna': typeof AppKlarnaRoute
-  '/_app/reports': typeof AppReportsRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/travel': typeof AppTravelRoute
@@ -119,10 +119,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/accounts'
+    | '/activity'
     | '/investments'
     | '/journal'
     | '/klarna'
-    | '/reports'
     | '/tasks'
     | '/transactions'
     | '/travel'
@@ -130,10 +130,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/accounts'
+    | '/activity'
     | '/investments'
     | '/journal'
     | '/klarna'
-    | '/reports'
     | '/tasks'
     | '/transactions'
     | '/travel'
@@ -143,10 +143,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_app/accounts'
+    | '/_app/activity'
     | '/_app/investments'
     | '/_app/journal'
     | '/_app/klarna'
-    | '/_app/reports'
     | '/_app/tasks'
     | '/_app/transactions'
     | '/_app/travel'
@@ -202,13 +202,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/reports': {
-      id: '/_app/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AppReportsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/klarna': {
       id: '/_app/klarna'
       path: '/klarna'
@@ -230,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvestmentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/activity': {
+      id: '/_app/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AppActivityRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/accounts': {
       id: '/_app/accounts'
       path: '/accounts'
@@ -242,10 +242,10 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
+  AppActivityRoute: typeof AppActivityRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppJournalRoute: typeof AppJournalRoute
   AppKlarnaRoute: typeof AppKlarnaRoute
-  AppReportsRoute: typeof AppReportsRoute
   AppTasksRoute: typeof AppTasksRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppTravelRoute: typeof AppTravelRoute
@@ -255,10 +255,10 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
+  AppActivityRoute: AppActivityRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppJournalRoute: AppJournalRoute,
   AppKlarnaRoute: AppKlarnaRoute,
-  AppReportsRoute: AppReportsRoute,
   AppTasksRoute: AppTasksRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppTravelRoute: AppTravelRoute,

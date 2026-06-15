@@ -1,5 +1,8 @@
 """Contains all the data models used in inputs/outputs"""
 
+from .activity_batch_request import ActivityBatchRequest
+from .activity_batch_response import ActivityBatchResponse
+from .activity_event_in import ActivityEventIn
 from .asset_type import AssetType
 from .bank_account_create import BankAccountCreate
 from .bank_account_list_response import BankAccountListResponse
@@ -96,6 +99,9 @@ from .workout_set_schema import WorkoutSetSchema
 from .workout_set_update import WorkoutSetUpdate
 
 __all__ = (
+  "ActivityBatchRequest",
+  "ActivityBatchResponse",
+  "ActivityEventIn",
   "AssetType",
   "BankAccountCreate",
   "BankAccountListResponse",

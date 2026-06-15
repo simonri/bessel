@@ -5,7 +5,6 @@ import {
   ArrowLeftRight,
   Landmark,
   TrendingUp,
-  PieChart,
   MapPin,
   CheckSquare,
   BookOpen,
@@ -28,7 +27,6 @@ const moreItems = [
   { title: "Investments", icon: TrendingUp, href: "/investments" },
   { title: "Journal", icon: BookOpen, href: "/journal" },
   { title: "Workout", icon: Dumbbell, href: "/workout" },
-  { title: "Reports", icon: PieChart, href: "/reports" },
   { title: "Settings", icon: Settings, href: "/settings" },
 ];
 

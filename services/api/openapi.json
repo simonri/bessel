@@ -30,6 +30,47 @@
         }
       }
     },
+    "/v1/activity/batch": {
+      "post": {
+        "tags": [
+          "activity"
+        ],
+        "summary": "Ingest Activity Events",
+        "operationId": "ingest_activity_batch_v1_activity_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/bank-accounts": {
       "get": {
         "tags": [
@@ -3353,6 +3394,111 @@
   },
   "components": {
     "schemas": {
+      "ActivityBatchRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Machine identifier, e.g. hostname."
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityEventIn"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "Batch of events to ingest."
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "events"
+        ],
+        "title": "ActivityBatchRequest"
+      },
+      "ActivityBatchResponse": {
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted",
+            "description": "Number of new events inserted."
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "description": "Number of duplicate events skipped."
+          }
+        },
+        "type": "object",
+        "required": [
+          "inserted",
+          "skipped"
+        ],
+        "title": "ActivityBatchResponse"
+      },
+      "ActivityEventIn": {
+        "properties": {
+          "local_id": {
+            "type": "integer",
+            "title": "Local Id",
+            "description": "Original SQLite id from the source machine."
+          },
+          "ts": {
+            "type": "integer",
+            "title": "Ts",
+            "description": "Unix epoch seconds (UTC) when the event was recorded."
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "'active' or 'idle'."
+          },
+          "app_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "App Class",
+            "description": "Window class / app identifier."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Window title."
+          },
+          "workspace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace",
+            "description": "Workspace name or number."
+          }
+        },
+        "type": "object",
+        "required": [
+          "local_id",
+          "ts",
+          "state"
+        ],
+        "title": "ActivityEventIn"
+      },
       "AssetType": {
         "type": "string",
         "enum": [

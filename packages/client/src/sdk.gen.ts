@@ -147,6 +147,9 @@ import type {
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostErrors,
   ImportTransactionsV1TransactionsImportPostResponses,
+  IngestActivityBatchV1ActivityBatchPostData,
+  IngestActivityBatchV1ActivityBatchPostErrors,
+  IngestActivityBatchV1ActivityBatchPostResponses,
   ListAreasV1TasksAreasGetData,
   ListAreasV1TasksAreasGetResponses,
   ListBankAccountsV1BankAccountsGetData,
@@ -260,6 +263,27 @@ export const healthzHealthzGet = <ThrowOnError extends boolean = false>(
     unknown,
     ThrowOnError
   >({ url: "/healthz", ...options });
+
+/**
+ * Ingest Activity Events
+ */
+export const ingestActivityBatchV1ActivityBatchPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<IngestActivityBatchV1ActivityBatchPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    IngestActivityBatchV1ActivityBatchPostResponses,
+    IngestActivityBatchV1ActivityBatchPostErrors,
+    ThrowOnError
+  >({
+    url: "/v1/activity/batch",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
 /**
  * List Bank Accounts

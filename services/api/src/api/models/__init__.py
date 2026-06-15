@@ -1,3 +1,4 @@
+from .activity_event import ActivityEvent
 from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
@@ -17,6 +18,7 @@ from .workout_log import WorkoutLog
 from .workout_set import WorkoutSet
 
 __all__ = [
+  "ActivityEvent",
   "BankAccount",
   "BankProfile",
   "Category",

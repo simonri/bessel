@@ -1,69 +1,70 @@
 from __future__ import annotations
 
-import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
+if TYPE_CHECKING:
+  from ..models.activity_event_in import ActivityEventIn
 
-T = TypeVar("T", bound="JournalCalendarDay")
+
+T = TypeVar("T", bound="ActivityBatchRequest")
 
 
 @_attrs_define
-class JournalCalendarDay:
+class ActivityBatchRequest:
   """
   Attributes:
-      entry_date (datetime.date):
-      has_morning (bool | Unset):  Default: False.
-      has_audit (bool | Unset):  Default: False.
+      source (str): Machine identifier, e.g. hostname.
+      events (list[ActivityEventIn]): Batch of events to ingest.
   """
 
-  entry_date: datetime.date
-  has_morning: bool | Unset = False
-  has_audit: bool | Unset = False
+  source: str
+  events: list[ActivityEventIn]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    entry_date = self.entry_date.isoformat()
+    source = self.source
 
-    has_morning = self.has_morning
-
-    has_audit = self.has_audit
+    events = []
+    for events_item_data in self.events:
+      events_item = events_item_data.to_dict()
+      events.append(events_item)
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
-        "entry_date": entry_date,
+        "source": source,
+        "events": events,
       }
     )
-    if has_morning is not UNSET:
-      field_dict["has_morning"] = has_morning
-    if has_audit is not UNSET:
-      field_dict["has_audit"] = has_audit
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.activity_event_in import ActivityEventIn
+
     d = dict(src_dict)
-    entry_date = datetime.date.fromisoformat(d.pop("entry_date"))
+    source = d.pop("source")
 
-    has_morning = d.pop("has_morning", UNSET)
+    events = []
+    _events = d.pop("events")
+    for events_item_data in _events:
+      events_item = ActivityEventIn.from_dict(events_item_data)
 
-    has_audit = d.pop("has_audit", UNSET)
+      events.append(events_item)
 
-    journal_calendar_day = cls(
-      entry_date=entry_date,
-      has_morning=has_morning,
-      has_audit=has_audit,
+    activity_batch_request = cls(
+      source=source,
+      events=events,
     )
 
-    journal_calendar_day.additional_properties = d
-    return journal_calendar_day
+    activity_batch_request.additional_properties = d
+    return activity_batch_request
 
   @property
   def additional_keys(self) -> list[str]:
