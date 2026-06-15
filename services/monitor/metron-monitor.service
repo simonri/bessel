@@ -1,0 +1,12 @@
+[Unit]
+Description=metron-monitor — activity tracker
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/uv run --directory %h/dev/metron/services/monitor python main.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

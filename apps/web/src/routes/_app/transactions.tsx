@@ -127,7 +127,7 @@ const TransactionActions = memo(function TransactionActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onToggleBusiness(id, !isBusiness)}>
-            {isBusiness ? "Mark as personal" : "Mark as business"}
+            {isBusiness ? "Remove business expense" : "Mark as business expense"}
           </DropdownMenuItem>
           <DropdownMenuItem className="text-destructive" onClick={() => onDelete([id])}>
             <Trash2 className="size-4" />
@@ -408,10 +408,10 @@ function Transactions() {
       header: "Description",
       cell: ({ row }) => (
         <div className="flex items-center gap-2 min-w-0">
-          <span className="block truncate text-sm">{row.original.description ?? "—"}</span>
+          <span className="truncate text-sm">{row.original.description ?? "—"}</span>
           {row.original.is_business && (
-            <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
-              Biz
+            <span className="shrink-0 inline-flex items-center rounded bg-chart-1 px-1.5 py-px text-[10px] font-semibold text-white">
+              Business
             </span>
           )}
         </div>

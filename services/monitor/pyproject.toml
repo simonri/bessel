@@ -1,0 +1,6 @@
+[project]
+name = "monitor"
+version = "0.1.0"
+description = "Activity tracker — logs focused window and idle/active state"
+requires-python = ">=3.12"
+dependencies = []

@@ -1,20 +1,15 @@
-# Project Metron
+# Metron
 
-## Commands
+As AI advances, its ability to optimize our lives grows — but only as fast as the data behind it. The missing piece isn't intelligence, it's context.
 
-```
-uv sync --all-packages --all-extras --all-groups
-```
+Metron is a personal life dashboard that aggregates data across all domains of your life: finances, health, fitness, travel, habits, and more. The goal is a single place where your data lives, so AI has the full picture it needs to actually understand your life and surface meaningful ways to improve it.
 
-Creating a new service:
+## Stack
 
-```
-uv init --package --lib services/hello
-uv lock
-```
+- **Backend**: Python / FastAPI, PostgreSQL, Redis
+- **Frontend**: TypeScript / TanStack Start
+- **Workers**: Dramatiq background jobs
 
-Add lib-one as dependency to lib-two
+## Development
 
-```
-uv add --package lib-two lib-one
-```
+See [CLAUDE.md](CLAUDE.md) for architecture overview and development commands.

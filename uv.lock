@@ -6,6 +6,7 @@ requires-python = "==3.12.*"
 members = [
     "api",
     "metron",
+    "monitor",
     "openapi-client",
 ]
 
@@ -894,6 +895,11 @@ requires-dist = [
     { name = "mypy-boto3-s3", specifier = ">=1.42.3" },
     { name = "openapi-python-client", specifier = ">=0.28.0" },
 ]
+
+[[package]]
+name = "monitor"
+version = "0.1.0"
+source = { virtual = "services/monitor" }
 
 [[package]]
 name = "mslex"

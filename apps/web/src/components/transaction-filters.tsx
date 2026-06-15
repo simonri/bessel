@@ -258,7 +258,7 @@ function BusinessToggle({
     <button
       type="button"
       onClick={() => onChange(value === true ? undefined : true)}
-      title="Show business transactions only"
+      title="Show business expenses only"
       className={cn(
         "flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm transition-colors",
         value === true
@@ -267,7 +267,7 @@ function BusinessToggle({
       )}
     >
       <Briefcase className="size-3.5" />
-      Business
+      Business expense
     </button>
   );
 }
