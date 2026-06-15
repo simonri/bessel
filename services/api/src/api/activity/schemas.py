@@ -20,3 +20,20 @@ class ActivityBatchRequest(Schema):
 class ActivityBatchResponse(Schema):
     inserted: int = Field(description="Number of new events inserted.")
     skipped: int = Field(description="Number of duplicate events skipped.")
+
+
+class ActivityAppSummary(Schema):
+    app_class: str = Field(description="Window class / app identifier.")
+    active_secs: int = Field(description="Total active seconds attributed to this app.")
+    percentage: float = Field(description="Share of total active time (0–100).")
+
+
+class ActivitySummaryResponse(Schema):
+    source: str = Field(description="Machine source that was queried.")
+    sources: list[str] = Field(description="All known machine sources, ordered by most recent activity.")
+    total_active_secs: int = Field(description="Total active seconds in the requested time window.")
+    apps: list[ActivityAppSummary] = Field(description="Per-app breakdown, sorted by active time descending.")
+
+
+class ActivitySourcesResponse(Schema):
+    sources: list[str] = Field(description="All known machine sources, ordered by most recent activity.")

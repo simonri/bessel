@@ -1,30 +1,176 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { isSameDay, format, subDays, addDays } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  listActivitySourcesV1ActivitySourcesGetOptions,
+  getActivitySummaryV1ActivitySummaryGetOptions,
+} from "@metron/client";
+import { Button } from "@metron/ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@metron/ui/components/select";
+import { Skeleton } from "@metron/ui/components/skeleton";
+import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app/activity")({
   component: ActivityPage,
 });
 
+function localDayBounds(d: Date): [number, number] {
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  return [Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000)];
+}
+
+function fmtDur(secs: number): string {
+  const m = Math.floor(secs / 60);
+  if (m >= 60) return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+  return `${m}m`;
+}
+
 function ActivityPage() {
+  const today = new Date();
+  const [date, setDate] = useState(today);
+  const [source, setSource] = useState<string | null>(null);
+
+  const isCurrentDay = isSameDay(date, today);
+
+  const { data: sourcesData } = useQuery({
+    ...listActivitySourcesV1ActivitySourcesGetOptions({ client }),
+  });
+  const sources = sourcesData?.sources ?? [];
+  const activeSource = source ?? sources[0] ?? null;
+
+  const [startTs, endTs] = localDayBounds(date);
+
+  const { data: summary, isLoading } = useQuery({
+    ...getActivitySummaryV1ActivitySummaryGetOptions({
+      client,
+      query: { start_ts: startTs, end_ts: endTs, source: activeSource! },
+    }),
+    enabled: !!activeSource,
+    placeholderData: keepPreviousData,
+  });
+
+  const prevDay = () => setDate((d) => subDays(d, 1));
+  const nextDay = () => setDate((d) => addDays(d, 1));
+  const goToday = () => setDate(today);
+
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Time tracking from the desktop monitor.
-        </p>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Time tracking from the desktop monitor.
+          </p>
+        </div>
+
+        {sources.length > 1 && (
+          <Select value={activeSource ?? ""} onValueChange={(v) => setSource(v)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select machine" />
+            </SelectTrigger>
+            <SelectContent>
+              {sources.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        No data yet. Run{" "}
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-          ./main.py --push
-        </code>{" "}
-        in{" "}
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
-          services/monitor
-        </code>{" "}
-        to sync your activity history.
-      </p>
+      {!sourcesData ? (
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      ) : sources.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No data yet. Run{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+            ./main.py --push
+          </code>{" "}
+          in{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+            services/monitor
+          </code>{" "}
+          to sync your activity history.
+        </p>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={prevDay}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="min-w-36 text-center text-sm font-medium">
+              {isCurrentDay ? "Today" : format(date, "EEE, MMM d, yyyy")}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={nextDay}
+              disabled={isCurrentDay}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            {!isCurrentDay && (
+              <Button variant="ghost" size="sm" onClick={goToday}>
+                Today
+              </Button>
+            )}
+          </div>
+
+          {isLoading && !summary ? (
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </div>
+          ) : !summary || summary.total_active_secs === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No activity recorded for this day.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              <p className="mb-4 text-sm text-muted-foreground">
+                <span className="text-base font-medium text-foreground">
+                  {fmtDur(summary.total_active_secs)}
+                </span>{" "}
+                active
+                {sources.length === 1 && (
+                  <span className="ml-2 text-xs">· {activeSource}</span>
+                )}
+              </p>
+
+              {summary.apps.map((app) => (
+                <div key={app.app_class} className="flex items-center gap-3">
+                  <span className="w-48 shrink-0 truncate font-mono text-sm text-foreground">
+                    {app.app_class}
+                  </span>
+                  <div className="relative h-5 flex-1 overflow-hidden rounded-sm bg-muted">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-sm bg-primary/60"
+                      style={{ width: `${app.percentage}%` }}
+                    />
+                  </div>
+                  <span className="w-16 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
+                    {fmtDur(app.active_secs)}
+                  </span>
+                  <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                    {app.percentage.toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -31,6 +31,7 @@ import {
   deleteTransactionsV1TransactionsDelete,
   deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete,
   deleteWorkoutV1WorkoutsWorkoutIdDelete,
+  getActivitySummaryV1ActivitySummaryGet,
   getBankAccountV1BankAccountsBankAccountIdGet,
   getCalendarV1JournalCalendarGet,
   getEntryV1JournalEntryDateGet,
@@ -45,6 +46,7 @@ import {
   importKlarnaTransactionsV1KlarnaImportPost,
   importTransactionsV1TransactionsImportPost,
   ingestActivityBatchV1ActivityBatchPost,
+  listActivitySourcesV1ActivitySourcesGet,
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
@@ -139,6 +141,9 @@ import type {
   DeleteWorkoutV1WorkoutsWorkoutIdDeleteData,
   DeleteWorkoutV1WorkoutsWorkoutIdDeleteError,
   DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponse,
+  GetActivitySummaryV1ActivitySummaryGetData,
+  GetActivitySummaryV1ActivitySummaryGetError,
+  GetActivitySummaryV1ActivitySummaryGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetError,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -177,6 +182,8 @@ import type {
   IngestActivityBatchV1ActivityBatchPostData,
   IngestActivityBatchV1ActivityBatchPostError,
   IngestActivityBatchV1ActivityBatchPostResponse,
+  ListActivitySourcesV1ActivitySourcesGetData,
+  ListActivitySourcesV1ActivitySourcesGetResponse,
   ListAreasV1TasksAreasGetData,
   ListAreasV1TasksAreasGetResponse,
   ListBankAccountsV1BankAccountsGetData,
@@ -355,6 +362,62 @@ export const ingestActivityBatchV1ActivityBatchPostMutation = (
   };
   return mutationOptions;
 };
+
+export const listActivitySourcesV1ActivitySourcesGetQueryKey = (
+  options?: Options<ListActivitySourcesV1ActivitySourcesGetData>,
+) => createQueryKey("listActivitySourcesV1ActivitySourcesGet", options);
+
+/**
+ * List Activity Sources
+ */
+export const listActivitySourcesV1ActivitySourcesGetOptions = (
+  options?: Options<ListActivitySourcesV1ActivitySourcesGetData>,
+) =>
+  queryOptions<
+    ListActivitySourcesV1ActivitySourcesGetResponse,
+    DefaultError,
+    ListActivitySourcesV1ActivitySourcesGetResponse,
+    ReturnType<typeof listActivitySourcesV1ActivitySourcesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listActivitySourcesV1ActivitySourcesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listActivitySourcesV1ActivitySourcesGetQueryKey(options),
+  });
+
+export const getActivitySummaryV1ActivitySummaryGetQueryKey = (
+  options: Options<GetActivitySummaryV1ActivitySummaryGetData>,
+) => createQueryKey("getActivitySummaryV1ActivitySummaryGet", options);
+
+/**
+ * Get Activity Summary
+ */
+export const getActivitySummaryV1ActivitySummaryGetOptions = (
+  options: Options<GetActivitySummaryV1ActivitySummaryGetData>,
+) =>
+  queryOptions<
+    GetActivitySummaryV1ActivitySummaryGetResponse,
+    GetActivitySummaryV1ActivitySummaryGetError,
+    GetActivitySummaryV1ActivitySummaryGetResponse,
+    ReturnType<typeof getActivitySummaryV1ActivitySummaryGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getActivitySummaryV1ActivitySummaryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getActivitySummaryV1ActivitySummaryGetQueryKey(options),
+  });
 
 export const listBankAccountsV1BankAccountsGetQueryKey = (
   options?: Options<ListBankAccountsV1BankAccountsGetData>,

@@ -5,6 +5,30 @@ export type ClientOptions = {
 };
 
 /**
+ * ActivityAppSummary
+ */
+export type ActivityAppSummary = {
+  /**
+   * App Class
+   *
+   * Window class / app identifier.
+   */
+  app_class: string;
+  /**
+   * Active Secs
+   *
+   * Total active seconds attributed to this app.
+   */
+  active_secs: number;
+  /**
+   * Percentage
+   *
+   * Share of total active time (0–100).
+   */
+  percentage: number;
+};
+
+/**
  * ActivityBatchRequest
  */
 export type ActivityBatchRequest = {
@@ -80,6 +104,48 @@ export type ActivityEventIn = {
    * Workspace name or number.
    */
   workspace?: string | null;
+};
+
+/**
+ * ActivitySourcesResponse
+ */
+export type ActivitySourcesResponse = {
+  /**
+   * Sources
+   *
+   * All known machine sources, ordered by most recent activity.
+   */
+  sources: Array<string>;
+};
+
+/**
+ * ActivitySummaryResponse
+ */
+export type ActivitySummaryResponse = {
+  /**
+   * Source
+   *
+   * Machine source that was queried.
+   */
+  source: string;
+  /**
+   * Sources
+   *
+   * All known machine sources, ordered by most recent activity.
+   */
+  sources: Array<string>;
+  /**
+   * Total Active Secs
+   *
+   * Total active seconds in the requested time window.
+   */
+  total_active_secs: number;
+  /**
+   * Apps
+   *
+   * Per-app breakdown, sorted by active time descending.
+   */
+  apps: Array<ActivityAppSummary>;
 };
 
 /**
@@ -2670,6 +2736,69 @@ export type IngestActivityBatchV1ActivityBatchPostResponses = {
 
 export type IngestActivityBatchV1ActivityBatchPostResponse =
   IngestActivityBatchV1ActivityBatchPostResponses[keyof IngestActivityBatchV1ActivityBatchPostResponses];
+
+export type ListActivitySourcesV1ActivitySourcesGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/activity/sources";
+};
+
+export type ListActivitySourcesV1ActivitySourcesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ActivitySourcesResponse;
+};
+
+export type ListActivitySourcesV1ActivitySourcesGetResponse =
+  ListActivitySourcesV1ActivitySourcesGetResponses[keyof ListActivitySourcesV1ActivitySourcesGetResponses];
+
+export type GetActivitySummaryV1ActivitySummaryGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Ts
+     *
+     * Start of time window (Unix epoch seconds, inclusive).
+     */
+    start_ts: number;
+    /**
+     * End Ts
+     *
+     * End of time window (Unix epoch seconds, exclusive).
+     */
+    end_ts: number;
+    /**
+     * Source
+     *
+     * Machine source to query.
+     */
+    source: string;
+  };
+  url: "/v1/activity/summary";
+};
+
+export type GetActivitySummaryV1ActivitySummaryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetActivitySummaryV1ActivitySummaryGetError =
+  GetActivitySummaryV1ActivitySummaryGetErrors[keyof GetActivitySummaryV1ActivitySummaryGetErrors];
+
+export type GetActivitySummaryV1ActivitySummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ActivitySummaryResponse;
+};
+
+export type GetActivitySummaryV1ActivitySummaryGetResponse =
+  GetActivitySummaryV1ActivitySummaryGetResponses[keyof GetActivitySummaryV1ActivitySummaryGetResponses];
 
 export type ListBankAccountsV1BankAccountsGetData = {
   body?: never;

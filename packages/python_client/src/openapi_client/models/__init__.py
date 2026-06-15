@@ -1,8 +1,11 @@
 """Contains all the data models used in inputs/outputs"""
 
+from .activity_app_summary import ActivityAppSummary
 from .activity_batch_request import ActivityBatchRequest
 from .activity_batch_response import ActivityBatchResponse
 from .activity_event_in import ActivityEventIn
+from .activity_sources_response import ActivitySourcesResponse
+from .activity_summary_response import ActivitySummaryResponse
 from .asset_type import AssetType
 from .bank_account_create import BankAccountCreate
 from .bank_account_list_response import BankAccountListResponse
@@ -99,9 +102,12 @@ from .workout_set_schema import WorkoutSetSchema
 from .workout_set_update import WorkoutSetUpdate
 
 __all__ = (
+  "ActivityAppSummary",
   "ActivityBatchRequest",
   "ActivityBatchResponse",
   "ActivityEventIn",
+  "ActivitySourcesResponse",
+  "ActivitySummaryResponse",
   "AssetType",
   "BankAccountCreate",
   "BankAccountListResponse",

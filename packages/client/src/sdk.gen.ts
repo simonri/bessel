@@ -111,6 +111,9 @@ import type {
   DeleteWorkoutV1WorkoutsWorkoutIdDeleteData,
   DeleteWorkoutV1WorkoutsWorkoutIdDeleteErrors,
   DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponses,
+  GetActivitySummaryV1ActivitySummaryGetData,
+  GetActivitySummaryV1ActivitySummaryGetErrors,
+  GetActivitySummaryV1ActivitySummaryGetResponses,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetErrors,
   GetBankAccountV1BankAccountsBankAccountIdGetResponses,
@@ -150,6 +153,8 @@ import type {
   IngestActivityBatchV1ActivityBatchPostData,
   IngestActivityBatchV1ActivityBatchPostErrors,
   IngestActivityBatchV1ActivityBatchPostResponses,
+  ListActivitySourcesV1ActivitySourcesGetData,
+  ListActivitySourcesV1ActivitySourcesGetResponses,
   ListAreasV1TasksAreasGetData,
   ListAreasV1TasksAreasGetResponses,
   ListBankAccountsV1BankAccountsGetData,
@@ -284,6 +289,34 @@ export const ingestActivityBatchV1ActivityBatchPost = <
       ...options.headers,
     },
   });
+
+/**
+ * List Activity Sources
+ */
+export const listActivitySourcesV1ActivitySourcesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListActivitySourcesV1ActivitySourcesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListActivitySourcesV1ActivitySourcesGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/activity/sources", ...options });
+
+/**
+ * Get Activity Summary
+ */
+export const getActivitySummaryV1ActivitySummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetActivitySummaryV1ActivitySummaryGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetActivitySummaryV1ActivitySummaryGetResponses,
+    GetActivitySummaryV1ActivitySummaryGetErrors,
+    ThrowOnError
+  >({ url: "/v1/activity/summary", ...options });
 
 /**
  * List Bank Accounts

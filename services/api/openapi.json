@@ -71,6 +71,93 @@
         }
       }
     },
+    "/v1/activity/sources": {
+      "get": {
+        "tags": [
+          "activity"
+        ],
+        "summary": "List Activity Sources",
+        "operationId": "list_activity_sources_v1_activity_sources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySourcesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activity/summary": {
+      "get": {
+        "tags": [
+          "activity"
+        ],
+        "summary": "Get Activity Summary",
+        "operationId": "get_activity_summary_v1_activity_summary_get",
+        "parameters": [
+          {
+            "name": "start_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Start of time window (Unix epoch seconds, inclusive).",
+              "title": "Start Ts"
+            },
+            "description": "Start of time window (Unix epoch seconds, inclusive)."
+          },
+          {
+            "name": "end_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "End of time window (Unix epoch seconds, exclusive).",
+              "title": "End Ts"
+            },
+            "description": "End of time window (Unix epoch seconds, exclusive)."
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Machine source to query.",
+              "title": "Source"
+            },
+            "description": "Machine source to query."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/bank-accounts": {
       "get": {
         "tags": [
@@ -3394,6 +3481,32 @@
   },
   "components": {
     "schemas": {
+      "ActivityAppSummary": {
+        "properties": {
+          "app_class": {
+            "type": "string",
+            "title": "App Class",
+            "description": "Window class / app identifier."
+          },
+          "active_secs": {
+            "type": "integer",
+            "title": "Active Secs",
+            "description": "Total active seconds attributed to this app."
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage",
+            "description": "Share of total active time (0\u2013100)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "app_class",
+          "active_secs",
+          "percentage"
+        ],
+        "title": "ActivityAppSummary"
+      },
       "ActivityBatchRequest": {
         "properties": {
           "source": {
@@ -3498,6 +3611,61 @@
           "state"
         ],
         "title": "ActivityEventIn"
+      },
+      "ActivitySourcesResponse": {
+        "properties": {
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "All known machine sources, ordered by most recent activity."
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources"
+        ],
+        "title": "ActivitySourcesResponse"
+      },
+      "ActivitySummaryResponse": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Machine source that was queried."
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "All known machine sources, ordered by most recent activity."
+          },
+          "total_active_secs": {
+            "type": "integer",
+            "title": "Total Active Secs",
+            "description": "Total active seconds in the requested time window."
+          },
+          "apps": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityAppSummary"
+            },
+            "type": "array",
+            "title": "Apps",
+            "description": "Per-app breakdown, sorted by active time descending."
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "sources",
+          "total_active_secs",
+          "apps"
+        ],
+        "title": "ActivitySummaryResponse"
       },
       "AssetType": {
         "type": "string",
