@@ -41,6 +41,22 @@ from sqlalchemy.orm import sessionmaker
 TODAY = date(2026, 6, 15)
 NOW = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 
+HEARTBEAT = 300  # seconds between activity events
+
+
+def _activity_blocks(day: date, blocks: list[tuple]) -> list[tuple]:
+    """Generate (ts, state, app_class) events from (start_h, end_h, app) block specs."""
+    base = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+    events: list[tuple] = []
+    for blk in blocks:
+        start_h, end_h, app_class = blk[0], blk[1], blk[2]
+        t = int((base + timedelta(hours=start_h)).timestamp())
+        end_t = int((base + timedelta(hours=end_h)).timestamp())
+        while t < end_t:
+            events.append((t, "active", app_class))
+            t += HEARTBEAT
+    return events
+
 
 def d(days_ago: int) -> date:
     return TODAY - timedelta(days=days_ago)
@@ -650,42 +666,187 @@ async def seed() -> None:
         print("Seeded 4 workout logs with sets.")
 
         # ── 13. Activity events ───────────────────────────────────────────────
-        base_ts = int(time.mktime(datetime(2026, 6, 15, 9, 0).timetuple()))
-        yesterday_ts = base_ts - 86400
-
-        activity_specs = [
-            # Today
-            (base_ts + 0,    "active", "code",     "metron – activity.tsx",           "Metron"),
-            (base_ts + 300,  "active", "code",     "metron – globals.css",            "Metron"),
-            (base_ts + 600,  "idle",   None,        None,                              None),
-            (base_ts + 900,  "active", "browser",  "Claude - claude.ai",              None),
-            (base_ts + 1200, "active", "code",     "metron – seed_db.py",             "Metron"),
-            (base_ts + 1800, "active", "code",     "metron – seed_db.py",             "Metron"),
-            (base_ts + 2400, "idle",   None,        None,                              None),
-            (base_ts + 2700, "active", "terminal", "zsh – services/api",              "Metron"),
-            (base_ts + 3000, "active", "code",     "metron – endpoints.py",           "Metron"),
-            (base_ts + 3600, "active", "browser",  "Stack Overflow",                  None),
-            (base_ts + 3900, "active", "code",     "metron – repository.py",          "Metron"),
-            (base_ts + 4500, "active", "code",     "metron – schemas.py",             "Metron"),
-            # Yesterday
-            (yesterday_ts + 0,    "active", "code",     "metron – transactions.tsx",      "Metron"),
-            (yesterday_ts + 400,  "active", "browser",  "Figma – Metron Design",          "Metron"),
-            (yesterday_ts + 900,  "active", "code",     "metron – button.tsx",            "Metron"),
-            (yesterday_ts + 1500, "idle",   None,        None,                             None),
-            (yesterday_ts + 1800, "active", "code",     "metron – globals.css",           "Metron"),
-            (yesterday_ts + 2400, "active", "terminal", "zsh – packages/ui",              "Metron"),
-            (yesterday_ts + 3000, "active", "browser",  "GitHub – metron",                "Metron"),
-            (yesterday_ts + 3600, "active", "code",     "metron – create-trade-dialog.tsx","Metron"),
-            (yesterday_ts + 4500, "active", "code",     "metron – app-sidebar.tsx",       "Metron"),
+        # 30-day history with varied daily profiles.
+        # Each day spec is (days_ago, [(start_h, end_h, app_class), ...]).
+        # Days omitted from the list = no activity (weekends off, holidays).
+        # App classes: code, terminal, browser, slack, figma, notion, mail, zoom
+        _day_specs: list[tuple[int, list[tuple]]] = [
+            # d(0) Mon June 15 — morning session
+            (0,  [(9.0, 10.5, "code"),
+                  (10.5, 11.0, "browser"),
+                  (11.0, 12.5, "code"),
+                  (12.5, 13.5, "terminal")]),
+            # d(1) Sun June 14 — light weekend session
+            (1,  [(10.5, 12.0, "browser"),
+                  (12.0, 13.5, "code"),
+                  (15.0, 16.5, "code")]),
+            # d(2) Sat June 13 — off
+            # d(3) Fri June 12 — solid day
+            (3,  [(8.5, 10.5, "code"),
+                  (10.5, 11.0, "slack"),
+                  (11.0, 12.5, "code"),
+                  (13.5, 15.5, "code"),
+                  (15.5, 16.0, "terminal"),
+                  (16.0, 18.0, "browser"),
+                  (18.0, 19.0, "code")]),
+            # d(4) Thu June 11 — heavy coding
+            (4,  [(8.0, 10.0, "code"),
+                  (10.0, 10.5, "browser"),
+                  (10.5, 12.5, "code"),
+                  (12.5, 13.0, "terminal"),
+                  (14.0, 16.5, "code"),
+                  (16.5, 17.0, "slack"),
+                  (17.0, 19.0, "code"),
+                  (19.0, 19.5, "terminal")]),
+            # d(5) Wed June 10 — meeting-heavy
+            (5,  [(9.0, 10.0, "zoom"),
+                  (10.0, 11.5, "code"),
+                  (11.5, 12.0, "slack"),
+                  (13.5, 15.0, "zoom"),
+                  (15.0, 16.5, "browser"),
+                  (16.5, 17.5, "code"),
+                  (17.5, 18.0, "mail")]),
+            # d(6) Tue June 9 — heavy coding + design
+            (6,  [(8.5, 10.5, "code"),
+                  (10.5, 11.0, "terminal"),
+                  (11.0, 12.5, "code"),
+                  (13.5, 15.0, "code"),
+                  (15.0, 16.0, "figma"),
+                  (16.0, 18.0, "code"),
+                  (18.0, 18.5, "browser")]),
+            # d(7) Mon June 8 — normal
+            (7,  [(9.0, 11.0, "code"),
+                  (11.0, 11.5, "mail"),
+                  (11.5, 13.0, "code"),
+                  (14.0, 16.0, "code"),
+                  (16.0, 16.5, "slack"),
+                  (16.5, 17.5, "browser")]),
+            # d(8) Sun June 7 — off
+            # d(9) Sat June 6 — short session
+            (9,  [(11.0, 12.5, "code"),
+                  (12.5, 13.0, "browser")]),
+            # d(10) Fri June 5 — productive
+            (10, [(8.0, 10.0, "code"),
+                  (10.0, 10.5, "slack"),
+                  (10.5, 12.5, "code"),
+                  (13.5, 16.0, "code"),
+                  (16.0, 17.0, "terminal"),
+                  (17.0, 19.0, "code")]),
+            # d(11) Thu June 4 — normal
+            (11, [(8.5, 10.5, "code"),
+                  (10.5, 11.0, "browser"),
+                  (11.0, 12.5, "code"),
+                  (13.5, 15.0, "code"),
+                  (15.0, 15.5, "terminal"),
+                  (15.5, 17.5, "code")]),
+            # d(12) Wed June 3 — design-focused
+            (12, [(9.0, 11.0, "figma"),
+                  (11.0, 12.0, "code"),
+                  (13.0, 14.5, "figma"),
+                  (14.5, 15.5, "browser"),
+                  (15.5, 17.5, "code"),
+                  (17.5, 18.0, "figma")]),
+            # d(13) Tue June 2 — heavy day
+            (13, [(8.0, 10.0, "code"),
+                  (10.0, 10.5, "slack"),
+                  (10.5, 12.5, "code"),
+                  (13.5, 16.0, "code"),
+                  (16.0, 16.5, "terminal"),
+                  (16.5, 18.5, "code"),
+                  (18.5, 19.0, "browser")]),
+            # d(14) Mon June 1 — start of week, email-heavy morning
+            (14, [(9.0, 10.5, "mail"),
+                  (10.5, 12.5, "code"),
+                  (13.5, 15.5, "code"),
+                  (15.5, 16.0, "slack"),
+                  (16.0, 17.5, "notion")]),
+            # d(15) Sun May 31 — off
+            # d(16) Sat May 30 — light afternoon
+            (16, [(14.0, 16.0, "browser"),
+                  (16.0, 17.0, "code")]),
+            # d(17) Fri May 29 — good day
+            (17, [(8.5, 10.5, "code"),
+                  (10.5, 11.0, "terminal"),
+                  (11.0, 12.5, "code"),
+                  (13.5, 16.0, "code"),
+                  (16.0, 17.0, "slack"),
+                  (17.0, 18.5, "code")]),
+            # d(18) Thu May 28 — heaviest day of the period
+            (18, [(7.5, 10.0, "code"),
+                  (10.0, 10.5, "browser"),
+                  (10.5, 12.5, "code"),
+                  (12.5, 13.0, "terminal"),
+                  (14.0, 16.5, "code"),
+                  (16.5, 17.0, "figma"),
+                  (17.0, 19.0, "code"),
+                  (19.0, 19.5, "terminal")]),
+            # d(19) Wed May 27 — meetings + code
+            (19, [(9.0, 10.5, "zoom"),
+                  (10.5, 12.0, "code"),
+                  (13.5, 14.5, "zoom"),
+                  (14.5, 16.0, "browser"),
+                  (16.0, 17.5, "code")]),
+            # d(20) Tue May 26 — normal + figma
+            (20, [(8.5, 10.5, "code"),
+                  (10.5, 11.5, "figma"),
+                  (11.5, 12.5, "code"),
+                  (13.5, 15.0, "code"),
+                  (15.0, 15.5, "slack"),
+                  (15.5, 17.0, "code")]),
+            # d(21) Mon May 25 — holiday, short afternoon
+            (21, [(13.0, 14.5, "code"),
+                  (14.5, 15.5, "browser")]),
+            # d(22) Sun May 24 — off
+            # d(23) Sat May 23 — off
+            # d(24) Fri May 22 — productive end of week
+            (24, [(8.0, 10.0, "code"),
+                  (10.0, 10.5, "slack"),
+                  (10.5, 12.5, "code"),
+                  (13.5, 16.0, "code"),
+                  (16.0, 17.5, "browser"),
+                  (17.5, 19.0, "code")]),
+            # d(25) Thu May 21 — normal
+            (25, [(9.0, 11.0, "code"),
+                  (11.0, 11.5, "browser"),
+                  (11.5, 12.5, "code"),
+                  (13.5, 15.0, "code"),
+                  (15.0, 15.5, "terminal"),
+                  (15.5, 17.5, "code")]),
+            # d(26) Wed May 20 — mixed
+            (26, [(8.5, 10.5, "code"),
+                  (10.5, 11.0, "slack"),
+                  (11.0, 12.5, "browser"),
+                  (13.5, 16.0, "code"),
+                  (16.0, 17.0, "figma"),
+                  (17.0, 18.0, "code")]),
+            # d(27) Tue May 19 — heavy
+            (27, [(8.0, 10.0, "code"),
+                  (10.0, 10.5, "terminal"),
+                  (10.5, 12.5, "code"),
+                  (13.5, 15.5, "code"),
+                  (15.5, 16.0, "slack"),
+                  (16.0, 18.5, "code"),
+                  (18.5, 19.0, "browser")]),
+            # d(28) Mon May 18 — lighter Monday
+            (28, [(10.0, 12.0, "code"),
+                  (12.0, 12.5, "mail"),
+                  (13.5, 15.5, "code"),
+                  (15.5, 16.5, "notion")]),
+            # d(29) Sun May 17 — off
         ]
 
-        for local_id, (ts, state, app_class, title, workspace) in enumerate(activity_specs, 1):
+        all_activity: list[tuple] = []
+        for days_ago, blocks in _day_specs:
+            all_activity.extend(_activity_blocks(d(days_ago), blocks))
+        all_activity.sort(key=lambda e: e[0])
+
+        for local_id, (ts, state, app_class) in enumerate(all_activity, 1):
             session.add(ActivityEvent(
-                ts=ts, state=state, app_class=app_class, title=title,
-                workspace=workspace, source="dev-machine", local_id=local_id,
+                ts=ts, state=state, app_class=app_class,
+                source="dev-machine", local_id=local_id,
             ))
         await session.flush()
-        print(f"Seeded {len(activity_specs)} activity events.")
+        print(f"Seeded {len(all_activity)} activity events across {len(_day_specs)} active days.")
 
         # ── Commit ────────────────────────────────────────────────────────────
         await session.commit()
@@ -700,7 +861,7 @@ async def seed() -> None:
         print(f"   Places:        {len(places)}")
         print(f"   Exercises:     {len(EXERCISES)}")
         print(f"   Workout logs:  4  (with sets)")
-        print(f"   Activity:      {len(activity_specs)} events")
+        print(f"   Activity:      {len(all_activity)} events  ({len(_day_specs)} active days)")
 
     await engine.dispose()
 
