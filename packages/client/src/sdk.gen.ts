@@ -10,9 +10,11 @@ import {
 import {
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
+  createCounterV1CountersPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
   createRecipeV1RecipesPostResponseTransformer,
+  createResetV1CountersCounterIdResetsPostResponseTransformer,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
   createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
@@ -22,9 +24,11 @@ import {
   getWeatherForecastV1WeatherGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
+  listCountersV1CountersGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
   listRecipesV1RecipesGetResponseTransformer,
+  listResetsV1CountersCounterIdResetsGetResponseTransformer,
   listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
@@ -33,6 +37,7 @@ import {
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+  updateCounterV1CountersCounterIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
   updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
@@ -53,6 +58,9 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
+  CreateCounterV1CountersPostData,
+  CreateCounterV1CountersPostErrors,
+  CreateCounterV1CountersPostResponses,
   CreateNotificationV1NotificationsPostData,
   CreateNotificationV1NotificationsPostErrors,
   CreateNotificationV1NotificationsPostResponses,
@@ -62,6 +70,9 @@ import type {
   CreateRecipeV1RecipesPostData,
   CreateRecipeV1RecipesPostErrors,
   CreateRecipeV1RecipesPostResponses,
+  CreateResetV1CountersCounterIdResetsPostData,
+  CreateResetV1CountersCounterIdResetsPostErrors,
+  CreateResetV1CountersCounterIdResetsPostResponses,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
@@ -77,6 +88,9 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
+  DeleteCounterV1CountersCounterIdDeleteData,
+  DeleteCounterV1CountersCounterIdDeleteErrors,
+  DeleteCounterV1CountersCounterIdDeleteResponses,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
@@ -142,6 +156,8 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
+  ListCountersV1CountersGetData,
+  ListCountersV1CountersGetResponses,
   ListNotificationsV1NotificationsGetData,
   ListNotificationsV1NotificationsGetResponses,
   ListPlacesV1PlacesGetData,
@@ -152,6 +168,9 @@ import type {
   ListRecipesV1RecipesGetData,
   ListRecipesV1RecipesGetErrors,
   ListRecipesV1RecipesGetResponses,
+  ListResetsV1CountersCounterIdResetsGetData,
+  ListResetsV1CountersCounterIdResetsGetErrors,
+  ListResetsV1CountersCounterIdResetsGetResponses,
   ListSecuritiesV1InvestmentsSecuritiesGetData,
   ListSecuritiesV1InvestmentsSecuritiesGetErrors,
   ListSecuritiesV1InvestmentsSecuritiesGetResponses,
@@ -187,9 +206,15 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteData,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
+  UpdateCounterV1CountersCounterIdPatchData,
+  UpdateCounterV1CountersCounterIdPatchErrors,
+  UpdateCounterV1CountersCounterIdPatchResponses,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
@@ -451,6 +476,136 @@ export const listCategoriesV1CategoriesGet = <
     url: "/v1/categories",
     ...options,
   });
+
+/**
+ * List Counters
+ */
+export const listCountersV1CountersGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCountersV1CountersGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListCountersV1CountersGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listCountersV1CountersGetResponseTransformer,
+    url: "/v1/counters",
+    ...options,
+  });
+
+/**
+ * Create Counter
+ */
+export const createCounterV1CountersPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateCounterV1CountersPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateCounterV1CountersPostResponses,
+    CreateCounterV1CountersPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createCounterV1CountersPostResponseTransformer,
+    url: "/v1/counters",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Counter
+ */
+export const deleteCounterV1CountersCounterIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteCounterV1CountersCounterIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteCounterV1CountersCounterIdDeleteResponses,
+    DeleteCounterV1CountersCounterIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/counters/{counter_id}", ...options });
+
+/**
+ * Update Counter
+ */
+export const updateCounterV1CountersCounterIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateCounterV1CountersCounterIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateCounterV1CountersCounterIdPatchResponses,
+    UpdateCounterV1CountersCounterIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateCounterV1CountersCounterIdPatchResponseTransformer,
+    url: "/v1/counters/{counter_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Resets
+ */
+export const listResetsV1CountersCounterIdResetsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ListResetsV1CountersCounterIdResetsGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    ListResetsV1CountersCounterIdResetsGetResponses,
+    ListResetsV1CountersCounterIdResetsGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listResetsV1CountersCounterIdResetsGetResponseTransformer,
+    url: "/v1/counters/{counter_id}/resets",
+    ...options,
+  });
+
+/**
+ * Record Reset
+ */
+export const createResetV1CountersCounterIdResetsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateResetV1CountersCounterIdResetsPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateResetV1CountersCounterIdResetsPostResponses,
+    CreateResetV1CountersCounterIdResetsPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      createResetV1CountersCounterIdResetsPostResponseTransformer,
+    url: "/v1/counters/{counter_id}/resets",
+    ...options,
+  });
+
+/**
+ * Undo Reset
+ */
+export const undoResetV1CountersCounterIdResetsResetIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UndoResetV1CountersCounterIdResetsResetIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
+    UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/counters/{counter_id}/resets/{reset_id}", ...options });
 
 /**
  * List Securities

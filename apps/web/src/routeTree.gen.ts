@@ -16,6 +16,7 @@ import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
+import { Route as AppCountersRouteImport } from './routes/_app/counters'
 import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
 
@@ -53,6 +54,11 @@ const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
   path: '/investments',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCountersRoute = AppCountersRouteImport.update({
+  id: '/counters',
+  path: '/counters',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppActivityRoute = AppActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/accounts': typeof AppAccountsRoute
   '/activity': typeof AppActivityRoute
+  '/counters': typeof AppCountersRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
   '/tasks': typeof AppTasksRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsRoute
   '/activity': typeof AppActivityRoute
+  '/counters': typeof AppCountersRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
   '/tasks': typeof AppTasksRoute
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_app/accounts': typeof AppAccountsRoute
   '/_app/activity': typeof AppActivityRoute
+  '/_app/counters': typeof AppCountersRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/recipes': typeof AppRecipesRoute
   '/_app/tasks': typeof AppTasksRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accounts'
     | '/activity'
+    | '/counters'
     | '/investments'
     | '/recipes'
     | '/tasks'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
   to:
     | '/accounts'
     | '/activity'
+    | '/counters'
     | '/investments'
     | '/recipes'
     | '/tasks'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_app/accounts'
     | '/_app/activity'
+    | '/_app/counters'
     | '/_app/investments'
     | '/_app/recipes'
     | '/_app/tasks'
@@ -185,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvestmentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/counters': {
+      id: '/_app/counters'
+      path: '/counters'
+      fullPath: '/counters'
+      preLoaderRoute: typeof AppCountersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/activity': {
       id: '/_app/activity'
       path: '/activity'
@@ -205,6 +224,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
   AppActivityRoute: typeof AppActivityRoute
+  AppCountersRoute: typeof AppCountersRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppRecipesRoute: typeof AppRecipesRoute
   AppTasksRoute: typeof AppTasksRoute
@@ -216,6 +236,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
   AppActivityRoute: AppActivityRoute,
+  AppCountersRoute: AppCountersRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppRecipesRoute: AppRecipesRoute,
   AppTasksRoute: AppTasksRoute,

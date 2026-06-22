@@ -9,6 +9,7 @@ import {
   MapPin,
   Activity,
   ChefHat,
+  Timer,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
 
@@ -84,6 +85,14 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ),
     colSpan: 1,
   },
+  counters: {
+    title: "Time since",
+    icon: Timer,
+    component: lazy(() =>
+      import("@/routes/_app/counters").then((m) => ({ default: m.Counters })),
+    ),
+    colSpan: 1,
+  },
 };
 
 export const MODULE_ORDER: ModuleKey[] = [
@@ -95,4 +104,5 @@ export const MODULE_ORDER: ModuleKey[] = [
   "travel",
   "activity",
   "recipes",
+  "counters",
 ];

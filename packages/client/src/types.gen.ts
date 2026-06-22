@@ -557,6 +557,90 @@ export type CategorySpending = {
 };
 
 /**
+ * CounterCreate
+ */
+export type CounterCreate = {
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * CounterResetSchema
+ */
+export type CounterResetSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Counter Id
+   */
+  counter_id: string;
+};
+
+/**
+ * CounterSchema
+ */
+export type CounterSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Last Reset At
+   */
+  last_reset_at: Date | null;
+  /**
+   * Reset Count
+   */
+  reset_count: number;
+};
+
+/**
+ * CounterUpdate
+ */
+export type CounterUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+};
+
+/**
  * CryptoPriceSchema
  */
 export type CryptoPriceSchema = {
@@ -2662,6 +2746,218 @@ export type ListCategoriesV1CategoriesGetResponses = {
 
 export type ListCategoriesV1CategoriesGetResponse =
   ListCategoriesV1CategoriesGetResponses[keyof ListCategoriesV1CategoriesGetResponses];
+
+export type ListCountersV1CountersGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/counters";
+};
+
+export type ListCountersV1CountersGetResponses = {
+  /**
+   * Response List Counters V1 Counters Get
+   *
+   * Successful Response
+   */
+  200: Array<CounterSchema>;
+};
+
+export type ListCountersV1CountersGetResponse =
+  ListCountersV1CountersGetResponses[keyof ListCountersV1CountersGetResponses];
+
+export type CreateCounterV1CountersPostData = {
+  body: CounterCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/counters";
+};
+
+export type CreateCounterV1CountersPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCounterV1CountersPostError =
+  CreateCounterV1CountersPostErrors[keyof CreateCounterV1CountersPostErrors];
+
+export type CreateCounterV1CountersPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: CounterSchema;
+};
+
+export type CreateCounterV1CountersPostResponse =
+  CreateCounterV1CountersPostResponses[keyof CreateCounterV1CountersPostResponses];
+
+export type DeleteCounterV1CountersCounterIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Counter Id
+     */
+    counter_id: string;
+  };
+  query?: never;
+  url: "/v1/counters/{counter_id}";
+};
+
+export type DeleteCounterV1CountersCounterIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCounterV1CountersCounterIdDeleteError =
+  DeleteCounterV1CountersCounterIdDeleteErrors[keyof DeleteCounterV1CountersCounterIdDeleteErrors];
+
+export type DeleteCounterV1CountersCounterIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteCounterV1CountersCounterIdDeleteResponse =
+  DeleteCounterV1CountersCounterIdDeleteResponses[keyof DeleteCounterV1CountersCounterIdDeleteResponses];
+
+export type UpdateCounterV1CountersCounterIdPatchData = {
+  body: CounterUpdate;
+  path: {
+    /**
+     * Counter Id
+     */
+    counter_id: string;
+  };
+  query?: never;
+  url: "/v1/counters/{counter_id}";
+};
+
+export type UpdateCounterV1CountersCounterIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCounterV1CountersCounterIdPatchError =
+  UpdateCounterV1CountersCounterIdPatchErrors[keyof UpdateCounterV1CountersCounterIdPatchErrors];
+
+export type UpdateCounterV1CountersCounterIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: CounterSchema;
+};
+
+export type UpdateCounterV1CountersCounterIdPatchResponse =
+  UpdateCounterV1CountersCounterIdPatchResponses[keyof UpdateCounterV1CountersCounterIdPatchResponses];
+
+export type ListResetsV1CountersCounterIdResetsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Counter Id
+     */
+    counter_id: string;
+  };
+  query?: never;
+  url: "/v1/counters/{counter_id}/resets";
+};
+
+export type ListResetsV1CountersCounterIdResetsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListResetsV1CountersCounterIdResetsGetError =
+  ListResetsV1CountersCounterIdResetsGetErrors[keyof ListResetsV1CountersCounterIdResetsGetErrors];
+
+export type ListResetsV1CountersCounterIdResetsGetResponses = {
+  /**
+   * Response List Resets V1 Counters  Counter Id  Resets Get
+   *
+   * Successful Response
+   */
+  200: Array<CounterResetSchema>;
+};
+
+export type ListResetsV1CountersCounterIdResetsGetResponse =
+  ListResetsV1CountersCounterIdResetsGetResponses[keyof ListResetsV1CountersCounterIdResetsGetResponses];
+
+export type CreateResetV1CountersCounterIdResetsPostData = {
+  body?: never;
+  path: {
+    /**
+     * Counter Id
+     */
+    counter_id: string;
+  };
+  query?: never;
+  url: "/v1/counters/{counter_id}/resets";
+};
+
+export type CreateResetV1CountersCounterIdResetsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateResetV1CountersCounterIdResetsPostError =
+  CreateResetV1CountersCounterIdResetsPostErrors[keyof CreateResetV1CountersCounterIdResetsPostErrors];
+
+export type CreateResetV1CountersCounterIdResetsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: CounterResetSchema;
+};
+
+export type CreateResetV1CountersCounterIdResetsPostResponse =
+  CreateResetV1CountersCounterIdResetsPostResponses[keyof CreateResetV1CountersCounterIdResetsPostResponses];
+
+export type UndoResetV1CountersCounterIdResetsResetIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Counter Id
+     */
+    counter_id: string;
+    /**
+     * Reset Id
+     */
+    reset_id: string;
+  };
+  query?: never;
+  url: "/v1/counters/{counter_id}/resets/{reset_id}";
+};
+
+export type UndoResetV1CountersCounterIdResetsResetIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UndoResetV1CountersCounterIdResetsResetIdDeleteError =
+  UndoResetV1CountersCounterIdResetsResetIdDeleteErrors[keyof UndoResetV1CountersCounterIdResetsResetIdDeleteErrors];
+
+export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponse =
+  UndoResetV1CountersCounterIdResetsResetIdDeleteResponses[keyof UndoResetV1CountersCounterIdResetsResetIdDeleteResponses];
 
 export type ListSecuritiesV1InvestmentsSecuritiesGetData = {
   body?: never;

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from api.activity.endpoints import router as activity_router
 from api.bank_accounts.endpoints import router as bank_accounts_router
 from api.categories.endpoints import router as categories_router
+from api.counters.endpoints import router as counters_router
 from api.investments.endpoints import router as investments_router
 from api.klarna.endpoints import router as klarna_router
 from api.notifications.endpoints import router as notifications_router
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/v1")
 router.include_router(activity_router)
 router.include_router(bank_accounts_router)
 router.include_router(categories_router)
+router.include_router(counters_router)
 router.include_router(investments_router)
 router.include_router(notifications_router)
 router.include_router(places_router)

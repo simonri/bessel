@@ -14,14 +14,17 @@ import {
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
+  createCounterV1CountersPost,
   createNotificationV1NotificationsPost,
   createPlaceV1PlacesPost,
   createRecipeV1RecipesPost,
+  createResetV1CountersCounterIdResetsPost,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
   createSecurityV1InvestmentsSecuritiesPost,
   createTaskV1TasksPost,
   createTradeV1InvestmentsTradesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
+  deleteCounterV1CountersCounterIdDelete,
   deletePlaceV1PlacesPlaceIdDelete,
   deleteRecipeV1RecipesRecipeIdDelete,
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
@@ -45,10 +48,12 @@ import {
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
+  listCountersV1CountersGet,
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
   listProjectsV1TasksProjectsGet,
   listRecipesV1RecipesGet,
+  listResetsV1CountersCounterIdResetsGet,
   listSecuritiesV1InvestmentsSecuritiesGet,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet,
   listTasksV1TasksGet,
@@ -62,7 +67,9 @@ import {
   reorderTasksV1TasksReorderPatch,
   searchGooglePlacesV1PlacesSearchGet,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
+  undoResetV1CountersCounterIdResetsResetIdDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
+  updateCounterV1CountersCounterIdPatch,
   updatePlaceV1PlacesPlaceIdPatch,
   updateRecipeV1RecipesRecipeIdPatch,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatch,
@@ -83,6 +90,9 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateCounterV1CountersPostData,
+  CreateCounterV1CountersPostError,
+  CreateCounterV1CountersPostResponse,
   CreateNotificationV1NotificationsPostData,
   CreateNotificationV1NotificationsPostError,
   CreateNotificationV1NotificationsPostResponse,
@@ -92,6 +102,9 @@ import type {
   CreateRecipeV1RecipesPostData,
   CreateRecipeV1RecipesPostError,
   CreateRecipeV1RecipesPostResponse,
+  CreateResetV1CountersCounterIdResetsPostData,
+  CreateResetV1CountersCounterIdResetsPostError,
+  CreateResetV1CountersCounterIdResetsPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
@@ -107,6 +120,9 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+  DeleteCounterV1CountersCounterIdDeleteData,
+  DeleteCounterV1CountersCounterIdDeleteError,
+  DeleteCounterV1CountersCounterIdDeleteResponse,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
@@ -171,6 +187,8 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetError,
   ListCategoriesV1CategoriesGetResponse,
+  ListCountersV1CountersGetData,
+  ListCountersV1CountersGetResponse,
   ListNotificationsV1NotificationsGetData,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetData,
@@ -181,6 +199,9 @@ import type {
   ListRecipesV1RecipesGetData,
   ListRecipesV1RecipesGetError,
   ListRecipesV1RecipesGetResponse,
+  ListResetsV1CountersCounterIdResetsGetData,
+  ListResetsV1CountersCounterIdResetsGetError,
+  ListResetsV1CountersCounterIdResetsGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetData,
   ListSecuritiesV1InvestmentsSecuritiesGetError,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
@@ -216,9 +237,15 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteData,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteError,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+  UpdateCounterV1CountersCounterIdPatchData,
+  UpdateCounterV1CountersCounterIdPatchError,
+  UpdateCounterV1CountersCounterIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
@@ -766,6 +793,199 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
       queryKey: listCategoriesV1CategoriesGetInfiniteQueryKey(options),
     },
   );
+
+export const listCountersV1CountersGetQueryKey = (
+  options?: Options<ListCountersV1CountersGetData>,
+) => createQueryKey("listCountersV1CountersGet", options);
+
+/**
+ * List Counters
+ */
+export const listCountersV1CountersGetOptions = (
+  options?: Options<ListCountersV1CountersGetData>,
+) =>
+  queryOptions<
+    ListCountersV1CountersGetResponse,
+    DefaultError,
+    ListCountersV1CountersGetResponse,
+    ReturnType<typeof listCountersV1CountersGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCountersV1CountersGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCountersV1CountersGetQueryKey(options),
+  });
+
+/**
+ * Create Counter
+ */
+export const createCounterV1CountersPostMutation = (
+  options?: Partial<Options<CreateCounterV1CountersPostData>>,
+): UseMutationOptions<
+  CreateCounterV1CountersPostResponse,
+  CreateCounterV1CountersPostError,
+  Options<CreateCounterV1CountersPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCounterV1CountersPostResponse,
+    CreateCounterV1CountersPostError,
+    Options<CreateCounterV1CountersPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createCounterV1CountersPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Counter
+ */
+export const deleteCounterV1CountersCounterIdDeleteMutation = (
+  options?: Partial<Options<DeleteCounterV1CountersCounterIdDeleteData>>,
+): UseMutationOptions<
+  DeleteCounterV1CountersCounterIdDeleteResponse,
+  DeleteCounterV1CountersCounterIdDeleteError,
+  Options<DeleteCounterV1CountersCounterIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCounterV1CountersCounterIdDeleteResponse,
+    DeleteCounterV1CountersCounterIdDeleteError,
+    Options<DeleteCounterV1CountersCounterIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteCounterV1CountersCounterIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Counter
+ */
+export const updateCounterV1CountersCounterIdPatchMutation = (
+  options?: Partial<Options<UpdateCounterV1CountersCounterIdPatchData>>,
+): UseMutationOptions<
+  UpdateCounterV1CountersCounterIdPatchResponse,
+  UpdateCounterV1CountersCounterIdPatchError,
+  Options<UpdateCounterV1CountersCounterIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCounterV1CountersCounterIdPatchResponse,
+    UpdateCounterV1CountersCounterIdPatchError,
+    Options<UpdateCounterV1CountersCounterIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCounterV1CountersCounterIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listResetsV1CountersCounterIdResetsGetQueryKey = (
+  options: Options<ListResetsV1CountersCounterIdResetsGetData>,
+) => createQueryKey("listResetsV1CountersCounterIdResetsGet", options);
+
+/**
+ * List Resets
+ */
+export const listResetsV1CountersCounterIdResetsGetOptions = (
+  options: Options<ListResetsV1CountersCounterIdResetsGetData>,
+) =>
+  queryOptions<
+    ListResetsV1CountersCounterIdResetsGetResponse,
+    ListResetsV1CountersCounterIdResetsGetError,
+    ListResetsV1CountersCounterIdResetsGetResponse,
+    ReturnType<typeof listResetsV1CountersCounterIdResetsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listResetsV1CountersCounterIdResetsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listResetsV1CountersCounterIdResetsGetQueryKey(options),
+  });
+
+/**
+ * Record Reset
+ */
+export const createResetV1CountersCounterIdResetsPostMutation = (
+  options?: Partial<Options<CreateResetV1CountersCounterIdResetsPostData>>,
+): UseMutationOptions<
+  CreateResetV1CountersCounterIdResetsPostResponse,
+  CreateResetV1CountersCounterIdResetsPostError,
+  Options<CreateResetV1CountersCounterIdResetsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateResetV1CountersCounterIdResetsPostResponse,
+    CreateResetV1CountersCounterIdResetsPostError,
+    Options<CreateResetV1CountersCounterIdResetsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createResetV1CountersCounterIdResetsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Undo Reset
+ */
+export const undoResetV1CountersCounterIdResetsResetIdDeleteMutation = (
+  options?: Partial<
+    Options<UndoResetV1CountersCounterIdResetsResetIdDeleteData>
+  >,
+): UseMutationOptions<
+  UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
+  UndoResetV1CountersCounterIdResetsResetIdDeleteError,
+  Options<UndoResetV1CountersCounterIdResetsResetIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
+    UndoResetV1CountersCounterIdResetsResetIdDeleteError,
+    Options<UndoResetV1CountersCounterIdResetsResetIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await undoResetV1CountersCounterIdResetsResetIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listSecuritiesV1InvestmentsSecuritiesGetQueryKey = (
   options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,

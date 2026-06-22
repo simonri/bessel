@@ -3,9 +3,11 @@
 import type {
   CompleteTaskV1TasksTaskIdCompletePostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateCounterV1CountersPostResponse,
   CreateNotificationV1NotificationsPostResponse,
   CreatePlaceV1PlacesPostResponse,
   CreateRecipeV1RecipesPostResponse,
+  CreateResetV1CountersCounterIdResetsPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
   CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
@@ -15,9 +17,11 @@ import type {
   GetWeatherForecastV1WeatherGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
+  ListCountersV1CountersGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
   ListRecipesV1RecipesGetResponse,
+  ListResetsV1CountersCounterIdResetsGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
@@ -26,6 +30,7 @@ import type {
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+  UpdateCounterV1CountersCounterIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
@@ -100,6 +105,63 @@ export const listCategoriesV1CategoriesGetResponseTransformer = async (
   data = categoryListResponseSchemaResponseTransformer(data);
   return data;
 };
+
+const counterSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.last_reset_at) {
+    data.last_reset_at = new Date(data.last_reset_at);
+  }
+  return data;
+};
+
+export const listCountersV1CountersGetResponseTransformer = async (
+  data: any,
+): Promise<ListCountersV1CountersGetResponse> => {
+  data = data.map((item: any) => counterSchemaSchemaResponseTransformer(item));
+  return data;
+};
+
+export const createCounterV1CountersPostResponseTransformer = async (
+  data: any,
+): Promise<CreateCounterV1CountersPostResponse> => {
+  data = counterSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCounterV1CountersCounterIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateCounterV1CountersCounterIdPatchResponse> => {
+  data = counterSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const counterResetSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+export const listResetsV1CountersCounterIdResetsGetResponseTransformer = async (
+  data: any,
+): Promise<ListResetsV1CountersCounterIdResetsGetResponse> => {
+  data = data.map((item: any) =>
+    counterResetSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const createResetV1CountersCounterIdResetsPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<CreateResetV1CountersCounterIdResetsPostResponse> => {
+    data = counterResetSchemaSchemaResponseTransformer(data);
+    return data;
+  };
 
 const securitySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

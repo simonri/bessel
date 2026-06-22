@@ -3,6 +3,7 @@ from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
 from .category import Category
+from .counter import Counter, CounterReset
 from .import_batch import ImportBatch
 from .notification import Notification
 from .place import Place
@@ -21,6 +22,8 @@ __all__ = [
   "BankAccount",
   "BankProfile",
   "Category",
+  "Counter",
+  "CounterReset",
   "ImportBatch",
   "Model",
   "Notification",

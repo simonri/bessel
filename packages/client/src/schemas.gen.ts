@@ -679,6 +679,134 @@ export const CategorySpendingSchema = {
   title: "CategorySpending",
 } as const;
 
+export const CounterCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      title: "Name",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "CounterCreate",
+} as const;
+
+export const CounterResetSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    counter_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Counter Id",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "counter_id"],
+  title: "CounterResetSchema",
+} as const;
+
+export const CounterSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    last_reset_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Reset At",
+    },
+    reset_count: {
+      type: "integer",
+      title: "Reset Count",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "last_reset_at",
+    "reset_count",
+  ],
+  title: "CounterSchema",
+} as const;
+
+export const CounterUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+  },
+  type: "object",
+  title: "CounterUpdate",
+} as const;
+
 export const CryptoPriceSchemaSchema = {
   properties: {
     coin_id: {
