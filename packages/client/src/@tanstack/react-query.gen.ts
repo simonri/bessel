@@ -16,12 +16,14 @@ import {
   createBankAccountV1BankAccountsPost,
   createNotificationV1NotificationsPost,
   createPlaceV1PlacesPost,
+  createRecipeV1RecipesPost,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
   createSecurityV1InvestmentsSecuritiesPost,
   createTaskV1TasksPost,
   createTradeV1InvestmentsTradesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deletePlaceV1PlacesPlaceIdDelete,
+  deleteRecipeV1RecipesRecipeIdDelete,
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
   deleteTaskV1TasksTaskIdDelete,
   deleteTradeV1InvestmentsTradesTradeIdDelete,
@@ -33,6 +35,7 @@ import {
   getHoldingsV1InvestmentsHoldingsGet,
   getIntradayActivityV1ActivityIntradayGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
+  getRecipeV1RecipesRecipeIdGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
@@ -45,6 +48,7 @@ import {
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
   listProjectsV1TasksProjectsGet,
+  listRecipesV1RecipesGet,
   listSecuritiesV1InvestmentsSecuritiesGet,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet,
   listTasksV1TasksGet,
@@ -60,6 +64,7 @@ import {
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updatePlaceV1PlacesPlaceIdPatch,
+  updateRecipeV1RecipesRecipeIdPatch,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatch,
   updateTaskV1TasksTaskIdPatch,
   updateTradeV1InvestmentsTradesTradeIdPatch,
@@ -84,6 +89,9 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostError,
   CreatePlaceV1PlacesPostResponse,
+  CreateRecipeV1RecipesPostData,
+  CreateRecipeV1RecipesPostError,
+  CreateRecipeV1RecipesPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
@@ -102,6 +110,9 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
+  DeleteRecipeV1RecipesRecipeIdDeleteData,
+  DeleteRecipeV1RecipesRecipeIdDeleteError,
+  DeleteRecipeV1RecipesRecipeIdDeleteResponse,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse,
@@ -134,6 +145,9 @@ import type {
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetError,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
+  GetRecipeV1RecipesRecipeIdGetData,
+  GetRecipeV1RecipesRecipeIdGetError,
+  GetRecipeV1RecipesRecipeIdGetResponse,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetError,
   GetWeatherForecastV1WeatherGetResponse,
@@ -164,6 +178,9 @@ import type {
   ListPlacesV1PlacesGetResponse,
   ListProjectsV1TasksProjectsGetData,
   ListProjectsV1TasksProjectsGetResponse,
+  ListRecipesV1RecipesGetData,
+  ListRecipesV1RecipesGetError,
+  ListRecipesV1RecipesGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetData,
   ListSecuritiesV1InvestmentsSecuritiesGetError,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
@@ -205,6 +222,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdateRecipeV1RecipesRecipeIdPatchData,
+  UpdateRecipeV1RecipesRecipeIdPatchError,
+  UpdateRecipeV1RecipesRecipeIdPatchResponse,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchError,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
@@ -1561,6 +1581,193 @@ export const updatePlaceV1PlacesPlaceIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updatePlaceV1PlacesPlaceIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listRecipesV1RecipesGetQueryKey = (
+  options?: Options<ListRecipesV1RecipesGetData>,
+) => createQueryKey("listRecipesV1RecipesGet", options);
+
+/**
+ * List Recipes
+ */
+export const listRecipesV1RecipesGetOptions = (
+  options?: Options<ListRecipesV1RecipesGetData>,
+) =>
+  queryOptions<
+    ListRecipesV1RecipesGetResponse,
+    ListRecipesV1RecipesGetError,
+    ListRecipesV1RecipesGetResponse,
+    ReturnType<typeof listRecipesV1RecipesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRecipesV1RecipesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRecipesV1RecipesGetQueryKey(options),
+  });
+
+export const listRecipesV1RecipesGetInfiniteQueryKey = (
+  options?: Options<ListRecipesV1RecipesGetData>,
+): QueryKey<Options<ListRecipesV1RecipesGetData>> =>
+  createQueryKey("listRecipesV1RecipesGet", options, true);
+
+/**
+ * List Recipes
+ */
+export const listRecipesV1RecipesGetInfiniteOptions = (
+  options?: Options<ListRecipesV1RecipesGetData>,
+) =>
+  infiniteQueryOptions<
+    ListRecipesV1RecipesGetResponse,
+    ListRecipesV1RecipesGetError,
+    InfiniteData<ListRecipesV1RecipesGetResponse>,
+    QueryKey<Options<ListRecipesV1RecipesGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListRecipesV1RecipesGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListRecipesV1RecipesGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listRecipesV1RecipesGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listRecipesV1RecipesGetInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Recipe
+ */
+export const createRecipeV1RecipesPostMutation = (
+  options?: Partial<Options<CreateRecipeV1RecipesPostData>>,
+): UseMutationOptions<
+  CreateRecipeV1RecipesPostResponse,
+  CreateRecipeV1RecipesPostError,
+  Options<CreateRecipeV1RecipesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRecipeV1RecipesPostResponse,
+    CreateRecipeV1RecipesPostError,
+    Options<CreateRecipeV1RecipesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createRecipeV1RecipesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Recipe
+ */
+export const deleteRecipeV1RecipesRecipeIdDeleteMutation = (
+  options?: Partial<Options<DeleteRecipeV1RecipesRecipeIdDeleteData>>,
+): UseMutationOptions<
+  DeleteRecipeV1RecipesRecipeIdDeleteResponse,
+  DeleteRecipeV1RecipesRecipeIdDeleteError,
+  Options<DeleteRecipeV1RecipesRecipeIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteRecipeV1RecipesRecipeIdDeleteResponse,
+    DeleteRecipeV1RecipesRecipeIdDeleteError,
+    Options<DeleteRecipeV1RecipesRecipeIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteRecipeV1RecipesRecipeIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getRecipeV1RecipesRecipeIdGetQueryKey = (
+  options: Options<GetRecipeV1RecipesRecipeIdGetData>,
+) => createQueryKey("getRecipeV1RecipesRecipeIdGet", options);
+
+/**
+ * Get Recipe
+ */
+export const getRecipeV1RecipesRecipeIdGetOptions = (
+  options: Options<GetRecipeV1RecipesRecipeIdGetData>,
+) =>
+  queryOptions<
+    GetRecipeV1RecipesRecipeIdGetResponse,
+    GetRecipeV1RecipesRecipeIdGetError,
+    GetRecipeV1RecipesRecipeIdGetResponse,
+    ReturnType<typeof getRecipeV1RecipesRecipeIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRecipeV1RecipesRecipeIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRecipeV1RecipesRecipeIdGetQueryKey(options),
+  });
+
+/**
+ * Update Recipe
+ */
+export const updateRecipeV1RecipesRecipeIdPatchMutation = (
+  options?: Partial<Options<UpdateRecipeV1RecipesRecipeIdPatchData>>,
+): UseMutationOptions<
+  UpdateRecipeV1RecipesRecipeIdPatchResponse,
+  UpdateRecipeV1RecipesRecipeIdPatchError,
+  Options<UpdateRecipeV1RecipesRecipeIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRecipeV1RecipesRecipeIdPatchResponse,
+    UpdateRecipeV1RecipesRecipeIdPatchError,
+    Options<UpdateRecipeV1RecipesRecipeIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateRecipeV1RecipesRecipeIdPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,

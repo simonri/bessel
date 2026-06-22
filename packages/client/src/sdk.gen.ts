@@ -12,16 +12,19 @@ import {
   createBankAccountV1BankAccountsPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
+  createRecipeV1RecipesPostResponseTransformer,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
   createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
   createTradeV1InvestmentsTradesPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+  getRecipeV1RecipesRecipeIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
+  listRecipesV1RecipesGetResponseTransformer,
   listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
@@ -31,6 +34,7 @@ import {
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+  updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
@@ -55,6 +59,9 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
+  CreateRecipeV1RecipesPostData,
+  CreateRecipeV1RecipesPostErrors,
+  CreateRecipeV1RecipesPostResponses,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
@@ -73,6 +80,9 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
+  DeleteRecipeV1RecipesRecipeIdDeleteData,
+  DeleteRecipeV1RecipesRecipeIdDeleteErrors,
+  DeleteRecipeV1RecipesRecipeIdDeleteResponses,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
@@ -105,6 +115,9 @@ import type {
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
+  GetRecipeV1RecipesRecipeIdGetData,
+  GetRecipeV1RecipesRecipeIdGetErrors,
+  GetRecipeV1RecipesRecipeIdGetResponses,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetErrors,
   GetWeatherForecastV1WeatherGetResponses,
@@ -136,6 +149,9 @@ import type {
   ListPlacesV1PlacesGetResponses,
   ListProjectsV1TasksProjectsGetData,
   ListProjectsV1TasksProjectsGetResponses,
+  ListRecipesV1RecipesGetData,
+  ListRecipesV1RecipesGetErrors,
+  ListRecipesV1RecipesGetResponses,
   ListSecuritiesV1InvestmentsSecuritiesGetData,
   ListSecuritiesV1InvestmentsSecuritiesGetErrors,
   ListSecuritiesV1InvestmentsSecuritiesGetResponses,
@@ -177,6 +193,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
+  UpdateRecipeV1RecipesRecipeIdPatchData,
+  UpdateRecipeV1RecipesRecipeIdPatchErrors,
+  UpdateRecipeV1RecipesRecipeIdPatchResponses,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
@@ -839,6 +858,96 @@ export const updatePlaceV1PlacesPlaceIdPatch = <
   >({
     responseTransformer: updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
     url: "/v1/places/{place_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Recipes
+ */
+export const listRecipesV1RecipesGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListRecipesV1RecipesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListRecipesV1RecipesGetResponses,
+    ListRecipesV1RecipesGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listRecipesV1RecipesGetResponseTransformer,
+    url: "/v1/recipes",
+    ...options,
+  });
+
+/**
+ * Create Recipe
+ */
+export const createRecipeV1RecipesPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRecipeV1RecipesPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateRecipeV1RecipesPostResponses,
+    CreateRecipeV1RecipesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createRecipeV1RecipesPostResponseTransformer,
+    url: "/v1/recipes",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Recipe
+ */
+export const deleteRecipeV1RecipesRecipeIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteRecipeV1RecipesRecipeIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteRecipeV1RecipesRecipeIdDeleteResponses,
+    DeleteRecipeV1RecipesRecipeIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/recipes/{recipe_id}", ...options });
+
+/**
+ * Get Recipe
+ */
+export const getRecipeV1RecipesRecipeIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetRecipeV1RecipesRecipeIdGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetRecipeV1RecipesRecipeIdGetResponses,
+    GetRecipeV1RecipesRecipeIdGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getRecipeV1RecipesRecipeIdGetResponseTransformer,
+    url: "/v1/recipes/{recipe_id}",
+    ...options,
+  });
+
+/**
+ * Update Recipe
+ */
+export const updateRecipeV1RecipesRecipeIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateRecipeV1RecipesRecipeIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateRecipeV1RecipesRecipeIdPatchResponses,
+    UpdateRecipeV1RecipesRecipeIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
+    url: "/v1/recipes/{recipe_id}",
     ...options,
     headers: {
       "Content-Type": "application/json",

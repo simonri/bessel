@@ -7,11 +7,13 @@ from .import_batch import ImportBatch
 from .notification import Notification
 from .place import Place
 from .raw_transaction import RawTransaction
+from .recipe import Recipe
 from .security import Security
 from .security_price import SecurityPrice
 from .task import Task
 from .trade import Trade
 from .transaction import Transaction
+from .tree_of_alpha_news import TreeOfAlphaNews
 from .weather_cache import WeatherCache
 
 __all__ = [
@@ -24,10 +26,12 @@ __all__ = [
   "Notification",
   "Place",
   "RawTransaction",
+  "Recipe",
   "Security",
   "SecurityPrice",
   "Task",
   "Trade",
   "Transaction",
+  "TreeOfAlphaNews",
   "WeatherCache",
 ]

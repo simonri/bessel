@@ -205,11 +205,7 @@ async def bulk_update_transactions(
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> BulkUpdateResponse:
   """Update category for a list of transactions by ID."""
-  stmt = (
-    update(Transaction)
-    .where(Transaction.id.in_(body.ids))
-    .values(category_id=body.category_id)
-  )
+  stmt = update(Transaction).where(Transaction.id.in_(body.ids)).values(category_id=body.category_id)
   result = await session.execute(stmt)
   return BulkUpdateResponse(updated=result.rowcount)
 

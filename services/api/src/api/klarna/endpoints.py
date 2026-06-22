@@ -3,16 +3,14 @@ import time
 import uuid
 from datetime import date
 from typing import Annotated, Any
-from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, Header, HTTPException
-
 from api.models.transaction import TransactionDirection
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.base import ParsedTransaction
-from api.transactions.service import transaction_service
 from api.transactions.schemas import ImportResponse
+from api.transactions.service import transaction_service
+from fastapi import APIRouter, Header, HTTPException
 
 router = APIRouter(prefix="/klarna", tags=["klarna"])
 
@@ -218,9 +216,9 @@ def _map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   )
 
 
-from pydantic import UUID4  # noqa: E402
-from fastapi import Depends  # noqa: E402
-from api.common.schemas import Schema  # noqa: E402
+from api.common.schemas import Schema
+from fastapi import Depends
+from pydantic import UUID4
 
 
 class KlarnaImportRequest(Schema):
@@ -230,6 +228,7 @@ class KlarnaImportRequest(Schema):
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
+
 
 @router.get("/transactions")
 async def get_klarna_transactions(

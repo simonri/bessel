@@ -5,16 +5,19 @@ import type {
   CreateBankAccountV1BankAccountsPostResponse,
   CreateNotificationV1NotificationsPostResponse,
   CreatePlaceV1PlacesPostResponse,
+  CreateRecipeV1RecipesPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
   CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
   CreateTradeV1InvestmentsTradesPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+  GetRecipeV1RecipesRecipeIdGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
+  ListRecipesV1RecipesGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
@@ -24,6 +27,7 @@ import type {
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdateRecipeV1RecipesRecipeIdPatchResponse,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
@@ -282,6 +286,49 @@ export const updatePlaceV1PlacesPlaceIdPatchResponseTransformer = async (
   data: any,
 ): Promise<UpdatePlaceV1PlacesPlaceIdPatchResponse> => {
   data = placeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const recipeSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+const recipeListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    recipeSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listRecipesV1RecipesGetResponseTransformer = async (
+  data: any,
+): Promise<ListRecipesV1RecipesGetResponse> => {
+  data = recipeListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createRecipeV1RecipesPostResponseTransformer = async (
+  data: any,
+): Promise<CreateRecipeV1RecipesPostResponse> => {
+  data = recipeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getRecipeV1RecipesRecipeIdGetResponseTransformer = async (
+  data: any,
+): Promise<GetRecipeV1RecipesRecipeIdGetResponse> => {
+  data = recipeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateRecipeV1RecipesRecipeIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateRecipeV1RecipesRecipeIdPatchResponse> => {
+  data = recipeSchemaSchemaResponseTransformer(data);
   return data;
 };
 

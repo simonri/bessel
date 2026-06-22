@@ -90,11 +90,11 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; co
 };
 
 const PRIORITY_CONFIG: Record<number, { label: string; color: string; border: string }> = {
-  0: { label: "None", color: "text-white/20", border: "border-l-transparent" },
-  1: { label: "Low", color: "text-white/40", border: "border-l-white/20" },
-  2: { label: "Medium", color: "text-blue-400", border: "border-l-blue-400/70" },
-  3: { label: "High", color: "text-orange-400", border: "border-l-orange-400" },
-  4: { label: "Urgent", color: "text-red-400", border: "border-l-red-400" },
+  0: { label: "None", color: "text-white/20", border: "" },
+  1: { label: "Low", color: "text-white/40", border: "border-l-2 border-l-white/20" },
+  2: { label: "Medium", color: "text-blue-400", border: "border-l-2 border-l-blue-400/70" },
+  3: { label: "High", color: "text-orange-400", border: "border-l-2 border-l-orange-400" },
+  4: { label: "Urgent", color: "text-red-400", border: "border-l-2 border-l-red-400" },
 };
 
 function ordinalSuffix(n: number): string {
@@ -192,7 +192,7 @@ function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-l-2 border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -514,7 +514,7 @@ function ScheduledTasksDialog({
             return (
               <div
                 key={task.id}
-                className={`rounded-lg border border-l-2 border-white/10 bg-white/5 p-2.5 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-colors ${priorityConfig.border}`}
+                className={`rounded-lg border border-white/10 bg-white/5 p-2.5 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-colors ${priorityConfig.border}`}
                 onClick={() => onSelectTask(task)}
               >
                 <div className="flex items-start gap-2.5">

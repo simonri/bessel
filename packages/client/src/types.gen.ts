@@ -1226,6 +1226,95 @@ export type PlaceUpdate = {
 };
 
 /**
+ * RecipeCreate
+ */
+export type RecipeCreate = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Content
+   */
+  content?: string;
+};
+
+/**
+ * RecipeListResponse
+ */
+export type RecipeListResponse = {
+  /**
+   * Items
+   */
+  items: Array<RecipeSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * RecipeSchema
+ */
+export type RecipeSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Content
+   */
+  content: string;
+};
+
+/**
+ * RecipeSortProperty
+ */
+export const RecipeSortProperty = {
+  CREATED_AT: "created_at",
+  "-CREATED_AT": "-created_at",
+  TITLE: "title",
+  "-TITLE": "-title",
+  MODIFIED_AT: "modified_at",
+  "-MODIFIED_AT": "-modified_at",
+} as const;
+
+/**
+ * RecipeSortProperty
+ */
+export type RecipeSortProperty =
+  (typeof RecipeSortProperty)[keyof typeof RecipeSortProperty];
+
+/**
+ * RecipeUpdate
+ */
+export type RecipeUpdate = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Content
+   */
+  content?: string | null;
+};
+
+/**
  * RruleFrequency
  */
 export const RruleFrequency = {
@@ -3254,6 +3343,181 @@ export type UpdatePlaceV1PlacesPlaceIdPatchResponses = {
 
 export type UpdatePlaceV1PlacesPlaceIdPatchResponse =
   UpdatePlaceV1PlacesPlaceIdPatchResponses[keyof UpdatePlaceV1PlacesPlaceIdPatchResponses];
+
+export type ListRecipesV1RecipesGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Search
+     *
+     * Search by title.
+     */
+    search?: string | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+    /**
+     * Sorting
+     *
+     * Sorting criterion. Several criteria can be used simultaneously and will be applied in order. Add a minus sign `-` before the criteria name to sort by descending order.
+     */
+    sorting?: Array<RecipeSortProperty> | null;
+  };
+  url: "/v1/recipes";
+};
+
+export type ListRecipesV1RecipesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListRecipesV1RecipesGetError =
+  ListRecipesV1RecipesGetErrors[keyof ListRecipesV1RecipesGetErrors];
+
+export type ListRecipesV1RecipesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeListResponse;
+};
+
+export type ListRecipesV1RecipesGetResponse =
+  ListRecipesV1RecipesGetResponses[keyof ListRecipesV1RecipesGetResponses];
+
+export type CreateRecipeV1RecipesPostData = {
+  body: RecipeCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/recipes";
+};
+
+export type CreateRecipeV1RecipesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateRecipeV1RecipesPostError =
+  CreateRecipeV1RecipesPostErrors[keyof CreateRecipeV1RecipesPostErrors];
+
+export type CreateRecipeV1RecipesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: RecipeSchema;
+};
+
+export type CreateRecipeV1RecipesPostResponse =
+  CreateRecipeV1RecipesPostResponses[keyof CreateRecipeV1RecipesPostResponses];
+
+export type DeleteRecipeV1RecipesRecipeIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Recipe Id
+     */
+    recipe_id: string;
+  };
+  query?: never;
+  url: "/v1/recipes/{recipe_id}";
+};
+
+export type DeleteRecipeV1RecipesRecipeIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteRecipeV1RecipesRecipeIdDeleteError =
+  DeleteRecipeV1RecipesRecipeIdDeleteErrors[keyof DeleteRecipeV1RecipesRecipeIdDeleteErrors];
+
+export type DeleteRecipeV1RecipesRecipeIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteRecipeV1RecipesRecipeIdDeleteResponse =
+  DeleteRecipeV1RecipesRecipeIdDeleteResponses[keyof DeleteRecipeV1RecipesRecipeIdDeleteResponses];
+
+export type GetRecipeV1RecipesRecipeIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Recipe Id
+     */
+    recipe_id: string;
+  };
+  query?: never;
+  url: "/v1/recipes/{recipe_id}";
+};
+
+export type GetRecipeV1RecipesRecipeIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetRecipeV1RecipesRecipeIdGetError =
+  GetRecipeV1RecipesRecipeIdGetErrors[keyof GetRecipeV1RecipesRecipeIdGetErrors];
+
+export type GetRecipeV1RecipesRecipeIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeSchema;
+};
+
+export type GetRecipeV1RecipesRecipeIdGetResponse =
+  GetRecipeV1RecipesRecipeIdGetResponses[keyof GetRecipeV1RecipesRecipeIdGetResponses];
+
+export type UpdateRecipeV1RecipesRecipeIdPatchData = {
+  body: RecipeUpdate;
+  path: {
+    /**
+     * Recipe Id
+     */
+    recipe_id: string;
+  };
+  query?: never;
+  url: "/v1/recipes/{recipe_id}";
+};
+
+export type UpdateRecipeV1RecipesRecipeIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateRecipeV1RecipesRecipeIdPatchError =
+  UpdateRecipeV1RecipesRecipeIdPatchErrors[keyof UpdateRecipeV1RecipesRecipeIdPatchErrors];
+
+export type UpdateRecipeV1RecipesRecipeIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeSchema;
+};
+
+export type UpdateRecipeV1RecipesRecipeIdPatchResponse =
+  UpdateRecipeV1RecipesRecipeIdPatchResponses[keyof UpdateRecipeV1RecipesRecipeIdPatchResponses];
 
 export type ListTasksV1TasksGetData = {
   body?: never;

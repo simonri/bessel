@@ -1816,6 +1816,124 @@ export const PlaceUpdateSchema = {
   title: "PlaceUpdate",
 } as const;
 
+export const RecipeCreateSchema = {
+  properties: {
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    content: {
+      type: "string",
+      title: "Content",
+      default: "",
+    },
+  },
+  type: "object",
+  required: ["title"],
+  title: "RecipeCreate",
+} as const;
+
+export const RecipeListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/RecipeSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "RecipeListResponse",
+} as const;
+
+export const RecipeSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    content: {
+      type: "string",
+      title: "Content",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "title", "content"],
+  title: "RecipeSchema",
+} as const;
+
+export const RecipeSortPropertySchema = {
+  type: "string",
+  enum: [
+    "created_at",
+    "-created_at",
+    "title",
+    "-title",
+    "modified_at",
+    "-modified_at",
+  ],
+  title: "RecipeSortProperty",
+} as const;
+
+export const RecipeUpdateSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    content: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Content",
+    },
+  },
+  type: "object",
+  title: "RecipeUpdate",
+} as const;
+
 export const RruleFrequencySchema = {
   type: "string",
   enum: ["daily", "weekly", "monthly", "yearly"],
