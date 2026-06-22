@@ -10,6 +10,7 @@ import {
 import {
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
+  createNotificationV1NotificationsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
   createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
@@ -19,12 +20,14 @@ import {
   getWeatherForecastV1WeatherGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
+  listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
   listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
   listTradesV1InvestmentsTradesGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
+  markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
@@ -46,6 +49,9 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
+  CreateNotificationV1NotificationsPostData,
+  CreateNotificationV1NotificationsPostErrors,
+  CreateNotificationV1NotificationsPostResponses,
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
@@ -123,6 +129,8 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
+  ListNotificationsV1NotificationsGetData,
+  ListNotificationsV1NotificationsGetResponses,
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetErrors,
   ListPlacesV1PlacesGetResponses,
@@ -143,6 +151,11 @@ import type {
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
+  MarkAllNotificationsReadV1NotificationsReadAllPostData,
+  MarkAllNotificationsReadV1NotificationsReadAllPostResponses,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostData,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostErrors,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostResponses,
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
@@ -666,6 +679,86 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
     GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
     ThrowOnError
   >({ url: "/v1/investments/crypto/price/{coin_id}", ...options });
+
+/**
+ * List Notifications
+ */
+export const listNotificationsV1NotificationsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListNotificationsV1NotificationsGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListNotificationsV1NotificationsGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listNotificationsV1NotificationsGetResponseTransformer,
+    url: "/v1/notifications",
+    ...options,
+  });
+
+/**
+ * Create Notification
+ */
+export const createNotificationV1NotificationsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateNotificationV1NotificationsPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateNotificationV1NotificationsPostResponses,
+    CreateNotificationV1NotificationsPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      createNotificationV1NotificationsPostResponseTransformer,
+    url: "/v1/notifications",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Mark Notification Read
+ */
+export const markNotificationReadV1NotificationsNotificationIdReadPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    MarkNotificationReadV1NotificationsNotificationIdReadPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    MarkNotificationReadV1NotificationsNotificationIdReadPostResponses,
+    MarkNotificationReadV1NotificationsNotificationIdReadPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
+    url: "/v1/notifications/{notification_id}/read",
+    ...options,
+  });
+
+/**
+ * Mark All Notifications Read
+ */
+export const markAllNotificationsReadV1NotificationsReadAllPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    MarkAllNotificationsReadV1NotificationsReadAllPostData,
+    ThrowOnError
+  >,
+) =>
+  (options?.client ?? client).post<
+    MarkAllNotificationsReadV1NotificationsReadAllPostResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/notifications/read-all", ...options });
 
 /**
  * List Places

@@ -18,7 +18,7 @@ export function CanvasShell() {
       <div className="absolute inset-0 bg-black/30" />
 
       {/* Content area: between top bar and dock, no scroll */}
-      <div className="relative flex h-full flex-col pt-10 pb-3.5">
+      <div className="relative flex h-full flex-col pt-12 pb-3.5">
         {windows.length > 0 && (
           <div
             className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"

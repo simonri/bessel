@@ -3,6 +3,7 @@
 import type {
   CompleteTaskV1TasksTaskIdCompletePostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateNotificationV1NotificationsPostResponse,
   CreatePlaceV1PlacesPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
   CreateSecurityV1InvestmentsSecuritiesPostResponse,
@@ -12,12 +13,14 @@ import type {
   GetWeatherForecastV1WeatherGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
+  ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
   ListTradesV1InvestmentsTradesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
@@ -200,6 +203,46 @@ export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostRespo
     data: any,
   ): Promise<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse> => {
     data = securityPriceSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const notificationResponseSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.read_at) {
+    data.read_at = new Date(data.read_at);
+  }
+  return data;
+};
+
+const notificationsListResponseSchemaResponseTransformer = (data: any) => {
+  data.notifications = data.notifications.map((item: any) =>
+    notificationResponseSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listNotificationsV1NotificationsGetResponseTransformer = async (
+  data: any,
+): Promise<ListNotificationsV1NotificationsGetResponse> => {
+  data = notificationsListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const createNotificationV1NotificationsPostResponseTransformer = async (
+  data: any,
+): Promise<CreateNotificationV1NotificationsPostResponse> => {
+  data = notificationResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<MarkNotificationReadV1NotificationsNotificationIdReadPostResponse> => {
+    data = notificationResponseSchemaResponseTransformer(data);
     return data;
   };
 

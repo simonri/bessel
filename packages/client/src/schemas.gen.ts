@@ -1085,6 +1085,129 @@ export const MonthlySpendingResponseSchema = {
   title: "MonthlySpendingResponse",
 } as const;
 
+export const NotificationCreateSchema = {
+  properties: {
+    title: {
+      type: "string",
+      title: "Title",
+      description: "Short notification title.",
+    },
+    body: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Body",
+      description: "Optional longer description.",
+    },
+    kind: {
+      type: "string",
+      enum: ["info", "success", "warning", "error"],
+      title: "Kind",
+      description: "Severity/type of notification.",
+      default: "info",
+    },
+  },
+  type: "object",
+  required: ["title"],
+  title: "NotificationCreate",
+} as const;
+
+export const NotificationResponseSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    body: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Body",
+    },
+    kind: {
+      type: "string",
+      title: "Kind",
+    },
+    read_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Read At",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "title",
+    "body",
+    "kind",
+    "read_at",
+  ],
+  title: "NotificationResponse",
+} as const;
+
+export const NotificationsListResponseSchema = {
+  properties: {
+    notifications: {
+      items: {
+        $ref: "#/components/schemas/NotificationResponse",
+      },
+      type: "array",
+      title: "Notifications",
+    },
+    unread_count: {
+      type: "integer",
+      title: "Unread Count",
+    },
+  },
+  type: "object",
+  required: ["notifications", "unread_count"],
+  title: "NotificationsListResponse",
+} as const;
+
 export const PaginationSchema = {
   properties: {
     total_count: {

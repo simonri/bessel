@@ -14,6 +14,7 @@ import {
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
+  createNotificationV1NotificationsPost,
   createPlaceV1PlacesPost,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
   createSecurityV1InvestmentsSecuritiesPost,
@@ -41,6 +42,7 @@ import {
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
+  listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
   listProjectsV1TasksProjectsGet,
   listSecuritiesV1InvestmentsSecuritiesGet,
@@ -48,6 +50,8 @@ import {
   listTasksV1TasksGet,
   listTradesV1InvestmentsTradesGet,
   listTransactionsV1TransactionsGet,
+  markAllNotificationsReadV1NotificationsReadAllPost,
+  markNotificationReadV1NotificationsNotificationIdReadPost,
   monthlyFlowV1TransactionsMonthlyFlowGet,
   type Options,
   reopenTaskV1TasksTaskIdReopenPost,
@@ -74,6 +78,9 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateNotificationV1NotificationsPostData,
+  CreateNotificationV1NotificationsPostError,
+  CreateNotificationV1NotificationsPostResponse,
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostError,
   CreatePlaceV1PlacesPostResponse,
@@ -150,6 +157,8 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetError,
   ListCategoriesV1CategoriesGetResponse,
+  ListNotificationsV1NotificationsGetData,
+  ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetError,
   ListPlacesV1PlacesGetResponse,
@@ -170,6 +179,11 @@ import type {
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
+  MarkAllNotificationsReadV1NotificationsReadAllPostData,
+  MarkAllNotificationsReadV1NotificationsReadAllPostResponse,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostData,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostError,
+  MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetError,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
@@ -1252,6 +1266,123 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
     },
     queryKey: getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey(options),
   });
+
+export const listNotificationsV1NotificationsGetQueryKey = (
+  options?: Options<ListNotificationsV1NotificationsGetData>,
+) => createQueryKey("listNotificationsV1NotificationsGet", options);
+
+/**
+ * List Notifications
+ */
+export const listNotificationsV1NotificationsGetOptions = (
+  options?: Options<ListNotificationsV1NotificationsGetData>,
+) =>
+  queryOptions<
+    ListNotificationsV1NotificationsGetResponse,
+    DefaultError,
+    ListNotificationsV1NotificationsGetResponse,
+    ReturnType<typeof listNotificationsV1NotificationsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listNotificationsV1NotificationsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listNotificationsV1NotificationsGetQueryKey(options),
+  });
+
+/**
+ * Create Notification
+ */
+export const createNotificationV1NotificationsPostMutation = (
+  options?: Partial<Options<CreateNotificationV1NotificationsPostData>>,
+): UseMutationOptions<
+  CreateNotificationV1NotificationsPostResponse,
+  CreateNotificationV1NotificationsPostError,
+  Options<CreateNotificationV1NotificationsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateNotificationV1NotificationsPostResponse,
+    CreateNotificationV1NotificationsPostError,
+    Options<CreateNotificationV1NotificationsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createNotificationV1NotificationsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Mark Notification Read
+ */
+export const markNotificationReadV1NotificationsNotificationIdReadPostMutation =
+  (
+    options?: Partial<
+      Options<MarkNotificationReadV1NotificationsNotificationIdReadPostData>
+    >,
+  ): UseMutationOptions<
+    MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
+    MarkNotificationReadV1NotificationsNotificationIdReadPostError,
+    Options<MarkNotificationReadV1NotificationsNotificationIdReadPostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
+      MarkNotificationReadV1NotificationsNotificationIdReadPostError,
+      Options<MarkNotificationReadV1NotificationsNotificationIdReadPostData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await markNotificationReadV1NotificationsNotificationIdReadPost({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+/**
+ * Mark All Notifications Read
+ */
+export const markAllNotificationsReadV1NotificationsReadAllPostMutation = (
+  options?: Partial<
+    Options<MarkAllNotificationsReadV1NotificationsReadAllPostData>
+  >,
+): UseMutationOptions<
+  MarkAllNotificationsReadV1NotificationsReadAllPostResponse,
+  DefaultError,
+  Options<MarkAllNotificationsReadV1NotificationsReadAllPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MarkAllNotificationsReadV1NotificationsReadAllPostResponse,
+    DefaultError,
+    Options<MarkAllNotificationsReadV1NotificationsReadAllPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await markAllNotificationsReadV1NotificationsReadAllPost(
+        {
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        },
+      );
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listPlacesV1PlacesGetQueryKey = (
   options?: Options<ListPlacesV1PlacesGetData>,

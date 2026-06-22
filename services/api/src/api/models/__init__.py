@@ -4,6 +4,7 @@ from .bank_profile import BankProfile
 from .base import Model
 from .category import Category
 from .import_batch import ImportBatch
+from .notification import Notification
 from .place import Place
 from .raw_transaction import RawTransaction
 from .security import Security
@@ -20,6 +21,7 @@ __all__ = [
   "Category",
   "ImportBatch",
   "Model",
+  "Notification",
   "Place",
   "RawTransaction",
   "Security",

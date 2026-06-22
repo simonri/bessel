@@ -1228,6 +1228,132 @@
         }
       }
     },
+    "/v1/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List Notifications",
+        "operationId": "list_notifications_v1_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationsListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Create Notification",
+        "operationId": "create_notification_v1_notifications_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notifications/{notification_id}/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark Notification Read",
+        "operationId": "mark_notification_read_v1_notifications__notification_id__read_post",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notifications/read-all": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark All Notifications Read",
+        "operationId": "mark_all_notifications_read_v1_notifications_read_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Mark All Notifications Read V1 Notifications Read All Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/places": {
       "get": {
         "tags": [
@@ -3851,6 +3977,136 @@
           "items"
         ],
         "title": "MonthlySpendingResponse"
+      },
+      "NotificationCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Short notification title."
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body",
+            "description": "Optional longer description."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "info",
+              "success",
+              "warning",
+              "error"
+            ],
+            "title": "Kind",
+            "description": "Severity/type of notification.",
+            "default": "info"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "NotificationCreate"
+      },
+      "NotificationResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp of the object."
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At",
+            "description": "Last modification timestamp of the object."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "modified_at",
+          "id",
+          "title",
+          "body",
+          "kind",
+          "read_at"
+        ],
+        "title": "NotificationResponse"
+      },
+      "NotificationsListResponse": {
+        "properties": {
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "type": "array",
+            "title": "Notifications"
+          },
+          "unread_count": {
+            "type": "integer",
+            "title": "Unread Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notifications",
+          "unread_count"
+        ],
+        "title": "NotificationsListResponse"
       },
       "Pagination": {
         "properties": {

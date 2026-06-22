@@ -840,6 +840,84 @@ export type MonthlySpendingResponse = {
 };
 
 /**
+ * NotificationCreate
+ */
+export type NotificationCreate = {
+  /**
+   * Title
+   *
+   * Short notification title.
+   */
+  title: string;
+  /**
+   * Body
+   *
+   * Optional longer description.
+   */
+  body?: string | null;
+  /**
+   * Kind
+   *
+   * Severity/type of notification.
+   */
+  kind?: "info" | "success" | "warning" | "error";
+};
+
+/**
+ * NotificationResponse
+ */
+export type NotificationResponse = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Body
+   */
+  body: string | null;
+  /**
+   * Kind
+   */
+  kind: string;
+  /**
+   * Read At
+   */
+  read_at: Date | null;
+};
+
+/**
+ * NotificationsListResponse
+ */
+export type NotificationsListResponse = {
+  /**
+   * Notifications
+   */
+  notifications: Array<NotificationResponse>;
+  /**
+   * Unread Count
+   */
+  unread_count: number;
+};
+
+/**
  * Pagination
  */
 export type Pagination = {
@@ -2901,6 +2979,104 @@ export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses = {
 
 export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse =
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses[keyof GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses];
+
+export type ListNotificationsV1NotificationsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/notifications";
+};
+
+export type ListNotificationsV1NotificationsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: NotificationsListResponse;
+};
+
+export type ListNotificationsV1NotificationsGetResponse =
+  ListNotificationsV1NotificationsGetResponses[keyof ListNotificationsV1NotificationsGetResponses];
+
+export type CreateNotificationV1NotificationsPostData = {
+  body: NotificationCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/notifications";
+};
+
+export type CreateNotificationV1NotificationsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateNotificationV1NotificationsPostError =
+  CreateNotificationV1NotificationsPostErrors[keyof CreateNotificationV1NotificationsPostErrors];
+
+export type CreateNotificationV1NotificationsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: NotificationResponse;
+};
+
+export type CreateNotificationV1NotificationsPostResponse =
+  CreateNotificationV1NotificationsPostResponses[keyof CreateNotificationV1NotificationsPostResponses];
+
+export type MarkNotificationReadV1NotificationsNotificationIdReadPostData = {
+  body?: never;
+  path: {
+    /**
+     * Notification Id
+     */
+    notification_id: string;
+  };
+  query?: never;
+  url: "/v1/notifications/{notification_id}/read";
+};
+
+export type MarkNotificationReadV1NotificationsNotificationIdReadPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type MarkNotificationReadV1NotificationsNotificationIdReadPostError =
+  MarkNotificationReadV1NotificationsNotificationIdReadPostErrors[keyof MarkNotificationReadV1NotificationsNotificationIdReadPostErrors];
+
+export type MarkNotificationReadV1NotificationsNotificationIdReadPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: NotificationResponse;
+  };
+
+export type MarkNotificationReadV1NotificationsNotificationIdReadPostResponse =
+  MarkNotificationReadV1NotificationsNotificationIdReadPostResponses[keyof MarkNotificationReadV1NotificationsNotificationIdReadPostResponses];
+
+export type MarkAllNotificationsReadV1NotificationsReadAllPostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/notifications/read-all";
+};
+
+export type MarkAllNotificationsReadV1NotificationsReadAllPostResponses = {
+  /**
+   * Response Mark All Notifications Read V1 Notifications Read All Post
+   *
+   * Successful Response
+   */
+  200: {
+    [key: string]: unknown;
+  };
+};
+
+export type MarkAllNotificationsReadV1NotificationsReadAllPostResponse =
+  MarkAllNotificationsReadV1NotificationsReadAllPostResponses[keyof MarkAllNotificationsReadV1NotificationsReadAllPostResponses];
 
 export type ListPlacesV1PlacesGetData = {
   body?: never;
