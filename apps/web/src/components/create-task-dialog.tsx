@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Plus } from "lucide-react";
@@ -61,6 +61,7 @@ interface ProjectInputProps {
 
 function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = value
     ? projects.filter((p) => p.toLowerCase().includes(value.toLowerCase()) && p !== value)
@@ -70,6 +71,7 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
     <Popover open={open && suggestions.length > 0} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <Input
+          ref={inputRef}
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
@@ -85,13 +87,19 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
         className="w-[var(--radix-popover-trigger-width)] p-1"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          // Radix fires onInteractOutside for the anchor click too (anchor isn't
+          // considered "inside" the content). Prevent that from closing the popover.
+          const target = (e as CustomEvent).detail?.originalEvent?.target as Node | null;
+          if (inputRef.current?.contains(target)) e.preventDefault();
+        }}
       >
         {suggestions.map((p) => (
           <button
             key={p}
             type="button"
-            onMouseDown={(e) => {
-              e.preventDefault(); // keep focus on input
+            onMouseDown={(e) => e.preventDefault()} // keep focus on input
+            onClick={() => {
               onChange(p);
               setOpen(false);
             }}

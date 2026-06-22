@@ -18,7 +18,7 @@ export function CanvasDock() {
               onClick={() => toggleWindow(key)}
               className={`flex flex-col items-center gap-1.5 rounded-xl px-3 py-2 transition-all duration-150 ${
                 active
-                  ? "bg-white/20 text-white"
+                  ? "bg-orange-500/20 text-orange-300"
                   : "text-white/50 hover:bg-white/10 hover:text-white/80"
               }`}
               title={config.title}

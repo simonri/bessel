@@ -23,6 +23,32 @@ export const Route = createFileRoute("/_app/activity")({
   component: ActivityPage,
 });
 
+// Indexed colors for app bars (per app, by position)
+const APP_COLORS = [
+  "232,113,75",   // warm orange
+  "147,131,250",  // soft violet
+  "96,165,250",   // sky blue
+  "52,211,153",   // emerald
+  "251,191,36",   // amber
+  "244,114,182",  // rose pink
+  "34,211,238",   // cyan
+  "192,132,252",  // lavender
+  "251,146,60",   // peach
+  "74,222,128",   // lime
+];
+
+// 5 intensity levels for the year grid (GitHub-style)
+const GRID_ALPHA = [0.07, 0.28, 0.50, 0.72, 0.92];
+
+function activityLevel(secs: number, maxSecs: number): 0 | 1 | 2 | 3 | 4 {
+  if (secs === 0 || maxSecs === 0) return 0;
+  const r = secs / maxSecs;
+  if (r < 0.25) return 1;
+  if (r < 0.50) return 2;
+  if (r < 0.75) return 3;
+  return 4;
+}
+
 function localDayBounds(d: Date): [number, number] {
   const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
@@ -34,6 +60,8 @@ function fmtDur(secs: number): string {
   if (m >= 60) return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
   return `${m}m`;
 }
+
+type GridDay = { d: Date; dateStr: string; active_secs: number } | null;
 
 export function ActivityPage() {
   const today = new Date();
@@ -48,8 +76,8 @@ export function ActivityPage() {
   const sources = sourcesData?.sources ?? [];
   const activeSource = source ?? sources[0] ?? null;
 
+  // Daily detail for selected date
   const [startTs, endTs] = localDayBounds(date);
-
   const { data: summary, isLoading } = useQuery({
     ...getActivitySummaryV1ActivitySummaryGetOptions({
       client,
@@ -60,31 +88,66 @@ export function ActivityPage() {
   });
 
   const tzOffsetMins = -new Date().getTimezoneOffset();
-  const rangeStart = Math.floor(subDays(new Date(today.getFullYear(), today.getMonth(), today.getDate()), 29).getTime() / 1000);
-  const rangeEnd = Math.floor(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getTime() / 1000);
 
-  const { data: dailyData } = useQuery({
+  // Full calendar year grid: Jan 1 → Dec 31, padded to week boundaries
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const calYearStart = new Date(today.getFullYear(), 0, 1);
+  const yearGridStart = subDays(calYearStart, calYearStart.getDay()); // Sunday on/before Jan 1
+  const calYearEnd = new Date(today.getFullYear(), 11, 31);
+  const yearGridEnd = addDays(calYearEnd, 6 - calYearEnd.getDay()); // Saturday on/after Dec 31
+  const yearRangeStart = Math.floor(yearGridStart.getTime() / 1000);
+  const yearRangeEnd = Math.floor(
+    new Date(todayMidnight.getFullYear(), todayMidnight.getMonth(), todayMidnight.getDate() + 1).getTime() / 1000
+  );
+
+  const { data: yearDailyData } = useQuery({
     ...getDailyActivityV1ActivityDailyGetOptions({
       client,
-      query: { start_ts: rangeStart, end_ts: rangeEnd, source: activeSource!, tz_offset_mins: tzOffsetMins },
+      query: { start_ts: yearRangeStart, end_ts: yearRangeEnd, source: activeSource!, tz_offset_mins: tzOffsetMins },
     }),
     enabled: !!activeSource,
   });
 
-  const dailyMap = new Map(dailyData?.days.map((d) => [d.date, d.active_secs]) ?? []);
-  const last30Days = Array.from({ length: 30 }, (_, i) => {
-    const d = subDays(today, 29 - i);
-    const dateStr = format(d, "yyyy-MM-dd");
-    return { d, dateStr, active_secs: dailyMap.get(dateStr) ?? 0 };
+  const yearDailyMap = new Map(yearDailyData?.days.map((d) => [d.date, d.active_secs]) ?? []);
+  const maxYearSecs = Math.max(...(yearDailyData?.days.map((d) => d.active_secs) ?? []), 1);
+
+  // Build week columns: full calendar year, future dates are null (empty cells)
+  const yearGrid: GridDay[][] = [];
+  let ws = new Date(yearGridStart);
+  while (ws <= yearGridEnd) {
+    const week: GridDay[] = [];
+    for (let di = 0; di < 7; di++) {
+      const d = addDays(ws, di);
+      if (d.getFullYear() !== today.getFullYear()) {
+        week.push(null); // padding days outside the calendar year
+      } else {
+        const dateStr = format(d, "yyyy-MM-dd");
+        week.push({ d, dateStr, active_secs: yearDailyMap.get(dateStr) ?? 0 });
+      }
+    }
+    yearGrid.push(week);
+    ws = addDays(ws, 7);
+  }
+
+  // Month labels: show at the column where a new month starts
+  const monthMarkers: { col: number; label: string }[] = [];
+  let prevMonth = -1;
+  yearGrid.forEach((week, wi) => {
+    const first = week.find((d) => d !== null);
+    if (!first) return;
+    const m = first.d.getMonth();
+    if (m !== prevMonth) {
+      monthMarkers.push({ col: wi, label: format(first.d, "MMM") });
+      prevMonth = m;
+    }
   });
-  const maxSecs = Math.max(...last30Days.map((d) => d.active_secs), 1);
 
   const prevDay = () => setDate((d) => subDays(d, 1));
   const nextDay = () => setDate((d) => addDays(d, 1));
   const goToday = () => setDate(today);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
@@ -92,7 +155,6 @@ export function ActivityPage() {
             Time tracking from the desktop monitor.
           </p>
         </div>
-
         {sources.length > 1 && (
           <Select value={activeSource ?? ""} onValueChange={(v) => setSource(v)}>
             <SelectTrigger className="w-48">
@@ -125,6 +187,7 @@ export function ActivityPage() {
         </p>
       ) : (
         <>
+          {/* Date navigation */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={prevDay}>
               <ChevronLeft className="h-4 w-4" />
@@ -132,12 +195,7 @@ export function ActivityPage() {
             <span className="min-w-36 text-center text-sm font-medium">
               {isCurrentDay ? "Today" : format(date, "EEE, MMM d, yyyy")}
             </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={nextDay}
-              disabled={isCurrentDay}
-            >
+            <Button variant="outline" size="icon" onClick={nextDay} disabled={isCurrentDay}>
               <ChevronRight className="h-4 w-4" />
             </Button>
             {!isCurrentDay && (
@@ -147,20 +205,93 @@ export function ActivityPage() {
             )}
           </div>
 
+          {/* GitHub-style year activity grid */}
+          <div className="pt-1">
+            <p className="mb-3 text-[11px] font-medium text-white/30">{today.getFullYear()}</p>
+
+            {/* Outer flex row: [day labels] [month labels + cells] */}
+            <div className="flex gap-1.5">
+              {/* Day-of-week labels — flex-1 rows track the grid rows automatically */}
+              <div className="flex flex-col shrink-0 select-none" style={{ gap: "3px" }}>
+                {["", "Mon", "", "Wed", "", "Fri", ""].map((l, i) => (
+                  <div key={i} className="flex-1 flex items-center justify-end text-[8px] leading-none text-white/30 pr-0.5">
+                    {l}
+                  </div>
+                ))}
+              </div>
+
+              {/* Cell column: month labels + cell grid */}
+              <div className="flex-1 min-w-0">
+                {/* Month labels: % positioned, clipped so they never overflow */}
+                <div className="relative h-3.5 mb-1 overflow-hidden">
+                  {monthMarkers.map(({ col, label }) => (
+                    <span
+                      key={label}
+                      className="absolute text-[9px] leading-none font-medium text-white/40 select-none"
+                      style={{ left: `${(col / Math.max(yearGrid.length, 1)) * 100}%` }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Cell grid: uniform 1fr columns so aspect-square resolves correctly */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${yearGrid.length}, 1fr)`,
+                    gap: "3px",
+                  }}
+                >
+                  {yearGrid.map((week, wi) =>
+                    week.map((day, di) =>
+                      day === null ? (
+                        <div
+                          key={`${wi}-${di}`}
+                          className="aspect-square"
+                          style={{ gridColumn: wi + 1, gridRow: di + 1 }}
+                        />
+                      ) : (
+                        <button
+                          key={`${wi}-${di}`}
+                          title={`${format(day.d, "EEE, MMM d")}: ${
+                            day.active_secs > 0 ? fmtDur(day.active_secs) : "No activity"
+                          }`}
+                          onClick={() => setDate(day.d)}
+                          className={`aspect-square rounded-[2px] transition-all cursor-pointer ${
+                            isSameDay(day.d, date)
+                              ? "ring-1 ring-inset ring-white/60"
+                              : isSameDay(day.d, today)
+                                ? "ring-1 ring-inset ring-white/25"
+                                : ""
+                          }`}
+                          style={{
+                            gridColumn: wi + 1,
+                            gridRow: di + 1,
+                            background: `rgba(232,113,75,${GRID_ALPHA[activityLevel(day.active_secs, maxYearSecs)]})`,
+                          }}
+                        />
+                      )
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Daily breakdown */}
           {isLoading && !summary ? (
             <div className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
+                <Skeleton key={i} className="h-6 w-full" />
               ))}
             </div>
           ) : !summary || summary.total_active_secs === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No activity recorded for this day.
-            </p>
+            <p className="text-sm text-muted-foreground">No activity recorded for this day.</p>
           ) : (
-            <div className="space-y-1">
-              <p className="mb-4 text-sm text-muted-foreground">
-                <span className="text-base font-medium text-foreground">
+            <div className="space-y-1.5">
+              <p className="mb-3 text-sm text-white/40">
+                <span className="text-base font-medium text-white/80">
                   {fmtDur(summary.total_active_secs)}
                 </span>{" "}
                 active
@@ -168,58 +299,33 @@ export function ActivityPage() {
                   <span className="ml-2 text-xs">· {activeSource}</span>
                 )}
               </p>
-
-              {summary.apps.map((app) => (
-                <div key={app.app_class} className="flex items-center gap-3">
-                  <span className="w-48 shrink-0 truncate font-mono text-sm text-foreground">
-                    {app.app_class}
-                  </span>
-                  <div className="relative h-5 flex-1 overflow-hidden rounded-sm bg-muted">
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-sm bg-primary/60"
-                      style={{ width: `${app.percentage}%` }}
-                    />
-                  </div>
-                  <span className="w-16 shrink-0 text-right text-sm tabular-nums text-muted-foreground">
-                    {fmtDur(app.active_secs)}
-                  </span>
-                  <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                    {app.percentage.toFixed(1)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="pt-2">
-            <p className="mb-2 text-xs text-muted-foreground">Last 30 days</p>
-            <div className="flex h-12 items-end gap-px">
-              {last30Days.map(({ d, dateStr, active_secs }) => {
-                const heightPct = active_secs > 0 ? Math.max((active_secs / maxSecs) * 100, 4) : 0;
-                const isSelectedDay = isSameDay(d, date);
-                const isDayToday = isSameDay(d, today);
+              {summary.apps.map((app, i) => {
+                const rgb = APP_COLORS[i % APP_COLORS.length];
                 return (
-                  <button
-                    key={dateStr}
-                    title={`${format(d, "EEE, MMM d")}: ${active_secs > 0 ? fmtDur(active_secs) : "No activity"}`}
-                    onClick={() => setDate(d)}
-                    className="relative flex-1 h-full cursor-pointer"
-                  >
+                  <div key={app.app_class} className="flex items-center gap-3">
+                    <span className="w-44 shrink-0 truncate font-mono text-xs text-white/60">
+                      {app.app_class}
+                    </span>
                     <div
-                      className={`absolute bottom-0 left-0 right-0 rounded-t-sm transition-colors ${
-                        isDayToday
-                          ? "bg-primary"
-                          : isSelectedDay
-                            ? "bg-primary/70"
-                            : "bg-primary/30"
-                      }`}
-                      style={{ height: `${heightPct}%` }}
-                    />
-                  </button>
+                      className="relative h-2 flex-1 overflow-hidden rounded-full"
+                      style={{ background: "rgba(255,255,255,0.07)" }}
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full transition-all"
+                        style={{ width: `${app.percentage}%`, background: `rgba(${rgb},0.72)` }}
+                      />
+                    </div>
+                    <span className="w-14 shrink-0 text-right text-xs tabular-nums text-white/45">
+                      {fmtDur(app.active_secs)}
+                    </span>
+                    <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-white/25">
+                      {app.percentage.toFixed(1)}%
+                    </span>
+                  </div>
                 );
               })}
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

@@ -35,7 +35,8 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       if (prev.some((w) => w.module === module)) {
         return prev.filter((w) => w.module !== module);
       }
-      return [...prev, { id: crypto.randomUUID(), module }];
+      const id = crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      return [...prev, { id, module }];
     });
   }, []);
 

@@ -23,7 +23,7 @@ export function CanvasTopBar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-end gap-2 border-b border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
-      <span className="text-[11px] font-mono text-white/40 tracking-wide">BTCUSDT</span>
+      <span className="text-[11px] font-mono text-orange-400/60 tracking-wide">BTCUSDT</span>
       <span className="text-[11px] font-mono font-medium text-white/70 tabular-nums">{formatted ?? "—"}</span>
       {pct !== null && (
         <span className={`flex items-center gap-0.5 text-[11px] font-mono tabular-nums ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
