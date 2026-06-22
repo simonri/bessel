@@ -15,6 +15,7 @@ def _get_kwargs(
   start_ts: int,
   end_ts: int,
   source: str,
+  tz_name: None | str | Unset = UNSET,
   tz_offset_mins: int | Unset = 0,
 ) -> dict[str, Any]:
 
@@ -25,6 +26,13 @@ def _get_kwargs(
   params["end_ts"] = end_ts
 
   params["source"] = source
+
+  json_tz_name: None | str | Unset
+  if isinstance(tz_name, Unset):
+    json_tz_name = UNSET
+  else:
+    json_tz_name = tz_name
+  params["tz_name"] = json_tz_name
 
   params["tz_offset_mins"] = tz_offset_mins
 
@@ -71,6 +79,7 @@ def sync_detailed(
   start_ts: int,
   end_ts: int,
   source: str,
+  tz_name: None | str | Unset = UNSET,
   tz_offset_mins: int | Unset = 0,
 ) -> Response[ActivityDailyResponse | HTTPValidationError]:
   """Get Daily Activity Totals
@@ -79,8 +88,10 @@ def sync_detailed(
       start_ts (int): Start of range (Unix epoch seconds, inclusive).
       end_ts (int): End of range (Unix epoch seconds, exclusive).
       source (str): Machine source to query.
-      tz_offset_mins (int | Unset): Local UTC offset in minutes (e.g. 120 for UTC+2). Default:
-          0.
+      tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
+          tz_offset_mins; handles DST correctly.
+      tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
+          (e.g. 120 for UTC+2). Does not handle DST. Default: 0.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -94,6 +105,7 @@ def sync_detailed(
     start_ts=start_ts,
     end_ts=end_ts,
     source=source,
+    tz_name=tz_name,
     tz_offset_mins=tz_offset_mins,
   )
 
@@ -110,6 +122,7 @@ def sync(
   start_ts: int,
   end_ts: int,
   source: str,
+  tz_name: None | str | Unset = UNSET,
   tz_offset_mins: int | Unset = 0,
 ) -> ActivityDailyResponse | HTTPValidationError | None:
   """Get Daily Activity Totals
@@ -118,8 +131,10 @@ def sync(
       start_ts (int): Start of range (Unix epoch seconds, inclusive).
       end_ts (int): End of range (Unix epoch seconds, exclusive).
       source (str): Machine source to query.
-      tz_offset_mins (int | Unset): Local UTC offset in minutes (e.g. 120 for UTC+2). Default:
-          0.
+      tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
+          tz_offset_mins; handles DST correctly.
+      tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
+          (e.g. 120 for UTC+2). Does not handle DST. Default: 0.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -134,6 +149,7 @@ def sync(
     start_ts=start_ts,
     end_ts=end_ts,
     source=source,
+    tz_name=tz_name,
     tz_offset_mins=tz_offset_mins,
   ).parsed
 
@@ -144,6 +160,7 @@ async def asyncio_detailed(
   start_ts: int,
   end_ts: int,
   source: str,
+  tz_name: None | str | Unset = UNSET,
   tz_offset_mins: int | Unset = 0,
 ) -> Response[ActivityDailyResponse | HTTPValidationError]:
   """Get Daily Activity Totals
@@ -152,8 +169,10 @@ async def asyncio_detailed(
       start_ts (int): Start of range (Unix epoch seconds, inclusive).
       end_ts (int): End of range (Unix epoch seconds, exclusive).
       source (str): Machine source to query.
-      tz_offset_mins (int | Unset): Local UTC offset in minutes (e.g. 120 for UTC+2). Default:
-          0.
+      tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
+          tz_offset_mins; handles DST correctly.
+      tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
+          (e.g. 120 for UTC+2). Does not handle DST. Default: 0.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -167,6 +186,7 @@ async def asyncio_detailed(
     start_ts=start_ts,
     end_ts=end_ts,
     source=source,
+    tz_name=tz_name,
     tz_offset_mins=tz_offset_mins,
   )
 
@@ -181,6 +201,7 @@ async def asyncio(
   start_ts: int,
   end_ts: int,
   source: str,
+  tz_name: None | str | Unset = UNSET,
   tz_offset_mins: int | Unset = 0,
 ) -> ActivityDailyResponse | HTTPValidationError | None:
   """Get Daily Activity Totals
@@ -189,8 +210,10 @@ async def asyncio(
       start_ts (int): Start of range (Unix epoch seconds, inclusive).
       end_ts (int): End of range (Unix epoch seconds, exclusive).
       source (str): Machine source to query.
-      tz_offset_mins (int | Unset): Local UTC offset in minutes (e.g. 120 for UTC+2). Default:
-          0.
+      tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
+          tz_offset_mins; handles DST correctly.
+      tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
+          (e.g. 120 for UTC+2). Does not handle DST. Default: 0.
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -206,6 +229,7 @@ async def asyncio(
       start_ts=start_ts,
       end_ts=end_ts,
       source=source,
+      tz_name=tz_name,
       tz_offset_mins=tz_offset_mins,
     )
   ).parsed

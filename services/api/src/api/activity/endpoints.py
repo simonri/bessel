@@ -1,6 +1,7 @@
 import time
 from datetime import UTC, datetime
 from typing import Annotated
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.dialects.postgresql import insert
@@ -134,21 +135,29 @@ async def get_daily_activity(
   start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
   source: Annotated[str, Query(description="Machine source to query.")],
-  tz_offset_mins: Annotated[int, Query(description="Local UTC offset in minutes (e.g. 120 for UTC+2).")] = 0,
+  tz_name: Annotated[str | None, Query(description="IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.")] = None,
+  tz_offset_mins: Annotated[int, Query(description="Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.")] = 0,
 ) -> ActivityDailyResponse:
   repo = ActivityRepository.from_session(session)
   events = await repo.get_events_in_range(start_ts, end_ts, source)
 
   tail_ts = min(int(time.time()), end_ts)
-  tz_offset_secs = tz_offset_mins * 60
   daily: dict[str, int] = {}
+
+  try:
+    tz = ZoneInfo(tz_name) if tz_name else None
+  except ZoneInfoNotFoundError:
+    tz = None
 
   for i, event in enumerate(events):
     nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts
     dur = min(nxt_ts - event.ts, _MAX_GAP_SECS)
     if event.state == "active" and dur > 0:
-      local_ts = event.ts + tz_offset_secs
-      day_str = datetime.fromtimestamp(local_ts, tz=UTC).date().isoformat()
+      if tz is not None:
+        day_str = datetime.fromtimestamp(event.ts, tz=tz).date().isoformat()
+      else:
+        local_ts = event.ts + tz_offset_mins * 60
+        day_str = datetime.fromtimestamp(local_ts, tz=UTC).date().isoformat()
       daily[day_str] = daily.get(day_str, 0) + dur
 
   days = sorted(

@@ -157,7 +157,7 @@ export function ActivityPage() {
     placeholderData: keepPreviousData,
   });
 
-  const tzOffsetMins = -new Date().getTimezoneOffset();
+  const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Full calendar year grid: Jan 1 → Dec 31, padded to week boundaries
   const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -173,7 +173,7 @@ export function ActivityPage() {
   const { data: yearDailyData } = useQuery({
     ...getDailyActivityV1ActivityDailyGetOptions({
       client,
-      query: { start_ts: yearRangeStart, end_ts: yearRangeEnd, source: activeSource!, tz_offset_mins: tzOffsetMins },
+      query: { start_ts: yearRangeStart, end_ts: yearRangeEnd, source: activeSource!, tz_name: tzName },
     }),
     enabled: !!activeSource,
   });

@@ -2457,9 +2457,15 @@ export type GetDailyActivityV1ActivityDailyGetData = {
      */
     source: string;
     /**
+     * Tz Name
+     *
+     * IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.
+     */
+    tz_name?: string | null;
+    /**
      * Tz Offset Mins
      *
-     * Local UTC offset in minutes (e.g. 120 for UTC+2).
+     * Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.
      */
     tz_offset_mins?: number;
   };

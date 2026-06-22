@@ -200,16 +200,34 @@
             "description": "Machine source to query."
           },
           {
+            "name": "tz_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.",
+              "title": "Tz Name"
+            },
+            "description": "IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly."
+          },
+          {
             "name": "tz_offset_mins",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "description": "Local UTC offset in minutes (e.g. 120 for UTC+2).",
+              "description": "Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.",
               "default": 0,
               "title": "Tz Offset Mins"
             },
-            "description": "Local UTC offset in minutes (e.g. 120 for UTC+2)."
+            "description": "Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST."
           }
         ],
         "responses": {
