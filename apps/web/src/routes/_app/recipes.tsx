@@ -232,7 +232,7 @@ export function Recipes() {
                   className="h-full w-full resize-none bg-transparent p-4 text-sm text-white/80 placeholder:text-white/25 outline-none font-mono leading-relaxed"
                 />
               ) : (
-                <div className="prose prose-invert prose-sm max-w-none p-4 [&_h1]:text-white/90 [&_h2]:text-white/85 [&_h3]:text-white/80 [&_p]:text-white/70 [&_li]:text-white/70 [&_code]:text-emerald-400 [&_pre]:bg-white/5 [&_pre]:border [&_pre]:border-white/10 [&_a]:text-blue-400 [&_strong]:text-white/85 [&_blockquote]:border-l-white/20 [&_blockquote]:text-white/50 [&_hr]:border-white/10">
+                <div className="prose prose-invert prose-sm max-w-none p-4 prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10 prose-code:text-emerald-400 prose-code:before:content-none prose-code:after:content-none prose-a:text-blue-400 prose-blockquote:border-l-white/20 prose-hr:border-white/10">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {draft.content || "*Nothing to preview*"}
                   </ReactMarkdown>
