@@ -29,6 +29,7 @@ import {
   Folder,
   Layers,
   Copy,
+  Pencil,
 } from "lucide-react";
 import type { TaskSchema } from "@metron/client";
 import {
@@ -59,7 +60,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@metron/ui/components/empty";
-import { CreateTaskDialog } from "@/components/create-task-dialog";
+import { CreateTaskDialog, TaskFormDialog } from "@/components/create-task-dialog";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -294,6 +295,7 @@ function TaskDetailDialog({
   onComplete,
   onReopen,
   onDelete,
+  onEdit,
   onStatusChange,
   onPriorityChange,
   completePending,
@@ -303,6 +305,7 @@ function TaskDetailDialog({
   onComplete: () => void;
   onReopen: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onStatusChange: (status: string) => void;
   onPriorityChange: (priority: number) => void;
   completePending: boolean;
@@ -455,6 +458,15 @@ function TaskDetailDialog({
           variant="ghost"
           size="sm"
           className="h-8 text-xs text-muted-foreground"
+          onClick={onEdit}
+        >
+          <Pencil className="size-3.5 mr-1.5" />
+          Edit
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs text-muted-foreground"
           onClick={() => {
             const parts = [`Implement this task:\nTitle: ${task.title}`];
             if (task.description) parts.push(`Description: ${task.description}`);
@@ -571,6 +583,7 @@ export function Tasks() {
   const [viewTab, setViewTab] = useState<ViewTab>("board");
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
   const [repeatingOpen, setRepeatingOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -1025,6 +1038,10 @@ export function Tasks() {
             onDelete={() => {
               setDeleteTarget(selectedTask);
             }}
+            onEdit={() => {
+              setEditingTask(selectedTask);
+              setSelectedTask(null);
+            }}
             onStatusChange={(s) => handleStatusChange(selectedTask, s)}
             onPriorityChange={(p) => handlePriorityChange(selectedTask, p)}
             completePending={completeMutation.isPending}
@@ -1032,6 +1049,14 @@ export function Tasks() {
           />
         )}
       </Dialog>
+
+      {/* Edit task dialog */}
+      <TaskFormDialog
+        key={editingTask?.id}
+        task={editingTask ?? undefined}
+        open={!!editingTask}
+        onOpenChange={(open) => !open && setEditingTask(null)}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

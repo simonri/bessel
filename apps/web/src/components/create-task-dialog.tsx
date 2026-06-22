@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
+import { format } from "date-fns";
 import { Plus } from "lucide-react";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -10,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@metron/ui/components/dialog";
 import { Input } from "@metron/ui/components/input";
 import { Textarea } from "@metron/ui/components/textarea";
@@ -29,9 +29,11 @@ import {
 } from "@metron/ui/components/popover";
 import {
   createTaskV1TasksPostMutation,
+  updateTaskV1TasksTaskIdPatchMutation,
   listTasksV1TasksGetQueryKey,
   listProjectsV1TasksProjectsGetOptions,
 } from "@metron/client";
+import type { TaskSchema } from "@metron/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -88,8 +90,6 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
-          // Radix fires onInteractOutside for the anchor click too (anchor isn't
-          // considered "inside" the content). Prevent that from closing the popover.
           const target = (e as CustomEvent).detail?.originalEvent?.target as Node | null;
           if (inputRef.current?.contains(target)) e.preventDefault();
         }}
@@ -98,7 +98,7 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
           <button
             key={p}
             type="button"
-            onMouseDown={(e) => e.preventDefault()} // keep focus on input
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               onChange(p);
               setOpen(false);
@@ -113,30 +113,9 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
   );
 }
 
-export function CreateTaskDialog() {
-  const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: projects = [] } = useQuery({
-    ...listProjectsV1TasksProjectsGetOptions({ client }),
-  });
-
-  const mutation = useMutation({
-    ...createTaskV1TasksPostMutation({ client }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: listTasksV1TasksGetQueryKey({ client }),
-      });
-      toast.success("Task created");
-      handleClose();
-    },
-    onError: () => {
-      toast.error("Failed to create task");
-    },
-  });
-
-  const form = useForm({
-    defaultValues: {
+function taskToFormValues(task?: TaskSchema) {
+  if (!task) {
+    return {
       title: "",
       description: "",
       dueDate: "",
@@ -146,55 +125,137 @@ export function CreateTaskDialog() {
       frequency: "none",
       rruleDayOfWeek: "",
       rruleDayOfMonth: "",
+    };
+  }
+  const d = task.due_date
+    ? task.due_date instanceof Date
+      ? task.due_date
+      : new Date(String(task.due_date))
+    : null;
+  return {
+    title: task.title ?? "",
+    description: task.description ?? "",
+    dueDate: d ? format(d, "yyyy-MM-dd") : "",
+    priority: String(task.priority ?? 0),
+    project: task.project ?? "",
+    area: task.area ?? "",
+    frequency: task.is_recurring ? (task.rrule_frequency ?? "none") : "none",
+    rruleDayOfWeek: task.rrule_day_of_week != null ? String(task.rrule_day_of_week) : "",
+    rruleDayOfMonth: task.rrule_day_of_month != null ? String(task.rrule_day_of_month) : "",
+  };
+}
+
+export function TaskFormDialog({
+  task,
+  open,
+  onOpenChange,
+}: {
+  task?: TaskSchema;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const isEditing = !!task;
+  const queryClient = useQueryClient();
+  const queryKey = listTasksV1TasksGetQueryKey({ client });
+
+  const { data: projects = [] } = useQuery({
+    ...listProjectsV1TasksProjectsGetOptions({ client }),
+  });
+
+  const createMutation = useMutation({
+    ...createTaskV1TasksPostMutation({ client }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success("Task created");
+      onOpenChange(false);
     },
+    onError: () => toast.error("Failed to create task"),
+  });
+
+  const updateMutation = useMutation({
+    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success("Task updated");
+      onOpenChange(false);
+    },
+    onError: () => toast.error("Failed to update task"),
+  });
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const form = useForm({
+    defaultValues: taskToFormValues(task),
     onSubmit: ({ value }) => {
       const isRecurring = value.frequency !== "none";
+      const freq = value.frequency as "daily" | "weekly" | "monthly" | "yearly";
 
-      mutation.mutate({
-        client,
-        body: {
-          title: value.title.trim(),
-          description: value.description.trim() || undefined,
-          due_date: value.dueDate ? new Date(value.dueDate) : undefined,
-          priority: Number(value.priority),
-          project: value.project.trim() || undefined,
-          area: value.area || undefined,
-          is_recurring: isRecurring,
-          rrule_frequency: isRecurring
-            ? (value.frequency as "daily" | "weekly" | "monthly" | "yearly")
-            : undefined,
-          rrule_interval: isRecurring ? 1 : undefined,
-          rrule_day_of_week:
-            value.frequency === "weekly" && value.rruleDayOfWeek
-              ? Number(value.rruleDayOfWeek)
-              : undefined,
-          rrule_day_of_month:
-            value.frequency === "monthly" && value.rruleDayOfMonth
-              ? Number(value.rruleDayOfMonth)
-              : undefined,
-        },
-      });
+      if (isEditing) {
+        updateMutation.mutate({
+          client,
+          path: { task_id: task.id },
+          body: {
+            title: value.title.trim(),
+            description: value.description.trim() || null,
+            due_date: value.dueDate ? new Date(value.dueDate) : null,
+            priority: Number(value.priority),
+            project: value.project.trim() || null,
+            area: value.area || null,
+            is_recurring: isRecurring,
+            rrule_frequency: isRecurring ? freq : null,
+            rrule_interval: isRecurring ? 1 : null,
+            rrule_day_of_week:
+              value.frequency === "weekly" && value.rruleDayOfWeek
+                ? Number(value.rruleDayOfWeek)
+                : null,
+            rrule_day_of_month:
+              value.frequency === "monthly" && value.rruleDayOfMonth
+                ? Number(value.rruleDayOfMonth)
+                : null,
+          },
+        });
+      } else {
+        createMutation.mutate({
+          client,
+          body: {
+            title: value.title.trim(),
+            description: value.description.trim() || undefined,
+            due_date: value.dueDate ? new Date(value.dueDate) : undefined,
+            priority: Number(value.priority),
+            project: value.project.trim() || undefined,
+            area: value.area || undefined,
+            is_recurring: isRecurring,
+            rrule_frequency: isRecurring ? freq : undefined,
+            rrule_interval: isRecurring ? 1 : undefined,
+            rrule_day_of_week:
+              value.frequency === "weekly" && value.rruleDayOfWeek
+                ? Number(value.rruleDayOfWeek)
+                : undefined,
+            rrule_day_of_month:
+              value.frequency === "monthly" && value.rruleDayOfMonth
+                ? Number(value.rruleDayOfMonth)
+                : undefined,
+          },
+        });
+      }
     },
   });
 
   const handleClose = () => {
-    setOpen(false);
+    onOpenChange(false);
     form.reset();
-    mutation.reset();
+    createMutation.reset();
+    updateMutation.reset();
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4" />
-          Add Task
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : handleClose())}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>New Task</DialogTitle>
-          <DialogDescription>Add a new task to your board.</DialogDescription>
+          <DialogTitle>{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? "Update the task details below." : "Add a new task to your board."}
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -403,8 +464,10 @@ export function CreateTaskDialog() {
             )}
           />
 
-          {mutation.isError && (
-            <p className="text-sm text-destructive">Failed to create task. Please try again.</p>
+          {(createMutation.isError || updateMutation.isError) && (
+            <p className="text-sm text-destructive">
+              {isEditing ? "Failed to update task." : "Failed to create task."} Please try again.
+            </p>
           )}
 
           <DialogFooter>
@@ -414,8 +477,14 @@ export function CreateTaskDialog() {
             <form.Subscribe
               selector={(state) => [state.values.title] as const}
               children={([title]) => (
-                <Button type="submit" disabled={mutation.isPending || !title.trim()}>
-                  {mutation.isPending ? "Creating..." : "Create Task"}
+                <Button type="submit" disabled={isPending || !title.trim()}>
+                  {isPending
+                    ? isEditing
+                      ? "Saving…"
+                      : "Creating…"
+                    : isEditing
+                      ? "Save"
+                      : "Create Task"}
                 </Button>
               )}
             />
@@ -423,5 +492,18 @@ export function CreateTaskDialog() {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function CreateTaskDialog() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <Plus className="size-4" />
+        Add Task
+      </Button>
+      <TaskFormDialog open={open} onOpenChange={setOpen} />
+    </>
   );
 }
