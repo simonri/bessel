@@ -3,9 +3,7 @@ from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
 from .category import Category
-from .exercise import Exercise
 from .import_batch import ImportBatch
-from .journal_entry import JournalEntry
 from .place import Place
 from .raw_transaction import RawTransaction
 from .security import Security
@@ -14,17 +12,13 @@ from .task import Task
 from .trade import Trade
 from .transaction import Transaction
 from .weather_cache import WeatherCache
-from .workout_log import WorkoutLog
-from .workout_set import WorkoutSet
 
 __all__ = [
   "ActivityEvent",
   "BankAccount",
   "BankProfile",
   "Category",
-  "Exercise",
   "ImportBatch",
-  "JournalEntry",
   "Model",
   "Place",
   "RawTransaction",
@@ -34,6 +28,4 @@ __all__ = [
   "Trade",
   "Transaction",
   "WeatherCache",
-  "WorkoutLog",
-  "WorkoutSet",
 ]

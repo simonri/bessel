@@ -6,8 +6,6 @@ import {
   Landmark,
   TrendingUp,
   CheckSquare,
-  BookOpen,
-  Dumbbell,
   MapPin,
   Activity,
 } from "lucide-react";
@@ -61,22 +59,6 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ),
     colSpan: 1,
   },
-  journal: {
-    title: "Journal",
-    icon: BookOpen,
-    component: lazy(() =>
-      import("@/routes/_app/journal").then((m) => ({ default: m.Journal })),
-    ),
-    colSpan: 1,
-  },
-  workout: {
-    title: "Workout",
-    icon: Dumbbell,
-    component: lazy(() =>
-      import("@/routes/_app/workout").then((m) => ({ default: m.Workout })),
-    ),
-    colSpan: 1,
-  },
   travel: {
     title: "Travel",
     icon: MapPin,
@@ -101,8 +83,6 @@ export const MODULE_ORDER: ModuleKey[] = [
   "accounts",
   "investments",
   "tasks",
-  "journal",
-  "workout",
   "travel",
   "activity",
 ];

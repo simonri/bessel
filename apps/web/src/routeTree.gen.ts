@@ -11,11 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AppWorkoutRouteImport } from './routes/_app/workout'
 import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
-import { Route as AppJournalRouteImport } from './routes/_app/journal'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
 import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
@@ -27,11 +25,6 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppWorkoutRoute = AppWorkoutRouteImport.update({
-  id: '/workout',
-  path: '/workout',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTravelRoute = AppTravelRouteImport.update({
@@ -47,11 +40,6 @@ const AppTransactionsRoute = AppTransactionsRouteImport.update({
 const AppTasksRoute = AppTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppJournalRoute = AppJournalRouteImport.update({
-  id: '/journal',
-  path: '/journal',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
@@ -75,21 +63,17 @@ export interface FileRoutesByFullPath {
   '/accounts': typeof AppAccountsRoute
   '/activity': typeof AppActivityRoute
   '/investments': typeof AppInvestmentsRoute
-  '/journal': typeof AppJournalRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
-  '/workout': typeof AppWorkoutRoute
 }
 export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsRoute
   '/activity': typeof AppActivityRoute
   '/investments': typeof AppInvestmentsRoute
-  '/journal': typeof AppJournalRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
-  '/workout': typeof AppWorkoutRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -98,11 +82,9 @@ export interface FileRoutesById {
   '/_app/accounts': typeof AppAccountsRoute
   '/_app/activity': typeof AppActivityRoute
   '/_app/investments': typeof AppInvestmentsRoute
-  '/_app/journal': typeof AppJournalRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/travel': typeof AppTravelRoute
-  '/_app/workout': typeof AppWorkoutRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -112,21 +94,17 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/activity'
     | '/investments'
-    | '/journal'
     | '/tasks'
     | '/transactions'
     | '/travel'
-    | '/workout'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/accounts'
     | '/activity'
     | '/investments'
-    | '/journal'
     | '/tasks'
     | '/transactions'
     | '/travel'
-    | '/workout'
     | '/'
   id:
     | '__root__'
@@ -134,11 +112,9 @@ export interface FileRouteTypes {
     | '/_app/accounts'
     | '/_app/activity'
     | '/_app/investments'
-    | '/_app/journal'
     | '/_app/tasks'
     | '/_app/transactions'
     | '/_app/travel'
-    | '/_app/workout'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
@@ -162,13 +138,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/workout': {
-      id: '/_app/workout'
-      path: '/workout'
-      fullPath: '/workout'
-      preLoaderRoute: typeof AppWorkoutRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/travel': {
       id: '/_app/travel'
       path: '/travel'
@@ -188,13 +157,6 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof AppTasksRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/journal': {
-      id: '/_app/journal'
-      path: '/journal'
-      fullPath: '/journal'
-      preLoaderRoute: typeof AppJournalRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/investments': {
@@ -225,11 +187,9 @@ interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
   AppActivityRoute: typeof AppActivityRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
-  AppJournalRoute: typeof AppJournalRoute
   AppTasksRoute: typeof AppTasksRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppTravelRoute: typeof AppTravelRoute
-  AppWorkoutRoute: typeof AppWorkoutRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -237,11 +197,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
   AppActivityRoute: AppActivityRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
-  AppJournalRoute: AppJournalRoute,
   AppTasksRoute: AppTasksRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppTravelRoute: AppTravelRoute,
-  AppWorkoutRoute: AppWorkoutRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

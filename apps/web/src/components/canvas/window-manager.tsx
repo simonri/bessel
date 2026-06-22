@@ -6,8 +6,6 @@ export type ModuleKey =
   | "accounts"
   | "investments"
   | "tasks"
-  | "journal"
-  | "workout"
   | "travel"
   | "activity";
 

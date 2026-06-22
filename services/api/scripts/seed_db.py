@@ -18,18 +18,13 @@ from api.models import (
     ActivityEvent,
     BankAccount,
     Category,
-    Exercise,
-    JournalEntry,
     Place,
     Security,
     SecurityPrice,
     Task,
     Trade,
     Transaction,
-    WorkoutLog,
-    WorkoutSet,
 )
-from api.models.exercise import Equipment, MuscleCategory
 from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
@@ -100,49 +95,6 @@ CHILD_CATS = [
     {"slug": "electronics", "name": "Electronics", "color": "#a855f7", "parent": "shopping"},
 ]
 
-# ── Exercises ─────────────────────────────────────────────────────────────────
-
-EXERCISES = [
-    ("Barbell Bench Press", "chest", "barbell"),
-    ("Incline Dumbbell Bench Press", "chest", "dumbbell"),
-    ("Cable Fly", "chest", "cable"),
-    ("Push-Up", "chest", "bodyweight"),
-    ("Conventional Deadlift", "back", "barbell"),
-    ("Pull-Up", "back", "bodyweight"),
-    ("Lat Pulldown", "back", "cable"),
-    ("Seated Cable Row", "back", "cable"),
-    ("Barbell Row", "back", "barbell"),
-    ("Overhead Press", "shoulders", "barbell"),
-    ("Lateral Raise", "shoulders", "dumbbell"),
-    ("Face Pull", "back", "cable"),
-    ("Barbell Curl", "biceps", "barbell"),
-    ("Hammer Curl", "biceps", "dumbbell"),
-    ("Skull Crusher", "triceps", "barbell"),
-    ("Tricep Pushdown", "triceps", "cable"),
-    ("Barbell Back Squat", "quads", "barbell"),
-    ("Romanian Deadlift", "hamstrings", "barbell"),
-    ("Leg Press", "quads", "machine"),
-    ("Leg Extension", "quads", "machine"),
-    ("Lying Leg Curl", "hamstrings", "machine"),
-    ("Hip Thrust", "glutes", "barbell"),
-    ("Standing Calf Raise", "calves", "machine"),
-    ("Plank", "core", "bodyweight"),
-    ("Treadmill Run", "cardio", "machine"),
-]
-
-
-def _make_sets(log_id, exercise_id, sets_data):
-    return [
-        WorkoutSet(
-            workout_log_id=log_id,
-            exercise_id=exercise_id,
-            set_number=i,
-            reps=reps,
-            weight=weight,
-            weight_unit="kg",
-        )
-        for i, (reps, weight) in enumerate(sets_data, 1)
-    ]
 
 
 async def seed() -> None:
@@ -154,11 +106,10 @@ async def seed() -> None:
 
         # ── 1. Truncate ───────────────────────────────────────────────────────
         for table in [
-            "activity_events", "workout_sets", "workout_logs",
-            "journal_entries", "tasks", "places",
+            "activity_events", "tasks", "places",
             "trades", "security_prices", "securities",
             "transactions", "raw_transactions", "import_batches",
-            "bank_accounts", "categories", "exercises",
+            "bank_accounts", "categories",
         ]:
             await session.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
         await session.commit()
@@ -444,91 +395,7 @@ async def seed() -> None:
         await session.flush()
         print(f"Seeded {len(tasks)} tasks.")
 
-        # ── 9. Journal entries ────────────────────────────────────────────────
-        entries = [
-            JournalEntry(
-                entry_date=d(0),
-                priority="Ship the seed script and test all features in Metron",
-                friction="Too many context switches today",
-                gratitude_1="Good coffee this morning",
-                gratitude_2="Sunny weather in Oslo",
-                gratitude_3="Making real progress on Metron",
-                morning_committed_at=datetime(2026, 6, 15, 7, 30, tzinfo=timezone.utc),
-            ),
-            JournalEntry(
-                entry_date=d(1),
-                priority="Finish monitor integration end-to-end",
-                friction="Debugging async SQLAlchemy session issues",
-                gratitude_1="Productive evening coding session",
-                gratitude_2="Great workout – PRed on deadlift",
-                gratitude_3="Healthy dinner and early bed",
-                morning_committed_at=datetime(2026, 6, 14, 7, 15, tzinfo=timezone.utc),
-                scorecard=8, priority_done=True,
-                insight="Async sessions need careful lifecycle management — always flush before reading IDs",
-                seed="Tackle the hardest thing first tomorrow",
-            ),
-            JournalEntry(
-                entry_date=d(2),
-                priority="Get the Metron theme right — beautiful and readable",
-                friction="OKLCH color space has a learning curve",
-                gratitude_1="Finally found the right color palette",
-                gratitude_2="Coffee with a good friend",
-                gratitude_3="Good sleep",
-                morning_committed_at=datetime(2026, 6, 13, 8, 0, tzinfo=timezone.utc),
-                scorecard=7, priority_done=True,
-                insight="OKLCH is the right color space for UI themes — perceptually uniform",
-                seed="Keep building momentum on the UI",
-            ),
-            JournalEntry(
-                entry_date=d(3),
-                priority="Weekly review and planning",
-                friction="Low energy in the afternoon",
-                gratitude_1="Completed a hard leg session",
-                gratitude_2="Clear weather for a long walk",
-                gratitude_3="Good audiobook while cooking",
-                morning_committed_at=datetime(2026, 6, 12, 7, 45, tzinfo=timezone.utc),
-                scorecard=6, priority_done=False,
-                insight="Weekly review on Sunday morning is the best habit I have",
-                seed="Eat better and sleep by 23:00 this week",
-            ),
-            JournalEntry(
-                entry_date=d(7),
-                priority="Complete the investments module",
-                friction="Complex state management in the trade dialog",
-                gratitude_1="Making real progress on investments",
-                gratitude_2="Good lunch – sushi",
-                gratitude_3="Evening walk by the water",
-                morning_committed_at=datetime(2026, 6, 8, 7, 30, tzinfo=timezone.utc),
-                scorecard=9, priority_done=True,
-                insight="Breaking big features into small PRs keeps momentum up",
-                seed="Don't let perfect be the enemy of good",
-            ),
-            JournalEntry(
-                entry_date=d(10),
-                priority="Write tests for the new API endpoints",
-                friction="Testing async code is tricky",
-                morning_committed_at=datetime(2026, 6, 5, 7, 0, tzinfo=timezone.utc),
-                scorecard=5, priority_done=False,
-                insight="Need to improve test coverage systematically — start with the happy paths",
-            ),
-            JournalEntry(
-                entry_date=d(14),
-                priority="Set up Docker Compose and get all services running",
-                gratitude_1="Clean codebase feels good",
-                gratitude_2="Coffee at Tim Wendelboe",
-                gratitude_3="Clear focus all morning",
-                morning_committed_at=datetime(2026, 6, 1, 8, 30, tzinfo=timezone.utc),
-                scorecard=8, priority_done=True,
-                insight="Getting infra right early saves time later",
-                seed="Keep the infrastructure clean",
-            ),
-        ]
-        for entry in entries:
-            session.add(entry)
-        await session.flush()
-        print(f"Seeded {len(entries)} journal entries.")
-
-        # ── 10. Places ────────────────────────────────────────────────────────
+        # ── 9. Places ─────────────────────────────────────────────────────────
         places = [
             Place(name="Tim Wendelboe", address="Grüners gate 1, Oslo", country="Norway",
                   latitude=59.9196, longitude=10.7585, category="cafe",
@@ -576,96 +443,7 @@ async def seed() -> None:
         await session.flush()
         print(f"Seeded {len(places)} places.")
 
-        # ── 11. Exercises ─────────────────────────────────────────────────────
-        ex_map: dict[str, Exercise] = {}
-        for name, cat, equip in EXERCISES:
-            e = Exercise(name=name, category=MuscleCategory(cat), equipment=Equipment(equip), is_custom=False)
-            session.add(e)
-            ex_map[name] = e
-        await session.flush()
-        print(f"Seeded {len(EXERCISES)} exercises.")
-
-        # ── 12. Workout logs + sets ───────────────────────────────────────────
-        def ex(name: str) -> str:
-            return ex_map[name].id
-
-        # Push day — 3 days ago
-        log_push = WorkoutLog(
-            started_at=datetime(2026, 6, 12, 17, 0, tzinfo=timezone.utc),
-            completed_at=datetime(2026, 6, 12, 18, 30, tzinfo=timezone.utc),
-            notes="Good session. Hit a rep PR on bench.",
-        )
-        session.add(log_push)
-        await session.flush()
-        for ws in (
-            _make_sets(log_push.id, ex("Barbell Bench Press"),        [(5,100),(5,100),(3,105),(3,107.5),(5,100)]) +
-            _make_sets(log_push.id, ex("Incline Dumbbell Bench Press"),[(10,36),(10,36),(10,38),(8,38)]) +
-            _make_sets(log_push.id, ex("Cable Fly"),                  [(12,15),(12,15),(12,15)]) +
-            _make_sets(log_push.id, ex("Overhead Press"),             [(5,75),(5,75),(4,80),(3,82.5)]) +
-            _make_sets(log_push.id, ex("Lateral Raise"),              [(15,12),(15,12),(15,14)]) +
-            _make_sets(log_push.id, ex("Skull Crusher"),              [(10,40),(10,40),(10,42.5)]) +
-            _make_sets(log_push.id, ex("Tricep Pushdown"),            [(12,35),(12,35),(12,37.5)])
-        ):
-            session.add(ws)
-
-        # Pull day — 5 days ago
-        log_pull = WorkoutLog(
-            started_at=datetime(2026, 6, 10, 17, 30, tzinfo=timezone.utc),
-            completed_at=datetime(2026, 6, 10, 19, 0, tzinfo=timezone.utc),
-        )
-        session.add(log_pull)
-        await session.flush()
-        for ws in (
-            _make_sets(log_pull.id, ex("Conventional Deadlift"), [(5,150),(5,155),(3,162.5),(3,165)]) +
-            _make_sets(log_pull.id, ex("Pull-Up"),               [(8,0),(7,0),(6,0),(5,0)]) +
-            _make_sets(log_pull.id, ex("Barbell Row"),           [(8,80),(8,85),(6,90),(6,90)]) +
-            _make_sets(log_pull.id, ex("Lat Pulldown"),          [(10,65),(10,65),(10,70)]) +
-            _make_sets(log_pull.id, ex("Seated Cable Row"),      [(12,60),(12,65),(10,70)]) +
-            _make_sets(log_pull.id, ex("Face Pull"),             [(15,25),(15,27.5),(15,27.5)]) +
-            _make_sets(log_pull.id, ex("Barbell Curl"),          [(10,47.5),(10,47.5),(8,50)]) +
-            _make_sets(log_pull.id, ex("Hammer Curl"),           [(12,20),(12,20),(10,22)])
-        ):
-            session.add(ws)
-
-        # Leg day — 8 days ago
-        log_legs = WorkoutLog(
-            started_at=datetime(2026, 6, 7, 10, 0, tzinfo=timezone.utc),
-            completed_at=datetime(2026, 6, 7, 11, 45, tzinfo=timezone.utc),
-            notes="Squats felt strong today.",
-        )
-        session.add(log_legs)
-        await session.flush()
-        for ws in (
-            _make_sets(log_legs.id, ex("Barbell Back Squat"),   [(5,120),(5,125),(3,132.5),(3,135),(5,125)]) +
-            _make_sets(log_legs.id, ex("Romanian Deadlift"),    [(10,90),(10,95),(8,100),(8,100)]) +
-            _make_sets(log_legs.id, ex("Leg Press"),            [(12,200),(12,220),(10,240)]) +
-            _make_sets(log_legs.id, ex("Leg Extension"),        [(15,55),(15,60),(12,65)]) +
-            _make_sets(log_legs.id, ex("Lying Leg Curl"),       [(12,45),(12,50),(10,55)]) +
-            _make_sets(log_legs.id, ex("Hip Thrust"),           [(10,100),(10,110),(8,120)]) +
-            _make_sets(log_legs.id, ex("Standing Calf Raise"),  [(15,80),(15,85),(15,90),(12,90)])
-        ):
-            session.add(ws)
-
-        # Push day 2 — 11 days ago
-        log_push2 = WorkoutLog(
-            started_at=datetime(2026, 6, 4, 17, 0, tzinfo=timezone.utc),
-            completed_at=datetime(2026, 6, 4, 18, 20, tzinfo=timezone.utc),
-        )
-        session.add(log_push2)
-        await session.flush()
-        for ws in (
-            _make_sets(log_push2.id, ex("Barbell Bench Press"), [(5,97.5),(5,100),(5,100),(4,102.5)]) +
-            _make_sets(log_push2.id, ex("Overhead Press"),      [(5,72.5),(5,75),(4,77.5)]) +
-            _make_sets(log_push2.id, ex("Cable Fly"),           [(12,15),(12,15),(12,17.5)]) +
-            _make_sets(log_push2.id, ex("Lateral Raise"),       [(15,12),(15,12),(12,14)]) +
-            _make_sets(log_push2.id, ex("Tricep Pushdown"),     [(12,32.5),(12,35),(10,37.5)])
-        ):
-            session.add(ws)
-
-        await session.flush()
-        print("Seeded 4 workout logs with sets.")
-
-        # ── 13. Activity events ───────────────────────────────────────────────
+        # ── 10. Activity events ───────────────────────────────────────────────
         # 30-day history with varied daily profiles.
         # Each day spec is (days_ago, [(start_h, end_h, app_class), ...]).
         # Days omitted from the list = no activity (weekends off, holidays).
@@ -857,10 +635,7 @@ async def seed() -> None:
         print(f"   Securities:    5  (35 price points)")
         print(f"   Trades:        {len(trades)}")
         print(f"   Tasks:         {len(tasks)}")
-        print(f"   Journal:       {len(entries)}")
         print(f"   Places:        {len(places)}")
-        print(f"   Exercises:     {len(EXERCISES)}")
-        print(f"   Workout logs:  4  (with sets)")
         print(f"   Activity:      {len(all_activity)} events  ({len(_day_specs)} active days)")
 
     await engine.dispose()

@@ -7,8 +7,6 @@ import {
   TrendingUp,
   MapPin,
   CheckSquare,
-  BookOpen,
-  Dumbbell,
   Settings,
   Menu,
   X,
@@ -25,8 +23,6 @@ const moreItems = [
   { title: "Transactions", icon: ArrowLeftRight, href: "/transactions" },
   { title: "Accounts", icon: Landmark, href: "/accounts" },
   { title: "Investments", icon: TrendingUp, href: "/investments" },
-  { title: "Journal", icon: BookOpen, href: "/journal" },
-  { title: "Workout", icon: Dumbbell, href: "/workout" },
   { title: "Settings", icon: Settings, href: "/settings" },
 ];
 
