@@ -65,6 +65,36 @@ export type ActivityBatchResponse = {
 };
 
 /**
+ * ActivityDailyEntry
+ */
+export type ActivityDailyEntry = {
+  /**
+   * Date
+   *
+   * ISO date string (YYYY-MM-DD).
+   */
+  date: string;
+  /**
+   * Active Secs
+   *
+   * Total active seconds for the day.
+   */
+  active_secs: number;
+};
+
+/**
+ * ActivityDailyResponse
+ */
+export type ActivityDailyResponse = {
+  /**
+   * Days
+   *
+   * Per-day totals, sorted ascending by date. Days with no activity are omitted.
+   */
+  days: Array<ActivityDailyEntry>;
+};
+
+/**
  * ActivityEventIn
  */
 export type ActivityEventIn = {
@@ -482,6 +512,28 @@ export type CategorySpending = {
    * Total spending in minor units (cents).
    */
   total: number;
+};
+
+/**
+ * CryptoPriceSchema
+ */
+export type CryptoPriceSchema = {
+  /**
+   * Coin Id
+   */
+  coin_id: string;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Price
+   */
+  price: number;
+  /**
+   * Price Change Pct 24H
+   */
+  price_change_pct_24h?: number | null;
 };
 
 /**
@@ -2800,6 +2852,58 @@ export type GetActivitySummaryV1ActivitySummaryGetResponses = {
 export type GetActivitySummaryV1ActivitySummaryGetResponse =
   GetActivitySummaryV1ActivitySummaryGetResponses[keyof GetActivitySummaryV1ActivitySummaryGetResponses];
 
+export type GetDailyActivityV1ActivityDailyGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Ts
+     *
+     * Start of range (Unix epoch seconds, inclusive).
+     */
+    start_ts: number;
+    /**
+     * End Ts
+     *
+     * End of range (Unix epoch seconds, exclusive).
+     */
+    end_ts: number;
+    /**
+     * Source
+     *
+     * Machine source to query.
+     */
+    source: string;
+    /**
+     * Tz Offset Mins
+     *
+     * Local UTC offset in minutes (e.g. 120 for UTC+2).
+     */
+    tz_offset_mins?: number;
+  };
+  url: "/v1/activity/daily";
+};
+
+export type GetDailyActivityV1ActivityDailyGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetDailyActivityV1ActivityDailyGetError =
+  GetDailyActivityV1ActivityDailyGetErrors[keyof GetDailyActivityV1ActivityDailyGetErrors];
+
+export type GetDailyActivityV1ActivityDailyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: ActivityDailyResponse;
+};
+
+export type GetDailyActivityV1ActivityDailyGetResponse =
+  GetDailyActivityV1ActivityDailyGetResponses[keyof GetDailyActivityV1ActivityDailyGetResponses];
+
 export type ListBankAccountsV1BankAccountsGetData = {
   body?: never;
   path?: never;
@@ -3377,6 +3481,43 @@ export type GetHoldingsV1InvestmentsHoldingsGetResponses = {
 
 export type GetHoldingsV1InvestmentsHoldingsGetResponse =
   GetHoldingsV1InvestmentsHoldingsGetResponses[keyof GetHoldingsV1InvestmentsHoldingsGetResponses];
+
+export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Coin Id
+     */
+    coin_id: string;
+  };
+  query?: {
+    /**
+     * Currency
+     */
+    currency?: string;
+  };
+  url: "/v1/investments/crypto/price/{coin_id}";
+};
+
+export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError =
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors[keyof GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors];
+
+export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CryptoPriceSchema;
+};
+
+export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse =
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses[keyof GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses];
 
 export type ListEntriesV1JournalGetData = {
   body?: never;

@@ -3,6 +3,8 @@
 from .activity_app_summary import ActivityAppSummary
 from .activity_batch_request import ActivityBatchRequest
 from .activity_batch_response import ActivityBatchResponse
+from .activity_daily_entry import ActivityDailyEntry
+from .activity_daily_response import ActivityDailyResponse
 from .activity_event_in import ActivityEventIn
 from .activity_sources_response import ActivitySourcesResponse
 from .activity_summary_response import ActivitySummaryResponse
@@ -21,6 +23,7 @@ from .bulk_update_response import BulkUpdateResponse
 from .category_list_response import CategoryListResponse
 from .category_schema import CategorySchema
 from .category_spending import CategorySpending
+from .crypto_price_schema import CryptoPriceSchema
 from .equipment import Equipment
 from .exercise_create import ExerciseCreate
 from .exercise_list_response import ExerciseListResponse
@@ -105,6 +108,8 @@ __all__ = (
   "ActivityAppSummary",
   "ActivityBatchRequest",
   "ActivityBatchResponse",
+  "ActivityDailyEntry",
+  "ActivityDailyResponse",
   "ActivityEventIn",
   "ActivitySourcesResponse",
   "ActivitySummaryResponse",
@@ -123,6 +128,7 @@ __all__ = (
   "CategoryListResponse",
   "CategorySchema",
   "CategorySpending",
+  "CryptoPriceSchema",
   "Equipment",
   "ExerciseCreate",
   "ExerciseListResponse",

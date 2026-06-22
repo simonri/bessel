@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/")({
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-function Dashboard() {
+export function Dashboard() {
   const { data: flowData } = useQuery(
     monthlyFlowV1TransactionsMonthlyFlowGetOptions({ client, query: { months: 2 } }),
   );
@@ -71,7 +71,7 @@ function Dashboard() {
       {accounts.length > 0 && (
         <section className="space-y-4 animate-in fade-in duration-150">
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground">
               Net worth
             </p>
             <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -106,7 +106,7 @@ function Dashboard() {
       {/* This month */}
       {currentFlow && (
         <section className="space-y-3 animate-in fade-in duration-150">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             {MONTH_SHORT[currentFlow.month - 1]} {currentFlow.year}
           </p>
           <div className="flex items-baseline gap-8">
@@ -136,7 +136,7 @@ function Dashboard() {
       {transactionsData?.items && transactionsData.items.length > 0 && (
         <section className="space-y-3 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground">
               Recent transactions
             </p>
             <Link to="/transactions" className="text-muted-foreground hover:text-foreground text-xs transition-colors">

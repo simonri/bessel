@@ -116,3 +116,13 @@ class HoldingSchema(Schema):
 
 class HoldingsResponse(Schema):
   items: list[HoldingSchema]
+
+
+# --- Crypto ---
+
+
+class CryptoPriceSchema(Schema):
+  coin_id: str
+  currency: str
+  price: float
+  price_change_pct_24h: float | None = None

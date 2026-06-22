@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_app/accounts")({
 
 const PAGE_SIZE = 50;
 
-function Accounts() {
+export function Accounts() {
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<BankAccountSchema | null>(null);
   const queryClient = useQueryClient();

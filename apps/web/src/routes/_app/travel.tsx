@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -38,7 +38,9 @@ import { useIsMobile } from "@metron/ui/hooks/use-mobile";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
-import { PlaceMap } from "@/components/place-map";
+const PlaceMap = lazy(() =>
+  import("@/components/place-map").then((m) => ({ default: m.PlaceMap })),
+);
 import { TagDisplay } from "@/components/tag-input";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
@@ -137,7 +139,7 @@ function TravelTimeline({
     <div className="h-full overflow-y-auto px-3 py-3">
       <div className="flex items-center gap-2 mb-3 px-1">
         <Plane className="size-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-medium text-muted-foreground">
           Recent Visits
         </span>
       </div>
@@ -218,7 +220,7 @@ function TravelTimeline({
   );
 }
 
-function Travel() {
+export function Travel() {
   const isMobile = useIsMobile();
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
@@ -499,11 +501,13 @@ function Travel() {
                 </div>
                 {/* Map */}
                 <div className="flex-1 rounded-lg border overflow-hidden">
-                  <PlaceMap
-                    places={places}
-                    onSelectPlace={handleSelectPlace}
-                    selectedPlaceId={selectedPlace?.id ?? null}
-                  />
+                  <Suspense fallback={null}>
+                    <PlaceMap
+                      places={places}
+                      onSelectPlace={handleSelectPlace}
+                      selectedPlaceId={selectedPlace?.id ?? null}
+                    />
+                  </Suspense>
                 </div>
               </div>
             )}

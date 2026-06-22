@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -9,6 +10,8 @@ from api.activity.schemas import (
     ActivityBatchRequest,
     ActivityBatchResponse,
     ActivityAppSummary,
+    ActivityDailyEntry,
+    ActivityDailyResponse,
     ActivitySourcesResponse,
     ActivitySummaryResponse,
 )
@@ -122,3 +125,37 @@ async def get_activity_summary(
         total_active_secs=total_active,
         apps=apps,
     )
+
+
+@router.get(
+    "/daily",
+    summary="Get Daily Activity Totals",
+    response_model=ActivityDailyResponse,
+)
+async def get_daily_activity(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
+    end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
+    source: Annotated[str, Query(description="Machine source to query.")],
+    tz_offset_mins: Annotated[int, Query(description="Local UTC offset in minutes (e.g. 120 for UTC+2).")] = 0,
+) -> ActivityDailyResponse:
+    repo = ActivityRepository.from_session(session)
+    events = await repo.get_events_in_range(start_ts, end_ts, source)
+
+    tail_ts = min(int(time.time()), end_ts)
+    tz_offset_secs = tz_offset_mins * 60
+    daily: dict[str, int] = {}
+
+    for i, event in enumerate(events):
+        nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts
+        dur = min(nxt_ts - event.ts, _MAX_GAP_SECS)
+        if event.state == "active" and dur > 0:
+            local_ts = event.ts + tz_offset_secs
+            day_str = datetime.fromtimestamp(local_ts, tz=timezone.utc).date().isoformat()
+            daily[day_str] = daily.get(day_str, 0) + dur
+
+    days = sorted(
+        [ActivityDailyEntry(date=k, active_secs=v) for k, v in daily.items()],
+        key=lambda x: x.date,
+    )
+    return ActivityDailyResponse(days=days)

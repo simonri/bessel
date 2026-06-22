@@ -427,7 +427,7 @@ function MiniCalendar({
 // Main Journal Page
 // ---------------------------------------------------------------------------
 
-function Journal() {
+export function Journal() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarMonth, setCalendarMonth] = useState(startOfMonth(new Date()));
   const queryClient = useQueryClient();

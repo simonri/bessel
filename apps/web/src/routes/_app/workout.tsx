@@ -121,7 +121,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 // --- Main Component ---
 
-function Workout() {
+export function Workout() {
   const [activeTab, setActiveTab] = useState("log");
 
   return (
@@ -464,7 +464,7 @@ function ExerciseGroup({
       {expanded && (
         <CardContent className="border-t pt-3 pb-3">
           {/* Set header */}
-          <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 py-2 text-xs font-medium text-muted-foreground uppercase">
+          <div className="grid grid-cols-[2rem_1fr_1fr_2rem] gap-2 py-2 text-xs font-medium text-muted-foreground">
             <span>Set</span>
             <span>Weight</span>
             <span>Reps</span>
@@ -913,7 +913,7 @@ function ExerciseSection({ title, children }: { title: string; children: React.R
   return (
     <div className="mb-3">
       <div className="sticky top-0 z-10 bg-background pb-1.5 pt-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="text-xs font-medium text-muted-foreground">
           {title}
         </p>
       </div>
@@ -1058,7 +1058,7 @@ function WorkoutHistory() {
     <div className="space-y-6">
       {Array.from(grouped.entries()).map(([dateKey, dayWorkouts]) => (
         <div key={dateKey}>
-          <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
             {format(new Date(dateKey), "EEEE, MMM d")}
           </p>
           <div className="space-y-2">
@@ -1162,7 +1162,7 @@ function WorkoutDetailView({
               <CardTitle className="text-sm">{exercise?.name ?? "Exercise"}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-[2rem_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground uppercase mb-2">
+              <div className="grid grid-cols-[2rem_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground mb-2">
                 <span>Set</span>
                 <span>Weight</span>
                 <span>Reps</span>

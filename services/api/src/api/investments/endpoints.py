@@ -1,13 +1,15 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import case, func, select
 
 from api.common.pagination import PaginationParamsQuery
 from api.exceptions import ResourceNotFound
 from api.investments.repository import SecurityPriceRepository, SecurityRepository, TradeRepository
 from api.investments.schemas import (
+  CryptoPriceSchema,
   HoldingSchema,
   HoldingsResponse,
   SecurityCreate,
@@ -26,6 +28,10 @@ from api.models.security import Security
 from api.models.security_price import SecurityPrice
 from api.models.trade import Trade, TradeType
 from api.postgres import AsyncSession, get_db_session
+from api.redis import Redis, get_redis
+
+COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
+CRYPTO_PRICE_CACHE_TTL = 120
 
 router = APIRouter(prefix="/investments", tags=["investments"])
 
@@ -282,3 +288,39 @@ async def get_holdings(
     )
 
   return HoldingsResponse(items=holdings)
+
+
+# ─── Crypto ───
+
+
+@router.get("/crypto/price/{coin_id}", summary="Get Crypto Price", response_model=CryptoPriceSchema)
+async def get_crypto_price(
+  coin_id: str,
+  redis: Annotated[Redis, Depends(get_redis)],
+  currency: str = Query(default="usd"),
+) -> CryptoPriceSchema:
+  cache_key = f"crypto_price:{coin_id}:{currency}"
+  cached = await redis.get(cache_key)
+  if cached is not None:
+    return CryptoPriceSchema.model_validate_json(cached)
+
+  async with httpx.AsyncClient(timeout=10.0) as http:
+    response = await http.get(
+      COINGECKO_URL,
+      params={"ids": coin_id, "vs_currencies": currency, "include_24hr_change": "true"},
+    )
+    response.raise_for_status()
+
+  data = response.json()
+  if coin_id not in data or currency not in data[coin_id]:
+    raise HTTPException(status_code=404, detail=f"Coin '{coin_id}' not found on CoinGecko")
+
+  coin_data = data[coin_id]
+  result = CryptoPriceSchema(
+    coin_id=coin_id,
+    currency=currency,
+    price=coin_data[currency],
+    price_change_pct_24h=coin_data.get(f"{currency}_24h_change"),
+  )
+  await redis.set(cache_key, result.model_dump_json(), ex=CRYPTO_PRICE_CACHE_TTL)
+  return result

@@ -62,6 +62,41 @@ export const ActivityBatchResponseSchema = {
   title: "ActivityBatchResponse",
 } as const;
 
+export const ActivityDailyEntrySchema = {
+  properties: {
+    date: {
+      type: "string",
+      title: "Date",
+      description: "ISO date string (YYYY-MM-DD).",
+    },
+    active_secs: {
+      type: "integer",
+      title: "Active Secs",
+      description: "Total active seconds for the day.",
+    },
+  },
+  type: "object",
+  required: ["date", "active_secs"],
+  title: "ActivityDailyEntry",
+} as const;
+
+export const ActivityDailyResponseSchema = {
+  properties: {
+    days: {
+      items: {
+        $ref: "#/components/schemas/ActivityDailyEntry",
+      },
+      type: "array",
+      title: "Days",
+      description:
+        "Per-day totals, sorted ascending by date. Days with no activity are omitted.",
+    },
+  },
+  type: "object",
+  required: ["days"],
+  title: "ActivityDailyResponse",
+} as const;
+
 export const ActivityEventInSchema = {
   properties: {
     local_id: {
@@ -596,6 +631,37 @@ export const CategorySpendingSchema = {
   type: "object",
   required: ["category_id", "category_name", "category_color", "total"],
   title: "CategorySpending",
+} as const;
+
+export const CryptoPriceSchemaSchema = {
+  properties: {
+    coin_id: {
+      type: "string",
+      title: "Coin Id",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    price: {
+      type: "number",
+      title: "Price",
+    },
+    price_change_pct_24h: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Price Change Pct 24H",
+    },
+  },
+  type: "object",
+  required: ["coin_id", "currency", "price"],
+  title: "CryptoPriceSchema",
 } as const;
 
 export const EquipmentSchema = {

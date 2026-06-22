@@ -34,6 +34,8 @@ import {
   getActivitySummaryV1ActivitySummaryGet,
   getBankAccountV1BankAccountsBankAccountIdGet,
   getCalendarV1JournalCalendarGet,
+  getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
+  getDailyActivityV1ActivityDailyGet,
   getEntryV1JournalEntryDateGet,
   getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet,
   getHoldingsV1InvestmentsHoldingsGet,
@@ -150,6 +152,12 @@ import type {
   GetCalendarV1JournalCalendarGetData,
   GetCalendarV1JournalCalendarGetError,
   GetCalendarV1JournalCalendarGetResponse,
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError,
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
+  GetDailyActivityV1ActivityDailyGetData,
+  GetDailyActivityV1ActivityDailyGetError,
+  GetDailyActivityV1ActivityDailyGetResponse,
   GetEntryV1JournalEntryDateGetData,
   GetEntryV1JournalEntryDateGetError,
   GetEntryV1JournalEntryDateGetResponse,
@@ -417,6 +425,34 @@ export const getActivitySummaryV1ActivitySummaryGetOptions = (
       return data;
     },
     queryKey: getActivitySummaryV1ActivitySummaryGetQueryKey(options),
+  });
+
+export const getDailyActivityV1ActivityDailyGetQueryKey = (
+  options: Options<GetDailyActivityV1ActivityDailyGetData>,
+) => createQueryKey("getDailyActivityV1ActivityDailyGet", options);
+
+/**
+ * Get Daily Activity Totals
+ */
+export const getDailyActivityV1ActivityDailyGetOptions = (
+  options: Options<GetDailyActivityV1ActivityDailyGetData>,
+) =>
+  queryOptions<
+    GetDailyActivityV1ActivityDailyGetResponse,
+    GetDailyActivityV1ActivityDailyGetError,
+    GetDailyActivityV1ActivityDailyGetResponse,
+    ReturnType<typeof getDailyActivityV1ActivityDailyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDailyActivityV1ActivityDailyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDailyActivityV1ActivityDailyGetQueryKey(options),
   });
 
 export const listBankAccountsV1BankAccountsGetQueryKey = (
@@ -1230,6 +1266,34 @@ export const getHoldingsV1InvestmentsHoldingsGetOptions = (
       return data;
     },
     queryKey: getHoldingsV1InvestmentsHoldingsGetQueryKey(options),
+  });
+
+export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey = (
+  options: Options<GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData>,
+) => createQueryKey("getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet", options);
+
+/**
+ * Get Crypto Price
+ */
+export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
+  options: Options<GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData>,
+) =>
+  queryOptions<
+    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
+    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError,
+    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
+    ReturnType<typeof getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey(options),
   });
 
 export const listEntriesV1JournalGetQueryKey = (

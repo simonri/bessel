@@ -37,3 +37,12 @@ class ActivitySummaryResponse(Schema):
 
 class ActivitySourcesResponse(Schema):
     sources: list[str] = Field(description="All known machine sources, ordered by most recent activity.")
+
+
+class ActivityDailyEntry(Schema):
+    date: str = Field(description="ISO date string (YYYY-MM-DD).")
+    active_secs: int = Field(description="Total active seconds for the day.")
+
+
+class ActivityDailyResponse(Schema):
+    days: list[ActivityDailyEntry] = Field(description="Per-day totals, sorted ascending by date. Days with no activity are omitted.")

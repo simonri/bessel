@@ -84,19 +84,19 @@ function isScheduledTask(task: TaskSchema): boolean {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  todo: { label: "Todo", icon: Circle, color: "text-muted-foreground" },
-  in_progress: { label: "In Progress", icon: Clock, color: "text-blue-500" },
-  scheduled: { label: "Scheduled", icon: CalendarClock, color: "text-violet-500" },
-  done: { label: "Done", icon: CheckCircle2, color: "text-green-500" },
-  cancelled: { label: "Cancelled", icon: XCircle, color: "text-muted-foreground" },
+  todo: { label: "Todo", icon: Circle, color: "text-white/35" },
+  in_progress: { label: "In Progress", icon: Clock, color: "text-blue-400" },
+  scheduled: { label: "Scheduled", icon: CalendarClock, color: "text-violet-400" },
+  done: { label: "Done", icon: CheckCircle2, color: "text-emerald-400" },
+  cancelled: { label: "Cancelled", icon: XCircle, color: "text-white/25" },
 };
 
 const PRIORITY_CONFIG: Record<number, { label: string; color: string; border: string }> = {
-  0: { label: "None", color: "text-muted-foreground/30", border: "border-l-transparent" },
-  1: { label: "Low", color: "text-muted-foreground", border: "border-l-muted-foreground/40" },
-  2: { label: "Medium", color: "text-blue-500", border: "border-l-blue-500" },
-  3: { label: "High", color: "text-orange-500", border: "border-l-orange-500" },
-  4: { label: "Urgent", color: "text-red-500", border: "border-l-red-500" },
+  0: { label: "None", color: "text-white/20", border: "border-l-transparent" },
+  1: { label: "Low", color: "text-white/40", border: "border-l-white/20" },
+  2: { label: "Medium", color: "text-blue-400", border: "border-l-blue-400/70" },
+  3: { label: "High", color: "text-orange-400", border: "border-l-orange-400" },
+  4: { label: "Urgent", color: "text-red-400", border: "border-l-red-400" },
 };
 
 function ordinalSuffix(n: number): string {
@@ -120,9 +120,9 @@ function formatDueDate(value: Date | string | null | undefined): string {
 function getDueDateColor(value: Date | string | null | undefined): string {
   if (!value) return "";
   const d = value instanceof Date ? value : new Date(value);
-  if (isPast(d) && !isToday(d)) return "text-red-500";
-  if (isToday(d)) return "text-orange-500";
-  return "text-muted-foreground";
+  if (isPast(d) && !isToday(d)) return "text-red-400";
+  if (isToday(d)) return "text-orange-400";
+  return "text-white/40";
 }
 
 function formatRecurrence(task: TaskSchema): string | null {
@@ -182,13 +182,13 @@ function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-md border border-l-2 bg-card p-3 transition-colors cursor-grab active:cursor-grabbing hover:border-foreground/20 ${priorityConfig.border}`}
+      className={`rounded-lg border border-l-2 border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
         <button
           type="button"
-          className="mt-0.5 shrink-0 text-muted-foreground/40 hover:text-green-500 transition-colors"
+          className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             onComplete();
@@ -197,7 +197,7 @@ function TaskCard({
           <Circle className="size-4" />
         </button>
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="text-sm font-medium leading-snug">{task.title}</div>
+          <div className="text-[13px] font-medium text-white/85 leading-snug">{task.title}</div>
           <div className="flex items-center gap-2 flex-wrap">
             {dueLabel && (
               <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
@@ -206,18 +206,18 @@ function TaskCard({
               </span>
             )}
             {recurrence && (
-              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1 text-[11px] text-white/35">
                 <Repeat className="size-3" />
                 {recurrence}
               </span>
             )}
             {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
             {task.project && (
-              <span className="text-[11px] text-muted-foreground bg-muted rounded px-1.5 py-0">
+              <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
                 {task.project}
               </span>
             )}
-            {task.area && <span className="text-[11px] text-muted-foreground/60">{task.area}</span>}
+            {task.area && <span className="text-[11px] text-white/30">{task.area}</span>}
           </div>
         </div>
       </div>
@@ -247,15 +247,15 @@ function BoardColumn({
   return (
     <div className="flex-1 min-w-[260px] max-w-[400px]">
       <div className="flex items-center gap-2 mb-3 px-1">
-        <Icon className={`size-4 ${config.color}`} />
-        <span className="text-sm font-medium">{config.label}</span>
-        <span className="text-xs text-muted-foreground bg-muted rounded-full px-1.5 tabular-nums">
+        <Icon className={`size-3.5 ${config.color}`} />
+        <span className="text-[11px] font-semibold text-white/50">{config.label}</span>
+        <span className="text-[10px] text-white/30 bg-white/10 rounded-full px-1.5 tabular-nums ml-0.5">
           {tasks.length}
         </span>
       </div>
       <div
         ref={setNodeRef}
-        className={`space-y-2 min-h-[80px] rounded-lg p-1 transition-colors ${isOver ? "bg-accent/50" : ""}`}
+        className={`space-y-1.5 min-h-[80px] rounded-lg p-1 transition-colors ${isOver ? "bg-white/5" : ""}`}
       >
         {tasks.map((task) => (
           <TaskCard
@@ -266,7 +266,7 @@ function BoardColumn({
           />
         ))}
         {tasks.length === 0 && (
-          <div className="rounded-md border border-dashed p-6 text-center text-xs text-muted-foreground/50">
+          <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-[11px] text-white/25">
             No tasks
           </div>
         )}
@@ -459,7 +459,7 @@ function TaskDetailDialog({
 // Main Page
 // ---------------------------------------------------------------------------
 
-function Tasks() {
+export function Tasks() {
   const [viewTab, setViewTab] = useState<ViewTab>("board");
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
@@ -669,27 +669,27 @@ function Tasks() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Tasks</h2>
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-base font-semibold text-white/90">Tasks</h2>
           {totalCount > 0 && (
-            <p className="text-muted-foreground text-sm">
-              {totalCount} task{totalCount !== 1 ? "s" : ""}
-            </p>
+            <span className="text-[11px] text-white/35 tabular-nums">
+              {totalCount}
+            </span>
           )}
         </div>
         <CreateTaskDialog />
       </div>
 
       {/* View tabs */}
-      <div className="flex items-center border-b">
+      <div className="flex items-center border-b border-white/10">
         {VIEW_TABS.map((tab) => (
           <button
             key={tab.value}
             type="button"
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
               viewTab === tab.value
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-white/60 text-white/90"
+                : "border-transparent text-white/35 hover:text-white/60"
             }`}
             onClick={() => {
               setViewTab(tab.value);
@@ -744,14 +744,14 @@ function Tasks() {
                 return (
                   <div
                     key={task.id}
-                    className="flex items-center gap-3 rounded-md border px-3 py-2.5 transition-colors cursor-pointer hover:border-foreground/20"
+                    className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20"
                     onClick={() => handleSelectTask(task)}
                   >
                     {isDone ? (
                       <button
                         type="button"
                         title="Reopen"
-                        className="text-muted-foreground/40 hover:text-foreground transition-colors shrink-0"
+                        className="text-white/25 hover:text-white/70 transition-colors shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleReopenTask(task);
@@ -762,7 +762,7 @@ function Tasks() {
                     ) : (
                       <button
                         type="button"
-                        className="text-muted-foreground/40 hover:text-green-500 transition-colors shrink-0"
+                        className="text-white/25 hover:text-emerald-400 transition-colors shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCompleteTask(task);
@@ -773,13 +773,13 @@ function Tasks() {
                     )}
                     <div className="min-w-0 flex-1">
                       <span
-                        className={`text-sm ${isDone ? "line-through text-muted-foreground" : "font-medium"}`}
+                        className={`text-[13px] ${isDone ? "line-through text-white/30" : "font-medium text-white/85"}`}
                       >
                         {task.title}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {task.is_recurring && <Repeat className="size-3 text-muted-foreground" />}
+                      {task.is_recurring && <Repeat className="size-3 text-white/30" />}
                       {priority >= 3 && (
                         <Flag
                           className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
@@ -792,7 +792,7 @@ function Tasks() {
                         </span>
                       )}
                       {isDone && task.completed_at && (
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[11px] text-white/30">
                           {format(
                             task.completed_at instanceof Date
                               ? task.completed_at
@@ -806,7 +806,7 @@ function Tasks() {
                 );
               })}
               {allTasks.length === 0 && (
-                <div className="text-muted-foreground text-center text-sm py-8">
+                <div className="text-white/30 text-center text-xs py-8">
                   {viewTab === "done" ? "No completed tasks yet." : "No tasks."}
                 </div>
               )}

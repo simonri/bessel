@@ -1,12 +1,30 @@
 @import "../../../packages/ui/src/styles/globals.css";
 @source "../../../packages/ui/src";
 
-/* Sidebar hover overlay: keep gap narrow while container expands */
-[data-slot="sidebar"][data-hover] [data-slot="sidebar-gap"] {
-  width: var(--sidebar-width-icon) !important;
+html, body {
+  overflow: hidden;
 }
 
-[data-slot="sidebar"][data-hover] [data-slot="sidebar-container"] {
-  box-shadow: 4px 0 20px oklch(0 0 0 / 30%);
-  z-index: 50;
+/* Thin scrollbars for canvas windows */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(1 0 0 / 15%) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 15%);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(1 0 0 / 25%);
 }

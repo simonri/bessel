@@ -120,6 +120,12 @@ import type {
   GetCalendarV1JournalCalendarGetData,
   GetCalendarV1JournalCalendarGetErrors,
   GetCalendarV1JournalCalendarGetResponses,
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
+  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
+  GetDailyActivityV1ActivityDailyGetData,
+  GetDailyActivityV1ActivityDailyGetErrors,
+  GetDailyActivityV1ActivityDailyGetResponses,
   GetEntryV1JournalEntryDateGetData,
   GetEntryV1JournalEntryDateGetErrors,
   GetEntryV1JournalEntryDateGetResponses,
@@ -317,6 +323,20 @@ export const getActivitySummaryV1ActivitySummaryGet = <
     GetActivitySummaryV1ActivitySummaryGetErrors,
     ThrowOnError
   >({ url: "/v1/activity/summary", ...options });
+
+/**
+ * Get Daily Activity Totals
+ */
+export const getDailyActivityV1ActivityDailyGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetDailyActivityV1ActivityDailyGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetDailyActivityV1ActivityDailyGetResponses,
+    GetDailyActivityV1ActivityDailyGetErrors,
+    ThrowOnError
+  >({ url: "/v1/activity/daily", ...options });
 
 /**
  * List Bank Accounts
@@ -682,6 +702,23 @@ export const getHoldingsV1InvestmentsHoldingsGet = <
     unknown,
     ThrowOnError
   >({ url: "/v1/investments/holdings", ...options });
+
+/**
+ * Get Crypto Price
+ */
+export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
+    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
+    ThrowOnError
+  >({ url: "/v1/investments/crypto/price/{coin_id}", ...options });
 
 /**
  * List Journal Entries

@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { isToday, isYesterday, format } from "date-fns";
@@ -141,18 +141,19 @@ const TransactionActions = memo(function TransactionActions({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-function Transactions() {
-  const filters = Route.useSearch();
-  const navigate = useNavigate({ from: Route.fullPath });
+export function Transactions() {
+  const now = new Date();
+  const [filters, setFilters] = useState<TransactionFilters>({
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+  });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(null);
   const queryClient = useQueryClient();
 
-  // Month navigation — defaults to current month, stored in URL
-  const now = new Date();
   const year = filters.year ?? now.getFullYear();
   const month = filters.month ?? (now.getMonth() + 1);
-  const firstDay = new Date(year, month - 1, 1); // local Date, used for label only
+  const firstDay = new Date(year, month - 1, 1);
   const mm = String(month).padStart(2, "0");
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayStr = `${year}-${mm}-01`;
@@ -164,32 +165,32 @@ function Transactions() {
       const newMonth = month + delta;
       const newYear = newMonth < 1 ? year - 1 : newMonth > 12 ? year + 1 : year;
       const clampedMonth = newMonth < 1 ? 12 : newMonth > 12 ? 1 : newMonth;
-      const clean: Record<string, unknown> = { year: newYear, month: clampedMonth };
+      const next: TransactionFilters = { year: newYear, month: clampedMonth };
       for (const [k, v] of Object.entries(filters)) {
         if (k === "year" || k === "month") continue;
         if (v === undefined || v === null) continue;
         if (Array.isArray(v) && v.length === 0) continue;
-        clean[k] = v;
+        (next as Record<string, unknown>)[k] = v;
       }
-      navigate({ search: clean as TransactionFilters, replace: true });
+      setFilters(next);
       setRowSelection({});
     },
-    [year, month, filters, navigate],
+    [year, month, filters],
   );
 
   const handleFiltersChange = useCallback(
     (next: TransactionFilters) => {
-      const clean: Record<string, unknown> = { year, month };
+      const clean: TransactionFilters = { year, month };
       for (const [k, v] of Object.entries(next)) {
         if (k === "year" || k === "month") continue;
         if (v === undefined || v === null) continue;
         if (Array.isArray(v) && v.length === 0) continue;
-        clean[k] = v;
+        (clean as Record<string, unknown>)[k] = v;
       }
-      navigate({ search: clean as TransactionFilters, replace: true });
+      setFilters(clean);
       setRowSelection({});
     },
-    [year, month, navigate],
+    [year, month],
   );
 
   const { data, isLoading } = useQuery({

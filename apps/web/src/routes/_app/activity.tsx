@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   listActivitySourcesV1ActivitySourcesGetOptions,
   getActivitySummaryV1ActivitySummaryGetOptions,
+  getDailyActivityV1ActivityDailyGetOptions,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -34,7 +35,7 @@ function fmtDur(secs: number): string {
   return `${m}m`;
 }
 
-function ActivityPage() {
+export function ActivityPage() {
   const today = new Date();
   const [date, setDate] = useState(today);
   const [source, setSource] = useState<string | null>(null);
@@ -57,6 +58,26 @@ function ActivityPage() {
     enabled: !!activeSource,
     placeholderData: keepPreviousData,
   });
+
+  const tzOffsetMins = -new Date().getTimezoneOffset();
+  const rangeStart = Math.floor(subDays(new Date(today.getFullYear(), today.getMonth(), today.getDate()), 29).getTime() / 1000);
+  const rangeEnd = Math.floor(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).getTime() / 1000);
+
+  const { data: dailyData } = useQuery({
+    ...getDailyActivityV1ActivityDailyGetOptions({
+      client,
+      query: { start_ts: rangeStart, end_ts: rangeEnd, source: activeSource!, tz_offset_mins: tzOffsetMins },
+    }),
+    enabled: !!activeSource,
+  });
+
+  const dailyMap = new Map(dailyData?.days.map((d) => [d.date, d.active_secs]) ?? []);
+  const last30Days = Array.from({ length: 30 }, (_, i) => {
+    const d = subDays(today, 29 - i);
+    const dateStr = format(d, "yyyy-MM-dd");
+    return { d, dateStr, active_secs: dailyMap.get(dateStr) ?? 0 };
+  });
+  const maxSecs = Math.max(...last30Days.map((d) => d.active_secs), 1);
 
   const prevDay = () => setDate((d) => subDays(d, 1));
   const nextDay = () => setDate((d) => addDays(d, 1));
@@ -169,6 +190,36 @@ function ActivityPage() {
               ))}
             </div>
           )}
+
+          <div className="pt-2">
+            <p className="mb-2 text-xs text-muted-foreground">Last 30 days</p>
+            <div className="flex h-12 items-end gap-px">
+              {last30Days.map(({ d, dateStr, active_secs }) => {
+                const heightPct = active_secs > 0 ? Math.max((active_secs / maxSecs) * 100, 4) : 0;
+                const isSelectedDay = isSameDay(d, date);
+                const isDayToday = isSameDay(d, today);
+                return (
+                  <button
+                    key={dateStr}
+                    title={`${format(d, "EEE, MMM d")}: ${active_secs > 0 ? fmtDur(active_secs) : "No activity"}`}
+                    onClick={() => setDate(d)}
+                    className="relative flex-1 h-full cursor-pointer"
+                  >
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 rounded-t-sm transition-colors ${
+                        isDayToday
+                          ? "bg-primary"
+                          : isSelectedDay
+                            ? "bg-primary/70"
+                            : "bg-primary/30"
+                      }`}
+                      style={{ height: `${heightPct}%` }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </>
       )}
     </div>

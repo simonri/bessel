@@ -158,6 +158,84 @@
         }
       }
     },
+    "/v1/activity/daily": {
+      "get": {
+        "tags": [
+          "activity"
+        ],
+        "summary": "Get Daily Activity Totals",
+        "operationId": "get_daily_activity_v1_activity_daily_get",
+        "parameters": [
+          {
+            "name": "start_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Start of range (Unix epoch seconds, inclusive).",
+              "title": "Start Ts"
+            },
+            "description": "Start of range (Unix epoch seconds, inclusive)."
+          },
+          {
+            "name": "end_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "End of range (Unix epoch seconds, exclusive).",
+              "title": "End Ts"
+            },
+            "description": "End of range (Unix epoch seconds, exclusive)."
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Machine source to query.",
+              "title": "Source"
+            },
+            "description": "Machine source to query."
+          },
+          {
+            "name": "tz_offset_mins",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Local UTC offset in minutes (e.g. 120 for UTC+2).",
+              "default": 0,
+              "title": "Tz Offset Mins"
+            },
+            "description": "Local UTC offset in minutes (e.g. 120 for UTC+2)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDailyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/bank-accounts": {
       "get": {
         "tags": [
@@ -1011,6 +1089,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HoldingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/investments/crypto/price/{coin_id}": {
+      "get": {
+        "tags": [
+          "investments"
+        ],
+        "summary": "Get Crypto Price",
+        "operationId": "get_crypto_price_v1_investments_crypto_price__coin_id__get",
+        "parameters": [
+          {
+            "name": "coin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Coin Id"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "usd",
+              "title": "Currency"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CryptoPriceSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -3550,6 +3680,43 @@
         ],
         "title": "ActivityBatchResponse"
       },
+      "ActivityDailyEntry": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "ISO date string (YYYY-MM-DD)."
+          },
+          "active_secs": {
+            "type": "integer",
+            "title": "Active Secs",
+            "description": "Total active seconds for the day."
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "active_secs"
+        ],
+        "title": "ActivityDailyEntry"
+      },
+      "ActivityDailyResponse": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityDailyEntry"
+            },
+            "type": "array",
+            "title": "Days",
+            "description": "Per-day totals, sorted ascending by date. Days with no activity are omitted."
+          }
+        },
+        "type": "object",
+        "required": [
+          "days"
+        ],
+        "title": "ActivityDailyResponse"
+      },
       "ActivityEventIn": {
         "properties": {
           "local_id": {
@@ -4108,6 +4275,40 @@
           "total"
         ],
         "title": "CategorySpending"
+      },
+      "CryptoPriceSchema": {
+        "properties": {
+          "coin_id": {
+            "type": "string",
+            "title": "Coin Id"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "price_change_pct_24h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Change Pct 24H"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coin_id",
+          "currency",
+          "price"
+        ],
+        "title": "CryptoPriceSchema"
       },
       "Equipment": {
         "type": "string",
