@@ -120,7 +120,7 @@ const TransactionActions = memo(function TransactionActions({
     <div className="text-right">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8">
+          <Button variant="ghost" size="icon">
             <MoreHorizontal className="size-4" />
             <span className="sr-only">Open menu</span>
           </Button>

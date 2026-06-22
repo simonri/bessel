@@ -36,10 +36,8 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 font-medium text-sm [&_svg:not([class*='size-'])]:size-4",
-        md: "h-8 px-3 font-medium text-sm [&_svg:not([class*='size-'])]:size-3.5",
-        mdDense: "h-8 px-2 font-medium text-sm [&_svg:not([class*='size-'])]:size-3.5 gap-1",
         lg: "h-10 px-4 font-medium text-base [&_svg:not([class*='size-'])]:size-4",
-        sm: "h-7 px-3 font-medium text-sm [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-8 px-3 font-medium text-sm [&_svg:not([class*='size-'])]:size-3.5",
         xs: "h-6 px-2 font-medium text-xs [&_svg:not([class*='size-'])]:size-3",
         icon: "size-8 p-0 [&_svg:not([class*='size-'])]:size-4",
         iconSm: "size-5 p-0 [&_svg:not([class*='size-'])]:size-3.5",

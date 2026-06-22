@@ -329,7 +329,7 @@ function TradesTab() {
           variant="ghost"
           size="icon"
           title="Delete"
-          className="size-8 text-muted-foreground hover:text-destructive"
+          className="hover:text-destructive"
           onClick={() => setDeleteTarget(row.original)}
         >
           <Trash2 className="size-3.5" />
@@ -475,7 +475,7 @@ function SecuritiesTab() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 text-muted-foreground hover:text-destructive"
+            className="hover:text-destructive"
             onClick={() => setDeleteTarget(row.original)}
           >
             <Trash2 className="size-3.5" />

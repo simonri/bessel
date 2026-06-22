@@ -98,7 +98,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Edit" className="size-8">
+        <Button variant="ghost" size="icon" title="Edit">
           <Pencil className="size-4" />
         </Button>
       </DialogTrigger>

@@ -438,7 +438,7 @@ function TaskDetailDialog({
       {/* Footer actions */}
       <div className="border-t px-5 py-3 flex items-center gap-2">
         {!isDone ? (
-          <Button size="sm" className="h-8 text-xs" onClick={onComplete} disabled={completePending}>
+          <Button size="sm" className="text-xs" onClick={onComplete} disabled={completePending}>
             <CheckCircle2 className="size-3.5 mr-1.5" />
             Complete
           </Button>
@@ -446,7 +446,7 @@ function TaskDetailDialog({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 text-xs"
+            className="text-xs"
             onClick={onReopen}
             disabled={reopenPending}
           >
@@ -457,7 +457,7 @@ function TaskDetailDialog({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 text-xs text-muted-foreground"
+          className="text-xs"
           onClick={onEdit}
         >
           <Pencil className="size-3.5 mr-1.5" />
@@ -466,7 +466,7 @@ function TaskDetailDialog({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 text-xs text-muted-foreground"
+          className="text-xs"
           onClick={() => {
             const parts = [`Implement this task:\nTitle: ${task.title}`];
             if (task.description) parts.push(`Description: ${task.description}`);
@@ -481,7 +481,7 @@ function TaskDetailDialog({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 text-xs text-muted-foreground hover:text-destructive ml-auto"
+          className="text-xs hover:text-destructive ml-auto"
           onClick={onDelete}
         >
           <Trash2 className="size-3.5 mr-1.5" />

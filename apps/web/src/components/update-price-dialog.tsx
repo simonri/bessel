@@ -81,7 +81,6 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
       <Button
         variant="ghost"
         size="icon"
-        className="size-8 text-muted-foreground"
         onClick={() => setOpen(true)}
         title="Update price"
       >

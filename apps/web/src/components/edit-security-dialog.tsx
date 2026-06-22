@@ -107,7 +107,6 @@ export function EditSecurityDialog({ security }: { security: SecuritySchema }) {
         variant="ghost"
         size="icon"
         title="Edit"
-        className="size-8 text-muted-foreground"
         onClick={() => setOpen(true)}
       >
         <Pencil className="size-3.5" />

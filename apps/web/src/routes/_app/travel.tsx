@@ -427,21 +427,21 @@ export function Travel() {
       size: 110,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-0.5">
-          <a
-            href={getGoogleMapsUrl(row.original)}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open in Google Maps"
-            className="inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          >
-            <Map className="size-3.5" />
-          </a>
+          <Button variant="ghost" size="icon" asChild title="Open in Google Maps">
+            <a
+              href={getGoogleMapsUrl(row.original)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Map className="size-3.5" />
+            </a>
+          </Button>
           <EditPlaceDialog place={row.original} />
           <Button
             variant="ghost"
             size="icon"
             title="Delete"
-            className="size-8 text-muted-foreground hover:text-destructive"
+            className="hover:text-destructive"
             onClick={() => setDeleteTarget(row.original)}
           >
             <Trash2 className="size-3.5" />
@@ -659,7 +659,7 @@ export function Travel() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-xs"
+                      className="text-xs"
                       onClick={() => handleQuickMarkVisited(selectedPlace)}
                       disabled={markVisitedMutation.isPending}
                     >
@@ -670,7 +670,7 @@ export function Travel() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-muted-foreground hover:text-destructive ml-auto"
+                    className="hover:text-destructive ml-auto"
                     onClick={() => setDeleteTarget(selectedPlace)}
                   >
                     <Trash2 className="size-3.5" />
