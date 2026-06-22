@@ -18,7 +18,7 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
   const Component = config.component;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/50 shadow-2xl backdrop-blur-xl">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-xl">
       {/* Title bar */}
       <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5">
         <Icon className="size-3.5 text-white/50" />

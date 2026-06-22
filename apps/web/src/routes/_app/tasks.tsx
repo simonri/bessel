@@ -34,6 +34,7 @@ import type { TaskSchema } from "@metron/client";
 import {
   listTasksV1TasksGetOptions,
   listTasksV1TasksGetQueryKey,
+  listProjectsV1TasksProjectsGetOptions,
   deleteTaskV1TasksTaskIdDeleteMutation,
   completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
@@ -74,7 +75,7 @@ const VIEW_TABS: { label: string; value: ViewTab }[] = [
   { label: "All", value: "all" },
 ];
 
-const BOARD_COLUMNS = ["todo", "in_progress", "scheduled"] as const;
+const BOARD_COLUMNS = ["todo", "in_progress"] as const;
 
 const SCHEDULED_THRESHOLD_DAYS = 7;
 
@@ -484,13 +485,98 @@ function TaskDetailDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Scheduled Tasks Dialog
+// ---------------------------------------------------------------------------
+
+function ScheduledTasksDialog({
+  tasks,
+  onSelectTask,
+  onCompleteTask,
+}: {
+  tasks: TaskSchema[];
+  onSelectTask: (task: TaskSchema) => void;
+  onCompleteTask: (task: TaskSchema) => void;
+}) {
+  return (
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <CalendarClock className="size-4 text-violet-400" />
+          Scheduled
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
+        {tasks.length === 0 ? (
+          <div className="text-center text-xs text-white/30 py-8">No scheduled tasks.</div>
+        ) : (
+          tasks.map((task) => {
+            const priority = task.priority ?? 0;
+            const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
+            const dueLabel = formatDueDate(task.due_date);
+            const dueColor = getDueDateColor(task.due_date);
+            const recurrence = formatRecurrence(task);
+            return (
+              <div
+                key={task.id}
+                className={`rounded-lg border border-l-2 border-white/10 bg-white/5 p-2.5 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-colors ${priorityConfig.border}`}
+                onClick={() => onSelectTask(task)}
+              >
+                <div className="flex items-start gap-2.5">
+                  <button
+                    type="button"
+                    className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCompleteTask(task);
+                    }}
+                  >
+                    <Circle className="size-4" />
+                  </button>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="text-[13px] font-medium text-white/85 leading-snug">
+                      {task.title}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {dueLabel && (
+                        <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
+                          <Calendar className="size-3" />
+                          {dueLabel}
+                        </span>
+                      )}
+                      {recurrence && (
+                        <span className="flex items-center gap-1 text-[11px] text-white/35">
+                          <Repeat className="size-3" />
+                          {recurrence}
+                        </span>
+                      )}
+                      {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
+                      {task.project && (
+                        <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
+                          {task.project}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </DialogContent>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
 export function Tasks() {
   const [viewTab, setViewTab] = useState<ViewTab>("board");
+  const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
+  const [scheduledOpen, setScheduledOpen] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
@@ -501,6 +587,11 @@ export function Tasks() {
       ? ["-completed_at" as "-created_at"]
       : ["-priority" as "-created_at", "due_date" as "-created_at"];
 
+  const { data: projectsData } = useQuery(
+    listProjectsV1TasksProjectsGetOptions({ client }),
+  );
+  const projects = projectsData ?? [];
+
   const { data, isLoading } = useQuery({
     ...listTasksV1TasksGetOptions({
       client,
@@ -509,6 +600,7 @@ export function Tasks() {
         limit,
         sorting: sortingValue,
         ...(statusFilter ? { status: statusFilter } : {}),
+        ...(projectFilter ? { project: projectFilter } : {}),
       },
     }),
     placeholderData: keepPreviousData,
@@ -670,13 +762,10 @@ export function Tasks() {
     const taskId = String(active.id);
     const newStatus = String(over.id);
 
-    // Map "scheduled" drop zone → status "todo" (scheduled is a view-layer concept)
-    const apiStatus = newStatus === "scheduled" ? "todo" : newStatus;
-
     updateMutation.mutate({
       client,
       path: { task_id: taskId },
-      body: { status: apiStatus as "todo" },
+      body: { status: newStatus as "todo" },
     });
   };
 
@@ -684,12 +773,15 @@ export function Tasks() {
   const totalCount = data?.pagination.total_count ?? 0;
   const maxPage = data?.pagination.max_page ?? 1;
 
+  const scheduledTasks = allTasks.filter(
+    (t) => (t.status ?? "todo") === "todo" && isScheduledTask(t),
+  );
+
   const boardTasks =
     viewTab === "board"
       ? {
           todo: allTasks.filter((t) => (t.status ?? "todo") === "todo" && !isScheduledTask(t)),
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
-          scheduled: allTasks.filter((t) => (t.status ?? "todo") === "todo" && isScheduledTask(t)),
         }
       : null;
 
@@ -708,25 +800,56 @@ export function Tasks() {
         <CreateTaskDialog />
       </div>
 
-      {/* View tabs */}
-      <div className="flex items-center border-b border-white/10">
-        {VIEW_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            type="button"
-            className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
-              viewTab === tab.value
-                ? "border-white/60 text-white/90"
-                : "border-transparent text-white/35 hover:text-white/60"
-            }`}
-            onClick={() => {
-              setViewTab(tab.value);
-              setPage(1);
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* View tabs + project filter */}
+      <div className="flex items-center justify-between border-b border-white/10">
+        <div className="flex items-center">
+          {VIEW_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                viewTab === tab.value
+                  ? "border-white/60 text-white/90"
+                  : "border-transparent text-white/35 hover:text-white/60"
+              }`}
+              onClick={() => {
+                setViewTab(tab.value);
+                setPage(1);
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {projects.length > 0 && (
+          <div className="flex items-center gap-1 pb-px">
+            <button
+              type="button"
+              className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
+                projectFilter === null
+                  ? "bg-white/10 text-white/80"
+                  : "text-white/35 hover:text-white/60"
+              }`}
+              onClick={() => { setProjectFilter(null); setPage(1); }}
+            >
+              All
+            </button>
+            {projects.map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
+                  projectFilter === p
+                    ? "bg-white/10 text-white/80"
+                    : "text-white/35 hover:text-white/60"
+                }`}
+                onClick={() => { setProjectFilter(p); setPage(1); }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -746,19 +869,31 @@ export function Tasks() {
       ) : (
         <>
           {viewTab === "board" && boardTasks ? (
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {BOARD_COLUMNS.map((col) => (
-                  <BoardColumn
-                    key={col}
-                    status={col}
-                    tasks={boardTasks[col]}
-                    onSelectTask={handleSelectTask}
-                    onCompleteTask={handleCompleteTask}
-                  />
-                ))}
-              </div>
-            </DndContext>
+            <>
+              <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {BOARD_COLUMNS.map((col) => (
+                    <BoardColumn
+                      key={col}
+                      status={col}
+                      tasks={boardTasks[col]}
+                      onSelectTask={handleSelectTask}
+                      onCompleteTask={handleCompleteTask}
+                    />
+                  ))}
+                </div>
+              </DndContext>
+              {scheduledTasks.length > 0 && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-violet-400 transition-colors"
+                  onClick={() => setScheduledOpen(true)}
+                >
+                  <CalendarClock className="size-3.5" />
+                  {scheduledTasks.length} scheduled
+                </button>
+              )}
+            </>
           ) : (
             /* Done / All list view */
             <div className="space-y-1">
@@ -869,6 +1004,18 @@ export function Tasks() {
           )}
         </>
       )}
+
+      {/* Scheduled tasks dialog */}
+      <Dialog open={scheduledOpen} onOpenChange={setScheduledOpen}>
+        <ScheduledTasksDialog
+          tasks={scheduledTasks}
+          onSelectTask={(task) => {
+            setScheduledOpen(false);
+            setSelectedTask(task);
+          }}
+          onCompleteTask={handleCompleteTask}
+        />
+      </Dialog>
 
       {/* Task detail dialog */}
       <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
