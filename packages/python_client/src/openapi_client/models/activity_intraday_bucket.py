@@ -1,39 +1,37 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-if TYPE_CHECKING:
-  from ..models.journal_calendar_day import JournalCalendarDay
-
-
-T = TypeVar("T", bound="JournalCalendarResponse")
+T = TypeVar("T", bound="ActivityIntradayBucket")
 
 
 @_attrs_define
-class JournalCalendarResponse:
+class ActivityIntradayBucket:
   """
   Attributes:
-      days (list[JournalCalendarDay]):
+      bucket (int): Bucket index from midnight (0-based). Each bucket spans bucket_mins minutes.
+      active_secs (int): Total active seconds in this bucket.
   """
 
-  days: list[JournalCalendarDay]
+  bucket: int
+  active_secs: int
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    days = []
-    for days_item_data in self.days:
-      days_item = days_item_data.to_dict()
-      days.append(days_item)
+    bucket = self.bucket
+
+    active_secs = self.active_secs
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
-        "days": days,
+        "bucket": bucket,
+        "active_secs": active_secs,
       }
     )
 
@@ -41,22 +39,18 @@ class JournalCalendarResponse:
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-    from ..models.journal_calendar_day import JournalCalendarDay
-
     d = dict(src_dict)
-    days = []
-    _days = d.pop("days")
-    for days_item_data in _days:
-      days_item = JournalCalendarDay.from_dict(days_item_data)
+    bucket = d.pop("bucket")
 
-      days.append(days_item)
+    active_secs = d.pop("active_secs")
 
-    journal_calendar_response = cls(
-      days=days,
+    activity_intraday_bucket = cls(
+      bucket=bucket,
+      active_secs=active_secs,
     )
 
-    journal_calendar_response.additional_properties = d
-    return journal_calendar_response
+    activity_intraday_bucket.additional_properties = d
+    return activity_intraday_bucket
 
   @property
   def additional_keys(self) -> list[str]:

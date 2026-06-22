@@ -46,3 +46,14 @@ class ActivityDailyEntry(Schema):
 
 class ActivityDailyResponse(Schema):
     days: list[ActivityDailyEntry] = Field(description="Per-day totals, sorted ascending by date. Days with no activity are omitted.")
+
+
+class ActivityIntradayBucket(Schema):
+    bucket: int = Field(description="Bucket index from midnight (0-based). Each bucket spans bucket_mins minutes.")
+    active_secs: int = Field(description="Total active seconds in this bucket.")
+
+
+class ActivityIntradayResponse(Schema):
+    bucket_mins: int = Field(description="Duration of each bucket in minutes.")
+    total_buckets: int = Field(description="Total number of buckets covering the requested window.")
+    buckets: list[ActivityIntradayBucket] = Field(description="Buckets with activity, sorted ascending. Buckets with no activity are omitted.")

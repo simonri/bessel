@@ -3,32 +3,21 @@
 import type {
   CompleteTaskV1TasksTaskIdCompletePostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
-  CreateExerciseV1WorkoutsExercisesPostResponse,
   CreatePlaceV1PlacesPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
   CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
   CreateTradeV1InvestmentsTradesPostResponse,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse,
-  CreateWorkoutV1WorkoutsPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
-  GetCalendarV1JournalCalendarGetResponse,
-  GetEntryV1JournalEntryDateGetResponse,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
-  GetWorkoutV1WorkoutsWorkoutIdGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
-  ListEntriesV1JournalGetResponse,
-  ListExercisesV1WorkoutsExercisesGetResponse,
   ListPlacesV1PlacesGetResponse,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
   ListTradesV1InvestmentsTradesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
-  ListWorkoutsV1WorkoutsGetResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
@@ -36,9 +25,6 @@ import type {
   UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchResponse,
-  UpsertEntryV1JournalEntryDatePutResponse,
 } from "./types.gen.js";
 
 const bankAccountSchemaSchemaResponseTransformer = (data: any) => {
@@ -217,67 +203,6 @@ export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostRespo
     return data;
   };
 
-const journalEntrySchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  data.entry_date = new Date(data.entry_date);
-  if (data.morning_committed_at) {
-    data.morning_committed_at = new Date(data.morning_committed_at);
-  }
-  return data;
-};
-
-const journalEntryListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    journalEntrySchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const listEntriesV1JournalGetResponseTransformer = async (
-  data: any,
-): Promise<ListEntriesV1JournalGetResponse> => {
-  data = journalEntryListResponseSchemaResponseTransformer(data);
-  return data;
-};
-
-const journalCalendarDaySchemaResponseTransformer = (data: any) => {
-  data.entry_date = new Date(data.entry_date);
-  return data;
-};
-
-const journalCalendarResponseSchemaResponseTransformer = (data: any) => {
-  data.days = data.days.map((item: any) =>
-    journalCalendarDaySchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const getCalendarV1JournalCalendarGetResponseTransformer = async (
-  data: any,
-): Promise<GetCalendarV1JournalCalendarGetResponse> => {
-  data = journalCalendarResponseSchemaResponseTransformer(data);
-  return data;
-};
-
-export const getEntryV1JournalEntryDateGetResponseTransformer = async (
-  data: any,
-): Promise<GetEntryV1JournalEntryDateGetResponse> => {
-  if (data) {
-    data = journalEntrySchemaSchemaResponseTransformer(data);
-  }
-  return data;
-};
-
-export const upsertEntryV1JournalEntryDatePutResponseTransformer = async (
-  data: any,
-): Promise<UpsertEntryV1JournalEntryDatePutResponse> => {
-  data = journalEntrySchemaSchemaResponseTransformer(data);
-  return data;
-};
-
 const placeSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
@@ -441,148 +366,3 @@ export const getWeatherForecastV1WeatherGetResponseTransformer = async (
   data = weatherForecastResponseSchemaResponseTransformer(data);
   return data;
 };
-
-const exerciseSchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  return data;
-};
-
-const exerciseListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    exerciseSchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const listExercisesV1WorkoutsExercisesGetResponseTransformer = async (
-  data: any,
-): Promise<ListExercisesV1WorkoutsExercisesGetResponse> => {
-  data = exerciseListResponseSchemaResponseTransformer(data);
-  return data;
-};
-
-export const createExerciseV1WorkoutsExercisesPostResponseTransformer = async (
-  data: any,
-): Promise<CreateExerciseV1WorkoutsExercisesPostResponse> => {
-  data = exerciseSchemaSchemaResponseTransformer(data);
-  return data;
-};
-
-export const listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<ListRecentExercisesV1WorkoutsExercisesRecentGetResponse> => {
-    data = data.map((item: any) =>
-      exerciseSchemaSchemaResponseTransformer(item),
-    );
-    return data;
-  };
-
-const workoutLogSchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  data.started_at = new Date(data.started_at);
-  if (data.completed_at) {
-    data.completed_at = new Date(data.completed_at);
-  }
-  return data;
-};
-
-const workoutLogListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    workoutLogSchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const listWorkoutsV1WorkoutsGetResponseTransformer = async (
-  data: any,
-): Promise<ListWorkoutsV1WorkoutsGetResponse> => {
-  data = workoutLogListResponseSchemaResponseTransformer(data);
-  return data;
-};
-
-export const createWorkoutV1WorkoutsPostResponseTransformer = async (
-  data: any,
-): Promise<CreateWorkoutV1WorkoutsPostResponse> => {
-  data = workoutLogSchemaSchemaResponseTransformer(data);
-  return data;
-};
-
-const workoutSetSchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  return data;
-};
-
-const workoutLogDetailSchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  data.started_at = new Date(data.started_at);
-  if (data.completed_at) {
-    data.completed_at = new Date(data.completed_at);
-  }
-  data.sets = data.sets.map((item: any) =>
-    workoutSetSchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const getWorkoutV1WorkoutsWorkoutIdGetResponseTransformer = async (
-  data: any,
-): Promise<GetWorkoutV1WorkoutsWorkoutIdGetResponse> => {
-  data = workoutLogDetailSchemaSchemaResponseTransformer(data);
-  return data;
-};
-
-export const updateWorkoutV1WorkoutsWorkoutIdPatchResponseTransformer = async (
-  data: any,
-): Promise<UpdateWorkoutV1WorkoutsWorkoutIdPatchResponse> => {
-  data = workoutLogSchemaSchemaResponseTransformer(data);
-  return data;
-};
-
-export const createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer =
-  async (
-    data: any,
-  ): Promise<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse> => {
-    data = workoutSetSchemaSchemaResponseTransformer(data);
-    return data;
-  };
-
-export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse> => {
-    data = workoutSetSchemaSchemaResponseTransformer(data);
-    return data;
-  };
-
-const exercisePrSchemaSchemaResponseTransformer = (data: any) => {
-  data.achieved_at = new Date(data.achieved_at);
-  return data;
-};
-
-const exercisePrListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    exercisePrSchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse> => {
-    data = exercisePrListResponseSchemaResponseTransformer(data);
-    return data;
-  };

@@ -7,6 +7,7 @@ import {
   listActivitySourcesV1ActivitySourcesGetOptions,
   getActivitySummaryV1ActivitySummaryGetOptions,
   getDailyActivityV1ActivityDailyGetOptions,
+  getIntradayActivityV1ActivityIntradayGetOptions,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -63,6 +64,66 @@ function fmtDur(secs: number): string {
 
 type GridDay = { d: Date; dateStr: string; active_secs: number } | null;
 
+const DAY_LABELS: { label: string; pct: number }[] = [
+  { label: "12am", pct: 0 },
+  { label: "3am", pct: 12.5 },
+  { label: "6am", pct: 25 },
+  { label: "9am", pct: 37.5 },
+  { label: "12pm", pct: 50 },
+  { label: "3pm", pct: 62.5 },
+  { label: "6pm", pct: 75 },
+  { label: "9pm", pct: 87.5 },
+  { label: "12am", pct: 100 },
+];
+
+function ActivityDayBar({
+  buckets,
+  totalBuckets,
+}: {
+  buckets: { bucket: number; active_secs: number }[];
+  totalBuckets: number;
+}) {
+  const activeSet = new Set(buckets.map((b) => b.bucket));
+  const n = totalBuckets || 96;
+
+  return (
+    <div>
+      <div
+        className="relative flex w-full overflow-hidden rounded"
+        style={{ height: "18px", background: "rgba(255,255,255,0.06)" }}
+      >
+        {Array.from({ length: n }, (_, i) =>
+          activeSet.has(i) ? (
+            <div
+              key={i}
+              className="absolute inset-y-0"
+              style={{
+                left: `${(i / n) * 100}%`,
+                width: `${(1 / n) * 100}%`,
+                background: "rgba(96,165,250,0.75)",
+              }}
+            />
+          ) : null
+        )}
+      </div>
+      <div className="relative mt-1 select-none" style={{ height: "14px" }}>
+        {DAY_LABELS.map(({ label, pct }) => (
+          <span
+            key={label + pct}
+            className="absolute text-[10px] leading-none text-white/30"
+            style={{
+              left: `${pct}%`,
+              transform: pct === 0 ? "none" : pct === 100 ? "translateX(-100%)" : "translateX(-50%)",
+            }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ActivityPage() {
   const today = new Date();
   const [date, setDate] = useState(today);
@@ -82,6 +143,15 @@ export function ActivityPage() {
     ...getActivitySummaryV1ActivitySummaryGetOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs, source: activeSource! },
+    }),
+    enabled: !!activeSource,
+    placeholderData: keepPreviousData,
+  });
+
+  const { data: intradayData } = useQuery({
+    ...getIntradayActivityV1ActivityIntradayGetOptions({
+      client,
+      query: { start_ts: startTs, end_ts: endTs, source: activeSource!, bucket_mins: 15 },
     }),
     enabled: !!activeSource,
     placeholderData: keepPreviousData,
@@ -278,6 +348,12 @@ export function ActivityPage() {
               </div>
             </div>
           </div>
+
+          {/* Intraday activity bar */}
+          <ActivityDayBar
+            buckets={intradayData?.buckets ?? []}
+            totalBuckets={intradayData?.total_buckets ?? 96}
+          />
 
           {/* Daily breakdown */}
           {isLoading && !summary ? (

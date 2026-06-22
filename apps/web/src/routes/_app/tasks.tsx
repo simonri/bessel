@@ -11,7 +11,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, isToday, isTomorrow, isPast, isYesterday, addDays } from "date-fns";
+import { format, isToday, isTomorrow, isPast, isYesterday } from "date-fns";
 import {
   CheckSquare,
   Trash2,
@@ -77,12 +77,8 @@ const VIEW_TABS: { label: string; value: ViewTab }[] = [
 
 const BOARD_COLUMNS = ["todo", "in_progress"] as const;
 
-const SCHEDULED_THRESHOLD_DAYS = 7;
-
-function isScheduledTask(task: TaskSchema): boolean {
-  if (!task.due_date) return false;
-  const due = task.due_date instanceof Date ? task.due_date : new Date(String(task.due_date));
-  return due > addDays(new Date(), SCHEDULED_THRESHOLD_DAYS);
+function isRepeatingTask(task: TaskSchema): boolean {
+  return task.is_recurring === true;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -485,7 +481,7 @@ function TaskDetailDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Scheduled Tasks Dialog
+// Repeated Tasks Dialog
 // ---------------------------------------------------------------------------
 
 function ScheduledTasksDialog({
@@ -501,13 +497,13 @@ function ScheduledTasksDialog({
     <DialogContent className="max-w-md">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <CalendarClock className="size-4 text-violet-400" />
-          Scheduled
+          <Repeat className="size-4 text-violet-400" />
+          Repeated
         </DialogTitle>
       </DialogHeader>
       <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
         {tasks.length === 0 ? (
-          <div className="text-center text-xs text-white/30 py-8">No scheduled tasks.</div>
+          <div className="text-center text-xs text-white/30 py-8">No repeated tasks.</div>
         ) : (
           tasks.map((task) => {
             const priority = task.priority ?? 0;
@@ -576,7 +572,7 @@ export function Tasks() {
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
-  const [scheduledOpen, setScheduledOpen] = useState(false);
+  const [repeatingOpen, setRepeatingOpen] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
@@ -773,14 +769,14 @@ export function Tasks() {
   const totalCount = data?.pagination.total_count ?? 0;
   const maxPage = data?.pagination.max_page ?? 1;
 
-  const scheduledTasks = allTasks.filter(
-    (t) => (t.status ?? "todo") === "todo" && isScheduledTask(t),
+  const repeatingTasks = allTasks.filter(
+    (t) => (t.status ?? "todo") === "todo" && isRepeatingTask(t),
   );
 
   const boardTasks =
     viewTab === "board"
       ? {
-          todo: allTasks.filter((t) => (t.status ?? "todo") === "todo" && !isScheduledTask(t)),
+          todo: allTasks.filter((t) => (t.status ?? "todo") === "todo" && !isRepeatingTask(t)),
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
         }
       : null;
@@ -797,7 +793,19 @@ export function Tasks() {
             </span>
           )}
         </div>
-        <CreateTaskDialog />
+        <div className="flex items-center gap-2">
+          {repeatingTasks.length > 0 && (
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-violet-400 transition-colors"
+              onClick={() => setRepeatingOpen(true)}
+            >
+              <Repeat className="size-3.5" />
+              {repeatingTasks.length} repeated
+            </button>
+          )}
+          <CreateTaskDialog />
+        </div>
       </div>
 
       {/* View tabs + project filter */}
@@ -883,16 +891,6 @@ export function Tasks() {
                   ))}
                 </div>
               </DndContext>
-              {scheduledTasks.length > 0 && (
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-violet-400 transition-colors"
-                  onClick={() => setScheduledOpen(true)}
-                >
-                  <CalendarClock className="size-3.5" />
-                  {scheduledTasks.length} scheduled
-                </button>
-              )}
             </>
           ) : (
             /* Done / All list view */
@@ -1005,12 +1003,12 @@ export function Tasks() {
         </>
       )}
 
-      {/* Scheduled tasks dialog */}
-      <Dialog open={scheduledOpen} onOpenChange={setScheduledOpen}>
+      {/* Repeating tasks dialog */}
+      <Dialog open={repeatingOpen} onOpenChange={setRepeatingOpen}>
         <ScheduledTasksDialog
-          tasks={scheduledTasks}
+          tasks={repeatingTasks}
           onSelectTask={(task) => {
-            setScheduledOpen(false);
+            setRepeatingOpen(false);
             setSelectedTask(task);
           }}
           onCompleteTask={handleCompleteTask}

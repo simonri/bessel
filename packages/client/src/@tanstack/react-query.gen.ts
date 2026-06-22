@@ -14,36 +14,25 @@ import {
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeTaskV1TasksTaskIdCompletePost,
   createBankAccountV1BankAccountsPost,
-  createExerciseV1WorkoutsExercisesPost,
   createPlaceV1PlacesPost,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
   createSecurityV1InvestmentsSecuritiesPost,
   createTaskV1TasksPost,
   createTradeV1InvestmentsTradesPost,
-  createWorkoutSetV1WorkoutsWorkoutIdSetsPost,
-  createWorkoutV1WorkoutsPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
-  deleteEntryV1JournalEntryDateDelete,
   deletePlaceV1PlacesPlaceIdDelete,
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
   deleteTaskV1TasksTaskIdDelete,
   deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
-  deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete,
-  deleteWorkoutV1WorkoutsWorkoutIdDelete,
   getActivitySummaryV1ActivitySummaryGet,
   getBankAccountV1BankAccountsBankAccountIdGet,
-  getCalendarV1JournalCalendarGet,
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
   getDailyActivityV1ActivityDailyGet,
-  getEntryV1JournalEntryDateGet,
-  getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet,
   getHoldingsV1InvestmentsHoldingsGet,
+  getIntradayActivityV1ActivityIntradayGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
-  getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet,
-  getStreakV1JournalStreakGet,
   getWeatherForecastV1WeatherGet,
-  getWorkoutV1WorkoutsWorkoutIdGet,
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
   importTransactionsV1TransactionsImportPost,
@@ -52,17 +41,13 @@ import {
   listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
-  listEntriesV1JournalGet,
-  listExercisesV1WorkoutsExercisesGet,
   listPlacesV1PlacesGet,
   listProjectsV1TasksProjectsGet,
-  listRecentExercisesV1WorkoutsExercisesRecentGet,
   listSecuritiesV1InvestmentsSecuritiesGet,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet,
   listTasksV1TasksGet,
   listTradesV1InvestmentsTradesGet,
   listTransactionsV1TransactionsGet,
-  listWorkoutsV1WorkoutsGet,
   monthlyFlowV1TransactionsMonthlyFlowGet,
   type Options,
   reopenTaskV1TasksTaskIdReopenPost,
@@ -75,9 +60,6 @@ import {
   updateTaskV1TasksTaskIdPatch,
   updateTradeV1InvestmentsTradesTradeIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
-  updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch,
-  updateWorkoutV1WorkoutsWorkoutIdPatch,
-  upsertEntryV1JournalEntryDatePut,
 } from "../sdk.gen.js";
 import type {
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
@@ -92,9 +74,6 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
-  CreateExerciseV1WorkoutsExercisesPostData,
-  CreateExerciseV1WorkoutsExercisesPostError,
-  CreateExerciseV1WorkoutsExercisesPostResponse,
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostError,
   CreatePlaceV1PlacesPostResponse,
@@ -110,18 +89,9 @@ import type {
   CreateTradeV1InvestmentsTradesPostData,
   CreateTradeV1InvestmentsTradesPostError,
   CreateTradeV1InvestmentsTradesPostResponse,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostError,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse,
-  CreateWorkoutV1WorkoutsPostData,
-  CreateWorkoutV1WorkoutsPostError,
-  CreateWorkoutV1WorkoutsPostResponse,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
-  DeleteEntryV1JournalEntryDateDeleteData,
-  DeleteEntryV1JournalEntryDateDeleteError,
-  DeleteEntryV1JournalEntryDateDeleteResponse,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
@@ -137,49 +107,29 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteError,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponse,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteData,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteError,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponse,
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetError,
   GetActivitySummaryV1ActivitySummaryGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetError,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
-  GetCalendarV1JournalCalendarGetData,
-  GetCalendarV1JournalCalendarGetError,
-  GetCalendarV1JournalCalendarGetResponse,
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError,
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
   GetDailyActivityV1ActivityDailyGetData,
   GetDailyActivityV1ActivityDailyGetError,
   GetDailyActivityV1ActivityDailyGetResponse,
-  GetEntryV1JournalEntryDateGetData,
-  GetEntryV1JournalEntryDateGetError,
-  GetEntryV1JournalEntryDateGetResponse,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetError,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponse,
+  GetIntradayActivityV1ActivityIntradayGetData,
+  GetIntradayActivityV1ActivityIntradayGetError,
+  GetIntradayActivityV1ActivityIntradayGetResponse,
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetError,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
-  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
-  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetError,
-  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
-  GetStreakV1JournalStreakGetData,
-  GetStreakV1JournalStreakGetResponse,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetError,
   GetWeatherForecastV1WeatherGetResponse,
-  GetWorkoutV1WorkoutsWorkoutIdGetData,
-  GetWorkoutV1WorkoutsWorkoutIdGetError,
-  GetWorkoutV1WorkoutsWorkoutIdGetResponse,
   HealthzHealthzGetData,
   ImportKlarnaTransactionsV1KlarnaImportPostData,
   ImportKlarnaTransactionsV1KlarnaImportPostError,
@@ -200,20 +150,11 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetError,
   ListCategoriesV1CategoriesGetResponse,
-  ListEntriesV1JournalGetData,
-  ListEntriesV1JournalGetError,
-  ListEntriesV1JournalGetResponse,
-  ListExercisesV1WorkoutsExercisesGetData,
-  ListExercisesV1WorkoutsExercisesGetError,
-  ListExercisesV1WorkoutsExercisesGetResponse,
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetError,
   ListPlacesV1PlacesGetResponse,
   ListProjectsV1TasksProjectsGetData,
   ListProjectsV1TasksProjectsGetResponse,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetData,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetError,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetData,
   ListSecuritiesV1InvestmentsSecuritiesGetError,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
@@ -229,9 +170,6 @@ import type {
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
-  ListWorkoutsV1WorkoutsGetData,
-  ListWorkoutsV1WorkoutsGetError,
-  ListWorkoutsV1WorkoutsGetResponse,
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetError,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
@@ -265,15 +203,6 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchError,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchData,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchError,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchResponse,
-  UpsertEntryV1JournalEntryDatePutData,
-  UpsertEntryV1JournalEntryDatePutError,
-  UpsertEntryV1JournalEntryDatePutResponse,
 } from "../types.gen.js";
 
 export type QueryKey<TOptions extends Options> = [
@@ -453,6 +382,34 @@ export const getDailyActivityV1ActivityDailyGetOptions = (
       return data;
     },
     queryKey: getDailyActivityV1ActivityDailyGetQueryKey(options),
+  });
+
+export const getIntradayActivityV1ActivityIntradayGetQueryKey = (
+  options: Options<GetIntradayActivityV1ActivityIntradayGetData>,
+) => createQueryKey("getIntradayActivityV1ActivityIntradayGet", options);
+
+/**
+ * Get Intraday Activity
+ */
+export const getIntradayActivityV1ActivityIntradayGetOptions = (
+  options: Options<GetIntradayActivityV1ActivityIntradayGetData>,
+) =>
+  queryOptions<
+    GetIntradayActivityV1ActivityIntradayGetResponse,
+    GetIntradayActivityV1ActivityIntradayGetError,
+    GetIntradayActivityV1ActivityIntradayGetResponse,
+    ReturnType<typeof getIntradayActivityV1ActivityIntradayGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getIntradayActivityV1ActivityIntradayGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getIntradayActivityV1ActivityIntradayGetQueryKey(options),
   });
 
 export const listBankAccountsV1BankAccountsGetQueryKey = (
@@ -1295,222 +1252,6 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
     },
     queryKey: getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey(options),
   });
-
-export const listEntriesV1JournalGetQueryKey = (
-  options?: Options<ListEntriesV1JournalGetData>,
-) => createQueryKey("listEntriesV1JournalGet", options);
-
-/**
- * List Journal Entries
- */
-export const listEntriesV1JournalGetOptions = (
-  options?: Options<ListEntriesV1JournalGetData>,
-) =>
-  queryOptions<
-    ListEntriesV1JournalGetResponse,
-    ListEntriesV1JournalGetError,
-    ListEntriesV1JournalGetResponse,
-    ReturnType<typeof listEntriesV1JournalGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listEntriesV1JournalGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listEntriesV1JournalGetQueryKey(options),
-  });
-
-export const listEntriesV1JournalGetInfiniteQueryKey = (
-  options?: Options<ListEntriesV1JournalGetData>,
-): QueryKey<Options<ListEntriesV1JournalGetData>> =>
-  createQueryKey("listEntriesV1JournalGet", options, true);
-
-/**
- * List Journal Entries
- */
-export const listEntriesV1JournalGetInfiniteOptions = (
-  options?: Options<ListEntriesV1JournalGetData>,
-) =>
-  infiniteQueryOptions<
-    ListEntriesV1JournalGetResponse,
-    ListEntriesV1JournalGetError,
-    InfiniteData<ListEntriesV1JournalGetResponse>,
-    QueryKey<Options<ListEntriesV1JournalGetData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListEntriesV1JournalGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<ListEntriesV1JournalGetData>>[0],
-          "body" | "headers" | "path" | "query"
-        > =
-          typeof pageParam === "object"
-            ? pageParam
-            : {
-                query: {
-                  page: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listEntriesV1JournalGet({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listEntriesV1JournalGetInfiniteQueryKey(options),
-    },
-  );
-
-export const getCalendarV1JournalCalendarGetQueryKey = (
-  options: Options<GetCalendarV1JournalCalendarGetData>,
-) => createQueryKey("getCalendarV1JournalCalendarGet", options);
-
-/**
- * Get Calendar Data
- */
-export const getCalendarV1JournalCalendarGetOptions = (
-  options: Options<GetCalendarV1JournalCalendarGetData>,
-) =>
-  queryOptions<
-    GetCalendarV1JournalCalendarGetResponse,
-    GetCalendarV1JournalCalendarGetError,
-    GetCalendarV1JournalCalendarGetResponse,
-    ReturnType<typeof getCalendarV1JournalCalendarGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getCalendarV1JournalCalendarGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getCalendarV1JournalCalendarGetQueryKey(options),
-  });
-
-export const getStreakV1JournalStreakGetQueryKey = (
-  options?: Options<GetStreakV1JournalStreakGetData>,
-) => createQueryKey("getStreakV1JournalStreakGet", options);
-
-/**
- * Get Streak Info
- */
-export const getStreakV1JournalStreakGetOptions = (
-  options?: Options<GetStreakV1JournalStreakGetData>,
-) =>
-  queryOptions<
-    GetStreakV1JournalStreakGetResponse,
-    DefaultError,
-    GetStreakV1JournalStreakGetResponse,
-    ReturnType<typeof getStreakV1JournalStreakGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getStreakV1JournalStreakGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getStreakV1JournalStreakGetQueryKey(options),
-  });
-
-/**
- * Delete Journal Entry
- */
-export const deleteEntryV1JournalEntryDateDeleteMutation = (
-  options?: Partial<Options<DeleteEntryV1JournalEntryDateDeleteData>>,
-): UseMutationOptions<
-  DeleteEntryV1JournalEntryDateDeleteResponse,
-  DeleteEntryV1JournalEntryDateDeleteError,
-  Options<DeleteEntryV1JournalEntryDateDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteEntryV1JournalEntryDateDeleteResponse,
-    DeleteEntryV1JournalEntryDateDeleteError,
-    Options<DeleteEntryV1JournalEntryDateDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await deleteEntryV1JournalEntryDateDelete({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getEntryV1JournalEntryDateGetQueryKey = (
-  options: Options<GetEntryV1JournalEntryDateGetData>,
-) => createQueryKey("getEntryV1JournalEntryDateGet", options);
-
-/**
- * Get Journal Entry
- */
-export const getEntryV1JournalEntryDateGetOptions = (
-  options: Options<GetEntryV1JournalEntryDateGetData>,
-) =>
-  queryOptions<
-    GetEntryV1JournalEntryDateGetResponse,
-    GetEntryV1JournalEntryDateGetError,
-    GetEntryV1JournalEntryDateGetResponse,
-    ReturnType<typeof getEntryV1JournalEntryDateGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getEntryV1JournalEntryDateGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getEntryV1JournalEntryDateGetQueryKey(options),
-  });
-
-/**
- * Upsert Journal Entry
- */
-export const upsertEntryV1JournalEntryDatePutMutation = (
-  options?: Partial<Options<UpsertEntryV1JournalEntryDatePutData>>,
-): UseMutationOptions<
-  UpsertEntryV1JournalEntryDatePutResponse,
-  UpsertEntryV1JournalEntryDatePutError,
-  Options<UpsertEntryV1JournalEntryDatePutData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpsertEntryV1JournalEntryDatePutResponse,
-    UpsertEntryV1JournalEntryDatePutError,
-    Options<UpsertEntryV1JournalEntryDatePutData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await upsertEntryV1JournalEntryDatePut({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
 
 export const listPlacesV1PlacesGetQueryKey = (
   options?: Options<ListPlacesV1PlacesGetData>,
@@ -2387,480 +2128,3 @@ export const importKlarnaTransactionsV1KlarnaImportPostMutation = (
   };
   return mutationOptions;
 };
-
-export const listExercisesV1WorkoutsExercisesGetQueryKey = (
-  options?: Options<ListExercisesV1WorkoutsExercisesGetData>,
-) => createQueryKey("listExercisesV1WorkoutsExercisesGet", options);
-
-/**
- * List Exercises
- */
-export const listExercisesV1WorkoutsExercisesGetOptions = (
-  options?: Options<ListExercisesV1WorkoutsExercisesGetData>,
-) =>
-  queryOptions<
-    ListExercisesV1WorkoutsExercisesGetResponse,
-    ListExercisesV1WorkoutsExercisesGetError,
-    ListExercisesV1WorkoutsExercisesGetResponse,
-    ReturnType<typeof listExercisesV1WorkoutsExercisesGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listExercisesV1WorkoutsExercisesGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listExercisesV1WorkoutsExercisesGetQueryKey(options),
-  });
-
-export const listExercisesV1WorkoutsExercisesGetInfiniteQueryKey = (
-  options?: Options<ListExercisesV1WorkoutsExercisesGetData>,
-): QueryKey<Options<ListExercisesV1WorkoutsExercisesGetData>> =>
-  createQueryKey("listExercisesV1WorkoutsExercisesGet", options, true);
-
-/**
- * List Exercises
- */
-export const listExercisesV1WorkoutsExercisesGetInfiniteOptions = (
-  options?: Options<ListExercisesV1WorkoutsExercisesGetData>,
-) =>
-  infiniteQueryOptions<
-    ListExercisesV1WorkoutsExercisesGetResponse,
-    ListExercisesV1WorkoutsExercisesGetError,
-    InfiniteData<ListExercisesV1WorkoutsExercisesGetResponse>,
-    QueryKey<Options<ListExercisesV1WorkoutsExercisesGetData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListExercisesV1WorkoutsExercisesGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<ListExercisesV1WorkoutsExercisesGetData>>[0],
-          "body" | "headers" | "path" | "query"
-        > =
-          typeof pageParam === "object"
-            ? pageParam
-            : {
-                query: {
-                  page: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listExercisesV1WorkoutsExercisesGet({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listExercisesV1WorkoutsExercisesGetInfiniteQueryKey(options),
-    },
-  );
-
-/**
- * Create Custom Exercise
- */
-export const createExerciseV1WorkoutsExercisesPostMutation = (
-  options?: Partial<Options<CreateExerciseV1WorkoutsExercisesPostData>>,
-): UseMutationOptions<
-  CreateExerciseV1WorkoutsExercisesPostResponse,
-  CreateExerciseV1WorkoutsExercisesPostError,
-  Options<CreateExerciseV1WorkoutsExercisesPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateExerciseV1WorkoutsExercisesPostResponse,
-    CreateExerciseV1WorkoutsExercisesPostError,
-    Options<CreateExerciseV1WorkoutsExercisesPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createExerciseV1WorkoutsExercisesPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const listRecentExercisesV1WorkoutsExercisesRecentGetQueryKey = (
-  options?: Options<ListRecentExercisesV1WorkoutsExercisesRecentGetData>,
-) => createQueryKey("listRecentExercisesV1WorkoutsExercisesRecentGet", options);
-
-/**
- * Recent Exercises
- */
-export const listRecentExercisesV1WorkoutsExercisesRecentGetOptions = (
-  options?: Options<ListRecentExercisesV1WorkoutsExercisesRecentGetData>,
-) =>
-  queryOptions<
-    ListRecentExercisesV1WorkoutsExercisesRecentGetResponse,
-    ListRecentExercisesV1WorkoutsExercisesRecentGetError,
-    ListRecentExercisesV1WorkoutsExercisesRecentGetResponse,
-    ReturnType<typeof listRecentExercisesV1WorkoutsExercisesRecentGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listRecentExercisesV1WorkoutsExercisesRecentGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listRecentExercisesV1WorkoutsExercisesRecentGetQueryKey(options),
-  });
-
-export const listWorkoutsV1WorkoutsGetQueryKey = (
-  options?: Options<ListWorkoutsV1WorkoutsGetData>,
-) => createQueryKey("listWorkoutsV1WorkoutsGet", options);
-
-/**
- * List Workouts
- */
-export const listWorkoutsV1WorkoutsGetOptions = (
-  options?: Options<ListWorkoutsV1WorkoutsGetData>,
-) =>
-  queryOptions<
-    ListWorkoutsV1WorkoutsGetResponse,
-    ListWorkoutsV1WorkoutsGetError,
-    ListWorkoutsV1WorkoutsGetResponse,
-    ReturnType<typeof listWorkoutsV1WorkoutsGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listWorkoutsV1WorkoutsGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listWorkoutsV1WorkoutsGetQueryKey(options),
-  });
-
-export const listWorkoutsV1WorkoutsGetInfiniteQueryKey = (
-  options?: Options<ListWorkoutsV1WorkoutsGetData>,
-): QueryKey<Options<ListWorkoutsV1WorkoutsGetData>> =>
-  createQueryKey("listWorkoutsV1WorkoutsGet", options, true);
-
-/**
- * List Workouts
- */
-export const listWorkoutsV1WorkoutsGetInfiniteOptions = (
-  options?: Options<ListWorkoutsV1WorkoutsGetData>,
-) =>
-  infiniteQueryOptions<
-    ListWorkoutsV1WorkoutsGetResponse,
-    ListWorkoutsV1WorkoutsGetError,
-    InfiniteData<ListWorkoutsV1WorkoutsGetResponse>,
-    QueryKey<Options<ListWorkoutsV1WorkoutsGetData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListWorkoutsV1WorkoutsGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<ListWorkoutsV1WorkoutsGetData>>[0],
-          "body" | "headers" | "path" | "query"
-        > =
-          typeof pageParam === "object"
-            ? pageParam
-            : {
-                query: {
-                  page: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listWorkoutsV1WorkoutsGet({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listWorkoutsV1WorkoutsGetInfiniteQueryKey(options),
-    },
-  );
-
-/**
- * Create Workout
- */
-export const createWorkoutV1WorkoutsPostMutation = (
-  options?: Partial<Options<CreateWorkoutV1WorkoutsPostData>>,
-): UseMutationOptions<
-  CreateWorkoutV1WorkoutsPostResponse,
-  CreateWorkoutV1WorkoutsPostError,
-  Options<CreateWorkoutV1WorkoutsPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateWorkoutV1WorkoutsPostResponse,
-    CreateWorkoutV1WorkoutsPostError,
-    Options<CreateWorkoutV1WorkoutsPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createWorkoutV1WorkoutsPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete Workout
- */
-export const deleteWorkoutV1WorkoutsWorkoutIdDeleteMutation = (
-  options?: Partial<Options<DeleteWorkoutV1WorkoutsWorkoutIdDeleteData>>,
-): UseMutationOptions<
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponse,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteError,
-  Options<DeleteWorkoutV1WorkoutsWorkoutIdDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponse,
-    DeleteWorkoutV1WorkoutsWorkoutIdDeleteError,
-    Options<DeleteWorkoutV1WorkoutsWorkoutIdDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await deleteWorkoutV1WorkoutsWorkoutIdDelete({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getWorkoutV1WorkoutsWorkoutIdGetQueryKey = (
-  options: Options<GetWorkoutV1WorkoutsWorkoutIdGetData>,
-) => createQueryKey("getWorkoutV1WorkoutsWorkoutIdGet", options);
-
-/**
- * Get Workout Detail
- */
-export const getWorkoutV1WorkoutsWorkoutIdGetOptions = (
-  options: Options<GetWorkoutV1WorkoutsWorkoutIdGetData>,
-) =>
-  queryOptions<
-    GetWorkoutV1WorkoutsWorkoutIdGetResponse,
-    GetWorkoutV1WorkoutsWorkoutIdGetError,
-    GetWorkoutV1WorkoutsWorkoutIdGetResponse,
-    ReturnType<typeof getWorkoutV1WorkoutsWorkoutIdGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getWorkoutV1WorkoutsWorkoutIdGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getWorkoutV1WorkoutsWorkoutIdGetQueryKey(options),
-  });
-
-/**
- * Update Workout
- */
-export const updateWorkoutV1WorkoutsWorkoutIdPatchMutation = (
-  options?: Partial<Options<UpdateWorkoutV1WorkoutsWorkoutIdPatchData>>,
-): UseMutationOptions<
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchResponse,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchError,
-  Options<UpdateWorkoutV1WorkoutsWorkoutIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateWorkoutV1WorkoutsWorkoutIdPatchResponse,
-    UpdateWorkoutV1WorkoutsWorkoutIdPatchError,
-    Options<UpdateWorkoutV1WorkoutsWorkoutIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await updateWorkoutV1WorkoutsWorkoutIdPatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Add Set to Workout
- */
-export const createWorkoutSetV1WorkoutsWorkoutIdSetsPostMutation = (
-  options?: Partial<Options<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData>>,
-): UseMutationOptions<
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostError,
-  Options<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponse,
-    CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostError,
-    Options<CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createWorkoutSetV1WorkoutsWorkoutIdSetsPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete Set
- */
-export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData>
-  >,
-): UseMutationOptions<
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponse,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteError,
-  Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponse,
-    DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteError,
-    Options<DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update Set
- */
-export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData>
-  >,
-): UseMutationOptions<
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchError,
-  Options<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponse,
-    UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchError,
-    Options<UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetQueryKey =
-  (
-    options: Options<GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData>,
-  ) =>
-    createQueryKey(
-      "getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet",
-      options,
-    );
-
-/**
- * Get Last Session for Exercise
- */
-export const getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetOptions =
-  (
-    options: Options<GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData>,
-  ) =>
-    queryOptions<
-      GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
-      GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetError,
-      GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponse,
-      ReturnType<
-        typeof getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetQueryKey
-      >
-    >({
-      queryFn: async ({ queryKey, signal }) => {
-        const { data } =
-          await getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true,
-          });
-        return data;
-      },
-      queryKey:
-        getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetQueryKey(
-          options,
-        ),
-    });
-
-export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey = (
-  options: Options<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData>,
-) =>
-  createQueryKey("getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet", options);
-
-/**
- * Get PRs for Exercise
- */
-export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetOptions = (
-  options: Options<GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData>,
-) =>
-  queryOptions<
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetError,
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponse,
-    ReturnType<typeof getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey:
-      getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetQueryKey(options),
-  });

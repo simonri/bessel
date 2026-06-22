@@ -10,32 +10,21 @@ import {
 import {
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
-  createExerciseV1WorkoutsExercisesPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
   createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
   createTradeV1InvestmentsTradesPostResponseTransformer,
-  createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer,
-  createWorkoutV1WorkoutsPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
-  getCalendarV1JournalCalendarGetResponseTransformer,
-  getEntryV1JournalEntryDateGetResponseTransformer,
-  getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
-  getWorkoutV1WorkoutsWorkoutIdGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
-  listEntriesV1JournalGetResponseTransformer,
-  listExercisesV1WorkoutsExercisesGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
-  listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer,
   listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
   listTradesV1InvestmentsTradesGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
-  listWorkoutsV1WorkoutsGetResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
@@ -43,9 +32,6 @@ import {
   updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
-  updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer,
-  updateWorkoutV1WorkoutsWorkoutIdPatchResponseTransformer,
-  upsertEntryV1JournalEntryDatePutResponseTransformer,
 } from "./transformers.gen.js";
 import type {
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
@@ -60,9 +46,6 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
-  CreateExerciseV1WorkoutsExercisesPostData,
-  CreateExerciseV1WorkoutsExercisesPostErrors,
-  CreateExerciseV1WorkoutsExercisesPostResponses,
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
@@ -78,18 +61,9 @@ import type {
   CreateTradeV1InvestmentsTradesPostData,
   CreateTradeV1InvestmentsTradesPostErrors,
   CreateTradeV1InvestmentsTradesPostResponses,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostErrors,
-  CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponses,
-  CreateWorkoutV1WorkoutsPostData,
-  CreateWorkoutV1WorkoutsPostErrors,
-  CreateWorkoutV1WorkoutsPostResponses,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
-  DeleteEntryV1JournalEntryDateDeleteData,
-  DeleteEntryV1JournalEntryDateDeleteErrors,
-  DeleteEntryV1JournalEntryDateDeleteResponses,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
@@ -105,49 +79,29 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteErrors,
-  DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponses,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteData,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteErrors,
-  DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponses,
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetErrors,
   GetActivitySummaryV1ActivitySummaryGetResponses,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetErrors,
   GetBankAccountV1BankAccountsBankAccountIdGetResponses,
-  GetCalendarV1JournalCalendarGetData,
-  GetCalendarV1JournalCalendarGetErrors,
-  GetCalendarV1JournalCalendarGetResponses,
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
   GetDailyActivityV1ActivityDailyGetData,
   GetDailyActivityV1ActivityDailyGetErrors,
   GetDailyActivityV1ActivityDailyGetResponses,
-  GetEntryV1JournalEntryDateGetData,
-  GetEntryV1JournalEntryDateGetErrors,
-  GetEntryV1JournalEntryDateGetResponses,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetErrors,
-  GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponses,
+  GetIntradayActivityV1ActivityIntradayGetData,
+  GetIntradayActivityV1ActivityIntradayGetErrors,
+  GetIntradayActivityV1ActivityIntradayGetResponses,
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
-  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
-  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors,
-  GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses,
-  GetStreakV1JournalStreakGetData,
-  GetStreakV1JournalStreakGetResponses,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetErrors,
   GetWeatherForecastV1WeatherGetResponses,
-  GetWorkoutV1WorkoutsWorkoutIdGetData,
-  GetWorkoutV1WorkoutsWorkoutIdGetErrors,
-  GetWorkoutV1WorkoutsWorkoutIdGetResponses,
   HealthzHealthzGetData,
   HealthzHealthzGetResponses,
   ImportKlarnaTransactionsV1KlarnaImportPostData,
@@ -169,20 +123,11 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
-  ListEntriesV1JournalGetData,
-  ListEntriesV1JournalGetErrors,
-  ListEntriesV1JournalGetResponses,
-  ListExercisesV1WorkoutsExercisesGetData,
-  ListExercisesV1WorkoutsExercisesGetErrors,
-  ListExercisesV1WorkoutsExercisesGetResponses,
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetErrors,
   ListPlacesV1PlacesGetResponses,
   ListProjectsV1TasksProjectsGetData,
   ListProjectsV1TasksProjectsGetResponses,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetData,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetErrors,
-  ListRecentExercisesV1WorkoutsExercisesRecentGetResponses,
   ListSecuritiesV1InvestmentsSecuritiesGetData,
   ListSecuritiesV1InvestmentsSecuritiesGetErrors,
   ListSecuritiesV1InvestmentsSecuritiesGetResponses,
@@ -198,9 +143,6 @@ import type {
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
-  ListWorkoutsV1WorkoutsGetData,
-  ListWorkoutsV1WorkoutsGetErrors,
-  ListWorkoutsV1WorkoutsGetResponses,
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
@@ -234,15 +176,6 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchErrors,
-  UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchData,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchErrors,
-  UpdateWorkoutV1WorkoutsWorkoutIdPatchResponses,
-  UpsertEntryV1JournalEntryDatePutData,
-  UpsertEntryV1JournalEntryDatePutErrors,
-  UpsertEntryV1JournalEntryDatePutResponses,
 } from "./types.gen.js";
 
 export type Options<
@@ -337,6 +270,20 @@ export const getDailyActivityV1ActivityDailyGet = <
     GetDailyActivityV1ActivityDailyGetErrors,
     ThrowOnError
   >({ url: "/v1/activity/daily", ...options });
+
+/**
+ * Get Intraday Activity
+ */
+export const getIntradayActivityV1ActivityIntradayGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetIntradayActivityV1ActivityIntradayGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetIntradayActivityV1ActivityIntradayGetResponses,
+    GetIntradayActivityV1ActivityIntradayGetErrors,
+    ThrowOnError
+  >({ url: "/v1/activity/intraday", ...options });
 
 /**
  * List Bank Accounts
@@ -719,108 +666,6 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
     GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
     ThrowOnError
   >({ url: "/v1/investments/crypto/price/{coin_id}", ...options });
-
-/**
- * List Journal Entries
- */
-export const listEntriesV1JournalGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListEntriesV1JournalGetData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<
-    ListEntriesV1JournalGetResponses,
-    ListEntriesV1JournalGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listEntriesV1JournalGetResponseTransformer,
-    url: "/v1/journal",
-    ...options,
-  });
-
-/**
- * Get Calendar Data
- */
-export const getCalendarV1JournalCalendarGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetCalendarV1JournalCalendarGetData, ThrowOnError>,
-) =>
-  (options.client ?? client).get<
-    GetCalendarV1JournalCalendarGetResponses,
-    GetCalendarV1JournalCalendarGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getCalendarV1JournalCalendarGetResponseTransformer,
-    url: "/v1/journal/calendar",
-    ...options,
-  });
-
-/**
- * Get Streak Info
- */
-export const getStreakV1JournalStreakGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<GetStreakV1JournalStreakGetData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<
-    GetStreakV1JournalStreakGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/v1/journal/streak", ...options });
-
-/**
- * Delete Journal Entry
- */
-export const deleteEntryV1JournalEntryDateDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteEntryV1JournalEntryDateDeleteData, ThrowOnError>,
-) =>
-  (options.client ?? client).delete<
-    DeleteEntryV1JournalEntryDateDeleteResponses,
-    DeleteEntryV1JournalEntryDateDeleteErrors,
-    ThrowOnError
-  >({ url: "/v1/journal/{entry_date}", ...options });
-
-/**
- * Get Journal Entry
- */
-export const getEntryV1JournalEntryDateGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetEntryV1JournalEntryDateGetData, ThrowOnError>,
-) =>
-  (options.client ?? client).get<
-    GetEntryV1JournalEntryDateGetResponses,
-    GetEntryV1JournalEntryDateGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getEntryV1JournalEntryDateGetResponseTransformer,
-    url: "/v1/journal/{entry_date}",
-    ...options,
-  });
-
-/**
- * Upsert Journal Entry
- */
-export const upsertEntryV1JournalEntryDatePut = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpsertEntryV1JournalEntryDatePutData, ThrowOnError>,
-) =>
-  (options.client ?? client).put<
-    UpsertEntryV1JournalEntryDatePutResponses,
-    UpsertEntryV1JournalEntryDatePutErrors,
-    ThrowOnError
-  >({
-    responseTransformer: upsertEntryV1JournalEntryDatePutResponseTransformer,
-    url: "/v1/journal/{entry_date}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
 
 /**
  * List Places
@@ -1312,268 +1157,4 @@ export const importKlarnaTransactionsV1KlarnaImportPost = <
       "Content-Type": "application/json",
       ...options.headers,
     },
-  });
-
-/**
- * List Exercises
- */
-export const listExercisesV1WorkoutsExercisesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListExercisesV1WorkoutsExercisesGetData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<
-    ListExercisesV1WorkoutsExercisesGetResponses,
-    ListExercisesV1WorkoutsExercisesGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listExercisesV1WorkoutsExercisesGetResponseTransformer,
-    url: "/v1/workouts/exercises",
-    ...options,
-  });
-
-/**
- * Create Custom Exercise
- */
-export const createExerciseV1WorkoutsExercisesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateExerciseV1WorkoutsExercisesPostData, ThrowOnError>,
-) =>
-  (options.client ?? client).post<
-    CreateExerciseV1WorkoutsExercisesPostResponses,
-    CreateExerciseV1WorkoutsExercisesPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      createExerciseV1WorkoutsExercisesPostResponseTransformer,
-    url: "/v1/workouts/exercises",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Recent Exercises
- */
-export const listRecentExercisesV1WorkoutsExercisesRecentGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    ListRecentExercisesV1WorkoutsExercisesRecentGetData,
-    ThrowOnError
-  >,
-) =>
-  (options?.client ?? client).get<
-    ListRecentExercisesV1WorkoutsExercisesRecentGetResponses,
-    ListRecentExercisesV1WorkoutsExercisesRecentGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      listRecentExercisesV1WorkoutsExercisesRecentGetResponseTransformer,
-    url: "/v1/workouts/exercises/recent",
-    ...options,
-  });
-
-/**
- * List Workouts
- */
-export const listWorkoutsV1WorkoutsGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListWorkoutsV1WorkoutsGetData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<
-    ListWorkoutsV1WorkoutsGetResponses,
-    ListWorkoutsV1WorkoutsGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listWorkoutsV1WorkoutsGetResponseTransformer,
-    url: "/v1/workouts",
-    ...options,
-  });
-
-/**
- * Create Workout
- */
-export const createWorkoutV1WorkoutsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateWorkoutV1WorkoutsPostData, ThrowOnError>,
-) =>
-  (options.client ?? client).post<
-    CreateWorkoutV1WorkoutsPostResponses,
-    CreateWorkoutV1WorkoutsPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createWorkoutV1WorkoutsPostResponseTransformer,
-    url: "/v1/workouts",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Delete Workout
- */
-export const deleteWorkoutV1WorkoutsWorkoutIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteWorkoutV1WorkoutsWorkoutIdDeleteData, ThrowOnError>,
-) =>
-  (options.client ?? client).delete<
-    DeleteWorkoutV1WorkoutsWorkoutIdDeleteResponses,
-    DeleteWorkoutV1WorkoutsWorkoutIdDeleteErrors,
-    ThrowOnError
-  >({ url: "/v1/workouts/{workout_id}", ...options });
-
-/**
- * Get Workout Detail
- */
-export const getWorkoutV1WorkoutsWorkoutIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetWorkoutV1WorkoutsWorkoutIdGetData, ThrowOnError>,
-) =>
-  (options.client ?? client).get<
-    GetWorkoutV1WorkoutsWorkoutIdGetResponses,
-    GetWorkoutV1WorkoutsWorkoutIdGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getWorkoutV1WorkoutsWorkoutIdGetResponseTransformer,
-    url: "/v1/workouts/{workout_id}",
-    ...options,
-  });
-
-/**
- * Update Workout
- */
-export const updateWorkoutV1WorkoutsWorkoutIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateWorkoutV1WorkoutsWorkoutIdPatchData, ThrowOnError>,
-) =>
-  (options.client ?? client).patch<
-    UpdateWorkoutV1WorkoutsWorkoutIdPatchResponses,
-    UpdateWorkoutV1WorkoutsWorkoutIdPatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      updateWorkoutV1WorkoutsWorkoutIdPatchResponseTransformer,
-    url: "/v1/workouts/{workout_id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Add Set to Workout
- */
-export const createWorkoutSetV1WorkoutsWorkoutIdSetsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).post<
-    CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostResponses,
-    CreateWorkoutSetV1WorkoutsWorkoutIdSetsPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      createWorkoutSetV1WorkoutsWorkoutIdSetsPostResponseTransformer,
-    url: "/v1/workouts/{workout_id}/sets",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Delete Set
- */
-export const deleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).delete<
-    DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteResponses,
-    DeleteWorkoutSetV1WorkoutsWorkoutIdSetsSetIdDeleteErrors,
-    ThrowOnError
-  >({ url: "/v1/workouts/{workout_id}/sets/{set_id}", ...options });
-
-/**
- * Update Set
- */
-export const updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).patch<
-    UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponses,
-    UpdateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      updateWorkoutSetV1WorkoutsWorkoutIdSetsSetIdPatchResponseTransformer,
-    url: "/v1/workouts/{workout_id}/sets/{set_id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Get Last Session for Exercise
- */
-export const getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).get<
-    GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetResponses,
-    GetLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetErrors,
-    ThrowOnError
-  >({ url: "/v1/workouts/exercises/{exercise_id}/last-session", ...options });
-
-/**
- * Get PRs for Exercise
- */
-export const getExercisePrsV1WorkoutsExercisesExerciseIdPrsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).get<
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponses,
-    GetExercisePrsV1WorkoutsExercisesExerciseIdPrsGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      getExercisePrsV1WorkoutsExercisesExerciseIdPrsGetResponseTransformer,
-    url: "/v1/workouts/exercises/{exercise_id}/prs",
-    ...options,
   });

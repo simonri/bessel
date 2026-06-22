@@ -12,6 +12,8 @@ from api.activity.schemas import (
     ActivityAppSummary,
     ActivityDailyEntry,
     ActivityDailyResponse,
+    ActivityIntradayBucket,
+    ActivityIntradayResponse,
     ActivitySourcesResponse,
     ActivitySummaryResponse,
 )
@@ -159,3 +161,42 @@ async def get_daily_activity(
         key=lambda x: x.date,
     )
     return ActivityDailyResponse(days=days)
+
+
+@router.get(
+    "/intraday",
+    summary="Get Intraday Activity",
+    response_model=ActivityIntradayResponse,
+)
+async def get_intraday_activity(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
+    end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],
+    source: Annotated[str, Query(description="Machine source to query.")],
+    bucket_mins: Annotated[int, Query(description="Bucket size in minutes.", ge=1, le=60)] = 15,
+) -> ActivityIntradayResponse:
+    repo = ActivityRepository.from_session(session)
+    events = await repo.get_events_in_range(start_ts, end_ts, source)
+
+    tail_ts = min(int(time.time()), end_ts)
+    bucket_secs = bucket_mins * 60
+    total_buckets = (end_ts - start_ts) // bucket_secs
+    buckets: dict[int, int] = {}
+
+    for i, event in enumerate(events):
+        nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts
+        dur = min(nxt_ts - event.ts, _MAX_GAP_SECS)
+        if event.state == "active" and dur > 0:
+            bucket_idx = (event.ts - start_ts) // bucket_secs
+            bucket_idx = min(bucket_idx, total_buckets - 1)
+            buckets[bucket_idx] = buckets.get(bucket_idx, 0) + dur
+
+    result = sorted(
+        [ActivityIntradayBucket(bucket=k, active_secs=v) for k, v in buckets.items()],
+        key=lambda x: x.bucket,
+    )
+    return ActivityIntradayResponse(
+        bucket_mins=bucket_mins,
+        total_buckets=total_buckets,
+        buckets=result,
+    )
