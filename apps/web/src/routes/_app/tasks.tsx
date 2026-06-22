@@ -28,6 +28,7 @@ import {
   RotateCcw,
   Folder,
   Layers,
+  Copy,
 } from "lucide-react";
 import type { TaskSchema } from "@metron/client";
 import {
@@ -441,6 +442,20 @@ function TaskDetailDialog({
             Reopen
           </Button>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs text-muted-foreground"
+          onClick={() => {
+            const parts = [`Implement this task:\nTitle: ${task.title}`];
+            if (task.description) parts.push(`Description: ${task.description}`);
+            navigator.clipboard.writeText(parts.join("\n\n"));
+            toast.success("Copied to clipboard");
+          }}
+        >
+          <Copy className="size-3.5 mr-1.5" />
+          Copy to prompt
+        </Button>
         <Button
           variant="ghost"
           size="sm"
