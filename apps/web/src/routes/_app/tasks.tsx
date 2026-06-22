@@ -149,6 +149,18 @@ function formatRecurrence(task: TaskSchema): string | null {
   return `Every ${interval} ${freq}`;
 }
 
+function copyText(text: string): Promise<void> {
+  if (navigator.clipboard) return navigator.clipboard.writeText(text);
+  const el = document.createElement("textarea");
+  el.value = text;
+  el.style.cssText = "position:fixed;opacity:0";
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  document.body.removeChild(el);
+  return Promise.resolve();
+}
+
 // ---------------------------------------------------------------------------
 // Task Card
 // ---------------------------------------------------------------------------
@@ -449,8 +461,9 @@ function TaskDetailDialog({
           onClick={() => {
             const parts = [`Implement this task:\nTitle: ${task.title}`];
             if (task.description) parts.push(`Description: ${task.description}`);
-            navigator.clipboard.writeText(parts.join("\n\n"));
-            toast.success("Copied to clipboard");
+            copyText(parts.join("\n\n"))
+              .then(() => toast.success("Copied to clipboard"))
+              .catch(() => toast.error("Failed to copy"));
           }}
         >
           <Copy className="size-3.5 mr-1.5" />
