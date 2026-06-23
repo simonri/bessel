@@ -10,7 +10,6 @@ import {
   markNotificationReadV1NotificationsNotificationIdReadPost,
 } from "@metron/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
-import { ScrollArea } from "@metron/ui/components/scroll-area";
 import { client } from "@/lib/client";
 import { useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
@@ -199,7 +198,7 @@ function NotificationBell() {
         {notifications.length === 0 ? (
           <div className="py-8 text-center text-xs text-white/30">No notifications</div>
         ) : (
-          <ScrollArea className="min-h-0 flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="divide-y divide-white/[0.06]">
               {notifications.map((n) => (
                 <button
@@ -230,7 +229,7 @@ function NotificationBell() {
                 </button>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </PopoverContent>
     </Popover>
@@ -255,6 +254,7 @@ export function CanvasTopBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
+        <TimeSinceDropdown />
         <NotificationBell />
         <button
           onClick={() => setSettingsOpen(true)}

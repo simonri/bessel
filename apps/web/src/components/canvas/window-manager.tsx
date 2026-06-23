@@ -8,8 +8,7 @@ export type ModuleKey =
   | "tasks"
   | "travel"
   | "activity"
-  | "recipes"
-  | "counters";
+  | "recipes";
 
 export type WindowEntry = { id: string; module: ModuleKey };
 
@@ -24,7 +23,7 @@ interface WindowManagerContextValue {
 const STORAGE_KEY = "metron:windows";
 
 const ALL_MODULES = new Set<string>([
-  "dashboard", "transactions", "accounts", "investments", "tasks", "travel", "activity", "recipes", "counters",
+  "dashboard", "transactions", "accounts", "investments", "tasks", "travel", "activity", "recipes",
 ]);
 
 function newId() {
