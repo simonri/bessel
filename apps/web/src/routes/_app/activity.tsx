@@ -19,6 +19,7 @@ import {
 } from "@metron/ui/components/select";
 import { Skeleton } from "@metron/ui/components/skeleton";
 import { client } from "@/lib/client";
+import { useSettings } from "@/hooks/use-settings";
 
 export const Route = createFileRoute("/_app/activity")({
   component: ActivityPage,
@@ -231,6 +232,12 @@ export function ActivityPage() {
   const today = new Date();
   const [date, setDate] = useState(today);
   const [source, setSource] = useState<string | null>(null);
+  const { settings } = useSettings();
+
+  const mapName = (name: string) => {
+    const match = settings.activityMappings.find((m) => m.from && m.from === name);
+    return match?.to || name;
+  };
 
   const isCurrentDay = isSameDay(date, today);
 
@@ -474,7 +481,7 @@ export function ActivityPage() {
                 return (
                   <div key={app.app_class} className="flex items-center gap-3">
                     <span className="w-44 shrink-0 truncate font-mono text-xs text-white/60">
-                      {app.app_class}
+                      {mapName(app.app_class)}
                     </span>
                     <div
                       className="relative h-2 flex-1 overflow-hidden rounded-full"

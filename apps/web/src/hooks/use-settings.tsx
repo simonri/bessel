@@ -1,11 +1,17 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
+export interface ActivityMapping {
+  from: string;
+  to: string;
+}
+
 interface Settings {
   cryptoPairs: string;
+  activityMappings: ActivityMapping[];
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT" };
+const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [] };
 
 function loadSettings(): Settings {
   try {
