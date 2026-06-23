@@ -8,6 +8,7 @@ import {
   getActivitySummaryV1ActivitySummaryGetOptions,
   getDailyActivityV1ActivityDailyGetOptions,
   getIntradayActivityV1ActivityIntradayGetOptions,
+  listTasksV1TasksGetOptions,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -267,6 +268,14 @@ export function ActivityPage() {
     placeholderData: keepPreviousData,
   });
 
+  const { data: completedTasksData } = useQuery({
+    ...listTasksV1TasksGetOptions({
+      client,
+      query: { status: "done", completed_after: startTs, completed_before: endTs, limit: 1 },
+    }),
+    placeholderData: keepPreviousData,
+  });
+
   const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Full calendar year grid: Jan 1 → Dec 31, padded to week boundaries
@@ -455,6 +464,16 @@ export function ActivityPage() {
             buckets={intradayData?.buckets ?? []}
             totalBuckets={intradayData?.total_buckets ?? 96}
           />
+
+          {/* Tasks completed */}
+          {completedTasksData !== undefined && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-white/40">Tasks completed</span>
+              <span className="text-sm font-medium text-white/80">
+                {completedTasksData.pagination.total_count}
+              </span>
+            </div>
+          )}
 
           {/* Daily breakdown */}
           {isLoading && !summary ? (

@@ -19,6 +19,8 @@ def _get_kwargs(
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
+  completed_after: int | None | Unset = UNSET,
+  completed_before: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TaskSortProperty] | None | Unset = UNSET,
@@ -62,6 +64,20 @@ def _get_kwargs(
   else:
     json_is_recurring = is_recurring
   params["is_recurring"] = json_is_recurring
+
+  json_completed_after: int | None | Unset
+  if isinstance(completed_after, Unset):
+    json_completed_after = UNSET
+  else:
+    json_completed_after = completed_after
+  params["completed_after"] = json_completed_after
+
+  json_completed_before: int | None | Unset
+  if isinstance(completed_before, Unset):
+    json_completed_before = UNSET
+  else:
+    json_completed_before = completed_before
+  params["completed_before"] = json_completed_before
 
   params["page"] = page
 
@@ -125,6 +141,8 @@ def sync_detailed(
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
+  completed_after: int | None | Unset = UNSET,
+  completed_before: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TaskSortProperty] | None | Unset = UNSET,
@@ -137,6 +155,10 @@ def sync_detailed(
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
+      completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
+          (inclusive).
+      completed_before (int | None | Unset): Filter tasks completed before this Unix timestamp
+          (exclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TaskSortProperty] | None | Unset): Sorting criterion. Several criteria can
@@ -157,6 +179,8 @@ def sync_detailed(
     project=project,
     area=area,
     is_recurring=is_recurring,
+    completed_after=completed_after,
+    completed_before=completed_before,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -177,6 +201,8 @@ def sync(
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
+  completed_after: int | None | Unset = UNSET,
+  completed_before: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TaskSortProperty] | None | Unset = UNSET,
@@ -189,6 +215,10 @@ def sync(
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
+      completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
+          (inclusive).
+      completed_before (int | None | Unset): Filter tasks completed before this Unix timestamp
+          (exclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TaskSortProperty] | None | Unset): Sorting criterion. Several criteria can
@@ -210,6 +240,8 @@ def sync(
     project=project,
     area=area,
     is_recurring=is_recurring,
+    completed_after=completed_after,
+    completed_before=completed_before,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -224,6 +256,8 @@ async def asyncio_detailed(
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
+  completed_after: int | None | Unset = UNSET,
+  completed_before: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TaskSortProperty] | None | Unset = UNSET,
@@ -236,6 +270,10 @@ async def asyncio_detailed(
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
+      completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
+          (inclusive).
+      completed_before (int | None | Unset): Filter tasks completed before this Unix timestamp
+          (exclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TaskSortProperty] | None | Unset): Sorting criterion. Several criteria can
@@ -256,6 +294,8 @@ async def asyncio_detailed(
     project=project,
     area=area,
     is_recurring=is_recurring,
+    completed_after=completed_after,
+    completed_before=completed_before,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -274,6 +314,8 @@ async def asyncio(
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
+  completed_after: int | None | Unset = UNSET,
+  completed_before: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TaskSortProperty] | None | Unset = UNSET,
@@ -286,6 +328,10 @@ async def asyncio(
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
+      completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
+          (inclusive).
+      completed_before (int | None | Unset): Filter tasks completed before this Unix timestamp
+          (exclusive).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TaskSortProperty] | None | Unset): Sorting criterion. Several criteria can
@@ -308,6 +354,8 @@ async def asyncio(
       project=project,
       area=area,
       is_recurring=is_recurring,
+      completed_after=completed_after,
+      completed_before=completed_before,
       page=page,
       limit=limit,
       sorting=sorting,

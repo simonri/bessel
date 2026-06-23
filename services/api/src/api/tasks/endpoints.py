@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
@@ -44,6 +45,8 @@ async def list_tasks(
   project: str | None = Query(default=None, description="Filter by project."),
   area: str | None = Query(default=None, description="Filter by area."),
   is_recurring: bool | None = Query(default=None, description="Filter by recurring."),
+  completed_after: int | None = Query(default=None, description="Filter tasks completed after this Unix timestamp (inclusive)."),
+  completed_before: int | None = Query(default=None, description="Filter tasks completed before this Unix timestamp (exclusive)."),
 ) -> TaskListResponse:
   repo = TaskRepository.from_session(session)
   statement = repo.get_base_statement()
@@ -58,6 +61,10 @@ async def list_tasks(
     statement = statement.where(Task.area == area)
   if is_recurring is not None:
     statement = statement.where(Task.is_recurring == is_recurring)
+  if completed_after is not None:
+    statement = statement.where(Task.completed_at >= datetime.fromtimestamp(completed_after, tz=timezone.utc))
+  if completed_before is not None:
+    statement = statement.where(Task.completed_at < datetime.fromtimestamp(completed_before, tz=timezone.utc))
 
   for prop, desc in sorting:
     column = getattr(Task, prop.value)

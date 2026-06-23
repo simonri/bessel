@@ -861,15 +861,20 @@ export function Tasks() {
         }
       : null;
 
+  const activeCount =
+    viewTab === "board" && boardTasks
+      ? boardTasks.todo.length + boardTasks.in_progress.length
+      : totalCount;
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-5 shrink-0">
         <div className="flex items-baseline gap-2">
           <h2 className="text-base font-semibold text-white/90">Tasks</h2>
-          {totalCount > 0 && (
+          {activeCount > 0 && (
             <span className="text-[11px] text-white/35 tabular-nums">
-              {totalCount}
+              {activeCount}
             </span>
           )}
         </div>

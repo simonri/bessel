@@ -2297,6 +2297,42 @@
             "description": "Filter by recurring."
           },
           {
+            "name": "completed_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter tasks completed after this Unix timestamp (inclusive).",
+              "title": "Completed After"
+            },
+            "description": "Filter tasks completed after this Unix timestamp (inclusive)."
+          },
+          {
+            "name": "completed_before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter tasks completed before this Unix timestamp (exclusive).",
+              "title": "Completed Before"
+            },
+            "description": "Filter tasks completed before this Unix timestamp (exclusive)."
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,

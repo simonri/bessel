@@ -3856,6 +3856,18 @@ export type ListTasksV1TasksGetData = {
      */
     is_recurring?: boolean | null;
     /**
+     * Completed After
+     *
+     * Filter tasks completed after this Unix timestamp (inclusive).
+     */
+    completed_after?: number | null;
+    /**
+     * Completed Before
+     *
+     * Filter tasks completed before this Unix timestamp (exclusive).
+     */
+    completed_before?: number | null;
+    /**
      * Page
      *
      * Page number, defaults to 1.

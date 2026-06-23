@@ -506,7 +506,7 @@ export function CreateTaskDialog() {
 
   return (
     <>
-      <Button onClick={handleOpen}>
+      <Button size="sm" onClick={handleOpen}>
         <Plus className="size-4" />
         Add Task
       </Button>
