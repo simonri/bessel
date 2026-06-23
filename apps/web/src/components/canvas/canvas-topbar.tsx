@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Settings, TrendingDown, TrendingUp } from "lucide-react";
+import { Bell, Settings, Timer, TrendingDown, TrendingUp } from "lucide-react";
 import {
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions,
   listNotificationsV1NotificationsGetOptions,
@@ -14,6 +14,7 @@ import { ScrollArea } from "@metron/ui/components/scroll-area";
 import { client } from "@/lib/client";
 import { useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
+import { Counters } from "@/routes/_app/counters";
 
 // Map trading pair symbols to CoinGecko IDs and quote currencies
 const QUOTE_SUFFIXES: [string, string][] = [
@@ -108,6 +109,25 @@ function CryptoPairTicker({ pair }: { pair: string }) {
   );
 }
 
+function TimeSinceDropdown() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70">
+          <Timer className="size-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="h-80 w-72 overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
+      >
+        <Counters />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function NotificationBell() {
   const queryClient = useQueryClient();
 
@@ -161,7 +181,7 @@ function NotificationBell() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="flex w-80 flex-col overflow-hidden border-white/10 bg-black/80 p-0 backdrop-blur-xl"
+        className="flex w-80 flex-col overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
         style={{ maxHeight: "min(28rem, 80vh)" }}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">

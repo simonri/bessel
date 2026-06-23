@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { X } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { MODULE_REGISTRY } from "./module-registry";
 import { useWindowManager, type WindowEntry } from "./window-manager";
 
@@ -17,13 +19,38 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
   const Icon = config.icon;
   const Component = config.component;
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-xl">
-      {/* Title bar */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-xl ${isDragging ? "opacity-0" : ""}`}
+    >
+      {/* Title bar — full-width drag handle */}
+      <div
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5 cursor-grab active:cursor-grabbing"
+      >
         <Icon className="size-3.5 text-white/50" />
         <span className="text-sm font-medium text-white/80">{config.title}</span>
         <button
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => closeWindow(entry.id)}
           className="ml-auto flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
         >

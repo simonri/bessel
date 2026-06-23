@@ -17,6 +17,7 @@ interface WindowManagerContextValue {
   windows: WindowEntry[];
   toggleWindow: (module: ModuleKey) => void;
   closeWindow: (id: string) => void;
+  reorderWindows: (activeId: string, overId: string) => void;
   isOpen: (module: ModuleKey) => boolean;
 }
 
@@ -70,8 +71,19 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     setWindows((prev) => prev.filter((w) => w.id !== id));
   }, []);
 
+  const reorderWindows = useCallback((activeId: string, overId: string) => {
+    setWindows((prev) => {
+      const oldIndex = prev.findIndex((w) => w.id === activeId);
+      const newIndex = prev.findIndex((w) => w.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(newIndex, 0, next.splice(oldIndex, 1)[0]);
+      return next;
+    });
+  }, []);
+
   return (
-    <WindowManagerContext.Provider value={{ windows, toggleWindow, closeWindow, isOpen }}>
+    <WindowManagerContext.Provider value={{ windows, toggleWindow, closeWindow, reorderWindows, isOpen }}>
       {children}
     </WindowManagerContext.Provider>
   );
