@@ -35,6 +35,8 @@ class Settings(BaseSettings):
       "http://127.0.0.1:3000",
       "http://localhost:3001",
       "http://127.0.0.1:3001",
+      # Electron desktop app (protocol.handle serves from app://localhost in production)
+      "app://localhost",
     ]
   )
   FRONTEND_BASE_URL: str = Field(default="http://localhost:5173")

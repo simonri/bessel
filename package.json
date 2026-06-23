@@ -13,6 +13,8 @@
     "dev": "turbo dev --parallel --filter=@metron/web --filter=@metron/api --filter=@metron/worker",
     "dev:web": "turbo dev --filter=@metron/web --parallel",
     "dev:api": "turbo dev --filter=@metron/api --parallel",
+    "desktop:dev": "pnpm --filter=@metron/desktop dev",
+    "desktop:build": "pnpm --filter=@metron/desktop build",
     "build": "turbo build --parallel",
     "format": "biome format --write .",
     "cleanup:s3": "bun run scripts/cleanup-s3-files.ts",

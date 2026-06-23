@@ -1,0 +1,54 @@
+{
+  "name": "@metron/desktop",
+  "version": "0.1.0",
+  "description": "Metron personal dashboard desktop app",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "predev": "tsc",
+    "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@metron/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
+    "build": "tsc && pnpm --filter=@metron/web build && electron-builder",
+    "build:dir": "tsc && pnpm --filter=@metron/web build && electron-builder --dir"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.1.2",
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "dev.metron.app",
+    "productName": "Metron",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "../web/dist/client",
+        "to": "web/dist/client"
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Utility"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    }
+  }
+}

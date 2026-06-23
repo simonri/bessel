@@ -58,6 +58,10 @@ tailwind.css
 # Trigger
 .trigger
 
+# Electron
+apps/desktop/dist/
+apps/desktop/release/
+
 # Logs
 logs
 *.log
