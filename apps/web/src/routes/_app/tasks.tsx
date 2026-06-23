@@ -177,7 +177,7 @@ function compareBoardTasks(a: TaskSchema, b: TaskSchema): number {
 
 function landingIndexFor(tasks: TaskSchema[], active: TaskSchema): number {
   let i = 0;
-  while (i < tasks.length && compareBoardTasks(active, tasks[i]) >= 0) i++;
+  while (i < tasks.length && compareBoardTasks(active, tasks[i]) > 0) i++;
   return i;
 }
 

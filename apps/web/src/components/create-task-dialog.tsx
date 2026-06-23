@@ -162,28 +162,6 @@ export function TaskFormDialog({
     ...listProjectsV1TasksProjectsGetOptions({ client }),
   });
 
-  const createMutation = useMutation({
-    ...createTaskV1TasksPostMutation({ client }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-      toast.success("Task created");
-      onOpenChange(false);
-    },
-    onError: () => toast.error("Failed to create task"),
-  });
-
-  const updateMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-      toast.success("Task updated");
-      onOpenChange(false);
-    },
-    onError: () => toast.error("Failed to update task"),
-  });
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
-
   const form = useForm({
     defaultValues: taskToFormValues(task),
     onSubmit: ({ value }) => {
@@ -241,11 +219,33 @@ export function TaskFormDialog({
     },
   });
 
+  const createMutation = useMutation({
+    ...createTaskV1TasksPostMutation({ client }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success("Task created");
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: () => toast.error("Failed to create task"),
+  });
+
+  const updateMutation = useMutation({
+    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success("Task updated");
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: () => toast.error("Failed to update task"),
+  });
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
   const handleClose = () => {
-    onOpenChange(false);
     form.reset();
-    createMutation.reset();
-    updateMutation.reset();
+    onOpenChange(false);
   };
 
   return (
@@ -497,13 +497,20 @@ export function TaskFormDialog({
 
 export function CreateTaskDialog() {
   const [open, setOpen] = useState(false);
+  const [epoch, setEpoch] = useState(0);
+
+  const handleOpen = () => {
+    setEpoch((e) => e + 1);
+    setOpen(true);
+  };
+
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button onClick={handleOpen}>
         <Plus className="size-4" />
         Add Task
       </Button>
-      <TaskFormDialog open={open} onOpenChange={setOpen} />
+      <TaskFormDialog key={epoch} open={open} onOpenChange={setOpen} />
     </>
   );
 }
