@@ -25,6 +25,7 @@ import socket
 import sqlite3
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -276,7 +277,22 @@ def _migrate(conn):
 
 # ─── tracking loop ───────────────────────────────────────────────────────────
 
-def track():
+def _auto_push_loop(source: str) -> None:
+    """Background thread: push to API every HEARTBEAT_SECS while tracking."""
+    while _running:
+        time.sleep(HEARTBEAT_SECS)
+        if not _running:
+            break
+        try:
+            cursor = _read_cursor()
+            inserted, skipped, _ = _do_push(source, cursor)
+            if inserted:
+                print(f"metron-monitor  auto-push inserted={inserted} skipped={skipped}", flush=True)
+        except Exception as e:
+            print(f"metron-monitor  auto-push failed: {e}", file=sys.stderr, flush=True)
+
+
+def track(source: str) -> None:
     backend = detect_backend()
     if backend == "unknown":
         sys.exit("Cannot detect display server — set DISPLAY or Wayland env vars.")
@@ -286,7 +302,10 @@ def track():
     idle_method = "idle file" if IDLE_FILE.exists() else "loginctl IdleHint"
     if backend in ("hyprland", "sway") and not IDLE_FILE.exists():
         idle_method = f"loginctl IdleHint (add hypridle listener → {IDLE_FILE} for accuracy)"
-    print(f"metron-monitor  backend={backend}  idle={idle_method}  db={DB_PATH}", flush=True)
+    print(f"metron-monitor  backend={backend}  idle={idle_method}  db={DB_PATH}  source={source}", flush=True)
+
+    t = threading.Thread(target=_auto_push_loop, args=(source,), daemon=True)
+    t.start()
 
     last_key = None
     last_write_ts = 0
@@ -406,13 +425,11 @@ def _write_cursor(value: int) -> None:
     CURSOR_PATH.write_text(str(value))
 
 
-def push(source: str, reset_cursor: bool) -> None:
-    if not DB_PATH.exists():
-        sys.exit("No data yet — run without --push to start tracking.")
-
-    cursor = 0 if reset_cursor else _read_cursor()
+def _do_push(source: str, cursor: int) -> tuple[int, int, int]:
+    """Push events since cursor to the API. Returns (inserted, skipped, new_cursor).
+    Raises OSError / urllib.error.URLError on network failure, RuntimeError on API error.
+    """
     conn = _open_db()
-
     total_inserted = 0
     total_skipped = 0
 
@@ -453,21 +470,32 @@ def push(source: str, reset_cursor: bool) -> None:
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     body = json.loads(resp.read())
             except urllib.error.HTTPError as e:
-                sys.exit(f"API error {e.code}: {e.read().decode()}")
+                raise RuntimeError(f"API error {e.code}: {e.read().decode()}") from e
             except (urllib.error.URLError, OSError) as e:
-                sys.exit(f"Failed to reach API at {METRON_API_URL}: {e}")
+                raise OSError(f"Failed to reach API at {METRON_API_URL}: {e}") from e
 
             total_inserted += body["inserted"]
             total_skipped += body["skipped"]
-
             cursor = rows[-1][0]
             _write_cursor(cursor)
-
     finally:
         conn.close()
 
+    return total_inserted, total_skipped, cursor
+
+
+def push(source: str, reset_cursor: bool) -> None:
+    if not DB_PATH.exists():
+        sys.exit("No data yet — run without --push to start tracking.")
+
+    cursor = 0 if reset_cursor else _read_cursor()
+    try:
+        inserted, skipped, cursor = _do_push(source, cursor)
+    except (RuntimeError, OSError) as e:
+        sys.exit(str(e))
+
     print(
-        f"Push complete — inserted={total_inserted} skipped={total_skipped} cursor={cursor}",
+        f"Push complete — inserted={inserted} skipped={skipped} cursor={cursor}",
         flush=True,
     )
 
@@ -479,7 +507,7 @@ if __name__ == "__main__":
     ap.add_argument("--push", action="store_true", help="sync unsynced events to the Metron API")
     ap.add_argument("--reset-cursor", action="store_true", help="re-push all events from the start (safe, server dedupes)")
     ap.add_argument("--source", metavar="NAME", default=socket.gethostname(),
-                    help="machine identifier for --push (default: hostname)")
+                    help="machine identifier (default: hostname); used for tracking auto-push and --push")
     ap.add_argument("--report", action="store_true", help="print time-per-app summary and exit")
     ap.add_argument("--dump",   action="store_true", help="write raw events as CSV to stdout")
     ap.add_argument("--date", metavar="YYYY-MM-DD",
@@ -507,4 +535,4 @@ if __name__ == "__main__":
             ap.error("--date / --reset-cursor only apply to --report, --dump, or --push")
         signal.signal(signal.SIGTERM, _stop)
         signal.signal(signal.SIGINT, _stop)
-        track()
+        track(source=args.source)

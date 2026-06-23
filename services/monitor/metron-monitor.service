@@ -5,6 +5,8 @@ After=graphical-session.target
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/uv run --directory %h/dev/metron/services/monitor python main.py
+Environment=METRON_API_URL=http://vps:8080
+EnvironmentFile=-%h/.config/metron/monitor.env
 Restart=on-failure
 RestartSec=5
 
