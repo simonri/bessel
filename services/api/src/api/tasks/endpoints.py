@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
@@ -62,9 +62,9 @@ async def list_tasks(
   if is_recurring is not None:
     statement = statement.where(Task.is_recurring == is_recurring)
   if completed_after is not None:
-    statement = statement.where(Task.completed_at >= datetime.fromtimestamp(completed_after, tz=timezone.utc))
+    statement = statement.where(Task.completed_at >= datetime.fromtimestamp(completed_after, tz=UTC))
   if completed_before is not None:
-    statement = statement.where(Task.completed_at < datetime.fromtimestamp(completed_before, tz=timezone.utc))
+    statement = statement.where(Task.completed_at < datetime.fromtimestamp(completed_before, tz=UTC))
 
   for prop, desc in sorting:
     column = getattr(Task, prop.value)
@@ -89,7 +89,11 @@ async def create_task(
   session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = Task(**body.model_dump())
+  task_data = body.model_dump()
+  if task_data.get("position") is None:
+    max_pos = await repo.get_max_position()
+    task_data["position"] = (max_pos or 0) + 1000
+  task = Task(**task_data)
   await repo.create(task, flush=True)
   return TaskSchema.model_validate(task)
 
@@ -158,6 +162,7 @@ async def complete_task(
       day_of_week=task.rrule_day_of_week,
       day_of_month=task.rrule_day_of_month,
     )
+    max_pos = await repo.get_max_position()
     next_task = Task(
       title=task.title,
       description=task.description,
@@ -167,7 +172,7 @@ async def complete_task(
       project=task.project,
       area=task.area,
       tags=task.tags,
-      position=task.position,
+      position=(max_pos or 0) + 1000,
       is_recurring=True,
       rrule_frequency=task.rrule_frequency,
       rrule_interval=task.rrule_interval,

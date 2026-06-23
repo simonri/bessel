@@ -1,17 +1,24 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
   PointerSensor,
-  closestCorners,
+  closestCenter,
   useSensor,
   useSensors,
   useDroppable,
-  useDraggable,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isTomorrow, isPast, isYesterday } from "date-fns";
@@ -43,6 +50,7 @@ import {
   completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
+  reorderTasksV1TasksReorderPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@metron/ui/components/dialog";
@@ -162,25 +170,6 @@ function copyText(text: string): Promise<void> {
   return Promise.resolve();
 }
 
-// Mirrors the board's server-side ordering (`-priority`, then `due_date` asc
-// with nulls last) so we can predict where a dropped card will settle.
-function compareBoardTasks(a: TaskSchema, b: TaskSchema): number {
-  const pa = a.priority ?? 0;
-  const pb = b.priority ?? 0;
-  if (pa !== pb) return pb - pa;
-  const da = a.due_date ? new Date(a.due_date).getTime() : null;
-  const db = b.due_date ? new Date(b.due_date).getTime() : null;
-  if (da === null) return db === null ? 0 : 1;
-  if (db === null) return -1;
-  return da - db;
-}
-
-function landingIndexFor(tasks: TaskSchema[], active: TaskSchema): number {
-  let i = 0;
-  while (i < tasks.length && compareBoardTasks(active, tasks[i]) > 0) i++;
-  return i;
-}
-
 // ---------------------------------------------------------------------------
 // Task Card
 // ---------------------------------------------------------------------------
@@ -232,14 +221,20 @@ function TaskCard({
   const priority = task.priority ?? 0;
   const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
 
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { task },
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
     <div
       ref={setNodeRef}
+      style={style}
       {...attributes}
       {...listeners}
       className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
@@ -285,33 +280,17 @@ function DragCard({ task }: { task: TaskSchema }) {
 function BoardColumn({
   status,
   tasks,
-  activeTask,
   onSelectTask,
   onCompleteTask,
 }: {
   status: string;
   tasks: TaskSchema[];
-  activeTask: TaskSchema | null;
   onSelectTask: (task: TaskSchema) => void;
   onCompleteTask: (task: TaskSchema) => void;
 }) {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
   const Icon = config.icon;
   const { setNodeRef, isOver } = useDroppable({ id: status });
-
-  // Show a landing slot only when a card from a different column hovers here,
-  // positioned where the board's sort would actually drop it.
-  const showLanding = isOver && activeTask !== null && activeTask.status !== status;
-  const landingIndex = showLanding ? landingIndexFor(tasks, activeTask) : -1;
-  // Ghost of the dragged card so the slot matches its exact size.
-  const landingSlot = activeTask ? (
-    <div className="rounded-lg border border-dashed border-white/30 bg-white/5 p-2.5">
-      <div className="flex items-start gap-2.5 invisible">
-        <Circle className="size-4 mt-0.5 shrink-0" />
-        <TaskCardMeta task={activeTask} />
-      </div>
-    </div>
-  ) : null;
 
   return (
     <div
@@ -325,24 +304,23 @@ function BoardColumn({
           {tasks.length}
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-1.5 p-1">
-        {tasks.map((task, i) => (
-          <Fragment key={task.id}>
-            {landingIndex === i && landingSlot}
+      <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex-1 overflow-y-auto space-y-1.5 p-1">
+          {tasks.map((task) => (
             <TaskCard
+              key={task.id}
               task={task}
               onSelect={() => onSelectTask(task)}
               onComplete={() => onCompleteTask(task)}
             />
-          </Fragment>
-        ))}
-        {landingIndex === tasks.length && landingSlot}
-        {tasks.length === 0 && !showLanding && (
-          <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-[11px] text-white/25">
-            No tasks
-          </div>
-        )}
-      </div>
+          ))}
+          {tasks.length === 0 && (
+            <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-[11px] text-white/25">
+              No tasks
+            </div>
+          )}
+        </div>
+      </SortableContext>
     </div>
   );
 }
@@ -648,6 +626,7 @@ export function Tasks() {
   const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
   const [repeatingOpen, setRepeatingOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
+  const [localOrder, setLocalOrder] = useState<{ todo: string[]; in_progress: string[] } | null>(null);
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
@@ -656,7 +635,9 @@ export function Tasks() {
   const sortingValue =
     viewTab === "done"
       ? ["-completed_at" as "-created_at"]
-      : ["-priority" as "-created_at", "due_date" as "-created_at"];
+      : viewTab === "board"
+        ? ["position" as "-created_at"]
+        : ["-created_at" as "-created_at"];
 
   const { data: projectsData } = useQuery(
     listProjectsV1TasksProjectsGetOptions({ client }),
@@ -775,17 +756,28 @@ export function Tasks() {
       const previous = await optimisticHelpers.cancel();
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
-        return {
-          ...old,
-          items: old.items.map((t: any) => (t.id === path.task_id ? { ...t, ...body } : t)),
-        };
+        const updatedItems = old.items.map((t: any) =>
+          t.id === path.task_id ? { ...t, ...body } : t,
+        );
+        if (body.position != null) {
+          updatedItems.sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
+        }
+        return { ...old, items: updatedItems };
       });
+      // Clear drag local order only after cache reflects new position (drag ops only).
+      // Clearing earlier would cause a one-frame snap back to server order.
+      if (body.position != null) setLocalOrder(null);
       return { previous };
     },
     onError: (_err, _vars, context) => {
       optimisticHelpers.rollback(context);
       toast.error("Action failed");
     },
+    onSettled: () => optimisticHelpers.invalidate(),
+  });
+
+  const reorderMutation = useMutation({
+    ...reorderTasksV1TasksReorderPatchMutation({ client }),
     onSettled: () => optimisticHelpers.invalidate(),
   });
 
@@ -827,22 +819,105 @@ export function Tasks() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveTask((event.active.data.current?.task as TaskSchema) ?? null);
+    const task = event.active.data.current?.task as TaskSchema;
+    setActiveTask(task ?? null);
+    if (boardTasks) {
+      setLocalOrder({
+        todo: boardTasks.todo.map(t => t.id),
+        in_progress: boardTasks.in_progress.map(t => t.id),
+      });
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || !localOrder) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    if (activeId === overId) return;
+
+    const overIsColumn = (BOARD_COLUMNS as readonly string[]).includes(overId);
+    const activeInTodo = localOrder.todo.includes(activeId);
+    const activeColumn = activeInTodo ? "todo" : "in_progress";
+    const overColumn = overIsColumn
+      ? (overId as "todo" | "in_progress")
+      : localOrder.todo.includes(overId)
+        ? "todo"
+        : "in_progress";
+
+    if (!overIsColumn && activeColumn === overColumn) {
+      const items = localOrder[activeColumn];
+      const oldIndex = items.indexOf(activeId);
+      const newIndex = items.indexOf(overId);
+      if (oldIndex !== newIndex) {
+        setLocalOrder(prev =>
+          prev ? { ...prev, [activeColumn]: arrayMove(items, oldIndex, newIndex) } : prev,
+        );
+      }
+    } else if (activeColumn !== overColumn) {
+      setLocalOrder(prev => {
+        if (!prev) return prev;
+        const source = prev[activeColumn].filter(id => id !== activeId);
+        const dest = [...prev[overColumn]];
+        if (overIsColumn) {
+          dest.push(activeId);
+        } else {
+          const idx = dest.indexOf(overId);
+          dest.splice(idx >= 0 ? idx : dest.length, 0, activeId);
+        }
+        return { ...prev, [activeColumn]: source, [overColumn]: dest };
+      });
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveTask(null);
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+
+    if (!over || !localOrder || !activeTask) {
+      setActiveTask(null);
+      setLocalOrder(null);
+      return;
+    }
 
     const taskId = String(active.id);
-    const newStatus = String(over.id);
+    const newStatus = localOrder.todo.includes(taskId) ? "todo" : "in_progress";
+    const taskIds = localOrder[newStatus];
+    const taskIndex = taskIds.indexOf(taskId);
 
-    updateMutation.mutate({
-      client,
-      path: { task_id: taskId },
-      body: { status: newStatus as "todo" },
-    });
+    const taskMap = new Map(allTasks.map(t => [t.id, t]));
+    const columnTasks = taskIds
+      .map(id => taskMap.get(id))
+      .filter((t): t is TaskSchema => t !== undefined);
+
+    const prev = columnTasks[taskIndex - 1];
+    const next = columnTasks[taskIndex + 1];
+
+    let newPosition: number;
+    if (!prev && !next) {
+      newPosition = 1000;
+    } else if (!prev) {
+      newPosition = (next.position ?? 1000) - 1000;
+    } else if (!next) {
+      newPosition = (prev.position ?? 0) + 1000;
+    } else {
+      const gap = (next.position ?? 0) - (prev.position ?? 0);
+      newPosition = ((prev.position ?? 0) + (next.position ?? 0)) / 2;
+      if (gap < 1e-6) {
+        const renormItems = columnTasks.map((t, i) => ({ id: t.id, position: (i + 1) * 1000 }));
+        reorderMutation.mutate({ client, body: renormItems });
+        newPosition = (taskIndex + 1) * 1000;
+      }
+    }
+
+    const body: { position: number; status?: "todo" | "in_progress" } = { position: newPosition };
+    if (activeTask.status !== newStatus) body.status = newStatus as "todo" | "in_progress";
+
+    updateMutation.mutate({ client, path: { task_id: taskId }, body });
+
+    setActiveTask(null);
+    // localOrder is cleared inside updateMutation.onMutate after the cache write,
+    // so liveBoardTasks and boardTasks agree when localOrder becomes null.
   };
 
   const allTasks = data?.items ?? [];
@@ -860,6 +935,17 @@ export function Tasks() {
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
         }
       : null;
+
+  const liveBoardTasks = (() => {
+    if (!localOrder || !boardTasks) return boardTasks;
+    const taskMap = new Map(allTasks.map(t => [t.id, t]));
+    return {
+      todo: localOrder.todo.map(id => taskMap.get(id)).filter((t): t is TaskSchema => !!t),
+      in_progress: localOrder.in_progress
+        .map(id => taskMap.get(id))
+        .filter((t): t is TaskSchema => !!t),
+    };
+  })();
 
   const activeCount =
     viewTab === "board" && boardTasks
@@ -965,8 +1051,9 @@ export function Tasks() {
           {viewTab === "board" && boardTasks ? (
             <DndContext
               sensors={sensors}
-              collisionDetection={closestCorners}
+              collisionDetection={closestCenter}
               onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
             >
               <div className="flex gap-4 flex-1 min-h-0">
@@ -974,8 +1061,7 @@ export function Tasks() {
                   <BoardColumn
                     key={col}
                     status={col}
-                    tasks={boardTasks[col]}
-                    activeTask={activeTask}
+                    tasks={(liveBoardTasks ?? boardTasks)[col]}
                     onSelectTask={handleSelectTask}
                     onCompleteTask={handleCompleteTask}
                   />
@@ -983,7 +1069,7 @@ export function Tasks() {
               </div>
               {typeof document !== "undefined" &&
                 createPortal(
-                  <DragOverlay>
+                  <DragOverlay dropAnimation={null}>
                     {activeTask ? <DragCard task={activeTask} /> : null}
                   </DragOverlay>,
                   document.body,

@@ -60,7 +60,7 @@ class TaskCreate(Schema):
   project: str | None = Field(default=None, max_length=100)
   area: str | None = Field(default=None, max_length=100)
   tags: list[str] | None = Field(default=None)
-  position: float = Field(default=0)
+  position: float | None = Field(default=None)
 
   is_recurring: bool = Field(default=False)
   rrule_frequency: RruleFrequency | None = Field(default=None)

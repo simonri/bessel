@@ -2474,9 +2474,15 @@ export const TaskCreateSchema = {
       title: "Tags",
     },
     position: {
-      type: "number",
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
       title: "Position",
-      default: 0,
     },
     is_recurring: {
       type: "boolean",

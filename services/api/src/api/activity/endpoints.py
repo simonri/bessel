@@ -135,8 +135,12 @@ async def get_daily_activity(
   start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
   source: Annotated[str, Query(description="Machine source to query.")],
-  tz_name: Annotated[str | None, Query(description="IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.")] = None,
-  tz_offset_mins: Annotated[int, Query(description="Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.")] = 0,
+  tz_name: Annotated[
+    str | None, Query(description="IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.")
+  ] = None,
+  tz_offset_mins: Annotated[
+    int, Query(description="Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.")
+  ] = 0,
 ) -> ActivityDailyResponse:
   repo = ActivityRepository.from_session(session)
   events = await repo.get_events_in_range(start_ts, end_ts, source)

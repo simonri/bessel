@@ -26,7 +26,7 @@ class TaskCreate:
       project (None | str | Unset):
       area (None | str | Unset):
       tags (list[str] | None | Unset):
-      position (float | Unset):  Default: 0.0.
+      position (float | None | Unset):
       is_recurring (bool | Unset):  Default: False.
       rrule_frequency (None | RruleFrequency | Unset):
       rrule_interval (int | None | Unset):
@@ -42,7 +42,7 @@ class TaskCreate:
   project: None | str | Unset = UNSET
   area: None | str | Unset = UNSET
   tags: list[str] | None | Unset = UNSET
-  position: float | Unset = 0.0
+  position: float | None | Unset = UNSET
   is_recurring: bool | Unset = False
   rrule_frequency: None | RruleFrequency | Unset = UNSET
   rrule_interval: int | None | Unset = UNSET
@@ -94,7 +94,11 @@ class TaskCreate:
     else:
       tags = self.tags
 
-    position = self.position
+    position: float | None | Unset
+    if isinstance(self.position, Unset):
+      position = UNSET
+    else:
+      position = self.position
 
     is_recurring = self.is_recurring
 
@@ -235,7 +239,14 @@ class TaskCreate:
 
     tags = _parse_tags(d.pop("tags", UNSET))
 
-    position = d.pop("position", UNSET)
+    def _parse_position(data: object) -> float | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(float | None | Unset, data)
+
+    position = _parse_position(d.pop("position", UNSET))
 
     is_recurring = d.pop("is_recurring", UNSET)
 

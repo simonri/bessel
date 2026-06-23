@@ -1634,7 +1634,7 @@ export type TaskCreate = {
   /**
    * Position
    */
-  position?: number;
+  position?: number | null;
   /**
    * Is Recurring
    */

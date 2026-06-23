@@ -6008,9 +6008,15 @@
             "title": "Tags"
           },
           "position": {
-            "type": "number",
-            "title": "Position",
-            "default": 0
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
           },
           "is_recurring": {
             "type": "boolean",
