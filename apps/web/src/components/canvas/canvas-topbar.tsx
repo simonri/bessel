@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Settings, Timer, TrendingDown, TrendingUp } from "lucide-react";
+import { Bell, Settings, Timer, TrendingDown, TrendingUp, X } from "lucide-react";
+
+declare global {
+  interface Window {
+    electron?: { close: () => void };
+  }
+}
 import {
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions,
   listNotificationsV1NotificationsGetOptions,
@@ -263,6 +269,15 @@ export function CanvasTopBar() {
         >
           <Settings className="size-4" />
         </button>
+        {window.electron && (
+          <button
+            onClick={() => window.electron!.close()}
+            title="Close"
+            className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-red-400"
+          >
+            <X className="size-4" />
+          </button>
+        )}
       </div>
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />

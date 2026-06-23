@@ -1,2 +1,5 @@
-// Preload runs in a privileged context bridging main and renderer.
-// Nothing to expose for now — kept for future IPC if needed.
+import { contextBridge, ipcRenderer } from "electron";
+
+contextBridge.exposeInMainWorld("electron", {
+  close: () => ipcRenderer.send("close-window"),
+});

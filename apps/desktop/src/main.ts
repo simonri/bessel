@@ -1,6 +1,6 @@
 import path from "path";
 import { pathToFileURL } from "url";
-import { app, BrowserWindow, net, protocol } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, net, protocol } from "electron";
 
 const WEB_DIR = path.join(__dirname, "../../web/dist/client");
 
@@ -40,6 +40,12 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+
+  ipcMain.on("close-window", (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close();
+  });
+
   protocol.handle("app", async (request) => {
     const { pathname } = new URL(request.url);
     const target =
