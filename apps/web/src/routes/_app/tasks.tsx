@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
   PointerSensor,
+  closestCorners,
   useSensor,
   useSensors,
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isTomorrow, isPast, isYesterday } from "date-fns";
@@ -159,9 +162,63 @@ function copyText(text: string): Promise<void> {
   return Promise.resolve();
 }
 
+// Mirrors the board's server-side ordering (`-priority`, then `due_date` asc
+// with nulls last) so we can predict where a dropped card will settle.
+function compareBoardTasks(a: TaskSchema, b: TaskSchema): number {
+  const pa = a.priority ?? 0;
+  const pb = b.priority ?? 0;
+  if (pa !== pb) return pb - pa;
+  const da = a.due_date ? new Date(a.due_date).getTime() : null;
+  const db = b.due_date ? new Date(b.due_date).getTime() : null;
+  if (da === null) return db === null ? 0 : 1;
+  if (db === null) return -1;
+  return da - db;
+}
+
+function landingIndexFor(tasks: TaskSchema[], active: TaskSchema): number {
+  let i = 0;
+  while (i < tasks.length && compareBoardTasks(active, tasks[i]) >= 0) i++;
+  return i;
+}
+
 // ---------------------------------------------------------------------------
 // Task Card
 // ---------------------------------------------------------------------------
+
+function TaskCardMeta({ task }: { task: TaskSchema }) {
+  const priority = task.priority ?? 0;
+  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
+  const dueLabel = formatDueDate(task.due_date);
+  const dueColor = getDueDateColor(task.due_date);
+  const recurrence = formatRecurrence(task);
+
+  return (
+    <div className="min-w-0 flex-1 space-y-1">
+      <div className="text-[13px] font-medium text-white/85 leading-snug">{task.title}</div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {dueLabel && (
+          <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
+            <Calendar className="size-3" />
+            {dueLabel}
+          </span>
+        )}
+        {recurrence && (
+          <span className="flex items-center gap-1 text-[11px] text-white/35">
+            <Repeat className="size-3" />
+            {recurrence}
+          </span>
+        )}
+        {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
+        {task.project && (
+          <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
+            {task.project}
+          </span>
+        )}
+        {task.area && <span className="text-[11px] text-white/30">{task.area}</span>}
+      </div>
+    </div>
+  );
+}
 
 function TaskCard({
   task,
@@ -174,26 +231,18 @@ function TaskCard({
 }) {
   const priority = task.priority ?? 0;
   const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-  const dueLabel = formatDueDate(task.due_date);
-  const dueColor = getDueDateColor(task.due_date);
-  const recurrence = formatRecurrence(task);
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task.id,
     data: { task },
   });
 
-  const style = transform
-    ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
-    : undefined;
-
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -207,30 +256,23 @@ function TaskCard({
         >
           <Circle className="size-4" />
         </button>
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="text-[13px] font-medium text-white/85 leading-snug">{task.title}</div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {dueLabel && (
-              <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
-                <Calendar className="size-3" />
-                {dueLabel}
-              </span>
-            )}
-            {recurrence && (
-              <span className="flex items-center gap-1 text-[11px] text-white/35">
-                <Repeat className="size-3" />
-                {recurrence}
-              </span>
-            )}
-            {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
-            {task.project && (
-              <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
-                {task.project}
-              </span>
-            )}
-            {task.area && <span className="text-[11px] text-white/30">{task.area}</span>}
-          </div>
-        </div>
+        <TaskCardMeta task={task} />
+      </div>
+    </div>
+  );
+}
+
+function DragCard({ task }: { task: TaskSchema }) {
+  const priority = task.priority ?? 0;
+  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
+
+  return (
+    <div
+      className={`rounded-lg border border-white/25 bg-white/10 p-2.5 shadow-2xl cursor-grabbing ${priorityConfig.border}`}
+    >
+      <div className="flex items-start gap-2.5">
+        <Circle className="size-4 mt-0.5 shrink-0 text-white/25" />
+        <TaskCardMeta task={task} />
       </div>
     </div>
   );
@@ -243,11 +285,13 @@ function TaskCard({
 function BoardColumn({
   status,
   tasks,
+  activeTask,
   onSelectTask,
   onCompleteTask,
 }: {
   status: string;
   tasks: TaskSchema[];
+  activeTask: TaskSchema | null;
   onSelectTask: (task: TaskSchema) => void;
   onCompleteTask: (task: TaskSchema) => void;
 }) {
@@ -255,28 +299,45 @@ function BoardColumn({
   const Icon = config.icon;
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
+  // Show a landing slot only when a card from a different column hovers here,
+  // positioned where the board's sort would actually drop it.
+  const showLanding = isOver && activeTask !== null && activeTask.status !== status;
+  const landingIndex = showLanding ? landingIndexFor(tasks, activeTask) : -1;
+  // Ghost of the dragged card so the slot matches its exact size.
+  const landingSlot = activeTask ? (
+    <div className="rounded-lg border border-dashed border-white/30 bg-white/5 p-2.5">
+      <div className="flex items-start gap-2.5 invisible">
+        <Circle className="size-4 mt-0.5 shrink-0" />
+        <TaskCardMeta task={activeTask} />
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <div className="flex-1 min-w-[260px] max-w-[400px]">
-      <div className="flex items-center gap-2 mb-3 px-1">
+    <div
+      ref={setNodeRef}
+      className={`flex-1 min-w-0 flex flex-col min-h-0 rounded-lg transition-colors ${isOver ? "bg-white/5" : ""}`}
+    >
+      <div className="flex items-center gap-2 mb-3 px-1 shrink-0">
         <Icon className={`size-3.5 ${config.color}`} />
         <span className="text-[11px] font-semibold text-white/50">{config.label}</span>
         <span className="text-[10px] text-white/30 bg-white/10 rounded-full px-1.5 tabular-nums ml-0.5">
           {tasks.length}
         </span>
       </div>
-      <div
-        ref={setNodeRef}
-        className={`space-y-1.5 min-h-[80px] rounded-lg p-1 transition-colors ${isOver ? "bg-white/5" : ""}`}
-      >
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onSelect={() => onSelectTask(task)}
-            onComplete={() => onCompleteTask(task)}
-          />
+      <div className="flex-1 overflow-y-auto space-y-1.5 p-1">
+        {tasks.map((task, i) => (
+          <Fragment key={task.id}>
+            {landingIndex === i && landingSlot}
+            <TaskCard
+              task={task}
+              onSelect={() => onSelectTask(task)}
+              onComplete={() => onCompleteTask(task)}
+            />
+          </Fragment>
         ))}
-        {tasks.length === 0 && (
+        {landingIndex === tasks.length && landingSlot}
+        {tasks.length === 0 && !showLanding && (
           <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-[11px] text-white/25">
             No tasks
           </div>
@@ -586,6 +647,7 @@ export function Tasks() {
   const [editingTask, setEditingTask] = useState<TaskSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
   const [repeatingOpen, setRepeatingOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
@@ -764,7 +826,12 @@ export function Tasks() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveTask((event.active.data.current?.task as TaskSchema) ?? null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveTask(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -795,9 +862,9 @@ export function Tasks() {
       : null;
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-5 shrink-0">
         <div className="flex items-baseline gap-2">
           <h2 className="text-base font-semibold text-white/90">Tasks</h2>
           {totalCount > 0 && (
@@ -822,7 +889,7 @@ export function Tasks() {
       </div>
 
       {/* View tabs + project filter */}
-      <div className="flex items-center justify-between border-b border-white/10">
+      <div className="flex items-center justify-between border-b border-white/10 shrink-0">
         <div className="flex items-center">
           {VIEW_TABS.map((tab) => (
             <button
@@ -874,6 +941,7 @@ export function Tasks() {
       </div>
 
       {/* Content */}
+      <div className="flex-1 min-h-0 pt-5 flex flex-col">
       {isLoading ? null : allTasks.length === 0 && viewTab === "board" ? (
         <Empty className="border">
           <EmptyHeader>
@@ -890,131 +958,143 @@ export function Tasks() {
       ) : (
         <>
           {viewTab === "board" && boardTasks ? (
-            <>
-              <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                <div className="flex gap-4 overflow-x-auto pb-2">
-                  {BOARD_COLUMNS.map((col) => (
-                    <BoardColumn
-                      key={col}
-                      status={col}
-                      tasks={boardTasks[col]}
-                      onSelectTask={handleSelectTask}
-                      onCompleteTask={handleCompleteTask}
-                    />
-                  ))}
-                </div>
-              </DndContext>
-            </>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex gap-4 flex-1 min-h-0">
+                {BOARD_COLUMNS.map((col) => (
+                  <BoardColumn
+                    key={col}
+                    status={col}
+                    tasks={boardTasks[col]}
+                    activeTask={activeTask}
+                    onSelectTask={handleSelectTask}
+                    onCompleteTask={handleCompleteTask}
+                  />
+                ))}
+              </div>
+              {typeof document !== "undefined" &&
+                createPortal(
+                  <DragOverlay>
+                    {activeTask ? <DragCard task={activeTask} /> : null}
+                  </DragOverlay>,
+                  document.body,
+                )}
+            </DndContext>
           ) : (
             /* Done / All list view */
-            <div className="space-y-1">
-              {allTasks.map((task) => {
-                const status = task.status ?? "todo";
-                const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
-                const StatusIcon = config.icon;
-                const isDone = status === "done" || status === "cancelled";
-                const priority = task.priority ?? 0;
+            <div className="overflow-y-auto flex-1 min-h-0">
+              <div className="space-y-1">
+                {allTasks.map((task) => {
+                  const status = task.status ?? "todo";
+                  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
+                  const StatusIcon = config.icon;
+                  const isDone = status === "done" || status === "cancelled";
+                  const priority = task.priority ?? 0;
 
-                return (
-                  <div
-                    key={task.id}
-                    className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20"
-                    onClick={() => handleSelectTask(task)}
-                  >
-                    {isDone ? (
-                      <button
-                        type="button"
-                        title="Reopen"
-                        className="text-white/25 hover:text-white/70 transition-colors shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleReopenTask(task);
-                        }}
-                      >
-                        <RotateCcw className="size-4" />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="text-white/25 hover:text-emerald-400 transition-colors shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCompleteTask(task);
-                        }}
-                      >
-                        <Circle className="size-4" />
-                      </button>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <span
-                        className={`text-[13px] ${isDone ? "line-through text-white/30" : "font-medium text-white/85"}`}
-                      >
-                        {task.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {task.is_recurring && <Repeat className="size-3 text-white/30" />}
-                      {priority >= 3 && (
-                        <Flag
-                          className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
-                        />
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20"
+                      onClick={() => handleSelectTask(task)}
+                    >
+                      {isDone ? (
+                        <button
+                          type="button"
+                          title="Reopen"
+                          className="text-white/25 hover:text-white/70 transition-colors shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReopenTask(task);
+                          }}
+                        >
+                          <RotateCcw className="size-4" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-white/25 hover:text-emerald-400 transition-colors shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCompleteTask(task);
+                          }}
+                        >
+                          <Circle className="size-4" />
+                        </button>
                       )}
-                      <StatusIcon className={`size-3.5 ${config.color}`} />
-                      {task.due_date && (
-                        <span className={`text-[11px] ${getDueDateColor(task.due_date)}`}>
-                          {formatDueDate(task.due_date)}
+                      <div className="min-w-0 flex-1">
+                        <span
+                          className={`text-[13px] ${isDone ? "line-through text-white/30" : "font-medium text-white/85"}`}
+                        >
+                          {task.title}
                         </span>
-                      )}
-                      {isDone && task.completed_at && (
-                        <span className="text-[11px] text-white/30">
-                          {format(
-                            task.completed_at instanceof Date
-                              ? task.completed_at
-                              : new Date(String(task.completed_at)),
-                            "MMM d",
-                          )}
-                        </span>
-                      )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {task.is_recurring && <Repeat className="size-3 text-white/30" />}
+                        {priority >= 3 && (
+                          <Flag
+                            className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
+                          />
+                        )}
+                        <StatusIcon className={`size-3.5 ${config.color}`} />
+                        {task.due_date && (
+                          <span className={`text-[11px] ${getDueDateColor(task.due_date)}`}>
+                            {formatDueDate(task.due_date)}
+                          </span>
+                        )}
+                        {isDone && task.completed_at && (
+                          <span className="text-[11px] text-white/30">
+                            {format(
+                              task.completed_at instanceof Date
+                                ? task.completed_at
+                                : new Date(String(task.completed_at)),
+                              "MMM d",
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  );
+                })}
+                {allTasks.length === 0 && (
+                  <div className="text-white/30 text-center text-xs py-8">
+                    {viewTab === "done" ? "No completed tasks yet." : "No tasks."}
                   </div>
-                );
-              })}
-              {allTasks.length === 0 && (
-                <div className="text-white/30 text-center text-xs py-8">
-                  {viewTab === "done" ? "No completed tasks yet." : "No tasks."}
+                )}
+              </div>
+              {maxPage > 1 && (
+                <div className="flex items-center justify-end gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </Button>
+                  <span className="text-muted-foreground text-sm tabular-nums">
+                    {page} / {maxPage}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                    disabled={page >= maxPage}
+                  >
+                    Next
+                    <ChevronRight className="size-4" />
+                  </Button>
                 </div>
               )}
             </div>
           )}
-
-          {/* Pagination for done/all */}
-          {viewTab !== "board" && maxPage > 1 && (
-            <div className="flex items-center justify-end gap-2 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                <ChevronLeft className="size-4" />
-                Previous
-              </Button>
-              <span className="text-muted-foreground text-sm tabular-nums">
-                {page} / {maxPage}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                disabled={page >= maxPage}
-              >
-                Next
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          )}
         </>
       )}
+      </div>
 
       {/* Repeating tasks dialog */}
       <Dialog open={repeatingOpen} onOpenChange={setRepeatingOpen}>

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { WindowManager } from "@/components/canvas/window-manager";
 import { CanvasShell } from "@/components/canvas/canvas-shell";
+import { SettingsProvider } from "@/hooks/use-settings";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -8,8 +9,10 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   return (
-    <WindowManager>
-      <CanvasShell />
-    </WindowManager>
+    <SettingsProvider>
+      <WindowManager>
+        <CanvasShell />
+      </WindowManager>
+    </SettingsProvider>
   );
 }

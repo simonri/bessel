@@ -1,16 +1,112 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, TrendingUp, TrendingDown } from "lucide-react";
+import { Bell, Settings, TrendingDown, TrendingUp } from "lucide-react";
 import {
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions,
   listNotificationsV1NotificationsGetOptions,
   listNotificationsV1NotificationsGetQueryKey,
-  markNotificationReadV1NotificationsNotificationIdReadPost,
   markAllNotificationsReadV1NotificationsReadAllPost,
+  markNotificationReadV1NotificationsNotificationIdReadPost,
 } from "@metron/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
 import { ScrollArea } from "@metron/ui/components/scroll-area";
 import { client } from "@/lib/client";
+import { useSettings } from "@/hooks/use-settings";
+import { SettingsModal } from "@/components/settings-modal";
+
+// Map trading pair symbols to CoinGecko IDs and quote currencies
+const QUOTE_SUFFIXES: [string, string][] = [
+  ["USDT", "usd"],
+  ["USDC", "usd"],
+  ["BUSD", "usd"],
+  ["USD", "usd"],
+  ["EUR", "eur"],
+  ["BTC", "btc"],
+  ["ETH", "eth"],
+];
+
+const SYMBOL_TO_COIN_ID: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  BNB: "binancecoin",
+  XRP: "ripple",
+  ADA: "cardano",
+  DOGE: "dogecoin",
+  DOT: "polkadot",
+  AVAX: "avalanche-2",
+  LINK: "chainlink",
+  MATIC: "matic-network",
+  ATOM: "cosmos",
+  LTC: "litecoin",
+  UNI: "uniswap",
+  NEAR: "near",
+  ARB: "arbitrum",
+  OP: "optimism",
+  APT: "aptos",
+  SUI: "sui",
+};
+
+function parsePair(pair: string): { coinId: string; currency: string } | null {
+  const upper = pair.toUpperCase();
+  for (const [quote, currency] of QUOTE_SUFFIXES) {
+    if (upper.endsWith(quote)) {
+      const base = upper.slice(0, upper.length - quote.length);
+      const coinId = SYMBOL_TO_COIN_ID[base];
+      if (coinId) return { coinId, currency };
+    }
+  }
+  return null;
+}
+
+function CryptoPairTicker({ pair }: { pair: string }) {
+  const parsed = parsePair(pair);
+
+  const { data } = useQuery({
+    ...getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions({
+      client,
+      path: { coin_id: parsed?.coinId ?? "" },
+      query: { currency: parsed?.currency ?? "usd" },
+    }),
+    refetchInterval: 30_000,
+    enabled: !!parsed,
+  });
+
+  if (!parsed) return null;
+
+  const formatted =
+    data?.price != null
+      ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 0,
+        }).format(data.price)
+      : null;
+
+  const pct = data?.price_change_pct_24h ?? null;
+  const isPositive = pct !== null && pct >= 0;
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="font-mono text-[11px] tracking-wide text-orange-400/60">{pair}</span>
+      <span className="font-mono text-[11px] font-medium tabular-nums text-white/70">
+        {formatted ?? "—"}
+      </span>
+      {pct !== null && (
+        <span
+          className={`flex items-center gap-0.5 font-mono text-[11px] tabular-nums ${
+            isPositive ? "text-emerald-400" : "text-red-400"
+          }`}
+        >
+          {isPositive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+          {isPositive ? "+" : ""}
+          {pct.toFixed(2)}%
+        </span>
+      )}
+    </div>
+  );
+}
 
 function NotificationBell() {
   const queryClient = useQueryClient();
@@ -36,8 +132,7 @@ function NotificationBell() {
   });
 
   const markAllRead = useMutation({
-    mutationFn: () =>
-      markAllNotificationsReadV1NotificationsReadAllPost({ client }),
+    mutationFn: () => markAllNotificationsReadV1NotificationsReadAllPost({ client }),
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: listNotificationsV1NotificationsGetQueryKey({ client }),
@@ -66,7 +161,7 @@ function NotificationBell() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="flex w-80 flex-col overflow-hidden p-0 border-white/10 bg-black/80 backdrop-blur-xl"
+        className="flex w-80 flex-col overflow-hidden border-white/10 bg-black/80 p-0 backdrop-blur-xl"
         style={{ maxHeight: "min(28rem, 80vh)" }}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
@@ -74,7 +169,7 @@ function NotificationBell() {
           {unreadCount > 0 && (
             <button
               onClick={() => markAllRead.mutate()}
-              className="text-[11px] text-sky-400 hover:text-sky-300 transition-colors"
+              className="text-[11px] text-sky-400 transition-colors hover:text-sky-300"
             >
               Mark all read
             </button>
@@ -123,35 +218,34 @@ function NotificationBell() {
 }
 
 export function CanvasTopBar() {
-  const { data } = useQuery({
-    ...getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions({
-      client,
-      path: { coin_id: "bitcoin" },
-      query: { currency: "usd" },
-    }),
-    refetchInterval: 30_000,
-  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { settings } = useSettings();
 
-  const formatted =
-    data?.price != null
-      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(data.price)
-      : null;
-
-  const pct = data?.price_change_pct_24h ?? null;
-  const isPositive = pct !== null && pct >= 0;
+  const pairs = settings.cryptoPairs
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-end gap-2 border-b border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
-      <NotificationBell />
-      <span className="text-[11px] font-mono text-orange-400/60 tracking-wide">BTCUSDT</span>
-      <span className="text-[11px] font-mono font-medium text-white/70 tabular-nums">{formatted ?? "—"}</span>
-      {pct !== null && (
-        <span className={`flex items-center gap-0.5 text-[11px] font-mono tabular-nums ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
-          {isPositive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-          {isPositive ? "+" : ""}
-          {pct.toFixed(2)}%
-        </span>
-      )}
+    <div className="fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
+      <div className="flex min-w-0 flex-1 items-center gap-6">
+        {pairs.map((pair) => (
+          <CryptoPairTicker key={pair} pair={pair} />
+        ))}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1">
+        <NotificationBell />
+        <button
+          onClick={() => setSettingsOpen(true)}
+          title="Settings"
+          className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
+        >
+          <Settings className="size-4" />
+        </button>
+      </div>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

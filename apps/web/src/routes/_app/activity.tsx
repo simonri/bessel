@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { isSameDay, format, subDays, addDays } from "date-fns";
@@ -167,6 +167,63 @@ function ActivityDayBar({
         ))}
       </div>
     </div>
+  );
+}
+
+function GridCell({
+  day,
+  col,
+  row,
+  isSelected,
+  isToday,
+  maxYearSecs,
+  onClick,
+}: {
+  day: NonNullable<GridDay>;
+  col: number;
+  row: number;
+  isSelected: boolean;
+  isToday: boolean;
+  maxYearSecs: number;
+  onClick: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    timer.current = setTimeout(() => setVisible(true), 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setVisible(false);
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`relative aspect-square rounded-[2px] transition-all cursor-pointer ${
+        isSelected
+          ? "ring-1 ring-inset ring-white/60"
+          : isToday
+            ? "ring-1 ring-inset ring-white/25"
+            : ""
+      }`}
+      style={{
+        gridColumn: col,
+        gridRow: row,
+        background: `rgba(232,113,75,${GRID_ALPHA[activityLevel(day.active_secs, maxYearSecs)]})`,
+      }}
+    >
+      {visible && (
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white/80">
+          <span className="text-white/50">{format(day.d, "MMM d")} · </span>
+          {day.active_secs > 0 ? fmtDur(day.active_secs) : "No activity"}
+        </div>
+      )}
+    </button>
   );
 }
 
@@ -368,24 +425,15 @@ export function ActivityPage() {
                           style={{ gridColumn: wi + 1, gridRow: di + 1 }}
                         />
                       ) : (
-                        <button
+                        <GridCell
                           key={`${wi}-${di}`}
-                          title={`${format(day.d, "EEE, MMM d")}: ${
-                            day.active_secs > 0 ? fmtDur(day.active_secs) : "No activity"
-                          }`}
+                          day={day}
+                          col={wi + 1}
+                          row={di + 1}
+                          isSelected={isSameDay(day.d, date)}
+                          isToday={isSameDay(day.d, today)}
+                          maxYearSecs={maxYearSecs}
                           onClick={() => setDate(day.d)}
-                          className={`aspect-square rounded-[2px] transition-all cursor-pointer ${
-                            isSameDay(day.d, date)
-                              ? "ring-1 ring-inset ring-white/60"
-                              : isSameDay(day.d, today)
-                                ? "ring-1 ring-inset ring-white/25"
-                                : ""
-                          }`}
-                          style={{
-                            gridColumn: wi + 1,
-                            gridRow: di + 1,
-                            background: `rgba(232,113,75,${GRID_ALPHA[activityLevel(day.active_secs, maxYearSecs)]})`,
-                          }}
                         />
                       )
                     )
