@@ -10,7 +10,10 @@
     "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@metron/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
     "compile": "tsc && pnpm --filter=@metron/web build",
     "build": "pnpm run compile && electron-builder",
-    "build:dir": "pnpm run compile && electron-builder --dir"
+    "build:dir": "pnpm run compile && electron-builder --dir",
+    "release:patch": "node scripts/release.mjs patch",
+    "release:minor": "node scripts/release.mjs minor",
+    "release:major": "node scripts/release.mjs major"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
