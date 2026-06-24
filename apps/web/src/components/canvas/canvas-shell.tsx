@@ -50,6 +50,7 @@ interface WorkspaceState {
 function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isActive: boolean }) {
   const { placeWindow } = useWindowManager();
   const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
+  const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -62,6 +63,7 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveWindow((wsWindows.find((w) => w.id === event.active.id)) ?? null);
+    setFocusedWindowId(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsWindows]);
 
@@ -96,7 +98,12 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
         {Array.from({ length: totalSlots }, (_, i) => {
           const win = wsWindows.find((w) => w.slot === i);
           return win ? (
-            <CanvasWindow key={win.id} entry={win} />
+            <CanvasWindow
+              key={win.id}
+              entry={win}
+              isFocused={focusedWindowId === win.id}
+              onFocus={() => setFocusedWindowId(win.id)}
+            />
           ) : (
             <EmptySlot key={`slot-${i}`} slotIndex={i} />
           );

@@ -364,7 +364,16 @@ function TaskDetailDialog({
   return (
     <DialogContent className="max-w-md gap-0 p-0">
       <DialogHeader className="px-5 pt-5 pb-0">
-        <DialogTitle className="text-base leading-snug pr-6">{task.title}</DialogTitle>
+        <DialogTitle
+          className="text-base leading-snug pr-6"
+          onCopy={(e) => {
+            e.preventDefault();
+            const text = window.getSelection()?.toString().replace(/[\n\r]+$/, "") ?? "";
+            e.clipboardData.setData("text/plain", text);
+          }}
+        >
+          {task.title}
+        </DialogTitle>
       </DialogHeader>
 
       <div className="px-5 py-4 space-y-5">

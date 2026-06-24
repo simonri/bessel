@@ -12,7 +12,15 @@ function WindowSpinner() {
   );
 }
 
-export const CanvasWindow = memo(function CanvasWindow({ entry }: { entry: WindowEntry }) {
+export const CanvasWindow = memo(function CanvasWindow({
+  entry,
+  isFocused = false,
+  onFocus,
+}: {
+  entry: WindowEntry;
+  isFocused?: boolean;
+  onFocus?: () => void;
+}) {
   const { closeWindow } = useWindowManager();
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
@@ -33,8 +41,15 @@ export const CanvasWindow = memo(function CanvasWindow({ entry }: { entry: Windo
   return (
     <div
       ref={setRef}
-      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl ${
-        isDragging ? "opacity-0" : isOver ? "border-white/30" : "border-white/10"
+      onPointerDown={onFocus}
+      className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
+        isDragging
+          ? "opacity-0"
+          : isFocused
+          ? "border-orange-500"
+          : isOver
+          ? "border-white/30"
+          : "border-white/10"
       }`}
     >
       {/* Title bar — drag handle */}
