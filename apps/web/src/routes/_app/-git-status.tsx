@@ -1,7 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, GitBranch, Minus, Plus, RefreshCw } from "lucide-react";
+import hljs from "highlight.js/lib/core";
+import langBash from "highlight.js/lib/languages/bash";
+import langCss from "highlight.js/lib/languages/css";
+import langGo from "highlight.js/lib/languages/go";
+import langJson from "highlight.js/lib/languages/json";
+import langJavascript from "highlight.js/lib/languages/javascript";
+import langMarkdown from "highlight.js/lib/languages/markdown";
+import langPython from "highlight.js/lib/languages/python";
+import langRust from "highlight.js/lib/languages/rust";
+import langSql from "highlight.js/lib/languages/sql";
+import langTypescript from "highlight.js/lib/languages/typescript";
+import langXml from "highlight.js/lib/languages/xml";
+import langYaml from "highlight.js/lib/languages/yaml";
+import "highlight.js/styles/atom-one-dark.css";
 import { type ClaudeProject, useSettings } from "@/hooks/use-settings";
+
+hljs.registerLanguage("bash", langBash);
+hljs.registerLanguage("css", langCss);
+hljs.registerLanguage("go", langGo);
+hljs.registerLanguage("json", langJson);
+hljs.registerLanguage("javascript", langJavascript);
+hljs.registerLanguage("markdown", langMarkdown);
+hljs.registerLanguage("python", langPython);
+hljs.registerLanguage("rust", langRust);
+hljs.registerLanguage("sql", langSql);
+hljs.registerLanguage("typescript", langTypescript);
+hljs.registerLanguage("html", langXml);
+hljs.registerLanguage("xml", langXml);
+hljs.registerLanguage("yaml", langYaml);
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -64,6 +92,21 @@ const EXT_COLOR: Record<string, string> = {
   toml: "bg-amber-400", lock: "bg-neutral-500",
 };
 
+const EXT_LANG: Record<string, string> = {
+  ts: "typescript", tsx: "typescript",
+  js: "javascript", jsx: "javascript", mjs: "javascript", cjs: "javascript",
+  py: "python",
+  css: "css", scss: "css",
+  json: "json",
+  md: "markdown", mdx: "markdown",
+  sql: "sql",
+  go: "go",
+  rs: "rust",
+  html: "html", htm: "html", xml: "xml", svg: "xml",
+  sh: "bash", bash: "bash", zsh: "bash",
+  yaml: "yaml", yml: "yaml",
+};
+
 const SKIP_PREFIXES = [
   "diff --git", "index ", "--- ", "+++ ",
   "new file mode", "deleted file mode", "old mode", "new mode",
@@ -98,12 +141,96 @@ function parseDiff(raw: string): ParsedLine[] {
   return result;
 }
 
+// ── Syntax highlighting ────────────────────────────────────────────────────────
+
+function detectLang(filepath: string | undefined): string | undefined {
+  if (!filepath) return undefined;
+  const ext = filepath.split("/").pop()?.split(".").pop()?.toLowerCase();
+  return ext ? EXT_LANG[ext] : undefined;
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Splits hljs-highlighted HTML into per-line strings while rebalancing spans
+// so multi-line tokens (block comments, template literals) render correctly.
+function splitHighlightedLines(html: string): string[] {
+  const rawLines = html.split("\n");
+  const lines: string[] = [];
+  const openStack: string[] = [];
+  const tagRe = /<span([^>]*)>|<\/span>/g;
+
+  for (const rawLine of rawLines) {
+    let line = openStack.join("") + rawLine;
+    let m: RegExpExecArray | null;
+    tagRe.lastIndex = 0;
+    while ((m = tagRe.exec(rawLine)) !== null) {
+      if (m[0].startsWith("</")) {
+        openStack.pop();
+      } else {
+        openStack.push(`<span${m[1]}>`);
+      }
+    }
+    line += "</span>".repeat(openStack.length);
+    lines.push(line);
+  }
+
+  return lines;
+}
+
+function buildHighlightMap(lines: ParsedLine[], lang: string | undefined): Map<number, string> {
+  const result = new Map<number, string>();
+  if (!lang) return result;
+
+  // Highlight per hunk to prevent parser state bleeding across hunk boundaries.
+  // Within each hunk, build both old-file (context+removes) and new-file
+  // (context+adds) reconstructions so that removed lines also get correct
+  // surrounding context — not just independent per-line highlighting.
+  let oldEntries: { idx: number; content: string }[] = [];
+  let newEntries: { idx: number; content: string }[] = [];
+
+  const flushHunk = () => {
+    for (const entries of [oldEntries, newEntries]) {
+      if (entries.length === 0) continue;
+      const src = entries.map((e) => e.content).join("\n");
+      const highlighted = hljs.highlight(src, { language: lang, ignoreIllegals: true }).value;
+      const hlLines = splitHighlightedLines(highlighted);
+      entries.forEach(({ idx }, i) => {
+        // New-file pass runs second, so context lines end up with new-file
+        // highlighting, which is correct for what the viewer displays.
+        result.set(idx, hlLines[i] ?? escapeHtml(lines[idx].content));
+      });
+    }
+    oldEntries = [];
+    newEntries = [];
+  };
+
+  lines.forEach((line, idx) => {
+    if (line.type === "hunk") {
+      flushHunk();
+    } else if (line.type === "context") {
+      oldEntries.push({ idx, content: line.content });
+      newEntries.push({ idx, content: line.content });
+    } else if (line.type === "add") {
+      newEntries.push({ idx, content: line.content });
+    } else if (line.type === "remove") {
+      oldEntries.push({ idx, content: line.content });
+    }
+  });
+  flushHunk();
+
+  return result;
+}
+
 // ── DiffViewer ─────────────────────────────────────────────────────────────────
 
-function DiffViewer({ diff }: { diff: string }) {
-  const lines = parseDiff(diff);
-  const hasContent = lines.some((l) => l.type !== "file-header" || l.content.includes("Binary"));
+function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
+  const lines = useMemo(() => parseDiff(diff), [diff]);
+  const lang = useMemo(() => detectLang(filename), [filename]);
+  const highlightMap = useMemo(() => buildHighlightMap(lines, lang), [lines, lang]);
 
+  const hasContent = lines.some((l) => l.type !== "file-header" || l.content.includes("Binary"));
   if (!hasContent) {
     return (
       <div className="flex h-full items-center justify-center text-xs text-white/25">
@@ -142,13 +269,19 @@ function DiffViewer({ diff }: { diff: string }) {
                 </tr>
               );
             }
+
+            const hlHtml = highlightMap.get(i);
+
             if (line.type === "add") {
               return (
                 <tr key={i} className="bg-emerald-950/50">
                   <td className="select-none py-0 pl-2 pr-1 text-right text-white/20"> </td>
                   <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.newNum}</td>
-                  <td className="py-0 pl-1 text-emerald-300 whitespace-pre">
-                    <span className="text-emerald-600">+</span>{line.content}
+                  <td className="py-0 pl-1 whitespace-pre">
+                    <span className="select-none text-emerald-600">+</span>
+                    {hlHtml
+                      ? <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
+                      : <span className="text-emerald-300">{line.content}</span>}
                   </td>
                 </tr>
               );
@@ -158,8 +291,11 @@ function DiffViewer({ diff }: { diff: string }) {
                 <tr key={i} className="bg-red-950/50">
                   <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.oldNum}</td>
                   <td className="select-none py-0 pl-2 pr-1 text-right text-white/20"> </td>
-                  <td className="py-0 pl-1 text-red-300/80 whitespace-pre">
-                    <span className="text-red-600">-</span>{line.content}
+                  <td className="py-0 pl-1 whitespace-pre">
+                    <span className="select-none text-red-600">-</span>
+                    {hlHtml
+                      ? <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
+                      : <span className="text-red-300/80">{line.content}</span>}
                   </td>
                 </tr>
               );
@@ -171,11 +307,17 @@ function DiffViewer({ diff }: { diff: string }) {
                 </tr>
               );
             }
+            // context
             return (
               <tr key={i} className="hover:bg-white/[0.02]">
                 <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.oldNum}</td>
                 <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.newNum}</td>
-                <td className="py-0 pl-1 text-white/55 whitespace-pre"> {line.content}</td>
+                <td className="py-0 pl-1 whitespace-pre">
+                  <span className="select-none text-white/20"> </span>
+                  {hlHtml
+                    ? <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
+                    : <span className="text-white/55">{line.content}</span>}
+                </td>
               </tr>
             );
           })}
@@ -591,7 +733,7 @@ export function GitStatus() {
                   <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />
                 </div>
               ) : (
-                <DiffViewer diff={diffQuery.data ?? ""} />
+                <DiffViewer diff={diffQuery.data ?? ""} filename={selectedFile.file.path} />
               )}
             </>
           ) : (

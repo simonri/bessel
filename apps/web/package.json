@@ -50,6 +50,7 @@
     "expo-router": "~55.0.14",
     "expo-splash-screen": "~55.0.21",
     "expo-status-bar": "~55.0.6",
+    "highlight.js": "^11.11.1",
     "input-otp": "^1.4.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.14.0",
