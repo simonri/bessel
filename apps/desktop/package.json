@@ -2,6 +2,7 @@
   "name": "@metron/desktop",
   "version": "0.1.0",
   "description": "Metron personal dashboard desktop app",
+  "author": "Simon Risberg",
   "private": true,
   "main": "dist/main.js",
   "scripts": {
@@ -24,6 +25,7 @@
   "build": {
     "appId": "dev.metron.app",
     "productName": "Metron",
+    "executableName": "metron",
     "directories": {
       "output": "release"
     },
@@ -31,17 +33,14 @@
       "dist/**/*",
       "node_modules/**/*"
     ],
-    "extraFiles": [
+    "extraResources": [
       {
         "from": "../web/dist/client",
         "to": "web/dist/client"
       }
     ],
     "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
+      "target": ["AppImage"],
       "icon": "assets/icon.png",
       "category": "Utility"
     },
