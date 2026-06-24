@@ -7,6 +7,7 @@ declare global {
   interface Window {
     electron?: {
       close: () => void;
+      getVersion: () => Promise<string>;
       selectFolder: () => Promise<string | null>;
       git: {
         status: (path: string) => Promise<{
@@ -539,7 +540,12 @@ function WorkspaceContextMenu({ canClose, onClose, onDismiss }: { canClose: bool
 
 export function CanvasTopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [version, setVersion] = useState<string | null>(null);
   const { settings } = useSettings();
+
+  useEffect(() => {
+    window.electron?.getVersion().then(setVersion);
+  }, []);
 
   const pairs = settings.cryptoPairs
     .split(",")
@@ -549,6 +555,12 @@ export function CanvasTopBar() {
   return (
     <div className="fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
       <div className="flex min-w-0 flex-1 items-center gap-6">
+        <div className="flex shrink-0 items-baseline gap-1.5">
+          <span className="text-sm font-semibold tracking-wide text-white/80">Metron</span>
+          {version && (
+            <span className="font-mono text-[11px] text-white/25">v{version}</span>
+          )}
+        </div>
         {pairs.map((pair) => (
           <CryptoPairTicker key={pair} pair={pair} />
         ))}

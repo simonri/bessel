@@ -104,6 +104,8 @@ app.whenReady().then(() => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
 
+  ipcMain.handle("app:version", () => app.getVersion());
+
   ipcMain.handle("dialog:select-folder", async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     const result = await dialog.showOpenDialog(win ?? BrowserWindow.getFocusedWindow()!, {
