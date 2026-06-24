@@ -24,21 +24,21 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "termi
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className={`flex flex-col items-center gap-1.5 rounded-xl px-3 py-2 transition-all duration-150 ${
+          className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
             active
-              ? "bg-orange-500/20 text-orange-300"
-              : "text-white/50 hover:bg-white/10 hover:text-white/80"
+              ? "text-orange-400"
+              : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
           }`}
           title={config.title}
         >
-          <Icon className="size-4 shrink-0" />
-          <span className="text-[10px] leading-none tracking-wide">{config.title}</span>
+          <Icon className="size-3.5 shrink-0" />
+          <span>{config.title}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
         side="top"
         align="center"
-        sideOffset={12}
+        sideOffset={8}
         className="w-64 overflow-hidden rounded-xl border-white/10 bg-black/80 p-0 shadow-2xl backdrop-blur-xl"
       >
         <div className="border-b border-white/10 px-3 py-2.5">
@@ -75,34 +75,32 @@ export function CanvasDock() {
   const { toggleWindow, openWindow, isOpen } = useWindowManager();
 
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-      <div className="flex items-center gap-0.5 rounded-2xl border border-white/10 bg-black/50 px-2 py-2 shadow-2xl backdrop-blur-xl">
-        {MODULE_ORDER.map((key) => {
-          const config = MODULE_REGISTRY[key];
-          const Icon = config.icon;
-          const active = isOpen(key);
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-1 border-t border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
+      {MODULE_ORDER.map((key) => {
+        const config = MODULE_REGISTRY[key];
+        const Icon = config.icon;
+        const active = isOpen(key);
 
-          if (key === "claudeCode" || key === "terminal") {
-            return <ProjectPicker key={key} moduleKey={key} active={active} />;
-          }
+        if (key === "claudeCode" || key === "terminal") {
+          return <ProjectPicker key={key} moduleKey={key} active={active} />;
+        }
 
-          return (
-            <button
-              key={key}
-              onClick={() => config.multiInstance ? openWindow(key) : toggleWindow(key)}
-              className={`flex flex-col items-center gap-1.5 rounded-xl px-3 py-2 transition-all duration-150 ${
-                active
-                  ? "bg-orange-500/20 text-orange-300"
-                  : "text-white/50 hover:bg-white/10 hover:text-white/80"
-              }`}
-              title={config.title}
-            >
-              <Icon className="size-4 shrink-0" />
-              <span className="text-[10px] leading-none tracking-wide">{config.title}</span>
-            </button>
-          );
-        })}
-      </div>
+        return (
+          <button
+            key={key}
+            onClick={() => config.multiInstance ? openWindow(key) : toggleWindow(key)}
+            className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              active
+                ? "text-orange-400"
+                : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
+            }`}
+            title={config.title}
+          >
+            <Icon className="size-3.5 shrink-0" />
+            <span>{config.title}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

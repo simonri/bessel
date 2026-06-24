@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -16,6 +16,7 @@ import { MODULE_REGISTRY } from "./module-registry";
 import { CanvasWindow } from "./canvas-window";
 import { CanvasDock } from "./canvas-dock";
 import { CanvasTopBar } from "./canvas-topbar";
+import { CommandPalette } from "./command-palette";
 
 const EmptySlot = memo(function EmptySlot({ slotIndex }: { slotIndex: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotIndex}` });
@@ -127,6 +128,18 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
 
 export function CanvasShell() {
   const { workspaces, activeWorkspaceId } = useWindowManager();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler, { capture: true });
+    return () => window.removeEventListener("keydown", handler, { capture: true });
+  }, []);
 
   return (
     <div className="fixed inset-0">
@@ -138,7 +151,7 @@ export function CanvasShell() {
       />
       <div className="absolute inset-0 bg-black/30" />
 
-      <div className="relative flex h-full flex-col pt-12 pb-3.5">
+      <div className="relative flex h-full flex-col pt-12 pb-10">
         {workspaces.map((workspace) => (
           <WorkspaceGrid
             key={workspace.id}
@@ -150,6 +163,7 @@ export function CanvasShell() {
 
       <CanvasTopBar />
       <CanvasDock />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }
