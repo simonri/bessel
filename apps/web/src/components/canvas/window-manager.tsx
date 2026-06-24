@@ -30,6 +30,7 @@ interface WindowManagerContextValue {
   placeWindow: (windowId: string, toSlot: number) => void;
   isOpen: (module: ModuleKey) => boolean;
   addWorkspace: () => void;
+  removeWorkspace: (id: string) => void;
   switchWorkspace: (id: string) => void;
 }
 
@@ -203,6 +204,18 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, activeWorkspaceId: id }));
   }, []);
 
+  const removeWorkspace = useCallback((id: string) => {
+    setState((prev) => {
+      if (prev.workspaces.length <= 1) return prev;
+      const remaining = prev.workspaces.filter((ws) => ws.id !== id);
+      const activeId =
+        prev.activeWorkspaceId === id
+          ? (remaining[remaining.length - 1]?.id ?? remaining[0].id)
+          : prev.activeWorkspaceId;
+      return { workspaces: remaining, activeWorkspaceId: activeId };
+    });
+  }, []);
+
   const contextValue = useMemo(() => ({
     windows,
     workspaces,
@@ -213,8 +226,9 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     placeWindow,
     isOpen,
     addWorkspace,
+    removeWorkspace,
     switchWorkspace,
-  }), [windows, workspaces, activeWorkspaceId, toggleWindow, openWindow, closeWindow, placeWindow, isOpen, addWorkspace, switchWorkspace]);
+  }), [windows, workspaces, activeWorkspaceId, toggleWindow, openWindow, closeWindow, placeWindow, isOpen, addWorkspace, removeWorkspace, switchWorkspace]);
 
   return (
     <WindowManagerContext.Provider value={contextValue}>

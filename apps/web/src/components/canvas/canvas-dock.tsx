@@ -186,7 +186,7 @@ function ClaudeProjectPicker({ active }: { active: boolean }) {
 }
 
 export function CanvasDock() {
-  const { toggleWindow, isOpen } = useWindowManager();
+  const { toggleWindow, openWindow, isOpen } = useWindowManager();
 
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
@@ -203,7 +203,7 @@ export function CanvasDock() {
           return (
             <button
               key={key}
-              onClick={() => toggleWindow(key)}
+              onClick={() => config.multiInstance ? openWindow(key) : toggleWindow(key)}
               className={`flex flex-col items-center gap-1.5 rounded-xl px-3 py-2 transition-all duration-150 ${
                 active
                   ? "bg-orange-500/20 text-orange-300"

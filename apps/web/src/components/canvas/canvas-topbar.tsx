@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, Plus, Settings, Timer, TrendingDown, TrendingUp, X } from "lucide-react";
@@ -270,29 +270,63 @@ function NotificationBell() {
 }
 
 function WorkspaceSwitcher() {
-  const { workspaces, activeWorkspaceId, addWorkspace, switchWorkspace } = useWindowManager();
+  const { workspaces, activeWorkspaceId, addWorkspace, removeWorkspace, switchWorkspace } = useWindowManager();
+  const [menuId, setMenuId] = useState<string | null>(null);
 
   return (
     <div className="flex items-center gap-0.5">
-      {workspaces.map((ws, i) => (
-        <button
-          key={ws.id}
-          onClick={() => switchWorkspace(ws.id)}
-          className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-xs font-medium transition-colors ${
-            ws.id === activeWorkspaceId
-              ? "bg-white/15 text-white/90"
-              : "text-white/35 hover:bg-white/[0.08] hover:text-white/70"
-          }`}
-        >
-          {i + 1}
-        </button>
-      ))}
+      {workspaces.map((ws, i) => {
+        const isActive = ws.id === activeWorkspaceId;
+        return (
+          <div key={ws.id} className="relative">
+            <button
+              onClick={() => switchWorkspace(ws.id)}
+              onContextMenu={(e) => { e.preventDefault(); setMenuId(ws.id); }}
+              className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-xs font-medium transition-colors ${
+                isActive
+                  ? "bg-white/15 text-white/90"
+                  : "text-white/35 hover:bg-white/[0.08] hover:text-white/70"
+              }`}
+            >
+              {i + 1}
+            </button>
+            {menuId === ws.id && (
+              <WorkspaceContextMenu
+                canClose={workspaces.length > 1}
+                onClose={() => { removeWorkspace(ws.id); setMenuId(null); }}
+                onDismiss={() => setMenuId(null)}
+              />
+            )}
+          </div>
+        );
+      })}
       <button
         onClick={addWorkspace}
         title="New workspace"
         className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-colors hover:bg-white/[0.08] hover:text-white/60"
       >
         <Plus className="size-3" />
+      </button>
+    </div>
+  );
+}
+
+function WorkspaceContextMenu({ canClose, onClose, onDismiss }: { canClose: boolean; onClose: () => void; onDismiss: () => void }) {
+  useEffect(() => {
+    const handler = () => onDismiss();
+    window.addEventListener("pointerdown", handler, { capture: true });
+    return () => window.removeEventListener("pointerdown", handler, { capture: true });
+  }, [onDismiss]);
+
+  return (
+    <div className="absolute left-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-xl">
+      <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={onClose}
+        disabled={!canClose}
+        className="flex w-full items-center px-4 py-2.5 text-sm text-red-400/80 transition-colors hover:bg-white/[0.06] hover:text-red-400 disabled:cursor-default disabled:opacity-30"
+      >
+        Close
       </button>
     </div>
   );
