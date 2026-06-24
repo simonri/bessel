@@ -21,4 +21,6 @@ const run = (cmd) => execSync(cmd, { stdio: "inherit", cwd: resolve(dir, "../../
 run(`git add apps/desktop/package.json`);
 run(`git commit -m "release: v${next}"`);
 run(`git tag v${next}`);
-console.log(`\nTagged v${next}. Run: git push --follow-tags`);
+run(`git push --follow-tags origin HEAD`);
+run(`git push origin v${next}`);
+console.log(`\nReleased v${next}.`);

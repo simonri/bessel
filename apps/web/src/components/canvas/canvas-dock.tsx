@@ -92,7 +92,7 @@ function AddProjectModal({
   );
 }
 
-function ClaudeProjectPicker({ active }: { active: boolean }) {
+function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "terminal"; active: boolean }) {
   const { openWindow } = useWindowManager();
   const { settings } = useSettings();
   const [open, setOpen] = useState(false);
@@ -100,13 +100,13 @@ function ClaudeProjectPicker({ active }: { active: boolean }) {
 
   const launch = (project?: ClaudeProject) => {
     openWindow(
-      "claudeCode",
+      moduleKey,
       project ? { projectPath: project.path, projectName: project.name } : undefined,
     );
     setOpen(false);
   };
 
-  const config = MODULE_REGISTRY["claudeCode"];
+  const config = MODULE_REGISTRY[moduleKey];
   const Icon = config.icon;
 
   return (
@@ -196,8 +196,8 @@ export function CanvasDock() {
           const Icon = config.icon;
           const active = isOpen(key);
 
-          if (key === "claudeCode") {
-            return <ClaudeProjectPicker key={key} active={active} />;
+          if (key === "claudeCode" || key === "terminal") {
+            return <ProjectPicker key={key} moduleKey={key} active={active} />;
           }
 
           return (
