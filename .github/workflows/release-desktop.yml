@@ -1,15 +1,16 @@
 name: Release Desktop
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
 
 jobs:
   build-linux:
     name: Build Linux AppImage
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -28,12 +29,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libarchive-tools
 
-      - name: Build AppImage
-        run: pnpm --filter=@metron/desktop build
+      - name: Compile
+        run: pnpm --filter=@metron/desktop run compile
+
+      - name: Build & publish
+        run: pnpm --filter=@metron/desktop exec electron-builder --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload AppImage to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: apps/desktop/release/*.AppImage

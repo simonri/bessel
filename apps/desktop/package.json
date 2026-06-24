@@ -1,6 +1,6 @@
 {
   "name": "@metron/desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Metron personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
@@ -8,10 +8,12 @@
   "scripts": {
     "predev": "tsc",
     "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@metron/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
-    "build": "tsc && pnpm --filter=@metron/web build && electron-builder",
-    "build:dir": "tsc && pnpm --filter=@metron/web build && electron-builder --dir"
+    "compile": "tsc && pnpm --filter=@metron/web build",
+    "build": "pnpm run compile && electron-builder",
+    "build:dir": "pnpm run compile && electron-builder --dir"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {
@@ -39,8 +41,15 @@
         "to": "web/dist/client"
       }
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "simonri",
+      "repo": "metron"
+    },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "assets/icon.png",
       "category": "Utility"
     },

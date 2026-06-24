@@ -3,6 +3,7 @@ import { pathToFileURL } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol } from "electron";
+import { autoUpdater } from "electron-updater";
 import * as pty from "node-pty";
 
 const execFileAsync = promisify(execFile);
@@ -94,6 +95,10 @@ function createWindow() {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+
+  if (app.isPackaged) {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
 
   ipcMain.on("close-window", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
