@@ -1,7 +1,6 @@
-import { Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { X } from "lucide-react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { MODULE_REGISTRY } from "./module-registry";
 import { useWindowManager, type WindowEntry } from "./window-manager";
 
@@ -19,28 +18,26 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
   const Icon = config.icon;
   const Component = config.component;
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: entry.id });
+  const { attributes, listeners, setNodeRef: setDragRef, setActivatorNodeRef, isDragging } =
+    useDraggable({ id: entry.id });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: entry.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const setRef = useCallback(
+    (node: HTMLElement | null) => {
+      setDragRef(node);
+      setDropRef(node);
+    },
+    [setDragRef, setDropRef],
+  );
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-xl ${isDragging ? "opacity-0" : ""}`}
+      ref={setRef}
+      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-colors ${
+        isDragging ? "opacity-0" : isOver ? "border-white/30" : "border-white/10"
+      }`}
     >
-      {/* Title bar — full-width drag handle */}
+      {/* Title bar — drag handle */}
       <div
         ref={setActivatorNodeRef}
         {...attributes}

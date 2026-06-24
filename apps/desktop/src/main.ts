@@ -57,8 +57,7 @@ app.whenReady().then(() => {
       const env = { ...process.env };
       delete env.ELECTRON_RUN_AS_NODE;
 
-      const shell = env.SHELL || "/bin/bash";
-      const p = pty.spawn(shell, ["-l", "-i"], {
+      const p = pty.spawn("claude", ["--dangerously-skip-permissions"], {
         name: "xterm-256color",
         cols,
         rows,
@@ -67,8 +66,6 @@ app.whenReady().then(() => {
       });
 
       ptySessions.set(sessionId, p);
-
-      setTimeout(() => p.write("claude --dangerously-skip-permissions\r"), 300);
 
       p.onData((data) => {
         for (const win of BrowserWindow.getAllWindows()) {

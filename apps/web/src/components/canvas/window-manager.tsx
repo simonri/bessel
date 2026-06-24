@@ -11,14 +11,14 @@ export type ModuleKey =
   | "recipes"
   | "claudeCode";
 
-export type WindowEntry = { id: string; module: ModuleKey };
+export type WindowEntry = { id: string; module: ModuleKey; slot: number };
 
 interface WindowManagerContextValue {
   windows: WindowEntry[];
   toggleWindow: (module: ModuleKey) => void;
   openWindow: (module: ModuleKey) => void;
   closeWindow: (id: string) => void;
-  reorderWindows: (activeId: string, overId: string) => void;
+  placeWindow: (windowId: string, toSlot: number) => void;
   isOpen: (module: ModuleKey) => boolean;
 }
 
@@ -35,14 +35,21 @@ function newId() {
   return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
+function firstFreeSlot(windows: WindowEntry[]): number {
+  const used = new Set(windows.map((w) => w.slot));
+  let slot = 0;
+  while (used.has(slot)) slot++;
+  return slot;
+}
+
 function loadWindows(): WindowEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const modules = JSON.parse(raw) as unknown[];
-    return (modules as string[])
-      .filter((m) => ALL_MODULES.has(m))
-      .map((module) => ({ id: newId(), module: module as ModuleKey }));
+    const parsed = JSON.parse(raw) as unknown[];
+    return (parsed as { module: string; slot: number }[])
+      .filter((e) => e && typeof e === "object" && ALL_MODULES.has(e.module) && typeof e.slot === "number")
+      .map((e) => ({ id: newId(), module: e.module as ModuleKey, slot: e.slot }));
   } catch {
     return [];
   }
@@ -54,7 +61,10 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   const [windows, setWindows] = useState<WindowEntry[]>(loadWindows);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(windows.map((w) => w.module)));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(windows.map((w) => ({ module: w.module, slot: w.slot }))),
+    );
   }, [windows]);
 
   const isOpen = useCallback(
@@ -67,31 +77,33 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       if (prev.some((w) => w.module === module)) {
         return prev.filter((w) => w.module !== module);
       }
-      return [...prev, { id: newId(), module }];
+      return [...prev, { id: newId(), module, slot: firstFreeSlot(prev) }];
     });
   }, []);
 
   const openWindow = useCallback((module: ModuleKey) => {
-    setWindows((prev) => [...prev, { id: newId(), module }]);
+    setWindows((prev) => [...prev, { id: newId(), module, slot: firstFreeSlot(prev) }]);
   }, []);
 
   const closeWindow = useCallback((id: string) => {
     setWindows((prev) => prev.filter((w) => w.id !== id));
   }, []);
 
-  const reorderWindows = useCallback((activeId: string, overId: string) => {
+  const placeWindow = useCallback((windowId: string, toSlot: number) => {
     setWindows((prev) => {
-      const oldIndex = prev.findIndex((w) => w.id === activeId);
-      const newIndex = prev.findIndex((w) => w.id === overId);
-      if (oldIndex === -1 || newIndex === -1) return prev;
-      const next = [...prev];
-      next.splice(newIndex, 0, next.splice(oldIndex, 1)[0]);
-      return next;
+      const moving = prev.find((w) => w.id === windowId);
+      if (!moving || moving.slot === toSlot) return prev;
+      const occupant = prev.find((w) => w.slot === toSlot);
+      return prev.map((w) => {
+        if (w.id === windowId) return { ...w, slot: toSlot };
+        if (occupant && w.id === occupant.id) return { ...w, slot: moving.slot };
+        return w;
+      });
     });
   }, []);
 
   return (
-    <WindowManagerContext.Provider value={{ windows, toggleWindow, openWindow, closeWindow, reorderWindows, isOpen }}>
+    <WindowManagerContext.Provider value={{ windows, toggleWindow, openWindow, closeWindow, placeWindow, isOpen }}>
       {children}
     </WindowManagerContext.Provider>
   );

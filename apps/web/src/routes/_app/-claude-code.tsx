@@ -1,11 +1,34 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 
+interface ContextMenu {
+  x: number;
+  y: number;
+  hasSelection: boolean;
+}
+
 export function ClaudeCode() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef<Terminal | null>(null);
   const sessionId = useRef(crypto.randomUUID()).current;
+  const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+
+  const closeMenu = useCallback(() => setContextMenu(null), []);
+
+  const handleCopy = useCallback(async () => {
+    const text = terminalRef.current?.getSelection();
+    if (text) await navigator.clipboard.writeText(text);
+    closeMenu();
+  }, [closeMenu]);
+
+  const handlePaste = useCallback(async () => {
+    const text = await navigator.clipboard.readText();
+    if (text) window.electron?.terminal.sendInput(sessionId, text);
+    closeMenu();
+  }, [sessionId, closeMenu]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -43,10 +66,41 @@ export function ClaudeCode() {
       allowProposedApi: true,
     });
 
+    terminalRef.current = terminal;
+
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(el);
     fitAddon.fit();
+
+    // Ctrl+Shift+C to copy, Ctrl+Shift+V to paste
+    terminal.attachCustomKeyEventHandler((e) => {
+      if (e.type !== "keydown") return true;
+      if (e.ctrlKey && e.shiftKey && e.code === "KeyC") {
+        const sel = terminal.getSelection();
+        if (sel) navigator.clipboard.writeText(sel);
+        return false;
+      }
+      if (e.ctrlKey && e.shiftKey && e.code === "KeyV") {
+        navigator.clipboard.readText().then((text) => {
+          if (text) window.electron?.terminal.sendInput(sessionId, text);
+        });
+        return false;
+      }
+      return true;
+    });
+
+    // Right-click context menu — capture before xterm handles it
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        hasSelection: terminal.getSelection().length > 0,
+      });
+    };
+    el.addEventListener("contextmenu", handleContextMenu, { capture: true });
 
     window.electron.terminal
       .spawn(sessionId, terminal.cols, terminal.rows)
@@ -81,10 +135,51 @@ export function ClaudeCode() {
       unsubData();
       unsubExit();
       resizeObserver.disconnect();
+      el.removeEventListener("contextmenu", handleContextMenu, { capture: true });
       terminal.dispose();
+      terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
     };
   }, [sessionId]);
 
-  return <div ref={containerRef} className="h-full w-full" style={{ background: "#0a0a0a" }} />;
+  // Close context menu on any outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener("pointerdown", close, { capture: true });
+    return () => window.removeEventListener("pointerdown", close, { capture: true });
+  }, [contextMenu]);
+
+  return (
+    <>
+      <div
+        ref={containerRef}
+        className="h-full w-full"
+        style={{ background: "#0a0a0a" }}
+      />
+      {contextMenu &&
+        createPortal(
+          <div
+            style={{ position: "fixed", left: contextMenu.x, top: contextMenu.y, zIndex: 9999 }}
+            className="overflow-hidden rounded-lg border border-white/10 bg-neutral-900/95 py-1 shadow-2xl backdrop-blur-xl"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={handleCopy}
+              disabled={!contextMenu.hasSelection}
+              className="flex w-full items-center px-4 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-default"
+            >
+              Copy
+            </button>
+            <button
+              onClick={handlePaste}
+              className="flex w-full items-center px-4 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              Paste
+            </button>
+          </div>,
+          document.body
+        )}
+    </>
+  );
 }

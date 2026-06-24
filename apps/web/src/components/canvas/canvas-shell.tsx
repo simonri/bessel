@@ -9,13 +9,25 @@ import {
   closestCenter,
   useSensor,
   useSensors,
+  useDroppable,
 } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useWindowManager, type WindowEntry } from "./window-manager";
 import { MODULE_REGISTRY } from "./module-registry";
 import { CanvasWindow } from "./canvas-window";
 import { CanvasDock } from "./canvas-dock";
 import { CanvasTopBar } from "./canvas-topbar";
+
+function EmptySlot({ slotIndex }: { slotIndex: number }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotIndex}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-2xl border border-dashed transition-colors ${
+        isOver ? "border-white/30 bg-white/5" : "border-white/[0.06]"
+      }`}
+    />
+  );
+}
 
 function WindowDragOverlay({ entry }: { entry: WindowEntry }) {
   const config = MODULE_REGISTRY[entry.module];
@@ -31,9 +43,12 @@ function WindowDragOverlay({ entry }: { entry: WindowEntry }) {
 }
 
 export function CanvasShell() {
-  const { windows, reorderWindows } = useWindowManager();
+  const { windows, placeWindow } = useWindowManager();
   const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
-  const rowCount = Math.max(1, Math.ceil(windows.length / 2));
+
+  const maxSlot = windows.reduce((max, w) => Math.max(max, w.slot), -1);
+  const rowCount = windows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
+  const totalSlots = rowCount * 2;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -47,8 +62,14 @@ export function CanvasShell() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveWindow(null);
-    if (over && active.id !== over.id) {
-      reorderWindows(String(active.id), String(over.id));
+    if (!over || active.id === over.id) return;
+
+    const overId = String(over.id);
+    if (overId.startsWith("slot-")) {
+      placeWindow(String(active.id), parseInt(overId.slice(5), 10));
+    } else {
+      const overWin = windows.find((w) => w.id === overId);
+      if (overWin) placeWindow(String(active.id), overWin.slot);
     }
   };
 
@@ -62,7 +83,7 @@ export function CanvasShell() {
       />
       <div className="absolute inset-0 bg-black/30" />
 
-      {/* Content area: between top bar and dock, no scroll */}
+      {/* Content area: between top bar and dock */}
       <div className="relative flex h-full flex-col pt-12 pb-3.5">
         {windows.length > 0 && (
           <DndContext
@@ -71,16 +92,19 @@ export function CanvasShell() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={windows.map((w) => w.id)} strategy={rectSortingStrategy}>
-              <div
-                className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
-                style={{ gridTemplateRows: `repeat(${rowCount}, 1fr)` }}
-              >
-                {windows.map((w) => (
-                  <CanvasWindow key={w.id} entry={w} />
-                ))}
-              </div>
-            </SortableContext>
+            <div
+              className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
+              style={{ gridTemplateRows: `repeat(${rowCount}, 1fr)` }}
+            >
+              {Array.from({ length: totalSlots }, (_, i) => {
+                const win = windows.find((w) => w.slot === i);
+                return win ? (
+                  <CanvasWindow key={win.id} entry={win} />
+                ) : (
+                  <EmptySlot key={`slot-${i}`} slotIndex={i} />
+                );
+              })}
+            </div>
             {typeof document !== "undefined" &&
               createPortal(
                 <DragOverlay dropAnimation={null}>
