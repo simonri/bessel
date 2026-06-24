@@ -40,6 +40,12 @@ export function useWindowEntry() {
   return useContext(WindowEntryContext);
 }
 
+export const WindowTitleContext = createContext<((title: string | null) => void) | null>(null);
+
+export function useWindowTitle() {
+  return useContext(WindowTitleContext);
+}
+
 const STORAGE_KEY = "metron:workspaces";
 const LEGACY_KEY = "metron:windows";
 

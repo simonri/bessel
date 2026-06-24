@@ -314,8 +314,8 @@ function WorkspaceSwitcher() {
 function WorkspaceContextMenu({ canClose, onClose, onDismiss }: { canClose: boolean; onClose: () => void; onDismiss: () => void }) {
   useEffect(() => {
     const handler = () => onDismiss();
-    window.addEventListener("pointerdown", handler, { capture: true });
-    return () => window.removeEventListener("pointerdown", handler, { capture: true });
+    window.addEventListener("pointerdown", handler);
+    return () => window.removeEventListener("pointerdown", handler);
   }, [onDismiss]);
 
   return (

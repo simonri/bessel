@@ -1,8 +1,8 @@
-import { memo, Suspense, useCallback } from "react";
+import { memo, Suspense, useCallback, useState } from "react";
 import { X } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { MODULE_REGISTRY } from "./module-registry";
-import { WindowEntryContext, useWindowManager, type WindowEntry } from "./window-manager";
+import { WindowEntryContext, WindowTitleContext, useWindowManager, type WindowEntry } from "./window-manager";
 
 function WindowSpinner() {
   return (
@@ -25,6 +25,7 @@ export const CanvasWindow = memo(function CanvasWindow({
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
   const Component = config.component;
+  const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
 
   const { attributes, listeners, setNodeRef: setDragRef, setActivatorNodeRef, isDragging } =
     useDraggable({ id: entry.id });
@@ -62,8 +63,10 @@ export const CanvasWindow = memo(function CanvasWindow({
         <Icon className="size-3.5 text-white/50" />
         <span className="text-sm font-medium text-white/80">
           {config.title}
-          {entry.data?.projectName && (
-            <span className="ml-1.5 font-normal text-white/40">/ {entry.data.projectName}</span>
+          {(dynamicTitle || entry.data?.projectName) && (
+            <span className="ml-1.5 font-normal text-white/40">
+              / {dynamicTitle || entry.data?.projectName}
+            </span>
           )}
         </span>
         <button
@@ -77,11 +80,13 @@ export const CanvasWindow = memo(function CanvasWindow({
 
       {/* Scrollable content */}
       <div className={`flex-1 ${config.noPadding ? "overflow-hidden" : "overflow-y-auto p-4"}`}>
-        <WindowEntryContext.Provider value={entry}>
-          <Suspense fallback={<WindowSpinner />}>
-            <Component />
-          </Suspense>
-        </WindowEntryContext.Provider>
+        <WindowTitleContext.Provider value={setDynamicTitle}>
+          <WindowEntryContext.Provider value={entry}>
+            <Suspense fallback={<WindowSpinner />}>
+              <Component />
+            </Suspense>
+          </WindowEntryContext.Provider>
+        </WindowTitleContext.Provider>
       </div>
     </div>
   );

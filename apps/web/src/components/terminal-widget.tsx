@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
+import { useWindowTitle } from "@/components/canvas/window-manager";
 
 interface ContextMenu {
   x: number;
@@ -26,6 +27,9 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
   const [isDragOver, setIsDragOver] = useState(false);
   const [isTaskDragging, setIsTaskDragging] = useState(false);
   const dragCounterRef = useRef(0);
+  const setWindowTitle = useWindowTitle();
+  const setWindowTitleRef = useRef(setWindowTitle);
+  useEffect(() => { setWindowTitleRef.current = setWindowTitle; });
 
   useEffect(() => {
     if (!taskDropZone) return;
@@ -128,6 +132,10 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
       window.electron!.terminal.sendInput(sessionId, data);
     });
 
+    const disposeTitleChange = terminal.onTitleChange((title) => {
+      setWindowTitleRef.current?.(title || null);
+    });
+
     const unsubData = window.electron.terminal.onData(sessionId, (data) => {
       terminal.write(data);
     });
@@ -146,6 +154,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
 
     return () => {
       disposeInput.dispose();
+      disposeTitleChange.dispose();
       unsubData();
       unsubExit();
       resizeObserver.disconnect();
@@ -192,7 +201,10 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
           dragCounterRef.current = 0;
           setIsDragOver(false);
           const text = e.dataTransfer.getData("metron/task-prompt");
-          if (text) window.electron?.terminal.sendInput(sessionId, text);
+          if (text) {
+            window.electron?.terminal.sendInput(sessionId, text);
+            terminalRef.current?.focus();
+          }
         } : undefined}
       >
         <div ref={containerRef} className="h-full w-full" />
