@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -40,6 +40,7 @@ import {
   Copy,
   Pencil,
 } from "lucide-react";
+import { isDesktop } from "@/lib/environment";
 import type { TaskSchema } from "@metron/client";
 import {
   listTasksV1TasksGetOptions,
@@ -167,6 +168,12 @@ function copyText(text: string): Promise<void> {
   document.execCommand("copy");
   document.body.removeChild(el);
   return Promise.resolve();
+}
+
+function buildTaskPrompt(task: TaskSchema): string {
+  const parts = [`Implement this task:\nTitle: ${task.title}`];
+  if (task.description) parts.push(`Description: ${task.description}`);
+  return parts.join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -629,6 +636,14 @@ export function Tasks() {
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
+  const lastPosRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!isDesktop) return;
+    const track = (e: PointerEvent) => { lastPosRef.current = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener("pointermove", track, { capture: true, passive: true });
+    return () => window.removeEventListener("pointermove", track, { capture: true });
+  }, []);
 
   const statusFilter = viewTab === "done" ? ("done" as const) : undefined;
   const sortingValue =
@@ -824,6 +839,7 @@ export function Tasks() {
         in_progress: boardTasks.in_progress.map(t => t.id),
       });
     }
+    window.dispatchEvent(new CustomEvent("metron:task-drag-start"));
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -870,6 +886,24 @@ export function Tasks() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+
+    window.dispatchEvent(new CustomEvent("metron:task-drag-end"));
+
+    // Check if dropped onto a Claude terminal window
+    if (isDesktop) {
+      const { x, y } = lastPosRef.current;
+      const task = active.data.current?.task as TaskSchema | undefined;
+      for (const el of document.elementsFromPoint(x, y)) {
+        const zone = (el as HTMLElement).closest("[data-claude-session]");
+        if (zone && task) {
+          const sid = zone.getAttribute("data-claude-session")!;
+          window.electron?.terminal.sendInput(sid, buildTaskPrompt(task));
+          setActiveTask(null);
+          setLocalOrder(null);
+          return;
+        }
+      }
+    }
 
     if (!over || !localOrder || !activeTask) {
       setActiveTask(null);
@@ -1089,6 +1123,11 @@ export function Tasks() {
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragEnd={handleDragEnd}
+              onDragCancel={() => {
+                window.dispatchEvent(new CustomEvent("metron:task-drag-end"));
+                setActiveTask(null);
+                setLocalOrder(null);
+              }}
             >
               <div className="flex gap-4 flex-1 min-h-0">
                 {BOARD_COLUMNS.map((col) => (
@@ -1125,6 +1164,11 @@ export function Tasks() {
                       key={task.id}
                       className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20"
                       onClick={() => handleSelectTask(task)}
+                      draggable={isDesktop}
+                      onDragStart={isDesktop ? (e) => {
+                        e.dataTransfer.setData("metron/task-prompt", buildTaskPrompt(task));
+                        e.dataTransfer.effectAllowed = "copy";
+                      } : undefined}
                     >
                       {isDone ? (
                         <button

@@ -16,7 +16,21 @@ export function ClaudeCode() {
   const terminalRef = useRef<Terminal | null>(null);
   const sessionId = useRef(crypto.randomUUID()).current;
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isTaskDragging, setIsTaskDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const entry = useWindowEntry();
+
+  useEffect(() => {
+    const onStart = () => setIsTaskDragging(true);
+    const onEnd = () => setIsTaskDragging(false);
+    window.addEventListener("metron:task-drag-start", onStart);
+    window.addEventListener("metron:task-drag-end", onEnd);
+    return () => {
+      window.removeEventListener("metron:task-drag-start", onStart);
+      window.removeEventListener("metron:task-drag-end", onEnd);
+    };
+  }, []);
   const projectPath = entry?.data?.projectPath;
 
   const closeMenu = useCallback(() => setContextMenu(null), []);
@@ -151,10 +165,46 @@ export function ClaudeCode() {
   return (
     <>
       <div
-        ref={containerRef}
-        className="h-full w-full"
-        style={{ background: "#0a0a0a" }}
-      />
+        data-claude-session={sessionId}
+        className="relative h-full w-full"
+        onDragEnter={(e) => {
+          if (Array.from(e.dataTransfer.types).includes("metron/task-prompt")) {
+            dragCounterRef.current++;
+            setIsDragOver(true);
+          }
+        }}
+        onDragLeave={() => {
+          dragCounterRef.current--;
+          if (dragCounterRef.current === 0) setIsDragOver(false);
+        }}
+        onDragOver={(e) => {
+          if (Array.from(e.dataTransfer.types).includes("metron/task-prompt")) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dragCounterRef.current = 0;
+          setIsDragOver(false);
+          const text = e.dataTransfer.getData("metron/task-prompt");
+          if (text) window.electron?.terminal.sendInput(sessionId, text);
+        }}
+      >
+        <div
+          ref={containerRef}
+          className="h-full w-full"
+          style={{ background: "#0a0a0a" }}
+        />
+        {(isDragOver || isTaskDragging) && (
+          <div className={`absolute inset-0 pointer-events-none flex items-center justify-center rounded border-2 transition-colors ${isDragOver ? "bg-orange-500/10 border-orange-500/50" : "bg-orange-500/5 border-orange-500/20"}`}>
+            <span className="text-orange-400 text-sm font-medium bg-black/60 px-3 py-1.5 rounded-md">
+              Drop to send to Claude
+            </span>
+          </div>
+        )}
+      </div>
       {contextMenu &&
         createPortal(
           <div
