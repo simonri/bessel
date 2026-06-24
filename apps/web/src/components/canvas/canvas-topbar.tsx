@@ -45,7 +45,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/p
 import { client } from "@/lib/client";
 import { useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
-import { Counters } from "@/routes/_app/counters";
+import { Counters } from "@/components/counters";
 import { useWindowManager } from "@/components/canvas/window-manager";
 
 // Map trading pair symbols to CoinGecko IDs and quote currencies

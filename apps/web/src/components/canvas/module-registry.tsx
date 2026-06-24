@@ -30,7 +30,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Dashboard",
     icon: LayoutDashboard,
     component: lazy(() =>
-      import("@/routes/_app/index").then((m) => ({ default: m.Dashboard })),
+      import("@/routes/_app/index").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -38,7 +38,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Transactions",
     icon: ArrowLeftRight,
     component: lazy(() =>
-      import("@/routes/_app/transactions").then((m) => ({ default: m.Transactions })),
+      import("@/routes/_app/transactions").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -46,7 +46,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Accounts",
     icon: Landmark,
     component: lazy(() =>
-      import("@/routes/_app/accounts").then((m) => ({ default: m.Accounts })),
+      import("@/routes/_app/accounts").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -54,7 +54,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Investments",
     icon: TrendingUp,
     component: lazy(() =>
-      import("@/routes/_app/investments").then((m) => ({ default: m.Investments })),
+      import("@/routes/_app/investments").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -62,7 +62,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Tasks",
     icon: CheckSquare,
     component: lazy(() =>
-      import("@/routes/_app/tasks").then((m) => ({ default: m.Tasks })),
+      import("@/routes/_app/tasks").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -70,7 +70,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Travel",
     icon: MapPin,
     component: lazy(() =>
-      import("@/routes/_app/travel").then((m) => ({ default: m.Travel })),
+      import("@/routes/_app/travel").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -78,7 +78,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Activity",
     icon: Activity,
     component: lazy(() =>
-      import("@/routes/_app/activity").then((m) => ({ default: m.ActivityPage })),
+      import("@/routes/_app/activity").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },
@@ -86,7 +86,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     title: "Recipes",
     icon: ChefHat,
     component: lazy(() =>
-      import("@/routes/_app/recipes").then((m) => ({ default: m.Recipes })),
+      import("@/routes/_app/recipes").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     colSpan: 1,
   },

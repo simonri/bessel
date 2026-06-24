@@ -282,7 +282,7 @@ function PlaceCard({
 // Main component
 // ---------------------------------------------------------------------------
 
-export function Travel() {
+function Travel() {
   const [selectedPlace, setSelectedPlace] = useState<PlaceSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PlaceSchema | null>(null);
   const [longPressPlace, setLongPressPlace] = useState<PlaceSchema | null>(null);

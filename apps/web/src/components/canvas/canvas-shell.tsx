@@ -43,12 +43,8 @@ function WindowDragOverlay({ entry }: { entry: WindowEntry }) {
 }
 
 export function CanvasShell() {
-  const { windows, placeWindow } = useWindowManager();
+  const { windows, workspaces, activeWorkspaceId, placeWindow } = useWindowManager();
   const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
-
-  const maxSlot = windows.reduce((max, w) => Math.max(max, w.slot), -1);
-  const rowCount = windows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
-  const totalSlots = rowCount * 2;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -83,37 +79,48 @@ export function CanvasShell() {
       />
       <div className="absolute inset-0 bg-black/30" />
 
-      {/* Content area: between top bar and dock */}
       <div className="relative flex h-full flex-col pt-12 pb-3.5">
-        {windows.length > 0 && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div
-              className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
-              style={{ gridTemplateRows: `repeat(${rowCount}, 1fr)` }}
-            >
-              {Array.from({ length: totalSlots }, (_, i) => {
-                const win = windows.find((w) => w.slot === i);
-                return win ? (
-                  <CanvasWindow key={win.id} entry={win} />
-                ) : (
-                  <EmptySlot key={`slot-${i}`} slotIndex={i} />
-                );
-              })}
-            </div>
-            {typeof document !== "undefined" &&
-              createPortal(
-                <DragOverlay dropAnimation={null}>
-                  {activeWindow ? <WindowDragOverlay entry={activeWindow} /> : null}
-                </DragOverlay>,
-                document.body,
-              )}
-          </DndContext>
-        )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          {workspaces.map((workspace) => {
+            const isActive = workspace.id === activeWorkspaceId;
+            const wsWindows = workspace.windows;
+            const maxSlot = wsWindows.reduce((max, w) => Math.max(max, w.slot), -1);
+            const rowCount = wsWindows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
+            const totalSlots = rowCount * 2;
+
+            return (
+              <div
+                key={workspace.id}
+                className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
+                style={{
+                  display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
+                  gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
+                }}
+              >
+                {Array.from({ length: totalSlots }, (_, i) => {
+                  const win = wsWindows.find((w) => w.slot === i);
+                  return win ? (
+                    <CanvasWindow key={win.id} entry={win} />
+                  ) : (
+                    <EmptySlot key={`slot-${i}`} slotIndex={i} />
+                  );
+                })}
+              </div>
+            );
+          })}
+          {typeof document !== "undefined" &&
+            createPortal(
+              <DragOverlay dropAnimation={null}>
+                {activeWindow ? <WindowDragOverlay entry={activeWindow} /> : null}
+              </DragOverlay>,
+              document.body,
+            )}
+        </DndContext>
       </div>
 
       <CanvasTopBar />

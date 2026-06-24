@@ -229,7 +229,7 @@ function GridCell({
   );
 }
 
-export function ActivityPage() {
+function ActivityPage() {
   const today = new Date();
   const [date, setDate] = useState(today);
   const [source, setSource] = useState<string | null>(null);

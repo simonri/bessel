@@ -624,7 +624,7 @@ function ScheduledTasksDialog({
 // Main Page
 // ---------------------------------------------------------------------------
 
-export function Tasks() {
+function Tasks() {
   const [viewTab, setViewTab] = useState<ViewTab>("board");
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);

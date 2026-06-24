@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/")({
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-export function Dashboard() {
+function Dashboard() {
   const { data: flowData } = useQuery(
     monthlyFlowV1TransactionsMonthlyFlowGetOptions({ client, query: { months: 2 } }),
   );

@@ -141,7 +141,7 @@ const TransactionActions = memo(function TransactionActions({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export function Transactions() {
+function Transactions() {
   const now = new Date();
   const [filters, setFilters] = useState<TransactionFilters>({
     year: now.getFullYear(),

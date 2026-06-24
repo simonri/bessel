@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_app/recipes")({
   component: Recipes,
 });
 
-export function Recipes() {
+function Recipes() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
