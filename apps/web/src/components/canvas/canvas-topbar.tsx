@@ -7,8 +7,24 @@ declare global {
   interface Window {
     electron?: {
       close: () => void;
+      selectFolder: () => Promise<string | null>;
+      git: {
+        status: (path: string) => Promise<{
+          branch: string;
+          ahead: number;
+          behind: number;
+          staged: Array<{ path: string; originalPath?: string; status: string }>;
+          unstaged: Array<{ path: string; originalPath?: string; status: string }>;
+          untracked: Array<{ path: string; status: string }>;
+        }>;
+        diff: (path: string, file: string, staged: boolean, untracked: boolean) => Promise<string>;
+        stage: (path: string, files: string[]) => Promise<void>;
+        unstage: (path: string, files: string[]) => Promise<void>;
+        commit: (path: string, message: string) => Promise<void>;
+        push: (path: string) => Promise<void>;
+      };
       terminal: {
-        spawn: (sessionId: string, cols: number, rows: number) => Promise<void>;
+        spawn: (sessionId: string, cols: number, rows: number, cwd?: string) => Promise<void>;
         sendInput: (sessionId: string, data: string) => void;
         resize: (sessionId: string, cols: number, rows: number) => void;
         kill: (sessionId: string) => void;

@@ -9,17 +9,24 @@ export type ModuleKey =
   | "travel"
   | "activity"
   | "recipes"
-  | "claudeCode";
+  | "claudeCode"
+  | "gitStatus";
 
-export type WindowEntry = { id: string; module: ModuleKey; slot: number };
+export type WindowEntry = { id: string; module: ModuleKey; slot: number; data?: Record<string, string> };
 
 interface WindowManagerContextValue {
   windows: WindowEntry[];
   toggleWindow: (module: ModuleKey) => void;
-  openWindow: (module: ModuleKey) => void;
+  openWindow: (module: ModuleKey, data?: Record<string, string>) => void;
   closeWindow: (id: string) => void;
   placeWindow: (windowId: string, toSlot: number) => void;
   isOpen: (module: ModuleKey) => boolean;
+}
+
+export const WindowEntryContext = createContext<WindowEntry | null>(null);
+
+export function useWindowEntry() {
+  return useContext(WindowEntryContext);
 }
 
 const STORAGE_KEY = "metron:windows";
@@ -47,9 +54,9 @@ function loadWindows(): WindowEntry[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown[];
-    return (parsed as { module: string; slot: number }[])
+    return (parsed as { module: string; slot: number; data?: Record<string, string> }[])
       .filter((e) => e && typeof e === "object" && ALL_MODULES.has(e.module) && typeof e.slot === "number")
-      .map((e) => ({ id: newId(), module: e.module as ModuleKey, slot: e.slot }));
+      .map((e) => ({ id: newId(), module: e.module as ModuleKey, slot: e.slot, data: e.data }));
   } catch {
     return [];
   }
@@ -63,7 +70,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(windows.map((w) => ({ module: w.module, slot: w.slot }))),
+      JSON.stringify(windows.map((w) => ({ module: w.module, slot: w.slot, ...(w.data ? { data: w.data } : {}) }))),
     );
   }, [windows]);
 
@@ -81,8 +88,8 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const openWindow = useCallback((module: ModuleKey) => {
-    setWindows((prev) => [...prev, { id: newId(), module, slot: firstFreeSlot(prev) }]);
+  const openWindow = useCallback((module: ModuleKey, data?: Record<string, string>) => {
+    setWindows((prev) => [...prev, { id: newId(), module, slot: firstFreeSlot(prev), data }]);
   }, []);
 
   const closeWindow = useCallback((id: string) => {

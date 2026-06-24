@@ -14,7 +14,6 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -764,8 +763,6 @@ export function Tasks() {
         }
         return { ...old, items: updatedItems };
       });
-      // Clear drag local order only after cache reflects new position (drag ops only).
-      // Clearing earlier would cause a one-frame snap back to server order.
       if (body.position != null) setLocalOrder(null);
       return { previous };
     },
@@ -846,29 +843,29 @@ export function Tasks() {
         ? "todo"
         : "in_progress";
 
-    if (!overIsColumn && activeColumn === overColumn) {
-      const items = localOrder[activeColumn];
-      const oldIndex = items.indexOf(activeId);
-      const newIndex = items.indexOf(overId);
-      if (oldIndex !== newIndex) {
-        setLocalOrder(prev =>
-          prev ? { ...prev, [activeColumn]: arrayMove(items, oldIndex, newIndex) } : prev,
-        );
+    // Only track cross-column moves. Same-column position is determined at drop
+    // time from over.id, so we don't need to (and shouldn't) reorder here —
+    // doing so causes closestCenter oscillation that snaps items to wrong positions.
+    if (activeColumn === overColumn) return;
+
+    const isBelowOverCenter =
+      active.rect.current.translated != null &&
+      active.rect.current.translated.top + active.rect.current.translated.height / 2 >
+        over.rect.top + over.rect.height / 2;
+
+    setLocalOrder(prev => {
+      if (!prev) return prev;
+      const source = prev[activeColumn].filter(id => id !== activeId);
+      const dest = [...prev[overColumn]];
+      if (overIsColumn) {
+        dest.push(activeId);
+      } else {
+        const idx = dest.indexOf(overId);
+        const insertAt = idx >= 0 ? idx + (isBelowOverCenter ? 1 : 0) : dest.length;
+        dest.splice(insertAt, 0, activeId);
       }
-    } else if (activeColumn !== overColumn) {
-      setLocalOrder(prev => {
-        if (!prev) return prev;
-        const source = prev[activeColumn].filter(id => id !== activeId);
-        const dest = [...prev[overColumn]];
-        if (overIsColumn) {
-          dest.push(activeId);
-        } else {
-          const idx = dest.indexOf(overId);
-          dest.splice(idx >= 0 ? idx : dest.length, 0, activeId);
-        }
-        return { ...prev, [activeColumn]: source, [overColumn]: dest };
-      });
-    }
+      return { ...prev, [activeColumn]: source, [overColumn]: dest };
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -881,12 +878,52 @@ export function Tasks() {
     }
 
     const taskId = String(active.id);
+    const overId = String(over.id);
     const newStatus = localOrder.todo.includes(taskId) ? "todo" : "in_progress";
-    const taskIds = localOrder[newStatus];
-    const taskIndex = taskIds.indexOf(taskId);
+    const originalStatus = activeTask.status as "todo" | "in_progress";
+    const overIsColumn = (BOARD_COLUMNS as readonly string[]).includes(overId);
 
+    // Destination column's tasks in server position order, excluding the dragged task.
+    // We use the server order (boardTasks) as the position reference to compute midpoints.
+    const destServerIds = (
+      newStatus === "todo" ? boardTasks!.todo : boardTasks!.in_progress
+    ).filter(t => t.id !== taskId).map(t => t.id);
+
+    // Compute the final ordered list for the destination column.
+    // Position is determined from over.id + isBelowOverCenter at the actual drop instant,
+    // which is more accurate than localOrder (which only tracked cross-column entry point).
+    let orderedColumnIds: string[];
+    if (overIsColumn) {
+      // Dropped in empty column space — place at end
+      orderedColumnIds = [...destServerIds, taskId];
+    } else if (overId === taskId) {
+      if (originalStatus === newStatus) {
+        // Dropped on own placeholder in same column — no meaningful movement
+        setActiveTask(null);
+        setLocalOrder(null);
+        return;
+      }
+      // Cross-column drop on own placeholder — use localOrder insertion position
+      orderedColumnIds = localOrder[newStatus];
+    } else {
+      const overIndex = destServerIds.indexOf(overId);
+      if (overIndex < 0) {
+        orderedColumnIds = [...destServerIds, taskId];
+      } else {
+        const isBelowOverCenter =
+          active.rect.current.translated != null &&
+          active.rect.current.translated.top + active.rect.current.translated.height / 2 >
+            over.rect.top + over.rect.height / 2;
+        const insertAt = overIndex + (isBelowOverCenter ? 1 : 0);
+        const withTask = [...destServerIds];
+        withTask.splice(insertAt, 0, taskId);
+        orderedColumnIds = withTask;
+      }
+    }
+
+    const taskIndex = orderedColumnIds.indexOf(taskId);
     const taskMap = new Map(allTasks.map(t => [t.id, t]));
-    const columnTasks = taskIds
+    const columnTasks = orderedColumnIds
       .map(id => taskMap.get(id))
       .filter((t): t is TaskSchema => t !== undefined);
 
@@ -911,13 +948,10 @@ export function Tasks() {
     }
 
     const body: { position: number; status?: "todo" | "in_progress" } = { position: newPosition };
-    if (activeTask.status !== newStatus) body.status = newStatus as "todo" | "in_progress";
+    if (originalStatus !== newStatus) body.status = newStatus;
 
     updateMutation.mutate({ client, path: { task_id: taskId }, body });
-
     setActiveTask(null);
-    // localOrder is cleared inside updateMutation.onMutate after the cache write,
-    // so liveBoardTasks and boardTasks agree when localOrder becomes null.
   };
 
   const allTasks = data?.items ?? [];

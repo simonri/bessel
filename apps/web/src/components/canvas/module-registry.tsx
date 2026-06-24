@@ -10,6 +10,7 @@ import {
   Activity,
   ChefHat,
   Terminal,
+  GitBranch,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
 import { isDesktop } from "@/lib/environment";
@@ -98,6 +99,15 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     multiInstance: true,
     noPadding: true,
   },
+  gitStatus: {
+    title: "Git",
+    icon: GitBranch,
+    component: lazy(() =>
+      import("@/routes/_app/-git-status").then((m) => ({ default: m.GitStatus })),
+    ),
+    colSpan: 1,
+    noPadding: true,
+  },
 };
 
 const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode"] : [];
@@ -111,5 +121,6 @@ export const MODULE_ORDER: ModuleKey[] = [
   "travel",
   "activity",
   "recipes",
+  "gitStatus",
   ...desktopModules,
 ];

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
+import { useWindowEntry } from "@/components/canvas/window-manager";
 
 interface ContextMenu {
   x: number;
@@ -15,6 +16,8 @@ export function ClaudeCode() {
   const terminalRef = useRef<Terminal | null>(null);
   const sessionId = useRef(crypto.randomUUID()).current;
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const entry = useWindowEntry();
+  const projectPath = entry?.data?.projectPath;
 
   const closeMenu = useCallback(() => setContextMenu(null), []);
 
@@ -60,7 +63,7 @@ export function ClaudeCode() {
       },
       fontFamily: '"JetBrains Mono", "Cascadia Code", "Fira Code", monospace',
       fontSize: 13,
-      lineHeight: 1.4,
+      lineHeight: 1.0,
       cursorBlink: true,
       scrollback: 5000,
       allowProposedApi: true,
@@ -73,18 +76,11 @@ export function ClaudeCode() {
     terminal.open(el);
     fitAddon.fit();
 
-    // Ctrl+Shift+C to copy, Ctrl+Shift+V to paste
+    // Ctrl+Shift+C to copy (Ctrl+V to paste is handled natively by xterm)
     terminal.attachCustomKeyEventHandler((e) => {
-      if (e.type !== "keydown") return true;
-      if (e.ctrlKey && e.shiftKey && e.code === "KeyC") {
+      if (e.type === "keydown" && e.ctrlKey && e.shiftKey && e.code === "KeyC") {
         const sel = terminal.getSelection();
         if (sel) navigator.clipboard.writeText(sel);
-        return false;
-      }
-      if (e.ctrlKey && e.shiftKey && e.code === "KeyV") {
-        navigator.clipboard.readText().then((text) => {
-          if (text) window.electron?.terminal.sendInput(sessionId, text);
-        });
         return false;
       }
       return true;
@@ -103,7 +99,7 @@ export function ClaudeCode() {
     el.addEventListener("contextmenu", handleContextMenu, { capture: true });
 
     window.electron.terminal
-      .spawn(sessionId, terminal.cols, terminal.rows)
+      .spawn(sessionId, terminal.cols, terminal.rows, projectPath)
       .catch((err: unknown) => {
         terminal.writeln(
           `\r\n\x1b[31mFailed to start terminal: ${err}\x1b[0m\r\n`
@@ -119,9 +115,11 @@ export function ClaudeCode() {
     });
 
     const unsubExit = window.electron.terminal.onExit(sessionId, (code) => {
-      terminal.writeln(
-        `\r\n\x1b[33m[Process exited with code ${code}]\x1b[0m`
-      );
+      if (code !== 0) {
+        terminal.writeln(
+          `\r\n\x1b[31m[Process exited with code ${code}]\x1b[0m`
+        );
+      }
     });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -140,7 +138,7 @@ export function ClaudeCode() {
       terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
     };
-  }, [sessionId]);
+  }, [sessionId, projectPath]);
 
   // Close context menu on any outside click
   useEffect(() => {

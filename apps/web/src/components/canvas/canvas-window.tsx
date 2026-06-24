@@ -2,7 +2,7 @@ import { Suspense, useCallback } from "react";
 import { X } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { MODULE_REGISTRY } from "./module-registry";
-import { useWindowManager, type WindowEntry } from "./window-manager";
+import { WindowEntryContext, useWindowManager, type WindowEntry } from "./window-manager";
 
 function WindowSpinner() {
   return (
@@ -45,7 +45,12 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
         className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5 cursor-grab active:cursor-grabbing"
       >
         <Icon className="size-3.5 text-white/50" />
-        <span className="text-sm font-medium text-white/80">{config.title}</span>
+        <span className="text-sm font-medium text-white/80">
+          {config.title}
+          {entry.data?.projectName && (
+            <span className="ml-1.5 font-normal text-white/40">/ {entry.data.projectName}</span>
+          )}
+        </span>
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => closeWindow(entry.id)}
@@ -57,9 +62,11 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
 
       {/* Scrollable content */}
       <div className={`flex-1 ${config.noPadding ? "overflow-hidden" : "overflow-y-auto p-4"}`}>
-        <Suspense fallback={<WindowSpinner />}>
-          <Component />
-        </Suspense>
+        <WindowEntryContext.Provider value={entry}>
+          <Suspense fallback={<WindowSpinner />}>
+            <Component />
+          </Suspense>
+        </WindowEntryContext.Provider>
       </div>
     </div>
   );
