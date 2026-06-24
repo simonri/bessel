@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type ModuleKey =
   | "dashboard"
@@ -203,21 +203,21 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, activeWorkspaceId: id }));
   }, []);
 
+  const contextValue = useMemo(() => ({
+    windows,
+    workspaces,
+    activeWorkspaceId,
+    toggleWindow,
+    openWindow,
+    closeWindow,
+    placeWindow,
+    isOpen,
+    addWorkspace,
+    switchWorkspace,
+  }), [windows, workspaces, activeWorkspaceId, toggleWindow, openWindow, closeWindow, placeWindow, isOpen, addWorkspace, switchWorkspace]);
+
   return (
-    <WindowManagerContext.Provider
-      value={{
-        windows,
-        workspaces,
-        activeWorkspaceId,
-        toggleWindow,
-        openWindow,
-        closeWindow,
-        placeWindow,
-        isOpen,
-        addWorkspace,
-        switchWorkspace,
-      }}
-    >
+    <WindowManagerContext.Provider value={contextValue}>
       {children}
     </WindowManagerContext.Provider>
   );

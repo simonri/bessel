@@ -1,4 +1,4 @@
-import { Suspense, useCallback } from "react";
+import { memo, Suspense, useCallback } from "react";
 import { X } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { MODULE_REGISTRY } from "./module-registry";
@@ -12,7 +12,7 @@ function WindowSpinner() {
   );
 }
 
-export function CanvasWindow({ entry }: { entry: WindowEntry }) {
+export const CanvasWindow = memo(function CanvasWindow({ entry }: { entry: WindowEntry }) {
   const { closeWindow } = useWindowManager();
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
@@ -33,7 +33,7 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
   return (
     <div
       ref={setRef}
-      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-colors ${
+      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl ${
         isDragging ? "opacity-0" : isOver ? "border-white/30" : "border-white/10"
       }`}
     >
@@ -70,4 +70,4 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
       </div>
     </div>
   );
-}
+});

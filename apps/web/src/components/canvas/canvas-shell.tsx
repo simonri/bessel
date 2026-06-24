@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -17,23 +17,23 @@ import { CanvasWindow } from "./canvas-window";
 import { CanvasDock } from "./canvas-dock";
 import { CanvasTopBar } from "./canvas-topbar";
 
-function EmptySlot({ slotIndex }: { slotIndex: number }) {
+const EmptySlot = memo(function EmptySlot({ slotIndex }: { slotIndex: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotIndex}` });
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-2xl border border-dashed transition-colors ${
+      className={`rounded-2xl border border-dashed ${
         isOver ? "border-white/30 bg-white/5" : "border-white/[0.06]"
       }`}
     />
   );
-}
+});
 
 function WindowDragOverlay({ entry }: { entry: WindowEntry }) {
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/20 bg-black/60 shadow-2xl backdrop-blur-xl opacity-80">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/20 bg-black/80 shadow-2xl opacity-80">
       <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5">
         <Icon className="size-3.5 text-white/50" />
         <span className="text-sm font-medium text-white/80">{config.title}</span>
@@ -42,32 +42,79 @@ function WindowDragOverlay({ entry }: { entry: WindowEntry }) {
   );
 }
 
-export function CanvasShell() {
-  const { windows, workspaces, activeWorkspaceId, placeWindow } = useWindowManager();
+interface WorkspaceState {
+  id: string;
+  windows: WindowEntry[];
+}
+
+function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isActive: boolean }) {
+  const { placeWindow } = useWindowManager();
   const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const win = windows.find((w) => w.id === event.active.id);
-    setActiveWindow(win ?? null);
-  };
+  const wsWindows = workspace.windows;
+  const maxSlot = wsWindows.reduce((max, w) => Math.max(max, w.slot), -1);
+  const rowCount = wsWindows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
+  const totalSlots = rowCount * 2;
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveWindow((wsWindows.find((w) => w.id === event.active.id)) ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsWindows]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveWindow(null);
     if (!over || active.id === over.id) return;
-
     const overId = String(over.id);
     if (overId.startsWith("slot-")) {
       placeWindow(String(active.id), parseInt(overId.slice(5), 10));
     } else {
-      const overWin = windows.find((w) => w.id === overId);
+      const overWin = wsWindows.find((w) => w.id === overId);
       if (overWin) placeWindow(String(active.id), overWin.slot);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsWindows, placeWindow]);
+
+  return (
+    <DndContext
+      sensors={isActive ? sensors : []}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div
+        className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
+        style={{
+          display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
+          gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
+        }}
+      >
+        {Array.from({ length: totalSlots }, (_, i) => {
+          const win = wsWindows.find((w) => w.slot === i);
+          return win ? (
+            <CanvasWindow key={win.id} entry={win} />
+          ) : (
+            <EmptySlot key={`slot-${i}`} slotIndex={i} />
+          );
+        })}
+      </div>
+      {isActive && typeof document !== "undefined" &&
+        createPortal(
+          <DragOverlay dropAnimation={null}>
+            {activeWindow ? <WindowDragOverlay entry={activeWindow} /> : null}
+          </DragOverlay>,
+          document.body,
+        )}
+    </DndContext>
+  );
+}
+
+export function CanvasShell() {
+  const { workspaces, activeWorkspaceId } = useWindowManager();
 
   return (
     <div className="fixed inset-0">
@@ -80,47 +127,13 @@ export function CanvasShell() {
       <div className="absolute inset-0 bg-black/30" />
 
       <div className="relative flex h-full flex-col pt-12 pb-3.5">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          {workspaces.map((workspace) => {
-            const isActive = workspace.id === activeWorkspaceId;
-            const wsWindows = workspace.windows;
-            const maxSlot = wsWindows.reduce((max, w) => Math.max(max, w.slot), -1);
-            const rowCount = wsWindows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
-            const totalSlots = rowCount * 2;
-
-            return (
-              <div
-                key={workspace.id}
-                className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
-                style={{
-                  display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
-                  gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
-                }}
-              >
-                {Array.from({ length: totalSlots }, (_, i) => {
-                  const win = wsWindows.find((w) => w.slot === i);
-                  return win ? (
-                    <CanvasWindow key={win.id} entry={win} />
-                  ) : (
-                    <EmptySlot key={`slot-${i}`} slotIndex={i} />
-                  );
-                })}
-              </div>
-            );
-          })}
-          {typeof document !== "undefined" &&
-            createPortal(
-              <DragOverlay dropAnimation={null}>
-                {activeWindow ? <WindowDragOverlay entry={activeWindow} /> : null}
-              </DragOverlay>,
-              document.body,
-            )}
-        </DndContext>
+        {workspaces.map((workspace) => (
+          <WorkspaceGrid
+            key={workspace.id}
+            workspace={workspace}
+            isActive={workspace.id === activeWorkspaceId}
+          />
+        ))}
       </div>
 
       <CanvasTopBar />
