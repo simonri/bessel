@@ -10,6 +10,7 @@ import {
   Activity,
   ChefHat,
   Terminal,
+  SquareTerminal,
   GitBranch,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
@@ -99,6 +100,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     multiInstance: true,
     noPadding: true,
   },
+  terminal: {
+    title: "Terminal",
+    icon: SquareTerminal,
+    component: lazy(() =>
+      import("@/routes/_app/-terminal").then((m) => ({ default: m.TerminalPage })),
+    ),
+    colSpan: 1,
+    multiInstance: true,
+    noPadding: true,
+  },
   gitStatus: {
     title: "Git",
     icon: GitBranch,
@@ -110,7 +121,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
 };
 
-const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode"] : [];
+const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "terminal"] : [];
 
 export const MODULE_ORDER: ModuleKey[] = [
   "dashboard",

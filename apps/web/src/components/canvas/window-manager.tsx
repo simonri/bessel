@@ -10,17 +10,27 @@ export type ModuleKey =
   | "activity"
   | "recipes"
   | "claudeCode"
+  | "terminal"
   | "gitStatus";
 
 export type WindowEntry = { id: string; module: ModuleKey; slot: number; data?: Record<string, string> };
 
+interface WorkspaceState {
+  id: string;
+  windows: WindowEntry[];
+}
+
 interface WindowManagerContextValue {
   windows: WindowEntry[];
+  workspaces: WorkspaceState[];
+  activeWorkspaceId: string;
   toggleWindow: (module: ModuleKey) => void;
   openWindow: (module: ModuleKey, data?: Record<string, string>) => void;
   closeWindow: (id: string) => void;
   placeWindow: (windowId: string, toSlot: number) => void;
   isOpen: (module: ModuleKey) => boolean;
+  addWorkspace: () => void;
+  switchWorkspace: (id: string) => void;
 }
 
 export const WindowEntryContext = createContext<WindowEntry | null>(null);
@@ -29,13 +39,15 @@ export function useWindowEntry() {
   return useContext(WindowEntryContext);
 }
 
-const STORAGE_KEY = "metron:windows";
+const STORAGE_KEY = "metron:workspaces";
+const LEGACY_KEY = "metron:windows";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
 const ALL_MODULES = new Set<string>([
-  "dashboard", "transactions", "accounts", "investments", "tasks", "travel", "activity", "recipes",
-  ...(isDesktop ? ["claudeCode"] : []),
+  "dashboard", "transactions", "accounts", "investments",
+  "tasks", "travel", "activity", "recipes", "gitStatus",
+  ...(isDesktop ? ["claudeCode", "terminal"] : []),
 ]);
 
 function newId() {
@@ -49,68 +61,163 @@ function firstFreeSlot(windows: WindowEntry[]): number {
   return slot;
 }
 
-function loadWindows(): WindowEntry[] {
+type StoredWindow = { module: string; slot: number; data?: Record<string, string> };
+
+function parseWindows(raw: unknown[]): WindowEntry[] {
+  return (raw as StoredWindow[])
+    .filter((e) => e && typeof e === "object" && ALL_MODULES.has(e.module) && typeof e.slot === "number")
+    .map((e) => ({ id: newId(), module: e.module as ModuleKey, slot: e.slot, data: e.data }));
+}
+
+function loadState(): { workspaces: WorkspaceState[]; activeWorkspaceId: string } {
+  // Try current workspaces format
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown[];
-    return (parsed as { module: string; slot: number; data?: Record<string, string> }[])
-      .filter((e) => e && typeof e === "object" && ALL_MODULES.has(e.module) && typeof e.slot === "number")
-      .map((e) => ({ id: newId(), module: e.module as ModuleKey, slot: e.slot, data: e.data }));
-  } catch {
-    return [];
-  }
+    if (raw) {
+      const parsed = JSON.parse(raw) as {
+        workspaces: Array<{ id: string; windows: StoredWindow[] }>;
+        activeWorkspaceId: string;
+      };
+      if (Array.isArray(parsed.workspaces) && parsed.workspaces.length > 0) {
+        const workspaces = parsed.workspaces.map((ws) => ({
+          id: ws.id,
+          windows: parseWindows(ws.windows ?? []),
+        }));
+        const activeId =
+          workspaces.find((ws) => ws.id === parsed.activeWorkspaceId)?.id ?? workspaces[0].id;
+        return { workspaces, activeWorkspaceId: activeId };
+      }
+    }
+  } catch {}
+
+  // Migrate from legacy flat-windows format
+  try {
+    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    if (legacyRaw) {
+      const windows = parseWindows(JSON.parse(legacyRaw) as unknown[]);
+      const id = newId();
+      return { workspaces: [{ id, windows }], activeWorkspaceId: id };
+    }
+  } catch {}
+
+  // Default: one empty workspace
+  const id = newId();
+  return { workspaces: [{ id, windows: [] }], activeWorkspaceId: id };
 }
 
 const WindowManagerContext = createContext<WindowManagerContextValue | null>(null);
 
 export function WindowManager({ children }: { children: React.ReactNode }) {
-  const [windows, setWindows] = useState<WindowEntry[]>(loadWindows);
+  const [state, setState] = useState(loadState);
+  const { workspaces, activeWorkspaceId } = state;
+
+  const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId) ?? workspaces[0];
+  const windows = activeWorkspace?.windows ?? [];
 
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(windows.map((w) => ({ module: w.module, slot: w.slot, ...(w.data ? { data: w.data } : {}) }))),
+      JSON.stringify({
+        workspaces: workspaces.map((ws) => ({
+          id: ws.id,
+          windows: ws.windows.map((w) => ({
+            module: w.module,
+            slot: w.slot,
+            ...(w.data ? { data: w.data } : {}),
+          })),
+        })),
+        activeWorkspaceId,
+      }),
     );
-  }, [windows]);
+  }, [workspaces, activeWorkspaceId]);
+
+  const updateActiveWindows = useCallback(
+    (updater: (wins: WindowEntry[]) => WindowEntry[]) => {
+      setState((prev) => ({
+        ...prev,
+        workspaces: prev.workspaces.map((ws) =>
+          ws.id === prev.activeWorkspaceId ? { ...ws, windows: updater(ws.windows) } : ws,
+        ),
+      }));
+    },
+    [],
+  );
 
   const isOpen = useCallback(
     (module: ModuleKey) => windows.some((w) => w.module === module),
     [windows],
   );
 
-  const toggleWindow = useCallback((module: ModuleKey) => {
-    setWindows((prev) => {
-      if (prev.some((w) => w.module === module)) {
-        return prev.filter((w) => w.module !== module);
-      }
-      return [...prev, { id: newId(), module, slot: firstFreeSlot(prev) }];
-    });
-  }, []);
-
-  const openWindow = useCallback((module: ModuleKey, data?: Record<string, string>) => {
-    setWindows((prev) => [...prev, { id: newId(), module, slot: firstFreeSlot(prev), data }]);
-  }, []);
-
-  const closeWindow = useCallback((id: string) => {
-    setWindows((prev) => prev.filter((w) => w.id !== id));
-  }, []);
-
-  const placeWindow = useCallback((windowId: string, toSlot: number) => {
-    setWindows((prev) => {
-      const moving = prev.find((w) => w.id === windowId);
-      if (!moving || moving.slot === toSlot) return prev;
-      const occupant = prev.find((w) => w.slot === toSlot);
-      return prev.map((w) => {
-        if (w.id === windowId) return { ...w, slot: toSlot };
-        if (occupant && w.id === occupant.id) return { ...w, slot: moving.slot };
-        return w;
+  const toggleWindow = useCallback(
+    (module: ModuleKey) => {
+      updateActiveWindows((prev) => {
+        if (prev.some((w) => w.module === module)) return prev.filter((w) => w.module !== module);
+        return [...prev, { id: newId(), module, slot: firstFreeSlot(prev) }];
       });
-    });
+    },
+    [updateActiveWindows],
+  );
+
+  const openWindow = useCallback(
+    (module: ModuleKey, data?: Record<string, string>) => {
+      updateActiveWindows((prev) => [
+        ...prev,
+        { id: newId(), module, slot: firstFreeSlot(prev), data },
+      ]);
+    },
+    [updateActiveWindows],
+  );
+
+  const closeWindow = useCallback(
+    (id: string) => {
+      updateActiveWindows((prev) => prev.filter((w) => w.id !== id));
+    },
+    [updateActiveWindows],
+  );
+
+  const placeWindow = useCallback(
+    (windowId: string, toSlot: number) => {
+      updateActiveWindows((prev) => {
+        const moving = prev.find((w) => w.id === windowId);
+        if (!moving || moving.slot === toSlot) return prev;
+        const occupant = prev.find((w) => w.slot === toSlot);
+        return prev.map((w) => {
+          if (w.id === windowId) return { ...w, slot: toSlot };
+          if (occupant && w.id === occupant.id) return { ...w, slot: moving.slot };
+          return w;
+        });
+      });
+    },
+    [updateActiveWindows],
+  );
+
+  const addWorkspace = useCallback(() => {
+    const id = newId();
+    setState((prev) => ({
+      workspaces: [...prev.workspaces, { id, windows: [] }],
+      activeWorkspaceId: id,
+    }));
+  }, []);
+
+  const switchWorkspace = useCallback((id: string) => {
+    setState((prev) => ({ ...prev, activeWorkspaceId: id }));
   }, []);
 
   return (
-    <WindowManagerContext.Provider value={{ windows, toggleWindow, openWindow, closeWindow, placeWindow, isOpen }}>
+    <WindowManagerContext.Provider
+      value={{
+        windows,
+        workspaces,
+        activeWorkspaceId,
+        toggleWindow,
+        openWindow,
+        closeWindow,
+        placeWindow,
+        isOpen,
+        addWorkspace,
+        switchWorkspace,
+      }}
+    >
       {children}
     </WindowManagerContext.Provider>
   );

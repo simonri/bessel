@@ -13,8 +13,8 @@ contextBridge.exposeInMainWorld("electron", {
     push: (path: string) => ipcRenderer.invoke("git:push", path),
   },
   terminal: {
-    spawn: (sessionId: string, cols: number, rows: number, cwd?: string) =>
-      ipcRenderer.invoke("terminal:spawn", sessionId, cols, rows, cwd),
+    spawn: (sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) =>
+      ipcRenderer.invoke("terminal:spawn", sessionId, cols, rows, config),
     sendInput: (sessionId: string, data: string) =>
       ipcRenderer.send("terminal:input", sessionId, data),
     resize: (sessionId: string, cols: number, rows: number) =>

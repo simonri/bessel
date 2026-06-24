@@ -114,17 +114,21 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     "terminal:spawn",
-    async (_, sessionId: string, cols: number, rows: number, cwd?: string) => {
+    async (_, sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) => {
       if (ptySessions.has(sessionId)) return;
 
       const env = { ...process.env };
       delete env.ELECTRON_RUN_AS_NODE;
 
-      const p = pty.spawn("claude", ["--dangerously-skip-permissions"], {
+      const command = config.command === "default-shell"
+        ? (process.env.SHELL ?? "/bin/bash")
+        : config.command;
+
+      const p = pty.spawn(command, config.args, {
         name: "xterm-256color",
         cols,
         rows,
-        cwd: cwd ?? env.HOME ?? process.cwd(),
+        cwd: config.cwd ?? env.HOME ?? process.cwd(),
         env,
       });
 

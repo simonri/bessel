@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Settings, Timer, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Bell, Plus, Settings, Timer, TrendingDown, TrendingUp, X } from "lucide-react";
 
 declare global {
   interface Window {
@@ -24,7 +24,7 @@ declare global {
         push: (path: string) => Promise<void>;
       };
       terminal: {
-        spawn: (sessionId: string, cols: number, rows: number, cwd?: string) => Promise<void>;
+        spawn: (sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) => Promise<void>;
         sendInput: (sessionId: string, data: string) => void;
         resize: (sessionId: string, cols: number, rows: number) => void;
         kill: (sessionId: string) => void;
@@ -46,6 +46,7 @@ import { client } from "@/lib/client";
 import { useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
 import { Counters } from "@/routes/_app/counters";
+import { useWindowManager } from "@/components/canvas/window-manager";
 
 // Map trading pair symbols to CoinGecko IDs and quote currencies
 const QUOTE_SUFFIXES: [string, string][] = [
@@ -268,6 +269,35 @@ function NotificationBell() {
   );
 }
 
+function WorkspaceSwitcher() {
+  const { workspaces, activeWorkspaceId, addWorkspace, switchWorkspace } = useWindowManager();
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {workspaces.map((ws, i) => (
+        <button
+          key={ws.id}
+          onClick={() => switchWorkspace(ws.id)}
+          className={`flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-xs font-medium transition-colors ${
+            ws.id === activeWorkspaceId
+              ? "bg-white/15 text-white/90"
+              : "text-white/35 hover:bg-white/[0.08] hover:text-white/70"
+          }`}
+        >
+          {i + 1}
+        </button>
+      ))}
+      <button
+        onClick={addWorkspace}
+        title="New workspace"
+        className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-colors hover:bg-white/[0.08] hover:text-white/60"
+      >
+        <Plus className="size-3" />
+      </button>
+    </div>
+  );
+}
+
 export function CanvasTopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { settings } = useSettings();
@@ -283,6 +313,10 @@ export function CanvasTopBar() {
         {pairs.map((pair) => (
           <CryptoPairTicker key={pair} pair={pair} />
         ))}
+      </div>
+
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <WorkspaceSwitcher />
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
