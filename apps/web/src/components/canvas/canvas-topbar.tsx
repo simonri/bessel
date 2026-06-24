@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Plus, Settings, Timer, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Bell, FolderOpen, Pencil, Plus, Settings, Timer, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
 
 declare global {
   interface Window {
@@ -43,7 +43,7 @@ import {
 } from "@metron/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
 import { client } from "@/lib/client";
-import { useSettings } from "@/hooks/use-settings";
+import { type ClaudeProject, useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
 import { Counters } from "@/components/counters";
 import { useWindowManager } from "@/components/canvas/window-manager";
@@ -138,6 +138,211 @@ function CryptoPairTicker({ pair }: { pair: string }) {
         </span>
       )}
     </div>
+  );
+}
+
+function ProjectsDropdown() {
+  const { settings, update } = useSettings();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPath, setEditPath] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addPath, setAddPath] = useState("");
+
+  const reset = () => {
+    setEditingId(null);
+    setShowAdd(false);
+    setAddName("");
+    setAddPath("");
+  };
+
+  const startEdit = (p: ClaudeProject) => {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditPath(p.path);
+    setShowAdd(false);
+  };
+
+  const saveEdit = () => {
+    if (!editName.trim() || !editPath.trim()) return;
+    update({
+      claudeProjects: settings.claudeProjects.map((p) =>
+        p.id === editingId ? { ...p, name: editName.trim(), path: editPath.trim() } : p,
+      ),
+    });
+    setEditingId(null);
+  };
+
+  const deleteProject = (id: string) => {
+    update({ claudeProjects: settings.claudeProjects.filter((p) => p.id !== id) });
+    if (editingId === id) setEditingId(null);
+  };
+
+  const saveAdd = () => {
+    if (!addName.trim() || !addPath.trim()) return;
+    update({
+      claudeProjects: [
+        ...settings.claudeProjects,
+        { id: crypto.randomUUID(), name: addName.trim(), path: addPath.trim() },
+      ],
+    });
+    setAddName("");
+    setAddPath("");
+    setShowAdd(false);
+  };
+
+  const browse = async (onSelect: (path: string, name: string) => void, currentName: string) => {
+    const selected = await window.electron?.selectFolder();
+    if (!selected) return;
+    const folderName = selected.split("/").pop() ?? selected;
+    onSelect(selected, currentName || folderName);
+  };
+
+  return (
+    <Popover onOpenChange={(open) => !open && reset()}>
+      <PopoverTrigger asChild>
+        <button
+          title="Projects"
+          className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
+        >
+          <FolderOpen className="size-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-72 overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
+      >
+        <div className="border-b border-white/10 px-4 py-2.5">
+          <span className="text-sm font-medium text-white/80">Projects</span>
+        </div>
+
+        <div className="max-h-72 overflow-y-auto">
+          {settings.claudeProjects.length === 0 && (
+            <div className="py-6 text-center text-xs text-white/30">No projects yet</div>
+          )}
+          {settings.claudeProjects.map((p) => (
+            <div key={p.id} className="border-b border-white/[0.06] last:border-0">
+              {editingId === p.id ? (
+                <div className="space-y-2 p-3">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Name"
+                    autoFocus
+                    className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                  />
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={editPath}
+                      onChange={(e) => setEditPath(e.target.value)}
+                      placeholder="Path"
+                      className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                    />
+                    <button
+                      onClick={() => browse((path, name) => { setEditPath(path); if (!editName) setEditName(name); }, editName)}
+                      className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white/80"
+                    >
+                      Browse
+                    </button>
+                  </div>
+                  <div className="flex justify-end gap-1.5">
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="rounded px-2.5 py-1 text-xs text-white/40 transition-colors hover:text-white/70"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveEdit}
+                      disabled={!editName.trim() || !editPath.trim()}
+                      className="rounded bg-orange-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-orange-400 disabled:opacity-40"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-white/80">{p.name}</p>
+                    <p className="truncate text-[11px] text-white/35">{p.path}</p>
+                  </div>
+                  <button
+                    onClick={() => startEdit(p)}
+                    className="shrink-0 text-white/25 transition-colors hover:text-white/70"
+                  >
+                    <Pencil className="size-3" />
+                  </button>
+                  <button
+                    onClick={() => deleteProject(p.id)}
+                    className="shrink-0 text-white/25 transition-colors hover:text-red-400"
+                  >
+                    <Trash2 className="size-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-white/10">
+          {showAdd ? (
+            <div className="space-y-2 p-3">
+              <input
+                type="text"
+                value={addName}
+                onChange={(e) => setAddName(e.target.value)}
+                placeholder="Name"
+                autoFocus
+                className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+              />
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={addPath}
+                  onChange={(e) => setAddPath(e.target.value)}
+                  placeholder="Path"
+                  className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                />
+                <button
+                  onClick={() => browse((path, name) => { setAddPath(path); if (!addName) setAddName(name); }, addName)}
+                  className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white/80"
+                >
+                  Browse
+                </button>
+              </div>
+              <div className="flex justify-end gap-1.5">
+                <button
+                  onClick={() => { setShowAdd(false); setAddName(""); setAddPath(""); }}
+                  className="rounded px-2.5 py-1 text-xs text-white/40 transition-colors hover:text-white/70"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveAdd}
+                  disabled={!addName.trim() || !addPath.trim()}
+                  className="rounded bg-orange-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-orange-400 disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setShowAdd(true); setEditingId(null); }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-orange-400 transition-colors hover:bg-white/[0.04] hover:text-orange-300"
+            >
+              <Plus className="size-3.5" />
+              Add project
+            </button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -354,6 +559,7 @@ export function CanvasTopBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
+        {window.electron && <ProjectsDropdown />}
         <TimeSinceDropdown />
         <NotificationBell />
         <button
