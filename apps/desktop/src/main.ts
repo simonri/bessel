@@ -106,6 +106,24 @@ app.whenReady().then(() => {
 
   ipcMain.handle("app:version", () => app.getVersion());
 
+  ipcMain.handle("app:check-update", () => {
+    if (!app.isPackaged) return Promise.resolve({ status: "dev" });
+    return new Promise((resolve) => {
+      const cleanup = () => {
+        autoUpdater.removeListener("update-available", onAvailable);
+        autoUpdater.removeListener("update-not-available", onNotAvailable);
+        autoUpdater.removeListener("error", onError);
+      };
+      const onAvailable = (info: { version: string }) => { cleanup(); resolve({ status: "available", version: info.version }); };
+      const onNotAvailable = () => { cleanup(); resolve({ status: "up-to-date" }); };
+      const onError = (err: Error) => { cleanup(); resolve({ status: "error", message: err.message }); };
+      autoUpdater.once("update-available", onAvailable);
+      autoUpdater.once("update-not-available", onNotAvailable);
+      autoUpdater.once("error", onError);
+      autoUpdater.checkForUpdates().catch(onError);
+    });
+  });
+
   ipcMain.handle("dialog:select-folder", async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     const result = await dialog.showOpenDialog(win ?? BrowserWindow.getFocusedWindow()!, {

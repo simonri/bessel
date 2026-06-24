@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("electron", {
   close: () => ipcRenderer.send("close-window"),
   getVersion: () => ipcRenderer.invoke("app:version"),
+  checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
   selectFolder: () => ipcRenderer.invoke("dialog:select-folder"),
   git: {
     status: (path: string) => ipcRenderer.invoke("git:status", path),

@@ -8,6 +8,7 @@ declare global {
     electron?: {
       close: () => void;
       getVersion: () => Promise<string>;
+      checkForUpdate: () => Promise<{ status: "dev" | "available" | "up-to-date" | "error"; version?: string; message?: string }>;
       selectFolder: () => Promise<string | null>;
       git: {
         status: (path: string) => Promise<{
