@@ -42,6 +42,7 @@ export const CanvasWindow = memo(function CanvasWindow({
   return (
     <div
       ref={setRef}
+      data-is-window="true"
       onPointerDown={onFocus}
       className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
         isDragging

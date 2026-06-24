@@ -27,6 +27,15 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
   const [isDragOver, setIsDragOver] = useState(false);
   const [isTaskDragging, setIsTaskDragging] = useState(false);
   const dragCounterRef = useRef(0);
+
+  const focusTerminal = useCallback(() => {
+    // Defer past dnd-kit / HTML5 drag cleanup which resets browser focus
+    requestAnimationFrame(() => {
+      const textarea = containerRef.current?.querySelector<HTMLTextAreaElement>(".xterm-helper-textarea");
+      textarea?.focus({ preventScroll: true });
+    });
+  }, []);
+
   const setWindowTitle = useWindowTitle();
   const setWindowTitleRef = useRef(setWindowTitle);
   useEffect(() => { setWindowTitleRef.current = setWindowTitle; });
@@ -42,6 +51,16 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
       window.removeEventListener("metron:task-drag-end", onEnd);
     };
   }, [taskDropZone]);
+
+  useEffect(() => {
+    if (!taskDropZone) return;
+    const onDrop = (e: Event) => {
+      if ((e as CustomEvent<{ sessionId: string }>).detail.sessionId !== sessionId) return;
+      focusTerminal();
+    };
+    window.addEventListener("metron:claude-drop", onDrop);
+    return () => window.removeEventListener("metron:claude-drop", onDrop);
+  }, [taskDropZone, sessionId]);
 
   const closeMenu = useCallback(() => setContextMenu(null), []);
 
@@ -203,7 +222,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
           const text = e.dataTransfer.getData("metron/task-prompt");
           if (text) {
             window.electron?.terminal.sendInput(sessionId, text);
-            terminalRef.current?.focus();
+            focusTerminal();
           }
         } : undefined}
       >

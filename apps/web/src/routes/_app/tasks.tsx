@@ -907,6 +907,7 @@ function Tasks() {
         if (zone && task) {
           const sid = zone.getAttribute("data-claude-session")!;
           window.electron?.terminal.sendInput(sid, buildTaskPrompt(task));
+          window.dispatchEvent(new CustomEvent("metron:claude-drop", { detail: { sessionId: sid } }));
           setActiveTask(null);
           setLocalOrder(null);
           return;

@@ -94,6 +94,11 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
           display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
           gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
         }}
+        onPointerDown={(e) => {
+          if (!(e.target as HTMLElement).closest("[data-is-window]")) {
+            setFocusedWindowId(null);
+          }
+        }}
       >
         {Array.from({ length: totalSlots }, (_, i) => {
           const win = wsWindows.find((w) => w.slot === i);
