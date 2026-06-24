@@ -5,7 +5,17 @@ import { Bell, Settings, Timer, TrendingDown, TrendingUp, X } from "lucide-react
 
 declare global {
   interface Window {
-    electron?: { close: () => void };
+    electron?: {
+      close: () => void;
+      terminal: {
+        spawn: (sessionId: string, cols: number, rows: number) => Promise<void>;
+        sendInput: (sessionId: string, data: string) => void;
+        resize: (sessionId: string, cols: number, rows: number) => void;
+        kill: (sessionId: string) => void;
+        onData: (sessionId: string, callback: (data: string) => void) => () => void;
+        onExit: (sessionId: string, callback: (code: number) => void) => () => void;
+      };
+    };
   }
 }
 import {

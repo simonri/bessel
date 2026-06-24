@@ -10,6 +10,9 @@
     "build": "tsc && pnpm --filter=@metron/web build && electron-builder",
     "build:dir": "tsc && pnpm --filter=@metron/web build && electron-builder --dir"
   },
+  "dependencies": {
+    "node-pty": "^1.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "concurrently": "^9.1.2",

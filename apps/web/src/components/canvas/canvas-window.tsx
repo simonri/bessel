@@ -59,7 +59,7 @@ export function CanvasWindow({ entry }: { entry: WindowEntry }) {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className={`flex-1 ${config.noPadding ? "overflow-hidden" : "overflow-y-auto p-4"}`}>
         <Suspense fallback={<WindowSpinner />}>
           <Component />
         </Suspense>

@@ -9,14 +9,18 @@ import {
   MapPin,
   Activity,
   ChefHat,
+  Terminal,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
+import { isDesktop } from "@/lib/environment";
 
 export interface ModuleConfig {
   title: string;
   icon: LucideIcon;
   component: React.LazyExoticComponent<React.ComponentType>;
   colSpan: 1;
+  multiInstance?: boolean;
+  noPadding?: boolean;
 }
 
 export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
@@ -84,7 +88,19 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ),
     colSpan: 1,
   },
+  claudeCode: {
+    title: "Claude",
+    icon: Terminal,
+    component: lazy(() =>
+      import("@/routes/_app/-claude-code").then((m) => ({ default: m.ClaudeCode })),
+    ),
+    colSpan: 1,
+    multiInstance: true,
+    noPadding: true,
+  },
 };
+
+const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode"] : [];
 
 export const MODULE_ORDER: ModuleKey[] = [
   "dashboard",
@@ -95,4 +111,5 @@ export const MODULE_ORDER: ModuleKey[] = [
   "travel",
   "activity",
   "recipes",
+  ...desktopModules,
 ];

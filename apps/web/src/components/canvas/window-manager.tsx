@@ -8,13 +8,15 @@ export type ModuleKey =
   | "tasks"
   | "travel"
   | "activity"
-  | "recipes";
+  | "recipes"
+  | "claudeCode";
 
 export type WindowEntry = { id: string; module: ModuleKey };
 
 interface WindowManagerContextValue {
   windows: WindowEntry[];
   toggleWindow: (module: ModuleKey) => void;
+  openWindow: (module: ModuleKey) => void;
   closeWindow: (id: string) => void;
   reorderWindows: (activeId: string, overId: string) => void;
   isOpen: (module: ModuleKey) => boolean;
@@ -22,8 +24,11 @@ interface WindowManagerContextValue {
 
 const STORAGE_KEY = "metron:windows";
 
+const isDesktop = typeof window !== "undefined" && !!window.electron;
+
 const ALL_MODULES = new Set<string>([
   "dashboard", "transactions", "accounts", "investments", "tasks", "travel", "activity", "recipes",
+  ...(isDesktop ? ["claudeCode"] : []),
 ]);
 
 function newId() {
@@ -66,6 +71,10 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const openWindow = useCallback((module: ModuleKey) => {
+    setWindows((prev) => [...prev, { id: newId(), module }]);
+  }, []);
+
   const closeWindow = useCallback((id: string) => {
     setWindows((prev) => prev.filter((w) => w.id !== id));
   }, []);
@@ -82,7 +91,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <WindowManagerContext.Provider value={{ windows, toggleWindow, closeWindow, reorderWindows, isOpen }}>
+    <WindowManagerContext.Provider value={{ windows, toggleWindow, openWindow, closeWindow, reorderWindows, isOpen }}>
       {children}
     </WindowManagerContext.Provider>
   );
