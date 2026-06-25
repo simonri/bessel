@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { client } from "@/lib/client";
 
 function AuthInterceptor() {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -13,7 +13,7 @@ function AuthInterceptor() {
         const token = await getAccessTokenSilently();
         request.headers.set("Authorization", `Bearer ${token}`);
       } catch {
-        // Token fetch failed; the server will return 401
+        logout({ logoutParams: { returnTo: window.location.origin } });
       }
       return request;
     });
@@ -21,7 +21,7 @@ function AuthInterceptor() {
     return () => {
       client.interceptors.request.eject(id);
     };
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently, logout]);
 
   return null;
 }
@@ -36,9 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <Auth0Provider
       domain={domain}
       clientId={clientId}
+      cacheLocation="localstorage"
+      useRefreshTokens={true}
       authorizationParams={{
         redirect_uri: redirectUri,
         audience,
+        scope: "openid profile email offline_access",
       }}
     >
       <AuthInterceptor />

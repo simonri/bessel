@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect } from "react";
 
@@ -8,12 +8,13 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { loginWithRedirect, isAuthenticated, isLoading, error } = useAuth0();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      window.location.replace("/");
+      navigate({ to: "/" });
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !error) {
