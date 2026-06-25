@@ -19,6 +19,7 @@ on:
       - "apps/web/**"
       - "packages/**"
       - "docker-compose.prod.yml"
+      - "run.sh"
       - ".github/workflows/deploy.yml"
       - "pyproject.toml"
       - "uv.lock"
@@ -232,13 +233,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy compose to VPS
+      - name: Copy deploy files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.prod.yml,run.sh"
           target: "/home/metron/"
 
       - name: Deploy
@@ -258,6 +259,9 @@ jobs:
           script: |
             set -e
             cd /home/metron
+            chmod +x run.sh
+
+            DC="/home/metron/run.sh docker compose -f docker-compose.prod.yml"
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
@@ -269,18 +273,18 @@ jobs:
             echo "Deploying:$SERVICES"
 
             for svc in $SERVICES; do
-              docker compose -f docker-compose.prod.yml pull $svc || true
+              $DC pull $svc || true
             done
 
             # Run migrations if API changed
             if [ "$DEPLOY_API" = "true" ]; then
-              docker compose -f docker-compose.prod.yml run --rm api python db.py upgrade
+              $DC run --rm api python db.py upgrade
             fi
 
-            docker compose -f docker-compose.prod.yml up -d --no-deps $SERVICES
+            $DC up -d --no-deps $SERVICES
 
             sleep 30
-            docker compose -f docker-compose.prod.yml ps
+            $DC ps
 
             docker image prune -af --filter "until=168h"
 
@@ -293,11 +297,11 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /home/metron
-            unhealthy=$(docker compose -f docker-compose.prod.yml ps --format json | jq -r 'select(.Health != "healthy" and .Health != "") | .Service')
+            DC="/home/metron/run.sh docker compose -f docker-compose.prod.yml"
+            unhealthy=$($DC ps --format json | jq -r 'select(.Health != "healthy" and .Health != "") | .Service')
             if [ -n "$unhealthy" ]; then
               echo "Unhealthy: $unhealthy"
-              docker compose -f docker-compose.prod.yml logs --tail=50 $unhealthy
+              $DC logs --tail=50 $unhealthy
               exit 1
             fi
             echo "All services healthy"
