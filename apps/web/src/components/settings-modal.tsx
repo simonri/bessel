@@ -96,7 +96,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 const WALLPAPER_OPTIONS: { key: WallpaperKey; label: string; src: string; isVideo: boolean }[] = [
   { key: "image", label: "Static", src: "/image.png", isVideo: false },
-  { key: "video", label: "Forest Night", src: "/wallpaper-forest.mp4", isVideo: true },
+  { key: "video", label: "Forest Night", src: "/wallpaper-forest-loop.mp4", isVideo: true },
 ];
 
 function WallpaperPage() {

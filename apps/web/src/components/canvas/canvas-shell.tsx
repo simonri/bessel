@@ -127,73 +127,21 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
   );
 }
 
-// Plays the video forward, then reverses frame-by-frame when it ends (ping-pong).
+// Forward+reverse baked into one clip — browser loops it natively.
 function VideoWallpaper() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const stopRaf = () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = 0;
-      }
-    };
-
-    const playReverse = () => {
-      let lastTs: number | null = null;
-      const step = (ts: number) => {
-        const v = videoRef.current;
-        if (!v) return;
-        if (lastTs !== null) {
-          v.currentTime = Math.max(0, v.currentTime - (ts - lastTs) / 1000);
-        }
-        lastTs = ts;
-        if (v.currentTime > 0) {
-          rafRef.current = requestAnimationFrame(step);
-        } else {
-          v.play();
-        }
-      };
-      rafRef.current = requestAnimationFrame(step);
-    };
-
-    video.play().catch(() => {});
-
-    const onEnded = () => {
-      stopRaf();
-      playReverse();
-    };
-
-    const onVisibilityChange = () => {
-      if (document.hidden) {
-        stopRaf();
-        video.pause();
-      } else if (!rafRef.current) {
-        video.play();
-      }
-    };
-
-    video.addEventListener("ended", onEnded);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      video.removeEventListener("ended", onEnded);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      stopRaf();
-    };
+    videoRef.current?.play().catch(() => {});
   }, []);
 
   return (
     <video
       ref={videoRef}
-      src="/wallpaper-forest.mp4"
-      autoPlay
+      src="/wallpaper-forest-loop.mp4"
       muted
       playsInline
+      loop
       className="absolute inset-0 h-full w-full object-cover"
     />
   );
