@@ -39,6 +39,37 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
-        run: pnpm --filter=@metron/desktop exec electron-builder --publish always
+        run: pnpm --filter=@metron/desktop exec electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-mac:
+    name: Build Mac DMG (arm64)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile
+        run: pnpm --filter=@metron/desktop run compile
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
+          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
+          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
+          VITE_FRONTEND_URL: app://localhost
+
+      - name: Build & publish
+        run: pnpm --filter=@metron/desktop exec electron-builder --mac --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false

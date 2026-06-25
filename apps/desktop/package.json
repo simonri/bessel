@@ -57,8 +57,9 @@
       "category": "Utility"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "assets/icon.icns"
+      "target": [{ "target": "dmg", "arch": ["arm64"] }],
+      "icon": "assets/icon.png",
+      "identity": null
     },
     "win": {
       "target": "nsis",

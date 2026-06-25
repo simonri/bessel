@@ -474,12 +474,11 @@ function CommitItem({ commit }: { commit: GitCommit }) {
   return (
     <div className="cursor-default px-3 py-1.5 hover:bg-white/[0.04]">
       <div className="flex items-baseline gap-2">
-        <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/25">{commit.shortHash}</span>
         <span className="flex-1 truncate text-xs leading-tight text-white/70">{commit.subject}</span>
         <span className="shrink-0 whitespace-nowrap text-[10px] text-white/20">{shortenRelDate(commit.date)}</span>
       </div>
       {refs.length > 0 && (
-        <div className="mt-0.5 flex flex-wrap gap-1 pl-[3.25rem]">
+        <div className="mt-0.5 flex flex-wrap gap-1">
           {refs.map((ref) => {
             const isHead = ref.startsWith("HEAD");
             const isTag = ref.startsWith("tag:");
@@ -774,27 +773,30 @@ export function GitStatus() {
                     ))}
                   </>
                 )}
-
-                <SectionHeader
-                  label="History"
-                  count={0}
-                  open={historyOpen}
-                  onToggle={() => setHistoryOpen((o) => !o)}
-                />
-                {historyOpen && (
-                  <>
-                    {logQuery.isLoading ? (
-                      <div className="flex h-12 items-center justify-center">
-                        <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />
-                      </div>
-                    ) : (
-                      logQuery.data?.map((commit) => (
-                        <CommitItem key={commit.hash} commit={commit} />
-                      ))
-                    )}
-                  </>
-                )}
               </>
+            )}
+          </div>
+
+          {/* History — pinned to bottom */}
+          <div className="shrink-0 border-t border-white/[0.06]">
+            <SectionHeader
+              label="History"
+              count={0}
+              open={historyOpen}
+              onToggle={() => setHistoryOpen((o) => !o)}
+            />
+            {historyOpen && (
+              <div className="max-h-48 overflow-y-auto">
+                {logQuery.isLoading ? (
+                  <div className="flex h-12 items-center justify-center">
+                    <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />
+                  </div>
+                ) : (
+                  logQuery.data?.map((commit) => (
+                    <CommitItem key={commit.hash} commit={commit} />
+                  ))
+                )}
+              </div>
             )}
           </div>
         </div>

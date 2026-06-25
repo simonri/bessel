@@ -83,9 +83,9 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
     if (!el || !window.electron?.terminal) return;
 
     const terminal = new Terminal({
-      allowTransparency: true,
+      allowTransparency: false,
       theme: {
-        background: "transparent",
+        background: "#06060e",
         foreground: "#e2e2e2",
         cursor: "#f97316",
         cursorAccent: "#0a0a0a",
@@ -94,7 +94,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
         red: "#ff5555",
         green: "#50fa7b",
         yellow: "#f1fa8c",
-        blue: "#8be9fd",
+        blue: "#7aa2f7",
         magenta: "#ff79c6",
         cyan: "#8be9fd",
         white: "#f8f8f2",
@@ -242,6 +242,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
         } : undefined}
       >
         <div ref={containerRef} className="h-full w-full" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
         {showDropOverlay && (
           <div
             className={`absolute inset-0 pointer-events-none flex items-center justify-center rounded border-2 transition-colors ${
