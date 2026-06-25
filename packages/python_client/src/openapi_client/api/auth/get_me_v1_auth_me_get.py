@@ -1,50 +1,29 @@
 from http import HTTPStatus
 from typing import Any
-from urllib.parse import quote
-from uuid import UUID
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.http_validation_error import HTTPValidationError
-from ...models.project_schema import ProjectSchema
-from ...models.project_update import ProjectUpdate
+from ...models.me_response import MeResponse
 from ...types import Response
 
 
-def _get_kwargs(
-  project_id: UUID,
-  *,
-  body: ProjectUpdate,
-) -> dict[str, Any]:
-  headers: dict[str, Any] = {}
+def _get_kwargs() -> dict[str, Any]:
 
   _kwargs: dict[str, Any] = {
-    "method": "patch",
-    "url": "/v1/projects/{project_id}".format(
-      project_id=quote(str(project_id), safe=""),
-    ),
+    "method": "get",
+    "url": "/v1/auth/me",
   }
 
-  _kwargs["json"] = body.to_dict()
-
-  headers["Content-Type"] = "application/json"
-
-  _kwargs["headers"] = headers
   return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | ProjectSchema | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> MeResponse | None:
   if response.status_code == 200:
-    response_200 = ProjectSchema.from_dict(response.json())
+    response_200 = MeResponse.from_dict(response.json())
 
     return response_200
-
-  if response.status_code == 422:
-    response_422 = HTTPValidationError.from_dict(response.json())
-
-    return response_422
 
   if client.raise_on_unexpected_status:
     raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -52,7 +31,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
     return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | ProjectSchema]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[MeResponse]:
   return Response(
     status_code=HTTPStatus(response.status_code),
     content=response.content,
@@ -62,29 +41,20 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 
 def sync_detailed(
-  project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
-) -> Response[HTTPValidationError | ProjectSchema]:
-  """Update Project
-
-  Args:
-      project_id (UUID):
-      body (ProjectUpdate):
+) -> Response[MeResponse]:
+  """Get Current User
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[HTTPValidationError | ProjectSchema]
+      Response[MeResponse]
   """
 
-  kwargs = _get_kwargs(
-    project_id=project_id,
-    body=body,
-  )
+  kwargs = _get_kwargs()
 
   response = client.get_httpx_client().request(
     **kwargs,
@@ -94,56 +64,39 @@ def sync_detailed(
 
 
 def sync(
-  project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
-) -> HTTPValidationError | ProjectSchema | None:
-  """Update Project
-
-  Args:
-      project_id (UUID):
-      body (ProjectUpdate):
+) -> MeResponse | None:
+  """Get Current User
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      HTTPValidationError | ProjectSchema
+      MeResponse
   """
 
   return sync_detailed(
-    project_id=project_id,
     client=client,
-    body=body,
   ).parsed
 
 
 async def asyncio_detailed(
-  project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
-) -> Response[HTTPValidationError | ProjectSchema]:
-  """Update Project
-
-  Args:
-      project_id (UUID):
-      body (ProjectUpdate):
+) -> Response[MeResponse]:
+  """Get Current User
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[HTTPValidationError | ProjectSchema]
+      Response[MeResponse]
   """
 
-  kwargs = _get_kwargs(
-    project_id=project_id,
-    body=body,
-  )
+  kwargs = _get_kwargs()
 
   response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -151,29 +104,21 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-  project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
-) -> HTTPValidationError | ProjectSchema | None:
-  """Update Project
-
-  Args:
-      project_id (UUID):
-      body (ProjectUpdate):
+) -> MeResponse | None:
+  """Get Current User
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      HTTPValidationError | ProjectSchema
+      MeResponse
   """
 
   return (
     await asyncio_detailed(
-      project_id=project_id,
       client=client,
-      body=body,
     )
   ).parsed

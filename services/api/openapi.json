@@ -30,6 +30,32 @@
         }
       }
     },
+    "/v1/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get Current User",
+        "operationId": "get_me_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/activity/batch": {
       "post": {
         "tags": [
@@ -37,15 +63,33 @@
         ],
         "summary": "Ingest Activity Events",
         "operationId": "ingest_activity_batch_v1_activity_batch_post",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ActivityBatchRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -89,7 +133,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/activity/summary": {
@@ -99,6 +148,11 @@
         ],
         "summary": "Get Activity Summary",
         "operationId": "get_activity_summary_v1_activity_summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "start_ts",
@@ -165,6 +219,11 @@
         ],
         "summary": "Get Daily Activity Totals",
         "operationId": "get_daily_activity_v1_activity_daily_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "start_ts",
@@ -261,6 +320,11 @@
         ],
         "summary": "Get Intraday Activity",
         "operationId": "get_intraday_activity_v1_activity_intraday_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "start_ts",
@@ -342,6 +406,11 @@
         "summary": "List Bank Accounts",
         "description": "List all bank accounts.",
         "operationId": "list_bank_accounts_v1_bank_accounts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "page",
@@ -424,6 +493,11 @@
         "summary": "Create Bank Account",
         "description": "Create a new bank account.",
         "operationId": "create_bank_account_v1_bank_accounts_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -466,6 +540,11 @@
         "summary": "Get Bank Account",
         "description": "Get a bank account by ID.",
         "operationId": "get_bank_account_v1_bank_accounts__bank_account_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "bank_account_id",
@@ -508,6 +587,11 @@
         "summary": "Update Bank Account",
         "description": "Update a bank account.",
         "operationId": "update_bank_account_v1_bank_accounts__bank_account_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "bank_account_id",
@@ -560,6 +644,11 @@
         "summary": "Delete Bank Account",
         "description": "Delete a bank account and all its transactions.",
         "operationId": "delete_bank_account_v1_bank_accounts__bank_account_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "bank_account_id",
@@ -597,6 +686,11 @@
         "summary": "List Categories",
         "description": "List all categories.",
         "operationId": "list_categories_v1_categories_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "page",
@@ -671,7 +765,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -710,7 +809,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/counters/{counter_id}": {
@@ -720,6 +824,11 @@
         ],
         "summary": "Update Counter",
         "operationId": "update_counter_v1_counters__counter_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "counter_id",
@@ -771,6 +880,11 @@
         ],
         "summary": "Delete Counter",
         "operationId": "delete_counter_v1_counters__counter_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "counter_id",
@@ -807,6 +921,11 @@
         ],
         "summary": "Record Reset",
         "operationId": "create_reset_v1_counters__counter_id__resets_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "counter_id",
@@ -848,6 +967,11 @@
         ],
         "summary": "List Resets",
         "operationId": "list_resets_v1_counters__counter_id__resets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "counter_id",
@@ -895,6 +1019,11 @@
         ],
         "summary": "Undo Reset",
         "operationId": "undo_reset_v1_counters__counter_id__resets__reset_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "counter_id",
@@ -941,6 +1070,11 @@
         ],
         "summary": "List Securities",
         "operationId": "list_securities_v1_investments_securities_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "page",
@@ -998,6 +1132,11 @@
         ],
         "summary": "Create Security",
         "operationId": "create_security_v1_investments_securities_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1039,6 +1178,11 @@
         ],
         "summary": "Update Security",
         "operationId": "update_security_v1_investments_securities__security_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "security_id",
@@ -1090,6 +1234,11 @@
         ],
         "summary": "Delete Security",
         "operationId": "delete_security_v1_investments_securities__security_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "security_id",
@@ -1126,6 +1275,11 @@
         ],
         "summary": "List Trades",
         "operationId": "list_trades_v1_investments_trades_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "security_id",
@@ -1217,6 +1371,11 @@
         ],
         "summary": "Create Trade",
         "operationId": "create_trade_v1_investments_trades_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1258,6 +1417,11 @@
         ],
         "summary": "Update Trade",
         "operationId": "update_trade_v1_investments_trades__trade_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trade_id",
@@ -1309,6 +1473,11 @@
         ],
         "summary": "Delete Trade",
         "operationId": "delete_trade_v1_investments_trades__trade_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "trade_id",
@@ -1345,6 +1514,11 @@
         ],
         "summary": "List Security Prices",
         "operationId": "list_security_prices_v1_investments_securities__security_id__prices_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "security_id",
@@ -1412,6 +1586,11 @@
         ],
         "summary": "Add Security Price",
         "operationId": "create_security_price_v1_investments_securities__security_id__prices_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "security_id",
@@ -1476,7 +1655,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/investments/crypto/price/{coin_id}": {
@@ -1486,6 +1670,11 @@
         ],
         "summary": "Get Crypto Price",
         "operationId": "get_crypto_price_v1_investments_crypto_price__coin_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "coin_id",
@@ -1549,7 +1738,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -1588,7 +1782,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/notifications/{notification_id}/read": {
@@ -1598,6 +1797,11 @@
         ],
         "summary": "Mark Notification Read",
         "operationId": "mark_notification_read_v1_notifications__notification_id__read_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "notification_id",
@@ -1654,7 +1858,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/places": {
@@ -1664,6 +1873,11 @@
         ],
         "summary": "List Places",
         "operationId": "list_places_v1_places_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "status",
@@ -1763,6 +1977,11 @@
         ],
         "summary": "Create Place",
         "operationId": "create_place_v1_places_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1804,6 +2023,11 @@
         ],
         "summary": "Search Google Places",
         "operationId": "search_google_places_v1_places_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
@@ -1848,6 +2072,11 @@
         ],
         "summary": "Update Place",
         "operationId": "update_place_v1_places__place_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "place_id",
@@ -1899,6 +2128,11 @@
         ],
         "summary": "Delete Place",
         "operationId": "delete_place_v1_places__place_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "place_id",
@@ -1950,7 +2184,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -1989,7 +2228,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/projects/{project_id}": {
@@ -1999,6 +2243,11 @@
         ],
         "summary": "Update Project",
         "operationId": "update_project_v1_projects__project_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -2050,6 +2299,11 @@
         ],
         "summary": "Delete Project",
         "operationId": "delete_project_v1_projects__project_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -2086,6 +2340,11 @@
         ],
         "summary": "List Recipes",
         "operationId": "list_recipes_v1_recipes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "search",
@@ -2185,6 +2444,11 @@
         ],
         "summary": "Create Recipe",
         "operationId": "create_recipe_v1_recipes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2226,6 +2490,11 @@
         ],
         "summary": "Get Recipe",
         "operationId": "get_recipe_v1_recipes__recipe_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "recipe_id",
@@ -2267,6 +2536,11 @@
         ],
         "summary": "Update Recipe",
         "operationId": "update_recipe_v1_recipes__recipe_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "recipe_id",
@@ -2318,6 +2592,11 @@
         ],
         "summary": "Delete Recipe",
         "operationId": "delete_recipe_v1_recipes__recipe_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "recipe_id",
@@ -2354,6 +2633,11 @@
         ],
         "summary": "List Tasks",
         "operationId": "list_tasks_v1_tasks_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "status",
@@ -2563,6 +2847,11 @@
         ],
         "summary": "Create Task",
         "operationId": "create_task_v1_tasks_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2604,6 +2893,11 @@
         ],
         "summary": "Update Task",
         "operationId": "update_task_v1_tasks__task_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "task_id",
@@ -2655,6 +2949,11 @@
         ],
         "summary": "Delete Task",
         "operationId": "delete_task_v1_tasks__task_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "task_id",
@@ -2691,6 +2990,11 @@
         ],
         "summary": "Complete Task",
         "operationId": "complete_task_v1_tasks__task_id__complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "task_id",
@@ -2734,6 +3038,11 @@
         ],
         "summary": "Reopen Task",
         "operationId": "reopen_task_v1_tasks__task_id__reopen_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "task_id",
@@ -2805,7 +3114,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/tasks/areas": {
@@ -2830,7 +3144,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/transactions": {
@@ -2841,6 +3160,11 @@
         "summary": "List Transactions",
         "description": "List transactions.",
         "operationId": "list_transactions_v1_transactions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "bank_account_id",
@@ -3071,6 +3395,11 @@
         "summary": "Delete Transactions",
         "description": "Delete transactions by IDs.",
         "operationId": "delete_transactions_v1_transactions_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3106,6 +3435,11 @@
         "summary": "Import Transactions",
         "description": "Import transactions from a bank export (CSV or XLSX).\n\nDuplicate transactions (by dedup hash) are automatically skipped.",
         "operationId": "import_transactions_v1_transactions_import_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "bank",
@@ -3173,6 +3507,11 @@
         "summary": "Update Transaction",
         "description": "Update a transaction.",
         "operationId": "update_transaction_v1_transactions__transaction_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "transaction_id",
@@ -3258,7 +3597,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/transactions/categorize-by-description": {
@@ -3300,7 +3644,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/transactions/spending-by-category": {
@@ -3311,6 +3660,11 @@
         "summary": "Monthly Spending by Category",
         "description": "Aggregate debit spending per category for a given month.",
         "operationId": "spending_by_category_v1_transactions_spending_by_category_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "year",
@@ -3367,6 +3721,11 @@
         "summary": "Monthly Income & Expenses",
         "description": "Return income and expenses aggregated per month.",
         "operationId": "monthly_flow_v1_transactions_monthly_flow_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "months",
@@ -4767,6 +5126,31 @@
           "authorization"
         ],
         "title": "KlarnaImportRequest"
+      },
+      "MeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "MeResponse"
       },
       "MonthlyFlow": {
         "properties": {
@@ -7413,6 +7797,12 @@
           "days"
         ],
         "title": "WeatherForecastResponse"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

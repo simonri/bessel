@@ -64,7 +64,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TradeUpdate,
 ) -> Response[HTTPValidationError | TradeSchema]:
   """Update Trade
@@ -96,7 +96,7 @@ def sync_detailed(
 def sync(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TradeUpdate,
 ) -> HTTPValidationError | TradeSchema | None:
   """Update Trade
@@ -123,7 +123,7 @@ def sync(
 async def asyncio_detailed(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TradeUpdate,
 ) -> Response[HTTPValidationError | TradeSchema]:
   """Update Trade
@@ -153,7 +153,7 @@ async def asyncio_detailed(
 async def asyncio(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TradeUpdate,
 ) -> HTTPValidationError | TradeSchema | None:
   """Update Trade

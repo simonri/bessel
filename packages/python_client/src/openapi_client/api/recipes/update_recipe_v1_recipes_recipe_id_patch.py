@@ -64,7 +64,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   recipe_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: RecipeUpdate,
 ) -> Response[HTTPValidationError | RecipeSchema]:
   """Update Recipe
@@ -96,7 +96,7 @@ def sync_detailed(
 def sync(
   recipe_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: RecipeUpdate,
 ) -> HTTPValidationError | RecipeSchema | None:
   """Update Recipe
@@ -123,7 +123,7 @@ def sync(
 async def asyncio_detailed(
   recipe_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: RecipeUpdate,
 ) -> Response[HTTPValidationError | RecipeSchema]:
   """Update Recipe
@@ -153,7 +153,7 @@ async def asyncio_detailed(
 async def asyncio(
   recipe_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: RecipeUpdate,
 ) -> HTTPValidationError | RecipeSchema | None:
   """Update Recipe

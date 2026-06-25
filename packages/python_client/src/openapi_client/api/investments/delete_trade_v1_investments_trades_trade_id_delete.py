@@ -53,7 +53,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Delete Trade
 
@@ -82,7 +82,7 @@ def sync_detailed(
 def sync(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Delete Trade
 
@@ -106,7 +106,7 @@ def sync(
 async def asyncio_detailed(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Delete Trade
 
@@ -133,7 +133,7 @@ async def asyncio_detailed(
 async def asyncio(
   trade_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Delete Trade
 

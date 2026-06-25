@@ -48,7 +48,7 @@ def _build_response(
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost]:
   """Mark All Notifications Read
 
@@ -71,7 +71,7 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost | None:
   """Mark All Notifications Read
 
@@ -90,7 +90,7 @@ def sync(
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost]:
   """Mark All Notifications Read
 
@@ -111,7 +111,7 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost | None:
   """Mark All Notifications Read
 

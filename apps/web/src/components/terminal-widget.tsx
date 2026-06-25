@@ -193,8 +193,8 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
   useEffect(() => {
     if (!contextMenu) return;
     const close = () => setContextMenu(null);
-    window.addEventListener("pointerdown", close, { capture: true });
-    return () => window.removeEventListener("pointerdown", close, { capture: true });
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
   }, [contextMenu]);
 
   const showDropOverlay = taskDropZone && (isDragOver || isTaskDragging);

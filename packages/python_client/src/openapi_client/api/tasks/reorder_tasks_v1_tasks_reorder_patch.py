@@ -59,7 +59,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: list[TaskReorderItem],
 ) -> Response[Any | HTTPValidationError]:
   """Reorder Tasks
@@ -88,7 +88,7 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: list[TaskReorderItem],
 ) -> Any | HTTPValidationError | None:
   """Reorder Tasks
@@ -112,7 +112,7 @@ def sync(
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: list[TaskReorderItem],
 ) -> Response[Any | HTTPValidationError]:
   """Reorder Tasks
@@ -139,7 +139,7 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: list[TaskReorderItem],
 ) -> Any | HTTPValidationError | None:
   """Reorder Tasks

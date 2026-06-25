@@ -64,7 +64,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: CounterUpdate,
 ) -> Response[CounterSchema | HTTPValidationError]:
   """Update Counter
@@ -96,7 +96,7 @@ def sync_detailed(
 def sync(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: CounterUpdate,
 ) -> CounterSchema | HTTPValidationError | None:
   """Update Counter
@@ -123,7 +123,7 @@ def sync(
 async def asyncio_detailed(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: CounterUpdate,
 ) -> Response[CounterSchema | HTTPValidationError]:
   """Update Counter
@@ -153,7 +153,7 @@ async def asyncio_detailed(
 async def asyncio(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: CounterUpdate,
 ) -> CounterSchema | HTTPValidationError | None:
   """Update Counter

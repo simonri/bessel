@@ -64,7 +64,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   bank_account_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: BankAccountUpdate,
 ) -> Response[BankAccountSchema | HTTPValidationError]:
   """Update Bank Account
@@ -98,7 +98,7 @@ def sync_detailed(
 def sync(
   bank_account_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: BankAccountUpdate,
 ) -> BankAccountSchema | HTTPValidationError | None:
   """Update Bank Account
@@ -127,7 +127,7 @@ def sync(
 async def asyncio_detailed(
   bank_account_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: BankAccountUpdate,
 ) -> Response[BankAccountSchema | HTTPValidationError]:
   """Update Bank Account
@@ -159,7 +159,7 @@ async def asyncio_detailed(
 async def asyncio(
   bank_account_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: BankAccountUpdate,
 ) -> BankAccountSchema | HTTPValidationError | None:
   """Update Bank Account

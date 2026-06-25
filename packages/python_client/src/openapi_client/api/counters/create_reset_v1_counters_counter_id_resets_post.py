@@ -55,7 +55,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[CounterResetSchema | HTTPValidationError]:
   """Record Reset
 
@@ -84,7 +84,7 @@ def sync_detailed(
 def sync(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> CounterResetSchema | HTTPValidationError | None:
   """Record Reset
 
@@ -108,7 +108,7 @@ def sync(
 async def asyncio_detailed(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[CounterResetSchema | HTTPValidationError]:
   """Record Reset
 
@@ -135,7 +135,7 @@ async def asyncio_detailed(
 async def asyncio(
   counter_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> CounterResetSchema | HTTPValidationError | None:
   """Record Reset
 

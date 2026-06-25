@@ -56,7 +56,7 @@ def sync_detailed(
   counter_id: UUID,
   reset_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Undo Reset
 
@@ -88,7 +88,7 @@ def sync(
   counter_id: UUID,
   reset_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Undo Reset
 
@@ -115,7 +115,7 @@ async def asyncio_detailed(
   counter_id: UUID,
   reset_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Undo Reset
 
@@ -145,7 +145,7 @@ async def asyncio(
   counter_id: UUID,
   reset_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Undo Reset
 

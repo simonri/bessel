@@ -866,6 +866,20 @@ export type KlarnaImportRequest = {
 };
 
 /**
+ * MeResponse
+ */
+export type MeResponse = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Email
+   */
+  email?: string | null;
+};
+
+/**
  * MonthlyFlow
  */
 export type MonthlyFlow = {
@@ -2392,8 +2406,31 @@ export type HealthzHealthzGetResponses = {
   200: unknown;
 };
 
+export type GetMeV1AuthMeGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/auth/me";
+};
+
+export type GetMeV1AuthMeGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MeResponse;
+};
+
+export type GetMeV1AuthMeGetResponse =
+  GetMeV1AuthMeGetResponses[keyof GetMeV1AuthMeGetResponses];
+
 export type IngestActivityBatchV1ActivityBatchPostData = {
   body: ActivityBatchRequest;
+  headers?: {
+    /**
+     * X-Api-Key
+     */
+    "x-api-key"?: string | null;
+  };
   path?: never;
   query?: never;
   url: "/v1/activity/batch";

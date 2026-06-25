@@ -53,7 +53,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Delete Task
 
@@ -82,7 +82,7 @@ def sync_detailed(
 def sync(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Delete Task
 
@@ -106,7 +106,7 @@ def sync(
 async def asyncio_detailed(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Delete Task
 
@@ -133,7 +133,7 @@ async def asyncio_detailed(
 async def asyncio(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Delete Task
 

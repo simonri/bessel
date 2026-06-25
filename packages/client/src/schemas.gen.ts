@@ -1147,6 +1147,30 @@ export const KlarnaImportRequestSchema = {
   title: "KlarnaImportRequest",
 } as const;
 
+export const MeResponseSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    email: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Email",
+    },
+  },
+  type: "object",
+  required: ["id"],
+  title: "MeResponse",
+} as const;
+
 export const MonthlyFlowSchema = {
   properties: {
     year: {

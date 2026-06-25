@@ -61,7 +61,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   year: int,
   month: int,
 ) -> Response[HTTPValidationError | MonthlySpendingResponse]:
@@ -95,7 +95,7 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   year: int,
   month: int,
 ) -> HTTPValidationError | MonthlySpendingResponse | None:
@@ -124,7 +124,7 @@ def sync(
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   year: int,
   month: int,
 ) -> Response[HTTPValidationError | MonthlySpendingResponse]:
@@ -156,7 +156,7 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   year: int,
   month: int,
 ) -> HTTPValidationError | MonthlySpendingResponse | None:

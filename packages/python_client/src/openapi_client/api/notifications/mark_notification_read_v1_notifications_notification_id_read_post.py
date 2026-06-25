@@ -55,7 +55,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   notification_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[HTTPValidationError | NotificationResponse]:
   """Mark Notification Read
 
@@ -84,7 +84,7 @@ def sync_detailed(
 def sync(
   notification_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> HTTPValidationError | NotificationResponse | None:
   """Mark Notification Read
 
@@ -108,7 +108,7 @@ def sync(
 async def asyncio_detailed(
   notification_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[HTTPValidationError | NotificationResponse]:
   """Mark Notification Read
 
@@ -135,7 +135,7 @@ async def asyncio_detailed(
 async def asyncio(
   notification_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> HTTPValidationError | NotificationResponse | None:
   """Mark Notification Read
 

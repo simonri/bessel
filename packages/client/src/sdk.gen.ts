@@ -138,6 +138,8 @@ import type {
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
+  GetMeV1AuthMeGetData,
+  GetMeV1AuthMeGetResponses,
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetErrors,
   GetRecipeV1RecipesRecipeIdGetResponses,
@@ -278,6 +280,22 @@ export const healthzHealthzGet = <ThrowOnError extends boolean = false>(
   >({ url: "/healthz", ...options });
 
 /**
+ * Get Current User
+ */
+export const getMeV1AuthMeGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMeV1AuthMeGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetMeV1AuthMeGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/auth/me",
+    ...options,
+  });
+
+/**
  * Ingest Activity Events
  */
 export const ingestActivityBatchV1ActivityBatchPost = <
@@ -310,7 +328,11 @@ export const listActivitySourcesV1ActivitySourcesGet = <
     ListActivitySourcesV1ActivitySourcesGetResponses,
     unknown,
     ThrowOnError
-  >({ url: "/v1/activity/sources", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/activity/sources",
+    ...options,
+  });
 
 /**
  * Get Activity Summary
@@ -324,7 +346,11 @@ export const getActivitySummaryV1ActivitySummaryGet = <
     GetActivitySummaryV1ActivitySummaryGetResponses,
     GetActivitySummaryV1ActivitySummaryGetErrors,
     ThrowOnError
-  >({ url: "/v1/activity/summary", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/activity/summary",
+    ...options,
+  });
 
 /**
  * Get Daily Activity Totals
@@ -338,7 +364,11 @@ export const getDailyActivityV1ActivityDailyGet = <
     GetDailyActivityV1ActivityDailyGetResponses,
     GetDailyActivityV1ActivityDailyGetErrors,
     ThrowOnError
-  >({ url: "/v1/activity/daily", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/activity/daily",
+    ...options,
+  });
 
 /**
  * Get Intraday Activity
@@ -352,7 +382,11 @@ export const getIntradayActivityV1ActivityIntradayGet = <
     GetIntradayActivityV1ActivityIntradayGetResponses,
     GetIntradayActivityV1ActivityIntradayGetErrors,
     ThrowOnError
-  >({ url: "/v1/activity/intraday", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/activity/intraday",
+    ...options,
+  });
 
 /**
  * List Bank Accounts
@@ -370,6 +404,7 @@ export const listBankAccountsV1BankAccountsGet = <
     ThrowOnError
   >({
     responseTransformer: listBankAccountsV1BankAccountsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts",
     ...options,
   });
@@ -390,6 +425,7 @@ export const createBankAccountV1BankAccountsPost = <
     ThrowOnError
   >({
     responseTransformer: createBankAccountV1BankAccountsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts",
     ...options,
     headers: {
@@ -415,7 +451,11 @@ export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
     DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
     DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/bank-accounts/{bank_account_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-accounts/{bank_account_id}",
+    ...options,
+  });
 
 /**
  * Get Bank Account
@@ -437,6 +477,7 @@ export const getBankAccountV1BankAccountsBankAccountIdGet = <
   >({
     responseTransformer:
       getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/{bank_account_id}",
     ...options,
   });
@@ -461,6 +502,7 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
   >({
     responseTransformer:
       updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/{bank_account_id}",
     ...options,
     headers: {
@@ -485,6 +527,7 @@ export const listCategoriesV1CategoriesGet = <
     ThrowOnError
   >({
     responseTransformer: listCategoriesV1CategoriesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/categories",
     ...options,
   });
@@ -501,6 +544,7 @@ export const listCountersV1CountersGet = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: listCountersV1CountersGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters",
     ...options,
   });
@@ -519,6 +563,7 @@ export const createCounterV1CountersPost = <
     ThrowOnError
   >({
     responseTransformer: createCounterV1CountersPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters",
     ...options,
     headers: {
@@ -539,7 +584,11 @@ export const deleteCounterV1CountersCounterIdDelete = <
     DeleteCounterV1CountersCounterIdDeleteResponses,
     DeleteCounterV1CountersCounterIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/counters/{counter_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/counters/{counter_id}",
+    ...options,
+  });
 
 /**
  * Update Counter
@@ -556,6 +605,7 @@ export const updateCounterV1CountersCounterIdPatch = <
   >({
     responseTransformer:
       updateCounterV1CountersCounterIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}",
     ...options,
     headers: {
@@ -579,6 +629,7 @@ export const listResetsV1CountersCounterIdResetsGet = <
   >({
     responseTransformer:
       listResetsV1CountersCounterIdResetsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets",
     ...options,
   });
@@ -598,6 +649,7 @@ export const createResetV1CountersCounterIdResetsPost = <
   >({
     responseTransformer:
       createResetV1CountersCounterIdResetsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets",
     ...options,
   });
@@ -617,7 +669,11 @@ export const undoResetV1CountersCounterIdResetsResetIdDelete = <
     UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
     UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/counters/{counter_id}/resets/{reset_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/counters/{counter_id}/resets/{reset_id}",
+    ...options,
+  });
 
 /**
  * List Securities
@@ -634,6 +690,7 @@ export const listSecuritiesV1InvestmentsSecuritiesGet = <
   >({
     responseTransformer:
       listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/securities",
     ...options,
   });
@@ -653,6 +710,7 @@ export const createSecurityV1InvestmentsSecuritiesPost = <
   >({
     responseTransformer:
       createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/securities",
     ...options,
     headers: {
@@ -676,7 +734,11 @@ export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete = <
     DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
     DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/investments/securities/{security_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/securities/{security_id}",
+    ...options,
+  });
 
 /**
  * Update Security
@@ -696,6 +758,7 @@ export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatch = <
   >({
     responseTransformer:
       updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/securities/{security_id}",
     ...options,
     headers: {
@@ -718,6 +781,7 @@ export const listTradesV1InvestmentsTradesGet = <
     ThrowOnError
   >({
     responseTransformer: listTradesV1InvestmentsTradesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/trades",
     ...options,
   });
@@ -736,6 +800,7 @@ export const createTradeV1InvestmentsTradesPost = <
     ThrowOnError
   >({
     responseTransformer: createTradeV1InvestmentsTradesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/trades",
     ...options,
     headers: {
@@ -759,7 +824,11 @@ export const deleteTradeV1InvestmentsTradesTradeIdDelete = <
     DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
     DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/investments/trades/{trade_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/trades/{trade_id}",
+    ...options,
+  });
 
 /**
  * Update Trade
@@ -779,6 +848,7 @@ export const updateTradeV1InvestmentsTradesTradeIdPatch = <
   >({
     responseTransformer:
       updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/trades/{trade_id}",
     ...options,
     headers: {
@@ -805,6 +875,7 @@ export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet = <
   >({
     responseTransformer:
       listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/securities/{security_id}/prices",
     ...options,
   });
@@ -827,6 +898,7 @@ export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost = <
   >({
     responseTransformer:
       createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/securities/{security_id}/prices",
     ...options,
     headers: {
@@ -847,7 +919,11 @@ export const getHoldingsV1InvestmentsHoldingsGet = <
     GetHoldingsV1InvestmentsHoldingsGetResponses,
     unknown,
     ThrowOnError
-  >({ url: "/v1/investments/holdings", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/holdings",
+    ...options,
+  });
 
 /**
  * Get Crypto Price
@@ -864,7 +940,11 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
     GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
     GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
     ThrowOnError
-  >({ url: "/v1/investments/crypto/price/{coin_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/crypto/price/{coin_id}",
+    ...options,
+  });
 
 /**
  * List Notifications
@@ -880,6 +960,7 @@ export const listNotificationsV1NotificationsGet = <
     ThrowOnError
   >({
     responseTransformer: listNotificationsV1NotificationsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/notifications",
     ...options,
   });
@@ -899,6 +980,7 @@ export const createNotificationV1NotificationsPost = <
   >({
     responseTransformer:
       createNotificationV1NotificationsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/notifications",
     ...options,
     headers: {
@@ -925,6 +1007,7 @@ export const markNotificationReadV1NotificationsNotificationIdReadPost = <
   >({
     responseTransformer:
       markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/notifications/{notification_id}/read",
     ...options,
   });
@@ -944,7 +1027,11 @@ export const markAllNotificationsReadV1NotificationsReadAllPost = <
     MarkAllNotificationsReadV1NotificationsReadAllPostResponses,
     unknown,
     ThrowOnError
-  >({ url: "/v1/notifications/read-all", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/notifications/read-all",
+    ...options,
+  });
 
 /**
  * List Places
@@ -958,6 +1045,7 @@ export const listPlacesV1PlacesGet = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: listPlacesV1PlacesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places",
     ...options,
   });
@@ -974,6 +1062,7 @@ export const createPlaceV1PlacesPost = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: createPlaceV1PlacesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places",
     ...options,
     headers: {
@@ -994,7 +1083,11 @@ export const searchGooglePlacesV1PlacesSearchGet = <
     SearchGooglePlacesV1PlacesSearchGetResponses,
     SearchGooglePlacesV1PlacesSearchGetErrors,
     ThrowOnError
-  >({ url: "/v1/places/search", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/places/search",
+    ...options,
+  });
 
 /**
  * Delete Place
@@ -1008,7 +1101,11 @@ export const deletePlaceV1PlacesPlaceIdDelete = <
     DeletePlaceV1PlacesPlaceIdDeleteResponses,
     DeletePlaceV1PlacesPlaceIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/places/{place_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/places/{place_id}",
+    ...options,
+  });
 
 /**
  * Update Place
@@ -1024,6 +1121,7 @@ export const updatePlaceV1PlacesPlaceIdPatch = <
     ThrowOnError
   >({
     responseTransformer: updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places/{place_id}",
     ...options,
     headers: {
@@ -1044,6 +1142,7 @@ export const listProjectsV1ProjectsGet = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: listProjectsV1ProjectsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects",
     ...options,
   });
@@ -1062,6 +1161,7 @@ export const createProjectV1ProjectsPost = <
     ThrowOnError
   >({
     responseTransformer: createProjectV1ProjectsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects",
     ...options,
     headers: {
@@ -1082,7 +1182,11 @@ export const deleteProjectV1ProjectsProjectIdDelete = <
     DeleteProjectV1ProjectsProjectIdDeleteResponses,
     DeleteProjectV1ProjectsProjectIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/projects/{project_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/projects/{project_id}",
+    ...options,
+  });
 
 /**
  * Update Project
@@ -1099,6 +1203,7 @@ export const updateProjectV1ProjectsProjectIdPatch = <
   >({
     responseTransformer:
       updateProjectV1ProjectsProjectIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects/{project_id}",
     ...options,
     headers: {
@@ -1119,6 +1224,7 @@ export const listRecipesV1RecipesGet = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: listRecipesV1RecipesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes",
     ...options,
   });
@@ -1135,6 +1241,7 @@ export const createRecipeV1RecipesPost = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: createRecipeV1RecipesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes",
     ...options,
     headers: {
@@ -1155,7 +1262,11 @@ export const deleteRecipeV1RecipesRecipeIdDelete = <
     DeleteRecipeV1RecipesRecipeIdDeleteResponses,
     DeleteRecipeV1RecipesRecipeIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/recipes/{recipe_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recipes/{recipe_id}",
+    ...options,
+  });
 
 /**
  * Get Recipe
@@ -1171,6 +1282,7 @@ export const getRecipeV1RecipesRecipeIdGet = <
     ThrowOnError
   >({
     responseTransformer: getRecipeV1RecipesRecipeIdGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes/{recipe_id}",
     ...options,
   });
@@ -1189,6 +1301,7 @@ export const updateRecipeV1RecipesRecipeIdPatch = <
     ThrowOnError
   >({
     responseTransformer: updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes/{recipe_id}",
     ...options,
     headers: {
@@ -1209,6 +1322,7 @@ export const listTasksV1TasksGet = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: listTasksV1TasksGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks",
     ...options,
   });
@@ -1225,6 +1339,7 @@ export const createTaskV1TasksPost = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     responseTransformer: createTaskV1TasksPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks",
     ...options,
     headers: {
@@ -1245,7 +1360,11 @@ export const deleteTaskV1TasksTaskIdDelete = <
     DeleteTaskV1TasksTaskIdDeleteResponses,
     DeleteTaskV1TasksTaskIdDeleteErrors,
     ThrowOnError
-  >({ url: "/v1/tasks/{task_id}", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/{task_id}",
+    ...options,
+  });
 
 /**
  * Update Task
@@ -1261,6 +1380,7 @@ export const updateTaskV1TasksTaskIdPatch = <
     ThrowOnError
   >({
     responseTransformer: updateTaskV1TasksTaskIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}",
     ...options,
     headers: {
@@ -1284,6 +1404,7 @@ export const completeTaskV1TasksTaskIdCompletePost = <
   >({
     responseTransformer:
       completeTaskV1TasksTaskIdCompletePostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/complete",
     ...options,
   });
@@ -1302,6 +1423,7 @@ export const reopenTaskV1TasksTaskIdReopenPost = <
     ThrowOnError
   >({
     responseTransformer: reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/reopen",
     ...options,
   });
@@ -1319,6 +1441,7 @@ export const reorderTasksV1TasksReorderPatch = <
     ReorderTasksV1TasksReorderPatchErrors,
     ThrowOnError
   >({
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/reorder",
     ...options,
     headers: {
@@ -1337,7 +1460,11 @@ export const listAreasV1TasksAreasGet = <ThrowOnError extends boolean = false>(
     ListAreasV1TasksAreasGetResponses,
     unknown,
     ThrowOnError
-  >({ url: "/v1/tasks/areas", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/areas",
+    ...options,
+  });
 
 /**
  * Delete Transactions
@@ -1354,6 +1481,7 @@ export const deleteTransactionsV1TransactionsDelete = <
     DeleteTransactionsV1TransactionsDeleteErrors,
     ThrowOnError
   >({
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions",
     ...options,
     headers: {
@@ -1378,6 +1506,7 @@ export const listTransactionsV1TransactionsGet = <
     ThrowOnError
   >({
     responseTransformer: listTransactionsV1TransactionsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions",
     ...options,
   });
@@ -1403,6 +1532,7 @@ export const importTransactionsV1TransactionsImportPost = <
     ThrowOnError
   >({
     ...formDataBodySerializer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/import",
     ...options,
     headers: {
@@ -1431,6 +1561,7 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
   >({
     responseTransformer:
       updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}",
     ...options,
     headers: {
@@ -1457,6 +1588,7 @@ export const bulkUpdateTransactionsV1TransactionsBulkPatch = <
     BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
     ThrowOnError
   >({
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/bulk",
     ...options,
     headers: {
@@ -1482,6 +1614,7 @@ export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost =
       CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
       ThrowOnError
     >({
+      security: [{ scheme: "bearer", type: "http" }],
       url: "/v1/transactions/categorize-by-description",
       ...options,
       headers: {
@@ -1507,7 +1640,11 @@ export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
     SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
     SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
     ThrowOnError
-  >({ url: "/v1/transactions/spending-by-category", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/spending-by-category",
+    ...options,
+  });
 
 /**
  * Monthly Income & Expenses
@@ -1523,7 +1660,11 @@ export const monthlyFlowV1TransactionsMonthlyFlowGet = <
     MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
     MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
     ThrowOnError
-  >({ url: "/v1/transactions/monthly-flow", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/monthly-flow",
+    ...options,
+  });
 
 /**
  * Get Weather Forecast

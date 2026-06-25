@@ -64,7 +64,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   transaction_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TransactionUpdate,
 ) -> Response[HTTPValidationError | TransactionUpdateResponse]:
   """Update Transaction
@@ -98,7 +98,7 @@ def sync_detailed(
 def sync(
   transaction_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TransactionUpdate,
 ) -> HTTPValidationError | TransactionUpdateResponse | None:
   """Update Transaction
@@ -127,7 +127,7 @@ def sync(
 async def asyncio_detailed(
   transaction_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TransactionUpdate,
 ) -> Response[HTTPValidationError | TransactionUpdateResponse]:
   """Update Transaction
@@ -159,7 +159,7 @@ async def asyncio_detailed(
 async def asyncio(
   transaction_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TransactionUpdate,
 ) -> HTTPValidationError | TransactionUpdateResponse | None:
   """Update Transaction

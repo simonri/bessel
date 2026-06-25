@@ -58,7 +58,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: ProjectCreate,
 ) -> Response[HTTPValidationError | ProjectSchema]:
   """Create Project
@@ -87,7 +87,7 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: ProjectCreate,
 ) -> HTTPValidationError | ProjectSchema | None:
   """Create Project
@@ -111,7 +111,7 @@ def sync(
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: ProjectCreate,
 ) -> Response[HTTPValidationError | ProjectSchema]:
   """Create Project
@@ -138,7 +138,7 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: ProjectCreate,
 ) -> HTTPValidationError | ProjectSchema | None:
   """Create Project

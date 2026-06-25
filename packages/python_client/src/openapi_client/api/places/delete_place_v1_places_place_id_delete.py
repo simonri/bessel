@@ -53,7 +53,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   place_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Delete Place
 
@@ -82,7 +82,7 @@ def sync_detailed(
 def sync(
   place_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Delete Place
 
@@ -106,7 +106,7 @@ def sync(
 async def asyncio_detailed(
   place_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Response[Any | HTTPValidationError]:
   """Delete Place
 
@@ -133,7 +133,7 @@ async def asyncio_detailed(
 async def asyncio(
   place_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
 ) -> Any | HTTPValidationError | None:
   """Delete Place
 

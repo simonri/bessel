@@ -40,6 +40,7 @@ import {
   getHoldingsV1InvestmentsHoldingsGet,
   getIntradayActivityV1ActivityIntradayGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
+  getMeV1AuthMeGet,
   getRecipeV1RecipesRecipeIdGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
@@ -170,6 +171,8 @@ import type {
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetError,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
+  GetMeV1AuthMeGetData,
+  GetMeV1AuthMeGetResponse,
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetError,
   GetRecipeV1RecipesRecipeIdGetResponse,
@@ -344,6 +347,34 @@ export const healthzHealthzGetOptions = (
       return data;
     },
     queryKey: healthzHealthzGetQueryKey(options),
+  });
+
+export const getMeV1AuthMeGetQueryKey = (
+  options?: Options<GetMeV1AuthMeGetData>,
+) => createQueryKey("getMeV1AuthMeGet", options);
+
+/**
+ * Get Current User
+ */
+export const getMeV1AuthMeGetOptions = (
+  options?: Options<GetMeV1AuthMeGetData>,
+) =>
+  queryOptions<
+    GetMeV1AuthMeGetResponse,
+    DefaultError,
+    GetMeV1AuthMeGetResponse,
+    ReturnType<typeof getMeV1AuthMeGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMeV1AuthMeGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMeV1AuthMeGetQueryKey(options),
   });
 
 /**

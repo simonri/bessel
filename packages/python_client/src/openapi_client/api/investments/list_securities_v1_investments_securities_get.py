@@ -61,7 +61,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> Response[HTTPValidationError | SecurityListResponse]:
@@ -93,7 +93,7 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> HTTPValidationError | SecurityListResponse | None:
@@ -120,7 +120,7 @@ def sync(
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> Response[HTTPValidationError | SecurityListResponse]:
@@ -150,7 +150,7 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> HTTPValidationError | SecurityListResponse | None:

@@ -63,7 +63,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   coin_id: str,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   currency: str | Unset = 'usd',
 ) -> Response[CryptoPriceSchema | HTTPValidationError]:
   """Get Crypto Price
@@ -95,7 +95,7 @@ def sync_detailed(
 def sync(
   coin_id: str,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   currency: str | Unset = 'usd',
 ) -> CryptoPriceSchema | HTTPValidationError | None:
   """Get Crypto Price
@@ -122,7 +122,7 @@ def sync(
 async def asyncio_detailed(
   coin_id: str,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   currency: str | Unset = 'usd',
 ) -> Response[CryptoPriceSchema | HTTPValidationError]:
   """Get Crypto Price
@@ -152,7 +152,7 @@ async def asyncio_detailed(
 async def asyncio(
   coin_id: str,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   currency: str | Unset = 'usd',
 ) -> CryptoPriceSchema | HTTPValidationError | None:
   """Get Crypto Price

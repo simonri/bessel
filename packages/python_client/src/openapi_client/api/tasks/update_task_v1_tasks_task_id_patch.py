@@ -64,7 +64,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TaskUpdate,
 ) -> Response[HTTPValidationError | TaskSchema]:
   """Update Task
@@ -96,7 +96,7 @@ def sync_detailed(
 def sync(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TaskUpdate,
 ) -> HTTPValidationError | TaskSchema | None:
   """Update Task
@@ -123,7 +123,7 @@ def sync(
 async def asyncio_detailed(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TaskUpdate,
 ) -> Response[HTTPValidationError | TaskSchema]:
   """Update Task
@@ -153,7 +153,7 @@ async def asyncio_detailed(
 async def asyncio(
   task_id: UUID,
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: TaskUpdate,
 ) -> HTTPValidationError | TaskSchema | None:
   """Update Task

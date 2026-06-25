@@ -1,6 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getMeV1AuthMeGetOptions } from "@metron/client";
+import { client } from "@/lib/client";
 import { WindowManager } from "@/components/canvas/window-manager";
 import { CanvasShell } from "@/components/canvas/canvas-shell";
 import { SettingsProvider } from "@/hooks/use-settings";
@@ -13,13 +16,18 @@ function AppLayout() {
   const { isLoading, isAuthenticated } = useAuth0();
   const navigate = useNavigate();
 
+  const { isLoading: isUserLoading } = useQuery({
+    ...getMeV1AuthMeGetOptions({ client }),
+    enabled: isAuthenticated,
+  });
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate({ to: "/login" });
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || isUserLoading || !isAuthenticated) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />

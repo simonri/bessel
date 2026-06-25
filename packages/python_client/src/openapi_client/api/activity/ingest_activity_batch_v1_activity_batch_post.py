@@ -8,14 +8,17 @@ from ...client import AuthenticatedClient, Client
 from ...models.activity_batch_request import ActivityBatchRequest
 from ...models.activity_batch_response import ActivityBatchResponse
 from ...models.http_validation_error import HTTPValidationError
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
   *,
   body: ActivityBatchRequest,
+  x_api_key: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
   headers: dict[str, Any] = {}
+  if not isinstance(x_api_key, Unset):
+    headers["x-api-key"] = x_api_key
 
   _kwargs: dict[str, Any] = {
     "method": "post",
@@ -60,10 +63,12 @@ def sync_detailed(
   *,
   client: AuthenticatedClient | Client,
   body: ActivityBatchRequest,
+  x_api_key: None | str | Unset = UNSET,
 ) -> Response[ActivityBatchResponse | HTTPValidationError]:
   """Ingest Activity Events
 
   Args:
+      x_api_key (None | str | Unset):
       body (ActivityBatchRequest):
 
   Raises:
@@ -76,6 +81,7 @@ def sync_detailed(
 
   kwargs = _get_kwargs(
     body=body,
+    x_api_key=x_api_key,
   )
 
   response = client.get_httpx_client().request(
@@ -89,10 +95,12 @@ def sync(
   *,
   client: AuthenticatedClient | Client,
   body: ActivityBatchRequest,
+  x_api_key: None | str | Unset = UNSET,
 ) -> ActivityBatchResponse | HTTPValidationError | None:
   """Ingest Activity Events
 
   Args:
+      x_api_key (None | str | Unset):
       body (ActivityBatchRequest):
 
   Raises:
@@ -106,6 +114,7 @@ def sync(
   return sync_detailed(
     client=client,
     body=body,
+    x_api_key=x_api_key,
   ).parsed
 
 
@@ -113,10 +122,12 @@ async def asyncio_detailed(
   *,
   client: AuthenticatedClient | Client,
   body: ActivityBatchRequest,
+  x_api_key: None | str | Unset = UNSET,
 ) -> Response[ActivityBatchResponse | HTTPValidationError]:
   """Ingest Activity Events
 
   Args:
+      x_api_key (None | str | Unset):
       body (ActivityBatchRequest):
 
   Raises:
@@ -129,6 +140,7 @@ async def asyncio_detailed(
 
   kwargs = _get_kwargs(
     body=body,
+    x_api_key=x_api_key,
   )
 
   response = await client.get_async_httpx_client().request(**kwargs)
@@ -140,10 +152,12 @@ async def asyncio(
   *,
   client: AuthenticatedClient | Client,
   body: ActivityBatchRequest,
+  x_api_key: None | str | Unset = UNSET,
 ) -> ActivityBatchResponse | HTTPValidationError | None:
   """Ingest Activity Events
 
   Args:
+      x_api_key (None | str | Unset):
       body (ActivityBatchRequest):
 
   Raises:
@@ -158,5 +172,6 @@ async def asyncio(
     await asyncio_detailed(
       client=client,
       body=body,
+      x_api_key=x_api_key,
     )
   ).parsed
