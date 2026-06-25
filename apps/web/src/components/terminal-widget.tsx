@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
+import { WebglAddon } from "@xterm/addon-webgl";
 import "@xterm/xterm/css/xterm.css";
 import { useWindowTitle } from "@/components/canvas/window-manager";
 
@@ -118,6 +119,11 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(el);
+
+    const webgl = new WebglAddon();
+    webgl.onContextLoss(() => webgl.dispose());
+    terminal.loadAddon(webgl);
+
     fitAddon.fit();
 
     terminal.attachCustomKeyEventHandler((e) => {
