@@ -25,6 +25,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
   const sessionId = useRef(crypto.randomUUID()).current;
   const spawnConfig = useRef({ command, args, cwd });
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const savedSelectionRef = useRef('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isTaskDragging, setIsTaskDragging] = useState(false);
   const dragCounterRef = useRef(0);
@@ -66,7 +67,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
   const closeMenu = useCallback(() => setContextMenu(null), []);
 
   const handleCopy = useCallback(async () => {
-    const text = terminalRef.current?.getSelection();
+    const text = savedSelectionRef.current;
     if (text) await navigator.clipboard.writeText(text);
     closeMenu();
   }, [closeMenu]);
@@ -135,13 +136,20 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
       return true;
     });
 
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) {
+        savedSelectionRef.current = terminal.getSelection();
+      }
+    };
+    el.addEventListener("mousedown", handleMouseDown, { capture: true });
+
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setContextMenu({
         x: e.clientX,
         y: e.clientY,
-        hasSelection: terminal.getSelection().length > 0,
+        hasSelection: savedSelectionRef.current.length > 0,
       });
     };
     el.addEventListener("contextmenu", handleContextMenu, { capture: true });
@@ -183,6 +191,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
       unsubData();
       unsubExit();
       resizeObserver.disconnect();
+      el.removeEventListener("mousedown", handleMouseDown, { capture: true });
       el.removeEventListener("contextmenu", handleContextMenu, { capture: true });
       terminal.dispose();
       terminalRef.current = null;

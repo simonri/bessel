@@ -47,4 +47,11 @@ contextBridge.exposeInMainWorld("electron", {
       return () => ipcRenderer.removeListener("terminal:exit", listener);
     },
   },
+  monitor: {
+    status: () => ipcRenderer.invoke("monitor:status"),
+    install: () => ipcRenderer.invoke("monitor:install"),
+    start: () => ipcRenderer.invoke("monitor:start"),
+    stop: () => ipcRenderer.invoke("monitor:stop"),
+    setEnabled: (enabled: boolean) => ipcRenderer.invoke("monitor:setEnabled", enabled),
+  },
 });

@@ -41,6 +41,13 @@ declare global {
         onData: (sessionId: string, callback: (data: string) => void) => () => void;
         onExit: (sessionId: string, callback: (code: number) => void) => () => void;
       };
+      monitor: {
+        status: () => Promise<{ installed: boolean; active: boolean; enabled: boolean; failed: boolean; state: string }>;
+        install: () => Promise<void>;
+        start: () => Promise<void>;
+        stop: () => Promise<void>;
+        setEnabled: (enabled: boolean) => Promise<void>;
+      };
     };
   }
 }
