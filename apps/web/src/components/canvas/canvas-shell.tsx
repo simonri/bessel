@@ -1,10 +1,10 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
-  DragEndEvent,
   DragOverlay,
-  DragStartEvent,
+  type DragEndEvent,
+  type DragStartEvent,
   PointerSensor,
   closestCenter,
   useSensor,
@@ -17,6 +17,7 @@ import { CanvasWindow } from "./canvas-window";
 import { CanvasDock } from "./canvas-dock";
 import { CanvasTopBar } from "./canvas-topbar";
 import { CommandPalette } from "./command-palette";
+import { useSettings } from "@/hooks/use-settings";
 
 const EmptySlot = memo(function EmptySlot({ slotIndex }: { slotIndex: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotIndex}` });
@@ -126,8 +127,81 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
   );
 }
 
+// Plays the video forward, then reverses frame-by-frame when it ends (ping-pong).
+function VideoWallpaper() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const stopRaf = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
+    };
+
+    const playReverse = () => {
+      let lastTs: number | null = null;
+      const step = (ts: number) => {
+        const v = videoRef.current;
+        if (!v) return;
+        if (lastTs !== null) {
+          v.currentTime = Math.max(0, v.currentTime - (ts - lastTs) / 1000);
+        }
+        lastTs = ts;
+        if (v.currentTime > 0) {
+          rafRef.current = requestAnimationFrame(step);
+        } else {
+          v.play();
+        }
+      };
+      rafRef.current = requestAnimationFrame(step);
+    };
+
+    video.play().catch(() => {});
+
+    const onEnded = () => {
+      stopRaf();
+      playReverse();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stopRaf();
+        video.pause();
+      } else if (!rafRef.current) {
+        video.play();
+      }
+    };
+
+    video.addEventListener("ended", onEnded);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      video.removeEventListener("ended", onEnded);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      stopRaf();
+    };
+  }, []);
+
+  return (
+    <video
+      ref={videoRef}
+      src="/wallpaper-forest.mp4"
+      autoPlay
+      muted
+      playsInline
+      className="absolute inset-0 h-full w-full object-cover"
+    />
+  );
+}
+
 export function CanvasShell() {
   const { workspaces, activeWorkspaceId } = useWindowManager();
+  const { settings } = useSettings();
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
@@ -143,13 +217,17 @@ export function CanvasShell() {
 
   return (
     <div className="fixed inset-0">
-      <img
-        src="/image.png"
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        draggable={false}
-      />
-      <div className="absolute inset-0 bg-black/30" />
+      {settings.wallpaper === "video" ? (
+        <VideoWallpaper />
+      ) : (
+        <img
+          src="/image.png"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          draggable={false}
+        />
+      )}
+      {settings.wallpaper === "image" && <div className="absolute inset-0 bg-black/30" />}
 
       <div className="relative flex h-full flex-col pt-12 pb-10">
         {workspaces.map((workspace) => (

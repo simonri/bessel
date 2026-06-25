@@ -123,18 +123,19 @@ function CryptoPairTicker({ pair }: { pair: string }) {
   const isPositive = pct !== null && pct >= 0;
 
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="font-mono text-[11px] tracking-wide text-orange-400/60">{pair}</span>
-      <span className="font-mono text-[11px] font-medium tabular-nums text-white/70">
+    <div className="flex items-center gap-1">
+      <span className="font-mono text-[10px] font-medium tracking-wider text-orange-400/75">{pair}</span>
+      <span className="text-white/15">·</span>
+      <span className="font-mono text-[11px] font-medium tabular-nums text-white/75">
         {formatted ?? "—"}
       </span>
       {pct !== null && (
         <span
-          className={`flex items-center gap-0.5 font-mono text-[11px] tabular-nums ${
-            isPositive ? "text-emerald-400" : "text-red-400"
+          className={`flex items-center gap-0.5 font-mono text-[10px] tabular-nums ${
+            isPositive ? "text-emerald-400/80" : "text-red-400/80"
           }`}
         >
-          {isPositive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+          {isPositive ? <TrendingUp className="size-2.5" /> : <TrendingDown className="size-2.5" />}
           {isPositive ? "+" : ""}
           {pct.toFixed(2)}%
         </span>
@@ -555,13 +556,20 @@ export function CanvasTopBar() {
 
   return (
     <div className="fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
-      <div className="flex min-w-0 flex-1 items-center gap-6">
-        <div className="flex shrink-0 items-baseline gap-1.5">
-          <span className="text-sm font-semibold tracking-wide text-white/80">Metron</span>
+      <div className="flex min-w-0 flex-1 items-center gap-5">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="bg-gradient-to-r from-white/90 to-white/55 bg-clip-text text-sm font-semibold tracking-wide text-transparent">
+            Metron
+          </span>
           {version && (
-            <span className="font-mono text-[11px] text-white/25">v{version}</span>
+            <span className="rounded bg-white/[0.06] px-1 py-px font-mono text-[10px] text-white/30">
+              v{version}
+            </span>
           )}
         </div>
+        {pairs.length > 0 && (
+          <div className="h-3 w-px shrink-0 bg-white/10" />
+        )}
         {pairs.map((pair) => (
           <CryptoPairTicker key={pair} pair={pair} />
         ))}

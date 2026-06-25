@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
-import { Plus, X, LayoutDashboard, Activity, Settings, Info } from "lucide-react";
+import { Plus, X, LayoutDashboard, Activity, Settings, Info, Image } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { type ActivityMapping, useSettings } from "@/hooks/use-settings";
+import { type ActivityMapping, type WallpaperKey, useSettings } from "@/hooks/use-settings";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
-type SidebarPage = "topbar" | "activity" | "about";
+type SidebarPage = "topbar" | "wallpaper" | "activity" | "about";
+
+const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
+  topbar: "Configure what appears in the top bar.",
+  wallpaper: "Choose the background for your dashboard.",
+  activity: "Map raw app names to readable labels in the activity widget.",
+  about: "Application version and update settings.",
+};
 
 const NAV_ITEMS: { key: SidebarPage; label: string; icon: React.ElementType }[] = [
   { key: "topbar", label: "Top bar", icon: LayoutDashboard },
+  { key: "wallpaper", label: "Wallpaper", icon: Image },
   { key: "activity", label: "Activity", icon: Activity },
   ...(isDesktop ? [{ key: "about" as const, label: "About", icon: Info }] : []),
 ];
@@ -59,11 +67,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                 <h1 className="text-[15px] font-semibold text-white/90">
                   {NAV_ITEMS.find((n) => n.key === page)?.label}
                 </h1>
-                <p className="mt-0.5 text-xs text-white/35">
-                  {page === "topbar"
-                    ? "Configure what appears in the top bar."
-                    : "Map raw app names to readable labels in the activity widget."}
-                </p>
+                <p className="mt-0.5 text-xs text-white/35">{PAGE_DESCRIPTIONS[page]}</p>
               </div>
               <DialogPrimitive.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-white/25 transition-colors hover:bg-white/5 hover:text-white/60">
                 <X className="size-3.5" />
@@ -71,6 +75,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
             </div>
             <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
               {page === "topbar" && <TopBarPage />}
+              {page === "wallpaper" && <WallpaperPage />}
               {page === "activity" && <ActivityPage />}
               {page === "about" && <AboutPage />}
             </div>
@@ -86,6 +91,57 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p className="mb-3 text-[10px] font-semibold tracking-widest text-white/30">
       {children}
     </p>
+  );
+}
+
+const WALLPAPER_OPTIONS: { key: WallpaperKey; label: string; src: string; isVideo: boolean }[] = [
+  { key: "image", label: "Static", src: "/image.png", isVideo: false },
+  { key: "video", label: "Forest Night", src: "/wallpaper-forest.mp4", isVideo: true },
+];
+
+function WallpaperPage() {
+  const { settings, update } = useSettings();
+  const selected = settings.wallpaper;
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <SectionLabel>Background</SectionLabel>
+        <div className="grid grid-cols-2 gap-3">
+          {WALLPAPER_OPTIONS.map(({ key, label, src, isVideo }) => (
+            <button
+              key={key}
+              onClick={() => update({ wallpaper: key })}
+              className={`relative overflow-hidden rounded-xl border-2 transition-all ${
+                selected === key
+                  ? "border-orange-500 shadow-lg shadow-orange-900/30"
+                  : "border-white/10 hover:border-white/25"
+              }`}
+              style={{ aspectRatio: "16/9" }}
+            >
+              {isVideo ? (
+                <video
+                  src={src}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <img src={src} alt={label} className="h-full w-full object-cover" />
+              )}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2">
+                <span className="text-[11px] font-medium text-white/80">{label}</span>
+              </div>
+              {selected === key && (
+                <div className="absolute inset-0 bg-orange-500/10 ring-inset" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

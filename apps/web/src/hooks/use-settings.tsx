@@ -11,14 +11,17 @@ export interface ClaudeProject {
   path: string;
 }
 
+export type WallpaperKey = "image" | "video";
+
 interface Settings {
   cryptoPairs: string;
   activityMappings: ActivityMapping[];
   claudeProjects: ClaudeProject[];
+  wallpaper: WallpaperKey;
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], claudeProjects: [] };
+const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], claudeProjects: [], wallpaper: "image" };
 
 function loadSettings(): Settings {
   try {
