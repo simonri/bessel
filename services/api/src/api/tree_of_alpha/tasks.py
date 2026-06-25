@@ -8,12 +8,14 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from api.common.utils import generate_uuid, utc_now
 from api.models.notification import Notification
 from api.models.tree_of_alpha_news import TreeOfAlphaNews
-from api.worker import AsyncSessionMaker, CronTrigger, TaskPriority, actor
+from api.worker import AsyncSessionMaker, CronTrigger, RedisMiddleware, TaskPriority, actor
 
 log = structlog.get_logger()
 
 _API_URL = "https://news.treeofalpha.com/api/news?limit=500"
 _LIKES_THRESHOLD = 3
+_COOLDOWN_KEY = "tree_of_alpha:scan_cooldown"
+_COOLDOWN_SECONDS = 50
 
 
 def _truncate(text: str, max_len: int) -> str:
@@ -24,6 +26,11 @@ def _truncate(text: str, max_len: int) -> str:
 
 @actor(cron_trigger=CronTrigger(minute="*"), priority=TaskPriority.LOW)
 async def scan_tree_of_alpha() -> None:
+  redis = RedisMiddleware.get()
+  acquired = await redis.set(_COOLDOWN_KEY, "1", nx=True, ex=_COOLDOWN_SECONDS)
+  if not acquired:
+    return
+
   async with httpx.AsyncClient(timeout=30) as http:
     response = await http.get(_API_URL)
     response.raise_for_status()
