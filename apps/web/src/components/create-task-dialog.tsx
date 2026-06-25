@@ -31,7 +31,7 @@ import {
   createTaskV1TasksPostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
   listTasksV1TasksGetQueryKey,
-  listProjectsV1TasksProjectsGetOptions,
+  listProjectsV1ProjectsGetOptions,
 } from "@metron/client";
 import type { TaskSchema } from "@metron/client";
 import { toast } from "sonner";
@@ -158,9 +158,10 @@ export function TaskFormDialog({
   const queryClient = useQueryClient();
   const queryKey = listTasksV1TasksGetQueryKey({ client });
 
-  const { data: projects = [] } = useQuery({
-    ...listProjectsV1TasksProjectsGetOptions({ client }),
+  const { data: projectsData = [] } = useQuery({
+    ...listProjectsV1ProjectsGetOptions({ client }),
   });
+  const projects = projectsData.map((p) => p.name);
 
   const form = useForm({
     defaultValues: taskToFormValues(task),

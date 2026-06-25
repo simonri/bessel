@@ -10,8 +10,10 @@ from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
 from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound
+from api.models.project import Project
 from api.models.task import Task
 from api.postgres import AsyncSession, get_db_session
+from api.projects.repository import ProjectRepository
 from api.tasks.recurrence import compute_next_due_date
 from api.tasks.repository import TaskRepository
 from api.tasks.schemas import TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
@@ -29,6 +31,16 @@ class TaskSortProperty(StrEnum):
 
 
 sorting_getter = SortingGetter(TaskSortProperty, default_sorting=["-created_at"])
+
+
+async def _resolve_project_id(session: AsyncSession, name: str | None) -> UUID | None:
+  if name is None:
+    return None
+  repo = ProjectRepository.from_session(session)
+  project = await repo.get_by_name(name)
+  if project is None:
+    project = await repo.create(Project(name=name), flush=True)
+  return project.id
 
 
 @router.get(
@@ -56,7 +68,8 @@ async def list_tasks(
   if priority is not None:
     statement = statement.where(Task.priority == priority)
   if project is not None:
-    statement = statement.where(Task.project == project)
+    project_subq = select(Project.id).where(Project.name == project).where(Project.deleted_at.is_(None)).scalar_subquery()
+    statement = statement.where(Task.project_id == project_subq)
   if area is not None:
     statement = statement.where(Task.area == area)
   if is_recurring is not None:
@@ -90,6 +103,8 @@ async def create_task(
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
   task_data = body.model_dump()
+  project_name = task_data.pop("project", None)
+  task_data["project_id"] = await _resolve_project_id(session, project_name)
   if task_data.get("position") is None:
     max_pos = await repo.get_max_position()
     task_data["position"] = (max_pos or 0) + 1000
@@ -114,6 +129,9 @@ async def update_task(
     raise ResourceNotFound("Task not found")
 
   update_dict = body.model_dump(exclude_unset=True)
+  if "project" in update_dict:
+    project_name = update_dict.pop("project")
+    update_dict["project_id"] = await _resolve_project_id(session, project_name)
   if update_dict:
     await repo.update(task, update_dict=update_dict)
 
@@ -169,7 +187,7 @@ async def complete_task(
       status="todo",
       priority=task.priority,
       due_date=next_due,
-      project=task.project,
+      project_id=task.project_id,
       area=task.area,
       tags=task.tags,
       position=(max_pos or 0) + 1000,
@@ -225,18 +243,6 @@ async def reorder_tasks(
     if item.status is not None:
       update["status"] = item.status
     await repo.update(task, update_dict=update)
-
-
-@router.get(
-  "/projects",
-  summary="List Projects",
-  response_model=list[str],
-)
-async def list_projects(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
-) -> list[str]:
-  result = await session.execute(select(Task.project).where(Task.project.is_not(None)).group_by(Task.project).order_by(func.count().desc()))
-  return [row[0] for row in result.all()]
 
 
 @router.get(

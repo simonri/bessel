@@ -6,6 +6,7 @@ import type {
   CreateCounterV1CountersPostResponse,
   CreateNotificationV1NotificationsPostResponse,
   CreatePlaceV1PlacesPostResponse,
+  CreateProjectV1ProjectsPostResponse,
   CreateRecipeV1RecipesPostResponse,
   CreateResetV1CountersCounterIdResetsPostResponse,
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
@@ -20,6 +21,7 @@ import type {
   ListCountersV1CountersGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
+  ListProjectsV1ProjectsGetResponse,
   ListRecipesV1RecipesGetResponse,
   ListResetsV1CountersCounterIdResetsGetResponse,
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
@@ -32,6 +34,7 @@ import type {
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateCounterV1CountersCounterIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdateProjectV1ProjectsProjectIdPatchResponse,
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
@@ -348,6 +351,35 @@ export const updatePlaceV1PlacesPlaceIdPatchResponseTransformer = async (
   data: any,
 ): Promise<UpdatePlaceV1PlacesPlaceIdPatchResponse> => {
   data = placeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const projectSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+export const listProjectsV1ProjectsGetResponseTransformer = async (
+  data: any,
+): Promise<ListProjectsV1ProjectsGetResponse> => {
+  data = data.map((item: any) => projectSchemaSchemaResponseTransformer(item));
+  return data;
+};
+
+export const createProjectV1ProjectsPostResponseTransformer = async (
+  data: any,
+): Promise<CreateProjectV1ProjectsPostResponse> => {
+  data = projectSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateProjectV1ProjectsProjectIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateProjectV1ProjectsProjectIdPatchResponse> => {
+  data = projectSchemaSchemaResponseTransformer(data);
   return data;
 };
 

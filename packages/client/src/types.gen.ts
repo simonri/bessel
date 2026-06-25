@@ -1310,6 +1310,54 @@ export type PlaceUpdate = {
 };
 
 /**
+ * ProjectCreate
+ */
+export type ProjectCreate = {
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * ProjectSchema
+ */
+export type ProjectSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * ProjectUpdate
+ */
+export type ProjectUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+};
+
+/**
  * RecipeCreate
  */
 export type RecipeCreate = {
@@ -3646,6 +3694,116 @@ export type UpdatePlaceV1PlacesPlaceIdPatchResponses = {
 export type UpdatePlaceV1PlacesPlaceIdPatchResponse =
   UpdatePlaceV1PlacesPlaceIdPatchResponses[keyof UpdatePlaceV1PlacesPlaceIdPatchResponses];
 
+export type ListProjectsV1ProjectsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/projects";
+};
+
+export type ListProjectsV1ProjectsGetResponses = {
+  /**
+   * Response List Projects V1 Projects Get
+   *
+   * Successful Response
+   */
+  200: Array<ProjectSchema>;
+};
+
+export type ListProjectsV1ProjectsGetResponse =
+  ListProjectsV1ProjectsGetResponses[keyof ListProjectsV1ProjectsGetResponses];
+
+export type CreateProjectV1ProjectsPostData = {
+  body: ProjectCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/projects";
+};
+
+export type CreateProjectV1ProjectsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateProjectV1ProjectsPostError =
+  CreateProjectV1ProjectsPostErrors[keyof CreateProjectV1ProjectsPostErrors];
+
+export type CreateProjectV1ProjectsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: ProjectSchema;
+};
+
+export type CreateProjectV1ProjectsPostResponse =
+  CreateProjectV1ProjectsPostResponses[keyof CreateProjectV1ProjectsPostResponses];
+
+export type DeleteProjectV1ProjectsProjectIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/v1/projects/{project_id}";
+};
+
+export type DeleteProjectV1ProjectsProjectIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteProjectV1ProjectsProjectIdDeleteError =
+  DeleteProjectV1ProjectsProjectIdDeleteErrors[keyof DeleteProjectV1ProjectsProjectIdDeleteErrors];
+
+export type DeleteProjectV1ProjectsProjectIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteProjectV1ProjectsProjectIdDeleteResponse =
+  DeleteProjectV1ProjectsProjectIdDeleteResponses[keyof DeleteProjectV1ProjectsProjectIdDeleteResponses];
+
+export type UpdateProjectV1ProjectsProjectIdPatchData = {
+  body: ProjectUpdate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/v1/projects/{project_id}";
+};
+
+export type UpdateProjectV1ProjectsProjectIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateProjectV1ProjectsProjectIdPatchError =
+  UpdateProjectV1ProjectsProjectIdPatchErrors[keyof UpdateProjectV1ProjectsProjectIdPatchErrors];
+
+export type UpdateProjectV1ProjectsProjectIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSchema;
+};
+
+export type UpdateProjectV1ProjectsProjectIdPatchResponse =
+  UpdateProjectV1ProjectsProjectIdPatchResponses[keyof UpdateProjectV1ProjectsProjectIdPatchResponses];
+
 export type ListRecipesV1RecipesGetData = {
   body?: never;
   path?: never;
@@ -4093,25 +4251,6 @@ export type ReorderTasksV1TasksReorderPatchResponses = {
 
 export type ReorderTasksV1TasksReorderPatchResponse =
   ReorderTasksV1TasksReorderPatchResponses[keyof ReorderTasksV1TasksReorderPatchResponses];
-
-export type ListProjectsV1TasksProjectsGetData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/v1/tasks/projects";
-};
-
-export type ListProjectsV1TasksProjectsGetResponses = {
-  /**
-   * Response List Projects V1 Tasks Projects Get
-   *
-   * Successful Response
-   */
-  200: Array<string>;
-};
-
-export type ListProjectsV1TasksProjectsGetResponse =
-  ListProjectsV1TasksProjectsGetResponses[keyof ListProjectsV1TasksProjectsGetResponses];
 
 export type ListAreasV1TasksAreasGetData = {
   body?: never;

@@ -57,6 +57,9 @@ from .place_schema import PlaceSchema
 from .place_sort_property import PlaceSortProperty
 from .place_status import PlaceStatus
 from .place_update import PlaceUpdate
+from .project_create import ProjectCreate
+from .project_schema import ProjectSchema
+from .project_update import ProjectUpdate
 from .recipe_create import RecipeCreate
 from .recipe_list_response import RecipeListResponse
 from .recipe_schema import RecipeSchema
@@ -148,6 +151,9 @@ __all__ = (
   "PlaceSortProperty",
   "PlaceStatus",
   "PlaceUpdate",
+  "ProjectCreate",
+  "ProjectSchema",
+  "ProjectUpdate",
   "RecipeCreate",
   "RecipeListResponse",
   "RecipeSchema",

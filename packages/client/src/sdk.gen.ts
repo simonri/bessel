@@ -13,6 +13,7 @@ import {
   createCounterV1CountersPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
+  createProjectV1ProjectsPostResponseTransformer,
   createRecipeV1RecipesPostResponseTransformer,
   createResetV1CountersCounterIdResetsPostResponseTransformer,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
@@ -27,6 +28,7 @@ import {
   listCountersV1CountersGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
+  listProjectsV1ProjectsGetResponseTransformer,
   listRecipesV1RecipesGetResponseTransformer,
   listResetsV1CountersCounterIdResetsGetResponseTransformer,
   listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
@@ -39,6 +41,7 @@ import {
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updateCounterV1CountersCounterIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+  updateProjectV1ProjectsProjectIdPatchResponseTransformer,
   updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
@@ -67,6 +70,9 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostErrors,
   CreatePlaceV1PlacesPostResponses,
+  CreateProjectV1ProjectsPostData,
+  CreateProjectV1ProjectsPostErrors,
+  CreateProjectV1ProjectsPostResponses,
   CreateRecipeV1RecipesPostData,
   CreateRecipeV1RecipesPostErrors,
   CreateRecipeV1RecipesPostResponses,
@@ -94,6 +100,9 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
+  DeleteProjectV1ProjectsProjectIdDeleteData,
+  DeleteProjectV1ProjectsProjectIdDeleteErrors,
+  DeleteProjectV1ProjectsProjectIdDeleteResponses,
   DeleteRecipeV1RecipesRecipeIdDeleteData,
   DeleteRecipeV1RecipesRecipeIdDeleteErrors,
   DeleteRecipeV1RecipesRecipeIdDeleteResponses,
@@ -163,8 +172,8 @@ import type {
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetErrors,
   ListPlacesV1PlacesGetResponses,
-  ListProjectsV1TasksProjectsGetData,
-  ListProjectsV1TasksProjectsGetResponses,
+  ListProjectsV1ProjectsGetData,
+  ListProjectsV1ProjectsGetResponses,
   ListRecipesV1RecipesGetData,
   ListRecipesV1RecipesGetErrors,
   ListRecipesV1RecipesGetResponses,
@@ -218,6 +227,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
+  UpdateProjectV1ProjectsProjectIdPatchData,
+  UpdateProjectV1ProjectsProjectIdPatchErrors,
+  UpdateProjectV1ProjectsProjectIdPatchResponses,
   UpdateRecipeV1RecipesRecipeIdPatchData,
   UpdateRecipeV1RecipesRecipeIdPatchErrors,
   UpdateRecipeV1RecipesRecipeIdPatchResponses,
@@ -1021,6 +1033,81 @@ export const updatePlaceV1PlacesPlaceIdPatch = <
   });
 
 /**
+ * List Projects
+ */
+export const listProjectsV1ProjectsGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListProjectsV1ProjectsGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListProjectsV1ProjectsGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listProjectsV1ProjectsGetResponseTransformer,
+    url: "/v1/projects",
+    ...options,
+  });
+
+/**
+ * Create Project
+ */
+export const createProjectV1ProjectsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateProjectV1ProjectsPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateProjectV1ProjectsPostResponses,
+    CreateProjectV1ProjectsPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createProjectV1ProjectsPostResponseTransformer,
+    url: "/v1/projects",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Project
+ */
+export const deleteProjectV1ProjectsProjectIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteProjectV1ProjectsProjectIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteProjectV1ProjectsProjectIdDeleteResponses,
+    DeleteProjectV1ProjectsProjectIdDeleteErrors,
+    ThrowOnError
+  >({ url: "/v1/projects/{project_id}", ...options });
+
+/**
+ * Update Project
+ */
+export const updateProjectV1ProjectsProjectIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateProjectV1ProjectsProjectIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateProjectV1ProjectsProjectIdPatchResponses,
+    UpdateProjectV1ProjectsProjectIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateProjectV1ProjectsProjectIdPatchResponseTransformer,
+    url: "/v1/projects/{project_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * List Recipes
  */
 export const listRecipesV1RecipesGet = <ThrowOnError extends boolean = false>(
@@ -1239,20 +1326,6 @@ export const reorderTasksV1TasksReorderPatch = <
       ...options.headers,
     },
   });
-
-/**
- * List Projects
- */
-export const listProjectsV1TasksProjectsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListProjectsV1TasksProjectsGetData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<
-    ListProjectsV1TasksProjectsGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/v1/tasks/projects", ...options });
 
 /**
  * List Areas

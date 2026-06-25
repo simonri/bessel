@@ -17,6 +17,7 @@ import {
   createCounterV1CountersPost,
   createNotificationV1NotificationsPost,
   createPlaceV1PlacesPost,
+  createProjectV1ProjectsPost,
   createRecipeV1RecipesPost,
   createResetV1CountersCounterIdResetsPost,
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
@@ -26,6 +27,7 @@ import {
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCounterV1CountersCounterIdDelete,
   deletePlaceV1PlacesPlaceIdDelete,
+  deleteProjectV1ProjectsProjectIdDelete,
   deleteRecipeV1RecipesRecipeIdDelete,
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
   deleteTaskV1TasksTaskIdDelete,
@@ -51,7 +53,7 @@ import {
   listCountersV1CountersGet,
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
-  listProjectsV1TasksProjectsGet,
+  listProjectsV1ProjectsGet,
   listRecipesV1RecipesGet,
   listResetsV1CountersCounterIdResetsGet,
   listSecuritiesV1InvestmentsSecuritiesGet,
@@ -71,6 +73,7 @@ import {
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCounterV1CountersCounterIdPatch,
   updatePlaceV1PlacesPlaceIdPatch,
+  updateProjectV1ProjectsProjectIdPatch,
   updateRecipeV1RecipesRecipeIdPatch,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatch,
   updateTaskV1TasksTaskIdPatch,
@@ -99,6 +102,9 @@ import type {
   CreatePlaceV1PlacesPostData,
   CreatePlaceV1PlacesPostError,
   CreatePlaceV1PlacesPostResponse,
+  CreateProjectV1ProjectsPostData,
+  CreateProjectV1ProjectsPostError,
+  CreateProjectV1ProjectsPostResponse,
   CreateRecipeV1RecipesPostData,
   CreateRecipeV1RecipesPostError,
   CreateRecipeV1RecipesPostResponse,
@@ -126,6 +132,9 @@ import type {
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
+  DeleteProjectV1ProjectsProjectIdDeleteData,
+  DeleteProjectV1ProjectsProjectIdDeleteError,
+  DeleteProjectV1ProjectsProjectIdDeleteResponse,
   DeleteRecipeV1RecipesRecipeIdDeleteData,
   DeleteRecipeV1RecipesRecipeIdDeleteError,
   DeleteRecipeV1RecipesRecipeIdDeleteResponse,
@@ -194,8 +203,8 @@ import type {
   ListPlacesV1PlacesGetData,
   ListPlacesV1PlacesGetError,
   ListPlacesV1PlacesGetResponse,
-  ListProjectsV1TasksProjectsGetData,
-  ListProjectsV1TasksProjectsGetResponse,
+  ListProjectsV1ProjectsGetData,
+  ListProjectsV1ProjectsGetResponse,
   ListRecipesV1RecipesGetData,
   ListRecipesV1RecipesGetError,
   ListRecipesV1RecipesGetResponse,
@@ -249,6 +258,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
+  UpdateProjectV1ProjectsProjectIdPatchData,
+  UpdateProjectV1ProjectsProjectIdPatchError,
+  UpdateProjectV1ProjectsProjectIdPatchResponse,
   UpdateRecipeV1RecipesRecipeIdPatchData,
   UpdateRecipeV1RecipesRecipeIdPatchError,
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
@@ -1811,6 +1823,115 @@ export const updatePlaceV1PlacesPlaceIdPatchMutation = (
   return mutationOptions;
 };
 
+export const listProjectsV1ProjectsGetQueryKey = (
+  options?: Options<ListProjectsV1ProjectsGetData>,
+) => createQueryKey("listProjectsV1ProjectsGet", options);
+
+/**
+ * List Projects
+ */
+export const listProjectsV1ProjectsGetOptions = (
+  options?: Options<ListProjectsV1ProjectsGetData>,
+) =>
+  queryOptions<
+    ListProjectsV1ProjectsGetResponse,
+    DefaultError,
+    ListProjectsV1ProjectsGetResponse,
+    ReturnType<typeof listProjectsV1ProjectsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listProjectsV1ProjectsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listProjectsV1ProjectsGetQueryKey(options),
+  });
+
+/**
+ * Create Project
+ */
+export const createProjectV1ProjectsPostMutation = (
+  options?: Partial<Options<CreateProjectV1ProjectsPostData>>,
+): UseMutationOptions<
+  CreateProjectV1ProjectsPostResponse,
+  CreateProjectV1ProjectsPostError,
+  Options<CreateProjectV1ProjectsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateProjectV1ProjectsPostResponse,
+    CreateProjectV1ProjectsPostError,
+    Options<CreateProjectV1ProjectsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createProjectV1ProjectsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Project
+ */
+export const deleteProjectV1ProjectsProjectIdDeleteMutation = (
+  options?: Partial<Options<DeleteProjectV1ProjectsProjectIdDeleteData>>,
+): UseMutationOptions<
+  DeleteProjectV1ProjectsProjectIdDeleteResponse,
+  DeleteProjectV1ProjectsProjectIdDeleteError,
+  Options<DeleteProjectV1ProjectsProjectIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteProjectV1ProjectsProjectIdDeleteResponse,
+    DeleteProjectV1ProjectsProjectIdDeleteError,
+    Options<DeleteProjectV1ProjectsProjectIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteProjectV1ProjectsProjectIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Project
+ */
+export const updateProjectV1ProjectsProjectIdPatchMutation = (
+  options?: Partial<Options<UpdateProjectV1ProjectsProjectIdPatchData>>,
+): UseMutationOptions<
+  UpdateProjectV1ProjectsProjectIdPatchResponse,
+  UpdateProjectV1ProjectsProjectIdPatchError,
+  Options<UpdateProjectV1ProjectsProjectIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateProjectV1ProjectsProjectIdPatchResponse,
+    UpdateProjectV1ProjectsProjectIdPatchError,
+    Options<UpdateProjectV1ProjectsProjectIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateProjectV1ProjectsProjectIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listRecipesV1RecipesGetQueryKey = (
   options?: Options<ListRecipesV1RecipesGetData>,
 ) => createQueryKey("listRecipesV1RecipesGet", options);
@@ -2237,34 +2358,6 @@ export const reorderTasksV1TasksReorderPatchMutation = (
   };
   return mutationOptions;
 };
-
-export const listProjectsV1TasksProjectsGetQueryKey = (
-  options?: Options<ListProjectsV1TasksProjectsGetData>,
-) => createQueryKey("listProjectsV1TasksProjectsGet", options);
-
-/**
- * List Projects
- */
-export const listProjectsV1TasksProjectsGetOptions = (
-  options?: Options<ListProjectsV1TasksProjectsGetData>,
-) =>
-  queryOptions<
-    ListProjectsV1TasksProjectsGetResponse,
-    DefaultError,
-    ListProjectsV1TasksProjectsGetResponse,
-    ReturnType<typeof listProjectsV1TasksProjectsGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listProjectsV1TasksProjectsGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listProjectsV1TasksProjectsGetQueryKey(options),
-  });
 
 export const listAreasV1TasksAreasGetQueryKey = (
   options?: Options<ListAreasV1TasksAreasGetData>,

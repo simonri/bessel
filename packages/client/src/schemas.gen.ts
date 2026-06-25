@@ -1944,6 +1944,75 @@ export const PlaceUpdateSchema = {
   title: "PlaceUpdate",
 } as const;
 
+export const ProjectCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      title: "Name",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "ProjectCreate",
+} as const;
+
+export const ProjectSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "name"],
+  title: "ProjectSchema",
+} as const;
+
+export const ProjectUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+  },
+  type: "object",
+  title: "ProjectUpdate",
+} as const;
+
 export const RecipeCreateSchema = {
   properties: {
     title: {

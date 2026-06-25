@@ -7,6 +7,7 @@ from .counter import Counter, CounterReset
 from .import_batch import ImportBatch
 from .notification import Notification
 from .place import Place
+from .project import Project
 from .raw_transaction import RawTransaction
 from .recipe import Recipe
 from .security import Security
@@ -28,6 +29,7 @@ __all__ = [
   "Model",
   "Notification",
   "Place",
+  "Project",
   "RawTransaction",
   "Recipe",
   "Security",

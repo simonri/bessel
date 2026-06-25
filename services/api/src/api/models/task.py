@@ -1,10 +1,12 @@
 from datetime import date, datetime
+from uuid import UUID
 
 from sqlalchemy import TIMESTAMP, Boolean, Date, Float, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
+from api.models.project import Project
 
 
 class Task(RecordModel):
@@ -18,7 +20,8 @@ class Task(RecordModel):
   due_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
   completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
-  project: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+  project_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("projects.id"), nullable=True, index=True)
+  project_obj: Mapped[Project | None] = relationship("Project", lazy="selectin")
   area: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
   tags: Mapped[list[str] | None] = mapped_column(ARRAY(String(50)), nullable=True)
   position: Mapped[float] = mapped_column(Float, nullable=False, default=0)
@@ -32,3 +35,7 @@ class Task(RecordModel):
 
   # Chain linking for recurring instances
   parent_task_id: Mapped[str | None] = mapped_column(Uuid, ForeignKey("tasks.id"), nullable=True)
+
+  @property
+  def project(self) -> str | None:
+    return self.project_obj.name if self.project_obj else None

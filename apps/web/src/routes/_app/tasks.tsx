@@ -45,7 +45,7 @@ import type { TaskSchema } from "@metron/client";
 import {
   listTasksV1TasksGetOptions,
   listTasksV1TasksGetQueryKey,
-  listProjectsV1TasksProjectsGetOptions,
+  listProjectsV1ProjectsGetOptions,
   deleteTaskV1TasksTaskIdDeleteMutation,
   completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
@@ -663,7 +663,7 @@ function Tasks() {
         : ["-created_at" as "-created_at"];
 
   const { data: projectsData } = useQuery(
-    listProjectsV1TasksProjectsGetOptions({ client }),
+    listProjectsV1ProjectsGetOptions({ client }),
   );
   const projects = projectsData ?? [];
 
@@ -1093,16 +1093,16 @@ function Tasks() {
             </button>
             {projects.map((p) => (
               <button
-                key={p}
+                key={p.id}
                 type="button"
                 className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
-                  projectFilter === p
+                  projectFilter === p.name
                     ? "bg-white/10 text-white/80"
                     : "text-white/35 hover:text-white/60"
                 }`}
-                onClick={() => { setProjectFilter(p); setPage(1); }}
+                onClick={() => { setProjectFilter(p.name); setPage(1); }}
               >
-                {p}
+                {p.name}
               </button>
             ))}
           </div>
