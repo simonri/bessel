@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -868,10 +869,20 @@ function Tasks() {
         ? "todo"
         : "in_progress";
 
-    // Only track cross-column moves. Same-column position is determined at drop
-    // time from over.id, so we don't need to (and shouldn't) reorder here —
-    // doing so causes closestCenter oscillation that snaps items to wrong positions.
-    if (activeColumn === overColumn) return;
+    if (activeColumn === overColumn) {
+      // Same-column reorder: keep localOrder in sync so liveBoardTasks reflects the drag
+      // and handleDragEnd can use localOrder directly instead of re-deriving from over.id.
+      if (overIsColumn) return;
+      setLocalOrder(prev => {
+        if (!prev) return prev;
+        const col = prev[activeColumn];
+        const fromIdx = col.indexOf(activeId);
+        const toIdx = col.indexOf(overId);
+        if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return prev;
+        return { ...prev, [activeColumn]: arrayMove(col, fromIdx, toIdx) };
+      });
+      return;
+    }
 
     const isBelowOverCenter =
       active.rect.current.translated != null &&
@@ -941,13 +952,8 @@ function Tasks() {
       // Dropped in empty column space — place at end
       orderedColumnIds = [...destServerIds, taskId];
     } else if (overId === taskId) {
-      if (originalStatus === newStatus) {
-        // Dropped on own placeholder in same column — no meaningful movement
-        setActiveTask(null);
-        setLocalOrder(null);
-        return;
-      }
-      // Cross-column drop on own placeholder — use localOrder insertion position
+      // Dropped on own sortable slot — localOrder has been kept in sync throughout
+      // the drag (arrayMove for same-column, insertion for cross-column), so use it directly.
       orderedColumnIds = localOrder[newStatus];
     } else {
       const overIndex = destServerIds.indexOf(overId);

@@ -305,7 +305,10 @@ app.whenReady().then(() => {
         ? path.join(WEB_DIR, "index.html")
         : path.join(WEB_DIR, pathname);
     try {
-      return await net.fetch(pathToFileURL(target).toString());
+      const headers: Record<string, string> = {};
+      const range = request.headers.get("range");
+      if (range) headers["range"] = range;
+      return await net.fetch(pathToFileURL(target).toString(), { headers });
     } catch {
       return net.fetch(
         pathToFileURL(path.join(WEB_DIR, "index.html")).toString()
