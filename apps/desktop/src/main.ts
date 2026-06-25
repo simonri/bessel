@@ -2,7 +2,7 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol } from "electron";
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as pty from "node-pty";
 
@@ -84,6 +84,12 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  win.webContents.on("did-finish-load", () => {
+    globalShortcut.register("CommandOrControl+Shift+I", () => {
+      win.webContents.toggleDevTools();
+    });
   });
 
   if (!app.isPackaged) {

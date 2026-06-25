@@ -33,6 +33,10 @@ jobs:
         run: pnpm --filter=@metron/desktop run compile
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
+          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
+          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
+          VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
         run: pnpm --filter=@metron/desktop exec electron-builder --publish always

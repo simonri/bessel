@@ -1,5 +1,6 @@
-import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
+import { Auth0Provider, useAuth0, type AppState } from "@auth0/auth0-react";
 import { useEffect, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { client } from "@/lib/client";
 
 function AuthInterceptor() {
@@ -32,12 +33,17 @@ const audience = import.meta.env.VITE_AUTH0_AUDIENCE as string;
 const redirectUri = import.meta.env.VITE_FRONTEND_URL as string;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+
   return (
     <Auth0Provider
       domain={domain}
       clientId={clientId}
       cacheLocation="localstorage"
       useRefreshTokens={true}
+      onRedirectCallback={(appState?: AppState) => {
+        navigate({ to: (appState?.returnTo as string) ?? "/" });
+      }}
       authorizationParams={{
         redirect_uri: redirectUri,
         audience,
