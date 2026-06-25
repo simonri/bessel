@@ -24,6 +24,14 @@ declare global {
         unstage: (path: string, files: string[]) => Promise<void>;
         commit: (path: string, message: string) => Promise<void>;
         push: (path: string) => Promise<void>;
+        log: (path: string, limit?: number) => Promise<Array<{
+          hash: string;
+          shortHash: string;
+          subject: string;
+          author: string;
+          date: string;
+          refs: string;
+        }>>;
       };
       terminal: {
         spawn: (sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) => Promise<void>;

@@ -7,6 +7,7 @@ from api.models.notification import Notification
 from api.notifications.repository import NotificationRepository
 from api.notifications.schemas import NotificationCreate, NotificationResponse, NotificationsListResponse
 from api.postgres import AsyncSession, get_db_session
+from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -18,9 +19,10 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 )
 async def list_notifications(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> NotificationsListResponse:
   repo = NotificationRepository.from_session(session)
-  notifications = await repo.list_recent()
+  notifications = await repo.list_recent(current_user.id)
   unread_count = sum(1 for n in notifications if n.read_at is None)
   return NotificationsListResponse(
     notifications=[NotificationResponse.model_validate(n) for n in notifications],
@@ -37,9 +39,10 @@ async def list_notifications(
 async def create_notification(
   body: NotificationCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> NotificationResponse:
   repo = NotificationRepository.from_session(session)
-  notification = Notification(title=body.title, body=body.body, kind=body.kind)
+  notification = Notification(title=body.title, body=body.body, kind=body.kind, user_id=current_user.id)
   session.add(notification)
   await session.flush()
   return NotificationResponse.model_validate(notification)
@@ -53,9 +56,10 @@ async def create_notification(
 async def mark_notification_read(
   notification_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> NotificationResponse:
   repo = NotificationRepository.from_session(session)
-  notification = await repo.mark_read(notification_id)
+  notification = await repo.mark_read(notification_id, current_user.id)
   if notification is None:
     raise HTTPException(status_code=404, detail="Notification not found.")
   return NotificationResponse.model_validate(notification)
@@ -68,7 +72,8 @@ async def mark_notification_read(
 )
 async def mark_all_notifications_read(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> dict:
   repo = NotificationRepository.from_session(session)
-  count = await repo.mark_all_read()
+  count = await repo.mark_all_read(current_user.id)
   return {"marked_read": count}

@@ -11,6 +11,7 @@ from api.places.repository import PlaceRepository
 from api.places.schemas import GooglePlaceSearchResponse, GooglePlaceSearchResult, PlaceCreate, PlaceListResponse, PlaceSchema, PlaceStatus, PlaceUpdate
 from api.postgres import AsyncSession, get_db_session
 from api.settings import settings
+from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query
 
 # Generic Google Places types that don't describe what the place actually is
@@ -84,12 +85,13 @@ sorting_getter = SortingGetter(PlaceSortProperty, default_sorting=["-created_at"
 )
 async def list_places(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[PlaceSortProperty]], Depends(sorting_getter)],
   status: PlaceStatus | None = Query(default=None, description="Filter by status."),
 ) -> PlaceListResponse:
   repo = PlaceRepository.from_session(session)
-  statement = repo.get_base_statement()
+  statement = repo.get_base_statement().where(Place.user_id == current_user.id)
 
   if status is not None:
     statement = statement.where(Place.status == status)
@@ -112,6 +114,7 @@ async def list_places(
   response_model=GooglePlaceSearchResponse,
 )
 async def search_google_places(
+  current_user: CurrentDBUser,
   query: str = Query(..., description="Search query for Google Places."),
 ) -> GooglePlaceSearchResponse:
   api_key = settings.GOOGLE_PLACES_API_KEY
@@ -167,9 +170,10 @@ async def search_google_places(
 async def create_place(
   body: PlaceCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
-  place = Place(**body.model_dump())
+  place = Place(**body.model_dump(), user_id=current_user.id)
   await repo.create(place, flush=True)
   return PlaceSchema.model_validate(place)
 
@@ -183,10 +187,11 @@ async def update_place(
   place_id: UUID,
   body: PlaceUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
   place = await repo.get_by_id(place_id)
-  if place is None:
+  if place is None or place.user_id != current_user.id:
     raise ResourceNotFound("Place not found")
 
   update_dict = body.model_dump(exclude_unset=True)
@@ -204,9 +209,10 @@ async def update_place(
 async def delete_place(
   place_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
   repo = PlaceRepository.from_session(session)
   place = await repo.get_by_id(place_id)
-  if place is None:
+  if place is None or place.user_id != current_user.id:
     raise ResourceNotFound("Place not found")
   await session.delete(place)

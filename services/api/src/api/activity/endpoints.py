@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.dialects.postgresql import insert
 
 from api.activity.repository import ActivityRepository
@@ -20,6 +20,8 @@ from api.activity.schemas import (
 )
 from api.models.activity_event import ActivityEvent
 from api.postgres import AsyncSession, get_db_session
+from api.settings import settings
+from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/activity", tags=["activity"])
 
@@ -28,11 +30,18 @@ router = APIRouter(prefix="/activity", tags=["activity"])
 _MAX_GAP_SECS = 600
 
 
+def _verify_internal_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
+  expected = settings.INTERNAL_API_KEY
+  if not expected or x_api_key != expected:
+    raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
 @router.post(
   "/batch",
   summary="Ingest Activity Events",
   response_model=ActivityBatchResponse,
   status_code=200,
+  dependencies=[Depends(_verify_internal_api_key)],
 )
 async def ingest_activity_batch(
   body: ActivityBatchRequest,
@@ -70,6 +79,7 @@ async def ingest_activity_batch(
 )
 async def list_activity_sources(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> ActivitySourcesResponse:
   repo = ActivityRepository.from_session(session)
   sources = await repo.get_sources()
@@ -83,6 +93,7 @@ async def list_activity_sources(
 )
 async def get_activity_summary(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of time window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of time window (Unix epoch seconds, exclusive).")],
   source: Annotated[str, Query(description="Machine source to query.")],
@@ -132,6 +143,7 @@ async def get_activity_summary(
 )
 async def get_daily_activity(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
   source: Annotated[str, Query(description="Machine source to query.")],
@@ -178,6 +190,7 @@ async def get_daily_activity(
 )
 async def get_intraday_activity(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],
   source: Annotated[str, Query(description="Machine source to query.")],

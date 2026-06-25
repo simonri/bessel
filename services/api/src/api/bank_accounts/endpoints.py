@@ -13,6 +13,7 @@ from api.exceptions import ResourceNotFound
 from api.models.bank_account import BankAccount
 from api.models.transaction import Transaction, TransactionDirection
 from api.postgres import AsyncSession, get_db_session
+from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/bank-accounts", tags=["bank-accounts"])
 
@@ -23,26 +24,6 @@ class BankAccountSortProperty(StrEnum):
 
 
 sorting_getter = SortingGetter(BankAccountSortProperty, default_sorting=["name"])
-
-
-def _balance_subquery(account_id_col):
-  """Subquery that sums transaction amounts (credits - debits) for a bank account."""
-  return (
-    select(
-      func.coalesce(
-        func.sum(
-          case(
-            (Transaction.direction == TransactionDirection.credit, Transaction.amount),
-            else_=-Transaction.amount,
-          )
-        ),
-        0,
-      )
-    )
-    .where(Transaction.bank_account_id == account_id_col)
-    .correlate(BankAccount)
-    .scalar_subquery()
-  )
 
 
 async def _get_balances(session: AsyncSession, account_ids: list[UUID]) -> dict[UUID, int]:
@@ -79,12 +60,13 @@ def _to_schema(account: BankAccount, balance: int) -> BankAccountSchema:
 )
 async def list_bank_accounts(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[BankAccountSortProperty]], Depends(sorting_getter)],
 ) -> BankAccountListResponse:
   """List all bank accounts."""
   repo = BankAccountRepository.from_session(session)
-  statement = repo.get_base_statement()
+  statement = repo.get_base_statement().where(BankAccount.user_id == current_user.id)
 
   for prop, desc in sorting:
     column = getattr(BankAccount, prop.value)
@@ -107,11 +89,12 @@ async def list_bank_accounts(
 async def get_bank_account(
   bank_account_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> BankAccountSchema:
   """Get a bank account by ID."""
   repo = BankAccountRepository.from_session(session)
   account = await repo.get_by_id(bank_account_id)
-  if account is None:
+  if account is None or account.user_id != current_user.id:
     raise ResourceNotFound("Bank account not found")
   balances = await _get_balances(session, [account.id])
   return _to_schema(account, balances.get(account.id, 0))
@@ -126,6 +109,7 @@ async def get_bank_account(
 async def create_bank_account(
   body: BankAccountCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> BankAccountSchema:
   """Create a new bank account."""
   repo = BankAccountRepository.from_session(session)
@@ -134,6 +118,7 @@ async def create_bank_account(
     currency=body.currency,
     base_balance=body.base_balance,
     subtype=body.subtype,
+    user_id=current_user.id,
   )
   await repo.create(account, flush=True)
   return _to_schema(account, 0)
@@ -148,11 +133,12 @@ async def update_bank_account(
   bank_account_id: UUID,
   body: BankAccountUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> BankAccountSchema:
   """Update a bank account."""
   repo = BankAccountRepository.from_session(session)
   account = await repo.get_by_id(bank_account_id)
-  if account is None:
+  if account is None or account.user_id != current_user.id:
     raise ResourceNotFound("Bank account not found")
 
   update_dict = body.model_dump(exclude_unset=True)
@@ -171,11 +157,12 @@ async def update_bank_account(
 async def delete_bank_account(
   bank_account_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
   """Delete a bank account and all its transactions."""
   repo = BankAccountRepository.from_session(session)
   account = await repo.get_by_id(bank_account_id)
-  if account is None:
+  if account is None or account.user_id != current_user.id:
     raise ResourceNotFound("Bank account not found")
   await session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id))
   await session.delete(account)

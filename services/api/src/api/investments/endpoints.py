@@ -29,6 +29,7 @@ from api.models.security_price import SecurityPrice
 from api.models.trade import Trade, TradeType
 from api.postgres import AsyncSession, get_db_session
 from api.redis import Redis, get_redis
+from api.users.dependencies import CurrentDBUser
 
 COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
 CRYPTO_PRICE_CACHE_TTL = 120
@@ -42,6 +43,7 @@ router = APIRouter(prefix="/investments", tags=["investments"])
 @router.get("/securities", summary="List Securities", response_model=SecurityListResponse)
 async def list_securities(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> SecurityListResponse:
   repo = SecurityRepository.from_session(session)
@@ -58,6 +60,7 @@ async def list_securities(
 async def create_security(
   body: SecurityCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> SecuritySchema:
   repo = SecurityRepository.from_session(session)
   security = Security(**body.model_dump())
@@ -70,6 +73,7 @@ async def update_security(
   security_id: UUID,
   body: SecurityUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> SecuritySchema:
   repo = SecurityRepository.from_session(session)
   security = await repo.get_by_id(security_id)
@@ -85,6 +89,7 @@ async def update_security(
 async def delete_security(
   security_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
   repo = SecurityRepository.from_session(session)
   security = await repo.get_by_id(security_id)
@@ -99,12 +104,13 @@ async def delete_security(
 @router.get("/trades", summary="List Trades", response_model=TradeListResponse)
 async def list_trades(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   security_id: UUID | None = Query(default=None),
   bank_account_id: UUID | None = Query(default=None),
 ) -> TradeListResponse:
   repo = TradeRepository.from_session(session)
-  statement = repo.get_base_statement().order_by(Trade.trade_date.desc(), Trade.created_at.desc())
+  statement = repo.get_base_statement().where(Trade.user_id == current_user.id).order_by(Trade.trade_date.desc(), Trade.created_at.desc())
   if security_id is not None:
     statement = statement.where(Trade.security_id == security_id)
   if bank_account_id is not None:
@@ -121,13 +127,13 @@ async def list_trades(
 async def create_trade(
   body: TradeCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TradeSchema:
-  # Verify security exists
   sec_repo = SecurityRepository.from_session(session)
   if await sec_repo.get_by_id(body.security_id) is None:
     raise ResourceNotFound("Security not found")
   repo = TradeRepository.from_session(session)
-  trade = Trade(**body.model_dump())
+  trade = Trade(**body.model_dump(), user_id=current_user.id)
   await repo.create(trade, flush=True)
   return TradeSchema.model_validate(trade)
 
@@ -137,10 +143,11 @@ async def update_trade(
   trade_id: UUID,
   body: TradeUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TradeSchema:
   repo = TradeRepository.from_session(session)
   trade = await repo.get_by_id(trade_id)
-  if trade is None:
+  if trade is None or trade.user_id != current_user.id:
     raise ResourceNotFound("Trade not found")
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:
@@ -152,10 +159,11 @@ async def update_trade(
 async def delete_trade(
   trade_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
   repo = TradeRepository.from_session(session)
   trade = await repo.get_by_id(trade_id)
-  if trade is None:
+  if trade is None or trade.user_id != current_user.id:
     raise ResourceNotFound("Trade not found")
   await session.delete(trade)
 
@@ -167,6 +175,7 @@ async def delete_trade(
 async def list_security_prices(
   security_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> SecurityPriceListResponse:
   repo = SecurityPriceRepository.from_session(session)
@@ -189,6 +198,7 @@ async def create_security_price(
   security_id: UUID,
   body: SecurityPriceCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> SecurityPriceSchema:
   sec_repo = SecurityRepository.from_session(session)
   if await sec_repo.get_by_id(security_id) is None:
@@ -205,6 +215,7 @@ async def create_security_price(
 @router.get("/holdings", summary="Get Holdings", response_model=HoldingsResponse)
 async def get_holdings(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> HoldingsResponse:
   # Aggregate trades per security: net quantity, total buy cost, total buy quantity
   qty_expr = case(
@@ -218,6 +229,7 @@ async def get_holdings(
       func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity), else_=0)).label("total_buy_qty"),
       func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity * Trade.price_per_unit), else_=0)).label("total_buy_cost"),
     )
+    .where(Trade.user_id == current_user.id)
     .group_by(Trade.security_id)
     .subquery()
   )
@@ -256,13 +268,7 @@ async def get_holdings(
     total_buy_qty = int(row.total_buy_qty)
     total_buy_cost = int(row.total_buy_cost)
 
-    # Average cost per unit (cents) = total_buy_cost / total_buy_qty
-    # total_buy_cost is already quantity_micro * price_cents, so:
-    # avg_cost = total_buy_cost / total_buy_qty  (cents, since micro cancels)
     avg_cost = total_buy_cost // total_buy_qty if total_buy_qty > 0 else 0
-
-    # Cost basis = net_qty * avg_cost (micro-units * cents)
-    # To get cents: cost_basis_cents = net_qty * avg_cost / 1_000_000
     cost_basis = (net_qty * avg_cost) // 1_000_000
 
     current_price = int(row.current_price) if row.current_price is not None else None
@@ -297,6 +303,7 @@ async def get_holdings(
 async def get_crypto_price(
   coin_id: str,
   redis: Annotated[Redis, Depends(get_redis)],
+  current_user: CurrentDBUser,
   currency: str = Query(default="usd"),
 ) -> CryptoPriceSchema:
   cache_key = f"crypto_price:{coin_id}:{currency}"

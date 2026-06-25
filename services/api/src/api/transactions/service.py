@@ -18,6 +18,7 @@ class TransactionService:
     file_format: str,
     raw_content: str,
     parsed: list[ParsedTransaction],
+    user_id: UUID | None = None,
   ) -> tuple[int, int]:
     """Full import pipeline: store raw → map & normalize → deduplicate.
 
@@ -59,6 +60,7 @@ class TransactionService:
         "description": tx.description or None,
         "bank_account_id": bank_account_id,
         "raw_id": raw_transactions[i].id,
+        "user_id": user_id,
       }
       for i, tx in enumerate(parsed)
     ]

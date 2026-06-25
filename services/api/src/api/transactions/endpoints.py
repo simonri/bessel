@@ -29,6 +29,7 @@ from api.transactions.schemas import (
   TransactionUpdateResponse,
 )
 from api.transactions.service import transaction_service
+from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query, UploadFile
 from sqlalchemy import delete, extract, func, or_, select, update
 
@@ -52,6 +53,7 @@ sorting_getter = SortingGetter(TransactionSortProperty, default_sorting=["-trans
 )
 async def list_transactions(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TransactionSortProperty]], Depends(sorting_getter)],
   bank_account_id: Annotated[list[UUID] | None, Query(description="Filter by bank account ID(s).")] = None,
@@ -67,7 +69,7 @@ async def list_transactions(
   from api.transactions.repository import TransactionRepository
 
   repo = TransactionRepository.from_session(session)
-  statement = repo.get_base_statement()
+  statement = repo.get_base_statement().where(Transaction.user_id == current_user.id)
 
   if bank_account_id:
     statement = statement.where(Transaction.bank_account_id.in_(bank_account_id))
@@ -110,6 +112,7 @@ async def import_transactions(
   bank: Annotated[str, Query(description="Bank identifier, e.g. 'marginalen'.")],
   bank_account_id: Annotated[UUID, Query(description="Bank account to attach transactions to.")],
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> ImportResponse:
   """Import transactions from a bank export (CSV or XLSX).
 
@@ -123,11 +126,9 @@ async def import_transactions(
   content = await file.read()
 
   if profile.file_format == "xlsx":
-    # Parse Excel file
     parsed = await parse_xlsx(content, profile)
     raw_content = f"[xlsx binary, {len(content)} bytes]"
   else:
-    # Parse CSV file
     try:
       text = content.decode("utf-8")
     except UnicodeDecodeError:
@@ -135,7 +136,6 @@ async def import_transactions(
     parsed = await parse_csv(text, profile)
     raw_content = text
 
-  # Store raw, map & normalize, deduplicate
   created, skipped = await transaction_service.import_transactions(
     session,
     bank_account_id=bank_account_id,
@@ -143,6 +143,7 @@ async def import_transactions(
     file_format=profile.file_format,
     raw_content=raw_content,
     parsed=parsed,
+    user_id=current_user.id,
   )
 
   return ImportResponse(created=created, skipped=skipped)
@@ -157,13 +158,14 @@ async def update_transaction(
   transaction_id: UUID,
   body: TransactionUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TransactionUpdateResponse:
   """Update a transaction."""
   from api.transactions.repository import TransactionRepository
 
   repo = TransactionRepository.from_session(session)
   transaction = await repo.get_by_id(transaction_id)
-  if transaction is None:
+  if transaction is None or transaction.user_id != current_user.id:
     raise ResourceNotFound("Transaction not found")
 
   update_dict = body.model_dump(exclude_unset=True)
@@ -177,6 +179,7 @@ async def update_transaction(
       select(func.count())
       .select_from(Transaction)
       .where(
+        Transaction.user_id == current_user.id,
         Transaction.description == transaction.description,
         Transaction.id != transaction.id,
       )
@@ -203,9 +206,10 @@ async def update_transaction(
 async def bulk_update_transactions(
   body: BulkUpdateRequest,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> BulkUpdateResponse:
   """Update category for a list of transactions by ID."""
-  stmt = update(Transaction).where(Transaction.id.in_(body.ids)).values(category_id=body.category_id)
+  stmt = update(Transaction).where(Transaction.id.in_(body.ids)).where(Transaction.user_id == current_user.id).values(category_id=body.category_id)
   result = await session.execute(stmt)
   return BulkUpdateResponse(updated=result.rowcount)
 
@@ -218,9 +222,15 @@ async def bulk_update_transactions(
 async def categorize_by_description(
   body: BulkCategorizeRequest,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> BulkCategorizeResponse:
   """Set category for all transactions matching the given description."""
-  stmt = update(Transaction).where(Transaction.description == body.description).values(category_id=body.category_id)
+  stmt = (
+    update(Transaction)
+    .where(Transaction.description == body.description)
+    .where(Transaction.user_id == current_user.id)
+    .values(category_id=body.category_id)
+  )
   result = await session.execute(stmt)
   return BulkCategorizeResponse(updated=result.rowcount)
 
@@ -233,9 +243,10 @@ async def categorize_by_description(
 async def delete_transactions(
   body: BulkDeleteRequest,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
   """Delete transactions by IDs."""
-  result = await session.execute(delete(Transaction).where(Transaction.id.in_(body.ids)))
+  result = await session.execute(delete(Transaction).where(Transaction.id.in_(body.ids)).where(Transaction.user_id == current_user.id))
   if result.rowcount == 0:
     raise ResourceNotFound("No transactions found")
 
@@ -247,6 +258,7 @@ async def delete_transactions(
 )
 async def spending_by_category(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   year: int = Query(description="Year to query."),
   month: int = Query(description="Month to query (1-12)."),
 ) -> MonthlySpendingResponse:
@@ -260,6 +272,7 @@ async def spending_by_category(
     )
     .join(Category, Transaction.category_id == Category.id)
     .where(
+      Transaction.user_id == current_user.id,
       Transaction.direction == "debit",
       extract("year", Transaction.transaction_date) == year,
       extract("month", Transaction.transaction_date) == month,
@@ -287,6 +300,7 @@ async def spending_by_category(
 )
 async def monthly_flow(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   months: int = Query(6, description="Number of months to look back (including current)."),
 ) -> MonthlyFlowResponse:
   """Return income and expenses aggregated per month."""
@@ -302,6 +316,7 @@ async def monthly_flow(
       Transaction.direction,
       func.sum(Transaction.amount).label("total"),
     )
+    .where(Transaction.user_id == current_user.id)
     .where(Transaction.transaction_date >= start)
     .group_by("yr", "mo", Transaction.direction)
     .order_by("yr", "mo")

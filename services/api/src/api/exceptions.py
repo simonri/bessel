@@ -59,6 +59,20 @@ class ConflictError(MetronError):
     super().__init__(message, status_code)
 
 
+class UnauthorizedError(MetronError):
+  """Authentication required or token invalid."""
+
+  def __init__(self, message: str = "Unauthorized", status_code: int = 401) -> None:
+    super().__init__(message, status_code, headers={"WWW-Authenticate": "Bearer"})
+
+
+class ForbiddenError(MetronError):
+  """Access to this resource is forbidden."""
+
+  def __init__(self, message: str = "Forbidden", status_code: int = 403) -> None:
+    super().__init__(message, status_code)
+
+
 class ServiceUnavailableError(MetronError):
   """External service is unavailable."""
 

@@ -34,3 +34,5 @@ class Trade(RecordModel):
   @declared_attr
   def bank_account(cls) -> Mapped["BankAccount"]:
     return relationship("BankAccount", lazy="raise")
+
+  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)

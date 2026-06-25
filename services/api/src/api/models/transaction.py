@@ -45,3 +45,5 @@ class Transaction(RecordModel):
   @declared_attr
   def raw_transaction(cls) -> Mapped["RawTransaction | None"]:
     return relationship("RawTransaction", lazy="raise")
+
+  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)

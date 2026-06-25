@@ -1,6 +1,7 @@
 from datetime import date
+from uuid import UUID
 
-from sqlalchemy import Date, Float, Integer, String, Text
+from sqlalchemy import Date, Float, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,3 +27,4 @@ class Place(RecordModel):
   photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
   website: Mapped[str | None] = mapped_column(String(500), nullable=True)
   phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)

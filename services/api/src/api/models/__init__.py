@@ -1,4 +1,5 @@
 from .activity_event import ActivityEvent
+from .user import User
 from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
@@ -20,6 +21,7 @@ from .weather_cache import WeatherCache
 
 __all__ = [
   "ActivityEvent",
+  "User",
   "BankAccount",
   "BankProfile",
   "Category",

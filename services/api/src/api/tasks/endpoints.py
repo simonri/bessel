@@ -17,6 +17,7 @@ from api.projects.repository import ProjectRepository
 from api.tasks.recurrence import compute_next_due_date
 from api.tasks.repository import TaskRepository
 from api.tasks.schemas import TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
+from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -33,14 +34,22 @@ class TaskSortProperty(StrEnum):
 sorting_getter = SortingGetter(TaskSortProperty, default_sorting=["-created_at"])
 
 
-async def _resolve_project_id(session: AsyncSession, name: str | None) -> UUID | None:
+async def _resolve_project(session: AsyncSession, name: str | None, user_id: UUID) -> Project | None:
   if name is None:
     return None
   repo = ProjectRepository.from_session(session)
-  project = await repo.get_by_name(name)
+  project = await repo.get_by_name(name, user_id=user_id)
   if project is None:
-    project = await repo.create(Project(name=name), flush=True)
-  return project.id
+    project = await repo.create(Project(name=name, user_id=user_id), flush=True)
+  return project
+
+
+async def _get_task_or_404(session: AsyncSession, task_id: UUID, user_id: UUID) -> Task:
+  repo = TaskRepository.from_session(session)
+  task = await repo.get_by_id(task_id)
+  if task is None or task.user_id != user_id:
+    raise ResourceNotFound("Task not found")
+  return task
 
 
 @router.get(
@@ -50,6 +59,7 @@ async def _resolve_project_id(session: AsyncSession, name: str | None) -> UUID |
 )
 async def list_tasks(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TaskSortProperty]], Depends(sorting_getter)],
   status: TaskStatus | None = Query(default=None, description="Filter by status."),
@@ -61,14 +71,16 @@ async def list_tasks(
   completed_before: int | None = Query(default=None, description="Filter tasks completed before this Unix timestamp (exclusive)."),
 ) -> TaskListResponse:
   repo = TaskRepository.from_session(session)
-  statement = repo.get_base_statement()
+  statement = repo.get_base_statement().where(Task.user_id == current_user.id)
 
   if status is not None:
     statement = statement.where(Task.status == status)
   if priority is not None:
     statement = statement.where(Task.priority == priority)
   if project is not None:
-    project_subq = select(Project.id).where(Project.name == project).where(Project.deleted_at.is_(None)).scalar_subquery()
+    project_subq = (
+      select(Project.id).where(Project.name == project).where(Project.deleted_at.is_(None)).where(Project.user_id == current_user.id).scalar_subquery()
+    )
     statement = statement.where(Task.project_id == project_subq)
   if area is not None:
     statement = statement.where(Task.area == area)
@@ -100,15 +112,18 @@ async def list_tasks(
 async def create_task(
   body: TaskCreate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
   task_data = body.model_dump()
-  project_name = task_data.pop("project", None)
-  task_data["project_id"] = await _resolve_project_id(session, project_name)
+  project = await _resolve_project(session, task_data.pop("project", None), current_user.id)
+  task_data["project_id"] = project.id if project else None
+  task_data["user_id"] = current_user.id
   if task_data.get("position") is None:
     max_pos = await repo.get_max_position()
     task_data["position"] = (max_pos or 0) + 1000
   task = Task(**task_data)
+  task.project_obj = project
   await repo.create(task, flush=True)
   return TaskSchema.model_validate(task)
 
@@ -122,16 +137,16 @@ async def update_task(
   task_id: UUID,
   body: TaskUpdate,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_by_id(task_id)
-  if task is None:
-    raise ResourceNotFound("Task not found")
+  task = await _get_task_or_404(session, task_id, current_user.id)
 
   update_dict = body.model_dump(exclude_unset=True)
   if "project" in update_dict:
-    project_name = update_dict.pop("project")
-    update_dict["project_id"] = await _resolve_project_id(session, project_name)
+    project = await _resolve_project(session, update_dict.pop("project"), current_user.id)
+    update_dict["project_id"] = project.id if project else None
+    task.project_obj = project
   if update_dict:
     await repo.update(task, update_dict=update_dict)
 
@@ -146,11 +161,9 @@ async def update_task(
 async def delete_task(
   task_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
-  repo = TaskRepository.from_session(session)
-  task = await repo.get_by_id(task_id)
-  if task is None:
-    raise ResourceNotFound("Task not found")
+  task = await _get_task_or_404(session, task_id, current_user.id)
   await session.delete(task)
 
 
@@ -162,11 +175,10 @@ async def delete_task(
 async def complete_task(
   task_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TaskCompleteResponse:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_by_id(task_id)
-  if task is None:
-    raise ResourceNotFound("Task not found")
+  task = await _get_task_or_404(session, task_id, current_user.id)
 
   # Mark as done
   await repo.update(task, update_dict={"status": "done", "completed_at": utc_now()})
@@ -197,7 +209,9 @@ async def complete_task(
       rrule_day_of_week=task.rrule_day_of_week,
       rrule_day_of_month=task.rrule_day_of_month,
       parent_task_id=task.id,
+      user_id=current_user.id,
     )
+    next_task.project_obj = task.project_obj
     await repo.create(next_task, flush=True)
     next_task_schema = TaskSchema.model_validate(next_task)
 
@@ -215,12 +229,10 @@ async def complete_task(
 async def reopen_task(
   task_id: UUID,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_by_id(task_id)
-  if task is None:
-    raise ResourceNotFound("Task not found")
-
+  task = await _get_task_or_404(session, task_id, current_user.id)
   await repo.update(task, update_dict={"status": "todo", "completed_at": None})
   return TaskSchema.model_validate(task)
 
@@ -233,11 +245,12 @@ async def reopen_task(
 async def reorder_tasks(
   body: list[TaskReorderItem],
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> None:
   repo = TaskRepository.from_session(session)
   for item in body:
     task = await repo.get_by_id(item.id)
-    if task is None:
+    if task is None or task.user_id != current_user.id:
       continue
     update: dict = {"position": item.position}
     if item.status is not None:
@@ -252,6 +265,9 @@ async def reorder_tasks(
 )
 async def list_areas(
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> list[str]:
-  result = await session.execute(select(Task.area).where(Task.area.is_not(None)).group_by(Task.area).order_by(func.count().desc()))
+  result = await session.execute(
+    select(Task.area).where(Task.area.is_not(None)).where(Task.user_id == current_user.id).group_by(Task.area).order_by(func.count().desc())
+  )
   return [row[0] for row in result.all()]

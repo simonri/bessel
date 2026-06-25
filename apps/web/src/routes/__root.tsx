@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@metron/ui/components/tooltip";
 import { ReactQueryProvider } from "@/providers/react-query";
+import { AuthProvider } from "@/providers/auth";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 import appCss from "../styles.css?url";
@@ -62,11 +63,13 @@ function RootComponent() {
       </head>
       <body className="antialiased">
         <ErrorBoundary>
-          <ReactQueryProvider>
-            <TooltipProvider>
-              <Outlet />
-            </TooltipProvider>
-          </ReactQueryProvider>
+          <AuthProvider>
+            <ReactQueryProvider>
+              <TooltipProvider>
+                <Outlet />
+              </TooltipProvider>
+            </ReactQueryProvider>
+          </AuthProvider>
         </ErrorBoundary>
         <Toaster theme="dark" richColors closeButton />
         <Scripts />

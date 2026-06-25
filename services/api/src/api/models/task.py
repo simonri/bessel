@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from uuid import UUID
 
+from uuid import UUID
+
 from sqlalchemy import TIMESTAMP, Boolean, Date, Float, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,6 +37,8 @@ class Task(RecordModel):
 
   # Chain linking for recurring instances
   parent_task_id: Mapped[str | None] = mapped_column(Uuid, ForeignKey("tasks.id"), nullable=True)
+
+  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
 
   @property
   def project(self) -> str | None:

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("electron", {
     unstage: (path: string, files: string[]) => ipcRenderer.invoke("git:unstage", path, files),
     commit: (path: string, message: string) => ipcRenderer.invoke("git:commit", path, message),
     push: (path: string) => ipcRenderer.invoke("git:push", path),
+    log: (path: string, limit?: number) => ipcRenderer.invoke("git:log", path, limit),
   },
   terminal: {
     spawn: (sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) =>

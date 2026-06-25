@@ -179,6 +179,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@auth0/auth0-react':
+        specifier: ^2.19.0
+        version: 2.19.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@base-ui/react':
         specifier: ^1.4.1
         version: 1.4.1(@date-fns/tz@1.4.1)(@types/react@19.2.14)(date-fns@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -607,6 +610,18 @@ packages:
 
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
+
+  '@auth0/auth0-auth-js@1.9.1':
+    resolution: {integrity: sha512-YY8/We7NpJyN8aDlYZI0ENRFlPsuFQ5NGETI4dkJa+BEwCibNTRlM1E9O9qc77K4TpOANZsmaADSMde2If+Alg==}
+
+  '@auth0/auth0-react@2.19.0':
+    resolution: {integrity: sha512-w7AjJyEvnKynOBUf7leDncFpSMxoSO8LMssOQM1HQRBwALuESlAcnbs8ztR9abNC0Okgk9CyGH/oF4sqMDaF5w==}
+    peerDependencies:
+      react: 19.2.6
+      react-dom: 19.2.6
+
+  '@auth0/auth0-spa-js@2.21.2':
+    resolution: {integrity: sha512-CkIzlTJeae0LbYluXgNRPs7X8+Yd7W8ya/d1Cq/AGZ0d5/gfWwgDdFv9tCQR59KhRqdmvESSJUaIQjcjD0B1aA==}
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -4930,6 +4945,9 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
+  browser-tabs-lock@1.3.0:
+    resolution: {integrity: sha512-g6nHaobTiT0eMZ7jh16YpD2kcjAp+PInbiVq3M1x6KKaEIVhT4v9oURNIpZLOZ3LQbQ3XYfNhMAb/9hzNLIWrw==}
+
   browserslist@4.28.1:
     resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -5564,6 +5582,9 @@ packages:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
 
+  dpop@2.1.1:
+    resolution: {integrity: sha512-J0Of2JTiM4h5si0tlbPQ/lkqfZ5wAEVkKYBhkwyyANnPJfWH4VsR5uIkZ+T+OSPIwDYUg1fbd5Mmodd25HjY1w==}
+
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -5685,6 +5706,9 @@ packages:
 
   error-stack-parser@2.1.4:
     resolution: {integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==}
+
+  es-cookie@1.3.2:
+    resolution: {integrity: sha512-UTlYYhXGLOy05P/vKVT2Ui7WtC7NiRzGtJyAKKn32g5Gvcjn7KAClLPWlipCtxIus934dFg9o9jXiBL0nP+t9Q==}
 
   es-define-property@1.0.1:
     resolution: {integrity: sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==}
@@ -6622,6 +6646,9 @@ packages:
   jose@6.1.3:
     resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
 
+  jose@6.2.3:
+    resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
+
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -7478,6 +7505,9 @@ packages:
       react-router-dom:
         optional: true
 
+  oauth4webapi@3.8.6:
+    resolution: {integrity: sha512-iwemM91xz8nryHti2yTmg5fhyEMVOkOXwHNqbvcATjyajb5oQxCQzrNOA6uElRHuMhQQTKUyFKV9y/CNyg25BQ==}
+
   ob1@0.83.7:
     resolution: {integrity: sha512-9M5kpuOLyTPogMtZiQUIxdAZxl7Dxs6tVBbJErSumsqGMuhVSoUbkfeZ3XNPpLpwBBtqY5QDUzGwggLHX3slQg==}
     engines: {node: '>=20.19.4'}
@@ -7552,6 +7582,9 @@ packages:
   open@8.4.2:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
+
+  openid-client@6.8.4:
+    resolution: {integrity: sha512-QSw0BA08piujetEwfZsHoTrDpMEha7GDZDicQqVwX4u0ChCjefvjDB++TZ8BTg76UpwhzIQgdvvfgfl3HpCSAw==}
 
   ora@3.4.0:
     resolution: {integrity: sha512-eNwHudNbO1folBP3JsZ19v9azXWtQZjICdr3Q0TDPIaeBQ3mXLrh54wM+er0+hSp+dWKf+Z8KM58CYzEyIYxYg==}
@@ -9262,6 +9295,24 @@ snapshots:
   '@asamuzakjp/generational-cache@1.0.1': {}
 
   '@asamuzakjp/nwsapi@2.3.9': {}
+
+  '@auth0/auth0-auth-js@1.9.1':
+    dependencies:
+      jose: 6.1.3
+      openid-client: 6.8.4
+
+  '@auth0/auth0-react@2.19.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@auth0/auth0-spa-js': 2.21.2
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+
+  '@auth0/auth0-spa-js@2.21.2':
+    dependencies:
+      '@auth0/auth0-auth-js': 1.9.1
+      browser-tabs-lock: 1.3.0
+      dpop: 2.1.1
+      es-cookie: 1.3.2
 
   '@babel/code-frame@7.27.1':
     dependencies:
@@ -13612,6 +13663,10 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
+  browser-tabs-lock@1.3.0:
+    dependencies:
+      lodash: 4.18.1
+
   browserslist@4.28.1:
     dependencies:
       baseline-browser-mapping: 2.9.14
@@ -14218,6 +14273,8 @@ snapshots:
 
   dotenv@17.4.2: {}
 
+  dpop@2.1.1: {}
+
   dunder-proto@1.0.1:
     dependencies:
       call-bind-apply-helpers: 1.0.2
@@ -14377,6 +14434,8 @@ snapshots:
   error-stack-parser@2.1.4:
     dependencies:
       stackframe: 1.3.4
+
+  es-cookie@1.3.2: {}
 
   es-define-property@1.0.1: {}
 
@@ -15430,6 +15489,8 @@ snapshots:
       '@standard-schema/spec': 1.1.0
 
   jose@6.1.3: {}
+
+  jose@6.2.3: {}
 
   js-tokens@4.0.0: {}
 
@@ -16652,6 +16713,8 @@ snapshots:
     optionalDependencies:
       '@tanstack/react-router': 1.169.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
 
+  oauth4webapi@3.8.6: {}
+
   ob1@0.83.7:
     dependencies:
       flow-enums-runtime: 0.0.6
@@ -16724,6 +16787,11 @@ snapshots:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
+
+  openid-client@6.8.4:
+    dependencies:
+      jose: 6.2.3
+      oauth4webapi: 3.8.6
 
   ora@3.4.0:
     dependencies:

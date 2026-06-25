@@ -48,6 +48,15 @@ interface GitStatusData {
   untracked: GitFileEntry[];
 }
 
+interface GitCommit {
+  hash: string;
+  shortHash: string;
+  subject: string;
+  author: string;
+  date: string;
+  refs: string;
+}
+
 interface SelectedFile {
   file: GitFileEntry;
   staged: boolean;
@@ -446,6 +455,58 @@ function SectionHeader({
   );
 }
 
+// ── CommitItem ─────────────────────────────────────────────────────────────────
+
+function shortenRelDate(rel: string): string {
+  return rel
+    .replace(/(\d+) seconds? ago/, "$1s ago")
+    .replace(/(\d+) minutes? ago/, "$1m ago")
+    .replace(/(\d+) hours? ago/, "$1h ago")
+    .replace(/(\d+) days? ago/, "$1d ago")
+    .replace(/(\d+) weeks? ago/, "$1w ago")
+    .replace(/(\d+) months? ago/, "$1mo ago")
+    .replace(/(\d+) years? ago/, "$1y ago");
+}
+
+function CommitItem({ commit }: { commit: GitCommit }) {
+  const refs = commit.refs ? commit.refs.split(", ").filter(Boolean) : [];
+
+  return (
+    <div className="cursor-default px-3 py-1.5 hover:bg-white/[0.04]">
+      <div className="flex items-baseline gap-2">
+        <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/25">{commit.shortHash}</span>
+        <span className="flex-1 truncate text-xs leading-tight text-white/70">{commit.subject}</span>
+        <span className="shrink-0 whitespace-nowrap text-[10px] text-white/20">{shortenRelDate(commit.date)}</span>
+      </div>
+      {refs.length > 0 && (
+        <div className="mt-0.5 flex flex-wrap gap-1 pl-[3.25rem]">
+          {refs.map((ref) => {
+            const isHead = ref.startsWith("HEAD");
+            const isTag = ref.startsWith("tag:");
+            const isRemote = !isHead && !isTag && ref.includes("/");
+            return (
+              <span
+                key={ref}
+                className={`inline-block rounded px-1 py-0 text-[9px] font-medium leading-4 ${
+                  isHead
+                    ? "bg-amber-500/20 text-amber-400/80"
+                    : isRemote
+                      ? "bg-sky-500/15 text-sky-400/70"
+                      : isTag
+                        ? "bg-purple-500/15 text-purple-400/70"
+                        : "bg-white/10 text-white/50"
+                }`}
+              >
+                {isTag ? ref.slice(5) : ref}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Error extraction ───────────────────────────────────────────────────────────
 
 function extractErrorMessage(error: unknown): string {
@@ -471,6 +532,7 @@ export function GitStatus() {
   const [error, setError] = useState<string | null>(null);
   const [changesOpen, setChangesOpen] = useState(true);
   const [stagedOpen, setStagedOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(215);
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
@@ -494,7 +556,9 @@ export function GitStatus() {
   }, [settings.claudeProjects, selectedProject]);
 
   const statusQueryKey = ["git:status", selectedProject?.path];
+  const logQueryKey = ["git:log", selectedProject?.path];
   const invalidateStatus = () => queryClient.invalidateQueries({ queryKey: statusQueryKey });
+  const invalidateLog = () => queryClient.invalidateQueries({ queryKey: logQueryKey });
 
   const statusQuery = useQuery<GitStatusData>({
     queryKey: statusQueryKey,
@@ -515,6 +579,14 @@ export function GitStatus() {
     enabled: !!selectedProject && !!selectedFile,
   });
 
+  const logQuery = useQuery<GitCommit[]>({
+    queryKey: logQueryKey,
+    queryFn: () => window.electron!.git.log(selectedProject!.path),
+    enabled: !!selectedProject && historyOpen,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
+  });
+
   const stageMutation = useMutation({
     mutationFn: (files: string[]) => window.electron!.git.stage(selectedProject!.path, files),
     onSuccess: () => { setError(null); invalidateStatus(); },
@@ -529,13 +601,13 @@ export function GitStatus() {
 
   const commitMutation = useMutation({
     mutationFn: (message: string) => window.electron!.git.commit(selectedProject!.path, message),
-    onSuccess: () => { setCommitMessage(""); setError(null); setSelectedFile(null); invalidateStatus(); },
+    onSuccess: () => { setCommitMessage(""); setError(null); setSelectedFile(null); invalidateStatus(); invalidateLog(); },
     onError: (e) => setError(extractErrorMessage(e)),
   });
 
   const pushMutation = useMutation({
     mutationFn: () => window.electron!.git.push(selectedProject!.path),
-    onSuccess: () => { setError(null); invalidateStatus(); },
+    onSuccess: () => { setError(null); invalidateStatus(); invalidateLog(); },
     onError: (e) => setError(extractErrorMessage(e)),
   });
 
@@ -700,6 +772,26 @@ export function GitStatus() {
                         onStage={() => stageMutation.mutate([file.path])}
                       />
                     ))}
+                  </>
+                )}
+
+                <SectionHeader
+                  label="History"
+                  count={0}
+                  open={historyOpen}
+                  onToggle={() => setHistoryOpen((o) => !o)}
+                />
+                {historyOpen && (
+                  <>
+                    {logQuery.isLoading ? (
+                      <div className="flex h-12 items-center justify-center">
+                        <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />
+                      </div>
+                    ) : (
+                      logQuery.data?.map((commit) => (
+                        <CommitItem key={commit.hash} commit={commit} />
+                      ))
+                    )}
                   </>
                 )}
               </>

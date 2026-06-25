@@ -219,6 +219,18 @@ app.whenReady().then(() => {
   ipcMain.handle("git:push", (_, repoPath: string) =>
     gitRun(["push"], repoPath));
 
+  ipcMain.handle("git:log", async (_, repoPath: string, limit: number = 30) => {
+    const SEP = "%x1f";
+    const out = await gitRun(
+      ["log", `--format=%H${SEP}%h${SEP}%s${SEP}%an${SEP}%ar${SEP}%D`, `-${limit}`],
+      repoPath,
+    );
+    return out.trim().split("\n").filter(Boolean).map((line) => {
+      const [hash, shortHash, subject, author, date, refs] = line.split("\x1f");
+      return { hash, shortHash, subject: subject ?? "", author: author ?? "", date: date ?? "", refs: refs?.trim() ?? "" };
+    });
+  });
+
   protocol.handle("app", async (request) => {
     const { pathname } = new URL(request.url);
     const target =
