@@ -110,7 +110,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
       fontSize: 13,
       lineHeight: 1.0,
       cursorBlink: true,
-      scrollback: 5000,
+      scrollback: 10_000,
       allowProposedApi: true,
     });
 
