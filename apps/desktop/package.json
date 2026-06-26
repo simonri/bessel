@@ -1,6 +1,6 @@
 {
   "name": "@metron/desktop",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Metron personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
@@ -57,7 +57,14 @@
       "category": "Utility"
     },
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["arm64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
       "icon": "assets/icon.png",
       "identity": null
     },
