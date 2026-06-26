@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, GitBranch, Minus, Plus, RefreshCw } from "lucide-react";
 import hljs from "highlight.js/lib/core";
@@ -528,6 +528,7 @@ export function GitStatus() {
   );
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [commitMessage, setCommitMessage] = useState("");
+  const commitTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [changesOpen, setChangesOpen] = useState(true);
   const [stagedOpen, setStagedOpen] = useState(true);
@@ -553,6 +554,13 @@ export function GitStatus() {
       setSelectedProject(settings.claudeProjects[0]);
     }
   }, [settings.claudeProjects, selectedProject]);
+
+  useEffect(() => {
+    const el = commitTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [commitMessage]);
 
   const statusQueryKey = ["git:status", selectedProject?.path];
   const logQueryKey = ["git:log", selectedProject?.path];
@@ -684,11 +692,12 @@ export function GitStatus() {
               <p className="truncate text-[10px] text-red-400/80" title={error}>{error}</p>
             )}
             <textarea
+              ref={commitTextareaRef}
               value={commitMessage}
               onChange={(e) => setCommitMessage(e.target.value)}
-              placeholder={branch ? `Message (⌘↵ to commit on '${branch}')` : "Message (⌘↵ to commit)"}
-              rows={3}
-              className="w-full resize-none rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs text-white/80 placeholder:text-white/20 outline-none transition-colors focus:border-white/20"
+              placeholder="Message"
+              rows={1}
+              className="w-full resize-none overflow-hidden rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs text-white/80 placeholder:text-white/20 outline-none transition-colors focus:border-white/20"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                   e.preventDefault();
