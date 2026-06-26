@@ -154,7 +154,7 @@ function CryptoPairTicker({ pair }: { pair: string }) {
 
   return (
     <div className="flex items-center gap-1">
-      <span className="font-mono text-[10px] font-medium tracking-wider text-orange-400/75">{pair}</span>
+      <span className="font-mono text-[10px] font-medium tracking-wider text-primary-400/75">{pair}</span>
       <span className="text-white/15">·</span>
       <span className="font-mono text-[11px] font-medium tabular-nums text-white/75">
         {formatted ?? "—"}
@@ -267,7 +267,7 @@ function ProjectsDropdown() {
                     onChange={(e) => setEditName(e.target.value)}
                     placeholder="Name"
                     autoFocus
-                    className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                    className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                   />
                   <div className="flex gap-1.5">
                     <input
@@ -275,7 +275,7 @@ function ProjectsDropdown() {
                       value={editPath}
                       onChange={(e) => setEditPath(e.target.value)}
                       placeholder="Path"
-                      className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                      className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                     />
                     <button
                       onClick={() => browse((path, name) => { setEditPath(path); if (!editName) setEditName(name); }, editName)}
@@ -294,7 +294,7 @@ function ProjectsDropdown() {
                     <button
                       onClick={saveEdit}
                       disabled={!editName.trim() || !editPath.trim()}
-                      className="rounded bg-orange-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-orange-400 disabled:opacity-40"
+                      className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
                     >
                       Save
                     </button>
@@ -333,7 +333,7 @@ function ProjectsDropdown() {
                 onChange={(e) => setAddName(e.target.value)}
                 placeholder="Name"
                 autoFocus
-                className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
               />
               <div className="flex gap-1.5">
                 <input
@@ -341,7 +341,7 @@ function ProjectsDropdown() {
                   value={addPath}
                   onChange={(e) => setAddPath(e.target.value)}
                   placeholder="Path"
-                  className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-orange-500/40"
+                  className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                 />
                 <button
                   onClick={() => browse((path, name) => { setAddPath(path); if (!addName) setAddName(name); }, addName)}
@@ -360,7 +360,7 @@ function ProjectsDropdown() {
                 <button
                   onClick={saveAdd}
                   disabled={!addName.trim() || !addPath.trim()}
-                  className="rounded bg-orange-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-orange-400 disabled:opacity-40"
+                  className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
                 >
                   Add
                 </button>
@@ -369,7 +369,7 @@ function ProjectsDropdown() {
           ) : (
             <button
               onClick={() => { setShowAdd(true); setEditingId(null); }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-orange-400 transition-colors hover:bg-white/[0.04] hover:text-orange-300"
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-primary-400 transition-colors hover:bg-white/[0.04] hover:text-primary-300"
             >
               <Plus className="size-3.5" />
               Add project

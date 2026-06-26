@@ -817,7 +817,7 @@ export function GitStatus() {
         {/* ── Resize handle ── */}
         <div
           onMouseDown={handleResizeMouseDown}
-          className="w-1 shrink-0 cursor-col-resize bg-white/[0.05] transition-colors hover:bg-orange-500/40 active:bg-orange-500/60"
+          className="w-1 shrink-0 cursor-col-resize bg-white/[0.05] transition-colors hover:bg-primary-500/40 active:bg-primary-500/60"
         />
 
         {/* ── Right panel: diff viewer ── */}

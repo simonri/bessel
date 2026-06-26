@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, X, Palette, LayoutDashboard, Settings, Info, Cpu } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { type ActivityMapping, type WallpaperKey, useSettings } from "@/hooks/use-settings";
+import { type ActivityMapping, type ThemeKey, type WallpaperKey, useSettings } from "@/hooks/use-settings";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
@@ -50,7 +50,7 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
                     onClick={() => setPage(key)}
                     className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-all ${
                       active
-                        ? "bg-orange-500 text-white shadow-lg shadow-orange-900/30"
+                        ? "bg-primary-500 text-white shadow-lg shadow-primary-900/30"
                         : "text-white/40 hover:bg-white/5 hover:text-white/75"
                     }`}
                   >
@@ -89,7 +89,12 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
 }
 
 function AppearancePage() {
-  return <WallpaperPage />;
+  return (
+    <div className="space-y-8">
+      <ThemePage />
+      <WallpaperPage />
+    </div>
+  );
 }
 
 function DashboardPage() {
@@ -106,6 +111,44 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p className="mb-3 text-[10px] font-semibold tracking-widest text-white/30">
       {children}
     </p>
+  );
+}
+
+const THEME_OPTIONS: { key: ThemeKey; label: string; hue: number }[] = [
+  { key: "orange", label: "Orange", hue: 40 },
+  { key: "green", label: "Green", hue: 145 },
+];
+
+function ThemePage() {
+  const { settings, update } = useSettings();
+  const selected = settings.theme;
+
+  return (
+    <div>
+      <SectionLabel>Accent color</SectionLabel>
+      <div className="flex gap-2">
+        {THEME_OPTIONS.map(({ key, label, hue }) => {
+          const isSelected = selected === key;
+          return (
+            <button
+              key={key}
+              onClick={() => update({ theme: key })}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-[13px] font-medium transition-all ${
+                isSelected
+                  ? "border-white/20 bg-white/10 text-white"
+                  : "border-white/[0.07] text-white/40 hover:border-white/15 hover:text-white/70"
+              }`}
+            >
+              <span
+                className="size-3 rounded-full"
+                style={{ background: `oklch(0.70 0.18 ${hue})` }}
+              />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -129,7 +172,7 @@ function WallpaperPage() {
               onClick={() => update({ wallpaper: key })}
               className={`relative overflow-hidden rounded-xl border-2 transition-all ${
                 selected === key
-                  ? "border-orange-500 shadow-lg shadow-orange-900/30"
+                  ? "border-primary-500 shadow-lg shadow-primary-900/30"
                   : "border-white/10 hover:border-white/25"
               }`}
               style={{ aspectRatio: "16/9" }}
@@ -150,7 +193,7 @@ function WallpaperPage() {
                 <span className="text-[11px] font-medium text-white/80">{label}</span>
               </div>
               {selected === key && (
-                <div className="absolute inset-0 bg-orange-500/10 ring-inset" />
+                <div className="absolute inset-0 bg-primary-500/10 ring-inset" />
               )}
             </button>
           ))}
@@ -183,7 +226,7 @@ function TopBarPage() {
               onBlur={save}
               onKeyDown={(e) => e.key === "Enter" && save()}
               placeholder="BTCUSDT,ETHUSDT"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-orange-500/40 focus:bg-white/[0.07]"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-primary-500/40 focus:bg-white/[0.07]"
             />
           </div>
         </div>
@@ -234,7 +277,7 @@ function AboutPage() {
               {status === "checking" && <span className="text-white/50">Checking…</span>}
               {status === "up-to-date" && <span className="text-emerald-400">Up to date</span>}
               {status === "available" && (
-                <span className="text-orange-400">
+                <span className="text-primary-400">
                   Update available{availableVersion ? `: v${availableVersion}` : ""}
                 </span>
               )}
@@ -288,14 +331,14 @@ function ActivityPage() {
                 value={m.from}
                 onChange={(e) => change(i, "from", e.target.value)}
                 placeholder="com.google.Chrome"
-                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-orange-500/40 focus:bg-white/[0.07]"
+                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-primary-500/40 focus:bg-white/[0.07]"
               />
               <input
                 type="text"
                 value={m.to}
                 onChange={(e) => change(i, "to", e.target.value)}
                 placeholder="Chrome"
-                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-orange-500/40 focus:bg-white/[0.07]"
+                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-primary-500/40 focus:bg-white/[0.07]"
               />
               <button
                 onClick={() => remove(i)}
@@ -314,7 +357,7 @@ function ActivityPage() {
 
           <button
             onClick={add}
-            className="flex items-center gap-1.5 pt-1 text-[12px] font-medium text-orange-500/70 transition-colors hover:text-orange-400"
+            className="flex items-center gap-1.5 pt-1 text-[12px] font-medium text-primary-500/70 transition-colors hover:text-primary-400"
           >
             <Plus className="size-3.5" />
             Add mapping
@@ -427,7 +470,7 @@ function MonitorPage() {
                   disabled={loading}
                   className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors disabled:opacity-40 ${
                     status.enabled
-                      ? "bg-orange-500 text-white hover:bg-orange-400"
+                      ? "bg-primary-500 text-white hover:bg-primary-400"
                       : "bg-white/10 text-white/70 hover:bg-white/15 hover:text-white/90"
                   }`}
                 >
@@ -444,7 +487,7 @@ function MonitorPage() {
           <button
             onClick={() => run(() => window.electron!.monitor.install())}
             disabled={loading}
-            className="w-full rounded-xl bg-orange-500 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-orange-400 disabled:opacity-40"
+            className="w-full rounded-xl bg-primary-500 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
           >
             {loading ? "Installing…" : "Install Service"}
           </button>

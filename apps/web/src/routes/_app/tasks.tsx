@@ -106,7 +106,7 @@ const PRIORITY_CONFIG: Record<number, { label: string; color: string; border: st
   0: { label: "None", color: "text-white/20", border: "" },
   1: { label: "Low", color: "text-white/40", border: "border-l-2 border-l-white/20" },
   2: { label: "Medium", color: "text-blue-400", border: "border-l-2 border-l-blue-400/70" },
-  3: { label: "High", color: "text-orange-400", border: "border-l-2 border-l-orange-400" },
+  3: { label: "High", color: "text-primary-400", border: "border-l-2 border-l-primary-400" },
   4: { label: "Urgent", color: "text-red-400", border: "border-l-2 border-l-red-400" },
 };
 
@@ -132,7 +132,7 @@ function getDueDateColor(value: Date | string | null | undefined): string {
   if (!value) return "";
   const d = value instanceof Date ? value : new Date(value);
   if (isPast(d) && !isToday(d)) return "text-red-400";
-  if (isToday(d)) return "text-orange-400";
+  if (isToday(d)) return "text-primary-400";
   return "text-white/40";
 }
 

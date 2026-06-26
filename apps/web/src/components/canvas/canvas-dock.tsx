@@ -32,7 +32,7 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "termi
         <button
           className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
             active
-              ? "text-orange-400"
+              ? "text-primary-400"
               : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
           }`}
           title={config.title}
@@ -97,7 +97,7 @@ export function CanvasDock() {
             onClick={() => config.multiInstance ? openWindow(key) : toggleWindow(key)}
             className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
               active
-                ? "text-orange-400"
+                ? "text-primary-400"
                 : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
             }`}
             title={config.title}

@@ -48,7 +48,7 @@ export const CanvasWindow = memo(function CanvasWindow({
         isDragging
           ? "opacity-0"
           : isFocused
-          ? "border-orange-500"
+          ? "border-primary-500"
           : isOver
           ? "border-white/30"
           : "border-white/10"

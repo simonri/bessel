@@ -82,14 +82,18 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
     const el = containerRef.current;
     if (!el || !window.electron?.terminal) return;
 
+    const rootStyle = getComputedStyle(document.documentElement);
+    const terminalCursor = rootStyle.getPropertyValue("--terminal-cursor").trim() || "#f97316";
+    const terminalSelection = rootStyle.getPropertyValue("--terminal-selection").trim() || "#f9731644";
+
     const terminal = new Terminal({
       allowTransparency: false,
       theme: {
         background: "#06060e",
         foreground: "#e2e2e2",
-        cursor: "#f97316",
+        cursor: terminalCursor,
         cursorAccent: "#0a0a0a",
-        selectionBackground: "#f9731644",
+        selectionBackground: terminalSelection,
         black: "#1a1a1a",
         red: "#ff5555",
         green: "#50fa7b",
@@ -247,11 +251,11 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
           <div
             className={`absolute inset-0 pointer-events-none flex items-center justify-center rounded border-2 transition-colors ${
               isDragOver
-                ? "bg-orange-500/10 border-orange-500/50"
-                : "bg-orange-500/5 border-orange-500/20"
+                ? "bg-primary-500/10 border-primary-500/50"
+                : "bg-primary-500/5 border-primary-500/20"
             }`}
           >
-            <span className="text-orange-400 text-sm font-medium bg-black/60 px-3 py-1.5 rounded-md">
+            <span className="text-primary-400 text-sm font-medium bg-black/60 px-3 py-1.5 rounded-md">
               Drop to send to Claude
             </span>
           </div>

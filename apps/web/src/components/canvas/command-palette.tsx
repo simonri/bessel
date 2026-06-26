@@ -153,10 +153,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                   }`}
                 >
                   <Icon
-                    className={`size-4 shrink-0 ${item.isOpen ? "text-orange-400" : "text-white/40"}`}
+                    className={`size-4 shrink-0 ${item.isOpen ? "text-primary-400" : "text-white/40"}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm ${item.isOpen ? "text-orange-300" : "text-white/80"}`}>
+                    <p className={`text-sm ${item.isOpen ? "text-primary-300" : "text-white/80"}`}>
                       {item.label}
                     </p>
                     {item.sublabel && (
@@ -164,7 +164,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                     )}
                   </div>
                   {item.isOpen && (
-                    <span className="shrink-0 text-[10px] text-orange-400/50">open</span>
+                    <span className="shrink-0 text-[10px] text-primary-400/50">open</span>
                   )}
                 </button>
               );

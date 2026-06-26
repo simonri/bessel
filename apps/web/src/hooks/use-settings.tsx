@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 export interface ActivityMapping {
   from: string;
@@ -6,15 +6,17 @@ export interface ActivityMapping {
 }
 
 export type WallpaperKey = "image" | "video";
+export type ThemeKey = "orange" | "green";
 
 interface Settings {
   cryptoPairs: string;
   activityMappings: ActivityMapping[];
   wallpaper: WallpaperKey;
+  theme: ThemeKey;
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "image" };
+const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "image", theme: "orange" };
 
 function loadSettings(): Settings {
   try {
@@ -35,6 +37,10 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.theme;
+  }, [settings.theme]);
 
   const update = useCallback((patch: Partial<Settings>) => {
     setSettings((prev) => {

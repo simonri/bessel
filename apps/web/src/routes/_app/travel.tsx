@@ -546,7 +546,7 @@ function Travel() {
                       href={getGoogleMapsUrl(selectedPlace)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] text-orange-400 transition-colors hover:text-orange-300"
+                      className="text-[11px] text-primary-400 transition-colors hover:text-primary-300"
                     >
                       View on Google Maps
                     </a>
