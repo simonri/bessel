@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, FolderOpen, Pencil, Plus, Settings, Timer, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Bell, ExternalLink, FolderOpen, Pencil, Plus, Settings, Timer, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
 
 declare global {
   interface Window {
@@ -47,6 +47,9 @@ declare global {
         start: () => Promise<void>;
         stop: () => Promise<void>;
         setEnabled: (enabled: boolean) => Promise<void>;
+      };
+      shell: {
+        openExternal: (url: string) => Promise<void>;
       };
     };
   }
@@ -457,32 +460,42 @@ function NotificationBell() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="divide-y divide-white/[0.06]">
               {notifications.map((n) => (
-                <button
+                <div
                   key={n.id}
                   onClick={() => {
                     if (!n.read_at) markRead.mutate(n.id);
                   }}
-                  className={`w-full px-4 py-3 text-left transition-colors hover:bg-white/[0.04] ${
+                  className={`group flex cursor-default items-start gap-2.5 px-4 py-3 transition-colors hover:bg-white/[0.04] ${
                     n.read_at ? "opacity-50" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-2.5">
-                    <span
-                      className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
-                        n.read_at ? "bg-white/20" : (kindColor[n.kind] ?? "bg-sky-400")
-                      }`}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium leading-snug text-white/80">{n.title}</p>
-                      {n.body && (
-                        <p className="mt-0.5 text-[11px] leading-snug text-white/40">{n.body}</p>
-                      )}
-                      <p className="mt-1 text-[10px] text-white/25">
-                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
+                  <span
+                    className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+                      n.read_at ? "bg-white/20" : (kindColor[n.kind] ?? "bg-sky-400")
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium leading-snug text-white/80">{n.title}</p>
+                    {n.body && (
+                      <p className="mt-0.5 text-[11px] leading-snug text-white/40">{n.body}</p>
+                    )}
+                    <p className="mt-1 text-[10px] text-white/25">
+                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                    </p>
                   </div>
-                </button>
+                  {n.link && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.electron?.shell.openExternal(n.link!);
+                      }}
+                      title="Open link"
+                      className="mt-0.5 shrink-0 text-white/20 opacity-0 transition-opacity hover:text-white/60 group-hover:opacity-100"
+                    >
+                      <ExternalLink className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>

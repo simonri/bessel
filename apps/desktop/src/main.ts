@@ -4,7 +4,7 @@ import os from "os";
 import { pathToFileURL } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol } from "electron";
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as pty from "node-pty";
 
@@ -126,6 +126,8 @@ app.whenReady().then(() => {
   ipcMain.on("close-window", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
+
+  ipcMain.handle("shell:open-external", (_, url: string) => shell.openExternal(url));
 
   ipcMain.handle("app:version", () => app.getVersion());
 

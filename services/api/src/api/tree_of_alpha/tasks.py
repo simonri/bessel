@@ -74,7 +74,7 @@ async def scan_tree_of_alpha() -> None:
       session.add(
         Notification(
           title=_truncate(item.title, 255),
-          body=item.url,
+          link=item.url,
           kind="info",
         )
       )

@@ -18,11 +18,13 @@ class NotificationCreate:
   Attributes:
       title (str): Short notification title.
       body (None | str | Unset): Optional longer description.
+      link (None | str | Unset): Optional URL to open when interacting with the notification.
       kind (NotificationCreateKind | Unset): Severity/type of notification. Default: NotificationCreateKind.INFO.
   """
 
   title: str
   body: None | str | Unset = UNSET
+  link: None | str | Unset = UNSET
   kind: NotificationCreateKind | Unset = NotificationCreateKind.INFO
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,6 +36,12 @@ class NotificationCreate:
       body = UNSET
     else:
       body = self.body
+
+    link: None | str | Unset
+    if isinstance(self.link, Unset):
+      link = UNSET
+    else:
+      link = self.link
 
     kind: str | Unset = UNSET
     if not isinstance(self.kind, Unset):
@@ -48,6 +56,8 @@ class NotificationCreate:
     )
     if body is not UNSET:
       field_dict["body"] = body
+    if link is not UNSET:
+      field_dict["link"] = link
     if kind is not UNSET:
       field_dict["kind"] = kind
 
@@ -67,6 +77,15 @@ class NotificationCreate:
 
     body = _parse_body(d.pop("body", UNSET))
 
+    def _parse_link(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    link = _parse_link(d.pop("link", UNSET))
+
     _kind = d.pop("kind", UNSET)
     kind: NotificationCreateKind | Unset
     if isinstance(_kind, Unset):
@@ -77,6 +96,7 @@ class NotificationCreate:
     notification_create = cls(
       title=title,
       body=body,
+      link=link,
       kind=kind,
     )
 

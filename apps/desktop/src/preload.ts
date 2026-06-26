@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld("electron", {
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
   selectFolder: () => ipcRenderer.invoke("dialog:select-folder"),
+  shell: {
+    openExternal: (url: string) => ipcRenderer.invoke("shell:open-external", url),
+  },
   git: {
     status: (path: string) => ipcRenderer.invoke("git:status", path),
     diff: (path: string, file: string, staged: boolean, untracked: boolean) =>

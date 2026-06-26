@@ -19,6 +19,7 @@ class NotificationResponse:
       id (str): The ID of the object.
       title (str):
       body (None | str):
+      link (None | str):
       kind (str):
       read_at (datetime.datetime | None):
   """
@@ -28,6 +29,7 @@ class NotificationResponse:
   id: str
   title: str
   body: None | str
+  link: None | str
   kind: str
   read_at: datetime.datetime | None
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -48,6 +50,9 @@ class NotificationResponse:
     body: None | str
     body = self.body
 
+    link: None | str
+    link = self.link
+
     kind = self.kind
 
     read_at: None | str
@@ -65,6 +70,7 @@ class NotificationResponse:
         "id": id,
         "title": title,
         "body": body,
+        "link": link,
         "kind": kind,
         "read_at": read_at,
       }
@@ -103,6 +109,13 @@ class NotificationResponse:
 
     body = _parse_body(d.pop("body"))
 
+    def _parse_link(data: object) -> None | str:
+      if data is None:
+        return data
+      return cast(None | str, data)
+
+    link = _parse_link(d.pop("link"))
+
     kind = d.pop("kind")
 
     def _parse_read_at(data: object) -> datetime.datetime | None:
@@ -126,6 +139,7 @@ class NotificationResponse:
       id=id,
       title=title,
       body=body,
+      link=link,
       kind=kind,
       read_at=read_at,
     )

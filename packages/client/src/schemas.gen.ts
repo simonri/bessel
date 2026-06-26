@@ -1256,6 +1256,19 @@ export const NotificationCreateSchema = {
       title: "Body",
       description: "Optional longer description.",
     },
+    link: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Link",
+      description:
+        "Optional URL to open when interacting with the notification.",
+    },
     kind: {
       type: "string",
       enum: ["info", "success", "warning", "error"],
@@ -1311,6 +1324,17 @@ export const NotificationResponseSchema = {
       ],
       title: "Body",
     },
+    link: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Link",
+    },
     kind: {
       type: "string",
       title: "Kind",
@@ -1335,6 +1359,7 @@ export const NotificationResponseSchema = {
     "id",
     "title",
     "body",
+    "link",
     "kind",
     "read_at",
   ],

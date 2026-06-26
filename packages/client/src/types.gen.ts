@@ -954,6 +954,12 @@ export type NotificationCreate = {
    */
   body?: string | null;
   /**
+   * Link
+   *
+   * Optional URL to open when interacting with the notification.
+   */
+  link?: string | null;
+  /**
    * Kind
    *
    * Severity/type of notification.
@@ -991,6 +997,10 @@ export type NotificationResponse = {
    * Body
    */
   body: string | null;
+  /**
+   * Link
+   */
+  link: string | null;
   /**
    * Kind
    */
