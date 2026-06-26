@@ -2000,6 +2000,18 @@ export const ProjectCreateSchema = {
       maxLength: 100,
       title: "Name",
     },
+    path: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Path",
+    },
   },
   type: "object",
   required: ["name"],
@@ -2037,6 +2049,17 @@ export const ProjectSchemaSchema = {
       type: "string",
       title: "Name",
     },
+    path: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Path",
+    },
   },
   type: "object",
   required: ["created_at", "modified_at", "id", "name"],
@@ -2056,6 +2079,18 @@ export const ProjectUpdateSchema = {
         },
       ],
       title: "Name",
+    },
+    path: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Path",
     },
   },
   type: "object",

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ProjectCreate")
 
@@ -14,13 +16,21 @@ class ProjectCreate:
   """
   Attributes:
       name (str):
+      path (None | str | Unset):
   """
 
   name: str
+  path: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     name = self.name
+
+    path: None | str | Unset
+    if isinstance(self.path, Unset):
+      path = UNSET
+    else:
+      path = self.path
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -29,6 +39,8 @@ class ProjectCreate:
         "name": name,
       }
     )
+    if path is not UNSET:
+      field_dict["path"] = path
 
     return field_dict
 
@@ -37,8 +49,18 @@ class ProjectCreate:
     d = dict(src_dict)
     name = d.pop("name")
 
+    def _parse_path(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    path = _parse_path(d.pop("path", UNSET))
+
     project_create = cls(
       name=name,
+      path=path,
     )
 
     project_create.additional_properties = d

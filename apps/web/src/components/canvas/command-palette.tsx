@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
+import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
+import { client } from "@/lib/client";
 import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
 import { useWindowManager } from "./window-manager";
-import { useSettings } from "@/hooks/use-settings";
+
+type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
 interface PaletteItem {
   id: string;
@@ -15,7 +19,8 @@ interface PaletteItem {
 
 function useItems(onClose: () => void) {
   const { openWindow, toggleWindow, isOpen } = useWindowManager();
-  const { settings } = useSettings();
+  const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
+  const projects = (data ?? []).filter((p): p is ProjectWithPath => p.path != null);
 
   const items: PaletteItem[] = [];
 
@@ -32,7 +37,7 @@ function useItems(onClose: () => void) {
         action: () => { openWindow(key); onClose(); },
         isOpen: isOpen(key),
       });
-      for (const project of settings.claudeProjects) {
+      for (const project of projects) {
         items.push({
           id: `${key}-${project.id}`,
           label: `${config.title} — ${project.name}`,

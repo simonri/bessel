@@ -11,3 +11,4 @@ class Project(RecordModel):
 
   name: Mapped[str] = mapped_column(String(100), nullable=False)
   user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  path: Mapped[str | None] = mapped_column(String(500), nullable=True)

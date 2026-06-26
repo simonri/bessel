@@ -7,6 +7,8 @@ from typing import Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 T = TypeVar("T", bound="ProjectSchema")
 
 
@@ -18,12 +20,14 @@ class ProjectSchema:
       modified_at (datetime.datetime | None): Last modification timestamp of the object.
       id (str): The ID of the object.
       name (str):
+      path (None | str | Unset):
   """
 
   created_at: datetime.datetime
   modified_at: datetime.datetime | None
   id: str
   name: str
+  path: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -39,6 +43,12 @@ class ProjectSchema:
 
     name = self.name
 
+    path: None | str | Unset
+    if isinstance(self.path, Unset):
+      path = UNSET
+    else:
+      path = self.path
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -49,6 +59,8 @@ class ProjectSchema:
         "name": name,
       }
     )
+    if path is not UNSET:
+      field_dict["path"] = path
 
     return field_dict
 
@@ -76,11 +88,21 @@ class ProjectSchema:
 
     name = d.pop("name")
 
+    def _parse_path(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    path = _parse_path(d.pop("path", UNSET))
+
     project_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
       id=id,
       name=name,
+      path=path,
     )
 
     project_schema.additional_properties = d

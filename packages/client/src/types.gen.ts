@@ -1341,6 +1341,10 @@ export type ProjectCreate = {
    * Name
    */
   name: string;
+  /**
+   * Path
+   */
+  path?: string | null;
 };
 
 /**
@@ -1369,6 +1373,10 @@ export type ProjectSchema = {
    * Name
    */
   name: string;
+  /**
+   * Path
+   */
+  path?: string | null;
 };
 
 /**
@@ -1379,6 +1387,10 @@ export type ProjectUpdate = {
    * Name
    */
   name?: string | null;
+  /**
+   * Path
+   */
+  path?: string | null;
 };
 
 /**

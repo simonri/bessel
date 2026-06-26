@@ -4,7 +4,7 @@ import os from "os";
 import { pathToFileURL } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, shell } from "electron";
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, safeStorage, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as pty from "node-pty";
 
@@ -87,6 +87,33 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
+// ─── auth cache ───────────────────────────────────────────────────────────────
+let authCache: Record<string, string> = {};
+let authCachePath = "";
+
+function isRealEncryptionAvailable(): boolean {
+  if (!safeStorage.isEncryptionAvailable()) return false;
+  // On Linux, 'basic_text' is plaintext obfuscation, not OS-keychain encryption
+  return safeStorage.getSelectedStorageBackend() !== "basic_text";
+}
+
+function loadAuthCache(): Record<string, string> {
+  if (!authCachePath || !isRealEncryptionAvailable()) return {};
+  if (!fs.existsSync(authCachePath)) return {};
+  try {
+    const decrypted = safeStorage.decryptString(fs.readFileSync(authCachePath));
+    return JSON.parse(decrypted) as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+function saveAuthCache(): void {
+  if (!authCachePath || !isRealEncryptionAvailable()) return;
+  const encrypted = safeStorage.encryptString(JSON.stringify(authCache));
+  fs.writeFileSync(authCachePath, encrypted);
+}
+
 const ptySessions = new Map<string, pty.IPty>();
 
 function createWindow() {
@@ -122,6 +149,20 @@ app.whenReady().then(() => {
   if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify();
   }
+
+  authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
+  authCache = loadAuthCache();
+
+  ipcMain.handle("auth:get", (_, key: string): string | null => authCache[key] ?? null);
+  ipcMain.handle("auth:set", (_, key: string, value: string): void => {
+    authCache[key] = value;
+    saveAuthCache();
+  });
+  ipcMain.handle("auth:remove", (_, key: string): void => {
+    delete authCache[key];
+    saveAuthCache();
+  });
+  ipcMain.handle("auth:all-keys", (): string[] => Object.keys(authCache));
 
   ipcMain.on("close-window", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();

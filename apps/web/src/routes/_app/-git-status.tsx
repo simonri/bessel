@@ -15,7 +15,10 @@ import langTypescript from "highlight.js/lib/languages/typescript";
 import langXml from "highlight.js/lib/languages/xml";
 import langYaml from "highlight.js/lib/languages/yaml";
 import "highlight.js/styles/atom-one-dark.css";
-import { type ClaudeProject, useSettings } from "@/hooks/use-settings";
+import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
+import { client } from "@/lib/client";
+
+type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
 hljs.registerLanguage("bash", langBash);
 hljs.registerLanguage("css", langCss);
@@ -521,11 +524,12 @@ function extractErrorMessage(error: unknown): string {
 // ── GitStatus (main export) ────────────────────────────────────────────────────
 
 export function GitStatus() {
-  const { settings } = useSettings();
   const queryClient = useQueryClient();
-  const [selectedProject, setSelectedProject] = useState<ClaudeProject | null>(
-    settings.claudeProjects[0] ?? null,
-  );
+
+  const { data: allProjects } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
+  const projects = (allProjects ?? []).filter((p): p is ProjectWithPath => p.path != null);
+
+  const [selectedProject, setSelectedProject] = useState<ProjectWithPath | null>(null);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [commitMessage, setCommitMessage] = useState("");
   const commitTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -550,10 +554,10 @@ export function GitStatus() {
   };
 
   useEffect(() => {
-    if (!selectedProject && settings.claudeProjects.length > 0) {
-      setSelectedProject(settings.claudeProjects[0]);
+    if (!selectedProject && projects.length > 0) {
+      setSelectedProject(projects[0] ?? null);
     }
-  }, [settings.claudeProjects, selectedProject]);
+  }, [projects, selectedProject]);
 
   useEffect(() => {
     const el = commitTextareaRef.current;
@@ -626,12 +630,12 @@ export function GitStatus() {
   const canPush = (status?.ahead ?? 0) > 0 && !pushMutation.isPending;
   const branch = status?.branch ?? "";
 
-  if (settings.claudeProjects.length === 0) {
+  if (projects.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
         <GitBranch className="size-8 text-white/15" />
         <p className="text-sm text-white/40">No projects configured</p>
-        <p className="text-xs text-white/25">Add a project via the Claude button in the dock</p>
+        <p className="text-xs text-white/25">Add a project via the folder icon in the top bar</p>
       </div>
     );
   }
@@ -643,14 +647,14 @@ export function GitStatus() {
         <select
           value={selectedProject?.id ?? ""}
           onChange={(e) => {
-            const p = settings.claudeProjects.find((p) => p.id === e.target.value) ?? null;
+            const p = projects.find((p) => p.id === e.target.value) ?? null;
             setSelectedProject(p);
             setSelectedFile(null);
             setError(null);
           }}
           className="min-w-0 flex-1 cursor-pointer truncate bg-transparent text-xs text-white/65 outline-none"
         >
-          {settings.claudeProjects.map((p) => (
+          {projects.map((p) => (
             <option key={p.id} value={p.id} className="bg-neutral-900">{p.name}</option>
           ))}
         </select>

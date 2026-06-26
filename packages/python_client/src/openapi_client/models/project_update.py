@@ -16,9 +16,11 @@ class ProjectUpdate:
   """
   Attributes:
       name (None | str | Unset):
+      path (None | str | Unset):
   """
 
   name: None | str | Unset = UNSET
+  path: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -28,11 +30,19 @@ class ProjectUpdate:
     else:
       name = self.name
 
+    path: None | str | Unset
+    if isinstance(self.path, Unset):
+      path = UNSET
+    else:
+      path = self.path
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update({})
     if name is not UNSET:
       field_dict["name"] = name
+    if path is not UNSET:
+      field_dict["path"] = path
 
     return field_dict
 
@@ -49,8 +59,18 @@ class ProjectUpdate:
 
     name = _parse_name(d.pop("name", UNSET))
 
+    def _parse_path(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    path = _parse_path(d.pop("path", UNSET))
+
     project_update = cls(
       name=name,
+      path=path,
     )
 
     project_update.additional_properties = d

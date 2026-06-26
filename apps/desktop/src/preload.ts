@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electron", {
   close: () => ipcRenderer.send("close-window"),
+  auth: {
+    get: (key: string): Promise<string | null> => ipcRenderer.invoke("auth:get", key),
+    set: (key: string, value: string): Promise<void> => ipcRenderer.invoke("auth:set", key, value),
+    remove: (key: string): Promise<void> => ipcRenderer.invoke("auth:remove", key),
+    allKeys: (): Promise<string[]> => ipcRenderer.invoke("auth:all-keys"),
+  },
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
   selectFolder: () => ipcRenderer.invoke("dialog:select-folder"),

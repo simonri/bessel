@@ -5,23 +5,16 @@ export interface ActivityMapping {
   to: string;
 }
 
-export interface ClaudeProject {
-  id: string;
-  name: string;
-  path: string;
-}
-
 export type WallpaperKey = "image" | "video";
 
 interface Settings {
   cryptoPairs: string;
   activityMappings: ActivityMapping[];
-  claudeProjects: ClaudeProject[];
   wallpaper: WallpaperKey;
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], claudeProjects: [], wallpaper: "image" };
+const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "image" };
 
 function loadSettings(): Settings {
   try {

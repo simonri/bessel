@@ -7,6 +7,12 @@ declare global {
   interface Window {
     electron?: {
       close: () => void;
+      auth: {
+        get: (key: string) => Promise<string | null>;
+        set: (key: string, value: string) => Promise<void>;
+        remove: (key: string) => Promise<void>;
+        allKeys: () => Promise<string[]>;
+      };
       getVersion: () => Promise<string>;
       checkForUpdate: () => Promise<{ status: "dev" | "available" | "up-to-date" | "error"; version?: string; message?: string }>;
       selectFolder: () => Promise<string | null>;
@@ -55,15 +61,21 @@ declare global {
   }
 }
 import {
+  createProjectV1ProjectsPostMutation,
+  deleteProjectV1ProjectsProjectIdDeleteMutation,
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions,
   listNotificationsV1NotificationsGetOptions,
   listNotificationsV1NotificationsGetQueryKey,
+  listProjectsV1ProjectsGetOptions,
+  listProjectsV1ProjectsGetQueryKey,
   markAllNotificationsReadV1NotificationsReadAllPost,
   markNotificationReadV1NotificationsNotificationIdReadPost,
+  updateProjectV1ProjectsProjectIdPatchMutation,
+  type ProjectSchema,
 } from "@metron/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
 import { client } from "@/lib/client";
-import { type ClaudeProject, useSettings } from "@/hooks/use-settings";
+import { useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
 import { Counters } from "@/components/counters";
 import { useWindowManager } from "@/components/canvas/window-manager";
@@ -163,13 +175,22 @@ function CryptoPairTicker({ pair }: { pair: string }) {
 }
 
 function ProjectsDropdown() {
-  const { settings, update } = useSettings();
+  const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPath, setEditPath] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [addName, setAddName] = useState("");
   const [addPath, setAddPath] = useState("");
+
+  const { data: projects = [] } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: listProjectsV1ProjectsGetQueryKey({ client }) });
+
+  const createMutation = useMutation({ ...createProjectV1ProjectsPostMutation(), onSuccess: invalidate });
+  const updateMutation = useMutation({ ...updateProjectV1ProjectsProjectIdPatchMutation(), onSuccess: invalidate });
+  const deleteMutation = useMutation({ ...deleteProjectV1ProjectsProjectIdDeleteMutation(), onSuccess: invalidate });
 
   const reset = () => {
     setEditingId(null);
@@ -178,39 +199,32 @@ function ProjectsDropdown() {
     setAddPath("");
   };
 
-  const startEdit = (p: ClaudeProject) => {
+  const startEdit = (p: ProjectSchema) => {
     setEditingId(p.id);
     setEditName(p.name);
-    setEditPath(p.path);
+    setEditPath(p.path ?? "");
     setShowAdd(false);
   };
 
   const saveEdit = () => {
-    if (!editName.trim() || !editPath.trim()) return;
-    update({
-      claudeProjects: settings.claudeProjects.map((p) =>
-        p.id === editingId ? { ...p, name: editName.trim(), path: editPath.trim() } : p,
-      ),
-    });
-    setEditingId(null);
+    if (!editingId || !editName.trim() || !editPath.trim()) return;
+    updateMutation.mutate(
+      { client, path: { project_id: editingId }, body: { name: editName.trim(), path: editPath.trim() } },
+      { onSuccess: () => setEditingId(null) },
+    );
   };
 
   const deleteProject = (id: string) => {
-    update({ claudeProjects: settings.claudeProjects.filter((p) => p.id !== id) });
+    deleteMutation.mutate({ client, path: { project_id: id } });
     if (editingId === id) setEditingId(null);
   };
 
   const saveAdd = () => {
     if (!addName.trim() || !addPath.trim()) return;
-    update({
-      claudeProjects: [
-        ...settings.claudeProjects,
-        { id: crypto.randomUUID(), name: addName.trim(), path: addPath.trim() },
-      ],
-    });
-    setAddName("");
-    setAddPath("");
-    setShowAdd(false);
+    createMutation.mutate(
+      { client, body: { name: addName.trim(), path: addPath.trim() } },
+      { onSuccess: () => { setAddName(""); setAddPath(""); setShowAdd(false); } },
+    );
   };
 
   const browse = async (onSelect: (path: string, name: string) => void, currentName: string) => {
@@ -240,10 +254,10 @@ function ProjectsDropdown() {
         </div>
 
         <div className="max-h-72 overflow-y-auto">
-          {settings.claudeProjects.length === 0 && (
+          {projects.length === 0 && (
             <div className="py-6 text-center text-xs text-white/30">No projects yet</div>
           )}
-          {settings.claudeProjects.map((p) => (
+          {projects.map((p) => (
             <div key={p.id} className="border-b border-white/[0.06] last:border-0">
               {editingId === p.id ? (
                 <div className="space-y-2 p-3">

@@ -1,15 +1,21 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
-import { type ClaudeProject, useSettings } from "@/hooks/use-settings";
+import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
+import { client } from "@/lib/client";
 import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
 import { useWindowManager } from "./window-manager";
 
+type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
+
 function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "terminal"; active: boolean }) {
   const { openWindow } = useWindowManager();
-  const { settings } = useSettings();
   const [open, setOpen] = useState(false);
 
-  const launch = (project?: ClaudeProject) => {
+  const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
+  const projects = (data ?? []).filter((p): p is ProjectWithPath => p.path != null);
+
+  const launch = (project?: ProjectWithPath) => {
     openWindow(
       moduleKey,
       project ? { projectPath: project.path, projectName: project.name } : undefined,
@@ -52,9 +58,9 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "termi
           Open without project
         </button>
 
-        {settings.claudeProjects.length > 0 && (
+        {projects.length > 0 && (
           <div className="max-h-48 overflow-y-auto border-t border-white/[0.06]">
-            {settings.claudeProjects.map((p) => (
+            {projects.map((p) => (
               <button
                 key={p.id}
                 onClick={() => launch(p)}

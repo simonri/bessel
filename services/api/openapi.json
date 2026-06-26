@@ -6000,6 +6000,18 @@
             "type": "string",
             "maxLength": 100,
             "title": "Name"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
           }
         },
         "type": "object",
@@ -6038,6 +6050,17 @@
           "name": {
             "type": "string",
             "title": "Name"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
           }
         },
         "type": "object",
@@ -6062,6 +6085,18 @@
               }
             ],
             "title": "Name"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
           }
         },
         "type": "object",
