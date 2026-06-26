@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld("electron", {
     commit: (path: string, message: string) => ipcRenderer.invoke("git:commit", path, message),
     push: (path: string) => ipcRenderer.invoke("git:push", path),
     log: (path: string, limit?: number) => ipcRenderer.invoke("git:log", path, limit),
+    discard: (path: string, trackedFiles: string[], untrackedFiles: string[]) =>
+      ipcRenderer.invoke("git:discard", path, trackedFiles, untrackedFiles),
   },
   terminal: {
     spawn: (sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) =>

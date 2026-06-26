@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, GitBranch, Minus, Plus, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, GitBranch, Minus, Plus, RefreshCw, Trash2 } from "lucide-react";
 import hljs from "highlight.js/lib/core";
 import langBash from "highlight.js/lib/languages/bash";
 import langCss from "highlight.js/lib/languages/css";
@@ -357,6 +357,7 @@ function FileItem({
   onSelect,
   onStage,
   onUnstage,
+  onDiscard,
 }: {
   file: GitFileEntry;
   isSelected: boolean;
@@ -364,6 +365,7 @@ function FileItem({
   onSelect: () => void;
   onStage?: () => void;
   onUnstage?: () => void;
+  onDiscard?: () => void;
 }) {
   const parts = file.path.split("/");
   const name = parts.pop() ?? file.path;
@@ -383,6 +385,16 @@ function FileItem({
         <span className="text-white/80">{name}</span>
         {dir && <span className="ml-1.5 text-white/30">{dir}</span>}
       </span>
+
+      {onDiscard && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDiscard(); }}
+          title="Discard changes"
+          className="flex size-4 shrink-0 items-center justify-center rounded text-white/25 opacity-0 transition-opacity hover:text-red-400/70 group-hover:opacity-100"
+        >
+          <Trash2 className="size-3" />
+        </button>
+      )}
 
       <button
         onClick={(e) => {
@@ -410,6 +422,7 @@ function SectionHeader({
   onToggle,
   onStageAll,
   onUnstageAll,
+  onDiscardAll,
 }: {
   label: string;
   count: number;
@@ -417,6 +430,7 @@ function SectionHeader({
   onToggle: () => void;
   onStageAll?: () => void;
   onUnstageAll?: () => void;
+  onDiscardAll?: () => void;
 }) {
   const Chevron = open ? ChevronDown : ChevronRight;
   return (
@@ -451,6 +465,15 @@ function SectionHeader({
             className="flex size-4 items-center justify-center rounded text-white/30 hover:text-white/70"
           >
             <Minus className="size-3" />
+          </button>
+        )}
+        {onDiscardAll && (
+          <button
+            onClick={onDiscardAll}
+            title="Discard all changes"
+            className="flex size-4 items-center justify-center rounded text-white/30 hover:text-red-400/70"
+          >
+            <Trash2 className="size-3" />
           </button>
         )}
       </div>
@@ -622,10 +645,27 @@ export function GitStatus() {
     onError: (e) => setError(extractErrorMessage(e)),
   });
 
+  const discardMutation = useMutation({
+    mutationFn: (files: GitFileEntry[]) => {
+      const tracked = files.filter((f) => f.status !== "?").map((f) => f.path);
+      const untracked = files.filter((f) => f.status === "?").map((f) => f.path);
+      return window.electron!.git.discard(selectedProject!.path, tracked, untracked);
+    },
+    onSuccess: () => { setError(null); invalidateStatus(); },
+    onError: (e) => setError(extractErrorMessage(e)),
+  });
+
+  const discardWithConfirm = (files: GitFileEntry[]) => {
+    const label = files.length === 1 ? `"${files[0]!.path}"` : `${files.length} files`;
+    if (window.confirm(`Discard changes to ${label}? This cannot be undone.`)) {
+      discardMutation.mutate(files);
+    }
+  };
+
   const status = statusQuery.data;
   const changes = [...(status?.unstaged ?? []), ...(status?.untracked ?? [])];
   const staged = status?.staged ?? [];
-  const isBusy = stageMutation.isPending || unstageMutation.isPending || commitMutation.isPending || pushMutation.isPending;
+  const isBusy = stageMutation.isPending || unstageMutation.isPending || commitMutation.isPending || pushMutation.isPending || discardMutation.isPending;
   const canCommit = commitMessage.trim().length > 0 && staged.length > 0 && !commitMutation.isPending;
   const canPush = (status?.ahead ?? 0) > 0 && !pushMutation.isPending;
   const branch = status?.branch ?? "";
@@ -768,6 +808,7 @@ export function GitStatus() {
                   open={changesOpen}
                   onToggle={() => setChangesOpen((o) => !o)}
                   onStageAll={changes.length > 0 ? () => stageMutation.mutate(changes.map((f) => f.path)) : undefined}
+                  onDiscardAll={changes.length > 0 ? () => discardWithConfirm(changes) : undefined}
                 />
                 {changesOpen && (
                   <>
@@ -782,6 +823,7 @@ export function GitStatus() {
                         staged={false}
                         onSelect={() => setSelectedFile({ file, staged: false, untracked: file.status === "?" })}
                         onStage={() => stageMutation.mutate([file.path])}
+                        onDiscard={() => discardWithConfirm([file])}
                       />
                     ))}
                   </>

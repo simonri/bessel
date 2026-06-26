@@ -31,6 +31,7 @@ declare global {
         unstage: (path: string, files: string[]) => Promise<void>;
         commit: (path: string, message: string) => Promise<void>;
         push: (path: string) => Promise<void>;
+        discard: (path: string, trackedFiles: string[], untrackedFiles: string[]) => Promise<void>;
         log: (path: string, limit?: number) => Promise<Array<{
           hash: string;
           shortHash: string;

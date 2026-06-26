@@ -279,6 +279,15 @@ app.whenReady().then(() => {
   ipcMain.handle("git:unstage", (_, repoPath: string, files: string[]) =>
     gitRun(["restore", "--staged", "--", ...files], repoPath));
 
+  ipcMain.handle("git:discard", async (_, repoPath: string, trackedFiles: string[], untrackedFiles: string[]) => {
+    if (trackedFiles.length > 0) {
+      await gitRun(["restore", "--", ...trackedFiles], repoPath);
+    }
+    for (const file of untrackedFiles) {
+      fs.rmSync(path.join(repoPath, file), { recursive: true, force: true });
+    }
+  });
+
   ipcMain.handle("git:commit", (_, repoPath: string, message: string) =>
     gitRun(["commit", "-m", message], repoPath));
 
