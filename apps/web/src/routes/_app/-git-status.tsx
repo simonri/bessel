@@ -253,7 +253,13 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
 
   return (
     <div className="h-full overflow-auto font-mono text-xs leading-5">
-      <table className="min-w-full border-collapse">
+      {/* atom-one-dark's comment/mono tones assume a lighter (#282c34) editor
+          background; against our near-black diff rows they read as almost
+          invisible, so brighten just that token here. */}
+      <style>{`
+        .diff-viewer .hljs-comment, .diff-viewer .hljs-quote { color: #7f8899; }
+      `}</style>
+      <table className="diff-viewer min-w-full border-collapse">
         <colgroup>
           <col style={{ width: "2.5rem" }} />
           <col style={{ width: "2.5rem" }} />
@@ -266,7 +272,7 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
               if (SKIP_PREFIXES.some((p) => line.content.startsWith(p))) return null;
               return (
                 <tr key={i}>
-                  <td colSpan={3} className="select-none px-2 py-0.5 italic text-white/30 whitespace-pre">
+                  <td colSpan={3} className="select-none px-2 py-0.5 italic text-white/40 whitespace-pre">
                     {line.content}
                   </td>
                 </tr>
@@ -274,10 +280,10 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
             }
             if (line.type === "hunk") {
               return (
-                <tr key={i} className="bg-sky-950/30">
-                  <td className="select-none py-0 pl-2 pr-1 text-right text-sky-600/50" />
-                  <td className="select-none py-0 pl-2 pr-1 text-right text-sky-600/50" />
-                  <td className="py-0 pl-2 text-sky-400/60 whitespace-pre">{line.content}</td>
+                <tr key={i} className="bg-sky-500/10">
+                  <td className="select-none border-l-2 border-sky-500/40 py-0 pl-2 pr-1 text-right text-sky-400/50" />
+                  <td className="select-none py-0 pl-2 pr-1 text-right text-sky-400/50" />
+                  <td className="py-0 pl-2 font-medium text-sky-300/90 whitespace-pre">{line.content}</td>
                 </tr>
               );
             }
@@ -286,28 +292,28 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
 
             if (line.type === "add") {
               return (
-                <tr key={i} className="bg-emerald-950/50">
-                  <td className="select-none py-0 pl-2 pr-1 text-right text-white/20"> </td>
-                  <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.newNum}</td>
+                <tr key={i} className="bg-emerald-500/10">
+                  <td className="select-none border-l-2 border-emerald-500/60 py-0 pl-2 pr-1 text-right text-emerald-400/40"> </td>
+                  <td className="select-none py-0 pl-2 pr-1 text-right text-emerald-400/40">{line.newNum}</td>
                   <td className="py-0 pl-1 whitespace-pre">
-                    <span className="select-none text-emerald-600">+</span>
+                    <span className="select-none font-semibold text-emerald-400">+</span>
                     {hlHtml
                       ? <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
-                      : <span className="text-emerald-300">{line.content}</span>}
+                      : <span className="text-emerald-200">{line.content}</span>}
                   </td>
                 </tr>
               );
             }
             if (line.type === "remove") {
               return (
-                <tr key={i} className="bg-red-950/50">
-                  <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.oldNum}</td>
-                  <td className="select-none py-0 pl-2 pr-1 text-right text-white/20"> </td>
+                <tr key={i} className="bg-red-500/10">
+                  <td className="select-none border-l-2 border-red-500/60 py-0 pl-2 pr-1 text-right text-red-400/40">{line.oldNum}</td>
+                  <td className="select-none py-0 pl-2 pr-1 text-right text-red-400/40"> </td>
                   <td className="py-0 pl-1 whitespace-pre">
-                    <span className="select-none text-red-600">-</span>
+                    <span className="select-none font-semibold text-red-400">-</span>
                     {hlHtml
                       ? <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
-                      : <span className="text-red-300/80">{line.content}</span>}
+                      : <span className="text-red-200">{line.content}</span>}
                   </td>
                 </tr>
               );
@@ -315,20 +321,20 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
             if (line.type === "no-newline") {
               return (
                 <tr key={i}>
-                  <td colSpan={3} className="py-0 pl-2 text-white/25 whitespace-pre">{line.content}</td>
+                  <td colSpan={3} className="py-0 pl-2 text-white/35 whitespace-pre">{line.content}</td>
                 </tr>
               );
             }
             // context
             return (
-              <tr key={i} className="hover:bg-white/[0.02]">
-                <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.oldNum}</td>
-                <td className="select-none py-0 pl-2 pr-1 text-right text-white/20">{line.newNum}</td>
+              <tr key={i} className="border-l-2 border-transparent hover:bg-white/[0.03]">
+                <td className="select-none py-0 pl-2 pr-1 text-right text-white/35">{line.oldNum}</td>
+                <td className="select-none py-0 pl-2 pr-1 text-right text-white/35">{line.newNum}</td>
                 <td className="py-0 pl-1 whitespace-pre">
                   <span className="select-none text-white/20"> </span>
                   {hlHtml
                     ? <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
-                    : <span className="text-white/55">{line.content}</span>}
+                    : <span className="text-white/70">{line.content}</span>}
                 </td>
               </tr>
             );
@@ -501,7 +507,7 @@ function CommitItem({ commit }: { commit: GitCommit }) {
     <div className="cursor-default px-3 py-1.5 hover:bg-white/[0.04]">
       <div className="flex items-baseline gap-2">
         <span className="flex-1 truncate text-xs leading-tight text-white/70">{commit.subject}</span>
-        <span className="shrink-0 whitespace-nowrap text-[10px] text-white/20">{shortenRelDate(commit.date)}</span>
+        <span className="shrink-0 whitespace-nowrap text-[10px] text-white/35">{shortenRelDate(commit.date)}</span>
       </div>
       {refs.length > 0 && (
         <div className="mt-0.5 flex flex-wrap gap-1">
@@ -700,7 +706,7 @@ export function GitStatus() {
         </select>
 
         {status && (
-          <div className="flex shrink-0 items-center gap-1 text-[11px] text-white/30">
+          <div className="flex shrink-0 items-center gap-1 text-[11px] text-white/50">
             <GitBranch className="size-3" />
             <span className="max-w-[72px] truncate">{branch}</span>
             {(status.ahead ?? 0) > 0 && (
