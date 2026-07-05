@@ -57,6 +57,7 @@ CURSOR_PATH = DATA_DIR / "push_cursor"
 _SCHEMA_VERSION = 2
 
 METRON_API_URL = os.environ.get("METRON_API_URL", "http://localhost:8100")
+METRON_INTERNAL_API_KEY = os.environ.get("METRON_INTERNAL_API_KEY", "")
 PUSH_BATCH_SIZE = 500
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -459,10 +460,13 @@ def _do_push(source: str, cursor: int) -> tuple[int, int, int]:
                 })
 
             payload = json.dumps({"source": source, "events": events}).encode()
+            headers = {"Content-Type": "application/json"}
+            if METRON_INTERNAL_API_KEY:
+                headers["X-API-Key"] = METRON_INTERNAL_API_KEY
             req = urllib.request.Request(
                 f"{METRON_API_URL}/v1/activity/batch",
                 data=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
                 method="POST",
             )
 
