@@ -130,6 +130,12 @@ const ptySessions = new Map<string, pty.IPty>();
 
 const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
 
+// Auth0's hosted login page (VITE_AUTH0_DOMAIN in apps/web/.env) is where the
+// window navigates during loginWithRedirect() before coming back to app://localhost.
+// Kept separate from TRUSTED_ORIGINS: IPC handlers must never trust this origin,
+// but the window still needs permission to navigate there and back.
+const NAVIGATION_ALLOWED_ORIGINS = new Set([...TRUSTED_ORIGINS, "https://metronapp.us.auth0.com"]);
+
 function isTrustedSender(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent): boolean {
   const url = event.senderFrame?.url;
   if (!url) return false;
@@ -194,7 +200,7 @@ function createWindow() {
   win.webContents.on("will-navigate", (event, url) => {
     try {
       const parsed = new URL(url);
-      if (!TRUSTED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`)) event.preventDefault();
+      if (!NAVIGATION_ALLOWED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`)) event.preventDefault();
     } catch {
       event.preventDefault();
     }
