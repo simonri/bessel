@@ -134,7 +134,10 @@ function isTrustedSender(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEv
   const url = event.senderFrame?.url;
   if (!url) return false;
   try {
-    return TRUSTED_ORIGINS.has(new URL(url).origin);
+    const parsed = new URL(url);
+    // `.origin` is unreliable for non-special schemes like "app:" (returns the
+    // string "null"), so build the origin from protocol + host instead.
+    return TRUSTED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`);
   } catch {
     return false;
   }
@@ -190,7 +193,8 @@ function createWindow() {
 
   win.webContents.on("will-navigate", (event, url) => {
     try {
-      if (!TRUSTED_ORIGINS.has(new URL(url).origin)) event.preventDefault();
+      const parsed = new URL(url);
+      if (!TRUSTED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`)) event.preventDefault();
     } catch {
       event.preventDefault();
     }
