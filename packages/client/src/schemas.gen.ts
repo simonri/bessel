@@ -2012,6 +2012,18 @@ export const ProjectCreateSchema = {
       ],
       title: "Path",
     },
+    ssh_host: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Ssh Host",
+    },
   },
   type: "object",
   required: ["name"],
@@ -2060,6 +2072,17 @@ export const ProjectSchemaSchema = {
       ],
       title: "Path",
     },
+    ssh_host: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Ssh Host",
+    },
   },
   type: "object",
   required: ["created_at", "modified_at", "id", "name"],
@@ -2091,6 +2114,18 @@ export const ProjectUpdateSchema = {
         },
       ],
       title: "Path",
+    },
+    ssh_host: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Ssh Host",
     },
   },
   type: "object",

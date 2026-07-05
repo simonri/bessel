@@ -53,7 +53,7 @@ class UserService:
   async def _claim_orphaned_data(self, session: AsyncSession, user_id: UUID) -> None:
     for table in _USER_OWNED_TABLES:
       await session.execute(
-        text(f"UPDATE {table} SET user_id = :uid WHERE user_id IS NULL"),  # noqa: S608
+        text(f"UPDATE {table} SET user_id = :uid WHERE user_id IS NULL"),
         {"uid": str(user_id)},
       )
     log.info("Claimed orphaned data", user_id=str(user_id))

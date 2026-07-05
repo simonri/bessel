@@ -17,10 +17,12 @@ class ProjectCreate:
   Attributes:
       name (str):
       path (None | str | Unset):
+      ssh_host (None | str | Unset):
   """
 
   name: str
   path: None | str | Unset = UNSET
+  ssh_host: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -32,6 +34,12 @@ class ProjectCreate:
     else:
       path = self.path
 
+    ssh_host: None | str | Unset
+    if isinstance(self.ssh_host, Unset):
+      ssh_host = UNSET
+    else:
+      ssh_host = self.ssh_host
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -41,6 +49,8 @@ class ProjectCreate:
     )
     if path is not UNSET:
       field_dict["path"] = path
+    if ssh_host is not UNSET:
+      field_dict["ssh_host"] = ssh_host
 
     return field_dict
 
@@ -58,9 +68,19 @@ class ProjectCreate:
 
     path = _parse_path(d.pop("path", UNSET))
 
+    def _parse_ssh_host(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    ssh_host = _parse_ssh_host(d.pop("ssh_host", UNSET))
+
     project_create = cls(
       name=name,
       path=path,
+      ssh_host=ssh_host,
     )
 
     project_create.additional_properties = d

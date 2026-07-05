@@ -18,7 +18,13 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "termi
   const launch = (project?: ProjectWithPath) => {
     openWindow(
       moduleKey,
-      project ? { projectPath: project.path, projectName: project.name } : undefined,
+      project
+        ? {
+            projectPath: project.path,
+            projectName: project.name,
+            ...(project.ssh_host ? { projectSshHost: project.ssh_host } : {}),
+          }
+        : undefined,
     );
     setOpen(false);
   };
@@ -67,7 +73,9 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "termi
                 className="flex w-full flex-col px-3 py-2.5 text-left transition-colors hover:bg-white/5"
               >
                 <span className="text-sm font-medium text-white/80">{p.name}</span>
-                <span className="truncate text-[11px] text-white/35">{p.path}</span>
+                <span className="truncate text-[11px] text-white/35">
+                  {p.ssh_host ? `${p.ssh_host}:${p.path}` : p.path}
+                </span>
               </button>
             ))}
           </div>

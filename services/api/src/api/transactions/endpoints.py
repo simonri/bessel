@@ -226,10 +226,7 @@ async def categorize_by_description(
 ) -> BulkCategorizeResponse:
   """Set category for all transactions matching the given description."""
   stmt = (
-    update(Transaction)
-    .where(Transaction.description == body.description)
-    .where(Transaction.user_id == current_user.id)
-    .values(category_id=body.category_id)
+    update(Transaction).where(Transaction.description == body.description).where(Transaction.user_id == current_user.id).values(category_id=body.category_id)
   )
   result = await session.execute(stmt)
   return BulkCategorizeResponse(updated=result.rowcount)

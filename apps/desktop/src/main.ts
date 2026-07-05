@@ -10,6 +10,18 @@ import * as pty from "node-pty";
 
 const execFileAsync = promisify(execFile);
 
+function shQuote(s: string): string {
+  return "'" + s.replace(/'/g, "'\\''") + "'";
+}
+
+// Build a `cd` argument that stays safe under the remote shell while still
+// letting a leading ~ expand to the remote home directory.
+function remoteCdArg(p: string): string {
+  if (p === "~") return "~";
+  if (p.startsWith("~/")) return "~/" + shQuote(p.slice(2));
+  return shQuote(p);
+}
+
 // ─── monitor ──────────────────────────────────────────────────────────────────
 const SYSTEMD_USER_DIR = path.join(os.homedir(), ".config", "systemd", "user");
 const MONITOR_SERVICE_NAME = "metron-monitor";
@@ -196,6 +208,31 @@ app.whenReady().then(() => {
       properties: ["openDirectory"],
     });
     return result.canceled ? null : (result.filePaths[0] ?? null);
+  });
+
+  ipcMain.handle("ssh:list-dir", async (_, host: string, dirPath: string) => {
+    const cdArg = remoteCdArg(dirPath?.trim() ? dirPath.trim() : "~");
+    // Sentinel markers isolate our output from anything a remote rc file prints.
+    const remote = `cd ${cdArg} && printf '\\n@@CWD@@\\n' && pwd && printf '@@DIRS@@\\n' && ls -1ApL`;
+    const { stdout } = await execFileAsync(
+      "ssh",
+      ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, remote],
+      { maxBuffer: 8 * 1024 * 1024 },
+    );
+    const cwdTag = "@@CWD@@\n";
+    const dirsTag = "@@DIRS@@\n";
+    const cwdAt = stdout.indexOf(cwdTag);
+    const dirsAt = stdout.indexOf(dirsTag, cwdAt);
+    if (cwdAt === -1 || dirsAt === -1) throw new Error("Unexpected response from remote host.");
+    const cwd = stdout.slice(cwdAt + cwdTag.length, dirsAt).trim();
+    const dirs = stdout
+      .slice(dirsAt + dirsTag.length)
+      .split("\n")
+      .filter((line) => line.endsWith("/"))
+      .map((line) => line.slice(0, -1))
+      .filter((name) => name && name !== "." && name !== "..")
+      .sort((a, b) => a.localeCompare(b));
+    return { cwd, dirs };
   });
 
   ipcMain.handle(

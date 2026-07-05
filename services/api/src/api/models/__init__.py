@@ -1,5 +1,4 @@
 from .activity_event import ActivityEvent
-from .user import User
 from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
@@ -17,6 +16,7 @@ from .task import Task
 from .trade import Trade
 from .transaction import Transaction
 from .tree_of_alpha_news import TreeOfAlphaNews
+from .user import User
 from .weather_cache import WeatherCache
 
 __all__ = [

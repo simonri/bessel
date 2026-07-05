@@ -91,7 +91,7 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
       onDragEnd={handleDragEnd}
     >
       <div
-        className="grid flex-1 grid-cols-2 gap-2 px-2 min-h-0"
+        className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
         style={{
           display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
           gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,

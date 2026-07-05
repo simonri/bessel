@@ -29,7 +29,9 @@ async def list_counters(
   current_user: CurrentDBUser,
 ) -> list[CounterSchema]:
   counters = list(
-    (await session.execute(select(Counter).where(Counter.deleted_at.is_(None)).where(Counter.user_id == current_user.id).order_by(Counter.name))).scalars().all()
+    (await session.execute(select(Counter).where(Counter.deleted_at.is_(None)).where(Counter.user_id == current_user.id).order_by(Counter.name)))
+    .scalars()
+    .all()
   )
 
   if not counters:

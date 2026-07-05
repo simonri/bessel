@@ -1345,6 +1345,10 @@ export type ProjectCreate = {
    * Path
    */
   path?: string | null;
+  /**
+   * Ssh Host
+   */
+  ssh_host?: string | null;
 };
 
 /**
@@ -1377,6 +1381,10 @@ export type ProjectSchema = {
    * Path
    */
   path?: string | null;
+  /**
+   * Ssh Host
+   */
+  ssh_host?: string | null;
 };
 
 /**
@@ -1391,6 +1399,10 @@ export type ProjectUpdate = {
    * Path
    */
   path?: string | null;
+  /**
+   * Ssh Host
+   */
+  ssh_host?: string | null;
 };
 
 /**

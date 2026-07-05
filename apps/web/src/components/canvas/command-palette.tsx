@@ -41,9 +41,16 @@ function useItems(onClose: () => void) {
         items.push({
           id: `${key}-${project.id}`,
           label: `${config.title} — ${project.name}`,
-          sublabel: project.path,
+          sublabel: project.ssh_host ? `${project.ssh_host}:${project.path}` : project.path,
           icon: Icon,
-          action: () => { openWindow(key, { projectPath: project.path, projectName: project.name }); onClose(); },
+          action: () => {
+            openWindow(key, {
+              projectPath: project.path,
+              projectName: project.name,
+              ...(project.ssh_host ? { projectSshHost: project.ssh_host } : {}),
+            });
+            onClose();
+          },
         });
       }
     } else {

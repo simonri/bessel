@@ -550,7 +550,7 @@ export function GitStatus() {
   const queryClient = useQueryClient();
 
   const { data: allProjects } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
-  const projects = (allProjects ?? []).filter((p): p is ProjectWithPath => p.path != null);
+  const projects = (allProjects ?? []).filter((p): p is ProjectWithPath => p.path != null && !p.ssh_host);
 
   const [selectedProject, setSelectedProject] = useState<ProjectWithPath | null>(null);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);

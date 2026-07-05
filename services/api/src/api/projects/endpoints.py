@@ -30,10 +30,10 @@ async def list_projects(
   current_user: CurrentDBUser,
 ) -> list[ProjectSchema]:
   rows = (
-    await session.execute(
-      select(Project).where(Project.deleted_at.is_(None)).where(Project.user_id == current_user.id).order_by(Project.name)
-    )
-  ).scalars().all()
+    (await session.execute(select(Project).where(Project.deleted_at.is_(None)).where(Project.user_id == current_user.id).order_by(Project.name)))
+    .scalars()
+    .all()
+  )
   return [ProjectSchema.model_validate(p) for p in rows]
 
 
@@ -47,7 +47,10 @@ async def create_project(
   existing = await repo.get_by_name(body.name, user_id=current_user.id)
   if existing:
     return ProjectSchema.model_validate(existing)
-  project = await repo.create(Project(name=body.name, user_id=current_user.id), flush=True)
+  project = await repo.create(
+    Project(name=body.name, user_id=current_user.id, path=body.path, ssh_host=body.ssh_host),
+    flush=True,
+  )
   return ProjectSchema.model_validate(project)
 
 
