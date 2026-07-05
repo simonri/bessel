@@ -1349,6 +1349,28 @@ export const createTaskV1TasksPost = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Reorder Tasks
+ */
+export const reorderTasksV1TasksReorderPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ReorderTasksV1TasksReorderPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    ReorderTasksV1TasksReorderPatchResponses,
+    ReorderTasksV1TasksReorderPatchErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/reorder",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * Delete Task
  */
 export const deleteTaskV1TasksTaskIdDelete = <
@@ -1426,28 +1448,6 @@ export const reopenTaskV1TasksTaskIdReopenPost = <
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/reopen",
     ...options,
-  });
-
-/**
- * Reorder Tasks
- */
-export const reorderTasksV1TasksReorderPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ReorderTasksV1TasksReorderPatchData, ThrowOnError>,
-) =>
-  (options.client ?? client).patch<
-    ReorderTasksV1TasksReorderPatchResponses,
-    ReorderTasksV1TasksReorderPatchErrors,
-    ThrowOnError
-  >({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/tasks/reorder",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
   });
 
 /**
@@ -1542,6 +1542,33 @@ export const importTransactionsV1TransactionsImportPost = <
   });
 
 /**
+ * Bulk Update Transactions
+ *
+ * Update category for a list of transactions by ID.
+ */
+export const bulkUpdateTransactionsV1TransactionsBulkPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    BulkUpdateTransactionsV1TransactionsBulkPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
+    BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/bulk",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * Update Transaction
  *
  * Update a transaction.
@@ -1563,33 +1590,6 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
       updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Bulk Update Transactions
- *
- * Update category for a list of transactions by ID.
- */
-export const bulkUpdateTransactionsV1TransactionsBulkPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    BulkUpdateTransactionsV1TransactionsBulkPatchData,
-    ThrowOnError
-  >,
-) =>
-  (options.client ?? client).patch<
-    BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
-    BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
-    ThrowOnError
-  >({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/transactions/bulk",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -1701,7 +1701,11 @@ export const getKlarnaTransactionsV1KlarnaTransactionsGet = <
     GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
     GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
     ThrowOnError
-  >({ url: "/v1/klarna/transactions", ...options });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/klarna/transactions",
+    ...options,
+  });
 
 /**
  * Import Klarna Transactions
@@ -1722,6 +1726,7 @@ export const importKlarnaTransactionsV1KlarnaImportPost = <
     ImportKlarnaTransactionsV1KlarnaImportPostErrors,
     ThrowOnError
   >({
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/klarna/import",
     ...options,
     headers: {

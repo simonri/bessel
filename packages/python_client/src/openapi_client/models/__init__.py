@@ -65,6 +65,7 @@ from .recipe_create import RecipeCreate
 from .recipe_list_response import RecipeListResponse
 from .recipe_schema import RecipeSchema
 from .recipe_sort_property import RecipeSortProperty
+from .recipe_type import RecipeType
 from .recipe_update import RecipeUpdate
 from .rrule_frequency import RruleFrequency
 from .security_create import SecurityCreate
@@ -160,6 +161,7 @@ __all__ = (
   "RecipeListResponse",
   "RecipeSchema",
   "RecipeSortProperty",
+  "RecipeType",
   "RecipeUpdate",
   "RruleFrequency",
   "SecurityCreate",

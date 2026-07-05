@@ -6,6 +6,7 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.recipe_type import RecipeType
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="RecipeCreate")
@@ -17,16 +18,22 @@ class RecipeCreate:
   Attributes:
       title (str):
       content (str | Unset):  Default: ''.
+      recipe_type (RecipeType | Unset):
   """
 
   title: str
   content: str | Unset = ''
+  recipe_type: RecipeType | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     title = self.title
 
     content = self.content
+
+    recipe_type: str | Unset = UNSET
+    if not isinstance(self.recipe_type, Unset):
+      recipe_type = self.recipe_type.value
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -37,6 +44,8 @@ class RecipeCreate:
     )
     if content is not UNSET:
       field_dict["content"] = content
+    if recipe_type is not UNSET:
+      field_dict["recipe_type"] = recipe_type
 
     return field_dict
 
@@ -47,9 +56,17 @@ class RecipeCreate:
 
     content = d.pop("content", UNSET)
 
+    _recipe_type = d.pop("recipe_type", UNSET)
+    recipe_type: RecipeType | Unset
+    if isinstance(_recipe_type, Unset):
+      recipe_type = UNSET
+    else:
+      recipe_type = RecipeType(_recipe_type)
+
     recipe_create = cls(
       title=title,
       content=content,
+      recipe_type=recipe_type,
     )
 
     recipe_create.additional_properties = d

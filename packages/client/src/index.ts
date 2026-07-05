@@ -507,6 +507,7 @@ export {
   type RecipeListResponse,
   type RecipeSchema,
   RecipeSortProperty,
+  RecipeType,
   type RecipeUpdate,
   type ReopenTaskV1TasksTaskIdReopenPostData,
   type ReopenTaskV1TasksTaskIdReopenPostError,

@@ -2143,6 +2143,10 @@ export const RecipeCreateSchema = {
       title: "Content",
       default: "",
     },
+    recipe_type: {
+      $ref: "#/components/schemas/RecipeType",
+      default: "other",
+    },
   },
   type: "object",
   required: ["title"],
@@ -2202,9 +2206,19 @@ export const RecipeSchemaSchema = {
       type: "string",
       title: "Content",
     },
+    recipe_type: {
+      $ref: "#/components/schemas/RecipeType",
+    },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "title", "content"],
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "title",
+    "content",
+    "recipe_type",
+  ],
   title: "RecipeSchema",
 } as const;
 
@@ -2219,6 +2233,12 @@ export const RecipeSortPropertySchema = {
     "-modified_at",
   ],
   title: "RecipeSortProperty",
+} as const;
+
+export const RecipeTypeSchema = {
+  type: "string",
+  enum: ["dessert", "main", "other"],
+  title: "RecipeType",
 } as const;
 
 export const RecipeUpdateSchema = {
@@ -2244,6 +2264,16 @@ export const RecipeUpdateSchema = {
         },
       ],
       title: "Content",
+    },
+    recipe_type: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecipeType",
+        },
+        {
+          type: "null",
+        },
+      ],
     },
   },
   type: "object",

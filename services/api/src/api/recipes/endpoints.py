@@ -54,7 +54,10 @@ async def create_recipe(
   body: RecipeCreate,
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.create(Recipe(title=body.title, content=body.content, user_id=current_user.id), flush=True)
+  recipe = await repo.create(
+    Recipe(title=body.title, content=body.content, recipe_type=body.recipe_type, user_id=current_user.id),
+    flush=True,
+  )
   return RecipeSchema.model_validate(recipe)
 
 

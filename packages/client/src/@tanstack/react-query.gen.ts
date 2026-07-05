@@ -2256,6 +2256,33 @@ export const createTaskV1TasksPostMutation = (
 };
 
 /**
+ * Reorder Tasks
+ */
+export const reorderTasksV1TasksReorderPatchMutation = (
+  options?: Partial<Options<ReorderTasksV1TasksReorderPatchData>>,
+): UseMutationOptions<
+  ReorderTasksV1TasksReorderPatchResponse,
+  ReorderTasksV1TasksReorderPatchError,
+  Options<ReorderTasksV1TasksReorderPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReorderTasksV1TasksReorderPatchResponse,
+    ReorderTasksV1TasksReorderPatchError,
+    Options<ReorderTasksV1TasksReorderPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await reorderTasksV1TasksReorderPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete Task
  */
 export const deleteTaskV1TasksTaskIdDeleteMutation = (
@@ -2353,33 +2380,6 @@ export const reopenTaskV1TasksTaskIdReopenPostMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await reopenTaskV1TasksTaskIdReopenPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Reorder Tasks
- */
-export const reorderTasksV1TasksReorderPatchMutation = (
-  options?: Partial<Options<ReorderTasksV1TasksReorderPatchData>>,
-): UseMutationOptions<
-  ReorderTasksV1TasksReorderPatchResponse,
-  ReorderTasksV1TasksReorderPatchError,
-  Options<ReorderTasksV1TasksReorderPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ReorderTasksV1TasksReorderPatchResponse,
-    ReorderTasksV1TasksReorderPatchError,
-    Options<ReorderTasksV1TasksReorderPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await reorderTasksV1TasksReorderPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2561,6 +2561,35 @@ export const importTransactionsV1TransactionsImportPostMutation = (
 };
 
 /**
+ * Bulk Update Transactions
+ *
+ * Update category for a list of transactions by ID.
+ */
+export const bulkUpdateTransactionsV1TransactionsBulkPatchMutation = (
+  options?: Partial<Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>>,
+): UseMutationOptions<
+  BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
+  BulkUpdateTransactionsV1TransactionsBulkPatchError,
+  Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
+    BulkUpdateTransactionsV1TransactionsBulkPatchError,
+    Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await bulkUpdateTransactionsV1TransactionsBulkPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Update Transaction
  *
  * Update a transaction.
@@ -2581,35 +2610,6 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateTransactionV1TransactionsTransactionIdPatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Bulk Update Transactions
- *
- * Update category for a list of transactions by ID.
- */
-export const bulkUpdateTransactionsV1TransactionsBulkPatchMutation = (
-  options?: Partial<Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>>,
-): UseMutationOptions<
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
-  BulkUpdateTransactionsV1TransactionsBulkPatchError,
-  Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
-    BulkUpdateTransactionsV1TransactionsBulkPatchError,
-    Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await bulkUpdateTransactionsV1TransactionsBulkPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,

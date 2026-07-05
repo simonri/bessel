@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BookOpen, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import type { RecipeSchema } from "@metron/client";
+import { RecipeType, type RecipeSchema } from "@metron/client";
 import {
   createRecipeV1RecipesPostMutation,
   deleteRecipeV1RecipesRecipeIdDeleteMutation,
@@ -13,6 +13,14 @@ import {
   updateRecipeV1RecipesRecipeIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
+import { Badge } from "@metron/ui/components/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@metron/ui/components/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +35,12 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@m
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
+const RECIPE_TYPE_LABELS: Record<RecipeType, string> = {
+  [RecipeType.DESSERT]: "Dessert",
+  [RecipeType.MAIN]: "Main",
+  [RecipeType.OTHER]: "Other",
+};
+
 export const Route = createFileRoute("/_app/recipes")({
   component: Recipes,
 });
@@ -35,7 +49,7 @@ function Recipes() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
-  const [draft, setDraft] = useState<{ title: string; content: string } | null>(null);
+  const [draft, setDraft] = useState<{ title: string; content: string; recipe_type: RecipeType } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecipeSchema | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
@@ -56,7 +70,7 @@ function Recipes() {
   // Sync draft when selection changes
   useEffect(() => {
     if (selected) {
-      setDraft({ title: selected.title, content: selected.content });
+      setDraft({ title: selected.title, content: selected.content, recipe_type: selected.recipe_type });
     } else {
       setDraft(null);
     }
@@ -110,6 +124,12 @@ function Recipes() {
     scheduleSave(selectedId, next.title, next.content);
   };
 
+  const handleTypeChange = (value: RecipeType) => {
+    if (!draft || !selectedId) return;
+    setDraft({ ...draft, recipe_type: value });
+    updateMutation.mutate({ client, path: { recipe_id: selectedId }, body: { recipe_type: value } });
+  };
+
   return (
     <div className="flex h-full gap-0 -m-4">
       {/* Left: recipe list */}
@@ -152,7 +172,14 @@ function Recipes() {
                 }`}
                 onClick={() => { setSelectedId(r.id); setMode("preview"); }}
               >
-                {r.title || "Untitled"}
+                <span className="flex items-center gap-1.5">
+                  <span className="truncate">{r.title || "Untitled"}</span>
+                  {r.recipe_type !== RecipeType.OTHER && (
+                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px] font-normal text-white/40">
+                      {RECIPE_TYPE_LABELS[r.recipe_type]}
+                    </Badge>
+                  )}
+                </span>
               </button>
             ))
           )}
@@ -191,6 +218,18 @@ function Recipes() {
                 className="min-w-0 flex-1 bg-transparent text-sm font-medium text-white/90 placeholder:text-white/30 outline-none"
                 placeholder="Recipe title"
               />
+              <Select value={draft.recipe_type} onValueChange={(v) => handleTypeChange(v as RecipeType)}>
+                <SelectTrigger size="sm" className="w-28 shrink-0 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(RECIPE_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex items-center rounded-md border border-white/10 p-0.5 shrink-0">
                 <button
                   type="button"

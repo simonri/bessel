@@ -64,7 +64,7 @@ def _build_response(
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   authorization: str,
   cookie: None | str | Unset = UNSET,
 ) -> Response[GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet | HTTPValidationError]:
@@ -98,7 +98,7 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   authorization: str,
   cookie: None | str | Unset = UNSET,
 ) -> GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet | HTTPValidationError | None:
@@ -127,7 +127,7 @@ def sync(
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   authorization: str,
   cookie: None | str | Unset = UNSET,
 ) -> Response[GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet | HTTPValidationError]:
@@ -159,7 +159,7 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   authorization: str,
   cookie: None | str | Unset = UNSET,
 ) -> GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet | HTTPValidationError | None:

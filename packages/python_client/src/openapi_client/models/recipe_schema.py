@@ -7,6 +7,8 @@ from typing import Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.recipe_type import RecipeType
+
 T = TypeVar("T", bound="RecipeSchema")
 
 
@@ -19,6 +21,7 @@ class RecipeSchema:
       id (str): The ID of the object.
       title (str):
       content (str):
+      recipe_type (RecipeType):
   """
 
   created_at: datetime.datetime
@@ -26,6 +29,7 @@ class RecipeSchema:
   id: str
   title: str
   content: str
+  recipe_type: RecipeType
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -43,6 +47,8 @@ class RecipeSchema:
 
     content = self.content
 
+    recipe_type = self.recipe_type.value
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -52,6 +58,7 @@ class RecipeSchema:
         "id": id,
         "title": title,
         "content": content,
+        "recipe_type": recipe_type,
       }
     )
 
@@ -83,12 +90,15 @@ class RecipeSchema:
 
     content = d.pop("content")
 
+    recipe_type = RecipeType(d.pop("recipe_type"))
+
     recipe_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
       id=id,
       title=title,
       content=content,
+      recipe_type=recipe_type,
     )
 
     recipe_schema.additional_properties = d

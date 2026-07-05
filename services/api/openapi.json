@@ -2886,6 +2886,49 @@
         }
       }
     },
+    "/v1/tasks/reorder": {
+      "patch": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Reorder Tasks",
+        "operationId": "reorder_tasks_v1_tasks_reorder_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/TaskReorderItem"
+                },
+                "type": "array",
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/tasks/{task_id}": {
       "patch": {
         "tags": [
@@ -3077,49 +3120,6 @@
             }
           }
         }
-      }
-    },
-    "/v1/tasks/reorder": {
-      "patch": {
-        "tags": [
-          "tasks"
-        ],
-        "summary": "Reorder Tasks",
-        "operationId": "reorder_tasks_v1_tasks_reorder_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "items": {
-                  "$ref": "#/components/schemas/TaskReorderItem"
-                },
-                "type": "array",
-                "title": "Body"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
       }
     },
     "/v1/tasks/areas": {
@@ -3499,6 +3499,53 @@
         }
       }
     },
+    "/v1/transactions/bulk": {
+      "patch": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Bulk Update Transactions",
+        "description": "Update category for a list of transactions by ID.",
+        "operationId": "bulk_update_transactions_v1_transactions_bulk_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/transactions/{transaction_id}": {
       "patch": {
         "tags": [
@@ -3556,53 +3603,6 @@
             }
           }
         }
-      }
-    },
-    "/v1/transactions/bulk": {
-      "patch": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "Bulk Update Transactions",
-        "description": "Update category for a list of transactions by ID.",
-        "operationId": "bulk_update_transactions_v1_transactions_bulk_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BulkUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BulkUpdateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
       }
     },
     "/v1/transactions/categorize-by-description": {
@@ -3831,6 +3831,11 @@
         "summary": "Get Klarna Transactions",
         "description": "Fetch Klarna transactions and return raw GraphQL response.",
         "operationId": "get_klarna_transactions_v1_klarna_transactions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "authorization",
@@ -3927,7 +3932,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     }
   },
@@ -6147,6 +6157,10 @@
             "type": "string",
             "title": "Content",
             "default": ""
+          },
+          "recipe_type": {
+            "$ref": "#/components/schemas/RecipeType",
+            "default": "other"
           }
         },
         "type": "object",
@@ -6209,6 +6223,9 @@
           "content": {
             "type": "string",
             "title": "Content"
+          },
+          "recipe_type": {
+            "$ref": "#/components/schemas/RecipeType"
           }
         },
         "type": "object",
@@ -6217,7 +6234,8 @@
           "modified_at",
           "id",
           "title",
-          "content"
+          "content",
+          "recipe_type"
         ],
         "title": "RecipeSchema"
       },
@@ -6232,6 +6250,15 @@
           "-modified_at"
         ],
         "title": "RecipeSortProperty"
+      },
+      "RecipeType": {
+        "type": "string",
+        "enum": [
+          "dessert",
+          "main",
+          "other"
+        ],
+        "title": "RecipeType"
       },
       "RecipeUpdate": {
         "properties": {
@@ -6256,6 +6283,16 @@
               }
             ],
             "title": "Content"
+          },
+          "recipe_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecipeType"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

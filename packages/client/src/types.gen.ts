@@ -1417,6 +1417,7 @@ export type RecipeCreate = {
    * Content
    */
   content?: string;
+  recipe_type?: RecipeType;
 };
 
 /**
@@ -1460,6 +1461,7 @@ export type RecipeSchema = {
    * Content
    */
   content: string;
+  recipe_type: RecipeType;
 };
 
 /**
@@ -1481,6 +1483,20 @@ export type RecipeSortProperty =
   (typeof RecipeSortProperty)[keyof typeof RecipeSortProperty];
 
 /**
+ * RecipeType
+ */
+export const RecipeType = {
+  DESSERT: "dessert",
+  MAIN: "main",
+  OTHER: "other",
+} as const;
+
+/**
+ * RecipeType
+ */
+export type RecipeType = (typeof RecipeType)[keyof typeof RecipeType];
+
+/**
  * RecipeUpdate
  */
 export type RecipeUpdate = {
@@ -1492,6 +1508,7 @@ export type RecipeUpdate = {
    * Content
    */
   content?: string | null;
+  recipe_type?: RecipeType | null;
 };
 
 /**
@@ -4165,6 +4182,36 @@ export type CreateTaskV1TasksPostResponses = {
 export type CreateTaskV1TasksPostResponse =
   CreateTaskV1TasksPostResponses[keyof CreateTaskV1TasksPostResponses];
 
+export type ReorderTasksV1TasksReorderPatchData = {
+  /**
+   * Body
+   */
+  body: Array<TaskReorderItem>;
+  path?: never;
+  query?: never;
+  url: "/v1/tasks/reorder";
+};
+
+export type ReorderTasksV1TasksReorderPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReorderTasksV1TasksReorderPatchError =
+  ReorderTasksV1TasksReorderPatchErrors[keyof ReorderTasksV1TasksReorderPatchErrors];
+
+export type ReorderTasksV1TasksReorderPatchResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ReorderTasksV1TasksReorderPatchResponse =
+  ReorderTasksV1TasksReorderPatchResponses[keyof ReorderTasksV1TasksReorderPatchResponses];
+
 export type DeleteTaskV1TasksTaskIdDeleteData = {
   body?: never;
   path: {
@@ -4292,36 +4339,6 @@ export type ReopenTaskV1TasksTaskIdReopenPostResponses = {
 
 export type ReopenTaskV1TasksTaskIdReopenPostResponse =
   ReopenTaskV1TasksTaskIdReopenPostResponses[keyof ReopenTaskV1TasksTaskIdReopenPostResponses];
-
-export type ReorderTasksV1TasksReorderPatchData = {
-  /**
-   * Body
-   */
-  body: Array<TaskReorderItem>;
-  path?: never;
-  query?: never;
-  url: "/v1/tasks/reorder";
-};
-
-export type ReorderTasksV1TasksReorderPatchErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type ReorderTasksV1TasksReorderPatchError =
-  ReorderTasksV1TasksReorderPatchErrors[keyof ReorderTasksV1TasksReorderPatchErrors];
-
-export type ReorderTasksV1TasksReorderPatchResponses = {
-  /**
-   * Successful Response
-   */
-  204: void;
-};
-
-export type ReorderTasksV1TasksReorderPatchResponse =
-  ReorderTasksV1TasksReorderPatchResponses[keyof ReorderTasksV1TasksReorderPatchResponses];
 
 export type ListAreasV1TasksAreasGetData = {
   body?: never;
@@ -4503,6 +4520,33 @@ export type ImportTransactionsV1TransactionsImportPostResponses = {
 export type ImportTransactionsV1TransactionsImportPostResponse =
   ImportTransactionsV1TransactionsImportPostResponses[keyof ImportTransactionsV1TransactionsImportPostResponses];
 
+export type BulkUpdateTransactionsV1TransactionsBulkPatchData = {
+  body: BulkUpdateRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/bulk";
+};
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchError =
+  BulkUpdateTransactionsV1TransactionsBulkPatchErrors[keyof BulkUpdateTransactionsV1TransactionsBulkPatchErrors];
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkUpdateResponse;
+};
+
+export type BulkUpdateTransactionsV1TransactionsBulkPatchResponse =
+  BulkUpdateTransactionsV1TransactionsBulkPatchResponses[keyof BulkUpdateTransactionsV1TransactionsBulkPatchResponses];
+
 export type UpdateTransactionV1TransactionsTransactionIdPatchData = {
   body: TransactionUpdate;
   path: {
@@ -4534,33 +4578,6 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
 
 export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
   UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
-
-export type BulkUpdateTransactionsV1TransactionsBulkPatchData = {
-  body: BulkUpdateRequest;
-  path?: never;
-  query?: never;
-  url: "/v1/transactions/bulk";
-};
-
-export type BulkUpdateTransactionsV1TransactionsBulkPatchErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type BulkUpdateTransactionsV1TransactionsBulkPatchError =
-  BulkUpdateTransactionsV1TransactionsBulkPatchErrors[keyof BulkUpdateTransactionsV1TransactionsBulkPatchErrors];
-
-export type BulkUpdateTransactionsV1TransactionsBulkPatchResponses = {
-  /**
-   * Successful Response
-   */
-  200: BulkUpdateResponse;
-};
-
-export type BulkUpdateTransactionsV1TransactionsBulkPatchResponse =
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponses[keyof BulkUpdateTransactionsV1TransactionsBulkPatchResponses];
 
 export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData =
   {
