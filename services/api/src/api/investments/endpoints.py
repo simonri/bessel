@@ -3,8 +3,8 @@ from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import case, func, select
 
+from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
 from api.exceptions import ResourceNotFound
 from api.investments.repository import SecurityPriceRepository, SecurityRepository, TradeRepository
@@ -26,7 +26,7 @@ from api.investments.schemas import (
 )
 from api.models.security import Security
 from api.models.security_price import SecurityPrice
-from api.models.trade import Trade, TradeType
+from api.models.trade import Trade
 from api.postgres import AsyncSession, get_db_session
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
@@ -95,6 +95,11 @@ async def delete_security(
   security = await repo.get_by_id(security_id)
   if security is None:
     raise ResourceNotFound("Security not found")
+  # Securities are shared; deleting cascades to trades and prices, so never
+  # allow one user to wipe rows belonging to someone else.
+  trade_repo = TradeRepository.from_session(session)
+  if await trade_repo.count_for_security_by_other_users(security_id, current_user.id) > 0:
+    raise HTTPException(status_code=409, detail="Security has trades belonging to other users")
   await session.delete(security)
 
 
@@ -106,8 +111,8 @@ async def list_trades(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
-  security_id: UUID | None = Query(default=None),
-  bank_account_id: UUID | None = Query(default=None),
+  security_id: Annotated[UUID | None, Query()] = None,
+  bank_account_id: Annotated[UUID | None, Query()] = None,
 ) -> TradeListResponse:
   repo = TradeRepository.from_session(session)
   statement = repo.get_base_statement().where(Trade.user_id == current_user.id).order_by(Trade.trade_date.desc(), Trade.created_at.desc())
@@ -132,6 +137,9 @@ async def create_trade(
   sec_repo = SecurityRepository.from_session(session)
   if await sec_repo.get_by_id(body.security_id) is None:
     raise ResourceNotFound("Security not found")
+  bank_account = await BankAccountRepository.from_session(session).get_by_id(body.bank_account_id)
+  if bank_account is None or bank_account.user_id != current_user.id:
+    raise ResourceNotFound("Bank account not found")
   repo = TradeRepository.from_session(session)
   trade = Trade(**body.model_dump(), user_id=current_user.id)
   await repo.create(trade, flush=True)
@@ -217,53 +225,11 @@ async def get_holdings(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> HoldingsResponse:
-  # Aggregate trades per security: net quantity, total buy cost, total buy quantity
-  qty_expr = case(
-    (Trade.trade_type == TradeType.buy, Trade.quantity),
-    else_=-Trade.quantity,
-  )
-  trade_agg = (
-    select(
-      Trade.security_id,
-      func.sum(qty_expr).label("net_quantity"),
-      func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity), else_=0)).label("total_buy_qty"),
-      func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity * Trade.price_per_unit), else_=0)).label("total_buy_cost"),
-    )
-    .where(Trade.user_id == current_user.id)
-    .group_by(Trade.security_id)
-    .subquery()
-  )
-
-  # Latest price per security (using a correlated subquery for the max date)
-  latest_price_date = select(func.max(SecurityPrice.price_date)).where(SecurityPrice.security_id == Security.id).correlate(Security).scalar_subquery()
-  latest_price = (
-    select(SecurityPrice.price_per_unit)
-    .where(SecurityPrice.security_id == Security.id, SecurityPrice.price_date == latest_price_date)
-    .correlate(Security)
-    .scalar_subquery()
-  )
-
-  stmt = (
-    select(
-      Security.id,
-      Security.name,
-      Security.ticker,
-      Security.asset_type,
-      Security.currency,
-      trade_agg.c.net_quantity,
-      trade_agg.c.total_buy_qty,
-      trade_agg.c.total_buy_cost,
-      latest_price.label("current_price"),
-    )
-    .join(trade_agg, Security.id == trade_agg.c.security_id)
-    .where(trade_agg.c.net_quantity > 0)
-    .order_by(Security.name.asc())
-  )
-
-  result = await session.execute(stmt)
+  repo = TradeRepository.from_session(session)
+  rows = await repo.holdings_rows(current_user.id)
   holdings: list[HoldingSchema] = []
 
-  for row in result.all():
+  for row in rows:
     net_qty = int(row.net_quantity)
     total_buy_qty = int(row.total_buy_qty)
     total_buy_cost = int(row.total_buy_cost)
@@ -312,11 +278,19 @@ async def get_crypto_price(
     return CryptoPriceSchema.model_validate_json(cached)
 
   async with httpx.AsyncClient(timeout=10.0) as http:
-    response = await http.get(
-      COINGECKO_URL,
-      params={"ids": coin_id, "vs_currencies": currency, "include_24hr_change": "true"},
+    try:
+      response = await http.get(
+        COINGECKO_URL,
+        params={"ids": coin_id, "vs_currencies": currency, "include_24hr_change": "true"},
+      )
+    except httpx.RequestError as e:
+      raise HTTPException(status_code=502, detail=f"Failed to reach CoinGecko: {e}") from e
+
+  if response.status_code != 200:
+    raise HTTPException(
+      status_code=429 if response.status_code == 429 else 502,
+      detail=f"CoinGecko returned {response.status_code}",
     )
-    response.raise_for_status()
 
   data = response.json()
   if coin_id not in data or currency not in data[coin_id]:

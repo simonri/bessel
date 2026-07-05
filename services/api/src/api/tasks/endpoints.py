@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import false
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
@@ -62,7 +62,7 @@ async def list_tasks(
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TaskSortProperty]], Depends(sorting_getter)],
-  status: TaskStatus | None = Query(default=None, description="Filter by status."),
+  status: Annotated[TaskStatus | None, Query(description="Filter by status.")] = None,
   priority: int | None = Query(default=None, ge=0, le=4, description="Filter by priority."),
   project: str | None = Query(default=None, description="Filter by project."),
   area: str | None = Query(default=None, description="Filter by area."),
@@ -78,10 +78,8 @@ async def list_tasks(
   if priority is not None:
     statement = statement.where(Task.priority == priority)
   if project is not None:
-    project_subq = (
-      select(Project.id).where(Project.name == project).where(Project.deleted_at.is_(None)).where(Project.user_id == current_user.id).scalar_subquery()
-    )
-    statement = statement.where(Task.project_id == project_subq)
+    project_obj = await ProjectRepository.from_session(session).get_by_name(project, user_id=current_user.id)
+    statement = statement.where(Task.project_id == project_obj.id) if project_obj else statement.where(false())
   if area is not None:
     statement = statement.where(Task.area == area)
   if is_recurring is not None:
@@ -126,6 +124,29 @@ async def create_task(
   task.project_obj = project
   await repo.create(task, flush=True)
   return TaskSchema.model_validate(task)
+
+
+# Registered before /{task_id} — FastAPI matches routes in definition order,
+# and "/reorder" would otherwise be captured (and 422) as a task_id.
+@router.patch(
+  "/reorder",
+  summary="Reorder Tasks",
+  status_code=204,
+)
+async def reorder_tasks(
+  body: list[TaskReorderItem],
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> None:
+  repo = TaskRepository.from_session(session)
+  for item in body:
+    task = await repo.get_by_id(item.id)
+    if task is None or task.user_id != current_user.id:
+      continue
+    update: dict = {"position": item.position}
+    if item.status is not None:
+      update["status"] = item.status
+    await repo.update(task, update_dict=update)
 
 
 @router.patch(
@@ -180,7 +201,11 @@ async def complete_task(
   repo = TaskRepository.from_session(session)
   task = await _get_task_or_404(session, task_id, current_user.id)
 
-  # Mark as done
+  # Idempotency: a duplicate complete (double click, client retry) must not
+  # re-stamp completed_at or spawn another recurring instance.
+  if task.status == "done":
+    return TaskCompleteResponse(completed_task=TaskSchema.model_validate(task), next_task=None)
+
   await repo.update(task, update_dict={"status": "done", "completed_at": utc_now()})
 
   next_task_schema = None
@@ -237,27 +262,6 @@ async def reopen_task(
   return TaskSchema.model_validate(task)
 
 
-@router.patch(
-  "/reorder",
-  summary="Reorder Tasks",
-  status_code=204,
-)
-async def reorder_tasks(
-  body: list[TaskReorderItem],
-  session: Annotated[AsyncSession, Depends(get_db_session)],
-  current_user: CurrentDBUser,
-) -> None:
-  repo = TaskRepository.from_session(session)
-  for item in body:
-    task = await repo.get_by_id(item.id)
-    if task is None or task.user_id != current_user.id:
-      continue
-    update: dict = {"position": item.position}
-    if item.status is not None:
-      update["status"] = item.status
-    await repo.update(task, update_dict=update)
-
-
 @router.get(
   "/areas",
   summary="List Areas",
@@ -267,7 +271,5 @@ async def list_areas(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> list[str]:
-  result = await session.execute(
-    select(Task.area).where(Task.area.is_not(None)).where(Task.user_id == current_user.id).group_by(Task.area).order_by(func.count().desc())
-  )
-  return [row[0] for row in result.all()]
+  repo = TaskRepository.from_session(session)
+  return await repo.list_areas_by_usage(current_user.id)

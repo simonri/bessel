@@ -2,15 +2,14 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, update
 
 from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound
 from api.models.project import Project
-from api.models.task import Task
 from api.postgres import AsyncSession, get_db_session
 from api.projects.repository import ProjectRepository
 from api.projects.schemas import ProjectCreate, ProjectSchema, ProjectUpdate
+from api.tasks.repository import TaskRepository
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -29,12 +28,9 @@ async def list_projects(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> list[ProjectSchema]:
-  rows = (
-    (await session.execute(select(Project).where(Project.deleted_at.is_(None)).where(Project.user_id == current_user.id).order_by(Project.name)))
-    .scalars()
-    .all()
-  )
-  return [ProjectSchema.model_validate(p) for p in rows]
+  repo = ProjectRepository.from_session(session)
+  projects = await repo.list_for_user(current_user.id)
+  return [ProjectSchema.model_validate(p) for p in projects]
 
 
 @router.post("", summary="Create Project", response_model=ProjectSchema, status_code=201)
@@ -76,6 +72,6 @@ async def delete_project(
   current_user: CurrentDBUser,
 ) -> None:
   project = await _get_project_or_404(session, project_id, current_user.id)
-  await session.execute(update(Task).where(Task.project_id == project_id).where(Task.user_id == current_user.id).values(project_id=None))
+  await TaskRepository.from_session(session).detach_from_project(project_id, current_user.id)
   repo = ProjectRepository.from_session(session)
   await repo.update(project, update_dict={"deleted_at": utc_now()})

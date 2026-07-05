@@ -27,7 +27,7 @@ FLUSH_BATCH_SIZE = 50
 
 
 class JobQueueManager:
-  __slots__ = ("_enqueued_jobs", "_ingested_events")
+  __slots__ = ("_enqueued_jobs",)
 
   def __init__(self) -> None:
     self._enqueued_jobs: list[
@@ -38,7 +38,6 @@ class JobQueueManager:
         int | None,
       ]
     ] = []
-    self._ingested_events: list[uuid.UUID] = []
 
   def enqueue_job(
     self,
@@ -50,13 +49,7 @@ class JobQueueManager:
     self._enqueued_jobs.append((actor, args, kwargs, delay))
     log.debug("metron.worker.job_enqueued", actor=actor, delay=delay)
 
-  def enqueue_events(self, *event_ids: uuid.UUID) -> None:
-    self._ingested_events.extend(event_ids)
-
   async def flush(self, broker: dramatiq.Broker, redis: Redis) -> None:
-    if len(self._ingested_events) > 0:
-      self.enqueue_job("event.ingested", self._ingested_events)
-
     if not self._enqueued_jobs:
       self.reset()
       return
@@ -87,7 +80,7 @@ class JobQueueManager:
 
       encoded_message = message.encode()
       queue_messages[message.queue_name].append((redis_message_id, encoded_message))
-      all_messages.append((fn.actor_name, message.encode()))
+      all_messages.append((fn.actor_name, encoded_message))
 
     for queue_name, messages in queue_messages.items():
       for batch in itertools.batched(messages, FLUSH_BATCH_SIZE):
@@ -119,7 +112,6 @@ class JobQueueManager:
 
   def reset(self) -> None:
     self._enqueued_jobs = []
-    self._ingested_events = []
 
   @classmethod
   def set(cls) -> "Self":
@@ -167,12 +159,6 @@ def enqueue_job(
   """
   job_queue_manager = JobQueueManager.get()
   job_queue_manager.enqueue_job(actor, *args, delay=delay, **kwargs)
-
-
-def enqueue_events(*event_ids: uuid.UUID) -> None:
-  """Enqueue events to be ingested."""
-  job_queue_manager = JobQueueManager.get()
-  job_queue_manager.enqueue_events(*event_ids)
 
 
 def calculate_bulk_job_delay(index: int, total_count: int) -> int | None:

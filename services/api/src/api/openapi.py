@@ -54,6 +54,7 @@ def set_openapi_generator(app: FastAPI) -> None:
       separate_input_output_schemas=app.separate_input_output_schemas,
     )
 
+    app.openapi_schema = openapi_schema
     return openapi_schema
 
   app.openapi = _openapi_generator  # type: ignore[method-assign]

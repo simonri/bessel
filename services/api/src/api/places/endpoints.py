@@ -88,7 +88,7 @@ async def list_places(
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[PlaceSortProperty]], Depends(sorting_getter)],
-  status: PlaceStatus | None = Query(default=None, description="Filter by status."),
+  status: Annotated[PlaceStatus | None, Query(description="Filter by status.")] = None,
 ) -> PlaceListResponse:
   repo = PlaceRepository.from_session(session)
   statement = repo.get_base_statement().where(Place.user_id == current_user.id)
@@ -127,6 +127,7 @@ async def search_google_places(
       params={"query": query, "key": api_key},
       timeout=10,
     )
+    response.raise_for_status()
     data = response.json()
 
   results: list[GooglePlaceSearchResult] = []

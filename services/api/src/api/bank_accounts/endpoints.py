@@ -3,7 +3,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import case, delete, func, select
 
 from api.bank_accounts.repository import BankAccountRepository
 from api.bank_accounts.schemas import BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
@@ -11,8 +10,8 @@ from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
 from api.exceptions import ResourceNotFound
 from api.models.bank_account import BankAccount
-from api.models.transaction import Transaction, TransactionDirection
 from api.postgres import AsyncSession, get_db_session
+from api.transactions.repository import TransactionRepository
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/bank-accounts", tags=["bank-accounts"])
@@ -27,24 +26,7 @@ sorting_getter = SortingGetter(BankAccountSortProperty, default_sorting=["name"]
 
 
 async def _get_balances(session: AsyncSession, account_ids: list[UUID]) -> dict[UUID, int]:
-  """Fetch transaction balance sums for a list of account IDs."""
-  if not account_ids:
-    return {}
-  stmt = (
-    select(
-      Transaction.bank_account_id,
-      func.sum(
-        case(
-          (Transaction.direction == TransactionDirection.credit, Transaction.amount),
-          else_=-Transaction.amount,
-        )
-      ).label("net"),
-    )
-    .where(Transaction.bank_account_id.in_(account_ids))
-    .group_by(Transaction.bank_account_id)
-  )
-  result = await session.execute(stmt)
-  return {row.bank_account_id: int(row.net) for row in result}
+  return await TransactionRepository.from_session(session).net_balances_by_account(account_ids)
 
 
 def _to_schema(account: BankAccount, balance: int) -> BankAccountSchema:
@@ -164,5 +146,5 @@ async def delete_bank_account(
   account = await repo.get_by_id(bank_account_id)
   if account is None or account.user_id != current_user.id:
     raise ResourceNotFound("Bank account not found")
-  await session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id))
+  await TransactionRepository.from_session(session).delete_for_bank_account(bank_account_id)
   await session.delete(account)

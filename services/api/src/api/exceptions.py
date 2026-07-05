@@ -88,7 +88,8 @@ class InternalError(MetronError):
 
 
 class MetronRequestValidationError(MetronError):
-  def __init__(self, errors: Sequence[ValidationError]) -> None:
+  def __init__(self, errors: Sequence[ErrorDetails]) -> None:
+    super().__init__("Request validation failed", status_code=422)
     self._errors = errors
 
   def errors(self) -> list[ErrorDetails]:

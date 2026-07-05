@@ -5,8 +5,12 @@ import httpx
 import pytest
 import pytest_asyncio
 from api.app import app as flow_app
+from api.auth.dependencies import verify_token
+from api.auth.schemas import UserInfo
 from api.postgres import AsyncSession, get_db_session
 from fastapi import FastAPI
+
+TEST_USER_INFO = UserInfo(sub="auth0|test-user", email="test@example.com", name="Test User", picture=None)
 
 
 class IsolatedSessionTestClient(httpx.AsyncClient):
@@ -35,10 +39,12 @@ class IsolatedSessionTestClient(httpx.AsyncClient):
 @pytest_asyncio.fixture
 async def app(session: AsyncSession) -> AsyncGenerator[FastAPI]:
   flow_app.dependency_overrides[get_db_session] = lambda: session
+  flow_app.dependency_overrides[verify_token] = lambda: TEST_USER_INFO
 
   yield flow_app
 
   flow_app.dependency_overrides.pop(get_db_session)
+  flow_app.dependency_overrides.pop(verify_token)
 
 
 @pytest_asyncio.fixture

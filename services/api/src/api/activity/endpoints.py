@@ -162,8 +162,9 @@ async def get_daily_activity(
 
   try:
     tz = ZoneInfo(tz_name) if tz_name else None
-  except ZoneInfoNotFoundError:
-    tz = None
+  except (ZoneInfoNotFoundError, ValueError) as e:
+    # Don't silently fall back to UTC — that would bucket days on the wrong boundary.
+    raise HTTPException(status_code=422, detail=f"Unknown timezone: {tz_name}") from e
 
   for i, event in enumerate(events):
     nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts

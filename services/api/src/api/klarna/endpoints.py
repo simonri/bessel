@@ -5,12 +5,17 @@ from datetime import date
 from typing import Annotated, Any
 
 import httpx
+from api.bank_accounts.repository import BankAccountRepository
+from api.common.schemas import Schema
+from api.exceptions import ResourceNotFound
 from api.models.transaction import TransactionDirection
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.parsers.base import ParsedTransaction
 from api.transactions.schemas import ImportResponse
 from api.transactions.service import transaction_service
-from fastapi import APIRouter, Header, HTTPException
+from api.users.dependencies import CurrentDBUser
+from fastapi import APIRouter, Depends, Header, HTTPException
+from pydantic import UUID4
 
 router = APIRouter(prefix="/klarna", tags=["klarna"])
 
@@ -216,11 +221,6 @@ def _map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   )
 
 
-from api.common.schemas import Schema
-from fastapi import Depends
-from pydantic import UUID4
-
-
 class KlarnaImportRequest(Schema):
   bank_account_id: UUID4
   authorization: str
@@ -232,6 +232,7 @@ class KlarnaImportRequest(Schema):
 
 @router.get("/transactions")
 async def get_klarna_transactions(
+  current_user: CurrentDBUser,
   authorization: Annotated[str, Header(description="Klarna Bearer token")],
   cookie: Annotated[str | None, Header(description="Klarna session cookies")] = None,
 ) -> dict[str, Any]:
@@ -247,6 +248,7 @@ async def get_klarna_transactions(
 async def import_klarna_transactions(
   body: KlarnaImportRequest,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
 ) -> ImportResponse:
   """
   Fetch Klarna transactions and import them into Metron.
@@ -256,16 +258,21 @@ async def import_klarna_transactions(
   if not auth.lower().startswith("bearer "):
     raise HTTPException(status_code=400, detail="Authorization must be a Bearer token")
 
+  bank_account = await BankAccountRepository.from_session(session).get_by_id(body.bank_account_id)
+  if bank_account is None or bank_account.user_id != current_user.id:
+    raise ResourceNotFound("Bank account not found")
+
   items = await _fetch_klarna_items(auth, body.cookie)
   parsed = [p for item in items if (p := _map_to_parsed(item)) is not None]
 
   created, skipped = await transaction_service.import_transactions(
     session,
-    bank_account_id=body.bank_account_id,
+    bank_account_id=bank_account.id,
     bank_name="klarna",
     file_format="klarna_api",
     raw_content=f"[klarna api, {len(items)} items fetched]",
     parsed=parsed,
+    user_id=current_user.id,
   )
 
   return ImportResponse(created=created, skipped=skipped)

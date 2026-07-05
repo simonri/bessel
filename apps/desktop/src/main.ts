@@ -4,7 +4,7 @@ import os from "os";
 import { pathToFileURL } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu, net, protocol, safeStorage, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, safeStorage, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as pty from "node-pty";
 
@@ -128,6 +128,41 @@ function saveAuthCache(): void {
 
 const ptySessions = new Map<string, pty.IPty>();
 
+const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
+
+function isTrustedSender(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent): boolean {
+  const url = event.senderFrame?.url;
+  if (!url) return false;
+  try {
+    return TRUSTED_ORIGINS.has(new URL(url).origin);
+  } catch {
+    return false;
+  }
+}
+
+function ipcHandle(
+  channel: string,
+  listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown,
+): void {
+  ipcMain.handle(channel, (event, ...args) => {
+    if (!isTrustedSender(event)) throw new Error(`Rejected "${channel}" from untrusted sender`);
+    return listener(event, ...args);
+  });
+}
+
+function ipcOn(channel: string, listener: (event: Electron.IpcMainEvent, ...args: any[]) => void): void {
+  ipcMain.on(channel, (event, ...args) => {
+    if (!isTrustedSender(event)) return;
+    listener(event, ...args);
+  });
+}
+
+function broadcast(channel: string, ...args: unknown[]): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send(channel, ...args);
+  }
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1400,
@@ -142,10 +177,23 @@ function createWindow() {
     },
   });
 
-  win.webContents.on("did-finish-load", () => {
-    globalShortcut.register("CommandOrControl+Shift+I", () => {
+  win.webContents.on("before-input-event", (_, input) => {
+    if (input.type === "keyDown" && input.shift && (input.control || input.meta) && input.key.toLowerCase() === "i") {
       win.webContents.toggleDevTools();
-    });
+    }
+  });
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("https://") || url.startsWith("http://")) shell.openExternal(url);
+    return { action: "deny" };
+  });
+
+  win.webContents.on("will-navigate", (event, url) => {
+    try {
+      if (!TRUSTED_ORIGINS.has(new URL(url).origin)) event.preventDefault();
+    } catch {
+      event.preventDefault();
+    }
   });
 
   if (!app.isPackaged) {
@@ -165,26 +213,31 @@ app.whenReady().then(() => {
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
 
-  ipcMain.handle("auth:get", (_, key: string): string | null => authCache[key] ?? null);
-  ipcMain.handle("auth:set", (_, key: string, value: string): void => {
+  ipcHandle("auth:get", (_, key: string): string | null => authCache[key] ?? null);
+  ipcHandle("auth:set", (_, key: string, value: string): void => {
     authCache[key] = value;
     saveAuthCache();
   });
-  ipcMain.handle("auth:remove", (_, key: string): void => {
+  ipcHandle("auth:remove", (_, key: string): void => {
     delete authCache[key];
     saveAuthCache();
   });
-  ipcMain.handle("auth:all-keys", (): string[] => Object.keys(authCache));
+  ipcHandle("auth:all-keys", (): string[] => Object.keys(authCache));
 
-  ipcMain.on("close-window", (event) => {
+  ipcOn("close-window", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
 
-  ipcMain.handle("shell:open-external", (_, url: string) => shell.openExternal(url));
+  ipcHandle("shell:open-external", (_, url: string) => {
+    if (!url.startsWith("https://") && !url.startsWith("http://")) {
+      throw new Error("Only http(s) URLs may be opened externally");
+    }
+    return shell.openExternal(url);
+  });
 
-  ipcMain.handle("app:version", () => app.getVersion());
+  ipcHandle("app:version", () => app.getVersion());
 
-  ipcMain.handle("app:check-update", () => {
+  ipcHandle("app:check-update", () => {
     if (!app.isPackaged) return Promise.resolve({ status: "dev" });
     return new Promise((resolve) => {
       const cleanup = () => {
@@ -202,18 +255,20 @@ app.whenReady().then(() => {
     });
   });
 
-  ipcMain.handle("dialog:select-folder", async (event) => {
+  ipcHandle("dialog:select-folder", async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    const result = await dialog.showOpenDialog(win ?? BrowserWindow.getFocusedWindow()!, {
-      properties: ["openDirectory"],
-    });
+    const options: Electron.OpenDialogOptions = { properties: ["openDirectory"] };
+    const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options);
     return result.canceled ? null : (result.filePaths[0] ?? null);
   });
 
-  ipcMain.handle("ssh:list-dir", async (_, host: string, dirPath: string) => {
+  ipcHandle("ssh:list-dir", async (_, host: string, dirPath: string) => {
+    if (!/^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9][A-Za-z0-9.-]*$/.test(host)) {
+      throw new Error(`Invalid SSH host: ${host}`);
+    }
     const cdArg = remoteCdArg(dirPath?.trim() ? dirPath.trim() : "~");
     // Sentinel markers isolate our output from anything a remote rc file prints.
-    const remote = `cd ${cdArg} && printf '\\n@@CWD@@\\n' && pwd && printf '@@DIRS@@\\n' && ls -1ApL`;
+    const remote = `cd ${cdArg} && printf '\\n@@CWD@@\\n' && pwd && printf '@@DIRS@@\\n' && ls -1Ap`;
     const { stdout } = await execFileAsync(
       "ssh",
       ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, remote],
@@ -235,7 +290,7 @@ app.whenReady().then(() => {
     return { cwd, dirs };
   });
 
-  ipcMain.handle(
+  ipcHandle(
     "terminal:spawn",
     async (_, sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) => {
       if (ptySessions.has(sessionId)) return;
@@ -258,34 +313,30 @@ app.whenReady().then(() => {
       ptySessions.set(sessionId, p);
 
       p.onData((data) => {
-        for (const win of BrowserWindow.getAllWindows()) {
-          win.webContents.send("terminal:data", sessionId, data);
-        }
+        broadcast("terminal:data", sessionId, data);
       });
 
       p.onExit(({ exitCode }) => {
-        for (const win of BrowserWindow.getAllWindows()) {
-          win.webContents.send("terminal:exit", sessionId, exitCode ?? 0);
-        }
+        broadcast("terminal:exit", sessionId, exitCode ?? 0);
         ptySessions.delete(sessionId);
       });
     }
   );
 
-  ipcMain.on("terminal:input", (_, sessionId: string, data: string) => {
+  ipcOn("terminal:input", (_, sessionId: string, data: string) => {
     ptySessions.get(sessionId)?.write(data);
   });
 
-  ipcMain.on("terminal:resize", (_, sessionId: string, cols: number, rows: number) => {
+  ipcOn("terminal:resize", (_, sessionId: string, cols: number, rows: number) => {
     ptySessions.get(sessionId)?.resize(cols, rows);
   });
 
-  ipcMain.on("terminal:kill", (_, sessionId: string) => {
+  ipcOn("terminal:kill", (_, sessionId: string) => {
     ptySessions.get(sessionId)?.kill();
     ptySessions.delete(sessionId);
   });
 
-  ipcMain.handle("git:status", async (_, repoPath: string) => {
+  ipcHandle("git:status", async (_, repoPath: string) => {
     const branch = (await gitRun(["rev-parse", "--abbrev-ref", "HEAD"], repoPath)).trim();
     let ahead = 0, behind = 0;
     try {
@@ -298,7 +349,7 @@ app.whenReady().then(() => {
     return { branch, ahead, behind, ...parsePorcelain(statusOut) };
   });
 
-  ipcMain.handle("git:diff", async (_, repoPath: string, file: string, staged: boolean, untracked: boolean) => {
+  ipcHandle("git:diff", async (_, repoPath: string, file: string, staged: boolean, untracked: boolean) => {
     if (untracked) {
       try {
         return await gitRun(["diff", "--no-index", "/dev/null", file], repoPath);
@@ -310,28 +361,33 @@ app.whenReady().then(() => {
     return gitRun(staged ? ["diff", "--cached", "--", file] : ["diff", "--", file], repoPath);
   });
 
-  ipcMain.handle("git:stage", (_, repoPath: string, files: string[]) =>
+  ipcHandle("git:stage", (_, repoPath: string, files: string[]) =>
     gitRun(["add", "--", ...files], repoPath));
 
-  ipcMain.handle("git:unstage", (_, repoPath: string, files: string[]) =>
+  ipcHandle("git:unstage", (_, repoPath: string, files: string[]) =>
     gitRun(["restore", "--staged", "--", ...files], repoPath));
 
-  ipcMain.handle("git:discard", async (_, repoPath: string, trackedFiles: string[], untrackedFiles: string[]) => {
+  ipcHandle("git:discard", async (_, repoPath: string, trackedFiles: string[], untrackedFiles: string[]) => {
     if (trackedFiles.length > 0) {
       await gitRun(["restore", "--", ...trackedFiles], repoPath);
     }
+    const repoRoot = path.resolve(repoPath);
     for (const file of untrackedFiles) {
-      fs.rmSync(path.join(repoPath, file), { recursive: true, force: true });
+      const target = path.resolve(repoRoot, file);
+      if (target === repoRoot || !target.startsWith(repoRoot + path.sep)) {
+        throw new Error(`Refusing to delete path outside repository: ${file}`);
+      }
+      fs.rmSync(target, { recursive: true, force: true });
     }
   });
 
-  ipcMain.handle("git:commit", (_, repoPath: string, message: string) =>
+  ipcHandle("git:commit", (_, repoPath: string, message: string) =>
     gitRun(["commit", "-m", message], repoPath));
 
-  ipcMain.handle("git:push", (_, repoPath: string) =>
+  ipcHandle("git:push", (_, repoPath: string) =>
     gitRun(["push"], repoPath));
 
-  ipcMain.handle("git:log", async (_, repoPath: string, limit: number = 30) => {
+  ipcHandle("git:log", async (_, repoPath: string, limit: number = 30) => {
     const SEP = "%x1f";
     const out = await gitRun(
       ["log", `--format=%H${SEP}%h${SEP}%s${SEP}%an${SEP}%ar${SEP}%D`, `-${limit}`],
@@ -343,7 +399,7 @@ app.whenReady().then(() => {
     });
   });
 
-  ipcMain.handle("monitor:status", async () => {
+  ipcHandle("monitor:status", async () => {
     const serviceFilePath = path.join(SYSTEMD_USER_DIR, `${MONITOR_SERVICE_NAME}.service`);
     const installed = fs.existsSync(serviceFilePath);
     if (!installed) {
@@ -360,7 +416,7 @@ app.whenReady().then(() => {
     };
   });
 
-  ipcMain.handle("monitor:install", async () => {
+  ipcHandle("monitor:install", async () => {
     if (!fs.existsSync(MONITOR_SERVICE_SRC)) {
       throw new Error(`Service file not found at ${MONITOR_SERVICE_SRC} — is the repo at ~/dev/metron?`);
     }
@@ -371,15 +427,15 @@ app.whenReady().then(() => {
     await execFileAsync("systemctl", ["--user", "start", MONITOR_SERVICE_NAME]);
   });
 
-  ipcMain.handle("monitor:start", async () => {
+  ipcHandle("monitor:start", async () => {
     await execFileAsync("systemctl", ["--user", "start", MONITOR_SERVICE_NAME]);
   });
 
-  ipcMain.handle("monitor:stop", async () => {
+  ipcHandle("monitor:stop", async () => {
     await execFileAsync("systemctl", ["--user", "stop", MONITOR_SERVICE_NAME]);
   });
 
-  ipcMain.handle("monitor:setEnabled", async (_, enabled: boolean) => {
+  ipcHandle("monitor:setEnabled", async (_, enabled: boolean) => {
     if (enabled) {
       await execFileAsync("systemctl", ["--user", "enable", MONITOR_SERVICE_NAME]);
     } else {
@@ -387,21 +443,21 @@ app.whenReady().then(() => {
     }
   });
 
+  const INDEX_HTML = path.join(WEB_DIR, "index.html");
   protocol.handle("app", async (request) => {
-    const { pathname } = new URL(request.url);
-    const target =
-      !pathname || pathname === "/" || !path.extname(pathname)
-        ? path.join(WEB_DIR, "index.html")
-        : path.join(WEB_DIR, pathname);
     try {
+      const { pathname } = new URL(request.url);
+      let target = INDEX_HTML;
+      if (pathname && pathname !== "/" && path.extname(pathname)) {
+        const resolved = path.resolve(WEB_DIR, "." + decodeURIComponent(pathname));
+        if (resolved.startsWith(WEB_DIR + path.sep)) target = resolved;
+      }
       const headers: Record<string, string> = {};
       const range = request.headers.get("range");
       if (range) headers["range"] = range;
       return await net.fetch(pathToFileURL(target).toString(), { headers });
     } catch {
-      return net.fetch(
-        pathToFileURL(path.join(WEB_DIR, "index.html")).toString()
-      );
+      return net.fetch(pathToFileURL(INDEX_HTML).toString());
     }
   });
 

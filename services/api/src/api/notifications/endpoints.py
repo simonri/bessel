@@ -42,9 +42,8 @@ async def create_notification(
   current_user: CurrentDBUser,
 ) -> NotificationResponse:
   repo = NotificationRepository.from_session(session)
-  notification = Notification(title=body.title, body=body.body, kind=body.kind, user_id=current_user.id)
-  session.add(notification)
-  await session.flush()
+  notification = Notification(title=body.title, body=body.body, link=body.link, kind=body.kind, user_id=current_user.id)
+  await repo.create(notification, flush=True)
   return NotificationResponse.model_validate(notification)
 
 

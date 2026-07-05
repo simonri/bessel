@@ -2,10 +2,9 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
 
 from api.common.utils import utc_now
-from api.counters.repository import CounterRepository, CounterResetRepository
+from api.counters.repository import CounterRepository, CounterResetRepository, CounterResetStats
 from api.counters.schemas import CounterCreate, CounterResetSchema, CounterSchema, CounterUpdate
 from api.exceptions import ResourceNotFound
 from api.models.counter import Counter, CounterReset
@@ -13,6 +12,19 @@ from api.postgres import AsyncSession, get_db_session
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/counters", tags=["counters"])
+
+_NO_RESETS = CounterResetStats(last_reset_at=None, reset_count=0)
+
+
+def _to_schema(counter: Counter, stats: CounterResetStats) -> CounterSchema:
+  return CounterSchema(
+    id=counter.id,
+    name=counter.name,
+    created_at=counter.created_at,
+    modified_at=counter.modified_at,
+    last_reset_at=stats.last_reset_at,
+    reset_count=stats.reset_count,
+  )
 
 
 async def _get_counter_or_404(session: AsyncSession, counter_id: UUID, user_id: UUID) -> Counter:
@@ -28,41 +40,12 @@ async def list_counters(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> list[CounterSchema]:
-  counters = list(
-    (await session.execute(select(Counter).where(Counter.deleted_at.is_(None)).where(Counter.user_id == current_user.id).order_by(Counter.name)))
-    .scalars()
-    .all()
-  )
-
+  counters = await CounterRepository.from_session(session).list_for_user(current_user.id)
   if not counters:
     return []
 
-  stats_rows = (
-    await session.execute(
-      select(
-        CounterReset.counter_id,
-        func.max(CounterReset.created_at).label("last_reset_at"),
-        func.count(CounterReset.id).label("reset_count"),
-      )
-      .where(CounterReset.counter_id.in_([c.id for c in counters]))
-      .where(CounterReset.deleted_at.is_(None))
-      .group_by(CounterReset.counter_id)
-    )
-  ).all()
-
-  stats_by_id = {row.counter_id: row for row in stats_rows}
-
-  return [
-    CounterSchema(
-      id=c.id,
-      name=c.name,
-      created_at=c.created_at,
-      modified_at=c.modified_at,
-      last_reset_at=stats_by_id[c.id].last_reset_at if c.id in stats_by_id else None,
-      reset_count=stats_by_id[c.id].reset_count if c.id in stats_by_id else 0,
-    )
-    for c in counters
-  ]
+  stats_by_id = await CounterResetRepository.from_session(session).get_stats_by_counter([c.id for c in counters])
+  return [_to_schema(c, stats_by_id.get(c.id, _NO_RESETS)) for c in counters]
 
 
 @router.post("", summary="Create Counter", response_model=CounterSchema, status_code=201)
@@ -73,14 +56,7 @@ async def create_counter(
 ) -> CounterSchema:
   repo = CounterRepository.from_session(session)
   counter = await repo.create(Counter(name=body.name, user_id=current_user.id), flush=True)
-  return CounterSchema(
-    id=counter.id,
-    name=counter.name,
-    created_at=counter.created_at,
-    modified_at=counter.modified_at,
-    last_reset_at=None,
-    reset_count=0,
-  )
+  return _to_schema(counter, _NO_RESETS)
 
 
 @router.patch("/{counter_id}", summary="Update Counter", response_model=CounterSchema)
@@ -94,25 +70,8 @@ async def update_counter(
   repo = CounterRepository.from_session(session)
   counter = await repo.update(counter, update_dict=body.model_dump(exclude_unset=True), flush=True)
 
-  stats = (
-    await session.execute(
-      select(
-        func.max(CounterReset.created_at).label("last_reset_at"),
-        func.count(CounterReset.id).label("reset_count"),
-      )
-      .where(CounterReset.counter_id == counter_id)
-      .where(CounterReset.deleted_at.is_(None))
-    )
-  ).one()
-
-  return CounterSchema(
-    id=counter.id,
-    name=counter.name,
-    created_at=counter.created_at,
-    modified_at=counter.modified_at,
-    last_reset_at=stats.last_reset_at,
-    reset_count=stats.reset_count or 0,
-  )
+  stats_by_id = await CounterResetRepository.from_session(session).get_stats_by_counter([counter_id])
+  return _to_schema(counter, stats_by_id.get(counter_id, _NO_RESETS))
 
 
 @router.delete("/{counter_id}", summary="Delete Counter", status_code=204)
@@ -154,19 +113,7 @@ async def list_resets(
   counter_id: UUID,
 ) -> list[CounterResetSchema]:
   await _get_counter_or_404(session, counter_id, current_user.id)
-  resets = (
-    (
-      await session.execute(
-        select(CounterReset)
-        .where(CounterReset.counter_id == counter_id)
-        .where(CounterReset.deleted_at.is_(None))
-        .order_by(CounterReset.created_at.desc())
-        .limit(100)
-      )
-    )
-    .scalars()
-    .all()
-  )
+  resets = await CounterResetRepository.from_session(session).list_for_counter(counter_id)
   return [CounterResetSchema.model_validate(r) for r in resets]
 
 
@@ -182,12 +129,8 @@ async def undo_reset(
   reset_id: UUID,
 ) -> None:
   await _get_counter_or_404(session, counter_id, current_user.id)
-  reset = (
-    await session.execute(
-      select(CounterReset).where(CounterReset.id == reset_id).where(CounterReset.counter_id == counter_id).where(CounterReset.deleted_at.is_(None))
-    )
-  ).scalar_one_or_none()
+  repo = CounterResetRepository.from_session(session)
+  reset = await repo.get_active(counter_id, reset_id)
   if not reset:
     raise ResourceNotFound(detail="Reset not found.")
-  repo = CounterResetRepository.from_session(session)
   await repo.update(reset, update_dict={"deleted_at": utc_now()})

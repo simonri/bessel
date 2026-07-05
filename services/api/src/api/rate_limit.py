@@ -7,8 +7,10 @@ from ratelimit.backends.redis import RedisBackend
 from ratelimit.types import ASGIApp, Scope
 
 from api.enums import RateLimitGroup
-from api.redis import create_redis
+from api.redis import Redis, create_redis
 from api.settings import Environment, settings
+
+_rate_limit_redis: Redis | None = None
 
 
 async def _authenticate(scope: Scope) -> tuple[str, RateLimitGroup]:
@@ -30,12 +32,21 @@ _PRODUCTION_RULES: dict[str, Sequence[Rule]] = {
 
 
 def get_middleware(app: ASGIApp) -> RateLimitMiddleware:
+  global _rate_limit_redis
   match settings.ENV:
     case Environment.production:
       rules = _PRODUCTION_RULES
     case _:
       rules = {}
-  return RateLimitMiddleware(app, _authenticate, RedisBackend(create_redis("rate-limit")), rules)
+  _rate_limit_redis = create_redis("rate-limit")
+  return RateLimitMiddleware(app, _authenticate, RedisBackend(_rate_limit_redis), rules)
 
 
-__all__ = ["get_middleware"]
+async def dispose_redis() -> None:
+  global _rate_limit_redis
+  if _rate_limit_redis is not None:
+    await _rate_limit_redis.close(True)
+    _rate_limit_redis = None
+
+
+__all__ = ["dispose_redis", "get_middleware"]

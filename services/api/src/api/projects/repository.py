@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import select
@@ -8,6 +9,10 @@ from api.models.project import Project
 
 class ProjectRepository(RepositoryBase[Project], RepositoryIDMixin[Project, UUID]):
   model = Project
+
+  async def list_for_user(self, user_id: UUID) -> Sequence[Project]:
+    statement = select(Project).where(Project.deleted_at.is_(None)).where(Project.user_id == user_id).order_by(Project.name)
+    return await self.get_all(statement)
 
   async def get_by_name(self, name: str, user_id: UUID | None = None) -> Project | None:
     statement = select(Project).where(Project.name == name).where(Project.deleted_at.is_(None))

@@ -14,7 +14,7 @@ from dramatiq.brokers.redis import RedisBroker
 from api.settings import settings
 
 from ._encoder import JSONEncoder
-from ._enqueue import JobQueueManager, calculate_bulk_job_delay, enqueue_events, enqueue_job
+from ._enqueue import JobQueueManager, calculate_bulk_job_delay, enqueue_job
 from ._redis import RedisMiddleware
 from ._sqlalchemy import AsyncSessionMaker, SQLAlchemyMiddleware
 
@@ -179,7 +179,6 @@ __all__ = [
   "actor",
   "calculate_bulk_job_delay",
   "can_retry",
-  "enqueue_events",
   "enqueue_job",
   "get_retries",
   "scheduler_middleware",

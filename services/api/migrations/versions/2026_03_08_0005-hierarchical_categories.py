@@ -220,7 +220,7 @@ def upgrade() -> None:
     op.execute(
       sa.text(
         "INSERT INTO categories (id, slug, name, color, excluded, parent_id, created_at) "
-        "VALUES (gen_random_uuid(), :slug, :name, :color, :excluded, NULL, now())"
+        + "VALUES (gen_random_uuid(), :slug, :name, :color, :excluded, NULL, now())"
       ).bindparams(slug=parent_slug, name=parent_name, color=color, excluded=parent_excluded)
     )
     # Insert children
@@ -228,8 +228,7 @@ def upgrade() -> None:
       op.execute(
         sa.text(
           "INSERT INTO categories (id, slug, name, color, excluded, parent_id, created_at) "
-          "VALUES (gen_random_uuid(), :slug, :name, :color, :excluded, "
-          "(SELECT id FROM categories WHERE slug = :parent_slug), now())"
+          + "VALUES (gen_random_uuid(), :slug, :name, :color, :excluded, (SELECT id FROM categories WHERE slug = :parent_slug), now())"
         ).bindparams(
           slug=child_slug,
           name=child_name,

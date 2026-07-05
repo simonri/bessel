@@ -17,14 +17,17 @@ class EmailSender(StrEnum):
   aws = "aws"
 
 
-env = Environment(os.getenv("ENV", Environment.development))
+# Support both the prefixed (metron_ENV, matching env_prefix) and bare (ENV) forms,
+# and feed the result into Settings.ENV as its default so the env-file selection and
+# the runtime environment can never disagree.
+env = Environment(os.getenv("metron_ENV") or os.getenv("ENV") or Environment.development)
 env_file = ".env.testing" if env == Environment.testing else ".env"
 
 file_extension = ".exe" if os.name == "nt" else ""
 
 
 class Settings(BaseSettings):
-  ENV: Environment = Environment.development
+  ENV: Environment = env
   LOG_LEVEL: str = "DEBUG"
 
   CORS_ORIGINS: list[str] = Field(

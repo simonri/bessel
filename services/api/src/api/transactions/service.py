@@ -3,9 +3,8 @@ from uuid import UUID
 from api.common.db.postgres import AsyncSession
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
-from api.models.transaction import Transaction
 from api.transactions.parsers.base import ParsedTransaction
-from sqlalchemy.dialects.postgresql import insert
+from api.transactions.repository import TransactionRepository
 
 
 class TransactionService:
@@ -18,7 +17,7 @@ class TransactionService:
     file_format: str,
     raw_content: str,
     parsed: list[ParsedTransaction],
-    user_id: UUID | None = None,
+    user_id: UUID,
   ) -> tuple[int, int]:
     """Full import pipeline: store raw → map & normalize → deduplicate.
 
@@ -49,7 +48,7 @@ class TransactionService:
       raw_transactions.append(raw_tx)
     await session.flush()
 
-    # 3. Deduplicate: INSERT ... ON CONFLICT (dedup_hash) DO NOTHING
+    # 3. Deduplicate: INSERT ... ON CONFLICT (user_id, dedup_hash) DO NOTHING
     values = [
       {
         "amount": tx.amount_minor,
@@ -65,9 +64,8 @@ class TransactionService:
       for i, tx in enumerate(parsed)
     ]
 
-    stmt = insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["dedup_hash"])
-    result = await session.execute(stmt)
-    created = result.rowcount
+    repo = TransactionRepository.from_session(session)
+    created = await repo.insert_ignoring_duplicates(values)
     skipped = len(parsed) - created
 
     return created, skipped

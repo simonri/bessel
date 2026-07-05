@@ -1,13 +1,13 @@
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 import structlog
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from api.common.utils import generate_uuid, utc_now
 from api.models.notification import Notification
-from api.models.tree_of_alpha_news import TreeOfAlphaNews
+from api.tree_of_alpha.repository import TreeOfAlphaNewsRepository
+from api.users.repository import UserRepository
 from api.worker import AsyncSessionMaker, CronTrigger, RedisMiddleware, TaskPriority, actor
 
 log = structlog.get_logger()
@@ -24,6 +24,23 @@ def _truncate(text: str, max_len: int) -> str:
   return text[: max_len - 1] + "…"
 
 
+def _to_row(item: dict[str, Any], created_at: datetime) -> dict[str, Any] | None:
+  external_id = item.get("_id")
+  published_ms = item.get("time")
+  if not external_id or not isinstance(published_ms, (int, float)):
+    return None
+  return {
+    "id": generate_uuid(),
+    "created_at": created_at,
+    "external_id": external_id,
+    "title": item.get("title") or "",
+    "url": item.get("url"),
+    "source": item.get("source"),
+    "likes": item.get("likes", 0),
+    "published_at": datetime.fromtimestamp(published_ms / 1000, tz=UTC),
+  }
+
+
 @actor(cron_trigger=CronTrigger(minute="*"), priority=TaskPriority.LOW)
 async def scan_tree_of_alpha() -> None:
   redis = RedisMiddleware.get()
@@ -31,53 +48,60 @@ async def scan_tree_of_alpha() -> None:
   if not acquired:
     return
 
+  try:
+    await _scan()
+  except Exception:
+    # Release the cooldown, otherwise Dramatiq's retries (2s backoff) land
+    # inside the window and silently no-op instead of retrying the scan.
+    await redis.delete(_COOLDOWN_KEY)
+    raise
+
+
+async def _scan() -> None:
   async with httpx.AsyncClient(timeout=30) as http:
     response = await http.get(_API_URL)
     response.raise_for_status()
     news_items: list[dict] = response.json()
 
-  if not news_items:
+  now = utc_now()
+  # Keyed by external_id: a malformed item must not break the batch, and
+  # duplicate ids would make ON CONFLICT DO UPDATE fail ("cannot affect row a second time").
+  rows_by_id: dict[str, dict[str, Any]] = {}
+  malformed = 0
+  for item in news_items:
+    row = _to_row(item, now)
+    if row is None:
+      malformed += 1
+      continue
+    rows_by_id[row["external_id"]] = row
+
+  if malformed:
+    log.warning("tree_of_alpha_malformed_items", count=malformed)
+  if not rows_by_id:
     return
 
-  now = utc_now()
-  rows = [
-    {
-      "id": generate_uuid(),
-      "created_at": now,
-      "external_id": item["_id"],
-      "title": item.get("title") or "",
-      "url": item.get("url"),
-      "source": item.get("source"),
-      "likes": item.get("likes", 0),
-      "published_at": datetime.fromtimestamp(item["time"] / 1000, tz=UTC),
-    }
-    for item in news_items
-  ]
-
+  notified = 0
   async with AsyncSessionMaker() as session:
-    stmt = pg_insert(TreeOfAlphaNews).values(rows)
-    stmt = stmt.on_conflict_do_update(
-      index_elements=["external_id"],
-      set_={"likes": stmt.excluded.likes},
-    )
-    await session.execute(stmt)
+    news_repo = TreeOfAlphaNewsRepository.from_session(session)
+    await news_repo.upsert_all(list(rows_by_id.values()))
 
-    result = await session.execute(
-      select(TreeOfAlphaNews)
-      .where(TreeOfAlphaNews.likes >= _LIKES_THRESHOLD)
-      .where(TreeOfAlphaNews.notification_sent_at.is_(None))
-      .where(TreeOfAlphaNews.deleted_at.is_(None))
-    )
-    items_to_notify = result.scalars().all()
+    items_to_notify = await news_repo.list_pending_notification(min_likes=_LIKES_THRESHOLD)
+    user_ids = await UserRepository.from_session(session).list_ids()
 
-    for item in items_to_notify:
-      session.add(
-        Notification(
-          title=_truncate(item.title, 255),
-          link=item.url,
-          kind="info",
-        )
-      )
-      item.notification_sent_at = now
+    # With no users yet, leave notification_sent_at unset so the items are
+    # picked up once a user exists instead of being silently consumed.
+    if items_to_notify and user_ids:
+      for item in items_to_notify:
+        for user_id in user_ids:
+          session.add(
+            Notification(
+              title=_truncate(item.title, 255),
+              link=item.url,
+              kind="info",
+              user_id=user_id,
+            )
+          )
+        item.notification_sent_at = now
+      notified = len(items_to_notify)
 
-  log.info("tree_of_alpha_scan", fetched=len(rows), notified=len(items_to_notify))
+  log.info("tree_of_alpha_scan", fetched=len(rows_by_id), notified=notified)

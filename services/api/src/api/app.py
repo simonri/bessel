@@ -87,6 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
   }
 
   await redis.close(True)
+  await rate_limit.dispose_redis()
   await async_engine.dispose()
   sync_engine.dispose()
 

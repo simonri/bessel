@@ -28,8 +28,8 @@ class JWKSClient:
     return (time.monotonic() - cls._cache_timestamp) < JWKS_CACHE_TTL
 
   @classmethod
-  async def get_jwks(cls) -> dict | None:
-    if not cls._is_cache_valid():
+  async def get_jwks(cls, *, force_refresh: bool = False) -> dict | None:
+    if force_refresh or not cls._is_cache_valid():
       uri = f"https://{settings.AUTH0_DOMAIN}/.well-known/jwks.json"
       async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.get(uri)
@@ -45,12 +45,25 @@ class JWKSClient:
     cls._cache_timestamp = 0
 
 
-async def _get_signing_key(token: str) -> dict:
-  jwks = await JWKSClient.get_jwks()
-  unverified_header = jwt.get_unverified_header(token)
+def _find_key(jwks: dict | None, kid: str | None) -> dict | None:
   for key in (jwks or {}).get("keys", []):
-    if key.get("kid") == unverified_header.get("kid"):
+    if key.get("kid") == kid:
       return key
+  return None
+
+
+async def _get_signing_key(token: str) -> dict:
+  unverified_header = jwt.get_unverified_header(token)
+  kid = unverified_header.get("kid")
+
+  key = _find_key(await JWKSClient.get_jwks(), kid)
+  if key is None:
+    # Unknown kid usually means Auth0 rotated its signing keys; refresh once
+    # before rejecting, otherwise every login fails until the cache TTL expires.
+    key = _find_key(await JWKSClient.get_jwks(force_refresh=True), kid)
+  if key is not None:
+    return key
+
   raise HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
     detail="Unable to find appropriate signing key",
