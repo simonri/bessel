@@ -359,16 +359,49 @@ app.whenReady().then(() => {
     return { branch, ahead, behind, ...parsePorcelain(statusOut) };
   });
 
+  // Full old/new file content, so the diff viewer can syntax-highlight against
+  // complete source rather than just the visible hunk — a hunk-only highlight
+  // misreads any multi-line construct (block comment, template literal, JSX)
+  // that opens or closes outside the shown context lines.
+  const gitShowFile = async (repoPath: string, ref: string, file: string): Promise<string> => {
+    try {
+      return await gitRun(["show", `${ref}:${file}`], repoPath);
+    } catch {
+      return "";
+    }
+  };
+
+  const readWorkingTreeFile = (repoPath: string, file: string): string => {
+    try {
+      return fs.readFileSync(path.join(repoPath, file), "utf8");
+    } catch {
+      return "";
+    }
+  };
+
   ipcHandle("git:diff", async (_, repoPath: string, file: string, staged: boolean, untracked: boolean) => {
     if (untracked) {
+      const newContent = readWorkingTreeFile(repoPath, file);
       try {
-        return await gitRun(["diff", "--no-index", "/dev/null", file], repoPath);
+        const diff = await gitRun(["diff", "--no-index", "/dev/null", file], repoPath);
+        return { diff, oldContent: "", newContent };
       } catch (err: any) {
-        if (err.code === 1) return err.stdout as string;
+        if (err.code === 1) return { diff: err.stdout as string, oldContent: "", newContent };
         throw err;
       }
     }
-    return gitRun(staged ? ["diff", "--cached", "--", file] : ["diff", "--", file], repoPath);
+
+    const diff = await gitRun(staged ? ["diff", "--cached", "--", file] : ["diff", "--", file], repoPath);
+    if (staged) {
+      const [oldContent, newContent] = await Promise.all([
+        gitShowFile(repoPath, "HEAD", file),
+        gitShowFile(repoPath, "", file), // index (stage 0)
+      ]);
+      return { diff, oldContent, newContent };
+    }
+    const oldContent = await gitShowFile(repoPath, "", file); // index (stage 0)
+    const newContent = readWorkingTreeFile(repoPath, file);
+    return { diff, oldContent, newContent };
   });
 
   ipcHandle("git:stage", (_, repoPath: string, files: string[]) =>

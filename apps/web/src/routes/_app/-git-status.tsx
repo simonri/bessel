@@ -161,10 +161,6 @@ function detectLang(filepath: string | undefined): string | undefined {
   return ext ? EXT_LANG[ext] : undefined;
 }
 
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 // Splits hljs-highlighted HTML into per-line strings while rebalancing spans
 // so multi-line tokens (block comments, template literals) render correctly.
 function splitHighlightedLines(html: string): string[] {
@@ -191,56 +187,77 @@ function splitHighlightedLines(html: string): string[] {
   return lines;
 }
 
-function buildHighlightMap(lines: ParsedLine[], lang: string | undefined): Map<number, string> {
+// Highlighting a hunk in isolation misreads any multi-line construct (block
+// comment, triple-quoted string, template literal, JSX) that opens or closes
+// outside the visible context lines — hljs has no way to know it's mid-token.
+// Highlighting the full old/new file content once and slicing by line number
+// gives every token its real surrounding context, so it can't break on a hunk
+// boundary. Falls back to per-line highlighting (old behavior) if full file
+// content isn't available, e.g. for a rename with no matching path at HEAD.
+function buildHighlightMap(
+  lines: ParsedLine[],
+  lang: string | undefined,
+  oldContent: string,
+  newContent: string,
+): Map<number, string> {
   const result = new Map<number, string>();
   if (!lang) return result;
 
-  // Highlight per hunk to prevent parser state bleeding across hunk boundaries.
-  // Within each hunk, build both old-file (context+removes) and new-file
-  // (context+adds) reconstructions so that removed lines also get correct
-  // surrounding context — not just independent per-line highlighting.
-  let oldEntries: { idx: number; content: string }[] = [];
-  let newEntries: { idx: number; content: string }[] = [];
+  const highlightLines = (content: string): string[] =>
+    content ? splitHighlightedLines(hljs.highlight(content, { language: lang, ignoreIllegals: true }).value) : [];
 
-  const flushHunk = () => {
-    for (const entries of [oldEntries, newEntries]) {
-      if (entries.length === 0) continue;
-      const src = entries.map((e) => e.content).join("\n");
-      const highlighted = hljs.highlight(src, { language: lang, ignoreIllegals: true }).value;
-      const hlLines = splitHighlightedLines(highlighted);
-      entries.forEach(({ idx }, i) => {
-        // New-file pass runs second, so context lines end up with new-file
-        // highlighting, which is correct for what the viewer displays.
-        result.set(idx, hlLines[i] ?? escapeHtml(lines[idx].content));
-      });
-    }
-    oldEntries = [];
-    newEntries = [];
-  };
+  const oldLines = highlightLines(oldContent);
+  const newLines = highlightLines(newContent);
+
+  const fallback: { idx: number; content: string }[] = [];
 
   lines.forEach((line, idx) => {
-    if (line.type === "hunk") {
-      flushHunk();
-    } else if (line.type === "context") {
-      oldEntries.push({ idx, content: line.content });
-      newEntries.push({ idx, content: line.content });
-    } else if (line.type === "add") {
-      newEntries.push({ idx, content: line.content });
-    } else if (line.type === "remove") {
-      oldEntries.push({ idx, content: line.content });
+    if (line.type === "add" && line.newNum !== undefined) {
+      const hl = newLines[line.newNum - 1];
+      if (hl !== undefined) result.set(idx, hl);
+      else fallback.push({ idx, content: line.content });
+    } else if (line.type === "remove" && line.oldNum !== undefined) {
+      const hl = oldLines[line.oldNum - 1];
+      if (hl !== undefined) result.set(idx, hl);
+      else fallback.push({ idx, content: line.content });
+    } else if (line.type === "context" && line.newNum !== undefined) {
+      // Prefer new-file highlighting for context lines — matches what's on disk.
+      const hl = newLines[line.newNum - 1] ?? oldLines[(line.oldNum ?? 0) - 1];
+      if (hl !== undefined) result.set(idx, hl);
+      else fallback.push({ idx, content: line.content });
     }
   });
-  flushHunk();
+
+  // Full file content wasn't available (e.g. rename source path 404s at HEAD) —
+  // highlight whatever we have per-line, independently, as a best effort.
+  if (fallback.length > 0) {
+    for (const { idx, content } of fallback) {
+      result.set(idx, hljs.highlight(content, { language: lang, ignoreIllegals: true }).value);
+    }
+  }
 
   return result;
 }
 
 // ── DiffViewer ─────────────────────────────────────────────────────────────────
 
-function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
+function DiffViewer({
+  diff,
+  filename,
+  oldContent,
+  newContent,
+}: {
+  diff: string;
+  filename?: string;
+  oldContent: string;
+  newContent: string;
+}) {
   const lines = useMemo(() => parseDiff(diff), [diff]);
   const lang = useMemo(() => detectLang(filename), [filename]);
-  const highlightMap = useMemo(() => buildHighlightMap(lines, lang), [lines, lang]);
+  const highlightMap = useMemo(
+    () => buildHighlightMap(lines, lang, oldContent, newContent),
+    [lines, lang, oldContent, newContent],
+  );
 
   const hasContent = lines.some((l) => l.type !== "file-header" || l.content.includes("Binary"));
   if (!hasContent) {
@@ -272,7 +289,7 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
               if (SKIP_PREFIXES.some((p) => line.content.startsWith(p))) return null;
               return (
                 <tr key={i}>
-                  <td colSpan={3} className="select-none px-2 py-0.5 italic text-white/40 whitespace-pre">
+                  <td colSpan={3} className="select-none border-l-2 border-transparent px-2 py-0.5 italic text-white/40 whitespace-pre">
                     {line.content}
                   </td>
                 </tr>
@@ -321,14 +338,14 @@ function DiffViewer({ diff, filename }: { diff: string; filename?: string }) {
             if (line.type === "no-newline") {
               return (
                 <tr key={i}>
-                  <td colSpan={3} className="py-0 pl-2 text-white/35 whitespace-pre">{line.content}</td>
+                  <td colSpan={3} className="border-l-2 border-transparent py-0 pl-2 text-white/35 whitespace-pre">{line.content}</td>
                 </tr>
               );
             }
             // context
             return (
-              <tr key={i} className="border-l-2 border-transparent hover:bg-white/[0.03]">
-                <td className="select-none py-0 pl-2 pr-1 text-right text-white/35">{line.oldNum}</td>
+              <tr key={i} className="hover:bg-white/[0.03]">
+                <td className="select-none border-l-2 border-transparent py-0 pl-2 pr-1 text-right text-white/35">{line.oldNum}</td>
                 <td className="select-none py-0 pl-2 pr-1 text-right text-white/35">{line.newNum}</td>
                 <td className="py-0 pl-1 whitespace-pre">
                   <span className="select-none text-white/20"> </span>
@@ -608,7 +625,7 @@ export function GitStatus() {
     refetchInterval: 8000,
   });
 
-  const diffQuery = useQuery<string>({
+  const diffQuery = useQuery<{ diff: string; oldContent: string; newContent: string }>({
     queryKey: ["git:diff", selectedProject?.path, selectedFile?.file.path, selectedFile?.staged, selectedFile?.untracked],
     queryFn: () => window.electron!.git.diff(
       selectedProject!.path,
@@ -888,7 +905,12 @@ export function GitStatus() {
                   <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />
                 </div>
               ) : (
-                <DiffViewer diff={diffQuery.data ?? ""} filename={selectedFile.file.path} />
+                <DiffViewer
+                  diff={diffQuery.data?.diff ?? ""}
+                  filename={selectedFile.file.path}
+                  oldContent={diffQuery.data?.oldContent ?? ""}
+                  newContent={diffQuery.data?.newContent ?? ""}
+                />
               )}
             </>
           ) : (

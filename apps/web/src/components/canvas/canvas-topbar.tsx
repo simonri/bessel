@@ -27,7 +27,11 @@ declare global {
           unstaged: Array<{ path: string; originalPath?: string; status: string }>;
           untracked: Array<{ path: string; status: string }>;
         }>;
-        diff: (path: string, file: string, staged: boolean, untracked: boolean) => Promise<string>;
+        diff: (path: string, file: string, staged: boolean, untracked: boolean) => Promise<{
+          diff: string;
+          oldContent: string;
+          newContent: string;
+        }>;
         stage: (path: string, files: string[]) => Promise<void>;
         unstage: (path: string, files: string[]) => Promise<void>;
         commit: (path: string, message: string) => Promise<void>;
