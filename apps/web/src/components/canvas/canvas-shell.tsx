@@ -51,6 +51,7 @@ interface WorkspaceState {
 
 function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isActive: boolean }) {
   const { placeWindow } = useWindowManager();
+  const { settings } = useSettings();
   const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
   const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
 
@@ -91,10 +92,11 @@ function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isA
       onDragEnd={handleDragEnd}
     >
       <div
-        className="grid flex-1 grid-cols-2 gap-4 px-3.5 min-h-0"
+        className="grid flex-1 grid-cols-2 px-3.5 min-h-0"
         style={{
           display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
           gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
+          gap: `${settings.gridGap}px`,
         }}
         onPointerDown={(e) => {
           if (!(e.target as HTMLElement).closest("[data-is-window]")) {

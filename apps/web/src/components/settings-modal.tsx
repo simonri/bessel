@@ -101,6 +101,7 @@ function DashboardPage() {
   return (
     <div className="space-y-8">
       <TopBarPage />
+      <GridGapPage />
       <ActivityPage />
     </div>
   );
@@ -229,6 +230,32 @@ function TopBarPage() {
               className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors focus:border-primary-500/40 focus:bg-white/[0.07]"
             />
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GridGapPage() {
+  const { settings, update } = useSettings();
+
+  return (
+    <div>
+      <SectionLabel>Grid gap</SectionLabel>
+      <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={16}
+            step={1}
+            value={settings.gridGap}
+            onChange={(e) => update({ gridGap: Number(e.target.value) })}
+            className="h-1.5 flex-1 cursor-pointer accent-primary-500"
+          />
+          <span className="w-9 shrink-0 text-right font-mono text-[13px] text-white/70">
+            {settings.gridGap}px
+          </span>
         </div>
       </div>
     </div>

@@ -13,10 +13,11 @@ interface Settings {
   activityMappings: ActivityMapping[];
   wallpaper: WallpaperKey;
   theme: ThemeKey;
+  gridGap: number;
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "image", theme: "orange" };
+const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "image", theme: "orange", gridGap: 16 };
 
 function loadSettings(): Settings {
   try {
