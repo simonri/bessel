@@ -1,5 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { bottom, collides, verticalCompactor, type Layout as RglLayout } from "react-grid-layout";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { verticalCompactor, type Layout as RglLayout } from "react-grid-layout";
+import { toast } from "sonner";
+import {
+  fitToViewport,
+  placeWithShrink,
+  sanitizeLayout,
+  type Box,
+  type EngineItem,
+} from "./layout-engine";
 import { MODULE_REGISTRY } from "./module-registry";
 
 export type ModuleKey =
@@ -18,6 +26,10 @@ export type ModuleKey =
 
 export const GRID_COLS = 24;
 export const GRID_ROW_HEIGHT = 32;
+
+// Hygiene ceiling for persisted coordinates — far taller than any real screen,
+// only there so corrupted data can't park a widget thousands of rows down.
+const MAX_STORED_ROWS = 500;
 
 export type WindowEntry = {
   id: string;
@@ -45,18 +57,23 @@ interface WindowManagerContextValue {
   activeWorkspaceId: string;
   /** Workspace a window was just moved into, briefly set so the UI can flash it. */
   flashWorkspaceId: string | null;
-  toggleWindow: (module: ModuleKey) => void;
-  openWindow: (module: ModuleKey, data?: Record<string, string>) => void;
+  /** How many grid rows fit the viewport right now — placement and layout sanitizing honor it. */
+  setViewportRows: (rows: number) => void;
+  /** Returns false (and toasts) when the workspace has no room, even after shrinking to minSize. */
+  toggleWindow: (module: ModuleKey) => boolean;
+  /** Returns false (and toasts) when the workspace has no room, even after shrinking to minSize. */
+  openWindow: (module: ModuleKey, data?: Record<string, string>) => boolean;
   closeWindow: (id: string) => void;
   /** Merges `patch` into a window's per-instance data — e.g. a browser widget saving its current URL. */
   updateWindowData: (windowId: string, patch: Record<string, string>) => void;
-  /** Writes a react-grid-layout `Layout` (from onLayoutChange) back into the given workspace's windows. */
+  /** Writes a react-grid-layout `Layout` (from drag/resize stop) back into the given workspace's windows. */
   updateLayout: (workspaceId: string, layout: RglLayout) => void;
-  /** Vertically compacts the active workspace's windows, removing gaps. Sizes are untouched. */
+  /** Vertically compacts the active workspace's windows into the current viewport, removing gaps. */
   alignWorkspace: () => void;
-  moveWindowToWorkspace: (windowId: string, targetWorkspaceId: string) => void;
-  /** Opens a batch of windows at once, either into the active workspace or a newly created one. */
-  applyTemplate: (specs: WindowSpec[], target: "current" | "new") => void;
+  /** Returns false (and toasts) when the target workspace has no room for the window. */
+  moveWindowToWorkspace: (windowId: string, targetWorkspaceId: string) => boolean;
+  /** Opens a batch of windows at once; widgets that don't fit are skipped and reported. */
+  applyTemplate: (specs: WindowSpec[], target: "current" | "new") => { opened: number; skipped: number };
   isOpen: (module: ModuleKey) => boolean;
   addWorkspace: () => void;
   removeWorkspace: (id: string) => void;
@@ -94,30 +111,30 @@ function toRglLayout(windows: WindowEntry[]): RglLayout {
   return windows.map((win) => ({ i: win.id, x: win.x, y: win.y, w: win.w, h: win.h }));
 }
 
-// The canvas never scrolls, so new widgets can't just stack in one column forever —
-// find the first open spot scanning left-to-right, then row by row (a "shelf" packer),
-// so widgets fill the available grid instead of piling straight down.
-function findFirstFit(existing: WindowEntry[], w: number, h: number): { x: number; y: number } {
-  const layout = toRglLayout(existing);
-  const maxY = bottom(layout) + h;
-  for (let y = 0; y <= maxY; y++) {
-    for (let x = 0; x <= GRID_COLS - w; x++) {
-      const candidate = { i: "__probe__", x, y, w, h };
-      if (!layout.some((item) => collides(item, candidate))) {
-        return { x, y };
-      }
-    }
-  }
-  return { x: 0, y: maxY };
+function toEngineItems(windows: WindowEntry[]): EngineItem[] {
+  return windows.map((win) => {
+    const { minSize } = MODULE_REGISTRY[win.module];
+    return { x: win.x, y: win.y, w: win.w, h: win.h, minW: minSize.w, minH: minSize.h };
+  });
 }
 
-function placeFirstFit(existing: WindowEntry[], size: { w: number; h: number }) {
-  const { x, y } = findFirstFit(existing, size.w, size.h);
-  return { x, y, w: size.w, h: size.h };
+/** Zips engine output back onto windows, preserving object identity where nothing moved. */
+function withEngineBoxes(windows: WindowEntry[], boxes: readonly Box[]): WindowEntry[] {
+  return windows.map((win, i) => {
+    const box = boxes[i];
+    return win.x === box.x && win.y === box.y && win.w === box.w && win.h === box.h
+      ? win
+      : { ...win, x: box.x, y: box.y, w: box.w, h: box.h };
+  });
 }
 
-function placeNewWidget(existing: WindowEntry[], module: ModuleKey) {
-  return placeFirstFit(existing, MODULE_REGISTRY[module].defaultSize);
+function placeNewWidget(existing: WindowEntry[], module: ModuleKey, maxRows: number): Box | null {
+  const { defaultSize, minSize } = MODULE_REGISTRY[module];
+  return placeWithShrink(existing, defaultSize, minSize, GRID_COLS, maxRows);
+}
+
+function toastNoRoom(module: ModuleKey) {
+  toast.warning(`No room for ${MODULE_REGISTRY[module].title} — free up space or close a widget`);
 }
 
 // The old 2-column, fixed 1x1-cell layout: `col = slot % 2`, `row = floor(slot / 2)`.
@@ -136,10 +153,10 @@ type StoredWindow = StoredWindowNew | StoredWindowLegacy;
 
 function isNewFormat(e: StoredWindow): e is StoredWindowNew {
   return (
-    typeof (e as StoredWindowNew).x === "number" &&
-    typeof (e as StoredWindowNew).y === "number" &&
-    typeof (e as StoredWindowNew).w === "number" &&
-    typeof (e as StoredWindowNew).h === "number"
+    Number.isFinite((e as StoredWindowNew).x) &&
+    Number.isFinite((e as StoredWindowNew).y) &&
+    Number.isFinite((e as StoredWindowNew).w) &&
+    Number.isFinite((e as StoredWindowNew).h)
   );
 }
 
@@ -164,12 +181,19 @@ function parseWindows(raw: unknown[], workspaceId: string): WindowEntry[] {
   // Clamping w down to fit the old 2-column layout onto this grid can introduce
   // overlap — clean it up, but only when a migration actually happened, so
   // already-current-format data is never silently rearranged on load.
-  if (!migrated) return result;
-  const compacted = verticalCompactor.compact(toRglLayout(result), GRID_COLS);
-  return result.map((win) => {
-    const item = compacted.find((l) => l.i === win.id)!;
-    return { ...win, x: item.x, y: item.y };
-  });
+  let windows = result;
+  if (migrated) {
+    const compacted = verticalCompactor.compact(toRglLayout(result), GRID_COLS);
+    windows = result.map((win) => {
+      const item = compacted.find((l) => l.i === win.id)!;
+      return { ...win, x: item.x, y: item.y };
+    });
+  }
+
+  // Untrusted storage: force everything in bounds. Valid windows are never
+  // moved by this; viewport-height fitting happens at render time instead.
+  const { items, changed } = sanitizeLayout(toEngineItems(windows), GRID_COLS, MAX_STORED_ROWS);
+  return changed ? withEngineBoxes(windows, items) : windows;
 }
 
 interface LoadedState {
@@ -216,8 +240,23 @@ const WindowManagerContext = createContext<WindowManagerContextValue | null>(nul
 
 export function WindowManager({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState(loadState);
+  // Authoritative mirror of `state`, so actions can read-then-commit synchronously
+  // (and fire toasts outside React updaters) without racing the render cycle.
+  const stateRef = useRef(state);
+  const viewportRowsRef = useRef(Infinity);
   const { workspaces, windows: allWindows, activeWorkspaceId } = state;
   const [flashWorkspaceId, setFlashWorkspaceId] = useState<string | null>(null);
+
+  const commit = useCallback((updater: (prev: LoadedState) => LoadedState) => {
+    const next = updater(stateRef.current);
+    if (next === stateRef.current) return;
+    stateRef.current = next;
+    setState(next);
+  }, []);
+
+  const setViewportRows = useCallback((rows: number) => {
+    viewportRowsRef.current = Number.isFinite(rows) && rows > 0 ? rows : Infinity;
+  }, []);
 
   const windows = useMemo(
     () => allWindows.filter((w) => w.workspaceId === activeWorkspaceId),
@@ -252,150 +291,208 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(t);
   }, [flashWorkspaceId]);
 
-  const updateActiveWindows = useCallback(
-    (updater: (wins: WindowEntry[], activeWorkspaceId: string) => WindowEntry[]) => {
-      setState((prev) => {
-        const activeId = prev.activeWorkspaceId;
-        const active = prev.windows.filter((w) => w.workspaceId === activeId);
-        const others = prev.windows.filter((w) => w.workspaceId !== activeId);
-        return { ...prev, windows: [...others, ...updater(active, activeId)] };
-      });
-    },
-    [],
-  );
-
   const isOpen = useCallback(
     (module: ModuleKey) => windows.some((w) => w.module === module),
     [windows],
   );
 
   const toggleWindow = useCallback(
-    (module: ModuleKey) => {
-      updateActiveWindows((prev, activeId) => {
-        if (prev.some((w) => w.module === module)) return prev.filter((w) => w.module !== module);
-        return [...prev, { id: newId(), module, ...placeNewWidget(prev, module), workspaceId: activeId }];
-      });
+    (module: ModuleKey): boolean => {
+      const prev = stateRef.current;
+      const activeId = prev.activeWorkspaceId;
+      const active = prev.windows.filter((w) => w.workspaceId === activeId);
+      if (active.some((w) => w.module === module)) {
+        commit((p) => ({
+          ...p,
+          windows: p.windows.filter((w) => !(w.workspaceId === activeId && w.module === module)),
+        }));
+        return true;
+      }
+      const placed = placeNewWidget(active, module, viewportRowsRef.current);
+      if (!placed) {
+        toastNoRoom(module);
+        return false;
+      }
+      const entry: WindowEntry = { id: newId(), module, ...placed, workspaceId: activeId };
+      commit((p) => ({ ...p, windows: [...p.windows, entry] }));
+      return true;
     },
-    [updateActiveWindows],
+    [commit],
   );
 
   const openWindow = useCallback(
-    (module: ModuleKey, data?: Record<string, string>) => {
-      updateActiveWindows((prev, activeId) => [
-        ...prev,
-        { id: newId(), module, ...placeNewWidget(prev, module), data, workspaceId: activeId },
-      ]);
+    (module: ModuleKey, data?: Record<string, string>): boolean => {
+      const prev = stateRef.current;
+      const activeId = prev.activeWorkspaceId;
+      const active = prev.windows.filter((w) => w.workspaceId === activeId);
+      const placed = placeNewWidget(active, module, viewportRowsRef.current);
+      if (!placed) {
+        toastNoRoom(module);
+        return false;
+      }
+      const entry: WindowEntry = { id: newId(), module, ...placed, data, workspaceId: activeId };
+      commit((p) => ({ ...p, windows: [...p.windows, entry] }));
+      return true;
     },
-    [updateActiveWindows],
+    [commit],
   );
 
   const closeWindow = useCallback(
     (id: string) => {
-      updateActiveWindows((prev) => prev.filter((w) => w.id !== id));
+      commit((prev) => ({ ...prev, windows: prev.windows.filter((w) => w.id !== id) }));
     },
-    [updateActiveWindows],
+    [commit],
   );
 
-  // Windows in every workspace stay mounted (see CanvasShell), so this can't go
-  // through updateActiveWindows — the window being updated may not be the active one.
-  const updateWindowData = useCallback((windowId: string, patch: Record<string, string>) => {
-    setState((prev) => ({
-      ...prev,
-      windows: prev.windows.map((w) => (w.id === windowId ? { ...w, data: { ...w.data, ...patch } } : w)),
-    }));
-  }, []);
+  // Windows in every workspace stay mounted (see CanvasShell), so data/layout
+  // updates target windows by id/workspaceId — not just the active workspace.
+  const updateWindowData = useCallback(
+    (windowId: string, patch: Record<string, string>) => {
+      commit((prev) => ({
+        ...prev,
+        windows: prev.windows.map((w) => (w.id === windowId ? { ...w, data: { ...w.data, ...patch } } : w)),
+      }));
+    },
+    [commit],
+  );
 
-  // Every workspace's grid stays mounted too, so a hidden grid's own onLayoutChange
-  // (e.g. its initial bounds-correction) must be able to target a non-active workspace.
-  const updateLayout = useCallback((workspaceId: string, layout: RglLayout) => {
-    setState((prev) => ({
-      ...prev,
-      windows: prev.windows.map((win) => {
-        if (win.workspaceId !== workspaceId) return win;
-        const item = layout.find((l) => l.i === win.id);
-        return item ? { ...win, x: item.x, y: item.y, w: item.w, h: item.h } : win;
-      }),
-    }));
-  }, []);
+  const updateLayout = useCallback(
+    (workspaceId: string, layout: RglLayout) => {
+      commit((prev) => {
+        let touched = false;
+        const merged = prev.windows.map((win) => {
+          if (win.workspaceId !== workspaceId) return win;
+          const item = layout.find((l) => l.i === win.id);
+          if (!item || (item.x === win.x && item.y === win.y && item.w === win.w && item.h === win.h)) return win;
+          touched = true;
+          return { ...win, x: item.x, y: item.y, w: item.w, h: item.h };
+        });
+        // Safety net: the drag-time compactor has no row cap, so a spring-back
+        // can shove a neighbor below the fold — pull it back before persisting.
+        const wsWindows = merged.filter((w) => w.workspaceId === workspaceId);
+        const { items, changed } = sanitizeLayout(toEngineItems(wsWindows), GRID_COLS, viewportRowsRef.current);
+        if (!touched && !changed) return prev;
+        if (!changed) return { ...prev, windows: merged };
+        const fixed = withEngineBoxes(wsWindows, items);
+        let idx = 0;
+        return { ...prev, windows: merged.map((w) => (w.workspaceId === workspaceId ? fixed[idx++] : w)) };
+      });
+    },
+    [commit],
+  );
 
   const alignWorkspace = useCallback(() => {
-    updateActiveWindows((prev) => {
-      const compacted = verticalCompactor.compact(toRglLayout(prev), GRID_COLS);
-      return prev.map((win) => {
+    commit((prev) => {
+      const activeId = prev.activeWorkspaceId;
+      const active = prev.windows.filter((w) => w.workspaceId === activeId);
+      if (active.length === 0) return prev;
+      const compacted = verticalCompactor.compact(toRglLayout(active), GRID_COLS);
+      const moved = active.map((win) => {
         const item = compacted.find((l) => l.i === win.id)!;
-        return { ...win, x: item.x, y: item.y };
+        return item.x === win.x && item.y === win.y ? win : { ...win, x: item.x, y: item.y };
       });
+      const fitted = fitToViewport(toEngineItems(moved), GRID_COLS, viewportRowsRef.current);
+      const finalWindows = withEngineBoxes(moved, fitted);
+      if (finalWindows.every((w, i) => w === active[i])) return prev;
+      let idx = 0;
+      return { ...prev, windows: prev.windows.map((w) => (w.workspaceId === activeId ? finalWindows[idx++] : w)) };
     });
-  }, [updateActiveWindows]);
+  }, [commit]);
 
-  const moveWindowToWorkspace = useCallback((windowId: string, targetWorkspaceId: string) => {
-    setState((prev) => {
+  const moveWindowToWorkspace = useCallback(
+    (windowId: string, targetWorkspaceId: string): boolean => {
+      const prev = stateRef.current;
       const moving = prev.windows.find((w) => w.id === windowId);
-      if (!moving || moving.workspaceId === targetWorkspaceId) return prev;
-      if (!prev.workspaces.some((ws) => ws.id === targetWorkspaceId)) return prev;
+      if (!moving || moving.workspaceId === targetWorkspaceId) return false;
+      if (!prev.workspaces.some((ws) => ws.id === targetWorkspaceId)) return false;
       const targetWindows = prev.windows.filter((w) => w.workspaceId === targetWorkspaceId);
-      const placed = placeFirstFit(targetWindows, { w: moving.w, h: moving.h });
-      return {
-        ...prev,
-        windows: prev.windows.map((w) =>
+      const { minSize } = MODULE_REGISTRY[moving.module];
+      // Current size first — the window only shrinks if the target is tight.
+      const placed = placeWithShrink(
+        targetWindows,
+        { w: moving.w, h: moving.h },
+        minSize,
+        GRID_COLS,
+        viewportRowsRef.current,
+      );
+      if (!placed) {
+        toast.warning("No room in that workspace — free up space there first");
+        return false;
+      }
+      commit((p) => ({
+        ...p,
+        windows: p.windows.map((w) =>
           w.id === windowId ? { ...w, workspaceId: targetWorkspaceId, ...placed } : w,
         ),
-      };
-    });
-    setFlashWorkspaceId(targetWorkspaceId);
-  }, []);
+      }));
+      setFlashWorkspaceId(targetWorkspaceId);
+      return true;
+    },
+    [commit],
+  );
 
-  const applyTemplate = useCallback((specs: WindowSpec[], target: "current" | "new") => {
-    setState((prev) => {
-      if (target === "new") {
-        const workspaceId = newId();
-        const newWindows: WindowEntry[] = [];
-        for (const spec of specs) {
-          const placed = placeNewWidget(newWindows, spec.module);
-          newWindows.push({ id: newId(), module: spec.module, ...placed, data: spec.data, workspaceId });
-        }
-        return {
-          workspaces: [...prev.workspaces, { id: workspaceId }],
-          windows: [...prev.windows, ...newWindows],
-          activeWorkspaceId: workspaceId,
-        };
-      }
-
-      const activeId = prev.activeWorkspaceId;
-      const activeWindows = prev.windows.filter((w) => w.workspaceId === activeId);
-      const newWindows: WindowEntry[] = [];
+  const applyTemplate = useCallback(
+    (specs: WindowSpec[], target: "current" | "new"): { opened: number; skipped: number } => {
+      const prev = stateRef.current;
+      const workspaceId = target === "new" ? newId() : prev.activeWorkspaceId;
+      const existing = target === "new" ? [] : prev.windows.filter((w) => w.workspaceId === workspaceId);
+      const added: WindowEntry[] = [];
+      let skipped = 0;
       for (const spec of specs) {
-        const placed = placeNewWidget([...activeWindows, ...newWindows], spec.module);
-        newWindows.push({ id: newId(), module: spec.module, ...placed, data: spec.data, workspaceId: activeId });
+        const placed = placeNewWidget([...existing, ...added], spec.module, viewportRowsRef.current);
+        if (!placed) {
+          skipped += 1;
+          continue;
+        }
+        added.push({ id: newId(), module: spec.module, ...placed, data: spec.data, workspaceId });
       }
-      return { ...prev, windows: [...prev.windows, ...newWindows] };
-    });
-  }, []);
+      if (target === "new") {
+        commit((p) => ({
+          workspaces: [...p.workspaces, { id: workspaceId }],
+          windows: [...p.windows, ...added],
+          activeWorkspaceId: workspaceId,
+        }));
+      } else if (added.length > 0) {
+        commit((p) => ({ ...p, windows: [...p.windows, ...added] }));
+      }
+      if (skipped > 0) {
+        toast.warning(`Opened ${added.length} of ${specs.length} widgets — no room for the rest`);
+      }
+      return { opened: added.length, skipped };
+    },
+    [commit],
+  );
 
   const addWorkspace = useCallback(() => {
     const id = newId();
-    setState((prev) => ({ ...prev, workspaces: [...prev.workspaces, { id }], activeWorkspaceId: id }));
-  }, []);
+    commit((prev) => ({ ...prev, workspaces: [...prev.workspaces, { id }], activeWorkspaceId: id }));
+  }, [commit]);
 
-  const switchWorkspace = useCallback((id: string) => {
-    setState((prev) => ({ ...prev, activeWorkspaceId: id }));
-  }, []);
+  const switchWorkspace = useCallback(
+    (id: string) => {
+      commit((prev) => ({ ...prev, activeWorkspaceId: id }));
+    },
+    [commit],
+  );
 
-  const removeWorkspace = useCallback((id: string) => {
-    setState((prev) => {
-      if (prev.workspaces.length <= 1) return prev;
-      const remaining = prev.workspaces.filter((ws) => ws.id !== id);
-      const activeId =
-        prev.activeWorkspaceId === id
-          ? (remaining[remaining.length - 1]?.id ?? remaining[0].id)
-          : prev.activeWorkspaceId;
-      return {
-        workspaces: remaining,
-        windows: prev.windows.filter((w) => w.workspaceId !== id),
-        activeWorkspaceId: activeId,
-      };
-    });
-  }, []);
+  const removeWorkspace = useCallback(
+    (id: string) => {
+      commit((prev) => {
+        if (prev.workspaces.length <= 1) return prev;
+        const remaining = prev.workspaces.filter((ws) => ws.id !== id);
+        const activeId =
+          prev.activeWorkspaceId === id
+            ? (remaining[remaining.length - 1]?.id ?? remaining[0].id)
+            : prev.activeWorkspaceId;
+        return {
+          workspaces: remaining,
+          windows: prev.windows.filter((w) => w.workspaceId !== id),
+          activeWorkspaceId: activeId,
+        };
+      });
+    },
+    [commit],
+  );
 
   const contextValue = useMemo(() => ({
     windows,
@@ -403,6 +500,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     workspaces,
     activeWorkspaceId,
     flashWorkspaceId,
+    setViewportRows,
     toggleWindow,
     openWindow,
     closeWindow,
@@ -416,7 +514,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     removeWorkspace,
     switchWorkspace,
   }), [
-    windows, allWindows, workspaces, activeWorkspaceId, flashWorkspaceId,
+    windows, allWindows, workspaces, activeWorkspaceId, flashWorkspaceId, setViewportRows,
     toggleWindow, openWindow, closeWindow, updateWindowData, updateLayout, alignWorkspace,
     moveWindowToWorkspace, applyTemplate, isOpen, addWorkspace, removeWorkspace, switchWorkspace,
   ]);

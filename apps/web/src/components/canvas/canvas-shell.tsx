@@ -4,9 +4,9 @@ import {
   cloneLayout,
   verticalCompactor,
   type Compactor,
-  type Layout as RglLayout,
 } from "react-grid-layout";
 import { useWindowManager, GRID_COLS, GRID_ROW_HEIGHT, type WindowEntry } from "./window-manager";
+import { fitToViewport } from "./layout-engine";
 import { MODULE_REGISTRY } from "./module-registry";
 import { CanvasWindow } from "./canvas-window";
 import { CanvasDock } from "./canvas-dock";
@@ -59,10 +59,20 @@ function useContainerSize() {
   return { ...size, containerRef, mounted };
 }
 
-function windowsToLayout(windows: WindowEntry[]): RglLayout {
+// minW/minH are capped to the grid itself so RGL's interactive clamps never
+// fight a widget the viewport forced below its natural minimum.
+function windowsToLayout(windows: WindowEntry[], maxRows: number) {
   return windows.map((win) => {
     const { minSize } = MODULE_REGISTRY[win.module];
-    return { i: win.id, x: win.x, y: win.y, w: win.w, h: win.h, minW: minSize.w, minH: minSize.h };
+    return {
+      i: win.id,
+      x: win.x,
+      y: win.y,
+      w: win.w,
+      h: win.h,
+      minW: Math.min(minSize.w, GRID_COLS),
+      minH: Math.min(minSize.h, maxRows),
+    };
   });
 }
 
@@ -118,7 +128,13 @@ function WorkspaceGrid({
   onDefocus: () => void;
 }) {
   const { updateLayout } = useWindowManager();
-  const layout = useMemo(() => windowsToLayout(windows), [windows]);
+  // Display-only viewport fit: the saved layout is never rewritten by a window
+  // resize — out-of-view widgets are just rendered pulled into view. Only a
+  // drag/resize commits what's on screen (see the stop handlers below).
+  const layout = useMemo(
+    () => fitToViewport(windowsToLayout(windows, maxRows), GRID_COLS, maxRows),
+    [windows, maxRows],
+  );
   const { compactor, markActive } = useDragAwareCompactor();
 
   return (
@@ -141,10 +157,15 @@ function WorkspaceGrid({
         resizeConfig={{ enabled: true, handles: ["se"] }}
         compactor={compactor}
         onDragStart={(_layout, oldItem) => markActive(oldItem?.i ?? null)}
-        onDragStop={() => markActive(null)}
+        onDragStop={(next) => {
+          markActive(null);
+          updateLayout(workspaceId, next);
+        }}
         onResizeStart={(_layout, oldItem) => markActive(oldItem?.i ?? null)}
-        onResizeStop={() => markActive(null)}
-        onLayoutChange={(next) => updateLayout(workspaceId, next)}
+        onResizeStop={(next) => {
+          markActive(null);
+          updateLayout(workspaceId, next);
+        }}
       >
         {windows.map((win) => (
           <div key={win.id}>
@@ -161,13 +182,19 @@ function WorkspaceGrid({
 }
 
 export function CanvasShell() {
-  const { allWindows, workspaces, activeWorkspaceId } = useWindowManager();
+  const { allWindows, workspaces, activeWorkspaceId, setViewportRows } = useWindowManager();
   const { settings } = useSettings();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
   const { width, height, containerRef, mounted } = useContainerSize();
   const gap = settings.gridGap;
   const maxRows = Math.max(1, Math.floor((height + gap) / (GRID_ROW_HEIGHT + gap)));
+
+  // The `mounted` gate matters: before the first measurement height is 0 and
+  // maxRows would be 1, which must never leak into placement decisions.
+  useEffect(() => {
+    if (mounted) setViewportRows(maxRows);
+  }, [mounted, maxRows, setViewportRows]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

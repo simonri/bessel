@@ -78,6 +78,13 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@metron/ui/components/empty";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@metron/ui/components/select";
 import { CreateTaskDialog, TaskFormDialog } from "@/components/create-task-dialog";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
@@ -94,7 +101,32 @@ const VIEW_TABS: { label: string; value: ViewTab }[] = [
   { label: "All", value: "all" },
 ];
 
+// Radix Select doesn't allow an empty-string item value, so "All" (projectFilter === null) needs a sentinel.
+const ALL_PROJECTS_VALUE = "__all__";
+
 const BOARD_COLUMNS = ["todo", "in_progress"] as const;
+
+function ProjectFilterButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors whitespace-nowrap ${
+        active ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60"
+      }`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
 
 function isRepeatingTask(task: TaskSchema): boolean {
   return task.is_recurring === true;
@@ -676,6 +708,26 @@ function Tasks() {
   );
   const projects = projectsData ?? [];
 
+  // Collapse the project pills into a dropdown once the widget is too narrow to
+  // fit them. The pills are always measured off-screen (invisible + absolute, so
+  // they don't affect layout) even while collapsed, so re-expanding the widget is
+  // detected too.
+  const projectFilterAreaRef = useRef<HTMLDivElement>(null);
+  const projectPillsMeasureRef = useRef<HTMLDivElement>(null);
+  const [projectFilterCollapsed, setProjectFilterCollapsed] = useState(false);
+
+  useEffect(() => {
+    const area = projectFilterAreaRef.current;
+    const measure = projectPillsMeasureRef.current;
+    if (!area || !measure) return;
+    const checkOverflow = () => setProjectFilterCollapsed(measure.scrollWidth > area.clientWidth);
+    const observer = new ResizeObserver(checkOverflow);
+    observer.observe(area);
+    observer.observe(measure);
+    checkOverflow();
+    return () => observer.disconnect();
+  }, [projects.length]);
+
   const { data, isLoading } = useQuery({
     ...listTasksV1TasksGetOptions({
       client,
@@ -1112,32 +1164,67 @@ function Tasks() {
           ))}
         </div>
         {projects.length > 0 && (
-          <div className="flex items-center gap-1 pb-px">
-            <button
-              type="button"
-              className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
-                projectFilter === null
-                  ? "bg-white/10 text-white/80"
-                  : "text-white/35 hover:text-white/60"
-              }`}
-              onClick={() => { setProjectFilter(null); setPage(1); }}
+          <div
+            ref={projectFilterAreaRef}
+            className="relative flex flex-1 min-w-0 items-center justify-end overflow-hidden pb-px"
+          >
+            <div
+              ref={projectPillsMeasureRef}
+              className="pointer-events-none invisible absolute right-0 flex items-center gap-1"
+              aria-hidden="true"
             >
-              All
-            </button>
-            {projects.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
-                  projectFilter === p.name
-                    ? "bg-white/10 text-white/80"
-                    : "text-white/35 hover:text-white/60"
-                }`}
-                onClick={() => { setProjectFilter(p.name); setPage(1); }}
+              <ProjectFilterButton active={projectFilter === null} onClick={() => {}}>
+                All
+              </ProjectFilterButton>
+              {projects.map((p) => (
+                <ProjectFilterButton key={p.id} active={false} onClick={() => {}}>
+                  {p.name}
+                </ProjectFilterButton>
+              ))}
+            </div>
+            {projectFilterCollapsed ? (
+              <Select
+                value={projectFilter ?? ALL_PROJECTS_VALUE}
+                onValueChange={(value) => {
+                  setProjectFilter(value === ALL_PROJECTS_VALUE ? null : value);
+                  setPage(1);
+                }}
               >
-                {p.name}
-              </button>
-            ))}
+                <SelectTrigger
+                  size="sm"
+                  className="h-auto w-auto max-w-32 shrink-0 gap-1 rounded border-0 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 shadow-none hover:bg-white/15 data-[size=sm]:h-auto dark:bg-white/10 dark:hover:bg-white/15"
+                >
+                  <Folder className="size-3" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_PROJECTS_VALUE}>All</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.name}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="flex items-center gap-1">
+                <ProjectFilterButton
+                  active={projectFilter === null}
+                  onClick={() => { setProjectFilter(null); setPage(1); }}
+                >
+                  All
+                </ProjectFilterButton>
+                {projects.map((p) => (
+                  <ProjectFilterButton
+                    key={p.id}
+                    active={projectFilter === p.name}
+                    onClick={() => { setProjectFilter(p.name); setPage(1); }}
+                  >
+                    {p.name}
+                  </ProjectFilterButton>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
