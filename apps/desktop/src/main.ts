@@ -83,6 +83,79 @@ function parsePorcelain(output: string): {
   return { staged, unstaged, untracked };
 }
 
+// ─── diagnostics log ────────────────────────────────────────────────────────
+// There was no logging anywhere in the main process, so a freeze (e.g. the
+// browser widget hanging after extended video playback) left zero forensic
+// trail. This appends timestamped crash/hang/memory diagnostics to a file so
+// the next occurrence can actually be diagnosed.
+let logFilePath = "";
+
+function appendLog(line: string): void {
+  if (!logFilePath) return;
+  const entry = `[${new Date().toISOString()}] ${line}\n`;
+  // Sync so a fatal error is guaranteed to be on disk before the process can
+  // exit (see the uncaughtException handler below).
+  try {
+    fs.appendFileSync(logFilePath, entry);
+  } catch {
+    // best-effort logging only
+  }
+  if (!app.isPackaged) console.log(entry.trimEnd());
+}
+
+function initLogging(): void {
+  const logDir = app.getPath("logs");
+  fs.mkdirSync(logDir, { recursive: true });
+  logFilePath = path.join(logDir, "main.log");
+  try {
+    if (fs.statSync(logFilePath).size > 5 * 1024 * 1024) {
+      fs.renameSync(logFilePath, `${logFilePath}.old`);
+    }
+  } catch {
+    // no existing log file yet
+  }
+  appendLog(`app ready — version ${app.getVersion()}, platform ${process.platform}`);
+
+  // Without a listener, Node's default behavior is to crash the process on an
+  // uncaught exception — log first, then exit the same way, rather than
+  // silently swallowing it and limping on in a possibly-corrupt state.
+  process.on("uncaughtException", (err) => {
+    appendLog(`uncaughtException: ${err.stack ?? err}`);
+    app.exit(1);
+  });
+  process.on("unhandledRejection", (reason) => appendLog(`unhandledRejection: ${reason}`));
+
+  // Fires for any renderer (host window or a <webview> guest) that crashes,
+  // gets OOM-killed, or is killed — the reason field is the key diagnostic.
+  app.on("render-process-gone", (_event, webContents, details) => {
+    appendLog(
+      `render-process-gone type=${webContents.getType()} url=${webContents.getURL()} ` +
+        `reason=${details.reason} exitCode=${details.exitCode}`,
+    );
+  });
+
+  // Covers the GPU process specifically — video playback is GPU-decode heavy,
+  // and a GPU process crash/restart loop is a common cause of an apparent freeze.
+  app.on("child-process-gone", (_event, details) => {
+    appendLog(
+      `child-process-gone type=${details.type} name=${details.name ?? ""} ` +
+        `reason=${details.reason} exitCode=${details.exitCode}`,
+    );
+  });
+
+  // Periodic memory snapshot so a slow leak building up to a freeze shows up
+  // in the log even when nothing actually crashes. pid is included so a
+  // climbing process can be cross-referenced against the "webview pid=" line
+  // logged once a given <webview> guest has navigated.
+  setInterval(() => {
+    const summary = app
+      .getAppMetrics()
+      .map((m) => `${m.type}${m.name ? `:${m.name}` : ""}#${m.pid}=${Math.round((m.memory?.workingSetSize ?? 0) / 1024)}MB`)
+      .join(" ");
+    appendLog(`memory ${summary}`);
+  }, 2 * 60 * 1000).unref();
+}
+
 const WEB_DIR = path.join(__dirname, "../../web/dist/client");
 
 // Must be called before app.whenReady()
@@ -218,6 +291,9 @@ function createWindow() {
     delete webPreferences.preload;
   });
 
+  win.webContents.on("unresponsive", () => appendLog("host window unresponsive"));
+  win.webContents.on("responsive", () => appendLog("host window responsive again"));
+
   win.webContents.on("before-input-event", (_, input) => {
     if (input.type === "keyDown" && input.shift && (input.control || input.meta) && input.key.toLowerCase() === "i") {
       win.webContents.toggleDevTools();
@@ -247,6 +323,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+  initLogging();
 
   if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify();
@@ -287,6 +364,31 @@ app.whenReady().then(() => {
     });
     contents.on("leave-html-full-screen", () => {
       if (contents.hostWebContents) BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(false);
+    });
+
+    // Tracked separately rather than calling contents.getURL() from the
+    // "destroyed" handler, where the contents may already be torn down.
+    let lastUrl = contents.getURL();
+    // The guest's OS process only exists once it has actually navigated, so
+    // this is logged here (not at creation) and cross-referenced against the
+    // pids in the periodic "memory" line to tie a climbing process to a URL.
+    contents.on("did-navigate", (_e, url) => {
+      lastUrl = url;
+      appendLog(`webview pid=${contents.getOSProcessId()} navigated to url=${lastUrl}`);
+    });
+    contents.on("did-navigate-in-page", (_e, url) => { lastUrl = url; });
+
+    appendLog(`webview created url=${lastUrl}`);
+    contents.on("unresponsive", () => appendLog(`webview unresponsive url=${lastUrl}`));
+    contents.on("responsive", () => appendLog(`webview responsive again url=${lastUrl}`));
+    contents.on("destroyed", () => appendLog(`webview destroyed url=${lastUrl}`));
+    // Surfaces guest-page JS errors/warnings (e.g. a video decode or WebGL
+    // context-lost error) that might otherwise vanish along with the freeze.
+    contents.on("console-message", (event) => {
+      const { level, message } = event;
+      if (level === "error" || level === "warning") {
+        appendLog(`webview console[${level}] url=${lastUrl} ${message}`);
+      }
     });
   });
 

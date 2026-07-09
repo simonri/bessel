@@ -287,6 +287,10 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
           if (text) {
             window.electron?.terminal.sendInput(sessionId, text);
             focusTerminal();
+            const taskId = e.dataTransfer.getData("metron/task-id");
+            if (taskId) {
+              window.dispatchEvent(new CustomEvent("metron:claude-drop", { detail: { sessionId, taskId } }));
+            }
           }
         } : undefined}
       >
