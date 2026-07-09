@@ -83,13 +83,14 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
 
   return (
     <>
-      <div className="flex min-w-0 items-center rounded-full bg-white/5">
+      <div className="flex h-4 min-w-0 items-center rounded-full bg-white/5">
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={() => setDialogOpen(true)}
           title={task.title}
-          className="flex min-w-0 max-w-32 items-center gap-1 rounded-full py-0.5 pl-2 pr-1 text-[11px] text-white/50 transition-colors hover:text-white/80"
+          className="flex h-4 min-w-0 max-w-32 items-center gap-1 rounded-full pl-2 pr-1 text-[11px] leading-none text-white/50 transition-colors hover:text-white/80"
         >
           <CheckSquare className="size-2.5 shrink-0 text-primary-400" />
           <span className="min-w-0 truncate">{task.title}</span>
@@ -97,6 +98,7 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={() => updateWindowData(entry.id, { attachedTaskId: "" })}
           title="Unassign task"
           className="flex size-4 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/10 hover:text-white/80"
