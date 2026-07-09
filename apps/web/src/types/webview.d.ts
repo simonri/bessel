@@ -29,3 +29,7 @@ export interface DidFailLoadEvent extends Event {
   errorDescription: string;
   isMainFrame: boolean;
 }
+
+export interface RenderProcessGoneEvent extends Event {
+  details: { reason: string; exitCode: number };
+}

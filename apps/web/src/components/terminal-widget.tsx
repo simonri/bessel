@@ -227,14 +227,26 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       }
     });
 
+    // Debounced (not throttled): resizing the container mid-drag fires this
+    // continuously, and resizing the PTY sends SIGWINCH to the child process,
+    // making TUIs like the claude CLI repaint on every intermediate size. We
+    // only want the final size once the drag settles, not a repaint per frame.
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const resizeObserver = new ResizeObserver(() => {
-      fitAddon.fit();
-      window.electron!.terminal.resize(sessionId, terminal.cols, terminal.rows);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const { cols: prevCols, rows: prevRows } = terminal;
+        fitAddon.fit();
+        if (terminal.cols !== prevCols || terminal.rows !== prevRows) {
+          window.electron!.terminal.resize(sessionId, terminal.cols, terminal.rows);
+        }
+      }, 100);
     });
     resizeObserver.observe(el);
 
     return () => {
       cancelled = true;
+      if (resizeTimer) clearTimeout(resizeTimer);
       disposeInput.dispose();
       disposeTitleChange.dispose();
       unsubData();

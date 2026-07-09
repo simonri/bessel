@@ -18,6 +18,7 @@ import type {
   DidFailLoadEvent,
   DidNavigateEvent,
   PageTitleUpdatedEvent,
+  RenderProcessGoneEvent,
   WebviewTag,
 } from "@/types/webview";
 
@@ -143,12 +144,26 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
       setFailed({ code: evt.errorCode, description: evt.errorDescription });
     };
 
+    // Fired when the guest's underlying renderer process dies (crash, OOM-kill,
+    // GPU-related abort during heavy video playback, ...). None of the other
+    // handlers fire in this case, so without this the widget silently freezes
+    // on its last painted frame with no way to recover short of closing it.
+    const onRenderProcessGone = (e: Event) => {
+      const { reason, exitCode } = (e as RenderProcessGoneEvent).details;
+      setLoading(false);
+      setFailed({
+        code: exitCode,
+        description: `The page stopped responding (${reason}).`,
+      });
+    };
+
     wv.addEventListener("did-start-loading", onStartLoading);
     wv.addEventListener("did-stop-loading", onStopLoading);
     wv.addEventListener("did-navigate", onNavigate);
     wv.addEventListener("did-navigate-in-page", onNavigate);
     wv.addEventListener("page-title-updated", onTitle);
     wv.addEventListener("did-fail-load", onFail);
+    wv.addEventListener("render-process-gone", onRenderProcessGone);
     return () => {
       wv.removeEventListener("did-start-loading", onStartLoading);
       wv.removeEventListener("did-stop-loading", onStopLoading);
@@ -156,6 +171,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
       wv.removeEventListener("did-navigate-in-page", onNavigate);
       wv.removeEventListener("page-title-updated", onTitle);
       wv.removeEventListener("did-fail-load", onFail);
+      wv.removeEventListener("render-process-gone", onRenderProcessGone);
     };
   }, []);
 

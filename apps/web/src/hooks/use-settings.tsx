@@ -17,7 +17,7 @@ interface Settings {
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "image", theme: "orange", gridGap: 16 };
+const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "video", theme: "orange", gridGap: 16 };
 
 function loadSettings(): Settings {
   try {
