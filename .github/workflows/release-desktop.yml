@@ -45,6 +45,7 @@ jobs:
 
   build-mac:
     name: Build Mac DMG (arm64)
+    needs: build-linux
     runs-on: macos-latest
 
     steps:
