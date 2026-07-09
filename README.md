@@ -13,3 +13,15 @@ Metron is a personal life dashboard that aggregates data across all domains of y
 ## Development
 
 See [CLAUDE.md](CLAUDE.md) for architecture overview and development commands.
+
+## Desktop app (macOS)
+
+The macOS build isn't code-signed or notarized, so Gatekeeper will refuse to
+open it and say **"Metron is damaged and can't be opened, you should move it
+to the Trash"**. The app isn't actually damaged — macOS just shows this for
+any unsigned app downloaded via a browser. To open it, clear the quarantine
+flag after installing:
+
+```bash
+xattr -cr /Applications/Metron.app
+```

@@ -70,6 +70,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
       import("@/routes/_app/tasks").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
     ...COMPACT_SIZE,
+    noPadding: true,
   },
   travel: {
     title: "Travel",

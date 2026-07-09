@@ -34,6 +34,7 @@
     "directories": {
       "output": "release"
     },
+    "afterSign": "scripts/afterSign.js",
     "files": [
       "dist/**/*",
       "node_modules/**/*"

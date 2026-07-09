@@ -312,7 +312,7 @@ function BoardColumn({
         </span>
       </div>
       <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 overflow-y-auto space-y-1.5 p-1">
+        <div className="flex-1 overflow-y-auto space-y-1.5 px-1 pt-1">
           {tasks.map((task) => (
             <TaskCard
               key={task.id}
@@ -1056,9 +1056,9 @@ function Tasks() {
       : totalCount;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 shrink-0">
+      <div className="flex items-center justify-between mb-5 shrink-0 px-4 pt-4">
         <div className="flex items-baseline gap-2">
           <h2 className="text-base font-semibold text-white/90">Tasks</h2>
           {activeCount > 0 && (
@@ -1083,7 +1083,7 @@ function Tasks() {
       </div>
 
       {/* View tabs + project filter */}
-      <div className="flex items-center justify-between border-b border-white/10 shrink-0">
+      <div className="flex items-center justify-between border-b border-white/10 shrink-0 px-4">
         <div className="flex items-center">
           {VIEW_TABS.map((tab) => (
             <button
@@ -1135,7 +1135,7 @@ function Tasks() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 pt-5 flex flex-col">
+      <div className="flex-1 min-h-0 pt-5 px-4 flex flex-col">
       {isLoading ? null : allTasks.length === 0 && viewTab === "board" ? (
         <Empty className="border">
           <EmptyHeader>

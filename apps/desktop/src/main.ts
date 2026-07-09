@@ -178,7 +178,12 @@ let authCachePath = "";
 
 function isRealEncryptionAvailable(): boolean {
   if (!safeStorage.isEncryptionAvailable()) return false;
-  // On Linux, 'basic_text' is plaintext obfuscation, not OS-keychain encryption
+  // getSelectedStorageBackend() only exists on Linux (it reports which keyring
+  // was picked — kwallet, gnome-libsecret, or "basic_text", which is plaintext
+  // obfuscation rather than real encryption). Calling it on mac/Windows throws
+  // a TypeError, since isEncryptionAvailable() already guarantees a real OS
+  // keychain/DPAPI backend there.
+  if (process.platform !== "linux") return true;
   return safeStorage.getSelectedStorageBackend() !== "basic_text";
 }
 
@@ -336,7 +341,7 @@ app.whenReady().then(() => {
   initLogging();
 
   if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdatesAndNotify().catch((err: Error) => appendLog(`update check failed: ${err.message}`));
   }
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");

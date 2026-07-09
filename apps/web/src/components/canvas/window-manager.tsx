@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { bottom, verticalCompactor, type Layout as RglLayout } from "react-grid-layout";
+import { bottom, collides, verticalCompactor, type Layout as RglLayout } from "react-grid-layout";
 import { MODULE_REGISTRY } from "./module-registry";
 
 export type ModuleKey =
@@ -94,12 +94,30 @@ function toRglLayout(windows: WindowEntry[]): RglLayout {
   return windows.map((win) => ({ i: win.id, x: win.x, y: win.y, w: win.w, h: win.h }));
 }
 
-function placeAtBottom(existing: WindowEntry[], size: { w: number; h: number }) {
-  return { x: 0, y: bottom(toRglLayout(existing)), w: size.w, h: size.h };
+// The canvas never scrolls, so new widgets can't just stack in one column forever —
+// find the first open spot scanning left-to-right, then row by row (a "shelf" packer),
+// so widgets fill the available grid instead of piling straight down.
+function findFirstFit(existing: WindowEntry[], w: number, h: number): { x: number; y: number } {
+  const layout = toRglLayout(existing);
+  const maxY = bottom(layout) + h;
+  for (let y = 0; y <= maxY; y++) {
+    for (let x = 0; x <= GRID_COLS - w; x++) {
+      const candidate = { i: "__probe__", x, y, w, h };
+      if (!layout.some((item) => collides(item, candidate))) {
+        return { x, y };
+      }
+    }
+  }
+  return { x: 0, y: maxY };
+}
+
+function placeFirstFit(existing: WindowEntry[], size: { w: number; h: number }) {
+  const { x, y } = findFirstFit(existing, size.w, size.h);
+  return { x, y, w: size.w, h: size.h };
 }
 
 function placeNewWidget(existing: WindowEntry[], module: ModuleKey) {
-  return placeAtBottom(existing, MODULE_REGISTRY[module].defaultSize);
+  return placeFirstFit(existing, MODULE_REGISTRY[module].defaultSize);
 }
 
 // The old 2-column, fixed 1x1-cell layout: `col = slot % 2`, `row = floor(slot / 2)`.
@@ -316,7 +334,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       if (!moving || moving.workspaceId === targetWorkspaceId) return prev;
       if (!prev.workspaces.some((ws) => ws.id === targetWorkspaceId)) return prev;
       const targetWindows = prev.windows.filter((w) => w.workspaceId === targetWorkspaceId);
-      const placed = placeAtBottom(targetWindows, { w: moving.w, h: moving.h });
+      const placed = placeFirstFit(targetWindows, { w: moving.w, h: moving.h });
       return {
         ...prev,
         windows: prev.windows.map((w) =>

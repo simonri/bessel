@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { GridLayout, useContainerWidth, type Layout as RglLayout } from "react-grid-layout";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  GridLayout,
+  cloneLayout,
+  verticalCompactor,
+  type Compactor,
+  type Layout as RglLayout,
+} from "react-grid-layout";
 import { useWindowManager, GRID_COLS, GRID_ROW_HEIGHT, type WindowEntry } from "./window-manager";
 import { MODULE_REGISTRY } from "./module-registry";
 import { CanvasWindow } from "./canvas-window";
@@ -29,6 +35,30 @@ function VideoWallpaper() {
   );
 }
 
+// The canvas must never scroll, so — unlike react-grid-layout's own width-only
+// useContainerWidth — this measures both dimensions of the available area, so a
+// row cap (maxRows) can be derived from real viewport height, not just column width.
+function useContainerSize() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      setSize({ width, height });
+      setMounted(true);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ...size, containerRef, mounted };
+}
+
 function windowsToLayout(windows: WindowEntry[]): RglLayout {
   return windows.map((win) => {
     const { minSize } = MODULE_REGISTRY[win.module];
@@ -36,11 +66,41 @@ function windowsToLayout(windows: WindowEntry[]): RglLayout {
   });
 }
 
+// A no-op most of the time (positions stay exactly where the user left them — only
+// the Align button runs a real compaction). While an item is actively being
+// dragged/resized, that one item is temporarily treated as a fixed anchor and
+// everything else is vertically compacted around it — this is what makes a widget
+// pushed aside by a collision spring back once the overlap goes away, without
+// fighting the user's own drag the way a fully continuous compactor would.
+function useDragAwareCompactor() {
+  const activeIdRef = useRef<string | null>(null);
+
+  const compactor = useMemo<Compactor>(() => ({
+    type: "vertical",
+    allowOverlap: false,
+    compact(layout, cols) {
+      const activeId = activeIdRef.current;
+      if (!activeId) return cloneLayout(layout);
+      const marked = layout.map((item) => (item.i === activeId ? { ...item, static: true } : item));
+      const compacted = verticalCompactor.compact(marked, cols);
+      return compacted.map((item) => (item.i === activeId ? { ...item, static: false } : item));
+    },
+  }), []);
+
+  const markActive = useCallback((id: string | null) => {
+    activeIdRef.current = id;
+  }, []);
+
+  return { compactor, markActive };
+}
+
 function WorkspaceGrid({
   workspaceId,
   windows,
   isActive,
   width,
+  height,
+  maxRows,
   gap,
   focusedWindowId,
   onFocusWindow,
@@ -50,6 +110,8 @@ function WorkspaceGrid({
   windows: WindowEntry[];
   isActive: boolean;
   width: number;
+  height: number;
+  maxRows: number;
   gap: number;
   focusedWindowId: string | null;
   onFocusWindow: (id: string) => void;
@@ -57,6 +119,7 @@ function WorkspaceGrid({
 }) {
   const { updateLayout } = useWindowManager();
   const layout = useMemo(() => windowsToLayout(windows), [windows]);
+  const { compactor, markActive } = useDragAwareCompactor();
 
   return (
     <div
@@ -67,10 +130,20 @@ function WorkspaceGrid({
     >
       <GridLayout
         width={width}
+        // Fixed to the full available height (not autoSize's shrink-to-content) —
+        // otherwise dragConfig.bounded clamps against the CURRENT (often smaller)
+        // content height, which can pin a bottom-most/solo widget at y=0 with no
+        // room to drag into, since the container hasn't "grown" to make room yet.
+        style={{ height }}
         layout={layout}
-        gridConfig={{ cols: GRID_COLS, rowHeight: GRID_ROW_HEIGHT, margin: [gap, gap], containerPadding: null }}
-        dragConfig={{ enabled: true, handle: ".canvas-window-titlebar", threshold: 5 }}
+        gridConfig={{ cols: GRID_COLS, rowHeight: GRID_ROW_HEIGHT, margin: [gap, gap], containerPadding: [0, 0], maxRows }}
+        dragConfig={{ enabled: true, handle: ".canvas-window-titlebar", threshold: 5, bounded: true }}
         resizeConfig={{ enabled: true, handles: ["se"] }}
+        compactor={compactor}
+        onDragStart={(_layout, oldItem) => markActive(oldItem?.i ?? null)}
+        onDragStop={() => markActive(null)}
+        onResizeStart={(_layout, oldItem) => markActive(oldItem?.i ?? null)}
+        onResizeStop={() => markActive(null)}
         onLayoutChange={(next) => updateLayout(workspaceId, next)}
       >
         {windows.map((win) => (
@@ -92,7 +165,9 @@ export function CanvasShell() {
   const { settings } = useSettings();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
-  const { width, containerRef, mounted } = useContainerWidth();
+  const { width, height, containerRef, mounted } = useContainerSize();
+  const gap = settings.gridGap;
+  const maxRows = Math.max(1, Math.floor((height + gap) / (GRID_ROW_HEIGHT + gap)));
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -120,23 +195,23 @@ export function CanvasShell() {
       {settings.wallpaper === "image" && <div className="absolute inset-0 bg-black/30" />}
 
       <div className="relative flex h-full flex-col pt-12 pb-10">
-        <div className="min-h-0 flex-1 overflow-y-auto px-3.5">
-          <div ref={containerRef}>
-            {mounted &&
-              workspaces.map((ws) => (
-                <WorkspaceGrid
-                  key={ws.id}
-                  workspaceId={ws.id}
-                  windows={allWindows.filter((w) => w.workspaceId === ws.id)}
-                  isActive={ws.id === activeWorkspaceId}
-                  width={width}
-                  gap={settings.gridGap}
-                  focusedWindowId={focusedWindowId}
-                  onFocusWindow={setFocusedWindowId}
-                  onDefocus={() => setFocusedWindowId(null)}
-                />
-              ))}
-          </div>
+        <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden px-3.5">
+          {mounted &&
+            workspaces.map((ws) => (
+              <WorkspaceGrid
+                key={ws.id}
+                workspaceId={ws.id}
+                windows={allWindows.filter((w) => w.workspaceId === ws.id)}
+                isActive={ws.id === activeWorkspaceId}
+                width={width}
+                height={height}
+                maxRows={maxRows}
+                gap={gap}
+                focusedWindowId={focusedWindowId}
+                onFocusWindow={setFocusedWindowId}
+                onDefocus={() => setFocusedWindowId(null)}
+              />
+            ))}
         </div>
       </div>
 
