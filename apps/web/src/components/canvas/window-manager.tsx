@@ -11,7 +11,8 @@ export type ModuleKey =
   | "recipes"
   | "claudeCode"
   | "terminal"
-  | "gitStatus";
+  | "gitStatus"
+  | "browser";
 
 export type WindowEntry = {
   id: string;
@@ -39,6 +40,8 @@ interface WindowManagerContextValue {
   toggleWindow: (module: ModuleKey) => void;
   openWindow: (module: ModuleKey, data?: Record<string, string>) => void;
   closeWindow: (id: string) => void;
+  /** Merges `patch` into a window's per-instance data — e.g. a browser widget saving its current URL. */
+  updateWindowData: (windowId: string, patch: Record<string, string>) => void;
   placeWindow: (windowId: string, toSlot: number) => void;
   moveWindowToWorkspace: (windowId: string, targetWorkspaceId: string) => void;
   /** Opens a batch of windows at once, either into the active workspace or a newly created one. */
@@ -69,7 +72,7 @@ const isDesktop = typeof window !== "undefined" && !!window.electron;
 const ALL_MODULES = new Set<string>([
   "dashboard", "transactions", "accounts", "investments",
   "tasks", "travel", "activity", "recipes", "gitStatus",
-  ...(isDesktop ? ["claudeCode", "terminal"] : []),
+  ...(isDesktop ? ["claudeCode", "terminal", "browser"] : []),
 ]);
 
 function newId() {
@@ -226,6 +229,15 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     [updateActiveWindows],
   );
 
+  // Windows in every workspace stay mounted (see CanvasShell), so this can't go
+  // through updateActiveWindows — the window being updated may not be the active one.
+  const updateWindowData = useCallback((windowId: string, patch: Record<string, string>) => {
+    setState((prev) => ({
+      ...prev,
+      windows: prev.windows.map((w) => (w.id === windowId ? { ...w, data: { ...w.data, ...patch } } : w)),
+    }));
+  }, []);
+
   const placeWindow = useCallback(
     (windowId: string, toSlot: number) => {
       updateActiveWindows((prev) => {
@@ -326,6 +338,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     toggleWindow,
     openWindow,
     closeWindow,
+    updateWindowData,
     placeWindow,
     moveWindowToWorkspace,
     applyTemplate,
@@ -335,7 +348,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     switchWorkspace,
   }), [
     windows, allWindows, workspaces, activeWorkspaceId, flashWorkspaceId,
-    toggleWindow, openWindow, closeWindow, placeWindow, moveWindowToWorkspace, applyTemplate,
+    toggleWindow, openWindow, closeWindow, updateWindowData, placeWindow, moveWindowToWorkspace, applyTemplate,
     isOpen, addWorkspace, removeWorkspace, switchWorkspace,
   ]);
 

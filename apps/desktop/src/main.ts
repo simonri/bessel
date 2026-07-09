@@ -4,7 +4,7 @@ import os from "os";
 import { pathToFileURL } from "url";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, safeStorage, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, safeStorage, session, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as pty from "node-pty";
 
@@ -136,6 +136,22 @@ const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
 // but the window still needs permission to navigate there and back.
 const NAVIGATION_ALLOWED_ORIGINS = new Set([...TRUSTED_ORIGINS, "https://metronapp.us.auth0.com"]);
 
+// ─── browser widget ───────────────────────────────────────────────────────────
+// Shared by every browser-widget <webview> instance so logging into a site once
+// (YouTube, Twitch, ...) carries over to every widget and survives app restarts.
+const BROWSER_PARTITION = "persist:browser";
+
+// Electron's default UA appends " Metron/<version> Electron/<version>", which
+// trips Google's "this browser or app may not be secure" block on login. Strip
+// those tokens so the guest session presents as plain Chromium.
+function chromeUserAgent(ses: Electron.Session): string {
+  return ses
+    .getUserAgent()
+    .split(" ")
+    .filter((token) => !token.startsWith("Electron/") && !token.startsWith(`${app.name}/`))
+    .join(" ");
+}
+
 function isTrustedSender(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent): boolean {
   const url = event.senderFrame?.url;
   if (!url) return false;
@@ -183,7 +199,23 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      webviewTag: true,
     },
+  });
+
+  // Pin the browser widget's <webview> guest to its own isolated partition and
+  // strip out anything (preload, node integration) it wasn't given explicitly —
+  // defense-in-depth against a compromised renderer requesting a different guest.
+  win.webContents.on("will-attach-webview", (event, webPreferences, params) => {
+    if (params.partition !== BROWSER_PARTITION) {
+      event.preventDefault();
+      return;
+    }
+    webPreferences.nodeIntegration = false;
+    webPreferences.nodeIntegrationInSubFrames = false;
+    webPreferences.contextIsolation = true;
+    webPreferences.sandbox = true;
+    delete webPreferences.preload;
   });
 
   win.webContents.on("before-input-event", (_, input) => {
@@ -222,6 +254,41 @@ app.whenReady().then(() => {
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
+
+  const browserSession = session.fromPartition(BROWSER_PARTITION);
+  browserSession.setUserAgent(chromeUserAgent(browserSession));
+  // Fullscreen (video player) and media (camera/mic prompts some sites show
+  // regardless of use) are the only permissions a browser widget guest can ask for.
+  browserSession.setPermissionRequestHandler((_contents, permission, callback) => {
+    callback(permission === "fullscreen" || permission === "media");
+  });
+
+  app.on("web-contents-created", (_event, contents) => {
+    if (contents.getType() !== "webview") return;
+
+    // OAuth login (Google, Twitch, ...) opens via window.open(); let it through
+    // as a real popup window so it shares the guest's session/cookies, instead
+    // of swallowing the click and leaving login looking broken.
+    contents.setWindowOpenHandler(({ url }) => {
+      if (!url.startsWith("http://") && !url.startsWith("https://")) return { action: "deny" };
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+        },
+      };
+    });
+
+    // <webview> HTML5 fullscreen (a video player's fullscreen button) requests
+    // fullscreen on the guest, which doesn't automatically propagate to the host
+    // window — bridge it manually or the fullscreen button silently does nothing.
+    contents.on("enter-html-full-screen", () => {
+      if (contents.hostWebContents) BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(true);
+    });
+    contents.on("leave-html-full-screen", () => {
+      if (contents.hostWebContents) BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(false);
+    });
+  });
 
   ipcHandle("auth:get", (_, key: string): string | null => authCache[key] ?? null);
   ipcHandle("auth:set", (_, key: string, value: string): void => {

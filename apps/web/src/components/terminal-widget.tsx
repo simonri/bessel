@@ -4,7 +4,7 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import "@xterm/xterm/css/xterm.css";
-import { useWindowTitle } from "@/components/canvas/window-manager";
+import { useWindowEntry, useWindowManager, useWindowTitle } from "@/components/canvas/window-manager";
 
 interface ContextMenu {
   x: number;
@@ -53,6 +53,11 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
   const setWindowTitle = useWindowTitle();
   const setWindowTitleRef = useRef(setWindowTitle);
   useEffect(() => { setWindowTitleRef.current = setWindowTitle; });
+
+  const entry = useWindowEntry();
+  const { closeWindow } = useWindowManager();
+  const closeWindowRef = useRef(closeWindow);
+  useEffect(() => { closeWindowRef.current = closeWindow; });
 
   useEffect(() => {
     if (!taskDropZone) return;
@@ -171,6 +176,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
     el.addEventListener("contextmenu", handleContextMenu, { capture: true });
 
     let cancelled = false;
+    let hasStarted = false;
     const lastOutputAt = { current: Date.now() };
     const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -207,10 +213,16 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
     const unsubData = window.electron.terminal.onData(sessionId, (data) => {
       terminal.write(data);
       lastOutputAt.current = Date.now();
+      hasStarted = true;
     });
 
+    // Only auto-close on a clean exit once the shell has actually produced output —
+    // i.e. it really started and was later exited, not a spawn that died before a
+    // prompt ever appeared (which should surface as an error, not a silent close).
     const unsubExit = window.electron.terminal.onExit(sessionId, (code) => {
-      if (code !== 0) {
+      if (code === 0 && hasStarted) {
+        if (entry) closeWindowRef.current(entry.id);
+      } else if (code !== 0) {
         terminal.writeln(`\r\n\x1b[31m[Process exited with code ${code}]\x1b[0m`);
       }
     });

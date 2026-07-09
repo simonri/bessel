@@ -64,10 +64,10 @@ export const CanvasWindow = memo(function CanvasWindow({
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
-        className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5 cursor-grab active:cursor-grabbing"
+        className="flex shrink-0 items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 cursor-grab active:cursor-grabbing"
       >
-        <Icon className="size-3.5 text-white/50" />
-        <span className="text-sm font-medium text-white/80">
+        <Icon className="size-3 text-white/50" />
+        <span className="text-xs font-medium text-white/80">
           {config.title}
           {(dynamicTitle || entry.data?.projectName) && (
             <span className="ml-1.5 font-normal text-white/40">
@@ -78,9 +78,9 @@ export const CanvasWindow = memo(function CanvasWindow({
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => closeWindow(entry.id)}
-          className="ml-auto flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          className="ml-auto flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
         >
-          <X className="size-3" />
+          <X className="size-2.5" />
         </button>
       </div>
 

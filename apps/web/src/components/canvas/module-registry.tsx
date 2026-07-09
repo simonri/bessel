@@ -12,6 +12,7 @@ import {
   Terminal,
   SquareTerminal,
   GitBranch,
+  Globe,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
 import { isDesktop } from "@/lib/environment";
@@ -119,9 +120,19 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     colSpan: 1,
     noPadding: true,
   },
+  browser: {
+    title: "Browser",
+    icon: Globe,
+    component: lazy(() =>
+      import("@/routes/_app/-browser").then((m) => ({ default: m.BrowserPage })),
+    ),
+    colSpan: 1,
+    multiInstance: true,
+    noPadding: true,
+  },
 };
 
-const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "terminal"] : [];
+const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "terminal", "browser"] : [];
 
 export const MODULE_ORDER: ModuleKey[] = [
   "dashboard",
