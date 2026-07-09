@@ -7,6 +7,7 @@ import { client } from "@/lib/client";
 import { WindowManager } from "@/components/canvas/window-manager";
 import { CanvasShell } from "@/components/canvas/canvas-shell";
 import { SettingsProvider } from "@/hooks/use-settings";
+import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -38,7 +39,9 @@ function AppLayout() {
   return (
     <SettingsProvider>
       <WindowManager>
-        <CanvasShell />
+        <WorkspaceTemplatesProvider>
+          <CanvasShell />
+        </WorkspaceTemplatesProvider>
       </WindowManager>
     </SettingsProvider>
   );

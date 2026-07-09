@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, LayoutTemplate } from "lucide-react";
 import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
 import { client } from "@/lib/client";
 import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
 import { useWindowManager } from "./window-manager";
+import { useWorkspaceTemplates, templateToWindowSpecs, widgetSummary } from "@/hooks/use-workspace-templates";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
@@ -18,11 +19,25 @@ interface PaletteItem {
 }
 
 function useItems(onClose: () => void) {
-  const { openWindow, toggleWindow, isOpen } = useWindowManager();
+  const { openWindow, toggleWindow, isOpen, applyTemplate } = useWindowManager();
+  const { templates } = useWorkspaceTemplates();
   const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
   const projects = (data ?? []).filter((p): p is ProjectWithPath => p.path != null);
 
   const items: PaletteItem[] = [];
+
+  for (const template of templates) {
+    items.push({
+      id: `template-${template.id}`,
+      label: `New workspace from "${template.name}"`,
+      sublabel: widgetSummary(template.widgets),
+      icon: LayoutTemplate,
+      action: () => {
+        applyTemplate(templateToWindowSpecs(template), "new");
+        onClose();
+      },
+    });
+  }
 
   for (const key of MODULE_ORDER) {
     const config = MODULE_REGISTRY[key];

@@ -1,12 +1,15 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
+  type CollisionDetection,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
   PointerSensor,
   closestCenter,
+  pointerWithin,
   useSensor,
   useSensors,
   useDroppable,
@@ -19,11 +22,27 @@ import { CanvasTopBar } from "./canvas-topbar";
 import { CommandPalette } from "./command-palette";
 import { useSettings } from "@/hooks/use-settings";
 
+function gridPos(slot: number): CSSProperties {
+  return { gridColumn: (slot % 2) + 1, gridRow: Math.floor(slot / 2) + 1 };
+}
+
+// closestCenter compares the *dragged window's* rect center to each droppable's
+// center — for a large window and a tiny, far-away workspace pill, a nearby grid
+// slot's center almost always wins, so the pill can practically never be hit.
+// Check the actual pointer position against the pills first (pointerWithin), and
+// only fall back to closestCenter for in-grid slot/window reordering.
+export const collisionDetection: CollisionDetection = (args) => {
+  const pointerHits = pointerWithin(args).filter((c) => String(c.id).startsWith("workspace-"));
+  if (pointerHits.length > 0) return pointerHits;
+  return closestCenter(args);
+};
+
 const EmptySlot = memo(function EmptySlot({ slotIndex }: { slotIndex: number }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotIndex}` });
   return (
     <div
       ref={setNodeRef}
+      style={gridPos(slotIndex)}
       className={`rounded-2xl border border-dashed ${
         isOver ? "border-white/30 bg-white/5" : "border-white/[0.06]"
       }`}
@@ -31,101 +50,20 @@ const EmptySlot = memo(function EmptySlot({ slotIndex }: { slotIndex: number }) 
   );
 });
 
-function WindowDragOverlay({ entry }: { entry: WindowEntry }) {
+function WindowDragOverlay({ entry, headingToWorkspace }: { entry: WindowEntry; headingToWorkspace: boolean }) {
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/20 bg-black/80 shadow-2xl opacity-80">
+    <div
+      className={`flex h-full flex-col overflow-hidden rounded-2xl border border-white/20 bg-black/80 shadow-2xl transition-all duration-150 ${
+        headingToWorkspace ? "scale-50 opacity-40" : "scale-100 opacity-80"
+      }`}
+    >
       <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2.5">
         <Icon className="size-3.5 text-white/50" />
         <span className="text-sm font-medium text-white/80">{config.title}</span>
       </div>
     </div>
-  );
-}
-
-interface WorkspaceState {
-  id: string;
-  windows: WindowEntry[];
-}
-
-function WorkspaceGrid({ workspace, isActive }: { workspace: WorkspaceState; isActive: boolean }) {
-  const { placeWindow } = useWindowManager();
-  const { settings } = useSettings();
-  const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
-  const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
-
-  const wsWindows = workspace.windows;
-  const maxSlot = wsWindows.reduce((max, w) => Math.max(max, w.slot), -1);
-  const rowCount = wsWindows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
-  const totalSlots = rowCount * 2;
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveWindow((wsWindows.find((w) => w.id === event.active.id)) ?? null);
-    setFocusedWindowId(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wsWindows]);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveWindow(null);
-    if (!over || active.id === over.id) return;
-    const overId = String(over.id);
-    if (overId.startsWith("slot-")) {
-      placeWindow(String(active.id), parseInt(overId.slice(5), 10));
-    } else {
-      const overWin = wsWindows.find((w) => w.id === overId);
-      if (overWin) placeWindow(String(active.id), overWin.slot);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wsWindows, placeWindow]);
-
-  return (
-    <DndContext
-      sensors={isActive ? sensors : []}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div
-        className="grid flex-1 grid-cols-2 px-3.5 min-h-0"
-        style={{
-          display: isActive ? (rowCount > 0 ? "grid" : "block") : "none",
-          gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
-          gap: `${settings.gridGap}px`,
-        }}
-        onPointerDown={(e) => {
-          if (!(e.target as HTMLElement).closest("[data-is-window]")) {
-            setFocusedWindowId(null);
-          }
-        }}
-      >
-        {Array.from({ length: totalSlots }, (_, i) => {
-          const win = wsWindows.find((w) => w.slot === i);
-          return win ? (
-            <CanvasWindow
-              key={win.id}
-              entry={win}
-              isFocused={focusedWindowId === win.id}
-              onFocus={() => setFocusedWindowId(win.id)}
-            />
-          ) : (
-            <EmptySlot key={`slot-${i}`} slotIndex={i} />
-          );
-        })}
-      </div>
-      {isActive && typeof document !== "undefined" &&
-        createPortal(
-          <DragOverlay dropAnimation={null}>
-            {activeWindow ? <WindowDragOverlay entry={activeWindow} /> : null}
-          </DragOverlay>,
-          document.body,
-        )}
-    </DndContext>
   );
 }
 
@@ -150,9 +88,24 @@ function VideoWallpaper() {
 }
 
 export function CanvasShell() {
-  const { workspaces, activeWorkspaceId } = useWindowManager();
+  const { allWindows, activeWorkspaceId, placeWindow, moveWindowToWorkspace } = useWindowManager();
   const { settings } = useSettings();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [activeWindow, setActiveWindow] = useState<WindowEntry | null>(null);
+  const [overWorkspacePill, setOverWorkspacePill] = useState(false);
+  const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const activeWorkspaceWindows = useMemo(
+    () => allWindows.filter((w) => w.workspaceId === activeWorkspaceId),
+    [allWindows, activeWorkspaceId],
+  );
+  const maxSlot = activeWorkspaceWindows.reduce((max, w) => Math.max(max, w.slot), -1);
+  const rowCount = activeWorkspaceWindows.length === 0 ? 0 : Math.floor(maxSlot / 2) + 1;
+  const totalSlots = rowCount * 2;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -164,6 +117,36 @@ export function CanvasShell() {
     window.addEventListener("keydown", handler, { capture: true });
     return () => window.removeEventListener("keydown", handler, { capture: true });
   }, []);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveWindow(allWindows.find((w) => w.id === event.active.id) ?? null);
+    setFocusedWindowId(null);
+  }, [allWindows]);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    setOverWorkspacePill(!!event.over && String(event.over.id).startsWith("workspace-"));
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveWindow(null);
+    setOverWorkspacePill(false);
+    if (!over || active.id === over.id) return;
+    const overId = String(over.id);
+    if (overId.startsWith("workspace-")) {
+      const targetWorkspaceId = overId.slice("workspace-".length);
+      if (targetWorkspaceId !== activeWorkspaceId) {
+        moveWindowToWorkspace(String(active.id), targetWorkspaceId);
+      }
+      return;
+    }
+    if (overId.startsWith("slot-")) {
+      placeWindow(String(active.id), parseInt(overId.slice(5), 10));
+    } else {
+      const overWin = activeWorkspaceWindows.find((w) => w.id === overId);
+      if (overWin) placeWindow(String(active.id), overWin.slot);
+    }
+  }, [activeWorkspaceWindows, activeWorkspaceId, placeWindow, moveWindowToWorkspace]);
 
   return (
     <div className="fixed inset-0">
@@ -179,18 +162,62 @@ export function CanvasShell() {
       )}
       {settings.wallpaper === "image" && <div className="absolute inset-0 bg-black/30" />}
 
-      <div className="relative flex h-full flex-col pt-12 pb-10">
-        {workspaces.map((workspace) => (
-          <WorkspaceGrid
-            key={workspace.id}
-            workspace={workspace}
-            isActive={workspace.id === activeWorkspaceId}
-          />
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetection}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="relative flex h-full flex-col pt-12 pb-10">
+          <div
+            className="grid flex-1 grid-cols-2 px-3.5 min-h-0"
+            style={{
+              display: rowCount > 0 ? "grid" : "block",
+              gridTemplateRows: rowCount > 0 ? `repeat(${rowCount}, 1fr)` : undefined,
+              gap: `${settings.gridGap}px`,
+            }}
+            onPointerDown={(e) => {
+              if (!(e.target as HTMLElement).closest("[data-is-window]")) {
+                setFocusedWindowId(null);
+              }
+            }}
+          >
+            {Array.from({ length: totalSlots }, (_, i) =>
+              activeWorkspaceWindows.some((w) => w.slot === i) ? null : (
+                <EmptySlot key={`slot-${i}`} slotIndex={i} />
+              ),
+            )}
+            {allWindows.map((win) => (
+              <CanvasWindow
+                key={win.id}
+                entry={win}
+                isActiveWorkspace={win.workspaceId === activeWorkspaceId}
+                isFocused={focusedWindowId === win.id}
+                onFocus={() => setFocusedWindowId(win.id)}
+                style={{
+                  ...gridPos(win.slot),
+                  display: win.workspaceId === activeWorkspaceId ? undefined : "none",
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
-      <CanvasTopBar />
-      <CanvasDock />
+        <CanvasTopBar />
+        <CanvasDock />
+
+        {typeof document !== "undefined" &&
+          createPortal(
+            <DragOverlay dropAnimation={null}>
+              {activeWindow ? (
+                <WindowDragOverlay entry={activeWindow} headingToWorkspace={overWorkspacePill} />
+              ) : null}
+            </DragOverlay>,
+            document.body,
+          )}
+      </DndContext>
+
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );

@@ -17,13 +17,25 @@ interface TerminalWidgetProps {
   args: string[];
   cwd?: string;
   taskDropZone?: boolean;
+  /** Commands run one after another once the shell/CLI has started. */
+  commands?: string[];
 }
 
-export function TerminalWidget({ command, args, cwd, taskDropZone = false }: TerminalWidgetProps) {
+// A command is only sent once the PTY has been quiet for this long — i.e. the
+// shell/CLI has finished its startup burst (or a prior command's output) and
+// is actually sitting at a prompt. Sending on a fixed delay instead races slower
+// programs (ssh handshakes, the claude CLI) and can land input mid-startup,
+// where it gets picked up twice by two different stages of that startup.
+const IDLE_GAP_MS = 500;
+const IDLE_POLL_MS = 100;
+const POST_SEND_SETTLE_MS = 300;
+const MAX_WAIT_PER_COMMAND_MS = 8000;
+
+export function TerminalWidget({ command, args, cwd, taskDropZone = false, commands = [] }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const sessionId = useRef(crypto.randomUUID()).current;
-  const spawnConfig = useRef({ command, args, cwd });
+  const spawnConfig = useRef({ command, args, cwd, commands });
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const savedSelectionRef = useRef('');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -158,9 +170,28 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
     };
     el.addEventListener("contextmenu", handleContextMenu, { capture: true });
 
-    const { command: cmd, args: cmdArgs, cwd: cmdCwd } = spawnConfig.current;
+    let cancelled = false;
+    const lastOutputAt = { current: Date.now() };
+    const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+    async function runQueuedCommands(cmds: string[]) {
+      for (const line of cmds) {
+        const deadline = Date.now() + MAX_WAIT_PER_COMMAND_MS;
+        while (!cancelled && Date.now() - lastOutputAt.current < IDLE_GAP_MS && Date.now() < deadline) {
+          await sleep(IDLE_POLL_MS);
+        }
+        if (cancelled) return;
+        window.electron?.terminal.sendInput(sessionId, `${line}\r`);
+        await sleep(POST_SEND_SETTLE_MS);
+      }
+    }
+
+    const { command: cmd, args: cmdArgs, cwd: cmdCwd, commands: queuedCommands } = spawnConfig.current;
     window.electron.terminal
       .spawn(sessionId, terminal.cols, terminal.rows, { command: cmd, args: cmdArgs, cwd: cmdCwd })
+      .then(() => {
+        if (queuedCommands.length > 0) void runQueuedCommands(queuedCommands);
+      })
       .catch((err: unknown) => {
         terminal.writeln(`\r\n\x1b[31mFailed to start terminal: ${err}\x1b[0m\r\n`);
       });
@@ -175,6 +206,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
 
     const unsubData = window.electron.terminal.onData(sessionId, (data) => {
       terminal.write(data);
+      lastOutputAt.current = Date.now();
     });
 
     const unsubExit = window.electron.terminal.onExit(sessionId, (code) => {
@@ -190,6 +222,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
     resizeObserver.observe(el);
 
     return () => {
+      cancelled = true;
       disposeInput.dispose();
       disposeTitleChange.dispose();
       unsubData();
@@ -201,7 +234,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false }: Ter
       terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
     };
-  }, []); // mount/unmount only — command/args/cwd are captured in spawnConfig ref
+  }, []); // mount/unmount only — command/args/cwd/commands are captured in spawnConfig ref
 
   useEffect(() => {
     if (!contextMenu) return;

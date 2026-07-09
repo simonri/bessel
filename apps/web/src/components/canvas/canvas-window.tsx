@@ -16,10 +16,14 @@ export const CanvasWindow = memo(function CanvasWindow({
   entry,
   isFocused = false,
   onFocus,
+  isActiveWorkspace = true,
+  style,
 }: {
   entry: WindowEntry;
   isFocused?: boolean;
   onFocus?: () => void;
+  isActiveWorkspace?: boolean;
+  style?: React.CSSProperties;
 }) {
   const { closeWindow } = useWindowManager();
   const config = MODULE_REGISTRY[entry.module];
@@ -28,8 +32,8 @@ export const CanvasWindow = memo(function CanvasWindow({
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
 
   const { attributes, listeners, setNodeRef: setDragRef, setActivatorNodeRef, isDragging } =
-    useDraggable({ id: entry.id });
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: entry.id });
+    useDraggable({ id: entry.id, disabled: !isActiveWorkspace });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: entry.id, disabled: !isActiveWorkspace });
 
   const setRef = useCallback(
     (node: HTMLElement | null) => {
@@ -42,6 +46,7 @@ export const CanvasWindow = memo(function CanvasWindow({
   return (
     <div
       ref={setRef}
+      style={style}
       data-is-window="true"
       onPointerDown={onFocus}
       className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
