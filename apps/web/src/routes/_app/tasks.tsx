@@ -282,7 +282,7 @@ function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -1156,6 +1156,10 @@ function Tasks() {
               }`}
               onClick={() => {
                 setViewTab(tab.value);
+                // "All" should mean every task, not whatever project was
+                // last selected while on Board/Done — otherwise a leftover
+                // project filter silently hides tasks from the All tab.
+                if (tab.value === "all") setProjectFilter(null);
                 setPage(1);
               }}
             >
@@ -1292,7 +1296,7 @@ function Tasks() {
                   return (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20"
+                      className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20 last:mb-3"
                       onClick={() => handleSelectTask(task)}
                       draggable={isDesktop}
                       onDragStart={isDesktop ? (e) => {
