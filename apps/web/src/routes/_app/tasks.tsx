@@ -918,7 +918,9 @@ function Tasks() {
         if (zone && task) {
           const sid = zone.getAttribute("data-claude-session")!;
           window.electron?.terminal.sendInput(sid, buildTaskPrompt(task));
-          window.dispatchEvent(new CustomEvent("metron:claude-drop", { detail: { sessionId: sid } }));
+          window.dispatchEvent(
+            new CustomEvent("metron:claude-drop", { detail: { sessionId: sid, taskId: task.id } }),
+          );
           setActiveTask(null);
           setLocalOrder(null);
           return;
@@ -1005,6 +1007,23 @@ function Tasks() {
   };
 
   const allTasks = data?.items ?? [];
+  const allTasksRef = useRef(allTasks);
+  allTasksRef.current = allTasks;
+
+  useEffect(() => {
+    const onClaudeDrop = (e: Event) => {
+      const { taskId } = (e as CustomEvent<{ sessionId: string; taskId?: string }>).detail;
+      if (!taskId) return;
+      const task = allTasksRef.current.find((t) => t.id === taskId);
+      if (task && (task.status ?? "todo") === "todo") {
+        updateMutation.mutate({ client, path: { task_id: taskId }, body: { status: "in_progress" } });
+      }
+    };
+    window.addEventListener("metron:claude-drop", onClaudeDrop);
+    return () => window.removeEventListener("metron:claude-drop", onClaudeDrop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const totalCount = data?.pagination.total_count ?? 0;
   const maxPage = data?.pagination.max_page ?? 1;
 
@@ -1183,6 +1202,7 @@ function Tasks() {
                       draggable={isDesktop}
                       onDragStart={isDesktop ? (e) => {
                         e.dataTransfer.setData("metron/task-prompt", buildTaskPrompt(task));
+                        e.dataTransfer.setData("metron/task-id", task.id);
                         e.dataTransfer.effectAllowed = "copy";
                       } : undefined}
                     >
