@@ -54,7 +54,13 @@ import {
   reorderTasksV1TasksReorderPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@metron/ui/components/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@metron/ui/components/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -375,6 +381,7 @@ function TaskDetailDialog({
         >
           {task.title}
         </DialogTitle>
+        <DialogDescription className="sr-only">Task details</DialogDescription>
       </DialogHeader>
 
       <div className="px-5 py-4 space-y-5">
@@ -567,6 +574,7 @@ function ScheduledTasksDialog({
           <Repeat className="size-4 text-violet-400" />
           Repeated
         </DialogTitle>
+        <DialogDescription className="sr-only">Recurring tasks</DialogDescription>
       </DialogHeader>
       <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
         {tasks.length === 0 ? (

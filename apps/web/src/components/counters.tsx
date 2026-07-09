@@ -34,6 +34,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@metron/ui/components/dialog";
@@ -361,6 +362,7 @@ function CounterDetailDialog({
                 className="w-full bg-transparent outline-none"
               />
             </DialogTitle>
+            <DialogDescription className="sr-only">Counter details</DialogDescription>
           </DialogHeader>
 
           {/* Stats */}

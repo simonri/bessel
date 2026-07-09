@@ -210,9 +210,14 @@ const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
 
 // Auth0's hosted login page (VITE_AUTH0_DOMAIN in apps/web/.env) is where the
 // window navigates during loginWithRedirect() before coming back to app://localhost.
-// Kept separate from TRUSTED_ORIGINS: IPC handlers must never trust this origin,
+// "Continue with Google" hops it on to accounts.google.com and back to Auth0.
+// Kept separate from TRUSTED_ORIGINS: IPC handlers must never trust these origins,
 // but the window still needs permission to navigate there and back.
-const NAVIGATION_ALLOWED_ORIGINS = new Set([...TRUSTED_ORIGINS, "https://metronapp.us.auth0.com"]);
+const NAVIGATION_ALLOWED_ORIGINS = new Set([
+  ...TRUSTED_ORIGINS,
+  "https://metronapp.us.auth0.com",
+  "https://accounts.google.com",
+]);
 
 // ─── browser widget ───────────────────────────────────────────────────────────
 // Shared by every browser-widget <webview> instance so logging into a site once
@@ -346,6 +351,10 @@ app.whenReady().then(() => {
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
+
+  // Same UA fix as the browser widget below, applied to the default session so
+  // the main window's Auth0/Google login (createWindow) isn't blocked too.
+  session.defaultSession.setUserAgent(chromeUserAgent(session.defaultSession));
 
   const browserSession = session.fromPartition(BROWSER_PARTITION);
   browserSession.setUserAgent(chromeUserAgent(browserSession));
