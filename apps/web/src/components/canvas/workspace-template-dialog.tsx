@@ -40,7 +40,7 @@ type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 const NO_PROJECT = "__none__";
 
 function supportsProject(module: ModuleKey) {
-  return module === "terminal" || module === "claudeCode";
+  return module === "terminal" || module === "claudeCode" || module === "codex";
 }
 
 function blankTemplate(): WorkspaceTemplate {

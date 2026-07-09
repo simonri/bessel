@@ -13,6 +13,7 @@ import {
   SquareTerminal,
   GitBranch,
   Globe,
+  Bot,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
 import { isDesktop } from "@/lib/environment";
@@ -106,6 +107,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     multiInstance: true,
     noPadding: true,
   },
+  codex: {
+    title: "Codex",
+    icon: Bot,
+    component: lazy(() =>
+      import("@/routes/_app/-codex").then((m) => ({ default: m.Codex })),
+    ),
+    ...SESSION_SIZE,
+    multiInstance: true,
+    noPadding: true,
+  },
   terminal: {
     title: "Terminal",
     icon: SquareTerminal,
@@ -137,7 +148,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
 };
 
-const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "terminal", "browser"] : [];
+const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "codex", "terminal", "browser"] : [];
 
 export const MODULE_ORDER: ModuleKey[] = [
   "dashboard",

@@ -8,7 +8,7 @@ import { useWindowManager } from "./window-manager";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
-function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "terminal"; active: boolean }) {
+function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex" | "terminal"; active: boolean }) {
   const { openWindow } = useWindowManager();
   const [open, setOpen] = useState(false);
 
@@ -95,7 +95,7 @@ export function CanvasDock() {
         const Icon = config.icon;
         const active = isOpen(key);
 
-        if (key === "claudeCode" || key === "terminal") {
+        if (key === "claudeCode" || key === "codex" || key === "terminal") {
           return <ProjectPicker key={key} moduleKey={key} active={active} />;
         }
 

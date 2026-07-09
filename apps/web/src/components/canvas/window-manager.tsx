@@ -20,6 +20,7 @@ export type ModuleKey =
   | "activity"
   | "recipes"
   | "claudeCode"
+  | "codex"
   | "terminal"
   | "gitStatus"
   | "browser";
@@ -100,7 +101,7 @@ const isDesktop = typeof window !== "undefined" && !!window.electron;
 const ALL_MODULES = new Set<string>([
   "dashboard", "transactions", "accounts", "investments",
   "tasks", "travel", "activity", "recipes", "gitStatus",
-  ...(isDesktop ? ["claudeCode", "terminal", "browser"] : []),
+  ...(isDesktop ? ["claudeCode", "codex", "terminal", "browser"] : []),
 ]);
 
 function newId() {

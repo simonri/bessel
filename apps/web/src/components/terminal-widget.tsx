@@ -324,7 +324,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
             }`}
           >
             <span className="text-primary-400 text-sm font-medium bg-black/60 px-3 py-1.5 rounded-md">
-              Drop to send to Claude
+              Drop to send
             </span>
           </div>
         )}
