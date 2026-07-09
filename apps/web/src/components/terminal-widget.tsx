@@ -31,6 +31,12 @@ const IDLE_POLL_MS = 100;
 const POST_SEND_SETTLE_MS = 300;
 const MAX_WAIT_PER_COMMAND_MS = 8000;
 
+// xterm's FitAddon floors rows to the container height, so `.xterm` is
+// usually a few px shorter than its container — the container needs this
+// same background or that leftover strip shows the (translucent) widget
+// chrome behind it instead of blending into the terminal.
+const TERMINAL_BG = "#06060e";
+
 export function TerminalWidget({ command, args, cwd, taskDropZone = false, commands = [] }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -106,7 +112,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
     const terminal = new Terminal({
       allowTransparency: false,
       theme: {
-        background: "#06060e",
+        background: TERMINAL_BG,
         foreground: "#e2e2e2",
         cursor: terminalCursor,
         cursorAccent: "#0a0a0a",
@@ -274,6 +280,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       <div
         {...(taskDropZone ? { "data-claude-session": sessionId } : {})}
         className="relative h-full w-full"
+        style={{ backgroundColor: TERMINAL_BG }}
         onDragEnter={taskDropZone ? (e) => {
           if (Array.from(e.dataTransfer.types).includes("metron/task-prompt")) {
             dragCounterRef.current++;
