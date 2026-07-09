@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { WindowManager, useWindowManager } from "./window-manager";
+import { WindowManager, useWindowManager, type WindowEntry } from "./window-manager";
 
 // This environment's global `localStorage` is a broken Node stub (no clear/removeItem),
 // not jsdom's Storage implementation — replace it with a real in-memory one for these tests.
@@ -26,6 +26,19 @@ function setup() {
 beforeEach(() => {
   window.localStorage.clear();
 });
+
+function overlaps(a: WindowEntry, b: WindowEntry): boolean {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+
+function hasNoOverlaps(windows: WindowEntry[]): boolean {
+  for (let i = 0; i < windows.length; i++) {
+    for (let j = i + 1; j < windows.length; j++) {
+      if (overlaps(windows[i], windows[j])) return false;
+    }
+  }
+  return true;
+}
 
 describe("moveWindowToWorkspace", () => {
   it("moves a window to another workspace, keeping its id and losing no data", () => {
@@ -54,6 +67,9 @@ describe("moveWindowToWorkspace", () => {
     expect(moved!.module).toBe("tasks");
     expect(moved!.data).toEqual({ foo: "bar" });
     expect(moved!.workspaceId).toBe(targetWorkspaceId);
+    // Size is preserved across the move, only position is re-placed.
+    expect(moved!.w).toBe(original.w);
+    expect(moved!.h).toBe(original.h);
     expect(result.current.allWindows.filter((w) => w.id === original.id)).toHaveLength(1);
 
     // Switching to the target workspace surfaces it as active.
@@ -117,8 +133,8 @@ describe("applyTemplate", () => {
     expect(result.current.activeWorkspaceId).not.toBe(originalWorkspaceId);
     expect(result.current.windows).toHaveLength(3);
     expect(result.current.windows.map((w) => w.module)).toEqual(["terminal", "terminal", "claudeCode"]);
-    // Slots don't collide within the new workspace.
-    expect(new Set(result.current.windows.map((w) => w.slot)).size).toBe(3);
+    // Widgets don't overlap within the new workspace.
+    expect(hasNoOverlaps(result.current.windows)).toBe(true);
     expect(result.current.windows[0].data).toEqual({ commands: JSON.stringify(["echo one"]) });
 
     // The original workspace is untouched.
@@ -126,7 +142,7 @@ describe("applyTemplate", () => {
     expect(result.current.windows).toHaveLength(0);
   });
 
-  it("appends to the current workspace without clobbering existing windows or slots", () => {
+  it("appends to the current workspace without clobbering existing windows or their position", () => {
     const { result } = setup();
     act(() => result.current.openWindow("tasks"));
     const existing = result.current.windows[0];
@@ -135,7 +151,90 @@ describe("applyTemplate", () => {
 
     expect(result.current.workspaces).toHaveLength(1);
     expect(result.current.windows).toHaveLength(3);
-    expect(result.current.windows.find((w) => w.id === existing.id)?.slot).toBe(existing.slot);
-    expect(new Set(result.current.windows.map((w) => w.slot)).size).toBe(3);
+    const stillThere = result.current.windows.find((w) => w.id === existing.id);
+    expect(stillThere).toMatchObject({ x: existing.x, y: existing.y, w: existing.w, h: existing.h });
+    expect(hasNoOverlaps(result.current.windows)).toBe(true);
+  });
+});
+
+describe("alignWorkspace", () => {
+  it("compacts gaps without changing sizes, and is idempotent", () => {
+    const { result } = setup();
+    act(() => result.current.openWindow("tasks"));
+    act(() => result.current.openWindow("accounts"));
+    const [first, second] = result.current.windows;
+    const workspaceId = result.current.activeWorkspaceId;
+
+    // Push the second widget down, leaving a gap above it.
+    act(() =>
+      result.current.updateLayout(workspaceId, [
+        { i: first.id, x: first.x, y: first.y, w: first.w, h: first.h },
+        { i: second.id, x: second.x, y: second.y + 20, w: second.w, h: second.h },
+      ]),
+    );
+    expect(result.current.windows.find((w) => w.id === second.id)?.y).toBe(second.y + 20);
+
+    act(() => result.current.alignWorkspace());
+    const aligned = result.current.windows;
+    expect(hasNoOverlaps(aligned)).toBe(true);
+    expect(aligned.find((w) => w.id === second.id)!.y).toBeLessThan(second.y + 20);
+    expect(aligned.find((w) => w.id === first.id)).toMatchObject({ w: first.w, h: first.h });
+    expect(aligned.find((w) => w.id === second.id)).toMatchObject({ w: second.w, h: second.h });
+
+    const positionsAfterFirstAlign = aligned.map((w) => ({ id: w.id, x: w.x, y: w.y }));
+    act(() => result.current.alignWorkspace());
+    const positionsAfterSecondAlign = result.current.windows;
+    for (const p of positionsAfterFirstAlign) {
+      const win = positionsAfterSecondAlign.find((w) => w.id === p.id)!;
+      expect(win.x).toBe(p.x);
+      expect(win.y).toBe(p.y);
+    }
+  });
+});
+
+describe("migration from the legacy slot-based layout", () => {
+  it("converts slot data into non-overlapping, in-bounds x/y/w/h", () => {
+    window.localStorage.setItem(
+      "metron:workspaces",
+      JSON.stringify({
+        workspaces: [
+          {
+            id: "ws-1",
+            windows: [
+              { module: "tasks", slot: 0 },
+              { module: "accounts", slot: 1 },
+              { module: "transactions", slot: 2 },
+            ],
+          },
+        ],
+        activeWorkspaceId: "ws-1",
+      }),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.windows).toHaveLength(3);
+    for (const win of result.current.windows) {
+      expect(win.x).toBeGreaterThanOrEqual(0);
+      expect(win.x + win.w).toBeLessThanOrEqual(24);
+      expect(win.y).toBeGreaterThanOrEqual(0);
+    }
+    expect(hasNoOverlaps(result.current.windows)).toBe(true);
+  });
+
+  it("leaves already-migrated (x/y/w/h) data untouched", () => {
+    window.localStorage.setItem(
+      "metron:workspaces",
+      JSON.stringify({
+        workspaces: [
+          { id: "ws-1", windows: [{ module: "tasks", x: 3, y: 5, w: 8, h: 8 }] },
+        ],
+        activeWorkspaceId: "ws-1",
+      }),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.windows[0]).toMatchObject({ x: 3, y: 5, w: 8, h: 8 });
   });
 });

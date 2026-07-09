@@ -47,7 +47,8 @@
     "publish": {
       "provider": "github",
       "owner": "simonri",
-      "repo": "metron"
+      "repo": "metron",
+      "releaseType": "release"
     },
     "linux": {
       "target": [

@@ -1,6 +1,11 @@
-import { memo, Suspense, useCallback, useState } from "react";
-import { X } from "lucide-react";
-import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { memo, Suspense, useState } from "react";
+import { ChevronDown, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@metron/ui/components/dropdown-menu";
 import { MODULE_REGISTRY } from "./module-registry";
 import { WindowEntryContext, WindowTitleContext, useWindowManager, type WindowEntry } from "./window-manager";
 
@@ -12,18 +17,50 @@ function WindowSpinner() {
   );
 }
 
+function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
+  const { workspaces, moveWindowToWorkspace } = useWindowManager();
+  const others = workspaces.filter((ws) => ws.id !== entry.workspaceId);
+  if (others.length === 0) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          title="Move to workspace"
+          className="flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+        >
+          <ChevronDown className="size-2.5" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="min-w-40 border-white/10 bg-black/80 text-white/80 shadow-2xl backdrop-blur-xl"
+      >
+        {workspaces.map((ws, i) =>
+          ws.id === entry.workspaceId ? null : (
+            <DropdownMenuItem
+              key={ws.id}
+              className="text-white/70 focus:bg-white/10 focus:text-white/90"
+              onClick={() => moveWindowToWorkspace(entry.id, ws.id)}
+            >
+              Move to workspace {i + 1}
+            </DropdownMenuItem>
+          ),
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export const CanvasWindow = memo(function CanvasWindow({
   entry,
   isFocused = false,
   onFocus,
-  isActiveWorkspace = true,
-  style,
 }: {
   entry: WindowEntry;
   isFocused?: boolean;
   onFocus?: () => void;
-  isActiveWorkspace?: boolean;
-  style?: React.CSSProperties;
 }) {
   const { closeWindow } = useWindowManager();
   const config = MODULE_REGISTRY[entry.module];
@@ -31,41 +68,16 @@ export const CanvasWindow = memo(function CanvasWindow({
   const Component = config.component;
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
 
-  const { attributes, listeners, setNodeRef: setDragRef, setActivatorNodeRef, isDragging } =
-    useDraggable({ id: entry.id, disabled: !isActiveWorkspace });
-  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: entry.id, disabled: !isActiveWorkspace });
-
-  const setRef = useCallback(
-    (node: HTMLElement | null) => {
-      setDragRef(node);
-      setDropRef(node);
-    },
-    [setDragRef, setDropRef],
-  );
-
   return (
     <div
-      ref={setRef}
-      style={style}
       data-is-window="true"
       onPointerDown={onFocus}
       className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
-        isDragging
-          ? "opacity-0"
-          : isFocused
-          ? "border-primary-500"
-          : isOver
-          ? "border-white/30"
-          : "border-white/10"
+        isFocused ? "border-primary-500" : "border-white/10"
       }`}
     >
-      {/* Title bar — drag handle */}
-      <div
-        ref={setActivatorNodeRef}
-        {...attributes}
-        {...listeners}
-        className="flex shrink-0 items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 cursor-grab active:cursor-grabbing"
-      >
+      {/* Title bar — react-grid-layout drag handle (selector: .canvas-window-titlebar) */}
+      <div className="canvas-window-titlebar flex shrink-0 cursor-grab items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 active:cursor-grabbing">
         <Icon className="size-3 text-white/50" />
         <span className="text-xs font-medium text-white/80">
           {config.title}
@@ -75,13 +87,16 @@ export const CanvasWindow = memo(function CanvasWindow({
             </span>
           )}
         </span>
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => closeWindow(entry.id)}
-          className="ml-auto flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
-        >
-          <X className="size-2.5" />
-        </button>
+        <div className="ml-auto flex items-center gap-1">
+          <MoveToWorkspaceMenu entry={entry} />
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => closeWindow(entry.id)}
+            className="flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          >
+            <X className="size-2.5" />
+          </button>
+        </div>
       </div>
 
       {/* Scrollable content */}

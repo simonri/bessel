@@ -294,6 +294,16 @@ function createWindow() {
   win.webContents.on("unresponsive", () => appendLog("host window unresponsive"));
   win.webContents.on("responsive", () => appendLog("host window responsive again"));
 
+  // Surfaces the React app's own console.error/warn (e.g. the ErrorBoundary
+  // catch) into the same forensic log as everything else, instead of it only
+  // ever reaching devtools and vanishing when the window is closed.
+  win.webContents.on("console-message", (event) => {
+    const { level, message, lineNumber, sourceId } = event;
+    if (level === "error" || level === "warning") {
+      appendLog(`renderer console[${level}] ${sourceId}:${lineNumber} ${message}`);
+    }
+  });
+
   win.webContents.on("before-input-event", (_, input) => {
     if (input.type === "keyDown" && input.shift && (input.control || input.meta) && input.key.toLowerCase() === "i") {
       win.webContents.toggleDevTools();
@@ -432,6 +442,24 @@ app.whenReady().then(() => {
       autoUpdater.once("error", onError);
       autoUpdater.checkForUpdates().catch(onError);
     });
+  });
+
+  ipcHandle("logs:read", (): string => {
+    const paths = [`${logFilePath}.old`, logFilePath];
+    return paths
+      .filter((p) => p && fs.existsSync(p))
+      .map((p) => {
+        try {
+          return fs.readFileSync(p, "utf8");
+        } catch {
+          return "";
+        }
+      })
+      .join("");
+  });
+
+  ipcHandle("logs:reveal", () => {
+    if (logFilePath) shell.showItemInFolder(logFilePath);
   });
 
   ipcHandle("dialog:select-folder", async (event) => {

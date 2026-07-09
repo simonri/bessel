@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, ExternalLink, FolderOpen, Pencil, Plus, Settings, Timer, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Bell, ExternalLink, FolderOpen, LayoutGrid, Pencil, Plus, ScrollText, Settings, Timer, Trash2, TrendingDown, TrendingUp, X } from "lucide-react";
 
 declare global {
   interface Window {
@@ -64,6 +64,10 @@ declare global {
       shell: {
         openExternal: (url: string) => Promise<void>;
       };
+      logs: {
+        read: () => Promise<string>;
+        reveal: () => Promise<void>;
+      };
     };
   }
 }
@@ -81,12 +85,13 @@ import {
   type ProjectSchema,
 } from "@metron/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@metron/ui/components/tooltip";
 import { client } from "@/lib/client";
 import { useSettings } from "@/hooks/use-settings";
 import { SettingsModal } from "@/components/settings-modal";
+import { LogsDialog } from "@/components/logs-dialog";
 import { Counters } from "@/components/counters";
 import { useWindowManager } from "@/components/canvas/window-manager";
-import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { useWorkspaceTemplates, templateToWindowSpecs, widgetSummary } from "@/hooks/use-workspace-templates";
 import { WorkspaceTemplatesDialog } from "@/components/canvas/workspace-template-dialog";
@@ -725,27 +730,20 @@ function WorkspacePill({
   isFlashing,
   onSelect,
   onContextMenu,
-  droppableId,
 }: {
   index: number;
   isActive: boolean;
   isFlashing: boolean;
   onSelect: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
-  droppableId: string;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-
   return (
     <button
-      ref={setNodeRef}
       onClick={onSelect}
       onContextMenu={onContextMenu}
       className={cn(
         "flex h-6 min-w-6 items-center justify-center rounded text-xs font-medium transition-all duration-150",
-        isOver
-          ? "bg-primary-500/80 text-white ring-2 ring-primary-400/70"
-          : isActive
+        isActive
           ? "bg-white/15 text-white/90"
           : "text-white/35 hover:bg-white/[0.08] hover:text-white/70",
         isFlashing && "animate-workspace-flash",
@@ -819,6 +817,25 @@ function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
   );
 }
 
+function AlignButton() {
+  const { alignWorkspace } = useWindowManager();
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={alignWorkspace}
+          title="Align widgets"
+          className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-colors hover:bg-white/[0.08] hover:text-white/60"
+        >
+          <LayoutGrid className="size-3" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>Align widgets</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function WorkspaceSwitcher() {
   const { workspaces, activeWorkspaceId, addWorkspace, removeWorkspace, switchWorkspace, flashWorkspaceId } =
     useWindowManager();
@@ -836,7 +853,6 @@ function WorkspaceSwitcher() {
               isFlashing={flashWorkspaceId === ws.id}
               onSelect={() => switchWorkspace(ws.id)}
               onContextMenu={(e) => { e.preventDefault(); setMenuId(ws.id); }}
-              droppableId={`workspace-${ws.id}`}
             />
             {menuId === ws.id && (
               <WorkspaceContextMenu
@@ -849,6 +865,8 @@ function WorkspaceSwitcher() {
         );
       })}
       <NewWorkspaceMenu addWorkspace={addWorkspace} />
+      <div className="mx-1 h-3 w-px shrink-0 bg-white/10" />
+      <AlignButton />
     </div>
   );
 }
@@ -921,6 +939,7 @@ function AvatarMenu() {
 
 export function CanvasTopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
   const { settings } = useSettings();
 
@@ -962,6 +981,15 @@ export function CanvasTopBar() {
         {window.electron && <ProjectsDropdown />}
         <TimeSinceDropdown />
         <NotificationBell />
+        {window.electron && (
+          <button
+            onClick={() => setLogsOpen(true)}
+            title="View logs"
+            className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
+          >
+            <ScrollText className="size-4" />
+          </button>
+        )}
         <button
           onClick={() => setSettingsOpen(true)}
           title="Settings"
@@ -982,6 +1010,7 @@ export function CanvasTopBar() {
       </div>
 
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {window.electron && <LogsDialog open={logsOpen} onClose={() => setLogsOpen(false)} />}
     </div>
   );
 }

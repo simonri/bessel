@@ -21,10 +21,14 @@ export interface ModuleConfig {
   title: string;
   icon: LucideIcon;
   component: React.LazyExoticComponent<React.ComponentType>;
-  colSpan: 1;
+  defaultSize: { w: number; h: number };
+  minSize: { w: number; h: number };
   multiInstance?: boolean;
   noPadding?: boolean;
 }
+
+const COMPACT_SIZE = { defaultSize: { w: 8, h: 8 }, minSize: { w: 4, h: 4 } };
+const SESSION_SIZE = { defaultSize: { w: 12, h: 14 }, minSize: { w: 6, h: 6 } };
 
 export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   dashboard: {
@@ -33,7 +37,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/index").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   transactions: {
     title: "Transactions",
@@ -41,7 +45,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/transactions").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   accounts: {
     title: "Accounts",
@@ -49,7 +53,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/accounts").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   investments: {
     title: "Investments",
@@ -57,7 +61,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/investments").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   tasks: {
     title: "Tasks",
@@ -65,7 +69,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/tasks").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   travel: {
     title: "Travel",
@@ -73,7 +77,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/travel").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   activity: {
     title: "Activity",
@@ -81,7 +85,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/activity").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   recipes: {
     title: "Recipes",
@@ -89,7 +93,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/recipes").then((m) => ({ default: m.Route.options.component as React.ComponentType })),
     ),
-    colSpan: 1,
+    ...COMPACT_SIZE,
   },
   claudeCode: {
     title: "Claude",
@@ -97,7 +101,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/-claude-code").then((m) => ({ default: m.ClaudeCode })),
     ),
-    colSpan: 1,
+    ...SESSION_SIZE,
     multiInstance: true,
     noPadding: true,
   },
@@ -107,7 +111,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/-terminal").then((m) => ({ default: m.TerminalPage })),
     ),
-    colSpan: 1,
+    ...SESSION_SIZE,
     multiInstance: true,
     noPadding: true,
   },
@@ -117,7 +121,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/-git-status").then((m) => ({ default: m.GitStatus })),
     ),
-    colSpan: 1,
+    ...SESSION_SIZE,
     noPadding: true,
   },
   browser: {
@@ -126,7 +130,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/-browser").then((m) => ({ default: m.BrowserPage })),
     ),
-    colSpan: 1,
+    ...SESSION_SIZE,
     multiInstance: true,
     noPadding: true,
   },

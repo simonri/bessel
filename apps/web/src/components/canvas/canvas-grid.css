@@ -1,0 +1,61 @@
+/* react-grid-layout v2 ships no CSS of its own — this supplies the base
+   positioning/interaction styles it depends on, restyled for the app's
+   dark-glass aesthetic. */
+
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+
+.react-grid-item {
+  transition: transform 200ms ease, width 200ms ease, height 200ms ease;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 30;
+  opacity: 0.85;
+  cursor: grabbing;
+}
+
+.react-grid-item.resizing {
+  transition: none;
+  z-index: 20;
+}
+
+.react-grid-item.react-grid-placeholder {
+  z-index: 1;
+  border-radius: 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  transition-duration: 100ms;
+  user-select: none;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.react-grid-item:hover > .react-resizable-handle,
+.react-grid-item.resizing > .react-resizable-handle {
+  opacity: 1;
+}
+
+.react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  border-bottom-right-radius: 2px;
+}

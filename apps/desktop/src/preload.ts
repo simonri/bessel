@@ -67,4 +67,8 @@ contextBridge.exposeInMainWorld("electron", {
     stop: () => ipcRenderer.invoke("monitor:stop"),
     setEnabled: (enabled: boolean) => ipcRenderer.invoke("monitor:setEnabled", enabled),
   },
+  logs: {
+    read: (): Promise<string> => ipcRenderer.invoke("logs:read"),
+    reveal: (): Promise<void> => ipcRenderer.invoke("logs:reveal"),
+  },
 });

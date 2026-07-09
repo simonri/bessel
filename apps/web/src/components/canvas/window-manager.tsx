@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { bottom, verticalCompactor, type Layout as RglLayout } from "react-grid-layout";
+import { MODULE_REGISTRY } from "./module-registry";
 
 export type ModuleKey =
   | "dashboard"
@@ -14,10 +16,16 @@ export type ModuleKey =
   | "gitStatus"
   | "browser";
 
+export const GRID_COLS = 24;
+export const GRID_ROW_HEIGHT = 32;
+
 export type WindowEntry = {
   id: string;
   module: ModuleKey;
-  slot: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   data?: Record<string, string>;
   workspaceId: string;
 };
@@ -42,7 +50,10 @@ interface WindowManagerContextValue {
   closeWindow: (id: string) => void;
   /** Merges `patch` into a window's per-instance data — e.g. a browser widget saving its current URL. */
   updateWindowData: (windowId: string, patch: Record<string, string>) => void;
-  placeWindow: (windowId: string, toSlot: number) => void;
+  /** Writes a react-grid-layout `Layout` (from onLayoutChange) back into the given workspace's windows. */
+  updateLayout: (workspaceId: string, layout: RglLayout) => void;
+  /** Vertically compacts the active workspace's windows, removing gaps. Sizes are untouched. */
+  alignWorkspace: () => void;
   moveWindowToWorkspace: (windowId: string, targetWorkspaceId: string) => void;
   /** Opens a batch of windows at once, either into the active workspace or a newly created one. */
   applyTemplate: (specs: WindowSpec[], target: "current" | "new") => void;
@@ -79,33 +90,68 @@ function newId() {
   return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-function firstFreeSlot(windows: WindowEntry[]): number {
-  const used = new Set(windows.map((w) => w.slot));
-  let slot = 0;
-  while (used.has(slot)) slot++;
-  return slot;
+function toRglLayout(windows: WindowEntry[]): RglLayout {
+  return windows.map((win) => ({ i: win.id, x: win.x, y: win.y, w: win.w, h: win.h }));
 }
 
-function nextFreeSlots(windows: WindowEntry[], count: number): number[] {
-  const used = new Set(windows.map((w) => w.slot));
-  const slots: number[] = [];
-  let slot = 0;
-  while (slots.length < count) {
-    if (!used.has(slot)) {
-      slots.push(slot);
-      used.add(slot);
-    }
-    slot++;
-  }
-  return slots;
+function placeAtBottom(existing: WindowEntry[], size: { w: number; h: number }) {
+  return { x: 0, y: bottom(toRglLayout(existing)), w: size.w, h: size.h };
 }
 
-type StoredWindow = { module: string; slot: number; data?: Record<string, string> };
+function placeNewWidget(existing: WindowEntry[], module: ModuleKey) {
+  return placeAtBottom(existing, MODULE_REGISTRY[module].defaultSize);
+}
+
+// The old 2-column, fixed 1x1-cell layout: `col = slot % 2`, `row = floor(slot / 2)`.
+// Replicated onto the finer grid so upgraded users see roughly the same left/right,
+// top/bottom arrangement — lossy (old data had no size info), but order is preserved.
+function migrateSlot(slot: number, module: ModuleKey): { x: number; y: number; w: number; h: number } {
+  const { w, h } = MODULE_REGISTRY[module].defaultSize;
+  const col = slot % 2;
+  const row = Math.floor(slot / 2);
+  return { x: col * (GRID_COLS / 2), y: row * h, w: Math.min(w, GRID_COLS / 2), h };
+}
+
+type StoredWindowNew = { module: string; x: number; y: number; w: number; h: number; data?: Record<string, string> };
+type StoredWindowLegacy = { module: string; slot: number; data?: Record<string, string> };
+type StoredWindow = StoredWindowNew | StoredWindowLegacy;
+
+function isNewFormat(e: StoredWindow): e is StoredWindowNew {
+  return (
+    typeof (e as StoredWindowNew).x === "number" &&
+    typeof (e as StoredWindowNew).y === "number" &&
+    typeof (e as StoredWindowNew).w === "number" &&
+    typeof (e as StoredWindowNew).h === "number"
+  );
+}
 
 function parseWindows(raw: unknown[], workspaceId: string): WindowEntry[] {
-  return (raw as StoredWindow[])
-    .filter((e) => e && typeof e === "object" && ALL_MODULES.has(e.module) && typeof e.slot === "number")
-    .map((e) => ({ id: newId(), module: e.module as ModuleKey, slot: e.slot, data: e.data, workspaceId }));
+  const entries = (raw as StoredWindow[]).filter(
+    (e) => e && typeof e === "object" && ALL_MODULES.has(e.module),
+  );
+
+  let migrated = false;
+  const result: WindowEntry[] = [];
+  for (const e of entries) {
+    const module = e.module as ModuleKey;
+    if (isNewFormat(e)) {
+      result.push({ id: newId(), module, x: e.x, y: e.y, w: e.w, h: e.h, data: e.data, workspaceId });
+    } else if (typeof (e as StoredWindowLegacy).slot === "number") {
+      migrated = true;
+      const { x, y, w, h } = migrateSlot((e as StoredWindowLegacy).slot, module);
+      result.push({ id: newId(), module, x, y, w, h, data: e.data, workspaceId });
+    }
+  }
+
+  // Clamping w down to fit the old 2-column layout onto this grid can introduce
+  // overlap — clean it up, but only when a migration actually happened, so
+  // already-current-format data is never silently rearranged on load.
+  if (!migrated) return result;
+  const compacted = verticalCompactor.compact(toRglLayout(result), GRID_COLS);
+  return result.map((win) => {
+    const item = compacted.find((l) => l.i === win.id)!;
+    return { ...win, x: item.x, y: item.y };
+  });
 }
 
 interface LoadedState {
@@ -168,10 +214,13 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
           id: ws.id,
           windows: allWindows
             .filter((w) => w.workspaceId === ws.id)
-            .map((w) => ({
-              module: w.module,
-              slot: w.slot,
-              ...(w.data ? { data: w.data } : {}),
+            .map((win) => ({
+              module: win.module,
+              x: win.x,
+              y: win.y,
+              w: win.w,
+              h: win.h,
+              ...(win.data ? { data: win.data } : {}),
             })),
         })),
         activeWorkspaceId,
@@ -206,7 +255,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     (module: ModuleKey) => {
       updateActiveWindows((prev, activeId) => {
         if (prev.some((w) => w.module === module)) return prev.filter((w) => w.module !== module);
-        return [...prev, { id: newId(), module, slot: firstFreeSlot(prev), workspaceId: activeId }];
+        return [...prev, { id: newId(), module, ...placeNewWidget(prev, module), workspaceId: activeId }];
       });
     },
     [updateActiveWindows],
@@ -216,7 +265,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     (module: ModuleKey, data?: Record<string, string>) => {
       updateActiveWindows((prev, activeId) => [
         ...prev,
-        { id: newId(), module, slot: firstFreeSlot(prev), data, workspaceId: activeId },
+        { id: newId(), module, ...placeNewWidget(prev, module), data, workspaceId: activeId },
       ]);
     },
     [updateActiveWindows],
@@ -238,21 +287,28 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const placeWindow = useCallback(
-    (windowId: string, toSlot: number) => {
-      updateActiveWindows((prev) => {
-        const moving = prev.find((w) => w.id === windowId);
-        if (!moving || moving.slot === toSlot) return prev;
-        const occupant = prev.find((w) => w.slot === toSlot);
-        return prev.map((w) => {
-          if (w.id === windowId) return { ...w, slot: toSlot };
-          if (occupant && w.id === occupant.id) return { ...w, slot: moving.slot };
-          return w;
-        });
+  // Every workspace's grid stays mounted too, so a hidden grid's own onLayoutChange
+  // (e.g. its initial bounds-correction) must be able to target a non-active workspace.
+  const updateLayout = useCallback((workspaceId: string, layout: RglLayout) => {
+    setState((prev) => ({
+      ...prev,
+      windows: prev.windows.map((win) => {
+        if (win.workspaceId !== workspaceId) return win;
+        const item = layout.find((l) => l.i === win.id);
+        return item ? { ...win, x: item.x, y: item.y, w: item.w, h: item.h } : win;
+      }),
+    }));
+  }, []);
+
+  const alignWorkspace = useCallback(() => {
+    updateActiveWindows((prev) => {
+      const compacted = verticalCompactor.compact(toRglLayout(prev), GRID_COLS);
+      return prev.map((win) => {
+        const item = compacted.find((l) => l.i === win.id)!;
+        return { ...win, x: item.x, y: item.y };
       });
-    },
-    [updateActiveWindows],
-  );
+    });
+  }, [updateActiveWindows]);
 
   const moveWindowToWorkspace = useCallback((windowId: string, targetWorkspaceId: string) => {
     setState((prev) => {
@@ -260,11 +316,11 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       if (!moving || moving.workspaceId === targetWorkspaceId) return prev;
       if (!prev.workspaces.some((ws) => ws.id === targetWorkspaceId)) return prev;
       const targetWindows = prev.windows.filter((w) => w.workspaceId === targetWorkspaceId);
-      const slot = firstFreeSlot(targetWindows);
+      const placed = placeAtBottom(targetWindows, { w: moving.w, h: moving.h });
       return {
         ...prev,
         windows: prev.windows.map((w) =>
-          w.id === windowId ? { ...w, workspaceId: targetWorkspaceId, slot } : w,
+          w.id === windowId ? { ...w, workspaceId: targetWorkspaceId, ...placed } : w,
         ),
       };
     });
@@ -275,14 +331,11 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     setState((prev) => {
       if (target === "new") {
         const workspaceId = newId();
-        const slots = nextFreeSlots([], specs.length);
-        const newWindows = specs.map((spec, i) => ({
-          id: newId(),
-          module: spec.module,
-          slot: slots[i],
-          data: spec.data,
-          workspaceId,
-        }));
+        const newWindows: WindowEntry[] = [];
+        for (const spec of specs) {
+          const placed = placeNewWidget(newWindows, spec.module);
+          newWindows.push({ id: newId(), module: spec.module, ...placed, data: spec.data, workspaceId });
+        }
         return {
           workspaces: [...prev.workspaces, { id: workspaceId }],
           windows: [...prev.windows, ...newWindows],
@@ -292,14 +345,11 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
 
       const activeId = prev.activeWorkspaceId;
       const activeWindows = prev.windows.filter((w) => w.workspaceId === activeId);
-      const slots = nextFreeSlots(activeWindows, specs.length);
-      const newWindows = specs.map((spec, i) => ({
-        id: newId(),
-        module: spec.module,
-        slot: slots[i],
-        data: spec.data,
-        workspaceId: activeId,
-      }));
+      const newWindows: WindowEntry[] = [];
+      for (const spec of specs) {
+        const placed = placeNewWidget([...activeWindows, ...newWindows], spec.module);
+        newWindows.push({ id: newId(), module: spec.module, ...placed, data: spec.data, workspaceId: activeId });
+      }
       return { ...prev, windows: [...prev.windows, ...newWindows] };
     });
   }, []);
@@ -339,7 +389,8 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     openWindow,
     closeWindow,
     updateWindowData,
-    placeWindow,
+    updateLayout,
+    alignWorkspace,
     moveWindowToWorkspace,
     applyTemplate,
     isOpen,
@@ -348,8 +399,8 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     switchWorkspace,
   }), [
     windows, allWindows, workspaces, activeWorkspaceId, flashWorkspaceId,
-    toggleWindow, openWindow, closeWindow, updateWindowData, placeWindow, moveWindowToWorkspace, applyTemplate,
-    isOpen, addWorkspace, removeWorkspace, switchWorkspace,
+    toggleWindow, openWindow, closeWindow, updateWindowData, updateLayout, alignWorkspace,
+    moveWindowToWorkspace, applyTemplate, isOpen, addWorkspace, removeWorkspace, switchWorkspace,
   ]);
 
   return (
