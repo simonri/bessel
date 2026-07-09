@@ -1,6 +1,6 @@
 {
   "name": "@metron/desktop",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Metron personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
