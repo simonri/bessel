@@ -37,6 +37,55 @@ async function querySystemctl(...args: string[]): Promise<string> {
   }
 }
 
+// ─── spotify ──────────────────────────────────────────────────────────────────
+// Controlled via playerctl/MPRIS (the local D-Bus interface Spotify's Linux
+// client exposes) rather than the Spotify Web API — no OAuth app registration,
+// no Premium requirement, and no network round-trip, just the local player.
+const PLAYERCTL_PLAYER = "spotify";
+const PLAYERCTL_SEP = "\x1f";
+const PLAYERCTL_STATUS_FIELDS = ["status", "title", "artist", "album", "mpris:artUrl", "mpris:length", "position"];
+
+interface SpotifyStatus {
+  running: boolean;
+  playing?: boolean;
+  title?: string;
+  artist?: string;
+  album?: string;
+  artUrl?: string;
+  lengthMs?: number;
+  positionMs?: number;
+}
+
+async function playerctl(...args: string[]): Promise<string> {
+  const { stdout } = await execFileAsync("playerctl", ["-p", PLAYERCTL_PLAYER, ...args]);
+  return stdout.trim();
+}
+
+async function getSpotifyStatus(): Promise<SpotifyStatus> {
+  let raw: string;
+  try {
+    raw = await playerctl(
+      "metadata",
+      "--format",
+      PLAYERCTL_STATUS_FIELDS.map((f) => `{{${f}}}`).join(PLAYERCTL_SEP),
+    );
+  } catch {
+    // No "spotify" MPRIS player registered — app isn't running, or isn't loaded yet.
+    return { running: false };
+  }
+  const [status, title, artist, album, artUrl, lengthUs, positionUs] = raw.split(PLAYERCTL_SEP);
+  return {
+    running: true,
+    playing: status === "Playing",
+    title: title || "",
+    artist: artist || "",
+    album: album || "",
+    artUrl: artUrl || "",
+    lengthMs: Math.round(Number(lengthUs) / 1000) || 0,
+    positionMs: Math.round(Number(positionUs) / 1000) || 0,
+  };
+}
+
 interface GitFileEntry {
   path: string;
   originalPath?: string;
@@ -741,6 +790,16 @@ app.whenReady().then(() => {
     } else {
       await execFileAsync("systemctl", ["--user", "disable", MONITOR_SERVICE_NAME]);
     }
+  });
+
+  ipcHandle("spotify:status", async () => getSpotifyStatus());
+
+  ipcHandle("spotify:playPause", async () => {
+    await playerctl("play-pause");
+  });
+
+  ipcHandle("spotify:next", async () => {
+    await playerctl("next");
   });
 
   const INDEX_HTML = path.join(WEB_DIR, "index.html");

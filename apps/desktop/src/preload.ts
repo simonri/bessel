@@ -71,4 +71,18 @@ contextBridge.exposeInMainWorld("electron", {
     read: (): Promise<string> => ipcRenderer.invoke("logs:read"),
     reveal: (): Promise<void> => ipcRenderer.invoke("logs:reveal"),
   },
+  spotify: {
+    getStatus: (): Promise<{
+      running: boolean;
+      playing?: boolean;
+      title?: string;
+      artist?: string;
+      album?: string;
+      artUrl?: string;
+      lengthMs?: number;
+      positionMs?: number;
+    }> => ipcRenderer.invoke("spotify:status"),
+    playPause: (): Promise<void> => ipcRenderer.invoke("spotify:playPause"),
+    next: (): Promise<void> => ipcRenderer.invoke("spotify:next"),
+  },
 });
