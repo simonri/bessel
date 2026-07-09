@@ -42,6 +42,7 @@ import {
   getKlarnaTransactionsV1KlarnaTransactionsGet,
   getMeV1AuthMeGet,
   getRecipeV1RecipesRecipeIdGet,
+  getTaskV1TasksTaskIdGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
@@ -176,6 +177,9 @@ import type {
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetError,
   GetRecipeV1RecipesRecipeIdGetResponse,
+  GetTaskV1TasksTaskIdGetData,
+  GetTaskV1TasksTaskIdGetError,
+  GetTaskV1TasksTaskIdGetResponse,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetError,
   GetWeatherForecastV1WeatherGetResponse,
@@ -2308,6 +2312,34 @@ export const deleteTaskV1TasksTaskIdDeleteMutation = (
   };
   return mutationOptions;
 };
+
+export const getTaskV1TasksTaskIdGetQueryKey = (
+  options: Options<GetTaskV1TasksTaskIdGetData>,
+) => createQueryKey("getTaskV1TasksTaskIdGet", options);
+
+/**
+ * Get Task
+ */
+export const getTaskV1TasksTaskIdGetOptions = (
+  options: Options<GetTaskV1TasksTaskIdGetData>,
+) =>
+  queryOptions<
+    GetTaskV1TasksTaskIdGetResponse,
+    GetTaskV1TasksTaskIdGetError,
+    GetTaskV1TasksTaskIdGetResponse,
+    ReturnType<typeof getTaskV1TasksTaskIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTaskV1TasksTaskIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTaskV1TasksTaskIdGetQueryKey(options),
+  });
 
 /**
  * Update Task

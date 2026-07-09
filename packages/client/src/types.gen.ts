@@ -4244,6 +4244,38 @@ export type DeleteTaskV1TasksTaskIdDeleteResponses = {
 export type DeleteTaskV1TasksTaskIdDeleteResponse =
   DeleteTaskV1TasksTaskIdDeleteResponses[keyof DeleteTaskV1TasksTaskIdDeleteResponses];
 
+export type GetTaskV1TasksTaskIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}";
+};
+
+export type GetTaskV1TasksTaskIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTaskV1TasksTaskIdGetError =
+  GetTaskV1TasksTaskIdGetErrors[keyof GetTaskV1TasksTaskIdGetErrors];
+
+export type GetTaskV1TasksTaskIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaskSchema;
+};
+
+export type GetTaskV1TasksTaskIdGetResponse =
+  GetTaskV1TasksTaskIdGetResponses[keyof GetTaskV1TasksTaskIdGetResponses];
+
 export type UpdateTaskV1TasksTaskIdPatchData = {
   body: TaskUpdate;
   path: {

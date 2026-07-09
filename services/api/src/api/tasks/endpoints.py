@@ -273,3 +273,19 @@ async def list_areas(
 ) -> list[str]:
   repo = TaskRepository.from_session(session)
   return await repo.list_areas_by_usage(current_user.id)
+
+
+# Registered after /areas — FastAPI matches routes in definition order, and
+# this would otherwise capture (and 422) "/areas" as a task_id.
+@router.get(
+  "/{task_id}",
+  summary="Get Task",
+  response_model=TaskSchema,
+)
+async def get_task(
+  task_id: UUID,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> TaskSchema:
+  task = await _get_task_or_404(session, task_id, current_user.id)
+  return TaskSchema.model_validate(task)

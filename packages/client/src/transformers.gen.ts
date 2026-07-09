@@ -15,6 +15,7 @@ import type {
   CreateTradeV1InvestmentsTradesPostResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
+  GetTaskV1TasksTaskIdGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
@@ -457,6 +458,13 @@ export const listTasksV1TasksGetResponseTransformer = async (
 export const createTaskV1TasksPostResponseTransformer = async (
   data: any,
 ): Promise<CreateTaskV1TasksPostResponse> => {
+  data = taskSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getTaskV1TasksTaskIdGetResponseTransformer = async (
+  data: any,
+): Promise<GetTaskV1TasksTaskIdGetResponse> => {
   data = taskSchemaSchemaResponseTransformer(data);
   return data;
 };

@@ -39,7 +39,9 @@ export function LogsDialog({ open, onClose }: { open: boolean; onClose: () => vo
           <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3.5">
             <div>
               <DialogPrimitive.Title className="text-[15px] font-semibold text-white/90">Logs</DialogPrimitive.Title>
-              <p className="mt-0.5 text-xs text-white/35">Diagnostic log for this app, including the previous session.</p>
+              <DialogPrimitive.Description className="mt-0.5 text-xs text-white/35">
+                Diagnostic log for this app, including the previous session.
+              </DialogPrimitive.Description>
             </div>
             <div className="flex items-center gap-1">
               <button

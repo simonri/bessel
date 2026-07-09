@@ -22,6 +22,7 @@ import {
   createTradeV1InvestmentsTradesPostResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
+  getTaskV1TasksTaskIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
@@ -143,6 +144,9 @@ import type {
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetErrors,
   GetRecipeV1RecipesRecipeIdGetResponses,
+  GetTaskV1TasksTaskIdGetData,
+  GetTaskV1TasksTaskIdGetErrors,
+  GetTaskV1TasksTaskIdGetResponses,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetErrors,
   GetWeatherForecastV1WeatherGetResponses,
@@ -1383,6 +1387,23 @@ export const deleteTaskV1TasksTaskIdDelete = <
     DeleteTaskV1TasksTaskIdDeleteErrors,
     ThrowOnError
   >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/{task_id}",
+    ...options,
+  });
+
+/**
+ * Get Task
+ */
+export const getTaskV1TasksTaskIdGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetTaskV1TasksTaskIdGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetTaskV1TasksTaskIdGetResponses,
+    GetTaskV1TasksTaskIdGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getTaskV1TasksTaskIdGetResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}",
     ...options,
