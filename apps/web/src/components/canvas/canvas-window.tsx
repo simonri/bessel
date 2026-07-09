@@ -1,11 +1,16 @@
-import { memo, Suspense, useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { memo, Suspense, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, CheckSquare, X } from "lucide-react";
+import { getTaskV1TasksTaskIdGetOptions } from "@metron/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@metron/ui/components/dropdown-menu";
+import { TaskDetailDialogController } from "@/components/task-detail-dialog";
+import { isDoneStatus } from "@/lib/task-format";
+import { client } from "@/lib/client";
 import { MODULE_REGISTRY } from "./module-registry";
 import { WindowEntryContext, WindowTitleContext, useWindowManager, type WindowEntry } from "./window-manager";
 
@@ -53,6 +58,60 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
   );
 }
 
+// Shown for any window that has a task attached (dropped onto a Claude/Codex
+// terminal widget) — lives in the shared title bar rather than the widget's
+// own content so it reads as "what this whole window is working on".
+function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
+  const { updateWindowData } = useWindowManager();
+  const attachedTaskId = entry.data?.attachedTaskId || null;
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { data: task, isError: taskMissing } = useQuery({
+    ...getTaskV1TasksTaskIdGetOptions({ client, path: { task_id: attachedTaskId ?? "" } }),
+    enabled: attachedTaskId != null,
+  });
+
+  useEffect(() => {
+    if (!attachedTaskId) return;
+    if (taskMissing || (task && isDoneStatus(task.status))) {
+      updateWindowData(entry.id, { attachedTaskId: "" });
+      setDialogOpen(false);
+    }
+  }, [entry.id, attachedTaskId, task, taskMissing, updateWindowData]);
+
+  if (!attachedTaskId || !task) return null;
+
+  return (
+    <>
+      <div className="flex min-w-0 items-center rounded-full bg-white/5">
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setDialogOpen(true)}
+          title={task.title}
+          className="flex min-w-0 max-w-32 items-center gap-1 rounded-full py-0.5 pl-2 pr-1 text-[11px] text-white/50 transition-colors hover:text-white/80"
+        >
+          <CheckSquare className="size-2.5 shrink-0 text-primary-400" />
+          <span className="min-w-0 truncate">{task.title}</span>
+        </button>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => updateWindowData(entry.id, { attachedTaskId: "" })}
+          title="Unassign task"
+          className="flex size-4 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/10 hover:text-white/80"
+        >
+          <X className="size-2.5" />
+        </button>
+      </div>
+      <TaskDetailDialogController
+        taskId={dialogOpen ? attachedTaskId : null}
+        onOpenChange={setDialogOpen}
+      />
+    </>
+  );
+}
+
 export const CanvasWindow = memo(function CanvasWindow({
   entry,
   isFocused = false,
@@ -87,7 +146,8 @@ export const CanvasWindow = memo(function CanvasWindow({
             </span>
           )}
         </span>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex min-w-0 items-center gap-1.5">
+          <AttachedTaskButton entry={entry} />
           <MoveToWorkspaceMenu entry={entry} />
           <button
             onPointerDown={(e) => e.stopPropagation()}

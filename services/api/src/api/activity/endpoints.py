@@ -1,5 +1,3 @@
-import time
-from datetime import UTC, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -18,16 +16,13 @@ from api.activity.schemas import (
   ActivitySourcesResponse,
   ActivitySummaryResponse,
 )
+from api.activity.service import ActivityService
 from api.models.activity_event import ActivityEvent
 from api.postgres import AsyncSession, get_db_session
 from api.settings import settings
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/activity", tags=["activity"])
-
-# Events are written at most every HEARTBEAT_SECS (300s); cap inter-event gaps
-# at 2× that so tracker downtime / suspend gaps don't inflate totals.
-_MAX_GAP_SECS = 600
 
 
 def _verify_internal_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
@@ -99,22 +94,17 @@ async def get_activity_summary(
   source: Annotated[str, Query(description="Machine source to query.")],
 ) -> ActivitySummaryResponse:
   repo = ActivityRepository.from_session(session)
-  events = await repo.get_events_in_range(start_ts, end_ts, source)
+  service = ActivityService()
+  segments = await service.get_active_segments(repo, source, start_ts, end_ts)
   sources = await repo.get_sources()
-
-  # tail_ts: for an ongoing window (today) cap at now; for past windows use end_ts.
-  tail_ts = min(int(time.time()), end_ts)
 
   totals: dict[str, int] = {}
   total_active = 0
 
-  for i, event in enumerate(events):
-    nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts
-    dur = min(nxt_ts - event.ts, _MAX_GAP_SECS)
-    if event.state == "active" and dur > 0:
-      key = event.app_class or "(unknown)"
-      totals[key] = totals.get(key, 0) + dur
-      total_active += dur
+  for seg in segments:
+    key = seg.app_class or "(unknown)"
+    totals[key] = totals.get(key, 0) + seg.duration
+    total_active += seg.duration
 
   apps = sorted(
     [
@@ -154,28 +144,20 @@ async def get_daily_activity(
     int, Query(description="Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.")
   ] = 0,
 ) -> ActivityDailyResponse:
-  repo = ActivityRepository.from_session(session)
-  events = await repo.get_events_in_range(start_ts, end_ts, source)
-
-  tail_ts = min(int(time.time()), end_ts)
-  daily: dict[str, int] = {}
-
   try:
     tz = ZoneInfo(tz_name) if tz_name else None
   except (ZoneInfoNotFoundError, ValueError) as e:
     # Don't silently fall back to UTC — that would bucket days on the wrong boundary.
     raise HTTPException(status_code=422, detail=f"Unknown timezone: {tz_name}") from e
 
-  for i, event in enumerate(events):
-    nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts
-    dur = min(nxt_ts - event.ts, _MAX_GAP_SECS)
-    if event.state == "active" and dur > 0:
-      if tz is not None:
-        day_str = datetime.fromtimestamp(event.ts, tz=tz).date().isoformat()
-      else:
-        local_ts = event.ts + tz_offset_mins * 60
-        day_str = datetime.fromtimestamp(local_ts, tz=UTC).date().isoformat()
-      daily[day_str] = daily.get(day_str, 0) + dur
+  repo = ActivityRepository.from_session(session)
+  service = ActivityService()
+  segments = await service.get_active_segments(repo, source, start_ts, end_ts)
+
+  daily: dict[str, int] = {}
+  for seg in segments:
+    for day_str, secs in service.split_by_local_day(seg, tz, tz_offset_mins):
+      daily[day_str] = daily.get(day_str, 0) + secs
 
   days = sorted(
     [ActivityDailyEntry(date=k, active_secs=v) for k, v in daily.items()],
@@ -198,20 +180,17 @@ async def get_intraday_activity(
   bucket_mins: Annotated[int, Query(description="Bucket size in minutes.", ge=1, le=60)] = 15,
 ) -> ActivityIntradayResponse:
   repo = ActivityRepository.from_session(session)
-  events = await repo.get_events_in_range(start_ts, end_ts, source)
+  service = ActivityService()
+  segments = await service.get_active_segments(repo, source, start_ts, end_ts)
 
-  tail_ts = min(int(time.time()), end_ts)
   bucket_secs = bucket_mins * 60
   total_buckets = (end_ts - start_ts) // bucket_secs
   buckets: dict[int, int] = {}
 
-  for i, event in enumerate(events):
-    nxt_ts = events[i + 1].ts if i + 1 < len(events) else tail_ts
-    dur = min(nxt_ts - event.ts, _MAX_GAP_SECS)
-    if event.state == "active" and dur > 0:
-      bucket_idx = (event.ts - start_ts) // bucket_secs
-      bucket_idx = min(bucket_idx, total_buckets - 1)
-      buckets[bucket_idx] = buckets.get(bucket_idx, 0) + dur
+  for seg in segments:
+    bucket_idx = (seg.start_ts - start_ts) // bucket_secs
+    bucket_idx = min(bucket_idx, total_buckets - 1)
+    buckets[bucket_idx] = buckets.get(bucket_idx, 0) + seg.duration
 
   result = sorted(
     [ActivityIntradayBucket(bucket=k, active_secs=v) for k, v in buckets.items()],

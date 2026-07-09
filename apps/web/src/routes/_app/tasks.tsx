@@ -21,25 +21,17 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, isToday, isTomorrow, isPast, isYesterday } from "date-fns";
+import { format } from "date-fns";
 import {
-  CheckSquare,
-  Trash2,
   Repeat,
   Calendar,
   ChevronLeft,
   ChevronRight,
   Flag,
   Circle,
-  CheckCircle2,
-  Clock,
-  CalendarClock,
-  XCircle,
-  RotateCcw,
+  CheckSquare,
   Folder,
-  Layers,
-  Copy,
-  Pencil,
+  RotateCcw,
 } from "lucide-react";
 import { isDesktop } from "@/lib/environment";
 import type { TaskSchema } from "@metron/client";
@@ -47,7 +39,6 @@ import {
   listTasksV1TasksGetOptions,
   listTasksV1TasksGetQueryKey,
   listProjectsV1ProjectsGetOptions,
-  deleteTaskV1TasksTaskIdDeleteMutation,
   completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
@@ -62,16 +53,6 @@ import {
   DialogTitle,
 } from "@metron/ui/components/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
-import {
   Empty,
   EmptyHeader,
   EmptyMedia,
@@ -85,9 +66,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@metron/ui/components/select";
-import { CreateTaskDialog, TaskFormDialog } from "@/components/create-task-dialog";
+import { CreateTaskDialog } from "@/components/create-task-dialog";
+import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
+import {
+  STATUS_CONFIG,
+  PRIORITY_CONFIG,
+  isRepeatingTask,
+  formatDueDate,
+  getDueDateColor,
+  formatRecurrence,
+  buildTaskPrompt,
+} from "@/lib/task-format";
 
 export const Route = createFileRoute("/_app/tasks")({
   component: Tasks,
@@ -126,93 +118,6 @@ function ProjectFilterButton({
       {children}
     </button>
   );
-}
-
-function isRepeatingTask(task: TaskSchema): boolean {
-  return task.is_recurring === true;
-}
-
-const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  todo: { label: "Todo", icon: Circle, color: "text-white/35" },
-  in_progress: { label: "In Progress", icon: Clock, color: "text-blue-400" },
-  scheduled: { label: "Scheduled", icon: CalendarClock, color: "text-violet-400" },
-  done: { label: "Done", icon: CheckCircle2, color: "text-emerald-400" },
-  cancelled: { label: "Cancelled", icon: XCircle, color: "text-white/25" },
-};
-
-const PRIORITY_CONFIG: Record<number, { label: string; color: string; border: string }> = {
-  0: { label: "None", color: "text-white/20", border: "" },
-  1: { label: "Low", color: "text-white/40", border: "border-l-2 border-l-white/20" },
-  2: { label: "Medium", color: "text-blue-400", border: "border-l-2 border-l-blue-400/70" },
-  3: { label: "High", color: "text-primary-400", border: "border-l-2 border-l-primary-400" },
-  4: { label: "Urgent", color: "text-red-400", border: "border-l-2 border-l-red-400" },
-};
-
-function ordinalSuffix(n: number): string {
-  if (n >= 11 && n <= 13) return "th";
-  const last = n % 10;
-  if (last === 1) return "st";
-  if (last === 2) return "nd";
-  if (last === 3) return "rd";
-  return "th";
-}
-
-function formatDueDate(value: Date | string | null | undefined): string {
-  if (!value) return "";
-  const d = value instanceof Date ? value : new Date(value);
-  if (isToday(d)) return "Today";
-  if (isTomorrow(d)) return "Tomorrow";
-  if (isYesterday(d)) return "Yesterday";
-  return format(d, "MMM d");
-}
-
-function getDueDateColor(value: Date | string | null | undefined): string {
-  if (!value) return "";
-  const d = value instanceof Date ? value : new Date(value);
-  if (isPast(d) && !isToday(d)) return "text-red-400";
-  if (isToday(d)) return "text-primary-400";
-  return "text-white/40";
-}
-
-function formatRecurrence(task: TaskSchema): string | null {
-  if (!task.is_recurring || !task.rrule_frequency) return null;
-  const interval = task.rrule_interval ?? 1;
-  const freq = task.rrule_frequency;
-  if (interval === 1) {
-    if (freq === "daily") return "Daily";
-    if (freq === "weekly") {
-      if (task.rrule_day_of_week != null) {
-        const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        return `Weekly on ${days[task.rrule_day_of_week]}`;
-      }
-      return "Weekly";
-    }
-    if (freq === "monthly") {
-      if (task.rrule_day_of_month)
-        return `Monthly on the ${task.rrule_day_of_month}${ordinalSuffix(task.rrule_day_of_month)}`;
-      return "Monthly";
-    }
-    if (freq === "yearly") return "Yearly";
-  }
-  return `Every ${interval} ${freq}`;
-}
-
-function copyText(text: string): Promise<void> {
-  if (navigator.clipboard) return navigator.clipboard.writeText(text);
-  const el = document.createElement("textarea");
-  el.value = text;
-  el.style.cssText = "position:fixed;opacity:0";
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand("copy");
-  document.body.removeChild(el);
-  return Promise.resolve();
-}
-
-function buildTaskPrompt(task: TaskSchema): string {
-  const parts = [`Implement this task:\nTitle: ${task.title}`];
-  if (task.description) parts.push(`Description: ${task.description}`);
-  return parts.join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -371,222 +276,6 @@ function BoardColumn({
 }
 
 // ---------------------------------------------------------------------------
-// Task Detail Dialog
-// ---------------------------------------------------------------------------
-
-function TaskDetailDialog({
-  task,
-  onComplete,
-  onReopen,
-  onDelete,
-  onEdit,
-  onStatusChange,
-  onPriorityChange,
-  completePending,
-  reopenPending,
-}: {
-  task: TaskSchema;
-  onComplete: () => void;
-  onReopen: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
-  onStatusChange: (status: string) => void;
-  onPriorityChange: (priority: number) => void;
-  completePending: boolean;
-  reopenPending: boolean;
-}) {
-  const status = task.status ?? "todo";
-  const priority = task.priority ?? 0;
-  const isDone = status === "done" || status === "cancelled";
-  const recurrence = formatRecurrence(task);
-
-  return (
-    <DialogContent className="max-w-md gap-0 p-0">
-      <DialogHeader className="px-5 pt-5 pb-0">
-        <DialogTitle
-          className="text-base leading-snug pr-6"
-          onCopy={(e) => {
-            e.preventDefault();
-            const text = window.getSelection()?.toString().replace(/[\n\r]+$/, "") ?? "";
-            e.clipboardData.setData("text/plain", text);
-          }}
-        >
-          {task.title}
-        </DialogTitle>
-        <DialogDescription className="sr-only">Task details</DialogDescription>
-      </DialogHeader>
-
-      <div className="px-5 py-4 space-y-5">
-        {/* Properties grid */}
-        <div className="grid grid-cols-[100px_1fr] gap-y-3 gap-x-3 text-sm items-center">
-          {/* Status */}
-          <span className="text-muted-foreground text-xs">Status</span>
-          <div className="flex gap-1">
-            {(["todo", "in_progress"] as const).map((s) => {
-              const sc = STATUS_CONFIG[s];
-              const Icon = sc.icon;
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
-                    status === s
-                      ? "border-foreground/20 bg-accent"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  }`}
-                  onClick={() => onStatusChange(s)}
-                >
-                  <Icon className={`size-3 ${sc.color}`} />
-                  {sc.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Priority */}
-          <span className="text-muted-foreground text-xs">Priority</span>
-          <div className="flex gap-0.5">
-            {[0, 1, 2, 3, 4].map((p) => {
-              const pc = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG[0];
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
-                    priority === p
-                      ? "border-foreground/20 bg-accent font-medium"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  }`}
-                  onClick={() => onPriorityChange(p)}
-                >
-                  {p === 0 ? (
-                    "\u2013"
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <Flag className={`size-3 ${pc.color}`} />
-                      {pc.label}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Due date */}
-          {task.due_date && (
-            <>
-              <span className="text-muted-foreground text-xs">Due</span>
-              <div
-                className={`flex items-center gap-1.5 text-sm ${getDueDateColor(task.due_date)}`}
-              >
-                <Calendar className="size-3.5" />
-                {formatDueDate(task.due_date)}
-              </div>
-            </>
-          )}
-
-          {/* Recurrence */}
-          {task.is_recurring && recurrence && (
-            <>
-              <span className="text-muted-foreground text-xs">Recurrence</span>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Repeat className="size-3.5" />
-                {recurrence}
-              </div>
-            </>
-          )}
-
-          {/* Project */}
-          {task.project && (
-            <>
-              <span className="text-muted-foreground text-xs">Project</span>
-              <div className="flex items-center gap-1.5 text-sm">
-                <Folder className="size-3.5 text-muted-foreground" />
-                {task.project}
-              </div>
-            </>
-          )}
-
-          {/* Area */}
-          {task.area && (
-            <>
-              <span className="text-muted-foreground text-xs">Area</span>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Layers className="size-3.5" />
-                {task.area}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Description */}
-        {task.description && (
-          <div className="border-t pt-3">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
-              {task.description}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Footer actions */}
-      <div className="border-t px-5 py-3 flex items-center gap-2">
-        {!isDone ? (
-          <Button size="sm" className="text-xs" onClick={onComplete} disabled={completePending}>
-            <CheckCircle2 className="size-3.5 mr-1.5" />
-            Complete
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-xs"
-            onClick={onReopen}
-            disabled={reopenPending}
-          >
-            <RotateCcw className="size-3.5 mr-1.5" />
-            Reopen
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs"
-          onClick={onEdit}
-        >
-          <Pencil className="size-3.5 mr-1.5" />
-          Edit
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs"
-          onClick={() => {
-            const parts = [`Implement this task:\nTitle: ${task.title}`];
-            if (task.description) parts.push(`Description: ${task.description}`);
-            copyText(parts.join("\n\n"))
-              .then(() => toast.success("Copied to clipboard"))
-              .catch(() => toast.error("Failed to copy"));
-          }}
-        >
-          <Copy className="size-3.5 mr-1.5" />
-          Copy to prompt
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs hover:text-destructive ml-auto"
-          onClick={onDelete}
-        >
-          <Trash2 className="size-3.5 mr-1.5" />
-          Delete
-        </Button>
-      </div>
-    </DialogContent>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Repeated Tasks Dialog
 // ---------------------------------------------------------------------------
 
@@ -677,9 +366,7 @@ function ScheduledTasksDialog({
 function Tasks() {
   const [viewTab, setViewTab] = useState<ViewTab>("board");
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const [selectedTask, setSelectedTask] = useState<TaskSchema | null>(null);
-  const [editingTask, setEditingTask] = useState<TaskSchema | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<TaskSchema | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [repeatingOpen, setRepeatingOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
   const [localOrder, setLocalOrder] = useState<{ todo: string[]; in_progress: string[] } | null>(null);
@@ -743,101 +430,42 @@ function Tasks() {
   });
 
   const queryKey = listTasksV1TasksGetQueryKey({ client });
-
-  const optimisticHelpers = {
-    async cancel() {
-      await queryClient.cancelQueries({ queryKey });
-      return queryClient.getQueriesData({ queryKey });
-    },
-    rollback(context: { previous: [any, any][] } | undefined) {
-      if (context?.previous) {
-        for (const [key, data] of context.previous) {
-          queryClient.setQueryData(key, data);
-        }
-      }
-    },
-    invalidate() {
-      void queryClient.invalidateQueries({ queryKey });
-    },
-  };
-
-  const deleteMutation = useMutation({
-    ...deleteTaskV1TasksTaskIdDeleteMutation({ client }),
-    onMutate: async ({ path }) => {
-      const previous = await optimisticHelpers.cancel();
-      queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
-        return {
-          ...old,
-          items: old.items.filter((t: any) => t.id !== path.task_id),
-          pagination: {
-            ...old.pagination,
-            total_count: old.pagination.total_count - 1,
-          },
-        };
-      });
-      setDeleteTarget(null);
-      setSelectedTask(null);
-      return { previous };
-    },
-    onError: (_err, _vars, context) => {
-      optimisticHelpers.rollback(context);
-      toast.error("Action failed");
-    },
-    onSettled: () => optimisticHelpers.invalidate(),
-  });
+  const cache = useTaskCacheHelpers();
 
   const completeMutation = useMutation({
     ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
     onMutate: async ({ path }) => {
-      const previous = await optimisticHelpers.cancel();
-      queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
-        return {
-          ...old,
-          items: old.items.map((t: any) =>
-            t.id === path.task_id
-              ? { ...t, status: "done", completed_at: new Date().toISOString() }
-              : t,
-          ),
-        };
-      });
-      setSelectedTask(null);
+      const previous = await cache.cancelAndSnapshot();
+      cache.patchTask(path.task_id, (t) => ({ ...t, status: "done", completed_at: new Date() }));
       return { previous };
     },
     onError: (_err, _vars, context) => {
-      optimisticHelpers.rollback(context);
+      cache.rollback(context?.previous);
       toast.error("Action failed");
     },
-    onSettled: () => optimisticHelpers.invalidate(),
+    onSettled: () => cache.invalidateAll(),
   });
 
   const reopenMutation = useMutation({
     ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
     onMutate: async ({ path }) => {
-      const previous = await optimisticHelpers.cancel();
-      queryClient.setQueriesData({ queryKey }, (old: any) => {
-        if (!old?.items) return old;
-        return {
-          ...old,
-          items: old.items.map((t: any) =>
-            t.id === path.task_id ? { ...t, status: "todo", completed_at: null } : t,
-          ),
-        };
-      });
+      const previous = await cache.cancelAndSnapshot();
+      cache.patchTask(path.task_id, (t) => ({ ...t, status: "todo", completed_at: null }));
       return { previous };
     },
     onError: (_err, _vars, context) => {
-      optimisticHelpers.rollback(context);
+      cache.rollback(context?.previous);
       toast.error("Action failed");
     },
-    onSettled: () => optimisticHelpers.invalidate(),
+    onSettled: () => cache.invalidateAll(),
   });
 
+  // Kept as a bespoke inline patch (rather than cache.patchTask) because a
+  // position change needs the whole column re-sorted, not just one item swapped.
   const updateMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
     onMutate: async ({ path, body }) => {
-      const previous = await optimisticHelpers.cancel();
+      const previous = await cache.cancelAndSnapshot();
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
         const updatedItems = old.items.map((t: any) =>
@@ -852,19 +480,19 @@ function Tasks() {
       return { previous };
     },
     onError: (_err, _vars, context) => {
-      optimisticHelpers.rollback(context);
+      cache.rollback(context?.previous);
       toast.error("Action failed");
     },
-    onSettled: () => optimisticHelpers.invalidate(),
+    onSettled: () => cache.invalidateAll(),
   });
 
   const reorderMutation = useMutation({
     ...reorderTasksV1TasksReorderPatchMutation({ client }),
-    onSettled: () => optimisticHelpers.invalidate(),
+    onSettled: () => cache.invalidateAll(),
   });
 
   const handleSelectTask = (task: TaskSchema) => {
-    setSelectedTask(task);
+    setSelectedTaskId(task.id);
   };
 
   const handleCompleteTask = (task: TaskSchema) => {
@@ -873,29 +501,6 @@ function Tasks() {
 
   const handleReopenTask = (task: TaskSchema) => {
     reopenMutation.mutate({ client, path: { task_id: task.id } });
-  };
-
-  const handleConfirmDelete = () => {
-    if (!deleteTarget) return;
-    deleteMutation.mutate({ client, path: { task_id: deleteTarget.id } });
-  };
-
-  const handleStatusChange = (task: TaskSchema, newStatus: string) => {
-    updateMutation.mutate({
-      client,
-      path: { task_id: task.id },
-      body: { status: newStatus as "todo" },
-    });
-    setSelectedTask({ ...task, status: newStatus as "todo" });
-  };
-
-  const handlePriorityChange = (task: TaskSchema, newPriority: number) => {
-    updateMutation.mutate({
-      client,
-      path: { task_id: task.id },
-      body: { priority: newPriority },
-    });
-    setSelectedTask({ ...task, priority: newPriority });
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -1406,64 +1011,17 @@ function Tasks() {
           tasks={repeatingTasks}
           onSelectTask={(task) => {
             setRepeatingOpen(false);
-            setSelectedTask(task);
+            setSelectedTaskId(task.id);
           }}
           onCompleteTask={handleCompleteTask}
         />
       </Dialog>
 
       {/* Task detail dialog */}
-      <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
-        {selectedTask && (
-          <TaskDetailDialog
-            task={selectedTask}
-            onComplete={() => handleCompleteTask(selectedTask)}
-            onReopen={() => handleReopenTask(selectedTask)}
-            onDelete={() => {
-              setDeleteTarget(selectedTask);
-            }}
-            onEdit={() => {
-              setEditingTask(selectedTask);
-              setSelectedTask(null);
-            }}
-            onStatusChange={(s) => handleStatusChange(selectedTask, s)}
-            onPriorityChange={(p) => handlePriorityChange(selectedTask, p)}
-            completePending={completeMutation.isPending}
-            reopenPending={reopenMutation.isPending}
-          />
-        )}
-      </Dialog>
-
-      {/* Edit task dialog */}
-      <TaskFormDialog
-        key={editingTask?.id}
-        task={editingTask ?? undefined}
-        open={!!editingTask}
-        onOpenChange={(open) => !open && setEditingTask(null)}
+      <TaskDetailDialogController
+        taskId={selectedTaskId}
+        onOpenChange={(open) => !open && setSelectedTaskId(null)}
       />
-
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete task?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{deleteTarget?.title}&rdquo; will be permanently removed. This can&rsquo;t be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

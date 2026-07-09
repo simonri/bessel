@@ -61,7 +61,7 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
   useEffect(() => { setWindowTitleRef.current = setWindowTitle; });
 
   const entry = useWindowEntry();
-  const { closeWindow } = useWindowManager();
+  const { closeWindow, updateWindowData } = useWindowManager();
   const closeWindowRef = useRef(closeWindow);
   useEffect(() => { closeWindowRef.current = closeWindow; });
 
@@ -80,12 +80,14 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
   useEffect(() => {
     if (!taskDropZone) return;
     const onDrop = (e: Event) => {
-      if ((e as CustomEvent<{ sessionId: string }>).detail.sessionId !== sessionId) return;
+      const detail = (e as CustomEvent<{ sessionId: string; taskId?: string }>).detail;
+      if (detail.sessionId !== sessionId) return;
       focusTerminal();
+      if (detail.taskId && entry) updateWindowData(entry.id, { attachedTaskId: detail.taskId });
     };
     window.addEventListener("metron:claude-drop", onDrop);
     return () => window.removeEventListener("metron:claude-drop", onDrop);
-  }, [taskDropZone, sessionId]);
+  }, [taskDropZone, sessionId, entry, updateWindowData]);
 
   const closeMenu = useCallback(() => setContextMenu(null), []);
 

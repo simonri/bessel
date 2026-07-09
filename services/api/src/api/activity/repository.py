@@ -18,6 +18,12 @@ class ActivityRepository(RepositoryBase[ActivityEvent]):
     result = await self.session.execute(statement)
     return list(result.scalars().all())
 
+  async def get_last_event_before(self, ts: int, source: str) -> ActivityEvent | None:
+    """Most recent event strictly before `ts`, used to seed the state that carried into a window."""
+    statement = select(ActivityEvent).where(ActivityEvent.source == source).where(ActivityEvent.ts < ts).order_by(ActivityEvent.ts.desc()).limit(1)
+    result = await self.session.execute(statement)
+    return result.scalars().first()
+
   async def get_sources(self) -> list[str]:
     """Return all known sources ordered by most recent activity."""
     result = await self.session.execute(select(ActivityEvent.source).group_by(ActivityEvent.source).order_by(func.max(ActivityEvent.ts).desc()))
