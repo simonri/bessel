@@ -24,6 +24,7 @@ import {
   EmptyTitle,
 } from "@metron/ui/components/empty";
 import { Input } from "@metron/ui/components/input";
+import { Skeleton } from "@metron/ui/components/skeleton";
 import {
   keepPreviousData,
   useMutation,
@@ -146,7 +147,13 @@ export function SecuritiesTab() {
         <CreateSecurityDialog />
       </div>
 
-      {isLoading ? null : securities.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : securities.length === 0 ? (
         <Empty className="border">
           <EmptyMedia>
             <TrendingUp />

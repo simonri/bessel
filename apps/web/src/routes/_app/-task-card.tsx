@@ -18,30 +18,30 @@ function TaskCardMeta({ task }: { task: TaskSchema }) {
 
   return (
     <div className="min-w-0 flex-1 space-y-1">
-      <div className="text-[13px] font-medium text-white/85 leading-snug">
+      <div className="text-13 font-medium text-white/85 leading-snug">
         {task.title}
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         {dueLabel && (
-          <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
+          <span className={`flex items-center gap-1 text-11 ${dueColor}`}>
             <Calendar className="size-3" />
             {dueLabel}
           </span>
         )}
         {recurrence && (
-          <span className="flex items-center gap-1 text-[11px] text-white/35">
+          <span className="flex items-center gap-1 text-11 text-white/50">
             <Repeat className="size-3" />
             {recurrence}
           </span>
         )}
         {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
         {task.project && (
-          <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
+          <span className="text-11 text-white/50 bg-white/10 rounded px-1.5 py-0">
             {task.project}
           </span>
         )}
         {task.area && (
-          <span className="text-[11px] text-white/30">{task.area}</span>
+          <span className="text-11 text-white/50">{task.area}</span>
         )}
       </div>
     </div>
@@ -83,13 +83,13 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color,transform] duration-150 cursor-grab active:cursor-grabbing active:scale-[0.98] motion-reduce:active:scale-100 hover:bg-white/10 hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color,transform] duration-150 cursor-grab active:cursor-grabbing active:scale-[0.98] motion-reduce:active:scale-100 pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
         <button
           type="button"
-          className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-[color,transform] duration-150 active:scale-90 motion-reduce:active:scale-100"
+          className="mt-0.5 shrink-0 text-white/25 pointer-fine:hover:text-emerald-400 transition-[color,transform] duration-150 active:scale-90 motion-reduce:active:scale-100"
           onClick={(e) => {
             e.stopPropagation();
             onComplete();

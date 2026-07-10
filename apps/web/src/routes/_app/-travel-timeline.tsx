@@ -14,7 +14,7 @@ export function TravelTimeline({
     return (
       <div className="flex h-full flex-col items-center justify-center px-4 text-center">
         <Plane className="mb-2 size-8 text-white/10" />
-        <p className="text-xs text-white/25">No visited places yet</p>
+        <p className="text-xs text-white/50">No visited places yet</p>
       </div>
     );
   }
@@ -23,7 +23,7 @@ export function TravelTimeline({
     <div className="h-full overflow-y-auto px-3 py-3">
       <div className="mb-3 flex items-center gap-2 px-1">
         <Plane className="size-3.5 text-white/30" />
-        <span className="text-[11px] font-medium text-white/30">
+        <span className="text-11 font-medium text-white/50">
           Recent visits
         </span>
       </div>
@@ -69,21 +69,21 @@ export function TravelTimeline({
                   </div>
                   <div className="mt-0.5 flex items-center gap-1.5">
                     {country && (
-                      <span className="truncate text-[11px] text-white/35">
+                      <span className="truncate text-11 text-white/50">
                         {country}
                       </span>
                     )}
                     {country && place.category && (
-                      <span className="text-[11px] text-white/20">/</span>
+                      <span className="text-11 text-white/20">/</span>
                     )}
                     {place.category && (
-                      <span className="truncate text-[11px] capitalize text-white/25">
+                      <span className="truncate text-11 capitalize text-white/50">
                         {place.category.replace(/_/g, " ")}
                       </span>
                     )}
                   </div>
                   {timeLabel && (
-                    <span className="mt-0.5 block text-[10px] text-white/20">
+                    <span className="mt-0.5 block text-10 text-white/50">
                       {timeLabel}
                     </span>
                   )}

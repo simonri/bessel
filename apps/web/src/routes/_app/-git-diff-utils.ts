@@ -1,31 +1,46 @@
-import hljs from "highlight.js/lib/core";
-import langBash from "highlight.js/lib/languages/bash";
-import langCss from "highlight.js/lib/languages/css";
-import langGo from "highlight.js/lib/languages/go";
-import langJavascript from "highlight.js/lib/languages/javascript";
-import langJson from "highlight.js/lib/languages/json";
-import langMarkdown from "highlight.js/lib/languages/markdown";
-import langPython from "highlight.js/lib/languages/python";
-import langRust from "highlight.js/lib/languages/rust";
-import langSql from "highlight.js/lib/languages/sql";
-import langTypescript from "highlight.js/lib/languages/typescript";
-import langXml from "highlight.js/lib/languages/xml";
-import langYaml from "highlight.js/lib/languages/yaml";
-import "highlight.js/styles/atom-one-dark.css";
+import { createHighlighter, type Highlighter } from "shiki";
 
-hljs.registerLanguage("bash", langBash);
-hljs.registerLanguage("css", langCss);
-hljs.registerLanguage("go", langGo);
-hljs.registerLanguage("json", langJson);
-hljs.registerLanguage("javascript", langJavascript);
-hljs.registerLanguage("markdown", langMarkdown);
-hljs.registerLanguage("python", langPython);
-hljs.registerLanguage("rust", langRust);
-hljs.registerLanguage("sql", langSql);
-hljs.registerLanguage("typescript", langTypescript);
-hljs.registerLanguage("html", langXml);
-hljs.registerLanguage("xml", langXml);
-hljs.registerLanguage("yaml", langYaml);
+// hljs's typescript/javascript grammars fall back to a crude regex-based XML
+// sub-mode for JSX that breaks on any attribute value beyond a bare token
+// (e.g. `onClick={() => ...}`) — once it misparses one attribute, everything
+// after it in the tag renders with zero highlighting. Shiki uses the same
+// TextMate grammars as VS Code, so JSX/TSX (and everything else) tokenizes
+// correctly. The theme below is a straight port of the old atom-one-dark look.
+const THEME = "one-dark-pro";
+
+const SUPPORTED_LANGS = [
+  "bash",
+  "css",
+  "scss",
+  "go",
+  "html",
+  "javascript",
+  "json",
+  "jsx",
+  "markdown",
+  "python",
+  "rust",
+  "sql",
+  "typescript",
+  "tsx",
+  "xml",
+  "yaml",
+] as const;
+
+let highlighterPromise: Promise<Highlighter> | null = null;
+
+function getHighlighter(): Promise<Highlighter> {
+  highlighterPromise ??= createHighlighter({
+    themes: [THEME],
+    langs: [...SUPPORTED_LANGS],
+  });
+  return highlighterPromise;
+}
+
+export interface HighlightToken {
+  content: string;
+  color?: string;
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -48,14 +63,14 @@ interface ParsedLine {
 
 const EXT_LANG: Record<string, string> = {
   ts: "typescript",
-  tsx: "typescript",
+  tsx: "tsx",
   js: "javascript",
-  jsx: "javascript",
+  jsx: "jsx",
   mjs: "javascript",
   cjs: "javascript",
   py: "python",
   css: "css",
-  scss: "css",
+  scss: "scss",
   json: "json",
   md: "markdown",
   mdx: "markdown",
@@ -117,88 +132,89 @@ export function detectLang(filepath: string | undefined): string | undefined {
   return ext ? EXT_LANG[ext] : undefined;
 }
 
-// Splits hljs-highlighted HTML into per-line strings while rebalancing spans
-// so multi-line tokens (block comments, template literals) render correctly.
-export function splitHighlightedLines(html: string): string[] {
-  const rawLines = html.split("\n");
-  const lines: string[] = [];
-  const openStack: string[] = [];
-  const tagRe = /<span([^>]*)>|<\/span>/g;
+// Full-file tokenizing runs on the main thread, so an oversized file (a
+// lockfile, a minified/generated bundle) could hang the UI for seconds —
+// skip it and fall back to per-line tokenizing instead, which stays cheap no
+// matter how large the untouched parts of the file are.
+const MAX_FULL_FILE_HIGHLIGHT_LENGTH = 200_000;
 
-  for (const rawLine of rawLines) {
-    let line = openStack.join("") + rawLine;
-    let m: RegExpExecArray | null;
-    tagRe.lastIndex = 0;
-    while ((m = tagRe.exec(rawLine)) !== null) {
-      if (m[0].startsWith("</")) {
-        openStack.pop();
-      } else {
-        openStack.push(`<span${m[1]}>`);
-      }
-    }
-    line += "</span>".repeat(openStack.length);
-    lines.push(line);
+// Nothing about tokenizing a real source file should throw, but a grammar
+// bug or genuinely pathological input is never worth taking the whole diff
+// (or the app) down for — every caller already treats "no tokens for this
+// line" as "render it as plain text".
+async function safeTokenizeLines(
+  content: string,
+  lang: string,
+): Promise<HighlightToken[][] | undefined> {
+  if (!content) return undefined;
+  try {
+    const highlighter = await getHighlighter();
+    return highlighter.codeToTokens(content, { lang, theme: THEME })
+      .tokens as HighlightToken[][];
+  } catch {
+    return undefined;
   }
-
-  return lines;
 }
 
-// Highlighting a hunk in isolation misreads any multi-line construct (block
+// Tokenizing a hunk in isolation misreads any multi-line construct (block
 // comment, triple-quoted string, template literal, JSX) that opens or closes
-// outside the visible context lines — hljs has no way to know it's mid-token.
-// Highlighting the full old/new file content once and slicing by line number
-// gives every token its real surrounding context, so it can't break on a hunk
-// boundary. Falls back to per-line highlighting (old behavior) if full file
-// content isn't available, e.g. for a rename with no matching path at HEAD.
-export function buildHighlightMap(
+// outside the visible context lines — the tokenizer has no way to know it's
+// mid-token. Tokenizing the full old/new file content once and slicing by
+// line number gives every token its real surrounding context, so it can't
+// break on a hunk boundary. Falls back to per-line tokenizing (old behavior)
+// if full file content isn't available (e.g. a rename with no matching path
+// at HEAD), too large to highlight synchronously, or fails outright.
+export async function buildHighlightMap(
   lines: ParsedLine[],
   lang: string | undefined,
   oldContent: string,
   newContent: string,
-): Map<number, string> {
-  const result = new Map<number, string>();
+): Promise<Map<number, HighlightToken[]>> {
+  const result = new Map<number, HighlightToken[]>();
   if (!lang) return result;
 
-  const highlightLines = (content: string): string[] =>
-    content
-      ? splitHighlightedLines(
-          hljs.highlight(content, { language: lang, ignoreIllegals: true })
-            .value,
-        )
-      : [];
+  const tokenizeFile = async (
+    content: string,
+  ): Promise<HighlightToken[][]> => {
+    if (!content || content.length > MAX_FULL_FILE_HIGHLIGHT_LENGTH) return [];
+    return (await safeTokenizeLines(content, lang)) ?? [];
+  };
 
-  const oldLines = highlightLines(oldContent);
-  const newLines = highlightLines(newContent);
+  const [oldLines, newLines] = await Promise.all([
+    tokenizeFile(oldContent),
+    tokenizeFile(newContent),
+  ]);
 
   const fallback: { idx: number; content: string }[] = [];
 
   lines.forEach((line, idx) => {
     if (line.type === "add" && line.newNum !== undefined) {
-      const hl = newLines[line.newNum - 1];
-      if (hl !== undefined) result.set(idx, hl);
+      const tok = newLines[line.newNum - 1];
+      if (tok !== undefined) result.set(idx, tok);
       else fallback.push({ idx, content: line.content });
     } else if (line.type === "remove" && line.oldNum !== undefined) {
-      const hl = oldLines[line.oldNum - 1];
-      if (hl !== undefined) result.set(idx, hl);
+      const tok = oldLines[line.oldNum - 1];
+      if (tok !== undefined) result.set(idx, tok);
       else fallback.push({ idx, content: line.content });
     } else if (line.type === "context" && line.newNum !== undefined) {
-      // Prefer new-file highlighting for context lines — matches what's on disk.
-      const hl = newLines[line.newNum - 1] ?? oldLines[(line.oldNum ?? 0) - 1];
-      if (hl !== undefined) result.set(idx, hl);
+      // Prefer new-file tokens for context lines — matches what's on disk.
+      const tok = newLines[line.newNum - 1] ?? oldLines[(line.oldNum ?? 0) - 1];
+      if (tok !== undefined) result.set(idx, tok);
       else fallback.push({ idx, content: line.content });
     }
   });
 
-  // Full file content wasn't available (e.g. rename source path 404s at HEAD) —
-  // highlight whatever we have per-line, independently, as a best effort.
-  if (fallback.length > 0) {
-    for (const { idx, content } of fallback) {
-      result.set(
-        idx,
-        hljs.highlight(content, { language: lang, ignoreIllegals: true }).value,
-      );
-    }
-  }
+  // Full file content wasn't available/safe to tokenize, or this exact line
+  // wasn't found in it — tokenize whatever we have per-line, independently,
+  // as a best effort. A line that still fails just stays unset: every
+  // renderer treats a missing map entry as "render this line as plain text",
+  // so one bad line can never take down the rest of the diff.
+  await Promise.all(
+    fallback.map(async ({ idx, content }) => {
+      const tok = (await safeTokenizeLines(content, lang))?.[0];
+      if (tok !== undefined) result.set(idx, tok);
+    }),
+  );
 
   return result;
 }

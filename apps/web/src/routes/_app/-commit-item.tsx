@@ -22,7 +22,7 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
         <span className="flex-1 truncate text-xs leading-tight text-white/70">
           {commit.subject}
         </span>
-        <span className="shrink-0 whitespace-nowrap text-[10px] text-white/35">
+        <span className="shrink-0 whitespace-nowrap text-10 text-white/50">
           {shortenRelDate(commit.date)}
         </span>
       </div>
@@ -35,7 +35,7 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
             return (
               <span
                 key={ref}
-                className={`inline-block rounded px-1 py-0 text-[9px] font-medium leading-4 ${
+                className={`inline-block rounded px-1 py-0 text-9 font-medium leading-4 ${
                   isHead
                     ? "bg-amber-500/20 text-amber-400/80"
                     : isRemote

@@ -18,7 +18,7 @@ export function GridGapPage() {
             onChange={(e) => update({ gridGap: Number(e.target.value) })}
             className="h-1.5 flex-1 cursor-pointer accent-primary-500"
           />
-          <span className="w-9 shrink-0 text-right font-mono text-[13px] text-white/70">
+          <span className="w-9 shrink-0 text-right font-mono text-13 text-white/70">
             {settings.gridGap}px
           </span>
         </div>

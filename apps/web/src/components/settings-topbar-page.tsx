@@ -14,10 +14,10 @@ export function TopBarPage() {
         <SectionLabel>Crypto ticker</SectionLabel>
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-3">
           <div className="space-y-1.5">
-            <label className="block text-[13px] font-medium text-white/75">
+            <label className="block text-13 font-medium text-white/75">
               Pairs
             </label>
-            <p className="text-[11px] text-white/35">
+            <p className="text-11 text-white/50">
               Comma-separated symbols shown in the top bar, e.g. BTCUSDT,ETHUSDT
             </p>
             <input

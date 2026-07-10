@@ -8,16 +8,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@metron/ui/components/dropdown-menu";
+import { glassSurface } from "@metron/ui/lib/glass";
+import { Spinner } from "@metron/ui/components/spinner";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { isDoneStatus } from "@/lib/task-format";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
 import { MODULE_REGISTRY } from "./module-registry";
 import { WindowEntryContext, WindowTitleContext, useWindowManager, type WindowEntry } from "./window-manager";
 
 function WindowSpinner() {
   return (
     <div className="flex h-full items-center justify-center">
-      <div className="size-5 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+      <Spinner className="size-5 text-white/60" />
     </div>
   );
 }
@@ -40,7 +43,7 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="min-w-40 border-white/10 bg-black/80 text-white/80 shadow-2xl backdrop-blur-xl"
+        className={cn(glassSurface({ weight: "heavy" }), "min-w-40 border-white/10 text-white/80 shadow-2xl")}
       >
         {workspaces.map((ws, i) =>
           ws.id === entry.workspaceId ? null : (
@@ -90,7 +93,7 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
           onMouseDown={(e) => e.stopPropagation()}
           onClick={() => setDialogOpen(true)}
           title={task.title}
-          className="flex h-4 min-w-0 max-w-32 items-center gap-1 rounded-full pl-2 pr-1 text-[11px] leading-none text-white/50 transition-colors hover:text-white/80"
+          className="flex h-4 min-w-0 max-w-32 items-center gap-1 rounded-full pl-2 pr-1 text-11 leading-none text-white/50 transition-colors hover:text-white/80"
         >
           <CheckSquare className="size-2.5 shrink-0 text-primary-400" />
           <span className="min-w-0 truncate">{task.title}</span>
@@ -133,9 +136,11 @@ export const CanvasWindow = memo(function CanvasWindow({
     <div
       data-is-window="true"
       onPointerDown={onFocus}
-      className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-black/60 shadow-2xl backdrop-blur-xl transition-[border-color,box-shadow] duration-300 ${
-        isFocused ? "border-primary-500" : "border-white/10"
-      }`}
+      className={cn(
+        glassSurface({ weight: "medium" }),
+        "relative flex h-full flex-col overflow-hidden rounded-2xl border shadow-2xl transition-[border-color,box-shadow] duration-300",
+        isFocused ? "border-primary-500" : "border-white/10",
+      )}
     >
       {/* Title bar — react-grid-layout drag handle (selector: .canvas-window-titlebar) */}
       <div className="canvas-window-titlebar flex shrink-0 cursor-grab items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 active:cursor-grabbing">
@@ -143,7 +148,7 @@ export const CanvasWindow = memo(function CanvasWindow({
         <span className="text-xs font-medium text-white/80">
           {config.title}
           {(dynamicTitle || entry.data?.projectName) && (
-            <span className="ml-1.5 font-normal text-white/40">
+            <span className="ml-1.5 font-normal text-white/50">
               / {dynamicTitle || entry.data?.projectName}
             </span>
           )}

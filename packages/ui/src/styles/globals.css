@@ -4,8 +4,40 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+/* Gate hover-only feedback to devices that actually have a hovering pointer,
+   so a tap on touch/trackpad doesn't leave a hover state stuck until the
+   next tap elsewhere. Usage: `pointer-fine:hover:bg-...` */
+@custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
+
+/* Named font-size steps for the sub-xs/in-between sizes widgets need to fit
+   cramped grid tiles. Font-size only (no line-height coupling), matching the
+   arbitrary text-[Npx] values they replace 1:1 so this is a pure rename with
+   no rendered change. */
+@utility text-8 {
+  font-size: 8px;
+}
+@utility text-9 {
+  font-size: 9px;
+}
+@utility text-10 {
+  font-size: 10px;
+}
+@utility text-11 {
+  font-size: 11px;
+}
+@utility text-12 {
+  font-size: 12px;
+}
+@utility text-13 {
+  font-size: 13px;
+}
+@utility text-15 {
+  font-size: 15px;
+}
 
 @theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -182,5 +214,36 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* The canvas chrome (topbar, dock, windows, dropdowns) is built entirely from
+   bespoke bg-black/NN + backdrop-blur-* surfaces rather than a shared
+   translucent-panel component, so there's no single place to swap in a solid
+   background — target the utility classes directly by substring instead.
+   Overmatching within this closed set of known values is harmless: every
+   variant gets the same solid/high-contrast treatment either way. */
+@media (prefers-reduced-transparency: reduce) {
+  [class*="backdrop-blur-"] {
+    backdrop-filter: none !important;
+  }
+  [class*="bg-black/30"],
+  [class*="bg-black/40"],
+  [class*="bg-black/50"],
+  [class*="bg-black/60"],
+  [class*="bg-black/70"],
+  [class*="bg-black/80"],
+  [class*="bg-black/90"] {
+    background-color: oklch(0.09 0.004 250 / 97%) !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  [class*="border-white/5"],
+  [class*="border-white/10"],
+  [class*="border-white/15"],
+  [class*="border-white/20"],
+  [class*="border-white/25"] {
+    border-color: oklch(1 0 0 / 55%) !important;
   }
 }

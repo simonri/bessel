@@ -89,12 +89,12 @@ function SshFolderPicker({
           <X className="size-3.5" />
         </button>
       </div>
-      <div className="truncate border-b border-white/5 px-3 py-1.5 text-[11px] text-white/40">
+      <div className="truncate border-b border-white/5 px-3 py-1.5 text-11 text-white/50">
         {cwd ?? (initialPath || "~")}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading && (
-          <div className="px-3 py-4 text-center text-xs text-white/30">
+          <div className="px-3 py-4 text-center text-xs text-white/50">
             Loading…
           </div>
         )}
@@ -103,7 +103,7 @@ function SshFolderPicker({
             <p className="text-xs leading-relaxed text-red-400/80">{error}</p>
             <button
               onClick={() => load("~")}
-              className="rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/60 transition-colors hover:bg-white/10 hover:text-white/80"
+              className="rounded border border-white/10 bg-white/5 px-2 py-1 text-11 text-white/60 transition-colors hover:bg-white/10 hover:text-white/80"
             >
               Go to home directory
             </button>
@@ -120,7 +120,7 @@ function SshFolderPicker({
               </button>
             )}
             {dirs.length === 0 && (
-              <div className="px-3 py-4 text-center text-xs text-white/25">
+              <div className="px-3 py-4 text-center text-xs text-white/50">
                 No subfolders
               </div>
             )}
@@ -139,7 +139,7 @@ function SshFolderPicker({
       <div className="flex justify-end gap-1.5 border-t border-white/10 px-3 py-2">
         <button
           onClick={onCancel}
-          className="rounded px-2.5 py-1 text-xs text-white/40 transition-colors hover:text-white/70"
+          className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
         >
           Cancel
         </button>
@@ -301,7 +301,7 @@ export function ProjectsDropdown() {
 
         <div className="max-h-72 overflow-y-auto">
           {projects.length === 0 && (
-            <div className="py-6 text-center text-xs text-white/30">
+            <div className="py-6 text-center text-xs text-white/50">
               No projects yet
             </div>
           )}
@@ -350,7 +350,7 @@ export function ProjectsDropdown() {
                   <div className="flex justify-end gap-1.5">
                     <button
                       onClick={() => setEditingId(null)}
-                      className="rounded px-2.5 py-1 text-xs text-white/40 transition-colors hover:text-white/70"
+                      className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
                     >
                       Cancel
                     </button>
@@ -369,7 +369,7 @@ export function ProjectsDropdown() {
                     <p className="text-xs font-medium text-white/80">
                       {p.name}
                     </p>
-                    <p className="truncate text-[11px] text-white/35">
+                    <p className="truncate text-11 text-white/50">
                       {p.ssh_host ? `${p.ssh_host}:${p.path}` : p.path}
                     </p>
                   </div>
@@ -436,7 +436,7 @@ export function ProjectsDropdown() {
                     setAddName("");
                     setAddPath("");
                   }}
-                  className="rounded px-2.5 py-1 text-xs text-white/40 transition-colors hover:text-white/70"
+                  className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
                 >
                   Cancel
                 </button>

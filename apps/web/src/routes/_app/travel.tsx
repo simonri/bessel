@@ -179,7 +179,7 @@ function Travel() {
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-white/80">Travel</span>
           {totalCount > 0 && (
-            <span className="tabular-nums text-xs text-white/30">
+            <span className="tabular-nums text-xs text-white/50">
               {totalCount}
             </span>
           )}
@@ -189,13 +189,13 @@ function Travel() {
 
       {/* Body */}
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center text-xs text-white/25">
+        <div className="flex flex-1 items-center justify-center text-xs text-white/50">
           Loading…
         </div>
       ) : places.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
           <MapPin className="size-8 text-white/10" />
-          <p className="text-xs text-white/25">No places yet</p>
+          <p className="text-xs text-white/50">No places yet</p>
           <div className="mt-1">
             <AddPlaceDialog />
           </div>
@@ -248,7 +248,7 @@ function Travel() {
                   >
                     <ChevronLeft className="size-4" />
                   </button>
-                  <span className="text-[11px] tabular-nums text-white/30">
+                  <span className="text-11 tabular-nums text-white/50">
                     {page} / {maxPage}
                   </span>
                   <button
@@ -284,7 +284,7 @@ function Travel() {
                       {selectedPlace.name}
                     </h3>
                     {(sel.country || selectedPlace.category) && (
-                      <p className="mt-0.5 text-[11px] text-white/40">
+                      <p className="mt-0.5 text-11 text-white/50">
                         {[
                           sel.country,
                           selectedPlace.category?.replace(/_/g, " "),
@@ -306,16 +306,16 @@ function Travel() {
                 {/* Status + rating */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    className={`rounded-full px-2 py-0.5 text-10 font-medium ${
                       sel.status === "visited"
                         ? "bg-emerald-500/15 text-emerald-400"
-                        : "bg-white/[0.07] text-white/40"
+                        : "bg-white/[0.07] text-white/50"
                     }`}
                   >
                     {sel.status === "visited" ? "Visited" : "Want to go"}
                   </span>
                   {!!sel.visitedAt && (
-                    <span className="text-[11px] text-white/35">
+                    <span className="text-11 text-white/50">
                       {formatVisitedDate(sel.visitedAt)}
                     </span>
                   )}
@@ -335,20 +335,20 @@ function Travel() {
                 {/* Address + maps link */}
                 <div className="space-y-1.5">
                   {selectedPlace.address && (
-                    <div className="flex items-start gap-2 text-white/40">
+                    <div className="flex items-start gap-2 text-white/50">
                       <MapPin className="mt-0.5 size-3.5 shrink-0" />
-                      <span className="text-[11px] leading-relaxed">
+                      <span className="text-11 leading-relaxed">
                         {selectedPlace.address}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-white/40">
+                  <div className="flex items-center gap-2 text-white/50">
                     <Map className="size-3.5 shrink-0" />
                     <a
                       href={getGoogleMapsUrl(selectedPlace)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] text-primary-400 transition-colors hover:text-primary-300"
+                      className="text-11 text-primary-400 transition-colors hover:text-primary-300"
                     >
                       View on Google Maps
                     </a>
@@ -358,7 +358,7 @@ function Travel() {
                 {/* Review */}
                 {selectedPlace.review && (
                   <div className="border-t border-white/[0.06] pt-3">
-                    <p className="text-[11px] leading-relaxed whitespace-pre-wrap text-white/40">
+                    <p className="text-11 leading-relaxed whitespace-pre-wrap text-white/50">
                       {selectedPlace.review}
                     </p>
                   </div>
@@ -370,7 +370,7 @@ function Travel() {
                   {sel.status !== "visited" && (
                     <button
                       type="button"
-                      className="flex items-center gap-1 rounded-md border border-white/[0.08] px-2 py-1 text-[11px] text-white/45 transition-colors hover:border-emerald-500/30 hover:text-emerald-400 disabled:pointer-events-none disabled:opacity-40"
+                      className="flex items-center gap-1 rounded-md border border-white/[0.08] px-2 py-1 text-11 text-white/50 transition-colors hover:border-emerald-500/30 hover:text-emerald-400 disabled:pointer-events-none disabled:opacity-40"
                       onClick={() => handleQuickMarkVisited(selectedPlace)}
                       disabled={markVisitedMutation.isPending}
                     >

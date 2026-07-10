@@ -35,7 +35,7 @@ export function ScheduledTasksDialog({
       </DialogHeader>
       <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
         {tasks.length === 0 ? (
-          <div className="text-center text-xs text-white/30 py-8">
+          <div className="text-center text-xs text-white/50 py-8">
             No repeated tasks.
           </div>
         ) : (
@@ -64,20 +64,20 @@ export function ScheduledTasksDialog({
                     <Circle className="size-4" />
                   </button>
                   <div className="min-w-0 flex-1 space-y-1">
-                    <div className="text-[13px] font-medium text-white/85 leading-snug">
+                    <div className="text-13 font-medium text-white/85 leading-snug">
                       {task.title}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       {dueLabel && (
                         <span
-                          className={`flex items-center gap-1 text-[11px] ${dueColor}`}
+                          className={`flex items-center gap-1 text-11 ${dueColor}`}
                         >
                           <Calendar className="size-3" />
                           {dueLabel}
                         </span>
                       )}
                       {recurrence && (
-                        <span className="flex items-center gap-1 text-[11px] text-white/35">
+                        <span className="flex items-center gap-1 text-11 text-white/50">
                           <Repeat className="size-3" />
                           {recurrence}
                         </span>
@@ -86,7 +86,7 @@ export function ScheduledTasksDialog({
                         <Flag className={`size-3 ${priorityConfig.color}`} />
                       )}
                       {task.project && (
-                        <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
+                        <span className="text-11 text-white/50 bg-white/10 rounded px-1.5 py-0">
                           {task.project}
                         </span>
                       )}

@@ -1,9 +1,11 @@
 import {
   closestCenter,
+  defaultDropAnimationSideEffects,
   DndContext,
   type DragEndEvent,
   type DragOverEvent,
   DragOverlay,
+  type DropAnimation,
   type DragStartEvent,
   PointerSensor,
   useSensor,
@@ -23,6 +25,7 @@ import {
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import { Dialog } from "@metron/ui/components/dialog";
+import { Skeleton } from "@metron/ui/components/skeleton";
 import {
   Empty,
   EmptyDescription,
@@ -92,6 +95,14 @@ const VIEW_TABS: { label: string; value: ViewTab }[] = [
 const ALL_PROJECTS_VALUE = "__all__";
 
 const BOARD_COLUMNS = ["todo", "in_progress"] as const;
+
+const dropAnimationConfig: DropAnimation = {
+  duration: 200,
+  easing: "cubic-bezier(0.23, 1, 0.32, 1)",
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: "0.4" } },
+  }),
+};
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -512,7 +523,7 @@ function Tasks() {
         <div className="flex items-baseline gap-2">
           <h2 className="text-base font-semibold text-white/90">Tasks</h2>
           {activeCount > 0 && (
-            <span className="text-[11px] text-white/35 tabular-nums">
+            <span className="text-11 text-white/50 tabular-nums">
               {activeCount}
             </span>
           )}
@@ -521,7 +532,7 @@ function Tasks() {
           {repeatingTasks.length > 0 && (
             <button
               type="button"
-              className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-violet-400 transition-colors"
+              className="flex items-center gap-1.5 text-11 text-white/50 hover:text-violet-400 transition-colors"
               onClick={() => setRepeatingOpen(true)}
             >
               <Repeat className="size-3.5" />
@@ -542,7 +553,7 @@ function Tasks() {
               className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
                 viewTab === tab.value
                   ? "border-white/60 text-white/90"
-                  : "border-transparent text-white/35 hover:text-white/60"
+                  : "border-transparent text-white/50 hover:text-white/60"
               }`}
               onClick={() => {
                 setViewTab(tab.value);
@@ -593,7 +604,7 @@ function Tasks() {
               >
                 <SelectTrigger
                   size="sm"
-                  className="h-auto w-auto max-w-32 shrink-0 gap-1 rounded border-0 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 shadow-none hover:bg-white/15 data-[size=sm]:h-auto dark:bg-white/10 dark:hover:bg-white/15"
+                  className="h-auto w-auto max-w-32 shrink-0 gap-1 rounded border-0 bg-white/10 px-2.5 py-1 text-11 font-medium text-white/80 shadow-none hover:bg-white/15 data-[size=sm]:h-auto dark:bg-white/10 dark:hover:bg-white/15"
                 >
                   <Folder className="size-3" />
                   <SelectValue />
@@ -638,7 +649,18 @@ function Tasks() {
 
       {/* Content */}
       <div className="flex-1 min-h-0 pt-5 px-4 flex flex-col">
-        {isLoading ? null : allTasks.length === 0 && viewTab === "board" ? (
+        {isLoading ? (
+          <div className="flex flex-1 gap-4">
+            {[0, 1].map((col) => (
+              <div key={col} className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-20" />
+                {[0, 1, 2].map((row) => (
+                  <Skeleton key={row} className="h-16 w-full rounded-lg" />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : allTasks.length === 0 && viewTab === "board" ? (
           <Empty className="border">
             <EmptyHeader>
               <EmptyMedia>
@@ -679,7 +701,7 @@ function Tasks() {
                 </div>
                 {typeof document !== "undefined" &&
                   createPortal(
-                    <DragOverlay dropAnimation={null}>
+                    <DragOverlay dropAnimation={dropAnimationConfig}>
                       {activeTask ? <DragCard task={activeTask} /> : null}
                     </DragOverlay>,
                     document.body,
@@ -744,7 +766,7 @@ function Tasks() {
                         )}
                         <div className="min-w-0 flex-1">
                           <span
-                            className={`text-[13px] ${isDone ? "line-through text-white/30" : "font-medium text-white/85"}`}
+                            className={`text-13 ${isDone ? "line-through text-white/50" : "font-medium text-white/85"}`}
                           >
                             {task.title}
                           </span>
@@ -761,13 +783,13 @@ function Tasks() {
                           <StatusIcon className={`size-3.5 ${config.color}`} />
                           {task.due_date && (
                             <span
-                              className={`text-[11px] ${getDueDateColor(task.due_date)}`}
+                              className={`text-11 ${getDueDateColor(task.due_date)}`}
                             >
                               {formatDueDate(task.due_date)}
                             </span>
                           )}
                           {isDone && task.completed_at && (
-                            <span className="text-[11px] text-white/30">
+                            <span className="text-11 text-white/50">
                               {format(
                                 task.completed_at instanceof Date
                                   ? task.completed_at
@@ -781,7 +803,7 @@ function Tasks() {
                     );
                   })}
                   {allTasks.length === 0 && (
-                    <div className="text-white/30 text-center text-xs py-8">
+                    <div className="text-white/50 text-center text-xs py-8">
                       {viewTab === "done"
                         ? "No completed tasks yet."
                         : "No tasks."}

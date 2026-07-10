@@ -157,7 +157,7 @@ function Recipes() {
         {/* List */}
         <div className="flex-1 overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-[11px] text-white/25">
+            <p className="px-3 py-4 text-center text-11 text-white/50">
               {search ? "No matches" : "No recipes yet"}
             </p>
           ) : (
@@ -165,7 +165,7 @@ function Recipes() {
               <button
                 key={r.id}
                 type="button"
-                className={`w-full truncate px-3 py-2 text-left text-[13px] transition-colors ${
+                className={`w-full truncate px-3 py-2 text-left text-13 transition-colors ${
                   r.id === selectedId
                     ? "bg-white/10 text-white/90"
                     : "text-white/55 hover:bg-white/5 hover:text-white/80"
@@ -175,7 +175,7 @@ function Recipes() {
                 <span className="flex items-center gap-1.5">
                   <span className="truncate">{r.title || "Untitled"}</span>
                   {r.recipe_type !== RecipeType.OTHER && (
-                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px] font-normal text-white/40">
+                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-9 font-normal text-white/50">
                       {RECIPE_TYPE_LABELS[r.recipe_type]}
                     </Badge>
                   )}
@@ -233,8 +233,8 @@ function Recipes() {
               <div className="flex items-center rounded-md border border-white/10 p-0.5 shrink-0">
                 <button
                   type="button"
-                  className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
-                    mode === "edit" ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60"
+                  className={`flex items-center gap-1 rounded px-2 py-1 text-11 transition-colors ${
+                    mode === "edit" ? "bg-white/10 text-white/80" : "text-white/50 hover:text-white/60"
                   }`}
                   onClick={() => setMode("edit")}
                 >
@@ -243,8 +243,8 @@ function Recipes() {
                 </button>
                 <button
                   type="button"
-                  className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
-                    mode === "preview" ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60"
+                  className={`flex items-center gap-1 rounded px-2 py-1 text-11 transition-colors ${
+                    mode === "preview" ? "bg-white/10 text-white/80" : "text-white/50 hover:text-white/60"
                   }`}
                   onClick={() => setMode("preview")}
                 >

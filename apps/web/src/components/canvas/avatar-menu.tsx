@@ -27,7 +27,7 @@ export function AvatarMenu() {
           {user?.picture ? (
             <img src={user.picture} alt="" className="size-5 rounded-full" />
           ) : (
-            <div className="flex size-5 items-center justify-center rounded-full bg-white/10 text-[10px] font-medium text-white/60">
+            <div className="flex size-5 items-center justify-center rounded-full bg-white/10 text-10 font-medium text-white/60">
               {initials}
             </div>
           )}
@@ -43,7 +43,7 @@ export function AvatarMenu() {
             <p className="truncate text-sm font-medium text-white/80">
               {user.name}
             </p>
-            <p className="truncate text-xs text-white/35">{user.email}</p>
+            <p className="truncate text-xs text-white/50">{user.email}</p>
           </div>
         )}
         <button

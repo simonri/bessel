@@ -76,7 +76,7 @@ export function ActivityDayBar({
 
         {hoveredSegment !== null && (
           <div
-            className="pointer-events-none absolute bottom-full mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white/80"
+            className="pointer-events-none absolute bottom-full mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-10 text-white/80"
             style={{
               left: `${((hoveredSegment.start + hoveredSegment.end) / 2 / n) * 100}%`,
             }}
@@ -90,7 +90,7 @@ export function ActivityDayBar({
         {DAY_LABELS.map(({ label, pct }) => (
           <span
             key={label + pct}
-            className="absolute text-[10px] leading-none text-white/30"
+            className="absolute text-10 leading-none text-white/50"
             style={{
               left: `${pct}%`,
               transform:

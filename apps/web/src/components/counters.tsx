@@ -159,7 +159,7 @@ export function Counters() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-white/30">
+        <span className="text-11 font-medium uppercase tracking-wider text-white/50">
           Time since
         </span>
         <button
@@ -209,10 +209,10 @@ export function Counters() {
         {counters.length === 0 && addingName === null ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-12 text-center">
             <Timer className="size-8 text-white/10" />
-            <p className="text-xs text-white/25">No counters yet</p>
+            <p className="text-xs text-white/50">No counters yet</p>
             <button
               type="button"
-              className="mt-1 text-xs text-white/35 underline-offset-2 hover:text-white/60 hover:underline"
+              className="mt-1 text-xs text-white/50 underline-offset-2 hover:text-white/60 hover:underline"
               onClick={() => {
                 setAddingName("");
                 setTimeout(() => addInputRef.current?.focus(), 0);
@@ -277,7 +277,6 @@ function CounterRow({
   onClick: () => void;
   onReset: () => void;
 }) {
-  const isNever = !counter.last_reset_at;
   return (
     <div className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5">
       <button
@@ -289,9 +288,7 @@ function CounterRow({
           {counter.name}
         </span>
       </button>
-      <span
-        className={`shrink-0 font-mono text-xs tabular-nums ${isNever ? "text-white/20" : "text-white/45"}`}
-      >
+      <span className="shrink-0 font-mono text-xs tabular-nums text-white/50">
         {formatTimeSince(counter.last_reset_at)}
       </span>
       <button
@@ -366,7 +363,7 @@ function CounterDetailDialog({
           </DialogHeader>
 
           {/* Stats */}
-          <div className="flex gap-4 border-b border-white/10 pb-4 text-xs text-white/45">
+          <div className="flex gap-4 border-b border-white/10 pb-4 text-xs text-white/50">
             <span>
               <span className="text-white/60">Last: </span>
               {counter.last_reset_at
@@ -382,7 +379,7 @@ function CounterDetailDialog({
           {/* Reset history */}
           <div className="max-h-56 overflow-y-auto">
             {resets.length === 0 ? (
-              <p className="py-4 text-center text-xs text-white/25">
+              <p className="py-4 text-center text-xs text-white/50">
                 No resets recorded yet
               </p>
             ) : (
@@ -399,7 +396,7 @@ function CounterDetailDialog({
                     <button
                       type="button"
                       title="Undo this reset"
-                      className="shrink-0 text-white/15 opacity-0 transition-all hover:text-amber-400 group-hover:opacity-100"
+                      className="shrink-0 text-white/15 opacity-0 transition-[opacity,color] hover:text-amber-400 group-hover:opacity-100"
                       onClick={() => onUndo(reset.id)}
                     >
                       <RotateCcw className="size-3" />
@@ -414,7 +411,7 @@ function CounterDetailDialog({
           <div className="border-t border-white/10 pt-3">
             <button
               type="button"
-              className="flex items-center gap-1.5 text-xs text-white/25 transition-colors hover:text-red-400"
+              className="flex items-center gap-1.5 text-xs text-white/50 transition-colors hover:text-red-400"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="size-3" />

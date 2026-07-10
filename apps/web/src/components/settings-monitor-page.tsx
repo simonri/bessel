@@ -47,7 +47,7 @@ export function MonitorPage() {
   if (!status) {
     return (
       <div className="flex items-center justify-center py-8">
-        <span className="text-[13px] text-white/30">Loading…</span>
+        <span className="text-13 text-white/50">Loading…</span>
       </div>
     );
   }
@@ -72,10 +72,10 @@ export function MonitorPage() {
         <SectionLabel>Background service</SectionLabel>
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-[13px] text-white/60">Status</span>
+            <span className="text-13 text-white/60">Status</span>
             <div className="flex items-center gap-2">
               <span className={`size-1.5 rounded-full ${dotColor}`} />
-              <span className="text-[13px] text-white/80">{stateLabel}</span>
+              <span className="text-13 text-white/80">{stateLabel}</span>
             </div>
           </div>
 
@@ -83,7 +83,7 @@ export function MonitorPage() {
             <>
               <div className="border-t border-white/[0.06]" />
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-white/60">Control</span>
+                <span className="text-13 text-white/60">Control</span>
                 <button
                   onClick={() =>
                     run(
@@ -93,13 +93,13 @@ export function MonitorPage() {
                     )
                   }
                   disabled={loading || status.failed}
-                  className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-[12px] font-medium text-white/70 transition-colors hover:bg-white/15 hover:text-white/90 disabled:opacity-40"
+                  className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-12 font-medium text-white/70 transition-colors hover:bg-white/15 hover:text-white/90 disabled:opacity-40"
                 >
                   {status.active ? "Stop" : "Start"}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-white/75">
+                <span className="text-13 text-white/75">
                   Start on login
                 </span>
                 <button
@@ -109,7 +109,7 @@ export function MonitorPage() {
                     )
                   }
                   disabled={loading}
-                  className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors disabled:opacity-40 ${
+                  className={`shrink-0 rounded-lg px-3 py-1.5 text-12 font-medium transition-colors disabled:opacity-40 ${
                     status.enabled
                       ? "bg-primary-500 text-white hover:bg-primary-400"
                       : "bg-white/10 text-white/70 hover:bg-white/15 hover:text-white/90"
@@ -128,18 +128,18 @@ export function MonitorPage() {
           <button
             onClick={() => run(() => window.electron!.monitor.install())}
             disabled={loading}
-            className="w-full rounded-xl bg-primary-500 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
+            className="w-full rounded-xl bg-primary-500 py-2.5 text-13 font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
           >
             {loading ? "Installing…" : "Install Service"}
           </button>
-          <p className="mt-2 text-center text-[11px] text-white/30">
+          <p className="mt-2 text-center text-11 text-white/50">
             Installs a systemd user service that tracks your active window and
             syncs to the API.
           </p>
         </div>
       )}
 
-      {error && <p className="text-[12px] text-red-400">{error}</p>}
+      {error && <p className="text-12 text-red-400">{error}</p>}
     </div>
   );
 }

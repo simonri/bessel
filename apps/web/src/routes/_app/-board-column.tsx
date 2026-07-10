@@ -29,10 +29,10 @@ export function BoardColumn({
     >
       <div className="flex items-center gap-2 mb-3 px-1 shrink-0">
         <Icon className={`size-3.5 ${config.color}`} />
-        <span className="text-[11px] font-semibold text-white/50">
+        <span className="text-11 font-semibold text-white/50">
           {config.label}
         </span>
-        <span className="text-[10px] text-white/30 bg-white/10 rounded-full px-1.5 tabular-nums ml-0.5">
+        <span className="text-10 text-white/50 bg-white/10 rounded-full px-1.5 tabular-nums ml-0.5">
           {tasks.length}
         </span>
       </div>
@@ -50,7 +50,7 @@ export function BoardColumn({
             />
           ))}
           {tasks.length === 0 && (
-            <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-[11px] text-white/25">
+            <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-11 text-white/50">
               No tasks
             </div>
           )}

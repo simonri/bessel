@@ -37,10 +37,10 @@ function WorkspacePill({
       onClick={onSelect}
       onContextMenu={onContextMenu}
       className={cn(
-        "flex h-6 min-w-6 items-center justify-center rounded text-xs font-medium transition-all duration-150",
+        "flex h-6 min-w-6 items-center justify-center rounded text-xs font-medium transition-colors duration-150",
         isActive
           ? "bg-white/15 text-white/90"
-          : "text-white/35 hover:bg-white/[0.08] hover:text-white/70",
+          : "text-white/55 hover:bg-white/[0.08] hover:text-white/70",
         isFlashing && "animate-workspace-flash",
       )}
     >
@@ -95,7 +95,7 @@ function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
                   className="flex w-full flex-col px-3 py-2 text-left transition-colors hover:bg-white/5"
                 >
                   <span className="text-sm text-white/80">{t.name}</span>
-                  <span className="truncate text-[11px] text-white/35">
+                  <span className="truncate text-11 text-white/50">
                     {widgetSummary(t.widgets)}
                   </span>
                 </button>
@@ -108,7 +108,7 @@ function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
               setManageOpen(true);
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2 border-t border-white/[0.06] px-3 py-2.5 text-left text-xs font-medium text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+            className="flex w-full items-center gap-2 border-t border-white/[0.06] px-3 py-2.5 text-left text-xs font-medium text-white/50 transition-colors hover:bg-white/5 hover:text-white/70"
           >
             <LayoutTemplate className="size-3.5 shrink-0" />
             Manage templates…

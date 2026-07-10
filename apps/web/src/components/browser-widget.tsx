@@ -294,7 +294,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
                   >
                     <Icon className="size-4" />
                   </span>
-                  <span className="text-[11px] text-white/50">{label}</span>
+                  <span className="text-11 text-white/50">{label}</span>
                 </button>
               ))}
             </div>
@@ -308,7 +308,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
               <div className="text-sm text-white/70">
                 Couldn't load {hostOf(address)}
               </div>
-              <div className="mt-0.5 text-xs text-white/40">
+              <div className="mt-0.5 text-xs text-white/50">
                 {failed.description}
               </div>
             </div>

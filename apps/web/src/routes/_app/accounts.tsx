@@ -11,6 +11,7 @@ import {
   deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
+import { Skeleton } from "@metron/ui/components/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -141,7 +142,13 @@ function Accounts() {
         <CreateAccountDialog />
       </div>
 
-      {!isLoading && (
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : (
         <VirtualDataTable
           columns={columns}
           data={accounts}

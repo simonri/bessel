@@ -29,7 +29,7 @@ export function PlaceCard({
       className={`group flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-[background-color,border-color,transform] duration-150 active:scale-[0.98] motion-reduce:active:scale-100 ${
         isSelected
           ? "border-white/20 bg-white/[0.08]"
-          : "border-white/[0.07] bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.06]"
+          : "border-white/[0.07] bg-white/[0.03] pointer-fine:hover:border-white/10 pointer-fine:hover:bg-white/[0.06]"
       }`}
       onClick={onSelect}
     >
@@ -41,7 +41,7 @@ export function PlaceCard({
           {place.name}
         </span>
         {(country || place.category) && (
-          <span className="block truncate text-[11px] text-white/35">
+          <span className="block truncate text-11 text-white/50">
             {[country, place.category?.replace(/_/g, " ")]
               .filter(Boolean)
               .join(" · ")}
@@ -54,12 +54,12 @@ export function PlaceCard({
         </div>
       )}
       {!isVisited && (
-        <span className="hidden shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-white/30 sm:block">
+        <span className="hidden shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-10 text-white/50 sm:block">
           want to go
         </span>
       )}
       {isVisited && !!visitedAt && (
-        <span className="hidden shrink-0 text-[10px] tabular-nums text-white/30 sm:block">
+        <span className="hidden shrink-0 text-10 tabular-nums text-white/50 sm:block">
           {formatVisitedDate(visitedAt)}
         </span>
       )}

@@ -41,7 +41,7 @@ export function GridCell({
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative aspect-square rounded-[2px] transition-all cursor-pointer ${
+      className={`relative aspect-square rounded-[2px] transition-shadow cursor-pointer ${
         isSelected
           ? "ring-1 ring-inset ring-white/60"
           : isToday
@@ -55,7 +55,7 @@ export function GridCell({
       }}
     >
       {visible && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white/80">
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-10 text-white/80">
           <span className="text-white/50">{format(day.d, "MMM d")} · </span>
           {day.active_secs > 0 ? fmtDur(day.active_secs) : "No activity"}
         </div>

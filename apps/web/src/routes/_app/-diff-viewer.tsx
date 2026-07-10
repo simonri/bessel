@@ -1,5 +1,10 @@
-import { useMemo } from "react";
-import { buildHighlightMap, detectLang, parseDiff } from "./-git-diff-utils";
+import { useEffect, useMemo, useState } from "react";
+import {
+  buildHighlightMap,
+  detectLang,
+  type HighlightToken,
+  parseDiff,
+} from "./-git-diff-utils";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -44,6 +49,19 @@ const SKIP_PREFIXES = [
   "rename to",
 ];
 
+function HighlightedLine({ tokens }: { tokens: HighlightToken[] }) {
+  return (
+    <>
+      {tokens.map((t, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: tokens for a line never reorder
+        <span key={i} style={t.color ? { color: t.color } : undefined}>
+          {t.content}
+        </span>
+      ))}
+    </>
+  );
+}
+
 // ── DiffViewer ─────────────────────────────────────────────────────────────────
 
 export function DiffViewer({
@@ -59,17 +77,29 @@ export function DiffViewer({
 }) {
   const lines = useMemo(() => parseDiff(diff), [diff]);
   const lang = useMemo(() => detectLang(filename), [filename]);
-  const highlightMap = useMemo(
-    () => buildHighlightMap(lines, lang, oldContent, newContent),
-    [lines, lang, oldContent, newContent],
-  );
+
+  // Tokenizing is async (Shiki loads its grammars/theme once, lazily), so the
+  // diff renders as plain text immediately and re-renders colored once ready.
+  const [highlightMap, setHighlightMap] = useState<
+    Map<number, HighlightToken[]>
+  >(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    setHighlightMap(new Map());
+    buildHighlightMap(lines, lang, oldContent, newContent).then((map) => {
+      if (!cancelled) setHighlightMap(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lines, lang, oldContent, newContent]);
 
   const hasContent = lines.some(
     (l) => l.type !== "file-header" || l.content.includes("Binary"),
   );
   if (!hasContent) {
     return (
-      <div className="flex h-full items-center justify-center text-xs text-white/25">
+      <div className="flex h-full items-center justify-center text-xs text-white/50">
         No diff available
       </div>
     );
@@ -77,12 +107,6 @@ export function DiffViewer({
 
   return (
     <div className="h-full overflow-auto font-mono text-xs leading-5">
-      {/* atom-one-dark's comment/mono tones assume a lighter (#282c34) editor
-          background; against our near-black diff rows they read as almost
-          invisible, so brighten just that token here. */}
-      <style>{`
-        .diff-viewer .hljs-comment, .diff-viewer .hljs-quote { color: #7f8899; }
-      `}</style>
       <table className="diff-viewer min-w-full border-collapse">
         <colgroup>
           <col style={{ width: "2.5rem" }} />
@@ -99,7 +123,7 @@ export function DiffViewer({
                 <tr key={i}>
                   <td
                     colSpan={3}
-                    className="select-none border-l-2 border-transparent px-2 py-0.5 italic text-white/40 whitespace-pre"
+                    className="select-none border-l-2 border-transparent px-2 py-0.5 italic text-white/50 whitespace-pre"
                   >
                     {line.content}
                   </td>
@@ -118,7 +142,7 @@ export function DiffViewer({
               );
             }
 
-            const hlHtml = highlightMap.get(i);
+            const tokens = highlightMap.get(i);
 
             if (line.type === "add") {
               return (
@@ -133,8 +157,8 @@ export function DiffViewer({
                     <span className="select-none font-semibold text-emerald-400">
                       +
                     </span>
-                    {hlHtml ? (
-                      <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
+                    {tokens ? (
+                      <HighlightedLine tokens={tokens} />
                     ) : (
                       <span className="text-emerald-200">{line.content}</span>
                     )}
@@ -155,8 +179,8 @@ export function DiffViewer({
                     <span className="select-none font-semibold text-red-400">
                       -
                     </span>
-                    {hlHtml ? (
-                      <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
+                    {tokens ? (
+                      <HighlightedLine tokens={tokens} />
                     ) : (
                       <span className="text-red-200">{line.content}</span>
                     )}
@@ -169,7 +193,7 @@ export function DiffViewer({
                 <tr key={i}>
                   <td
                     colSpan={3}
-                    className="border-l-2 border-transparent py-0 pl-2 text-white/35 whitespace-pre"
+                    className="border-l-2 border-transparent py-0 pl-2 text-white/50 whitespace-pre"
                   >
                     {line.content}
                   </td>
@@ -179,16 +203,16 @@ export function DiffViewer({
             // context
             return (
               <tr key={i} className="hover:bg-white/[0.03]">
-                <td className="select-none border-l-2 border-transparent py-0 pl-2 pr-1 text-right text-white/35">
+                <td className="select-none border-l-2 border-transparent py-0 pl-2 pr-1 text-right text-white/50">
                   {line.oldNum}
                 </td>
-                <td className="select-none py-0 pl-2 pr-1 text-right text-white/35">
+                <td className="select-none py-0 pl-2 pr-1 text-right text-white/50">
                   {line.newNum}
                 </td>
                 <td className="py-0 pl-1 whitespace-pre">
                   <span className="select-none text-white/20"> </span>
-                  {hlHtml ? (
-                    <span dangerouslySetInnerHTML={{ __html: hlHtml }} />
+                  {tokens ? (
+                    <HighlightedLine tokens={tokens} />
                   ) : (
                     <span className="text-white/70">{line.content}</span>
                   )}

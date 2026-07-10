@@ -59,7 +59,7 @@ export function NotificationBell() {
         <button className="relative flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70">
           <Bell className="size-4" />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-sky-500 text-[9px] font-bold leading-none text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-sky-500 text-9 font-bold leading-none text-white">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -78,7 +78,7 @@ export function NotificationBell() {
           {unreadCount > 0 && (
             <button
               onClick={() => markAllRead.mutate()}
-              className="text-[11px] text-sky-400 transition-colors hover:text-sky-300"
+              className="text-11 text-sky-400 transition-colors hover:text-sky-300"
             >
               Mark all read
             </button>
@@ -86,7 +86,7 @@ export function NotificationBell() {
         </div>
 
         {notifications.length === 0 ? (
-          <div className="py-8 text-center text-xs text-white/30">
+          <div className="py-8 text-center text-xs text-white/50">
             No notifications
           </div>
         ) : (
@@ -114,11 +114,11 @@ export function NotificationBell() {
                       {n.title}
                     </p>
                     {n.body && (
-                      <p className="mt-0.5 text-[11px] leading-snug text-white/40">
+                      <p className="mt-0.5 text-11 leading-snug text-white/50">
                         {n.body}
                       </p>
                     )}
-                    <p className="mt-1 text-[10px] text-white/25">
+                    <p className="mt-1 text-10 text-white/50">
                       {formatDistanceToNow(new Date(n.created_at), {
                         addSuffix: true,
                       })}

@@ -86,10 +86,10 @@ export function SpotifyWidget() {
         >
           <SkipForward className="size-3.5" />
         </button>
-        <div className="min-w-0 max-w-44 truncate font-mono text-[11px] text-white/60">
+        <div className="min-w-0 max-w-44 truncate font-mono text-11 text-white/60">
           {data.title}
           {data.artist && (
-            <span className="text-white/30"> · {data.artist}</span>
+            <span className="text-white/50"> · {data.artist}</span>
           )}
         </div>
       </div>

@@ -17,6 +17,7 @@ import {
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import { Checkbox } from "@metron/ui/components/checkbox";
+import { Skeleton } from "@metron/ui/components/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -411,7 +412,7 @@ function Transactions() {
         <div className="flex items-center gap-2 min-w-0">
           <span className="truncate text-sm">{row.original.description ?? "—"}</span>
           {row.original.is_business && (
-            <span className="shrink-0 inline-flex items-center rounded bg-chart-1 px-1.5 py-px text-[10px] font-semibold text-white">
+            <span className="shrink-0 inline-flex items-center rounded bg-chart-1 px-1.5 py-px text-10 font-semibold text-white">
               Business
             </span>
           )}
@@ -530,7 +531,13 @@ function Transactions() {
       />
 
       {/* Table */}
-      {isLoading ? null : transactions.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : transactions.length === 0 ? (
         <Empty className="border">
           <EmptyMedia >
             <ArrowLeftRight />

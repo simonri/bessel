@@ -49,7 +49,7 @@ export function FileItem({
 
       <span className="min-w-0 flex-1 truncate text-xs">
         <span className="text-white/80">{name}</span>
-        {dir && <span className="ml-1.5 text-white/30">{dir}</span>}
+        {dir && <span className="ml-1.5 text-white/50">{dir}</span>}
       </span>
 
       {onDiscard && (
@@ -76,7 +76,7 @@ export function FileItem({
       </button>
 
       <span
-        className={`w-3 shrink-0 text-center text-[10px] font-semibold ${STATUS_COLOR[file.status] ?? "text-white/35"}`}
+        className={`w-3 shrink-0 text-center text-10 font-semibold ${STATUS_COLOR[file.status] ?? "text-white/50"}`}
       >
         {statusBadge}
       </span>
@@ -110,11 +110,11 @@ export function SectionHeader({
       className="group flex cursor-pointer items-center gap-1 px-2 py-[5px] hover:bg-white/[0.03]"
     >
       <Chevron className="size-3 shrink-0 text-white/40" />
-      <span className="flex-1 text-[10px] font-semibold uppercase tracking-wider text-white/50">
+      <span className="flex-1 text-10 font-semibold uppercase tracking-wider text-white/50">
         {label}
       </span>
       {count > 0 && (
-        <span className="rounded px-1 text-[10px] text-white/30">{count}</span>
+        <span className="rounded px-1 text-10 text-white/50">{count}</span>
       )}
       <div
         className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"

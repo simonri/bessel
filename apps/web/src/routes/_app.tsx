@@ -3,6 +3,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMeV1AuthMeGetOptions } from "@metron/client";
+import { Spinner } from "@metron/ui/components/spinner";
 import { client } from "@/lib/client";
 import { WindowManager } from "@/components/canvas/window-manager";
 import { CanvasShell } from "@/components/canvas/canvas-shell";
@@ -31,7 +32,7 @@ function AppLayout() {
   if (isLoading || isUserLoading || !isAuthenticated) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+        <Spinner className="size-6 text-white" />
       </div>
     );
   }

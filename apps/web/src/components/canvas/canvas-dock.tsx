@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
+import { glassSurface } from "@metron/ui/lib/glass";
 import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
 import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
 import { useWindowManager } from "./window-manager";
 
@@ -39,7 +41,7 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
           className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
             active
               ? "text-primary-400"
-              : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
+              : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
           }`}
           title={config.title}
         >
@@ -51,7 +53,7 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
         side="top"
         align="center"
         sideOffset={8}
-        className="w-64 overflow-hidden rounded-xl border-white/10 bg-black/80 p-0 shadow-2xl backdrop-blur-xl"
+        className={cn(glassSurface({ weight: "heavy" }), "w-64 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl")}
       >
         <div className="border-b border-white/10 px-3 py-2.5">
           <p className="text-xs font-medium text-white/50">Select project</p>
@@ -73,7 +75,7 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
                 className="flex w-full flex-col px-3 py-2.5 text-left transition-colors hover:bg-white/5"
               >
                 <span className="text-sm font-medium text-white/80">{p.name}</span>
-                <span className="truncate text-[11px] text-white/35">
+                <span className="truncate text-11 text-white/50">
                   {p.ssh_host ? `${p.ssh_host}:${p.path}` : p.path}
                 </span>
               </button>
@@ -89,7 +91,12 @@ export function CanvasDock() {
   const { toggleWindow, openWindow, isOpen } = useWindowManager();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center gap-1 border-t border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
+    <div
+      className={cn(
+        glassSurface({ weight: "light" }),
+        "fixed bottom-0 left-0 right-0 z-50 flex items-center gap-1 border-t border-white/10 px-4 py-1",
+      )}
+    >
       {MODULE_ORDER.map((key) => {
         const config = MODULE_REGISTRY[key];
         const Icon = config.icon;
@@ -106,7 +113,7 @@ export function CanvasDock() {
             className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
               active
                 ? "text-primary-400"
-                : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
+                : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
             }`}
             title={config.title}
           >

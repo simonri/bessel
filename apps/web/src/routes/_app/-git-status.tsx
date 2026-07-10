@@ -5,6 +5,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Check, GitBranch, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { WidgetErrorBoundary } from "@/components/widget-error-boundary";
 import { client } from "@/lib/client";
 import { CommitItem } from "./-commit-item";
 import { DiffViewer } from "./-diff-viewer";
@@ -243,8 +244,8 @@ export function GitStatus() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
         <GitBranch className="size-8 text-white/15" />
-        <p className="text-sm text-white/40">No projects configured</p>
-        <p className="text-xs text-white/25">
+        <p className="text-sm text-white/50">No projects configured</p>
+        <p className="text-xs text-white/50">
           Add a project via the folder icon in the top bar
         </p>
       </div>
@@ -273,7 +274,7 @@ export function GitStatus() {
         </select>
 
         {status && (
-          <div className="flex shrink-0 items-center gap-1 text-[11px] text-white/50">
+          <div className="flex shrink-0 items-center gap-1 text-11 text-white/50">
             <GitBranch className="size-3" />
             <span className="max-w-[72px] truncate">{branch}</span>
             {(status.ahead ?? 0) > 0 && (
@@ -312,7 +313,7 @@ export function GitStatus() {
           {/* Commit area — at top, like VS Code */}
           <div className="shrink-0 space-y-1.5 border-b border-white/[0.06] p-2">
             {error && (
-              <p className="truncate text-[10px] text-red-400/80" title={error}>
+              <p className="truncate text-10 text-red-400/80" title={error}>
                 {error}
               </p>
             )}
@@ -376,7 +377,7 @@ export function GitStatus() {
                 {stagedOpen && (
                   <>
                     {staged.length === 0 && (
-                      <p className="py-1 pl-8 text-xs text-white/20">
+                      <p className="py-1 pl-8 text-xs text-white/50">
                         Nothing staged
                       </p>
                     )}
@@ -421,7 +422,7 @@ export function GitStatus() {
                 {changesOpen && (
                   <>
                     {changes.length === 0 && (
-                      <p className="py-1 pl-8 text-xs text-white/20">
+                      <p className="py-1 pl-8 text-xs text-white/50">
                         No changes
                       </p>
                     )}
@@ -486,12 +487,12 @@ export function GitStatus() {
           {selectedFile ? (
             <>
               <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.06] px-3 py-1.5">
-                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-white/45">
+                <span className="min-w-0 flex-1 truncate font-mono text-11 text-white/50">
                   {selectedFile.file.originalPath
                     ? `${selectedFile.file.originalPath} → ${selectedFile.file.path}`
                     : selectedFile.file.path}
                 </span>
-                <span className="shrink-0 text-[10px] text-white/25">
+                <span className="shrink-0 text-10 text-white/50">
                   {selectedFile.staged
                     ? "staged"
                     : selectedFile.untracked
@@ -505,16 +506,20 @@ export function GitStatus() {
                   <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />
                 </div>
               ) : (
-                <DiffViewer
-                  diff={diffQuery.data?.diff ?? ""}
-                  filename={selectedFile.file.path}
-                  oldContent={diffQuery.data?.oldContent ?? ""}
-                  newContent={diffQuery.data?.newContent ?? ""}
-                />
+                <WidgetErrorBoundary
+                  key={`${selectedFile.file.path}:${selectedFile.staged}`}
+                >
+                  <DiffViewer
+                    diff={diffQuery.data?.diff ?? ""}
+                    filename={selectedFile.file.path}
+                    oldContent={diffQuery.data?.oldContent ?? ""}
+                    newContent={diffQuery.data?.newContent ?? ""}
+                  />
+                </WidgetErrorBoundary>
               )}
             </>
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-white/20">
+            <div className="flex h-full items-center justify-center text-xs text-white/50">
               Select a file to view diff
             </div>
           )}

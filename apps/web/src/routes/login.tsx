@@ -27,7 +27,7 @@ function LoginPage() {
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4 max-w-md text-center">
           <p className="text-sm text-white/70">Authentication error</p>
-          <p className="text-xs text-white/40">{error.message}</p>
+          <p className="text-xs text-white/50">{error.message}</p>
           <button
             onClick={() => loginWithRedirect()}
             className="text-xs text-white/60 underline"

@@ -249,7 +249,7 @@ function ActivityPage() {
 
           {/* GitHub-style year activity grid */}
           <div className="pt-1">
-            <p className="mb-3 text-[11px] font-medium text-white/30">
+            <p className="mb-3 text-11 font-medium text-white/50">
               {today.getFullYear()}
             </p>
 
@@ -263,7 +263,7 @@ function ActivityPage() {
                 {["", "Mon", "", "Wed", "", "Fri", ""].map((l, i) => (
                   <div
                     key={i}
-                    className="flex-1 flex items-center justify-end text-[8px] leading-none text-white/30 pr-0.5"
+                    className="flex-1 flex items-center justify-end text-8 leading-none text-white/50 pr-0.5"
                   >
                     {l}
                   </div>
@@ -277,7 +277,7 @@ function ActivityPage() {
                   {monthMarkers.map(({ col, label }) => (
                     <span
                       key={label}
-                      className="absolute text-[9px] leading-none font-medium text-white/40 select-none"
+                      className="absolute text-9 leading-none font-medium text-white/50 select-none"
                       style={{
                         left: `${(col / Math.max(yearGrid.length, 1)) * 100}%`,
                       }}
@@ -331,7 +331,7 @@ function ActivityPage() {
           {/* Tasks completed */}
           {completedTasksData !== undefined && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-white/40">Tasks completed</span>
+              <span className="text-sm text-white/50">Tasks completed</span>
               <span className="text-sm font-medium text-white/80">
                 {completedTasksData.pagination.total_count}
               </span>
@@ -351,7 +351,7 @@ function ActivityPage() {
             </p>
           ) : (
             <div className="space-y-1.5">
-              <p className="mb-3 text-sm text-white/40">
+              <p className="mb-3 text-sm text-white/50">
                 <span className="text-base font-medium text-white/80">
                   {fmtDur(summary.total_active_secs)}
                 </span>{" "}
@@ -372,17 +372,17 @@ function ActivityPage() {
                       style={{ background: "rgba(255,255,255,0.07)" }}
                     >
                       <div
-                        className="absolute inset-y-0 left-0 rounded-full transition-all"
+                        className="absolute inset-y-0 left-0 w-full rounded-full transition-transform"
                         style={{
-                          width: `${app.percentage}%`,
+                          transform: `translateX(-${100 - app.percentage}%)`,
                           background: `rgba(${rgb},0.72)`,
                         }}
                       />
                     </div>
-                    <span className="w-14 shrink-0 text-right text-xs tabular-nums text-white/45">
+                    <span className="w-14 shrink-0 text-right text-xs tabular-nums text-white/50">
                       {fmtDur(app.active_secs)}
                     </span>
-                    <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-white/25">
+                    <span className="w-10 shrink-0 text-right text-11 tabular-nums text-white/50">
                       {app.percentage.toFixed(1)}%
                     </span>
                   </div>

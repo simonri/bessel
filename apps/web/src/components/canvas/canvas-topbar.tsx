@@ -1,5 +1,7 @@
+import { glassSurface } from "@metron/ui/lib/glass";
 import { ScrollText, Settings, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
 import { CryptoPairTicker } from "@/components/canvas/crypto-pair-ticker";
 import { NotificationBell } from "@/components/canvas/notification-bell";
@@ -27,14 +29,19 @@ export function CanvasTopBar() {
     .filter(Boolean);
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 bg-black/40 px-4 py-1 backdrop-blur-xl">
+    <div
+      className={cn(
+        glassSurface({ weight: "light" }),
+        "fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 px-4 py-1",
+      )}
+    >
       <div className="flex min-w-0 flex-1 items-center gap-5">
         <div className="flex shrink-0 items-center gap-2">
-          <span className="bg-gradient-to-r from-white/90 to-white/55 bg-clip-text text-sm font-semibold tracking-wide text-transparent">
+          <span className="text-sm font-semibold tracking-wide text-white/90">
             Metron
           </span>
           {version && (
-            <span className="rounded bg-white/[0.06] px-1 py-px font-mono text-[10px] text-white/30">
+            <span className="rounded bg-white/[0.06] px-1 py-px font-mono text-10 text-white/50">
               v{version}
             </span>
           )}

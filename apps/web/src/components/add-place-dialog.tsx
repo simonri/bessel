@@ -178,7 +178,7 @@ export function AddPlaceDialog() {
                         <div className="flex items-baseline gap-1.5 min-w-0">
                           <span className="font-medium text-sm truncate">{result.name}</span>
                           {result.category && (
-                            <span className="text-muted-foreground text-[10px] bg-muted rounded px-1.5 py-0.5 capitalize shrink-0 whitespace-nowrap">
+                            <span className="text-muted-foreground text-10 bg-muted rounded px-1.5 py-0.5 capitalize shrink-0 whitespace-nowrap">
                               {result.category.replace(/_/g, " ")}
                             </span>
                           )}

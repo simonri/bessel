@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { glassSurface } from "@metron/ui/lib/glass";
 import { Search, LayoutTemplate } from "lucide-react";
 import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
 import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
 import { useWindowManager } from "./window-manager";
 import { useWorkspaceTemplates, templateToWindowSpecs, widgetSummary } from "@/hooks/use-workspace-templates";
@@ -140,7 +142,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-black/80 shadow-2xl backdrop-blur-xl"
+        className={cn(
+          glassSurface({ weight: "heavy" }),
+          "relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 shadow-2xl",
+        )}
         onPointerDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-white/[0.08] px-4 py-3.5">
@@ -153,14 +158,14 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             placeholder="Open widget…"
             className="flex-1 bg-transparent text-sm text-white/90 outline-none placeholder:text-white/25"
           />
-          <kbd className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-white/25">
+          <kbd className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 font-mono text-10 text-white/50">
             esc
           </kbd>
         </div>
 
         <div ref={listRef} className="max-h-72 overflow-y-auto py-1.5">
           {filtered.length === 0 ? (
-            <p className="py-8 text-center text-sm text-white/25">No widgets match</p>
+            <p className="py-8 text-center text-sm text-white/50">No widgets match</p>
           ) : (
             filtered.map((item, i) => {
               const Icon = item.icon;
@@ -182,11 +187,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                       {item.label}
                     </p>
                     {item.sublabel && (
-                      <p className="truncate text-[11px] text-white/30">{item.sublabel}</p>
+                      <p className="truncate text-11 text-white/50">{item.sublabel}</p>
                     )}
                   </div>
                   {item.isOpen && (
-                    <span className="shrink-0 text-[10px] text-primary-400/50">open</span>
+                    <span className="shrink-0 text-10 text-primary-400/50">open</span>
                   )}
                 </button>
               );
@@ -195,9 +200,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         </div>
 
         <div className="flex items-center gap-4 border-t border-white/[0.06] px-4 py-2">
-          <span className="text-[11px] text-white/20">↑↓ navigate</span>
-          <span className="text-[11px] text-white/20">↵ open</span>
-          <span className="text-[11px] text-white/20">esc close</span>
+          <span className="text-11 text-white/50">↑↓ navigate</span>
+          <span className="text-11 text-white/50">↵ open</span>
+          <span className="text-11 text-white/50">esc close</span>
         </div>
       </div>
     </div>

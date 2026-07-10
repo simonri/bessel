@@ -77,16 +77,16 @@ export function CryptoPairTicker({ pair }: { pair: string }) {
 
   return (
     <div className="flex items-center gap-1">
-      <span className="font-mono text-[10px] font-medium tracking-wider text-primary-400/75">
+      <span className="font-mono text-10 font-medium tracking-wider text-primary-400/75">
         {pair}
       </span>
-      <span className="text-white/15">·</span>
-      <span className="font-mono text-[11px] font-medium tabular-nums text-white/75">
+      <span className="text-white/30">·</span>
+      <span className="font-mono text-11 font-medium tabular-nums text-white/75">
         {formatted ?? "—"}
       </span>
       {pct !== null && (
         <span
-          className={`flex items-center gap-0.5 font-mono text-[10px] tabular-nums ${
+          className={`flex items-center gap-0.5 font-mono text-10 tabular-nums ${
             isPositive ? "text-emerald-400/80" : "text-red-400/80"
           }`}
         >

@@ -7,6 +7,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@metron/ui/components/empty";
+import { Skeleton } from "@metron/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TrendingUp } from "lucide-react";
@@ -133,7 +134,25 @@ export function HoldingsTab() {
       .sort((a, b) => b.value - a.value);
   }, [holdings]);
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap gap-x-8 gap-y-3 pb-4 border-b">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (holdings.length === 0) {
     return (
