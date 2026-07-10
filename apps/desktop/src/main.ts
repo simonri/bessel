@@ -1,12 +1,26 @@
-import path from "path";
-import fs from "fs";
-import os from "os";
-import { Readable } from "stream";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import { app, BrowserWindow, dialog, ipcMain, Menu, protocol, safeStorage, session, shell } from "electron";
+import {
+  type ChildProcessWithoutNullStreams,
+  execFile,
+  spawn,
+} from "child_process";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  protocol,
+  safeStorage,
+  session,
+  shell,
+} from "electron";
 import { autoUpdater } from "electron-updater";
+import fs from "fs";
 import * as pty from "node-pty";
+import os from "os";
+import path from "path";
+import { Readable } from "stream";
+import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
@@ -26,7 +40,10 @@ function remoteCdArg(p: string): string {
 const SYSTEMD_USER_DIR = path.join(os.homedir(), ".config", "systemd", "user");
 const MONITOR_SERVICE_NAME = "metron-monitor";
 // Service file lives in the repo; %h specifiers in its ExecStart are expanded by systemd at runtime.
-const MONITOR_SERVICE_SRC = path.resolve(__dirname, "../../../services/monitor/metron-monitor.service");
+const MONITOR_SERVICE_SRC = path.resolve(
+  __dirname,
+  "../../../services/monitor/metron-monitor.service",
+);
 
 async function querySystemctl(...args: string[]): Promise<string> {
   try {
@@ -41,9 +58,32 @@ async function querySystemctl(...args: string[]): Promise<string> {
 // Controlled via playerctl/MPRIS (the local D-Bus interface Spotify's Linux
 // client exposes) rather than the Spotify Web API — no OAuth app registration,
 // no Premium requirement, and no network round-trip, just the local player.
+//
+// Status is pushed, not polled. A naive renderer-side setInterval poll looked
+// fine in dev but took up to ~2 minutes to notice a play/pause in practice:
+// Chromium throttles a hidden/unfocused page's timers, and this topbar spends
+// most of its life behind other windows. IPC sends to the renderer aren't
+// subject to that throttling, so instead a long-lived `playerctl --follow`
+// process streams status the instant Spotify's own D-Bus signal fires, and
+// every line gets broadcast straight to the renderer's query cache.
+//
+// `--follow` can't self-report "no such player" — targeting a player name
+// that doesn't exist just blocks forever with no output and no exit (verified
+// empirically), so it can't be trusted to signal Spotify opening/closing. A
+// cheap watchdog (`playerctl -l`, just a D-Bus name list) polls for that
+// instead, and only that — it never touches metadata/status.
 const PLAYERCTL_PLAYER = "spotify";
 const PLAYERCTL_SEP = "\x1f";
-const PLAYERCTL_STATUS_FIELDS = ["status", "title", "artist", "album", "mpris:artUrl", "mpris:length", "position"];
+const PLAYERCTL_STATUS_FIELDS = [
+  "status",
+  "title",
+  "artist",
+  "album",
+  "mpris:artUrl",
+  "mpris:length",
+  "position",
+];
+const SPOTIFY_WATCHDOG_MS = 5000;
 
 interface SpotifyStatus {
   running: boolean;
@@ -56,24 +96,27 @@ interface SpotifyStatus {
   positionMs?: number;
 }
 
+let spotifyStatus: SpotifyStatus = { running: false };
+let spotifyFollowProc: ChildProcessWithoutNullStreams | null = null;
+let spotifyWatchdogTimer: ReturnType<typeof setInterval> | null = null;
+
 async function playerctl(...args: string[]): Promise<string> {
-  const { stdout } = await execFileAsync("playerctl", ["-p", PLAYERCTL_PLAYER, ...args]);
+  const { stdout } = await execFileAsync("playerctl", [
+    "-p",
+    PLAYERCTL_PLAYER,
+    ...args,
+  ]);
   return stdout.trim();
 }
 
-async function getSpotifyStatus(): Promise<SpotifyStatus> {
-  let raw: string;
-  try {
-    raw = await playerctl(
-      "metadata",
-      "--format",
-      PLAYERCTL_STATUS_FIELDS.map((f) => `{{${f}}}`).join(PLAYERCTL_SEP),
-    );
-  } catch {
-    // No "spotify" MPRIS player registered — app isn't running, or isn't loaded yet.
-    return { running: false };
-  }
-  const [status, title, artist, album, artUrl, lengthUs, positionUs] = raw.split(PLAYERCTL_SEP);
+function setSpotifyStatus(next: SpotifyStatus): void {
+  spotifyStatus = next;
+  broadcast("spotify:status-changed", next);
+}
+
+function parseSpotifyStatusLine(raw: string): SpotifyStatus {
+  const [status, title, artist, album, artUrl, lengthUs, positionUs] =
+    raw.split(PLAYERCTL_SEP);
   return {
     running: true,
     playing: status === "Playing",
@@ -86,6 +129,73 @@ async function getSpotifyStatus(): Promise<SpotifyStatus> {
   };
 }
 
+function startSpotifyFollow(): void {
+  if (spotifyFollowProc) return;
+  const fmt = PLAYERCTL_STATUS_FIELDS.map((f) => `{{${f}}}`).join(
+    PLAYERCTL_SEP,
+  );
+  const proc = spawn("playerctl", [
+    "-p",
+    PLAYERCTL_PLAYER,
+    "metadata",
+    "--format",
+    fmt,
+    "--follow",
+  ]);
+  spotifyFollowProc = proc;
+
+  let buffer = "";
+  proc.stdout.on("data", (chunk: Buffer) => {
+    buffer += chunk.toString();
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (line) setSpotifyStatus(parseSpotifyStatusLine(line));
+    }
+  });
+  const onDone = () => {
+    if (spotifyFollowProc === proc) spotifyFollowProc = null;
+  };
+  proc.on("exit", onDone);
+  proc.on("error", onDone);
+}
+
+function stopSpotifyFollow(): void {
+  spotifyFollowProc?.kill();
+  spotifyFollowProc = null;
+}
+
+async function spotifyWatchdogTick(): Promise<void> {
+  let players: string[] = [];
+  try {
+    const { stdout } = await execFileAsync("playerctl", ["-l"]);
+    players = stdout
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+  } catch {
+    players = [];
+  }
+
+  if (players.includes(PLAYERCTL_PLAYER)) {
+    if (!spotifyFollowProc) startSpotifyFollow();
+  } else {
+    stopSpotifyFollow();
+    if (spotifyStatus.running) setSpotifyStatus({ running: false });
+  }
+}
+
+function startSpotifyWatchdog(): void {
+  spotifyWatchdogTick();
+  spotifyWatchdogTimer = setInterval(spotifyWatchdogTick, SPOTIFY_WATCHDOG_MS);
+}
+
+function stopSpotifyWatchdog(): void {
+  if (spotifyWatchdogTimer) clearInterval(spotifyWatchdogTimer);
+  spotifyWatchdogTimer = null;
+  stopSpotifyFollow();
+}
+
 interface GitFileEntry {
   path: string;
   originalPath?: string;
@@ -93,7 +203,10 @@ interface GitFileEntry {
 }
 
 async function gitRun(args: string[], cwd: string): Promise<string> {
-  const { stdout } = await execFileAsync("git", args, { cwd, maxBuffer: 10 * 1024 * 1024 });
+  const { stdout } = await execFileAsync("git", args, {
+    cwd,
+    maxBuffer: 10 * 1024 * 1024,
+  });
   return stdout;
 }
 
@@ -163,7 +276,9 @@ function initLogging(): void {
   } catch {
     // no existing log file yet
   }
-  appendLog(`app ready — version ${app.getVersion()}, platform ${process.platform}`);
+  appendLog(
+    `app ready — version ${app.getVersion()}, platform ${process.platform}`,
+  );
 
   // Without a listener, Node's default behavior is to crash the process on an
   // uncaught exception — log first, then exit the same way, rather than
@@ -172,7 +287,9 @@ function initLogging(): void {
     appendLog(`uncaughtException: ${err.stack ?? err}`);
     app.exit(1);
   });
-  process.on("unhandledRejection", (reason) => appendLog(`unhandledRejection: ${reason}`));
+  process.on("unhandledRejection", (reason) =>
+    appendLog(`unhandledRejection: ${reason}`),
+  );
 
   // Fires for any renderer (host window or a <webview> guest) that crashes,
   // gets OOM-killed, or is killed — the reason field is the key diagnostic.
@@ -196,13 +313,19 @@ function initLogging(): void {
   // in the log even when nothing actually crashes. pid is included so a
   // climbing process can be cross-referenced against the "webview pid=" line
   // logged once a given <webview> guest has navigated.
-  setInterval(() => {
-    const summary = app
-      .getAppMetrics()
-      .map((m) => `${m.type}${m.name ? `:${m.name}` : ""}#${m.pid}=${Math.round((m.memory?.workingSetSize ?? 0) / 1024)}MB`)
-      .join(" ");
-    appendLog(`memory ${summary}`);
-  }, 2 * 60 * 1000).unref();
+  setInterval(
+    () => {
+      const summary = app
+        .getAppMetrics()
+        .map(
+          (m) =>
+            `${m.type}${m.name ? `:${m.name}` : ""}#${m.pid}=${Math.round((m.memory?.workingSetSize ?? 0) / 1024)}MB`,
+        )
+        .join(" ");
+      appendLog(`memory ${summary}`);
+    },
+    2 * 60 * 1000,
+  ).unref();
 }
 
 const WEB_DIR = path.join(__dirname, "../../web/dist/client");
@@ -280,11 +403,16 @@ function chromeUserAgent(ses: Electron.Session): string {
   return ses
     .getUserAgent()
     .split(" ")
-    .filter((token) => !token.startsWith("Electron/") && !token.startsWith(`${app.name}/`))
+    .filter(
+      (token) =>
+        !token.startsWith("Electron/") && !token.startsWith(`${app.name}/`),
+    )
     .join(" ");
 }
 
-function isTrustedSender(event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent): boolean {
+function isTrustedSender(
+  event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent,
+): boolean {
   const url = event.senderFrame?.url;
   if (!url) return false;
   try {
@@ -302,12 +430,16 @@ function ipcHandle(
   listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown,
 ): void {
   ipcMain.handle(channel, (event, ...args) => {
-    if (!isTrustedSender(event)) throw new Error(`Rejected "${channel}" from untrusted sender`);
+    if (!isTrustedSender(event))
+      throw new Error(`Rejected "${channel}" from untrusted sender`);
     return listener(event, ...args);
   });
 }
 
-function ipcOn(channel: string, listener: (event: Electron.IpcMainEvent, ...args: any[]) => void): void {
+function ipcOn(
+  channel: string,
+  listener: (event: Electron.IpcMainEvent, ...args: any[]) => void,
+): void {
   ipcMain.on(channel, (event, ...args) => {
     if (!isTrustedSender(event)) return;
     listener(event, ...args);
@@ -337,13 +469,18 @@ const MIME_TYPES: Record<string, string> = {
 // returns the full file as a 200 with no Content-Length, which breaks <video>
 // playback for any mp4 that needs a byte-range seek (e.g. to read a trailing
 // moov atom). Serve local files ourselves so range requests get a real 206.
-async function serveLocalFile(filePath: string, range: string | null): Promise<Response> {
+async function serveLocalFile(
+  filePath: string,
+  range: string | null,
+): Promise<Response> {
   const stat = await fs.promises.stat(filePath);
   let start = 0;
   let end = stat.size - 1;
   let status = 200;
   const headers: Record<string, string> = {
-    "content-type": MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream",
+    "content-type":
+      MIME_TYPES[path.extname(filePath).toLowerCase()] ??
+      "application/octet-stream",
     "accept-ranges": "bytes",
   };
 
@@ -362,7 +499,9 @@ async function serveLocalFile(filePath: string, range: string | null): Promise<R
   }
 
   headers["content-length"] = String(end - start + 1);
-  const body = Readable.toWeb(fs.createReadStream(filePath, { start, end })) as ReadableStream<Uint8Array>;
+  const body = Readable.toWeb(
+    fs.createReadStream(filePath, { start, end }),
+  ) as ReadableStream<Uint8Array>;
   return new Response(body, { status, headers });
 }
 
@@ -396,8 +535,12 @@ function createWindow() {
     delete webPreferences.preload;
   });
 
-  win.webContents.on("unresponsive", () => appendLog("host window unresponsive"));
-  win.webContents.on("responsive", () => appendLog("host window responsive again"));
+  win.webContents.on("unresponsive", () =>
+    appendLog("host window unresponsive"),
+  );
+  win.webContents.on("responsive", () =>
+    appendLog("host window responsive again"),
+  );
 
   // Surfaces the React app's own console.error/warn (e.g. the ErrorBoundary
   // catch) into the same forensic log as everything else, instead of it only
@@ -405,25 +548,34 @@ function createWindow() {
   win.webContents.on("console-message", (event) => {
     const { level, message, lineNumber, sourceId } = event;
     if (level === "error" || level === "warning") {
-      appendLog(`renderer console[${level}] ${sourceId}:${lineNumber} ${message}`);
+      appendLog(
+        `renderer console[${level}] ${sourceId}:${lineNumber} ${message}`,
+      );
     }
   });
 
   win.webContents.on("before-input-event", (_, input) => {
-    if (input.type === "keyDown" && input.shift && (input.control || input.meta) && input.key.toLowerCase() === "i") {
+    if (
+      input.type === "keyDown" &&
+      input.shift &&
+      (input.control || input.meta) &&
+      input.key.toLowerCase() === "i"
+    ) {
       win.webContents.toggleDevTools();
     }
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https://") || url.startsWith("http://")) shell.openExternal(url);
+    if (url.startsWith("https://") || url.startsWith("http://"))
+      shell.openExternal(url);
     return { action: "deny" };
   });
 
   win.webContents.on("will-navigate", (event, url) => {
     try {
       const parsed = new URL(url);
-      if (!NAVIGATION_ALLOWED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`)) event.preventDefault();
+      if (!NAVIGATION_ALLOWED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`))
+        event.preventDefault();
     } catch {
       event.preventDefault();
     }
@@ -441,7 +593,9 @@ app.whenReady().then(() => {
   initLogging();
 
   if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify().catch((err: Error) => appendLog(`update check failed: ${err.message}`));
+    autoUpdater
+      .checkForUpdatesAndNotify()
+      .catch((err: Error) => appendLog(`update check failed: ${err.message}`));
   }
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
@@ -455,9 +609,11 @@ app.whenReady().then(() => {
   browserSession.setUserAgent(chromeUserAgent(browserSession));
   // Fullscreen (video player) and media (camera/mic prompts some sites show
   // regardless of use) are the only permissions a browser widget guest can ask for.
-  browserSession.setPermissionRequestHandler((_contents, permission, callback) => {
-    callback(permission === "fullscreen" || permission === "media");
-  });
+  browserSession.setPermissionRequestHandler(
+    (_contents, permission, callback) => {
+      callback(permission === "fullscreen" || permission === "media");
+    },
+  );
 
   app.on("web-contents-created", (_event, contents) => {
     if (contents.getType() !== "webview") return;
@@ -466,11 +622,16 @@ app.whenReady().then(() => {
     // as a real popup window so it shares the guest's session/cookies, instead
     // of swallowing the click and leaving login looking broken.
     contents.setWindowOpenHandler(({ url }) => {
-      if (!url.startsWith("http://") && !url.startsWith("https://")) return { action: "deny" };
+      if (!url.startsWith("http://") && !url.startsWith("https://"))
+        return { action: "deny" };
       return {
         action: "allow",
         overrideBrowserWindowOptions: {
-          webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+          },
         },
       };
     });
@@ -479,10 +640,16 @@ app.whenReady().then(() => {
     // fullscreen on the guest, which doesn't automatically propagate to the host
     // window — bridge it manually or the fullscreen button silently does nothing.
     contents.on("enter-html-full-screen", () => {
-      if (contents.hostWebContents) BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(true);
+      if (contents.hostWebContents)
+        BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(
+          true,
+        );
     });
     contents.on("leave-html-full-screen", () => {
-      if (contents.hostWebContents) BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(false);
+      if (contents.hostWebContents)
+        BrowserWindow.fromWebContents(contents.hostWebContents)?.setFullScreen(
+          false,
+        );
     });
 
     // Tracked separately rather than calling contents.getURL() from the
@@ -493,14 +660,24 @@ app.whenReady().then(() => {
     // pids in the periodic "memory" line to tie a climbing process to a URL.
     contents.on("did-navigate", (_e, url) => {
       lastUrl = url;
-      appendLog(`webview pid=${contents.getOSProcessId()} navigated to url=${lastUrl}`);
+      appendLog(
+        `webview pid=${contents.getOSProcessId()} navigated to url=${lastUrl}`,
+      );
     });
-    contents.on("did-navigate-in-page", (_e, url) => { lastUrl = url; });
+    contents.on("did-navigate-in-page", (_e, url) => {
+      lastUrl = url;
+    });
 
     appendLog(`webview created url=${lastUrl}`);
-    contents.on("unresponsive", () => appendLog(`webview unresponsive url=${lastUrl}`));
-    contents.on("responsive", () => appendLog(`webview responsive again url=${lastUrl}`));
-    contents.on("destroyed", () => appendLog(`webview destroyed url=${lastUrl}`));
+    contents.on("unresponsive", () =>
+      appendLog(`webview unresponsive url=${lastUrl}`),
+    );
+    contents.on("responsive", () =>
+      appendLog(`webview responsive again url=${lastUrl}`),
+    );
+    contents.on("destroyed", () =>
+      appendLog(`webview destroyed url=${lastUrl}`),
+    );
     // Surfaces guest-page JS errors/warnings (e.g. a video decode or WebGL
     // context-lost error) that might otherwise vanish along with the freeze.
     contents.on("console-message", (event) => {
@@ -511,7 +688,10 @@ app.whenReady().then(() => {
     });
   });
 
-  ipcHandle("auth:get", (_, key: string): string | null => authCache[key] ?? null);
+  ipcHandle(
+    "auth:get",
+    (_, key: string): string | null => authCache[key] ?? null,
+  );
   ipcHandle("auth:set", (_, key: string, value: string): void => {
     authCache[key] = value;
     saveAuthCache();
@@ -543,9 +723,18 @@ app.whenReady().then(() => {
         autoUpdater.removeListener("update-not-available", onNotAvailable);
         autoUpdater.removeListener("error", onError);
       };
-      const onAvailable = (info: { version: string }) => { cleanup(); resolve({ status: "available", version: info.version }); };
-      const onNotAvailable = () => { cleanup(); resolve({ status: "up-to-date" }); };
-      const onError = (err: Error) => { cleanup(); resolve({ status: "error", message: err.message }); };
+      const onAvailable = (info: { version: string }) => {
+        cleanup();
+        resolve({ status: "available", version: info.version });
+      };
+      const onNotAvailable = () => {
+        cleanup();
+        resolve({ status: "up-to-date" });
+      };
+      const onError = (err: Error) => {
+        cleanup();
+        resolve({ status: "error", message: err.message });
+      };
       autoUpdater.once("update-available", onAvailable);
       autoUpdater.once("update-not-available", onNotAvailable);
       autoUpdater.once("error", onError);
@@ -573,8 +762,12 @@ app.whenReady().then(() => {
 
   ipcHandle("dialog:select-folder", async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    const options: Electron.OpenDialogOptions = { properties: ["openDirectory"] };
-    const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options);
+    const options: Electron.OpenDialogOptions = {
+      properties: ["openDirectory"],
+    };
+    const result = win
+      ? await dialog.showOpenDialog(win, options)
+      : await dialog.showOpenDialog(options);
     return result.canceled ? null : (result.filePaths[0] ?? null);
   });
 
@@ -594,7 +787,8 @@ app.whenReady().then(() => {
     const dirsTag = "@@DIRS@@\n";
     const cwdAt = stdout.indexOf(cwdTag);
     const dirsAt = stdout.indexOf(dirsTag, cwdAt);
-    if (cwdAt === -1 || dirsAt === -1) throw new Error("Unexpected response from remote host.");
+    if (cwdAt === -1 || dirsAt === -1)
+      throw new Error("Unexpected response from remote host.");
     const cwd = stdout.slice(cwdAt + cwdTag.length, dirsAt).trim();
     const dirs = stdout
       .slice(dirsAt + dirsTag.length)
@@ -608,15 +802,22 @@ app.whenReady().then(() => {
 
   ipcHandle(
     "terminal:spawn",
-    async (_, sessionId: string, cols: number, rows: number, config: { command: string; args: string[]; cwd?: string }) => {
+    async (
+      _,
+      sessionId: string,
+      cols: number,
+      rows: number,
+      config: { command: string; args: string[]; cwd?: string },
+    ) => {
       if (ptySessions.has(sessionId)) return;
 
       const env = { ...process.env };
       delete env.ELECTRON_RUN_AS_NODE;
 
-      const command = config.command === "default-shell"
-        ? (process.env.SHELL ?? "/bin/bash")
-        : config.command;
+      const command =
+        config.command === "default-shell"
+          ? (process.env.SHELL ?? "/bin/bash")
+          : config.command;
 
       const p = pty.spawn(command, config.args, {
         name: "xterm-256color",
@@ -636,16 +837,19 @@ app.whenReady().then(() => {
         broadcast("terminal:exit", sessionId, exitCode ?? 0);
         ptySessions.delete(sessionId);
       });
-    }
+    },
   );
 
   ipcOn("terminal:input", (_, sessionId: string, data: string) => {
     ptySessions.get(sessionId)?.write(data);
   });
 
-  ipcOn("terminal:resize", (_, sessionId: string, cols: number, rows: number) => {
-    ptySessions.get(sessionId)?.resize(cols, rows);
-  });
+  ipcOn(
+    "terminal:resize",
+    (_, sessionId: string, cols: number, rows: number) => {
+      ptySessions.get(sessionId)?.resize(cols, rows);
+    },
+  );
 
   ipcOn("terminal:kill", (_, sessionId: string) => {
     ptySessions.get(sessionId)?.kill();
@@ -653,15 +857,28 @@ app.whenReady().then(() => {
   });
 
   ipcHandle("git:status", async (_, repoPath: string) => {
-    const branch = (await gitRun(["rev-parse", "--abbrev-ref", "HEAD"], repoPath)).trim();
-    let ahead = 0, behind = 0;
+    const branch = (
+      await gitRun(["rev-parse", "--abbrev-ref", "HEAD"], repoPath)
+    ).trim();
+    let ahead = 0,
+      behind = 0;
     try {
-      const counts = (await gitRun(["rev-list", "--left-right", "--count", "@{upstream}...HEAD"], repoPath)).trim();
+      const counts = (
+        await gitRun(
+          ["rev-list", "--left-right", "--count", "@{upstream}...HEAD"],
+          repoPath,
+        )
+      ).trim();
       const [b, a] = counts.split("\t").map(Number);
       ahead = a ?? 0;
       behind = b ?? 0;
-    } catch { /* no upstream configured */ }
-    const statusOut = await gitRun(["status", "--porcelain=v1", "-z"], repoPath);
+    } catch {
+      /* no upstream configured */
+    }
+    const statusOut = await gitRun(
+      ["status", "--porcelain=v1", "-z"],
+      repoPath,
+    );
     return { branch, ahead, behind, ...parsePorcelain(statusOut) };
   });
 
@@ -669,7 +886,11 @@ app.whenReady().then(() => {
   // complete source rather than just the visible hunk — a hunk-only highlight
   // misreads any multi-line construct (block comment, template literal, JSX)
   // that opens or closes outside the shown context lines.
-  const gitShowFile = async (repoPath: string, ref: string, file: string): Promise<string> => {
+  const gitShowFile = async (
+    repoPath: string,
+    ref: string,
+    file: string,
+  ): Promise<string> => {
     try {
       return await gitRun(["show", `${ref}:${file}`], repoPath);
     } catch {
@@ -685,74 +906,127 @@ app.whenReady().then(() => {
     }
   };
 
-  ipcHandle("git:diff", async (_, repoPath: string, file: string, staged: boolean, untracked: boolean) => {
-    if (untracked) {
-      const newContent = readWorkingTreeFile(repoPath, file);
-      try {
-        const diff = await gitRun(["diff", "--no-index", "/dev/null", file], repoPath);
-        return { diff, oldContent: "", newContent };
-      } catch (err: any) {
-        if (err.code === 1) return { diff: err.stdout as string, oldContent: "", newContent };
-        throw err;
+  ipcHandle(
+    "git:diff",
+    async (
+      _,
+      repoPath: string,
+      file: string,
+      staged: boolean,
+      untracked: boolean,
+    ) => {
+      if (untracked) {
+        const newContent = readWorkingTreeFile(repoPath, file);
+        try {
+          const diff = await gitRun(
+            ["diff", "--no-index", "/dev/null", file],
+            repoPath,
+          );
+          return { diff, oldContent: "", newContent };
+        } catch (err: any) {
+          if (err.code === 1)
+            return { diff: err.stdout as string, oldContent: "", newContent };
+          throw err;
+        }
       }
-    }
 
-    const diff = await gitRun(staged ? ["diff", "--cached", "--", file] : ["diff", "--", file], repoPath);
-    if (staged) {
-      const [oldContent, newContent] = await Promise.all([
-        gitShowFile(repoPath, "HEAD", file),
-        gitShowFile(repoPath, "", file), // index (stage 0)
-      ]);
+      const diff = await gitRun(
+        staged ? ["diff", "--cached", "--", file] : ["diff", "--", file],
+        repoPath,
+      );
+      if (staged) {
+        const [oldContent, newContent] = await Promise.all([
+          gitShowFile(repoPath, "HEAD", file),
+          gitShowFile(repoPath, "", file), // index (stage 0)
+        ]);
+        return { diff, oldContent, newContent };
+      }
+      const oldContent = await gitShowFile(repoPath, "", file); // index (stage 0)
+      const newContent = readWorkingTreeFile(repoPath, file);
       return { diff, oldContent, newContent };
-    }
-    const oldContent = await gitShowFile(repoPath, "", file); // index (stage 0)
-    const newContent = readWorkingTreeFile(repoPath, file);
-    return { diff, oldContent, newContent };
-  });
+    },
+  );
 
   ipcHandle("git:stage", (_, repoPath: string, files: string[]) =>
-    gitRun(["add", "--", ...files], repoPath));
+    gitRun(["add", "--", ...files], repoPath),
+  );
 
   ipcHandle("git:unstage", (_, repoPath: string, files: string[]) =>
-    gitRun(["restore", "--staged", "--", ...files], repoPath));
+    gitRun(["restore", "--staged", "--", ...files], repoPath),
+  );
 
-  ipcHandle("git:discard", async (_, repoPath: string, trackedFiles: string[], untrackedFiles: string[]) => {
-    if (trackedFiles.length > 0) {
-      await gitRun(["restore", "--", ...trackedFiles], repoPath);
-    }
-    const repoRoot = path.resolve(repoPath);
-    for (const file of untrackedFiles) {
-      const target = path.resolve(repoRoot, file);
-      if (target === repoRoot || !target.startsWith(repoRoot + path.sep)) {
-        throw new Error(`Refusing to delete path outside repository: ${file}`);
+  ipcHandle(
+    "git:discard",
+    async (
+      _,
+      repoPath: string,
+      trackedFiles: string[],
+      untrackedFiles: string[],
+    ) => {
+      if (trackedFiles.length > 0) {
+        await gitRun(["restore", "--", ...trackedFiles], repoPath);
       }
-      fs.rmSync(target, { recursive: true, force: true });
-    }
-  });
+      const repoRoot = path.resolve(repoPath);
+      for (const file of untrackedFiles) {
+        const target = path.resolve(repoRoot, file);
+        if (target === repoRoot || !target.startsWith(repoRoot + path.sep)) {
+          throw new Error(
+            `Refusing to delete path outside repository: ${file}`,
+          );
+        }
+        fs.rmSync(target, { recursive: true, force: true });
+      }
+    },
+  );
 
   ipcHandle("git:commit", (_, repoPath: string, message: string) =>
-    gitRun(["commit", "-m", message], repoPath));
+    gitRun(["commit", "-m", message], repoPath),
+  );
 
-  ipcHandle("git:push", (_, repoPath: string) =>
-    gitRun(["push"], repoPath));
+  ipcHandle("git:push", (_, repoPath: string) => gitRun(["push"], repoPath));
 
-  ipcHandle("git:log", async (_, repoPath: string, limit: number = 30) => {
+  ipcHandle("git:log", async (_, repoPath: string, limit = 30) => {
     const SEP = "%x1f";
     const out = await gitRun(
-      ["log", `--format=%H${SEP}%h${SEP}%s${SEP}%an${SEP}%ar${SEP}%D`, `-${limit}`],
+      [
+        "log",
+        `--format=%H${SEP}%h${SEP}%s${SEP}%an${SEP}%ar${SEP}%D`,
+        `-${limit}`,
+      ],
       repoPath,
     );
-    return out.trim().split("\n").filter(Boolean).map((line) => {
-      const [hash, shortHash, subject, author, date, refs] = line.split("\x1f");
-      return { hash, shortHash, subject: subject ?? "", author: author ?? "", date: date ?? "", refs: refs?.trim() ?? "" };
-    });
+    return out
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const [hash, shortHash, subject, author, date, refs] =
+          line.split("\x1f");
+        return {
+          hash,
+          shortHash,
+          subject: subject ?? "",
+          author: author ?? "",
+          date: date ?? "",
+          refs: refs?.trim() ?? "",
+        };
+      });
   });
 
   ipcHandle("monitor:status", async () => {
-    const serviceFilePath = path.join(SYSTEMD_USER_DIR, `${MONITOR_SERVICE_NAME}.service`);
+    const serviceFilePath = path.join(
+      SYSTEMD_USER_DIR,
+      `${MONITOR_SERVICE_NAME}.service`,
+    );
     const installed = fs.existsSync(serviceFilePath);
     if (!installed) {
-      return { installed: false, active: false, enabled: false, failed: false, state: "not-found" };
+      return {
+        installed: false,
+        active: false,
+        enabled: false,
+        failed: false,
+        state: "not-found",
+      };
     }
     const state = await querySystemctl("is-active", MONITOR_SERVICE_NAME);
     const enabledStr = await querySystemctl("is-enabled", MONITOR_SERVICE_NAME);
@@ -767,12 +1041,21 @@ app.whenReady().then(() => {
 
   ipcHandle("monitor:install", async () => {
     if (!fs.existsSync(MONITOR_SERVICE_SRC)) {
-      throw new Error(`Service file not found at ${MONITOR_SERVICE_SRC} — is the repo at ~/dev/metron?`);
+      throw new Error(
+        `Service file not found at ${MONITOR_SERVICE_SRC} — is the repo at ~/dev/metron?`,
+      );
     }
     fs.mkdirSync(SYSTEMD_USER_DIR, { recursive: true });
-    fs.copyFileSync(MONITOR_SERVICE_SRC, path.join(SYSTEMD_USER_DIR, `${MONITOR_SERVICE_NAME}.service`));
+    fs.copyFileSync(
+      MONITOR_SERVICE_SRC,
+      path.join(SYSTEMD_USER_DIR, `${MONITOR_SERVICE_NAME}.service`),
+    );
     await execFileAsync("systemctl", ["--user", "daemon-reload"]);
-    await execFileAsync("systemctl", ["--user", "enable", MONITOR_SERVICE_NAME]);
+    await execFileAsync("systemctl", [
+      "--user",
+      "enable",
+      MONITOR_SERVICE_NAME,
+    ]);
     await execFileAsync("systemctl", ["--user", "start", MONITOR_SERVICE_NAME]);
   });
 
@@ -786,13 +1069,21 @@ app.whenReady().then(() => {
 
   ipcHandle("monitor:setEnabled", async (_, enabled: boolean) => {
     if (enabled) {
-      await execFileAsync("systemctl", ["--user", "enable", MONITOR_SERVICE_NAME]);
+      await execFileAsync("systemctl", [
+        "--user",
+        "enable",
+        MONITOR_SERVICE_NAME,
+      ]);
     } else {
-      await execFileAsync("systemctl", ["--user", "disable", MONITOR_SERVICE_NAME]);
+      await execFileAsync("systemctl", [
+        "--user",
+        "disable",
+        MONITOR_SERVICE_NAME,
+      ]);
     }
   });
 
-  ipcHandle("spotify:status", async () => getSpotifyStatus());
+  ipcHandle("spotify:status", async () => spotifyStatus);
 
   ipcHandle("spotify:playPause", async () => {
     await playerctl("play-pause");
@@ -808,7 +1099,10 @@ app.whenReady().then(() => {
       const { pathname } = new URL(request.url);
       let target = INDEX_HTML;
       if (pathname && pathname !== "/" && path.extname(pathname)) {
-        const resolved = path.resolve(WEB_DIR, "." + decodeURIComponent(pathname));
+        const resolved = path.resolve(
+          WEB_DIR,
+          "." + decodeURIComponent(pathname),
+        );
         if (resolved.startsWith(WEB_DIR + path.sep)) target = resolved;
       }
       return await serveLocalFile(target, request.headers.get("range"));
@@ -818,6 +1112,7 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+  startSpotifyWatchdog();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -827,5 +1122,6 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   for (const p of ptySessions.values()) p.kill();
   ptySessions.clear();
+  stopSpotifyWatchdog();
   if (process.platform !== "darwin") app.quit();
 });

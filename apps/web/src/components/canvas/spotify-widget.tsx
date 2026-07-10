@@ -1,41 +1,67 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pause, Play, SkipForward } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SPOTIFY_STATUS_QUERY_KEY = ["spotify-status"];
+// Backstop only — the main process pushes a status update the instant Spotify's
+// own D-Bus signal fires, normally well under a second. This just guarantees the
+// optimistic icon doesn't get stuck if a push is ever lost (e.g. Spotify closes
+// mid-click).
+const OPTIMISTIC_TIMEOUT_MS = 4000;
 
 export function SpotifyWidget() {
   const queryClient = useQueryClient();
   const [optimisticPlaying, setOptimisticPlaying] = useState<boolean | null>(
     null,
   );
+  // Tracks which "playing" value our own pending click expects, so a stray
+  // push that arrives before our own change propagates doesn't clear the
+  // optimistic icon to the wrong state for a frame.
+  const pendingPlaying = useRef<boolean | null>(null);
+  const optimisticTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data } = useQuery({
     queryKey: SPOTIFY_STATUS_QUERY_KEY,
     queryFn: () => window.electron!.spotify.getStatus(),
-    refetchInterval: 2000,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
-  const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: SPOTIFY_STATUS_QUERY_KEY });
+  useEffect(() => {
+    return window.electron!.spotify.onStatusChange((status) => {
+      queryClient.setQueryData(SPOTIFY_STATUS_QUERY_KEY, status);
+      if (
+        pendingPlaying.current === null ||
+        status.playing === pendingPlaying.current
+      ) {
+        pendingPlaying.current = null;
+        setOptimisticPlaying(null);
+        if (optimisticTimer.current) {
+          clearTimeout(optimisticTimer.current);
+          optimisticTimer.current = null;
+        }
+      }
+    });
+  }, [queryClient]);
 
   if (!data?.running) return null;
 
   const isPlaying = optimisticPlaying ?? data.playing ?? false;
 
-  const togglePlayPause = async () => {
-    setOptimisticPlaying(!isPlaying);
-    try {
-      await window.electron!.spotify.playPause();
-    } finally {
-      await refresh();
+  const togglePlayPause = () => {
+    const next = !isPlaying;
+    pendingPlaying.current = next;
+    setOptimisticPlaying(next);
+    window.electron!.spotify.playPause();
+
+    if (optimisticTimer.current) clearTimeout(optimisticTimer.current);
+    optimisticTimer.current = setTimeout(() => {
+      pendingPlaying.current = null;
       setOptimisticPlaying(null);
-    }
+    }, OPTIMISTIC_TIMEOUT_MS);
   };
 
-  const skip = async () => {
-    await window.electron!.spotify.next();
-    refresh();
+  const skip = () => {
+    window.electron!.spotify.next();
   };
 
   return (

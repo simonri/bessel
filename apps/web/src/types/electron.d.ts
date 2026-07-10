@@ -1,5 +1,16 @@
 export {};
 
+interface ElectronSpotifyStatus {
+  running: boolean;
+  playing?: boolean;
+  title?: string;
+  artist?: string;
+  album?: string;
+  artUrl?: string;
+  lengthMs?: number;
+  positionMs?: number;
+}
+
 declare global {
   interface Window {
     electron?: {
@@ -111,18 +122,12 @@ declare global {
         reveal: () => Promise<void>;
       };
       spotify: {
-        getStatus: () => Promise<{
-          running: boolean;
-          playing?: boolean;
-          title?: string;
-          artist?: string;
-          album?: string;
-          artUrl?: string;
-          lengthMs?: number;
-          positionMs?: number;
-        }>;
+        getStatus: () => Promise<ElectronSpotifyStatus>;
         playPause: () => Promise<void>;
         next: () => Promise<void>;
+        onStatusChange: (
+          callback: (status: ElectronSpotifyStatus) => void,
+        ) => () => void;
       };
     };
   }
