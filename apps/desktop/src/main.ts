@@ -24,6 +24,22 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
+// A packaged build and a `pnpm dev` build share the same userData dir (and
+// therefore the same cookie/session-storage/GPU-shader-cache stores, and the
+// persist:browser <webview> partition), so running both at once means two
+// unrelated Chromium processes hitting the same on-disk profile concurrently
+// — a well-known source of corruption and crashes, not just wasted resources.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+  process.exit(0);
+}
+app.on("second-instance", () => {
+  const win = BrowserWindow.getAllWindows()[0];
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.focus();
+});
+
 function shQuote(s: string): string {
   return "'" + s.replace(/'/g, "'\\''") + "'";
 }

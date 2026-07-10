@@ -24,6 +24,13 @@ import type {
 
 const BROWSER_PARTITION = "persist:browser";
 
+// A guest renderer crash (native GPU/video-decode faults are the common
+// culprit for video-heavy sites) is usually transient — reload the same URL
+// a few times with backoff before giving up and showing the manual retry UI,
+// so a one-off crash doesn't strand the tab on a dead frame.
+const MAX_CRASH_AUTO_RETRIES = 3;
+const CRASH_RETRY_BASE_DELAY_MS = 1000;
+
 const QUICK_LAUNCH = [
   {
     label: "YouTube",
@@ -116,6 +123,8 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     const wv = webviewRef.current;
     if (!wv) return;
 
+    const crashRetry = { attempts: 0, timer: null as ReturnType<typeof setTimeout> | null };
+
     const onStartLoading = () => {
       setLoading(true);
       setFailed(null);
@@ -129,6 +138,9 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
       setCanGoBack(wv.canGoBack());
       setCanGoForward(wv.canGoForward());
       onUrlChangeRef.current?.(url);
+      // A real navigation completed, so the guest is healthy again — don't
+      // let attempts from an earlier, unrelated crash burst count against it.
+      crashRetry.attempts = 0;
     };
 
     const onTitle = (e: Event) => {
@@ -148,9 +160,20 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     // GPU-related abort during heavy video playback, ...). None of the other
     // handlers fire in this case, so without this the widget silently freezes
     // on its last painted frame with no way to recover short of closing it.
+    // Most such crashes are transient, so reload a few times with backoff
+    // before falling back to the manual retry UI.
     const onRenderProcessGone = (e: Event) => {
       const { reason, exitCode } = (e as RenderProcessGoneEvent).details;
       setLoading(false);
+
+      if (crashRetry.attempts < MAX_CRASH_AUTO_RETRIES) {
+        crashRetry.attempts += 1;
+        const delay =
+          CRASH_RETRY_BASE_DELAY_MS * 2 ** (crashRetry.attempts - 1);
+        crashRetry.timer = setTimeout(() => wv.reload(), delay);
+        return;
+      }
+
       setFailed({
         code: exitCode,
         description: `The page stopped responding (${reason}).`,
@@ -165,6 +188,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     wv.addEventListener("did-fail-load", onFail);
     wv.addEventListener("render-process-gone", onRenderProcessGone);
     return () => {
+      if (crashRetry.timer) clearTimeout(crashRetry.timer);
       wv.removeEventListener("did-start-loading", onStartLoading);
       wv.removeEventListener("did-stop-loading", onStopLoading);
       wv.removeEventListener("did-navigate", onNavigate);

@@ -62,7 +62,7 @@ async def list_tasks(
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TaskSortProperty]], Depends(sorting_getter)],
-  status: Annotated[TaskStatus | None, Query(description="Filter by status.")] = None,
+  status: Annotated[list[TaskStatus] | None, Query(description="Filter by status. Repeat to filter by multiple.")] = None,
   priority: int | None = Query(default=None, ge=0, le=4, description="Filter by priority."),
   project: str | None = Query(default=None, description="Filter by project."),
   area: str | None = Query(default=None, description="Filter by area."),
@@ -74,7 +74,7 @@ async def list_tasks(
   statement = repo.get_base_statement().where(Task.user_id == current_user.id)
 
   if status is not None:
-    statement = statement.where(Task.status == status)
+    statement = statement.where(Task.status.in_(status))
   if priority is not None:
     statement = statement.where(Task.priority == priority)
   if project is not None:

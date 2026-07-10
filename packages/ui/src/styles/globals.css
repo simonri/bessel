@@ -167,3 +167,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Collapse all animation/transition durations to effectively zero rather than
+   removing them outright — this keeps enter/exit state changes and drag
+   settle instant (no slide/spring/parallax) without stripping the opacity
+   and color changes that still carry meaning. Applies globally so Radix's
+   animate-in/out classes, react-grid-layout's canvas transitions, and
+   dnd-kit's inline transition styles are all covered from one place. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

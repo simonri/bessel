@@ -9,9 +9,9 @@ const buttonVariants = cva(
     "box-border relative inline-flex items-center gap-1.5 whitespace-nowrap rounded-md",
     "disabled:pointer-events-none disabled:opacity-50",
     "selection:text-current",
-    "transition-colors duration-150",
+    "transition-[background-color,color,transform] duration-150 active:scale-[0.97]",
     "focus:outline-none",
-    "motion-reduce:transition-none",
+    "motion-reduce:transition-none motion-reduce:active:scale-100",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
   ],
   {

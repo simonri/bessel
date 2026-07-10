@@ -2646,16 +2646,19 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/TaskStatus"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskStatus"
+                  }
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Filter by status.",
+              "description": "Filter by status. Repeat to filter by multiple.",
               "title": "Status"
             },
-            "description": "Filter by status."
+            "description": "Filter by status. Repeat to filter by multiple."
           },
           {
             "name": "priority",

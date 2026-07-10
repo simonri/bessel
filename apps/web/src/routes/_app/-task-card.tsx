@@ -83,13 +83,13 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color,transform] duration-150 cursor-grab active:cursor-grabbing active:scale-[0.98] motion-reduce:active:scale-100 hover:bg-white/10 hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
         <button
           type="button"
-          className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
+          className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-[color,transform] duration-150 active:scale-90 motion-reduce:active:scale-100"
           onClick={(e) => {
             e.stopPropagation();
             onComplete();

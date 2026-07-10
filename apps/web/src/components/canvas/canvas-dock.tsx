@@ -36,7 +36,7 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
+          className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
             active
               ? "text-primary-400"
               : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"
@@ -103,7 +103,7 @@ export function CanvasDock() {
           <button
             key={key}
             onClick={() => config.multiInstance ? openWindow(key) : toggleWindow(key)}
-            className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
               active
                 ? "text-primary-400"
                 : "text-white/40 hover:bg-white/[0.08] hover:text-white/70"

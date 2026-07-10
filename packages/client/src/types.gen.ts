@@ -4074,9 +4074,9 @@ export type ListTasksV1TasksGetData = {
     /**
      * Status
      *
-     * Filter by status.
+     * Filter by status. Repeat to filter by multiple.
      */
-    status?: TaskStatus | null;
+    status?: Array<TaskStatus> | null;
     /**
      * Priority
      *

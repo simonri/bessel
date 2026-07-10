@@ -26,7 +26,7 @@ export function PlaceCard({
 
   return (
     <div
-      className={`group flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
+      className={`group flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-[background-color,border-color,transform] duration-150 active:scale-[0.98] motion-reduce:active:scale-100 ${
         isSelected
           ? "border-white/20 bg-white/[0.08]"
           : "border-white/[0.07] bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.06]"

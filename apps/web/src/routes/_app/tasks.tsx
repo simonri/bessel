@@ -18,6 +18,7 @@ import {
   listTasksV1TasksGetQueryKey,
   reopenTaskV1TasksTaskIdReopenPostMutation,
   reorderTasksV1TasksReorderPatchMutation,
+  TaskStatus,
   updateTaskV1TasksTaskIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
@@ -124,7 +125,14 @@ function Tasks() {
       window.removeEventListener("pointermove", track, { capture: true });
   }, []);
 
-  const statusFilter = viewTab === "done" ? ("done" as const) : undefined;
+  // Board only ever renders todo/in_progress tasks — filtering server-side keeps
+  // its result set small so the (done-heavy) pagination limit never truncates it.
+  const statusFilter =
+    viewTab === "done"
+      ? [TaskStatus.DONE]
+      : viewTab === "board"
+        ? [TaskStatus.TODO, TaskStatus.IN_PROGRESS]
+        : undefined;
   const sortingValue =
     viewTab === "done"
       ? ["-completed_at" as "-created_at"]

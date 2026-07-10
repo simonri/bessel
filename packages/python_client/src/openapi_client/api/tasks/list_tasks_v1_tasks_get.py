@@ -14,7 +14,7 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
   *,
-  status: None | TaskStatus | Unset = UNSET,
+  status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
@@ -28,11 +28,15 @@ def _get_kwargs(
 
   params: dict[str, Any] = {}
 
-  json_status: None | str | Unset
+  json_status: list[str] | None | Unset
   if isinstance(status, Unset):
     json_status = UNSET
-  elif isinstance(status, TaskStatus):
-    json_status = status.value
+  elif isinstance(status, list):
+    json_status = []
+    for status_type_0_item_data in status:
+      status_type_0_item = status_type_0_item_data.value
+      json_status.append(status_type_0_item)
+
   else:
     json_status = status
   params["status"] = json_status
@@ -136,7 +140,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   *,
   client: AuthenticatedClient,
-  status: None | TaskStatus | Unset = UNSET,
+  status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
@@ -150,7 +154,7 @@ def sync_detailed(
   """List Tasks
 
   Args:
-      status (None | TaskStatus | Unset): Filter by status.
+      status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
@@ -196,7 +200,7 @@ def sync_detailed(
 def sync(
   *,
   client: AuthenticatedClient,
-  status: None | TaskStatus | Unset = UNSET,
+  status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
@@ -210,7 +214,7 @@ def sync(
   """List Tasks
 
   Args:
-      status (None | TaskStatus | Unset): Filter by status.
+      status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
@@ -251,7 +255,7 @@ def sync(
 async def asyncio_detailed(
   *,
   client: AuthenticatedClient,
-  status: None | TaskStatus | Unset = UNSET,
+  status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
@@ -265,7 +269,7 @@ async def asyncio_detailed(
   """List Tasks
 
   Args:
-      status (None | TaskStatus | Unset): Filter by status.
+      status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.
@@ -309,7 +313,7 @@ async def asyncio_detailed(
 async def asyncio(
   *,
   client: AuthenticatedClient,
-  status: None | TaskStatus | Unset = UNSET,
+  status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
   area: None | str | Unset = UNSET,
@@ -323,7 +327,7 @@ async def asyncio(
   """List Tasks
 
   Args:
-      status (None | TaskStatus | Unset): Filter by status.
+      status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
       area (None | str | Unset): Filter by area.

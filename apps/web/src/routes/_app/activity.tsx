@@ -4,6 +4,7 @@ import {
   getIntradayActivityV1ActivityIntradayGetOptions,
   listActivitySourcesV1ActivitySourcesGetOptions,
   listTasksV1TasksGetOptions,
+  TaskStatus,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
 import {
@@ -93,7 +94,7 @@ function ActivityPage() {
     ...listTasksV1TasksGetOptions({
       client,
       query: {
-        status: "done",
+        status: [TaskStatus.DONE],
         completed_after: startTs,
         completed_before: endTs,
         limit: 1,
