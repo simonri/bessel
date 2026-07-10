@@ -156,14 +156,22 @@ function WorkspaceGrid({
         dragConfig={{ enabled: true, handle: ".canvas-window-titlebar", threshold: 5, bounded: true }}
         resizeConfig={{ enabled: true, handles: ["se"] }}
         compactor={compactor}
-        onDragStart={(_layout, oldItem) => markActive(oldItem?.i ?? null)}
+        onDragStart={(_layout, oldItem) => {
+          markActive(oldItem?.i ?? null);
+          document.body.classList.add("select-none");
+        }}
         onDragStop={(next) => {
           markActive(null);
+          document.body.classList.remove("select-none");
           updateLayout(workspaceId, next);
         }}
-        onResizeStart={(_layout, oldItem) => markActive(oldItem?.i ?? null)}
+        onResizeStart={(_layout, oldItem) => {
+          markActive(oldItem?.i ?? null);
+          document.body.classList.add("select-none");
+        }}
         onResizeStop={(next) => {
           markActive(null);
+          document.body.classList.remove("select-none");
           updateLayout(workspaceId, next);
         }}
       >
@@ -205,6 +213,16 @@ export function CanvasShell() {
     };
     window.addEventListener("keydown", handler, { capture: true });
     return () => window.removeEventListener("keydown", handler, { capture: true });
+  }, []);
+
+  // Safety net for the select-none toggled in onDragStart/onResizeStart below:
+  // if a drag ends in a way react-grid-layout's onStop doesn't observe (mouse
+  // released outside the window, an error mid-callback), this guarantees text
+  // selection isn't left permanently disabled app-wide.
+  useEffect(() => {
+    const clear = () => document.body.classList.remove("select-none");
+    window.addEventListener("pointerup", clear);
+    return () => window.removeEventListener("pointerup", clear);
   }, []);
 
   return (

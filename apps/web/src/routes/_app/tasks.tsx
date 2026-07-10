@@ -1,63 +1,33 @@
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import {
+  closestCenter,
   DndContext,
-  DragOverlay,
   type DragEndEvent,
   type DragOverEvent,
+  DragOverlay,
   type DragStartEvent,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
-  useDroppable,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { createFileRoute } from "@tanstack/react-router";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import {
-  Repeat,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Flag,
-  Circle,
-  CheckSquare,
-  Folder,
-  RotateCcw,
-} from "lucide-react";
-import { isDesktop } from "@/lib/environment";
+import { arrayMove } from "@dnd-kit/sortable";
 import type { TaskSchema } from "@metron/client";
 import {
+  completeTaskV1TasksTaskIdCompletePostMutation,
+  listProjectsV1ProjectsGetOptions,
   listTasksV1TasksGetOptions,
   listTasksV1TasksGetQueryKey,
-  listProjectsV1ProjectsGetOptions,
-  completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
-  updateTaskV1TasksTaskIdPatchMutation,
   reorderTasksV1TasksReorderPatchMutation,
+  updateTaskV1TasksTaskIdPatchMutation,
 } from "@metron/client";
 import { Button } from "@metron/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@metron/ui/components/dialog";
+import { Dialog } from "@metron/ui/components/dialog";
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  EmptyDescription,
 } from "@metron/ui/components/empty";
 import {
   Select,
@@ -66,20 +36,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@metron/ui/components/select";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { format } from "date-fns";
+import {
+  CheckSquare,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  Flag,
+  Folder,
+  Repeat,
+  RotateCcw,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { CreateTaskDialog } from "@/components/create-task-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
-import { toast } from "sonner";
-import { client } from "@/lib/client";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
+import { client } from "@/lib/client";
+import { isDesktop } from "@/lib/environment";
 import {
-  STATUS_CONFIG,
-  PRIORITY_CONFIG,
-  isRepeatingTask,
+  buildTaskPrompt,
   formatDueDate,
   getDueDateColor,
-  formatRecurrence,
-  buildTaskPrompt,
+  isRepeatingTask,
+  PRIORITY_CONFIG,
+  STATUS_CONFIG,
 } from "@/lib/task-format";
+import { BoardColumn } from "./-board-column";
+import { ProjectFilterButton } from "./-project-filter-button";
+import { ScheduledTasksDialog } from "./-scheduled-tasks-dialog";
+import { DragCard } from "./-task-card";
 
 export const Route = createFileRoute("/_app/tasks")({
   component: Tasks,
@@ -98,267 +92,6 @@ const ALL_PROJECTS_VALUE = "__all__";
 
 const BOARD_COLUMNS = ["todo", "in_progress"] as const;
 
-function ProjectFilterButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors whitespace-nowrap ${
-        active ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60"
-      }`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Task Card
-// ---------------------------------------------------------------------------
-
-function TaskCardMeta({ task }: { task: TaskSchema }) {
-  const priority = task.priority ?? 0;
-  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-  const dueLabel = formatDueDate(task.due_date);
-  const dueColor = getDueDateColor(task.due_date);
-  const recurrence = formatRecurrence(task);
-
-  return (
-    <div className="min-w-0 flex-1 space-y-1">
-      <div className="text-[13px] font-medium text-white/85 leading-snug">{task.title}</div>
-      <div className="flex items-center gap-2 flex-wrap">
-        {dueLabel && (
-          <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
-            <Calendar className="size-3" />
-            {dueLabel}
-          </span>
-        )}
-        {recurrence && (
-          <span className="flex items-center gap-1 text-[11px] text-white/35">
-            <Repeat className="size-3" />
-            {recurrence}
-          </span>
-        )}
-        {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
-        {task.project && (
-          <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
-            {task.project}
-          </span>
-        )}
-        {task.area && <span className="text-[11px] text-white/30">{task.area}</span>}
-      </div>
-    </div>
-  );
-}
-
-function TaskCard({
-  task,
-  onSelect,
-  onComplete,
-}: {
-  task: TaskSchema;
-  onSelect: () => void;
-  onComplete: () => void;
-}) {
-  const priority = task.priority ?? 0;
-  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: task.id,
-    data: { task },
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
-      onClick={onSelect}
-    >
-      <div className="flex items-start gap-2.5">
-        <button
-          type="button"
-          className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onComplete();
-          }}
-        >
-          <Circle className="size-4" />
-        </button>
-        <TaskCardMeta task={task} />
-      </div>
-    </div>
-  );
-}
-
-function DragCard({ task }: { task: TaskSchema }) {
-  const priority = task.priority ?? 0;
-  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-
-  return (
-    <div
-      className={`rounded-lg border border-white/25 bg-white/10 p-2.5 shadow-2xl cursor-grabbing ${priorityConfig.border}`}
-    >
-      <div className="flex items-start gap-2.5">
-        <Circle className="size-4 mt-0.5 shrink-0 text-white/25" />
-        <TaskCardMeta task={task} />
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Board Column
-// ---------------------------------------------------------------------------
-
-function BoardColumn({
-  status,
-  tasks,
-  onSelectTask,
-  onCompleteTask,
-}: {
-  status: string;
-  tasks: TaskSchema[];
-  onSelectTask: (task: TaskSchema) => void;
-  onCompleteTask: (task: TaskSchema) => void;
-}) {
-  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
-  const Icon = config.icon;
-  const { setNodeRef, isOver } = useDroppable({ id: status });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`flex-1 min-w-0 flex flex-col min-h-0 rounded-lg transition-colors ${isOver ? "bg-white/5" : ""}`}
-    >
-      <div className="flex items-center gap-2 mb-3 px-1 shrink-0">
-        <Icon className={`size-3.5 ${config.color}`} />
-        <span className="text-[11px] font-semibold text-white/50">{config.label}</span>
-        <span className="text-[10px] text-white/30 bg-white/10 rounded-full px-1.5 tabular-nums ml-0.5">
-          {tasks.length}
-        </span>
-      </div>
-      <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 overflow-y-auto space-y-1.5 px-1 pt-1">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onSelect={() => onSelectTask(task)}
-              onComplete={() => onCompleteTask(task)}
-            />
-          ))}
-          {tasks.length === 0 && (
-            <div className="rounded-md border border-dashed border-white/10 p-6 text-center text-[11px] text-white/25">
-              No tasks
-            </div>
-          )}
-        </div>
-      </SortableContext>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Repeated Tasks Dialog
-// ---------------------------------------------------------------------------
-
-function ScheduledTasksDialog({
-  tasks,
-  onSelectTask,
-  onCompleteTask,
-}: {
-  tasks: TaskSchema[];
-  onSelectTask: (task: TaskSchema) => void;
-  onCompleteTask: (task: TaskSchema) => void;
-}) {
-  return (
-    <DialogContent className="max-w-md">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Repeat className="size-4 text-violet-400" />
-          Repeated
-        </DialogTitle>
-        <DialogDescription className="sr-only">Recurring tasks</DialogDescription>
-      </DialogHeader>
-      <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
-        {tasks.length === 0 ? (
-          <div className="text-center text-xs text-white/30 py-8">No repeated tasks.</div>
-        ) : (
-          tasks.map((task) => {
-            const priority = task.priority ?? 0;
-            const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-            const dueLabel = formatDueDate(task.due_date);
-            const dueColor = getDueDateColor(task.due_date);
-            const recurrence = formatRecurrence(task);
-            return (
-              <div
-                key={task.id}
-                className={`rounded-lg border border-white/10 bg-white/5 p-2.5 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-colors ${priorityConfig.border}`}
-                onClick={() => onSelectTask(task)}
-              >
-                <div className="flex items-start gap-2.5">
-                  <button
-                    type="button"
-                    className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCompleteTask(task);
-                    }}
-                  >
-                    <Circle className="size-4" />
-                  </button>
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="text-[13px] font-medium text-white/85 leading-snug">
-                      {task.title}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {dueLabel && (
-                        <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
-                          <Calendar className="size-3" />
-                          {dueLabel}
-                        </span>
-                      )}
-                      {recurrence && (
-                        <span className="flex items-center gap-1 text-[11px] text-white/35">
-                          <Repeat className="size-3" />
-                          {recurrence}
-                        </span>
-                      )}
-                      {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
-                      {task.project && (
-                        <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
-                          {task.project}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </DialogContent>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
@@ -369,7 +102,10 @@ function Tasks() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [repeatingOpen, setRepeatingOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
-  const [localOrder, setLocalOrder] = useState<{ todo: string[]; in_progress: string[] } | null>(null);
+  const [localOrder, setLocalOrder] = useState<{
+    todo: string[];
+    in_progress: string[];
+  } | null>(null);
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
@@ -377,9 +113,15 @@ function Tasks() {
 
   useEffect(() => {
     if (!isDesktop) return;
-    const track = (e: PointerEvent) => { lastPosRef.current = { x: e.clientX, y: e.clientY }; };
-    window.addEventListener("pointermove", track, { capture: true, passive: true });
-    return () => window.removeEventListener("pointermove", track, { capture: true });
+    const track = (e: PointerEvent) => {
+      lastPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("pointermove", track, {
+      capture: true,
+      passive: true,
+    });
+    return () =>
+      window.removeEventListener("pointermove", track, { capture: true });
   }, []);
 
   const statusFilter = viewTab === "done" ? ("done" as const) : undefined;
@@ -388,7 +130,7 @@ function Tasks() {
       ? ["-completed_at" as "-created_at"]
       : viewTab === "board"
         ? ["position" as "-created_at"]
-        : ["-created_at" as "-created_at"];
+        : ["-created_at" as const];
 
   const { data: projectsData } = useQuery(
     listProjectsV1ProjectsGetOptions({ client }),
@@ -407,7 +149,8 @@ function Tasks() {
     const area = projectFilterAreaRef.current;
     const measure = projectPillsMeasureRef.current;
     if (!area || !measure) return;
-    const checkOverflow = () => setProjectFilterCollapsed(measure.scrollWidth > area.clientWidth);
+    const checkOverflow = () =>
+      setProjectFilterCollapsed(measure.scrollWidth > area.clientWidth);
     const observer = new ResizeObserver(checkOverflow);
     observer.observe(area);
     observer.observe(measure);
@@ -436,7 +179,11 @@ function Tasks() {
     ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
     onMutate: async ({ path }) => {
       const previous = await cache.cancelAndSnapshot();
-      cache.patchTask(path.task_id, (t) => ({ ...t, status: "done", completed_at: new Date() }));
+      cache.patchTask(path.task_id, (t) => ({
+        ...t,
+        status: "done",
+        completed_at: new Date(),
+      }));
       return { previous };
     },
     onError: (_err, _vars, context) => {
@@ -450,7 +197,11 @@ function Tasks() {
     ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
     onMutate: async ({ path }) => {
       const previous = await cache.cancelAndSnapshot();
-      cache.patchTask(path.task_id, (t) => ({ ...t, status: "todo", completed_at: null }));
+      cache.patchTask(path.task_id, (t) => ({
+        ...t,
+        status: "todo",
+        completed_at: null,
+      }));
       return { previous };
     },
     onError: (_err, _vars, context) => {
@@ -472,7 +223,9 @@ function Tasks() {
           t.id === path.task_id ? { ...t, ...body } : t,
         );
         if (body.position != null) {
-          updatedItems.sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
+          updatedItems.sort(
+            (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0),
+          );
         }
         return { ...old, items: updatedItems };
       });
@@ -503,15 +256,17 @@ function Tasks() {
     reopenMutation.mutate({ client, path: { task_id: task.id } });
   };
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = event.active.data.current?.task as TaskSchema;
     setActiveTask(task ?? null);
     if (boardTasks) {
       setLocalOrder({
-        todo: boardTasks.todo.map(t => t.id),
-        in_progress: boardTasks.in_progress.map(t => t.id),
+        todo: boardTasks.todo.map((t) => t.id),
+        in_progress: boardTasks.in_progress.map((t) => t.id),
       });
     }
     window.dispatchEvent(new CustomEvent("metron:task-drag-start"));
@@ -538,7 +293,7 @@ function Tasks() {
       // Same-column reorder: keep localOrder in sync so liveBoardTasks reflects the drag
       // and handleDragEnd can use localOrder directly instead of re-deriving from over.id.
       if (overIsColumn) return;
-      setLocalOrder(prev => {
+      setLocalOrder((prev) => {
         if (!prev) return prev;
         const col = prev[activeColumn];
         const fromIdx = col.indexOf(activeId);
@@ -551,18 +306,20 @@ function Tasks() {
 
     const isBelowOverCenter =
       active.rect.current.translated != null &&
-      active.rect.current.translated.top + active.rect.current.translated.height / 2 >
+      active.rect.current.translated.top +
+        active.rect.current.translated.height / 2 >
         over.rect.top + over.rect.height / 2;
 
-    setLocalOrder(prev => {
+    setLocalOrder((prev) => {
       if (!prev) return prev;
-      const source = prev[activeColumn].filter(id => id !== activeId);
+      const source = prev[activeColumn].filter((id) => id !== activeId);
       const dest = [...prev[overColumn]];
       if (overIsColumn) {
         dest.push(activeId);
       } else {
         const idx = dest.indexOf(overId);
-        const insertAt = idx >= 0 ? idx + (isBelowOverCenter ? 1 : 0) : dest.length;
+        const insertAt =
+          idx >= 0 ? idx + (isBelowOverCenter ? 1 : 0) : dest.length;
         dest.splice(insertAt, 0, activeId);
       }
       return { ...prev, [activeColumn]: source, [overColumn]: dest };
@@ -584,7 +341,9 @@ function Tasks() {
           const sid = zone.getAttribute("data-claude-session")!;
           window.electron?.terminal.sendInput(sid, buildTaskPrompt(task));
           window.dispatchEvent(
-            new CustomEvent("metron:claude-drop", { detail: { sessionId: sid, taskId: task.id } }),
+            new CustomEvent("metron:claude-drop", {
+              detail: { sessionId: sid, taskId: task.id },
+            }),
           );
           setActiveTask(null);
           setLocalOrder(null);
@@ -609,7 +368,9 @@ function Tasks() {
     // We use the server order (boardTasks) as the position reference to compute midpoints.
     const destServerIds = (
       newStatus === "todo" ? boardTasks!.todo : boardTasks!.in_progress
-    ).filter(t => t.id !== taskId).map(t => t.id);
+    )
+      .filter((t) => t.id !== taskId)
+      .map((t) => t.id);
 
     // Compute the final ordered list for the destination column.
     // Position is determined from over.id + isBelowOverCenter at the actual drop instant,
@@ -629,7 +390,8 @@ function Tasks() {
       } else {
         const isBelowOverCenter =
           active.rect.current.translated != null &&
-          active.rect.current.translated.top + active.rect.current.translated.height / 2 >
+          active.rect.current.translated.top +
+            active.rect.current.translated.height / 2 >
             over.rect.top + over.rect.height / 2;
         const insertAt = overIndex + (isBelowOverCenter ? 1 : 0);
         const withTask = [...destServerIds];
@@ -639,9 +401,9 @@ function Tasks() {
     }
 
     const taskIndex = orderedColumnIds.indexOf(taskId);
-    const taskMap = new Map(allTasks.map(t => [t.id, t]));
+    const taskMap = new Map(allTasks.map((t) => [t.id, t]));
     const columnTasks = orderedColumnIds
-      .map(id => taskMap.get(id))
+      .map((id) => taskMap.get(id))
       .filter((t): t is TaskSchema => t !== undefined);
 
     const prev = columnTasks[taskIndex - 1];
@@ -658,13 +420,18 @@ function Tasks() {
       const gap = (next.position ?? 0) - (prev.position ?? 0);
       newPosition = ((prev.position ?? 0) + (next.position ?? 0)) / 2;
       if (gap < 1e-6) {
-        const renormItems = columnTasks.map((t, i) => ({ id: t.id, position: (i + 1) * 1000 }));
+        const renormItems = columnTasks.map((t, i) => ({
+          id: t.id,
+          position: (i + 1) * 1000,
+        }));
         reorderMutation.mutate({ client, body: renormItems });
         newPosition = (taskIndex + 1) * 1000;
       }
     }
 
-    const body: { position: number; status?: "todo" | "in_progress" } = { position: newPosition };
+    const body: { position: number; status?: "todo" | "in_progress" } = {
+      position: newPosition,
+    };
     if (originalStatus !== newStatus) body.status = newStatus;
 
     updateMutation.mutate({ client, path: { task_id: taskId }, body });
@@ -677,11 +444,17 @@ function Tasks() {
 
   useEffect(() => {
     const onClaudeDrop = (e: Event) => {
-      const { taskId } = (e as CustomEvent<{ sessionId: string; taskId?: string }>).detail;
+      const { taskId } = (
+        e as CustomEvent<{ sessionId: string; taskId?: string }>
+      ).detail;
       if (!taskId) return;
       const task = allTasksRef.current.find((t) => t.id === taskId);
       if (task && (task.status ?? "todo") === "todo") {
-        updateMutation.mutate({ client, path: { task_id: taskId }, body: { status: "in_progress" } });
+        updateMutation.mutate({
+          client,
+          path: { task_id: taskId },
+          body: { status: "in_progress" },
+        });
       }
     };
     window.addEventListener("metron:claude-drop", onClaudeDrop);
@@ -699,18 +472,22 @@ function Tasks() {
   const boardTasks =
     viewTab === "board"
       ? {
-          todo: allTasks.filter((t) => (t.status ?? "todo") === "todo" && !isRepeatingTask(t)),
+          todo: allTasks.filter(
+            (t) => (t.status ?? "todo") === "todo" && !isRepeatingTask(t),
+          ),
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
         }
       : null;
 
   const liveBoardTasks = (() => {
     if (!localOrder || !boardTasks) return boardTasks;
-    const taskMap = new Map(allTasks.map(t => [t.id, t]));
+    const taskMap = new Map(allTasks.map((t) => [t.id, t]));
     return {
-      todo: localOrder.todo.map(id => taskMap.get(id)).filter((t): t is TaskSchema => !!t),
+      todo: localOrder.todo
+        .map((id) => taskMap.get(id))
+        .filter((t): t is TaskSchema => !!t),
       in_progress: localOrder.in_progress
-        .map(id => taskMap.get(id))
+        .map((id) => taskMap.get(id))
         .filter((t): t is TaskSchema => !!t),
     };
   })();
@@ -782,11 +559,18 @@ function Tasks() {
               className="pointer-events-none invisible absolute right-0 flex items-center gap-1"
               aria-hidden="true"
             >
-              <ProjectFilterButton active={projectFilter === null} onClick={() => {}}>
+              <ProjectFilterButton
+                active={projectFilter === null}
+                onClick={() => {}}
+              >
                 All
               </ProjectFilterButton>
               {projects.map((p) => (
-                <ProjectFilterButton key={p.id} active={false} onClick={() => {}}>
+                <ProjectFilterButton
+                  key={p.id}
+                  active={false}
+                  onClick={() => {}}
+                >
                   {p.name}
                 </ProjectFilterButton>
               ))}
@@ -819,7 +603,10 @@ function Tasks() {
               <div className="flex items-center gap-1">
                 <ProjectFilterButton
                   active={projectFilter === null}
-                  onClick={() => { setProjectFilter(null); setPage(1); }}
+                  onClick={() => {
+                    setProjectFilter(null);
+                    setPage(1);
+                  }}
                 >
                   All
                 </ProjectFilterButton>
@@ -827,7 +614,10 @@ function Tasks() {
                   <ProjectFilterButton
                     key={p.id}
                     active={projectFilter === p.name}
-                    onClick={() => { setProjectFilter(p.name); setPage(1); }}
+                    onClick={() => {
+                      setProjectFilter(p.name);
+                      setPage(1);
+                    }}
                   >
                     {p.name}
                   </ProjectFilterButton>
@@ -840,169 +630,185 @@ function Tasks() {
 
       {/* Content */}
       <div className="flex-1 min-h-0 pt-5 px-4 flex flex-col">
-      {isLoading ? null : allTasks.length === 0 && viewTab === "board" ? (
-        <Empty className="border">
-          <EmptyHeader>
-            <EmptyMedia >
-              <CheckSquare />
-            </EmptyMedia>
-            <EmptyTitle>No tasks yet</EmptyTitle>
-            <EmptyDescription>
-              Create your first task to start organizing your work.
-            </EmptyDescription>
-          </EmptyHeader>
-          <CreateTaskDialog />
-        </Empty>
-      ) : (
-        <>
-          {viewTab === "board" && boardTasks ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragEnd={handleDragEnd}
-              onDragCancel={() => {
-                window.dispatchEvent(new CustomEvent("metron:task-drag-end"));
-                setActiveTask(null);
-                setLocalOrder(null);
-              }}
-            >
-              <div className="flex gap-4 flex-1 min-h-0">
-                {BOARD_COLUMNS.map((col) => (
-                  <BoardColumn
-                    key={col}
-                    status={col}
-                    tasks={(liveBoardTasks ?? boardTasks)[col]}
-                    onSelectTask={handleSelectTask}
-                    onCompleteTask={handleCompleteTask}
-                  />
-                ))}
-              </div>
-              {typeof document !== "undefined" &&
-                createPortal(
-                  <DragOverlay dropAnimation={null}>
-                    {activeTask ? <DragCard task={activeTask} /> : null}
-                  </DragOverlay>,
-                  document.body,
-                )}
-            </DndContext>
-          ) : (
-            /* Done / All list view */
-            <div className="overflow-y-auto flex-1 min-h-0">
-              <div className="space-y-1">
-                {allTasks.map((task) => {
-                  const status = task.status ?? "todo";
-                  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
-                  const StatusIcon = config.icon;
-                  const isDone = status === "done" || status === "cancelled";
-                  const priority = task.priority ?? 0;
+        {isLoading ? null : allTasks.length === 0 && viewTab === "board" ? (
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia>
+                <CheckSquare />
+              </EmptyMedia>
+              <EmptyTitle>No tasks yet</EmptyTitle>
+              <EmptyDescription>
+                Create your first task to start organizing your work.
+              </EmptyDescription>
+            </EmptyHeader>
+            <CreateTaskDialog />
+          </Empty>
+        ) : (
+          <>
+            {viewTab === "board" && boardTasks ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+                onDragCancel={() => {
+                  window.dispatchEvent(new CustomEvent("metron:task-drag-end"));
+                  setActiveTask(null);
+                  setLocalOrder(null);
+                }}
+              >
+                <div className="flex gap-4 flex-1 min-h-0">
+                  {BOARD_COLUMNS.map((col) => (
+                    <BoardColumn
+                      key={col}
+                      status={col}
+                      tasks={(liveBoardTasks ?? boardTasks)[col]}
+                      onSelectTask={handleSelectTask}
+                      onCompleteTask={handleCompleteTask}
+                    />
+                  ))}
+                </div>
+                {typeof document !== "undefined" &&
+                  createPortal(
+                    <DragOverlay dropAnimation={null}>
+                      {activeTask ? <DragCard task={activeTask} /> : null}
+                    </DragOverlay>,
+                    document.body,
+                  )}
+              </DndContext>
+            ) : (
+              /* Done / All list view */
+              <div className="overflow-y-auto flex-1 min-h-0">
+                <div className="space-y-1">
+                  {allTasks.map((task) => {
+                    const status = task.status ?? "todo";
+                    const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
+                    const StatusIcon = config.icon;
+                    const isDone = status === "done" || status === "cancelled";
+                    const priority = task.priority ?? 0;
 
-                  return (
-                    <div
-                      key={task.id}
-                      className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20 last:mb-3"
-                      onClick={() => handleSelectTask(task)}
-                      draggable={isDesktop}
-                      onDragStart={isDesktop ? (e) => {
-                        e.dataTransfer.setData("metron/task-prompt", buildTaskPrompt(task));
-                        e.dataTransfer.setData("metron/task-id", task.id);
-                        e.dataTransfer.effectAllowed = "copy";
-                      } : undefined}
-                    >
-                      {isDone ? (
-                        <button
-                          type="button"
-                          title="Reopen"
-                          className="text-white/25 hover:text-white/70 transition-colors shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleReopenTask(task);
-                          }}
-                        >
-                          <RotateCcw className="size-4" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-white/25 hover:text-emerald-400 transition-colors shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompleteTask(task);
-                          }}
-                        >
-                          <Circle className="size-4" />
-                        </button>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <span
-                          className={`text-[13px] ${isDone ? "line-through text-white/30" : "font-medium text-white/85"}`}
-                        >
-                          {task.title}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {task.is_recurring && <Repeat className="size-3 text-white/30" />}
-                        {priority >= 3 && (
-                          <Flag
-                            className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
-                          />
+                    return (
+                      <div
+                        key={task.id}
+                        className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20 last:mb-3"
+                        onClick={() => handleSelectTask(task)}
+                        draggable={isDesktop}
+                        onDragStart={
+                          isDesktop
+                            ? (e) => {
+                                e.dataTransfer.setData(
+                                  "metron/task-prompt",
+                                  buildTaskPrompt(task),
+                                );
+                                e.dataTransfer.setData(
+                                  "metron/task-id",
+                                  task.id,
+                                );
+                                e.dataTransfer.effectAllowed = "copy";
+                              }
+                            : undefined
+                        }
+                      >
+                        {isDone ? (
+                          <button
+                            type="button"
+                            title="Reopen"
+                            className="text-white/25 hover:text-white/70 transition-colors shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReopenTask(task);
+                            }}
+                          >
+                            <RotateCcw className="size-4" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-white/25 hover:text-emerald-400 transition-colors shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCompleteTask(task);
+                            }}
+                          >
+                            <Circle className="size-4" />
+                          </button>
                         )}
-                        <StatusIcon className={`size-3.5 ${config.color}`} />
-                        {task.due_date && (
-                          <span className={`text-[11px] ${getDueDateColor(task.due_date)}`}>
-                            {formatDueDate(task.due_date)}
+                        <div className="min-w-0 flex-1">
+                          <span
+                            className={`text-[13px] ${isDone ? "line-through text-white/30" : "font-medium text-white/85"}`}
+                          >
+                            {task.title}
                           </span>
-                        )}
-                        {isDone && task.completed_at && (
-                          <span className="text-[11px] text-white/30">
-                            {format(
-                              task.completed_at instanceof Date
-                                ? task.completed_at
-                                : new Date(String(task.completed_at)),
-                              "MMM d",
-                            )}
-                          </span>
-                        )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {task.is_recurring && (
+                            <Repeat className="size-3 text-white/30" />
+                          )}
+                          {priority >= 3 && (
+                            <Flag
+                              className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
+                            />
+                          )}
+                          <StatusIcon className={`size-3.5 ${config.color}`} />
+                          {task.due_date && (
+                            <span
+                              className={`text-[11px] ${getDueDateColor(task.due_date)}`}
+                            >
+                              {formatDueDate(task.due_date)}
+                            </span>
+                          )}
+                          {isDone && task.completed_at && (
+                            <span className="text-[11px] text-white/30">
+                              {format(
+                                task.completed_at instanceof Date
+                                  ? task.completed_at
+                                  : new Date(String(task.completed_at)),
+                                "MMM d",
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                    );
+                  })}
+                  {allTasks.length === 0 && (
+                    <div className="text-white/30 text-center text-xs py-8">
+                      {viewTab === "done"
+                        ? "No completed tasks yet."
+                        : "No tasks."}
                     </div>
-                  );
-                })}
-                {allTasks.length === 0 && (
-                  <div className="text-white/30 text-center text-xs py-8">
-                    {viewTab === "done" ? "No completed tasks yet." : "No tasks."}
+                  )}
+                </div>
+                {maxPage > 1 && (
+                  <div className="flex items-center justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                    >
+                      <ChevronLeft className="size-4" />
+                      Previous
+                    </Button>
+                    <span className="text-muted-foreground text-sm tabular-nums">
+                      {page} / {maxPage}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                      disabled={page >= maxPage}
+                    >
+                      Next
+                      <ChevronRight className="size-4" />
+                    </Button>
                   </div>
                 )}
               </div>
-              {maxPage > 1 && (
-                <div className="flex items-center justify-end gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <span className="text-muted-foreground text-sm tabular-nums">
-                    {page} / {maxPage}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                    disabled={page >= maxPage}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
       </div>
 
       {/* Repeating tasks dialog */}

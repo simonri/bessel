@@ -1,0 +1,120 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { TaskSchema } from "@metron/client";
+import { Calendar, Circle, Flag, Repeat } from "lucide-react";
+import {
+  formatDueDate,
+  formatRecurrence,
+  getDueDateColor,
+  PRIORITY_CONFIG,
+} from "@/lib/task-format";
+
+function TaskCardMeta({ task }: { task: TaskSchema }) {
+  const priority = task.priority ?? 0;
+  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
+  const dueLabel = formatDueDate(task.due_date);
+  const dueColor = getDueDateColor(task.due_date);
+  const recurrence = formatRecurrence(task);
+
+  return (
+    <div className="min-w-0 flex-1 space-y-1">
+      <div className="text-[13px] font-medium text-white/85 leading-snug">
+        {task.title}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {dueLabel && (
+          <span className={`flex items-center gap-1 text-[11px] ${dueColor}`}>
+            <Calendar className="size-3" />
+            {dueLabel}
+          </span>
+        )}
+        {recurrence && (
+          <span className="flex items-center gap-1 text-[11px] text-white/35">
+            <Repeat className="size-3" />
+            {recurrence}
+          </span>
+        )}
+        {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
+        {task.project && (
+          <span className="text-[11px] text-white/45 bg-white/10 rounded px-1.5 py-0">
+            {task.project}
+          </span>
+        )}
+        {task.area && (
+          <span className="text-[11px] text-white/30">{task.area}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function TaskCard({
+  task,
+  onSelect,
+  onComplete,
+}: {
+  task: TaskSchema;
+  onSelect: () => void;
+  onComplete: () => void;
+}) {
+  const priority = task.priority ?? 0;
+  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    data: { task },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-colors cursor-grab active:cursor-grabbing hover:bg-white/10 hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
+      onClick={onSelect}
+    >
+      <div className="flex items-start gap-2.5">
+        <button
+          type="button"
+          className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onComplete();
+          }}
+        >
+          <Circle className="size-4" />
+        </button>
+        <TaskCardMeta task={task} />
+      </div>
+    </div>
+  );
+}
+
+export function DragCard({ task }: { task: TaskSchema }) {
+  const priority = task.priority ?? 0;
+  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
+
+  return (
+    <div
+      className={`rounded-lg border border-white/25 bg-white/10 p-2.5 shadow-2xl cursor-grabbing ${priorityConfig.border}`}
+    >
+      <div className="flex items-start gap-2.5">
+        <Circle className="size-4 mt-0.5 shrink-0 text-white/25" />
+        <TaskCardMeta task={task} />
+      </div>
+    </div>
+  );
+}
