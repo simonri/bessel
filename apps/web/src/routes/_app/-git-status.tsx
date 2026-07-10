@@ -5,6 +5,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Check, GitBranch, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useWindowVisible } from "@/components/canvas/window-manager";
 import { WidgetErrorBoundary } from "@/components/widget-error-boundary";
 import { client } from "@/lib/client";
 import { CommitItem } from "./-commit-item";
@@ -61,6 +62,9 @@ function extractErrorMessage(error: unknown): string {
 
 export function GitStatus() {
   const queryClient = useQueryClient();
+  // Widgets in inactive workspaces stay mounted (display:none) — suspend the
+  // polls there, or every hidden git widget spawns subprocesses forever.
+  const visible = useWindowVisible();
 
   const { data: allProjects } = useQuery(
     listProjectsV1ProjectsGetOptions({ client }),
@@ -120,8 +124,8 @@ export function GitStatus() {
     queryKey: statusQueryKey,
     queryFn: () => window.electron!.git.status(selectedProject!.path),
     enabled: !!selectedProject,
-    refetchOnWindowFocus: true,
-    refetchInterval: 8000,
+    refetchOnWindowFocus: visible,
+    refetchInterval: visible ? 8000 : false,
   });
 
   const diffQuery = useQuery<{
@@ -144,14 +148,17 @@ export function GitStatus() {
         selectedFile!.untracked,
       ),
     enabled: !!selectedProject && !!selectedFile,
+    // The payload holds both full file contents — don't let deselected files
+    // pile up in the cache for the default 5 minutes.
+    gcTime: 60_000,
   });
 
   const logQuery = useQuery<GitCommit[]>({
     queryKey: logQueryKey,
     queryFn: () => window.electron!.git.log(selectedProject!.path),
     enabled: !!selectedProject && historyOpen,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000,
+    refetchOnWindowFocus: visible,
+    refetchInterval: visible ? 30000 : false,
   });
 
   const stageMutation = useMutation({

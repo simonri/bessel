@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
+import { Terminal } from "@xterm/xterm";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "@xterm/xterm/css/xterm.css";
-import { useWindowEntry, useWindowManager, useWindowTitle } from "@/components/canvas/window-manager";
+import {
+  useWindowActions,
+  useWindowEntry,
+  useWindowTitle,
+} from "@/components/canvas/window-manager";
 
 interface ContextMenu {
   x: number;
@@ -37,13 +41,19 @@ const MAX_WAIT_PER_COMMAND_MS = 8000;
 // chrome behind it instead of blending into the terminal.
 const TERMINAL_BG = "#06060e";
 
-export function TerminalWidget({ command, args, cwd, taskDropZone = false, commands = [] }: TerminalWidgetProps) {
+export function TerminalWidget({
+  command,
+  args,
+  cwd,
+  taskDropZone = false,
+  commands = [],
+}: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const sessionId = useRef(crypto.randomUUID()).current;
   const spawnConfig = useRef({ command, args, cwd, commands });
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
-  const savedSelectionRef = useRef('');
+  const savedSelectionRef = useRef("");
   const [isDragOver, setIsDragOver] = useState(false);
   const [isTaskDragging, setIsTaskDragging] = useState(false);
   const dragCounterRef = useRef(0);
@@ -51,19 +61,25 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
   const focusTerminal = useCallback(() => {
     // Defer past dnd-kit / HTML5 drag cleanup which resets browser focus
     requestAnimationFrame(() => {
-      const textarea = containerRef.current?.querySelector<HTMLTextAreaElement>(".xterm-helper-textarea");
+      const textarea = containerRef.current?.querySelector<HTMLTextAreaElement>(
+        ".xterm-helper-textarea",
+      );
       textarea?.focus({ preventScroll: true });
     });
   }, []);
 
   const setWindowTitle = useWindowTitle();
   const setWindowTitleRef = useRef(setWindowTitle);
-  useEffect(() => { setWindowTitleRef.current = setWindowTitle; });
+  useEffect(() => {
+    setWindowTitleRef.current = setWindowTitle;
+  });
 
   const entry = useWindowEntry();
-  const { closeWindow, updateWindowData } = useWindowManager();
+  const { closeWindow, updateWindowData } = useWindowActions();
   const closeWindowRef = useRef(closeWindow);
-  useEffect(() => { closeWindowRef.current = closeWindow; });
+  useEffect(() => {
+    closeWindowRef.current = closeWindow;
+  });
 
   useEffect(() => {
     if (!taskDropZone) return;
@@ -80,10 +96,12 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
   useEffect(() => {
     if (!taskDropZone) return;
     const onDrop = (e: Event) => {
-      const detail = (e as CustomEvent<{ sessionId: string; taskId?: string }>).detail;
+      const detail = (e as CustomEvent<{ sessionId: string; taskId?: string }>)
+        .detail;
       if (detail.sessionId !== sessionId) return;
       focusTerminal();
-      if (detail.taskId && entry) updateWindowData(entry.id, { attachedTaskId: detail.taskId });
+      if (detail.taskId && entry)
+        updateWindowData(entry.id, { attachedTaskId: detail.taskId });
     };
     window.addEventListener("metron:claude-drop", onDrop);
     return () => window.removeEventListener("metron:claude-drop", onDrop);
@@ -108,8 +126,10 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
     if (!el || !window.electron?.terminal) return;
 
     const rootStyle = getComputedStyle(document.documentElement);
-    const terminalCursor = rootStyle.getPropertyValue("--terminal-cursor").trim() || "#f97316";
-    const terminalSelection = rootStyle.getPropertyValue("--terminal-selection").trim() || "#f9731644";
+    const terminalCursor =
+      rootStyle.getPropertyValue("--terminal-cursor").trim() || "#f97316";
+    const terminalSelection =
+      rootStyle.getPropertyValue("--terminal-selection").trim() || "#f9731644";
 
     const terminal = new Terminal({
       allowTransparency: false,
@@ -140,7 +160,9 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       fontSize: 13,
       lineHeight: 1.0,
       cursorBlink: true,
-      scrollback: 10_000,
+      // Scrollback is the dominant per-terminal RAM cost, and every terminal
+      // in every workspace stays mounted — keep the buffer widget-sized.
+      scrollback: 4_000,
       allowProposedApi: true,
     });
 
@@ -150,14 +172,36 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
     terminal.loadAddon(fitAddon);
     terminal.open(el);
 
-    const webgl = new WebglAddon();
-    webgl.onContextLoss(() => webgl.dispose());
-    terminal.loadAddon(webgl);
+    let cancelled = false;
+
+    // Chromium caps live WebGL contexts per page (~16) and evicts the oldest,
+    // so with enough terminals across workspaces a context WILL be lost.
+    // Without re-creating the addon, that terminal silently falls back to the
+    // much slower DOM renderer forever — retry with backoff instead.
+    let webglRetries = 0;
+    const loadWebgl = () => {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => {
+        webgl.dispose();
+        if (cancelled || webglRetries >= 3) return;
+        webglRetries += 1;
+        setTimeout(() => {
+          if (!cancelled) loadWebgl();
+        }, 1000 * webglRetries);
+      });
+      terminal.loadAddon(webgl);
+    };
+    loadWebgl();
 
     fitAddon.fit();
 
     terminal.attachCustomKeyEventHandler((e) => {
-      if (e.type === "keydown" && e.ctrlKey && e.shiftKey && e.code === "KeyC") {
+      if (
+        e.type === "keydown" &&
+        e.ctrlKey &&
+        e.shiftKey &&
+        e.code === "KeyC"
+      ) {
         const sel = terminal.getSelection();
         if (sel) navigator.clipboard.writeText(sel);
         return false;
@@ -183,15 +227,19 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
     };
     el.addEventListener("contextmenu", handleContextMenu, { capture: true });
 
-    let cancelled = false;
     let hasStarted = false;
     const lastOutputAt = { current: Date.now() };
-    const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
 
     async function runQueuedCommands(cmds: string[]) {
       for (const line of cmds) {
         const deadline = Date.now() + MAX_WAIT_PER_COMMAND_MS;
-        while (!cancelled && Date.now() - lastOutputAt.current < IDLE_GAP_MS && Date.now() < deadline) {
+        while (
+          !cancelled &&
+          Date.now() - lastOutputAt.current < IDLE_GAP_MS &&
+          Date.now() < deadline
+        ) {
           await sleep(IDLE_POLL_MS);
         }
         if (cancelled) return;
@@ -200,14 +248,25 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       }
     }
 
-    const { command: cmd, args: cmdArgs, cwd: cmdCwd, commands: queuedCommands } = spawnConfig.current;
+    const {
+      command: cmd,
+      args: cmdArgs,
+      cwd: cmdCwd,
+      commands: queuedCommands,
+    } = spawnConfig.current;
     window.electron.terminal
-      .spawn(sessionId, terminal.cols, terminal.rows, { command: cmd, args: cmdArgs, cwd: cmdCwd })
+      .spawn(sessionId, terminal.cols, terminal.rows, {
+        command: cmd,
+        args: cmdArgs,
+        cwd: cmdCwd,
+      })
       .then(() => {
         if (queuedCommands.length > 0) void runQueuedCommands(queuedCommands);
       })
       .catch((err: unknown) => {
-        terminal.writeln(`\r\n\x1b[31mFailed to start terminal: ${err}\x1b[0m\r\n`);
+        terminal.writeln(
+          `\r\n\x1b[31mFailed to start terminal: ${err}\x1b[0m\r\n`,
+        );
       });
 
     const disposeInput = terminal.onData((data) => {
@@ -231,7 +290,9 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       if (code === 0 && hasStarted) {
         if (entry) closeWindowRef.current(entry.id);
       } else if (code !== 0) {
-        terminal.writeln(`\r\n\x1b[31m[Process exited with code ${code}]\x1b[0m`);
+        terminal.writeln(
+          `\r\n\x1b[31m[Process exited with code ${code}]\x1b[0m`,
+        );
       }
     });
 
@@ -246,7 +307,11 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
         const { cols: prevCols, rows: prevRows } = terminal;
         fitAddon.fit();
         if (terminal.cols !== prevCols || terminal.rows !== prevRows) {
-          window.electron!.terminal.resize(sessionId, terminal.cols, terminal.rows);
+          window.electron!.terminal.resize(
+            sessionId,
+            terminal.cols,
+            terminal.rows,
+          );
         }
       }, 100);
     });
@@ -261,7 +326,9 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       unsubExit();
       resizeObserver.disconnect();
       el.removeEventListener("mousedown", handleMouseDown, { capture: true });
-      el.removeEventListener("contextmenu", handleContextMenu, { capture: true });
+      el.removeEventListener("contextmenu", handleContextMenu, {
+        capture: true,
+      });
       terminal.dispose();
       terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
@@ -283,37 +350,65 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
         {...(taskDropZone ? { "data-claude-session": sessionId } : {})}
         className="relative h-full w-full"
         style={{ backgroundColor: TERMINAL_BG }}
-        onDragEnter={taskDropZone ? (e) => {
-          if (Array.from(e.dataTransfer.types).includes("metron/task-prompt")) {
-            dragCounterRef.current++;
-            setIsDragOver(true);
-          }
-        } : undefined}
-        onDragLeave={taskDropZone ? () => {
-          dragCounterRef.current--;
-          if (dragCounterRef.current === 0) setIsDragOver(false);
-        } : undefined}
-        onDragOver={taskDropZone ? (e) => {
-          if (Array.from(e.dataTransfer.types).includes("metron/task-prompt")) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
-          }
-        } : undefined}
-        onDrop={taskDropZone ? (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          dragCounterRef.current = 0;
-          setIsDragOver(false);
-          const text = e.dataTransfer.getData("metron/task-prompt");
-          if (text) {
-            window.electron?.terminal.sendInput(sessionId, text);
-            focusTerminal();
-            const taskId = e.dataTransfer.getData("metron/task-id");
-            if (taskId) {
-              window.dispatchEvent(new CustomEvent("metron:claude-drop", { detail: { sessionId, taskId } }));
-            }
-          }
-        } : undefined}
+        onDragEnter={
+          taskDropZone
+            ? (e) => {
+                if (
+                  Array.from(e.dataTransfer.types).includes(
+                    "metron/task-prompt",
+                  )
+                ) {
+                  dragCounterRef.current++;
+                  setIsDragOver(true);
+                }
+              }
+            : undefined
+        }
+        onDragLeave={
+          taskDropZone
+            ? () => {
+                dragCounterRef.current--;
+                if (dragCounterRef.current === 0) setIsDragOver(false);
+              }
+            : undefined
+        }
+        onDragOver={
+          taskDropZone
+            ? (e) => {
+                if (
+                  Array.from(e.dataTransfer.types).includes(
+                    "metron/task-prompt",
+                  )
+                ) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "copy";
+                }
+              }
+            : undefined
+        }
+        onDrop={
+          taskDropZone
+            ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounterRef.current = 0;
+                setIsDragOver(false);
+                const text = e.dataTransfer.getData("metron/task-prompt");
+                if (text) {
+                  window.electron?.terminal.sendInput(sessionId, text);
+                  focusTerminal();
+                  const taskId = e.dataTransfer.getData("metron/task-id");
+                  if (taskId) {
+                    window.dispatchEvent(
+                      new CustomEvent("metron:claude-drop", {
+                        detail: { sessionId, taskId },
+                      }),
+                    );
+                  }
+                }
+              }
+            : undefined
+        }
       >
         <div ref={containerRef} className="h-full w-full" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
@@ -334,7 +429,12 @@ export function TerminalWidget({ command, args, cwd, taskDropZone = false, comma
       {contextMenu &&
         createPortal(
           <div
-            style={{ position: "fixed", left: contextMenu.x, top: contextMenu.y, zIndex: 9999 }}
+            style={{
+              position: "fixed",
+              left: contextMenu.x,
+              top: contextMenu.y,
+              zIndex: 9999,
+            }}
             className="overflow-hidden rounded-lg border border-white/10 bg-neutral-900/95 py-1 shadow-2xl backdrop-blur-xl"
             onPointerDown={(e) => e.stopPropagation()}
           >

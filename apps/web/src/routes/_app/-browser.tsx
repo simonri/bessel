@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
 import { BrowserWidget } from "@/components/browser-widget";
 import {
+  useWindowActions,
   useWindowEntry,
-  useWindowManager,
 } from "@/components/canvas/window-manager";
 
 // did-navigate-in-page fires often on SPA-heavy sites (YouTube's client router
@@ -12,7 +12,7 @@ const PERSIST_DELAY_MS = 800;
 
 export function BrowserPage() {
   const entry = useWindowEntry();
-  const { updateWindowData } = useWindowManager();
+  const { updateWindowData } = useWindowActions();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(

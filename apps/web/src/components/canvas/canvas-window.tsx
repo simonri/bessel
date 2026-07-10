@@ -1,6 +1,3 @@
-import { memo, Suspense, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, CheckSquare, X } from "lucide-react";
 import { getTaskV1TasksTaskIdGetOptions } from "@metron/client";
 import {
   DropdownMenu,
@@ -8,14 +5,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@metron/ui/components/dropdown-menu";
-import { glassSurface } from "@metron/ui/lib/glass";
 import { Spinner } from "@metron/ui/components/spinner";
+import { glassSurface } from "@metron/ui/lib/glass";
+import { useQuery } from "@tanstack/react-query";
+import { CheckSquare, ChevronDown, X } from "lucide-react";
+import { memo, Suspense, useEffect, useState } from "react";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
-import { isDoneStatus } from "@/lib/task-format";
 import { client } from "@/lib/client";
+import { isDoneStatus } from "@/lib/task-format";
 import { cn } from "@/lib/utils";
+import { setFocusedWindow, useIsWindowFocused } from "./canvas-focus";
 import { MODULE_REGISTRY } from "./module-registry";
-import { WindowEntryContext, WindowTitleContext, useWindowManager, type WindowEntry } from "./window-manager";
+import {
+  useWindowActions,
+  useWorkspaceMeta,
+  type WindowEntry,
+  WindowEntryContext,
+  WindowTitleContext,
+} from "./window-manager";
 
 function WindowSpinner() {
   return (
@@ -26,7 +33,8 @@ function WindowSpinner() {
 }
 
 function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
-  const { workspaces, moveWindowToWorkspace } = useWindowManager();
+  const { workspaces } = useWorkspaceMeta();
+  const { moveWindowToWorkspace } = useWindowActions();
   const others = workspaces.filter((ws) => ws.id !== entry.workspaceId);
   if (others.length === 0) return null;
 
@@ -43,7 +51,10 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className={cn(glassSurface({ weight: "heavy" }), "min-w-40 border-white/10 text-white/80 shadow-2xl")}
+        className={cn(
+          glassSurface({ weight: "heavy" }),
+          "min-w-40 border-white/10 text-white/80 shadow-2xl",
+        )}
       >
         {workspaces.map((ws, i) =>
           ws.id === entry.workspaceId ? null : (
@@ -65,12 +76,15 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
 // terminal widget) — lives in the shared title bar rather than the widget's
 // own content so it reads as "what this whole window is working on".
 function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
-  const { updateWindowData } = useWindowManager();
+  const { updateWindowData } = useWindowActions();
   const attachedTaskId = entry.data?.attachedTaskId || null;
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: task, isError: taskMissing } = useQuery({
-    ...getTaskV1TasksTaskIdGetOptions({ client, path: { task_id: attachedTaskId ?? "" } }),
+    ...getTaskV1TasksTaskIdGetOptions({
+      client,
+      path: { task_id: attachedTaskId ?? "" },
+    }),
     enabled: attachedTaskId != null,
   });
 
@@ -119,14 +133,11 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
 
 export const CanvasWindow = memo(function CanvasWindow({
   entry,
-  isFocused = false,
-  onFocus,
 }: {
   entry: WindowEntry;
-  isFocused?: boolean;
-  onFocus?: () => void;
 }) {
-  const { closeWindow } = useWindowManager();
+  const { closeWindow } = useWindowActions();
+  const isFocused = useIsWindowFocused(entry.id);
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
   const Component = config.component;
@@ -135,7 +146,7 @@ export const CanvasWindow = memo(function CanvasWindow({
   return (
     <div
       data-is-window="true"
-      onPointerDown={onFocus}
+      onPointerDown={() => setFocusedWindow(entry.id)}
       className={cn(
         glassSurface({ weight: "medium" }),
         "relative flex h-full flex-col overflow-hidden rounded-2xl border shadow-2xl transition-[border-color,box-shadow] duration-300",
@@ -167,7 +178,9 @@ export const CanvasWindow = memo(function CanvasWindow({
       </div>
 
       {/* Scrollable content */}
-      <div className={`flex-1 ${config.noPadding ? "overflow-hidden" : "overflow-y-auto p-4"}`}>
+      <div
+        className={`flex-1 ${config.noPadding ? "overflow-hidden" : "overflow-y-auto p-4"}`}
+      >
         <WindowTitleContext.Provider value={setDynamicTitle}>
           <WindowEntryContext.Provider value={entry}>
             <Suspense fallback={<WindowSpinner />}>

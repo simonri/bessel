@@ -1,7 +1,6 @@
 import { glassSurface } from "@metron/ui/lib/glass";
 import { ScrollText, Settings, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { memo, useEffect, useState } from "react";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
 import { CryptoPairTicker } from "@/components/canvas/crypto-pair-ticker";
 import { NotificationBell } from "@/components/canvas/notification-bell";
@@ -12,8 +11,11 @@ import { WorkspaceSwitcher } from "@/components/canvas/workspace-switcher";
 import { LogsDialog } from "@/components/logs-dialog";
 import { SettingsModal } from "@/components/settings-modal";
 import { useSettings } from "@/hooks/use-settings";
+import { cn } from "@/lib/utils";
 
-export function CanvasTopBar() {
+// memo: takes no props, so canvas re-renders (live resize, workspace switches)
+// never cascade into the ticker/spotify/notification subtrees.
+export const CanvasTopBar = memo(function CanvasTopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
@@ -98,4 +100,4 @@ export function CanvasTopBar() {
       )}
     </div>
   );
-}
+});

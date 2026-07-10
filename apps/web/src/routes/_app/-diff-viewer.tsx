@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildHighlightMap,
   detectLang,
@@ -64,7 +64,15 @@ function HighlightedLine({ tokens }: { tokens: HighlightToken[] }) {
 
 // ── DiffViewer ─────────────────────────────────────────────────────────────────
 
-export function DiffViewer({
+// Every row renders at exactly this height (leading-5, py-0) — that uniformity
+// is what makes the plain scrollTop-based windowing below correct.
+const ROW_HEIGHT = 20;
+const OVERSCAN_ROWS = 20;
+
+// memo: the parent GitStatus re-renders on every 8s poll's isFetching flip;
+// the diff strings only change identity when the content actually changed
+// (TanStack Query structural sharing), so this skips those reconciles.
+export const DiffViewer = memo(function DiffViewer({
   diff,
   filename,
   oldContent,
@@ -94,6 +102,51 @@ export function DiffViewer({
     };
   }, [lines, lang, oldContent, newContent]);
 
+  // Rows that actually render, with their original index preserved so
+  // highlightMap lookups (keyed on the unfiltered index) still line up.
+  const rows = useMemo(
+    () =>
+      lines
+        .map((line, i) => ({ line, key: i }))
+        .filter(
+          ({ line }) =>
+            line.type !== "file-header" ||
+            (!!line.content.trim() &&
+              !SKIP_PREFIXES.some((p) => line.content.startsWith(p))),
+        ),
+    [lines],
+  );
+
+  // Window the table to the visible rows plus overscan — a lockfile or
+  // generated-file diff can run tens of thousands of lines, and mounting a
+  // <tr> per line freezes the widget. Spacer rows keep scroll geometry exact.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [range, setRange] = useState({ start: 0, end: 0 });
+  const updateRange = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const start = Math.max(
+      0,
+      Math.floor(el.scrollTop / ROW_HEIGHT) - OVERSCAN_ROWS,
+    );
+    const end = Math.min(
+      rows.length,
+      Math.ceil((el.scrollTop + el.clientHeight) / ROW_HEIGHT) + OVERSCAN_ROWS,
+    );
+    setRange((prev) =>
+      prev.start === start && prev.end === end ? prev : { start, end },
+    );
+  }, [rows.length]);
+
+  useEffect(() => {
+    updateRange();
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(updateRange);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [updateRange]);
+
   const hasContent = lines.some(
     (l) => l.type !== "file-header" || l.content.includes("Binary"),
   );
@@ -106,7 +159,11 @@ export function DiffViewer({
   }
 
   return (
-    <div className="h-full overflow-auto font-mono text-xs leading-5">
+    <div
+      ref={containerRef}
+      onScroll={updateRange}
+      className="h-full overflow-auto font-mono text-xs leading-5"
+    >
       <table className="diff-viewer min-w-full border-collapse">
         <colgroup>
           <col style={{ width: "2.5rem" }} />
@@ -114,16 +171,16 @@ export function DiffViewer({
           <col />
         </colgroup>
         <tbody>
-          {lines.map((line, i) => {
+          {range.start > 0 && (
+            <tr style={{ height: range.start * ROW_HEIGHT }} />
+          )}
+          {rows.slice(range.start, range.end).map(({ line, key: i }) => {
             if (line.type === "file-header") {
-              if (!line.content.trim()) return null;
-              if (SKIP_PREFIXES.some((p) => line.content.startsWith(p)))
-                return null;
               return (
-                <tr key={i}>
+                <tr key={i} style={{ height: ROW_HEIGHT }}>
                   <td
                     colSpan={3}
-                    className="select-none border-l-2 border-transparent px-2 py-0.5 italic text-white/50 whitespace-pre"
+                    className="select-none border-l-2 border-transparent px-2 py-0 italic text-white/50 whitespace-pre"
                   >
                     {line.content}
                   </td>
@@ -220,11 +277,14 @@ export function DiffViewer({
               </tr>
             );
           })}
+          {range.end < rows.length && (
+            <tr style={{ height: (rows.length - range.end) * ROW_HEIGHT }} />
+          )}
         </tbody>
       </table>
     </div>
   );
-}
+});
 
 // ── FileTypeIndicator ──────────────────────────────────────────────────────────
 

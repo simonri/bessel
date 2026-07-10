@@ -1,21 +1,36 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
+import {
+  listProjectsV1ProjectsGetOptions,
+  type ProjectSchema,
+} from "@metron/client";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@metron/ui/components/popover";
 import { glassSurface } from "@metron/ui/lib/glass";
-import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
+import { useQuery } from "@tanstack/react-query";
+import { memo, useState } from "react";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
-import { useWindowManager } from "./window-manager";
+import { MODULE_ORDER, MODULE_REGISTRY } from "./module-registry";
+import { useWindowActions, useWindowState } from "./window-manager";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
-function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex" | "terminal"; active: boolean }) {
-  const { openWindow } = useWindowManager();
+function ProjectPicker({
+  moduleKey,
+  active,
+}: {
+  moduleKey: "claudeCode" | "codex" | "terminal";
+  active: boolean;
+}) {
+  const { openWindow } = useWindowActions();
   const [open, setOpen] = useState(false);
 
   const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
-  const projects = (data ?? []).filter((p): p is ProjectWithPath => p.path != null);
+  const projects = (data ?? []).filter(
+    (p): p is ProjectWithPath => p.path != null,
+  );
 
   const launch = (project?: ProjectWithPath) => {
     openWindow(
@@ -53,7 +68,10 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
         side="top"
         align="center"
         sideOffset={8}
-        className={cn(glassSurface({ weight: "heavy" }), "w-64 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl")}
+        className={cn(
+          glassSurface({ weight: "heavy" }),
+          "w-64 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl",
+        )}
       >
         <div className="border-b border-white/10 px-3 py-2.5">
           <p className="text-xs font-medium text-white/50">Select project</p>
@@ -74,7 +92,9 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
                 onClick={() => launch(p)}
                 className="flex w-full flex-col px-3 py-2.5 text-left transition-colors hover:bg-white/5"
               >
-                <span className="text-sm font-medium text-white/80">{p.name}</span>
+                <span className="text-sm font-medium text-white/80">
+                  {p.name}
+                </span>
                 <span className="truncate text-11 text-white/50">
                   {p.ssh_host ? `${p.ssh_host}:${p.path}` : p.path}
                 </span>
@@ -87,8 +107,9 @@ function ProjectPicker({ moduleKey, active }: { moduleKey: "claudeCode" | "codex
   );
 }
 
-export function CanvasDock() {
-  const { toggleWindow, openWindow, isOpen } = useWindowManager();
+export const CanvasDock = memo(function CanvasDock() {
+  const { toggleWindow, openWindow } = useWindowActions();
+  const { isOpen } = useWindowState();
 
   return (
     <div
@@ -109,7 +130,9 @@ export function CanvasDock() {
         return (
           <button
             key={key}
-            onClick={() => config.multiInstance ? openWindow(key) : toggleWindow(key)}
+            onClick={() =>
+              config.multiInstance ? openWindow(key) : toggleWindow(key)
+            }
             className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
               active
                 ? "text-primary-400"
@@ -124,4 +147,4 @@ export function CanvasDock() {
       })}
     </div>
   );
-}
+});

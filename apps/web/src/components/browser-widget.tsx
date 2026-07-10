@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,6 +12,7 @@ import {
   ShieldAlert,
   X,
 } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useWindowTitle } from "@/components/canvas/window-manager";
 import type {
   DidFailLoadEvent,
@@ -87,9 +87,108 @@ interface BrowserWidgetProps {
   onUrlChange?: (url: string) => void;
 }
 
+// The address input lives in its own memoized component so typing re-renders
+// just the toolbar — not the whole widget including the <webview> subtree.
+const BrowserToolbar = memo(function BrowserToolbar({
+  currentUrl,
+  loading,
+  canGoBack,
+  canGoForward,
+  onNavigate,
+  onHome,
+  onBack,
+  onForward,
+  onReloadOrStop,
+}: {
+  currentUrl: string;
+  loading: boolean;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  onNavigate: (target: string) => void;
+  onHome: () => void;
+  onBack: () => void;
+  onForward: () => void;
+  onReloadOrStop: () => void;
+}) {
+  const [address, setAddress] = useState(currentUrl);
+
+  // Follow real navigations, without clobbering what the user is typing more
+  // often than the URL actually changes.
+  const lastUrlRef = useRef(currentUrl);
+  useEffect(() => {
+    if (currentUrl !== lastUrlRef.current) {
+      lastUrlRef.current = currentUrl;
+      setAddress(currentUrl);
+    }
+  }, [currentUrl]);
+
+  const isSecure = /^https:\/\//i.test(address);
+
+  return (
+    <div className="flex shrink-0 items-center gap-1 border-b border-white/10 bg-white/[0.03] px-2 py-1.5">
+      <button
+        type="button"
+        onClick={onBack}
+        disabled={!canGoBack}
+        className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent"
+      >
+        <ArrowLeft className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={onForward}
+        disabled={!canGoForward}
+        className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent"
+      >
+        <ArrowRight className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={onReloadOrStop}
+        className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white"
+      >
+        {loading ? (
+          <X className="size-3.5" />
+        ) : (
+          <RotateCw className="size-3.5" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={onHome}
+        className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white"
+      >
+        <Home className="size-3.5" />
+      </button>
+
+      <form
+        className="mx-1 flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-white/10 bg-black/40 px-2 py-1"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onNavigate(address);
+        }}
+      >
+        {isSecure ? (
+          <Lock className="size-3 shrink-0 text-white/30" />
+        ) : (
+          <Search className="size-3 shrink-0 text-white/30" />
+        )}
+        <input
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          placeholder="Search or enter address"
+          className="min-w-0 flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/30 focus:outline-none"
+          spellCheck={false}
+        />
+      </form>
+    </div>
+  );
+});
+
 export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
   const webviewRef = useRef<WebviewTag | null>(null);
-  const [address, setAddress] = useState(initialUrl ?? "");
+  const [currentUrl, setCurrentUrl] = useState(initialUrl ?? "");
   const [showHome, setShowHome] = useState(!initialUrl);
   const [loading, setLoading] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -115,7 +214,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     if (!resolved) return;
     setFailed(null);
     setShowHome(false);
-    setAddress(resolved);
+    setCurrentUrl(resolved);
     webviewRef.current?.loadURL(resolved);
   }, []);
 
@@ -123,7 +222,10 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     const wv = webviewRef.current;
     if (!wv) return;
 
-    const crashRetry = { attempts: 0, timer: null as ReturnType<typeof setTimeout> | null };
+    const crashRetry = {
+      attempts: 0,
+      timer: null as ReturnType<typeof setTimeout> | null,
+    };
 
     const onStartLoading = () => {
       setLoading(true);
@@ -134,7 +236,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     const onNavigate = (e: Event) => {
       const url = (e as DidNavigateEvent).url;
       if (!url || url === "about:blank") return;
-      setAddress(url);
+      setCurrentUrl(url);
       setCanGoBack(wv.canGoBack());
       setCanGoForward(wv.canGoForward());
       onUrlChangeRef.current?.(url);
@@ -202,73 +304,31 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
   const goHome = useCallback(() => {
     setShowHome(true);
     setFailed(null);
-    setAddress("");
+    setCurrentUrl("");
   }, []);
 
-  const isSecure = /^https:\/\//i.test(address);
+  const goBack = useCallback(() => webviewRef.current?.goBack(), []);
+  const goForward = useCallback(() => webviewRef.current?.goForward(), []);
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
+  const reloadOrStop = useCallback(() => {
+    if (loadingRef.current) webviewRef.current?.stop();
+    else webviewRef.current?.reload();
+  }, []);
 
   return (
     <div className="flex h-full flex-col bg-neutral-950">
-      <div className="flex shrink-0 items-center gap-1 border-b border-white/10 bg-white/[0.03] px-2 py-1.5">
-        <button
-          type="button"
-          onClick={() => webviewRef.current?.goBack()}
-          disabled={!canGoBack}
-          className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent"
-        >
-          <ArrowLeft className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => webviewRef.current?.goForward()}
-          disabled={!canGoForward}
-          className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent"
-        >
-          <ArrowRight className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            loading ? webviewRef.current?.stop() : webviewRef.current?.reload()
-          }
-          className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white"
-        >
-          {loading ? (
-            <X className="size-3.5" />
-          ) : (
-            <RotateCw className="size-3.5" />
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={goHome}
-          className="flex size-6 items-center justify-center rounded-md text-white/60 transition hover:bg-white/10 hover:text-white"
-        >
-          <Home className="size-3.5" />
-        </button>
-
-        <form
-          className="mx-1 flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-white/10 bg-black/40 px-2 py-1"
-          onSubmit={(e) => {
-            e.preventDefault();
-            navigate(address);
-          }}
-        >
-          {isSecure ? (
-            <Lock className="size-3 shrink-0 text-white/30" />
-          ) : (
-            <Search className="size-3 shrink-0 text-white/30" />
-          )}
-          <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            onFocus={(e) => e.target.select()}
-            placeholder="Search or enter address"
-            className="min-w-0 flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/30 focus:outline-none"
-            spellCheck={false}
-          />
-        </form>
-      </div>
+      <BrowserToolbar
+        currentUrl={currentUrl}
+        loading={loading}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onNavigate={navigate}
+        onHome={goHome}
+        onBack={goBack}
+        onForward={goForward}
+        onReloadOrStop={reloadOrStop}
+      />
 
       <div className="relative min-h-0 flex-1">
         <webview
@@ -306,7 +366,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
             <ShieldAlert className="size-6 text-white/30" />
             <div>
               <div className="text-sm text-white/70">
-                Couldn't load {hostOf(address)}
+                Couldn't load {hostOf(currentUrl)}
               </div>
               <div className="mt-0.5 text-xs text-white/50">
                 {failed.description}

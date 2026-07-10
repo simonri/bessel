@@ -1,17 +1,9 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { BankAccountSchema } from "@metron/client";
 import {
+  deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
-  deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
 } from "@metron/client";
-import { Button } from "@metron/ui/components/button";
-import { Skeleton } from "@metron/ui/components/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +14,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@metron/ui/components/alert-dialog";
-import { VirtualDataTable } from "@/components/virtual-data-table";
+import { Button } from "@metron/ui/components/button";
+import { Skeleton } from "@metron/ui/components/skeleton";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
+import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
 import { formatMoney } from "@/lib/money";
 
@@ -36,7 +41,9 @@ const PAGE_SIZE = 50;
 
 function Accounts() {
   const [page, setPage] = useState(1);
-  const [deleteTarget, setDeleteTarget] = useState<BankAccountSchema | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BankAccountSchema | null>(
+    null,
+  );
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -59,7 +66,10 @@ function Accounts() {
         return {
           ...old,
           items: old.items.filter((a: any) => a.id !== path.bank_account_id),
-          pagination: { ...old.pagination, total_count: old.pagination.total_count - 1 },
+          pagination: {
+            ...old.pagination,
+            total_count: old.pagination.total_count - 1,
+          },
         };
       });
       setDeleteTarget(null);
@@ -67,62 +77,72 @@ function Accounts() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        for (const [key, val] of context.previous) queryClient.setQueryData(key, val);
+        for (const [key, val] of context.previous)
+          queryClient.setQueryData(key, val);
       }
     },
     onSettled: () => void queryClient.invalidateQueries({ queryKey }),
   });
 
-  const columns: ColumnDef<BankAccountSchema>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "subtype",
-      size: 100,
-      header: "Type",
-      cell: ({ row }) => <span className="capitalize">{row.original.subtype}</span>,
-    },
-    {
-      accessorKey: "currency",
-      size: 80,
-      header: "Currency",
-    },
-    {
-      accessorKey: "current_balance",
-      size: 140,
-      header: () => <div className="text-right">Balance</div>,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {formatMoney(row.original.current_balance ?? 0, row.original.currency)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "created_at",
-      size: 120,
-      header: "Created",
-      cell: ({ row }) => format(row.original.created_at, "yyyy-MM-dd"),
-    },
-    {
-      id: "actions",
-      size: 90,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-0.5">
-          <EditAccountDialog account={row.original} />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:text-destructive"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  // Stable identity so react-table doesn't rebuild its column model per render.
+  const columns: ColumnDef<BankAccountSchema>[] = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        accessorKey: "subtype",
+        size: 100,
+        header: "Type",
+        cell: ({ row }) => (
+          <span className="capitalize">{row.original.subtype}</span>
+        ),
+      },
+      {
+        accessorKey: "currency",
+        size: 80,
+        header: "Currency",
+      },
+      {
+        accessorKey: "current_balance",
+        size: 140,
+        header: () => <div className="text-right">Balance</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">
+            {formatMoney(
+              row.original.current_balance ?? 0,
+              row.original.currency,
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "created_at",
+        size: 120,
+        header: "Created",
+        cell: ({ row }) => format(row.original.created_at, "yyyy-MM-dd"),
+      },
+      {
+        id: "actions",
+        size: 90,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-0.5">
+            <EditAccountDialog account={row.original} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:text-destructive"
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   const accounts = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
@@ -183,13 +203,16 @@ function Accounts() {
         </div>
       )}
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete account?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will be permanently
-              removed. This can&rsquo;t be undone.
+              &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will
+              be permanently removed. This can&rsquo;t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -198,7 +221,10 @@ function Accounts() {
               variant="destructive"
               onClick={() => {
                 if (!deleteTarget) return;
-                deleteMutation.mutate({ client, path: { bank_account_id: deleteTarget.id } });
+                deleteMutation.mutate({
+                  client,
+                  path: { bank_account_id: deleteTarget.id },
+                });
               }}
               disabled={deleteMutation.isPending}
             >

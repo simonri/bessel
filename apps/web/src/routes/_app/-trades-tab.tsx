@@ -33,7 +33,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Trash2, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { DataTable } from "@/components/data-table";
@@ -72,89 +72,93 @@ export function TradesTab() {
     },
   });
 
-  const columns: ColumnDef<TradeSchema>[] = [
-    {
-      accessorKey: "trade_date",
-      header: "Date",
-      size: 110,
-      cell: ({ row }) => format(row.original.trade_date, "yyyy-MM-dd"),
-    },
-    {
-      accessorKey: "trade_type",
-      header: "Type",
-      size: 70,
-      cell: ({ row }) => (
-        <span
-          className={`font-medium capitalize ${row.original.trade_type === "buy" ? "text-income" : "text-expense"}`}
-        >
-          {row.original.trade_type}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "quantity",
-      header: () => <div className="text-right">Quantity</div>,
-      size: 120,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {formatQuantity(row.original.quantity)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "price_per_unit",
-      header: () => <div className="text-right">Price/Unit</div>,
-      size: 120,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {formatAmount(row.original.price_per_unit)}
-        </div>
-      ),
-    },
-    {
-      id: "total",
-      header: () => <div className="text-right">Total</div>,
-      size: 120,
-      cell: ({ row }) => {
-        const total =
-          (row.original.quantity * row.original.price_per_unit) / 1_000_000;
-        return (
-          <div className="text-right font-mono tabular-nums">
-            {formatAmount(total)}
-          </div>
-        );
+  // Stable identity so react-table doesn't rebuild its column model per render.
+  const columns: ColumnDef<TradeSchema>[] = useMemo(
+    () => [
+      {
+        accessorKey: "trade_date",
+        header: "Date",
+        size: 110,
+        cell: ({ row }) => format(row.original.trade_date, "yyyy-MM-dd"),
       },
-    },
-    {
-      accessorKey: "currency",
-      header: "Ccy",
-      size: 60,
-    },
-    {
-      accessorKey: "notes",
-      header: "Notes",
-      cell: ({ row }) => (
-        <span className="block truncate text-muted-foreground">
-          {row.original.notes ?? ""}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      size: 50,
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Delete"
-          className="hover:text-destructive"
-          onClick={() => setDeleteTarget(row.original)}
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
-      ),
-    },
-  ];
+      {
+        accessorKey: "trade_type",
+        header: "Type",
+        size: 70,
+        cell: ({ row }) => (
+          <span
+            className={`font-medium capitalize ${row.original.trade_type === "buy" ? "text-income" : "text-expense"}`}
+          >
+            {row.original.trade_type}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "quantity",
+        header: () => <div className="text-right">Quantity</div>,
+        size: 120,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">
+            {formatQuantity(row.original.quantity)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "price_per_unit",
+        header: () => <div className="text-right">Price/Unit</div>,
+        size: 120,
+        cell: ({ row }) => (
+          <div className="text-right font-mono tabular-nums">
+            {formatAmount(row.original.price_per_unit)}
+          </div>
+        ),
+      },
+      {
+        id: "total",
+        header: () => <div className="text-right">Total</div>,
+        size: 120,
+        cell: ({ row }) => {
+          const total =
+            (row.original.quantity * row.original.price_per_unit) / 1_000_000;
+          return (
+            <div className="text-right font-mono tabular-nums">
+              {formatAmount(total)}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "currency",
+        header: "Ccy",
+        size: 60,
+      },
+      {
+        accessorKey: "notes",
+        header: "Notes",
+        cell: ({ row }) => (
+          <span className="block truncate text-muted-foreground">
+            {row.original.notes ?? ""}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        size: 50,
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Delete"
+            className="hover:text-destructive"
+            onClick={() => setDeleteTarget(row.original)}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        ),
+      },
+    ],
+    [],
+  );
 
   const trades = data?.items ?? [];
   const maxPage = data?.pagination.max_page ?? 1;

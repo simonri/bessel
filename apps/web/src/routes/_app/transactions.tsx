@@ -1,23 +1,14 @@
-import { memo, useCallback, useMemo } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { isToday, isYesterday, format } from "date-fns";
-import { MoreHorizontal, Trash2, Tag, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TransactionSchema } from "@metron/client";
 import {
+  bulkUpdateTransactionsV1TransactionsBulkPatchMutation,
+  categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
+  deleteTransactionsV1TransactionsDeleteMutation,
+  listBankAccountsV1BankAccountsGetOptions,
+  listCategoriesV1CategoriesGetOptions,
   listTransactionsV1TransactionsGetOptions,
   listTransactionsV1TransactionsGetQueryKey,
-  listCategoriesV1CategoriesGetOptions,
-  listBankAccountsV1BankAccountsGetOptions,
-  deleteTransactionsV1TransactionsDeleteMutation,
-  categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
-  bulkUpdateTransactionsV1TransactionsBulkPatchMutation,
   updateTransactionV1TransactionsTransactionIdPatchMutation,
 } from "@metron/client";
-import { Button } from "@metron/ui/components/button";
-import { Checkbox } from "@metron/ui/components/checkbox";
-import { Skeleton } from "@metron/ui/components/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@metron/ui/components/alert-dialog";
+import { Button } from "@metron/ui/components/button";
+import { Checkbox } from "@metron/ui/components/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,43 +29,75 @@ import {
 } from "@metron/ui/components/dropdown-menu";
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  EmptyDescription,
 } from "@metron/ui/components/empty";
-import { VirtualDataTable } from "@/components/virtual-data-table";
-import { ImportDialog } from "@/components/import-dialog";
-import { CategoryCell, type BulkSuggestion } from "@/components/category-cell";
 import {
-  TransactionFiltersBar,
-  type TransactionFilters,
-} from "@/components/transaction-filters";
-import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@metron/ui/components/popover";
+import { Skeleton } from "@metron/ui/components/skeleton";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import { format, isToday, isYesterday } from "date-fns";
+import {
+  ArrowLeftRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Tag,
+  Trash2,
+} from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
+import { ImportDialog } from "@/components/import-dialog";
+import {
+  type TransactionFilters,
+  TransactionFiltersBar,
+} from "@/components/transaction-filters";
+import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
 import { formatAmount } from "@/lib/money";
-import { useState } from "react";
-import { ArrowLeftRight } from "lucide-react";
 
 // ─── Route + URL search params ────────────────────────────────────────────────
 
 function parseFilters(raw: Record<string, unknown>): TransactionFilters {
   const asArr = (v: unknown): string[] | undefined => {
-    if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
+    if (Array.isArray(v))
+      return v.filter((x): x is string => typeof x === "string");
     if (typeof v === "string") return [v];
     return undefined;
   };
   const asInt = (v: unknown): number | undefined => {
-    const n = typeof v === "string" ? parseInt(v, 10) : typeof v === "number" ? v : NaN;
+    const n =
+      typeof v === "string"
+        ? Number.parseInt(v, 10)
+        : typeof v === "number"
+          ? v
+          : Number.NaN;
     return isNaN(n) ? undefined : n;
   };
   return {
     bank_account_id: asArr(raw.bank_account_id),
     category_id: asArr(raw.category_id),
-    uncategorized: raw.uncategorized === "true" || raw.uncategorized === true ? true : undefined,
+    uncategorized:
+      raw.uncategorized === "true" || raw.uncategorized === true
+        ? true
+        : undefined,
     direction: typeof raw.direction === "string" ? raw.direction : undefined,
-    is_business: raw.is_business === "true" || raw.is_business === true ? true : undefined,
+    is_business:
+      raw.is_business === "true" || raw.is_business === true ? true : undefined,
     search: typeof raw.search === "string" ? raw.search : undefined,
     year: asInt(raw.year),
     month: asInt(raw.month),
@@ -93,7 +118,10 @@ function toLocalDateStr(value: Date | string): string {
   return format(d, "yyyy-MM-dd");
 }
 
-function getDateGroupLabel(tx: TransactionSchema, prev: TransactionSchema | undefined): string | null {
+function getDateGroupLabel(
+  tx: TransactionSchema,
+  prev: TransactionSchema | undefined,
+): string | null {
   const dateStr = toLocalDateStr(tx.transaction_date);
   const prevStr = prev ? toLocalDateStr(prev.transaction_date) : null;
   if (dateStr === prevStr) return null;
@@ -128,9 +156,14 @@ const TransactionActions = memo(function TransactionActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onToggleBusiness(id, !isBusiness)}>
-            {isBusiness ? "Remove business expense" : "Mark as business expense"}
+            {isBusiness
+              ? "Remove business expense"
+              : "Mark as business expense"}
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive" onClick={() => onDelete([id])}>
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => onDelete([id])}
+          >
             <Trash2 className="size-4" />
             Delete
           </DropdownMenuItem>
@@ -149,17 +182,20 @@ function Transactions() {
     month: now.getMonth() + 1,
   });
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(null);
+  const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(
+    null,
+  );
   const queryClient = useQueryClient();
 
   const year = filters.year ?? now.getFullYear();
-  const month = filters.month ?? (now.getMonth() + 1);
+  const month = filters.month ?? now.getMonth() + 1;
   const firstDay = new Date(year, month - 1, 1);
   const mm = String(month).padStart(2, "0");
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayStr = `${year}-${mm}-01`;
   const lastDayStr = `${year}-${mm}-${String(daysInMonth).padStart(2, "0")}`;
-  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+  const isCurrentMonth =
+    year === now.getFullYear() && month === now.getMonth() + 1;
 
   const navigateMonth = useCallback(
     (delta: -1 | 1) => {
@@ -220,7 +256,10 @@ function Transactions() {
       query: { limit: 200 },
     }),
   );
-  const categories = categoriesData?.items ?? [];
+  const categories = useMemo(
+    () => categoriesData?.items ?? [],
+    [categoriesData],
+  );
 
   const { data: accountsData } = useQuery(
     listBankAccountsV1BankAccountsGetOptions({
@@ -260,7 +299,8 @@ function Transactions() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        for (const [key, val] of context.previous) queryClient.setQueryData(key, val);
+        for (const [key, val] of context.previous)
+          queryClient.setQueryData(key, val);
       }
       toast.error("Failed to delete transactions");
     },
@@ -287,7 +327,8 @@ function Transactions() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        for (const [key, val] of context.previous) queryClient.setQueryData(key, val);
+        for (const [key, val] of context.previous)
+          queryClient.setQueryData(key, val);
       }
       toast.error("Failed to categorize transactions");
     },
@@ -295,7 +336,9 @@ function Transactions() {
   });
 
   const bulkCategorizeMutation = useMutation({
-    ...categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation({ client }),
+    ...categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation(
+      { client },
+    ),
     onMutate: async ({ body }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
@@ -304,7 +347,9 @@ function Transactions() {
         return {
           ...old,
           items: old.items.map((t: any) =>
-            t.description === body.description ? { ...t, category_id: body.category_id } : t,
+            t.description === body.description
+              ? { ...t, category_id: body.category_id }
+              : t,
           ),
         };
       });
@@ -312,7 +357,8 @@ function Transactions() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        for (const [key, val] of context.previous) queryClient.setQueryData(key, val);
+        for (const [key, val] of context.previous)
+          queryClient.setQueryData(key, val);
       }
       toast.error("Failed to categorize transactions");
     },
@@ -332,7 +378,9 @@ function Transactions() {
         return {
           ...old,
           items: old.items.map((t: any) =>
-            t.id === path.transaction_id ? { ...t, is_business: body.is_business } : t,
+            t.id === path.transaction_id
+              ? { ...t, is_business: body.is_business }
+              : t,
           ),
         };
       });
@@ -340,7 +388,8 @@ function Transactions() {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        for (const [key, val] of context.previous) queryClient.setQueryData(key, val);
+        for (const [key, val] of context.previous)
+          queryClient.setQueryData(key, val);
       }
       toast.error("Failed to update transaction");
     },
@@ -381,106 +430,122 @@ function Transactions() {
     });
   };
 
-  const columns: ColumnDef<TransactionSchema>[] = [
-    {
-      id: "select",
-      size: 40,
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="truncate text-sm">{row.original.description ?? "—"}</span>
-          {row.original.is_business && (
-            <span className="shrink-0 inline-flex items-center rounded bg-chart-1 px-1.5 py-px text-10 font-semibold text-white">
-              Business
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "account",
-      size: 120,
-      header: "Account",
-      // hidden on mobile via meta — handled by className on TableCell below
-      cell: ({ row }) => (
-        <span className="text-muted-foreground hidden truncate text-xs sm:block">
-          {accountMap.get(row.original.bank_account_id) ?? "—"}
-        </span>
-      ),
-    },
-    {
-      id: "category",
-      size: 160,
-      header: "Category",
-      cell: ({ row }) => (
-        <CategoryCell
-          transactionId={row.original.id}
-          categoryId={row.original.category_id}
-          description={row.original.description}
-          categories={categories}
-          onBulkSuggestion={handleBulkSuggestion}
-        />
-      ),
-    },
-    {
-      accessorKey: "amount",
-      size: 120,
-      header: () => <div className="text-right">Amount</div>,
-      cell: ({ row }) => {
-        const amount = row.original.amount;
-        const sign = row.original.direction === "debit" ? "−" : "+";
-        return (
-          <div
-            className={`text-right font-mono tabular-nums text-sm ${
-              row.original.direction === "credit"
-                ? "text-income"
-                : "text-expense"
-            }`}
-          >
-            {sign}
-            {formatAmount(amount)}
-          </div>
-        );
+  // Stable columns identity — a fresh array (with fresh cell closures) every
+  // render forces react-table to rebuild its column model per keystroke in
+  // the filters and re-render every cell.
+  const columns: ColumnDef<TransactionSchema>[] = useMemo(
+    () => [
+      {
+        id: "select",
+        size: 40,
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
       },
-    },
-    {
-      id: "actions",
-      size: 48,
-      header: () => null,
-      cell: ({ row }) => (
-        <div className="hidden sm:block">
-          <TransactionActions
-                  id={row.original.id}
-                  isBusiness={row.original.is_business ?? false}
-                  onDelete={handleDeleteRows}
-                  onToggleBusiness={handleToggleBusiness}
-                />
-        </div>
-      ),
-    },
-  ];
+      {
+        accessorKey: "description",
+        header: "Description",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="truncate text-sm">
+              {row.original.description ?? "—"}
+            </span>
+            {row.original.is_business && (
+              <span className="shrink-0 inline-flex items-center rounded bg-chart-1 px-1.5 py-px text-10 font-semibold text-white">
+                Business
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "account",
+        size: 120,
+        header: "Account",
+        // hidden on mobile via meta — handled by className on TableCell below
+        cell: ({ row }) => (
+          <span className="text-muted-foreground hidden truncate text-xs sm:block">
+            {accountMap.get(row.original.bank_account_id) ?? "—"}
+          </span>
+        ),
+      },
+      {
+        id: "category",
+        size: 160,
+        header: "Category",
+        cell: ({ row }) => (
+          <CategoryCell
+            transactionId={row.original.id}
+            categoryId={row.original.category_id}
+            description={row.original.description}
+            categories={categories}
+            onBulkSuggestion={handleBulkSuggestion}
+          />
+        ),
+      },
+      {
+        accessorKey: "amount",
+        size: 120,
+        header: () => <div className="text-right">Amount</div>,
+        cell: ({ row }) => {
+          const amount = row.original.amount;
+          const sign = row.original.direction === "debit" ? "−" : "+";
+          return (
+            <div
+              className={`text-right font-mono tabular-nums text-sm ${
+                row.original.direction === "credit"
+                  ? "text-income"
+                  : "text-expense"
+              }`}
+            >
+              {sign}
+              {formatAmount(amount)}
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        size: 48,
+        header: () => null,
+        cell: ({ row }) => (
+          <div className="hidden sm:block">
+            <TransactionActions
+              id={row.original.id}
+              isBusiness={row.original.is_business ?? false}
+              onDelete={handleDeleteRows}
+              onToggleBusiness={handleToggleBusiness}
+            />
+          </div>
+        ),
+      },
+    ],
+    [
+      accountMap,
+      categories,
+      handleBulkSuggestion,
+      handleDeleteRows,
+      handleToggleBusiness,
+    ],
+  );
 
   const transactions = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
@@ -505,7 +570,9 @@ function Transactions() {
         >
           <ChevronLeft className="size-4" />
         </button>
-        <span className="text-sm font-medium w-28 text-center tabular-nums">{monthLabel}</span>
+        <span className="text-sm font-medium w-28 text-center tabular-nums">
+          {monthLabel}
+        </span>
         <button
           type="button"
           onClick={() => navigateMonth(1)}
@@ -539,7 +606,7 @@ function Transactions() {
         </div>
       ) : transactions.length === 0 ? (
         <Empty className="border">
-          <EmptyMedia >
+          <EmptyMedia>
             <ArrowLeftRight />
           </EmptyMedia>
           <EmptyHeader>
@@ -562,7 +629,6 @@ function Transactions() {
             getGroupLabel={getDateGroupLabel}
           />
 
-
           {selectedCount > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">
@@ -572,20 +638,30 @@ function Transactions() {
               {/* Bulk categorize */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={bulkUpdateMutation.isPending}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={bulkUpdateMutation.isPending}
+                  >
                     <Tag className="size-4" />
                     Categorize
                     <ChevronDown className="size-3" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="max-h-72 w-56 overflow-y-auto p-1.5">
+                <PopoverContent
+                  align="start"
+                  className="max-h-72 w-56 overflow-y-auto p-1.5"
+                >
                   <button
                     type="button"
                     className="hover:bg-accent text-muted-foreground w-full rounded-sm px-2 py-1.5 text-left text-sm italic"
                     onClick={() =>
                       bulkUpdateMutation.mutate({
                         client,
-                        body: { ids: Object.keys(rowSelection), category_id: null },
+                        body: {
+                          ids: Object.keys(rowSelection),
+                          category_id: null,
+                        },
                       })
                     }
                   >
@@ -601,7 +677,10 @@ function Transactions() {
                         onClick={() =>
                           bulkUpdateMutation.mutate({
                             client,
-                            body: { ids: Object.keys(rowSelection), category_id: cat.id },
+                            body: {
+                              ids: Object.keys(rowSelection),
+                              category_id: cat.id,
+                            },
                           })
                         }
                       >
@@ -636,7 +715,9 @@ function Transactions() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apply category to similar transactions?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Apply category to similar transactions?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {bulkSuggestion?.count} other transaction
               {bulkSuggestion?.count !== 1 ? "s" : ""} with description &ldquo;

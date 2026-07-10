@@ -19,7 +19,20 @@ export function MonitorPage() {
     const poll = async () => {
       try {
         const s = await window.electron!.monitor.status();
-        if (alive) setStatus(s);
+        // Keep the previous reference when nothing changed so the 3s poll
+        // doesn't re-render the settings modal for identical status.
+        if (alive) {
+          setStatus((prev) =>
+            prev &&
+            prev.installed === s.installed &&
+            prev.active === s.active &&
+            prev.enabled === s.enabled &&
+            prev.failed === s.failed &&
+            prev.state === s.state
+              ? prev
+              : s,
+          );
+        }
       } catch {}
     };
     poll();
@@ -99,9 +112,7 @@ export function MonitorPage() {
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-13 text-white/75">
-                  Start on login
-                </span>
+                <span className="text-13 text-white/75">Start on login</span>
                 <button
                   onClick={() =>
                     run(() =>

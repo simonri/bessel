@@ -48,6 +48,13 @@ function parsePair(pair: string): { coinId: string; currency: string } | null {
   return null;
 }
 
+// Intl.NumberFormat construction is expensive — share one instance.
+const USD_FORMAT = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
 export function CryptoPairTicker({ pair }: { pair: string }) {
   const parsed = parsePair(pair);
 
@@ -63,14 +70,7 @@ export function CryptoPairTicker({ pair }: { pair: string }) {
 
   if (!parsed) return null;
 
-  const formatted =
-    data?.price != null
-      ? new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-          maximumFractionDigits: 0,
-        }).format(data.price)
-      : null;
+  const formatted = data?.price != null ? USD_FORMAT.format(data.price) : null;
 
   const pct = data?.price_change_pct_24h ?? null;
   const isPositive = pct !== null && pct >= 0;

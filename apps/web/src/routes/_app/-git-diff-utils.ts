@@ -1,4 +1,5 @@
-import { createHighlighter, type Highlighter } from "shiki";
+import { createHighlighterCore, type HighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 
 // hljs's typescript/javascript grammars fall back to a crude regex-based XML
 // sub-mode for JSX that breaks on any attribute value beyond a bare token
@@ -8,35 +9,56 @@ import { createHighlighter, type Highlighter } from "shiki";
 // correctly. The theme below is a straight port of the old atom-one-dark look.
 const THEME = "one-dark-pro";
 
-const SUPPORTED_LANGS = [
-  "bash",
-  "css",
-  "scss",
-  "go",
-  "html",
-  "javascript",
-  "json",
-  "jsx",
-  "markdown",
-  "python",
-  "rust",
-  "sql",
-  "typescript",
-  "tsx",
-  "xml",
-  "yaml",
-] as const;
+// createHighlighterCore + the JavaScript regex engine instead of the full
+// shiki bundle: skips the ~600 KB oniguruma WASM engine and the full grammar
+// registry. Grammars load (and compile) lazily per detected language rather
+// than all up-front — a diff view only ever needs one at a time.
+const LANG_LOADERS = {
+  bash: () => import("shiki/langs/bash.mjs"),
+  css: () => import("shiki/langs/css.mjs"),
+  scss: () => import("shiki/langs/scss.mjs"),
+  go: () => import("shiki/langs/go.mjs"),
+  html: () => import("shiki/langs/html.mjs"),
+  javascript: () => import("shiki/langs/javascript.mjs"),
+  json: () => import("shiki/langs/json.mjs"),
+  jsx: () => import("shiki/langs/jsx.mjs"),
+  markdown: () => import("shiki/langs/markdown.mjs"),
+  python: () => import("shiki/langs/python.mjs"),
+  rust: () => import("shiki/langs/rust.mjs"),
+  sql: () => import("shiki/langs/sql.mjs"),
+  typescript: () => import("shiki/langs/typescript.mjs"),
+  tsx: () => import("shiki/langs/tsx.mjs"),
+  xml: () => import("shiki/langs/xml.mjs"),
+  yaml: () => import("shiki/langs/yaml.mjs"),
+} as const;
 
-type SupportedLang = (typeof SUPPORTED_LANGS)[number];
+type SupportedLang = keyof typeof LANG_LOADERS;
 
-let highlighterPromise: Promise<Highlighter> | null = null;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
+const langLoads = new Map<SupportedLang, Promise<void>>();
 
-function getHighlighter(): Promise<Highlighter> {
-  highlighterPromise ??= createHighlighter({
-    themes: [THEME],
-    langs: [...SUPPORTED_LANGS],
+function getHighlighter(): Promise<HighlighterCore> {
+  highlighterPromise ??= createHighlighterCore({
+    themes: [import("shiki/themes/one-dark-pro.mjs")],
+    langs: [],
+    // forgiving: a grammar pattern the JS engine can't translate is skipped
+    // instead of throwing — worst case is a plain-text token, never a crash.
+    engine: createJavaScriptRegexEngine({ forgiving: true }),
   });
   return highlighterPromise;
+}
+
+async function getHighlighterWithLang(
+  lang: SupportedLang,
+): Promise<HighlighterCore> {
+  const highlighter = await getHighlighter();
+  let load = langLoads.get(lang);
+  if (!load) {
+    load = highlighter.loadLanguage(LANG_LOADERS[lang]);
+    langLoads.set(lang, load);
+  }
+  await load;
+  return highlighter;
 }
 
 export interface HighlightToken {
@@ -152,7 +174,7 @@ async function safeTokenizeLines(
 ): Promise<HighlightToken[][] | undefined> {
   if (!content) return undefined;
   try {
-    const highlighter = await getHighlighter();
+    const highlighter = await getHighlighterWithLang(lang);
     return highlighter.codeToTokens(content, { lang, theme: THEME })
       .tokens as HighlightToken[][];
   } catch {

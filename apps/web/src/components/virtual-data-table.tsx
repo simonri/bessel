@@ -1,13 +1,3 @@
-import { useRef, useState } from "react";
-import {
-  type ColumnDef,
-  type OnChangeFn,
-  type RowSelectionState,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { cn } from "@metron/ui/lib/utils";
 import {
   Table,
   TableBody,
@@ -16,6 +6,16 @@ import {
   TableHeader,
   TableRow,
 } from "@metron/ui/components/table";
+import { cn } from "@metron/ui/lib/utils";
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  type OnChangeFn,
+  type RowSelectionState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { useMemo, useRef, useState } from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -85,7 +85,10 @@ export function VirtualDataTable<TData, TValue>({
   });
 
   const { rows } = table.getRowModel();
-  const renderedItems = buildRenderedItems(data, getGroupLabel);
+  const renderedItems = useMemo(
+    () => buildRenderedItems(data, getGroupLabel),
+    [data, getGroupLabel],
+  );
 
   return (
     <div className="rounded-md border">
@@ -104,7 +107,10 @@ export function VirtualDataTable<TData, TValue>({
                 >
                   {header.isPlaceholder
                     ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                 </TableHead>
               ))}
             </TableRow>
@@ -138,7 +144,11 @@ export function VirtualDataTable<TData, TValue>({
                 <LongPressRow
                   key={row.id}
                   row={row}
-                  onLongPress={onRowLongPress ? () => onRowLongPress(row.original) : undefined}
+                  onLongPress={
+                    onRowLongPress
+                      ? () => onRowLongPress(row.original)
+                      : undefined
+                  }
                 />
               );
             })
@@ -155,7 +165,9 @@ function LongPressRow<TData>({
   row,
   onLongPress,
 }: {
-  row: ReturnType<ReturnType<typeof useReactTable<TData>>["getRowModel"]>["rows"][number];
+  row: ReturnType<
+    ReturnType<typeof useReactTable<TData>>["getRowModel"]
+  >["rows"][number];
   onLongPress?: () => void;
 }) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);

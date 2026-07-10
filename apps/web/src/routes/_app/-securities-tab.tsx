@@ -33,7 +33,7 @@ import {
 } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash2, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CreateSecurityDialog } from "@/components/create-security-dialog";
 import { DataTable } from "@/components/data-table";
@@ -76,51 +76,55 @@ export function SecuritiesTab() {
     },
   });
 
-  const columns: ColumnDef<SecuritySchema>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "ticker",
-      header: "Ticker",
-      size: 100,
-      cell: ({ row }) => row.original.ticker ?? "—",
-    },
-    {
-      accessorKey: "asset_type",
-      header: "Type",
-      size: 120,
-      cell: ({ row }) => (
-        <span className="capitalize">
-          {row.original.asset_type.replace("_", " ")}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "currency",
-      header: "Currency",
-      size: 80,
-    },
-    {
-      id: "actions",
-      size: 130,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-0.5">
-          <UpdatePriceDialog security={row.original} />
-          <EditSecurityDialog security={row.original} />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:text-destructive"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  // Stable identity so react-table doesn't rebuild its column model per render.
+  const columns: ColumnDef<SecuritySchema>[] = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        accessorKey: "ticker",
+        header: "Ticker",
+        size: 100,
+        cell: ({ row }) => row.original.ticker ?? "—",
+      },
+      {
+        accessorKey: "asset_type",
+        header: "Type",
+        size: 120,
+        cell: ({ row }) => (
+          <span className="capitalize">
+            {row.original.asset_type.replace("_", " ")}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "currency",
+        header: "Currency",
+        size: 80,
+      },
+      {
+        id: "actions",
+        size: 130,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-0.5">
+            <UpdatePriceDialog security={row.original} />
+            <EditSecurityDialog security={row.original} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:text-destructive"
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   const allSecurities = data?.items ?? [];
   const maxPage = data?.pagination.max_page ?? 1;

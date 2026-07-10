@@ -1,13 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import {
+  listProjectsV1ProjectsGetOptions,
+  type ProjectSchema,
+} from "@metron/client";
 import { glassSurface } from "@metron/ui/lib/glass";
-import { Search, LayoutTemplate } from "lucide-react";
-import { listProjectsV1ProjectsGetOptions, type ProjectSchema } from "@metron/client";
+import { useQuery } from "@tanstack/react-query";
+import { LayoutTemplate, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  templateToWindowSpecs,
+  useWorkspaceTemplates,
+  widgetSummary,
+} from "@/hooks/use-workspace-templates";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { MODULE_REGISTRY, MODULE_ORDER } from "./module-registry";
-import { useWindowManager } from "./window-manager";
-import { useWorkspaceTemplates, templateToWindowSpecs, widgetSummary } from "@/hooks/use-workspace-templates";
+import { MODULE_ORDER, MODULE_REGISTRY } from "./module-registry";
+import { useWindowActions, useWindowState } from "./window-manager";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
@@ -21,97 +28,134 @@ interface PaletteItem {
 }
 
 function useItems(onClose: () => void) {
-  const { openWindow, toggleWindow, isOpen, applyTemplate } = useWindowManager();
+  const { openWindow, toggleWindow, applyTemplate } = useWindowActions();
+  const { isOpen } = useWindowState();
   const { templates } = useWorkspaceTemplates();
   const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
-  const projects = (data ?? []).filter((p): p is ProjectWithPath => p.path != null);
 
-  const items: PaletteItem[] = [];
+  return useMemo(() => {
+    const projects = (data ?? []).filter(
+      (p): p is ProjectWithPath => p.path != null,
+    );
+    const items: PaletteItem[] = [];
 
-  for (const template of templates) {
-    items.push({
-      id: `template-${template.id}`,
-      label: `New workspace from "${template.name}"`,
-      sublabel: widgetSummary(template.widgets),
-      icon: LayoutTemplate,
-      action: () => {
-        applyTemplate(templateToWindowSpecs(template), "new");
-        onClose();
-      },
-    });
-  }
-
-  for (const key of MODULE_ORDER) {
-    const config = MODULE_REGISTRY[key];
-    const Icon = config.icon;
-
-    if (config.multiInstance) {
+    for (const template of templates) {
       items.push({
-        id: key,
-        label: config.title,
-        sublabel: "Open without project",
-        icon: Icon,
-        action: () => { openWindow(key); onClose(); },
-        isOpen: isOpen(key),
-      });
-      for (const project of projects) {
-        items.push({
-          id: `${key}-${project.id}`,
-          label: `${config.title} — ${project.name}`,
-          sublabel: project.ssh_host ? `${project.ssh_host}:${project.path}` : project.path,
-          icon: Icon,
-          action: () => {
-            openWindow(key, {
-              projectPath: project.path,
-              projectName: project.name,
-              ...(project.ssh_host ? { projectSshHost: project.ssh_host } : {}),
-            });
-            onClose();
-          },
-        });
-      }
-    } else {
-      items.push({
-        id: key,
-        label: config.title,
-        icon: Icon,
-        action: () => { toggleWindow(key); onClose(); },
-        isOpen: isOpen(key),
+        id: `template-${template.id}`,
+        label: `New workspace from "${template.name}"`,
+        sublabel: widgetSummary(template.widgets),
+        icon: LayoutTemplate,
+        action: () => {
+          applyTemplate(templateToWindowSpecs(template), "new");
+          onClose();
+        },
       });
     }
-  }
 
-  return items;
+    for (const key of MODULE_ORDER) {
+      const config = MODULE_REGISTRY[key];
+      const Icon = config.icon;
+
+      if (config.multiInstance) {
+        items.push({
+          id: key,
+          label: config.title,
+          sublabel: "Open without project",
+          icon: Icon,
+          action: () => {
+            openWindow(key);
+            onClose();
+          },
+          isOpen: isOpen(key),
+        });
+        for (const project of projects) {
+          items.push({
+            id: `${key}-${project.id}`,
+            label: `${config.title} — ${project.name}`,
+            sublabel: project.ssh_host
+              ? `${project.ssh_host}:${project.path}`
+              : project.path,
+            icon: Icon,
+            action: () => {
+              openWindow(key, {
+                projectPath: project.path,
+                projectName: project.name,
+                ...(project.ssh_host
+                  ? { projectSshHost: project.ssh_host }
+                  : {}),
+              });
+              onClose();
+            },
+          });
+        }
+      } else {
+        items.push({
+          id: key,
+          label: config.title,
+          icon: Icon,
+          action: () => {
+            toggleWindow(key);
+            onClose();
+          },
+          isOpen: isOpen(key),
+        });
+      }
+    }
+
+    return items;
+  }, [
+    data,
+    templates,
+    isOpen,
+    openWindow,
+    toggleWindow,
+    applyTemplate,
+    onClose,
+  ]);
 }
 
-export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+// The gate lives outside the component with the hooks, so a closed palette
+// runs nothing at all — no projects query subscription, no item rebuilding.
+export function CommandPalette({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+  return <CommandPaletteContent onClose={onClose} />;
+}
+
+function CommandPaletteContent({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const items = useItems(onClose);
 
-  const filtered = query.trim()
-    ? items.filter((item) =>
-        item.label.toLowerCase().includes(query.toLowerCase()) ||
-        item.sublabel?.toLowerCase().includes(query.toLowerCase()),
-      )
-    : items;
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q) ||
+        item.sublabel?.toLowerCase().includes(q),
+    );
+  }, [items, query]);
 
   useEffect(() => {
-    if (open) {
-      setQuery("");
-      setSelectedIndex(0);
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [open]);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
 
   useEffect(() => {
     setSelectedIndex(0);
   }, [query]);
 
   useEffect(() => {
-    const el = listRef.current?.children[selectedIndex] as HTMLElement | undefined;
+    const el = listRef.current?.children[selectedIndex] as
+      | HTMLElement
+      | undefined;
     el?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex]);
 
@@ -132,8 +176,6 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     },
     [filtered, selectedIndex, onClose],
   );
-
-  if (!open) return null;
 
   return (
     <div
@@ -165,7 +207,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
         <div ref={listRef} className="max-h-72 overflow-y-auto py-1.5">
           {filtered.length === 0 ? (
-            <p className="py-8 text-center text-sm text-white/50">No widgets match</p>
+            <p className="py-8 text-center text-sm text-white/50">
+              No widgets match
+            </p>
           ) : (
             filtered.map((item, i) => {
               const Icon = item.icon;
@@ -174,7 +218,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 <button
                   key={item.id}
                   onClick={item.action}
-                  onPointerMove={() => setSelectedIndex(i)}
+                  onPointerMove={() => {
+                    if (i !== selectedIndex) setSelectedIndex(i);
+                  }}
                   className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                     selected ? "bg-white/[0.08]" : ""
                   }`}
@@ -183,15 +229,21 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                     className={`size-4 shrink-0 ${item.isOpen ? "text-primary-400" : "text-white/40"}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm ${item.isOpen ? "text-primary-300" : "text-white/80"}`}>
+                    <p
+                      className={`text-sm ${item.isOpen ? "text-primary-300" : "text-white/80"}`}
+                    >
                       {item.label}
                     </p>
                     {item.sublabel && (
-                      <p className="truncate text-11 text-white/50">{item.sublabel}</p>
+                      <p className="truncate text-11 text-white/50">
+                        {item.sublabel}
+                      </p>
                     )}
                   </div>
                   {item.isOpen && (
-                    <span className="shrink-0 text-10 text-primary-400/50">open</span>
+                    <span className="shrink-0 text-10 text-primary-400/50">
+                      open
+                    </span>
                   )}
                 </button>
               );

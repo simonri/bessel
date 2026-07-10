@@ -10,7 +10,11 @@ import {
 } from "@metron/ui/components/tooltip";
 import { LayoutGrid, LayoutTemplate, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useWindowManager } from "@/components/canvas/window-manager";
+import {
+  useFlashWorkspace,
+  useWindowActions,
+  useWorkspaceMeta,
+} from "@/components/canvas/window-manager";
 import { WorkspaceTemplatesDialog } from "@/components/canvas/workspace-template-dialog";
 import {
   templateToWindowSpecs,
@@ -51,7 +55,7 @@ function WorkspacePill({
 
 function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
   const { templates } = useWorkspaceTemplates();
-  const { applyTemplate } = useWindowManager();
+  const { applyTemplate } = useWindowActions();
   const [open, setOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
 
@@ -124,7 +128,7 @@ function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
 }
 
 function AlignButton() {
-  const { alignWorkspace } = useWindowManager();
+  const { alignWorkspace } = useWindowActions();
 
   return (
     <Tooltip>
@@ -172,14 +176,9 @@ function WorkspaceContextMenu({
 }
 
 export function WorkspaceSwitcher() {
-  const {
-    workspaces,
-    activeWorkspaceId,
-    addWorkspace,
-    removeWorkspace,
-    switchWorkspace,
-    flashWorkspaceId,
-  } = useWindowManager();
+  const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
+  const { addWorkspace, removeWorkspace, switchWorkspace } = useWindowActions();
+  const flashWorkspaceId = useFlashWorkspace();
   const [menuId, setMenuId] = useState<string | null>(null);
 
   return (

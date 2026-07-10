@@ -18,105 +18,107 @@ import { DataTable } from "@/components/data-table";
 import { client } from "@/lib/client";
 import { formatAmount, formatQuantity } from "@/lib/money";
 
+// Module scope: captures nothing, so there's no reason to rebuild the column
+// model (and every cell closure) per render.
+const columns: ColumnDef<HoldingSchema>[] = [
+  {
+    accessorKey: "security_name",
+    header: "Security",
+    cell: ({ row }) => (
+      <div>
+        <div className="font-medium">{row.original.security_name}</div>
+        {row.original.ticker && (
+          <div className="text-muted-foreground text-xs">
+            {row.original.ticker}
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "asset_type",
+    header: "Type",
+    size: 100,
+    cell: ({ row }) => (
+      <span className="capitalize">
+        {row.original.asset_type.replace("_", " ")}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "quantity",
+    header: () => <div className="text-right">Quantity</div>,
+    size: 120,
+    cell: ({ row }) => (
+      <div className="text-right font-mono tabular-nums">
+        {formatQuantity(row.original.quantity)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "avg_cost_per_unit",
+    header: () => <div className="text-right">Avg Cost</div>,
+    size: 120,
+    cell: ({ row }) => (
+      <div className="text-right font-mono tabular-nums">
+        {formatAmount(row.original.avg_cost_per_unit)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "current_price",
+    header: () => <div className="text-right">Price</div>,
+    size: 120,
+    cell: ({ row }) => (
+      <div className="text-right font-mono tabular-nums">
+        {row.original.current_price != null
+          ? formatAmount(row.original.current_price)
+          : "—"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "current_value",
+    header: () => <div className="text-right">Value</div>,
+    size: 140,
+    cell: ({ row }) => (
+      <div className="text-right font-mono tabular-nums">
+        {row.original.current_value != null
+          ? `${formatAmount(row.original.current_value)} ${row.original.currency}`
+          : "—"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "gain_loss",
+    header: () => <div className="text-right">Gain/Loss</div>,
+    size: 170,
+    cell: ({ row }) => {
+      const { gain_loss, gain_loss_pct, currency } = row.original;
+      if (gain_loss == null) return <div className="text-right">—</div>;
+      const isPositive = gain_loss >= 0;
+      return (
+        <div
+          className={`text-right font-mono tabular-nums ${isPositive ? "text-income" : "text-expense"}`}
+        >
+          {isPositive ? "+" : ""}
+          {formatAmount(gain_loss)} {currency}
+          {gain_loss_pct != null && (
+            <span className="text-muted-foreground text-xs ml-1">
+              ({isPositive ? "+" : ""}
+              {gain_loss_pct.toFixed(1)}%)
+            </span>
+          )}
+        </div>
+      );
+    },
+  },
+];
+
 export function HoldingsTab() {
   const { data, isLoading } = useQuery({
     ...getHoldingsV1InvestmentsHoldingsGetOptions({ client }),
   });
-
-  const columns: ColumnDef<HoldingSchema>[] = [
-    {
-      accessorKey: "security_name",
-      header: "Security",
-      cell: ({ row }) => (
-        <div>
-          <div className="font-medium">{row.original.security_name}</div>
-          {row.original.ticker && (
-            <div className="text-muted-foreground text-xs">
-              {row.original.ticker}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "asset_type",
-      header: "Type",
-      size: 100,
-      cell: ({ row }) => (
-        <span className="capitalize">
-          {row.original.asset_type.replace("_", " ")}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "quantity",
-      header: () => <div className="text-right">Quantity</div>,
-      size: 120,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {formatQuantity(row.original.quantity)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "avg_cost_per_unit",
-      header: () => <div className="text-right">Avg Cost</div>,
-      size: 120,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {formatAmount(row.original.avg_cost_per_unit)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "current_price",
-      header: () => <div className="text-right">Price</div>,
-      size: 120,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {row.original.current_price != null
-            ? formatAmount(row.original.current_price)
-            : "—"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "current_value",
-      header: () => <div className="text-right">Value</div>,
-      size: 140,
-      cell: ({ row }) => (
-        <div className="text-right font-mono tabular-nums">
-          {row.original.current_value != null
-            ? `${formatAmount(row.original.current_value)} ${row.original.currency}`
-            : "—"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "gain_loss",
-      header: () => <div className="text-right">Gain/Loss</div>,
-      size: 170,
-      cell: ({ row }) => {
-        const { gain_loss, gain_loss_pct, currency } = row.original;
-        if (gain_loss == null) return <div className="text-right">—</div>;
-        const isPositive = gain_loss >= 0;
-        return (
-          <div
-            className={`text-right font-mono tabular-nums ${isPositive ? "text-income" : "text-expense"}`}
-          >
-            {isPositive ? "+" : ""}
-            {formatAmount(gain_loss)} {currency}
-            {gain_loss_pct != null && (
-              <span className="text-muted-foreground text-xs ml-1">
-                ({isPositive ? "+" : ""}
-                {gain_loss_pct.toFixed(1)}%)
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-  ];
 
   const holdings = data?.items ?? [];
 

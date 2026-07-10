@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export interface ActivityMapping {
   from: string;
@@ -17,7 +25,13 @@ interface Settings {
 }
 
 const STORAGE_KEY = "metron:settings";
-const DEFAULT_SETTINGS: Settings = { cryptoPairs: "BTCUSDT", activityMappings: [], wallpaper: "video", theme: "orange", gridGap: 16 };
+const DEFAULT_SETTINGS: Settings = {
+  cryptoPairs: "BTCUSDT",
+  activityMappings: [],
+  wallpaper: "video",
+  theme: "orange",
+  gridGap: 16,
+};
 
 function loadSettings(): Settings {
   try {
@@ -51,7 +65,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  return <SettingsContext.Provider value={{ settings, update }}>{children}</SettingsContext.Provider>;
+  // Memoized so parent re-renders (auth/query state in AppLayout) don't mint a
+  // new context value and cascade into every settings consumer.
+  const value = useMemo(() => ({ settings, update }), [settings, update]);
+
+  return (
+    <SettingsContext.Provider value={value}>
+      {children}
+    </SettingsContext.Provider>
+  );
 }
 
 export function useSettings() {

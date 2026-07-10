@@ -1,26 +1,46 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  GridLayout,
-  cloneLayout,
-  verticalCompactor,
   type Compactor,
+  cloneLayout,
+  GridLayout,
+  verticalCompactor,
 } from "react-grid-layout";
-import { useWindowManager, GRID_COLS, GRID_ROW_HEIGHT, type WindowEntry } from "./window-manager";
+import { useSettings } from "@/hooks/use-settings";
+import { CanvasDock } from "./canvas-dock";
+import { setFocusedWindow } from "./canvas-focus";
+import { CanvasTopBar } from "./canvas-topbar";
+import { CanvasWindow } from "./canvas-window";
+import { CommandPalette } from "./command-palette";
 import { fitToViewport } from "./layout-engine";
 import { MODULE_REGISTRY } from "./module-registry";
-import { CanvasWindow } from "./canvas-window";
-import { CanvasDock } from "./canvas-dock";
-import { CanvasTopBar } from "./canvas-topbar";
-import { CommandPalette } from "./command-palette";
-import { useSettings } from "@/hooks/use-settings";
+import {
+  GRID_COLS,
+  GRID_ROW_HEIGHT,
+  useWindowActions,
+  useWindowState,
+  useWorkspaceMeta,
+  type WindowEntry,
+} from "./window-manager";
 import "./canvas-grid.css";
+
+const NO_WINDOWS: WindowEntry[] = [];
 
 // Forward+reverse baked into one clip — browser loops it natively.
 function VideoWallpaper() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Pause while the window is hidden/minimized — otherwise the loop decodes
+  // full-screen video on the GPU for the app's entire (always-running) life.
   useEffect(() => {
-    videoRef.current?.play().catch(() => {});
+    const video = videoRef.current;
+    if (!video) return;
+    const sync = () => {
+      if (document.hidden) video.pause();
+      else video.play().catch(() => {});
+    };
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
   }, []);
 
   return (
@@ -46,14 +66,27 @@ function useContainerSize() {
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
+    let frame = 0;
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
       const { width, height } = entry.contentRect;
-      setSize({ width, height });
-      setMounted(true);
+      // Coalesce to one commit per frame — a live OS-window resize fires the
+      // observer continuously, and every commit re-lays-out every grid.
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setSize((prev) =>
+          prev.width === width && prev.height === height
+            ? prev
+            : { width, height },
+        );
+        setMounted(true);
+      });
     });
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   return { ...size, containerRef, mounted };
@@ -85,17 +118,24 @@ function windowsToLayout(windows: WindowEntry[], maxRows: number) {
 function useDragAwareCompactor() {
   const activeIdRef = useRef<string | null>(null);
 
-  const compactor = useMemo<Compactor>(() => ({
-    type: "vertical",
-    allowOverlap: false,
-    compact(layout, cols) {
-      const activeId = activeIdRef.current;
-      if (!activeId) return cloneLayout(layout);
-      const marked = layout.map((item) => (item.i === activeId ? { ...item, static: true } : item));
-      const compacted = verticalCompactor.compact(marked, cols);
-      return compacted.map((item) => (item.i === activeId ? { ...item, static: false } : item));
-    },
-  }), []);
+  const compactor = useMemo<Compactor>(
+    () => ({
+      type: "vertical",
+      allowOverlap: false,
+      compact(layout, cols) {
+        const activeId = activeIdRef.current;
+        if (!activeId) return cloneLayout(layout);
+        const marked = layout.map((item) =>
+          item.i === activeId ? { ...item, static: true } : item,
+        );
+        const compacted = verticalCompactor.compact(marked, cols);
+        return compacted.map((item) =>
+          item.i === activeId ? { ...item, static: false } : item,
+        );
+      },
+    }),
+    [],
+  );
 
   const markActive = useCallback((id: string | null) => {
     activeIdRef.current = id;
@@ -104,7 +144,10 @@ function useDragAwareCompactor() {
   return { compactor, markActive };
 }
 
-function WorkspaceGrid({
+// Memoized so interactions in one workspace don't re-render the others: the
+// window manager preserves each workspace's `windows` array identity when its
+// contents didn't change, and every other prop is stable between commits.
+const WorkspaceGrid = memo(function WorkspaceGrid({
   workspaceId,
   windows,
   isActive,
@@ -112,9 +155,6 @@ function WorkspaceGrid({
   height,
   maxRows,
   gap,
-  focusedWindowId,
-  onFocusWindow,
-  onDefocus,
 }: {
   workspaceId: string;
   windows: WindowEntry[];
@@ -123,11 +163,8 @@ function WorkspaceGrid({
   height: number;
   maxRows: number;
   gap: number;
-  focusedWindowId: string | null;
-  onFocusWindow: (id: string) => void;
-  onDefocus: () => void;
 }) {
-  const { updateLayout } = useWindowManager();
+  const { updateLayout } = useWindowActions();
   // Display-only viewport fit: the saved layout is never rewritten by a window
   // resize — out-of-view widgets are just rendered pulled into view. Only a
   // drag/resize commits what's on screen (see the stop handlers below).
@@ -141,7 +178,8 @@ function WorkspaceGrid({
     <div
       style={{ display: isActive ? undefined : "none" }}
       onPointerDown={(e) => {
-        if (!(e.target as HTMLElement).closest("[data-is-window]")) onDefocus();
+        if (!(e.target as HTMLElement).closest("[data-is-window]"))
+          setFocusedWindow(null);
       }}
     >
       <GridLayout
@@ -152,8 +190,19 @@ function WorkspaceGrid({
         // room to drag into, since the container hasn't "grown" to make room yet.
         style={{ height }}
         layout={layout}
-        gridConfig={{ cols: GRID_COLS, rowHeight: GRID_ROW_HEIGHT, margin: [gap, gap], containerPadding: [0, 0], maxRows }}
-        dragConfig={{ enabled: true, handle: ".canvas-window-titlebar", threshold: 5, bounded: true }}
+        gridConfig={{
+          cols: GRID_COLS,
+          rowHeight: GRID_ROW_HEIGHT,
+          margin: [gap, gap],
+          containerPadding: [0, 0],
+          maxRows,
+        }}
+        dragConfig={{
+          enabled: true,
+          handle: ".canvas-window-titlebar",
+          threshold: 5,
+          bounded: true,
+        }}
         resizeConfig={{ enabled: true, handles: ["se"] }}
         compactor={compactor}
         onDragStart={(_layout, oldItem) => {
@@ -177,26 +226,27 @@ function WorkspaceGrid({
       >
         {windows.map((win) => (
           <div key={win.id}>
-            <CanvasWindow
-              entry={win}
-              isFocused={focusedWindowId === win.id}
-              onFocus={() => onFocusWindow(win.id)}
-            />
+            <CanvasWindow entry={win} />
           </div>
         ))}
       </GridLayout>
     </div>
   );
-}
+});
 
 export function CanvasShell() {
-  const { allWindows, workspaces, activeWorkspaceId, setViewportRows } = useWindowManager();
+  const { windowsByWorkspace } = useWindowState();
+  const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
+  const { setViewportRows } = useWindowActions();
   const { settings } = useSettings();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
+  const closePalette = useCallback(() => setPaletteOpen(false), []);
   const { width, height, containerRef, mounted } = useContainerSize();
   const gap = settings.gridGap;
-  const maxRows = Math.max(1, Math.floor((height + gap) / (GRID_ROW_HEIGHT + gap)));
+  const maxRows = Math.max(
+    1,
+    Math.floor((height + gap) / (GRID_ROW_HEIGHT + gap)),
+  );
 
   // The `mounted` gate matters: before the first measurement height is 0 and
   // maxRows would be 1, which must never leak into placement decisions.
@@ -212,7 +262,8 @@ export function CanvasShell() {
       }
     };
     window.addEventListener("keydown", handler, { capture: true });
-    return () => window.removeEventListener("keydown", handler, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handler, { capture: true });
   }, []);
 
   // Safety net for the select-none toggled in onDragStart/onResizeStart below:
@@ -237,24 +288,26 @@ export function CanvasShell() {
           draggable={false}
         />
       )}
-      {settings.wallpaper === "image" && <div className="absolute inset-0 bg-black/30" />}
+      {settings.wallpaper === "image" && (
+        <div className="absolute inset-0 bg-black/30" />
+      )}
 
       <div className="relative flex h-full flex-col pt-12 pb-10">
-        <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden px-3.5">
+        <div
+          ref={containerRef}
+          className="min-h-0 flex-1 overflow-hidden px-3.5"
+        >
           {mounted &&
             workspaces.map((ws) => (
               <WorkspaceGrid
                 key={ws.id}
                 workspaceId={ws.id}
-                windows={allWindows.filter((w) => w.workspaceId === ws.id)}
+                windows={windowsByWorkspace.get(ws.id) ?? NO_WINDOWS}
                 isActive={ws.id === activeWorkspaceId}
                 width={width}
                 height={height}
                 maxRows={maxRows}
                 gap={gap}
-                focusedWindowId={focusedWindowId}
-                onFocusWindow={setFocusedWindowId}
-                onDefocus={() => setFocusedWindowId(null)}
               />
             ))}
         </div>
@@ -263,7 +316,7 @@ export function CanvasShell() {
       <CanvasTopBar />
       <CanvasDock />
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <CommandPalette open={paletteOpen} onClose={closePalette} />
     </div>
   );
 }

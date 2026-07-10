@@ -3,6 +3,31 @@ import { Pause, Play, SkipForward } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const SPOTIFY_STATUS_QUERY_KEY = ["spotify-status"];
+
+// Only the fields this widget renders. MPRIS emits several duplicate
+// PropertiesChanged per track change, each carrying a different position —
+// projecting the push down to these fields lets TanStack Query's structural
+// sharing coalesce those duplicates into zero re-renders.
+interface ProjectedSpotifyStatus {
+  running: boolean;
+  playing?: boolean;
+  title?: string;
+  artist?: string;
+}
+
+function projectStatus(status: {
+  running: boolean;
+  playing?: boolean;
+  title?: string;
+  artist?: string;
+}): ProjectedSpotifyStatus {
+  return {
+    running: status.running,
+    playing: status.playing,
+    title: status.title,
+    artist: status.artist,
+  };
+}
 // Backstop only — the main process pushes a status update the instant Spotify's
 // own D-Bus signal fires, normally well under a second. This just guarantees the
 // optimistic icon doesn't get stuck if a push is ever lost (e.g. Spotify closes
@@ -22,13 +47,22 @@ export function SpotifyWidget() {
 
   const { data } = useQuery({
     queryKey: SPOTIFY_STATUS_QUERY_KEY,
-    queryFn: () => window.electron!.spotify.getStatus(),
+    queryFn: async () =>
+      projectStatus(await window.electron!.spotify.getStatus()),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
+  // The 4s optimistic backstop must not fire setState after unmount.
+  useEffect(
+    () => () => {
+      if (optimisticTimer.current) clearTimeout(optimisticTimer.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     return window.electron!.spotify.onStatusChange((status) => {
-      queryClient.setQueryData(SPOTIFY_STATUS_QUERY_KEY, status);
+      queryClient.setQueryData(SPOTIFY_STATUS_QUERY_KEY, projectStatus(status));
       if (
         pendingPlaying.current === null ||
         status.playing === pendingPlaying.current
