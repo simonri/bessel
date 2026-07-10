@@ -31,9 +31,7 @@ describe("buildHighlightMap", () => {
     ].join("\n");
     const lines = parseDiff(makeDiff(content));
     const map = await buildHighlightMap(lines, "tsx", content, content);
-    const returnLineIdx = lines.findIndex((l) =>
-      l.content.includes("<button"),
-    );
+    const returnLineIdx = lines.findIndex((l) => l.content.includes("<button"));
     const tokens = map.get(returnLineIdx);
     expect(tokens).toBeDefined();
     const joined = tokens!.map((t) => t.content).join("");

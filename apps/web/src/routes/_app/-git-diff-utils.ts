@@ -27,6 +27,8 @@ const SUPPORTED_LANGS = [
   "yaml",
 ] as const;
 
+type SupportedLang = (typeof SUPPORTED_LANGS)[number];
+
 let highlighterPromise: Promise<Highlighter> | null = null;
 
 function getHighlighter(): Promise<Highlighter> {
@@ -61,7 +63,7 @@ interface ParsedLine {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const EXT_LANG: Record<string, string> = {
+const EXT_LANG: Record<string, SupportedLang> = {
   ts: "typescript",
   tsx: "tsx",
   js: "javascript",
@@ -126,7 +128,9 @@ export function parseDiff(raw: string): ParsedLine[] {
 
 // ── Syntax highlighting ────────────────────────────────────────────────────────
 
-export function detectLang(filepath: string | undefined): string | undefined {
+export function detectLang(
+  filepath: string | undefined,
+): SupportedLang | undefined {
   if (!filepath) return undefined;
   const ext = filepath.split("/").pop()?.split(".").pop()?.toLowerCase();
   return ext ? EXT_LANG[ext] : undefined;
@@ -144,7 +148,7 @@ const MAX_FULL_FILE_HIGHLIGHT_LENGTH = 200_000;
 // line" as "render it as plain text".
 async function safeTokenizeLines(
   content: string,
-  lang: string,
+  lang: SupportedLang,
 ): Promise<HighlightToken[][] | undefined> {
   if (!content) return undefined;
   try {
@@ -166,16 +170,14 @@ async function safeTokenizeLines(
 // at HEAD), too large to highlight synchronously, or fails outright.
 export async function buildHighlightMap(
   lines: ParsedLine[],
-  lang: string | undefined,
+  lang: SupportedLang | undefined,
   oldContent: string,
   newContent: string,
 ): Promise<Map<number, HighlightToken[]>> {
   const result = new Map<number, HighlightToken[]>();
   if (!lang) return result;
 
-  const tokenizeFile = async (
-    content: string,
-  ): Promise<HighlightToken[][]> => {
+  const tokenizeFile = async (content: string): Promise<HighlightToken[][]> => {
     if (!content || content.length > MAX_FULL_FILE_HIGHLIGHT_LENGTH) return [];
     return (await safeTokenizeLines(content, lang)) ?? [];
   };
