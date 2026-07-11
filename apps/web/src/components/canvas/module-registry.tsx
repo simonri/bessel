@@ -14,6 +14,7 @@ import {
   GitBranch,
   Globe,
   Bot,
+  Sparkles,
 } from "lucide-react";
 import type { ModuleKey } from "./window-manager";
 import { isDesktop } from "@/lib/environment";
@@ -117,6 +118,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     multiInstance: true,
     noPadding: true,
   },
+  grok: {
+    title: "Grok",
+    icon: Sparkles,
+    component: lazy(() =>
+      import("@/routes/_app/-grok").then((m) => ({ default: m.Grok })),
+    ),
+    ...SESSION_SIZE,
+    multiInstance: true,
+    noPadding: true,
+  },
   terminal: {
     title: "Terminal",
     icon: SquareTerminal,
@@ -148,7 +159,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
 };
 
-const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "codex", "terminal", "browser"] : [];
+const desktopModules: ModuleKey[] = isDesktop ? ["claudeCode", "codex", "grok", "terminal", "browser"] : [];
 
 export const MODULE_ORDER: ModuleKey[] = [
   "dashboard",
