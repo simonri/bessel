@@ -26,6 +26,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "^6.0.3",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "wrangler": "^4.0.0"
   }
 }

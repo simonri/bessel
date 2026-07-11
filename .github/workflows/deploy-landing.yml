@@ -45,4 +45,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/landing/dist/client --project-name=bessel-landing --branch=master
+          workingDirectory: apps/landing
+          command: pages deploy dist/client --project-name=bessel-landing --branch=master
