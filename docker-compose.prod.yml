@@ -109,13 +109,20 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
-      # API routes
+      # API routes (Tailscale-only)
       - "traefik.http.routers.metron-api.rule=Host(`vps.tailca3fd9.ts.net`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
       - "traefik.http.routers.metron-api.entrypoints=websecure"
       - "traefik.http.routers.metron-api.middlewares=metron-tailscale@docker"
       - "traefik.http.services.metron-api.loadbalancer.server.port=8000"
       # Tailscale-only access
       - "traefik.http.middlewares.metron-tailscale.ipallowlist.sourcerange=100.64.0.0/10"
+      # Public API access (api.getbessel.com) - separate cert resolver since the
+      # default DNS-01 Cloudflare token on this box isn't scoped to this zone
+      - "traefik.http.routers.bessel-api-public.rule=Host(`api.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
+      - "traefik.http.routers.bessel-api-public.entrypoints=websecure"
+      - "traefik.http.routers.bessel-api-public.tls.certresolver=letsencrypt-http"
+      - "traefik.http.routers.bessel-api-public.service=metron-api"
+      - "traefik.http.routers.bessel-api-public.middlewares=security-headers@file,rate-limit@file"
     networks:
       - metron-internal
       - web

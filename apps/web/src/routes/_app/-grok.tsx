@@ -16,12 +16,24 @@ export function Grok() {
     return (
       <TerminalWidget
         command="ssh"
-        args={["-t", sshHost, `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc 'grok'`]}
+        args={[
+          "-t",
+          sshHost,
+          `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc 'grok'`,
+        ]}
         taskDropZone
         commands={commands}
       />
     );
   }
 
-  return <TerminalWidget command="grok" cwd={path} taskDropZone commands={commands} />;
+  return (
+    <TerminalWidget
+      command="grok"
+      args={[]}
+      cwd={path}
+      taskDropZone
+      commands={commands}
+    />
+  );
 }

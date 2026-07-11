@@ -28,7 +28,7 @@ const PLATFORM_LABEL: Record<Platform, string> = {
   linux: "Linux",
 };
 
-const APP_URL = "https://app.bessel.dev";
+const APP_URL = "https://app.getbessel.com";
 const GITHUB_URL = "https://github.com/simonri/bessel";
 const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
 
@@ -49,6 +49,7 @@ function LandingPage() {
       <div className="relative">
         <Nav />
         <Hero />
+        <Thesis />
         <Features />
         <SelfHosted />
         <Download />
@@ -68,6 +69,9 @@ function Nav() {
             <Wordmark />
           </a>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
+            <a href="#why" className="transition-colors duration-150 pointer-fine:hover:text-foreground">
+              Why
+            </a>
             <a href="#features" className="transition-colors duration-150 pointer-fine:hover:text-foreground">
               Features
             </a>
@@ -146,6 +150,26 @@ function Hero() {
       </div>
 
       <AppMockup className="rise mx-auto mt-16 max-w-4xl sm:mt-20" />
+    </section>
+  );
+}
+
+function Thesis() {
+  return (
+    <section id="why" className="mx-auto w-full max-w-3xl scroll-mt-20 px-6 pt-28 sm:pt-36">
+      <div className="flex flex-col items-center text-center">
+        <span className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
+          Why Bessel
+        </span>
+        <p className="mt-5 text-balance text-2xl font-medium leading-snug tracking-tight sm:text-3xl md:text-4xl">
+          AI keeps getting smarter. It still only knows what you tell it.
+        </p>
+        <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
+          The missing piece was never intelligence, it's context. Bessel pulls
+          your finances, health, travel, and habits into one place, so the
+          full picture of your life finally exists somewhere AI can use it.
+        </p>
+      </div>
     </section>
   );
 }
