@@ -32,13 +32,21 @@ const APP_URL = "https://app.getbessel.com";
 const GITHUB_URL = "https://github.com/simonri/bessel";
 const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
 
+// Applied to every link that leaves the landing page (a different domain,
+// including subdomains like app.getbessel.com) so it opens in a new tab
+// instead of navigating away from the marketing site.
+const EXTERNAL_LINK_PROPS = { target: "_blank", rel: "noopener noreferrer" } as const;
+const isExternalHref = (href: string) => !href.startsWith("#");
+
 // Fixed, version-free artifact names (set via `artifactName` in
 // apps/desktop/package.json) so these links always resolve to whatever the
 // latest release published, with no landing-page redeploy per version.
 const PLATFORM_ASSET: Record<Platform, string> = {
   mac: "Bessel-mac-arm64.dmg",
   windows: "Bessel-win-x64.exe",
-  linux: "Bessel-linux-x64.AppImage",
+  // electron-builder maps the Linux target's ${arch} to the distro-packaging
+  // convention (x86_64/aarch64), unlike mac/win which use the raw x64/arm64.
+  linux: "Bessel-linux-x86_64.AppImage",
 };
 const platformDownloadUrl = (platform: Platform) => `${DOWNLOAD_URL}/download/${PLATFORM_ASSET[platform]}`;
 
@@ -98,12 +106,14 @@ function Nav() {
             href={GITHUB_URL}
             aria-label="GitHub"
             className="text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground"
+            {...EXTERNAL_LINK_PROPS}
           >
             <GitHubLogo className="size-4.5" />
           </a>
           <a
             href={APP_URL}
             className="hidden text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground sm:block"
+            {...EXTERNAL_LINK_PROPS}
           >
             Sign in
           </a>
@@ -142,6 +152,7 @@ function Hero() {
             <a
               href={platformDownloadUrl(platform)}
               className="flex items-center gap-2.5 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
+              download
             >
               {PLATFORM_ICON[platform]}
               Download for {PLATFORM_LABEL[platform]}
@@ -287,6 +298,7 @@ function SelfHosted() {
             <a
               href={GITHUB_URL}
               className="mt-6 inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-150 pointer-fine:hover:text-accent-soft"
+              {...EXTERNAL_LINK_PROPS}
             >
               <GitHubLogo className="size-4" />
               Read the source on GitHub
@@ -353,6 +365,7 @@ function Download() {
                   ? "border-accent/40 bg-accent/[0.06] pointer-fine:hover:border-accent/60"
                   : "border-white/[0.09] bg-white/[0.035] pointer-fine:hover:border-white/[0.2] pointer-fine:hover:bg-white/[0.06]"
               }`}
+              download
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/[0.1] bg-white/[0.05] text-foreground">
                 {p.icon}
@@ -375,7 +388,11 @@ function Download() {
       </div>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Latest release on{" "}
-        <a href={DOWNLOAD_URL} className="text-foreground underline decoration-white/25 underline-offset-2 pointer-fine:hover:decoration-white/50">
+        <a
+          href={DOWNLOAD_URL}
+          className="text-foreground underline decoration-white/25 underline-offset-2 pointer-fine:hover:decoration-white/50"
+          {...EXTERNAL_LINK_PROPS}
+        >
           GitHub Releases
         </a>
       </p>
@@ -398,6 +415,7 @@ function FinalCta() {
         <a
           href={platformDownloadUrl(platform)}
           className="mt-8 flex items-center gap-2.5 rounded-full bg-foreground px-7 py-3 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
+          download
         >
           {PLATFORM_ICON[platform]}
           Download Bessel
@@ -459,6 +477,7 @@ function FooterColumn({
           key={link.label}
           href={link.href}
           className="text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground"
+          {...(isExternalHref(link.href) ? EXTERNAL_LINK_PROPS : {})}
         >
           {link.label}
         </a>
