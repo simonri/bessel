@@ -17,10 +17,10 @@ class EmailSender(StrEnum):
   aws = "aws"
 
 
-# Support both the prefixed (metron_ENV, matching env_prefix) and bare (ENV) forms,
+# Support both the prefixed (bessel_ENV, matching env_prefix) and bare (ENV) forms,
 # and feed the result into Settings.ENV as its default so the env-file selection and
 # the runtime environment can never disagree.
-env = Environment(os.getenv("metron_ENV") or os.getenv("ENV") or Environment.development)
+env = Environment(os.getenv("bessel_ENV") or os.getenv("ENV") or Environment.development)
 env_file = ".env.testing" if env == Environment.testing else ".env"
 
 file_extension = ".exe" if os.name == "nt" else ""
@@ -85,7 +85,7 @@ class Settings(BaseSettings):
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000
 
-  model_config = SettingsConfigDict(env_prefix="metron_", env_file_encoding="utf-8", case_sensitive=False, env_file=env_file, extra="allow")
+  model_config = SettingsConfigDict(env_prefix="bessel_", env_file_encoding="utf-8", case_sensitive=False, env_file=env_file, extra="allow")
 
   def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:
     return str(

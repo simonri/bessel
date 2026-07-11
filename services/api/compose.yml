@@ -2,24 +2,24 @@ services:
   redis:
     image: redis
     ports:
-      - "${METRON_REDIS_PORT}:6379"
+      - "${BESSEL_REDIS_PORT}:6379"
 
   db:
     image: postgres:15.1-bullseye
     environment:
-      - POSTGRES_USER=${METRON_POSTGRES_USER}
-      - POSTGRES_PASSWORD=${METRON_POSTGRES_PASSWORD}
-      - POSTGRES_DB=${METRON_POSTGRES_DB}
-      - POSTGRES_PORT=${METRON_POSTGRES_PORT}
+      - POSTGRES_USER=${BESSEL_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${BESSEL_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${BESSEL_POSTGRES_DB}
+      - POSTGRES_PORT=${BESSEL_POSTGRES_PORT}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
-      - "${METRON_POSTGRES_PORT}:5432"
+      - "${BESSEL_POSTGRES_PORT}:5432"
     expose:
-      - ${METRON_POSTGRES_PORT}
+      - ${BESSEL_POSTGRES_PORT}
     healthcheck:
       test:
-        ["CMD", "pg_isready", "-q", "-d", "${METRON_POSTGRES_DB}", "-U", "${METRON_POSTGRES_USER}"]
+        ["CMD", "pg_isready", "-q", "-d", "${BESSEL_POSTGRES_DB}", "-U", "${BESSEL_POSTGRES_USER}"]
       timeout: 40s
       interval: 2s
       retries: 20

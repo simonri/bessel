@@ -64,7 +64,7 @@ function Nav() {
     <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/60 backdrop-blur-md">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-6">
         <div className="flex items-center gap-8">
-          <a href="#" aria-label="Bessel home">
+          <a href="#" aria-label="Bessel home" className="flex items-center">
             <Wordmark />
           </a>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">

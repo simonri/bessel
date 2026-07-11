@@ -65,7 +65,7 @@ worker_clean = { cmd = "./worker.sh clean", help = "force kill all workers" }
 db_migrate = { cmd = "python db.py upgrade" }
 db_new_migration = { cmd = "alembic revision --autogenerate -m 'migrate'" }
 db_seed = { cmd = "python -m scripts.seed_db" }
-test = { cmd = "METRON_ENV=testing python -m pytest . --cov=src --cov-report=term-missing --cov-report=html" }
+test = { cmd = "BESSEL_ENV=testing python -m pytest . --cov=src --cov-report=term-missing --cov-report=html" }
 lint = { cmd = "ruff format . && ruff check --fix .", help = "run linters with autofix" }
 generate_client = { cmd = "openapi-python-client generate --url http://localhost:8000/openapi.json --output-path ../python_client --overwrite" }
 
