@@ -25,3 +25,9 @@ flag after installing:
 ```bash
 xattr -cr /Applications/Bessel.app
 ```
+
+## Desktop app (Windows)
+
+The Windows build isn't code-signed either, so SmartScreen will show **"Windows
+protected your PC"** on first launch. Click **More info → Run anyway** to
+proceed.

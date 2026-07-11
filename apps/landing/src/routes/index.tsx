@@ -32,6 +32,16 @@ const APP_URL = "https://app.getbessel.com";
 const GITHUB_URL = "https://github.com/simonri/bessel";
 const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
 
+// Fixed, version-free artifact names (set via `artifactName` in
+// apps/desktop/package.json) so these links always resolve to whatever the
+// latest release published, with no landing-page redeploy per version.
+const PLATFORM_ASSET: Record<Platform, string> = {
+  mac: "Bessel-mac-arm64.dmg",
+  windows: "Bessel-win-x64.exe",
+  linux: "Bessel-linux-x64.AppImage",
+};
+const platformDownloadUrl = (platform: Platform) => `${DOWNLOAD_URL}/download/${PLATFORM_ASSET[platform]}`;
+
 export const Route = createFileRoute("/")({
   component: LandingPage,
 });
@@ -130,7 +140,7 @@ function Hero() {
         <div className="rise mt-9 flex flex-col items-center gap-3" style={riseDelay(0.25)}>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
-              href={DOWNLOAD_URL}
+              href={platformDownloadUrl(platform)}
               className="flex items-center gap-2.5 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
             >
               {PLATFORM_ICON[platform]}
@@ -337,7 +347,7 @@ function Download() {
           return (
             <a
               key={p.name}
-              href={DOWNLOAD_URL}
+              href={platformDownloadUrl(p.id)}
               className={`group flex items-center gap-4 rounded-xl border p-5 transition-[transform,border-color,background-color] duration-200 ease-out-strong active:scale-[0.98] ${
                 isDetected
                   ? "border-accent/40 bg-accent/[0.06] pointer-fine:hover:border-accent/60"
@@ -374,6 +384,7 @@ function Download() {
 }
 
 function FinalCta() {
+  const platform = usePlatform() ?? "mac";
   return (
     <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-32 sm:pt-40">
       <div className="flex flex-col items-center text-center">
@@ -385,10 +396,10 @@ function FinalCta() {
           Signal, without the noise. Free, open source, and yours.
         </p>
         <a
-          href={DOWNLOAD_URL}
+          href={platformDownloadUrl(platform)}
           className="mt-8 flex items-center gap-2.5 rounded-full bg-foreground px-7 py-3 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
         >
-          <AppleLogo className="size-4" />
+          {PLATFORM_ICON[platform]}
           Download Bessel
         </a>
       </div>

@@ -51,6 +51,7 @@
       "repo": "bessel",
       "releaseType": "release"
     },
+    "artifactName": "${productName}-${os}-${arch}.${ext}",
     "linux": {
       "target": [
         "AppImage"
@@ -72,7 +73,10 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "arch": [
+        "x64"
+      ]
     }
   }
 }
