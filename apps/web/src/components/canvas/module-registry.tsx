@@ -1,8 +1,6 @@
-import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   ArrowLeftRight,
-  Bot,
   CheckSquare,
   ChefHat,
   GitBranch,
@@ -10,18 +8,17 @@ import {
   Landmark,
   LayoutDashboard,
   MapPin,
-  Sparkles,
   SquareTerminal,
-  Terminal,
   TrendingUp,
 } from "lucide-react";
 import { lazy } from "react";
 import { isDesktop } from "@/lib/environment";
+import { ClaudeIcon, CodexIcon, GrokIcon } from "./brand-icons";
 import type { ModuleKey } from "./window-manager";
 
 export interface ModuleConfig {
   title: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   component: React.LazyExoticComponent<React.ComponentType>;
   defaultSize: { w: number; h: number };
   minSize: { w: number; h: number };
@@ -116,7 +113,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
   claudeCode: {
     title: "Claude",
-    icon: Terminal,
+    icon: ClaudeIcon,
     component: lazy(() =>
       import("@/routes/_app/-claude-code").then((m) => ({
         default: m.ClaudeCode,
@@ -128,7 +125,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
   codex: {
     title: "Codex",
-    icon: Bot,
+    icon: CodexIcon,
     component: lazy(() =>
       import("@/routes/_app/-codex").then((m) => ({ default: m.Codex })),
     ),
@@ -138,7 +135,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
   grok: {
     title: "Grok",
-    icon: Sparkles,
+    icon: GrokIcon,
     component: lazy(() =>
       import("@/routes/_app/-grok").then((m) => ({ default: m.Grok })),
     ),
