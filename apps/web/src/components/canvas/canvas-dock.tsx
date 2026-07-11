@@ -21,7 +21,7 @@ function ProjectPicker({
   moduleKey,
   active,
 }: {
-  moduleKey: "claudeCode" | "codex" | "grok" | "terminal";
+  moduleKey: "claudeCode" | "codex" | "terminal";
   active: boolean;
 }) {
   const { openWindow } = useWindowActions();
@@ -123,12 +123,7 @@ export const CanvasDock = memo(function CanvasDock() {
         const Icon = config.icon;
         const active = isOpen(key);
 
-        if (
-          key === "claudeCode" ||
-          key === "codex" ||
-          key === "grok" ||
-          key === "terminal"
-        ) {
+        if (key === "claudeCode" || key === "codex" || key === "terminal") {
           return <ProjectPicker key={key} moduleKey={key} active={active} />;
         }
 
