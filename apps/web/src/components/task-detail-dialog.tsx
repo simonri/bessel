@@ -270,7 +270,7 @@ export function TaskDetailDialogController({
   taskId: string | null;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [editingTask, setEditingTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskSchema | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const cache = useTaskCacheHelpers();
 
@@ -348,7 +348,7 @@ export function TaskDetailDialogController({
             onReopen={() => reopenMutation.mutate({ client, path: { task_id: task.id } })}
             onDelete={() => setConfirmDelete(true)}
             onEdit={() => {
-              setEditingTask(true);
+              setEditingTask(task);
               onOpenChange(false);
             }}
             onStatusChange={(s) =>
@@ -363,7 +363,12 @@ export function TaskDetailDialogController({
         )}
       </Dialog>
 
-      <TaskFormDialog key={task?.id} task={task ?? undefined} open={editingTask} onOpenChange={setEditingTask} />
+      <TaskFormDialog
+        key={editingTask?.id}
+        task={editingTask ?? undefined}
+        open={editingTask != null}
+        onOpenChange={(open) => !open && setEditingTask(null)}
+      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
