@@ -221,7 +221,7 @@ export function AppMockup({ className }: { className?: string }) {
             <MiniWindow title="Transactions" className="col-span-7 h-32 sm:col-span-4">
               <TransactionsWidget />
             </MiniWindow>
-            <MiniWindow title="metron.git" className="col-span-5 h-32 sm:col-span-4">
+            <MiniWindow title="bessel.git" className="col-span-5 h-32 sm:col-span-4">
               <GitWidget />
             </MiniWindow>
             <MiniWindow title="Activity" className="col-span-12 h-32 max-sm:hidden sm:col-span-4">

@@ -29,7 +29,7 @@ const PLATFORM_LABEL: Record<Platform, string> = {
 };
 
 const APP_URL = "https://app.bessel.dev";
-const GITHUB_URL = "https://github.com/simonri/metron";
+const GITHUB_URL = "https://github.com/simonri/bessel";
 const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
 
 export const Route = createFileRoute("/")({

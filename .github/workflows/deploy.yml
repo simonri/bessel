@@ -1,5 +1,5 @@
 # ==============================================================================
-# Production Deployment — Metron
+# Production Deployment — Bessel
 # ==============================================================================
 # Builds Docker images and deploys to VPS on push to main.
 # Only builds/deploys services whose code has changed.
@@ -37,7 +37,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/metron
+  IMAGE_PREFIX: ${{ github.repository_owner }}/bessel
 
 jobs:
   # ============================================================================

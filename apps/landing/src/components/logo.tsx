@@ -12,7 +12,7 @@ export function BesselMark({ className }: { className?: string }) {
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
-        transform="translate(0, 1.5)"
+        transform="translate(0, -0.9)"
       />
     </svg>
   );

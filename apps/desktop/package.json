@@ -48,7 +48,7 @@
     "publish": {
       "provider": "github",
       "owner": "simonri",
-      "repo": "metron",
+      "repo": "bessel",
       "releaseType": "release"
     },
     "linux": {
