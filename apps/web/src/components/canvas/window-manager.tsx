@@ -29,6 +29,7 @@ export type ModuleKey =
   | "recipes"
   | "claudeCode"
   | "codex"
+  | "grok"
   | "terminal"
   | "gitStatus"
   | "browser";
@@ -147,7 +148,7 @@ const ALL_MODULES = new Set<string>([
   "activity",
   "recipes",
   "gitStatus",
-  ...(isDesktop ? ["claudeCode", "codex", "terminal", "browser"] : []),
+  ...(isDesktop ? ["claudeCode", "codex", "grok", "terminal", "browser"] : []),
 ]);
 
 function newId() {
