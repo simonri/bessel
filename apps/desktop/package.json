@@ -1,6 +1,6 @@
 {
   "name": "@bessel/desktop",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "Bessel personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
