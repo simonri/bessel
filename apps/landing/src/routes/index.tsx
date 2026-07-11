@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Bot,
@@ -7,9 +8,11 @@ import {
   GitBranch,
   LayoutGrid,
   Map,
+  Menu,
   ServerCog,
   SquareTerminal,
   Wallet,
+  X,
 } from "lucide-react";
 import { AppMockup } from "@/components/app-mockup";
 import { AppleLogo, GitHubLogo, LinuxLogo, WindowsLogo } from "@/components/icons";
@@ -78,7 +81,16 @@ function LandingPage() {
   );
 }
 
+const NAV_LINKS = [
+  { href: "#why", label: "Why" },
+  { href: "#features", label: "Features" },
+  { href: "#self-hosted", label: "Self-hosted" },
+  { href: "#download", label: "Download" },
+];
+
 function Nav() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/60 backdrop-blur-md">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-6">
@@ -86,19 +98,16 @@ function Nav() {
           <a href="#" aria-label="Bessel home" className="flex items-center">
             <Wordmark />
           </a>
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
-            <a href="#why" className="transition-colors duration-150 pointer-fine:hover:text-foreground">
-              Why
-            </a>
-            <a href="#features" className="transition-colors duration-150 pointer-fine:hover:text-foreground">
-              Features
-            </a>
-            <a href="#self-hosted" className="transition-colors duration-150 pointer-fine:hover:text-foreground">
-              Self-hosted
-            </a>
-            <a href="#download" className="transition-colors duration-150 pointer-fine:hover:text-foreground">
-              Download
-            </a>
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="transition-colors duration-150 pointer-fine:hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-5">
@@ -112,7 +121,7 @@ function Nav() {
           </a>
           <a
             href={APP_URL}
-            className="hidden text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground sm:block"
+            className="hidden text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground md:block"
             {...EXTERNAL_LINK_PROPS}
           >
             Sign in
@@ -123,8 +132,39 @@ function Nav() {
           >
             Download
           </a>
+          <button
+            type="button"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground md:hidden"
+          >
+            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
         </div>
       </div>
+      {menuOpen && (
+        <nav className="flex flex-col gap-1 border-t border-white/[0.06] bg-background px-6 py-3 md:hidden">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="rounded-lg px-2 py-2.5 text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground"
+            >
+              {link.label}
+            </a>
+          ))}
+          <a
+            href={APP_URL}
+            onClick={() => setMenuOpen(false)}
+            className="rounded-lg px-2 py-2.5 text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground"
+            {...EXTERNAL_LINK_PROPS}
+          >
+            Sign in
+          </a>
+        </nav>
+      )}
     </header>
   );
 }

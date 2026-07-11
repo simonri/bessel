@@ -53,7 +53,7 @@ function ProjectPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
+          className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
             active
               ? "text-primary-400"
               : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
@@ -61,7 +61,7 @@ function ProjectPicker({
           title={config.title}
         >
           <Icon className="size-3.5 shrink-0" />
-          <span>{config.title}</span>
+          <span className="hidden lg:inline">{config.title}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -115,7 +115,7 @@ export const CanvasDock = memo(function CanvasDock() {
     <div
       className={cn(
         glassSurface({ weight: "light" }),
-        "fixed bottom-0 left-0 right-0 z-50 flex items-center gap-1 border-t border-white/10 px-4 py-1",
+        "fixed bottom-0 left-0 right-0 z-50 flex items-center gap-1 overflow-x-auto border-t border-white/10 px-4 py-1",
       )}
     >
       {MODULE_ORDER.map((key) => {
@@ -138,7 +138,7 @@ export const CanvasDock = memo(function CanvasDock() {
             onClick={() =>
               config.multiInstance ? openWindow(key) : toggleWindow(key)
             }
-            className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
+            className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
               active
                 ? "text-primary-400"
                 : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
@@ -146,7 +146,7 @@ export const CanvasDock = memo(function CanvasDock() {
             title={config.title}
           >
             <Icon className="size-3.5 shrink-0" />
-            <span>{config.title}</span>
+            <span className="hidden lg:inline">{config.title}</span>
           </button>
         );
       })}
