@@ -20,6 +20,7 @@ declare global {
         set: (key: string, value: string) => Promise<void>;
         remove: (key: string) => Promise<void>;
         allKeys: () => Promise<string[]>;
+        onCallback: (callback: (url: string) => void) => () => void;
       };
       getVersion: () => Promise<string>;
       checkForUpdate: () => Promise<{

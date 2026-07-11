@@ -16,6 +16,7 @@ import {
 } from "electron";
 import { autoUpdater } from "electron-updater";
 import fs from "fs";
+import http from "http";
 import * as pty from "node-pty";
 import os from "os";
 import path from "path";
@@ -407,6 +408,51 @@ const NAVIGATION_ALLOWED_ORIGINS = new Set([
   "https://accounts.google.com",
 ]);
 
+// ─── OAuth loopback callback server ────────────────────────────────────────────
+// Google blocks its own login page ("This browser or app may not be secure")
+// when it's navigated inside an embedded webview like an Electron BrowserWindow
+// — it detects this by more than the User-Agent string (Electron never sends
+// the Sec-CH-UA client hints a real Chrome does, no matter what the UA string
+// claims), so there's no header to spoof our way out of it. The fix Google
+// documents for native/desktop apps is to run the whole OAuth flow in the
+// system's real default browser and receive the redirect back via a local
+// loopback server (RFC 8252) — see providers/auth.tsx on the web side, which
+// opens loginWithRedirect() via shell.openExternal instead of navigating here.
+// Must match AUTH_CALLBACK_PORT-derived redirect_uri in apps/web/src/providers/auth.tsx.
+const AUTH_CALLBACK_PORT = 41823;
+const AUTH_CALLBACK_PATH = "/callback";
+
+function startAuthCallbackServer(): void {
+  const server = http.createServer((req, res) => {
+    if (!req.url?.startsWith(AUTH_CALLBACK_PATH)) {
+      res.writeHead(404).end();
+      return;
+    }
+    broadcast(
+      "auth:callback",
+      `http://127.0.0.1:${AUTH_CALLBACK_PORT}${req.url}`,
+    );
+    res.writeHead(200, { "content-type": "text/html" });
+    res.end(
+      "<!doctype html><meta charset=utf-8><title>Bessel</title>" +
+        "<body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;" +
+        "background:#0a0a0a;color:#ffffff88;font:14px system-ui,sans-serif'>" +
+        "Signed in — you can close this tab and return to Bessel.</body>",
+    );
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+  server.on("error", (err) =>
+    appendLog(
+      `auth callback server failed to start: ${(err as Error).message}`,
+    ),
+  );
+  server.listen(AUTH_CALLBACK_PORT, "127.0.0.1");
+}
+
 // ─── browser widget ───────────────────────────────────────────────────────────
 // Shared by every browser-widget <webview> instance so logging into a site once
 // (YouTube, Twitch, ...) carries over to every widget and survives app restarts.
@@ -616,6 +662,7 @@ app.whenReady().then(() => {
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
+  startAuthCallbackServer();
 
   // Same UA fix as the browser widget below, applied to the default session so
   // the main window's Auth0/Google login (createWindow) isn't blocked too.

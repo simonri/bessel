@@ -1,6 +1,6 @@
-import { Auth0Provider, useAuth0, type AppState } from "@auth0/auth0-react";
-import { useEffect, type ReactNode } from "react";
+import { type AppState, Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "@tanstack/react-router";
+import { type ReactNode, useEffect } from "react";
 import { client } from "@/lib/client";
 
 function AuthInterceptor() {
@@ -23,6 +23,34 @@ function AuthInterceptor() {
       client.interceptors.request.eject(id);
     };
   }, [isAuthenticated, getAccessTokenSilently, logout]);
+
+  return null;
+}
+
+// In Electron, loginWithRedirect() opens the Auth0/Google login in the OS's
+// real default browser instead of navigating this window (see openUrl below)
+// — Google blocks its own login page when it detects an embedded browser like
+// an Electron BrowserWindow, regardless of User-Agent spoofing. The system
+// browser hands the OAuth callback to apps/desktop's local loopback server
+// (main.ts, AUTH_CALLBACK_PORT), which forwards the callback URL here over IPC
+// so it can be fed into the SDK exactly like a normal window navigation would.
+function ElectronAuthCallback() {
+  const { handleRedirectCallback } = useAuth0();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isElectron) return;
+    return window.electron!.auth.onCallback((url) => {
+      handleRedirectCallback(url)
+        .then((result) => {
+          const returnTo = (result?.appState as AppState | undefined)?.returnTo;
+          navigate({ to: returnTo ?? "/" });
+        })
+        .catch((err: unknown) => {
+          console.error("Failed to complete Google/Auth0 login", err);
+        });
+    });
+  }, [handleRedirectCallback, navigate]);
 
   return null;
 }
@@ -68,7 +96,19 @@ const electronCache = isElectron ? new ElectronAuthCache() : undefined;
 const domain = import.meta.env.VITE_AUTH0_DOMAIN as string;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID as string;
 const audience = import.meta.env.VITE_AUTH0_AUDIENCE as string;
-const redirectUri = import.meta.env.VITE_FRONTEND_URL as string;
+
+// Must match apps/desktop/src/main.ts's AUTH_CALLBACK_PORT. Add this exact URL
+// to the Auth0 application's Allowed Callback URLs.
+const ELECTRON_REDIRECT_URI = "http://127.0.0.1:41823/callback";
+const redirectUri = isElectron
+  ? ELECTRON_REDIRECT_URI
+  : (import.meta.env.VITE_FRONTEND_URL as string);
+
+// Passed to loginWithRedirect() so Electron opens the login page in the
+// system's default browser instead of navigating the app window there.
+export const loginOpenUrlOptions = isElectron
+  ? { openUrl: (url: string) => void window.electron!.shell.openExternal(url) }
+  : {};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -91,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       <AuthInterceptor />
+      <ElectronAuthCallback />
       {children}
     </Auth0Provider>
   );

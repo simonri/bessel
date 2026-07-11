@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { loginOpenUrlOptions } from "@/providers/auth";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -16,9 +17,15 @@ function LoginPage() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
+  // In Electron, loginWithRedirect() opens the system browser and this window
+  // stays mounted, so an effect re-run would start a second OAuth transaction
+  // and invalidate the state of the one the user is completing. Fire once.
+  const loginStarted = useRef(false);
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !error) {
-      loginWithRedirect();
+    if (!isLoading && !isAuthenticated && !error && !loginStarted.current) {
+      loginStarted.current = true;
+      loginWithRedirect(loginOpenUrlOptions);
     }
   }, [isLoading, isAuthenticated, error, loginWithRedirect]);
 
@@ -29,7 +36,7 @@ function LoginPage() {
           <p className="text-sm text-white/70">Authentication error</p>
           <p className="text-xs text-white/50">{error.message}</p>
           <button
-            onClick={() => loginWithRedirect()}
+            onClick={() => loginWithRedirect(loginOpenUrlOptions)}
             className="text-xs text-white/60 underline"
           >
             Try again

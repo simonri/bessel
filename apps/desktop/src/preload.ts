@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld("electron", {
     remove: (key: string): Promise<void> =>
       ipcRenderer.invoke("auth:remove", key),
     allKeys: (): Promise<string[]> => ipcRenderer.invoke("auth:all-keys"),
+    onCallback: (callback: (url: string) => void) => {
+      const listener = (_: Electron.IpcRendererEvent, url: string) =>
+        callback(url);
+      ipcRenderer.on("auth:callback", listener);
+      return () => ipcRenderer.removeListener("auth:callback", listener);
+    },
   },
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
