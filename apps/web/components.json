@@ -16,8 +16,8 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@metron/ui/lib/utils",
-    "ui": "@metron/ui/components"
+    "utils": "@bessel/ui/lib/utils",
+    "ui": "@bessel/ui/components"
   },
   "registries": {}
 }

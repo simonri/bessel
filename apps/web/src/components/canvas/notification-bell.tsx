@@ -3,12 +3,12 @@ import {
   listNotificationsV1NotificationsGetQueryKey,
   markAllNotificationsReadV1NotificationsReadAllPost,
   markNotificationReadV1NotificationsNotificationIdReadPost,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@metron/ui/components/popover";
+} from "@bessel/ui/components/popover";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, ExternalLink } from "lucide-react";

@@ -5,8 +5,8 @@ import { ErrorFallback } from "@/components/shared/error-fallback";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary as ErrorBoundaryComponent } from "react-error-boundary";
 import { useRouter } from "expo-router";
-import { MetronClientProvider } from "@/providers/metron-client-provider";
-import { MetronQueryClientProvider } from "@/providers/metron-query-client-provider";
+import { BesselClientProvider } from "@/providers/bessel-client-provider";
+import { BesselQueryClientProvider } from "@/providers/bessel-query-client-provider";
 import { DarkTheme, ThemeProvider } from '@react-navigation/native'
 
 function RootLayout() {
@@ -52,11 +52,11 @@ export default function Providers() {
   return (
     <ThemeProvider value={DarkTheme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <MetronClientProvider>
-          <MetronQueryClientProvider>
+        <BesselClientProvider>
+          <BesselQueryClientProvider>
             <RootLayout />
-          </MetronQueryClientProvider>
-        </MetronClientProvider>
+          </BesselQueryClientProvider>
+        </BesselClientProvider>
       </GestureHandlerRootView>
     </ThemeProvider>
   )

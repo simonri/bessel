@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   updateTransactionV1TransactionsTransactionIdPatchMutation,
   listTransactionsV1TransactionsGetQueryKey,
-} from "@metron/client";
+} from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

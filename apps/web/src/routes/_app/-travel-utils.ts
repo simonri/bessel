@@ -1,4 +1,4 @@
-import type { PlaceSchema } from "@metron/client";
+import type { PlaceSchema } from "@bessel/client";
 import { format } from "date-fns";
 import {
   Beer,

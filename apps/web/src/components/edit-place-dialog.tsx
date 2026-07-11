@@ -4,7 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { Pencil } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
 import { CategorySelect } from "@/components/category-select";
-import { Button } from "@metron/ui/components/button";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -13,14 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Label } from "@metron/ui/components/label";
-import type { PlaceSchema } from "@metron/client";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Label } from "@bessel/ui/components/label";
+import type { PlaceSchema } from "@bessel/client";
 import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
   listPlacesV1PlacesGetQueryKey,
-} from "@metron/client";
+} from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

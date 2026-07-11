@@ -21,7 +21,7 @@ log: Logger = structlog.get_logger()
 type JSONSerializable = Mapping[str, "JSONSerializable"] | Iterable["JSONSerializable"] | str | int | float | bool | uuid.UUID | None
 
 
-_job_queue_manager: contextvars.ContextVar["JobQueueManager | None"] = contextvars.ContextVar("metron.job_queue_manager")
+_job_queue_manager: contextvars.ContextVar["JobQueueManager | None"] = contextvars.ContextVar("bessel.job_queue_manager")
 
 FLUSH_BATCH_SIZE = 50
 
@@ -47,7 +47,7 @@ class JobQueueManager:
     **kwargs: JSONSerializable,
   ) -> None:
     self._enqueued_jobs.append((actor, args, kwargs, delay))
-    log.debug("metron.worker.job_enqueued", actor=actor, delay=delay)
+    log.debug("bessel.worker.job_enqueued", actor=actor, delay=delay)
 
   async def flush(self, broker: dramatiq.Broker, redis: Redis) -> None:
     if not self._enqueued_jobs:
@@ -88,7 +88,7 @@ class JobQueueManager:
         await self._batch_rpush_queue(redis, queue_name, (message_id for message_id, _ in batch))
 
     for actor_name, encoded_message in all_messages:
-      log.debug("metron.worker.job_flushed", actor=actor_name, message=encoded_message)
+      log.debug("bessel.worker.job_flushed", actor=actor_name, message=encoded_message)
 
     self.reset()
 

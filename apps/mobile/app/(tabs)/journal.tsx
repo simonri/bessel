@@ -3,7 +3,7 @@ import { View, Pressable, ScrollView, Alert, KeyboardAvoidingView, Platform, Act
 import { Text } from "@/components/shared/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { JournalEntrySchema, JournalEntryUpsert } from "@metron/client";
+import type { JournalEntrySchema, JournalEntryUpsert } from "@bessel/client";
 import {
   getEntryV1JournalEntryDateGetOptions,
   getEntryV1JournalEntryDateGetQueryKey,
@@ -11,7 +11,7 @@ import {
   getStreakV1JournalStreakGetQueryKey,
   upsertEntryV1JournalEntryDatePutMutation,
   deleteEntryV1JournalEntryDateDeleteMutation,
-} from "@metron/client";
+} from "@bessel/client";
 import { Flame, ChevronLeft, ChevronRight, Trash2 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { client } from "@/lib/client";

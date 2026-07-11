@@ -4,23 +4,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BookOpen, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { RecipeType, type RecipeSchema } from "@metron/client";
+import { RecipeType, type RecipeSchema } from "@bessel/client";
 import {
   createRecipeV1RecipesPostMutation,
   deleteRecipeV1RecipesRecipeIdDeleteMutation,
   listRecipesV1RecipesGetOptions,
   listRecipesV1RecipesGetQueryKey,
   updateRecipeV1RecipesRecipeIdPatchMutation,
-} from "@metron/client";
-import { Button } from "@metron/ui/components/button";
-import { Badge } from "@metron/ui/components/badge";
+} from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
+import { Badge } from "@bessel/ui/components/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
+} from "@bessel/ui/components/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +30,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@metron/ui/components/empty";
+} from "@bessel/ui/components/alert-dialog";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@bessel/ui/components/empty";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

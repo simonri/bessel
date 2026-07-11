@@ -13,8 +13,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
   listPlacesV1PlacesGetQueryKey,
-} from "@metron/client";
-import type { PlaceSchema } from "@metron/client";
+} from "@bessel/client";
+import type { PlaceSchema } from "@bessel/client";
 import { Star, X, Check } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Input } from "@/components/shared/input";

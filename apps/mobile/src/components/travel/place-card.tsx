@@ -1,7 +1,7 @@
 import { View, Pressable } from "react-native";
 import { Text } from "@/components/shared/text";
 import { Star, MapPin } from "lucide-react-native";
-import type { PlaceSchema } from "@metron/client";
+import type { PlaceSchema } from "@bessel/client";
 import { getPlaceFields, CATEGORY_ICONS, CATEGORY_COLORS } from "./lib";
 import { useTheme } from "@/design-system";
 

@@ -1,10 +1,10 @@
-import type { SecuritySchema } from "@metron/client";
+import type { SecuritySchema } from "@bessel/client";
 import {
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteMutation,
   getHoldingsV1InvestmentsHoldingsGetOptions,
   listSecuritiesV1InvestmentsSecuritiesGetOptions,
   listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,17 +14,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
-import { Button } from "@metron/ui/components/button";
+} from "@bessel/ui/components/alert-dialog";
+import { Button } from "@bessel/ui/components/button";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@metron/ui/components/empty";
-import { Input } from "@metron/ui/components/input";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/ui/components/empty";
+import { Input } from "@bessel/ui/components/input";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
   useMutation,

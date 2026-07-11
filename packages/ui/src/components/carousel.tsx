@@ -4,8 +4,8 @@ import * as React from "react";
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { cn } from "@metron/ui/lib/utils";
-import { Button } from "@metron/ui/components/button";
+import { cn } from "@bessel/ui/lib/utils";
+import { Button } from "@bessel/ui/components/button";
 
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;

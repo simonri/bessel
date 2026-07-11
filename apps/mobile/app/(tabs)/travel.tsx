@@ -8,8 +8,8 @@ import {
   listPlacesV1PlacesGetQueryKey,
   deletePlaceV1PlacesPlaceIdDeleteMutation,
   updatePlaceV1PlacesPlaceIdPatchMutation,
-} from "@metron/client";
-import type { PlaceSchema } from "@metron/client";
+} from "@bessel/client";
+import type { PlaceSchema } from "@bessel/client";
 import { MapPin, Plus, Search, X } from "lucide-react-native";
 import { Button } from "@/components/shared/button";
 import { LinearGradient } from "expo-linear-gradient";

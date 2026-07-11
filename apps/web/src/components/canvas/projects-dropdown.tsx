@@ -5,12 +5,12 @@ import {
   listProjectsV1ProjectsGetQueryKey,
   type ProjectSchema,
   updateProjectV1ProjectsProjectIdPatchMutation,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@metron/ui/components/popover";
+} from "@bessel/ui/components/popover";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";

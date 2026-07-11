@@ -1,10 +1,10 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@metron/ui/lib/utils";
-import { Button } from "@metron/ui/components/button";
-import { Input } from "@metron/ui/components/input";
-import { Textarea } from "@metron/ui/components/textarea";
+import { cn } from "@bessel/ui/lib/utils";
+import { Button } from "@bessel/ui/components/button";
+import { Input } from "@bessel/ui/components/input";
+import { Textarea } from "@bessel/ui/components/textarea";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (

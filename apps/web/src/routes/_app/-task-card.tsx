@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 import { Calendar, Circle, Flag, Repeat } from "lucide-react";
 import {
   formatDueDate,

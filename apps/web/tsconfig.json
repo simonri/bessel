@@ -24,7 +24,7 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@metron/ui/*": ["../../packages/ui/src/*"]
+      "@bessel/ui/*": ["../../packages/ui/src/*"]
     }
   }
 }

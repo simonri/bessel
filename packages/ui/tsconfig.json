@@ -1,9 +1,9 @@
 {
-  "extends": "@metron/tsconfig/react-library.json",
+  "extends": "@bessel/tsconfig/react-library.json",
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@metron/ui/*": ["./src/*"]
+      "@bessel/ui/*": ["./src/*"]
     }
   },
   "include": ["src"],

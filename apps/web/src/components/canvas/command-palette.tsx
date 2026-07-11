@@ -1,8 +1,8 @@
 import {
   listProjectsV1ProjectsGetOptions,
   type ProjectSchema,
-} from "@metron/client";
-import { glassSurface } from "@metron/ui/lib/glass";
+} from "@bessel/client";
+import { glassSurface } from "@bessel/ui/lib/glass";
 import { useQuery } from "@tanstack/react-query";
 import { LayoutTemplate, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

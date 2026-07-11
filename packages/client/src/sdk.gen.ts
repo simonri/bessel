@@ -1731,7 +1731,7 @@ export const getKlarnaTransactionsV1KlarnaTransactionsGet = <
 /**
  * Import Klarna Transactions
  *
- * Fetch Klarna transactions and import them into Metron.
+ * Fetch Klarna transactions and import them into Bessel.
  * Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
  */
 export const importKlarnaTransactionsV1KlarnaImportPost = <

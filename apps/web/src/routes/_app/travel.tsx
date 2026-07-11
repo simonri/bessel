@@ -1,10 +1,10 @@
-import type { PlaceSchema } from "@metron/client";
+import type { PlaceSchema } from "@bessel/client";
 import {
   deletePlaceV1PlacesPlaceIdDeleteMutation,
   listPlacesV1PlacesGetOptions,
   listPlacesV1PlacesGetQueryKey,
   updatePlaceV1PlacesPlaceIdPatchMutation,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
+} from "@bessel/ui/components/alert-dialog";
 import {
   keepPreviousData,
   useMutation,

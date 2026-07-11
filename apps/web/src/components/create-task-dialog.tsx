@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
-import { Button } from "@metron/ui/components/button";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -11,29 +11,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Textarea } from "@metron/ui/components/textarea";
-import { Label } from "@metron/ui/components/label";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Textarea } from "@bessel/ui/components/textarea";
+import { Label } from "@bessel/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
+} from "@bessel/ui/components/select";
 import {
   Popover,
   PopoverAnchor,
   PopoverContent,
-} from "@metron/ui/components/popover";
+} from "@bessel/ui/components/popover";
 import {
   createTaskV1TasksPostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
   listTasksV1TasksGetQueryKey,
   listProjectsV1ProjectsGetOptions,
-} from "@metron/client";
-import type { TaskSchema } from "@metron/client";
+} from "@bessel/client";
+import type { TaskSchema } from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

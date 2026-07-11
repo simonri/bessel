@@ -13,7 +13,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
-// Required for @metron/client which uses package.json "exports" field
+// Required for @bessel/client which uses package.json "exports" field
 config.resolver.unstable_enablePackageExports = true;
 config.resolver.unstable_conditionNames = [
   "react-native",
@@ -22,7 +22,7 @@ config.resolver.unstable_conditionNames = [
   "default",
 ];
 
-// Resolve .js imports to .ts files in workspace packages (e.g. @metron/client
+// Resolve .js imports to .ts files in workspace packages (e.g. @bessel/client
 // imports ./@tanstack/react-query.gen.js but the file is .ts)
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   // Rewrite .js imports to .ts when resolving workspace packages

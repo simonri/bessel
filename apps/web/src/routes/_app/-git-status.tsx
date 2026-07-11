@@ -1,7 +1,7 @@
 import {
   listProjectsV1ProjectsGetOptions,
   type ProjectSchema,
-} from "@metron/client";
+} from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Check, GitBranch, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

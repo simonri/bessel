@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@metron/ui/components",
-    "hooks": "@metron/ui/hooks",
-    "lib": "@metron/ui/lib",
-    "utils": "@metron/ui/lib/utils",
-    "ui": "@metron/ui/components"
+    "components": "@bessel/ui/components",
+    "hooks": "@bessel/ui/hooks",
+    "lib": "@bessel/ui/lib",
+    "utils": "@bessel/ui/lib/utils",
+    "ui": "@bessel/ui/components"
   },
   "registries": {}
 }

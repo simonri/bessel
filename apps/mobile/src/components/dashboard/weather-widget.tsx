@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Text } from "@/components/shared/text";
 import { useQuery } from "@tanstack/react-query";
-import { getWeatherForecastV1WeatherGetOptions } from "@metron/client";
-import type { WeatherDaySchema } from "@metron/client";
+import { getWeatherForecastV1WeatherGetOptions } from "@bessel/client";
+import type { WeatherDaySchema } from "@bessel/client";
 import {
   Sun,
   Cloud,

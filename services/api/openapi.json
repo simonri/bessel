@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Metron API",
-    "summary": "Metron HTTP and Webhooks API",
-    "description": "Hello! This is the Metron API.",
+    "title": "Bessel API",
+    "summary": "Bessel HTTP and Webhooks API",
+    "description": "Hello! This is the Bessel API.",
     "version": "0.1.0"
   },
   "servers": [
@@ -3948,7 +3948,7 @@
           "klarna"
         ],
         "summary": "Import Klarna Transactions",
-        "description": "Fetch Klarna transactions and import them into Metron.\nSkips rejected (isAmountLineThrough), pending, and duplicate transactions.",
+        "description": "Fetch Klarna transactions and import them into Bessel.\nSkips rejected (isAmountLineThrough), pending, and duplicate transactions.",
         "operationId": "import_klarna_transactions_v1_klarna_import_post",
         "requestBody": {
           "content": {

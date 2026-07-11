@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@metron/ui/components/table";
+} from "@bessel/ui/components/table";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

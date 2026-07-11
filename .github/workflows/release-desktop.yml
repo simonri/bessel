@@ -30,7 +30,7 @@ jobs:
           sudo apt-get install -y libarchive-tools
 
       - name: Compile
-        run: pnpm --filter=@metron/desktop run compile
+        run: pnpm --filter=@bessel/desktop run compile
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
@@ -39,7 +39,7 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
-        run: pnpm --filter=@metron/desktop exec electron-builder --linux --publish always
+        run: pnpm --filter=@bessel/desktop exec electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,7 +61,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Compile
-        run: pnpm --filter=@metron/desktop run compile
+        run: pnpm --filter=@bessel/desktop run compile
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
@@ -70,7 +70,7 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
-        run: pnpm --filter=@metron/desktop exec electron-builder --mac --publish always
+        run: pnpm --filter=@bessel/desktop exec electron-builder --mac --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false

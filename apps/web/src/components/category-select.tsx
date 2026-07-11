@@ -4,7 +4,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
+} from "@bessel/ui/components/select";
 
 const CATEGORIES = [
   "restaurant",

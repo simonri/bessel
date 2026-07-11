@@ -4,8 +4,8 @@ import * as React from "react";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
-import { cn } from "@metron/ui/lib/utils";
-import { glassSurface } from "@metron/ui/lib/glass";
+import { cn } from "@bessel/ui/lib/utils";
+import { glassSurface } from "@bessel/ui/lib/glass";
 
 function GlassDialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="glass-dialog" {...props} />;

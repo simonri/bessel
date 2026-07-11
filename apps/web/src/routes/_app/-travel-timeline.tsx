@@ -1,4 +1,4 @@
-import type { PlaceSchema } from "@metron/client";
+import type { PlaceSchema } from "@bessel/client";
 import { formatDistanceToNow } from "date-fns";
 import { Plane } from "lucide-react";
 import { RatingStars } from "./-rating-stars";

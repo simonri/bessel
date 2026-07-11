@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Plus } from "lucide-react";
 import { format } from "date-fns";
-import { Button } from "@metron/ui/components/button";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -12,24 +12,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Label } from "@metron/ui/components/label";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Label } from "@bessel/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
+} from "@bessel/ui/components/select";
 import {
   createTradeV1InvestmentsTradesPostMutation,
   listTradesV1InvestmentsTradesGetQueryKey,
   listSecuritiesV1InvestmentsSecuritiesGetOptions,
   listBankAccountsV1BankAccountsGetOptions,
   getHoldingsV1InvestmentsHoldingsGetOptions,
-} from "@metron/client";
-import type { TradeType } from "@metron/client";
+} from "@bessel/client";
+import type { TradeType } from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

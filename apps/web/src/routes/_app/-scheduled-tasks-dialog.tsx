@@ -1,10 +1,10 @@
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 import {
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
+} from "@bessel/ui/components/dialog";
 import { Calendar, Circle, Flag, Repeat } from "lucide-react";
 import {
   formatDueDate,

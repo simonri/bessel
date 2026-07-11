@@ -85,11 +85,11 @@ export function TerminalWidget({
     if (!taskDropZone) return;
     const onStart = () => setIsTaskDragging(true);
     const onEnd = () => setIsTaskDragging(false);
-    window.addEventListener("metron:task-drag-start", onStart);
-    window.addEventListener("metron:task-drag-end", onEnd);
+    window.addEventListener("bessel:task-drag-start", onStart);
+    window.addEventListener("bessel:task-drag-end", onEnd);
     return () => {
-      window.removeEventListener("metron:task-drag-start", onStart);
-      window.removeEventListener("metron:task-drag-end", onEnd);
+      window.removeEventListener("bessel:task-drag-start", onStart);
+      window.removeEventListener("bessel:task-drag-end", onEnd);
     };
   }, [taskDropZone]);
 
@@ -103,8 +103,8 @@ export function TerminalWidget({
       if (detail.taskId && entry)
         updateWindowData(entry.id, { attachedTaskId: detail.taskId });
     };
-    window.addEventListener("metron:claude-drop", onDrop);
-    return () => window.removeEventListener("metron:claude-drop", onDrop);
+    window.addEventListener("bessel:claude-drop", onDrop);
+    return () => window.removeEventListener("bessel:claude-drop", onDrop);
   }, [taskDropZone, sessionId, entry, updateWindowData]);
 
   const closeMenu = useCallback(() => setContextMenu(null), []);
@@ -355,7 +355,7 @@ export function TerminalWidget({
             ? (e) => {
                 if (
                   Array.from(e.dataTransfer.types).includes(
-                    "metron/task-prompt",
+                    "bessel/task-prompt",
                   )
                 ) {
                   dragCounterRef.current++;
@@ -377,7 +377,7 @@ export function TerminalWidget({
             ? (e) => {
                 if (
                   Array.from(e.dataTransfer.types).includes(
-                    "metron/task-prompt",
+                    "bessel/task-prompt",
                   )
                 ) {
                   e.preventDefault();
@@ -393,14 +393,14 @@ export function TerminalWidget({
                 e.stopPropagation();
                 dragCounterRef.current = 0;
                 setIsDragOver(false);
-                const text = e.dataTransfer.getData("metron/task-prompt");
+                const text = e.dataTransfer.getData("bessel/task-prompt");
                 if (text) {
                   window.electron?.terminal.sendInput(sessionId, text);
                   focusTerminal();
-                  const taskId = e.dataTransfer.getData("metron/task-id");
+                  const taskId = e.dataTransfer.getData("bessel/task-id");
                   if (taskId) {
                     window.dispatchEvent(
-                      new CustomEvent("metron:claude-drop", {
+                      new CustomEvent("bessel:claude-drop", {
                         detail: { sessionId, taskId },
                       }),
                     );

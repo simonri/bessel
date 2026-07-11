@@ -76,15 +76,15 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@bessel/client':
+        specifier: workspace:*
+        version: link:../../packages/client
       '@expo-google-fonts/inter':
         specifier: ^0.4.2
         version: 0.4.2
       '@gorhom/bottom-sheet':
         specifier: ^5.2.14
         version: 5.2.14(@types/react@19.2.14)(react-native-gesture-handler@2.31.2(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.6))(react@19.2.6))(react-native-reanimated@4.3.1(react-native-worklets@0.8.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.6))(react@19.2.6))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.6))(react@19.2.6))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
-      '@metron/client':
-        specifier: workspace:*
-        version: link:../../packages/client
       '@react-native-community/datetimepicker':
         specifier: 9.1.0
         version: 9.1.0(expo@55.0.24)(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
@@ -185,6 +185,12 @@ importers:
       '@base-ui/react':
         specifier: ^1.4.1
         version: 1.4.1(@date-fns/tz@1.4.1)(@types/react@19.2.14)(date-fns@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@bessel/client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@bessel/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -197,12 +203,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
-      '@metron/client':
-        specifier: workspace:*
-        version: link:../../packages/client
-      '@metron/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -363,7 +363,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@metron/tsconfig':
+      '@bessel/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@tanstack/devtools-vite':
@@ -547,7 +547,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@metron/tsconfig':
+      '@bessel/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/react':
@@ -12334,7 +12334,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.83.6': {}
 

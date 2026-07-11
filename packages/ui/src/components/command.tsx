@@ -4,14 +4,14 @@ import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { SearchIcon } from "lucide-react";
 
-import { cn } from "@metron/ui/lib/utils";
+import { cn } from "@bessel/ui/lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
+} from "@bessel/ui/components/dialog";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (

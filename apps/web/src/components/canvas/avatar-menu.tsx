@@ -3,7 +3,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@metron/ui/components/popover";
+} from "@bessel/ui/components/popover";
 
 export function AvatarMenu() {
   const { user, logout } = useAuth0();

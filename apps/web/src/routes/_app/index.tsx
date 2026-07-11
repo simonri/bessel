@@ -6,8 +6,8 @@ import {
   listBankAccountsV1BankAccountsGetOptions,
   listTransactionsV1TransactionsGetOptions,
   listCategoriesV1CategoriesGetOptions,
-} from "@metron/client";
-import { Card, CardContent } from "@metron/ui/components/card";
+} from "@bessel/client";
+import { Card, CardContent } from "@bessel/ui/components/card";
 import { client } from "@/lib/client";
 import { formatMoney, formatAmount } from "@/lib/money";
 

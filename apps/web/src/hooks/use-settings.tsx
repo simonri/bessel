@@ -24,7 +24,7 @@ interface Settings {
   gridGap: number;
 }
 
-const STORAGE_KEY = "metron:settings";
+const STORAGE_KEY = "bessel:settings";
 const DEFAULT_SETTINGS: Settings = {
   cryptoPairs: "BTCUSDT",
   activityMappings: [],

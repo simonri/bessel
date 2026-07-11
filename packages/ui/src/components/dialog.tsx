@@ -2,8 +2,8 @@ import * as React from "react";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
-import { cn } from "@metron/ui/lib/utils";
-import { Button } from "@metron/ui/components/button";
+import { cn } from "@bessel/ui/lib/utils";
+import { Button } from "@bessel/ui/components/button";
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;

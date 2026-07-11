@@ -2,7 +2,7 @@
 
 ## Overview
 
-Metron is a personal life dashboard. Monorepo with:
+Bessel is a personal life dashboard. Monorepo with:
 
 - **Backend**: Python/FastAPI API server with PostgreSQL, Redis
 - **Frontend**: Vite+ / TanStack Start SPA with TypeScript
@@ -90,7 +90,7 @@ Never call `session.commit()` directly in business logic. The API backend automa
 ### Frontend
 
 - TanStack Query for data fetching, TanStack Router for routing, TanStack Form for forms
-- UI components from shared `@metron/ui` package (shadcn/Radix)
+- UI components from shared `@bessel/ui` package (shadcn/Radix)
 - Tailwind CSS v4 for styling
 - File-based routing under `src/routes/`
 

@@ -9,7 +9,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { CounterResetSchema, CounterSchema } from "@metron/client";
+import type { CounterResetSchema, CounterSchema } from "@bessel/client";
 import {
   createCounterV1CountersPostMutation,
   createResetV1CountersCounterIdResetsPostMutation,
@@ -20,7 +20,7 @@ import {
   listResetsV1CountersCounterIdResetsGetQueryKey,
   undoResetV1CountersCounterIdResetsResetIdDeleteMutation,
   updateCounterV1CountersCounterIdPatchMutation,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,14 +30,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
+} from "@bessel/ui/components/alert-dialog";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
+} from "@bessel/ui/components/dialog";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
