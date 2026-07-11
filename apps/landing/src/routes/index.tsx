@@ -63,7 +63,7 @@ function riseDelay(seconds: number) {
 
 function LandingPage() {
   return (
-    <div className="relative min-h-svh">
+    <div className="relative min-h-svh overflow-x-hidden">
       <LiveBackground />
       <div className="grain pointer-events-none fixed inset-0 opacity-[0.05]" />
 
