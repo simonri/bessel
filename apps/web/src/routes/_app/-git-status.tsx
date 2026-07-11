@@ -46,6 +46,10 @@ interface SelectedFile {
   untracked: boolean;
 }
 
+function fileKey(file: GitFileEntry, staged: boolean): string {
+  return `${staged ? "s" : "u"}:${file.path}`;
+}
+
 // ── Error extraction ───────────────────────────────────────────────────────────
 
 function extractErrorMessage(error: unknown): string {
@@ -76,6 +80,8 @@ export function GitStatus() {
   const [selectedProject, setSelectedProject] =
     useState<ProjectWithPath | null>(null);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [anchorKey, setAnchorKey] = useState<string | null>(null);
   const [commitMessage, setCommitMessage] = useState("");
   const commitTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +111,59 @@ export function GitStatus() {
       setSelectedProject(projects[0] ?? null);
     }
   }, [projects, selectedProject]);
+
+  const handleFileClick = (
+    list: GitFileEntry[],
+    index: number,
+    staged: boolean,
+    e: React.MouseEvent,
+  ) => {
+    const file = list[index]!;
+    const key = fileKey(file, staged);
+    const untracked = !staged && file.status === "?";
+
+    if (e.shiftKey && anchorKey) {
+      const anchorIndex = list.findIndex(
+        (f) => fileKey(f, staged) === anchorKey,
+      );
+      if (anchorIndex !== -1) {
+        const [lo, hi] =
+          anchorIndex < index ? [anchorIndex, index] : [index, anchorIndex];
+        setSelectedKeys(
+          new Set(list.slice(lo, hi + 1).map((f) => fileKey(f, staged))),
+        );
+        setSelectedFile({ file, staged, untracked });
+        return;
+      }
+    }
+
+    if (e.metaKey || e.ctrlKey) {
+      setSelectedKeys((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      });
+      setAnchorKey(key);
+      setSelectedFile({ file, staged, untracked });
+      return;
+    }
+
+    setSelectedKeys(new Set([key]));
+    setAnchorKey(key);
+    setSelectedFile({ file, staged, untracked });
+  };
+
+  // Bulk actions apply to the whole selection when the acted-on file is part
+  // of a multi-file selection, otherwise they apply to just that one file.
+  const selectionTargets = (
+    list: GitFileEntry[],
+    staged: boolean,
+    file: GitFileEntry,
+  ): GitFileEntry[] => {
+    const selected = list.filter((f) => selectedKeys.has(fileKey(f, staged)));
+    return selected.some((f) => f.path === file.path) ? selected : [file];
+  };
 
   useEffect(() => {
     const el = commitTextareaRef.current;
@@ -269,6 +328,8 @@ export function GitStatus() {
             const p = projects.find((p) => p.id === e.target.value) ?? null;
             setSelectedProject(p);
             setSelectedFile(null);
+            setSelectedKeys(new Set());
+            setAnchorKey(null);
             setError(null);
           }}
           className="min-w-0 flex-1 cursor-pointer truncate bg-transparent text-xs text-white/65 outline-none"
@@ -388,23 +449,22 @@ export function GitStatus() {
                         Nothing staged
                       </p>
                     )}
-                    {staged.map((file) => (
+                    {staged.map((file, index) => (
                       <FileItem
                         key={`s:${file.path}`}
                         file={file}
-                        isSelected={
-                          !!selectedFile?.staged &&
-                          selectedFile.file.path === file.path
-                        }
+                        isSelected={selectedKeys.has(fileKey(file, true))}
                         staged={true}
-                        onSelect={() =>
-                          setSelectedFile({
-                            file,
-                            staged: true,
-                            untracked: false,
-                          })
+                        onSelect={(e) =>
+                          handleFileClick(staged, index, true, e)
                         }
-                        onUnstage={() => unstageMutation.mutate([file.path])}
+                        onUnstage={() =>
+                          unstageMutation.mutate(
+                            selectionTargets(staged, true, file).map(
+                              (f) => f.path,
+                            ),
+                          )
+                        }
                       />
                     ))}
                   </>
@@ -433,24 +493,27 @@ export function GitStatus() {
                         No changes
                       </p>
                     )}
-                    {changes.map((file) => (
+                    {changes.map((file, index) => (
                       <FileItem
                         key={`u:${file.path}`}
                         file={file}
-                        isSelected={
-                          !selectedFile?.staged &&
-                          selectedFile?.file.path === file.path
-                        }
+                        isSelected={selectedKeys.has(fileKey(file, false))}
                         staged={false}
-                        onSelect={() =>
-                          setSelectedFile({
-                            file,
-                            staged: false,
-                            untracked: file.status === "?",
-                          })
+                        onSelect={(e) =>
+                          handleFileClick(changes, index, false, e)
                         }
-                        onStage={() => stageMutation.mutate([file.path])}
-                        onDiscard={() => discardWithConfirm([file])}
+                        onStage={() =>
+                          stageMutation.mutate(
+                            selectionTargets(changes, false, file).map(
+                              (f) => f.path,
+                            ),
+                          )
+                        }
+                        onDiscard={() =>
+                          discardWithConfirm(
+                            selectionTargets(changes, false, file),
+                          )
+                        }
                       />
                     ))}
                   </>

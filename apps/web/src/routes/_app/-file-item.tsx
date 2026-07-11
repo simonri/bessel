@@ -28,7 +28,7 @@ export function FileItem({
   file: GitFileEntry;
   isSelected: boolean;
   staged: boolean;
-  onSelect: () => void;
+  onSelect: (e: React.MouseEvent) => void;
   onStage?: () => void;
   onUnstage?: () => void;
   onDiscard?: () => void;
