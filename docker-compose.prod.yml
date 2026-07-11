@@ -131,7 +131,14 @@ services:
   # Background Worker
   # ============================================================================
   worker:
-    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/bessel}-worker:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/bessel}-api:${TAG:-latest}
+    command: ["dramatiq", "-p", "1", "-t", "1", "--queues", "high_priority", "medium_priority", "low_priority", "-f", "api.worker.scheduler:start", "api.worker.run"]
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "dramatiq"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: unless-stopped
     depends_on:
       metron-postgres:
