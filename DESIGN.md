@@ -208,7 +208,7 @@ Use filled badges (`bg-chart-1 text-white`) for categorical labels on data rows.
 
 ## Typography
 
-Font: **Geist** (loaded in `__root.tsx`). Geist is to Metron what San Francisco is to iOS — neutral, precise, designed for data.
+Font: **Geist** (loaded in `__root.tsx`). Geist is to Bessel what San Francisco is to iOS — neutral, precise, designed for data.
 
 ### Scale
 

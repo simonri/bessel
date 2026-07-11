@@ -412,7 +412,7 @@ const NAVIGATION_ALLOWED_ORIGINS = new Set([
 // (YouTube, Twitch, ...) carries over to every widget and survives app restarts.
 const BROWSER_PARTITION = "persist:browser";
 
-// Electron's default UA appends " Metron/<version> Electron/<version>", which
+// Electron's default UA appends " Bessel/<version> Electron/<version>", which
 // trips Google's "this browser or app may not be secure" block on login. Strip
 // those tokens so the guest session presents as plain Chromium.
 function chromeUserAgent(ses: Electron.Session): string {
@@ -527,7 +527,7 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    title: "Metron",
+    title: "Bessel",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

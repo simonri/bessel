@@ -79,7 +79,7 @@ class Logging[RendererType]:
         "version": 1,
         "disable_existing_loggers": True,
         "formatters": {
-          "metron": {
+          "bessel": {
             "()": structlog.stdlib.ProcessorFormatter,
             "processors": [
               structlog.stdlib.ProcessorFormatter.remove_processors_meta,
@@ -101,7 +101,7 @@ class Logging[RendererType]:
           "default": {
             "level": level,
             "class": "logging.StreamHandler",
-            "formatter": "metron",
+            "formatter": "bessel",
           },
         },
         "loggers": {

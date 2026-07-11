@@ -1,7 +1,7 @@
 [project]
 name = "openapi_client"
 version = "1.0.0"
-description = "Metron API Client"
+description = "Bessel API Client"
 requires-python = ">=3.12"
 
 dependencies = [

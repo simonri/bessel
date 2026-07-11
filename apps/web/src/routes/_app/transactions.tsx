@@ -1,4 +1,4 @@
-import type { TransactionSchema } from "@metron/client";
+import type { TransactionSchema } from "@bessel/client";
 import {
   bulkUpdateTransactionsV1TransactionsBulkPatchMutation,
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
@@ -8,7 +8,7 @@ import {
   listTransactionsV1TransactionsGetOptions,
   listTransactionsV1TransactionsGetQueryKey,
   updateTransactionV1TransactionsTransactionIdPatchMutation,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,28 +18,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
-import { Button } from "@metron/ui/components/button";
-import { Checkbox } from "@metron/ui/components/checkbox";
+} from "@bessel/ui/components/alert-dialog";
+import { Button } from "@bessel/ui/components/button";
+import { Checkbox } from "@bessel/ui/components/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@metron/ui/components/dropdown-menu";
+} from "@bessel/ui/components/dropdown-menu";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@metron/ui/components/empty";
+} from "@bessel/ui/components/empty";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@metron/ui/components/popover";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/ui/components/popover";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
   useMutation,

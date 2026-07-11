@@ -17,10 +17,10 @@ class OpenAPIParameters(TypedDict):
 
 
 OPENAPI_PARAMETERS: OpenAPIParameters = {
-  "title": "Metron API",
-  "summary": "Metron HTTP and Webhooks API",
+  "title": "Bessel API",
+  "summary": "Bessel HTTP and Webhooks API",
   "version": "0.1.0",
-  "description": "Hello! This is the Metron API.",
+  "description": "Hello! This is the Bessel API.",
   "docs_url": None if settings.is_environment({Environment.production}) else "/docs",
   "redoc_url": None if settings.is_environment({Environment.production}) else "/redoc",
   "servers": [

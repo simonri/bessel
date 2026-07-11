@@ -1,11 +1,11 @@
-from api.exceptions import MetronError
+from api.exceptions import BesselError
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 
-async def metron_error_handler(request: Request, exc: Exception) -> JSONResponse:
-  if not isinstance(exc, MetronError):
-    raise TypeError(f"Expected MetronError, got {type(exc).__name__}")
+async def bessel_error_handler(request: Request, exc: Exception) -> JSONResponse:
+  if not isinstance(exc, BesselError):
+    raise TypeError(f"Expected BesselError, got {type(exc).__name__}")
 
   return JSONResponse(
     status_code=exc.status_code,
@@ -15,4 +15,4 @@ async def metron_error_handler(request: Request, exc: Exception) -> JSONResponse
 
 
 def add_exception_handlers(app: FastAPI) -> None:
-  app.add_exception_handler(MetronError, metron_error_handler)
+  app.add_exception_handler(BesselError, bessel_error_handler)

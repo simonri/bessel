@@ -1,8 +1,8 @@
 import {
   listProjectsV1ProjectsGetOptions,
   type ProjectSchema,
-} from "@metron/client";
-import { Button } from "@metron/ui/components/button";
+} from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Label } from "@metron/ui/components/label";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Label } from "@bessel/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
-import { Textarea } from "@metron/ui/components/textarea";
+} from "@bessel/ui/components/select";
+import { Textarea } from "@bessel/ui/components/textarea";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutTemplate,

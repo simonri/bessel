@@ -9,8 +9,8 @@ import {
   completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
   deleteTaskV1TasksTaskIdDeleteMutation,
-} from "@metron/client";
-import type { TaskSchema } from "@metron/client";
+} from "@bessel/client";
+import type { TaskSchema } from "@bessel/client";
 import { Plus, ListTodo } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FlashList } from "@shopify/flash-list";

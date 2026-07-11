@@ -1,6 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { TooltipProvider } from "@metron/ui/components/tooltip";
+import { TooltipProvider } from "@bessel/ui/components/tooltip";
 import { ReactQueryProvider } from "@/providers/react-query";
 import { AuthProvider } from "@/providers/auth";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -23,7 +23,7 @@ export const Route = createRootRoute({
         content: "index, follow",
       },
       {
-        title: "Metron",
+        title: "Bessel",
       },
     ],
     links: [

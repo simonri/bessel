@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { render, fireEvent, screen, cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@bessel/ui/components/popover";
 import { WindowManager, useWindowManager, type WindowSpec } from "./window-manager";
 
 function memoryStorage(): Storage {

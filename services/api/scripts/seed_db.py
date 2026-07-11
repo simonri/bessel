@@ -336,14 +336,14 @@ async def seed() -> None:
 
     # ── 8. Tasks ──────────────────────────────────────────────────────────
     tasks = [
-      Task(title="Add activity heatmap to Activity page", status="todo", priority=2, project="Metron Dev", area="Engineering", due_date=d(-7), position=0),
-      Task(title="Implement budget tracking feature", status="todo", priority=1, project="Metron Dev", area="Engineering", position=1),
-      Task(title="Fix chart responsiveness on mobile", status="in_progress", priority=2, project="Metron Dev", area="Engineering", position=2),
+      Task(title="Add activity heatmap to Activity page", status="todo", priority=2, project="Bessel Dev", area="Engineering", due_date=d(-7), position=0),
+      Task(title="Implement budget tracking feature", status="todo", priority=1, project="Bessel Dev", area="Engineering", position=1),
+      Task(title="Fix chart responsiveness on mobile", status="in_progress", priority=2, project="Bessel Dev", area="Engineering", position=2),
       Task(
         title="Set up systemd monitor timer",
         status="done",
         priority=3,
-        project="Metron Dev",
+        project="Bessel Dev",
         area="Engineering",
         position=3,
         completed_at=datetime(2026, 6, 14, 18, 30, tzinfo=UTC),
@@ -352,7 +352,7 @@ async def seed() -> None:
         title="Implement activity batch endpoint",
         status="done",
         priority=3,
-        project="Metron Dev",
+        project="Bessel Dev",
         area="Engineering",
         position=4,
         completed_at=datetime(2026, 6, 15, 10, 0, tzinfo=UTC),

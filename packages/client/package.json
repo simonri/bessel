@@ -1,5 +1,5 @@
 {
-  "name": "@metron/client",
+  "name": "@bessel/client",
   "private": true,
   "exports": {
     "./client": "./src/client/index.ts",

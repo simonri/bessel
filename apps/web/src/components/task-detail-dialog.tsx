@@ -13,16 +13,16 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 import {
   getTaskV1TasksTaskIdGetOptions,
   completeTaskV1TasksTaskIdCompletePostMutation,
   reopenTaskV1TasksTaskIdReopenPostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
   deleteTaskV1TasksTaskIdDeleteMutation,
-} from "@metron/client";
-import { Button } from "@metron/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@metron/ui/components/dialog";
+} from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@bessel/ui/components/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
+} from "@bessel/ui/components/alert-dialog";
 import { TaskFormDialog } from "@/components/create-task-dialog";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import {

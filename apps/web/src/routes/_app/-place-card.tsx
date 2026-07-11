@@ -1,4 +1,4 @@
-import type { PlaceSchema } from "@metron/client";
+import type { PlaceSchema } from "@bessel/client";
 import { Map, Trash2 } from "lucide-react";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
 import { RatingStars } from "./-rating-stars";

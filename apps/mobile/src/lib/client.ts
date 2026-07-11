@@ -1,4 +1,4 @@
-import { createClient } from "@metron/client/client";
+import { createClient } from "@bessel/client/client";
 
 const IS_DEV = __DEV__;
 const API_BASE_URL =

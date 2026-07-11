@@ -3,7 +3,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@metron/ui/components/tabs";
+} from "@bessel/ui/components/tabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { HoldingsTab } from "./-holdings-tab";
 import { SecuritiesTab } from "./-securities-tab";

@@ -3,7 +3,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 import { STATUS_CONFIG } from "@/lib/task-format";
 import { TaskCard } from "./-task-card";
 

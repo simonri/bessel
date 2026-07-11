@@ -1,4 +1,4 @@
-import { getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions } from "@metron/client";
+import { getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { client } from "@/lib/client";

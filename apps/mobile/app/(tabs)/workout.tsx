@@ -11,8 +11,8 @@ import {
   createWorkoutV1WorkoutsPostMutation,
   updateWorkoutV1WorkoutsWorkoutIdPatchMutation,
   deleteWorkoutV1WorkoutsWorkoutIdDeleteMutation,
-} from "@metron/client";
-import type { WorkoutLogDetailSchema } from "@metron/client";
+} from "@bessel/client";
+import type { WorkoutLogDetailSchema } from "@bessel/client";
 import { Dumbbell, Play } from "lucide-react-native";
 import { Button } from "@/components/shared/button";
 import { LinearGradient } from "expo-linear-gradient";

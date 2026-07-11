@@ -1,6 +1,6 @@
 import { format, isPast, isToday, isTomorrow, isYesterday } from "date-fns";
 import { Circle, CheckCircle2, Clock, CalendarClock, XCircle } from "lucide-react";
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 
 export const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   todo: { label: "Todo", icon: Circle, color: "text-white/35" },

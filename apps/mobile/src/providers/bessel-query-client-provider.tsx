@@ -1,7 +1,7 @@
 import { queryClient } from "../../utils/query"
 import { QueryClientProvider } from "@tanstack/react-query";
 
-export function MetronQueryClientProvider({
+export function BesselQueryClientProvider({
   children,
 }: {
   children: React.ReactElement

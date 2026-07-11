@@ -1,4 +1,4 @@
-"""A client library for accessing Metron API"""
+"""A client library for accessing Bessel API"""
 
 from .client import AuthenticatedClient, Client
 

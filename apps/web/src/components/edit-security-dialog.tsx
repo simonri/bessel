@@ -2,14 +2,14 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Pencil } from "lucide-react";
-import type { SecuritySchema } from "@metron/client";
+import type { SecuritySchema } from "@bessel/client";
 import {
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation,
   listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
   getHoldingsV1InvestmentsHoldingsGetOptions,
-} from "@metron/client";
-import { AssetType } from "@metron/client";
-import { Button } from "@metron/ui/components/button";
+} from "@bessel/client";
+import { AssetType } from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -17,17 +17,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Label } from "@metron/ui/components/label";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Label } from "@bessel/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
-import { Textarea } from "@metron/ui/components/textarea";
+} from "@bessel/ui/components/select";
+import { Textarea } from "@bessel/ui/components/textarea";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

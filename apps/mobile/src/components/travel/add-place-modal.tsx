@@ -15,8 +15,8 @@ import {
   createPlaceV1PlacesPostMutation,
   listPlacesV1PlacesGetQueryKey,
   searchGooglePlacesV1PlacesSearchGetOptions,
-} from "@metron/client";
-import type { GooglePlaceSearchResult } from "@metron/client";
+} from "@bessel/client";
+import type { GooglePlaceSearchResult } from "@bessel/client";
 import { MapPin, Star, Search, X, Check, ChevronLeft } from "lucide-react-native";
 import { Input } from "@/components/shared/input";
 import { client } from "@/lib/client";

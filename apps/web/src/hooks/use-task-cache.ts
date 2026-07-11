@@ -3,7 +3,7 @@ import {
   getTaskV1TasksTaskIdGetQueryKey,
   listTasksV1TasksGetQueryKey,
   type TaskSchema,
-} from "@metron/client";
+} from "@bessel/client";
 import { client } from "@/lib/client";
 
 type TaskListPage = { items: TaskSchema[]; pagination: { total_count: number; [k: string]: unknown } };

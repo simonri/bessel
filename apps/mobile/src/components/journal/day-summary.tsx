@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { Text } from "@/components/shared/text";
 import { Sun, Moon, Star, Check, X, Clock } from "lucide-react-native";
-import type { JournalEntrySchema } from "@metron/client";
+import type { JournalEntrySchema } from "@bessel/client";
 import { useTheme } from "@/design-system";
 
 type CaptureItem = { text: string; timestamp: string };

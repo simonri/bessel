@@ -3,12 +3,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { DollarSign } from "lucide-react";
 import { format } from "date-fns";
-import type { SecuritySchema } from "@metron/client";
+import type { SecuritySchema } from "@bessel/client";
 import {
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation,
   getHoldingsV1InvestmentsHoldingsGetOptions,
-} from "@metron/client";
-import { Button } from "@metron/ui/components/button";
+} from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Label } from "@metron/ui/components/label";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Label } from "@bessel/ui/components/label";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

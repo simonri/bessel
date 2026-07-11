@@ -1,5 +1,5 @@
 # ==============================================================================
-# Production Docker Compose for Metron
+# Production Docker Compose for Bessel
 # ==============================================================================
 # Deployed to VPS, accessible only via Tailscale.
 # Uses shared Traefik reverse proxy (from Nous stack) with IP allowlist
@@ -88,7 +88,7 @@ services:
   # API
   # ============================================================================
   api:
-    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/metron}-api:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/bessel}-api:${TAG:-latest}
     restart: unless-stopped
     depends_on:
       metron-postgres:
@@ -124,7 +124,7 @@ services:
   # Background Worker
   # ============================================================================
   worker:
-    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/metron}-worker:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/bessel}-worker:${TAG:-latest}
     restart: unless-stopped
     depends_on:
       metron-postgres:
@@ -144,7 +144,7 @@ services:
   # Web Frontend
   # ============================================================================
   web:
-    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/metron}-web:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/bessel}-web:${TAG:-latest}
     restart: unless-stopped
     depends_on:
       - api

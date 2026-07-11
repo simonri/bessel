@@ -275,7 +275,7 @@ describe("viewport-aware placement", () => {
 describe("layout sanitization", () => {
   it("clamps garbage stored data into bounds on load", () => {
     window.localStorage.setItem(
-      "metron:workspaces",
+      "bessel:workspaces",
       JSON.stringify({
         workspaces: [
           {
@@ -356,7 +356,7 @@ describe("alignWorkspace with a viewport cap", () => {
 describe("migration from the legacy slot-based layout", () => {
   it("converts slot data into non-overlapping, in-bounds x/y/w/h", () => {
     window.localStorage.setItem(
-      "metron:workspaces",
+      "bessel:workspaces",
       JSON.stringify({
         workspaces: [
           {
@@ -385,7 +385,7 @@ describe("migration from the legacy slot-based layout", () => {
 
   it("leaves already-migrated (x/y/w/h) data untouched", () => {
     window.localStorage.setItem(
-      "metron:workspaces",
+      "bessel:workspaces",
       JSON.stringify({
         workspaces: [
           { id: "ws-1", windows: [{ module: "tasks", x: 3, y: 5, w: 8, h: 8 }] },

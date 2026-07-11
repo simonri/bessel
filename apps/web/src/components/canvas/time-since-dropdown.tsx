@@ -2,7 +2,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@metron/ui/components/popover";
+} from "@bessel/ui/components/popover";
 import { Timer } from "lucide-react";
 import { Counters } from "@/components/counters";
 

@@ -1,5 +1,5 @@
 {
-  "name": "@metron/ui",
+  "name": "@bessel/ui",
   "version": "0.1.0",
   "private": true,
   "sideEffects": false,
@@ -46,7 +46,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@metron/tsconfig": "workspace:*",
+    "@bessel/tsconfig": "workspace:*",
     "@types/react": "^19.2.14",
     "shadcn": "^4.7.0",
     "typescript": "^6"

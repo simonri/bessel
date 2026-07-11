@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { Upload } from "lucide-react";
-import { Button } from "@metron/ui/components/button";
+import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
   DialogContent,
@@ -11,22 +11,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@metron/ui/components/dialog";
-import { Input } from "@metron/ui/components/input";
-import { Label } from "@metron/ui/components/label";
+} from "@bessel/ui/components/dialog";
+import { Input } from "@bessel/ui/components/input";
+import { Label } from "@bessel/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
+} from "@bessel/ui/components/select";
 import {
   importTransactionsV1TransactionsImportPostMutation,
   importKlarnaTransactionsV1KlarnaImportPostMutation,
   listTransactionsV1TransactionsGetQueryKey,
   listBankAccountsV1BankAccountsGetOptions,
-} from "@metron/client";
+} from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

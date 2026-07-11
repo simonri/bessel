@@ -1,7 +1,7 @@
 import { View, Pressable } from "react-native";
 import { Text } from "@/components/shared/text";
 import { Circle, CheckCircle2, Flag, Calendar, Repeat, ChevronRight } from "lucide-react-native";
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 import { formatDueDate, PRIORITY_COLORS, PRIORITY_LABELS } from "./lib";
 import { useTheme } from "@/design-system";
 

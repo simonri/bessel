@@ -68,7 +68,7 @@ class State(TypedDict):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[State]:
-  log.info("Starting Metron API")
+  log.info("Starting Bessel API")
 
   async_engine = create_async_engine("app")
   async_sessionmaker = create_async_sessionmaker(async_engine)
@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
   redis = create_redis("app")
 
-  log.info("Metron API started")
+  log.info("Bessel API started")
 
   yield {
     "async_engine": async_engine,
@@ -91,7 +91,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
   await async_engine.dispose()
   sync_engine.dispose()
 
-  log.info("Metron API stopped")
+  log.info("Bessel API stopped")
 
 
 def create_app() -> FastAPI:

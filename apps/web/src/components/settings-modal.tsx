@@ -4,7 +4,7 @@ import {
   GlassDialogContent,
   GlassDialogDescription,
   GlassDialogTitle,
-} from "@metron/ui/components/glass-dialog";
+} from "@bessel/ui/components/glass-dialog";
 import { Cpu, Info, LayoutDashboard, Palette, Settings, X } from "lucide-react";
 import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";

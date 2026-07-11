@@ -6,8 +6,8 @@ import {
   getWorkoutV1WorkoutsWorkoutIdGetQueryKey,
   createWorkoutSetV1WorkoutsWorkoutIdSetsPostMutation,
   getLastSessionV1WorkoutsExercisesExerciseIdLastSessionGetOptions,
-} from "@metron/client";
-import type { WorkoutLogDetailSchema, WorkoutSetSchema, ExerciseSchema } from "@metron/client";
+} from "@bessel/client";
+import type { WorkoutLogDetailSchema, WorkoutSetSchema, ExerciseSchema } from "@bessel/client";
 import { Plus, ChevronLeft, ChevronRight, Timer, Dumbbell } from "lucide-react-native";
 import { ExercisePicker } from "./exercise-picker";
 import { SetRow } from "./set-row";

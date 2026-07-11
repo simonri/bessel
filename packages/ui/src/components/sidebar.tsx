@@ -3,25 +3,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import { Slot } from "radix-ui";
 
-import { useIsMobile } from "@metron/ui/hooks/use-mobile";
-import { cn } from "@metron/ui/lib/utils";
-import { Button } from "@metron/ui/components/button";
-import { Input } from "@metron/ui/components/input";
-import { Separator } from "@metron/ui/components/separator";
+import { useIsMobile } from "@bessel/ui/hooks/use-mobile";
+import { cn } from "@bessel/ui/lib/utils";
+import { Button } from "@bessel/ui/components/button";
+import { Input } from "@bessel/ui/components/input";
+import { Separator } from "@bessel/ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@metron/ui/components/sheet";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/ui/components/sheet";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@metron/ui/components/tooltip";
+} from "@bessel/ui/components/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

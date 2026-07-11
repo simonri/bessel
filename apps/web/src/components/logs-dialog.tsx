@@ -5,7 +5,7 @@ import {
   GlassDialogContent,
   GlassDialogDescription,
   GlassDialogTitle,
-} from "@metron/ui/components/glass-dialog";
+} from "@bessel/ui/components/glass-dialog";
 import { Copy, FolderOpen, RefreshCw, X } from "lucide-react";
 
 export function LogsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

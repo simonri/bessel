@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 // Note: date range filter removed — month navigation in transactions.tsx handles date scoping
 import { Search, X, ChevronDown, Briefcase } from "lucide-react";
-import type { BankAccountSchema, CategorySchema } from "@metron/client";
-import { Button } from "@metron/ui/components/button";
-import { Checkbox } from "@metron/ui/components/checkbox";
-import { Input } from "@metron/ui/components/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@metron/ui/components/popover";
-import { cn } from "@metron/ui/lib/utils";
+import type { BankAccountSchema, CategorySchema } from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
+import { Checkbox } from "@bessel/ui/components/checkbox";
+import { Input } from "@bessel/ui/components/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@bessel/ui/components/popover";
+import { cn } from "@bessel/ui/lib/utils";
 
 export interface TransactionFilters {
   bank_account_id?: string[];

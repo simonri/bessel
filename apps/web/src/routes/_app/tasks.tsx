@@ -12,7 +12,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { TaskSchema } from "@metron/client";
+import type { TaskSchema } from "@bessel/client";
 import {
   completeTaskV1TasksTaskIdCompletePostMutation,
   listProjectsV1ProjectsGetOptions,
@@ -22,24 +22,24 @@ import {
   reorderTasksV1TasksReorderPatchMutation,
   TaskStatus,
   updateTaskV1TasksTaskIdPatchMutation,
-} from "@metron/client";
-import { Button } from "@metron/ui/components/button";
-import { Dialog } from "@metron/ui/components/dialog";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
+import { Dialog } from "@bessel/ui/components/dialog";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@metron/ui/components/empty";
+} from "@bessel/ui/components/empty";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@metron/ui/components/select";
+} from "@bessel/ui/components/select";
 import {
   keepPreviousData,
   useMutation,
@@ -288,7 +288,7 @@ function Tasks() {
         in_progress: boardTasks.in_progress.map((t) => t.id),
       });
     }
-    window.dispatchEvent(new CustomEvent("metron:task-drag-start"));
+    window.dispatchEvent(new CustomEvent("bessel:task-drag-start"));
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -348,7 +348,7 @@ function Tasks() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    window.dispatchEvent(new CustomEvent("metron:task-drag-end"));
+    window.dispatchEvent(new CustomEvent("bessel:task-drag-end"));
 
     // Check if dropped onto a Claude terminal window
     if (isDesktop) {
@@ -360,7 +360,7 @@ function Tasks() {
           const sid = zone.getAttribute("data-claude-session")!;
           window.electron?.terminal.sendInput(sid, buildTaskPrompt(task));
           window.dispatchEvent(
-            new CustomEvent("metron:claude-drop", {
+            new CustomEvent("bessel:claude-drop", {
               detail: { sessionId: sid, taskId: task.id },
             }),
           );
@@ -476,8 +476,8 @@ function Tasks() {
         });
       }
     };
-    window.addEventListener("metron:claude-drop", onClaudeDrop);
-    return () => window.removeEventListener("metron:claude-drop", onClaudeDrop);
+    window.addEventListener("bessel:claude-drop", onClaudeDrop);
+    return () => window.removeEventListener("bessel:claude-drop", onClaudeDrop);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -683,7 +683,7 @@ function Tasks() {
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
                 onDragCancel={() => {
-                  window.dispatchEvent(new CustomEvent("metron:task-drag-end"));
+                  window.dispatchEvent(new CustomEvent("bessel:task-drag-end"));
                   setActiveTask(null);
                   setLocalOrder(null);
                 }}
@@ -728,11 +728,11 @@ function Tasks() {
                           isDesktop
                             ? (e) => {
                                 e.dataTransfer.setData(
-                                  "metron/task-prompt",
+                                  "bessel/task-prompt",
                                   buildTaskPrompt(task),
                                 );
                                 e.dataTransfer.setData(
-                                  "metron/task-id",
+                                  "bessel/task-id",
                                   task.id,
                                 );
                                 e.dataTransfer.effectAllowed = "copy";

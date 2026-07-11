@@ -63,7 +63,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | ImportResponse]:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Metron.
+   Fetch Klarna transactions and import them into Bessel.
   Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
 
   Args:
@@ -95,7 +95,7 @@ def sync(
 ) -> HTTPValidationError | ImportResponse | None:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Metron.
+   Fetch Klarna transactions and import them into Bessel.
   Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
 
   Args:
@@ -122,7 +122,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | ImportResponse]:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Metron.
+   Fetch Klarna transactions and import them into Bessel.
   Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
 
   Args:
@@ -152,7 +152,7 @@ async def asyncio(
 ) -> HTTPValidationError | ImportResponse | None:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Metron.
+   Fetch Klarna transactions and import them into Bessel.
   Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
 
   Args:

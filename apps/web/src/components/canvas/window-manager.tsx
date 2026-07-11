@@ -132,7 +132,7 @@ export function useWindowTitle() {
   return useContext(WindowTitleContext);
 }
 
-const STORAGE_KEY = "metron:workspaces";
+const STORAGE_KEY = "bessel:workspaces";
 const LEGACY_KEY = "metron:windows";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;

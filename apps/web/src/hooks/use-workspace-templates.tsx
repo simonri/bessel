@@ -26,7 +26,7 @@ export interface WorkspaceTemplate {
   widgets: TemplateWidget[];
 }
 
-const STORAGE_KEY = "metron:workspace-templates";
+const STORAGE_KEY = "bessel:workspace-templates";
 
 function newId() {
   return (

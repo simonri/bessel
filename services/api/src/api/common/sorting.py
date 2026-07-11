@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import Query
 from makefun import with_signature
 
-from api.exceptions import MetronRequestValidationError
+from api.exceptions import BesselRequestValidationError
 
 type Sorting[PE] = tuple[PE, bool]
 
@@ -28,7 +28,7 @@ class _SortingGetter[PE: StrEnum]:
       try:
         parsed_sorting.append((self.sort_property_enum(criteria), desc))
       except ValueError:
-        raise MetronRequestValidationError(
+        raise BesselRequestValidationError(
           [
             {
               "loc": ("query", "sorting"),

@@ -1,6 +1,6 @@
 import { View, Pressable } from "react-native";
 import { Text } from "@/components/shared/text";
-import type { WorkoutLogSchema } from "@metron/client";
+import type { WorkoutLogSchema } from "@bessel/client";
 import { formatDuration, formatDate, formatTime } from "./lib";
 import { useTheme } from "@/design-system";
 

@@ -1,14 +1,14 @@
 {
-  "name": "@metron/desktop",
+  "name": "@bessel/desktop",
   "version": "0.1.20",
-  "description": "Metron personal dashboard desktop app",
+  "description": "Bessel personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
   "main": "dist/main.js",
   "scripts": {
     "predev": "tsc",
-    "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@metron/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
-    "compile": "tsc && pnpm --filter=@metron/web build",
+    "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@bessel/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
+    "compile": "tsc && pnpm --filter=@bessel/web build",
     "build": "pnpm run compile && electron-builder",
     "build:dir": "pnpm run compile && electron-builder --dir",
     "release:patch": "node scripts/release.mjs patch",
@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "dev.metron.app",
-    "productName": "Metron",
+    "productName": "Bessel",
     "executableName": "metron",
     "directories": {
       "output": "release"
@@ -48,7 +48,7 @@
     "publish": {
       "provider": "github",
       "owner": "simonri",
-      "repo": "metron",
+      "repo": "bessel",
       "releaseType": "release"
     },
     "linux": {

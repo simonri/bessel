@@ -1,10 +1,10 @@
-import type { TradeSchema } from "@metron/client";
+import type { TradeSchema } from "@bessel/client";
 import {
   deleteTradeV1InvestmentsTradesTradeIdDeleteMutation,
   getHoldingsV1InvestmentsHoldingsGetOptions,
   listTradesV1InvestmentsTradesGetOptions,
   listTradesV1InvestmentsTradesGetQueryKey,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,16 +14,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
-import { Button } from "@metron/ui/components/button";
+} from "@bessel/ui/components/alert-dialog";
+import { Button } from "@bessel/ui/components/button";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@metron/ui/components/empty";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/ui/components/empty";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
   useMutation,

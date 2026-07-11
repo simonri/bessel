@@ -1,13 +1,13 @@
 import {
   listProjectsV1ProjectsGetOptions,
   type ProjectSchema,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@metron/ui/components/popover";
-import { glassSurface } from "@metron/ui/lib/glass";
+} from "@bessel/ui/components/popover";
+import { glassSurface } from "@bessel/ui/lib/glass";
 import { useQuery } from "@tanstack/react-query";
 import { memo, useState } from "react";
 import { client } from "@/lib/client";

@@ -11,8 +11,8 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
-import { cn } from "@metron/ui/lib/utils";
-import { Label } from "@metron/ui/components/label";
+import { cn } from "@bessel/ui/lib/utils";
+import { Label } from "@bessel/ui/components/label";
 
 const Form = FormProvider;
 

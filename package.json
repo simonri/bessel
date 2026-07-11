@@ -1,5 +1,5 @@
 {
-  "name": "metron",
+  "name": "bessel",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
@@ -10,11 +10,11 @@
     "test": "turbo test --parallel",
     "test:watch": "turbo test:watch --parallel",
     "typecheck": "turbo typecheck",
-    "dev": "turbo dev --parallel --filter=@metron/web --filter=@metron/api --filter=@metron/worker",
-    "dev:web": "turbo dev --filter=@metron/web --parallel",
-    "dev:api": "turbo dev --filter=@metron/api --parallel",
-    "desktop:dev": "pnpm --filter=@metron/desktop dev",
-    "desktop:build": "pnpm --filter=@metron/desktop build",
+    "dev": "turbo dev --parallel --filter=@bessel/web --filter=@bessel/api --filter=@bessel/worker",
+    "dev:web": "turbo dev --filter=@bessel/web --parallel",
+    "dev:api": "turbo dev --filter=@bessel/api --parallel",
+    "desktop:dev": "pnpm --filter=@bessel/desktop dev",
+    "desktop:build": "pnpm --filter=@bessel/desktop build",
     "build": "turbo build --parallel",
     "format": "biome format --write .",
     "cleanup:s3": "bun run scripts/cleanup-s3-files.ts",

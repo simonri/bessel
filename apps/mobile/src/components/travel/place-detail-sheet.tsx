@@ -2,7 +2,7 @@ import { View } from "react-native";
 import { Text } from "@/components/shared/text";
 import { MapPin, Navigation, Check, Trash2, Pencil } from "lucide-react-native";
 import { Button } from "@/components/shared/button";
-import type { PlaceSchema } from "@metron/client";
+import type { PlaceSchema } from "@bessel/client";
 import { BottomSheet } from "@/components/shared/sheet";
 import { PlaceIcon, RatingStars } from "./place-card";
 import { getPlaceFields, formatDate, CATEGORY_COLORS } from "./lib";

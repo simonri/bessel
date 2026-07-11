@@ -1,4 +1,4 @@
-import { glassSurface } from "@metron/ui/lib/glass";
+import { glassSurface } from "@bessel/ui/lib/glass";
 import { ScrollText, Settings, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
@@ -40,7 +40,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
       <div className="flex min-w-0 flex-1 items-center gap-5">
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-semibold tracking-wide text-white/90">
-            Metron
+            Bessel
           </span>
           {version && (
             <span className="rounded bg-white/[0.06] px-1 py-px font-mono text-10 text-white/50">

@@ -251,7 +251,7 @@ async def import_klarna_transactions(
   current_user: CurrentDBUser,
 ) -> ImportResponse:
   """
-  Fetch Klarna transactions and import them into Metron.
+  Fetch Klarna transactions and import them into Bessel.
   Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
   """
   auth = body.authorization

@@ -1,10 +1,10 @@
 import { useRef, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CategorySchema } from "@metron/client";
+import type { CategorySchema } from "@bessel/client";
 import {
   updateTransactionV1TransactionsTransactionIdPatchMutation,
   listTransactionsV1TransactionsGetQueryKey,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   Combobox,
   ComboboxInput,
@@ -13,7 +13,7 @@ import {
   ComboboxItem,
   ComboboxGroup,
   ComboboxLabel,
-} from "@metron/ui/components/combobox";
+} from "@bessel/ui/components/combobox";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 

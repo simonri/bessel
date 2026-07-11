@@ -5,8 +5,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@metron/ui/components/table";
-import { cn } from "@metron/ui/lib/utils";
+} from "@bessel/ui/components/table";
+import { cn } from "@bessel/ui/lib/utils";
 import {
   type ColumnDef,
   flexRender,

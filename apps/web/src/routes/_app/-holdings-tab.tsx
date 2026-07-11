@@ -1,13 +1,13 @@
-import type { HoldingSchema } from "@metron/client";
-import { getHoldingsV1InvestmentsHoldingsGetOptions } from "@metron/client";
+import type { HoldingSchema } from "@bessel/client";
+import { getHoldingsV1InvestmentsHoldingsGetOptions } from "@bessel/client";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@metron/ui/components/empty";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/ui/components/empty";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TrendingUp } from "lucide-react";

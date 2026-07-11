@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getCalendarV1JournalCalendarGetOptions,
   getStreakV1JournalStreakGetOptions,
-} from "@metron/client";
+} from "@bessel/client";
 import { Flame } from "lucide-react-native";
 import { BottomSheet } from "@/components/shared/sheet";
 import { client } from "@/lib/client";

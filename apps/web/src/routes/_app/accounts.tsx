@@ -1,9 +1,9 @@
-import type { BankAccountSchema } from "@metron/client";
+import type { BankAccountSchema } from "@bessel/client";
 import {
   deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
-} from "@metron/client";
+} from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,9 +13,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@metron/ui/components/alert-dialog";
-import { Button } from "@metron/ui/components/button";
-import { Skeleton } from "@metron/ui/components/skeleton";
+} from "@bessel/ui/components/alert-dialog";
+import { Button } from "@bessel/ui/components/button";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
   useMutation,
