@@ -11,6 +11,7 @@ import { client } from "@/lib/client";
 import { CommitItem } from "./-commit-item";
 import { DiffViewer } from "./-diff-viewer";
 import { FileItem, SectionHeader } from "./-file-item";
+import { ImageDiffViewer } from "./-image-diff-viewer";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
@@ -30,6 +31,10 @@ interface GitStatusData {
   unstaged: GitFileEntry[];
   untracked: GitFileEntry[];
 }
+
+type GitDiffResult =
+  | { kind: "text"; diff: string; oldContent: string; newContent: string }
+  | { kind: "image"; oldImage: string | null; newImage: string | null };
 
 export interface GitCommit {
   hash: string;
@@ -187,11 +192,7 @@ export function GitStatus() {
     refetchInterval: visible ? 8000 : false,
   });
 
-  const diffQuery = useQuery<{
-    diff: string;
-    oldContent: string;
-    newContent: string;
-  }>({
+  const diffQuery = useQuery<GitDiffResult>({
     queryKey: [
       "git:diff",
       selectedProject?.path,
@@ -579,12 +580,19 @@ export function GitStatus() {
                 <WidgetErrorBoundary
                   key={`${selectedFile.file.path}:${selectedFile.staged}`}
                 >
-                  <DiffViewer
-                    diff={diffQuery.data?.diff ?? ""}
-                    filename={selectedFile.file.path}
-                    oldContent={diffQuery.data?.oldContent ?? ""}
-                    newContent={diffQuery.data?.newContent ?? ""}
-                  />
+                  {diffQuery.data?.kind === "image" ? (
+                    <ImageDiffViewer
+                      oldImage={diffQuery.data.oldImage}
+                      newImage={diffQuery.data.newImage}
+                    />
+                  ) : (
+                    <DiffViewer
+                      diff={diffQuery.data?.diff ?? ""}
+                      filename={selectedFile.file.path}
+                      oldContent={diffQuery.data?.oldContent ?? ""}
+                      newContent={diffQuery.data?.newContent ?? ""}
+                    />
+                  )}
                 </WidgetErrorBoundary>
               )}
             </>

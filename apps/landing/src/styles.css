@@ -4,8 +4,10 @@
 @custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
 
 @theme {
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+  --font-sans:
+    "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
 
   /* Brand tokens, mirror packages/ui dark theme (cool near-black, accent hue 40) */
   --color-background: oklch(0.125 0.004 250);
@@ -16,7 +18,22 @@
   --color-accent-soft: oklch(0.84 0.13 40);
   --color-border: oklch(1 0 0 / 11%);
 
+  /* Ink & cream: the hero image's own palette, used for text sitting on it */
+  --color-ink: #2b2720;
+  --color-cream: #faf6ec;
+
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid oklch(0.7 0.18 40 / 70%);
+  outline-offset: 3px;
 }
 
 body {
@@ -58,6 +75,44 @@ body {
       opacity: 1;
       transform: none;
       filter: none;
+    }
+  }
+}
+
+/* One-time slow settle on the hero image */
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.045);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-zoom {
+    animation: hero-zoom 2.6s var(--ease-out-strong) both;
+  }
+}
+
+/* Scroll-driven section reveals; browsers without view() just show content */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 45%;
     }
   }
 }

@@ -55,11 +55,10 @@ declare global {
           file: string,
           staged: boolean,
           untracked: boolean,
-        ) => Promise<{
-          diff: string;
-          oldContent: string;
-          newContent: string;
-        }>;
+        ) => Promise<
+          | { kind: "text"; diff: string; oldContent: string; newContent: string }
+          | { kind: "image"; oldImage: string | null; newImage: string | null }
+        >;
         stage: (path: string, files: string[]) => Promise<void>;
         unstage: (path: string, files: string[]) => Promise<void>;
         commit: (path: string, message: string) => Promise<void>;

@@ -1,5 +1,3 @@
-import type { CSSProperties, ReactNode } from "react";
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Bot,
@@ -7,15 +5,23 @@ import {
   Download as DownloadIcon,
   GitBranch,
   LayoutGrid,
-  Map,
+  Map as MapIcon,
   Menu,
   ServerCog,
   SquareTerminal,
   Wallet,
   X,
 } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import { useState } from "react";
+import heroSky from "@/assets/hero-sky.webp";
 import { AppMockup } from "@/components/app-mockup";
-import { AppleLogo, GitHubLogo, LinuxLogo, WindowsLogo } from "@/components/icons";
+import {
+  AppleLogo,
+  GitHubLogo,
+  LinuxLogo,
+  WindowsLogo,
+} from "@/components/icons";
 import { LiveBackground } from "@/components/live-background";
 import { BesselMark, Wordmark } from "@/components/logo";
 import { type Platform, usePlatform } from "@/hooks/use-platform";
@@ -38,7 +44,10 @@ const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
 // Applied to every link that leaves the landing page (a different domain,
 // including subdomains like app.getbessel.com) so it opens in a new tab
 // instead of navigating away from the marketing site.
-const EXTERNAL_LINK_PROPS = { target: "_blank", rel: "noopener noreferrer" } as const;
+const EXTERNAL_LINK_PROPS = {
+  target: "_blank",
+  rel: "noopener noreferrer",
+} as const;
 const isExternalHref = (href: string) => !href.startsWith("#");
 
 // Fixed, version-free artifact names (set via `artifactName` in
@@ -51,7 +60,8 @@ const PLATFORM_ASSET: Record<Platform, string> = {
   // convention (x86_64/aarch64), unlike mac/win which use the raw x64/arm64.
   linux: "Bessel-linux-x86_64.AppImage",
 };
-const platformDownloadUrl = (platform: Platform) => `${DOWNLOAD_URL}/download/${PLATFORM_ASSET[platform]}`;
+const platformDownloadUrl = (platform: Platform) =>
+  `${DOWNLOAD_URL}/download/${PLATFORM_ASSET[platform]}`;
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -92,25 +102,27 @@ function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/60 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-6">
-        <div className="flex items-center gap-8">
-          <a href="#" aria-label="Bessel home" className="flex items-center">
-            <Wordmark />
-          </a>
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="transition-colors duration-150 pointer-fine:hover:text-foreground"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-        <div className="flex items-center gap-5">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-background/80 backdrop-blur-md">
+      <div className="mx-auto grid h-14 w-full max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6">
+        <a
+          href="/"
+          aria-label="Bessel home"
+          className="col-start-1 flex items-center"
+        >
+          <Wordmark />
+        </a>
+        <nav className="col-start-2 hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="transition-colors duration-150 pointer-fine:hover:text-foreground"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+        <div className="col-start-3 flex items-center justify-end gap-5">
           <a
             href={GITHUB_URL}
             aria-label="GitHub"
@@ -144,7 +156,7 @@ function Nav() {
         </div>
       </div>
       {menuOpen && (
-        <nav className="flex flex-col gap-1 border-t border-white/[0.06] bg-background px-6 py-3 md:hidden">
+        <nav className="flex flex-col gap-1 border-t border-white/[0.06] px-6 py-3 md:hidden">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -172,62 +184,80 @@ function Nav() {
 function Hero() {
   const platform = usePlatform() ?? "mac";
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pt-24 sm:pt-32">
-      <div className="flex flex-col items-center text-center">
-        <h1
-          className="rise max-w-3xl text-balance text-5xl font-medium tracking-tight sm:text-6xl md:text-7xl"
-          style={riseDelay(0.05)}
-        >
-          Your life, measured.
-        </h1>
-        <p
-          className="rise mt-6 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg"
-          style={riseDelay(0.15)}
-        >
-          Money, health, places, and projects - all on one desktop canvas
-          that's entirely yours.
-        </p>
-        <div className="rise mt-9 flex flex-col items-center gap-3" style={riseDelay(0.25)}>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={platformDownloadUrl(platform)}
-              className="flex items-center gap-2.5 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
-              download
-            >
-              {PLATFORM_ICON[platform]}
-              Download for {PLATFORM_LABEL[platform]}
-            </a>
-            <a
-              href="#download"
-              className="rounded-full border border-border px-6 py-3 text-sm text-muted-foreground transition-[transform,color,border-color] duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:border-white/25 pointer-fine:hover:text-foreground"
-            >
-              All platforms
-            </a>
+    <section className="relative isolate w-full overflow-hidden">
+      <div className="relative">
+        <img
+          src={heroSky}
+          alt=""
+          aria-hidden
+          className="hero-zoom absolute inset-0 h-full w-full object-cover object-[center_82%] [mask-image:linear-gradient(to_bottom,#000_82%,transparent_99%)]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/8 via-black/0 to-black/5 [mask-image:linear-gradient(to_bottom,#000_82%,transparent_99%)]" />
+
+        <div className="relative flex min-h-[720px] flex-col items-center justify-center px-6 py-14 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[820px] md:min-h-[960px]">
+          <h1
+            className="rise max-w-2xl text-balance font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl md:text-7xl"
+            style={riseDelay(0.05)}
+          >
+            Your life, <span className="font-normal italic">measured</span>.
+          </h1>
+          <p
+            className="rise mt-5 max-w-xl text-balance text-base font-medium leading-relaxed text-ink sm:text-lg"
+            style={riseDelay(0.15)}
+          >
+            Money, health, places, and projects, all on one
+            <br className="hidden sm:block" /> desktop canvas that&rsquo;s
+            entirely yours.
+          </p>
+          <div
+            className="rise mt-8 flex flex-col items-center gap-3"
+            style={riseDelay(0.25)}
+          >
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href={platformDownloadUrl(platform)}
+                className="flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-sm font-medium text-cream [text-shadow:none] transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-[#141210]"
+                download
+              >
+                {PLATFORM_ICON[platform]}
+                Download for {PLATFORM_LABEL[platform]}
+              </a>
+              <a
+                href="#download"
+                className="rounded-full border border-ink/25 bg-white/10 px-6 py-3 text-sm text-ink backdrop-blur-[2px] transition-[transform,color,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:border-ink/45 pointer-fine:hover:bg-white/25"
+              >
+                All platforms
+              </a>
+            </div>
+            <span className="text-xs text-[#211d17] [text-shadow:0_1px_14px_rgba(255,255,255,0.7)]">
+              Free &amp; open source
+            </span>
           </div>
-          <span className="text-xs text-faint-foreground">
-            Free &amp; open source · macOS, Windows &amp; Linux
-          </span>
         </div>
       </div>
 
-      <AppMockup className="rise mx-auto mt-16 max-w-4xl sm:mt-20" />
+      <AppMockup className="rise mx-auto mt-6 max-w-5xl px-8 sm:-mt-16 sm:px-6 md:-mt-20" />
     </section>
   );
 }
 
 function Thesis() {
   return (
-    <section id="why" className="mx-auto w-full max-w-3xl scroll-mt-20 px-6 pt-28 sm:pt-36">
-      <div className="flex flex-col items-center text-center">
+    <section
+      id="why"
+      className="mx-auto w-full max-w-3xl scroll-mt-20 px-6 pt-28 sm:pt-36"
+    >
+      <div className="reveal flex flex-col items-center text-center">
         <span className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
           Why Bessel
         </span>
-        <p className="mt-5 text-balance text-2xl font-medium leading-snug tracking-tight sm:text-3xl md:text-4xl">
-          AI keeps getting smarter. It still only knows what you tell it.
+        <p className="mt-5 text-balance font-serif text-3xl font-medium leading-[1.2] tracking-tight sm:text-4xl">
+          AI keeps getting smarter. It still only knows what you{" "}
+          <span className="font-normal italic">tell</span> it.
         </p>
         <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
-          The missing piece was never intelligence, it's context. Bessel pulls
-          your finances, health, travel, and habits into one place, so the
+          The missing piece was never intelligence, it&rsquo;s context. Bessel
+          pulls your finances, health, travel, and habits into one place, so the
           full picture of your life finally exists somewhere AI can use it.
         </p>
       </div>
@@ -252,7 +282,7 @@ const FEATURES: {
     icon: <SquareTerminal className="size-4.5" />,
     title: "A real terminal",
     description:
-      "Full PTY terminals in a widget - run your dev servers and scripts without leaving the dashboard.",
+      "Full PTY terminals in a widget, run your dev servers and scripts without leaving the dashboard.",
   },
   {
     icon: <GitBranch className="size-4.5" />,
@@ -270,10 +300,10 @@ const FEATURES: {
     icon: <Wallet className="size-4.5" />,
     title: "Money, honestly",
     description:
-      "Accounts, transactions, holdings, and trades in one ledger - with imports, categories, and charts.",
+      "Accounts, transactions, holdings, and trades in one ledger, with imports, categories, and charts.",
   },
   {
-    icon: <Map className="size-4.5" />,
+    icon: <MapIcon className="size-4.5" />,
     title: "Life, logged",
     description:
       "A travel timeline on a real map, places you love, recipes, workouts, and a task board for the rest.",
@@ -289,21 +319,24 @@ const FEATURES: {
 
 function Features() {
   return (
-    <section id="features" className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36">
+    <section
+      id="features"
+      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
+    >
       <SectionHeading
         eyebrow="Features"
         title="One window for your whole day"
-        subtitle="Not another app to check - the surface everything else lands on."
+        subtitle="Not another app to check, the surface everything else lands on."
       />
       <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature) => (
           <div
             key={feature.title}
-            className={`group rounded-xl border border-white/[0.07] bg-white/[0.02] p-6 transition-colors duration-200 pointer-fine:hover:border-white/[0.14] pointer-fine:hover:bg-white/[0.04] ${
+            className={`group reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition-colors duration-200 pointer-fine:hover:border-white/[0.14] pointer-fine:hover:bg-white/[0.04] ${
               feature.wide ? "lg:col-span-2" : ""
             }`}
           >
-            <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-accent">
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-accent transition-colors duration-200 pointer-fine:group-hover:border-accent/25 pointer-fine:group-hover:bg-accent/[0.06]">
               {feature.icon}
             </div>
             <h3 className="mt-4 text-[15px] font-medium">{feature.title}</h3>
@@ -319,21 +352,24 @@ function Features() {
 
 function SelfHosted() {
   return (
-    <section id="self-hosted" className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36">
-      <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02]">
+    <section
+      id="self-hosted"
+      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
+    >
+      <div className="reveal overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02]">
         <div className="grid items-center gap-10 p-8 sm:p-12 lg:grid-cols-2">
           <div>
             <span className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-accent">
               <ServerCog className="size-4.5" />
             </span>
-            <h2 className="mt-5 text-balance text-3xl font-medium tracking-tight sm:text-4xl">
+            <h2 className="mt-5 text-balance font-serif text-3xl font-medium tracking-tight sm:text-4xl">
               Your data never leaves your hands
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
-              Bessel is self-hosted and open source. The desktop app talks to
-              a backend you run yourself, keeping your finances, your
-              locations, and your history on your own hardware. No
-              telemetry, no third parties.
+              Bessel is self-hosted and open source. The desktop app talks to a
+              backend you run yourself, keeping your finances, your locations,
+              and your history on your own hardware. No telemetry, no third
+              parties.
             </p>
             <a
               href={GITHUB_URL}
@@ -363,7 +399,12 @@ function SelfHosted() {
   );
 }
 
-const PLATFORMS: { id: Platform; icon: ReactNode; name: string; detail: string }[] = [
+const PLATFORMS: {
+  id: Platform;
+  icon: ReactNode;
+  name: string;
+  detail: string;
+}[] = [
   {
     id: "mac",
     icon: <AppleLogo className="size-6" />,
@@ -387,20 +428,23 @@ const PLATFORMS: { id: Platform; icon: ReactNode; name: string; detail: string }
 function Download() {
   const platform = usePlatform();
   return (
-    <section id="download" className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36">
+    <section
+      id="download"
+      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
+    >
       <SectionHeading
         eyebrow="Download"
         title="Runs where you work"
         subtitle="One app, three platforms, auto-updates included."
       />
-      <div className="mt-12 flex flex-col gap-3 sm:grid sm:grid-cols-3">
+      <div className="reveal mt-12 flex flex-col gap-3 sm:grid sm:grid-cols-3">
         {PLATFORMS.map((p) => {
           const isDetected = p.id === platform;
           return (
             <a
               key={p.name}
               href={platformDownloadUrl(p.id)}
-              className={`group flex items-center gap-4 rounded-xl border p-5 transition-[transform,border-color,background-color] duration-200 ease-out-strong active:scale-[0.98] ${
+              className={`group flex items-center gap-4 rounded-2xl border p-5 transition-[transform,border-color,background-color] duration-200 ease-out-strong active:scale-[0.98] ${
                 isDetected
                   ? "border-accent/40 bg-accent/[0.06] pointer-fine:hover:border-accent/60"
                   : "border-white/[0.09] bg-white/[0.035] pointer-fine:hover:border-white/[0.2] pointer-fine:hover:bg-white/[0.06]"
@@ -419,7 +463,9 @@ function Download() {
                     </span>
                   )}
                 </span>
-                <span className="text-sm text-muted-foreground">{p.detail}</span>
+                <span className="text-sm text-muted-foreground">
+                  {p.detail}
+                </span>
               </span>
               <DownloadIcon className="size-4 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-foreground" />
             </a>
@@ -443,11 +489,11 @@ function Download() {
 function FinalCta() {
   const platform = usePlatform() ?? "mac";
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-32 sm:pt-40">
-      <div className="flex flex-col items-center text-center">
+    <section className="mx-auto w-full max-w-6xl px-6 pb-24 pt-32 sm:pb-28 sm:pt-40">
+      <div className="reveal flex flex-col items-center text-center">
         <BesselMark className="size-8 text-accent" />
-        <h2 className="mt-6 text-balance text-4xl font-medium tracking-tight sm:text-5xl">
-          Measure your life.
+        <h2 className="mt-6 text-balance font-serif text-4xl font-medium tracking-tight sm:text-5xl">
+          Measure your <span className="font-normal italic">life</span>.
         </h2>
         <p className="mt-4 max-w-sm text-balance text-base text-muted-foreground">
           Signal, without the noise. Free, open source, and yours.
@@ -496,7 +542,9 @@ function Footer() {
         <span className="text-xs text-faint-foreground">
           © {new Date().getFullYear()} Bessel
         </span>
-        <span className="text-xs text-faint-foreground">A dashboard for one.</span>
+        <span className="text-xs text-faint-foreground">
+          A dashboard for one.
+        </span>
       </div>
     </footer>
   );
@@ -536,14 +584,16 @@ function SectionHeading({
   subtitle: string;
 }) {
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="reveal flex flex-col items-center text-center">
       <span className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
         {eyebrow}
       </span>
-      <h2 className="mt-3 text-balance text-3xl font-medium tracking-tight sm:text-4xl">
+      <h2 className="mt-4 text-balance font-serif text-3xl font-medium tracking-tight sm:text-4xl">
         {title}
       </h2>
-      <p className="mt-3 max-w-md text-balance text-base text-muted-foreground">{subtitle}</p>
+      <p className="mt-4 max-w-md text-balance text-base text-muted-foreground">
+        {subtitle}
+      </p>
     </div>
   );
 }

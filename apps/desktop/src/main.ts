@@ -22,6 +22,8 @@ import os from "os";
 import path from "path";
 import { Readable } from "stream";
 import { promisify } from "util";
+import * as Sentry from "@sentry/electron/main";
+import { SENTRY_DSN } from "./env.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -40,6 +42,29 @@ app.on("second-instance", () => {
   if (win.isMinimized()) win.restore();
   win.focus();
 });
+
+// Only enabled for packaged builds — a `pnpm dev` session shouldn't spam the
+// Sentry project with local-only errors. The renderer (apps/web) inherits
+// this config and reports through this process — see apps/web/src/lib/sentry.ts.
+// It reports over a fetch-based fallback rather than the preload IPC bridge:
+// the preload script is loaded in Electron's sandboxed context, which can't
+// `require()` arbitrary npm packages, so `@sentry/electron/preload` isn't an
+// option there without bundling the preload script (it isn't bundled today).
+// uncaughtException/unhandledRejection are still reported via the handlers
+// below rather than Sentry's own integrations, so those are filtered out here
+// to avoid double-reporting and Sentry's own crash dialog.
+if (app.isPackaged && SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    release: app.getVersion(),
+    environment: "production",
+    tracesSampleRate: 0,
+    integrations: (integrations) =>
+      integrations.filter(
+        (i) => i.name !== "OnUncaughtException" && i.name !== "OnUnhandledRejection",
+      ),
+  });
+}
 
 function shQuote(s: string): string {
   return "'" + s.replace(/'/g, "'\\''") + "'";
@@ -227,6 +252,17 @@ async function gitRun(args: string[], cwd: string): Promise<string> {
   return stdout;
 }
 
+// Raw-byte variant for image previews — gitRun's string stdout is decoded as
+// utf8, which corrupts binary content.
+async function gitRunBuffer(args: string[], cwd: string): Promise<Buffer> {
+  const { stdout } = await execFileAsync("git", args, {
+    cwd,
+    maxBuffer: 10 * 1024 * 1024,
+    encoding: "buffer",
+  });
+  return stdout;
+}
+
 function parsePorcelain(output: string): {
   staged: GitFileEntry[];
   unstaged: GitFileEntry[];
@@ -302,11 +338,15 @@ function initLogging(): void {
   // silently swallowing it and limping on in a possibly-corrupt state.
   process.on("uncaughtException", (err) => {
     appendLog(`uncaughtException: ${err.stack ?? err}`);
-    app.exit(1);
+    Sentry.captureException(err);
+    // Sentry's transport is async, so give it a chance to flush before the
+    // process exits — captureException alone doesn't guarantee delivery.
+    void Sentry.flush(2000).finally(() => app.exit(1));
   });
-  process.on("unhandledRejection", (reason) =>
-    appendLog(`unhandledRejection: ${reason}`),
-  );
+  process.on("unhandledRejection", (reason) => {
+    appendLog(`unhandledRejection: ${reason}`);
+    Sentry.captureException(reason);
+  });
 
   // Fires for any renderer (host window or a <webview> guest) that crashes,
   // gets OOM-killed, or is killed — the reason field is the key diagnostic.
@@ -523,9 +563,17 @@ const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".bmp": "image/bmp",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
 };
+
+function isImageFile(file: string): boolean {
+  const mime = MIME_TYPES[path.extname(file).toLowerCase()];
+  return !!mime && mime.startsWith("image/");
+}
 
 // electron's net.fetch() ignores the Range header on file:// URLs — it always
 // returns the full file as a 200 with no Content-Length, which breaks <video>
@@ -969,6 +1017,29 @@ app.whenReady().then(() => {
     }
   };
 
+  const gitShowFileBuffer = async (
+    repoPath: string,
+    ref: string,
+    file: string,
+  ): Promise<Buffer | null> => {
+    try {
+      return await gitRunBuffer(["show", `${ref}:${file}`], repoPath);
+    } catch {
+      return null;
+    }
+  };
+
+  const readWorkingTreeFileBuffer = (
+    repoPath: string,
+    file: string,
+  ): Buffer | null => {
+    try {
+      return fs.readFileSync(path.join(repoPath, file));
+    } catch {
+      return null;
+    }
+  };
+
   ipcHandle(
     "git:diff",
     async (
@@ -978,6 +1049,32 @@ app.whenReady().then(() => {
       staged: boolean,
       untracked: boolean,
     ) => {
+      if (isImageFile(file)) {
+        const mimeType = MIME_TYPES[path.extname(file).toLowerCase()];
+        const toDataUri = (buf: Buffer | null) =>
+          buf ? `data:${mimeType};base64,${buf.toString("base64")}` : null;
+
+        let oldBuf: Buffer | null;
+        let newBuf: Buffer | null;
+        if (untracked) {
+          oldBuf = null;
+          newBuf = readWorkingTreeFileBuffer(repoPath, file);
+        } else if (staged) {
+          [oldBuf, newBuf] = await Promise.all([
+            gitShowFileBuffer(repoPath, "HEAD", file),
+            gitShowFileBuffer(repoPath, "", file), // index (stage 0)
+          ]);
+        } else {
+          oldBuf = await gitShowFileBuffer(repoPath, "", file); // index (stage 0)
+          newBuf = readWorkingTreeFileBuffer(repoPath, file);
+        }
+        return {
+          kind: "image" as const,
+          oldImage: toDataUri(oldBuf),
+          newImage: toDataUri(newBuf),
+        };
+      }
+
       if (untracked) {
         const newContent = readWorkingTreeFile(repoPath, file);
         try {
@@ -985,10 +1082,15 @@ app.whenReady().then(() => {
             ["diff", "--no-index", "/dev/null", file],
             repoPath,
           );
-          return { diff, oldContent: "", newContent };
+          return { kind: "text" as const, diff, oldContent: "", newContent };
         } catch (err: any) {
           if (err.code === 1)
-            return { diff: err.stdout as string, oldContent: "", newContent };
+            return {
+              kind: "text" as const,
+              diff: err.stdout as string,
+              oldContent: "",
+              newContent,
+            };
           throw err;
         }
       }
@@ -1002,11 +1104,11 @@ app.whenReady().then(() => {
           gitShowFile(repoPath, "HEAD", file),
           gitShowFile(repoPath, "", file), // index (stage 0)
         ]);
-        return { diff, oldContent, newContent };
+        return { kind: "text" as const, diff, oldContent, newContent };
       }
       const oldContent = await gitShowFile(repoPath, "", file); // index (stage 0)
       const newContent = readWorkingTreeFile(repoPath, file);
-      return { diff, oldContent, newContent };
+      return { kind: "text" as const, diff, oldContent, newContent };
     },
   );
 

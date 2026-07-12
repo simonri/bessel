@@ -16,6 +16,7 @@
     "release:major": "node scripts/release.mjs major"
   },
   "dependencies": {
+    "@sentry/electron": "^7.15.0",
     "electron-updater": "^6.8.9",
     "node-pty": "^1.0.0"
   },

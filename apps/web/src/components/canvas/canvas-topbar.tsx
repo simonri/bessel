@@ -34,10 +34,10 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
     <div
       className={cn(
         glassSurface({ weight: "light" }),
-        "fixed left-0 right-0 top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/10 px-4 py-1",
+        "fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 px-4 py-1",
       )}
     >
-      <div className="flex min-w-0 items-center gap-5">
+      <div className="flex min-w-0 flex-1 items-center gap-5">
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-semibold tracking-wide text-white/90">
             Bessel
@@ -48,33 +48,18 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
             </span>
           )}
         </div>
-        {/* Crypto tickers and Spotify are the least essential things up here,
-            so they're the first to go when space is tight - full workspace
-            switching and the right-side controls always take priority. */}
-        {pairs.length > 0 && (
-          <div className="hidden min-w-0 items-center gap-3 lg:flex">
-            <div className="h-3 w-px shrink-0 bg-white/10" />
-            {/* Scrolls rather than overlapping the centered workspace switcher
-                on the rare window/pair-count combo where even this doesn't fit. */}
-            <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto">
-              {pairs.map((pair) => (
-                <CryptoPairTicker key={pair} pair={pair} />
-              ))}
-            </div>
-          </div>
-        )}
-        {window.electron && (
-          <div className="hidden lg:block">
-            <SpotifyWidget />
-          </div>
-        )}
+        {pairs.length > 0 && <div className="h-3 w-px shrink-0 bg-white/10" />}
+        {pairs.map((pair) => (
+          <CryptoPairTicker key={pair} pair={pair} />
+        ))}
+        {window.electron && <SpotifyWidget />}
       </div>
 
-      <div className="flex items-center justify-center">
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <WorkspaceSwitcher />
       </div>
 
-      <div className="flex min-w-0 items-center justify-end gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         {window.electron && <ProjectsDropdown />}
         <TimeSinceDropdown />
         <NotificationBell />
