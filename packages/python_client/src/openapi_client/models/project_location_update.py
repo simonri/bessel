@@ -8,31 +8,41 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ProjectUpdate")
+T = TypeVar("T", bound="ProjectLocationUpdate")
 
 
 @_attrs_define
-class ProjectUpdate:
+class ProjectLocationUpdate:
   """
   Attributes:
-      name (None | str | Unset):
+      path (None | str | Unset):
+      ssh_host (None | str | Unset):
   """
 
-  name: None | str | Unset = UNSET
+  path: None | str | Unset = UNSET
+  ssh_host: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
-    name: None | str | Unset
-    if isinstance(self.name, Unset):
-      name = UNSET
+    path: None | str | Unset
+    if isinstance(self.path, Unset):
+      path = UNSET
     else:
-      name = self.name
+      path = self.path
+
+    ssh_host: None | str | Unset
+    if isinstance(self.ssh_host, Unset):
+      ssh_host = UNSET
+    else:
+      ssh_host = self.ssh_host
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update({})
-    if name is not UNSET:
-      field_dict["name"] = name
+    if path is not UNSET:
+      field_dict["path"] = path
+    if ssh_host is not UNSET:
+      field_dict["ssh_host"] = ssh_host
 
     return field_dict
 
@@ -40,21 +50,31 @@ class ProjectUpdate:
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     d = dict(src_dict)
 
-    def _parse_name(data: object) -> None | str | Unset:
+    def _parse_path(data: object) -> None | str | Unset:
       if data is None:
         return data
       if isinstance(data, Unset):
         return data
       return cast(None | str | Unset, data)
 
-    name = _parse_name(d.pop("name", UNSET))
+    path = _parse_path(d.pop("path", UNSET))
 
-    project_update = cls(
-      name=name,
+    def _parse_ssh_host(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    ssh_host = _parse_ssh_host(d.pop("ssh_host", UNSET))
+
+    project_location_update = cls(
+      path=path,
+      ssh_host=ssh_host,
     )
 
-    project_update.additional_properties = d
-    return project_update
+    project_location_update.additional_properties = d
+    return project_location_update
 
   @property
   def additional_keys(self) -> list[str]:

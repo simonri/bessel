@@ -5,6 +5,7 @@ from api.auth.endpoints import router as auth_router
 from api.bank_accounts.endpoints import router as bank_accounts_router
 from api.categories.endpoints import router as categories_router
 from api.counters.endpoints import router as counters_router
+from api.devices.endpoints import router as devices_router
 from api.investments.endpoints import router as investments_router
 from api.klarna.endpoints import router as klarna_router
 from api.notifications.endpoints import router as notifications_router
@@ -22,6 +23,7 @@ router.include_router(activity_router)
 router.include_router(bank_accounts_router)
 router.include_router(categories_router)
 router.include_router(counters_router)
+router.include_router(devices_router)
 router.include_router(investments_router)
 router.include_router(notifications_router)
 router.include_router(places_router)

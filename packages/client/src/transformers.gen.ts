@@ -20,6 +20,7 @@ import type {
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetResponse,
+  ListDevicesV1DevicesGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
   ListProjectsV1ProjectsGetResponse,
@@ -32,8 +33,10 @@ import type {
   ListTransactionsV1TransactionsGetResponse,
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
+  SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateCounterV1CountersCounterIdPatchResponse,
+  UpdateDeviceV1DevicesDeviceIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateProjectV1ProjectsProjectIdPatchResponse,
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
@@ -166,6 +169,29 @@ export const createResetV1CountersCounterIdResetsPostResponseTransformer =
     data = counterResetSchemaSchemaResponseTransformer(data);
     return data;
   };
+
+const deviceSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.last_seen_at = new Date(data.last_seen_at);
+  return data;
+};
+
+export const listDevicesV1DevicesGetResponseTransformer = async (
+  data: any,
+): Promise<ListDevicesV1DevicesGetResponse> => {
+  data = data.map((item: any) => deviceSchemaSchemaResponseTransformer(item));
+  return data;
+};
+
+export const updateDeviceV1DevicesDeviceIdPatchResponseTransformer = async (
+  data: any,
+): Promise<UpdateDeviceV1DevicesDeviceIdPatchResponse> => {
+  data = deviceSchemaSchemaResponseTransformer(data);
+  return data;
+};
 
 const securitySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
@@ -383,6 +409,14 @@ export const updateProjectV1ProjectsProjectIdPatchResponseTransformer = async (
   data = projectSchemaSchemaResponseTransformer(data);
   return data;
 };
+
+export const setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer =
+  async (
+    data: any,
+  ): Promise<SetProjectLocationV1ProjectsProjectIdLocationPutResponse> => {
+    data = projectSchemaSchemaResponseTransformer(data);
+    return data;
+  };
 
 const recipeSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

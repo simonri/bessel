@@ -31,6 +31,10 @@ contextBridge.exposeInMainWorld("electron", {
   },
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
+  device: {
+    getInfo: (): Promise<{ key: string; name: string }> =>
+      ipcRenderer.invoke("device:get-info"),
+  },
   selectFolder: () => ipcRenderer.invoke("dialog:select-folder"),
   sshListDir: (
     host: string,

@@ -663,6 +663,48 @@ export type CryptoPriceSchema = {
 };
 
 /**
+ * DeviceSchema
+ */
+export type DeviceSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Last Seen At
+   */
+  last_seen_at: Date;
+};
+
+/**
+ * DeviceUpdate
+ */
+export type DeviceUpdate = {
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
  * GooglePlaceSearchResponse
  */
 export type GooglePlaceSearchResponse = {
@@ -1352,6 +1394,20 @@ export type ProjectCreate = {
 };
 
 /**
+ * ProjectLocationUpdate
+ */
+export type ProjectLocationUpdate = {
+  /**
+   * Path
+   */
+  path?: string | null;
+  /**
+   * Ssh Host
+   */
+  ssh_host?: string | null;
+};
+
+/**
  * ProjectSchema
  */
 export type ProjectSchema = {
@@ -1395,14 +1451,6 @@ export type ProjectUpdate = {
    * Name
    */
   name?: string | null;
-  /**
-   * Path
-   */
-  path?: string | null;
-  /**
-   * Ssh Host
-   */
-  ssh_host?: string | null;
 };
 
 /**
@@ -3101,6 +3149,89 @@ export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponses = {
 export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponse =
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponses[keyof UndoResetV1CountersCounterIdResetsResetIdDeleteResponses];
 
+export type ListDevicesV1DevicesGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/devices";
+};
+
+export type ListDevicesV1DevicesGetResponses = {
+  /**
+   * Response List Devices V1 Devices Get
+   *
+   * Successful Response
+   */
+  200: Array<DeviceSchema>;
+};
+
+export type ListDevicesV1DevicesGetResponse =
+  ListDevicesV1DevicesGetResponses[keyof ListDevicesV1DevicesGetResponses];
+
+export type DeleteDeviceV1DevicesDeviceIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Device Id
+     */
+    device_id: string;
+  };
+  query?: never;
+  url: "/v1/devices/{device_id}";
+};
+
+export type DeleteDeviceV1DevicesDeviceIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteDeviceV1DevicesDeviceIdDeleteError =
+  DeleteDeviceV1DevicesDeviceIdDeleteErrors[keyof DeleteDeviceV1DevicesDeviceIdDeleteErrors];
+
+export type DeleteDeviceV1DevicesDeviceIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteDeviceV1DevicesDeviceIdDeleteResponse =
+  DeleteDeviceV1DevicesDeviceIdDeleteResponses[keyof DeleteDeviceV1DevicesDeviceIdDeleteResponses];
+
+export type UpdateDeviceV1DevicesDeviceIdPatchData = {
+  body: DeviceUpdate;
+  path: {
+    /**
+     * Device Id
+     */
+    device_id: string;
+  };
+  query?: never;
+  url: "/v1/devices/{device_id}";
+};
+
+export type UpdateDeviceV1DevicesDeviceIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateDeviceV1DevicesDeviceIdPatchError =
+  UpdateDeviceV1DevicesDeviceIdPatchErrors[keyof UpdateDeviceV1DevicesDeviceIdPatchErrors];
+
+export type UpdateDeviceV1DevicesDeviceIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: DeviceSchema;
+};
+
+export type UpdateDeviceV1DevicesDeviceIdPatchResponse =
+  UpdateDeviceV1DevicesDeviceIdPatchResponses[keyof UpdateDeviceV1DevicesDeviceIdPatchResponses];
+
 export type ListSecuritiesV1InvestmentsSecuritiesGetData = {
   body?: never;
   path?: never;
@@ -3784,10 +3915,30 @@ export type UpdatePlaceV1PlacesPlaceIdPatchResponse =
 
 export type ListProjectsV1ProjectsGetData = {
   body?: never;
+  headers?: {
+    /**
+     * X-Device-Id
+     */
+    "x-device-id"?: string | null;
+    /**
+     * X-Device-Name
+     */
+    "x-device-name"?: string | null;
+  };
   path?: never;
   query?: never;
   url: "/v1/projects";
 };
+
+export type ListProjectsV1ProjectsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListProjectsV1ProjectsGetError =
+  ListProjectsV1ProjectsGetErrors[keyof ListProjectsV1ProjectsGetErrors];
 
 export type ListProjectsV1ProjectsGetResponses = {
   /**
@@ -3803,6 +3954,16 @@ export type ListProjectsV1ProjectsGetResponse =
 
 export type CreateProjectV1ProjectsPostData = {
   body: ProjectCreate;
+  headers?: {
+    /**
+     * X-Device-Id
+     */
+    "x-device-id"?: string | null;
+    /**
+     * X-Device-Name
+     */
+    "x-device-name"?: string | null;
+  };
   path?: never;
   query?: never;
   url: "/v1/projects";
@@ -3862,6 +4023,16 @@ export type DeleteProjectV1ProjectsProjectIdDeleteResponse =
 
 export type UpdateProjectV1ProjectsProjectIdPatchData = {
   body: ProjectUpdate;
+  headers?: {
+    /**
+     * X-Device-Id
+     */
+    "x-device-id"?: string | null;
+    /**
+     * X-Device-Name
+     */
+    "x-device-name"?: string | null;
+  };
   path: {
     /**
      * Project Id
@@ -3891,6 +4062,48 @@ export type UpdateProjectV1ProjectsProjectIdPatchResponses = {
 
 export type UpdateProjectV1ProjectsProjectIdPatchResponse =
   UpdateProjectV1ProjectsProjectIdPatchResponses[keyof UpdateProjectV1ProjectsProjectIdPatchResponses];
+
+export type SetProjectLocationV1ProjectsProjectIdLocationPutData = {
+  body: ProjectLocationUpdate;
+  headers?: {
+    /**
+     * X-Device-Id
+     */
+    "x-device-id"?: string | null;
+    /**
+     * X-Device-Name
+     */
+    "x-device-name"?: string | null;
+  };
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/v1/projects/{project_id}/location";
+};
+
+export type SetProjectLocationV1ProjectsProjectIdLocationPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SetProjectLocationV1ProjectsProjectIdLocationPutError =
+  SetProjectLocationV1ProjectsProjectIdLocationPutErrors[keyof SetProjectLocationV1ProjectsProjectIdLocationPutErrors];
+
+export type SetProjectLocationV1ProjectsProjectIdLocationPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: ProjectSchema;
+};
+
+export type SetProjectLocationV1ProjectsProjectIdLocationPutResponse =
+  SetProjectLocationV1ProjectsProjectIdLocationPutResponses[keyof SetProjectLocationV1ProjectsProjectIdLocationPutResponses];
 
 export type ListRecipesV1RecipesGetData = {
   body?: never;

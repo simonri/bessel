@@ -5,21 +5,33 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.http_validation_error import HTTPValidationError
 from ...models.project_schema import ProjectSchema
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+  *,
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
+) -> dict[str, Any]:
+  headers: dict[str, Any] = {}
+  if not isinstance(x_device_id, Unset):
+    headers["x-device-id"] = x_device_id
+
+  if not isinstance(x_device_name, Unset):
+    headers["x-device-name"] = x_device_name
 
   _kwargs: dict[str, Any] = {
     "method": "get",
     "url": "/v1/projects",
   }
 
+  _kwargs["headers"] = headers
   return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> list[ProjectSchema] | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | list[ProjectSchema] | None:
   if response.status_code == 200:
     response_200 = []
     _response_200 = response.json()
@@ -30,13 +42,18 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
     return response_200
 
+  if response.status_code == 422:
+    response_422 = HTTPValidationError.from_dict(response.json())
+
+    return response_422
+
   if client.raise_on_unexpected_status:
     raise errors.UnexpectedStatus(response.status_code, response.content)
   else:
     return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[list[ProjectSchema]]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | list[ProjectSchema]]:
   return Response(
     status_code=HTTPStatus(response.status_code),
     content=response.content,
@@ -48,18 +65,27 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   *,
   client: AuthenticatedClient,
-) -> Response[list[ProjectSchema]]:
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
+) -> Response[HTTPValidationError | list[ProjectSchema]]:
   """List Projects
+
+  Args:
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[list[ProjectSchema]]
+      Response[HTTPValidationError | list[ProjectSchema]]
   """
 
-  kwargs = _get_kwargs()
+  kwargs = _get_kwargs(
+    x_device_id=x_device_id,
+    x_device_name=x_device_name,
+  )
 
   response = client.get_httpx_client().request(
     **kwargs,
@@ -71,37 +97,54 @@ def sync_detailed(
 def sync(
   *,
   client: AuthenticatedClient,
-) -> list[ProjectSchema] | None:
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
+) -> HTTPValidationError | list[ProjectSchema] | None:
   """List Projects
+
+  Args:
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      list[ProjectSchema]
+      HTTPValidationError | list[ProjectSchema]
   """
 
   return sync_detailed(
     client=client,
+    x_device_id=x_device_id,
+    x_device_name=x_device_name,
   ).parsed
 
 
 async def asyncio_detailed(
   *,
   client: AuthenticatedClient,
-) -> Response[list[ProjectSchema]]:
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
+) -> Response[HTTPValidationError | list[ProjectSchema]]:
   """List Projects
+
+  Args:
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[list[ProjectSchema]]
+      Response[HTTPValidationError | list[ProjectSchema]]
   """
 
-  kwargs = _get_kwargs()
+  kwargs = _get_kwargs(
+    x_device_id=x_device_id,
+    x_device_name=x_device_name,
+  )
 
   response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -111,19 +154,27 @@ async def asyncio_detailed(
 async def asyncio(
   *,
   client: AuthenticatedClient,
-) -> list[ProjectSchema] | None:
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
+) -> HTTPValidationError | list[ProjectSchema] | None:
   """List Projects
+
+  Args:
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      list[ProjectSchema]
+      HTTPValidationError | list[ProjectSchema]
   """
 
   return (
     await asyncio_detailed(
       client=client,
+      x_device_id=x_device_id,
+      x_device_name=x_device_name,
     )
   ).parsed

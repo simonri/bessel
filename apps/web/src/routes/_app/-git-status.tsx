@@ -78,9 +78,13 @@ export function GitStatus() {
   const { data: allProjects } = useQuery(
     listProjectsV1ProjectsGetOptions({ client }),
   );
-  const projects = (allProjects ?? []).filter(
-    (p): p is ProjectWithPath => p.path != null && !p.ssh_host,
+  // ssh-backed projects are a separate, pre-existing limitation (no remote git
+  // support yet) — unrelated to whether this device has a local path set.
+  const localProjects = (allProjects ?? []).filter((p) => !p.ssh_host);
+  const projects = localProjects.filter(
+    (p): p is ProjectWithPath => p.path != null,
   );
+  const unconfiguredCount = localProjects.length - projects.length;
 
   const [selectedProject, setSelectedProject] =
     useState<ProjectWithPath | null>(null);
@@ -311,10 +315,25 @@ export function GitStatus() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
         <GitBranch className="size-8 text-white/15" />
-        <p className="text-sm text-white/50">No projects configured</p>
-        <p className="text-xs text-white/50">
-          Add a project via the folder icon in the top bar
-        </p>
+        {unconfiguredCount > 0 ? (
+          <>
+            <p className="text-sm text-white/50">
+              {unconfiguredCount === 1
+                ? "1 project isn't set up on this device"
+                : `${unconfiguredCount} projects aren't set up on this device`}
+            </p>
+            <p className="text-xs text-white/50">
+              Set a local path via the folder icon in the top bar
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-white/50">No projects configured</p>
+            <p className="text-xs text-white/50">
+              Add a project via the folder icon in the top bar
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -371,6 +390,14 @@ export function GitStatus() {
           />
         </button>
       </div>
+
+      {unconfiguredCount > 0 && (
+        <div className="shrink-0 border-b border-white/[0.06] px-3 py-1 text-11 text-white/40">
+          {unconfiguredCount === 1
+            ? "1 more project isn't set up on this device"
+            : `${unconfiguredCount} more projects aren't set up on this device`}
+        </div>
+      )}
 
       {/* ── Body ── */}
       <div className="flex min-h-0 flex-1 overflow-hidden">

@@ -29,6 +29,9 @@ declare global {
         version?: string;
         message?: string;
       }>;
+      device: {
+        getInfo: () => Promise<{ key: string; name: string }>;
+      };
       selectFolder: () => Promise<string | null>;
       sshListDir: (
         host: string,

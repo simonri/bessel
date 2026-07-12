@@ -5,20 +5,35 @@ import {
   GlassDialogDescription,
   GlassDialogTitle,
 } from "@bessel/ui/components/glass-dialog";
-import { Cpu, Info, LayoutDashboard, Palette, Settings, X } from "lucide-react";
+import {
+  Cpu,
+  Info,
+  Laptop,
+  LayoutDashboard,
+  Palette,
+  Settings,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";
 import { AppearancePage } from "@/components/settings-appearance-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
+import { DevicesPage } from "@/components/settings-devices-page";
 import { MonitorPage } from "@/components/settings-monitor-page";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
-type SidebarPage = "appearance" | "dashboard" | "monitor" | "about";
+type SidebarPage =
+  | "appearance"
+  | "dashboard"
+  | "devices"
+  | "monitor"
+  | "about";
 
 const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
   appearance: "Customize the look and feel of your dashboard.",
   dashboard: "Configure the top bar and widget display settings.",
+  devices: "Manage the devices linked to your account.",
   monitor: "Manage the background activity tracker service.",
   about: "Application version and update settings.",
 };
@@ -32,6 +47,7 @@ const NAV_ITEMS: {
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   ...(isDesktop
     ? [
+        { key: "devices" as const, label: "Devices", icon: Laptop },
         { key: "monitor" as const, label: "Monitor", icon: Cpu },
         { key: "about" as const, label: "About", icon: Info },
       ]
@@ -109,6 +125,7 @@ export function SettingsModal({
             <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
               {page === "appearance" && <AppearancePage />}
               {page === "dashboard" && <DashboardPage />}
+              {page === "devices" && <DevicesPage />}
               {page === "monitor" && <MonitorPage />}
               {page === "about" && <AboutPage />}
             </div>

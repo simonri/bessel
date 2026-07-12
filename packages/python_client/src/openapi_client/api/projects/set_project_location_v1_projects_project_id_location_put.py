@@ -8,15 +8,15 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
+from ...models.project_location_update import ProjectLocationUpdate
 from ...models.project_schema import ProjectSchema
-from ...models.project_update import ProjectUpdate
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
   project_id: UUID,
   *,
-  body: ProjectUpdate,
+  body: ProjectLocationUpdate,
   x_device_id: None | str | Unset = UNSET,
   x_device_name: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
@@ -28,8 +28,8 @@ def _get_kwargs(
     headers["x-device-name"] = x_device_name
 
   _kwargs: dict[str, Any] = {
-    "method": "patch",
-    "url": "/v1/projects/{project_id}".format(
+    "method": "put",
+    "url": "/v1/projects/{project_id}/location".format(
       project_id=quote(str(project_id), safe=""),
     ),
   }
@@ -72,17 +72,17 @@ def sync_detailed(
   project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
+  body: ProjectLocationUpdate,
   x_device_id: None | str | Unset = UNSET,
   x_device_name: None | str | Unset = UNSET,
 ) -> Response[HTTPValidationError | ProjectSchema]:
-  """Update Project
+  """Set Project Location For This Device
 
   Args:
       project_id (UUID):
       x_device_id (None | str | Unset):
       x_device_name (None | str | Unset):
-      body (ProjectUpdate):
+      body (ProjectLocationUpdate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -110,17 +110,17 @@ def sync(
   project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
+  body: ProjectLocationUpdate,
   x_device_id: None | str | Unset = UNSET,
   x_device_name: None | str | Unset = UNSET,
 ) -> HTTPValidationError | ProjectSchema | None:
-  """Update Project
+  """Set Project Location For This Device
 
   Args:
       project_id (UUID):
       x_device_id (None | str | Unset):
       x_device_name (None | str | Unset):
-      body (ProjectUpdate):
+      body (ProjectLocationUpdate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -143,17 +143,17 @@ async def asyncio_detailed(
   project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
+  body: ProjectLocationUpdate,
   x_device_id: None | str | Unset = UNSET,
   x_device_name: None | str | Unset = UNSET,
 ) -> Response[HTTPValidationError | ProjectSchema]:
-  """Update Project
+  """Set Project Location For This Device
 
   Args:
       project_id (UUID):
       x_device_id (None | str | Unset):
       x_device_name (None | str | Unset):
-      body (ProjectUpdate):
+      body (ProjectLocationUpdate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -179,17 +179,17 @@ async def asyncio(
   project_id: UUID,
   *,
   client: AuthenticatedClient,
-  body: ProjectUpdate,
+  body: ProjectLocationUpdate,
   x_device_id: None | str | Unset = UNSET,
   x_device_name: None | str | Unset = UNSET,
 ) -> HTTPValidationError | ProjectSchema | None:
-  """Update Project
+  """Set Project Location For This Device
 
   Args:
       project_id (UUID):
       x_device_id (None | str | Unset):
       x_device_name (None | str | Unset):
-      body (ProjectUpdate):
+      body (ProjectLocationUpdate):
 
   Raises:
       errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

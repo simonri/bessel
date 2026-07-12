@@ -14,6 +14,7 @@ import {
   session,
   shell,
 } from "electron";
+import crypto from "crypto";
 import { autoUpdater } from "electron-updater";
 import fs from "fs";
 import http from "http";
@@ -441,6 +442,33 @@ function saveAuthCache(): void {
   fs.writeFileSync(authCachePath, encrypted);
 }
 
+// ─── device identity ────────────────────────────────────────────────────────
+// A project's local path/ssh_host resolve per-device on the backend (see
+// api/projects/service.py) — this id is what tells the backend "this device"
+// on every request, sent as the X-Device-Id header. Persisted outside the
+// encrypted auth cache since it isn't a secret and must survive logout.
+interface DeviceInfo {
+  key: string;
+  name: string;
+}
+
+let deviceInfo: DeviceInfo | null = null;
+
+function loadOrCreateDeviceInfo(): DeviceInfo {
+  const devicePath = path.join(app.getPath("userData"), "device.json");
+  try {
+    const existing = JSON.parse(
+      fs.readFileSync(devicePath, "utf8"),
+    ) as DeviceInfo;
+    if (existing.key) return existing;
+  } catch {
+    // No file yet, or it's corrupt — fall through and create a fresh one.
+  }
+  const info: DeviceInfo = { key: crypto.randomUUID(), name: os.hostname() };
+  fs.writeFileSync(devicePath, JSON.stringify(info));
+  return info;
+}
+
 const ptySessions = new Map<string, pty.IPty>();
 
 const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
@@ -728,6 +756,7 @@ app.whenReady().then(() => {
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
+  deviceInfo = loadOrCreateDeviceInfo();
   startAuthCallbackServer();
 
   // Same UA fix as the browser widget below, applied to the default session so
@@ -843,6 +872,8 @@ app.whenReady().then(() => {
   });
 
   ipcHandle("app:version", () => app.getVersion());
+
+  ipcHandle("device:get-info", (): DeviceInfo => deviceInfo!);
 
   ipcHandle("app:check-update", () => {
     if (!app.isPackaged) return Promise.resolve({ status: "dev" });
