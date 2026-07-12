@@ -1,0 +1,46 @@
+name: Bessel
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "17.0"
+configFiles:
+  Debug: Config/Dev.xcconfig
+  Release: Config/Prod.xcconfig
+settings:
+  base:
+    DEVELOPMENT_TEAM: WQH84QWCFP
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.10"
+targets:
+  Bessel:
+    type: application
+    platform: iOS
+    sources:
+      - Bessel
+    scheme:
+      gatherCoverageData: false
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+    info:
+      path: Bessel/Info.plist
+      properties:
+        CFBundleDisplayName: $(BESSEL_APP_NAME)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Dark
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
+            CFBundleURLSchemes:
+              - $(PRODUCT_BUNDLE_IDENTIFIER)
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        AUTH_CALLBACK_SCHEME: $(PRODUCT_BUNDLE_IDENTIFIER)
+        API_BASE_URL: $(API_BASE_URL)
+        AUTH0_DOMAIN: $(AUTH0_DOMAIN)
+        AUTH0_CLIENT_ID: $(AUTH0_CLIENT_ID)
+        AUTH0_AUDIENCE: $(AUTH0_AUDIENCE)

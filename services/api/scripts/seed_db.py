@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from api.models import ActivityEvent, BankAccount, Category, Place, Security, SecurityPrice, Task, Trade, Transaction
+from api.models import ActivityEvent, BankAccount, Category, Place, Project, Security, SecurityPrice, Task, Trade, Transaction
 from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
@@ -95,6 +95,7 @@ async def seed() -> None:
     for table in [
       "activity_events",
       "tasks",
+      "projects",
       "places",
       "trades",
       "security_prices",
@@ -334,16 +335,23 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(trades)} trades.")
 
-    # ── 8. Tasks ──────────────────────────────────────────────────────────
+    # ── 8. Projects ───────────────────────────────────────────────────────
+    proj_bessel = Project(name="Bessel Dev")
+    proj_work = Project(name="Work")
+    session.add_all([proj_bessel, proj_work])
+    await session.flush()
+    print("Seeded 2 projects.")
+
+    # ── 9. Tasks ──────────────────────────────────────────────────────────
     tasks = [
-      Task(title="Add activity heatmap to Activity page", status="todo", priority=2, project="Bessel Dev", area="Engineering", due_date=d(-7), position=0),
-      Task(title="Implement budget tracking feature", status="todo", priority=1, project="Bessel Dev", area="Engineering", position=1),
-      Task(title="Fix chart responsiveness on mobile", status="in_progress", priority=2, project="Bessel Dev", area="Engineering", position=2),
+      Task(title="Add activity heatmap to Activity page", status="todo", priority=2, project_id=proj_bessel.id, area="Engineering", due_date=d(-7), position=0),
+      Task(title="Implement budget tracking feature", status="todo", priority=1, project_id=proj_bessel.id, area="Engineering", position=1),
+      Task(title="Fix chart responsiveness on mobile", status="in_progress", priority=2, project_id=proj_bessel.id, area="Engineering", position=2),
       Task(
         title="Set up systemd monitor timer",
         status="done",
         priority=3,
-        project="Bessel Dev",
+        project_id=proj_bessel.id,
         area="Engineering",
         position=3,
         completed_at=datetime(2026, 6, 14, 18, 30, tzinfo=UTC),
@@ -352,18 +360,18 @@ async def seed() -> None:
         title="Implement activity batch endpoint",
         status="done",
         priority=3,
-        project="Bessel Dev",
+        project_id=proj_bessel.id,
         area="Engineering",
         position=4,
         completed_at=datetime(2026, 6, 15, 10, 0, tzinfo=UTC),
       ),
-      Task(title="Q2 performance review", status="todo", priority=1, project="Work", area="Career", due_date=d(-3), position=5),
-      Task(title="Draft project proposal for client", status="in_progress", priority=2, project="Work", area="Career", due_date=d(2), position=6),
+      Task(title="Q2 performance review", status="todo", priority=1, project_id=proj_work.id, area="Career", due_date=d(-3), position=5),
+      Task(title="Draft project proposal for client", status="in_progress", priority=2, project_id=proj_work.id, area="Career", due_date=d(2), position=6),
       Task(
         title="Team meeting prep",
         status="done",
         priority=2,
-        project="Work",
+        project_id=proj_work.id,
         area="Career",
         position=7,
         completed_at=datetime(2026, 6, 13, 9, 0, tzinfo=UTC),
@@ -372,7 +380,7 @@ async def seed() -> None:
         title="Send invoice to Consulting AS",
         status="done",
         priority=3,
-        project="Work",
+        project_id=proj_work.id,
         area="Career",
         position=8,
         completed_at=datetime(2026, 6, 10, 15, 0, tzinfo=UTC),
@@ -392,7 +400,7 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(tasks)} tasks.")
 
-    # ── 9. Places ─────────────────────────────────────────────────────────
+    # ── 10. Places ────────────────────────────────────────────────────────
     places = [
       Place(
         name="Tim Wendelboe",
@@ -515,7 +523,7 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(places)} places.")
 
-    # ── 10. Activity events ───────────────────────────────────────────────
+    # ── 11. Activity events ───────────────────────────────────────────────
     # 30-day history with varied daily profiles.
     # Each day spec is (days_ago, [(start_h, end_h, app_class), ...]).
     # Days omitted from the list = no activity (weekends off, holidays).

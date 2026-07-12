@@ -15,11 +15,17 @@ import { cn } from "@/lib/utils";
 
 // memo: takes no props, so canvas re-renders (live resize, workspace switches)
 // never cascade into the ticker/spotify/notification subtrees.
+// Kept in sync with main.ts's trafficLightPosition: {x: 16, y: 12} — the
+// traffic lights are ~16px tall, so this leaves enough left inset for them to
+// clear the "Bessel" title.
+const MAC_TRAFFIC_LIGHT_INSET = "pl-20";
+
 export const CanvasTopBar = memo(function CanvasTopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
   const { settings } = useSettings();
+  const isMac = window.electron?.platform === "darwin";
 
   useEffect(() => {
     window.electron?.getVersion().then(setVersion);
@@ -30,11 +36,17 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
     .map((s) => s.trim().toUpperCase())
     .filter(Boolean);
 
+  // Non-interactive stretches of the bar (padding, gaps, the title) stay
+  // draggable via inheritance from the bar's own drag region below — only the
+  // actual click targets need to opt back out with noDrag.
+  const noDrag = isMac ? "[-webkit-app-region:no-drag]" : undefined;
+
   return (
     <div
       className={cn(
         glassSurface({ weight: "light" }),
-        "fixed left-0 right-0 top-0 z-50 flex items-center border-b border-white/10 px-4 py-1",
+        "fixed left-0 right-0 top-0 z-50 flex h-10 items-center border-b border-white/10 px-4",
+        isMac && [MAC_TRAFFIC_LIGHT_INSET, "[-webkit-app-region:drag]"],
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-5">
@@ -52,22 +64,39 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
         {pairs.map((pair) => (
           <CryptoPairTicker key={pair} pair={pair} />
         ))}
-        {window.electron && <SpotifyWidget />}
+        {window.electron && (
+          <div className={noDrag}>
+            <SpotifyWidget />
+          </div>
+        )}
       </div>
 
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <WorkspaceSwitcher />
+        <div className={noDrag}>
+          <WorkspaceSwitcher />
+        </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {window.electron && <ProjectsDropdown />}
-        <TimeSinceDropdown />
-        <NotificationBell />
+        {window.electron && (
+          <div className={noDrag}>
+            <ProjectsDropdown />
+          </div>
+        )}
+        <div className={noDrag}>
+          <TimeSinceDropdown />
+        </div>
+        <div className={noDrag}>
+          <NotificationBell />
+        </div>
         {window.electron && (
           <button
             onClick={() => setLogsOpen(true)}
             title="View logs"
-            className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
+            className={cn(
+              "flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70",
+              noDrag,
+            )}
           >
             <ScrollText className="size-4" />
           </button>
@@ -75,12 +104,17 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
         <button
           onClick={() => setSettingsOpen(true)}
           title="Settings"
-          className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
+          className={cn(
+            "flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70",
+            noDrag,
+          )}
         >
           <Settings className="size-4" />
         </button>
-        <AvatarMenu />
-        {window.electron && (
+        <div className={noDrag}>
+          <AvatarMenu />
+        </div>
+        {window.electron && !isMac && (
           <button
             onClick={() => window.electron!.close()}
             title="Close"

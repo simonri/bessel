@@ -14,6 +14,7 @@ interface ElectronSpotifyStatus {
 declare global {
   interface Window {
     electron?: {
+      platform: NodeJS.Platform;
       close: () => void;
       auth: {
         get: (key: string) => Promise<string | null>;

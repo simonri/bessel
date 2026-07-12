@@ -1,0 +1,11 @@
+// Copy to Dev.xcconfig (used by the Debug configuration → "Bessel Dev" app).
+// Auth0 values match apps/web/.env. API_BASE_URL must be reachable from the
+// phone — your Mac's LAN IP, not localhost.
+// Note: `//` starts a comment in xcconfig, hence the $() trick in URLs.
+
+PRODUCT_BUNDLE_IDENTIFIER = com.simonri.bessel.dev
+BESSEL_APP_NAME = Bessel Dev
+API_BASE_URL = http:/$()/192.168.1.188:8100
+AUTH0_DOMAIN = metronapp.us.auth0.com
+AUTH0_CLIENT_ID = YOUR_AUTH0_CLIENT_ID
+AUTH0_AUDIENCE = metron

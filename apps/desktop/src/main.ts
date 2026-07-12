@@ -622,6 +622,16 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: "Bessel",
+    // Hides the native gray title bar on mac while keeping the traffic lights,
+    // which CanvasTopBar reserves left inset space for (MAC_TRAFFIC_LIGHT_INSET).
+    // frame:false would drop the traffic lights entirely, which we still want.
+    // Windows/Linux keep their native frame — no custom drag region needed there.
+    ...(process.platform === "darwin"
+      ? {
+          titleBarStyle: "hidden" as const,
+          trafficLightPosition: { x: 16, y: 12 },
+        }
+      : {}),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

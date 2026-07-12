@@ -6,7 +6,7 @@ import { isDesktop } from "@/lib/environment";
 let sentry: typeof import("@sentry/electron/renderer") | undefined;
 
 export async function initSentry() {
-  if (!isDesktop) return;
+  if (!isDesktop || import.meta.env.DEV) return;
   sentry = await import("@sentry/electron/renderer");
   sentry.init();
 }

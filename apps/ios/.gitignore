@@ -1,0 +1,5 @@
+Bessel.xcodeproj/
+build/
+DerivedData/
+Config/Dev.xcconfig
+Config/Prod.xcconfig

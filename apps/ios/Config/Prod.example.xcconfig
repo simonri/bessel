@@ -1,0 +1,8 @@
+// Copy to Prod.xcconfig (used by the Release configuration → "Bessel" app).
+
+PRODUCT_BUNDLE_IDENTIFIER = com.simonri.bessel
+BESSEL_APP_NAME = Bessel
+API_BASE_URL = https:/$()/api.getbessel.com
+AUTH0_DOMAIN = metronapp.us.auth0.com
+AUTH0_CLIENT_ID = YOUR_AUTH0_CLIENT_ID
+AUTH0_AUDIENCE = metron

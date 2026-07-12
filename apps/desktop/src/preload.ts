@@ -12,6 +12,7 @@ interface SpotifyStatus {
 }
 
 contextBridge.exposeInMainWorld("electron", {
+  platform: process.platform,
   close: () => ipcRenderer.send("close-window"),
   auth: {
     get: (key: string): Promise<string | null> =>
