@@ -23,19 +23,19 @@
     "upgrade": "pnpm update -r --latest -i"
   },
   "dependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.5.3",
     "@tanstack/react-table": "^8.21.3",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "emoji-regex": "^10.6.0",
-    "turbo": "^2.9.12",
+    "turbo": "^2.10.4",
     "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "@voidzero-dev/vite-plus-darwin-arm64": "0.1.21",
+    "@voidzero-dev/vite-plus-darwin-arm64": "0.2.4",
     "vite-plus": "catalog:"
   },
   "overrides": {
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "@tanstack/query-core": "5.90.16"
   },
   "pnpm": {

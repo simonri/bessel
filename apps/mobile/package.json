@@ -15,10 +15,10 @@
     "@gorhom/bottom-sheet": "^5.2.14",
     "@bessel/client": "workspace:*",
     "@react-native-community/datetimepicker": "9.1.0",
-    "@react-navigation/bottom-tabs": "^7.16.0",
-    "@shopify/flash-list": "^2.3.1",
+    "@react-navigation/bottom-tabs": "^7.18.8",
+    "@shopify/flash-list": "^2.3.2",
     "@shopify/restyle": "^2.4.5",
-    "@tanstack/react-query": "^5.100.10",
+    "@tanstack/react-query": "^5.101.2",
     "expo": "~55.0.24",
     "expo-blur": "^55.0.14",
     "expo-constants": "~55.0.16",
@@ -32,19 +32,19 @@
     "expo-router": "~55.0.14",
     "expo-splash-screen": "~55.0.21",
     "expo-status-bar": "~55.0.6",
-    "lucide-react-native": "^1.14.0",
-    "react": "^19.2.6",
-    "react-error-boundary": "^6.1.1",
-    "react-native": "~0.85.3",
+    "lucide-react-native": "^1.24.0",
+    "react": "^19.2.7",
+    "react-error-boundary": "^6.1.2",
+    "react-native": "~0.86.0",
     "react-native-gesture-handler": "~2.31.2",
-    "react-native-reanimated": "~4.3.1",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.25.0",
+    "react-native-reanimated": "~4.5.1",
+    "react-native-safe-area-context": "~5.8.0",
+    "react-native-screens": "~4.26.0",
     "react-native-svg": "~15.15.5",
-    "react-native-worklets": "^0.8.3"
+    "react-native-worklets": "^0.10.2"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.17",
     "typescript": "^6.0.3"
   }
 }
