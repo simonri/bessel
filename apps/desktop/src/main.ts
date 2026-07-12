@@ -34,7 +34,25 @@ const execFileAsync = promisify(execFile);
 // user's profile to a new, empty directory on the next launch — wiping
 // workspace templates, settings, and window layouts with no migration.
 // Pin the path explicitly so future renames can't do that again.
-app.setPath("userData", path.join(app.getPath("appData"), "@bessel", "desktop"));
+const USER_DATA_DIR = path.join(app.getPath("appData"), "@bessel", "desktop");
+app.setPath("userData", USER_DATA_DIR);
+
+// The pin above stops *future* renames from silently switching profiles, but
+// it doesn't undo the Jul 11 one — anyone who hadn't launched a build under
+// the new name yet still has their real data sitting in the pre-rebrand
+// "@metron/desktop" profile, invisible to the new one. Seed the new profile
+// from it, but only on the very first launch under the new path: this runs
+// before Chromium has opened "Local Storage" for USER_DATA_DIR (a plain file
+// copy is only safe into a directory nothing has touched yet — copying into,
+// or out of, an *open* LevelDB store risks corrupting it), and it must never
+// clobber real usage that already happened under the new profile.
+const LEGACY_USER_DATA_DIR = path.join(app.getPath("appData"), "@metron", "desktop");
+const NEW_LOCAL_STORAGE_DIR = path.join(USER_DATA_DIR, "Local Storage");
+const LEGACY_LOCAL_STORAGE_DIR = path.join(LEGACY_USER_DATA_DIR, "Local Storage");
+if (!fs.existsSync(NEW_LOCAL_STORAGE_DIR) && fs.existsSync(LEGACY_LOCAL_STORAGE_DIR)) {
+  fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+  fs.cpSync(LEGACY_LOCAL_STORAGE_DIR, NEW_LOCAL_STORAGE_DIR, { recursive: true });
+}
 
 // A packaged build and a `pnpm dev` build share the same userData dir (and
 // therefore the same cookie/session-storage/GPU-shader-cache stores, and the
