@@ -27,6 +27,14 @@ import { SENTRY_DSN } from "./env.js";
 
 const execFileAsync = promisify(execFile);
 
+// Electron derives the userData directory from package.json's top-level
+// "name" field unless overridden. The Jul 11 rebrand changed that field
+// ("@metron/desktop" -> "@bessel/desktop"), which silently moved every
+// user's profile to a new, empty directory on the next launch — wiping
+// workspace templates, settings, and window layouts with no migration.
+// Pin the path explicitly so future renames can't do that again.
+app.setPath("userData", path.join(app.getPath("appData"), "@bessel", "desktop"));
+
 // A packaged build and a `pnpm dev` build share the same userData dir (and
 // therefore the same cookie/session-storage/GPU-shader-cache stores, and the
 // persist:browser <webview> partition), so running both at once means two
