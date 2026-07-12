@@ -25,6 +25,7 @@ interface Settings {
 }
 
 const STORAGE_KEY = "bessel:settings";
+const LEGACY_KEY = "metron:settings";
 const DEFAULT_SETTINGS: Settings = {
   cryptoPairs: "BTCUSDT",
   activityMappings: [],
@@ -36,11 +37,22 @@ const DEFAULT_SETTINGS: Settings = {
 function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+    if (raw)
+      return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
+  } catch {}
+
+  // Falls back to the pre-rebrand key name — see window-manager.tsx's
+  // identical LEGACY_KEY handling for the same "metron:" -> "bessel:" rename.
+  try {
+    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    if (legacyRaw)
+      return {
+        ...DEFAULT_SETTINGS,
+        ...(JSON.parse(legacyRaw) as Partial<Settings>),
+      };
+  } catch {}
+
+  return DEFAULT_SETTINGS;
 }
 
 interface SettingsContextValue {
