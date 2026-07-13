@@ -115,8 +115,9 @@ interface WindowManagerContextValue
   extends WindowManagerActions,
     WindowManagerState,
     WorkspaceMetaState {
-  /** Workspace a window was just moved into, briefly set so the UI can flash it. */
-  flashWorkspaceId: string | null;
+  /** Workspace a window was just moved into, briefly set so the UI can flash it.
+      seq increments per move so a repeat flash on the same pill restarts. */
+  flashWorkspace: { id: string; seq: number } | null;
 }
 
 export const WindowEntryContext = createContext<WindowEntry | null>(null);
@@ -362,7 +363,10 @@ function loadState(): LoadedState {
 const WindowActionsContext = createContext<WindowManagerActions | null>(null);
 const WindowStateContext = createContext<WindowManagerState | null>(null);
 const WorkspaceMetaContext = createContext<WorkspaceMetaState | null>(null);
-const FlashWorkspaceContext = createContext<string | null>(null);
+const FlashWorkspaceContext = createContext<{
+  id: string;
+  seq: number;
+} | null>(null);
 
 const NO_WINDOWS: WindowEntry[] = [];
 
@@ -375,7 +379,10 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   const stateRef = useRef(state);
   const viewportRowsRef = useRef(Number.POSITIVE_INFINITY);
   const { workspaces, windows: allWindows, activeWorkspaceId } = state;
-  const [flashWorkspaceId, setFlashWorkspaceId] = useState<string | null>(null);
+  const [flashWorkspace, setFlashWorkspace] = useState<{
+    id: string;
+    seq: number;
+  } | null>(null);
 
   const commit = useCallback((updater: (prev: LoadedState) => LoadedState) => {
     const next = updater(stateRef.current);
@@ -463,10 +470,10 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   }, [persistNow]);
 
   useEffect(() => {
-    if (!flashWorkspaceId) return;
-    const t = setTimeout(() => setFlashWorkspaceId(null), 900);
+    if (!flashWorkspace) return;
+    const t = setTimeout(() => setFlashWorkspace(null), 600);
     return () => clearTimeout(t);
-  }, [flashWorkspaceId]);
+  }, [flashWorkspace]);
 
   const isOpen = useCallback(
     (module: ModuleKey) => windows.some((w) => w.module === module),
@@ -655,7 +662,10 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
             : w,
         ),
       }));
-      setFlashWorkspaceId(targetWorkspaceId);
+      setFlashWorkspace((prev) => ({
+        id: targetWorkspaceId,
+        seq: (prev?.seq ?? 0) + 1,
+      }));
       return true;
     },
     [commit],
@@ -793,7 +803,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     <WindowActionsContext.Provider value={actions}>
       <WorkspaceMetaContext.Provider value={metaValue}>
         <WindowStateContext.Provider value={stateValue}>
-          <FlashWorkspaceContext.Provider value={flashWorkspaceId}>
+          <FlashWorkspaceContext.Provider value={flashWorkspace}>
             {children}
           </FlashWorkspaceContext.Provider>
         </WindowStateContext.Provider>
@@ -822,7 +832,7 @@ export function useWorkspaceMeta(): WorkspaceMetaState {
   return ctx;
 }
 
-export function useFlashWorkspace(): string | null {
+export function useFlashWorkspace(): { id: string; seq: number } | null {
   return useContext(FlashWorkspaceContext);
 }
 
@@ -851,9 +861,9 @@ export function useWindowManager(): WindowManagerContextValue {
   const actions = useWindowActions();
   const state = useWindowState();
   const meta = useWorkspaceMeta();
-  const flashWorkspaceId = useFlashWorkspace();
+  const flashWorkspace = useFlashWorkspace();
   return useMemo(
-    () => ({ ...actions, ...state, ...meta, flashWorkspaceId }),
-    [actions, state, meta, flashWorkspaceId],
+    () => ({ ...actions, ...state, ...meta, flashWorkspace }),
+    [actions, state, meta, flashWorkspace],
   );
 }

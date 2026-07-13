@@ -292,7 +292,7 @@ export function CanvasShell() {
         <div className="absolute inset-0 bg-black/30" />
       )}
 
-      <div className="relative flex h-full flex-col pt-12 pb-10">
+      <div className="relative flex h-full flex-col pt-12 pb-10 animate-in fade-in duration-300 ease-out">
         <div
           ref={containerRef}
           className="min-h-0 flex-1 overflow-hidden px-3.5"

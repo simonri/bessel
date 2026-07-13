@@ -149,7 +149,7 @@ export const CanvasWindow = memo(function CanvasWindow({
       onPointerDown={() => setFocusedWindow(entry.id)}
       className={cn(
         glassSurface({ weight: "medium" }),
-        "relative flex h-full flex-col overflow-hidden rounded-2xl border shadow-2xl transition-[border-color,box-shadow] duration-300",
+        "relative flex h-full flex-col overflow-hidden rounded-2xl border shadow-2xl transition-[border-color] duration-150",
         isFocused ? "border-primary-500" : "border-white/10",
       )}
     >

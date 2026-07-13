@@ -41,7 +41,7 @@ function WorkspacePill({
       onClick={onSelect}
       onContextMenu={onContextMenu}
       className={cn(
-        "flex h-6 min-w-6 items-center justify-center rounded text-xs font-medium transition-colors duration-150",
+        "flex h-6 min-w-6 items-center justify-center rounded text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100",
         isActive
           ? "bg-white/15 text-white/90"
           : "text-white/55 hover:bg-white/[0.08] hover:text-white/70",
@@ -65,7 +65,7 @@ function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
         <PopoverTrigger asChild>
           <button
             title="New workspace"
-            className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-colors hover:bg-white/[0.08] hover:text-white/60"
+            className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.08] hover:text-white/60 active:scale-95 motion-reduce:active:scale-100"
           >
             <Plus className="size-3" />
           </button>
@@ -136,7 +136,7 @@ function AlignButton() {
         <button
           onClick={alignWorkspace}
           title="Align widgets"
-          className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-colors hover:bg-white/[0.08] hover:text-white/60"
+          className="flex h-6 w-6 items-center justify-center rounded text-white/25 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.08] hover:text-white/60 active:scale-95 motion-reduce:active:scale-100"
         >
           <LayoutGrid className="size-3" />
         </button>
@@ -178,7 +178,7 @@ function WorkspaceContextMenu({
 export function WorkspaceSwitcher() {
   const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
   const { addWorkspace, removeWorkspace, switchWorkspace } = useWindowActions();
-  const flashWorkspaceId = useFlashWorkspace();
+  const flashWorkspace = useFlashWorkspace();
   const [menuId, setMenuId] = useState<string | null>(null);
 
   return (
@@ -188,9 +188,14 @@ export function WorkspaceSwitcher() {
         return (
           <div key={ws.id} className="relative">
             <WorkspacePill
+              key={
+                flashWorkspace?.id === ws.id
+                  ? `flash-${flashWorkspace.seq}`
+                  : "pill"
+              }
               index={i}
               isActive={isActive}
-              isFlashing={flashWorkspaceId === ws.id}
+              isFlashing={flashWorkspace?.id === ws.id}
               onSelect={() => switchWorkspace(ws.id)}
               onContextMenu={(e) => {
                 e.preventDefault();
