@@ -40,6 +40,9 @@
       "dist/**/*",
       "node_modules/**/*"
     ],
+    "asarUnpack": [
+      "**/node_modules/node-pty/**"
+    ],
     "extraResources": [
       {
         "from": "../web/dist/client",

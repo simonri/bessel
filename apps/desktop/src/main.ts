@@ -501,6 +501,37 @@ function loadOrCreateDeviceInfo(): DeviceInfo {
 
 const ptySessions = new Map<string, pty.IPty>();
 
+// macOS GUI apps inherit launchd's minimal environment (PATH is just
+// /usr/bin:/bin:/usr/sbin:/sbin), not the user's shell environment — so
+// anything installed via Homebrew/nvm/npm -g (claude, codex, grok, ...) is
+// invisible both to pty.spawn's binary lookup and inside the shells it
+// starts. Resolve the user's real PATH once by asking their login shell,
+// the same way VS Code and other Electron terminal hosts do. The printf
+// markers make parsing immune to rc files that print banners.
+let shellPathPromise: Promise<string | null> | null = null;
+function resolveShellPath(): Promise<string | null> {
+  if (process.platform !== "darwin") return Promise.resolve(null);
+  shellPathPromise ??= (async () => {
+    const shell = process.env.SHELL ?? "/bin/zsh";
+    try {
+      const { stdout } = await execFileAsync(
+        shell,
+        ["-i", "-l", "-c", 'printf "__BSL_PATH__%s__BSL_PATH__" "$PATH"'],
+        { timeout: 5000 },
+      );
+      const path = /__BSL_PATH__(.*)__BSL_PATH__/s.exec(stdout)?.[1];
+      if (!path) throw new Error("no PATH marker in shell output");
+      return path;
+    } catch (err) {
+      appendLog(
+        `login-shell PATH resolution failed (${shell}): ${(err as Error).message}`,
+      );
+      return null;
+    }
+  })();
+  return shellPathPromise;
+}
+
 const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
 
 // Auth0's hosted login page (VITE_AUTH0_DOMAIN in apps/web/.env) is where the
@@ -820,6 +851,9 @@ app.whenReady().then(() => {
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
   deviceInfo = loadOrCreateDeviceInfo();
+  // Warm the macOS login-shell PATH lookup so the first terminal spawn
+  // doesn't stall on it (rc-heavy shells can take a second to start).
+  void resolveShellPath();
 
   // Same UA fix as the browser widget below, applied to the default session so
   // the main window's Auth0/Google login (createWindow) isn't blocked too.
@@ -1037,18 +1071,44 @@ app.whenReady().then(() => {
       const env = { ...process.env };
       delete env.ELECTRON_RUN_AS_NODE;
 
-      const command =
-        config.command === "default-shell"
-          ? (process.env.SHELL ?? "/bin/bash")
-          : config.command;
+      const shellPath = await resolveShellPath();
+      if (shellPath) {
+        env.PATH = shellPath;
+      } else if (process.platform === "darwin") {
+        // Resolution failed (exotic shell, slow rc files) — at least cover
+        // the standard Homebrew locations rather than launchd's bare PATH.
+        env.PATH = `${env.PATH}:/opt/homebrew/bin:/usr/local/bin`;
+      }
 
-      const p = pty.spawn(command, config.args, {
-        name: "xterm-256color",
-        cols,
-        rows,
-        cwd: config.cwd ?? env.HOME ?? process.cwd(),
-        env,
-      });
+      const isDefaultShell = config.command === "default-shell";
+      const command = isDefaultShell
+        ? (env.SHELL ?? "/bin/bash")
+        : config.command;
+      // macOS terminal emulators start login shells — .zprofile (where
+      // Homebrew puts its PATH setup) is only sourced with -l.
+      const args =
+        isDefaultShell && process.platform === "darwin"
+          ? ["-l", ...config.args]
+          : config.args;
+
+      let p: pty.IPty;
+      try {
+        p = pty.spawn(command, args, {
+          name: "xterm-256color",
+          cols,
+          rows,
+          cwd: config.cwd ?? env.HOME ?? process.cwd(),
+          env,
+        });
+      } catch (err) {
+        appendLog(
+          `terminal spawn failed command=${command} cwd=${config.cwd ?? ""} ` +
+            `PATH=${env.PATH}: ${(err as Error).message}`,
+        );
+        throw new Error(
+          `Could not launch "${command}": ${(err as Error).message}`,
+        );
+      }
 
       ptySessions.set(sessionId, p);
 
