@@ -9,14 +9,14 @@ struct TaskRow: View {
             if let onComplete {
                 Button(action: onComplete) {
                     Image(systemName: "circle")
-                        .font(.system(size: 20, weight: .light))
-                        .foregroundStyle(Theme.mutedForeground.opacity(0.6))
+                        .font(.system(size: 18, weight: .light))
+                        .foregroundStyle(Theme.mutedForeground.opacity(0.5))
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 1)
             } else if task.status == .done {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 20, weight: .light))
+                    .font(.system(size: 18, weight: .light))
                     .foregroundStyle(Theme.mutedForeground.opacity(0.5))
                     .padding(.top, 1)
             }
@@ -28,27 +28,15 @@ struct TaskRow: View {
                     .strikethrough(task.status == .done, color: Theme.mutedForeground.opacity(0.5))
                     .lineLimit(2)
 
-                if hasMetadata {
-                    HStack(spacing: 8) {
-                        if task.status == .done, let completedAt = task.completedAt {
-                            metaText(completedAt.formatted(.relative(presentation: .named)), color: Theme.dueLater)
-                        } else if let dueDate = task.dueDate {
-                            metaText(Self.dueLabel(for: dueDate), color: dueColor(for: dueDate))
-                        }
-                        if let recurrence = task.recurrenceLabel {
-                            HStack(spacing: 3) {
-                                Image(systemName: "repeat")
-                                    .font(.system(size: 10))
-                                Text(recurrence)
+                if !metaItems.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(Array(metaItems.enumerated()), id: \.offset) { index, item in
+                            if index > 0 {
+                                Text("·")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.mutedForeground.opacity(0.5))
                             }
-                            .font(.caption)
-                            .foregroundStyle(Theme.mutedForeground)
-                        }
-                        if let project = task.project {
-                            metaText(project, color: Theme.mutedForeground)
-                        }
-                        if let area = task.area {
-                            metaText(area, color: Theme.mutedForeground.opacity(0.7))
+                            metaView(item)
                         }
                     }
                     .lineLimit(1)
@@ -57,7 +45,8 @@ struct TaskRow: View {
 
             Spacer(minLength: 0)
 
-            if task.priority > 0 {
+            // Low priority is near-default — a flag for it is decoration, not signal.
+            if task.priority >= 2 {
                 Image(systemName: "flag.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.priorityColor(task.priority))
@@ -65,17 +54,49 @@ struct TaskRow: View {
             }
         }
         .padding(.vertical, 6)
+        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
     }
 
-    private var hasMetadata: Bool {
-        task.dueDate != nil || task.completedAt != nil || task.project != nil
-            || task.area != nil || task.recurrenceLabel != nil
+    private enum MetaItem {
+        case text(String, Color)
+        case recurrence(String)
     }
 
-    private func metaText(_ text: String, color: Color) -> some View {
-        Text(text)
+    private var metaItems: [MetaItem] {
+        var items: [MetaItem] = []
+        if task.status == .done, let completedAt = task.completedAt {
+            items.append(.text(completedAt.formatted(.relative(presentation: .named)), Theme.dueLater))
+        } else if let dueDate = task.dueDate {
+            items.append(.text(Self.dueLabel(for: dueDate), dueColor(for: dueDate)))
+        }
+        if let recurrence = task.recurrenceLabel {
+            items.append(.recurrence(recurrence))
+        }
+        if let project = task.project {
+            items.append(.text(project, Theme.mutedForeground))
+        }
+        if let area = task.area {
+            items.append(.text(area, Theme.mutedForeground.opacity(0.7)))
+        }
+        return items
+    }
+
+    @ViewBuilder
+    private func metaView(_ item: MetaItem) -> some View {
+        switch item {
+        case .text(let text, let color):
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(color)
+        case .recurrence(let label):
+            HStack(spacing: 3) {
+                Image(systemName: "repeat")
+                    .font(.system(size: 10))
+                Text(label)
+            }
             .font(.caption)
-            .foregroundStyle(color)
+            .foregroundStyle(Theme.mutedForeground)
+        }
     }
 
     private func dueColor(for date: Date) -> Color {

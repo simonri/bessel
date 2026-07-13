@@ -5,18 +5,22 @@ struct LoginView: View {
 
     @State private var isSigningIn = false
     @State private var errorMessage: String?
+    @State private var appeared = false
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
+            BesselMark(size: 64)
             Text("Bessel")
-                .font(.system(size: 28, weight: .semibold))
+                .font(.system(size: 30, weight: .semibold))
+                .kerning(-0.5)
                 .foregroundStyle(Theme.foreground)
+                .padding(.top, 16)
             Text("Personal life dashboard")
                 .font(.subheadline)
                 .foregroundStyle(Theme.mutedForeground)
-                .padding(.top, 4)
+                .padding(.top, 6)
 
             Spacer()
 
@@ -39,25 +43,29 @@ struct LoginView: View {
             Button {
                 signIn()
             } label: {
-                HStack {
+                ZStack {
+                    Text("Continue with Google")
+                        .font(.body.weight(.medium))
+                        .opacity(isSigningIn ? 0 : 1)
                     if isSigningIn {
                         ProgressView()
                             .tint(.white)
-                    } else {
-                        Text("Continue with Google")
-                            .font(.body.weight(.medium))
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 48)
+                .frame(height: 50)
             }
             .background(Theme.primary)
             .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
             .disabled(isSigningIn || !AppConfig.isAuthConfigured)
         }
         .padding(24)
         .padding(.bottom, 24)
+        .opacity(appeared ? 1 : 0)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.15)) { appeared = true }
+        }
     }
 
     private func signIn() {

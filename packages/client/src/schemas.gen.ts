@@ -972,6 +972,360 @@ export const HTTPValidationErrorSchema = {
   title: "HTTPValidationError",
 } as const;
 
+export const HealthKitWorkoutListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/HealthKitWorkoutSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "HealthKitWorkoutListResponse",
+} as const;
+
+export const HealthKitWorkoutSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    healthkit_uuid: {
+      type: "string",
+      format: "uuid4",
+      title: "Healthkit Uuid",
+    },
+    workout_activity_type: {
+      type: "integer",
+      title: "Workout Activity Type",
+    },
+    workout_activity_type_name: {
+      type: "string",
+      title: "Workout Activity Type Name",
+    },
+    start_date: {
+      type: "string",
+      format: "date-time",
+      title: "Start Date",
+    },
+    end_date: {
+      type: "string",
+      format: "date-time",
+      title: "End Date",
+    },
+    duration: {
+      type: "number",
+      title: "Duration",
+    },
+    total_energy_burned: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Total Energy Burned",
+    },
+    total_distance: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Total Distance",
+    },
+    source_name: {
+      type: "string",
+      title: "Source Name",
+    },
+    source_bundle_id: {
+      type: "string",
+      title: "Source Bundle Id",
+    },
+    source_version: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Source Version",
+    },
+    device_name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Device Name",
+    },
+    workout_metadata: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Workout Metadata",
+    },
+    statistics: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Statistics",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "healthkit_uuid",
+    "workout_activity_type",
+    "workout_activity_type_name",
+    "start_date",
+    "end_date",
+    "duration",
+    "total_energy_burned",
+    "total_distance",
+    "source_name",
+    "source_bundle_id",
+    "source_version",
+    "device_name",
+    "workout_metadata",
+    "statistics",
+  ],
+  title: "HealthKitWorkoutSchema",
+} as const;
+
+export const HealthKitWorkoutSyncRequestSchema = {
+  properties: {
+    workouts: {
+      items: {
+        $ref: "#/components/schemas/HealthKitWorkoutUpload",
+      },
+      type: "array",
+      maxItems: 500,
+      title: "Workouts",
+    },
+    deleted_uuids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      maxItems: 500,
+      title: "Deleted Uuids",
+      description:
+        "HealthKit UUIDs of workouts deleted on-device since the last sync anchor.",
+    },
+  },
+  type: "object",
+  title: "HealthKitWorkoutSyncRequest",
+} as const;
+
+export const HealthKitWorkoutSyncResponseSchema = {
+  properties: {
+    synced: {
+      type: "integer",
+      title: "Synced",
+      description: "Number of workouts inserted or updated.",
+    },
+    deleted: {
+      type: "integer",
+      title: "Deleted",
+      description: "Number of workouts soft-deleted.",
+    },
+  },
+  type: "object",
+  required: ["synced", "deleted"],
+  title: "HealthKitWorkoutSyncResponse",
+} as const;
+
+export const HealthKitWorkoutUploadSchema = {
+  properties: {
+    healthkit_uuid: {
+      type: "string",
+      format: "uuid4",
+      title: "Healthkit Uuid",
+      description: "HKObject.uuid, stable across devices.",
+    },
+    workout_activity_type: {
+      type: "integer",
+      minimum: 0,
+      title: "Workout Activity Type",
+      description: "HKWorkoutActivityType raw value.",
+    },
+    workout_activity_type_name: {
+      type: "string",
+      maxLength: 64,
+      title: "Workout Activity Type Name",
+      description: "Human-readable activity type, e.g. 'running'.",
+    },
+    start_date: {
+      type: "string",
+      format: "date-time",
+      title: "Start Date",
+    },
+    end_date: {
+      type: "string",
+      format: "date-time",
+      title: "End Date",
+    },
+    duration: {
+      type: "number",
+      minimum: 0,
+      title: "Duration",
+      description: "Duration in seconds.",
+    },
+    total_energy_burned: {
+      anyOf: [
+        {
+          type: "number",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Total Energy Burned",
+      description: "Active energy in kcal.",
+    },
+    total_distance: {
+      anyOf: [
+        {
+          type: "number",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Total Distance",
+      description: "Distance in meters.",
+    },
+    source_name: {
+      type: "string",
+      maxLength: 255,
+      title: "Source Name",
+    },
+    source_bundle_id: {
+      type: "string",
+      maxLength: 255,
+      title: "Source Bundle Id",
+    },
+    source_version: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Source Version",
+    },
+    device_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Device Name",
+    },
+    workout_metadata: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Workout Metadata",
+      description: "HKWorkout.metadata, JSON-safe subset.",
+    },
+    statistics: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Statistics",
+      description: "Per-quantity statistics keyed by HK identifier.",
+    },
+  },
+  type: "object",
+  required: [
+    "healthkit_uuid",
+    "workout_activity_type",
+    "workout_activity_type_name",
+    "start_date",
+    "end_date",
+    "duration",
+    "source_name",
+    "source_bundle_id",
+  ],
+  title: "HealthKitWorkoutUpload",
+  description: "One HKWorkout sample, mirrored field-by-field from HealthKit.",
+} as const;
+
 export const HoldingSchemaSchema = {
   properties: {
     security_id: {

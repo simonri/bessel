@@ -13,7 +13,7 @@ struct RootView: View {
             case .signedOut:
                 LoginView(auth: auth)
             case .signedIn:
-                TasksView(auth: auth)
+                MainTabView(auth: auth)
             }
         }
         .onAppear { auth.restore() }

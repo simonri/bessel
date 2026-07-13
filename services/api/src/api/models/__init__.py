@@ -4,6 +4,7 @@ from .bank_profile import BankProfile
 from .base import Model
 from .category import Category
 from .counter import Counter, CounterReset
+from .healthkit_workout import HealthKitWorkout
 from .import_batch import ImportBatch
 from .notification import Notification
 from .place import Place
@@ -27,6 +28,7 @@ __all__ = [
   "Category",
   "Counter",
   "CounterReset",
+  "HealthKitWorkout",
   "ImportBatch",
   "Model",
   "Notification",

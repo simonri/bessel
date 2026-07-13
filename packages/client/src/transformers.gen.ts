@@ -20,6 +20,7 @@ import type {
   ListBankAccountsV1BankAccountsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetResponse,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
   ListProjectsV1ProjectsGetResponse,
@@ -164,6 +165,31 @@ export const createResetV1CountersCounterIdResetsPostResponseTransformer =
     data: any,
   ): Promise<CreateResetV1CountersCounterIdResetsPostResponse> => {
     data = counterResetSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const healthKitWorkoutSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.start_date = new Date(data.start_date);
+  data.end_date = new Date(data.end_date);
+  return data;
+};
+
+const healthKitWorkoutListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    healthKitWorkoutSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse> => {
+    data = healthKitWorkoutListResponseSchemaResponseTransformer(data);
     return data;
   };
 

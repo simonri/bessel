@@ -53,6 +53,7 @@ import {
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
   listCountersV1CountersGet,
+  listHealthkitWorkoutsV1HealthkitWorkoutsGet,
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
   listProjectsV1ProjectsGet,
@@ -71,6 +72,7 @@ import {
   reorderTasksV1TasksReorderPatch,
   searchGooglePlacesV1PlacesSearchGet,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
+  syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCounterV1CountersCounterIdPatch,
@@ -205,6 +207,9 @@ import type {
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetData,
   ListCountersV1CountersGetResponse,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
   ListNotificationsV1NotificationsGetData,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetData,
@@ -253,6 +258,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
   UndoResetV1CountersCounterIdResetsResetIdDeleteData,
   UndoResetV1CountersCounterIdResetsResetIdDeleteError,
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
@@ -1033,6 +1041,114 @@ export const undoResetV1CountersCounterIdResetsResetIdDeleteMutation = (
   };
   return mutationOptions;
 };
+
+/**
+ * Sync HealthKit Workouts
+ */
+export const syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostMutation = (
+  options?: Partial<
+    Options<SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData>
+  >,
+): UseMutationOptions<
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
+  Options<SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
+    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
+    Options<SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listHealthkitWorkoutsV1HealthkitWorkoutsGetQueryKey = (
+  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
+) => createQueryKey("listHealthkitWorkoutsV1HealthkitWorkoutsGet", options);
+
+/**
+ * List HealthKit Workouts
+ */
+export const listHealthkitWorkoutsV1HealthkitWorkoutsGetOptions = (
+  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
+) =>
+  queryOptions<
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
+    ReturnType<typeof listHealthkitWorkoutsV1HealthkitWorkoutsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listHealthkitWorkoutsV1HealthkitWorkoutsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listHealthkitWorkoutsV1HealthkitWorkoutsGetQueryKey(options),
+  });
+
+export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey = (
+  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
+): QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>> =>
+  createQueryKey("listHealthkitWorkoutsV1HealthkitWorkoutsGet", options, true);
+
+/**
+ * List HealthKit Workouts
+ */
+export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
+  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
+) =>
+  infiniteQueryOptions<
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
+    InfiniteData<ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse>,
+    QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listHealthkitWorkoutsV1HealthkitWorkoutsGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey:
+        listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey(options),
+    },
+  );
 
 export const listSecuritiesV1InvestmentsSecuritiesGetQueryKey = (
   options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,

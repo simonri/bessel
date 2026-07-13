@@ -60,10 +60,18 @@ constraints:
 The prod app is installed and refreshed by AltStore, which re-signs it in the
 background whenever the phone can reach AltServer on the Mac (same Wi-Fi):
 
-- Ship a new prod build: `scripts/export-ipa.sh` → writes `Bessel.ipa` to
-  iCloud Drive/Bessel → on the phone, open it in Files and share to AltStore
-  (or AltStore → My Apps → +). AltStore only *re-signs* the build it was given;
-  new code always goes through a new .ipa.
+- Ship a new prod build: `make ios-deploy` (or `apps/ios/scripts/export-ipa.sh`
+  directly) → builds, writes `Bessel.ipa` to iCloud Drive/Bessel and
+  `apps/ios/build/Bessel.ipa`, then runs the "Ship IPA" Shortcut to pop the
+  AirDrop share sheet with the .ipa pre-loaded — tap the phone, then on the
+  phone tap Accept (iOS offers "Open in AltStore" automatically for .ipa
+  files). AltStore only *re-signs* the build it was given; new code always
+  goes through a new .ipa.
+- One-time setup for the Shortcut (Shortcuts app → **+** → name it "Ship IPA"):
+  add a **Get File** action (so it accepts an input file) and a **Share**
+  action fed from that file. If the Shortcut doesn't exist yet, the script
+  just skips straight to the old manual flow (open Bessel.ipa from Files and
+  share to AltStore).
 - AltStore rewrites the bundle ID when re-signing. Sign-in survives because the
   OAuth callback scheme is baked into Info.plist (`AUTH_CALLBACK_SCHEME`)
   rather than read from the runtime bundle ID.

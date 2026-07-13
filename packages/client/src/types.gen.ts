@@ -755,6 +755,219 @@ export type HttpValidationError = {
 };
 
 /**
+ * HealthKitWorkoutListResponse
+ */
+export type HealthKitWorkoutListResponse = {
+  /**
+   * Items
+   */
+  items: Array<HealthKitWorkoutSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * HealthKitWorkoutSchema
+ */
+export type HealthKitWorkoutSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Healthkit Uuid
+   */
+  healthkit_uuid: string;
+  /**
+   * Workout Activity Type
+   */
+  workout_activity_type: number;
+  /**
+   * Workout Activity Type Name
+   */
+  workout_activity_type_name: string;
+  /**
+   * Start Date
+   */
+  start_date: Date;
+  /**
+   * End Date
+   */
+  end_date: Date;
+  /**
+   * Duration
+   */
+  duration: number;
+  /**
+   * Total Energy Burned
+   */
+  total_energy_burned: number | null;
+  /**
+   * Total Distance
+   */
+  total_distance: number | null;
+  /**
+   * Source Name
+   */
+  source_name: string;
+  /**
+   * Source Bundle Id
+   */
+  source_bundle_id: string;
+  /**
+   * Source Version
+   */
+  source_version: string | null;
+  /**
+   * Device Name
+   */
+  device_name: string | null;
+  /**
+   * Workout Metadata
+   */
+  workout_metadata: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Statistics
+   */
+  statistics: {
+    [key: string]: unknown;
+  } | null;
+};
+
+/**
+ * HealthKitWorkoutSyncRequest
+ */
+export type HealthKitWorkoutSyncRequest = {
+  /**
+   * Workouts
+   */
+  workouts?: Array<HealthKitWorkoutUpload>;
+  /**
+   * Deleted Uuids
+   *
+   * HealthKit UUIDs of workouts deleted on-device since the last sync anchor.
+   */
+  deleted_uuids?: Array<string>;
+};
+
+/**
+ * HealthKitWorkoutSyncResponse
+ */
+export type HealthKitWorkoutSyncResponse = {
+  /**
+   * Synced
+   *
+   * Number of workouts inserted or updated.
+   */
+  synced: number;
+  /**
+   * Deleted
+   *
+   * Number of workouts soft-deleted.
+   */
+  deleted: number;
+};
+
+/**
+ * HealthKitWorkoutUpload
+ *
+ * One HKWorkout sample, mirrored field-by-field from HealthKit.
+ */
+export type HealthKitWorkoutUpload = {
+  /**
+   * Healthkit Uuid
+   *
+   * HKObject.uuid, stable across devices.
+   */
+  healthkit_uuid: string;
+  /**
+   * Workout Activity Type
+   *
+   * HKWorkoutActivityType raw value.
+   */
+  workout_activity_type: number;
+  /**
+   * Workout Activity Type Name
+   *
+   * Human-readable activity type, e.g. 'running'.
+   */
+  workout_activity_type_name: string;
+  /**
+   * Start Date
+   */
+  start_date: Date;
+  /**
+   * End Date
+   */
+  end_date: Date;
+  /**
+   * Duration
+   *
+   * Duration in seconds.
+   */
+  duration: number;
+  /**
+   * Total Energy Burned
+   *
+   * Active energy in kcal.
+   */
+  total_energy_burned?: number | null;
+  /**
+   * Total Distance
+   *
+   * Distance in meters.
+   */
+  total_distance?: number | null;
+  /**
+   * Source Name
+   */
+  source_name: string;
+  /**
+   * Source Bundle Id
+   */
+  source_bundle_id: string;
+  /**
+   * Source Version
+   */
+  source_version?: string | null;
+  /**
+   * Device Name
+   */
+  device_name?: string | null;
+  /**
+   * Workout Metadata
+   *
+   * HKWorkout.metadata, JSON-safe subset.
+   */
+  workout_metadata?: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Statistics
+   *
+   * Per-quantity statistics keyed by HK identifier.
+   */
+  statistics?: {
+    [key: string]: unknown;
+  } | null;
+};
+
+/**
  * HoldingSchema
  */
 export type HoldingSchema = {
@@ -3100,6 +3313,73 @@ export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponses = {
 
 export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponse =
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponses[keyof UndoResetV1CountersCounterIdResetsResetIdDeleteResponses];
+
+export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData = {
+  body: HealthKitWorkoutSyncRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/healthkit/workouts/sync";
+};
+
+export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError =
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors[keyof SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors];
+
+export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: HealthKitWorkoutSyncResponse;
+};
+
+export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse =
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses[keyof SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses];
+
+export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/healthkit/workouts";
+};
+
+export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetError =
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors[keyof ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors];
+
+export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: HealthKitWorkoutListResponse;
+};
+
+export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse =
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses[keyof ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses];
 
 export type ListSecuritiesV1InvestmentsSecuritiesGetData = {
   body?: never;

@@ -30,3 +30,11 @@ cp "$STAGING/Bessel.ipa" "$ICLOUD_DIR/Bessel.ipa"
 cp "$STAGING/Bessel.ipa" "build/Bessel.ipa"
 
 echo "Exported build/Bessel.ipa and iCloud Drive/Bessel/Bessel.ipa ($(date))"
+
+SHORTCUT="Ship IPA"
+if shortcuts list 2>/dev/null | grep -qF "$SHORTCUT"; then
+  shortcuts run "$SHORTCUT" -i "$ICLOUD_DIR/Bessel.ipa"
+else
+  echo "Shortcut '$SHORTCUT' not found — create it (Get File + Share actions) to" \
+       "auto-open the AirDrop sheet next time. Falling back to manual AirDrop/Files."
+fi

@@ -6,6 +6,7 @@ struct TasksView: View {
     @State private var store: TasksStore
     @State private var showingCreate = false
     @State private var editingTask: TaskItem?
+    @Namespace private var tabUnderline
 
     init(auth: AuthSession) {
         self.auth = auth
@@ -15,18 +16,11 @@ struct TasksView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("View", selection: $store.tab) {
-                    ForEach(TasksStore.Tab.allCases) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-
+                tabBar
                 content
             }
             .background(Theme.background)
+            .overlay(alignment: .bottomTrailing) { composeButton }
             .navigationTitle("Tasks")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
@@ -44,6 +38,58 @@ struct TasksView: View {
             .task { await store.loadEverything() }
             .refreshable { await store.loadEverything() }
         }
+    }
+
+    /// X-style text tabs: colour carries selection, a single primary underline
+    /// slides between them. Only the underline animates — content switches instantly.
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            ForEach(TasksStore.Tab.allCases) { tab in
+                Button {
+                    store.tab = tab
+                } label: {
+                    VStack(spacing: 8) {
+                        Text(tab.rawValue)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(store.tab == tab ? Theme.foreground : Theme.mutedForeground)
+                        ZStack {
+                            Color.clear.frame(height: 2)
+                            if store.tab == tab {
+                                Capsule()
+                                    .fill(Theme.primary)
+                                    .frame(width: 40, height: 2)
+                                    .matchedGeometryEffect(id: "underline", in: tabUnderline)
+                            }
+                        }
+                    }
+                    .padding(.top, 6)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(store.tab == tab ? [.isSelected] : [])
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: store.tab)
+        .overlay(alignment: .bottom) {
+            Theme.border.frame(height: 0.5)
+        }
+    }
+
+    private var composeButton: some View {
+        Button {
+            showingCreate = true
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 52, height: 52)
+                .background(Theme.primary, in: Circle())
+                .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
+        }
+        .padding(.trailing, 20)
+        .padding(.bottom, 16)
+        .accessibilityLabel("New task")
     }
 
     private var errorBinding: Binding<Bool> {
@@ -110,6 +156,7 @@ struct TasksView: View {
             }
             .listRowBackground(Theme.background)
             .listRowSeparatorTint(Theme.border)
+            .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
         } header: {
             if !tasks.isEmpty {
                 sectionLabel(title)
@@ -140,6 +187,7 @@ struct TasksView: View {
                     }
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.border)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
             }
             if store.canLoadMoreDone {
                 HStack {
@@ -177,6 +225,7 @@ struct TasksView: View {
                     }
                     .listRowBackground(Theme.background)
                     .listRowSeparatorTint(Theme.border)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
             }
         }
         .listStyle(.plain)
@@ -190,7 +239,7 @@ struct TasksView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button("All projects") { setFilter(nil) }
                 ForEach(store.projects, id: \.self) { project in
@@ -209,41 +258,30 @@ struct TasksView: View {
                     ? "line.3.horizontal.decrease.circle"
                     : "line.3.horizontal.decrease.circle.fill")
             }
-        }
-        ToolbarItemGroup(placement: .topBarTrailing) {
-            Button {
-                showingCreate = true
-            } label: {
-                Image(systemName: "plus")
-            }
-            Menu {
-                if let email = auth.userEmail {
-                    Text(email)
-                }
-                Button("Sign out", role: .destructive) { auth.signOut() }
-            } label: {
-                Image(systemName: "person.circle")
-            }
+            .accessibilityLabel("Filter by project")
         }
     }
 
     private func sectionLabel(_ title: String) -> some View {
         Text(title)
-            .font(.caption)
-            .fontWeight(.medium)
-            .kerning(1.5)
-            .textCase(.uppercase)
+            .font(.footnote.weight(.medium))
+            .textCase(nil)
             .foregroundStyle(Theme.mutedForeground)
     }
 
     private func emptyState(_ title: String, detail: String) -> some View {
-        VStack(spacing: 4) {
-            Text(title)
-                .font(.body.weight(.medium))
-                .foregroundStyle(Theme.foreground)
-            Text(detail)
-                .font(.footnote)
-                .foregroundStyle(Theme.mutedForeground)
+        VStack(spacing: 12) {
+            Image(systemName: "checklist")
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(Theme.mutedForeground.opacity(0.4))
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Theme.foreground)
+                Text(detail)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.mutedForeground)
+            }
         }
         .allowsHitTesting(false)
     }

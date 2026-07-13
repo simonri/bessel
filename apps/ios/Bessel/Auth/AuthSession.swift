@@ -95,6 +95,9 @@ final class AuthSession {
         refreshTask = nil
         KeychainStore.delete(Self.tokensKey)
         KeychainStore.delete("email")
+        // The sync cursor belongs to this account's data; a different account
+        // signing in must start from scratch or its history would never upload.
+        WorkoutSyncAnchor.clear()
         state = .signedOut
     }
 

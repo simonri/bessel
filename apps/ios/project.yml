@@ -23,10 +23,15 @@ targets:
       base:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+    entitlements:
+      path: Bessel/Bessel.entitlements
+      properties:
+        com.apple.developer.healthkit: true
     info:
       path: Bessel/Info.plist
       properties:
         CFBundleDisplayName: $(BESSEL_APP_NAME)
+        NSHealthShareUsageDescription: Bessel reads your workouts from Health to sync them to your account.
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:

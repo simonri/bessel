@@ -27,6 +27,7 @@ import {
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
   listCountersV1CountersGetResponseTransformer,
+  listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
   listProjectsV1ProjectsGetResponseTransformer,
@@ -173,6 +174,9 @@ import type {
   ListCategoriesV1CategoriesGetResponses,
   ListCountersV1CountersGetData,
   ListCountersV1CountersGetResponses,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
+  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
   ListNotificationsV1NotificationsGetData,
   ListNotificationsV1NotificationsGetResponses,
   ListPlacesV1PlacesGetData,
@@ -221,6 +225,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
+  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
   UndoResetV1CountersCounterIdResetsResetIdDeleteData,
   UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
@@ -676,6 +683,54 @@ export const undoResetV1CountersCounterIdResetsResetIdDelete = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets/{reset_id}",
+    ...options,
+  });
+
+/**
+ * Sync HealthKit Workouts
+ */
+export const syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
+    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/workouts/sync",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List HealthKit Workouts
+ */
+export const listHealthkitWorkoutsV1HealthkitWorkoutsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
+    ThrowOnError
+  >,
+) =>
+  (options?.client ?? client).get<
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
+    ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/workouts",
     ...options,
   });
 

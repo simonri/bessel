@@ -35,6 +35,15 @@ from .get_klarna_transactions_v1_klarna_transactions_get_response_get_klarna_tra
 )
 from .google_place_search_response import GooglePlaceSearchResponse
 from .google_place_search_result import GooglePlaceSearchResult
+from .health_kit_workout_list_response import HealthKitWorkoutListResponse
+from .health_kit_workout_schema import HealthKitWorkoutSchema
+from .health_kit_workout_schema_statistics_type_0 import HealthKitWorkoutSchemaStatisticsType0
+from .health_kit_workout_schema_workout_metadata_type_0 import HealthKitWorkoutSchemaWorkoutMetadataType0
+from .health_kit_workout_sync_request import HealthKitWorkoutSyncRequest
+from .health_kit_workout_sync_response import HealthKitWorkoutSyncResponse
+from .health_kit_workout_upload import HealthKitWorkoutUpload
+from .health_kit_workout_upload_statistics_type_0 import HealthKitWorkoutUploadStatisticsType0
+from .health_kit_workout_upload_workout_metadata_type_0 import HealthKitWorkoutUploadWorkoutMetadataType0
 from .holding_schema import HoldingSchema
 from .holdings_response import HoldingsResponse
 from .http_validation_error import HTTPValidationError
@@ -133,6 +142,15 @@ __all__ = (
   "GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet",
   "GooglePlaceSearchResponse",
   "GooglePlaceSearchResult",
+  "HealthKitWorkoutListResponse",
+  "HealthKitWorkoutSchema",
+  "HealthKitWorkoutSchemaStatisticsType0",
+  "HealthKitWorkoutSchemaWorkoutMetadataType0",
+  "HealthKitWorkoutSyncRequest",
+  "HealthKitWorkoutSyncResponse",
+  "HealthKitWorkoutUpload",
+  "HealthKitWorkoutUploadStatisticsType0",
+  "HealthKitWorkoutUploadWorkoutMetadataType0",
   "HoldingSchema",
   "HoldingsResponse",
   "HTTPValidationError",

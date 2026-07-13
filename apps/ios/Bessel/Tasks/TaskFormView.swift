@@ -8,7 +8,7 @@ struct TaskFormView: View {
     @FocusState private var titleFocused: Bool
 
     @State private var title = ""
-    @State private var notes = ""
+    @State private var taskDescription = ""
     @State private var status: TaskStatus = .todo
     @State private var priority = 0
     @State private var hasDueDate = false
@@ -25,7 +25,7 @@ struct TaskFormView: View {
                 Section {
                     TextField("Title", text: $title)
                         .focused($titleFocused)
-                    TextField("Notes", text: $notes, axis: .vertical)
+                    TextField("Description", text: $taskDescription, axis: .vertical)
                         .lineLimit(3...6)
                         .foregroundStyle(Theme.foreground)
                 }
@@ -69,6 +69,11 @@ struct TaskFormView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.interactively)
+            .listSectionSpacing(20)
+            .contentMargins(.top, 12, for: .scrollContent)
+            .onTapGesture { endEditing() }
             .background(Theme.background)
             .navigationTitle(isEditing ? "Edit Task" : "New Task")
             .navigationBarTitleDisplayMode(.inline)
@@ -92,6 +97,7 @@ struct TaskFormView: View {
             .onAppear(perform: populate)
         }
         .presentationDetents([.large])
+        .presentationContentInteraction(.resizes)
     }
 
     private func suggestingField(_ label: String, text: Binding<String>, suggestions: [String]) -> some View {
@@ -111,13 +117,21 @@ struct TaskFormView: View {
         }
     }
 
+    /// Taps on interactive rows are consumed by their controls, so this only
+    /// fires on the form's background — dismissing the keyboard.
+    private func endEditing() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
+    }
+
     private func populate() {
         guard let task else {
             titleFocused = true
             return
         }
         title = task.title
-        notes = task.description ?? ""
+        taskDescription = task.description ?? ""
         status = task.status
         priority = task.priority
         hasDueDate = task.dueDate != nil
@@ -128,14 +142,14 @@ struct TaskFormView: View {
 
     private func save() {
         let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
-        let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = taskDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedProject = project.trimmingCharacters(in: .whitespaces)
         let trimmedArea = area.trimmingCharacters(in: .whitespaces)
 
         if let task {
             let update = TaskUpdate(
                 title: trimmedTitle,
-                description: trimmedNotes.isEmpty ? nil : trimmedNotes,
+                description: trimmedDescription.isEmpty ? nil : trimmedDescription,
                 status: status,
                 priority: priority,
                 dueDate: hasDueDate ? dueDate : nil,
@@ -146,7 +160,7 @@ struct TaskFormView: View {
         } else {
             let draft = TaskCreate(
                 title: trimmedTitle,
-                description: trimmedNotes.isEmpty ? nil : trimmedNotes,
+                description: trimmedDescription.isEmpty ? nil : trimmedDescription,
                 status: .todo,
                 priority: priority,
                 dueDate: hasDueDate ? dueDate : nil,
