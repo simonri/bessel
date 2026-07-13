@@ -70,7 +70,7 @@ async def get_recipe(
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_by_id(recipe_id)
   if not recipe or recipe.user_id != current_user.id:
-    raise ResourceNotFound(detail="Recipe not found.")
+    raise ResourceNotFound("Recipe not found.")
   return RecipeSchema.model_validate(recipe)
 
 
@@ -84,7 +84,7 @@ async def update_recipe(
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_by_id(recipe_id)
   if not recipe or recipe.user_id != current_user.id:
-    raise ResourceNotFound(detail="Recipe not found.")
+    raise ResourceNotFound("Recipe not found.")
   update_data = body.model_dump(exclude_unset=True)
   recipe = await repo.update(recipe, update_dict=update_data)
   return RecipeSchema.model_validate(recipe)
@@ -99,5 +99,5 @@ async def delete_recipe(
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_by_id(recipe_id)
   if not recipe or recipe.user_id != current_user.id:
-    raise ResourceNotFound(detail="Recipe not found.")
-  await session.delete(recipe)
+    raise ResourceNotFound("Recipe not found.")
+  await repo.delete(recipe)

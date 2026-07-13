@@ -5,7 +5,7 @@ from uuid import UUID
 import httpx
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter
-from api.exceptions import ResourceNotFound
+from api.exceptions import ResourceNotFound, ServiceUnavailableError
 from api.models.place import Place
 from api.places.repository import PlaceRepository
 from api.places.schemas import GooglePlaceSearchResponse, GooglePlaceSearchResult, PlaceCreate, PlaceListResponse, PlaceSchema, PlaceStatus, PlaceUpdate
@@ -122,12 +122,15 @@ async def search_google_places(
     return GooglePlaceSearchResponse(results=[])
 
   async with httpx.AsyncClient() as http_client:
-    response = await http_client.get(
-      "https://maps.googleapis.com/maps/api/place/textsearch/json",
-      params={"query": query, "key": api_key},
-      timeout=10,
-    )
-    response.raise_for_status()
+    try:
+      response = await http_client.get(
+        "https://maps.googleapis.com/maps/api/place/textsearch/json",
+        params={"query": query, "key": api_key},
+        timeout=10,
+      )
+      response.raise_for_status()
+    except httpx.HTTPError as e:
+      raise ServiceUnavailableError(f"Google Places request failed: {e}", status_code=502) from e
     data = response.json()
 
   results: list[GooglePlaceSearchResult] = []
@@ -216,4 +219,4 @@ async def delete_place(
   place = await repo.get_by_id(place_id)
   if place is None or place.user_id != current_user.id:
     raise ResourceNotFound("Place not found")
-  await session.delete(place)
+  await repo.delete(place)

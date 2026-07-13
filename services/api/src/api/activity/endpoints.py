@@ -1,8 +1,7 @@
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from sqlalchemy.dialects.postgresql import insert
+from fastapi import APIRouter, Depends, Header, Query
 
 from api.activity.repository import ActivityRepository
 from api.activity.schemas import (
@@ -17,7 +16,7 @@ from api.activity.schemas import (
   ActivitySummaryResponse,
 )
 from api.activity.service import ActivityService
-from api.models.activity_event import ActivityEvent
+from api.exceptions import UnauthorizedError, ValidationError
 from api.postgres import AsyncSession, get_db_session
 from api.settings import settings
 from api.users.dependencies import CurrentDBUser
@@ -28,7 +27,7 @@ router = APIRouter(prefix="/activity", tags=["activity"])
 def _verify_internal_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
   expected = settings.INTERNAL_API_KEY
   if not expected or x_api_key != expected:
-    raise HTTPException(status_code=401, detail="Invalid or missing API key")
+    raise UnauthorizedError("Invalid or missing API key")
 
 
 @router.post(
@@ -58,13 +57,10 @@ async def ingest_activity_batch(
     for ev in body.events
   ]
 
-  stmt = insert(ActivityEvent).values(rows).on_conflict_do_nothing(constraint="activity_events_source_local_id_key").returning(ActivityEvent.id)
+  repo = ActivityRepository.from_session(session)
+  inserted = await repo.insert_events_ignoring_duplicates(rows)
 
-  result = await session.execute(stmt)
-  inserted = len(result.fetchall())
-  skipped = len(rows) - inserted
-
-  return ActivityBatchResponse(inserted=inserted, skipped=skipped)
+  return ActivityBatchResponse(inserted=inserted, skipped=len(rows) - inserted)
 
 
 @router.get(
@@ -148,7 +144,7 @@ async def get_daily_activity(
     tz = ZoneInfo(tz_name) if tz_name else None
   except (ZoneInfoNotFoundError, ValueError) as e:
     # Don't silently fall back to UTC — that would bucket days on the wrong boundary.
-    raise HTTPException(status_code=422, detail=f"Unknown timezone: {tz_name}") from e
+    raise ValidationError(f"Unknown timezone: {tz_name}", status_code=422) from e
 
   repo = ActivityRepository.from_session(session)
   service = ActivityService()

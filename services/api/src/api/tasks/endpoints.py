@@ -118,7 +118,7 @@ async def create_task(
   task_data["project_id"] = project.id if project else None
   task_data["user_id"] = current_user.id
   if task_data.get("position") is None:
-    max_pos = await repo.get_max_position()
+    max_pos = await repo.get_max_position(current_user.id)
     task_data["position"] = (max_pos or 0) + 1000
   task = Task(**task_data)
   task.project_obj = project
@@ -139,9 +139,10 @@ async def reorder_tasks(
   current_user: CurrentDBUser,
 ) -> None:
   repo = TaskRepository.from_session(session)
+  tasks_by_id = {task.id: task for task in await repo.list_by_ids_for_user([item.id for item in body], current_user.id)}
   for item in body:
-    task = await repo.get_by_id(item.id)
-    if task is None or task.user_id != current_user.id:
+    task = tasks_by_id.get(item.id)
+    if task is None:
       continue
     update: dict = {"position": item.position}
     if item.status is not None:
@@ -185,7 +186,7 @@ async def delete_task(
   current_user: CurrentDBUser,
 ) -> None:
   task = await _get_task_or_404(session, task_id, current_user.id)
-  await session.delete(task)
+  await TaskRepository.from_session(session).delete(task)
 
 
 @router.post(
@@ -217,7 +218,7 @@ async def complete_task(
       day_of_week=task.rrule_day_of_week,
       day_of_month=task.rrule_day_of_month,
     )
-    max_pos = await repo.get_max_position()
+    max_pos = await repo.get_max_position(current_user.id)
     next_task = Task(
       title=task.title,
       description=task.description,

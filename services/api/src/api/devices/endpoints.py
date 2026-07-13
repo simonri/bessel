@@ -51,4 +51,4 @@ async def delete_device(
   current_user: CurrentDBUser,
 ) -> None:
   device = await _get_device_or_404(session, device_id, current_user.id)
-  await session.delete(device)
+  await DeviceRepository.from_session(session).delete(device)

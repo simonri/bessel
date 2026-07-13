@@ -6,6 +6,8 @@ from uuid import UUID
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.bank_profile import BankProfile
 from api.models.category import Category
+from api.models.import_batch import ImportBatch
+from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
 from sqlalchemy import Row, case, delete, extract, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -13,6 +15,15 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Transaction, UUID]):
   model = Transaction
+
+  async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:
+    self.session.add(batch)
+    await self.session.flush()
+    return batch
+
+  async def create_raw_transactions(self, raw_transactions: Sequence[RawTransaction]) -> None:
+    self.session.add_all(raw_transactions)
+    await self.session.flush()
 
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])

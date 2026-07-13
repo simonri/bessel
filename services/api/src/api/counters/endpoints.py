@@ -31,7 +31,7 @@ async def _get_counter_or_404(session: AsyncSession, counter_id: UUID, user_id: 
   repo = CounterRepository.from_session(session)
   counter = await repo.get_by_id(counter_id)
   if not counter or counter.deleted_at is not None or counter.user_id != user_id:
-    raise ResourceNotFound(detail="Counter not found.")
+    raise ResourceNotFound("Counter not found.")
   return counter
 
 
@@ -132,5 +132,5 @@ async def undo_reset(
   repo = CounterResetRepository.from_session(session)
   reset = await repo.get_active(counter_id, reset_id)
   if not reset:
-    raise ResourceNotFound(detail="Reset not found.")
+    raise ResourceNotFound("Reset not found.")
   await repo.update(reset, update_dict={"deleted_at": utc_now()})

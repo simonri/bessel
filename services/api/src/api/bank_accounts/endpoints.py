@@ -147,4 +147,4 @@ async def delete_bank_account(
   if account is None or account.user_id != current_user.id:
     raise ResourceNotFound("Bank account not found")
   await TransactionRepository.from_session(session).delete_for_bank_account(bank_account_id)
-  await session.delete(account)
+  await repo.delete(account)

@@ -2,11 +2,11 @@ from typing import Annotated
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
 from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
-from api.exceptions import ResourceNotFound
+from api.exceptions import ConflictError, ResourceNotFound, ServiceUnavailableError
 from api.investments.repository import SecurityPriceRepository, SecurityRepository, TradeRepository
 from api.investments.schemas import (
   CryptoPriceSchema,
@@ -99,8 +99,8 @@ async def delete_security(
   # allow one user to wipe rows belonging to someone else.
   trade_repo = TradeRepository.from_session(session)
   if await trade_repo.count_for_security_by_other_users(security_id, current_user.id) > 0:
-    raise HTTPException(status_code=409, detail="Security has trades belonging to other users")
-  await session.delete(security)
+    raise ConflictError("Security has trades belonging to other users")
+  await repo.delete(security)
 
 
 # ─── Trades ───
@@ -173,7 +173,7 @@ async def delete_trade(
   trade = await repo.get_by_id(trade_id)
   if trade is None or trade.user_id != current_user.id:
     raise ResourceNotFound("Trade not found")
-  await session.delete(trade)
+  await repo.delete(trade)
 
 
 # ─── Prices ───
@@ -284,17 +284,17 @@ async def get_crypto_price(
         params={"ids": coin_id, "vs_currencies": currency, "include_24hr_change": "true"},
       )
     except httpx.RequestError as e:
-      raise HTTPException(status_code=502, detail=f"Failed to reach CoinGecko: {e}") from e
+      raise ServiceUnavailableError(f"Failed to reach CoinGecko: {e}", status_code=502) from e
 
   if response.status_code != 200:
-    raise HTTPException(
+    raise ServiceUnavailableError(
+      f"CoinGecko returned {response.status_code}",
       status_code=429 if response.status_code == 429 else 502,
-      detail=f"CoinGecko returned {response.status_code}",
     )
 
   data = response.json()
   if coin_id not in data or currency not in data[coin_id]:
-    raise HTTPException(status_code=404, detail=f"Coin '{coin_id}' not found on CoinGecko")
+    raise ResourceNotFound(f"Coin '{coin_id}' not found on CoinGecko")
 
   coin_data = data[coin_id]
   result = CryptoPriceSchema(

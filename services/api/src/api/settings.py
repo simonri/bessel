@@ -99,9 +99,6 @@ class Settings(BaseSettings):
       )
     )
 
-  def get_postgres_read_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str | None:
-    return None
-
   @property
   def redis_url(self) -> str:
     return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
@@ -129,6 +126,13 @@ class Settings(BaseSettings):
         missing.append("POSTGRES_USER")
       if not self.POSTGRES_PASSWORD:
         missing.append("POSTGRES_PASSWORD")
+
+      # Auth is mandatory in production — an empty domain/audience would make
+      # every authenticated request fail at runtime instead of failing the boot.
+      if not self.AUTH0_DOMAIN:
+        missing.append("AUTH0_DOMAIN")
+      if not self.AUTH0_AUDIENCE:
+        missing.append("AUTH0_AUDIENCE")
 
       if missing:
         raise ValueError(f"Missing required environment variables for production: {', '.join(missing)}")
