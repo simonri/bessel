@@ -1801,6 +1801,7 @@ export const getWeatherForecastV1WeatherGet = <
     ThrowOnError
   >({
     responseTransformer: getWeatherForecastV1WeatherGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/weather",
     ...options,
   });

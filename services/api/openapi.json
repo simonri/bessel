@@ -8,7 +8,7 @@
   },
   "servers": [
     {
-      "url": "https://api.metron.sh",
+      "url": "https://api.getbessel.com",
       "description": "Production environment",
       "x-speakeasy-server-id": "production"
     }
@@ -4147,6 +4147,11 @@
         ],
         "summary": "Get Weather Forecast",
         "operationId": "get_weather_forecast_v1_weather_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "lat",
