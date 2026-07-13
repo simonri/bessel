@@ -21,6 +21,7 @@ declare global {
         set: (key: string, value: string) => Promise<void>;
         remove: (key: string) => Promise<void>;
         allKeys: () => Promise<string[]>;
+        startLogin: () => Promise<number>;
         onCallback: (callback: (url: string) => void) => () => void;
       };
       getVersion: () => Promise<string>;

@@ -65,7 +65,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
           <CryptoPairTicker key={pair} pair={pair} />
         ))}
         {window.electron && (
-          <div className={noDrag}>
+          <div className={cn("flex items-center gap-5", noDrag)}>
             <SpotifyWidget />
           </div>
         )}

@@ -34,7 +34,18 @@ const execFileAsync = promisify(execFile);
 // user's profile to a new, empty directory on the next launch — wiping
 // workspace templates, settings, and window layouts with no migration.
 // Pin the path explicitly so future renames can't do that again.
-const USER_DATA_DIR = path.join(app.getPath("appData"), "@bessel", "desktop");
+//
+// `pnpm dev` gets its own "-dev" suffixed profile rather than sharing the
+// packaged build's: two unrelated Chromium processes hitting the same
+// on-disk profile (cookies, session storage, GPU shader cache, the
+// persist:browser <webview> partition) concurrently is a well-known source
+// of corruption, and it let a running packaged app block dev via
+// requestSingleInstanceLock() below.
+const USER_DATA_DIR = path.join(
+  app.getPath("appData"),
+  "@bessel",
+  app.isPackaged ? "desktop" : "desktop-dev",
+);
 app.setPath("userData", USER_DATA_DIR);
 
 // The pin above stops *future* renames from silently switching profiles, but
@@ -45,20 +56,21 @@ app.setPath("userData", USER_DATA_DIR);
 // before Chromium has opened "Local Storage" for USER_DATA_DIR (a plain file
 // copy is only safe into a directory nothing has touched yet — copying into,
 // or out of, an *open* LevelDB store risks corrupting it), and it must never
-// clobber real usage that already happened under the new profile.
-const LEGACY_USER_DATA_DIR = path.join(app.getPath("appData"), "@metron", "desktop");
-const NEW_LOCAL_STORAGE_DIR = path.join(USER_DATA_DIR, "Local Storage");
-const LEGACY_LOCAL_STORAGE_DIR = path.join(LEGACY_USER_DATA_DIR, "Local Storage");
-if (!fs.existsSync(NEW_LOCAL_STORAGE_DIR) && fs.existsSync(LEGACY_LOCAL_STORAGE_DIR)) {
-  fs.mkdirSync(USER_DATA_DIR, { recursive: true });
-  fs.cpSync(LEGACY_LOCAL_STORAGE_DIR, NEW_LOCAL_STORAGE_DIR, { recursive: true });
+// clobber real usage that already happened under the new profile. Only the
+// packaged profile has pre-rebrand data to migrate — the "-dev" profile is new.
+if (app.isPackaged) {
+  const LEGACY_USER_DATA_DIR = path.join(app.getPath("appData"), "@metron", "desktop");
+  const NEW_LOCAL_STORAGE_DIR = path.join(USER_DATA_DIR, "Local Storage");
+  const LEGACY_LOCAL_STORAGE_DIR = path.join(LEGACY_USER_DATA_DIR, "Local Storage");
+  if (!fs.existsSync(NEW_LOCAL_STORAGE_DIR) && fs.existsSync(LEGACY_LOCAL_STORAGE_DIR)) {
+    fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+    fs.cpSync(LEGACY_LOCAL_STORAGE_DIR, NEW_LOCAL_STORAGE_DIR, { recursive: true });
+  }
 }
 
-// A packaged build and a `pnpm dev` build share the same userData dir (and
-// therefore the same cookie/session-storage/GPU-shader-cache stores, and the
-// persist:browser <webview> partition), so running both at once means two
-// unrelated Chromium processes hitting the same on-disk profile concurrently
-// — a well-known source of corruption and crashes, not just wasted resources.
+// Guards against two copies of the *same* profile running at once — e.g. two
+// `pnpm dev` sessions, or two packaged instances — rather than dev vs. prod,
+// since those now use separate profiles (see USER_DATA_DIR above).
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
@@ -512,11 +524,31 @@ const NAVIGATION_ALLOWED_ORIGINS = new Set([
 // system's real default browser and receive the redirect back via a local
 // loopback server (RFC 8252) — see providers/auth.tsx on the web side, which
 // opens loginWithRedirect() via shell.openExternal instead of navigating here.
-// Must match AUTH_CALLBACK_PORT-derived redirect_uri in apps/web/src/providers/auth.tsx.
-const AUTH_CALLBACK_PORT = 41823;
+//
+// The server is opened on demand, right before a login attempt, rather than
+// held open for the app's whole lifetime. Ideally it would also bind an
+// OS-assigned ephemeral port instead of a fixed one (RFC 8252's recommended
+// approach for native apps) — but Auth0 only allows wildcard placeholders in
+// a callback URL's subdomain/domain, not its port, so a per-attempt random
+// port can never be allow-listed. Fall back to one fixed port per build
+// variant instead: that's still enough to fix the actual bug, since the only
+// way two instances fight over the same port is a packaged build and
+// `pnpm dev` running at once (two copies of the *same* variant already can't
+// run concurrently — see requestSingleInstanceLock() above). Both ports must
+// be in the Auth0 application's Allowed Callback URLs; apps/web/src/providers
+// /auth.tsx asks main for the port via `auth:start-login` before calling
+// loginWithRedirect() rather than hardcoding it on the renderer side too.
+const AUTH_CALLBACK_PORT = app.isPackaged ? 41823 : 41824;
 const AUTH_CALLBACK_PATH = "/callback";
+const AUTH_CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 
-function startAuthCallbackServer(): void {
+let authCallbackServer: http.Server | null = null;
+
+function startAuthLogin(): Promise<number> {
+  // A stale, abandoned attempt (user closed the login tab and tried again)
+  // shouldn't keep its port bound.
+  authCallbackServer?.close();
+
   const server = http.createServer((req, res) => {
     if (!req.url?.startsWith(AUTH_CALLBACK_PATH)) {
       res.writeHead(404).end();
@@ -538,13 +570,26 @@ function startAuthCallbackServer(): void {
       if (win.isMinimized()) win.restore();
       win.focus();
     }
+    server.close();
+  });
+  authCallbackServer = server;
+  server.on("close", () => {
+    if (authCallbackServer === server) authCallbackServer = null;
   });
   server.on("error", (err) =>
     appendLog(
       `auth callback server failed to start: ${(err as Error).message}`,
     ),
   );
-  server.listen(AUTH_CALLBACK_PORT, "127.0.0.1");
+  // Covers an attempt the user never finishes (closes the browser tab, etc.)
+  // — without this the port would stay bound until the app quits.
+  setTimeout(() => server.close(), AUTH_CALLBACK_TIMEOUT_MS).unref();
+
+  return new Promise((resolve, reject) => {
+    server.once("listening", () => resolve(AUTH_CALLBACK_PORT));
+    server.once("error", reject);
+    server.listen(AUTH_CALLBACK_PORT, "127.0.0.1");
+  });
 }
 
 // ─── browser widget ───────────────────────────────────────────────────────────
@@ -775,7 +820,6 @@ app.whenReady().then(() => {
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
   deviceInfo = loadOrCreateDeviceInfo();
-  startAuthCallbackServer();
 
   // Same UA fix as the browser widget below, applied to the default session so
   // the main window's Auth0/Google login (createWindow) isn't blocked too.
@@ -877,6 +921,7 @@ app.whenReady().then(() => {
     saveAuthCache();
   });
   ipcHandle("auth:all-keys", (): string[] => Object.keys(authCache));
+  ipcHandle("auth:start-login", (): Promise<number> => startAuthLogin());
 
   ipcOn("close-window", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();

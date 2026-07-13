@@ -1,4 +1,9 @@
-import { type AppState, Auth0Provider, useAuth0 } from "@auth0/auth0-react";
+import {
+  type AppState,
+  Auth0Provider,
+  type RedirectLoginOptions,
+  useAuth0,
+} from "@auth0/auth0-react";
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
 import { client } from "@/lib/client";
@@ -28,12 +33,13 @@ function AuthInterceptor() {
 }
 
 // In Electron, loginWithRedirect() opens the Auth0/Google login in the OS's
-// real default browser instead of navigating this window (see openUrl below)
-// — Google blocks its own login page when it detects an embedded browser like
-// an Electron BrowserWindow, regardless of User-Agent spoofing. The system
-// browser hands the OAuth callback to apps/desktop's local loopback server
-// (main.ts, AUTH_CALLBACK_PORT), which forwards the callback URL here over IPC
-// so it can be fed into the SDK exactly like a normal window navigation would.
+// real default browser instead of navigating this window (see startLogin
+// below) — Google blocks its own login page when it detects an embedded
+// browser like an Electron BrowserWindow, regardless of User-Agent spoofing.
+// The system browser hands the OAuth callback to apps/desktop's local
+// loopback server (main.ts's startAuthLogin), which forwards the callback URL
+// here over IPC so it can be fed into the SDK exactly like a normal window
+// navigation would.
 function ElectronAuthCallback() {
   const { handleRedirectCallback } = useAuth0();
   const navigate = useNavigate();
@@ -97,18 +103,32 @@ const domain = import.meta.env.VITE_AUTH0_DOMAIN as string;
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID as string;
 const audience = import.meta.env.VITE_AUTH0_AUDIENCE as string;
 
-// Must match apps/desktop/src/main.ts's AUTH_CALLBACK_PORT. Add this exact URL
-// to the Auth0 application's Allowed Callback URLs.
-const ELECTRON_REDIRECT_URI = "http://127.0.0.1:41823/callback";
 const redirectUri = isElectron
-  ? ELECTRON_REDIRECT_URI
+  ? undefined
   : (import.meta.env.VITE_FRONTEND_URL as string);
 
-// Passed to loginWithRedirect() so Electron opens the login page in the
-// system's default browser instead of navigating the app window there.
-export const loginOpenUrlOptions = isElectron
-  ? { openUrl: (url: string) => void window.electron!.shell.openExternal(url) }
-  : {};
+// Electron has no fixed redirect_uri: apps/desktop/src/main.ts opens the
+// OAuth loopback callback server on an OS-assigned port per login attempt
+// (see main.ts's startAuthLogin, reached here via the "auth:start-login" IPC
+// call below) rather than a fixed one, so two running instances never fight
+// over the same port. The Auth0 application's Allowed Callback URLs include
+// the wildcard pattern "http://127.0.0.1:*/callback" to match whatever port
+// comes back.
+//
+// Call this instead of loginWithRedirect() directly wherever the app logs in.
+export async function startLogin(
+  loginWithRedirect: (options?: RedirectLoginOptions) => Promise<void>,
+): Promise<void> {
+  if (!isElectron) {
+    await loginWithRedirect();
+    return;
+  }
+  const port = await window.electron!.auth.startLogin();
+  await loginWithRedirect({
+    openUrl: (url: string) => void window.electron!.shell.openExternal(url),
+    authorizationParams: { redirect_uri: `http://127.0.0.1:${port}/callback` },
+  });
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();

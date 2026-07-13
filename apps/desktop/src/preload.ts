@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld("electron", {
     remove: (key: string): Promise<void> =>
       ipcRenderer.invoke("auth:remove", key),
     allKeys: (): Promise<string[]> => ipcRenderer.invoke("auth:all-keys"),
+    startLogin: (): Promise<number> => ipcRenderer.invoke("auth:start-login"),
     onCallback: (callback: (url: string) => void) => {
       const listener = (_: Electron.IpcRendererEvent, url: string) =>
         callback(url);
