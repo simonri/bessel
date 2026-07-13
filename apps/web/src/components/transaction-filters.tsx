@@ -392,16 +392,3 @@ export function TransactionFiltersBar({
     </div>
   );
 }
-
-// Keep for backward compat if anything else imports ActiveFilters
-export function ActiveFilters(_props: {
-  filters: TransactionFilters;
-  onFiltersChange: (f: TransactionFilters) => void;
-  accounts: BankAccountSchema[];
-  categories: CategorySchema[];
-}) {
-  return null;
-}
-
-// Keep legacy export name for any remaining imports
-export const TransactionFiltersPopover = TransactionFiltersBar;

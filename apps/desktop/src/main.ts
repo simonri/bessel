@@ -48,6 +48,21 @@ const USER_DATA_DIR = path.join(
 );
 app.setPath("userData", USER_DATA_DIR);
 
+// Chromium only auto-selects a real Secret Service keyring for safeStorage when
+// it recognises the desktop environment as GNOME or KDE (via XDG_CURRENT_DESKTOP).
+// On anything else — Hyprland, Sway, and other wlroots compositors — it silently
+// falls back to the "basic_text" backend, which isRealEncryptionAvailable() below
+// (correctly) rejects as not real encryption. That makes saveAuthCache() a no-op,
+// so the Auth0 token cache is never written and every app restart forces a fresh
+// login. Pin the libsecret backend explicitly: it talks to org.freedesktop.secrets
+// (gnome-keyring, KeePassXC, KWallet's compat service, …) regardless of DE. Where
+// no Secret Service is running, isEncryptionAvailable() still returns false and we
+// degrade to the same no-persistence behaviour as before — no regression. Must run
+// before app "ready", since Chromium reads --password-store when os_crypt inits.
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("password-store", "gnome-libsecret");
+}
+
 // The pin above stops *future* renames from silently switching profiles, but
 // it doesn't undo the Jul 11 one — anyone who hadn't launched a build under
 // the new name yet still has their real data sitting in the pre-rebrand
