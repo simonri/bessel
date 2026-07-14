@@ -601,6 +601,34 @@ function resolveShellPath(): Promise<string | null> {
   return shellPathPromise;
 }
 
+// Widgets persist a `claude --session-id <uuid>` across app restarts and
+// reconnect with `--resume <uuid>` — but that id is captured as soon as the
+// widget opens, before the CLI has necessarily written anything under
+// `~/.claude/projects/<encoded-cwd>/`. If the app restarts before a single
+// message was sent, that transcript file never existed and `--resume` would
+// hard-fail ("No conversation found"), permanently stranding the widget on a
+// dead session id. Downgrading to `--session-id` (same id, fresh start) when
+// the file is missing makes that self-healing instead.
+function claudeProjectDir(cwd: string): string {
+  return path.join(
+    os.homedir(),
+    ".claude",
+    "projects",
+    cwd.replace(/[^A-Za-z0-9]/g, "-"),
+  );
+}
+
+function downgradeStaleClaudeResume(args: string[], cwd: string): void {
+  const resumeIdx = args.indexOf("--resume");
+  if (resumeIdx === -1) return;
+  const sessionId = args[resumeIdx + 1];
+  if (!sessionId) return;
+  const transcript = path.join(claudeProjectDir(cwd), `${sessionId}.jsonl`);
+  if (!fs.existsSync(transcript)) {
+    args[resumeIdx] = "--session-id";
+  }
+}
+
 // Auth0's hosted login page (VITE_AUTH0_DOMAIN in apps/web/.env) is where the
 // window navigates during loginWithRedirect() before coming back to app://localhost.
 // "Continue with Google" hops it on to accounts.google.com and back to Auth0.
@@ -1115,6 +1143,9 @@ app.whenReady().then(() => {
         isDefaultShell && process.platform === "darwin"
           ? ["-l", ...config.args]
           : config.args;
+      if (config.command === "claude") {
+        downgradeStaleClaudeResume(args, config.cwd ?? env.HOME ?? process.cwd());
+      }
 
       let p: pty.IPty;
       try {

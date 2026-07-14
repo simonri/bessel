@@ -14,7 +14,10 @@ class HealthKitSleepSample(RecordModel):
 
   __tablename__ = "healthkit_sleep_samples"
 
-  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+  # Nullable like every other user-owned table: pre-auth/seeded rows land with
+  # user_id NULL and are claimed by the first user ever created (see
+  # UserRepository.claim_orphaned_data).
+  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
   healthkit_uuid: Mapped[UUID] = mapped_column(Uuid, nullable=False)
   sleep_value: Mapped[int] = mapped_column(Integer, nullable=False)
   sleep_value_name: Mapped[str] = mapped_column(String(32), nullable=False)

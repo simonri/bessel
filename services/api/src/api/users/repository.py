@@ -22,6 +22,7 @@ _USER_OWNED_TABLES = [
   "activity_events",
   "trades",
   "healthkit_workouts",
+  "healthkit_sleep_samples",
 ]
 
 
