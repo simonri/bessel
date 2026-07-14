@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS: Settings = {
   activityMappings: [],
   wallpaper: "video",
   theme: "orange",
-  gridGap: 16,
+  gridGap: 4,
 };
 
 function loadSettings(): Settings {
