@@ -43,6 +43,7 @@ declare global {
           branch: string;
           ahead: number;
           behind: number;
+          mergeInProgress: boolean;
           staged: Array<{
             path: string;
             originalPath?: string;
@@ -54,6 +55,7 @@ declare global {
             status: string;
           }>;
           untracked: Array<{ path: string; status: string }>;
+          conflicted: Array<{ path: string; status: string }>;
         }>;
         diff: (
           path: string,
@@ -61,13 +63,21 @@ declare global {
           staged: boolean,
           untracked: boolean,
         ) => Promise<
-          | { kind: "text"; diff: string; oldContent: string; newContent: string }
+          | {
+              kind: "text";
+              diff: string;
+              oldContent: string;
+              newContent: string;
+            }
           | { kind: "image"; oldImage: string | null; newImage: string | null }
         >;
         stage: (path: string, files: string[]) => Promise<void>;
         unstage: (path: string, files: string[]) => Promise<void>;
         commit: (path: string, message: string) => Promise<void>;
         push: (path: string) => Promise<void>;
+        fetch: (path: string) => Promise<void>;
+        pull: (path: string) => Promise<{ status: "ok" | "conflict" }>;
+        mergeAbort: (path: string) => Promise<void>;
         discard: (
           path: string,
           trackedFiles: string[],
@@ -124,6 +134,11 @@ declare global {
       };
       logs: {
         read: () => Promise<string>;
+        reveal: () => Promise<void>;
+      };
+      myAi: {
+        status: () => Promise<{ path: string; exists: boolean }>;
+        create: () => Promise<string>;
         reveal: () => Promise<void>;
       };
       spotify: {

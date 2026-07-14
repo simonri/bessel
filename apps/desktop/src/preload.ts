@@ -57,6 +57,9 @@ contextBridge.exposeInMainWorld("electron", {
     commit: (path: string, message: string) =>
       ipcRenderer.invoke("git:commit", path, message),
     push: (path: string) => ipcRenderer.invoke("git:push", path),
+    fetch: (path: string) => ipcRenderer.invoke("git:fetch", path),
+    pull: (path: string) => ipcRenderer.invoke("git:pull", path),
+    mergeAbort: (path: string) => ipcRenderer.invoke("git:merge-abort", path),
     log: (path: string, limit?: number) =>
       ipcRenderer.invoke("git:log", path, limit),
     discard: (path: string, trackedFiles: string[], untrackedFiles: string[]) =>
@@ -108,6 +111,12 @@ contextBridge.exposeInMainWorld("electron", {
   logs: {
     read: (): Promise<string> => ipcRenderer.invoke("logs:read"),
     reveal: (): Promise<void> => ipcRenderer.invoke("logs:reveal"),
+  },
+  myAi: {
+    status: (): Promise<{ path: string; exists: boolean }> =>
+      ipcRenderer.invoke("my-ai:status"),
+    create: (): Promise<string> => ipcRenderer.invoke("my-ai:create"),
+    reveal: (): Promise<void> => ipcRenderer.invoke("my-ai:reveal"),
   },
   spotify: {
     getStatus: (): Promise<SpotifyStatus> =>

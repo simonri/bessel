@@ -1,20 +1,20 @@
+import * as Sentry from "@sentry/electron/main";
 import {
   type ChildProcessWithoutNullStreams,
   execFile,
   spawn,
 } from "child_process";
+import crypto from "crypto";
 import {
   app,
   BrowserWindow,
   dialog,
-  ipcMain,
   Menu,
   protocol,
   safeStorage,
   session,
   shell,
 } from "electron";
-import crypto from "crypto";
 import { autoUpdater } from "electron-updater";
 import fs from "fs";
 import http from "http";
@@ -23,8 +23,9 @@ import os from "os";
 import path from "path";
 import { Readable } from "stream";
 import { promisify } from "util";
-import * as Sentry from "@sentry/electron/main";
 import { SENTRY_DSN } from "./env.js";
+import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
+import { registerMyAiHandlers } from "./my-ai.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -74,12 +75,24 @@ if (process.platform === "linux") {
 // clobber real usage that already happened under the new profile. Only the
 // packaged profile has pre-rebrand data to migrate — the "-dev" profile is new.
 if (app.isPackaged) {
-  const LEGACY_USER_DATA_DIR = path.join(app.getPath("appData"), "@metron", "desktop");
+  const LEGACY_USER_DATA_DIR = path.join(
+    app.getPath("appData"),
+    "@metron",
+    "desktop",
+  );
   const NEW_LOCAL_STORAGE_DIR = path.join(USER_DATA_DIR, "Local Storage");
-  const LEGACY_LOCAL_STORAGE_DIR = path.join(LEGACY_USER_DATA_DIR, "Local Storage");
-  if (!fs.existsSync(NEW_LOCAL_STORAGE_DIR) && fs.existsSync(LEGACY_LOCAL_STORAGE_DIR)) {
+  const LEGACY_LOCAL_STORAGE_DIR = path.join(
+    LEGACY_USER_DATA_DIR,
+    "Local Storage",
+  );
+  if (
+    !fs.existsSync(NEW_LOCAL_STORAGE_DIR) &&
+    fs.existsSync(LEGACY_LOCAL_STORAGE_DIR)
+  ) {
     fs.mkdirSync(USER_DATA_DIR, { recursive: true });
-    fs.cpSync(LEGACY_LOCAL_STORAGE_DIR, NEW_LOCAL_STORAGE_DIR, { recursive: true });
+    fs.cpSync(LEGACY_LOCAL_STORAGE_DIR, NEW_LOCAL_STORAGE_DIR, {
+      recursive: true,
+    });
   }
 }
 
@@ -115,7 +128,8 @@ if (app.isPackaged && SENTRY_DSN) {
     tracesSampleRate: 0,
     integrations: (integrations) =>
       integrations.filter(
-        (i) => i.name !== "OnUncaughtException" && i.name !== "OnUnhandledRejection",
+        (i) =>
+          i.name !== "OnUncaughtException" && i.name !== "OnUnhandledRejection",
       ),
   });
 }
@@ -298,12 +312,34 @@ interface GitFileEntry {
   status: string;
 }
 
-async function gitRun(args: string[], cwd: string): Promise<string> {
+async function gitRun(
+  args: string[],
+  cwd: string,
+  opts?: { env?: NodeJS.ProcessEnv; timeoutMs?: number },
+): Promise<string> {
   const { stdout } = await execFileAsync("git", args, {
     cwd,
     maxBuffer: 10 * 1024 * 1024,
+    ...(opts?.env ? { env: { ...process.env, ...opts.env } } : {}),
+    ...(opts?.timeoutMs ? { timeout: opts.timeoutMs } : {}),
   });
   return stdout;
+}
+
+// Network git commands must never sit waiting for a username/password prompt
+// (the auto-fetch loop would silently hang a subprocess every cycle).
+const GIT_NO_PROMPT_ENV = { GIT_TERMINAL_PROMPT: "0" };
+
+// execFile errors read "Command failed: git pull ...\n<full stderr>" — surface
+// just git's first meaningful stderr line to the widget instead.
+function toGitError(err: unknown): Error {
+  const stderr = (err as { stderr?: string }).stderr;
+  const line = stderr
+    ?.split("\n")
+    .map((l) => l.trim())
+    .find(Boolean);
+  if (!line) return err instanceof Error ? err : new Error(String(err));
+  return new Error(line.replace(/^(error|fatal):\s*/, ""));
 }
 
 // Raw-byte variant for image previews — gitRun's string stdout is decoded as
@@ -321,12 +357,15 @@ function parsePorcelain(output: string): {
   staged: GitFileEntry[];
   unstaged: GitFileEntry[];
   untracked: GitFileEntry[];
+  conflicted: GitFileEntry[];
 } {
-  if (!output) return { staged: [], unstaged: [], untracked: [] };
+  if (!output)
+    return { staged: [], unstaged: [], untracked: [], conflicted: [] };
   const parts = output.split("\0");
   const staged: GitFileEntry[] = [];
   const unstaged: GitFileEntry[] = [];
   const untracked: GitFileEntry[] = [];
+  const conflicted: GitFileEntry[] = [];
   let i = 0;
   while (i < parts.length) {
     const entry = parts[i++];
@@ -342,6 +381,17 @@ function parsePorcelain(output: string): {
       untracked.push({ path: filePath, status: "?" });
       continue;
     }
+    // Unmerged entries (porcelain XY: DD, AU, UD, UA, DU, AA, UU) — a file in
+    // conflict must not also show up as staged/unstaged.
+    if (
+      x === "U" ||
+      y === "U" ||
+      (x === "A" && y === "A") ||
+      (x === "D" && y === "D")
+    ) {
+      conflicted.push({ path: filePath, status: "U" });
+      continue;
+    }
     if (x !== " " && x !== "?") {
       staged.push({ path: filePath, originalPath, status: x });
     }
@@ -349,7 +399,7 @@ function parsePorcelain(output: string): {
       unstaged.push({ path: filePath, status: y });
     }
   }
-  return { staged, unstaged, untracked };
+  return { staged, unstaged, untracked, conflicted };
 }
 
 // ─── diagnostics log ────────────────────────────────────────────────────────
@@ -547,8 +597,6 @@ function resolveShellPath(): Promise<string | null> {
   return shellPathPromise;
 }
 
-const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
-
 // Auth0's hosted login page (VITE_AUTH0_DOMAIN in apps/web/.env) is where the
 // window navigates during loginWithRedirect() before coming back to app://localhost.
 // "Continue with Google" hops it on to accounts.google.com and back to Auth0.
@@ -655,48 +703,6 @@ function chromeUserAgent(ses: Electron.Session): string {
         !token.startsWith("Electron/") && !token.startsWith(`${app.name}/`),
     )
     .join(" ");
-}
-
-function isTrustedSender(
-  event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent,
-): boolean {
-  const url = event.senderFrame?.url;
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    // `.origin` is unreliable for non-special schemes like "app:" (returns the
-    // string "null"), so build the origin from protocol + host instead.
-    return TRUSTED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`);
-  } catch {
-    return false;
-  }
-}
-
-function ipcHandle(
-  channel: string,
-  listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown,
-): void {
-  ipcMain.handle(channel, (event, ...args) => {
-    if (!isTrustedSender(event))
-      throw new Error(`Rejected "${channel}" from untrusted sender`);
-    return listener(event, ...args);
-  });
-}
-
-function ipcOn(
-  channel: string,
-  listener: (event: Electron.IpcMainEvent, ...args: any[]) => void,
-): void {
-  ipcMain.on(channel, (event, ...args) => {
-    if (!isTrustedSender(event)) return;
-    listener(event, ...args);
-  });
-}
-
-function broadcast(channel: string, ...args: unknown[]): void {
-  for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send(channel, ...args);
-  }
 }
 
 const MIME_TYPES: Record<string, string> = {
@@ -1177,7 +1183,19 @@ app.whenReady().then(() => {
       ["status", "--porcelain=v1", "-z"],
       repoPath,
     );
-    return { branch, ahead, behind, ...parsePorcelain(statusOut) };
+    const mergeInProgress = await gitRun(
+      ["rev-parse", "-q", "--verify", "MERGE_HEAD"],
+      repoPath,
+    )
+      .then(() => true)
+      .catch(() => false);
+    return {
+      branch,
+      ahead,
+      behind,
+      mergeInProgress,
+      ...parsePorcelain(statusOut),
+    };
   });
 
   // Full old/new file content, so the diff viewer can syntax-highlight against
@@ -1332,10 +1350,55 @@ app.whenReady().then(() => {
   );
 
   ipcHandle("git:commit", (_, repoPath: string, message: string) =>
-    gitRun(["commit", "-m", message], repoPath),
+    // An empty message completes an in-progress merge with git's prepared
+    // MERGE_MSG; outside a merge git rejects the empty message, so this can't
+    // create a normal commit without one.
+    message.trim()
+      ? gitRun(["commit", "-m", message], repoPath)
+      : gitRun(["commit", "--no-edit"], repoPath),
   );
 
   ipcHandle("git:push", (_, repoPath: string) => gitRun(["push"], repoPath));
+
+  ipcHandle("git:fetch", async (_, repoPath: string) => {
+    try {
+      await gitRun(["fetch", "--prune"], repoPath, {
+        env: GIT_NO_PROMPT_ENV,
+        timeoutMs: 60_000,
+      });
+    } catch (err) {
+      throw toGitError(err);
+    }
+  });
+
+  ipcHandle("git:pull", async (_, repoPath: string) => {
+    try {
+      await gitRun(["pull", "--no-rebase", "--no-edit"], repoPath, {
+        env: GIT_NO_PROMPT_ENV,
+        timeoutMs: 120_000,
+      });
+      return { status: "ok" as const };
+    } catch (err) {
+      // A conflicted merge is an expected outcome, not an error — the widget
+      // switches into its resolve-conflicts state.
+      const mergeStarted = await gitRun(
+        ["rev-parse", "-q", "--verify", "MERGE_HEAD"],
+        repoPath,
+      )
+        .then(() => true)
+        .catch(() => false);
+      if (mergeStarted) return { status: "conflict" as const };
+      throw toGitError(err);
+    }
+  });
+
+  ipcHandle("git:merge-abort", async (_, repoPath: string) => {
+    try {
+      await gitRun(["merge", "--abort"], repoPath);
+    } catch (err) {
+      throw toGitError(err);
+    }
+  });
 
   ipcHandle("git:log", async (_, repoPath: string, limit = 30) => {
     const SEP = "%x1f";
@@ -1434,6 +1497,8 @@ app.whenReady().then(() => {
       ]);
     }
   });
+
+  registerMyAiHandlers(USER_DATA_DIR);
 
   ipcHandle("spotify:status", async () => spotifyStatus);
 
