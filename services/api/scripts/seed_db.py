@@ -10,10 +10,11 @@ import hashlib
 import sys
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from api.models import ActivityEvent, BankAccount, Category, Place, Project, Security, SecurityPrice, Task, Trade, Transaction
+from api.models import ActivityEvent, BankAccount, Category, HealthKitWorkout, Place, Project, Security, SecurityPrice, Task, Trade, Transaction
 from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
@@ -105,6 +106,7 @@ async def seed() -> None:
       "import_batches",
       "bank_accounts",
       "categories",
+      "healthkit_workouts",
     ]:
       await session.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
     await session.commit()
@@ -682,6 +684,68 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(all_activity)} activity events across {len(_day_specs)} active days.")
 
+    # ── 12. HealthKit workouts ────────────────────────────────────────────
+    # user_id is left NULL like every other user-owned row above — claimed by
+    # the first user to log in (see UserRepository.claim_orphaned_data).
+    # Raw values match Apple's HKWorkoutActivityType enum.
+    RUNNING = (37, "running")
+    CYCLING = (13, "cycling")
+    STRENGTH = (50, "traditionalStrengthTraining")
+    YOGA = (57, "yoga")
+    HIKING = (24, "hiking")
+
+    # (days_ago, start_hour, (type, type_name), duration_min, energy_kcal, distance_m, avg_hr, min_hr, max_hr, indoor)
+    workout_specs = [
+      (1, 7.0, RUNNING, 30, 340, 5200, 152, 98, 174, False),
+      (3, 18.0, STRENGTH, 55, 320, None, 118, 85, 152, True),
+      (5, 7.0, RUNNING, 35, 390, 6000, 155, 100, 178, False),
+      (8, 18.0, STRENGTH, 60, 350, None, 120, 86, 155, True),
+      (10, 17.0, CYCLING, 50, 420, 18000, 138, 95, 165, False),
+      (12, 7.0, RUNNING, 28, 310, 4800, 150, 97, 172, False),
+      (15, 10.0, HIKING, 130, 650, 11000, 122, 88, 148, False),  # d(15) — Nordmarka, matches the Place visit
+      (17, 18.0, STRENGTH, 55, 330, None, 119, 85, 153, True),
+      (19, 19.0, YOGA, 50, 180, None, 95, 68, 118, True),
+      (22, 7.0, RUNNING, 32, 350, 5500, 153, 99, 176, False),
+      (24, 18.0, STRENGTH, 60, 360, None, 121, 87, 156, True),
+      (26, 17.0, CYCLING, 65, 520, 24000, 141, 96, 168, False),
+      (29, 9.5, HIKING, 150, 700, 12500, 124, 89, 150, False),
+      (31, 7.0, RUNNING, 30, 330, 5000, 151, 98, 174, False),
+      (33, 18.0, STRENGTH, 55, 320, None, 118, 85, 152, True),
+      (36, 19.0, YOGA, 45, 160, None, 93, 66, 115, True),
+      (38, 7.0, RUNNING, 35, 400, 6200, 156, 101, 179, False),
+      (40, 18.0, STRENGTH, 60, 340, None, 120, 86, 154, True),
+      (43, 17.0, CYCLING, 55, 460, 20000, 139, 95, 166, False),
+      (45, 10.0, HIKING, 140, 680, 12000, 123, 88, 149, False),
+    ]
+
+    workouts: list[HealthKitWorkout] = []
+    for days_ago, start_hour, (activity_type, activity_name), duration_min, energy, distance, avg_hr, min_hr, max_hr, indoor in workout_specs:
+      day = d(days_ago)
+      start = datetime(day.year, day.month, day.day, tzinfo=UTC) + timedelta(hours=start_hour)
+      end = start + timedelta(minutes=duration_min)
+      workouts.append(
+        HealthKitWorkout(
+          healthkit_uuid=uuid4(),
+          workout_activity_type=activity_type,
+          workout_activity_type_name=activity_name,
+          start_date=start,
+          end_date=end,
+          duration=duration_min * 60,
+          total_energy_burned=float(energy),
+          total_distance=float(distance) if distance is not None else None,
+          source_name="Apple Watch",
+          source_bundle_id="com.apple.health",
+          source_version="11.0",
+          device_name="Apple Watch",
+          workout_metadata={"HKIndoorWorkout": indoor},
+          statistics={"HKQuantityTypeIdentifierHeartRate": {"average": avg_hr, "min": min_hr, "max": max_hr, "unit": "count/min"}},
+        )
+      )
+    for workout in workouts:
+      session.add(workout)
+    await session.flush()
+    print(f"Seeded {len(workouts)} HealthKit workouts.")
+
     # ── Commit ────────────────────────────────────────────────────────────
     await session.commit()
     print("\n✅ Database seeded successfully!")
@@ -693,6 +757,7 @@ async def seed() -> None:
     print(f"   Tasks:         {len(tasks)}")
     print(f"   Places:        {len(places)}")
     print(f"   Activity:      {len(all_activity)} events  ({len(_day_specs)} active days)")
+    print(f"   Workouts:      {len(workouts)}")
 
   await engine.dispose()
 

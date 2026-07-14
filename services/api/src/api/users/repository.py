@@ -21,6 +21,7 @@ _USER_OWNED_TABLES = [
   "notifications",
   "activity_events",
   "trades",
+  "healthkit_workouts",
 ]
 
 
