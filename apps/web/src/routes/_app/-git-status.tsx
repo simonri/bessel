@@ -3,7 +3,14 @@ import {
   type ProjectSchema,
 } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Check, GitBranch, RefreshCw } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  GitBranch,
+  RefreshCw,
+  TriangleAlert,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useWindowVisible } from "@/components/canvas/window-manager";
 import { WidgetErrorBoundary } from "@/components/widget-error-boundary";
@@ -27,9 +34,11 @@ interface GitStatusData {
   branch: string;
   ahead: number;
   behind: number;
+  mergeInProgress: boolean;
   staged: GitFileEntry[];
   unstaged: GitFileEntry[];
   untracked: GitFileEntry[];
+  conflicted: GitFileEntry[];
 }
 
 type GitDiffResult =
@@ -49,6 +58,7 @@ interface SelectedFile {
   file: GitFileEntry;
   staged: boolean;
   untracked: boolean;
+  conflicted?: boolean;
 }
 
 function fileKey(file: GitFileEntry, staged: boolean): string {
@@ -121,6 +131,7 @@ export function GitStatus() {
   const [error, setError] = useState<string | null>(null);
   const [changesOpen, setChangesOpen] = useState(true);
   const [stagedOpen, setStagedOpen] = useState(true);
+  const [conflictsOpen, setConflictsOpen] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(215);
 
@@ -154,11 +165,14 @@ export function GitStatus() {
     index: number,
     staged: boolean,
     e: React.MouseEvent,
+    conflicted = false,
   ) => {
     if (e.button !== 0) return;
     const file = list[index]!;
     const key = fileKey(file, staged);
-    const untracked = !staged && file.status === "?";
+    // Conflicted files render via the untracked (whole-file) diff path so the
+    // <<<<<<< conflict markers in the working tree are visible.
+    const untracked = conflicted || (!staged && file.status === "?");
     const shift = e.shiftKey || heldModifiers.current.shift;
     const toggle = e.metaKey || e.ctrlKey || heldModifiers.current.ctrlOrMeta;
 
@@ -167,7 +181,7 @@ export function GitStatus() {
       `[git-select] evtShift=${e.shiftKey} heldShift=${heldModifiers.current.shift} evtCtrl=${e.ctrlKey || e.metaKey} heldCtrl=${heldModifiers.current.ctrlOrMeta} anchor=${anchorKey ?? "none"}`,
     );
 
-    setSelectedFile({ file, staged, untracked });
+    setSelectedFile({ file, staged, untracked, conflicted });
 
     if (shift && anchorKey) {
       const anchorIndex = list.findIndex(
@@ -305,6 +319,68 @@ export function GitStatus() {
     onError: (e) => setError(extractErrorMessage(e)),
   });
 
+  // Fetch keeps the behind-count honest so the pull button lights up on its
+  // own, like GitHub Desktop's background fetch. Offline failures are
+  // swallowed — the status refresh still runs so local state stays current.
+  const fetchMutation = useMutation({
+    mutationFn: async () => {
+      try {
+        await window.electron!.git.fetch(selectedProject!.path);
+      } catch {
+        /* offline / no remote — behind count just stays stale */
+      }
+    },
+    onSuccess: () => {
+      invalidateStatus();
+      invalidateLog();
+    },
+  });
+  const fetchRef = useRef(fetchMutation.mutate);
+  fetchRef.current = fetchMutation.mutate;
+  const selectedPath = selectedProject?.path;
+  useEffect(() => {
+    if (!visible || !selectedPath) return;
+    fetchRef.current();
+    const id = setInterval(() => fetchRef.current(), 5 * 60_000);
+    return () => clearInterval(id);
+  }, [visible, selectedPath]);
+
+  const pullMutation = useMutation({
+    mutationFn: () => window.electron!.git.pull(selectedProject!.path),
+    onSuccess: (result) => {
+      // A conflicted pull isn't an error — the widget switches into its
+      // resolve-conflicts state via the refreshed status.
+      setError(null);
+      if (result.status === "conflict") setSelectedFile(null);
+      invalidateStatus();
+      invalidateLog();
+    },
+    onError: (e) => {
+      setError(extractErrorMessage(e));
+      invalidateStatus();
+    },
+  });
+
+  const mergeAbortMutation = useMutation({
+    mutationFn: () => window.electron!.git.mergeAbort(selectedProject!.path),
+    onSuccess: () => {
+      setError(null);
+      setSelectedFile(null);
+      invalidateStatus();
+    },
+    onError: (e) => setError(extractErrorMessage(e)),
+  });
+
+  const abortMergeWithConfirm = () => {
+    if (
+      window.confirm(
+        "Abort the merge? All conflict resolutions will be discarded.",
+      )
+    ) {
+      mergeAbortMutation.mutate();
+    }
+  };
+
   const discardMutation = useMutation({
     mutationFn: (files: GitFileEntry[]) => {
       const tracked = files.filter((f) => f.status !== "?").map((f) => f.path);
@@ -335,17 +411,26 @@ export function GitStatus() {
   const status = statusQuery.data;
   const changes = [...(status?.unstaged ?? []), ...(status?.untracked ?? [])];
   const staged = status?.staged ?? [];
+  const conflicted = status?.conflicted ?? [];
+  const mergeInProgress = status?.mergeInProgress ?? false;
+  const behind = status?.behind ?? 0;
   const isBusy =
     stageMutation.isPending ||
     unstageMutation.isPending ||
     commitMutation.isPending ||
     pushMutation.isPending ||
+    pullMutation.isPending ||
+    mergeAbortMutation.isPending ||
     discardMutation.isPending;
+  // Completing a merge doesn't need a typed message — git's prepared merge
+  // message is used when the field is left empty.
   const canCommit =
-    commitMessage.trim().length > 0 &&
+    (commitMessage.trim().length > 0 || mergeInProgress) &&
     staged.length > 0 &&
+    conflicted.length === 0 &&
     !commitMutation.isPending;
   const canPush = (status?.ahead ?? 0) > 0 && !pushMutation.isPending;
+  const canPull = behind > 0 && !mergeInProgress && !pullMutation.isPending;
   const branch = status?.branch ?? "";
 
   if (projects.length === 0) {
@@ -418,15 +503,34 @@ export function GitStatus() {
         )}
 
         <button
-          onClick={() => statusQuery.refetch()}
-          disabled={statusQuery.isFetching || isBusy}
+          onClick={() => fetchMutation.mutate()}
+          disabled={fetchMutation.isPending || statusQuery.isFetching || isBusy}
+          title="Fetch from remote"
           className="shrink-0 text-white/25 transition-colors hover:text-white/60 disabled:opacity-40"
         >
           <RefreshCw
-            className={`size-3 ${statusQuery.isFetching ? "animate-spin" : ""}`}
+            className={`size-3 ${fetchMutation.isPending || statusQuery.isFetching ? "animate-spin" : ""}`}
           />
         </button>
       </div>
+
+      {(mergeInProgress || conflicted.length > 0) && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-amber-400/20 bg-amber-400/10 px-3 py-1.5">
+          <TriangleAlert className="size-3 shrink-0 text-amber-400/80" />
+          <span className="min-w-0 flex-1 truncate text-11 text-amber-200/80">
+            {conflicted.length > 0
+              ? `Merge conflicts in ${conflicted.length} file${conflicted.length === 1 ? "" : "s"} — resolve and stage them, then commit`
+              : "Merge in progress — commit to finish it"}
+          </span>
+          <button
+            onClick={abortMergeWithConfirm}
+            disabled={mergeAbortMutation.isPending}
+            className="shrink-0 rounded border border-amber-400/30 px-1.5 py-0.5 text-10 text-amber-200/80 transition-colors hover:bg-amber-400/15 disabled:opacity-40"
+          >
+            {mergeAbortMutation.isPending ? "Aborting…" : "Abort merge"}
+          </button>
+        </div>
+      )}
 
       {unconfiguredCount > 0 && (
         <div className="shrink-0 border-b border-white/[0.06] px-3 py-1 text-11 text-white/40">
@@ -471,7 +575,27 @@ export function GitStatus() {
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/[0.08] py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/[0.12] hover:text-white disabled:cursor-default disabled:opacity-25"
               >
                 <Check className="size-3" />
-                {commitMutation.isPending ? "Committing…" : "Commit"}
+                {commitMutation.isPending
+                  ? "Committing…"
+                  : mergeInProgress
+                    ? "Commit merge"
+                    : "Commit"}
+              </button>
+              <button
+                onClick={() => pullMutation.mutate()}
+                disabled={!canPull}
+                title={
+                  behind > 0
+                    ? `Pull ${behind} commit${behind === 1 ? "" : "s"} from remote`
+                    : "Nothing to pull"
+                }
+                className="flex items-center justify-center rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-white/40 transition-colors hover:bg-white/[0.08] hover:text-white/70 disabled:cursor-default disabled:opacity-25"
+              >
+                {pullMutation.isPending ? (
+                  <RefreshCw className="size-3 animate-spin" />
+                ) : (
+                  <ArrowDown className="size-3" />
+                )}
               </button>
               <button
                 onClick={() => pushMutation.mutate()}
@@ -500,6 +624,37 @@ export function GitStatus() {
               </div>
             ) : (
               <>
+                {conflicted.length > 0 && (
+                  <>
+                    <SectionHeader
+                      label="Conflicts"
+                      count={conflicted.length}
+                      open={conflictsOpen}
+                      onToggle={() => setConflictsOpen((o) => !o)}
+                    />
+                    {conflictsOpen &&
+                      conflicted.map((file, index) => (
+                        <FileItem
+                          key={`c:${file.path}`}
+                          file={file}
+                          isSelected={selectedKeys.has(fileKey(file, false))}
+                          staged={false}
+                          onSelect={(e) =>
+                            handleFileClick(conflicted, index, false, e, true)
+                          }
+                          // Staging a conflicted file marks it resolved
+                          onStage={() =>
+                            stageMutation.mutate(
+                              selectionTargets(conflicted, false, file).map(
+                                (f) => f.path,
+                              ),
+                            )
+                          }
+                        />
+                      ))}
+                  </>
+                )}
+
                 <SectionHeader
                   label="Staged Changes"
                   count={staged.length}
@@ -634,9 +789,11 @@ export function GitStatus() {
                 <span className="shrink-0 text-10 text-white/50">
                   {selectedFile.staged
                     ? "staged"
-                    : selectedFile.untracked
-                      ? "untracked"
-                      : "unstaged"}
+                    : selectedFile.conflicted
+                      ? "conflicted"
+                      : selectedFile.untracked
+                        ? "untracked"
+                        : "unstaged"}
                 </span>
               </div>
 

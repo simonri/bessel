@@ -86,6 +86,23 @@ export const DiffViewer = memo(function DiffViewer({
   const lines = useMemo(() => parseDiff(diff), [diff]);
   const lang = useMemo(() => detectLang(filename), [filename]);
 
+  // GitHub sizes the gutter once, from the widest line number in the whole
+  // file — fixed for the life of the diff. Without table-layout: fixed below,
+  // auto layout instead re-measures from whatever rows the windowing below
+  // currently has mounted, so the gutter width jitters as you scroll past
+  // rows with more/fewer digits.
+  const gutterDigits = useMemo(() => {
+    let max = 0;
+    for (const line of lines) {
+      if (line.oldNum && line.oldNum > max) max = line.oldNum;
+      if (line.newNum && line.newNum > max) max = line.newNum;
+    }
+    return Math.max(2, String(max).length);
+  }, [lines]);
+  // +0.75rem covers the pl-2/pr-1 padding on the gutter cells (table-fixed
+  // treats the col width as the cell's full outer width, padding included).
+  const gutterWidth = `calc(${gutterDigits}ch + 0.75rem)`;
+
   // Tokenizing is async (Shiki loads its grammars/theme once, lazily), so the
   // diff renders as plain text immediately and re-renders colored once ready.
   const [highlightMap, setHighlightMap] = useState<
@@ -164,10 +181,10 @@ export const DiffViewer = memo(function DiffViewer({
       onScroll={updateRange}
       className="h-full overflow-auto font-mono text-xs leading-5"
     >
-      <table className="diff-viewer min-w-full border-collapse">
+      <table className="diff-viewer min-w-full table-fixed border-collapse">
         <colgroup>
-          <col style={{ width: "2.5rem" }} />
-          <col style={{ width: "2.5rem" }} />
+          <col style={{ width: gutterWidth }} />
+          <col style={{ width: gutterWidth }} />
           <col />
         </colgroup>
         <tbody>
