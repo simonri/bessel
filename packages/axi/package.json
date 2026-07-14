@@ -1,0 +1,30 @@
+{
+  "name": "bessel-axi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent-ergonomic CLI for the Bessel personal API. Bundled into the desktop app; not published.",
+  "type": "module",
+  "bin": {
+    "bessel-axi": "./dist/bin/bessel-axi.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "dev": "tsx src/bin/bessel-axi.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "axi-sdk-js": "^0.1.8"
+  },
+  "devDependencies": {
+    "@bessel/client": "workspace:*",
+    "@bessel/tsconfig": "workspace:*",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.0"
+  }
+}

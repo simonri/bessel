@@ -23,6 +23,10 @@ import os from "os";
 import path from "path";
 import { Readable } from "stream";
 import { promisify } from "util";
+import {
+  registerAxiCliInstallHandlers,
+  registerCliBrokerHandlers,
+} from "./cli-broker.js";
 import { SENTRY_DSN } from "./env.js";
 import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
 import { registerMyAiHandlers } from "./my-ai.js";
@@ -1499,6 +1503,8 @@ app.whenReady().then(() => {
   });
 
   registerMyAiHandlers(USER_DATA_DIR);
+  registerCliBrokerHandlers(USER_DATA_DIR);
+  registerAxiCliInstallHandlers();
 
   ipcHandle("spotify:status", async () => spotifyStatus);
 

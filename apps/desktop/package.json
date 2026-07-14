@@ -8,7 +8,7 @@
   "scripts": {
     "predev": "tsc",
     "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@bessel/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
-    "compile": "tsc && pnpm --filter=@bessel/web build",
+    "compile": "tsc && pnpm --filter=@bessel/web build && pnpm --filter=bessel-axi build",
     "build": "pnpm run compile && electron-builder",
     "build:dir": "pnpm run compile && electron-builder --dir",
     "release:patch": "node scripts/release.mjs patch",
@@ -47,6 +47,10 @@
       {
         "from": "../web/dist/client",
         "to": "web/dist/client"
+      },
+      {
+        "from": "../../packages/axi/dist",
+        "to": "axi"
       }
     ],
     "publish": {

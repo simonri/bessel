@@ -2,18 +2,32 @@ import { useEffect, useState } from "react";
 import { SectionLabel } from "@/components/settings-section-label";
 
 type MyAiStatus = { path: string; exists: boolean };
+type CliStatus = {
+  installed: boolean;
+  shimPath: string;
+  onPath: boolean;
+  supported: boolean;
+};
 
 export function MyAiPage() {
   const [status, setStatus] = useState<MyAiStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [cliStatus, setCliStatus] = useState<CliStatus | null>(null);
+  const [cliLoading, setCliLoading] = useState(false);
+  const [cliError, setCliError] = useState<string | null>(null);
+
   useEffect(() => {
-    // Optional-chained on myAi too: a renderer hot-reloaded under an older
-    // preload (dev) doesn't have the bridge yet.
+    // Optional-chained on myAi/cli too: a renderer hot-reloaded under an
+    // older preload (dev) doesn't have the bridge yet.
     window.electron?.myAi
       ?.status()
       .then(setStatus)
+      .catch(() => {});
+    window.electron?.cli
+      ?.status()
+      .then(setCliStatus)
       .catch(() => {});
   }, []);
 
@@ -27,6 +41,19 @@ export function MyAiPage() {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const installCli = async () => {
+    setCliLoading(true);
+    setCliError(null);
+    try {
+      await window.electron!.cli.install();
+      setCliStatus(await window.electron!.cli.status());
+    } catch (e) {
+      setCliError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCliLoading(false);
     }
   };
 
@@ -95,6 +122,68 @@ export function MyAiPage() {
       )}
 
       {error && <p className="text-12 text-red-400">{error}</p>}
+
+      {cliStatus && (
+        <div>
+          <SectionLabel>CLI</SectionLabel>
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <span className="shrink-0 text-13 text-white/60">Status</span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`size-1.5 rounded-full ${cliStatus.installed ? "bg-emerald-400" : "bg-white/20"}`}
+                />
+                <span className="text-13 text-white/80">
+                  {!cliStatus.supported
+                    ? "Not supported on this OS"
+                    : cliStatus.installed
+                      ? "Installed"
+                      : "Not installed"}
+                </span>
+              </div>
+            </div>
+            {cliStatus.installed && (
+              <>
+                <div className="border-t border-white/[0.06]" />
+                <div className="flex items-center justify-between gap-4">
+                  <span className="shrink-0 text-13 text-white/60">Path</span>
+                  <span
+                    className="truncate font-mono text-12 text-white/80"
+                    title={cliStatus.shimPath}
+                  >
+                    {cliStatus.shimPath}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {cliStatus?.supported && !cliStatus.installed && (
+        <div>
+          <button
+            onClick={installCli}
+            disabled={cliLoading}
+            className="w-full rounded-xl bg-primary-500 py-2.5 text-13 font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
+          >
+            {cliLoading ? "Installing…" : "Install CLI"}
+          </button>
+          <p className="mt-2 text-center text-11 text-white/50">
+            Installs the bessel-axi command so Claude Code (or any terminal) can
+            query your live Bessel data — tasks today, more later.
+          </p>
+        </div>
+      )}
+
+      {cliStatus?.installed && !cliStatus.onPath && (
+        <p className="text-12 text-amber-400">
+          {cliStatus.shimPath} isn't on your PATH — add its directory to your
+          shell profile to run bessel-axi directly.
+        </p>
+      )}
+
+      {cliError && <p className="text-12 text-red-400">{cliError}</p>}
     </div>
   );
 }

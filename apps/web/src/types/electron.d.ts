@@ -141,6 +141,20 @@ declare global {
         create: () => Promise<string>;
         reveal: () => Promise<void>;
       };
+      cli: {
+        onTokenRequested: (callback: (requestId: string) => void) => () => void;
+        provideToken: (
+          requestId: string,
+          token: string | null,
+        ) => Promise<void>;
+        status: () => Promise<{
+          installed: boolean;
+          shimPath: string;
+          onPath: boolean;
+          supported: boolean;
+        }>;
+        install: () => Promise<{ shimPath: string; onPath: boolean }>;
+      };
       spotify: {
         getStatus: () => Promise<ElectronSpotifyStatus>;
         playPause: () => Promise<void>;

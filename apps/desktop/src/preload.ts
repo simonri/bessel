@@ -118,6 +118,24 @@ contextBridge.exposeInMainWorld("electron", {
     create: (): Promise<string> => ipcRenderer.invoke("my-ai:create"),
     reveal: (): Promise<void> => ipcRenderer.invoke("my-ai:reveal"),
   },
+  cli: {
+    onTokenRequested: (callback: (requestId: string) => void) => {
+      const listener = (_: Electron.IpcRendererEvent, requestId: string) =>
+        callback(requestId);
+      ipcRenderer.on("cli:token-requested", listener);
+      return () => ipcRenderer.removeListener("cli:token-requested", listener);
+    },
+    provideToken: (requestId: string, token: string | null): Promise<void> =>
+      ipcRenderer.invoke("cli:provide-token", requestId, token),
+    status: (): Promise<{
+      installed: boolean;
+      shimPath: string;
+      onPath: boolean;
+      supported: boolean;
+    }> => ipcRenderer.invoke("axi-cli:status"),
+    install: (): Promise<{ shimPath: string; onPath: boolean }> =>
+      ipcRenderer.invoke("axi-cli:install"),
+  },
   spotify: {
     getStatus: (): Promise<SpotifyStatus> =>
       ipcRenderer.invoke("spotify:status"),

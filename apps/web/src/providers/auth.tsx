@@ -61,6 +61,30 @@ function ElectronAuthCallback() {
   return null;
 }
 
+// The bessel-axi CLI (packages/axi) runs outside Electron and has no session
+// of its own — it asks main.ts's local broker (apps/desktop/src/cli-broker.ts)
+// for a token, which relays the request here since the actual Auth0 SDK state
+// only exists in the renderer. Mirrors ElectronAuthCallback's IPC-event ->
+// SDK-call -> reply-over-IPC shape.
+function CliTokenBridge() {
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+  useEffect(() => {
+    if (!isElectron) return;
+    return window.electron!.cli.onTokenRequested((requestId) => {
+      if (!isAuthenticated) {
+        void window.electron!.cli.provideToken(requestId, null);
+        return;
+      }
+      getAccessTokenSilently()
+        .then((token) => window.electron!.cli.provideToken(requestId, token))
+        .catch(() => window.electron!.cli.provideToken(requestId, null));
+    });
+  }, [isAuthenticated, getAccessTokenSilently]);
+
+  return null;
+}
+
 // Custom Auth0 cache backed by Electron's safeStorage (OS keychain encryption).
 // Only used when running inside the Electron shell — the main process encrypts
 // the token blob via safeStorage and stores it in userData, never touching
@@ -152,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       <AuthInterceptor />
       <ElectronAuthCallback />
+      <CliTokenBridge />
       {children}
     </Auth0Provider>
   );
