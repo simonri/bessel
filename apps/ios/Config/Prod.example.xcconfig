@@ -1,4 +1,6 @@
 // Copy to Prod.xcconfig (used by the Release configuration → "Bessel" app).
+// Bundle ID intentionally not "com.simonri.bessel" — see "Why the prod bundle
+// ID looks like that" in README.md.
 
 PRODUCT_BUNDLE_IDENTIFIER = com.simonri.bessel.WQH84QWCFP
 BESSEL_APP_NAME = Bessel

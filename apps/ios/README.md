@@ -13,11 +13,27 @@ Two build configurations produce two separate apps that install side by side:
 | Configuration | App | Bundle ID | API |
 |---|---|---|---|
 | Debug | Bessel Dev | `com.simonri.bessel.dev` | Mac's LAN IP (`uv run task api`) |
-| Release | Bessel | `com.simonri.bessel` | `https://api.getbessel.com` |
+| Release | Bessel | `com.simonri.bessel.WQH84QWCFP` | `https://api.getbessel.com` |
 
-Xcode's Run button and `scripts/deploy.sh` install the Debug (dev) app
-directly. The prod app is distributed through **AltStore** (below). With
-AltStore itself that's 3/3 free-team app slots — nothing else can be sideloaded.
+Both apps are installed the same way: directly, over Wi-Fi (or USB), via
+Xcode's Run button (Debug only) or `scripts/deploy.sh` (either or both —
+see below). No AltStore, no `.ipa` export, no AirDrop — that whole path was
+retired because it silently dropped the HealthKit entitlement (see below).
+
+### Why the prod bundle ID looks like that
+
+Bessel used to be free-sideloaded twice: once directly (dev) and once
+re-signed by AltStore (prod), which rewrites the bundle ID it's given. When
+we moved prod to direct installs to fix HealthKit (below), Apple's device-side
+free-provisioning tracker already had 3 App IDs on file for this device
+(dev, AltStore itself, and AltStore's rewritten prod ID) — the max — and that
+tracker doesn't free a slot on uninstall, only after its own rolling ~7-day
+window. So prod now reuses AltStore's old rewritten ID
+(`com.simonri.bessel.WQH84QWCFP`) rather than waiting out the window to
+reclaim the clean `com.simonri.bessel`. Ugly, but it's an already-registered
+App ID slot, not a new one — swap it back to `com.simonri.bessel` later if
+you want, once a slot frees up and AltStore is uninstalled (it's no longer
+needed for Bessel at all, freeing its slot for something else).
 
 ## Setup
 
@@ -28,7 +44,7 @@ AltStore itself that's 3/3 free-team app slots — nothing else can be sideloade
    localhost.
 2. **Auth0 dashboard** — add both native callbacks to the application's
    *Allowed Callback URLs*:
-   `com.simonri.bessel://<AUTH0_DOMAIN>/ios/com.simonri.bessel/callback`,
+   `com.simonri.bessel.WQH84QWCFP://<AUTH0_DOMAIN>/ios/com.simonri.bessel.WQH84QWCFP/callback`,
    `com.simonri.bessel.dev://<AUTH0_DOMAIN>/ios/com.simonri.bessel.dev/callback`
 3. **Generate + open**:
    ```bash
@@ -49,50 +65,42 @@ constraints:
 - The signature **expires after 7 days** — the app stops launching (data is kept).
   Reinstalling from the same team resets the clock and preserves data.
 - Max **3 sideloaded apps** per device, max **10 bundle IDs per rolling week**
-  (keep the bundle ID stable).
+  (keep bundle IDs stable — see "Why the prod bundle ID looks like that" above).
+  The 3-app tracker is historical, not live: uninstalling an app does **not**
+  free its slot before the rolling window rolls over.
 - No paid capabilities: **no push notifications** (APNs), App Groups, iCloud,
   Sign in with Apple, or universal links. Custom URL schemes, Keychain (own app),
   and local notifications all work — which is why auth uses the
-  `com.simonri.bessel://` scheme rather than universal links.
-- **HealthKit works in the Debug/dev app but not the AltStore-installed prod
-  app.** AltServer creates its own App ID when it re-signs the `.ipa` and only
-  registers a minimal baseline capability set — it doesn't read
-  `Bessel.entitlements` and provision matching capabilities on the developer
-  portal. The prod app crashes with "Missing com.apple.developer.healthkit
-  entitlement" the first time it touches a HealthKit API, even though the
-  entitlement is correctly embedded in the signed binary. This is a known
-  AltStore limitation (only lifted with a paid Apple Developer Program
-  account), not fixable from this repo.
+  `com.simonri.bessel.WQH84QWCFP://` scheme rather than universal links.
+  HealthKit *does* work on a free Personal Team — it only failed when prod was
+  distributed through AltStore (below), which doesn't provision the capability.
 
-### Prod app via AltStore
+### Ship a new prod build
 
-The prod app is installed and refreshed by AltStore, which re-signs it in the
-background whenever the phone can reach AltServer on the Mac (same Wi-Fi):
+```bash
+make ios-deploy
+# or: CONFIGS=Release apps/ios/scripts/deploy.sh
+```
 
-- Ship a new prod build: `make ios-deploy` (or `apps/ios/scripts/export-ipa.sh`
-  directly) → builds, writes `Bessel.ipa` to iCloud Drive/Bessel and
-  `apps/ios/build/Bessel.ipa`, then runs the "Ship IPA" Shortcut to pop the
-  AirDrop share sheet with the .ipa pre-loaded — tap the phone, then on the
-  phone tap Accept (iOS offers "Open in AltStore" automatically for .ipa
-  files). AltStore only *re-signs* the build it was given; new code always
-  goes through a new .ipa.
-- One-time setup for the Shortcut (Shortcuts app → **+** → name it "Ship IPA"):
-  add a **Get File** action (so it accepts an input file) and a **Share**
-  action fed from that file. If the Shortcut doesn't exist yet, the script
-  just skips straight to the old manual flow (open Bessel.ipa from Files and
-  share to AltStore).
-- AltStore rewrites the bundle ID when re-signing. Sign-in survives because the
-  OAuth callback scheme is baked into Info.plist (`AUTH_CALLBACK_SCHEME`)
-  rather than read from the runtime bundle ID.
-- Requirements: AltServer running on the Mac (menu-bar app, signed into the
-  Apple ID), Background App Refresh enabled for AltStore on the phone.
+Direct-installs over Wi-Fi (or USB) via `xcodebuild -allowProvisioningUpdates`
++ `xcrun devicectl`, same as the dev app. Requires the phone on the same
+network (or plugged in) and Xcode's Apple ID session still valid.
 
-### Auto-renewing the dev app's 7-day signature
+We used to distribute prod through AltStore instead, so its 7-day signature
+could refresh in the background without opening Xcode. That was dropped: **AltStore
+re-signs the `.ipa` with its own App ID and doesn't provision capabilities it
+doesn't already know about**, so the entitlements requested in
+`Bessel.entitlements` (HealthKit) got silently dropped, crashing the app the
+first time it touched a HealthKit API — even though the local build's
+signature correctly embedded them. If you ever see "Missing entitlement" on
+an installed app again, suspect whatever signed it isn't reading this
+project's entitlements — same failure mode, different cause.
 
-`scripts/deploy.sh` rebuilds and reinstalls the dev app over Wi-Fi (`xcodebuild
--allowProvisioningUpdates` + `xcrun devicectl`). The launchd agent runs it
-Mondays and Fridays at 09:00 so the gap never exceeds ~4 days; launchd runs
-missed jobs at next wake:
+### Auto-renewing both apps' 7-day signatures
+
+`scripts/deploy.sh` defaults to installing both configs, so the same launchd
+job now keeps both signatures fresh. It runs Mondays and Fridays at 09:00 so
+the gap never exceeds ~4 days; launchd runs missed jobs at next wake:
 
 ```bash
 cp scripts/com.simonri.bessel.refresh.plist ~/Library/LaunchAgents/
@@ -104,7 +112,7 @@ session in Xcode still valid. That session expires every month or two and needs
 an interactive re-login (2FA) — the script posts a macOS notification when the
 refresh fails so it doesn't die silently. Logs: `/tmp/bessel-ios-refresh.log`.
 
-Manual refresh any time:
+Manual refresh any time (both apps):
 
 ```bash
 ./scripts/deploy.sh

@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
-# Build and install Bessel on the iPhone. Re-running this resets the 7-day
-# free-provisioning clock, so it doubles as the weekly refresh job (see
+# Build and install Bessel on the iPhone (both dev and prod apps by default).
+# Re-running this resets the 7-day free-provisioning clock for whichever
+# configs it installs, so it doubles as the weekly refresh job (see
 # com.simonri.bessel.refresh.plist).
 #
 # Requirements: Apple ID signed into Xcode (Settings > Accounts), iPhone paired
 # once via Xcode and on USB or the same Wi-Fi, Developer Mode enabled on device.
 set -euo pipefail
+
+# devicectl replaces non-ASCII device-name characters (e.g. the apostrophe in
+# "Simon's iPhone") with "?" under a non-UTF-8 locale — which is launchd's
+# default environment — breaking the name match below.
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
 
 DEVICE_NAME=${DEVICE_NAME:-"Simon’s iPhone"}
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,10 +23,9 @@ notify_failure() {
 }
 trap notify_failure ERR
 
-# Installs the dev app by default; the prod app is distributed via AltStore
-# (scripts/export-ipa.sh), which also handles its 7-day signature refresh.
-# CONFIGS="Debug Release" ./deploy.sh to direct-install both.
-CONFIGS=${CONFIGS:-"Debug"}
+# Both dev and prod are direct-installed and share this same refresh job;
+# CONFIGS="Debug" or CONFIGS="Release" ./deploy.sh to do just one.
+CONFIGS=${CONFIGS:-"Debug Release"}
 
 xcodegen generate
 

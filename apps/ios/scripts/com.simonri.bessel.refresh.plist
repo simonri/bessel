@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Weekly free-provisioning refresh: rebuilds and reinstalls Bessel on the
-  iPhone Mondays and Fridays at 09:00, so the 7-day signature never expires
-  (max gap between runs is ~4 days). launchd runs missed jobs at next wake.
+  Weekly free-provisioning refresh: rebuilds and reinstalls both the dev and
+  prod Bessel apps on the iPhone Mondays and Fridays at 09:00, so neither's
+  7-day signature ever expires (max gap between runs is ~4 days). launchd
+  runs missed jobs at next wake.
 
   Install:
     cp apps/ios/scripts/com.simonri.bessel.refresh.plist ~/Library/LaunchAgents/

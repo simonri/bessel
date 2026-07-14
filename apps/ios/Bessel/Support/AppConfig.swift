@@ -7,9 +7,6 @@ enum AppConfig {
     static let auth0ClientID = infoValue("AUTH0_CLIENT_ID")
     static let auth0Audience = infoValue("AUTH0_AUDIENCE")
 
-    /// Baked in at build time rather than derived from Bundle.main.bundleIdentifier:
-    /// AltStore rewrites the bundle ID when re-signing, but the URL scheme it
-    /// registers (CFBundleURLTypes) and the Auth0 allowlist keep the original value.
     static let authCallbackScheme = infoValue("AUTH_CALLBACK_SCHEME")
 
     /// Auth0 native callback: <scheme>://<domain>/ios/<scheme>/callback
