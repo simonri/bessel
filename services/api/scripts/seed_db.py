@@ -7,6 +7,7 @@ Run: cd services/api && uv run python -m scripts.seed_db
 
 import asyncio
 import hashlib
+import random
 import sys
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -14,7 +15,20 @@ from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from api.models import ActivityEvent, BankAccount, Category, HealthKitWorkout, Place, Project, Security, SecurityPrice, Task, Trade, Transaction
+from api.models import (
+  ActivityEvent,
+  BankAccount,
+  Category,
+  HealthKitSleepSample,
+  HealthKitWorkout,
+  Place,
+  Project,
+  Security,
+  SecurityPrice,
+  Task,
+  Trade,
+  Transaction,
+)
 from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
@@ -107,6 +121,7 @@ async def seed() -> None:
       "bank_accounts",
       "categories",
       "healthkit_workouts",
+      "healthkit_sleep_samples",
     ]:
       await session.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
     await session.commit()
@@ -746,6 +761,67 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(workouts)} HealthKit workouts.")
 
+    # ── 13. HealthKit sleep samples ───────────────────────────────────────
+    # One night per day for the last 28 days, generated as a sequence of
+    # stage segments (inBed buffer, repeating core/deep/REM cycles with
+    # occasional awakenings, inBed buffer before waking). Raw values match
+    # Apple's HKCategoryValueSleepAnalysis enum.
+    SLEEP_VALUES = {
+      "inBed": 0,
+      "asleepUnspecified": 1,
+      "awake": 2,
+      "asleepCore": 3,
+      "asleepDeep": 4,
+      "asleepREM": 5,
+    }
+    SLEEP_NIGHTS = 28
+
+    def _sleep_cycles(rng: random.Random, target_minutes: float) -> list[tuple[str, int]]:
+      segments: list[tuple[str, int]] = [("inBed", rng.randint(5, 20))]
+      remaining = target_minutes
+      while remaining > 30:
+        cycle = min(rng.randint(75, 105), int(remaining))
+        core = max(15, round(cycle * 0.55))
+        deep = max(10, round(cycle * 0.20))
+        rem = max(10, cycle - core - deep)
+        segments += [("asleepCore", core), ("asleepDeep", deep), ("asleepREM", rem)]
+        remaining -= cycle
+        if rng.random() < 0.3:
+          segments.append(("awake", rng.randint(3, 10)))
+      segments.append(("inBed", rng.randint(2, 10)))
+      return segments
+
+    sleep_rng = random.Random(20260615)
+    sleep_samples: list[HealthKitSleepSample] = []
+    for days_ago in range(SLEEP_NIGHTS):
+      bed_day = d(days_ago) - timedelta(days=1)
+      is_weekend_night = bed_day.weekday() >= 4  # Fri/Sat night in -> later, longer
+      bedtime_hour = sleep_rng.uniform(23.5, 25.0) if is_weekend_night else sleep_rng.uniform(22.5, 23.75)
+      target_hours = sleep_rng.uniform(7.2, 8.6) if is_weekend_night else sleep_rng.uniform(6.4, 7.6)
+
+      t = datetime(bed_day.year, bed_day.month, bed_day.day, tzinfo=UTC) + timedelta(hours=bedtime_hour)
+      for stage, minutes in _sleep_cycles(sleep_rng, target_hours * 60):
+        end = t + timedelta(minutes=minutes)
+        sleep_samples.append(
+          HealthKitSleepSample(
+            healthkit_uuid=uuid4(),
+            sleep_value=SLEEP_VALUES[stage],
+            sleep_value_name=stage,
+            start_date=t,
+            end_date=end,
+            source_name="Apple Watch",
+            source_bundle_id="com.apple.health",
+            source_version="11.0",
+            device_name="Apple Watch",
+          )
+        )
+        t = end
+
+    for sample in sleep_samples:
+      session.add(sample)
+    await session.flush()
+    print(f"Seeded {len(sleep_samples)} HealthKit sleep samples across {SLEEP_NIGHTS} nights.")
+
     # ── Commit ────────────────────────────────────────────────────────────
     await session.commit()
     print("\n✅ Database seeded successfully!")
@@ -758,6 +834,7 @@ async def seed() -> None:
     print(f"   Places:        {len(places)}")
     print(f"   Activity:      {len(all_activity)} events  ({len(_day_specs)} active days)")
     print(f"   Workouts:      {len(workouts)}")
+    print(f"   Sleep samples: {len(sleep_samples)}  ({SLEEP_NIGHTS} nights)")
 
   await engine.dispose()
 
