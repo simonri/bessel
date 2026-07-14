@@ -28,6 +28,7 @@ import {
   listCategoriesV1CategoriesGetResponseTransformer,
   listCountersV1CountersGetResponseTransformer,
   listDevicesV1DevicesGetResponseTransformer,
+  listHealthkitSleepV1HealthkitSleepGetResponseTransformer,
   listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
@@ -138,6 +139,9 @@ import type {
   GetDailyActivityV1ActivityDailyGetData,
   GetDailyActivityV1ActivityDailyGetErrors,
   GetDailyActivityV1ActivityDailyGetResponses,
+  GetDailySleepV1HealthkitSleepDailyGetData,
+  GetDailySleepV1HealthkitSleepDailyGetErrors,
+  GetDailySleepV1HealthkitSleepDailyGetResponses,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponses,
   GetIntradayActivityV1ActivityIntradayGetData,
@@ -151,6 +155,9 @@ import type {
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetErrors,
   GetRecipeV1RecipesRecipeIdGetResponses,
+  GetSleepSummaryV1HealthkitSleepSummaryGetData,
+  GetSleepSummaryV1HealthkitSleepSummaryGetErrors,
+  GetSleepSummaryV1HealthkitSleepSummaryGetResponses,
   GetTaskV1TasksTaskIdGetData,
   GetTaskV1TasksTaskIdGetErrors,
   GetTaskV1TasksTaskIdGetResponses,
@@ -182,6 +189,9 @@ import type {
   ListCountersV1CountersGetResponses,
   ListDevicesV1DevicesGetData,
   ListDevicesV1DevicesGetResponses,
+  ListHealthkitSleepV1HealthkitSleepGetData,
+  ListHealthkitSleepV1HealthkitSleepGetErrors,
+  ListHealthkitSleepV1HealthkitSleepGetResponses,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
@@ -237,6 +247,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostData,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
@@ -804,6 +817,87 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGet = <
       listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/healthkit/workouts",
+    ...options,
+  });
+
+/**
+ * Sync HealthKit Sleep Samples
+ */
+export const syncHealthkitSleepV1HealthkitSleepSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SyncHealthkitSleepV1HealthkitSleepSyncPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
+    SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/sleep/sync",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List HealthKit Sleep Samples
+ */
+export const listHealthkitSleepV1HealthkitSleepGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListHealthkitSleepV1HealthkitSleepGetResponses,
+    ListHealthkitSleepV1HealthkitSleepGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listHealthkitSleepV1HealthkitSleepGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/sleep",
+    ...options,
+  });
+
+/**
+ * Get Nightly Sleep Totals
+ */
+export const getDailySleepV1HealthkitSleepDailyGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetDailySleepV1HealthkitSleepDailyGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetDailySleepV1HealthkitSleepDailyGetResponses,
+    GetDailySleepV1HealthkitSleepDailyGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/sleep/daily",
+    ...options,
+  });
+
+/**
+ * Get Sleep Stage Summary
+ */
+export const getSleepSummaryV1HealthkitSleepSummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetSleepSummaryV1HealthkitSleepSummaryGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetSleepSummaryV1HealthkitSleepSummaryGetResponses,
+    GetSleepSummaryV1HealthkitSleepSummaryGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/sleep/summary",
     ...options,
   });
 

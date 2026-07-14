@@ -31,10 +31,10 @@ final class WorkoutsStore {
         }
     }
 
-    /// Uploads everything HealthKit reports as changed since the persisted anchor,
-    /// one page at a time. The anchor only advances after the server acknowledges a
-    /// page, so an interrupted sync resumes where it left off; the server upsert
-    /// absorbs any replayed page.
+    /// Uploads everything HealthKit reports as changed since the persisted anchors
+    /// (workouts and sleep each have their own), one page at a time. Anchors only
+    /// advance after the server acknowledges a page, so an interrupted sync resumes
+    /// where it left off; the server upsert absorbs any replayed page.
     func sync() async {
         guard !isSyncing else { return }
         guard HealthKitService.isAvailable else {
@@ -45,22 +45,41 @@ final class WorkoutsStore {
         defer { isSyncing = false }
         do {
             try await healthKit.requestAuthorization()
-            var anchor = WorkoutSyncAnchor.load()
-            while true {
-                let batch = try await healthKit.fetchNextBatch(anchor: anchor, limit: 200)
-                if batch.added.isEmpty && batch.deletedUUIDs.isEmpty { break }
-                let _: WorkoutSyncResponse = try await client.post(
-                    "/v1/healthkit/workouts/sync",
-                    body: WorkoutSyncRequest(workouts: batch.added, deletedUuids: batch.deletedUUIDs)
-                )
-                WorkoutSyncAnchor.save(batch.newAnchor)
-                anchor = batch.newAnchor
-            }
+            try await syncWorkouts()
+            try await syncSleep()
             WorkoutSyncAnchor.lastSyncedAt = .now
             lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
             await load()
         } catch {
             report(error)
+        }
+    }
+
+    private func syncWorkouts() async throws {
+        var anchor = WorkoutSyncAnchor.load()
+        while true {
+            let batch = try await healthKit.fetchNextBatch(anchor: anchor, limit: 200)
+            if batch.added.isEmpty && batch.deletedUUIDs.isEmpty { break }
+            let _: WorkoutSyncResponse = try await client.post(
+                "/v1/healthkit/workouts/sync",
+                body: WorkoutSyncRequest(workouts: batch.added, deletedUuids: batch.deletedUUIDs)
+            )
+            WorkoutSyncAnchor.save(batch.newAnchor)
+            anchor = batch.newAnchor
+        }
+    }
+
+    private func syncSleep() async throws {
+        var anchor = SleepSyncAnchor.load()
+        while true {
+            let batch = try await healthKit.fetchNextSleepBatch(anchor: anchor, limit: 200)
+            if batch.added.isEmpty && batch.deletedUUIDs.isEmpty { break }
+            let _: SleepSyncResponse = try await client.post(
+                "/v1/healthkit/sleep/sync",
+                body: SleepSyncRequest(samples: batch.added, deletedUuids: batch.deletedUUIDs)
+            )
+            SleepSyncAnchor.save(batch.newAnchor)
+            anchor = batch.newAnchor
         }
     }
 

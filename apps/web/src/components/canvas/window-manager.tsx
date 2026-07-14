@@ -26,6 +26,7 @@ export type ModuleKey =
   | "tasks"
   | "travel"
   | "activity"
+  | "sleep"
   | "recipes"
   | "claudeCode"
   | "codex"

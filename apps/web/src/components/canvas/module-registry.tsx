@@ -8,6 +8,7 @@ import {
   Landmark,
   LayoutDashboard,
   MapPin,
+  Moon,
   SquareTerminal,
   TrendingUp,
 } from "lucide-react";
@@ -96,6 +97,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     icon: Activity,
     component: lazy(() =>
       import("@/routes/_app/activity").then((m) => ({
+        default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...COMPACT_SIZE,
+  },
+  sleep: {
+    title: "Sleep",
+    icon: Moon,
+    component: lazy(() =>
+      import("@/routes/_app/sleep").then((m) => ({
         default: m.Route.options.component as React.ComponentType,
       })),
     ),
@@ -192,6 +203,7 @@ export const MODULE_ORDER: ModuleKey[] = [
   "tasks",
   "travel",
   "activity",
+  "sleep",
   "recipes",
   "gitStatus",
   ...desktopModules,

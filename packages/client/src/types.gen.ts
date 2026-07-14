@@ -797,6 +797,175 @@ export type HttpValidationError = {
 };
 
 /**
+ * HealthKitSleepListResponse
+ */
+export type HealthKitSleepListResponse = {
+  /**
+   * Items
+   */
+  items: Array<HealthKitSleepSampleSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * HealthKitSleepSampleSchema
+ */
+export type HealthKitSleepSampleSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Healthkit Uuid
+   */
+  healthkit_uuid: string;
+  /**
+   * Sleep Value
+   */
+  sleep_value: number;
+  /**
+   * Sleep Value Name
+   */
+  sleep_value_name: string;
+  /**
+   * Start Date
+   */
+  start_date: Date;
+  /**
+   * End Date
+   */
+  end_date: Date;
+  /**
+   * Source Name
+   */
+  source_name: string;
+  /**
+   * Source Bundle Id
+   */
+  source_bundle_id: string;
+  /**
+   * Source Version
+   */
+  source_version: string | null;
+  /**
+   * Device Name
+   */
+  device_name: string | null;
+  /**
+   * Sample Metadata
+   */
+  sample_metadata: {
+    [key: string]: unknown;
+  } | null;
+};
+
+/**
+ * HealthKitSleepSampleUpload
+ *
+ * One HKCategorySample for sleep analysis, mirrored field-by-field from HealthKit.
+ */
+export type HealthKitSleepSampleUpload = {
+  /**
+   * Healthkit Uuid
+   *
+   * HKObject.uuid, stable across devices.
+   */
+  healthkit_uuid: string;
+  /**
+   * Sleep Value
+   *
+   * HKCategoryValueSleepAnalysis raw value.
+   */
+  sleep_value: number;
+  /**
+   * Sleep Value Name
+   *
+   * e.g. 'asleepCore', 'awake', 'inBed'.
+   */
+  sleep_value_name: string;
+  /**
+   * Start Date
+   */
+  start_date: Date;
+  /**
+   * End Date
+   */
+  end_date: Date;
+  /**
+   * Source Name
+   */
+  source_name: string;
+  /**
+   * Source Bundle Id
+   */
+  source_bundle_id: string;
+  /**
+   * Source Version
+   */
+  source_version?: string | null;
+  /**
+   * Device Name
+   */
+  device_name?: string | null;
+  /**
+   * Sample Metadata
+   *
+   * HKCategorySample.metadata, JSON-safe subset.
+   */
+  sample_metadata?: {
+    [key: string]: unknown;
+  } | null;
+};
+
+/**
+ * HealthKitSleepSyncRequest
+ */
+export type HealthKitSleepSyncRequest = {
+  /**
+   * Samples
+   */
+  samples?: Array<HealthKitSleepSampleUpload>;
+  /**
+   * Deleted Uuids
+   *
+   * HealthKit UUIDs of sleep samples deleted on-device since the last sync anchor.
+   */
+  deleted_uuids?: Array<string>;
+};
+
+/**
+ * HealthKitSleepSyncResponse
+ */
+export type HealthKitSleepSyncResponse = {
+  /**
+   * Synced
+   *
+   * Number of sleep samples inserted or updated.
+   */
+  synced: number;
+  /**
+   * Deleted
+   *
+   * Number of sleep samples soft-deleted.
+   */
+  deleted: number;
+};
+
+/**
  * HealthKitWorkoutListResponse
  */
 export type HealthKitWorkoutListResponse = {
@@ -1957,6 +2126,68 @@ export type SecurityUpdate = {
    * Notes
    */
   notes?: string | null;
+};
+
+/**
+ * SleepDailyEntry
+ */
+export type SleepDailyEntry = {
+  /**
+   * Date
+   *
+   * Wake date (ISO 8601), not the bed date — a night is bucketed to the date the sleeper woke up.
+   */
+  date: string;
+  /**
+   * Asleep Secs
+   */
+  asleep_secs: number;
+};
+
+/**
+ * SleepDailyResponse
+ */
+export type SleepDailyResponse = {
+  /**
+   * Nights
+   */
+  nights: Array<SleepDailyEntry>;
+};
+
+/**
+ * SleepStageSummary
+ */
+export type SleepStageSummary = {
+  /**
+   * Stage
+   *
+   * HKCategoryValueSleepAnalysis name, e.g. 'asleepCore', 'awake'.
+   */
+  stage: string;
+  /**
+   * Secs
+   */
+  secs: number;
+  /**
+   * Percentage
+   *
+   * Share of the total queried window (all stages), not just asleep time.
+   */
+  percentage: number;
+};
+
+/**
+ * SleepSummaryResponse
+ */
+export type SleepSummaryResponse = {
+  /**
+   * Total Asleep Secs
+   */
+  total_asleep_secs: number;
+  /**
+   * Stages
+   */
+  stages: Array<SleepStageSummary>;
 };
 
 /**
@@ -3511,6 +3742,165 @@ export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses = {
 
 export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse =
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses[keyof ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses];
+
+export type SyncHealthkitSleepV1HealthkitSleepSyncPostData = {
+  body: HealthKitSleepSyncRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/healthkit/sleep/sync";
+};
+
+export type SyncHealthkitSleepV1HealthkitSleepSyncPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SyncHealthkitSleepV1HealthkitSleepSyncPostError =
+  SyncHealthkitSleepV1HealthkitSleepSyncPostErrors[keyof SyncHealthkitSleepV1HealthkitSleepSyncPostErrors];
+
+export type SyncHealthkitSleepV1HealthkitSleepSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: HealthKitSleepSyncResponse;
+};
+
+export type SyncHealthkitSleepV1HealthkitSleepSyncPostResponse =
+  SyncHealthkitSleepV1HealthkitSleepSyncPostResponses[keyof SyncHealthkitSleepV1HealthkitSleepSyncPostResponses];
+
+export type ListHealthkitSleepV1HealthkitSleepGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/healthkit/sleep";
+};
+
+export type ListHealthkitSleepV1HealthkitSleepGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListHealthkitSleepV1HealthkitSleepGetError =
+  ListHealthkitSleepV1HealthkitSleepGetErrors[keyof ListHealthkitSleepV1HealthkitSleepGetErrors];
+
+export type ListHealthkitSleepV1HealthkitSleepGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: HealthKitSleepListResponse;
+};
+
+export type ListHealthkitSleepV1HealthkitSleepGetResponse =
+  ListHealthkitSleepV1HealthkitSleepGetResponses[keyof ListHealthkitSleepV1HealthkitSleepGetResponses];
+
+export type GetDailySleepV1HealthkitSleepDailyGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Ts
+     *
+     * Start of range (Unix epoch seconds, inclusive).
+     */
+    start_ts: number;
+    /**
+     * End Ts
+     *
+     * End of range (Unix epoch seconds, exclusive).
+     */
+    end_ts: number;
+    /**
+     * Tz Name
+     *
+     * IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.
+     */
+    tz_name?: string | null;
+    /**
+     * Tz Offset Mins
+     *
+     * Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.
+     */
+    tz_offset_mins?: number;
+  };
+  url: "/v1/healthkit/sleep/daily";
+};
+
+export type GetDailySleepV1HealthkitSleepDailyGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetDailySleepV1HealthkitSleepDailyGetError =
+  GetDailySleepV1HealthkitSleepDailyGetErrors[keyof GetDailySleepV1HealthkitSleepDailyGetErrors];
+
+export type GetDailySleepV1HealthkitSleepDailyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SleepDailyResponse;
+};
+
+export type GetDailySleepV1HealthkitSleepDailyGetResponse =
+  GetDailySleepV1HealthkitSleepDailyGetResponses[keyof GetDailySleepV1HealthkitSleepDailyGetResponses];
+
+export type GetSleepSummaryV1HealthkitSleepSummaryGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Ts
+     *
+     * Start of window (Unix epoch seconds, inclusive).
+     */
+    start_ts: number;
+    /**
+     * End Ts
+     *
+     * End of window (Unix epoch seconds, exclusive).
+     */
+    end_ts: number;
+  };
+  url: "/v1/healthkit/sleep/summary";
+};
+
+export type GetSleepSummaryV1HealthkitSleepSummaryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetSleepSummaryV1HealthkitSleepSummaryGetError =
+  GetSleepSummaryV1HealthkitSleepSummaryGetErrors[keyof GetSleepSummaryV1HealthkitSleepSummaryGetErrors];
+
+export type GetSleepSummaryV1HealthkitSleepSummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SleepSummaryResponse;
+};
+
+export type GetSleepSummaryV1HealthkitSleepSummaryGetResponse =
+  GetSleepSummaryV1HealthkitSleepSummaryGetResponses[keyof GetSleepSummaryV1HealthkitSleepSummaryGetResponses];
 
 export type ListSecuritiesV1InvestmentsSecuritiesGetData = {
   body?: never;

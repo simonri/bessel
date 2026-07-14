@@ -1300,6 +1300,266 @@
         }
       }
     },
+    "/v1/healthkit/sleep/sync": {
+      "post": {
+        "tags": [
+          "healthkit"
+        ],
+        "summary": "Sync HealthKit Sleep Samples",
+        "operationId": "sync_healthkit_sleep_v1_healthkit_sleep_sync_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthKitSleepSyncRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthKitSleepSyncResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/healthkit/sleep": {
+      "get": {
+        "tags": [
+          "healthkit"
+        ],
+        "summary": "List HealthKit Sleep Samples",
+        "operationId": "list_healthkit_sleep_v1_healthkit_sleep_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Page number, defaults to 1.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number, defaults to 1."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Size of a page, defaults to 10. Maximum is 100.",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "Size of a page, defaults to 10. Maximum is 100."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthKitSleepListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/healthkit/sleep/daily": {
+      "get": {
+        "tags": [
+          "healthkit"
+        ],
+        "summary": "Get Nightly Sleep Totals",
+        "operationId": "get_daily_sleep_v1_healthkit_sleep_daily_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Start of range (Unix epoch seconds, inclusive).",
+              "title": "Start Ts"
+            },
+            "description": "Start of range (Unix epoch seconds, inclusive)."
+          },
+          {
+            "name": "end_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "End of range (Unix epoch seconds, exclusive).",
+              "title": "End Ts"
+            },
+            "description": "End of range (Unix epoch seconds, exclusive)."
+          },
+          {
+            "name": "tz_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.",
+              "title": "Tz Name"
+            },
+            "description": "IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly."
+          },
+          {
+            "name": "tz_offset_mins",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.",
+              "default": 0,
+              "title": "Tz Offset Mins"
+            },
+            "description": "Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SleepDailyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/healthkit/sleep/summary": {
+      "get": {
+        "tags": [
+          "healthkit"
+        ],
+        "summary": "Get Sleep Stage Summary",
+        "operationId": "get_sleep_summary_v1_healthkit_sleep_summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Start of window (Unix epoch seconds, inclusive).",
+              "title": "Start Ts"
+            },
+            "description": "Start of window (Unix epoch seconds, inclusive)."
+          },
+          {
+            "name": "end_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "End of window (Unix epoch seconds, exclusive).",
+              "title": "End Ts"
+            },
+            "description": "End of window (Unix epoch seconds, exclusive)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SleepSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/investments/securities": {
       "get": {
         "tags": [
@@ -5513,6 +5773,272 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HealthKitSleepListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HealthKitSleepSampleSchema"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "pagination"
+        ],
+        "title": "HealthKitSleepListResponse"
+      },
+      "HealthKitSleepSampleSchema": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp of the object."
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At",
+            "description": "Last modification timestamp of the object."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "healthkit_uuid": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Healthkit Uuid"
+          },
+          "sleep_value": {
+            "type": "integer",
+            "title": "Sleep Value"
+          },
+          "sleep_value_name": {
+            "type": "string",
+            "title": "Sleep Value Name"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End Date"
+          },
+          "source_name": {
+            "type": "string",
+            "title": "Source Name"
+          },
+          "source_bundle_id": {
+            "type": "string",
+            "title": "Source Bundle Id"
+          },
+          "source_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "sample_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "modified_at",
+          "id",
+          "healthkit_uuid",
+          "sleep_value",
+          "sleep_value_name",
+          "start_date",
+          "end_date",
+          "source_name",
+          "source_bundle_id",
+          "source_version",
+          "device_name",
+          "sample_metadata"
+        ],
+        "title": "HealthKitSleepSampleSchema"
+      },
+      "HealthKitSleepSampleUpload": {
+        "properties": {
+          "healthkit_uuid": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Healthkit Uuid",
+            "description": "HKObject.uuid, stable across devices."
+          },
+          "sleep_value": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sleep Value",
+            "description": "HKCategoryValueSleepAnalysis raw value."
+          },
+          "sleep_value_name": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Sleep Value Name",
+            "description": "e.g. 'asleepCore', 'awake', 'inBed'."
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End Date"
+          },
+          "source_name": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Source Name"
+          },
+          "source_bundle_id": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Source Bundle Id"
+          },
+          "source_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "sample_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Metadata",
+            "description": "HKCategorySample.metadata, JSON-safe subset."
+          }
+        },
+        "type": "object",
+        "required": [
+          "healthkit_uuid",
+          "sleep_value",
+          "sleep_value_name",
+          "start_date",
+          "end_date",
+          "source_name",
+          "source_bundle_id"
+        ],
+        "title": "HealthKitSleepSampleUpload",
+        "description": "One HKCategorySample for sleep analysis, mirrored field-by-field from HealthKit."
+      },
+      "HealthKitSleepSyncRequest": {
+        "properties": {
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/HealthKitSleepSampleUpload"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Samples"
+          },
+          "deleted_uuids": {
+            "items": {
+              "type": "string",
+              "format": "uuid4"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Deleted Uuids",
+            "description": "HealthKit UUIDs of sleep samples deleted on-device since the last sync anchor."
+          }
+        },
+        "type": "object",
+        "title": "HealthKitSleepSyncRequest"
+      },
+      "HealthKitSleepSyncResponse": {
+        "properties": {
+          "synced": {
+            "type": "integer",
+            "title": "Synced",
+            "description": "Number of sleep samples inserted or updated."
+          },
+          "deleted": {
+            "type": "integer",
+            "title": "Deleted",
+            "description": "Number of sleep samples soft-deleted."
+          }
+        },
+        "type": "object",
+        "required": [
+          "synced",
+          "deleted"
+        ],
+        "title": "HealthKitSleepSyncResponse"
+      },
       "HealthKitWorkoutListResponse": {
         "properties": {
           "items": {
@@ -7529,6 +8055,87 @@
         },
         "type": "object",
         "title": "SecurityUpdate"
+      },
+      "SleepDailyEntry": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "Wake date (ISO 8601), not the bed date \u2014 a night is bucketed to the date the sleeper woke up."
+          },
+          "asleep_secs": {
+            "type": "integer",
+            "title": "Asleep Secs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "asleep_secs"
+        ],
+        "title": "SleepDailyEntry"
+      },
+      "SleepDailyResponse": {
+        "properties": {
+          "nights": {
+            "items": {
+              "$ref": "#/components/schemas/SleepDailyEntry"
+            },
+            "type": "array",
+            "title": "Nights"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nights"
+        ],
+        "title": "SleepDailyResponse"
+      },
+      "SleepStageSummary": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage",
+            "description": "HKCategoryValueSleepAnalysis name, e.g. 'asleepCore', 'awake'."
+          },
+          "secs": {
+            "type": "integer",
+            "title": "Secs"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage",
+            "description": "Share of the total queried window (all stages), not just asleep time."
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage",
+          "secs",
+          "percentage"
+        ],
+        "title": "SleepStageSummary"
+      },
+      "SleepSummaryResponse": {
+        "properties": {
+          "total_asleep_secs": {
+            "type": "integer",
+            "title": "Total Asleep Secs"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/SleepStageSummary"
+            },
+            "type": "array",
+            "title": "Stages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_asleep_secs",
+          "stages"
+        ],
+        "title": "SleepSummaryResponse"
       },
       "TaskCompleteResponse": {
         "properties": {

@@ -49,7 +49,7 @@
 		<true/>
 	</dict>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Bessel reads your workouts from Health to sync them to your account.</string>
+	<string>Bessel reads your workouts and sleep data from Health to sync them to your account.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

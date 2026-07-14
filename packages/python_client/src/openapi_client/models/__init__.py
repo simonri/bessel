@@ -37,6 +37,13 @@ from .get_klarna_transactions_v1_klarna_transactions_get_response_get_klarna_tra
 )
 from .google_place_search_response import GooglePlaceSearchResponse
 from .google_place_search_result import GooglePlaceSearchResult
+from .health_kit_sleep_list_response import HealthKitSleepListResponse
+from .health_kit_sleep_sample_schema import HealthKitSleepSampleSchema
+from .health_kit_sleep_sample_schema_sample_metadata_type_0 import HealthKitSleepSampleSchemaSampleMetadataType0
+from .health_kit_sleep_sample_upload import HealthKitSleepSampleUpload
+from .health_kit_sleep_sample_upload_sample_metadata_type_0 import HealthKitSleepSampleUploadSampleMetadataType0
+from .health_kit_sleep_sync_request import HealthKitSleepSyncRequest
+from .health_kit_sleep_sync_response import HealthKitSleepSyncResponse
 from .health_kit_workout_list_response import HealthKitWorkoutListResponse
 from .health_kit_workout_schema import HealthKitWorkoutSchema
 from .health_kit_workout_schema_statistics_type_0 import HealthKitWorkoutSchemaStatisticsType0
@@ -87,6 +94,10 @@ from .security_price_list_response import SecurityPriceListResponse
 from .security_price_schema import SecurityPriceSchema
 from .security_schema import SecuritySchema
 from .security_update import SecurityUpdate
+from .sleep_daily_entry import SleepDailyEntry
+from .sleep_daily_response import SleepDailyResponse
+from .sleep_stage_summary import SleepStageSummary
+from .sleep_summary_response import SleepSummaryResponse
 from .task_complete_response import TaskCompleteResponse
 from .task_create import TaskCreate
 from .task_list_response import TaskListResponse
@@ -147,6 +158,13 @@ __all__ = (
   "GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet",
   "GooglePlaceSearchResponse",
   "GooglePlaceSearchResult",
+  "HealthKitSleepListResponse",
+  "HealthKitSleepSampleSchema",
+  "HealthKitSleepSampleSchemaSampleMetadataType0",
+  "HealthKitSleepSampleUpload",
+  "HealthKitSleepSampleUploadSampleMetadataType0",
+  "HealthKitSleepSyncRequest",
+  "HealthKitSleepSyncResponse",
   "HealthKitWorkoutListResponse",
   "HealthKitWorkoutSchema",
   "HealthKitWorkoutSchemaStatisticsType0",
@@ -195,6 +213,10 @@ __all__ = (
   "SecurityPriceSchema",
   "SecuritySchema",
   "SecurityUpdate",
+  "SleepDailyEntry",
+  "SleepDailyResponse",
+  "SleepStageSummary",
+  "SleepSummaryResponse",
   "TaskCompleteResponse",
   "TaskCreate",
   "TaskListResponse",

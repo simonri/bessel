@@ -7,8 +7,15 @@ struct WorkoutBatch {
     let newAnchor: HKQueryAnchor
 }
 
-/// Reads workouts from the HealthKit store via anchored queries, so each call
-/// returns only what changed since the given anchor (adds and deletes).
+struct SleepBatch {
+    let added: [HealthKitSleepSampleUpload]
+    let deletedUUIDs: [UUID]
+    let newAnchor: HKQueryAnchor
+}
+
+/// Reads workouts and sleep analysis from the HealthKit store via anchored
+/// queries, so each call returns only what changed since the given anchor
+/// (adds and deletes).
 final class HealthKitService {
     static var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
@@ -17,7 +24,10 @@ final class HealthKitService {
     /// No-op once granted; read status is intentionally not queryable, so this
     /// runs before every sync and the query simply returns what is permitted.
     func requestAuthorization() async throws {
-        try await store.requestAuthorization(toShare: [], read: [HKObjectType.workoutType()])
+        try await store.requestAuthorization(
+            toShare: [],
+            read: [HKObjectType.workoutType(), HKCategoryType(.sleepAnalysis)]
+        )
     }
 
     func fetchNextBatch(anchor: HKQueryAnchor?, limit: Int) async throws -> WorkoutBatch {
@@ -28,6 +38,20 @@ final class HealthKitService {
         )
         let result = try await descriptor.result(for: store)
         return WorkoutBatch(
+            added: result.addedSamples.map(Self.upload(from:)),
+            deletedUUIDs: result.deletedObjects.map(\.uuid),
+            newAnchor: result.newAnchor
+        )
+    }
+
+    func fetchNextSleepBatch(anchor: HKQueryAnchor?, limit: Int) async throws -> SleepBatch {
+        let descriptor = HKAnchoredObjectQueryDescriptor(
+            predicates: [.categorySample(type: HKCategoryType(.sleepAnalysis))],
+            anchor: anchor,
+            limit: limit
+        )
+        let result = try await descriptor.result(for: store)
+        return SleepBatch(
             added: result.addedSamples.map(Self.upload(from:)),
             deletedUUIDs: result.deletedObjects.map(\.uuid),
             newAnchor: result.newAnchor
@@ -118,6 +142,21 @@ final class HealthKitService {
         return result.isEmpty ? nil : result
     }
 
+    private static func upload(from sample: HKCategorySample) -> HealthKitSleepSampleUpload {
+        HealthKitSleepSampleUpload(
+            healthkitUuid: sample.uuid,
+            sleepValue: sample.value,
+            sleepValueName: HKCategoryValueSleepAnalysis(rawValue: sample.value)?.name ?? "unknown",
+            startDate: isoFormatter.string(from: sample.startDate),
+            endDate: isoFormatter.string(from: sample.endDate),
+            sourceName: sample.sourceRevision.source.name,
+            sourceBundleId: sample.sourceRevision.source.bundleIdentifier,
+            sourceVersion: sample.sourceRevision.version,
+            deviceName: sample.device?.name,
+            sampleMetadata: jsonMetadata(sample.metadata)
+        )
+    }
+
     private static func jsonMetadata(_ metadata: [String: Any]?) -> [String: JSONValue]? {
         guard let metadata else { return nil }
         var result: [String: JSONValue] = [:]
@@ -165,6 +204,49 @@ enum WorkoutSyncAnchor {
     static func clear() {
         UserDefaults.standard.removeObject(forKey: anchorKey)
         UserDefaults.standard.removeObject(forKey: lastSyncedAtKey)
+    }
+}
+
+/// The persisted HKQueryAnchor cursor for sleep samples, independent of the
+/// workout anchor since it's a separate anchored query.
+enum SleepSyncAnchor {
+    private static let anchorKey = "healthkit.sleepAnchor"
+    private static let lastSyncedAtKey = "healthkit.sleepLastSyncedAt"
+
+    static func load() -> HKQueryAnchor? {
+        guard let data = UserDefaults.standard.data(forKey: anchorKey) else { return nil }
+        return try? NSKeyedUnarchiver.unarchivedObject(ofClass: HKQueryAnchor.self, from: data)
+    }
+
+    static func save(_ anchor: HKQueryAnchor) {
+        guard let data = try? NSKeyedArchiver.archivedData(withRootObject: anchor, requiringSecureCoding: true) else { return }
+        UserDefaults.standard.set(data, forKey: anchorKey)
+    }
+
+    static var lastSyncedAt: Date? {
+        get { UserDefaults.standard.object(forKey: lastSyncedAtKey) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: lastSyncedAtKey) }
+    }
+
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: anchorKey)
+        UserDefaults.standard.removeObject(forKey: lastSyncedAtKey)
+    }
+}
+
+extension HKCategoryValueSleepAnalysis {
+    /// Human-readable slug stored alongside the raw value, matching the
+    /// backend's `sleep_value_name` convention.
+    var name: String {
+        switch self {
+        case .inBed: "inBed"
+        case .asleepUnspecified: "asleepUnspecified"
+        case .awake: "awake"
+        case .asleepCore: "asleepCore"
+        case .asleepDeep: "asleepDeep"
+        case .asleepREM: "asleepREM"
+        @unknown default: "unknown"
+        }
     }
 }
 

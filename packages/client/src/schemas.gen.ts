@@ -1027,6 +1027,273 @@ export const HTTPValidationErrorSchema = {
   title: "HTTPValidationError",
 } as const;
 
+export const HealthKitSleepListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/HealthKitSleepSampleSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "HealthKitSleepListResponse",
+} as const;
+
+export const HealthKitSleepSampleSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    healthkit_uuid: {
+      type: "string",
+      format: "uuid4",
+      title: "Healthkit Uuid",
+    },
+    sleep_value: {
+      type: "integer",
+      title: "Sleep Value",
+    },
+    sleep_value_name: {
+      type: "string",
+      title: "Sleep Value Name",
+    },
+    start_date: {
+      type: "string",
+      format: "date-time",
+      title: "Start Date",
+    },
+    end_date: {
+      type: "string",
+      format: "date-time",
+      title: "End Date",
+    },
+    source_name: {
+      type: "string",
+      title: "Source Name",
+    },
+    source_bundle_id: {
+      type: "string",
+      title: "Source Bundle Id",
+    },
+    source_version: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Source Version",
+    },
+    device_name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Device Name",
+    },
+    sample_metadata: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sample Metadata",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "healthkit_uuid",
+    "sleep_value",
+    "sleep_value_name",
+    "start_date",
+    "end_date",
+    "source_name",
+    "source_bundle_id",
+    "source_version",
+    "device_name",
+    "sample_metadata",
+  ],
+  title: "HealthKitSleepSampleSchema",
+} as const;
+
+export const HealthKitSleepSampleUploadSchema = {
+  properties: {
+    healthkit_uuid: {
+      type: "string",
+      format: "uuid4",
+      title: "Healthkit Uuid",
+      description: "HKObject.uuid, stable across devices.",
+    },
+    sleep_value: {
+      type: "integer",
+      minimum: 0,
+      title: "Sleep Value",
+      description: "HKCategoryValueSleepAnalysis raw value.",
+    },
+    sleep_value_name: {
+      type: "string",
+      maxLength: 32,
+      title: "Sleep Value Name",
+      description: "e.g. 'asleepCore', 'awake', 'inBed'.",
+    },
+    start_date: {
+      type: "string",
+      format: "date-time",
+      title: "Start Date",
+    },
+    end_date: {
+      type: "string",
+      format: "date-time",
+      title: "End Date",
+    },
+    source_name: {
+      type: "string",
+      maxLength: 255,
+      title: "Source Name",
+    },
+    source_bundle_id: {
+      type: "string",
+      maxLength: 255,
+      title: "Source Bundle Id",
+    },
+    source_version: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Source Version",
+    },
+    device_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Device Name",
+    },
+    sample_metadata: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sample Metadata",
+      description: "HKCategorySample.metadata, JSON-safe subset.",
+    },
+  },
+  type: "object",
+  required: [
+    "healthkit_uuid",
+    "sleep_value",
+    "sleep_value_name",
+    "start_date",
+    "end_date",
+    "source_name",
+    "source_bundle_id",
+  ],
+  title: "HealthKitSleepSampleUpload",
+  description:
+    "One HKCategorySample for sleep analysis, mirrored field-by-field from HealthKit.",
+} as const;
+
+export const HealthKitSleepSyncRequestSchema = {
+  properties: {
+    samples: {
+      items: {
+        $ref: "#/components/schemas/HealthKitSleepSampleUpload",
+      },
+      type: "array",
+      maxItems: 500,
+      title: "Samples",
+    },
+    deleted_uuids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      maxItems: 500,
+      title: "Deleted Uuids",
+      description:
+        "HealthKit UUIDs of sleep samples deleted on-device since the last sync anchor.",
+    },
+  },
+  type: "object",
+  title: "HealthKitSleepSyncRequest",
+} as const;
+
+export const HealthKitSleepSyncResponseSchema = {
+  properties: {
+    synced: {
+      type: "integer",
+      title: "Synced",
+      description: "Number of sleep samples inserted or updated.",
+    },
+    deleted: {
+      type: "integer",
+      title: "Deleted",
+      description: "Number of sleep samples soft-deleted.",
+    },
+  },
+  type: "object",
+  required: ["synced", "deleted"],
+  title: "HealthKitSleepSyncResponse",
+} as const;
+
 export const HealthKitWorkoutListResponseSchema = {
   properties: {
     items: {
@@ -3003,6 +3270,82 @@ export const SecurityUpdateSchema = {
   },
   type: "object",
   title: "SecurityUpdate",
+} as const;
+
+export const SleepDailyEntrySchema = {
+  properties: {
+    date: {
+      type: "string",
+      title: "Date",
+      description:
+        "Wake date (ISO 8601), not the bed date — a night is bucketed to the date the sleeper woke up.",
+    },
+    asleep_secs: {
+      type: "integer",
+      title: "Asleep Secs",
+    },
+  },
+  type: "object",
+  required: ["date", "asleep_secs"],
+  title: "SleepDailyEntry",
+} as const;
+
+export const SleepDailyResponseSchema = {
+  properties: {
+    nights: {
+      items: {
+        $ref: "#/components/schemas/SleepDailyEntry",
+      },
+      type: "array",
+      title: "Nights",
+    },
+  },
+  type: "object",
+  required: ["nights"],
+  title: "SleepDailyResponse",
+} as const;
+
+export const SleepStageSummarySchema = {
+  properties: {
+    stage: {
+      type: "string",
+      title: "Stage",
+      description:
+        "HKCategoryValueSleepAnalysis name, e.g. 'asleepCore', 'awake'.",
+    },
+    secs: {
+      type: "integer",
+      title: "Secs",
+    },
+    percentage: {
+      type: "number",
+      title: "Percentage",
+      description:
+        "Share of the total queried window (all stages), not just asleep time.",
+    },
+  },
+  type: "object",
+  required: ["stage", "secs", "percentage"],
+  title: "SleepStageSummary",
+} as const;
+
+export const SleepSummaryResponseSchema = {
+  properties: {
+    total_asleep_secs: {
+      type: "integer",
+      title: "Total Asleep Secs",
+    },
+    stages: {
+      items: {
+        $ref: "#/components/schemas/SleepStageSummary",
+      },
+      type: "array",
+      title: "Stages",
+    },
+  },
+  type: "object",
+  required: ["total_asleep_secs", "stages"],
+  title: "SleepSummaryResponse",
 } as const;
 
 export const TaskCompleteResponseSchema = {

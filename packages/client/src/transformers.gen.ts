@@ -21,6 +21,7 @@ import type {
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetResponse,
+  ListHealthkitSleepV1HealthkitSleepGetResponse,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
@@ -218,6 +219,30 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer =
     data = healthKitWorkoutListResponseSchemaResponseTransformer(data);
     return data;
   };
+
+const healthKitSleepSampleSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.start_date = new Date(data.start_date);
+  data.end_date = new Date(data.end_date);
+  return data;
+};
+
+const healthKitSleepListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    healthKitSleepSampleSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listHealthkitSleepV1HealthkitSleepGetResponseTransformer = async (
+  data: any,
+): Promise<ListHealthkitSleepV1HealthkitSleepGetResponse> => {
+  data = healthKitSleepListResponseSchemaResponseTransformer(data);
+  return data;
+};
 
 const securitySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

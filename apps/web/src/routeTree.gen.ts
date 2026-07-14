@@ -15,6 +15,7 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
+import { Route as AppSleepRouteImport } from './routes/_app/sleep'
 import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
 import { Route as AppCountersRouteImport } from './routes/_app/counters'
@@ -48,6 +49,11 @@ const AppTransactionsRoute = AppTransactionsRouteImport.update({
 const AppTasksRoute = AppTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSleepRoute = AppSleepRouteImport.update({
+  id: '/sleep',
+  path: '/sleep',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRecipesRoute = AppRecipesRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/counters': typeof AppCountersRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
+  '/sleep': typeof AppSleepRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/counters': typeof AppCountersRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
+  '/sleep': typeof AppSleepRoute
   '/tasks': typeof AppTasksRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/_app/counters': typeof AppCountersRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/recipes': typeof AppRecipesRoute
+  '/_app/sleep': typeof AppSleepRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/travel': typeof AppTravelRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/counters'
     | '/investments'
     | '/recipes'
+    | '/sleep'
     | '/tasks'
     | '/transactions'
     | '/travel'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/counters'
     | '/investments'
     | '/recipes'
+    | '/sleep'
     | '/tasks'
     | '/transactions'
     | '/travel'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/_app/counters'
     | '/_app/investments'
     | '/_app/recipes'
+    | '/_app/sleep'
     | '/_app/tasks'
     | '/_app/transactions'
     | '/_app/travel'
@@ -203,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/sleep': {
+      id: '/_app/sleep'
+      path: '/sleep'
+      fullPath: '/sleep'
+      preLoaderRoute: typeof AppSleepRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/recipes': {
       id: '/_app/recipes'
       path: '/recipes'
@@ -247,6 +266,7 @@ interface AppRouteChildren {
   AppCountersRoute: typeof AppCountersRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppRecipesRoute: typeof AppRecipesRoute
+  AppSleepRoute: typeof AppSleepRoute
   AppTasksRoute: typeof AppTasksRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppTravelRoute: typeof AppTravelRoute
@@ -259,6 +279,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCountersRoute: AppCountersRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppRecipesRoute: AppRecipesRoute,
+  AppSleepRoute: AppSleepRoute,
   AppTasksRoute: AppTasksRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppTravelRoute: AppTravelRoute,

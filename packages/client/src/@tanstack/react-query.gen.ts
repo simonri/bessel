@@ -38,11 +38,13 @@ import {
   getBankAccountV1BankAccountsBankAccountIdGet,
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
   getDailyActivityV1ActivityDailyGet,
+  getDailySleepV1HealthkitSleepDailyGet,
   getHoldingsV1InvestmentsHoldingsGet,
   getIntradayActivityV1ActivityIntradayGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
   getMeV1AuthMeGet,
   getRecipeV1RecipesRecipeIdGet,
+  getSleepSummaryV1HealthkitSleepSummaryGet,
   getTaskV1TasksTaskIdGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
@@ -55,6 +57,7 @@ import {
   listCategoriesV1CategoriesGet,
   listCountersV1CountersGet,
   listDevicesV1DevicesGet,
+  listHealthkitSleepV1HealthkitSleepGet,
   listHealthkitWorkoutsV1HealthkitWorkoutsGet,
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
@@ -75,6 +78,7 @@ import {
   searchGooglePlacesV1PlacesSearchGet,
   setProjectLocationV1ProjectsProjectIdLocationPut,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
+  syncHealthkitSleepV1HealthkitSleepSyncPost,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
@@ -173,6 +177,9 @@ import type {
   GetDailyActivityV1ActivityDailyGetData,
   GetDailyActivityV1ActivityDailyGetError,
   GetDailyActivityV1ActivityDailyGetResponse,
+  GetDailySleepV1HealthkitSleepDailyGetData,
+  GetDailySleepV1HealthkitSleepDailyGetError,
+  GetDailySleepV1HealthkitSleepDailyGetResponse,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponse,
   GetIntradayActivityV1ActivityIntradayGetData,
@@ -186,6 +193,9 @@ import type {
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetError,
   GetRecipeV1RecipesRecipeIdGetResponse,
+  GetSleepSummaryV1HealthkitSleepSummaryGetData,
+  GetSleepSummaryV1HealthkitSleepSummaryGetError,
+  GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
   GetTaskV1TasksTaskIdGetData,
   GetTaskV1TasksTaskIdGetError,
   GetTaskV1TasksTaskIdGetResponse,
@@ -216,6 +226,9 @@ import type {
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetData,
   ListDevicesV1DevicesGetResponse,
+  ListHealthkitSleepV1HealthkitSleepGetData,
+  ListHealthkitSleepV1HealthkitSleepGetError,
+  ListHealthkitSleepV1HealthkitSleepGetResponse,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
@@ -271,6 +284,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostData,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostError,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
@@ -1247,6 +1263,167 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
         listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey(options),
     },
   );
+
+/**
+ * Sync HealthKit Sleep Samples
+ */
+export const syncHealthkitSleepV1HealthkitSleepSyncPostMutation = (
+  options?: Partial<Options<SyncHealthkitSleepV1HealthkitSleepSyncPostData>>,
+): UseMutationOptions<
+  SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
+  SyncHealthkitSleepV1HealthkitSleepSyncPostError,
+  Options<SyncHealthkitSleepV1HealthkitSleepSyncPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
+    SyncHealthkitSleepV1HealthkitSleepSyncPostError,
+    Options<SyncHealthkitSleepV1HealthkitSleepSyncPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncHealthkitSleepV1HealthkitSleepSyncPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listHealthkitSleepV1HealthkitSleepGetQueryKey = (
+  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
+) => createQueryKey("listHealthkitSleepV1HealthkitSleepGet", options);
+
+/**
+ * List HealthKit Sleep Samples
+ */
+export const listHealthkitSleepV1HealthkitSleepGetOptions = (
+  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
+) =>
+  queryOptions<
+    ListHealthkitSleepV1HealthkitSleepGetResponse,
+    ListHealthkitSleepV1HealthkitSleepGetError,
+    ListHealthkitSleepV1HealthkitSleepGetResponse,
+    ReturnType<typeof listHealthkitSleepV1HealthkitSleepGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listHealthkitSleepV1HealthkitSleepGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listHealthkitSleepV1HealthkitSleepGetQueryKey(options),
+  });
+
+export const listHealthkitSleepV1HealthkitSleepGetInfiniteQueryKey = (
+  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
+): QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>> =>
+  createQueryKey("listHealthkitSleepV1HealthkitSleepGet", options, true);
+
+/**
+ * List HealthKit Sleep Samples
+ */
+export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
+  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
+) =>
+  infiniteQueryOptions<
+    ListHealthkitSleepV1HealthkitSleepGetResponse,
+    ListHealthkitSleepV1HealthkitSleepGetError,
+    InfiniteData<ListHealthkitSleepV1HealthkitSleepGetResponse>,
+    QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listHealthkitSleepV1HealthkitSleepGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listHealthkitSleepV1HealthkitSleepGetInfiniteQueryKey(options),
+    },
+  );
+
+export const getDailySleepV1HealthkitSleepDailyGetQueryKey = (
+  options: Options<GetDailySleepV1HealthkitSleepDailyGetData>,
+) => createQueryKey("getDailySleepV1HealthkitSleepDailyGet", options);
+
+/**
+ * Get Nightly Sleep Totals
+ */
+export const getDailySleepV1HealthkitSleepDailyGetOptions = (
+  options: Options<GetDailySleepV1HealthkitSleepDailyGetData>,
+) =>
+  queryOptions<
+    GetDailySleepV1HealthkitSleepDailyGetResponse,
+    GetDailySleepV1HealthkitSleepDailyGetError,
+    GetDailySleepV1HealthkitSleepDailyGetResponse,
+    ReturnType<typeof getDailySleepV1HealthkitSleepDailyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDailySleepV1HealthkitSleepDailyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDailySleepV1HealthkitSleepDailyGetQueryKey(options),
+  });
+
+export const getSleepSummaryV1HealthkitSleepSummaryGetQueryKey = (
+  options: Options<GetSleepSummaryV1HealthkitSleepSummaryGetData>,
+) => createQueryKey("getSleepSummaryV1HealthkitSleepSummaryGet", options);
+
+/**
+ * Get Sleep Stage Summary
+ */
+export const getSleepSummaryV1HealthkitSleepSummaryGetOptions = (
+  options: Options<GetSleepSummaryV1HealthkitSleepSummaryGetData>,
+) =>
+  queryOptions<
+    GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
+    GetSleepSummaryV1HealthkitSleepSummaryGetError,
+    GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
+    ReturnType<typeof getSleepSummaryV1HealthkitSleepSummaryGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSleepSummaryV1HealthkitSleepSummaryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSleepSummaryV1HealthkitSleepSummaryGetQueryKey(options),
+  });
 
 export const listSecuritiesV1InvestmentsSecuritiesGetQueryKey = (
   options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
