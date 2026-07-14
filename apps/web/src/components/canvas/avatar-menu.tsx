@@ -22,7 +22,7 @@ export function AvatarMenu() {
       <PopoverTrigger asChild>
         <button
           title={user?.name ?? user?.email ?? "Account"}
-          className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
+          className="flex items-center justify-center rounded p-0.5 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100"
         >
           {user?.picture ? (
             <img src={user.picture} alt="" className="size-5 rounded-full" />

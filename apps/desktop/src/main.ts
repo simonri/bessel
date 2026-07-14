@@ -14,6 +14,7 @@ import {
   session,
   shell,
 } from "electron";
+import crypto from "crypto";
 import { autoUpdater } from "electron-updater";
 import fs from "fs";
 import http from "http";
@@ -27,11 +28,64 @@ import { SENTRY_DSN } from "./env.js";
 
 const execFileAsync = promisify(execFile);
 
-// A packaged build and a `pnpm dev` build share the same userData dir (and
-// therefore the same cookie/session-storage/GPU-shader-cache stores, and the
-// persist:browser <webview> partition), so running both at once means two
-// unrelated Chromium processes hitting the same on-disk profile concurrently
-// — a well-known source of corruption and crashes, not just wasted resources.
+// Electron derives the userData directory from package.json's top-level
+// "name" field unless overridden. The Jul 11 rebrand changed that field
+// ("@metron/desktop" -> "@bessel/desktop"), which silently moved every
+// user's profile to a new, empty directory on the next launch — wiping
+// workspace templates, settings, and window layouts with no migration.
+// Pin the path explicitly so future renames can't do that again.
+//
+// `pnpm dev` gets its own "-dev" suffixed profile rather than sharing the
+// packaged build's: two unrelated Chromium processes hitting the same
+// on-disk profile (cookies, session storage, GPU shader cache, the
+// persist:browser <webview> partition) concurrently is a well-known source
+// of corruption, and it let a running packaged app block dev via
+// requestSingleInstanceLock() below.
+const USER_DATA_DIR = path.join(
+  app.getPath("appData"),
+  "@bessel",
+  app.isPackaged ? "desktop" : "desktop-dev",
+);
+app.setPath("userData", USER_DATA_DIR);
+
+// Chromium only auto-selects a real Secret Service keyring for safeStorage when
+// it recognises the desktop environment as GNOME or KDE (via XDG_CURRENT_DESKTOP).
+// On anything else — Hyprland, Sway, and other wlroots compositors — it silently
+// falls back to the "basic_text" backend, which isRealEncryptionAvailable() below
+// (correctly) rejects as not real encryption. That makes saveAuthCache() a no-op,
+// so the Auth0 token cache is never written and every app restart forces a fresh
+// login. Pin the libsecret backend explicitly: it talks to org.freedesktop.secrets
+// (gnome-keyring, KeePassXC, KWallet's compat service, …) regardless of DE. Where
+// no Secret Service is running, isEncryptionAvailable() still returns false and we
+// degrade to the same no-persistence behaviour as before — no regression. Must run
+// before app "ready", since Chromium reads --password-store when os_crypt inits.
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("password-store", "gnome-libsecret");
+}
+
+// The pin above stops *future* renames from silently switching profiles, but
+// it doesn't undo the Jul 11 one — anyone who hadn't launched a build under
+// the new name yet still has their real data sitting in the pre-rebrand
+// "@metron/desktop" profile, invisible to the new one. Seed the new profile
+// from it, but only on the very first launch under the new path: this runs
+// before Chromium has opened "Local Storage" for USER_DATA_DIR (a plain file
+// copy is only safe into a directory nothing has touched yet — copying into,
+// or out of, an *open* LevelDB store risks corrupting it), and it must never
+// clobber real usage that already happened under the new profile. Only the
+// packaged profile has pre-rebrand data to migrate — the "-dev" profile is new.
+if (app.isPackaged) {
+  const LEGACY_USER_DATA_DIR = path.join(app.getPath("appData"), "@metron", "desktop");
+  const NEW_LOCAL_STORAGE_DIR = path.join(USER_DATA_DIR, "Local Storage");
+  const LEGACY_LOCAL_STORAGE_DIR = path.join(LEGACY_USER_DATA_DIR, "Local Storage");
+  if (!fs.existsSync(NEW_LOCAL_STORAGE_DIR) && fs.existsSync(LEGACY_LOCAL_STORAGE_DIR)) {
+    fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+    fs.cpSync(LEGACY_LOCAL_STORAGE_DIR, NEW_LOCAL_STORAGE_DIR, { recursive: true });
+  }
+}
+
+// Guards against two copies of the *same* profile running at once — e.g. two
+// `pnpm dev` sessions, or two packaged instances — rather than dev vs. prod,
+// since those now use separate profiles (see USER_DATA_DIR above).
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
@@ -433,7 +487,65 @@ function saveAuthCache(): void {
   fs.writeFileSync(authCachePath, encrypted);
 }
 
+// ─── device identity ────────────────────────────────────────────────────────
+// A project's local path/ssh_host resolve per-device on the backend (see
+// api/projects/service.py) — this id is what tells the backend "this device"
+// on every request, sent as the X-Device-Id header. Persisted outside the
+// encrypted auth cache since it isn't a secret and must survive logout.
+interface DeviceInfo {
+  key: string;
+  name: string;
+}
+
+let deviceInfo: DeviceInfo | null = null;
+
+function loadOrCreateDeviceInfo(): DeviceInfo {
+  const devicePath = path.join(app.getPath("userData"), "device.json");
+  try {
+    const existing = JSON.parse(
+      fs.readFileSync(devicePath, "utf8"),
+    ) as DeviceInfo;
+    if (existing.key) return existing;
+  } catch {
+    // No file yet, or it's corrupt — fall through and create a fresh one.
+  }
+  const info: DeviceInfo = { key: crypto.randomUUID(), name: os.hostname() };
+  fs.writeFileSync(devicePath, JSON.stringify(info));
+  return info;
+}
+
 const ptySessions = new Map<string, pty.IPty>();
+
+// macOS GUI apps inherit launchd's minimal environment (PATH is just
+// /usr/bin:/bin:/usr/sbin:/sbin), not the user's shell environment — so
+// anything installed via Homebrew/nvm/npm -g (claude, codex, grok, ...) is
+// invisible both to pty.spawn's binary lookup and inside the shells it
+// starts. Resolve the user's real PATH once by asking their login shell,
+// the same way VS Code and other Electron terminal hosts do. The printf
+// markers make parsing immune to rc files that print banners.
+let shellPathPromise: Promise<string | null> | null = null;
+function resolveShellPath(): Promise<string | null> {
+  if (process.platform !== "darwin") return Promise.resolve(null);
+  shellPathPromise ??= (async () => {
+    const shell = process.env.SHELL ?? "/bin/zsh";
+    try {
+      const { stdout } = await execFileAsync(
+        shell,
+        ["-i", "-l", "-c", 'printf "__BSL_PATH__%s__BSL_PATH__" "$PATH"'],
+        { timeout: 5000 },
+      );
+      const path = /__BSL_PATH__(.*)__BSL_PATH__/s.exec(stdout)?.[1];
+      if (!path) throw new Error("no PATH marker in shell output");
+      return path;
+    } catch (err) {
+      appendLog(
+        `login-shell PATH resolution failed (${shell}): ${(err as Error).message}`,
+      );
+      return null;
+    }
+  })();
+  return shellPathPromise;
+}
 
 const TRUSTED_ORIGINS = new Set(["http://localhost:3001", "app://localhost"]);
 
@@ -458,11 +570,31 @@ const NAVIGATION_ALLOWED_ORIGINS = new Set([
 // system's real default browser and receive the redirect back via a local
 // loopback server (RFC 8252) — see providers/auth.tsx on the web side, which
 // opens loginWithRedirect() via shell.openExternal instead of navigating here.
-// Must match AUTH_CALLBACK_PORT-derived redirect_uri in apps/web/src/providers/auth.tsx.
-const AUTH_CALLBACK_PORT = 41823;
+//
+// The server is opened on demand, right before a login attempt, rather than
+// held open for the app's whole lifetime. Ideally it would also bind an
+// OS-assigned ephemeral port instead of a fixed one (RFC 8252's recommended
+// approach for native apps) — but Auth0 only allows wildcard placeholders in
+// a callback URL's subdomain/domain, not its port, so a per-attempt random
+// port can never be allow-listed. Fall back to one fixed port per build
+// variant instead: that's still enough to fix the actual bug, since the only
+// way two instances fight over the same port is a packaged build and
+// `pnpm dev` running at once (two copies of the *same* variant already can't
+// run concurrently — see requestSingleInstanceLock() above). Both ports must
+// be in the Auth0 application's Allowed Callback URLs; apps/web/src/providers
+// /auth.tsx asks main for the port via `auth:start-login` before calling
+// loginWithRedirect() rather than hardcoding it on the renderer side too.
+const AUTH_CALLBACK_PORT = app.isPackaged ? 41823 : 41824;
 const AUTH_CALLBACK_PATH = "/callback";
+const AUTH_CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 
-function startAuthCallbackServer(): void {
+let authCallbackServer: http.Server | null = null;
+
+function startAuthLogin(): Promise<number> {
+  // A stale, abandoned attempt (user closed the login tab and tried again)
+  // shouldn't keep its port bound.
+  authCallbackServer?.close();
+
   const server = http.createServer((req, res) => {
     if (!req.url?.startsWith(AUTH_CALLBACK_PATH)) {
       res.writeHead(404).end();
@@ -484,13 +616,26 @@ function startAuthCallbackServer(): void {
       if (win.isMinimized()) win.restore();
       win.focus();
     }
+    server.close();
+  });
+  authCallbackServer = server;
+  server.on("close", () => {
+    if (authCallbackServer === server) authCallbackServer = null;
   });
   server.on("error", (err) =>
     appendLog(
       `auth callback server failed to start: ${(err as Error).message}`,
     ),
   );
-  server.listen(AUTH_CALLBACK_PORT, "127.0.0.1");
+  // Covers an attempt the user never finishes (closes the browser tab, etc.)
+  // — without this the port would stay bound until the app quits.
+  setTimeout(() => server.close(), AUTH_CALLBACK_TIMEOUT_MS).unref();
+
+  return new Promise((resolve, reject) => {
+    server.once("listening", () => resolve(AUTH_CALLBACK_PORT));
+    server.once("error", reject);
+    server.listen(AUTH_CALLBACK_PORT, "127.0.0.1");
+  });
 }
 
 // ─── browser widget ───────────────────────────────────────────────────────────
@@ -720,7 +865,10 @@ app.whenReady().then(() => {
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
   authCache = loadAuthCache();
-  startAuthCallbackServer();
+  deviceInfo = loadOrCreateDeviceInfo();
+  // Warm the macOS login-shell PATH lookup so the first terminal spawn
+  // doesn't stall on it (rc-heavy shells can take a second to start).
+  void resolveShellPath();
 
   // Same UA fix as the browser widget below, applied to the default session so
   // the main window's Auth0/Google login (createWindow) isn't blocked too.
@@ -822,6 +970,7 @@ app.whenReady().then(() => {
     saveAuthCache();
   });
   ipcHandle("auth:all-keys", (): string[] => Object.keys(authCache));
+  ipcHandle("auth:start-login", (): Promise<number> => startAuthLogin());
 
   ipcOn("close-window", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
@@ -835,6 +984,8 @@ app.whenReady().then(() => {
   });
 
   ipcHandle("app:version", () => app.getVersion());
+
+  ipcHandle("device:get-info", (): DeviceInfo => deviceInfo!);
 
   ipcHandle("app:check-update", () => {
     if (!app.isPackaged) return Promise.resolve({ status: "dev" });
@@ -935,18 +1086,44 @@ app.whenReady().then(() => {
       const env = { ...process.env };
       delete env.ELECTRON_RUN_AS_NODE;
 
-      const command =
-        config.command === "default-shell"
-          ? (process.env.SHELL ?? "/bin/bash")
-          : config.command;
+      const shellPath = await resolveShellPath();
+      if (shellPath) {
+        env.PATH = shellPath;
+      } else if (process.platform === "darwin") {
+        // Resolution failed (exotic shell, slow rc files) — at least cover
+        // the standard Homebrew locations rather than launchd's bare PATH.
+        env.PATH = `${env.PATH}:/opt/homebrew/bin:/usr/local/bin`;
+      }
 
-      const p = pty.spawn(command, config.args, {
-        name: "xterm-256color",
-        cols,
-        rows,
-        cwd: config.cwd ?? env.HOME ?? process.cwd(),
-        env,
-      });
+      const isDefaultShell = config.command === "default-shell";
+      const command = isDefaultShell
+        ? (env.SHELL ?? "/bin/bash")
+        : config.command;
+      // macOS terminal emulators start login shells — .zprofile (where
+      // Homebrew puts its PATH setup) is only sourced with -l.
+      const args =
+        isDefaultShell && process.platform === "darwin"
+          ? ["-l", ...config.args]
+          : config.args;
+
+      let p: pty.IPty;
+      try {
+        p = pty.spawn(command, args, {
+          name: "xterm-256color",
+          cols,
+          rows,
+          cwd: config.cwd ?? env.HOME ?? process.cwd(),
+          env,
+        });
+      } catch (err) {
+        appendLog(
+          `terminal spawn failed command=${command} cwd=${config.cwd ?? ""} ` +
+            `PATH=${env.PATH}: ${(err as Error).message}`,
+        );
+        throw new Error(
+          `Could not launch "${command}": ${(err as Error).message}`,
+        );
+      }
 
       ptySessions.set(sessionId, p);
 

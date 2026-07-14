@@ -838,6 +838,61 @@ export const CryptoPriceSchemaSchema = {
   title: "CryptoPriceSchema",
 } as const;
 
+export const DeviceSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    last_seen_at: {
+      type: "string",
+      format: "date-time",
+      title: "Last Seen At",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "name", "last_seen_at"],
+  title: "DeviceSchema",
+} as const;
+
+export const DeviceUpdateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      title: "Name",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "DeviceUpdate",
+} as const;
+
 export const GooglePlaceSearchResponseSchema = {
   properties: {
     results: {
@@ -2384,6 +2439,37 @@ export const ProjectCreateSchema = {
   title: "ProjectCreate",
 } as const;
 
+export const ProjectLocationUpdateSchema = {
+  properties: {
+    path: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Path",
+    },
+    ssh_host: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Ssh Host",
+    },
+  },
+  type: "object",
+  title: "ProjectLocationUpdate",
+} as const;
+
 export const ProjectSchemaSchema = {
   properties: {
     created_at: {
@@ -2456,30 +2542,6 @@ export const ProjectUpdateSchema = {
         },
       ],
       title: "Name",
-    },
-    path: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 500,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Path",
-    },
-    ssh_host: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 255,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Ssh Host",
     },
   },
   type: "object",

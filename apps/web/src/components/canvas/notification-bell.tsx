@@ -56,7 +56,7 @@ export function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70">
+        <button className="relative flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100">
           <Bell className="size-4" />
           {unreadCount > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-sky-500 text-9 font-bold leading-none text-white">

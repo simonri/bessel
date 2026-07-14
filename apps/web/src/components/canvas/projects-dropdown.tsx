@@ -4,6 +4,7 @@ import {
   listProjectsV1ProjectsGetOptions,
   listProjectsV1ProjectsGetQueryKey,
   type ProjectSchema,
+  setProjectLocationV1ProjectsProjectIdLocationPutMutation,
   updateProjectV1ProjectsProjectIdPatchMutation,
 } from "@bessel/client";
 import {
@@ -188,6 +189,10 @@ export function ProjectsDropdown() {
     ...updateProjectV1ProjectsProjectIdPatchMutation(),
     onSuccess: invalidate,
   });
+  const locationMutation = useMutation({
+    ...setProjectLocationV1ProjectsProjectIdLocationPutMutation(),
+    onSuccess: invalidate,
+  });
   const deleteMutation = useMutation({
     ...deleteProjectV1ProjectsProjectIdDeleteMutation(),
     onSuccess: invalidate,
@@ -227,20 +232,25 @@ export function ProjectsDropdown() {
     setShowAdd(false);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingId || !editName.trim() || !editPath.trim()) return;
-    updateMutation.mutate(
-      {
+    const id = editingId;
+    await Promise.all([
+      updateMutation.mutateAsync({
         client,
-        path: { project_id: editingId },
+        path: { project_id: id },
+        body: { name: editName.trim() },
+      }),
+      locationMutation.mutateAsync({
+        client,
+        path: { project_id: id },
         body: {
-          name: editName.trim(),
           path: editPath.trim(),
           ssh_host: editSshHost.trim() || null,
         },
-      },
-      { onSuccess: () => setEditingId(null) },
-    );
+      }),
+    ]);
+    setEditingId(null);
   };
 
   const deleteProject = (id: string) => {
@@ -320,6 +330,9 @@ export function ProjectsDropdown() {
                     autoFocus
                     className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                   />
+                  <p className="text-11 text-white/30">
+                    Location on this device
+                  </p>
                   <input
                     type="text"
                     value={editSshHost}
@@ -370,7 +383,11 @@ export function ProjectsDropdown() {
                       {p.name}
                     </p>
                     <p className="truncate text-11 text-white/50">
-                      {p.ssh_host ? `${p.ssh_host}:${p.path}` : p.path}
+                      {p.path
+                        ? p.ssh_host
+                          ? `${p.ssh_host}:${p.path}`
+                          : p.path
+                        : "Not configured on this device"}
                     </p>
                   </div>
                   <button

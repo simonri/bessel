@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
 
@@ -32,3 +34,20 @@ class TestRecipeType:
   async def test_rejects_invalid_type(self, client: AsyncClient) -> None:
     resp = await client.post("/v1/recipes", json={"title": "Bad", "content": "", "recipe_type": "snack"})
     assert resp.status_code == 422
+
+
+class TestRecipeNotFound:
+  @pytest.mark.asyncio
+  async def test_get_missing_returns_404(self, client: AsyncClient) -> None:
+    resp = await client.get(f"/v1/recipes/{uuid4()}")
+    assert resp.status_code == 404
+
+  @pytest.mark.asyncio
+  async def test_update_missing_returns_404(self, client: AsyncClient) -> None:
+    resp = await client.patch(f"/v1/recipes/{uuid4()}", json={"title": "Nope"})
+    assert resp.status_code == 404
+
+  @pytest.mark.asyncio
+  async def test_delete_missing_returns_404(self, client: AsyncClient) -> None:
+    resp = await client.delete(f"/v1/recipes/{uuid4()}")
+    assert resp.status_code == 404

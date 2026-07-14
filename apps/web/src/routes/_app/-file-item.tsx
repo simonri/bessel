@@ -39,10 +39,14 @@ export function FileItem({
   const statusBadge = file.status === "?" ? "U" : file.status;
 
   return (
+    // Selection on mousedown (file-explorer feel); no color transition so the
+    // highlight lands the same frame as the press instead of fading in.
     <div
-      onClick={onSelect}
-      className={`group flex cursor-pointer items-center gap-1.5 py-[3px] pl-4 pr-2 transition-colors ${
-        isSelected ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
+      onMouseDown={onSelect}
+      className={`group flex cursor-pointer items-center gap-1.5 border-l-2 py-[3px] pl-[14px] pr-2 ${
+        isSelected
+          ? "border-primary-500 bg-primary-500/15"
+          : "border-transparent hover:bg-white/[0.04]"
       }`}
     >
       <FileTypeDot filename={name} />
@@ -54,6 +58,7 @@ export function FileItem({
 
       {onDiscard && (
         <button
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
             onDiscard();
@@ -66,6 +71,7 @@ export function FileItem({
       )}
 
       <button
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           staged ? onUnstage?.() : onStage?.();

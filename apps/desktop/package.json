@@ -1,6 +1,6 @@
 {
   "name": "@bessel/desktop",
-  "version": "0.1.23",
+  "version": "0.1.26",
   "description": "Bessel personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
@@ -29,9 +29,9 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-    "appId": "dev.metron.app",
+    "appId": "dev.bessel.app",
     "productName": "Bessel",
-    "executableName": "metron",
+    "executableName": "bessel",
     "directories": {
       "output": "release"
     },
@@ -39,6 +39,9 @@
     "files": [
       "dist/**/*",
       "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/node-pty/**"
     ],
     "extraResources": [
       {

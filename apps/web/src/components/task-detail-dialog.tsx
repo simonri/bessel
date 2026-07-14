@@ -77,7 +77,7 @@ export function TaskDetailDialog({
     <DialogContent className="max-w-md gap-0 p-0">
       <DialogHeader className="px-5 pt-5 pb-0">
         <DialogTitle
-          className="text-base leading-snug pr-6"
+          className="text-base leading-snug pr-6 break-words"
           onCopy={(e) => {
             e.preventDefault();
             const text = window.getSelection()?.toString().replace(/[\n\r]+$/, "") ?? "";
@@ -195,7 +195,7 @@ export function TaskDetailDialog({
         {/* Description */}
         {task.description && (
           <div className="border-t pt-3">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">
               {task.description}
             </p>
           </div>

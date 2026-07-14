@@ -27,6 +27,7 @@ import {
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
   listCountersV1CountersGetResponseTransformer,
+  listDevicesV1DevicesGetResponseTransformer,
   listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
@@ -40,8 +41,10 @@ import {
   listTransactionsV1TransactionsGetResponseTransformer,
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
+  setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updateCounterV1CountersCounterIdPatchResponseTransformer,
+  updateDeviceV1DevicesDeviceIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
   updateProjectV1ProjectsProjectIdPatchResponseTransformer,
   updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
@@ -99,6 +102,9 @@ import type {
   DeleteCounterV1CountersCounterIdDeleteData,
   DeleteCounterV1CountersCounterIdDeleteErrors,
   DeleteCounterV1CountersCounterIdDeleteResponses,
+  DeleteDeviceV1DevicesDeviceIdDeleteData,
+  DeleteDeviceV1DevicesDeviceIdDeleteErrors,
+  DeleteDeviceV1DevicesDeviceIdDeleteResponses,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
@@ -174,6 +180,8 @@ import type {
   ListCategoriesV1CategoriesGetResponses,
   ListCountersV1CountersGetData,
   ListCountersV1CountersGetResponses,
+  ListDevicesV1DevicesGetData,
+  ListDevicesV1DevicesGetResponses,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
@@ -183,6 +191,7 @@ import type {
   ListPlacesV1PlacesGetErrors,
   ListPlacesV1PlacesGetResponses,
   ListProjectsV1ProjectsGetData,
+  ListProjectsV1ProjectsGetErrors,
   ListProjectsV1ProjectsGetResponses,
   ListRecipesV1RecipesGetData,
   ListRecipesV1RecipesGetErrors,
@@ -222,6 +231,9 @@ import type {
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetErrors,
   SearchGooglePlacesV1PlacesSearchGetResponses,
+  SetProjectLocationV1ProjectsProjectIdLocationPutData,
+  SetProjectLocationV1ProjectsProjectIdLocationPutErrors,
+  SetProjectLocationV1ProjectsProjectIdLocationPutResponses,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
@@ -237,6 +249,9 @@ import type {
   UpdateCounterV1CountersCounterIdPatchData,
   UpdateCounterV1CountersCounterIdPatchErrors,
   UpdateCounterV1CountersCounterIdPatchResponses,
+  UpdateDeviceV1DevicesDeviceIdPatchData,
+  UpdateDeviceV1DevicesDeviceIdPatchErrors,
+  UpdateDeviceV1DevicesDeviceIdPatchResponses,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
@@ -684,6 +699,64 @@ export const undoResetV1CountersCounterIdResetsResetIdDelete = <
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets/{reset_id}",
     ...options,
+  });
+
+/**
+ * List Devices
+ */
+export const listDevicesV1DevicesGet = <ThrowOnError extends boolean = false>(
+  options?: Options<ListDevicesV1DevicesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListDevicesV1DevicesGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listDevicesV1DevicesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/devices",
+    ...options,
+  });
+
+/**
+ * Delete Device
+ */
+export const deleteDeviceV1DevicesDeviceIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteDeviceV1DevicesDeviceIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteDeviceV1DevicesDeviceIdDeleteResponses,
+    DeleteDeviceV1DevicesDeviceIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/devices/{device_id}",
+    ...options,
+  });
+
+/**
+ * Rename Device
+ */
+export const updateDeviceV1DevicesDeviceIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateDeviceV1DevicesDeviceIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateDeviceV1DevicesDeviceIdPatchResponses,
+    UpdateDeviceV1DevicesDeviceIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateDeviceV1DevicesDeviceIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/devices/{device_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**
@@ -1197,7 +1270,7 @@ export const listProjectsV1ProjectsGet = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).get<
     ListProjectsV1ProjectsGetResponses,
-    unknown,
+    ListProjectsV1ProjectsGetErrors,
     ThrowOnError
   >({
     responseTransformer: listProjectsV1ProjectsGetResponseTransformer,
@@ -1264,6 +1337,33 @@ export const updateProjectV1ProjectsProjectIdPatch = <
       updateProjectV1ProjectsProjectIdPatchResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects/{project_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set Project Location For This Device
+ */
+export const setProjectLocationV1ProjectsProjectIdLocationPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SetProjectLocationV1ProjectsProjectIdLocationPutData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).put<
+    SetProjectLocationV1ProjectsProjectIdLocationPutResponses,
+    SetProjectLocationV1ProjectsProjectIdLocationPutErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/projects/{project_id}/location",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -1756,6 +1856,7 @@ export const getWeatherForecastV1WeatherGet = <
     ThrowOnError
   >({
     responseTransformer: getWeatherForecastV1WeatherGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/weather",
     ...options,
   });

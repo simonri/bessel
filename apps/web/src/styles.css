@@ -36,5 +36,5 @@ html, body {
 }
 
 .animate-workspace-flash {
-  animation: workspace-flash 0.7s ease-out;
+  animation: workspace-flash 0.5s var(--ease-out);
 }

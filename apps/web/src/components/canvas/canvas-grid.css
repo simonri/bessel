@@ -4,11 +4,10 @@
 
 .react-grid-layout {
   position: relative;
-  transition: height 200ms ease;
 }
 
 .react-grid-item {
-  transition: transform 200ms ease, width 200ms ease, height 200ms ease;
+  transition: transform 200ms var(--ease-in-out);
 }
 
 .react-grid-item.react-draggable-dragging {

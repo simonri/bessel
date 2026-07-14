@@ -26,6 +26,7 @@ import {
   createTradeV1InvestmentsTradesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCounterV1CountersCounterIdDelete,
+  deleteDeviceV1DevicesDeviceIdDelete,
   deletePlaceV1PlacesPlaceIdDelete,
   deleteProjectV1ProjectsProjectIdDelete,
   deleteRecipeV1RecipesRecipeIdDelete,
@@ -53,6 +54,7 @@ import {
   listBankAccountsV1BankAccountsGet,
   listCategoriesV1CategoriesGet,
   listCountersV1CountersGet,
+  listDevicesV1DevicesGet,
   listHealthkitWorkoutsV1HealthkitWorkoutsGet,
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
@@ -71,11 +73,13 @@ import {
   reopenTaskV1TasksTaskIdReopenPost,
   reorderTasksV1TasksReorderPatch,
   searchGooglePlacesV1PlacesSearchGet,
+  setProjectLocationV1ProjectsProjectIdLocationPut,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCounterV1CountersCounterIdPatch,
+  updateDeviceV1DevicesDeviceIdPatch,
   updatePlaceV1PlacesPlaceIdPatch,
   updateProjectV1ProjectsProjectIdPatch,
   updateRecipeV1RecipesRecipeIdPatch,
@@ -133,6 +137,9 @@ import type {
   DeleteCounterV1CountersCounterIdDeleteData,
   DeleteCounterV1CountersCounterIdDeleteError,
   DeleteCounterV1CountersCounterIdDeleteResponse,
+  DeleteDeviceV1DevicesDeviceIdDeleteData,
+  DeleteDeviceV1DevicesDeviceIdDeleteError,
+  DeleteDeviceV1DevicesDeviceIdDeleteResponse,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
@@ -207,6 +214,8 @@ import type {
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetData,
   ListCountersV1CountersGetResponse,
+  ListDevicesV1DevicesGetData,
+  ListDevicesV1DevicesGetResponse,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
@@ -216,6 +225,7 @@ import type {
   ListPlacesV1PlacesGetError,
   ListPlacesV1PlacesGetResponse,
   ListProjectsV1ProjectsGetData,
+  ListProjectsV1ProjectsGetError,
   ListProjectsV1ProjectsGetResponse,
   ListRecipesV1RecipesGetData,
   ListRecipesV1RecipesGetError,
@@ -255,6 +265,9 @@ import type {
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetError,
   SearchGooglePlacesV1PlacesSearchGetResponse,
+  SetProjectLocationV1ProjectsProjectIdLocationPutData,
+  SetProjectLocationV1ProjectsProjectIdLocationPutError,
+  SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
@@ -270,6 +283,9 @@ import type {
   UpdateCounterV1CountersCounterIdPatchData,
   UpdateCounterV1CountersCounterIdPatchError,
   UpdateCounterV1CountersCounterIdPatchResponse,
+  UpdateDeviceV1DevicesDeviceIdPatchData,
+  UpdateDeviceV1DevicesDeviceIdPatchError,
+  UpdateDeviceV1DevicesDeviceIdPatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
@@ -1032,6 +1048,88 @@ export const undoResetV1CountersCounterIdResetsResetIdDeleteMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await undoResetV1CountersCounterIdResetsResetIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listDevicesV1DevicesGetQueryKey = (
+  options?: Options<ListDevicesV1DevicesGetData>,
+) => createQueryKey("listDevicesV1DevicesGet", options);
+
+/**
+ * List Devices
+ */
+export const listDevicesV1DevicesGetOptions = (
+  options?: Options<ListDevicesV1DevicesGetData>,
+) =>
+  queryOptions<
+    ListDevicesV1DevicesGetResponse,
+    DefaultError,
+    ListDevicesV1DevicesGetResponse,
+    ReturnType<typeof listDevicesV1DevicesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listDevicesV1DevicesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listDevicesV1DevicesGetQueryKey(options),
+  });
+
+/**
+ * Delete Device
+ */
+export const deleteDeviceV1DevicesDeviceIdDeleteMutation = (
+  options?: Partial<Options<DeleteDeviceV1DevicesDeviceIdDeleteData>>,
+): UseMutationOptions<
+  DeleteDeviceV1DevicesDeviceIdDeleteResponse,
+  DeleteDeviceV1DevicesDeviceIdDeleteError,
+  Options<DeleteDeviceV1DevicesDeviceIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteDeviceV1DevicesDeviceIdDeleteResponse,
+    DeleteDeviceV1DevicesDeviceIdDeleteError,
+    Options<DeleteDeviceV1DevicesDeviceIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteDeviceV1DevicesDeviceIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Rename Device
+ */
+export const updateDeviceV1DevicesDeviceIdPatchMutation = (
+  options?: Partial<Options<UpdateDeviceV1DevicesDeviceIdPatchData>>,
+): UseMutationOptions<
+  UpdateDeviceV1DevicesDeviceIdPatchResponse,
+  UpdateDeviceV1DevicesDeviceIdPatchError,
+  Options<UpdateDeviceV1DevicesDeviceIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateDeviceV1DevicesDeviceIdPatchResponse,
+    UpdateDeviceV1DevicesDeviceIdPatchError,
+    Options<UpdateDeviceV1DevicesDeviceIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateDeviceV1DevicesDeviceIdPatch({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1986,7 +2084,7 @@ export const listProjectsV1ProjectsGetOptions = (
 ) =>
   queryOptions<
     ListProjectsV1ProjectsGetResponse,
-    DefaultError,
+    ListProjectsV1ProjectsGetError,
     ListProjectsV1ProjectsGetResponse,
     ReturnType<typeof listProjectsV1ProjectsGetQueryKey>
   >({
@@ -2073,6 +2171,35 @@ export const updateProjectV1ProjectsProjectIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateProjectV1ProjectsProjectIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Set Project Location For This Device
+ */
+export const setProjectLocationV1ProjectsProjectIdLocationPutMutation = (
+  options?: Partial<
+    Options<SetProjectLocationV1ProjectsProjectIdLocationPutData>
+  >,
+): UseMutationOptions<
+  SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
+  SetProjectLocationV1ProjectsProjectIdLocationPutError,
+  Options<SetProjectLocationV1ProjectsProjectIdLocationPutData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
+    SetProjectLocationV1ProjectsProjectIdLocationPutError,
+    Options<SetProjectLocationV1ProjectsProjectIdLocationPutData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await setProjectLocationV1ProjectsProjectIdLocationPut({
         ...options,
         ...fnOptions,
         throwOnError: true,

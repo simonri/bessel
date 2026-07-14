@@ -1,7 +1,8 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { TaskSchema } from "@bessel/client";
-import { Calendar, Circle, Flag, Repeat } from "lucide-react";
+import { Calendar, Circle, CircleCheck, Flag, Repeat } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
   formatDueDate,
   formatRecurrence,
@@ -72,6 +73,36 @@ export function TaskCard({
     data: { task },
   });
 
+  const [isCompleting, setIsCompleting] = useState(false);
+  const completeTimer = useRef<number | null>(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  // If the card unmounts while the exit is playing (filter change, refetch),
+  // still deliver the completion — never lose the click.
+  useEffect(
+    () => () => {
+      if (completeTimer.current != null) {
+        window.clearTimeout(completeTimer.current);
+        onCompleteRef.current();
+      }
+    },
+    [],
+  );
+
+  const handleComplete = () => {
+    if (isCompleting) return;
+    setIsCompleting(true);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onComplete();
+      return;
+    }
+    completeTimer.current = window.setTimeout(() => {
+      completeTimer.current = null;
+      onComplete();
+    }, 180);
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -83,7 +114,7 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color,transform] duration-150 cursor-grab active:cursor-grabbing active:scale-[0.98] motion-reduce:active:scale-100 pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color,transform] duration-150 cursor-grab active:cursor-grabbing active:scale-[0.98] motion-reduce:active:scale-100 pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""} ${isCompleting ? "pointer-events-none opacity-0 scale-[0.98] transition-[opacity,transform] duration-[180ms] ease-out" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -92,10 +123,14 @@ export function TaskCard({
           className="mt-0.5 shrink-0 text-white/25 pointer-fine:hover:text-emerald-400 transition-[color,transform] duration-150 active:scale-90 motion-reduce:active:scale-100"
           onClick={(e) => {
             e.stopPropagation();
-            onComplete();
+            handleComplete();
           }}
         >
-          <Circle className="size-4" />
+          {isCompleting ? (
+            <CircleCheck className="size-4 text-emerald-400" />
+          ) : (
+            <Circle className="size-4" />
+          )}
         </button>
         <TaskCardMeta task={task} />
       </div>

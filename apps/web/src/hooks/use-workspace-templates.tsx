@@ -27,6 +27,7 @@ export interface WorkspaceTemplate {
 }
 
 const STORAGE_KEY = "bessel:workspace-templates";
+const LEGACY_KEY = "metron:workspace-templates";
 
 function newId() {
   return (
@@ -38,12 +39,23 @@ function newId() {
 function loadTemplates(): WorkspaceTemplate[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+
+  // Falls back to the pre-rebrand key name — see window-manager.tsx's
+  // identical LEGACY_KEY handling for the same "metron:" -> "bessel:" rename.
+  try {
+    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    if (legacyRaw) {
+      const parsed = JSON.parse(legacyRaw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+
+  return [];
 }
 
 export function widgetSummary(widgets: TemplateWidget[]): string {

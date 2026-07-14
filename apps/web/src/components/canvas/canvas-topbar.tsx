@@ -65,7 +65,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
           <CryptoPairTicker key={pair} pair={pair} />
         ))}
         {window.electron && (
-          <div className={noDrag}>
+          <div className={cn("flex items-center gap-5", noDrag)}>
             <SpotifyWidget />
           </div>
         )}
@@ -94,7 +94,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
             onClick={() => setLogsOpen(true)}
             title="View logs"
             className={cn(
-              "flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70",
+              "flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100",
               noDrag,
             )}
           >
@@ -105,7 +105,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
           onClick={() => setSettingsOpen(true)}
           title="Settings"
           className={cn(
-            "flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70",
+            "flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100",
             noDrag,
           )}
         >
@@ -118,7 +118,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
           <button
             onClick={() => window.electron!.close()}
             title="Close"
-            className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-red-400"
+            className="flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-red-400 active:scale-95 motion-reduce:active:scale-100"
           >
             <X className="size-4" />
           </button>

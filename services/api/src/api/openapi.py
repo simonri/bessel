@@ -25,7 +25,7 @@ OPENAPI_PARAMETERS: OpenAPIParameters = {
   "redoc_url": None if settings.is_environment({Environment.production}) else "/redoc",
   "servers": [
     {
-      "url": "https://api.metron.sh",
+      "url": "https://api.getbessel.com",
       "description": "Production environment",
       "x-speakeasy-server-id": "production",
     },

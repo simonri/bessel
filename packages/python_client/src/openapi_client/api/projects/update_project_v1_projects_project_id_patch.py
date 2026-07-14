@@ -10,15 +10,22 @@ from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
 from ...models.project_schema import ProjectSchema
 from ...models.project_update import ProjectUpdate
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
   project_id: UUID,
   *,
   body: ProjectUpdate,
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
   headers: dict[str, Any] = {}
+  if not isinstance(x_device_id, Unset):
+    headers["x-device-id"] = x_device_id
+
+  if not isinstance(x_device_name, Unset):
+    headers["x-device-name"] = x_device_name
 
   _kwargs: dict[str, Any] = {
     "method": "patch",
@@ -66,11 +73,15 @@ def sync_detailed(
   *,
   client: AuthenticatedClient,
   body: ProjectUpdate,
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
 ) -> Response[HTTPValidationError | ProjectSchema]:
   """Update Project
 
   Args:
       project_id (UUID):
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
       body (ProjectUpdate):
 
   Raises:
@@ -84,6 +95,8 @@ def sync_detailed(
   kwargs = _get_kwargs(
     project_id=project_id,
     body=body,
+    x_device_id=x_device_id,
+    x_device_name=x_device_name,
   )
 
   response = client.get_httpx_client().request(
@@ -98,11 +111,15 @@ def sync(
   *,
   client: AuthenticatedClient,
   body: ProjectUpdate,
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
 ) -> HTTPValidationError | ProjectSchema | None:
   """Update Project
 
   Args:
       project_id (UUID):
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
       body (ProjectUpdate):
 
   Raises:
@@ -117,6 +134,8 @@ def sync(
     project_id=project_id,
     client=client,
     body=body,
+    x_device_id=x_device_id,
+    x_device_name=x_device_name,
   ).parsed
 
 
@@ -125,11 +144,15 @@ async def asyncio_detailed(
   *,
   client: AuthenticatedClient,
   body: ProjectUpdate,
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
 ) -> Response[HTTPValidationError | ProjectSchema]:
   """Update Project
 
   Args:
       project_id (UUID):
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
       body (ProjectUpdate):
 
   Raises:
@@ -143,6 +166,8 @@ async def asyncio_detailed(
   kwargs = _get_kwargs(
     project_id=project_id,
     body=body,
+    x_device_id=x_device_id,
+    x_device_name=x_device_name,
   )
 
   response = await client.get_async_httpx_client().request(**kwargs)
@@ -155,11 +180,15 @@ async def asyncio(
   *,
   client: AuthenticatedClient,
   body: ProjectUpdate,
+  x_device_id: None | str | Unset = UNSET,
+  x_device_name: None | str | Unset = UNSET,
 ) -> HTTPValidationError | ProjectSchema | None:
   """Update Project
 
   Args:
       project_id (UUID):
+      x_device_id (None | str | Unset):
+      x_device_name (None | str | Unset):
       body (ProjectUpdate):
 
   Raises:
@@ -175,5 +204,7 @@ async def asyncio(
       project_id=project_id,
       client=client,
       body=body,
+      x_device_id=x_device_id,
+      x_device_name=x_device_name,
     )
   ).parsed

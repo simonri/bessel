@@ -55,20 +55,8 @@ export function formatVisitedDate(value: unknown): string {
 }
 
 export function getGoogleMapsUrl(place: PlaceSchema): string {
-  const placeAny = place as Record<string, unknown>;
-  if (typeof placeAny.google_place_id === "string") {
-    return `https://www.google.com/maps/place/?q=place_id:${placeAny.google_place_id}`;
+  if (place.google_place_id) {
+    return `https://www.google.com/maps/place/?q=place_id:${place.google_place_id}`;
   }
   return `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`;
-}
-
-export function getPlaceAny(place: PlaceSchema) {
-  const a = place as Record<string, unknown>;
-  return {
-    country: a.country as string | undefined,
-    status: a.status as string,
-    visitedAt: a.visited_at,
-    googlePlaceId: a.google_place_id as string | undefined,
-    tags: Array.isArray(a.tags) ? (a.tags as string[]) : [],
-  };
 }

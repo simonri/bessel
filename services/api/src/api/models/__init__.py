@@ -4,11 +4,13 @@ from .bank_profile import BankProfile
 from .base import Model
 from .category import Category
 from .counter import Counter, CounterReset
+from .device import Device
 from .healthkit_workout import HealthKitWorkout
 from .import_batch import ImportBatch
 from .notification import Notification
 from .place import Place
 from .project import Project
+from .project_device_config import ProjectDeviceConfig
 from .raw_transaction import RawTransaction
 from .recipe import Recipe
 from .security import Security
@@ -28,12 +30,14 @@ __all__ = [
   "Category",
   "Counter",
   "CounterReset",
+  "Device",
   "HealthKitWorkout",
   "ImportBatch",
   "Model",
   "Notification",
   "Place",
   "Project",
+  "ProjectDeviceConfig",
   "RawTransaction",
   "Recipe",
   "Security",

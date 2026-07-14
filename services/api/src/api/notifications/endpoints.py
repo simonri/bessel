@@ -1,8 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
+from api.exceptions import ResourceNotFound
 from api.models.notification import Notification
 from api.notifications.repository import NotificationRepository
 from api.notifications.schemas import NotificationCreate, NotificationResponse, NotificationsListResponse
@@ -60,7 +61,7 @@ async def mark_notification_read(
   repo = NotificationRepository.from_session(session)
   notification = await repo.mark_read(notification_id, current_user.id)
   if notification is None:
-    raise HTTPException(status_code=404, detail="Notification not found.")
+    raise ResourceNotFound("Notification not found.")
   return NotificationResponse.model_validate(notification)
 
 

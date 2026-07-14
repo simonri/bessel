@@ -26,27 +26,21 @@ class TransactionService:
     if not parsed:
       return 0, 0
 
+    repo = TransactionRepository.from_session(session)
+
     # 1. Store raw: create ImportBatch
-    batch = ImportBatch(
-      bank_name=bank_name,
-      file_format=file_format,
-      raw_content=raw_content,
-      row_count=len(parsed),
+    batch = await repo.create_import_batch(
+      ImportBatch(
+        bank_name=bank_name,
+        file_format=file_format,
+        raw_content=raw_content,
+        row_count=len(parsed),
+      )
     )
-    session.add(batch)
-    await session.flush()
 
     # 2. Store raw: create RawTransaction for each row
-    raw_transactions: list[RawTransaction] = []
-    for i, tx in enumerate(parsed):
-      raw_tx = RawTransaction(
-        row_number=i,
-        raw_data=tx.raw_data,
-        batch_id=batch.id,
-      )
-      session.add(raw_tx)
-      raw_transactions.append(raw_tx)
-    await session.flush()
+    raw_transactions = [RawTransaction(row_number=i, raw_data=tx.raw_data, batch_id=batch.id) for i, tx in enumerate(parsed)]
+    await repo.create_raw_transactions(raw_transactions)
 
     # 3. Deduplicate: INSERT ... ON CONFLICT (user_id, dedup_hash) DO NOTHING
     values = [
@@ -64,7 +58,6 @@ class TransactionService:
       for i, tx in enumerate(parsed)
     ]
 
-    repo = TransactionRepository.from_session(session)
     created = await repo.insert_ignoring_duplicates(values)
     skipped = len(parsed) - created
 

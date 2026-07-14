@@ -1,7 +1,7 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { loginOpenUrlOptions } from "@/providers/auth";
+import { startLogin } from "@/providers/auth";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -25,7 +25,7 @@ function LoginPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !error && !loginStarted.current) {
       loginStarted.current = true;
-      loginWithRedirect(loginOpenUrlOptions);
+      void startLogin(loginWithRedirect);
     }
   }, [isLoading, isAuthenticated, error, loginWithRedirect]);
 
@@ -36,7 +36,7 @@ function LoginPage() {
           <p className="text-sm text-white/70">Authentication error</p>
           <p className="text-xs text-white/50">{error.message}</p>
           <button
-            onClick={() => loginWithRedirect(loginOpenUrlOptions)}
+            onClick={() => void startLogin(loginWithRedirect)}
             className="text-xs text-white/60 underline"
           >
             Try again

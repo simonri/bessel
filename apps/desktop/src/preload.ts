@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld("electron", {
     remove: (key: string): Promise<void> =>
       ipcRenderer.invoke("auth:remove", key),
     allKeys: (): Promise<string[]> => ipcRenderer.invoke("auth:all-keys"),
+    startLogin: (): Promise<number> => ipcRenderer.invoke("auth:start-login"),
     onCallback: (callback: (url: string) => void) => {
       const listener = (_: Electron.IpcRendererEvent, url: string) =>
         callback(url);
@@ -31,6 +32,10 @@ contextBridge.exposeInMainWorld("electron", {
   },
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
+  device: {
+    getInfo: (): Promise<{ key: string; name: string }> =>
+      ipcRenderer.invoke("device:get-info"),
+  },
   selectFolder: () => ipcRenderer.invoke("dialog:select-folder"),
   sshListDir: (
     host: string,

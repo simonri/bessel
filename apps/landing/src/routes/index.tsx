@@ -7,7 +7,6 @@ import {
   LayoutGrid,
   Map as MapIcon,
   Menu,
-  ServerCog,
   SquareTerminal,
   Wallet,
   X,
@@ -37,7 +36,6 @@ const PLATFORM_LABEL: Record<Platform, string> = {
   linux: "Linux",
 };
 
-const APP_URL = "https://app.getbessel.com";
 const GITHUB_URL = "https://github.com/simonri/bessel";
 const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
 
@@ -82,7 +80,6 @@ function LandingPage() {
         <Hero />
         <Thesis />
         <Features />
-        <SelfHosted />
         <Download />
         <FinalCta />
         <Footer />
@@ -94,7 +91,6 @@ function LandingPage() {
 const NAV_LINKS = [
   { href: "#why", label: "Why" },
   { href: "#features", label: "Features" },
-  { href: "#self-hosted", label: "Self-hosted" },
   { href: "#download", label: "Download" },
 ];
 
@@ -132,13 +128,6 @@ function Nav() {
             <GitHubLogo className="size-4.5" />
           </a>
           <a
-            href={APP_URL}
-            className="hidden text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground md:block"
-            {...EXTERNAL_LINK_PROPS}
-          >
-            Sign in
-          </a>
-          <a
             href="#download"
             className="rounded-full bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
           >
@@ -167,14 +156,6 @@ function Nav() {
               {link.label}
             </a>
           ))}
-          <a
-            href={APP_URL}
-            onClick={() => setMenuOpen(false)}
-            className="rounded-lg px-2 py-2.5 text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground"
-            {...EXTERNAL_LINK_PROPS}
-          >
-            Sign in
-          </a>
         </nav>
       )}
     </header>
@@ -350,55 +331,6 @@ function Features() {
   );
 }
 
-function SelfHosted() {
-  return (
-    <section
-      id="self-hosted"
-      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
-    >
-      <div className="reveal overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02]">
-        <div className="grid items-center gap-10 p-8 sm:p-12 lg:grid-cols-2">
-          <div>
-            <span className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-accent">
-              <ServerCog className="size-4.5" />
-            </span>
-            <h2 className="mt-5 text-balance font-serif text-3xl font-medium tracking-tight sm:text-4xl">
-              Your data never leaves your hands
-            </h2>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
-              Bessel is self-hosted and open source. The desktop app talks to a
-              backend you run yourself, keeping your finances, your locations,
-              and your history on your own hardware. No telemetry, no third
-              parties.
-            </p>
-            <a
-              href={GITHUB_URL}
-              className="mt-6 inline-flex items-center gap-2 text-sm text-foreground transition-colors duration-150 pointer-fine:hover:text-accent-soft"
-              {...EXTERNAL_LINK_PROPS}
-            >
-              <GitHubLogo className="size-4" />
-              Read the source on GitHub
-            </a>
-          </div>
-          <div className="rounded-xl border border-white/[0.07] bg-[#101116]/80 p-5 font-mono text-xs leading-loose text-white/70">
-            <p className="text-white/45"># bring your own server</p>
-            <p>
-              <span className="text-[#f97316]">❯</span> docker compose up -d
-            </p>
-            <p className="text-white/55">✔ postgres · ready</p>
-            <p className="text-white/55">✔ redis · ready</p>
-            <p>
-              <span className="text-[#f97316]">❯</span> uv run task api
-            </p>
-            <p className="text-white/55">INFO API listening on :8100</p>
-            <p className="text-emerald-400/90">Bessel is yours.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 const PLATFORMS: {
   id: Platform;
   icon: ReactNode;
@@ -534,7 +466,6 @@ function Footer() {
           links={[
             { label: "GitHub", href: GITHUB_URL },
             { label: "Report an issue", href: `${GITHUB_URL}/issues` },
-            { label: "Sign in", href: APP_URL },
           ]}
         />
       </div>

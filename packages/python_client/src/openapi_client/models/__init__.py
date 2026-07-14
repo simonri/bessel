@@ -30,6 +30,8 @@ from .counter_reset_schema import CounterResetSchema
 from .counter_schema import CounterSchema
 from .counter_update import CounterUpdate
 from .crypto_price_schema import CryptoPriceSchema
+from .device_schema import DeviceSchema
+from .device_update import DeviceUpdate
 from .get_klarna_transactions_v1_klarna_transactions_get_response_get_klarna_transactions_v1_klarna_transactions_get import (
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet,
 )
@@ -68,6 +70,7 @@ from .place_sort_property import PlaceSortProperty
 from .place_status import PlaceStatus
 from .place_update import PlaceUpdate
 from .project_create import ProjectCreate
+from .project_location_update import ProjectLocationUpdate
 from .project_schema import ProjectSchema
 from .project_update import ProjectUpdate
 from .recipe_create import RecipeCreate
@@ -139,6 +142,8 @@ __all__ = (
   "CounterSchema",
   "CounterUpdate",
   "CryptoPriceSchema",
+  "DeviceSchema",
+  "DeviceUpdate",
   "GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet",
   "GooglePlaceSearchResponse",
   "GooglePlaceSearchResult",
@@ -173,6 +178,7 @@ __all__ = (
   "PlaceStatus",
   "PlaceUpdate",
   "ProjectCreate",
+  "ProjectLocationUpdate",
   "ProjectSchema",
   "ProjectUpdate",
   "RecipeCreate",

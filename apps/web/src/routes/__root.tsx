@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { TooltipProvider } from "@bessel/ui/components/tooltip";
 import { ReactQueryProvider } from "@/providers/react-query";
 import { AuthProvider } from "@/providers/auth";
+import { DeviceInterceptor } from "@/providers/device";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { initSentry } from "@/lib/sentry";
 
@@ -50,7 +51,7 @@ export const Route = createRootRoute({
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap",
       },
     ],
   }),
@@ -67,6 +68,7 @@ function RootComponent() {
       <body className="antialiased">
         <ErrorBoundary>
           <AuthProvider>
+            <DeviceInterceptor />
             <ReactQueryProvider>
               <TooltipProvider>
                 <Outlet />

@@ -1,17 +1,3 @@
-import {
-  closestCenter,
-  defaultDropAnimationSideEffects,
-  DndContext,
-  type DragEndEvent,
-  type DragOverEvent,
-  DragOverlay,
-  type DropAnimation,
-  type DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
 import type { TaskSchema } from "@bessel/client";
 import {
   completeTaskV1TasksTaskIdCompletePostMutation,
@@ -25,7 +11,6 @@ import {
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import { Dialog } from "@bessel/ui/components/dialog";
-import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   Empty,
   EmptyDescription,
@@ -40,6 +25,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
+import { Skeleton } from "@bessel/ui/components/skeleton";
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
+  DragOverlay,
+  type DragStartEvent,
+  type DropAnimation,
+  defaultDropAnimationSideEffects,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import {
   keepPreviousData,
   useMutation,
@@ -260,6 +260,32 @@ function Tasks() {
 
   const reorderMutation = useMutation({
     ...reorderTasksV1TasksReorderPatchMutation({ client }),
+    onMutate: async ({ body }) => {
+      const previous = await cache.cancelAndSnapshot();
+      const itemsById = new Map(body.map((item) => [item.id, item]));
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        const updatedItems = old.items.map((t: any) => {
+          const item = itemsById.get(t.id);
+          if (!item) return t;
+          return {
+            ...t,
+            position: item.position,
+            ...(item.status ? { status: item.status } : {}),
+          };
+        });
+        updatedItems.sort(
+          (a: any, b: any) => (a.position ?? 0) - (b.position ?? 0),
+        );
+        return { ...old, items: updatedItems };
+      });
+      setLocalOrder(null);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      cache.rollback(context?.previous);
+      toast.error("Action failed");
+    },
     onSettled: () => cache.invalidateAll(),
   });
 
@@ -439,12 +465,20 @@ function Tasks() {
       const gap = (next.position ?? 0) - (prev.position ?? 0);
       newPosition = ((prev.position ?? 0) + (next.position ?? 0)) / 2;
       if (gap < 1e-6) {
+        // Renumber the whole column in a single reorder call. The dragged
+        // task's status change rides along on its item — firing a separate
+        // update would race the renumbering and clobber positions.
         const renormItems = columnTasks.map((t, i) => ({
           id: t.id,
           position: (i + 1) * 1000,
+          status:
+            t.id === taskId && originalStatus !== newStatus
+              ? (newStatus as TaskStatus)
+              : undefined,
         }));
         reorderMutation.mutate({ client, body: renormItems });
-        newPosition = (taskIndex + 1) * 1000;
+        setActiveTask(null);
+        return;
       }
     }
 

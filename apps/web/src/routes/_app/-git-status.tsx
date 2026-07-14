@@ -78,15 +78,44 @@ export function GitStatus() {
   const { data: allProjects } = useQuery(
     listProjectsV1ProjectsGetOptions({ client }),
   );
-  const projects = (allProjects ?? []).filter(
-    (p): p is ProjectWithPath => p.path != null && !p.ssh_host,
+  // ssh-backed projects are a separate, pre-existing limitation (no remote git
+  // support yet) — unrelated to whether this device has a local path set.
+  const localProjects = (allProjects ?? []).filter((p) => !p.ssh_host);
+  const projects = localProjects.filter(
+    (p): p is ProjectWithPath => p.path != null,
   );
+  const unconfiguredCount = localProjects.length - projects.length;
 
   const [selectedProject, setSelectedProject] =
     useState<ProjectWithPath | null>(null);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [anchorKey, setAnchorKey] = useState<string | null>(null);
+
+  // Chromium under Wayland/ozone (this Electron build) delivers mouse events
+  // with all keyboard-modifier flags stripped — e.shiftKey is always false on
+  // click, silently breaking shift/ctrl selection. Keyboard events DO carry
+  // modifier state, so track it from those and OR it with the event's own
+  // flags at click time.
+  const heldModifiers = useRef({ shift: false, ctrlOrMeta: false });
+  useEffect(() => {
+    const sync = (e: KeyboardEvent) => {
+      heldModifiers.current.shift = e.getModifierState("Shift");
+      heldModifiers.current.ctrlOrMeta =
+        e.getModifierState("Control") || e.getModifierState("Meta");
+    };
+    const reset = () => {
+      heldModifiers.current = { shift: false, ctrlOrMeta: false };
+    };
+    window.addEventListener("keydown", sync, true);
+    window.addEventListener("keyup", sync, true);
+    window.addEventListener("blur", reset);
+    return () => {
+      window.removeEventListener("keydown", sync, true);
+      window.removeEventListener("keyup", sync, true);
+      window.removeEventListener("blur", reset);
+    };
+  }, []);
   const [commitMessage, setCommitMessage] = useState("");
   const commitTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,17 +146,30 @@ export function GitStatus() {
     }
   }, [projects, selectedProject]);
 
+  // Runs on mousedown (not click), like a native file explorer — selection
+  // responds on press, and a press that turns into a drag doesn't matter here
+  // since rows aren't draggable.
   const handleFileClick = (
     list: GitFileEntry[],
     index: number,
     staged: boolean,
     e: React.MouseEvent,
   ) => {
+    if (e.button !== 0) return;
     const file = list[index]!;
     const key = fileKey(file, staged);
     const untracked = !staged && file.status === "?";
+    const shift = e.shiftKey || heldModifiers.current.shift;
+    const toggle = e.metaKey || e.ctrlKey || heldModifiers.current.ctrlOrMeta;
 
-    if (e.shiftKey && anchorKey) {
+    // TEMP: confirming the Wayland modifier workaround on-device; remove after.
+    console.warn(
+      `[git-select] evtShift=${e.shiftKey} heldShift=${heldModifiers.current.shift} evtCtrl=${e.ctrlKey || e.metaKey} heldCtrl=${heldModifiers.current.ctrlOrMeta} anchor=${anchorKey ?? "none"}`,
+    );
+
+    setSelectedFile({ file, staged, untracked });
+
+    if (shift && anchorKey) {
       const anchorIndex = list.findIndex(
         (f) => fileKey(f, staged) === anchorKey,
       );
@@ -137,12 +179,13 @@ export function GitStatus() {
         setSelectedKeys(
           new Set(list.slice(lo, hi + 1).map((f) => fileKey(f, staged))),
         );
-        setSelectedFile({ file, staged, untracked });
+        // Anchor stays put so a follow-up shift-click re-ranges from the
+        // same origin, matching file-explorer behavior.
         return;
       }
     }
 
-    if (e.metaKey || e.ctrlKey) {
+    if (toggle) {
       setSelectedKeys((prev) => {
         const next = new Set(prev);
         if (next.has(key)) next.delete(key);
@@ -150,13 +193,11 @@ export function GitStatus() {
         return next;
       });
       setAnchorKey(key);
-      setSelectedFile({ file, staged, untracked });
       return;
     }
 
     setSelectedKeys(new Set([key]));
     setAnchorKey(key);
-    setSelectedFile({ file, staged, untracked });
   };
 
   // Bulk actions apply to the whole selection when the acted-on file is part
@@ -311,10 +352,25 @@ export function GitStatus() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
         <GitBranch className="size-8 text-white/15" />
-        <p className="text-sm text-white/50">No projects configured</p>
-        <p className="text-xs text-white/50">
-          Add a project via the folder icon in the top bar
-        </p>
+        {unconfiguredCount > 0 ? (
+          <>
+            <p className="text-sm text-white/50">
+              {unconfiguredCount === 1
+                ? "1 project isn't set up on this device"
+                : `${unconfiguredCount} projects aren't set up on this device`}
+            </p>
+            <p className="text-xs text-white/50">
+              Set a local path via the folder icon in the top bar
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-white/50">No projects configured</p>
+            <p className="text-xs text-white/50">
+              Add a project via the folder icon in the top bar
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -372,6 +428,14 @@ export function GitStatus() {
         </button>
       </div>
 
+      {unconfiguredCount > 0 && (
+        <div className="shrink-0 border-b border-white/[0.06] px-3 py-1 text-11 text-white/40">
+          {unconfiguredCount === 1
+            ? "1 more project isn't set up on this device"
+            : `${unconfiguredCount} more projects aren't set up on this device`}
+        </div>
+      )}
+
       {/* ── Body ── */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── Left panel ── */}
@@ -425,7 +489,11 @@ export function GitStatus() {
           </div>
 
           {/* File list */}
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* select-none: shift-click is meant to range-select rows (like a
+              file explorer), but without this the browser's default
+              behavior kicks in first and shift-click just text-selects
+              across rows instead. */}
+          <div className="min-h-0 flex-1 select-none overflow-y-auto">
             {statusQuery.isLoading ? (
               <div className="flex h-12 items-center justify-center">
                 <div className="size-3.5 animate-spin rounded-full border border-white/20 border-t-white/50" />

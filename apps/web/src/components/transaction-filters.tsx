@@ -1,12 +1,16 @@
-import { useRef, useState } from "react";
-// Note: date range filter removed — month navigation in transactions.tsx handles date scoping
-import { Search, X, ChevronDown, Briefcase } from "lucide-react";
 import type { BankAccountSchema, CategorySchema } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import { Checkbox } from "@bessel/ui/components/checkbox";
 import { Input } from "@bessel/ui/components/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@bessel/ui/components/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@bessel/ui/components/popover";
 import { cn } from "@bessel/ui/lib/utils";
+// Note: date range filter removed — month navigation in transactions.tsx handles date scoping
+import { Briefcase, ChevronDown, Search, X } from "lucide-react";
+import { useRef, useState } from "react";
 
 export interface TransactionFilters {
   bank_account_id?: string[];
@@ -87,7 +91,9 @@ function AccountDropdown({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-52 p-1.5">
         {accounts.length === 0 ? (
-          <p className="text-muted-foreground py-2 text-center text-sm">No accounts</p>
+          <p className="text-muted-foreground py-2 text-center text-sm">
+            No accounts
+          </p>
         ) : (
           accounts.map((acc) => (
             <label
@@ -172,9 +178,15 @@ function CategoryDropdown({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-72 w-56 overflow-y-auto p-1.5">
+      <PopoverContent
+        align="start"
+        className="max-h-72 w-56 overflow-y-auto p-1.5"
+      >
         <label className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm">
-          <Checkbox checked={uncategorized} onCheckedChange={onToggleUncategorized} />
+          <Checkbox
+            checked={uncategorized}
+            onCheckedChange={onToggleUncategorized}
+          />
           <span className="text-muted-foreground italic">Uncategorized</span>
         </label>
         {parents.map((parent) => {
@@ -318,9 +330,14 @@ export function TransactionFiltersBar({
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const active = hasActiveFilters(filters);
 
-  const toggleArrayFilter = (key: "bank_account_id" | "category_id", id: string) => {
+  const toggleArrayFilter = (
+    key: "bank_account_id" | "category_id",
+    id: string,
+  ) => {
     const current = filters[key] ?? [];
-    const next = current.includes(id) ? current.filter((v) => v !== id) : [...current, id];
+    const next = current.includes(id)
+      ? current.filter((v) => v !== id)
+      : [...current, id];
     onFiltersChange({ ...filters, [key]: next.length ? next : undefined });
   };
 
@@ -340,7 +357,9 @@ export function TransactionFiltersBar({
         accounts={accounts}
         selected={filters.bank_account_id ?? []}
         onToggle={(id) => toggleArrayFilter("bank_account_id", id)}
-        onClear={() => onFiltersChange({ ...filters, bank_account_id: undefined })}
+        onClear={() =>
+          onFiltersChange({ ...filters, bank_account_id: undefined })
+        }
       />
 
       <CategoryDropdown
@@ -357,11 +376,17 @@ export function TransactionFiltersBar({
           onFiltersChange({
             ...filters,
             uncategorized: !filters.uncategorized ? true : undefined,
-            category_id: !filters.uncategorized ? undefined : filters.category_id,
+            category_id: !filters.uncategorized
+              ? undefined
+              : filters.category_id,
           })
         }
         onClear={() =>
-          onFiltersChange({ ...filters, category_id: undefined, uncategorized: undefined })
+          onFiltersChange({
+            ...filters,
+            category_id: undefined,
+            uncategorized: undefined,
+          })
         }
       />
 
@@ -392,16 +417,3 @@ export function TransactionFiltersBar({
     </div>
   );
 }
-
-// Keep for backward compat if anything else imports ActiveFilters
-export function ActiveFilters(_props: {
-  filters: TransactionFilters;
-  onFiltersChange: (f: TransactionFilters) => void;
-  accounts: BankAccountSchema[];
-  categories: CategorySchema[];
-}) {
-  return null;
-}
-
-// Keep legacy export name for any remaining imports
-export const TransactionFiltersPopover = TransactionFiltersBar;

@@ -79,6 +79,11 @@ class RepositoryBase[M]:
       await self.session.flush()
     return item
 
+  async def delete(self, item: M, *, flush: bool = False) -> None:
+    await self.session.delete(item)
+    if flush:
+      await self.session.flush()
+
   async def update(
     self,
     item: M,
