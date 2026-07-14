@@ -14,12 +14,17 @@ const config = defineConfig({
     }),
     tailwindcss(),
     tanstackStart({
-      spa: {
+      // Static-site prerender (not `spa` mode): `spa` mode intentionally
+      // writes an empty hydration shell for client-only apps and was
+      // silently producing a bodyless index.html here, so Google had no
+      // crawlable text at all. This renders real HTML per route instead.
+      prerender: {
         enabled: true,
-        prerender: {
-          outputPath: "/index.html",
-          crawlLinks: true,
-        },
+        crawlLinks: true,
+      },
+      sitemap: {
+        enabled: true,
+        host: "https://getbessel.com",
       },
     }),
     viteReact(),

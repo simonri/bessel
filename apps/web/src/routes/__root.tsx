@@ -24,7 +24,7 @@ export const Route = createRootRoute({
       },
       {
         name: "robots",
-        content: "index, follow",
+        content: "noindex, nofollow",
       },
       {
         title: "Bessel",
