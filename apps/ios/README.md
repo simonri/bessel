@@ -54,6 +54,15 @@ constraints:
   Sign in with Apple, or universal links. Custom URL schemes, Keychain (own app),
   and local notifications all work — which is why auth uses the
   `com.simonri.bessel://` scheme rather than universal links.
+- **HealthKit works in the Debug/dev app but not the AltStore-installed prod
+  app.** AltServer creates its own App ID when it re-signs the `.ipa` and only
+  registers a minimal baseline capability set — it doesn't read
+  `Bessel.entitlements` and provision matching capabilities on the developer
+  portal. The prod app crashes with "Missing com.apple.developer.healthkit
+  entitlement" the first time it touches a HealthKit API, even though the
+  entitlement is correctly embedded in the signed binary. This is a known
+  AltStore limitation (only lifted with a paid Apple Developer Program
+  account), not fixable from this repo.
 
 ### Prod app via AltStore
 
