@@ -114,7 +114,7 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color,transform] duration-150 cursor-grab active:cursor-grabbing active:scale-[0.98] motion-reduce:active:scale-100 pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""} ${isCompleting ? "pointer-events-none opacity-0 scale-[0.98] transition-[opacity,transform] duration-[180ms] ease-out" : ""}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color] duration-150 cursor-grab active:cursor-grabbing pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""} ${isCompleting ? "pointer-events-none opacity-0 scale-[0.98] transition-[opacity,transform] duration-[180ms] ease-out" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">

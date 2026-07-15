@@ -208,6 +208,11 @@
     @apply border-border;
     outline: none;
   }
+  /* Beats Tailwind preflight's `:-moz-focusring { outline: auto }`, which
+     otherwise restores Firefox's native tab focus ring despite the reset above. */
+  *:focus-visible {
+    outline: none;
+  }
   body {
     @apply bg-background text-foreground;
   }
