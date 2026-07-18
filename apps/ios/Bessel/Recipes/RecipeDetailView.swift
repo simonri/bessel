@@ -40,11 +40,13 @@ struct RecipeDetailView: View {
                     .onChange(of: content) { scheduleSave() }
             } else {
                 ScrollView {
-                    Text(preview)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.foreground)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(MarkdownBlock.parse(content)) { block in
+                            blockView(block)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
                 }
             }
         }
@@ -108,9 +110,55 @@ struct RecipeDetailView: View {
         .padding(.vertical, 10)
     }
 
-    private var preview: AttributedString {
-        (try? AttributedString(markdown: content, options: .init(interpretedSyntax: .full)))
-            ?? AttributedString(content)
+    @ViewBuilder
+    private func blockView(_ block: MarkdownBlock) -> some View {
+        switch block.kind {
+        case .heading(let level):
+            Text(block.text)
+                .font(headingFont(level))
+                .foregroundStyle(Theme.foreground)
+        case .listItem(let ordinal, let indentationLevel):
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(ordinal.map { "\($0)." } ?? "•")
+                    .foregroundStyle(Theme.mutedForeground)
+                    .frame(minWidth: 18, alignment: .trailing)
+                Text(block.text)
+                    .foregroundStyle(Theme.foreground)
+            }
+            .font(.subheadline)
+            .padding(.leading, CGFloat(max(indentationLevel - 1, 0)) * 16)
+        case .codeBlock:
+            Text(block.text)
+                .font(.system(.subheadline, design: .monospaced))
+                .foregroundStyle(Theme.foreground)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 6))
+        case .blockQuote:
+            HStack(spacing: 8) {
+                Rectangle()
+                    .fill(Theme.border)
+                    .frame(width: 3)
+                Text(block.text)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.mutedForeground)
+            }
+        case .thematicBreak:
+            Divider().overlay(Theme.border)
+        case .paragraph:
+            Text(block.text)
+                .font(.subheadline)
+                .foregroundStyle(Theme.foreground)
+        }
+    }
+
+    private func headingFont(_ level: Int) -> Font {
+        switch level {
+        case 1: .title2.weight(.semibold)
+        case 2: .title3.weight(.semibold)
+        case 3: .headline
+        default: .subheadline.weight(.semibold)
+        }
     }
 
     private func scheduleSave(immediate: Bool = false) {
