@@ -28,6 +28,11 @@ enum Theme {
     static let dueOverdue = Color(hex: 0xF87171)
     static let dueToday = primary400
     static let dueLater = Color.white.opacity(0.4)
+
+    // Battery/status colors, mirroring the golfcart web palette (green-400/amber-400/blue-400)
+    static let positive = Color(hex: 0x4ADE80)
+    static let warning = Color(hex: 0xFBBF24)
+    static let info = Color(hex: 0x60A5FA)
 }
 
 extension Color {

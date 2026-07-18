@@ -70,7 +70,7 @@ struct TaskFormView: View {
             }
             .scrollContentBackground(.hidden)
             .scrollBounceBehavior(.basedOnSize)
-            .scrollDismissesKeyboard(.interactively)
+            .scrollDismissesKeyboard(.immediately)
             .listSectionSpacing(20)
             .contentMargins(.top, 12, for: .scrollContent)
             .onTapGesture { endEditing() }
@@ -97,7 +97,6 @@ struct TaskFormView: View {
             .onAppear(perform: populate)
         }
         .presentationDetents([.large])
-        .presentationContentInteraction(.resizes)
     }
 
     private func suggestingField(_ label: String, text: Binding<String>, suggestions: [String]) -> some View {
@@ -112,6 +111,8 @@ struct TaskFormView: View {
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.caption)
                         .foregroundStyle(Theme.mutedForeground)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
             }
         }
