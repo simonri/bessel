@@ -101,5 +101,5 @@ __pycache__
 .claude
 htmlcov
 .coverage
-bin/
+/bin/
 dist/
