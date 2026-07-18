@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:26-slim
 
 RUN npm install -g serve@14 && apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
