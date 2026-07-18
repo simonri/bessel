@@ -191,6 +191,17 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
   },
 };
 
+/** Whether this module's window carries a project directory (`projectPath`/
+ *  `projectSshHost` in its data) that a widget can be respawned into. */
+export function moduleSupportsProject(module: ModuleKey): boolean {
+  return (
+    module === "claudeCode" ||
+    module === "codex" ||
+    module === "grok" ||
+    module === "terminal"
+  );
+}
+
 const desktopModules: ModuleKey[] = isDesktop
   ? ["claudeCode", "codex", "grok", "terminal", "browser"]
   : [];

@@ -45,6 +45,7 @@ export function ClaudeCode() {
         args={["-t", sshHost, `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc '${remoteCommand}'`]}
         taskDropZone
         commands={commands}
+        detectAgentStatus
       />
     );
   }
@@ -56,6 +57,7 @@ export function ClaudeCode() {
       cwd={path}
       taskDropZone
       commands={commands}
+      detectAgentStatus
     />
   );
 }

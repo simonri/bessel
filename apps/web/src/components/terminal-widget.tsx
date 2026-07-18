@@ -5,8 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "@xterm/xterm/css/xterm.css";
 import {
+  type AgentStatus,
   useWindowActions,
   useWindowEntry,
+  useWindowStatus,
   useWindowTitle,
 } from "@/components/canvas/window-manager";
 
@@ -23,6 +25,10 @@ interface TerminalWidgetProps {
   taskDropZone?: boolean;
   /** Commands run one after another once the shell/CLI has started. */
   commands?: string[];
+  /** Classify the agent CLI's OSC window-title updates as working/free and
+   *  report via WindowStatusContext. Only meaningful for TUI agent CLIs
+   *  (Claude, ...) that use this convention — not a generic shell. */
+  detectAgentStatus?: boolean;
 }
 
 // A command is only sent once the PTY has been quiet for this long — i.e. the
@@ -34,6 +40,22 @@ const IDLE_GAP_MS = 500;
 const IDLE_POLL_MS = 100;
 const POST_SEND_SETTLE_MS = 300;
 const MAX_WAIT_PER_COMMAND_MS = 8000;
+
+// Claude Code prefixes its OSC window-title updates with a spinner glyph
+// (Braille pattern dots, U+2800-U+28FF) while generating a response, and with
+// a static ✳ (U+2733) once back at the prompt — verified empirically against
+// the live CLI (2.1.210), since it isn't documented and the glyphs aren't
+// literal strings in the binary (assembled at runtime). This is the only
+// structured busy/idle signal available; text titles that don't start with
+// either glyph (e.g. a plain shell prompt) don't update the status.
+const AGENT_SPINNER_GLYPH = /^[⠀-⣿]/;
+const AGENT_IDLE_GLYPH = /^✳/;
+
+function classifyAgentStatus(title: string): AgentStatus | null {
+  if (AGENT_SPINNER_GLYPH.test(title)) return "working";
+  if (AGENT_IDLE_GLYPH.test(title)) return "free";
+  return null;
+}
 
 // xterm's FitAddon floors rows to the container height, so `.xterm` is
 // usually a few px shorter than its container — the container needs this
@@ -47,6 +69,7 @@ export function TerminalWidget({
   cwd,
   taskDropZone = false,
   commands = [],
+  detectAgentStatus = false,
 }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -72,6 +95,12 @@ export function TerminalWidget({
   const setWindowTitleRef = useRef(setWindowTitle);
   useEffect(() => {
     setWindowTitleRef.current = setWindowTitle;
+  });
+
+  const setWindowStatus = useWindowStatus();
+  const setWindowStatusRef = useRef(setWindowStatus);
+  useEffect(() => {
+    setWindowStatusRef.current = setWindowStatus;
   });
 
   const entry = useWindowEntry();
@@ -274,6 +303,14 @@ export function TerminalWidget({
     });
 
     const disposeTitleChange = terminal.onTitleChange((title) => {
+      // The agent CLI's title text (its own idle glyph, or a conversation
+      // summary once one is generated) isn't shown — only the working/free
+      // dot derived from it is, so this only feeds the status classifier.
+      if (detectAgentStatus) {
+        const status = classifyAgentStatus(title);
+        if (status) setWindowStatusRef.current?.(status);
+        return;
+      }
       setWindowTitleRef.current?.(title || null);
     });
 
@@ -320,6 +357,7 @@ export function TerminalWidget({
     return () => {
       cancelled = true;
       if (resizeTimer) clearTimeout(resizeTimer);
+      if (detectAgentStatus) setWindowStatusRef.current?.(null);
       disposeInput.dispose();
       disposeTitleChange.dispose();
       unsubData();
@@ -333,7 +371,10 @@ export function TerminalWidget({
       terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
     };
-  }, []); // mount/unmount only — command/args/cwd/commands are captured in spawnConfig ref
+    // mount/unmount only — command/args/cwd/commands/detectAgentStatus are
+    // captured here or in spawnConfig ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!contextMenu) return;

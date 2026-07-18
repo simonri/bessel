@@ -5,24 +5,49 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@bessel/ui/components/popover";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { useQuery } from "@tanstack/react-query";
-import { CheckSquare, ChevronDown, X } from "lucide-react";
+import { CheckSquare, ChevronDown, FolderOpen, X } from "lucide-react";
 import { memo, Suspense, useEffect, useState } from "react";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { client } from "@/lib/client";
 import { isDoneStatus } from "@/lib/task-format";
 import { cn } from "@/lib/utils";
 import { setFocusedWindow, useIsWindowFocused } from "./canvas-focus";
-import { MODULE_REGISTRY } from "./module-registry";
+import { MODULE_REGISTRY, moduleSupportsProject } from "./module-registry";
 import {
+  ProjectPickerMenu,
+  type ProjectWithPath,
+  useProjectsWithPath,
+} from "./project-picker-menu";
+import {
+  type AgentStatus,
   useWindowActions,
   useWorkspaceMeta,
   type WindowEntry,
   WindowEntryContext,
+  WindowStatusContext,
   WindowTitleContext,
 } from "./window-manager";
+
+function AgentStatusIndicator({ status }: { status: AgentStatus }) {
+  const isWorking = status === "working";
+  return (
+    <span
+      title={isWorking ? "Working" : "Free"}
+      className={cn(
+        "size-1.5 shrink-0 rounded-full",
+        isWorking ? "bg-amber-400 animate-pulse" : "bg-emerald-400",
+      )}
+    />
+  );
+}
 
 function WindowSpinner() {
   return (
@@ -131,6 +156,60 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
   );
 }
 
+// Lets a project-aware widget (Claude, Codex, Grok, a plain terminal) be
+// repointed at a different project directory without closing and reopening
+// the window — the actual respawn happens via the `key` on <Component>
+// below, which unmounts/remounts the widget (and its Claude session, if any)
+// once entry.data's project fields change.
+function ProjectSwitcher({ entry }: { entry: WindowEntry }) {
+  const { updateWindowData } = useWindowActions();
+  const [open, setOpen] = useState(false);
+  const projects = useProjectsWithPath();
+
+  const switchProject = (project?: ProjectWithPath) => {
+    const patch: Record<string, string> = {
+      projectPath: project?.path ?? "",
+      projectName: project?.name ?? "",
+      projectSshHost: project?.ssh_host ?? "",
+    };
+    // Force a brand-new Claude session in the new directory rather than
+    // resuming the old project's conversation.
+    if (entry.module === "claudeCode") patch.claudeSessionId = "";
+    updateWindowData(entry.id, patch);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          title="Switch project"
+          className="flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+        >
+          <FolderOpen className="size-2.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        sideOffset={8}
+        className={cn(
+          glassSurface({ weight: "heavy" }),
+          "w-64 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl",
+        )}
+      >
+        <ProjectPickerMenu
+          projects={projects}
+          onSelect={switchProject}
+          noProjectLabel="No project"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export const CanvasWindow = memo(function CanvasWindow({
   entry,
 }: {
@@ -142,6 +221,7 @@ export const CanvasWindow = memo(function CanvasWindow({
   const Icon = config.icon;
   const Component = config.component;
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
+  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
 
   return (
     <div
@@ -164,8 +244,12 @@ export const CanvasWindow = memo(function CanvasWindow({
             </span>
           )}
         </span>
+        {agentStatus && <AgentStatusIndicator status={agentStatus} />}
         <div className="ml-auto flex min-w-0 items-center gap-1.5">
           <AttachedTaskButton entry={entry} />
+          {moduleSupportsProject(entry.module) && (
+            <ProjectSwitcher entry={entry} />
+          )}
           <MoveToWorkspaceMenu entry={entry} />
           <button
             onPointerDown={(e) => e.stopPropagation()}
@@ -182,11 +266,18 @@ export const CanvasWindow = memo(function CanvasWindow({
         className={`flex-1 ${config.noPadding ? "overflow-hidden" : "overflow-y-auto p-4"}`}
       >
         <WindowTitleContext.Provider value={setDynamicTitle}>
-          <WindowEntryContext.Provider value={entry}>
-            <Suspense fallback={<WindowSpinner />}>
-              <Component />
-            </Suspense>
-          </WindowEntryContext.Provider>
+          <WindowStatusContext.Provider value={setAgentStatus}>
+            <WindowEntryContext.Provider value={entry}>
+              <Suspense fallback={<WindowSpinner />}>
+                {/* Keyed on project so switching directories fully respawns the
+                    widget (killing the old PTY/Claude session, starting a new
+                    one) instead of leaving it pointed at the old cwd. */}
+                <Component
+                  key={`${entry.data?.projectSshHost ?? ""}:${entry.data?.projectPath ?? ""}`}
+                />
+              </Suspense>
+            </WindowEntryContext.Provider>
+          </WindowStatusContext.Provider>
         </WindowTitleContext.Provider>
       </div>
     </div>

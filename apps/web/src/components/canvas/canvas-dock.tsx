@@ -1,21 +1,18 @@
 import {
-  listProjectsV1ProjectsGetOptions,
-  type ProjectSchema,
-} from "@bessel/client";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
 import { glassSurface } from "@bessel/ui/lib/glass";
-import { useQuery } from "@tanstack/react-query";
 import { memo, useState } from "react";
-import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { MODULE_ORDER, MODULE_REGISTRY } from "./module-registry";
+import {
+  ProjectPickerMenu,
+  type ProjectWithPath,
+  useProjectsWithPath,
+} from "./project-picker-menu";
 import { useWindowActions, useWindowState } from "./window-manager";
-
-type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
 function ProjectPicker({
   moduleKey,
@@ -26,11 +23,7 @@ function ProjectPicker({
 }) {
   const { openWindow } = useWindowActions();
   const [open, setOpen] = useState(false);
-
-  const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
-  const projects = (data ?? []).filter(
-    (p): p is ProjectWithPath => p.path != null,
-  );
+  const projects = useProjectsWithPath();
 
   const launch = (project?: ProjectWithPath) => {
     openWindow(
@@ -73,35 +66,7 @@ function ProjectPicker({
           "w-64 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl",
         )}
       >
-        <div className="border-b border-white/10 px-3 py-2.5">
-          <p className="text-xs font-medium text-white/50">Select project</p>
-        </div>
-
-        <button
-          onClick={() => launch()}
-          className="w-full px-3 py-2.5 text-left text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white/80"
-        >
-          Open without project
-        </button>
-
-        {projects.length > 0 && (
-          <div className="max-h-48 overflow-y-auto border-t border-white/[0.06]">
-            {projects.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => launch(p)}
-                className="flex w-full flex-col px-3 py-2.5 text-left transition-colors hover:bg-white/5"
-              >
-                <span className="text-sm font-medium text-white/80">
-                  {p.name}
-                </span>
-                <span className="truncate text-11 text-white/50">
-                  {p.ssh_host ? `${p.ssh_host}:${p.path}` : p.path}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+        <ProjectPickerMenu projects={projects} onSelect={launch} />
       </PopoverContent>
     </Popover>
   );

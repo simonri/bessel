@@ -135,6 +135,19 @@ export function useWindowTitle() {
   return useContext(WindowTitleContext);
 }
 
+/** Whether an agent CLI (Claude, ...) running inside a terminal widget is
+ *  currently generating a response ("working") or sitting at a prompt
+ *  ("free"). Null means no signal yet (not detected, or not applicable). */
+export type AgentStatus = "working" | "free";
+
+export const WindowStatusContext = createContext<
+  ((status: AgentStatus | null) => void) | null
+>(null);
+
+export function useWindowStatus() {
+  return useContext(WindowStatusContext);
+}
+
 const STORAGE_KEY = "bessel:workspaces";
 const LEGACY_KEY = "metron:windows";
 
