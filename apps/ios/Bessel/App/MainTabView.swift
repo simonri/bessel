@@ -3,8 +3,10 @@ import SwiftUI
 enum AppTab: String, CaseIterable, Identifiable {
     case tasks
     case workouts
+    case recipes
     case places
     case money
+    case golfCart
     case settings
 
     var id: String { rawValue }
@@ -13,8 +15,10 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .tasks: "Tasks"
         case .workouts: "Workouts"
+        case .recipes: "Recipes"
         case .places: "Places"
         case .money: "Money"
+        case .golfCart: "Golf cart"
         case .settings: "Settings"
         }
     }
@@ -23,8 +27,10 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .tasks: "checklist"
         case .workouts: "figure.run"
+        case .recipes: selected ? "book.fill" : "book"
         case .places: selected ? "map.fill" : "map"
         case .money: selected ? "creditcard.fill" : "creditcard"
+        case .golfCart: selected ? "bolt.car.fill" : "bolt.car"
         case .settings: selected ? "gearshape.fill" : "gearshape"
         }
     }
@@ -43,8 +49,10 @@ struct MainTabView: View {
             ZStack {
                 pane(.tasks) { TasksView(auth: auth) }
                 pane(.workouts) { WorkoutsView(auth: auth) }
+                pane(.recipes) { RecipesView(auth: auth) }
                 pane(.places) { ComingSoonView(tab: .places) }
                 pane(.money) { ComingSoonView(tab: .money) }
+                pane(.golfCart) { GolfCartView(isActive: selection == .golfCart) }
                 pane(.settings) { SettingsView(auth: auth) }
             }
             bottomBar

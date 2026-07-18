@@ -48,8 +48,10 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bessel connects to the golf cart's battery monitor over Bluetooth to show live battery status.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Bessel reads your workouts and sleep data from Health to sync them to your account.</string>
+	<string>Bessel reads your workouts from Health to sync them to your account.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
