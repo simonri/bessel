@@ -4,6 +4,7 @@ from typing import Any, Protocol, Self
 from uuid import UUID
 
 from api.common.db.postgres import AsyncReadSession, AsyncSession
+from api.exceptions import ResourceNotFound
 from sqlalchemy import ColumnExpressionArgument, Select, func, over, select
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm.attributes import flag_modified
@@ -118,6 +119,15 @@ class ModelIDProtocol[ID_TYPE](Protocol):
   id: Mapped[ID_TYPE]
 
 
+class ModelUserProtocol(Protocol):
+  user_id: Mapped[UUID | None]
+  deleted_at: Mapped[datetime | None]
+
+
+class ModelOwnedProtocol(ModelIDProtocol[UUID], ModelUserProtocol, Protocol):
+  pass
+
+
 class RepositoryIDMixin[MODEL_ID: ModelIDProtocol, ID_TYPE]:
   async def get_by_id(
     self: RepositoryProtocol[MODEL_ID],
@@ -128,10 +138,21 @@ class RepositoryIDMixin[MODEL_ID: ModelIDProtocol, ID_TYPE]:
     statement = self.get_base_statement().where(self.model.id == entity_id).options(*options)
     return await self.get_one_or_none(statement)
 
-
-class ModelUserProtocol(Protocol):
-  user_id: Mapped[UUID | None]
-  deleted_at: Mapped[datetime | None]
+  async def get_owned_or_404[MODEL_OWNED: ModelOwnedProtocol](
+    self: RepositoryProtocol[MODEL_OWNED],
+    entity_id: UUID,
+    user_id: UUID,
+    *,
+    check_not_deleted: bool = False,
+    not_found_message: str = "Not found",
+  ) -> MODEL_OWNED:
+    statement = self.get_base_statement().where(self.model.id == entity_id).where(self.model.user_id == user_id)
+    if check_not_deleted:
+      statement = statement.where(self.model.deleted_at.is_(None))
+    item = await self.get_one_or_none(statement)
+    if item is None:
+      raise ResourceNotFound(not_found_message)
+    return item
 
 
 class RepositoryUserMixin[MODEL_USER: ModelUserProtocol]:

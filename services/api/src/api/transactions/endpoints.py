@@ -173,9 +173,7 @@ async def update_transaction(
 ) -> TransactionUpdateResponse:
   """Update a transaction."""
   repo = TransactionRepository.from_session(session)
-  transaction = await repo.get_by_id(transaction_id)
-  if transaction is None or transaction.user_id != current_user.id:
-    raise ResourceNotFound("Transaction not found")
+  transaction = await repo.get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:

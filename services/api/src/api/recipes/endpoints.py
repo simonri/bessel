@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
-from api.exceptions import ResourceNotFound
 from api.models.recipe import Recipe
 from api.postgres import AsyncSession, get_db_session
 from api.recipes.repository import RecipeRepository
@@ -66,9 +65,7 @@ async def get_recipe(
   recipe_id: UUID,
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.get_by_id(recipe_id)
-  if not recipe or recipe.user_id != current_user.id:
-    raise ResourceNotFound("Recipe not found.")
+  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
   return RecipeSchema.model_validate(recipe)
 
 
@@ -80,9 +77,7 @@ async def update_recipe(
   body: RecipeUpdate,
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.get_by_id(recipe_id)
-  if not recipe or recipe.user_id != current_user.id:
-    raise ResourceNotFound("Recipe not found.")
+  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
   update_data = body.model_dump(exclude_unset=True)
   recipe = await repo.update(recipe, update_dict=update_data)
   return RecipeSchema.model_validate(recipe)
@@ -95,7 +90,5 @@ async def delete_recipe(
   recipe_id: UUID,
 ) -> None:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.get_by_id(recipe_id)
-  if not recipe or recipe.user_id != current_user.id:
-    raise ResourceNotFound("Recipe not found.")
+  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
   await repo.delete(recipe)

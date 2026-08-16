@@ -8,7 +8,6 @@ from api.bank_accounts.repository import BankAccountRepository
 from api.bank_accounts.schemas import BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
-from api.exceptions import ResourceNotFound
 from api.models.bank_account import BankAccount
 from api.postgres import AsyncSession, get_db_session
 from api.transactions.repository import TransactionRepository
@@ -73,9 +72,7 @@ async def get_bank_account(
 ) -> BankAccountSchema:
   """Get a bank account by ID."""
   repo = BankAccountRepository.from_session(session)
-  account = await repo.get_by_id(bank_account_id)
-  if account is None or account.user_id != current_user.id:
-    raise ResourceNotFound("Bank account not found")
+  account = await repo.get_owned_or_404(bank_account_id, current_user.id, not_found_message="Bank account not found")
   balances = await _get_balances(session, [account.id])
   return _to_schema(account, balances.get(account.id, 0))
 
@@ -117,9 +114,7 @@ async def update_bank_account(
 ) -> BankAccountSchema:
   """Update a bank account."""
   repo = BankAccountRepository.from_session(session)
-  account = await repo.get_by_id(bank_account_id)
-  if account is None or account.user_id != current_user.id:
-    raise ResourceNotFound("Bank account not found")
+  account = await repo.get_owned_or_404(bank_account_id, current_user.id, not_found_message="Bank account not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:
@@ -141,8 +136,6 @@ async def delete_bank_account(
 ) -> None:
   """Delete a bank account and all its transactions."""
   repo = BankAccountRepository.from_session(session)
-  account = await repo.get_by_id(bank_account_id)
-  if account is None or account.user_id != current_user.id:
-    raise ResourceNotFound("Bank account not found")
+  account = await repo.get_owned_or_404(bank_account_id, current_user.id, not_found_message="Bank account not found")
   await TransactionRepository.from_session(session).delete_for_bank_account(bank_account_id)
   await repo.delete(account)
