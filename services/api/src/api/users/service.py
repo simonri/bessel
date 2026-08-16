@@ -1,7 +1,7 @@
 import structlog
-from sqlalchemy.exc import IntegrityError
 
 from api.common.db.postgres import AsyncSession
+from api.common.repository.get_or_create import get_or_create
 from api.models.user import User
 from api.users.repository import UserRepository
 
@@ -16,23 +16,22 @@ class UserService:
     email: str | None,
   ) -> User:
     repo = UserRepository.from_session(session)
-    user = await repo.get_by_sub(auth0_sub)
 
-    if user:
+    async def on_found(user: User) -> User:
       # Keep email in sync if it changed in Auth0.
       if email and user.email != email:
         await repo.update(user, update_dict={"email": email}, flush=True)
       return user
 
-    user = User(auth0_sub=auth0_sub, email=email)
-    try:
-      async with session.begin_nested():
-        await repo.create(user, flush=True)
-    except IntegrityError:
-      # Lost a concurrent-creation race: the other request's row is committed by now.
-      user = await repo.get_by_sub(auth0_sub)
-      if user is None:
-        raise
+    user, created = await get_or_create(
+      session,
+      fetch=lambda: repo.get_by_sub(auth0_sub),
+      on_found=on_found,
+      build=lambda: User(auth0_sub=auth0_sub, email=email),
+      create=lambda new_user: repo.create(new_user, flush=True),
+    )
+
+    if not created:
       return user
 
     log.info("Created new user", user_id=str(user.id), email=email)
