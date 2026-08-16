@@ -32,7 +32,7 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
-        run: pnpm --filter=@bessel/desktop exec electron-builder --linux --publish always
+        run: pnpm --filter=@bessel/desktop exec electron-builder --linux --publish always --config electron-builder.config.ts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -56,7 +56,7 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
-        run: pnpm --filter=@bessel/desktop exec electron-builder --mac --publish always
+        run: pnpm --filter=@bessel/desktop exec electron-builder --mac --publish always --config electron-builder.config.ts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -83,6 +83,6 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Build & publish
-        run: pnpm --filter=@bessel/desktop exec electron-builder --win --publish always
+        run: pnpm --filter=@bessel/desktop exec electron-builder --win --publish always --config electron-builder.config.ts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
