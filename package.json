@@ -2,10 +2,6 @@
   "name": "bessel",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
   "scripts": {
     "test": "turbo test --parallel",
     "test:watch": "turbo test:watch --parallel",
@@ -33,16 +29,6 @@
   "devDependencies": {
     "@voidzero-dev/vite-plus-darwin-arm64": "0.1.21",
     "vite-plus": "catalog:"
-  },
-  "overrides": {
-    "date-fns": "^4.1.0",
-    "@tanstack/query-core": "5.90.16"
-  },
-  "pnpm": {
-    "overrides": {
-      "@tanstack/query-core": "5.96.2",
-      "@tanstack/react-query": "5.96.2"
-    }
   },
   "packageManager": "pnpm@11.12.0"
 }
