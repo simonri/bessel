@@ -4,7 +4,7 @@ from uuid import UUID
 
 import httpx
 from api.common.pagination import PaginationParamsQuery
-from api.common.sorting import Sorting, SortingGetter
+from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.exceptions import ResourceNotFound, ServiceUnavailableError
 from api.models.place import Place
 from api.places.repository import PlaceRepository
@@ -96,9 +96,7 @@ async def list_places(
   if status is not None:
     statement = statement.where(Place.status == status)
 
-  for prop, desc in sorting:
-    column = getattr(Place, prop.value)
-    statement = statement.order_by(column.desc() if desc else column.asc())
+  statement = apply_sorting(statement, Place, sorting)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return PlaceListResponse.from_paginated_results(

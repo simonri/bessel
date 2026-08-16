@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from api.common.pagination import PaginationParamsQuery
-from api.common.sorting import Sorting, SortingGetter
+from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.exceptions import ResourceNotFound
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
@@ -84,9 +84,7 @@ async def list_transactions(
   if is_business is not None:
     statement = statement.where(Transaction.is_business == is_business)
 
-  for prop, desc in sorting:
-    column = getattr(Transaction, prop.value)
-    statement = statement.order_by(column.desc() if desc else column.asc())
+  statement = apply_sorting(statement, Transaction, sorting)
   # Stable tiebreaker so row order never shifts after unrelated updates (e.g. category)
   statement = statement.order_by(Transaction.id)
 

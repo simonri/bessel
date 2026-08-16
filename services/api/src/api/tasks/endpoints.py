@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import false
 
 from api.common.pagination import PaginationParamsQuery
-from api.common.sorting import Sorting, SortingGetter
+from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound
 from api.models.project import Project
@@ -89,9 +89,7 @@ async def list_tasks(
   if completed_before is not None:
     statement = statement.where(Task.completed_at < datetime.fromtimestamp(completed_before, tz=UTC))
 
-  for prop, desc in sorting:
-    column = getattr(Task, prop.value)
-    statement = statement.order_by(column.desc() if desc else column.asc())
+  statement = apply_sorting(statement, Task, sorting)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return TaskListResponse.from_paginated_results(
