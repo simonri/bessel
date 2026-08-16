@@ -9,7 +9,6 @@ from sqlalchemy import false
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
-from api.exceptions import ResourceNotFound
 from api.models.project import Project
 from api.models.task import Task
 from api.postgres import AsyncSession, get_db_session
@@ -42,14 +41,6 @@ async def _resolve_project(session: AsyncSession, name: str | None, user_id: UUI
   if project is None:
     project = await repo.create(Project(name=name, user_id=user_id), flush=True)
   return project
-
-
-async def _get_task_or_404(session: AsyncSession, task_id: UUID, user_id: UUID) -> Task:
-  repo = TaskRepository.from_session(session)
-  task = await repo.get_by_id(task_id)
-  if task is None or task.user_id != user_id:
-    raise ResourceNotFound("Task not found")
-  return task
 
 
 @router.get(
@@ -160,7 +151,7 @@ async def update_task(
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = await _get_task_or_404(session, task_id, current_user.id)
+  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if "project" in update_dict:
@@ -183,8 +174,9 @@ async def delete_task(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> None:
-  task = await _get_task_or_404(session, task_id, current_user.id)
-  await TaskRepository.from_session(session).delete(task)
+  repo = TaskRepository.from_session(session)
+  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  await repo.delete(task)
 
 
 @router.post(
@@ -198,7 +190,7 @@ async def complete_task(
   current_user: CurrentDBUser,
 ) -> TaskCompleteResponse:
   repo = TaskRepository.from_session(session)
-  task = await _get_task_or_404(session, task_id, current_user.id)
+  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
 
   # Idempotency: a duplicate complete (double click, client retry) must not
   # re-stamp completed_at or spawn another recurring instance.
@@ -256,7 +248,7 @@ async def reopen_task(
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = await _get_task_or_404(session, task_id, current_user.id)
+  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
   await repo.update(task, update_dict={"status": "todo", "completed_at": None})
   return TaskSchema.model_validate(task)
 
@@ -286,5 +278,5 @@ async def get_task(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> TaskSchema:
-  task = await _get_task_or_404(session, task_id, current_user.id)
+  task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
   return TaskSchema.model_validate(task)

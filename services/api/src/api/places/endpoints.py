@@ -5,7 +5,7 @@ from uuid import UUID
 import httpx
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
-from api.exceptions import ResourceNotFound, ServiceUnavailableError
+from api.exceptions import ServiceUnavailableError
 from api.models.place import Place
 from api.places.repository import PlaceRepository
 from api.places.schemas import GooglePlaceSearchResponse, GooglePlaceSearchResult, PlaceCreate, PlaceListResponse, PlaceSchema, PlaceStatus, PlaceUpdate
@@ -192,9 +192,7 @@ async def update_place(
   current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
-  place = await repo.get_by_id(place_id)
-  if place is None or place.user_id != current_user.id:
-    raise ResourceNotFound("Place not found")
+  place = await repo.get_owned_or_404(place_id, current_user.id, not_found_message="Place not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:
@@ -214,7 +212,5 @@ async def delete_place(
   current_user: CurrentDBUser,
 ) -> None:
   repo = PlaceRepository.from_session(session)
-  place = await repo.get_by_id(place_id)
-  if place is None or place.user_id != current_user.id:
-    raise ResourceNotFound("Place not found")
+  place = await repo.get_owned_or_404(place_id, current_user.id, not_found_message="Place not found")
   await repo.delete(place)

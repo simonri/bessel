@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 
 from api.bank_accounts.repository import BankAccountRepository
-from api.exceptions import ResourceNotFound, ValidationError
+from api.exceptions import ValidationError
 from api.klarna.schemas import KlarnaImportRequest
 from api.klarna.service import fetch_klarna_items, map_to_parsed
 from api.postgres import AsyncSession, get_db_session
@@ -43,9 +43,9 @@ async def import_klarna_transactions(
   """
   _require_bearer(body.authorization)
 
-  bank_account = await BankAccountRepository.from_session(session).get_by_id(body.bank_account_id)
-  if bank_account is None or bank_account.user_id != current_user.id:
-    raise ResourceNotFound("Bank account not found")
+  bank_account = await BankAccountRepository.from_session(session).get_owned_or_404(
+    body.bank_account_id, current_user.id, not_found_message="Bank account not found"
+  )
 
   items = await fetch_klarna_items(body.authorization, body.cookie)
   parsed = [p for item in items if (p := map_to_parsed(item)) is not None]

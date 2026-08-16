@@ -137,9 +137,7 @@ async def create_trade(
   sec_repo = SecurityRepository.from_session(session)
   if await sec_repo.get_by_id(body.security_id) is None:
     raise ResourceNotFound("Security not found")
-  bank_account = await BankAccountRepository.from_session(session).get_by_id(body.bank_account_id)
-  if bank_account is None or bank_account.user_id != current_user.id:
-    raise ResourceNotFound("Bank account not found")
+  await BankAccountRepository.from_session(session).get_owned_or_404(body.bank_account_id, current_user.id, not_found_message="Bank account not found")
   repo = TradeRepository.from_session(session)
   trade = Trade(**body.model_dump(), user_id=current_user.id)
   await repo.create(trade, flush=True)
@@ -154,9 +152,7 @@ async def update_trade(
   current_user: CurrentDBUser,
 ) -> TradeSchema:
   repo = TradeRepository.from_session(session)
-  trade = await repo.get_by_id(trade_id)
-  if trade is None or trade.user_id != current_user.id:
-    raise ResourceNotFound("Trade not found")
+  trade = await repo.get_owned_or_404(trade_id, current_user.id, not_found_message="Trade not found")
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:
     await repo.update(trade, update_dict=update_dict)
@@ -170,9 +166,7 @@ async def delete_trade(
   current_user: CurrentDBUser,
 ) -> None:
   repo = TradeRepository.from_session(session)
-  trade = await repo.get_by_id(trade_id)
-  if trade is None or trade.user_id != current_user.id:
-    raise ResourceNotFound("Trade not found")
+  trade = await repo.get_owned_or_404(trade_id, current_user.id, not_found_message="Trade not found")
   await repo.delete(trade)
 
 

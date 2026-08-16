@@ -27,14 +27,6 @@ def _to_schema(counter: Counter, stats: CounterResetStats) -> CounterSchema:
   )
 
 
-async def _get_counter_or_404(session: AsyncSession, counter_id: UUID, user_id: UUID) -> Counter:
-  repo = CounterRepository.from_session(session)
-  counter = await repo.get_by_id(counter_id)
-  if not counter or counter.deleted_at is not None or counter.user_id != user_id:
-    raise ResourceNotFound("Counter not found.")
-  return counter
-
-
 @router.get("", summary="List Counters", response_model=list[CounterSchema])
 async def list_counters(
   session: Annotated[AsyncSession, Depends(get_db_session)],
@@ -66,8 +58,8 @@ async def update_counter(
   counter_id: UUID,
   body: CounterUpdate,
 ) -> CounterSchema:
-  counter = await _get_counter_or_404(session, counter_id, current_user.id)
   repo = CounterRepository.from_session(session)
+  counter = await repo.get_owned_or_404(counter_id, current_user.id, check_not_deleted=True, not_found_message="Counter not found.")
   counter = await repo.update(counter, update_dict=body.model_dump(exclude_unset=True), flush=True)
 
   stats_by_id = await CounterResetRepository.from_session(session).get_stats_by_counter([counter_id])
@@ -80,8 +72,8 @@ async def delete_counter(
   current_user: CurrentDBUser,
   counter_id: UUID,
 ) -> None:
-  counter = await _get_counter_or_404(session, counter_id, current_user.id)
   repo = CounterRepository.from_session(session)
+  counter = await repo.get_owned_or_404(counter_id, current_user.id, check_not_deleted=True, not_found_message="Counter not found.")
   await repo.update(counter, update_dict={"deleted_at": utc_now()})
 
 
@@ -96,7 +88,7 @@ async def create_reset(
   current_user: CurrentDBUser,
   counter_id: UUID,
 ) -> CounterResetSchema:
-  await _get_counter_or_404(session, counter_id, current_user.id)
+  await CounterRepository.from_session(session).get_owned_or_404(counter_id, current_user.id, check_not_deleted=True, not_found_message="Counter not found.")
   repo = CounterResetRepository.from_session(session)
   reset = await repo.create(CounterReset(counter_id=counter_id, user_id=current_user.id), flush=True)
   return CounterResetSchema.model_validate(reset)
@@ -112,7 +104,7 @@ async def list_resets(
   current_user: CurrentDBUser,
   counter_id: UUID,
 ) -> list[CounterResetSchema]:
-  await _get_counter_or_404(session, counter_id, current_user.id)
+  await CounterRepository.from_session(session).get_owned_or_404(counter_id, current_user.id, check_not_deleted=True, not_found_message="Counter not found.")
   resets = await CounterResetRepository.from_session(session).list_for_counter(counter_id)
   return [CounterResetSchema.model_validate(r) for r in resets]
 
@@ -128,7 +120,7 @@ async def undo_reset(
   counter_id: UUID,
   reset_id: UUID,
 ) -> None:
-  await _get_counter_or_404(session, counter_id, current_user.id)
+  await CounterRepository.from_session(session).get_owned_or_404(counter_id, current_user.id, check_not_deleted=True, not_found_message="Counter not found.")
   repo = CounterResetRepository.from_session(session)
   reset = await repo.get_active(counter_id, reset_id)
   if not reset:
