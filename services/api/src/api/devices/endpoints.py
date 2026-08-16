@@ -29,7 +29,7 @@ async def update_device(
   current_user: CurrentDBUser,
 ) -> DeviceSchema:
   repo = DeviceRepository.from_session(session)
-  device = await repo.get_owned_or_404(device_id, current_user.id, not_found_message="Device not found")
+  device = await repo.get_owned_or_404(device_id, current_user.id, check_not_deleted=True, not_found_message="Device not found")
   await repo.update(device, update_dict=body.model_dump(exclude_unset=True))
   return DeviceSchema.model_validate(device)
 
@@ -41,5 +41,5 @@ async def delete_device(
   current_user: CurrentDBUser,
 ) -> None:
   repo = DeviceRepository.from_session(session)
-  device = await repo.get_owned_or_404(device_id, current_user.id, not_found_message="Device not found")
+  device = await repo.get_owned_or_404(device_id, current_user.id, check_not_deleted=True, not_found_message="Device not found")
   await repo.delete(device)

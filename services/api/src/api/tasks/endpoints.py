@@ -151,7 +151,7 @@ async def update_task(
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  task = await repo.get_owned_or_404(task_id, current_user.id, check_not_deleted=True, not_found_message="Task not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if "project" in update_dict:
@@ -175,7 +175,7 @@ async def delete_task(
   current_user: CurrentDBUser,
 ) -> None:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  task = await repo.get_owned_or_404(task_id, current_user.id, check_not_deleted=True, not_found_message="Task not found")
   await repo.delete(task)
 
 
@@ -190,7 +190,7 @@ async def complete_task(
   current_user: CurrentDBUser,
 ) -> TaskCompleteResponse:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  task = await repo.get_owned_or_404(task_id, current_user.id, check_not_deleted=True, not_found_message="Task not found")
 
   # Idempotency: a duplicate complete (double click, client retry) must not
   # re-stamp completed_at or spawn another recurring instance.
@@ -248,7 +248,7 @@ async def reopen_task(
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  task = await repo.get_owned_or_404(task_id, current_user.id, check_not_deleted=True, not_found_message="Task not found")
   await repo.update(task, update_dict={"status": "todo", "completed_at": None})
   return TaskSchema.model_validate(task)
 
@@ -278,5 +278,5 @@ async def get_task(
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
 ) -> TaskSchema:
-  task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, check_not_deleted=True, not_found_message="Task not found")
   return TaskSchema.model_validate(task)

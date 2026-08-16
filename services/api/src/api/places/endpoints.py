@@ -192,7 +192,7 @@ async def update_place(
   current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
-  place = await repo.get_owned_or_404(place_id, current_user.id, not_found_message="Place not found")
+  place = await repo.get_owned_or_404(place_id, current_user.id, check_not_deleted=True, not_found_message="Place not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:
@@ -212,5 +212,5 @@ async def delete_place(
   current_user: CurrentDBUser,
 ) -> None:
   repo = PlaceRepository.from_session(session)
-  place = await repo.get_owned_or_404(place_id, current_user.id, not_found_message="Place not found")
+  place = await repo.get_owned_or_404(place_id, current_user.id, check_not_deleted=True, not_found_message="Place not found")
   await repo.delete(place)
