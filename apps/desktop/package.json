@@ -1,6 +1,6 @@
 {
   "name": "@bessel/desktop",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "Bessel personal dashboard desktop app",
   "author": "Simon Risberg",
   "private": true,
@@ -9,8 +9,8 @@
     "predev": "tsc",
     "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@bessel/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
     "compile": "tsc && pnpm --filter=@bessel/web build && pnpm --filter=bessel-axi build",
-    "build": "pnpm run compile && electron-builder",
-    "build:dir": "pnpm run compile && electron-builder --dir",
+    "build": "pnpm run compile && electron-builder --config electron-builder.config.ts",
+    "build:dir": "pnpm run compile && electron-builder --dir --config electron-builder.config.ts",
     "release:patch": "node scripts/release.mjs patch",
     "release:minor": "node scripts/release.mjs minor",
     "release:major": "node scripts/release.mjs major"
@@ -27,68 +27,5 @@
     "electron-builder": "^26.0.12",
     "typescript": "^5.8.3",
     "wait-on": "^8.0.3"
-  },
-  "build": {
-    "appId": "dev.bessel.app",
-    "productName": "Bessel",
-    "executableName": "bessel",
-    "directories": {
-      "output": "release"
-    },
-    "afterSign": "scripts/afterSign.js",
-    "files": [
-      "dist/**/*",
-      "node_modules/**/*"
-    ],
-    "asarUnpack": [
-      "**/node_modules/node-pty/**"
-    ],
-    "extraResources": [
-      {
-        "from": "../web/dist/client",
-        "to": "web/dist/client"
-      },
-      {
-        "from": "../../packages/axi/dist",
-        "to": "axi"
-      }
-    ],
-    "publish": {
-      "provider": "github",
-      "owner": "simonri",
-      "repo": "bessel",
-      "releaseType": "release"
-    },
-    "artifactName": "${productName}-${os}-${arch}.${ext}",
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "icon": "assets/icon.png",
-      "category": "Utility"
-    },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.png",
-      "identity": null
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.ico"
-    }
   }
 }
