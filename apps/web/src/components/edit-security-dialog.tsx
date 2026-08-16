@@ -30,16 +30,7 @@ import {
 import { Textarea } from "@bessel/ui/components/textarea";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
-
-const ASSET_TYPE_LABELS: Record<string, string> = {
-  stock: "Stock",
-  etf: "ETF",
-  mutual_fund: "Mutual Fund",
-  bond: "Bond",
-  crypto: "Crypto",
-  real_estate: "Real Estate",
-  other: "Other",
-};
+import { ASSET_TYPE_LABELS } from "@/lib/security-constants";
 
 export function EditSecurityDialog({ security }: { security: SecuritySchema }) {
   const [open, setOpen] = useState(false);

@@ -29,16 +29,7 @@ import {
 import { AssetType } from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
-
-const ASSET_TYPE_LABELS: Record<string, string> = {
-  stock: "Stock",
-  etf: "ETF",
-  mutual_fund: "Mutual Fund",
-  bond: "Bond",
-  crypto: "Crypto",
-  real_estate: "Real Estate",
-  other: "Other",
-};
+import { ASSET_TYPE_LABELS } from "@/lib/security-constants";
 
 export function CreateSecurityDialog() {
   const [open, setOpen] = useState(false);
