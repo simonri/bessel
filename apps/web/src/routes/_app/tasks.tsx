@@ -553,7 +553,7 @@ function Tasks() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 shrink-0 px-4 pt-4">
+      <div className="flex items-center justify-between mb-5 shrink-0 px-3 pt-4">
         <div className="flex items-baseline gap-2">
           <h2 className="text-base font-semibold text-white/90">Tasks</h2>
           {activeCount > 0 && (
@@ -578,7 +578,7 @@ function Tasks() {
       </div>
 
       {/* View tabs + project filter */}
-      <div className="flex items-center justify-between border-b border-white/10 shrink-0 px-4">
+      <div className="flex items-center justify-between border-b border-white/10 shrink-0 px-3">
         <div className="flex items-center">
           {VIEW_TABS.map((tab) => (
             <button
@@ -682,7 +682,7 @@ function Tasks() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 pt-5 px-4 flex flex-col">
+      <div className="flex-1 min-h-0 pt-5 px-3 flex flex-col">
         {isLoading ? (
           <div className="flex flex-1 gap-4">
             {[0, 1].map((col) => (

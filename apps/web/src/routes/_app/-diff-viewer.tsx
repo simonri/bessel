@@ -179,6 +179,12 @@ export const DiffViewer = memo(function DiffViewer({
     <div
       ref={containerRef}
       onScroll={updateRange}
+      // Windowing already keeps scroll position correct by construction —
+      // the browser's own scroll anchoring (which nudges scrollTop to
+      // compensate for content changes above the viewport) fights that as
+      // rows mount/unmount during a scroll, producing a transient sub-pixel
+      // shimmer in the visible rows.
+      style={{ overflowAnchor: "none" }}
       className="h-full overflow-auto font-mono text-xs leading-5"
     >
       <table className="diff-viewer min-w-full table-fixed border-collapse">
@@ -188,9 +194,13 @@ export const DiffViewer = memo(function DiffViewer({
           <col />
         </colgroup>
         <tbody>
-          {range.start > 0 && (
-            <tr style={{ height: range.start * ROW_HEIGHT }} />
-          )}
+          {/* Spacers are always mounted (height 0 when empty) with a real
+              <td> — a conditionally-mounted, cell-less <tr> is invalid table
+              markup and forces an extra relayout as `range` crosses a
+              boundary mid-scroll. */}
+          <tr>
+            <td colSpan={3} style={{ height: range.start * ROW_HEIGHT }} />
+          </tr>
           {rows.slice(range.start, range.end).map(({ line, key: i }) => {
             if (line.type === "file-header") {
               return (
@@ -294,9 +304,12 @@ export const DiffViewer = memo(function DiffViewer({
               </tr>
             );
           })}
-          {range.end < rows.length && (
-            <tr style={{ height: (rows.length - range.end) * ROW_HEIGHT }} />
-          )}
+          <tr>
+            <td
+              colSpan={3}
+              style={{ height: (rows.length - range.end) * ROW_HEIGHT }}
+            />
+          </tr>
         </tbody>
       </table>
     </div>

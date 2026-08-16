@@ -76,6 +76,7 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
+        sideOffset={8}
         className={cn(
           glassSurface({ weight: "heavy" }),
           "min-w-40 border-white/10 text-white/80 shadow-2xl",
