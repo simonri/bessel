@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { client } from "@/lib/client";
 import { fmtDur } from "./-activity-utils";
-import { SleepGridCell, type SleepGridDay } from "./-sleep-grid-cell";
+import { YearGrid, yearGridRange } from "./-year-grid";
 
 export const Route = createFileRoute("/_app/sleep")({
   component: SleepPage,
@@ -58,69 +58,17 @@ function SleepPage() {
     placeholderData: keepPreviousData,
   });
 
-  // Full calendar year grid: Jan 1 → Dec 31, padded to week boundaries
-  const todayMidnight = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  const calYearStart = new Date(today.getFullYear(), 0, 1);
-  const yearGridStart = subDays(calYearStart, calYearStart.getDay()); // Sunday on/before Jan 1
-  const calYearEnd = new Date(today.getFullYear(), 11, 31);
-  const yearGridEnd = addDays(calYearEnd, 6 - calYearEnd.getDay()); // Saturday on/after Dec 31
-  const yearRangeStart = Math.floor(yearGridStart.getTime() / 1000);
-  const yearRangeEnd = Math.floor(
-    new Date(
-      todayMidnight.getFullYear(),
-      todayMidnight.getMonth(),
-      todayMidnight.getDate() + 1,
-    ).getTime() / 1000,
-  );
+  const [yearRangeStart, yearRangeEnd] = yearGridRange(today);
 
   const { data: yearDailyData } = useQuery({
     ...getDailySleepV1HealthkitSleepDailyGetOptions({
       client,
-      query: { start_ts: yearRangeStart, end_ts: yearRangeEnd, tz_name: tzName },
+      query: {
+        start_ts: yearRangeStart,
+        end_ts: yearRangeEnd,
+        tz_name: tzName,
+      },
     }),
-  });
-
-  const yearDailyMap = new Map(
-    yearDailyData?.nights.map((n) => [n.date, n.asleep_secs]) ?? [],
-  );
-  const maxYearSecs = Math.max(
-    ...(yearDailyData?.nights.map((n) => n.asleep_secs) ?? []),
-    1,
-  );
-
-  // Build week columns: full calendar year, future dates are null (empty cells)
-  const yearGrid: SleepGridDay[][] = [];
-  let ws = new Date(yearGridStart);
-  while (ws <= yearGridEnd) {
-    const week: SleepGridDay[] = [];
-    for (let di = 0; di < 7; di++) {
-      const d = addDays(ws, di);
-      if (d.getFullYear() !== today.getFullYear()) {
-        week.push(null); // padding days outside the calendar year
-      } else {
-        const dateStr = format(d, "yyyy-MM-dd");
-        week.push({ d, dateStr, asleep_secs: yearDailyMap.get(dateStr) ?? 0 });
-      }
-    }
-    yearGrid.push(week);
-    ws = addDays(ws, 7);
-  }
-
-  // Month labels: show at the column where a new month starts
-  const monthMarkers: { col: number; label: string }[] = [];
-  let prevMonth = -1;
-  yearGrid.forEach((week, wi) => {
-    const first = week.find((d) => d !== null);
-    if (!first) return;
-    const m = first.d.getMonth();
-    if (m !== prevMonth) {
-      monthMarkers.push({ col: wi, label: format(first.d, "MMM") });
-      prevMonth = m;
-    }
   });
 
   const prevDay = () => setDate((d) => subDays(d, 1));
@@ -165,80 +113,26 @@ function SleepPage() {
       </div>
 
       {/* GitHub-style year sleep grid */}
-      <div className="pt-1">
-        <p className="mb-3 text-11 font-medium text-white/50">
-          {today.getFullYear()}
-        </p>
-
-        <div className="flex gap-1.5">
-          <div
-            className="flex flex-col shrink-0 select-none"
-            style={{ gap: "3px" }}
-          >
-            {["", "Mon", "", "Wed", "", "Fri", ""].map((l, i) => (
-              <div
-                key={i}
-                className="flex-1 flex items-center justify-end text-8 leading-none text-white/50 pr-0.5"
-              >
-                {l}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="relative h-3.5 mb-1 overflow-hidden">
-              {monthMarkers.map(({ col, label }) => (
-                <span
-                  key={label}
-                  className="absolute text-9 leading-none font-medium text-white/50 select-none"
-                  style={{
-                    left: `${(col / Math.max(yearGrid.length, 1)) * 100}%`,
-                  }}
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${yearGrid.length}, 1fr)`,
-                gap: "3px",
-              }}
-            >
-              {yearGrid.map((week, wi) =>
-                week.map((day, di) =>
-                  day === null ? (
-                    <div
-                      key={`${wi}-${di}`}
-                      className="aspect-square"
-                      style={{ gridColumn: wi + 1, gridRow: di + 1 }}
-                    />
-                  ) : (
-                    <SleepGridCell
-                      key={`${wi}-${di}`}
-                      day={day}
-                      col={wi + 1}
-                      row={di + 1}
-                      isSelected={isSameDay(day.d, date)}
-                      isToday={isSameDay(day.d, today)}
-                      maxYearSecs={maxYearSecs}
-                      onClick={() => setDate(day.d)}
-                    />
-                  ),
-                ),
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <YearGrid
+        year={today.getFullYear()}
+        items={yearDailyData?.nights ?? []}
+        getDate={(n) => n.date}
+        getValue={(n) => n.asleep_secs}
+        color="129,140,248"
+        emptyLabel="No sleep data"
+        selectedDate={date}
+        today={today}
+        onSelectDay={setDate}
+      />
 
       {/* Selected-night stage breakdown */}
       {isLoading && !summary ? (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-6 w-full animate-pulse rounded bg-white/5" />
+            <div
+              key={i}
+              className="h-6 w-full animate-pulse rounded bg-white/5"
+            />
           ))}
         </div>
       ) : !summary || summary.total_asleep_secs === 0 ? (

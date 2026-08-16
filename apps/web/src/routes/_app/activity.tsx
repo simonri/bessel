@@ -23,8 +23,8 @@ import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
 import { ActivityDayBar } from "./-activity-day-bar";
-import { GridCell, type GridDay } from "./-activity-grid-cell";
 import { fmtDur, localDayBounds } from "./-activity-utils";
+import { YearGrid, yearGridRange } from "./-year-grid";
 
 export const Route = createFileRoute("/_app/activity")({
   component: ActivityPage,
@@ -105,24 +105,7 @@ function ActivityPage() {
 
   const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  // Full calendar year grid: Jan 1 → Dec 31, padded to week boundaries
-  const todayMidnight = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  const calYearStart = new Date(today.getFullYear(), 0, 1);
-  const yearGridStart = subDays(calYearStart, calYearStart.getDay()); // Sunday on/before Jan 1
-  const calYearEnd = new Date(today.getFullYear(), 11, 31);
-  const yearGridEnd = addDays(calYearEnd, 6 - calYearEnd.getDay()); // Saturday on/after Dec 31
-  const yearRangeStart = Math.floor(yearGridStart.getTime() / 1000);
-  const yearRangeEnd = Math.floor(
-    new Date(
-      todayMidnight.getFullYear(),
-      todayMidnight.getMonth(),
-      todayMidnight.getDate() + 1,
-    ).getTime() / 1000,
-  );
+  const [yearRangeStart, yearRangeEnd] = yearGridRange(today);
 
   const { data: yearDailyData } = useQuery({
     ...getDailyActivityV1ActivityDailyGetOptions({
@@ -135,45 +118,6 @@ function ActivityPage() {
       },
     }),
     enabled: !!activeSource,
-  });
-
-  const yearDailyMap = new Map(
-    yearDailyData?.days.map((d) => [d.date, d.active_secs]) ?? [],
-  );
-  const maxYearSecs = Math.max(
-    ...(yearDailyData?.days.map((d) => d.active_secs) ?? []),
-    1,
-  );
-
-  // Build week columns: full calendar year, future dates are null (empty cells)
-  const yearGrid: GridDay[][] = [];
-  let ws = new Date(yearGridStart);
-  while (ws <= yearGridEnd) {
-    const week: GridDay[] = [];
-    for (let di = 0; di < 7; di++) {
-      const d = addDays(ws, di);
-      if (d.getFullYear() !== today.getFullYear()) {
-        week.push(null); // padding days outside the calendar year
-      } else {
-        const dateStr = format(d, "yyyy-MM-dd");
-        week.push({ d, dateStr, active_secs: yearDailyMap.get(dateStr) ?? 0 });
-      }
-    }
-    yearGrid.push(week);
-    ws = addDays(ws, 7);
-  }
-
-  // Month labels: show at the column where a new month starts
-  const monthMarkers: { col: number; label: string }[] = [];
-  let prevMonth = -1;
-  yearGrid.forEach((week, wi) => {
-    const first = week.find((d) => d !== null);
-    if (!first) return;
-    const m = first.d.getMonth();
-    if (m !== prevMonth) {
-      monthMarkers.push({ col: wi, label: format(first.d, "MMM") });
-      prevMonth = m;
-    }
   });
 
   const prevDay = () => setDate((d) => subDays(d, 1));
@@ -248,79 +192,17 @@ function ActivityPage() {
           </div>
 
           {/* GitHub-style year activity grid */}
-          <div className="pt-1">
-            <p className="mb-3 text-11 font-medium text-white/50">
-              {today.getFullYear()}
-            </p>
-
-            {/* Outer flex row: [day labels] [month labels + cells] */}
-            <div className="flex gap-1.5">
-              {/* Day-of-week labels — flex-1 rows track the grid rows automatically */}
-              <div
-                className="flex flex-col shrink-0 select-none"
-                style={{ gap: "3px" }}
-              >
-                {["", "Mon", "", "Wed", "", "Fri", ""].map((l, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 flex items-center justify-end text-8 leading-none text-white/50 pr-0.5"
-                  >
-                    {l}
-                  </div>
-                ))}
-              </div>
-
-              {/* Cell column: month labels + cell grid */}
-              <div className="flex-1 min-w-0">
-                {/* Month labels: % positioned, clipped so they never overflow */}
-                <div className="relative h-3.5 mb-1 overflow-hidden">
-                  {monthMarkers.map(({ col, label }) => (
-                    <span
-                      key={label}
-                      className="absolute text-9 leading-none font-medium text-white/50 select-none"
-                      style={{
-                        left: `${(col / Math.max(yearGrid.length, 1)) * 100}%`,
-                      }}
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Cell grid: uniform 1fr columns so aspect-square resolves correctly */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${yearGrid.length}, 1fr)`,
-                    gap: "3px",
-                  }}
-                >
-                  {yearGrid.map((week, wi) =>
-                    week.map((day, di) =>
-                      day === null ? (
-                        <div
-                          key={`${wi}-${di}`}
-                          className="aspect-square"
-                          style={{ gridColumn: wi + 1, gridRow: di + 1 }}
-                        />
-                      ) : (
-                        <GridCell
-                          key={`${wi}-${di}`}
-                          day={day}
-                          col={wi + 1}
-                          row={di + 1}
-                          isSelected={isSameDay(day.d, date)}
-                          isToday={isSameDay(day.d, today)}
-                          maxYearSecs={maxYearSecs}
-                          onClick={() => setDate(day.d)}
-                        />
-                      ),
-                    ),
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <YearGrid
+            year={today.getFullYear()}
+            items={yearDailyData?.days ?? []}
+            getDate={(d) => d.date}
+            getValue={(d) => d.active_secs}
+            color="232,113,75"
+            emptyLabel="No activity"
+            selectedDate={date}
+            today={today}
+            onSelectDay={setDate}
+          />
 
           {/* Intraday activity bar */}
           <ActivityDayBar
