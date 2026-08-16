@@ -4,16 +4,6 @@ import {
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
 } from "@bessel/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
 import { Button } from "@bessel/ui/components/button";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
@@ -27,6 +17,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
 import { VirtualDataTable } from "@/components/virtual-data-table";
@@ -203,36 +194,27 @@ function Accounts() {
         </div>
       )}
 
-      <AlertDialog
+      <ConfirmDeleteDialog
+        size="sm"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete account?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will
-              be permanently removed. This can&rsquo;t be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                if (!deleteTarget) return;
-                deleteMutation.mutate({
-                  client,
-                  path: { bank_account_id: deleteTarget.id },
-                });
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete account?"
+        description={
+          <>
+            &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will
+            be permanently removed. This can&rsquo;t be undone.
+          </>
+        }
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          deleteMutation.mutate({
+            client,
+            path: { bank_account_id: deleteTarget.id },
+          });
+        }}
+        isPending={deleteMutation.isPending}
+        pendingLabel="Deleting…"
+      />
     </div>
   );
 }

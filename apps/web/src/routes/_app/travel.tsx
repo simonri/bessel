@@ -5,16 +5,7 @@ import {
   listPlacesV1PlacesGetQueryKey,
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@bessel/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@bessel/ui/components/empty";
 import {
   keepPreviousData,
   useMutation,
@@ -37,6 +28,7 @@ import {
 import { lazy, Suspense, useState } from "react";
 
 import { AddPlaceDialog } from "@/components/add-place-dialog";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
 
 const PlaceMap = lazy(() =>
@@ -239,13 +231,15 @@ function Travel() {
           Loading…
         </div>
       ) : noPlacesAtAll ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-          <MapPin className="size-8 text-white/10" />
-          <p className="text-xs text-white/50">No places yet</p>
-          <div className="mt-1">
-            <AddPlaceDialog />
-          </div>
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <MapPin />
+            </EmptyMedia>
+            <EmptyTitle>No places yet</EmptyTitle>
+          </EmptyHeader>
+          <AddPlaceDialog />
+        </Empty>
       ) : (
         <div className="flex min-h-0 flex-1">
           {/* Left: toolbar + map + list */}
@@ -332,9 +326,13 @@ function Travel() {
             {/* Card list */}
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {filtered.length === 0 ? (
-                <div className="flex h-24 items-center justify-center text-xs text-white/40">
-                  {q ? "No places match your search" : "Nothing here yet"}
-                </div>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>
+                      {q ? "No places match your search" : "Nothing here yet"}
+                    </EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 <div className="space-y-1.5">
                   {filtered.map((place) => (
@@ -531,30 +529,21 @@ function Travel() {
       )}
 
       {/* Delete confirmation */}
-      <AlertDialog
+      <ConfirmDeleteDialog
+        size="sm"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete place?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed.
-              This can&rsquo;t be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete place?"
+        description={
+          <>
+            &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed.
+            This can&rsquo;t be undone.
+          </>
+        }
+        onConfirm={handleConfirmDelete}
+        isPending={deleteMutation.isPending}
+        pendingLabel="Deleting…"
+      />
     </div>
   );
 }

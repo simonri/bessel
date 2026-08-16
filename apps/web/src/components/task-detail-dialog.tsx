@@ -23,16 +23,7 @@ import {
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@bessel/ui/components/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { TaskFormDialog } from "@/components/create-task-dialog";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import {
@@ -370,26 +361,18 @@ export function TaskDetailDialogController({
         onOpenChange={(open) => !open && setEditingTask(null)}
       />
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete task?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{task?.title}&rdquo; will be permanently removed. This can&rsquo;t be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => task && deleteMutation.mutate({ client, path: { task_id: task.id } })}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Delete task?"
+        description={
+          <>
+            &ldquo;{task?.title}&rdquo; will be permanently removed. This can&rsquo;t be undone.
+          </>
+        }
+        onConfirm={() => task && deleteMutation.mutate({ client, path: { task_id: task.id } })}
+        isPending={deleteMutation.isPending}
+      />
     </>
   );
 }

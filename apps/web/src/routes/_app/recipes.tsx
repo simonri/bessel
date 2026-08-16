@@ -21,18 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@bessel/ui/components/empty";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { client } from "@/lib/client";
 
 const RECIPE_TYPE_LABELS: Record<RecipeType, string> = {
@@ -283,26 +274,16 @@ function Recipes() {
       </div>
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete recipe?</AlertDialogTitle>
-            <AlertDialogDescription>
-              "{deleteTarget?.title}" will be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                deleteTarget && deleteMutation.mutate({ client, path: { recipe_id: deleteTarget.id } })
-              }
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        variant="default"
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete recipe?"
+        description={<>"{deleteTarget?.title}" will be permanently deleted.</>}
+        onConfirm={() =>
+          deleteTarget && deleteMutation.mutate({ client, path: { recipe_id: deleteTarget.id } })
+        }
+      />
     </div>
   );
 }
