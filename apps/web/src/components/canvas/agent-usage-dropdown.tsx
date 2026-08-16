@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
 import { useQuery } from "@tanstack/react-query";
-import { format, formatDistanceToNowStrict, subDays } from "date-fns";
+import { format, formatDistanceToNowStrict, isPast, subDays } from "date-fns";
 import { Gauge } from "lucide-react";
 import { useState } from "react";
 import { client } from "@/lib/client";
@@ -34,6 +34,11 @@ function fmtTokens(n: number): string {
   if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
   if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
   return String(n);
+}
+
+function resetLabel(resetsAt: Date): string {
+  if (isPast(resetsAt)) return "Resets any moment";
+  return `Resets in ${formatDistanceToNowStrict(resetsAt)}`;
 }
 
 function windowLabel(label: string): string {
@@ -175,6 +180,11 @@ export function AgentUsageDropdown() {
                             {stale ? " (stale)" : ""}
                           </span>
                         </div>
+                        {entry.resets_at && (
+                          <div className="text-right text-10 text-white/35">
+                            {resetLabel(new Date(entry.resets_at))}
+                          </div>
+                        )}
                         <div
                           className="relative h-2 w-full overflow-hidden rounded-full"
                           style={{ background: "rgba(255,255,255,0.07)" }}
