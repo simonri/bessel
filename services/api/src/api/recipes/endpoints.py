@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from api.common.pagination import PaginationParamsQuery
-from api.common.sorting import Sorting, SortingGetter
+from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.exceptions import ResourceNotFound
 from api.models.recipe import Recipe
 from api.postgres import AsyncSession, get_db_session
@@ -39,9 +39,7 @@ async def list_recipes(
   if search:
     statement = statement.where(Recipe.title.ilike(f"%{search}%"))
 
-  for prop, descending in sorting:
-    col = getattr(Recipe, prop.value)
-    statement = statement.order_by(col.desc() if descending else col.asc())
+  statement = apply_sorting(statement, Recipe, sorting)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return RecipeListResponse.from_paginated_results(items, total_count, pagination)

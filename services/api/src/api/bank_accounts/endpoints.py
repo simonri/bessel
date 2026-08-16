@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends
 from api.bank_accounts.repository import BankAccountRepository
 from api.bank_accounts.schemas import BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
 from api.common.pagination import PaginationParamsQuery
-from api.common.sorting import Sorting, SortingGetter
+from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.exceptions import ResourceNotFound
 from api.models.bank_account import BankAccount
 from api.postgres import AsyncSession, get_db_session
@@ -50,9 +50,7 @@ async def list_bank_accounts(
   repo = BankAccountRepository.from_session(session)
   statement = repo.get_base_statement().where(BankAccount.user_id == current_user.id)
 
-  for prop, desc in sorting:
-    column = getattr(BankAccount, prop.value)
-    statement = statement.order_by(column.desc() if desc else column.asc())
+  statement = apply_sorting(statement, BankAccount, sorting)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   balances = await _get_balances(session, [a.id for a in items])
