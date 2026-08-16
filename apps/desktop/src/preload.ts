@@ -11,6 +11,18 @@ interface SpotifyStatus {
   positionMs?: number;
 }
 
+function subscribe<Args extends unknown[]>(
+  channel: string,
+  callback: (...args: Args) => void,
+  predicate?: (...args: Args) => boolean,
+): () => void {
+  const listener = (_: Electron.IpcRendererEvent, ...args: Args) => {
+    if (!predicate || predicate(...args)) callback(...args);
+  };
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.removeListener(channel, listener);
+}
+
 contextBridge.exposeInMainWorld("electron", {
   platform: process.platform,
   close: () => ipcRenderer.send("close-window"),
@@ -23,12 +35,8 @@ contextBridge.exposeInMainWorld("electron", {
       ipcRenderer.invoke("auth:remove", key),
     allKeys: (): Promise<string[]> => ipcRenderer.invoke("auth:all-keys"),
     startLogin: (): Promise<number> => ipcRenderer.invoke("auth:start-login"),
-    onCallback: (callback: (url: string) => void) => {
-      const listener = (_: Electron.IpcRendererEvent, url: string) =>
-        callback(url);
-      ipcRenderer.on("auth:callback", listener);
-      return () => ipcRenderer.removeListener("auth:callback", listener);
-    },
+    onCallback: (callback: (url: string) => void) =>
+      subscribe<[string]>("auth:callback", callback),
   },
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
@@ -77,28 +85,18 @@ contextBridge.exposeInMainWorld("electron", {
     resize: (sessionId: string, cols: number, rows: number) =>
       ipcRenderer.send("terminal:resize", sessionId, cols, rows),
     kill: (sessionId: string) => ipcRenderer.send("terminal:kill", sessionId),
-    onData: (sessionId: string, callback: (data: string) => void) => {
-      const listener = (
-        _: Electron.IpcRendererEvent,
-        sid: string,
-        data: string,
-      ) => {
-        if (sid === sessionId) callback(data);
-      };
-      ipcRenderer.on("terminal:data", listener);
-      return () => ipcRenderer.removeListener("terminal:data", listener);
-    },
-    onExit: (sessionId: string, callback: (code: number) => void) => {
-      const listener = (
-        _: Electron.IpcRendererEvent,
-        sid: string,
-        code: number,
-      ) => {
-        if (sid === sessionId) callback(code);
-      };
-      ipcRenderer.on("terminal:exit", listener);
-      return () => ipcRenderer.removeListener("terminal:exit", listener);
-    },
+    onData: (sessionId: string, callback: (data: string) => void) =>
+      subscribe<[string, string]>(
+        "terminal:data",
+        (_sid, data) => callback(data),
+        (sid) => sid === sessionId,
+      ),
+    onExit: (sessionId: string, callback: (code: number) => void) =>
+      subscribe<[string, number]>(
+        "terminal:exit",
+        (_sid, code) => callback(code),
+        (sid) => sid === sessionId,
+      ),
   },
   monitor: {
     status: () => ipcRenderer.invoke("monitor:status"),
@@ -119,12 +117,8 @@ contextBridge.exposeInMainWorld("electron", {
     reveal: (): Promise<void> => ipcRenderer.invoke("my-ai:reveal"),
   },
   cli: {
-    onTokenRequested: (callback: (requestId: string) => void) => {
-      const listener = (_: Electron.IpcRendererEvent, requestId: string) =>
-        callback(requestId);
-      ipcRenderer.on("cli:token-requested", listener);
-      return () => ipcRenderer.removeListener("cli:token-requested", listener);
-    },
+    onTokenRequested: (callback: (requestId: string) => void) =>
+      subscribe<[string]>("cli:token-requested", callback),
     provideToken: (requestId: string, token: string | null): Promise<void> =>
       ipcRenderer.invoke("cli:provide-token", requestId, token),
     status: (): Promise<{
@@ -141,12 +135,7 @@ contextBridge.exposeInMainWorld("electron", {
       ipcRenderer.invoke("spotify:status"),
     playPause: (): Promise<void> => ipcRenderer.invoke("spotify:playPause"),
     next: (): Promise<void> => ipcRenderer.invoke("spotify:next"),
-    onStatusChange: (callback: (status: SpotifyStatus) => void) => {
-      const listener = (_: Electron.IpcRendererEvent, status: SpotifyStatus) =>
-        callback(status);
-      ipcRenderer.on("spotify:status-changed", listener);
-      return () =>
-        ipcRenderer.removeListener("spotify:status-changed", listener);
-    },
+    onStatusChange: (callback: (status: SpotifyStatus) => void) =>
+      subscribe<[SpotifyStatus]>("spotify:status-changed", callback),
   },
 });
