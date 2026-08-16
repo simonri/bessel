@@ -110,6 +110,9 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(@voidzero-dev/vite-plus-core@0.1.13(@types/node@25.7.0)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.46.1)(tsx@4.23.0)(typescript@6.0.3)(yaml@2.8.3))(typescript@6.0.3)
     devDependencies:
+      '@bessel/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@types/node':
         specifier: ^25.7.0
         version: 25.7.0
