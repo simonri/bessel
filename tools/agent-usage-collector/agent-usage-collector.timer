@@ -1,0 +1,9 @@
+[Unit]
+Description=Periodically push Claude Code usage stats to Bessel
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

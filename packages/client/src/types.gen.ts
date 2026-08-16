@@ -221,6 +221,218 @@ export type ActivitySummaryResponse = {
 };
 
 /**
+ * AgentUsageDailyEntry
+ */
+export type AgentUsageDailyEntry = {
+  /**
+   * Date
+   *
+   * ISO date string (YYYY-MM-DD).
+   */
+  date: string;
+  /**
+   * Device
+   */
+  device: string;
+  /**
+   * Agent
+   */
+  agent: string;
+  /**
+   * Model
+   */
+  model: string;
+  /**
+   * Input Tokens
+   */
+  input_tokens: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens: number;
+  /**
+   * Cache Read Tokens
+   */
+  cache_read_tokens: number;
+  /**
+   * Cache Creation Tokens
+   */
+  cache_creation_tokens: number;
+};
+
+/**
+ * AgentUsageDailyResponse
+ */
+export type AgentUsageDailyResponse = {
+  /**
+   * Entries
+   */
+  entries: Array<AgentUsageDailyEntry>;
+};
+
+/**
+ * AgentUsageDailyUpload
+ */
+export type AgentUsageDailyUpload = {
+  /**
+   * Device
+   *
+   * Machine identifier, e.g. hostname.
+   */
+  device: string;
+  /**
+   * Agent
+   *
+   * e.g. 'claude-code'.
+   */
+  agent: string;
+  /**
+   * Date
+   *
+   * Collector's local calendar date.
+   */
+  date: Date;
+  /**
+   * Models
+   */
+  models: Array<AgentUsageModelTokens>;
+};
+
+/**
+ * AgentUsageModelTokens
+ */
+export type AgentUsageModelTokens = {
+  /**
+   * Model
+   */
+  model: string;
+  /**
+   * Input Tokens
+   */
+  input_tokens: number;
+  /**
+   * Output Tokens
+   */
+  output_tokens: number;
+  /**
+   * Cache Read Tokens
+   */
+  cache_read_tokens: number;
+  /**
+   * Cache Creation Tokens
+   */
+  cache_creation_tokens: number;
+};
+
+/**
+ * AgentUsageRateLimitUpload
+ */
+export type AgentUsageRateLimitUpload = {
+  /**
+   * Device
+   */
+  device: string;
+  /**
+   * Agent
+   */
+  agent: string;
+  /**
+   * Window Label
+   *
+   * e.g. 'session_5h', 'week'.
+   */
+  window_label: string;
+  /**
+   * Utilization Pct
+   */
+  utilization_pct: number;
+  /**
+   * Resets At
+   */
+  resets_at?: Date | null;
+  /**
+   * Tier
+   */
+  tier?: string | null;
+};
+
+/**
+ * AgentUsageStatusEntry
+ */
+export type AgentUsageStatusEntry = {
+  /**
+   * Device
+   */
+  device: string;
+  /**
+   * Agent
+   */
+  agent: string;
+  /**
+   * Window Label
+   */
+  window_label: string;
+  /**
+   * Utilization Pct
+   */
+  utilization_pct: number;
+  /**
+   * Resets At
+   */
+  resets_at: Date | null;
+  /**
+   * Tier
+   */
+  tier: string | null;
+  /**
+   * Observed At
+   */
+  observed_at: Date;
+};
+
+/**
+ * AgentUsageStatusResponse
+ */
+export type AgentUsageStatusResponse = {
+  /**
+   * Entries
+   */
+  entries: Array<AgentUsageStatusEntry>;
+};
+
+/**
+ * AgentUsageSyncRequest
+ */
+export type AgentUsageSyncRequest = {
+  /**
+   * Daily
+   */
+  daily?: Array<AgentUsageDailyUpload>;
+  /**
+   * Rate Limits
+   */
+  rate_limits?: Array<AgentUsageRateLimitUpload>;
+};
+
+/**
+ * AgentUsageSyncResponse
+ */
+export type AgentUsageSyncResponse = {
+  /**
+   * Daily Synced
+   *
+   * Number of (device, agent, date, model) rows inserted or updated.
+   */
+  daily_synced: number;
+  /**
+   * Status Synced
+   *
+   * Number of (device, agent, window_label) rows inserted or updated.
+   */
+  status_synced: number;
+};
+
+/**
  * AssetType
  */
 export const AssetType = {
@@ -3171,6 +3383,96 @@ export type GetIntradayActivityV1ActivityIntradayGetResponses = {
 
 export type GetIntradayActivityV1ActivityIntradayGetResponse =
   GetIntradayActivityV1ActivityIntradayGetResponses[keyof GetIntradayActivityV1ActivityIntradayGetResponses];
+
+export type SyncAgentUsageV1AgentUsageSyncPostData = {
+  body: AgentUsageSyncRequest;
+  headers?: {
+    /**
+     * X-Api-Key
+     */
+    "x-api-key"?: string | null;
+  };
+  path?: never;
+  query?: never;
+  url: "/v1/agent-usage/sync";
+};
+
+export type SyncAgentUsageV1AgentUsageSyncPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SyncAgentUsageV1AgentUsageSyncPostError =
+  SyncAgentUsageV1AgentUsageSyncPostErrors[keyof SyncAgentUsageV1AgentUsageSyncPostErrors];
+
+export type SyncAgentUsageV1AgentUsageSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: AgentUsageSyncResponse;
+};
+
+export type SyncAgentUsageV1AgentUsageSyncPostResponse =
+  SyncAgentUsageV1AgentUsageSyncPostResponses[keyof SyncAgentUsageV1AgentUsageSyncPostResponses];
+
+export type GetAgentUsageStatusV1AgentUsageStatusGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/agent-usage/status";
+};
+
+export type GetAgentUsageStatusV1AgentUsageStatusGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AgentUsageStatusResponse;
+};
+
+export type GetAgentUsageStatusV1AgentUsageStatusGetResponse =
+  GetAgentUsageStatusV1AgentUsageStatusGetResponses[keyof GetAgentUsageStatusV1AgentUsageStatusGetResponses];
+
+export type GetAgentUsageDailyV1AgentUsageDailyGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Date
+     *
+     * Start of range (inclusive).
+     */
+    start_date: Date;
+    /**
+     * End Date
+     *
+     * End of range (inclusive).
+     */
+    end_date: Date;
+  };
+  url: "/v1/agent-usage/daily";
+};
+
+export type GetAgentUsageDailyV1AgentUsageDailyGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetAgentUsageDailyV1AgentUsageDailyGetError =
+  GetAgentUsageDailyV1AgentUsageDailyGetErrors[keyof GetAgentUsageDailyV1AgentUsageDailyGetErrors];
+
+export type GetAgentUsageDailyV1AgentUsageDailyGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AgentUsageDailyResponse;
+};
+
+export type GetAgentUsageDailyV1AgentUsageDailyGetResponse =
+  GetAgentUsageDailyV1AgentUsageDailyGetResponses[keyof GetAgentUsageDailyV1AgentUsageDailyGetResponses];
 
 export type ListBankAccountsV1BankAccountsGetData = {
   body?: never;

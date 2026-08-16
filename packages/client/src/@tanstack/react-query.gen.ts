@@ -35,6 +35,8 @@ import {
   deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
   getActivitySummaryV1ActivitySummaryGet,
+  getAgentUsageDailyV1AgentUsageDailyGet,
+  getAgentUsageStatusV1AgentUsageStatusGet,
   getBankAccountV1BankAccountsBankAccountIdGet,
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
   getDailyActivityV1ActivityDailyGet,
@@ -78,6 +80,7 @@ import {
   searchGooglePlacesV1PlacesSearchGet,
   setProjectLocationV1ProjectsProjectIdLocationPut,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
+  syncAgentUsageV1AgentUsageSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
@@ -168,6 +171,11 @@ import type {
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetError,
   GetActivitySummaryV1ActivitySummaryGetResponse,
+  GetAgentUsageDailyV1AgentUsageDailyGetData,
+  GetAgentUsageDailyV1AgentUsageDailyGetError,
+  GetAgentUsageDailyV1AgentUsageDailyGetResponse,
+  GetAgentUsageStatusV1AgentUsageStatusGetData,
+  GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetError,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -284,6 +292,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
+  SyncAgentUsageV1AgentUsageSyncPostData,
+  SyncAgentUsageV1AgentUsageSyncPostError,
+  SyncAgentUsageV1AgentUsageSyncPostResponse,
   SyncHealthkitSleepV1HealthkitSleepSyncPostData,
   SyncHealthkitSleepV1HealthkitSleepSyncPostError,
   SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
@@ -558,6 +569,89 @@ export const getIntradayActivityV1ActivityIntradayGetOptions = (
       return data;
     },
     queryKey: getIntradayActivityV1ActivityIntradayGetQueryKey(options),
+  });
+
+/**
+ * Sync Agent Usage
+ */
+export const syncAgentUsageV1AgentUsageSyncPostMutation = (
+  options?: Partial<Options<SyncAgentUsageV1AgentUsageSyncPostData>>,
+): UseMutationOptions<
+  SyncAgentUsageV1AgentUsageSyncPostResponse,
+  SyncAgentUsageV1AgentUsageSyncPostError,
+  Options<SyncAgentUsageV1AgentUsageSyncPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SyncAgentUsageV1AgentUsageSyncPostResponse,
+    SyncAgentUsageV1AgentUsageSyncPostError,
+    Options<SyncAgentUsageV1AgentUsageSyncPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncAgentUsageV1AgentUsageSyncPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAgentUsageStatusV1AgentUsageStatusGetQueryKey = (
+  options?: Options<GetAgentUsageStatusV1AgentUsageStatusGetData>,
+) => createQueryKey("getAgentUsageStatusV1AgentUsageStatusGet", options);
+
+/**
+ * Get Agent Usage Status
+ */
+export const getAgentUsageStatusV1AgentUsageStatusGetOptions = (
+  options?: Options<GetAgentUsageStatusV1AgentUsageStatusGetData>,
+) =>
+  queryOptions<
+    GetAgentUsageStatusV1AgentUsageStatusGetResponse,
+    DefaultError,
+    GetAgentUsageStatusV1AgentUsageStatusGetResponse,
+    ReturnType<typeof getAgentUsageStatusV1AgentUsageStatusGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAgentUsageStatusV1AgentUsageStatusGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAgentUsageStatusV1AgentUsageStatusGetQueryKey(options),
+  });
+
+export const getAgentUsageDailyV1AgentUsageDailyGetQueryKey = (
+  options: Options<GetAgentUsageDailyV1AgentUsageDailyGetData>,
+) => createQueryKey("getAgentUsageDailyV1AgentUsageDailyGet", options);
+
+/**
+ * Get Agent Usage Daily Totals
+ */
+export const getAgentUsageDailyV1AgentUsageDailyGetOptions = (
+  options: Options<GetAgentUsageDailyV1AgentUsageDailyGetData>,
+) =>
+  queryOptions<
+    GetAgentUsageDailyV1AgentUsageDailyGetResponse,
+    GetAgentUsageDailyV1AgentUsageDailyGetError,
+    GetAgentUsageDailyV1AgentUsageDailyGetResponse,
+    ReturnType<typeof getAgentUsageDailyV1AgentUsageDailyGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAgentUsageDailyV1AgentUsageDailyGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAgentUsageDailyV1AgentUsageDailyGetQueryKey(options),
   });
 
 export const listBankAccountsV1BankAccountsGetQueryKey = (

@@ -20,6 +20,7 @@ import {
   createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
   createTradeV1InvestmentsTradesPostResponseTransformer,
+  getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
   getTaskV1TasksTaskIdGetResponseTransformer,
@@ -130,6 +131,11 @@ import type {
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetErrors,
   GetActivitySummaryV1ActivitySummaryGetResponses,
+  GetAgentUsageDailyV1AgentUsageDailyGetData,
+  GetAgentUsageDailyV1AgentUsageDailyGetErrors,
+  GetAgentUsageDailyV1AgentUsageDailyGetResponses,
+  GetAgentUsageStatusV1AgentUsageStatusGetData,
+  GetAgentUsageStatusV1AgentUsageStatusGetResponses,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetErrors,
   GetBankAccountV1BankAccountsBankAccountIdGetResponses,
@@ -247,6 +253,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
+  SyncAgentUsageV1AgentUsageSyncPostData,
+  SyncAgentUsageV1AgentUsageSyncPostErrors,
+  SyncAgentUsageV1AgentUsageSyncPostResponses,
   SyncHealthkitSleepV1HealthkitSleepSyncPostData,
   SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
   SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
@@ -424,6 +433,65 @@ export const getIntradayActivityV1ActivityIntradayGet = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/activity/intraday",
+    ...options,
+  });
+
+/**
+ * Sync Agent Usage
+ */
+export const syncAgentUsageV1AgentUsageSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<SyncAgentUsageV1AgentUsageSyncPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    SyncAgentUsageV1AgentUsageSyncPostResponses,
+    SyncAgentUsageV1AgentUsageSyncPostErrors,
+    ThrowOnError
+  >({
+    url: "/v1/agent-usage/sync",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Agent Usage Status
+ */
+export const getAgentUsageStatusV1AgentUsageStatusGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetAgentUsageStatusV1AgentUsageStatusGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetAgentUsageStatusV1AgentUsageStatusGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/agent-usage/status",
+    ...options,
+  });
+
+/**
+ * Get Agent Usage Daily Totals
+ */
+export const getAgentUsageDailyV1AgentUsageDailyGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetAgentUsageDailyV1AgentUsageDailyGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetAgentUsageDailyV1AgentUsageDailyGetResponses,
+    GetAgentUsageDailyV1AgentUsageDailyGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/agent-usage/daily",
     ...options,
   });
 

@@ -1,6 +1,7 @@
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { ScrollText, Settings, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
+import { AgentUsageDropdown } from "@/components/canvas/agent-usage-dropdown";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
 import { CryptoPairTicker } from "@/components/canvas/crypto-pair-ticker";
 import { NotificationBell } from "@/components/canvas/notification-bell";
@@ -85,6 +86,9 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
         )}
         <div className={noDrag}>
           <TimeSinceDropdown />
+        </div>
+        <div className={noDrag}>
+          <AgentUsageDropdown />
         </div>
         <div className={noDrag}>
           <NotificationBell />

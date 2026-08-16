@@ -398,6 +398,153 @@
         }
       }
     },
+    "/v1/agent-usage/sync": {
+      "post": {
+        "tags": [
+          "agent-usage"
+        ],
+        "summary": "Sync Agent Usage",
+        "operationId": "sync_agent_usage_v1_agent_usage_sync_post",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentUsageSyncRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentUsageSyncResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent-usage/status": {
+      "get": {
+        "tags": [
+          "agent-usage"
+        ],
+        "summary": "Get Agent Usage Status",
+        "operationId": "get_agent_usage_status_v1_agent_usage_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentUsageStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/agent-usage/daily": {
+      "get": {
+        "tags": [
+          "agent-usage"
+        ],
+        "summary": "Get Agent Usage Daily Totals",
+        "operationId": "get_agent_usage_daily_v1_agent_usage_daily_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "Start of range (inclusive).",
+              "title": "Start Date"
+            },
+            "description": "Start of range (inclusive)."
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "End of range (inclusive).",
+              "title": "End Date"
+            },
+            "description": "End of range (inclusive)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentUsageDailyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/bank-accounts": {
       "get": {
         "tags": [
@@ -4965,6 +5112,321 @@
           "apps"
         ],
         "title": "ActivitySummaryResponse"
+      },
+      "AgentUsageDailyEntry": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "ISO date string (YYYY-MM-DD)."
+          },
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "agent": {
+            "type": "string",
+            "title": "Agent"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "cache_read_tokens": {
+            "type": "integer",
+            "title": "Cache Read Tokens"
+          },
+          "cache_creation_tokens": {
+            "type": "integer",
+            "title": "Cache Creation Tokens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "device",
+          "agent",
+          "model",
+          "input_tokens",
+          "output_tokens",
+          "cache_read_tokens",
+          "cache_creation_tokens"
+        ],
+        "title": "AgentUsageDailyEntry"
+      },
+      "AgentUsageDailyResponse": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageDailyEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries"
+        ],
+        "title": "AgentUsageDailyResponse"
+      },
+      "AgentUsageDailyUpload": {
+        "properties": {
+          "device": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Device",
+            "description": "Machine identifier, e.g. hostname."
+          },
+          "agent": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Agent",
+            "description": "e.g. 'claude-code'."
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date",
+            "description": "Collector's local calendar date."
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageModelTokens"
+            },
+            "type": "array",
+            "title": "Models"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device",
+          "agent",
+          "date",
+          "models"
+        ],
+        "title": "AgentUsageDailyUpload"
+      },
+      "AgentUsageModelTokens": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Model"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Output Tokens"
+          },
+          "cache_read_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Cache Read Tokens"
+          },
+          "cache_creation_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Cache Creation Tokens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model",
+          "input_tokens",
+          "output_tokens",
+          "cache_read_tokens",
+          "cache_creation_tokens"
+        ],
+        "title": "AgentUsageModelTokens"
+      },
+      "AgentUsageRateLimitUpload": {
+        "properties": {
+          "device": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Device"
+          },
+          "agent": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Agent"
+          },
+          "window_label": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Window Label",
+            "description": "e.g. 'session_5h', 'week'."
+          },
+          "utilization_pct": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Utilization Pct"
+          },
+          "resets_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resets At"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device",
+          "agent",
+          "window_label",
+          "utilization_pct"
+        ],
+        "title": "AgentUsageRateLimitUpload"
+      },
+      "AgentUsageStatusEntry": {
+        "properties": {
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "agent": {
+            "type": "string",
+            "title": "Agent"
+          },
+          "window_label": {
+            "type": "string",
+            "title": "Window Label"
+          },
+          "utilization_pct": {
+            "type": "number",
+            "title": "Utilization Pct"
+          },
+          "resets_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resets At"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Observed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device",
+          "agent",
+          "window_label",
+          "utilization_pct",
+          "resets_at",
+          "tier",
+          "observed_at"
+        ],
+        "title": "AgentUsageStatusEntry"
+      },
+      "AgentUsageStatusResponse": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageStatusEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries"
+        ],
+        "title": "AgentUsageStatusResponse"
+      },
+      "AgentUsageSyncRequest": {
+        "properties": {
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageDailyUpload"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Daily"
+          },
+          "rate_limits": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageRateLimitUpload"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Rate Limits"
+          }
+        },
+        "type": "object",
+        "title": "AgentUsageSyncRequest"
+      },
+      "AgentUsageSyncResponse": {
+        "properties": {
+          "daily_synced": {
+            "type": "integer",
+            "title": "Daily Synced",
+            "description": "Number of (device, agent, date, model) rows inserted or updated."
+          },
+          "status_synced": {
+            "type": "integer",
+            "title": "Status Synced",
+            "description": "Number of (device, agent, window_label) rows inserted or updated."
+          }
+        },
+        "type": "object",
+        "required": [
+          "daily_synced",
+          "status_synced"
+        ],
+        "title": "AgentUsageSyncResponse"
       },
       "AssetType": {
         "type": "string",

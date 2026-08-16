@@ -1,4 +1,6 @@
 from .activity_event import ActivityEvent
+from .agent_usage_daily import AgentUsageDaily
+from .agent_usage_status import AgentUsageStatus
 from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
@@ -25,6 +27,8 @@ from .weather_cache import WeatherCache
 
 __all__ = [
   "ActivityEvent",
+  "AgentUsageDaily",
+  "AgentUsageStatus",
   "User",
   "BankAccount",
   "BankProfile",

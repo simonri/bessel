@@ -23,6 +23,8 @@ _USER_OWNED_TABLES = [
   "trades",
   "healthkit_workouts",
   "healthkit_sleep_samples",
+  "agent_usage_daily",
+  "agent_usage_status",
 ]
 
 

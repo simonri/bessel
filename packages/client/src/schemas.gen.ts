@@ -254,6 +254,315 @@ export const ActivitySummaryResponseSchema = {
   title: "ActivitySummaryResponse",
 } as const;
 
+export const AgentUsageDailyEntrySchema = {
+  properties: {
+    date: {
+      type: "string",
+      title: "Date",
+      description: "ISO date string (YYYY-MM-DD).",
+    },
+    device: {
+      type: "string",
+      title: "Device",
+    },
+    agent: {
+      type: "string",
+      title: "Agent",
+    },
+    model: {
+      type: "string",
+      title: "Model",
+    },
+    input_tokens: {
+      type: "integer",
+      title: "Input Tokens",
+    },
+    output_tokens: {
+      type: "integer",
+      title: "Output Tokens",
+    },
+    cache_read_tokens: {
+      type: "integer",
+      title: "Cache Read Tokens",
+    },
+    cache_creation_tokens: {
+      type: "integer",
+      title: "Cache Creation Tokens",
+    },
+  },
+  type: "object",
+  required: [
+    "date",
+    "device",
+    "agent",
+    "model",
+    "input_tokens",
+    "output_tokens",
+    "cache_read_tokens",
+    "cache_creation_tokens",
+  ],
+  title: "AgentUsageDailyEntry",
+} as const;
+
+export const AgentUsageDailyResponseSchema = {
+  properties: {
+    entries: {
+      items: {
+        $ref: "#/components/schemas/AgentUsageDailyEntry",
+      },
+      type: "array",
+      title: "Entries",
+    },
+  },
+  type: "object",
+  required: ["entries"],
+  title: "AgentUsageDailyResponse",
+} as const;
+
+export const AgentUsageDailyUploadSchema = {
+  properties: {
+    device: {
+      type: "string",
+      maxLength: 100,
+      title: "Device",
+      description: "Machine identifier, e.g. hostname.",
+    },
+    agent: {
+      type: "string",
+      maxLength: 50,
+      title: "Agent",
+      description: "e.g. 'claude-code'.",
+    },
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+      description: "Collector's local calendar date.",
+    },
+    models: {
+      items: {
+        $ref: "#/components/schemas/AgentUsageModelTokens",
+      },
+      type: "array",
+      title: "Models",
+    },
+  },
+  type: "object",
+  required: ["device", "agent", "date", "models"],
+  title: "AgentUsageDailyUpload",
+} as const;
+
+export const AgentUsageModelTokensSchema = {
+  properties: {
+    model: {
+      type: "string",
+      maxLength: 100,
+      title: "Model",
+    },
+    input_tokens: {
+      type: "integer",
+      minimum: 0,
+      title: "Input Tokens",
+    },
+    output_tokens: {
+      type: "integer",
+      minimum: 0,
+      title: "Output Tokens",
+    },
+    cache_read_tokens: {
+      type: "integer",
+      minimum: 0,
+      title: "Cache Read Tokens",
+    },
+    cache_creation_tokens: {
+      type: "integer",
+      minimum: 0,
+      title: "Cache Creation Tokens",
+    },
+  },
+  type: "object",
+  required: [
+    "model",
+    "input_tokens",
+    "output_tokens",
+    "cache_read_tokens",
+    "cache_creation_tokens",
+  ],
+  title: "AgentUsageModelTokens",
+} as const;
+
+export const AgentUsageRateLimitUploadSchema = {
+  properties: {
+    device: {
+      type: "string",
+      maxLength: 100,
+      title: "Device",
+    },
+    agent: {
+      type: "string",
+      maxLength: 50,
+      title: "Agent",
+    },
+    window_label: {
+      type: "string",
+      maxLength: 50,
+      title: "Window Label",
+      description: "e.g. 'session_5h', 'week'.",
+    },
+    utilization_pct: {
+      type: "number",
+      maximum: 100,
+      minimum: 0,
+      title: "Utilization Pct",
+    },
+    resets_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Resets At",
+    },
+    tier: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tier",
+    },
+  },
+  type: "object",
+  required: ["device", "agent", "window_label", "utilization_pct"],
+  title: "AgentUsageRateLimitUpload",
+} as const;
+
+export const AgentUsageStatusEntrySchema = {
+  properties: {
+    device: {
+      type: "string",
+      title: "Device",
+    },
+    agent: {
+      type: "string",
+      title: "Agent",
+    },
+    window_label: {
+      type: "string",
+      title: "Window Label",
+    },
+    utilization_pct: {
+      type: "number",
+      title: "Utilization Pct",
+    },
+    resets_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Resets At",
+    },
+    tier: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tier",
+    },
+    observed_at: {
+      type: "string",
+      format: "date-time",
+      title: "Observed At",
+    },
+  },
+  type: "object",
+  required: [
+    "device",
+    "agent",
+    "window_label",
+    "utilization_pct",
+    "resets_at",
+    "tier",
+    "observed_at",
+  ],
+  title: "AgentUsageStatusEntry",
+} as const;
+
+export const AgentUsageStatusResponseSchema = {
+  properties: {
+    entries: {
+      items: {
+        $ref: "#/components/schemas/AgentUsageStatusEntry",
+      },
+      type: "array",
+      title: "Entries",
+    },
+  },
+  type: "object",
+  required: ["entries"],
+  title: "AgentUsageStatusResponse",
+} as const;
+
+export const AgentUsageSyncRequestSchema = {
+  properties: {
+    daily: {
+      items: {
+        $ref: "#/components/schemas/AgentUsageDailyUpload",
+      },
+      type: "array",
+      maxItems: 200,
+      title: "Daily",
+    },
+    rate_limits: {
+      items: {
+        $ref: "#/components/schemas/AgentUsageRateLimitUpload",
+      },
+      type: "array",
+      maxItems: 200,
+      title: "Rate Limits",
+    },
+  },
+  type: "object",
+  title: "AgentUsageSyncRequest",
+} as const;
+
+export const AgentUsageSyncResponseSchema = {
+  properties: {
+    daily_synced: {
+      type: "integer",
+      title: "Daily Synced",
+      description:
+        "Number of (device, agent, date, model) rows inserted or updated.",
+    },
+    status_synced: {
+      type: "integer",
+      title: "Status Synced",
+      description:
+        "Number of (device, agent, window_label) rows inserted or updated.",
+    },
+  },
+  type: "object",
+  required: ["daily_synced", "status_synced"],
+  title: "AgentUsageSyncResponse",
+} as const;
+
 export const AssetTypeSchema = {
   type: "string",
   enum: [

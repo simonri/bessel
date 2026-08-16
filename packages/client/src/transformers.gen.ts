@@ -13,6 +13,7 @@ import type {
   CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
   CreateTradeV1InvestmentsTradesPostResponse,
+  GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
   GetTaskV1TasksTaskIdGetResponse,
@@ -47,6 +48,29 @@ import type {
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
 } from "./types.gen.js";
+
+const agentUsageStatusEntrySchemaResponseTransformer = (data: any) => {
+  if (data.resets_at) {
+    data.resets_at = new Date(data.resets_at);
+  }
+  data.observed_at = new Date(data.observed_at);
+  return data;
+};
+
+const agentUsageStatusResponseSchemaResponseTransformer = (data: any) => {
+  data.entries = data.entries.map((item: any) =>
+    agentUsageStatusEntrySchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<GetAgentUsageStatusV1AgentUsageStatusGetResponse> => {
+    data = agentUsageStatusResponseSchemaResponseTransformer(data);
+    return data;
+  };
 
 const bankAccountSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
