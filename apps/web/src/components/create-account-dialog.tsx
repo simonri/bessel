@@ -27,6 +27,7 @@ import {
 } from "@bessel/client";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import { ACCOUNT_SUBTYPES } from "@/lib/account-constants";
 
 export function CreateAccountDialog() {
   const [open, setOpen] = useState(false);
@@ -128,15 +129,11 @@ export function CreateAccountDialog() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="checking">Checking</SelectItem>
-                      <SelectItem value="savings">Savings</SelectItem>
-                      <SelectItem value="isk">ISK</SelectItem>
-                      <SelectItem value="af">AF</SelectItem>
-                      <SelectItem value="kf">KF</SelectItem>
-                      <SelectItem value="brokerage">Brokerage</SelectItem>
-                      <SelectItem value="credit_card">Credit Card</SelectItem>
-                      <SelectItem value="loan">Loan</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {ACCOUNT_SUBTYPES.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
