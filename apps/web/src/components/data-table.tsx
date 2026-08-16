@@ -1,19 +1,18 @@
 import {
-  type ColumnDef,
-  type OnChangeFn,
-  type RowSelectionState,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@bessel/ui/components/table";
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  type OnChangeFn,
+  type RowSelectionState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { DataTableHeader } from "@/components/data-table-header";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -48,26 +47,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="rounded-md border">
       <Table className="table-fixed">
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  style={
-                    header.column.columnDef.size !== undefined
-                      ? { width: header.column.columnDef.size }
-                      : undefined
-                  }
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
+        <DataTableHeader table={table} />
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (

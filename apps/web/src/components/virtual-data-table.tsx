@@ -2,8 +2,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@bessel/ui/components/table";
 import { cn } from "@bessel/ui/lib/utils";
@@ -16,6 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useRef, useState } from "react";
+import { DataTableHeader } from "@/components/data-table-header";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -93,29 +92,10 @@ export function VirtualDataTable<TData, TValue>({
   return (
     <div className="rounded-md border">
       <Table className="table-fixed">
-        <TableHeader className="bg-background sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  style={
-                    header.column.columnDef.size !== undefined
-                      ? { width: header.column.columnDef.size }
-                      : undefined
-                  }
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
+        <DataTableHeader
+          table={table}
+          className="bg-background sticky top-0 z-10"
+        />
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
