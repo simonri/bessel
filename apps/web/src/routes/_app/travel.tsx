@@ -6,16 +6,6 @@ import {
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@bessel/client";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
-import {
   keepPreviousData,
   useMutation,
   useQuery,
@@ -37,6 +27,7 @@ import {
 import { lazy, Suspense, useState } from "react";
 
 import { AddPlaceDialog } from "@/components/add-place-dialog";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
 
 const PlaceMap = lazy(() =>
@@ -531,30 +522,21 @@ function Travel() {
       )}
 
       {/* Delete confirmation */}
-      <AlertDialog
+      <ConfirmDeleteDialog
+        size="sm"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete place?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed.
-              This can&rsquo;t be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete place?"
+        description={
+          <>
+            &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed.
+            This can&rsquo;t be undone.
+          </>
+        }
+        onConfirm={handleConfirmDelete}
+        isPending={deleteMutation.isPending}
+        pendingLabel="Deleting…"
+      />
     </div>
   );
 }

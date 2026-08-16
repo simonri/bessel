@@ -22,16 +22,6 @@ import {
   updateCounterV1CountersCounterIdPatchMutation,
 } from "@bessel/client";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -39,6 +29,7 @@ import {
   DialogTitle,
 } from "@bessel/ui/components/dialog";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { client } from "@/lib/client";
 
 function formatTimeSince(date: Date | null | undefined): string {
@@ -421,28 +412,18 @@ function CounterDetailDialog({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete counter?</AlertDialogTitle>
-            <AlertDialogDescription>
-              "{counter.name}" and all its history will be deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setDeleteOpen(false);
-                onDelete();
-                onClose();
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        variant="default"
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete counter?"
+        description={`"${counter.name}" and all its history will be deleted.`}
+        onConfirm={() => {
+          setDeleteOpen(false);
+          onDelete();
+          onClose();
+        }}
+      />
     </>
   );
 }

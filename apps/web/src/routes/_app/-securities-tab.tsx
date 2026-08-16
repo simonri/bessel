@@ -5,16 +5,6 @@ import {
   listSecuritiesV1InvestmentsSecuritiesGetOptions,
   listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
 } from "@bessel/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
 import { Button } from "@bessel/ui/components/button";
 import {
   Empty,
@@ -35,6 +25,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash2, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateSecurityDialog } from "@/components/create-security-dialog";
 import { DataTable } from "@/components/data-table";
 import { EditSecurityDialog } from "@/components/edit-security-dialog";
@@ -197,36 +188,26 @@ export function SecuritiesTab() {
         </div>
       )}
 
-      <AlertDialog
+      <ConfirmDeleteDialog
+        size="sm"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete security?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{deleteTarget?.name}&rdquo; and all its trades and prices
-              will be permanently removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                if (!deleteTarget) return;
-                deleteMutation.mutate({
-                  client,
-                  path: { security_id: deleteTarget.id },
-                });
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete security?"
+        description={
+          <>
+            &ldquo;{deleteTarget?.name}&rdquo; and all its trades and prices
+            will be permanently removed.
+          </>
+        }
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          deleteMutation.mutate({
+            client,
+            path: { security_id: deleteTarget.id },
+          });
+        }}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 }

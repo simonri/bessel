@@ -5,16 +5,6 @@ import {
   listTradesV1InvestmentsTradesGetOptions,
   listTradesV1InvestmentsTradesGetQueryKey,
 } from "@bessel/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@bessel/ui/components/alert-dialog";
 import { Button } from "@bessel/ui/components/button";
 import {
   Empty,
@@ -35,6 +25,7 @@ import { format } from "date-fns";
 import { Trash2, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { DataTable } from "@/components/data-table";
 import { client } from "@/lib/client";
@@ -215,36 +206,26 @@ export function TradesTab() {
         </div>
       )}
 
-      <AlertDialog
+      <ConfirmDeleteDialog
+        size="sm"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete trade?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This trade will be permanently removed. This can&rsquo;t be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                if (!deleteTarget) return;
-                deleteMutation.mutate({
-                  client,
-                  path: { trade_id: deleteTarget.id },
-                });
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Delete trade?"
+        description={
+          <>
+            This trade will be permanently removed. This can&rsquo;t be
+            undone.
+          </>
+        }
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          deleteMutation.mutate({
+            client,
+            path: { trade_id: deleteTarget.id },
+          });
+        }}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 }
