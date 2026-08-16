@@ -1,8 +1,10 @@
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Any, Protocol, Self
+from uuid import UUID
 
 from api.common.db.postgres import AsyncReadSession, AsyncSession
-from sqlalchemy import Select, func, over, select
+from sqlalchemy import ColumnExpressionArgument, Select, func, over, select
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.base import ExecutableOption
@@ -125,3 +127,25 @@ class RepositoryIDMixin[MODEL_ID: ModelIDProtocol, ID_TYPE]:
   ) -> MODEL_ID | None:
     statement = self.get_base_statement().where(self.model.id == entity_id).options(*options)
     return await self.get_one_or_none(statement)
+
+
+class ModelUserProtocol(Protocol):
+  user_id: Mapped[UUID | None]
+  deleted_at: Mapped[datetime | None]
+
+
+class RepositoryUserMixin[MODEL_USER: ModelUserProtocol]:
+  async def list_for_user(
+    self: RepositoryProtocol[MODEL_USER],
+    user_id: UUID,
+    *,
+    order_by: ColumnExpressionArgument[Any],
+    extra_filters: Sequence[ColumnExpressionArgument[bool]] = (),
+    limit: int | None = None,
+  ) -> Sequence[MODEL_USER]:
+    statement = self.get_base_statement().where(self.model.deleted_at.is_(None)).where(self.model.user_id == user_id).order_by(order_by)
+    for extra_filter in extra_filters:
+      statement = statement.where(extra_filter)
+    if limit is not None:
+      statement = statement.limit(limit)
+    return await self.get_all(statement)

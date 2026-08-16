@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 
-from api.common.repository.base import RepositoryBase, RepositoryIDMixin
+from api.common.repository.base import RepositoryBase, RepositoryIDMixin, RepositoryUserMixin
 from api.models.counter import Counter, CounterReset
 
 
@@ -14,12 +14,11 @@ class CounterResetStats(NamedTuple):
   reset_count: int
 
 
-class CounterRepository(RepositoryBase[Counter], RepositoryIDMixin[Counter, UUID]):
+class CounterRepository(RepositoryBase[Counter], RepositoryIDMixin[Counter, UUID], RepositoryUserMixin[Counter]):
   model = Counter
 
   async def list_for_user(self, user_id: UUID) -> Sequence[Counter]:
-    statement = select(Counter).where(Counter.deleted_at.is_(None)).where(Counter.user_id == user_id).order_by(Counter.name)
-    return await self.get_all(statement)
+    return await super().list_for_user(user_id, order_by=Counter.name)
 
 
 class CounterResetRepository(RepositoryBase[CounterReset], RepositoryIDMixin[CounterReset, UUID]):

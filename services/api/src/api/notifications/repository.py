@@ -2,19 +2,17 @@ from uuid import UUID
 
 from sqlalchemy import select, update
 
-from api.common.repository.base import RepositoryBase
+from api.common.repository.base import RepositoryBase, RepositoryUserMixin
 from api.common.utils import utc_now
 from api.models.notification import Notification
 
 
-class NotificationRepository(RepositoryBase[Notification]):
+class NotificationRepository(RepositoryBase[Notification], RepositoryUserMixin[Notification]):
   model = Notification
 
   async def list_recent(self, user_id: UUID, limit: int = 50) -> list[Notification]:
-    result = await self.session.execute(
-      select(Notification).where(Notification.deleted_at.is_(None)).where(Notification.user_id == user_id).order_by(Notification.created_at.desc()).limit(limit)
-    )
-    return list(result.scalars().all())
+    notifications = await super().list_for_user(user_id, order_by=Notification.created_at.desc(), limit=limit)
+    return list(notifications)
 
   async def mark_read(self, notification_id: UUID, user_id: UUID) -> Notification | None:
     result = await self.session.execute(
