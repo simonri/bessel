@@ -106,6 +106,13 @@ contextBridge.exposeInMainWorld("electron", {
     setEnabled: (enabled: boolean) =>
       ipcRenderer.invoke("monitor:setEnabled", enabled),
   },
+  collector: {
+    status: () => ipcRenderer.invoke("collector:status"),
+    install: () => ipcRenderer.invoke("collector:install"),
+    runNow: () => ipcRenderer.invoke("collector:runNow"),
+    setEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke("collector:setEnabled", enabled),
+  },
   logs: {
     read: (): Promise<string> => ipcRenderer.invoke("logs:read"),
     reveal: (): Promise<void> => ipcRenderer.invoke("logs:reveal"),

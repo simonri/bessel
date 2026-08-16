@@ -7,6 +7,7 @@ import {
 } from "@bessel/ui/components/glass-dialog";
 import {
   Cpu,
+  Gauge,
   Info,
   Laptop,
   LayoutDashboard,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";
+import { AgentUsagePage } from "@/components/settings-agent-usage-page";
 import { AppearancePage } from "@/components/settings-appearance-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
@@ -24,12 +26,17 @@ import { MonitorPage } from "@/components/settings-monitor-page";
 import { MyAiPage } from "@/components/settings-my-ai-page";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
+// systemctl-based install/status only makes sense on Linux — unlike the
+// other desktop-only pages, gate this one specifically instead of on
+// isDesktop, so it doesn't show on mac/win builds where it can't work.
+const isLinuxDesktop = isDesktop && window.electron?.platform === "linux";
 
 type SidebarPage =
   | "appearance"
   | "dashboard"
   | "devices"
   | "monitor"
+  | "agent-usage"
   | "my-ai"
   | "about";
 
@@ -38,6 +45,7 @@ const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
   dashboard: "Configure the top bar and widget display settings.",
   devices: "Manage the devices linked to your account.",
   monitor: "Manage the background activity tracker service.",
+  "agent-usage": "Manage the Claude Code usage tracking timer.",
   "my-ai": "Personal context folder for AI assistants like Claude Code.",
   about: "Application version and update settings.",
 };
@@ -53,6 +61,15 @@ const NAV_ITEMS: {
     ? [
         { key: "devices" as const, label: "Devices", icon: Laptop },
         { key: "monitor" as const, label: "Monitor", icon: Cpu },
+        ...(isLinuxDesktop
+          ? [
+              {
+                key: "agent-usage" as const,
+                label: "Agent Usage",
+                icon: Gauge,
+              },
+            ]
+          : []),
         { key: "my-ai" as const, label: "My AI", icon: Sparkles },
         { key: "about" as const, label: "About", icon: Info },
       ]
@@ -130,6 +147,7 @@ export function SettingsModal({
             {page === "dashboard" && <DashboardPage />}
             {page === "devices" && <DevicesPage />}
             {page === "monitor" && <MonitorPage />}
+            {page === "agent-usage" && <AgentUsagePage />}
             {page === "my-ai" && <MyAiPage />}
             {page === "about" && <AboutPage />}
           </div>

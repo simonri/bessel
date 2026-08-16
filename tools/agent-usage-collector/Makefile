@@ -1,16 +1,19 @@
-SERVICE    = agent-usage-collector
-SYSTEMD    = $(HOME)/.config/systemd/user
-CONFIG_DIR = $(HOME)/.config/bessel
-ENV_FILE   = $(CONFIG_DIR)/agent-usage-collector.env
+SERVICE     = agent-usage-collector
+SYSTEMD     = $(HOME)/.config/systemd/user
+CONFIG_DIR  = $(HOME)/.config/bessel
+ENV_FILE    = $(CONFIG_DIR)/agent-usage-collector.env
+PAYLOAD_DIR = $(HOME)/.local/share/bessel/agent-usage-collector
 
 .PHONY: install restart logs status uninstall run dry-run
 
 install:
-	mkdir -p $(CONFIG_DIR)
+	mkdir -p $(CONFIG_DIR) $(PAYLOAD_DIR)
 	test -f $(ENV_FILE) || cp .env.example $(ENV_FILE)
+	cp collect_agent_usage.py $(PAYLOAD_DIR)/
 	cp $(SERVICE).service $(SERVICE).timer $(SYSTEMD)/
 	systemctl --user daemon-reload
 	systemctl --user enable --now $(SERVICE).timer
+	systemctl --user restart $(SERVICE).timer
 	@echo "Fill in $(ENV_FILE) if you haven't already, then: make run"
 
 restart:

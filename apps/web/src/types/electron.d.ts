@@ -129,6 +129,20 @@ declare global {
         stop: () => Promise<void>;
         setEnabled: (enabled: boolean) => Promise<void>;
       };
+      collector: {
+        status: () => Promise<{
+          installed: boolean;
+          active: boolean;
+          enabled: boolean;
+          failed: boolean;
+          state: string;
+          needsConfig: boolean;
+          envPath: string;
+        }>;
+        install: () => Promise<void>;
+        runNow: () => Promise<void>;
+        setEnabled: (enabled: boolean) => Promise<void>;
+      };
       shell: {
         openExternal: (url: string) => Promise<void>;
       };

@@ -30,6 +30,7 @@ import {
 import { SENTRY_DSN } from "./env.js";
 import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
 import { registerMyAiHandlers } from "./my-ai.js";
+import { registerServiceInstallerHandlers } from "./service-installer.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -148,24 +149,6 @@ function remoteCdArg(p: string): string {
   if (p === "~") return "~";
   if (p.startsWith("~/")) return "~/" + shQuote(p.slice(2));
   return shQuote(p);
-}
-
-// ─── monitor ──────────────────────────────────────────────────────────────────
-const SYSTEMD_USER_DIR = path.join(os.homedir(), ".config", "systemd", "user");
-const MONITOR_SERVICE_NAME = "metron-monitor";
-// Service file lives in the repo; %h specifiers in its ExecStart are expanded by systemd at runtime.
-const MONITOR_SERVICE_SRC = path.resolve(
-  __dirname,
-  "../../../services/monitor/metron-monitor.service",
-);
-
-async function querySystemctl(...args: string[]): Promise<string> {
-  try {
-    const { stdout } = await execFileAsync("systemctl", ["--user", ...args]);
-    return stdout.trim();
-  } catch (err: unknown) {
-    return ((err as { stdout?: string }).stdout ?? "").trim();
-  }
 }
 
 // ─── spotify ──────────────────────────────────────────────────────────────────
@@ -1463,76 +1446,7 @@ app.whenReady().then(() => {
       });
   });
 
-  ipcHandle("monitor:status", async () => {
-    const serviceFilePath = path.join(
-      SYSTEMD_USER_DIR,
-      `${MONITOR_SERVICE_NAME}.service`,
-    );
-    const installed = fs.existsSync(serviceFilePath);
-    if (!installed) {
-      return {
-        installed: false,
-        active: false,
-        enabled: false,
-        failed: false,
-        state: "not-found",
-      };
-    }
-    const state = await querySystemctl("is-active", MONITOR_SERVICE_NAME);
-    const enabledStr = await querySystemctl("is-enabled", MONITOR_SERVICE_NAME);
-    return {
-      installed: true,
-      active: state === "active",
-      failed: state === "failed",
-      enabled: enabledStr === "enabled",
-      state,
-    };
-  });
-
-  ipcHandle("monitor:install", async () => {
-    if (!fs.existsSync(MONITOR_SERVICE_SRC)) {
-      throw new Error(
-        `Service file not found at ${MONITOR_SERVICE_SRC} — is the repo at ~/dev/metron?`,
-      );
-    }
-    fs.mkdirSync(SYSTEMD_USER_DIR, { recursive: true });
-    fs.copyFileSync(
-      MONITOR_SERVICE_SRC,
-      path.join(SYSTEMD_USER_DIR, `${MONITOR_SERVICE_NAME}.service`),
-    );
-    await execFileAsync("systemctl", ["--user", "daemon-reload"]);
-    await execFileAsync("systemctl", [
-      "--user",
-      "enable",
-      MONITOR_SERVICE_NAME,
-    ]);
-    await execFileAsync("systemctl", ["--user", "start", MONITOR_SERVICE_NAME]);
-  });
-
-  ipcHandle("monitor:start", async () => {
-    await execFileAsync("systemctl", ["--user", "start", MONITOR_SERVICE_NAME]);
-  });
-
-  ipcHandle("monitor:stop", async () => {
-    await execFileAsync("systemctl", ["--user", "stop", MONITOR_SERVICE_NAME]);
-  });
-
-  ipcHandle("monitor:setEnabled", async (_, enabled: boolean) => {
-    if (enabled) {
-      await execFileAsync("systemctl", [
-        "--user",
-        "enable",
-        MONITOR_SERVICE_NAME,
-      ]);
-    } else {
-      await execFileAsync("systemctl", [
-        "--user",
-        "disable",
-        MONITOR_SERVICE_NAME,
-      ]);
-    }
-  });
-
+  registerServiceInstallerHandlers();
   registerMyAiHandlers(USER_DATA_DIR);
   registerCliBrokerHandlers(USER_DATA_DIR);
   registerAxiCliInstallHandlers();

@@ -19,6 +19,14 @@ const config: Configuration = {
       from: "../../packages/axi/dist",
       to: "axi",
     },
+    {
+      from: "../../services/monitor",
+      to: "monitor",
+    },
+    {
+      from: "../../tools/agent-usage-collector",
+      to: "agent-usage-collector",
+    },
   ],
   publish: {
     provider: "github",
