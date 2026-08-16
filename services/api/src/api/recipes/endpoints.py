@@ -65,7 +65,7 @@ async def get_recipe(
   recipe_id: UUID,
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
+  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, check_not_deleted=True, not_found_message="Recipe not found.")
   return RecipeSchema.model_validate(recipe)
 
 
@@ -77,7 +77,7 @@ async def update_recipe(
   body: RecipeUpdate,
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
+  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, check_not_deleted=True, not_found_message="Recipe not found.")
   update_data = body.model_dump(exclude_unset=True)
   recipe = await repo.update(recipe, update_dict=update_data)
   return RecipeSchema.model_validate(recipe)
@@ -90,5 +90,5 @@ async def delete_recipe(
   recipe_id: UUID,
 ) -> None:
   repo = RecipeRepository.from_session(session)
-  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
+  recipe = await repo.get_owned_or_404(recipe_id, current_user.id, check_not_deleted=True, not_found_message="Recipe not found.")
   await repo.delete(recipe)

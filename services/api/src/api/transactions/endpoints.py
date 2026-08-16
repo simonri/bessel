@@ -173,7 +173,7 @@ async def update_transaction(
 ) -> TransactionUpdateResponse:
   """Update a transaction."""
   repo = TransactionRepository.from_session(session)
-  transaction = await repo.get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
+  transaction = await repo.get_owned_or_404(transaction_id, current_user.id, check_not_deleted=True, not_found_message="Transaction not found")
 
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:

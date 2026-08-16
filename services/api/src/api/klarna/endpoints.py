@@ -44,7 +44,7 @@ async def import_klarna_transactions(
   _require_bearer(body.authorization)
 
   bank_account = await BankAccountRepository.from_session(session).get_owned_or_404(
-    body.bank_account_id, current_user.id, not_found_message="Bank account not found"
+    body.bank_account_id, current_user.id, check_not_deleted=True, not_found_message="Bank account not found"
   )
 
   items = await fetch_klarna_items(body.authorization, body.cookie)
