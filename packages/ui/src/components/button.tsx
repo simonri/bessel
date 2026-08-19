@@ -33,6 +33,7 @@ const buttonVariants = cva(
           "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent",
         link: "bg-transparent text-muted-foreground hover:text-foreground",
         destructive: "bg-destructive text-white hover:bg-destructive/90",
+        contrast: "bg-foreground text-background hover:bg-foreground/90",
       },
       size: {
         default: "h-9 px-4 font-medium text-sm [&_svg:not([class*='size-'])]:size-4",
@@ -52,6 +53,10 @@ const buttonVariants = cva(
         success: "",
         warning: "",
         error: "",
+      },
+      shape: {
+        default: "",
+        pill: "rounded-full",
       },
     },
     compoundVariants: [
@@ -99,6 +104,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
       colorVariant: "default",
+      shape: "default",
     },
   },
 );
@@ -115,6 +121,7 @@ function Button({
   size = "default",
   align,
   colorVariant = "default",
+  shape = "default",
   asChild = false,
   disabled,
   ...props
@@ -126,7 +133,9 @@ function Button({
       data-slot="button"
       aria-disabled={disabled}
       disabled={disabled}
-      className={cn(buttonVariants({ align, variant, size, colorVariant, className }))}
+      className={cn(
+        buttonVariants({ align, variant, size, colorVariant, shape, className }),
+      )}
       {...props}
     />
   );

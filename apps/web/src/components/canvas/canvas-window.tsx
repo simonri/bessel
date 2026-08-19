@@ -1,4 +1,9 @@
 import { getTaskV1TasksTaskIdGetOptions } from "@bessel/client";
+import { Button, buttonVariants } from "@bessel/ui/components/button";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@bessel/ui/components/button-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,14 +90,16 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="iconSm"
+          shape="pill"
           onPointerDown={(e) => e.stopPropagation()}
           title="Move to session"
-          className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          className="text-white/40 hover:bg-white/10 hover:text-white/80"
         >
           <MoreHorizontal className="size-3" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
         {workspaces.map((ws) =>
@@ -145,21 +152,26 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
           onMouseDown={(e) => e.stopPropagation()}
           onClick={() => setDialogOpen(true)}
           title={task.title}
-          className="flex h-5 min-w-0 max-w-32 items-center gap-1 rounded-full pl-2 pr-1 text-11 leading-none text-white/50 transition-colors hover:text-white/80"
+          className={cn(
+            buttonVariants({ variant: "ghost", shape: "pill" }),
+            "h-5 min-w-0 max-w-32 gap-1 pl-2 pr-1 text-11 leading-none text-white/50 hover:bg-transparent hover:text-white/80",
+          )}
         >
           <CheckSquare className="size-3 shrink-0 text-primary-400" />
           <span className="min-w-0 truncate">{task.title}</span>
         </button>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="iconSm"
+          shape="pill"
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={() => updateWindowData(entry.id, { attachedTaskId: "" })}
           title="Unassign task"
-          className="flex size-5 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/10 hover:text-white/80"
+          className="shrink-0 text-white/30 hover:bg-white/10 hover:text-white/80"
         >
           <X className="size-3" />
-        </button>
+        </Button>
       </div>
       <TaskDetailDialogController
         taskId={dialogOpen ? attachedTaskId : null}
@@ -195,14 +207,16 @@ function ProjectSwitcher({ entry }: { entry: WindowEntry }) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="iconSm"
+          shape="pill"
           onPointerDown={(e) => e.stopPropagation()}
           title="Switch project"
-          className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          className="text-white/40 hover:bg-white/10 hover:text-white/80"
         >
           <FolderOpen className="size-3" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
@@ -285,32 +299,39 @@ export const CanvasWindow = memo(function CanvasWindow({
             <ProjectSwitcher entry={entry} />
           )}
           <MoveToWorkspaceMenu entry={entry} />
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={() => toggleFullscreenWindow(entry.id)}
-            title={isFullscreen ? "Exit full screen" : "Full screen"}
-            className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="size-3" />
-            ) : (
-              <Maximize2 className="size-3" />
-            )}
-          </button>
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={() => {
-              closeWindow(entry.id);
-              clearFullscreenWindow(entry.id);
-            }}
-            className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
-          >
-            <X className="size-3" />
-          </button>
+          <ButtonGroup shape="pill" className="bg-white/5 ring-white/10">
+            <Button
+              variant="ghost"
+              size="iconSm"
+              shape="pill"
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => toggleFullscreenWindow(entry.id)}
+              title={isFullscreen ? "Exit full screen" : "Full screen"}
+              className="text-white/40 hover:bg-white/10 hover:text-white/80"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="size-3" />
+              ) : (
+                <Maximize2 className="size-3" />
+              )}
+            </Button>
+            <ButtonGroupSeparator className="bg-white/10" />
+            <Button
+              variant="ghost"
+              size="iconSm"
+              shape="pill"
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => {
+                closeWindow(entry.id);
+                clearFullscreenWindow(entry.id);
+              }}
+              className="text-white/40 hover:bg-white/10 hover:text-white/80"
+            >
+              <X className="size-3" />
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
 

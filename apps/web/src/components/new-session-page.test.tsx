@@ -96,4 +96,20 @@ describe("NewSessionPage", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
+
+  it("Skip opens a new workspace with no widgets, keeping the chosen project and name", () => {
+    const { manager, onCreated } = mount("p1");
+    fireEvent.change(screen.getByLabelText("Session name"), { target: { value: "Scratch" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+
+    expect(onCreated).toHaveBeenCalledTimes(1);
+    const { workspaces, activeWorkspaceId, windows } = manager();
+    expect(windows).toHaveLength(0);
+    expect(workspaces.find((ws) => ws.id === activeWorkspaceId)).toEqual({
+      id: activeWorkspaceId,
+      name: "Scratch",
+      projectId: "p1",
+    });
+  });
 });

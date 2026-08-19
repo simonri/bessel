@@ -6,6 +6,7 @@ import {
   ContextMenuTrigger,
 } from "@bessel/ui/components/context-menu";
 import { cn } from "@bessel/ui/lib/utils";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ChevronRight,
   File,
@@ -20,9 +21,14 @@ import {
   SquareArrowOutUpRight,
   Trash2,
 } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { buildTree, filterTree, type TreeNode } from "./lib/tree";
+import {
+  buildTree,
+  filterTree,
+  flattenVisibleTree,
+  type TreeNode,
+} from "./lib/tree";
 import { basenameOf, stripMd } from "./lib/wikilinks";
 import type { VaultEntry, VaultEntryKind } from "./vault-types";
 
@@ -159,87 +165,61 @@ const TreeRow = memo(function TreeRow({
   if (node.kind === "dir") {
     const expanded = isExpanded(node.rel);
     return (
-      <div>
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <button
-              type="button"
-              onClick={() => onToggle(node.rel)}
-              style={{ paddingLeft: indent }}
-              className={cn(ROW, "text-white/60 hover:bg-white/[0.05]")}
-            >
-              <ChevronRight
-                className={cn(
-                  "size-3 shrink-0 text-white/30 transition-transform",
-                  expanded && "rotate-90",
-                )}
-              />
-              {expanded ? (
-                <FolderOpen className="size-3.5 shrink-0 text-white/35" />
-              ) : (
-                <Folder className="size-3.5 shrink-0 text-white/35" />
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <button
+            type="button"
+            onClick={() => onToggle(node.rel)}
+            style={{ paddingLeft: indent }}
+            className={cn(ROW, "text-white/60 hover:bg-white/[0.05]")}
+          >
+            <ChevronRight
+              className={cn(
+                "size-3 shrink-0 text-white/30 transition-transform",
+                expanded && "rotate-90",
               )}
-              {isRenaming ? (
-                <RenameInput
-                  value={renameValue}
-                  onChange={onRenameValueChange}
-                  onCommit={onCommitRename}
-                  onCancel={onCancelRename}
-                />
-              ) : (
-                <span className="min-w-0 flex-1 truncate">{node.name}</span>
-              )}
-            </button>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onSelect={() => onCreateNote(node.rel)}>
-              <FileText />
-              New note
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onCreateFolder(node.rel)}>
-              <FolderPlus />
-              New folder
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onStartRename(node)}>
-              <Pencil />
-              Rename
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onReveal(node.rel)}>
-              <SquareArrowOutUpRight />
-              Reveal in file manager
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem variant="destructive" onSelect={trashWithConfirm}>
-              <Trash2 />
-              Trash
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-        {expanded &&
-          node.children.map((child) => (
-            <TreeRow
-              key={child.rel}
-              node={child}
-              depth={depth + 1}
-              root={root}
-              activeRel={activeRel}
-              isExpanded={isExpanded}
-              renaming={renaming}
-              renameValue={renameValue}
-              onToggle={onToggle}
-              onOpen={onOpen}
-              onStartRename={onStartRename}
-              onRenameValueChange={onRenameValueChange}
-              onCommitRename={onCommitRename}
-              onCancelRename={onCancelRename}
-              onCreateNote={onCreateNote}
-              onCreateFolder={onCreateFolder}
-              onTrash={onTrash}
-              onReveal={onReveal}
-              onPinToCanvas={onPinToCanvas}
             />
-          ))}
-      </div>
+            {expanded ? (
+              <FolderOpen className="size-3.5 shrink-0 text-white/35" />
+            ) : (
+              <Folder className="size-3.5 shrink-0 text-white/35" />
+            )}
+            {isRenaming ? (
+              <RenameInput
+                value={renameValue}
+                onChange={onRenameValueChange}
+                onCommit={onCommitRename}
+                onCancel={onCancelRename}
+              />
+            ) : (
+              <span className="min-w-0 flex-1 truncate">{node.name}</span>
+            )}
+          </button>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onSelect={() => onCreateNote(node.rel)}>
+            <FileText />
+            New note
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onCreateFolder(node.rel)}>
+            <FolderPlus />
+            New folder
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onStartRename(node)}>
+            <Pencil />
+            Rename
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onReveal(node.rel)}>
+            <SquareArrowOutUpRight />
+            Reveal in file manager
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem variant="destructive" onSelect={trashWithConfirm}>
+            <Trash2 />
+            Trash
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     );
   }
 
@@ -338,6 +318,25 @@ export function FileTree({
   const filtering = filter.trim().length > 0;
   const expandedSet = useMemo(() => new Set(expandedDirs), [expandedDirs]);
   const isExpanded = (rel: string) => filtering || expandedSet.has(rel);
+  const visibleNodes = useMemo(
+    () =>
+      flattenVisibleTree(
+        displayTree,
+        (rel) => filtering || expandedSet.has(rel),
+      ),
+    [displayTree, filtering, expandedSet],
+  );
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: visibleNodes.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 24,
+    getItemKey: (index) => visibleNodes[index]?.node.rel ?? index,
+    overscan: 12,
+    // jsdom and the first pre-layout render have no measured viewport yet.
+    // This also prevents a transient empty tree on the initial browser frame.
+    initialRect: { width: 0, height: 480 },
+  });
 
   const startRename = (node: TreeNode) => {
     const original = node.kind === "dir" ? node.name : basenameOf(node.rel);
@@ -366,35 +365,49 @@ export function FileTree({
       </div>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <div className="min-h-0 flex-1 overflow-y-auto p-1">
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-1">
             {displayTree.length === 0 ? (
               <p className="px-2 py-4 text-center text-12 text-white/35">
                 {filtering ? "No matches" : "Empty vault"}
               </p>
             ) : (
-              displayTree.map((node) => (
-                <TreeRow
-                  key={node.rel}
-                  node={node}
-                  depth={0}
-                  root={root}
-                  activeRel={activeRel}
-                  isExpanded={isExpanded}
-                  renaming={renaming}
-                  renameValue={renameValue}
-                  onToggle={onToggleDir}
-                  onOpen={onOpen}
-                  onStartRename={startRename}
-                  onRenameValueChange={setRenameValue}
-                  onCommitRename={commitRename}
-                  onCancelRename={cancelRename}
-                  onCreateNote={onCreateNote}
-                  onCreateFolder={onCreateFolder}
-                  onTrash={onTrash}
-                  onReveal={onReveal}
-                  onPinToCanvas={onPinToCanvas}
-                />
-              ))
+              <div
+                className="relative w-full"
+                style={{ height: virtualizer.getTotalSize() }}
+              >
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = visibleNodes[virtualRow.index];
+                  if (!item) return null;
+                  return (
+                    <div
+                      key={virtualRow.key}
+                      className="absolute top-0 left-0 h-6 w-full"
+                      style={{ transform: `translateY(${virtualRow.start}px)` }}
+                    >
+                      <TreeRow
+                        node={item.node}
+                        depth={item.depth}
+                        root={root}
+                        activeRel={activeRel}
+                        isExpanded={isExpanded}
+                        renaming={renaming}
+                        renameValue={renameValue}
+                        onToggle={onToggleDir}
+                        onOpen={onOpen}
+                        onStartRename={startRename}
+                        onRenameValueChange={setRenameValue}
+                        onCommitRename={commitRename}
+                        onCancelRename={cancelRename}
+                        onCreateNote={onCreateNote}
+                        onCreateFolder={onCreateFolder}
+                        onTrash={onTrash}
+                        onReveal={onReveal}
+                        onPinToCanvas={onPinToCanvas}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </ContextMenuTrigger>

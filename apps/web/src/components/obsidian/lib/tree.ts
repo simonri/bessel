@@ -9,6 +9,11 @@ export interface TreeNode {
   children: TreeNode[];
 }
 
+export interface VisibleTreeNode {
+  node: TreeNode;
+  depth: number;
+}
+
 function basename(rel: string): string {
   return rel.slice(rel.lastIndexOf("/") + 1);
 }
@@ -99,4 +104,26 @@ export function filterTree(
     }
   }
   return result;
+}
+
+/** Flattens the expanded portion of a tree into display order. Keeping this
+ * separate from rendering lets the file tree window an arbitrarily large
+ * vault while preserving the hierarchy through each row's `depth`. */
+export function flattenVisibleTree(
+  nodes: readonly TreeNode[],
+  isExpanded: (rel: string) => boolean,
+): VisibleTreeNode[] {
+  const visible: VisibleTreeNode[] = [];
+
+  function visit(items: readonly TreeNode[], depth: number): void {
+    for (const node of items) {
+      visible.push({ node, depth });
+      if (node.kind === "dir" && isExpanded(node.rel)) {
+        visit(node.children, depth + 1);
+      }
+    }
+  }
+
+  visit(nodes, 0);
+  return visible;
 }

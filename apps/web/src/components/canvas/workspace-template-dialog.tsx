@@ -2,6 +2,15 @@ import {
   listProjectsV1ProjectsGetOptions,
   type ProjectSchema,
 } from "@bessel/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@bessel/ui/components/alert-dialog";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -31,7 +40,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   newTemplateId,
@@ -176,10 +185,14 @@ function TemplateEditor({
   template,
   onSave,
   onCancel,
+  onDirtyStateChange,
+  saveRef,
 }: {
   template: WorkspaceTemplate;
   onSave: (template: WorkspaceTemplate) => void;
   onCancel: () => void;
+  onDirtyStateChange: (state: { dirty: boolean; canSave: boolean }) => void;
+  saveRef: React.MutableRefObject<(() => void) | null>;
 }) {
   const [draft, setDraft] = useState(template);
   const { data: projectsData = [] } = useQuery(
@@ -205,6 +218,23 @@ function TemplateEditor({
     }));
 
   const canSave = draft.name.trim().length > 0 && draft.widgets.length > 0;
+  const dirty = JSON.stringify(draft) !== JSON.stringify(template);
+
+  const save = useCallback(
+    () => onSave({ ...draft, name: draft.name.trim() }),
+    [draft, onSave],
+  );
+
+  useEffect(() => {
+    saveRef.current = canSave ? save : null;
+    return () => {
+      saveRef.current = null;
+    };
+  }, [saveRef, canSave, save]);
+
+  useEffect(() => {
+    onDirtyStateChange({ dirty, canSave });
+  }, [dirty, canSave, onDirtyStateChange]);
 
   return (
     <div className="space-y-4">
@@ -242,15 +272,57 @@ function TemplateEditor({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button
-          type="button"
-          disabled={!canSave}
-          onClick={() => onSave({ ...draft, name: draft.name.trim() })}
-        >
+        <Button type="button" disabled={!canSave} onClick={save}>
           Save template
         </Button>
       </DialogFooter>
     </div>
+  );
+}
+
+function UnsavedChangesDialog({
+  open,
+  onOpenChange,
+  canSave,
+  onDiscard,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  canSave: boolean;
+  onDiscard: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            Save or discard changes before continuing
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex items-center justify-between gap-2">
+          <AlertDialogAction variant="link" size="sm" onClick={onDiscard}>
+            Discard
+          </AlertDialogAction>
+          <div className="flex gap-2">
+            <AlertDialogCancel size="sm" shape="pill">
+              Keep editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="contrast"
+              size="sm"
+              shape="pill"
+              disabled={!canSave}
+              onClick={onSave}
+            >
+              Save
+            </AlertDialogAction>
+          </div>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -352,47 +424,91 @@ export function WorkspaceTemplatesDialog({
 }) {
   const { upsertTemplate } = useWorkspaceTemplates();
   const [editing, setEditing] = useState<WorkspaceTemplate | null>(null);
+  const [editorState, setEditorState] = useState({
+    dirty: false,
+    canSave: false,
+  });
+  // "close" = leaving the whole dialog mid-edit; "cancel" = backing out of
+  // the editor to the template list, dialog stays open either way.
+  const [confirmExit, setConfirmExit] = useState<"close" | "cancel" | null>(
+    null,
+  );
+  const saveRef = useRef<(() => void) | null>(null);
+
+  const requestEditorExit = (exit: "close" | "cancel") => {
+    if (editorState.dirty) {
+      setConfirmExit(exit);
+      return;
+    }
+    setEditing(null);
+    if (exit === "close") onOpenChange(false);
+  };
 
   const close = (v: boolean) => {
-    if (!v) setEditing(null);
+    if (!v && editing) {
+      requestEditorExit("close");
+      return;
+    }
     onOpenChange(v);
   };
 
   return (
-    <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {editing
-              ? editing.name
-                ? "Edit template"
-                : "New template"
-              : "Workspace templates"}
-          </DialogTitle>
-          <DialogDescription>
-            {editing
-              ? "Pick the widgets this template opens, and any commands each terminal should run in order."
-              : "Apply a saved set of widgets to a new or current workspace."}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={close}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editing
+                ? editing.name
+                  ? "Edit template"
+                  : "New template"
+                : "Workspace templates"}
+            </DialogTitle>
+            <DialogDescription>
+              {editing
+                ? "Pick the widgets this template opens, and any commands each terminal should run in order."
+                : "Apply a saved set of widgets to a new or current workspace."}
+            </DialogDescription>
+          </DialogHeader>
 
-        {editing ? (
-          <TemplateEditor
-            template={editing}
-            onCancel={() => setEditing(null)}
-            onSave={(t) => {
-              upsertTemplate(t);
-              toast.success(`Saved "${t.name}"`);
-              setEditing(null);
-            }}
-          />
-        ) : (
-          <TemplateList
-            onEdit={setEditing}
-            onCreate={() => setEditing(blankTemplate())}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+          {editing ? (
+            <TemplateEditor
+              template={editing}
+              onCancel={() => requestEditorExit("cancel")}
+              onSave={(t) => {
+                upsertTemplate(t);
+                toast.success(`Saved "${t.name}"`);
+                setEditing(null);
+              }}
+              onDirtyStateChange={setEditorState}
+              saveRef={saveRef}
+            />
+          ) : (
+            <TemplateList
+              onEdit={setEditing}
+              onCreate={() => setEditing(blankTemplate())}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <UnsavedChangesDialog
+        open={confirmExit !== null}
+        onOpenChange={(v) => {
+          if (!v) setConfirmExit(null);
+        }}
+        canSave={editorState.canSave}
+        onDiscard={() => {
+          setEditing(null);
+          if (confirmExit === "close") onOpenChange(false);
+          setConfirmExit(null);
+        }}
+        onSave={() => {
+          saveRef.current?.();
+          if (confirmExit === "close") onOpenChange(false);
+          setConfirmExit(null);
+        }}
+      />
+    </>
   );
 }

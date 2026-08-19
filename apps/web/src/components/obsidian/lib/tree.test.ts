@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { VaultEntry } from "../vault-types";
-import { buildTree, filterTree } from "./tree";
+import { buildTree, filterTree, flattenVisibleTree } from "./tree";
 
 function entry(rel: string, kind: VaultEntry["kind"] = "md"): VaultEntry {
   return { rel, kind, mtimeMs: 0, size: 0 };
@@ -79,6 +79,39 @@ describe("filterTree", () => {
     expect(filtered.map((n) => n.name)).toEqual(["Journal"]);
     expect(filtered[0]!.children.map((c) => c.rel)).toEqual([
       "Journal/2026-08-19.md",
+    ]);
+  });
+});
+
+describe("flattenVisibleTree", () => {
+  const tree = buildTree([
+    entry("Journal/2026/A.md"),
+    entry("Journal/2026/B.md"),
+    entry("Recipes/Pasta.md"),
+    entry("Root.md"),
+  ]);
+
+  it("includes only children of expanded folders in display order", () => {
+    const expanded = new Set(["Journal", "Journal/2026"]);
+    const rows = flattenVisibleTree(tree, (rel) => expanded.has(rel));
+
+    expect(rows.map(({ node, depth }) => [node.rel, depth])).toEqual([
+      ["Journal", 0],
+      ["Journal/2026", 1],
+      ["Journal/2026/A.md", 2],
+      ["Journal/2026/B.md", 2],
+      ["Recipes", 0],
+      ["Root.md", 0],
+    ]);
+  });
+
+  it("can flatten the entire filtered tree", () => {
+    const filtered = filterTree(tree, "pasta");
+    const rows = flattenVisibleTree(filtered, () => true);
+
+    expect(rows.map(({ node }) => node.rel)).toEqual([
+      "Recipes",
+      "Recipes/Pasta.md",
     ]);
   });
 });

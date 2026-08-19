@@ -1,5 +1,5 @@
 import { glassSurface } from "@bessel/ui/lib/glass";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Play } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { tileEvenly } from "@/components/canvas/layout-engine";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
@@ -76,7 +76,9 @@ function Field({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <span className="text-xs font-medium text-white/60">{label}</span>
+        <span className="text-11 font-medium uppercase tracking-wide text-white/40">
+          {label}
+        </span>
         {hint && <span className="text-11 text-white/35">{hint}</span>}
       </div>
       {children}
@@ -221,6 +223,12 @@ export function NewSessionPage({
     onCreated();
   };
 
+  // No agents to spawn, so no need to gate on isDesktop like submit() does.
+  const skip = () => {
+    createSession({ projectId: project?.id, name, specs: [] });
+    onCreated();
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -283,40 +291,51 @@ export function NewSessionPage({
           <legend className="sr-only">Agent</legend>
           {AGENTS.map((key) => {
             const { title, icon: Icon } = MODULE_REGISTRY[key];
+            const selected = key === agent;
             return (
               <RadioOption
                 key={key}
                 name={`${formId}-agent`}
                 value={key}
-                checked={key === agent}
+                checked={selected}
                 onSelect={() => setAgent(key)}
-                className="flex-col items-center gap-2 px-3 py-4"
+                className="items-center justify-between gap-2 px-3 py-3"
               >
-                <Icon className="size-5" />
-                <span className="text-xs font-medium">{title}</span>
+                <span className="flex items-center gap-2">
+                  <Icon className="size-4" />
+                  <span className="text-xs font-medium">{title}</span>
+                </span>
+                {selected && (
+                  <Check className="size-3.5 shrink-0 text-primary-400" />
+                )}
               </RadioOption>
             );
           })}
         </fieldset>
       </Field>
 
-      <Field label="How many" hint="Tiled evenly across the canvas">
+      <Field label="How many">
         <div className="flex flex-col gap-3">
-          <fieldset className="grid grid-cols-4 gap-2">
-            <legend className="sr-only">How many</legend>
-            {COUNTS.map((n) => (
-              <RadioOption
-                key={n}
-                name={`${formId}-count`}
-                value={String(n)}
-                checked={n === count}
-                onSelect={() => setCount(n)}
-                className="justify-center py-2 font-mono text-sm tabular-nums"
-              >
-                {n}
-              </RadioOption>
-            ))}
-          </fieldset>
+          <div className="flex items-center gap-2">
+            <fieldset className="flex gap-2">
+              <legend className="sr-only">How many</legend>
+              {COUNTS.map((n) => (
+                <RadioOption
+                  key={n}
+                  name={`${formId}-count`}
+                  value={String(n)}
+                  checked={n === count}
+                  onSelect={() => setCount(n)}
+                  className="size-9 items-center justify-center font-mono text-sm tabular-nums"
+                >
+                  {n}
+                </RadioOption>
+              ))}
+            </fieldset>
+            <span className="text-xs text-white/40">
+              session{count > 1 ? "s" : ""}, tiled evenly
+            </span>
+          </div>
           <LayoutPreview count={count} agent={agent} />
         </div>
       </Field>
@@ -334,11 +353,12 @@ export function NewSessionPage({
 
       {!isDesktop && (
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-200/80">
-          Agent sessions run in the desktop app.
+          Agent widgets require the desktop app — Skip still opens an empty
+          canvas here.
         </p>
       )}
 
-      <footer className="flex items-center justify-end gap-2 border-t border-white/10 pt-4">
+      <footer className="flex items-center justify-between gap-2 border-t border-white/10 pt-4">
         <button
           type="button"
           onClick={onCancel}
@@ -346,14 +366,24 @@ export function NewSessionPage({
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          disabled={!isDesktop}
-          className="rounded-lg bg-primary-500 px-3.5 py-1.5 text-xs font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100"
-        >
-          Open {count > 1 ? `${count} × ${agentTitle}` : agentTitle}
-          {project ? ` in ${project.name}` : ""}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={skip}
+            className="rounded-lg border border-white/10 px-3.5 py-1.5 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white/90"
+          >
+            Skip
+          </button>
+          <button
+            type="submit"
+            disabled={!isDesktop}
+            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-1.5 text-xs font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100"
+          >
+            <Play className="size-3 fill-current" />
+            Open {count > 1 ? `${count} × ${agentTitle}` : agentTitle}
+            {project ? ` in ${project.name}` : ""}
+          </button>
+        </div>
       </footer>
     </form>
   );

@@ -9,14 +9,31 @@ const buttonGroupVariants = cva(
   {
     variants: {
       orientation: {
-        horizontal:
-          "[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none",
-        vertical:
-          "flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 [&>*:not(:last-child)]:rounded-b-none",
+        horizontal: "",
+        vertical: "flex-col",
+      },
+      shape: {
+        segmented: "",
+        pill: "rounded-full ring-1 ring-border bg-secondary/60 gap-0 p-0.5",
       },
     },
+    compoundVariants: [
+      {
+        orientation: "horizontal",
+        shape: "segmented",
+        className:
+          "[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 [&>*:not(:last-child)]:rounded-r-none",
+      },
+      {
+        orientation: "vertical",
+        shape: "segmented",
+        className:
+          "[&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 [&>*:not(:last-child)]:rounded-b-none",
+      },
+    ],
     defaultVariants: {
       orientation: "horizontal",
+      shape: "segmented",
     },
   },
 );
@@ -24,6 +41,7 @@ const buttonGroupVariants = cva(
 function ButtonGroup({
   className,
   orientation,
+  shape,
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof buttonGroupVariants>) {
   return (
@@ -31,7 +49,7 @@ function ButtonGroup({
       role="group"
       data-slot="button-group"
       data-orientation={orientation}
-      className={cn(buttonGroupVariants({ orientation }), className)}
+      className={cn(buttonGroupVariants({ orientation, shape }), className)}
       {...props}
     />
   );
