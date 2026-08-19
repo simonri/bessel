@@ -128,7 +128,10 @@ function useAdoptLegacySessions(
 function CountBadge({ count }: { count: number }) {
   if (count < 1) return null;
   return (
-    <span className="shrink-0 rounded bg-white/[0.08] px-1.5 py-px font-mono text-10 tabular-nums leading-4 text-white/45">
+    <span
+      title={`${count} ${count === 1 ? "widget" : "widgets"}`}
+      className="shrink-0 rounded bg-white/[0.08] px-1.5 py-px font-mono text-10 tabular-nums leading-4 text-white/45"
+    >
       {count}
     </span>
   );
@@ -246,7 +249,7 @@ function SessionRow({
           >
             <StatusDot status={status} />
             <span className="min-w-0 flex-1 truncate">{label}</span>
-            {windows.length > 1 && <CountBadge count={windows.length} />}
+            <CountBadge count={windows.length} />
           </button>
         )}
       </ContextMenuTrigger>

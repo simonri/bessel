@@ -46,6 +46,7 @@ function ProjectPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          type="button"
           className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
             active
               ? "text-primary-400"
@@ -80,7 +81,7 @@ export const CanvasDock = memo(function CanvasDock() {
     <div
       className={cn(
         glassSurface({ weight: "light" }),
-        "flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-t border-white/10 px-4",
+        "flex h-10 shrink-0 select-none items-center gap-1 overflow-x-auto border-t border-white/10 px-4",
       )}
     >
       {MODULE_ORDER.map((key) => {
@@ -99,6 +100,7 @@ export const CanvasDock = memo(function CanvasDock() {
 
         return (
           <button
+            type="button"
             key={key}
             onClick={() =>
               config.multiInstance ? openWindow(key) : toggleWindow(key)

@@ -111,6 +111,26 @@ describe("ProjectSessions", () => {
     expect(dot().className).toContain("bg-white/20");
   });
 
+  it("shows a widget-count badge for one or more widgets, but not zero", () => {
+    seed(
+      [
+        {
+          id: "one",
+          name: "One widget",
+          windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }],
+        },
+        { id: "empty", name: "Empty", windows: [] },
+      ],
+      "one",
+    );
+    mount();
+
+    expect(
+      screen.getByTitle("One widget").querySelector('[title="1 widget"]'),
+    ).toBeTruthy();
+    expect(screen.getByTitle("Empty").querySelector('[title$="widget"]')).toBeNull();
+  });
+
   it("switches to a clicked session and brings the canvas on screen", () => {
     seed([{ id: "a", projectId: "p1", windows: [] }, { id: "b", projectId: "p1", name: "Two", windows: [] }], "a");
     const { manager, onOpenCanvas } = mount({ isOnCanvasPage: false });

@@ -1,5 +1,5 @@
 import { glassSurface } from "@bessel/ui/lib/glass";
-import { ScrollText, Settings, X } from "lucide-react";
+import { Network, ScrollText, Settings, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AgentUsageDropdown } from "@/components/canvas/agent-usage-dropdown";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
@@ -9,6 +9,7 @@ import { ProjectsDropdown } from "@/components/canvas/projects-dropdown";
 import { SpotifyWidget } from "@/components/canvas/spotify-widget";
 import { TimeSinceDropdown } from "@/components/canvas/time-since-dropdown";
 import { LogsDialog } from "@/components/logs-dialog";
+import { PortsDialog } from "@/components/ports-dialog";
 import { SettingsModal } from "@/components/settings-modal";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ const MAC_TRAFFIC_LIGHT_INSET = "pl-20";
 export const CanvasTopBar = memo(function CanvasTopBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
+  const [portsOpen, setPortsOpen] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
   const { settings } = useSettings();
   const isMac = window.electron?.platform === "darwin";
@@ -88,6 +90,18 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
         </div>
         {window.electron && (
           <button
+            onClick={() => setPortsOpen(true)}
+            title="Ports"
+            className={cn(
+              "flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100",
+              noDrag,
+            )}
+          >
+            <Network className="size-4" />
+          </button>
+        )}
+        {window.electron && (
+          <button
             onClick={() => setLogsOpen(true)}
             title="View logs"
             className={cn(
@@ -128,6 +142,9 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
       />
       {window.electron && (
         <LogsDialog open={logsOpen} onClose={() => setLogsOpen(false)} />
+      )}
+      {window.electron && (
+        <PortsDialog open={portsOpen} onClose={() => setPortsOpen(false)} />
       )}
     </div>
   );

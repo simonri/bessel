@@ -188,7 +188,10 @@ declare global {
         ) => () => void;
       };
       ports: {
-        list: () => Promise<{ supported: boolean; entries: ElectronPortEntry[] }>;
+        list: () => Promise<{
+          supported: boolean;
+          entries: ElectronPortEntry[];
+        }>;
         kill: (pid: number) => Promise<void>;
       };
     };

@@ -82,12 +82,12 @@ export function PortsDialog({
             <div>
               <GlassDialogTitle>Ports</GlassDialogTitle>
               <GlassDialogDescription className="mt-0.5">
-                Listening dev servers and background processes on this
-                machine.
+                Listening dev servers and background processes on this machine.
               </GlassDialogDescription>
             </div>
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={load}
                 disabled={loading}
                 title="Refresh"
@@ -141,6 +141,7 @@ export function PortsDialog({
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setKillTarget(entry)}
                       title="Kill process"
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/30 transition-colors hover:bg-red-500/10 hover:text-red-400"

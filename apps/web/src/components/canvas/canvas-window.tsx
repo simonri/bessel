@@ -86,6 +86,7 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
+          type="button"
           onPointerDown={(e) => e.stopPropagation()}
           title="Move to session"
           className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
@@ -266,9 +267,18 @@ export const CanvasWindow = memo(function CanvasWindow({
       )}
     >
       {/* Title bar — react-grid-layout drag handle (selector: .canvas-window-titlebar) */}
-      <div className="canvas-window-titlebar flex shrink-0 cursor-grab items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 active:cursor-grabbing">
+      <div
+        className="canvas-window-titlebar flex shrink-0 cursor-grab items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 active:cursor-grabbing"
+        onMouseDownCapture={(event) => {
+          if (event.button !== 1) return;
+          event.preventDefault();
+          event.stopPropagation();
+          closeWindow(entry.id);
+          clearFullscreenWindow(entry.id);
+        }}
+      >
         <Icon className="size-3.5 text-white/50" />
-        <span className="text-xs font-medium text-white/80">
+        <span className="select-none text-xs font-medium text-white/80">
           {config.title}
           {(dynamicTitle || entry.data?.projectName) && (
             <span className="ml-1.5 font-normal text-white/50">
@@ -284,6 +294,7 @@ export const CanvasWindow = memo(function CanvasWindow({
           )}
           <MoveToWorkspaceMenu entry={entry} />
           <button
+            type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={() => toggleFullscreenWindow(entry.id)}
@@ -297,6 +308,7 @@ export const CanvasWindow = memo(function CanvasWindow({
             )}
           </button>
           <button
+            type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={() => {
