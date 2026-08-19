@@ -129,6 +129,7 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
   width,
   height,
   maxRows,
+  rowHeight,
   gap,
 }: {
   workspaceId: string;
@@ -137,6 +138,7 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
   width: number;
   height: number;
   maxRows: number;
+  rowHeight: number;
   gap: number;
 }) {
   const { updateLayout } = useWindowActions();
@@ -190,7 +192,7 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
         layout={displayLayout}
         gridConfig={{
           cols: GRID_COLS,
-          rowHeight: GRID_ROW_HEIGHT,
+          rowHeight,
           margin: [gap, gap],
           containerPadding: [0, 0],
           maxRows,
@@ -251,10 +253,16 @@ export function CanvasPage() {
   const { settings } = useSettings();
   const { width, height, containerRef, mounted } = useContainerSize();
   const gap = settings.gridGap;
+  // GRID_ROW_HEIGHT only decides how many rows FIT — actual row height is
+  // stretched to exactly fill the container below, so the grid's rows plus
+  // their gaps always sum to the real viewport height with no leftover strip
+  // at the bottom (height rarely divides evenly by a fixed row size).
   const maxRows = Math.max(
     1,
     Math.floor((height + gap) / (GRID_ROW_HEIGHT + gap)),
   );
+  const rowHeight =
+    height > 0 ? (height - (maxRows - 1) * gap) / maxRows : GRID_ROW_HEIGHT;
 
   // The `mounted` gate matters: before the first measurement height is 0 and
   // maxRows would be 1, which must never leak into placement decisions.
@@ -288,6 +296,7 @@ export function CanvasPage() {
               width={width}
               height={height}
               maxRows={maxRows}
+              rowHeight={rowHeight}
               gap={gap}
             />
           ))}
