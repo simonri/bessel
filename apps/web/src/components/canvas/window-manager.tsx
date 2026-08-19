@@ -55,8 +55,14 @@ export type WindowEntry = {
 
 export type WindowSpec = { module: ModuleKey; data?: Record<string, string> };
 
-interface WorkspaceMeta {
+export interface WorkspaceMeta {
   id: string;
+  /** User-given name; absent means "Workspace N" (see workspaceLabel). */
+  name?: string;
+}
+
+export function workspaceLabel(ws: WorkspaceMeta, index: number): string {
+  return ws.name ?? `Workspace ${index + 1}`;
 }
 
 // Split into four contexts so consumers only re-render for the state they
@@ -91,6 +97,8 @@ interface WindowManagerActions {
   addWorkspace: () => void;
   removeWorkspace: (id: string) => void;
   switchWorkspace: (id: string) => void;
+  /** A blank (after trimming) name clears back to the default "Workspace N" label. */
+  renameWorkspace: (id: string, name: string) => void;
 }
 
 interface WindowManagerState {

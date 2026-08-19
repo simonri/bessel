@@ -42,6 +42,14 @@
   transition: opacity 150ms ease;
 }
 
+/* react-grid-layout marks a non-resizable item's own root with this class
+   (see resizeConfig.enabled) but ships no CSS to back it — without this the
+   handle stays visible (and hoverable-looking) on an item it no longer
+   affects, e.g. the widget currently filling the canvas while fullscreen. */
+.react-resizable-hide > .react-resizable-handle {
+  display: none;
+}
+
 /* The visible glyph is tiny (6px) and the handle itself only 18px, so a fast
    drag easily lands 2-3px off it — onto the widget's real text content
    instead, starting a native browser text-selection drag that react-grid-layout

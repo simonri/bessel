@@ -17,6 +17,7 @@ import {
   CheckSquare,
   FolderOpen,
   Maximize2,
+  Minimize2,
   MoreHorizontal,
   X,
 } from "lucide-react";
@@ -26,6 +27,11 @@ import { client } from "@/lib/client";
 import { isDoneStatus } from "@/lib/task-format";
 import { cn } from "@/lib/utils";
 import { setFocusedWindow, useIsWindowFocused } from "./canvas-focus";
+import {
+  clearFullscreenWindow,
+  toggleFullscreenWindow,
+  useIsWindowFullscreen,
+} from "./canvas-fullscreen";
 import { MODULE_REGISTRY, moduleSupportsProject } from "./module-registry";
 import {
   ProjectPickerMenu,
@@ -223,7 +229,14 @@ export const CanvasWindow = memo(function CanvasWindow({
   entry: WindowEntry;
 }) {
   const { closeWindow } = useWindowActions();
+  const { activeWorkspaceId } = useWorkspaceMeta();
   const isFocused = useIsWindowFocused(entry.id);
+  // Only "shown" fullscreen while its own workspace is the one on screen —
+  // switching away just falls back to the normal grid slot (hidden along
+  // with the rest of that workspace), so it reappears fullscreened if you
+  // switch back rather than leaking through over whatever you switched to.
+  const isFullscreen =
+    useIsWindowFullscreen(entry.id) && entry.workspaceId === activeWorkspaceId;
   const config = MODULE_REGISTRY[entry.module];
   const Icon = config.icon;
   const Component = config.component;
@@ -237,7 +250,7 @@ export const CanvasWindow = memo(function CanvasWindow({
       className={cn(
         glassSurface({ weight: "medium" }),
         "relative flex h-full flex-col overflow-hidden rounded-2xl border shadow-2xl transition-[border-color] duration-150",
-        isFocused ? "border-primary-500" : "border-white/10",
+        isFocused || isFullscreen ? "border-primary-500" : "border-white/10",
       )}
     >
       {/* Title bar — react-grid-layout drag handle (selector: .canvas-window-titlebar) */}
@@ -260,14 +273,24 @@ export const CanvasWindow = memo(function CanvasWindow({
           <MoveToWorkspaceMenu entry={entry} />
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            title="Full screen"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => toggleFullscreenWindow(entry.id)}
+            title={isFullscreen ? "Exit full screen" : "Full screen"}
             className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
           >
-            <Maximize2 className="size-3" />
+            {isFullscreen ? (
+              <Minimize2 className="size-3" />
+            ) : (
+              <Maximize2 className="size-3" />
+            )}
           </button>
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => closeWindow(entry.id)}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => {
+              closeWindow(entry.id);
+              clearFullscreenWindow(entry.id);
+            }}
             className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
           >
             <X className="size-3" />

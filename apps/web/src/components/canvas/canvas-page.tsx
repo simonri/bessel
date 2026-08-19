@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-settings";
 import { CanvasDock } from "./canvas-dock";
 import { setFocusedWindow } from "./canvas-focus";
+import { useFullscreenWindowId } from "./canvas-fullscreen";
 import { CanvasTopBar } from "./canvas-topbar";
 import { CanvasWindow } from "./canvas-window";
 import { CommandPalette } from "./command-palette";
@@ -177,6 +178,28 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
     [windows, maxRows],
   );
   const { compactor, markActive } = useDragAwareCompactor();
+  const fullscreenId = useFullscreenWindowId();
+  // Only meaningful when the fullscreened window actually belongs to this
+  // workspace — its own visibility is decided separately (see CanvasWindow).
+  const hideSiblings =
+    isActive &&
+    fullscreenId != null &&
+    windows.some((w) => w.id === fullscreenId);
+  // Same DOM node, same fiber, same keyed grid item — fullscreening only
+  // ever changes react-grid-layout's own inline position/size style for it,
+  // never where or how it's mounted. That's what keeps a live widget (a
+  // terminal's PTY, a Claude Code session) running across the toggle.
+  const displayLayout = useMemo(
+    () =>
+      hideSiblings
+        ? layout.map((item) =>
+            item.i === fullscreenId
+              ? { ...item, x: 0, y: 0, w: GRID_COLS, h: maxRows }
+              : item,
+          )
+        : layout,
+    [layout, hideSiblings, fullscreenId, maxRows],
+  );
 
   return (
     <div
@@ -193,7 +216,7 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
         // content height, which can pin a bottom-most/solo widget at y=0 with no
         // room to drag into, since the container hasn't "grown" to make room yet.
         style={{ height }}
-        layout={layout}
+        layout={displayLayout}
         gridConfig={{
           cols: GRID_COLS,
           rowHeight: GRID_ROW_HEIGHT,
@@ -202,12 +225,12 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
           maxRows,
         }}
         dragConfig={{
-          enabled: true,
+          enabled: !hideSiblings,
           handle: ".canvas-window-titlebar",
           threshold: 5,
           bounded: true,
         }}
-        resizeConfig={{ enabled: true, handles: ["se"] }}
+        resizeConfig={{ enabled: !hideSiblings, handles: ["se"] }}
         compactor={compactor}
         onDragStart={(_layout, oldItem) => {
           markActive(oldItem?.i ?? null);
@@ -229,7 +252,12 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
         }}
       >
         {windows.map((win) => (
-          <div key={win.id}>
+          <div
+            key={win.id}
+            className={
+              hideSiblings && win.id !== fullscreenId ? "invisible" : undefined
+            }
+          >
             <CanvasWindow entry={win} />
           </div>
         ))}
@@ -301,11 +329,8 @@ export function CanvasShell() {
         <div className="absolute inset-0 bg-black/30" />
       )}
 
-      <div className="relative flex h-full flex-col pt-12 pb-10 animate-in fade-in duration-300 ease-out">
-        <div
-          ref={containerRef}
-          className="min-h-0 flex-1 overflow-hidden px-3.5"
-        >
+      <div className="relative flex h-full flex-col pt-12 pb-12 animate-in fade-in duration-300 ease-out">
+        <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden px-2">
           {mounted &&
             workspaces.map((ws) => (
               <WorkspaceGrid
