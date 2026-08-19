@@ -1,3 +1,14 @@
+import type {
+  VaultChangedEvent,
+  VaultDefaultPath,
+  VaultEntry,
+  VaultIndex,
+  VaultInfo,
+  VaultReadResult,
+  VaultSearchHit,
+  VaultWriteResult,
+} from "../components/obsidian/vault-types";
+
 export {};
 
 interface ElectronPortEntry {
@@ -193,6 +204,45 @@ declare global {
           entries: ElectronPortEntry[];
         }>;
         kill: (pid: number) => Promise<void>;
+      };
+      vault: {
+        defaultPath: () => Promise<VaultDefaultPath>;
+        inspect: (root: string) => Promise<VaultInfo>;
+        list: (root: string) => Promise<VaultEntry[]>;
+        read: (root: string, rel: string) => Promise<VaultReadResult>;
+        /** Throws an Error whose message contains VAULT_CONFLICT_ERROR when
+         *  `expectedMtimeMs` is set and the file changed on disk. */
+        write: (
+          root: string,
+          rel: string,
+          content: string,
+          expectedMtimeMs: number | null,
+        ) => Promise<VaultWriteResult>;
+        writeBinary: (
+          root: string,
+          rel: string,
+          data: Uint8Array,
+        ) => Promise<{ rel: string }>;
+        /** Auto-suffixes ("Untitled 1.md") when `rel` exists; returns the rel actually created. */
+        create: (
+          root: string,
+          rel: string,
+          content?: string,
+        ) => Promise<{ rel: string }>;
+        mkdir: (root: string, rel: string) => Promise<void>;
+        /** Renames a file/dir and rewrites `[[wikilinks]]` pointing at it. */
+        rename: (
+          root: string,
+          from: string,
+          to: string,
+        ) => Promise<{ updatedFiles: number }>;
+        trash: (root: string, rel: string) => Promise<void>;
+        reveal: (root: string, rel: string) => Promise<void>;
+        watch: (root: string) => Promise<void>;
+        unwatch: (root: string) => Promise<void>;
+        onChanged: (callback: (event: VaultChangedEvent) => void) => () => void;
+        index: (root: string) => Promise<VaultIndex>;
+        search: (root: string, query: string) => Promise<VaultSearchHit[]>;
       };
     };
   }

@@ -1,5 +1,15 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { PortEntry } from "./ports.js";
+import type {
+  VaultChangedEvent,
+  VaultDefaultPath,
+  VaultEntry,
+  VaultIndex,
+  VaultInfo,
+  VaultReadResult,
+  VaultSearchHit,
+  VaultWriteResult,
+} from "./vault-types.js";
 
 interface SpotifyStatus {
   running: boolean;
@@ -150,5 +160,56 @@ contextBridge.exposeInMainWorld("electron", {
     list: (): Promise<{ supported: boolean; entries: PortEntry[] }> =>
       ipcRenderer.invoke("ports:list"),
     kill: (pid: number): Promise<void> => ipcRenderer.invoke("ports:kill", pid),
+  },
+  vault: {
+    defaultPath: (): Promise<VaultDefaultPath> =>
+      ipcRenderer.invoke("vault:default-path"),
+    inspect: (root: string): Promise<VaultInfo> =>
+      ipcRenderer.invoke("vault:inspect", root),
+    list: (root: string): Promise<VaultEntry[]> =>
+      ipcRenderer.invoke("vault:list", root),
+    read: (root: string, rel: string): Promise<VaultReadResult> =>
+      ipcRenderer.invoke("vault:read", root, rel),
+    write: (
+      root: string,
+      rel: string,
+      content: string,
+      expectedMtimeMs: number | null,
+    ): Promise<VaultWriteResult> =>
+      ipcRenderer.invoke("vault:write", root, rel, content, expectedMtimeMs),
+    writeBinary: (
+      root: string,
+      rel: string,
+      data: Uint8Array,
+    ): Promise<{ rel: string }> =>
+      ipcRenderer.invoke("vault:write-binary", root, rel, data),
+    create: (
+      root: string,
+      rel: string,
+      content?: string,
+    ): Promise<{ rel: string }> =>
+      ipcRenderer.invoke("vault:create", root, rel, content ?? ""),
+    mkdir: (root: string, rel: string): Promise<void> =>
+      ipcRenderer.invoke("vault:mkdir", root, rel),
+    rename: (
+      root: string,
+      from: string,
+      to: string,
+    ): Promise<{ updatedFiles: number }> =>
+      ipcRenderer.invoke("vault:rename", root, from, to),
+    trash: (root: string, rel: string): Promise<void> =>
+      ipcRenderer.invoke("vault:trash", root, rel),
+    reveal: (root: string, rel: string): Promise<void> =>
+      ipcRenderer.invoke("vault:reveal", root, rel),
+    watch: (root: string): Promise<void> =>
+      ipcRenderer.invoke("vault:watch", root),
+    unwatch: (root: string): Promise<void> =>
+      ipcRenderer.invoke("vault:unwatch", root),
+    onChanged: (callback: (event: VaultChangedEvent) => void) =>
+      subscribe<[VaultChangedEvent]>("vault:changed", callback),
+    index: (root: string): Promise<VaultIndex> =>
+      ipcRenderer.invoke("vault:index", root),
+    search: (root: string, query: string): Promise<VaultSearchHit[]> =>
+      ipcRenderer.invoke("vault:search", root, query),
   },
 });

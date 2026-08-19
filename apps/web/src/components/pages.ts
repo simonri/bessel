@@ -1,6 +1,7 @@
 import { LayoutGrid } from "lucide-react";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
 import type { ModuleKey } from "@/components/canvas/window-manager";
+import { isDesktop } from "@/lib/environment";
 
 // Top-level pages the sidebar navigates between. Pages are shell state rather
 // than router routes: the canvas must stay mounted for the app's whole life
@@ -14,7 +15,8 @@ export type PageKey =
   | "recipes"
   | "transactions"
   | "accounts"
-  | "investments";
+  | "investments"
+  | "obsidian";
 
 export interface PageConfig {
   title: string;
@@ -41,6 +43,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   transactions: fromModule("transactions"),
   accounts: fromModule("accounts"),
   investments: fromModule("investments"),
+  obsidian: fromModule("obsidian", true),
 };
 
 /** Shown as top-level sidebar items. */
@@ -50,10 +53,15 @@ export const PRIMARY_PAGES: PageKey[] = [
   "activity",
   "sleep",
   "recipes",
+  ...(isDesktop ? (["obsidian"] as PageKey[]) : []),
 ];
 
 /** Tucked behind the sidebar's "More" menu. */
-export const MORE_PAGES: PageKey[] = ["transactions", "accounts", "investments"];
+export const MORE_PAGES: PageKey[] = [
+  "transactions",
+  "accounts",
+  "investments",
+];
 
 const ALL_PAGES = new Set<string>([...PRIMARY_PAGES, ...MORE_PAGES]);
 

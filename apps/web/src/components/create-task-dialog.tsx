@@ -1,7 +1,6 @@
-import type { TaskAttachmentSchema, TaskSchema } from "@bessel/client";
+import type { TaskSchema } from "@bessel/client";
 import {
   createTaskV1TasksPostMutation,
-  deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation,
   listProjectsV1ProjectsGetOptions,
   listTasksV1TasksGetQueryKey,
   updateTaskV1TasksTaskIdPatchMutation,
@@ -38,10 +37,11 @@ import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  AttachmentBadge,
+  attachmentMarker,
   extractPastedImages,
   type PendingAttachment,
-  PendingAttachmentBadge,
+  removeMarker,
+  replaceMarkerId,
 } from "@/components/task-attachments";
 import { client } from "@/lib/client";
 
@@ -176,9 +176,6 @@ export function TaskFormDialog({
   });
   const projects = projectsData.map((p) => p.name);
 
-  const [attachments, setAttachments] = useState<TaskAttachmentSchema[]>(
-    task?.attachments ?? [],
-  );
   // Images pasted before the task exists yet (create mode) — held locally
   // and uploaded once createMutation returns a real task_id to attach to.
   const [pendingFiles, setPendingFiles] = useState<PendingAttachment[]>([]);
@@ -196,14 +193,34 @@ export function TaskFormDialog({
     [],
   );
 
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
   const uploadAttachmentMutation = useMutation({
     ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
   });
-  const deleteAttachmentMutation = useMutation({
-    ...deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation({
-      client,
-    }),
+  // Fires silently in the background right after a paste-triggered upload
+  // resolves, to persist the description's marker swap (pending -> real id)
+  // immediately — distinct from `updateMutation` below, which is the
+  // user-facing Save action and closes the dialog on success.
+  const patchDescriptionMutation = useMutation({
+    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
   });
+
+  // Inserts `marker` into the description at the textarea's current cursor
+  // position (not wherever the field's value happens to be when this runs —
+  // callers capture the cursor at paste time) and restores the cursor right
+  // after it once React has re-rendered the (controlled) textarea.
+  const insertMarkerAt = (position: number, marker: string) => {
+    form.setFieldValue(
+      "description",
+      (prev) => prev.slice(0, position) + marker + prev.slice(position),
+    );
+    const cursor = position + marker.length;
+    requestAnimationFrame(() => {
+      descriptionRef.current?.setSelectionRange(cursor, cursor);
+      descriptionRef.current?.focus();
+    });
+  };
 
   const handleDescriptionPaste = (
     e: React.ClipboardEvent<HTMLTextAreaElement>,
@@ -211,45 +228,52 @@ export function TaskFormDialog({
     const files = extractPastedImages(e);
     if (files.length === 0) return;
     e.preventDefault();
-    if (isEditing) {
-      for (const file of files) {
+    // Captured once, up front — uploads resolve asynchronously, and by then
+    // the user may have kept typing, so "current" cursor position at insert
+    // time would be the wrong spot. Each successive pasted file advances
+    // past the marker just inserted for the previous one.
+    let insertPos =
+      descriptionRef.current?.selectionStart ??
+      form.state.values.description.length;
+
+    for (const file of files) {
+      const tempId = `pending:${crypto.randomUUID()}`;
+      const marker = attachmentMarker(tempId, file.name);
+      insertMarkerAt(insertPos, marker);
+      insertPos += marker.length;
+
+      if (isEditing) {
         uploadAttachmentMutation.mutate(
           { client, path: { task_id: task.id }, body: { file } },
           {
-            onSuccess: (attachment) =>
-              setAttachments((prev) => [...prev, attachment]),
-            onError: () => toast.error(`Failed to attach ${file.name}`),
+            onSuccess: (attachment) => {
+              const updated = replaceMarkerId(
+                form.state.values.description,
+                tempId,
+                attachment.id,
+              );
+              form.setFieldValue("description", updated);
+              patchDescriptionMutation.mutate({
+                client,
+                path: { task_id: task.id },
+                body: { description: updated },
+              });
+            },
+            onError: () => {
+              toast.error(`Failed to attach ${file.name}`);
+              form.setFieldValue("description", (prev) =>
+                removeMarker(prev, tempId, file.name),
+              );
+            },
           },
         );
+      } else {
+        setPendingFiles((prev) => [
+          ...prev,
+          { file, previewUrl: URL.createObjectURL(file), tempId },
+        ]);
       }
-    } else {
-      setPendingFiles((prev) => [
-        ...prev,
-        ...files.map((file) => ({
-          file,
-          previewUrl: URL.createObjectURL(file),
-        })),
-      ]);
     }
-  };
-
-  const removePendingFile = (previewUrl: string) => {
-    URL.revokeObjectURL(previewUrl);
-    setPendingFiles((prev) => prev.filter((p) => p.previewUrl !== previewUrl));
-  };
-
-  const removeExistingAttachment = (attachment: TaskAttachmentSchema) => {
-    deleteAttachmentMutation.mutate(
-      {
-        client,
-        path: { task_id: attachment.task_id, attachment_id: attachment.id },
-      },
-      {
-        onSuccess: () =>
-          setAttachments((prev) => prev.filter((a) => a.id !== attachment.id)),
-        onError: () => toast.error("Failed to remove attachment"),
-      },
-    );
   };
 
   const form = useForm({
@@ -312,17 +336,39 @@ export function TaskFormDialog({
   const createMutation = useMutation({
     ...createTaskV1TasksPostMutation({ client }),
     onSuccess: async (newTask) => {
+      let description = newTask.description ?? "";
       for (const pending of pendingFiles) {
         try {
-          await uploadAttachmentMutation.mutateAsync({
+          const attachment = await uploadAttachmentMutation.mutateAsync({
             client,
             path: { task_id: newTask.id },
             body: { file: pending.file },
           });
+          description = replaceMarkerId(
+            description,
+            pending.tempId,
+            attachment.id,
+          );
         } catch {
           toast.error(`Failed to attach ${pending.file.name}`);
+          description = removeMarker(
+            description,
+            pending.tempId,
+            pending.file.name,
+          );
         } finally {
           URL.revokeObjectURL(pending.previewUrl);
+        }
+      }
+      if (description !== newTask.description) {
+        try {
+          await patchDescriptionMutation.mutateAsync({
+            client,
+            path: { task_id: newTask.id },
+            body: { description },
+          });
+        } catch {
+          toast.error("Failed to save attachment references");
         }
       }
       void queryClient.invalidateQueries({ queryKey });
@@ -400,6 +446,7 @@ export function TaskFormDialog({
                 <Label htmlFor="task-description">Description</Label>
                 <Textarea
                   id="task-description"
+                  ref={descriptionRef}
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
@@ -408,29 +455,6 @@ export function TaskFormDialog({
                   rows={3}
                   className="resize-none"
                 />
-                {(attachments.length > 0 || pendingFiles.length > 0) && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {attachments.map((attachment) => (
-                      <AttachmentBadge
-                        key={attachment.id}
-                        attachment={attachment}
-                        onDelete={() => removeExistingAttachment(attachment)}
-                        deleting={
-                          deleteAttachmentMutation.isPending &&
-                          deleteAttachmentMutation.variables?.path
-                            .attachment_id === attachment.id
-                        }
-                      />
-                    ))}
-                    {pendingFiles.map((pending) => (
-                      <PendingAttachmentBadge
-                        key={pending.previewUrl}
-                        pending={pending}
-                        onRemove={() => removePendingFile(pending.previewUrl)}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           />

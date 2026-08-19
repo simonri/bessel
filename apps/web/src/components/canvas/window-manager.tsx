@@ -33,7 +33,8 @@ export type ModuleKey =
   | "grok"
   | "terminal"
   | "gitStatus"
-  | "browser";
+  | "browser"
+  | "obsidian";
 
 export const GRID_COLS = 24;
 export const GRID_ROW_HEIGHT = 32;
@@ -207,7 +208,9 @@ const ALL_MODULES = new Set<string>([
   "activity",
   "recipes",
   "gitStatus",
-  ...(isDesktop ? ["claudeCode", "codex", "grok", "terminal", "browser"] : []),
+  ...(isDesktop
+    ? ["claudeCode", "codex", "grok", "terminal", "browser", "obsidian"]
+    : []),
 ]);
 
 function newId() {

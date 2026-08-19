@@ -32,7 +32,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { TaskFormDialog } from "@/components/create-task-dialog";
-import { AttachmentBadge } from "@/components/task-attachments";
+import {
+  DescriptionWithAttachments,
+  removeMarker,
+} from "@/components/task-attachments";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
 import {
@@ -199,28 +202,16 @@ export function TaskDetailDialog({
           )}
         </div>
 
-        {/* Description */}
-        {task.description && (
+        {/* Description — pasted images render as inline thumbnails at the
+            exact spot they were pasted, not collected in a separate list. */}
+        {(task.description || (task.attachments?.length ?? 0) > 0) && (
           <div className="border-t pt-3">
-            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">
-              {task.description}
-            </p>
-          </div>
-        )}
-
-        {/* Attachments */}
-        {(task.attachments?.length ?? 0) > 0 && (
-          <div className={task.description ? "" : "border-t pt-3"}>
-            <div className="flex flex-wrap gap-1.5">
-              {task.attachments?.map((attachment) => (
-                <AttachmentBadge
-                  key={attachment.id}
-                  attachment={attachment}
-                  onDelete={() => onDeleteAttachment(attachment.id)}
-                  deleting={deletingAttachmentId === attachment.id}
-                />
-              ))}
-            </div>
+            <DescriptionWithAttachments
+              description={task.description ?? ""}
+              attachments={task.attachments ?? []}
+              onDeleteAttachment={onDeleteAttachment}
+              deletingAttachmentId={deletingAttachmentId}
+            />
           </div>
         )}
       </div>
@@ -431,12 +422,31 @@ export function TaskDetailDialogController({
                 body: { priority: p },
               })
             }
-            onDeleteAttachment={(attachmentId) =>
+            onDeleteAttachment={(attachmentId) => {
               deleteAttachmentMutation.mutate({
                 client,
                 path: { task_id: task.id, attachment_id: attachmentId },
-              })
-            }
+              });
+              // Strip the now-dangling marker out of the description too,
+              // so a re-paste at the same spot doesn't read as a duplicate.
+              const target = task.attachments?.find(
+                (a) => a.id === attachmentId,
+              );
+              const cleaned = target
+                ? removeMarker(
+                    task.description ?? "",
+                    attachmentId,
+                    target.filename,
+                  )
+                : task.description;
+              if (cleaned !== task.description) {
+                updateMutation.mutate({
+                  client,
+                  path: { task_id: task.id },
+                  body: { description: cleaned || null },
+                });
+              }
+            }}
             deletingAttachmentId={deletingAttachmentId}
             completePending={completeMutation.isPending}
             reopenPending={reopenMutation.isPending}

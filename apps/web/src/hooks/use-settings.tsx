@@ -37,6 +37,10 @@ interface Settings {
   wallpaper: WallpaperKey;
   theme: ThemeKey;
   gridGap: number;
+  /** Last opened Obsidian vault's folder path, desktop-only. */
+  obsidianVaultPath: string | null;
+  /** Most recently opened vault paths, newest first, capped at 5. */
+  obsidianRecentVaults: string[];
 }
 
 const STORAGE_KEY = "bessel:settings";
@@ -47,6 +51,8 @@ const DEFAULT_SETTINGS: Settings = {
   wallpaper: "video",
   theme: "orange",
   gridGap: 4,
+  obsidianVaultPath: null,
+  obsidianRecentVaults: [],
 };
 
 function loadSettings(): Settings {

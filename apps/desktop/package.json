@@ -11,12 +11,14 @@
     "compile": "tsc && pnpm --filter=@bessel/web build && pnpm --filter=bessel-axi build",
     "build": "pnpm run compile && electron-builder --config electron-builder.config.ts",
     "build:dir": "pnpm run compile && electron-builder --dir --config electron-builder.config.ts",
+    "test": "vp test run",
     "release:patch": "node scripts/release.mjs patch",
     "release:minor": "node scripts/release.mjs minor",
     "release:major": "node scripts/release.mjs major"
   },
   "dependencies": {
     "@sentry/electron": "^7.15.0",
+    "chokidar": "^4.0.3",
     "dbus-next": "^0.10.2",
     "electron-updater": "^6.8.9",
     "node-pty": "^1.0.0"
@@ -27,6 +29,7 @@
     "electron": "^36.0.0",
     "electron-builder": "^26.0.12",
     "typescript": "^5.8.3",
+    "vitest": "catalog:",
     "wait-on": "^8.0.3"
   }
 }

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { lazy } from "react";
 import { isDesktop } from "@/lib/environment";
-import { ClaudeIcon, CodexIcon, GrokIcon } from "./brand-icons";
+import { ClaudeIcon, CodexIcon, GrokIcon, ObsidianIcon } from "./brand-icons";
 import type { ModuleKey } from "./window-manager";
 
 export interface ModuleConfig {
@@ -178,6 +178,18 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     multiInstance: true,
     noPadding: true,
   },
+  obsidian: {
+    title: "Obsidian",
+    icon: ObsidianIcon,
+    component: lazy(() =>
+      import("@/components/obsidian/obsidian-page").then((m) => ({
+        default: m.ObsidianPage,
+      })),
+    ),
+    ...SESSION_SIZE,
+    multiInstance: true,
+    noPadding: true,
+  },
 };
 
 /** Whether this module's window carries a project directory (`projectPath`/
@@ -192,7 +204,7 @@ export function moduleSupportsProject(module: ModuleKey): boolean {
 }
 
 const desktopModules: ModuleKey[] = isDesktop
-  ? ["claudeCode", "codex", "grok", "terminal", "browser"]
+  ? ["claudeCode", "codex", "grok", "terminal", "browser", "obsidian"]
   : [];
 
 // Modules also reachable as sidebar pages (see pages.ts) are left out here —

@@ -29,6 +29,33 @@ export function CodexIcon({ className }: { className?: string }) {
   );
 }
 
+export function ObsidianIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className}>
+      <path
+        d="M12 1.2L19.6 7.4 21.8 14.3 12 22.8 2.2 14.3 4.4 7.4Z"
+        fill="currentColor"
+        fillOpacity="0.85"
+      />
+      <path
+        d="M12 1.2L4.4 7.4 6.6 14.3Z"
+        fill="currentColor"
+        fillOpacity="0.55"
+      />
+      <path
+        d="M12 1.2L19.6 7.4 17.4 14.3Z"
+        fill="currentColor"
+        fillOpacity="0.7"
+      />
+      <path
+        d="M12 1.2L17.4 14.3 12 22.8Z"
+        fill="currentColor"
+        fillOpacity="0.4"
+      />
+    </svg>
+  );
+}
+
 export function GrokIcon({ className }: { className?: string }) {
   return (
     <svg
