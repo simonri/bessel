@@ -8,7 +8,13 @@ import {
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
 import { useQuery } from "@tanstack/react-query";
-import { format, formatDistanceToNowStrict, isPast, subDays } from "date-fns";
+import {
+  format,
+  formatDistanceToNowStrict,
+  intervalToDuration,
+  isPast,
+  subDays,
+} from "date-fns";
 import { Gauge } from "lucide-react";
 import { useState } from "react";
 import { client } from "@/lib/client";
@@ -36,9 +42,18 @@ function fmtTokens(n: number): string {
   return String(n);
 }
 
+// formatDistanceToNowStrict rounds to a single largest unit — a reset 20
+// hours out reads as "1 day", which is misleading for a countdown. Always
+// pair the largest unit with the next one down instead.
 function resetLabel(resetsAt: Date): string {
   if (isPast(resetsAt)) return "Resets any moment";
-  return `Resets in ${formatDistanceToNowStrict(resetsAt)}`;
+  const { days, hours, minutes } = intervalToDuration({
+    start: new Date(),
+    end: resetsAt,
+  });
+  if (days) return `Resets in ${days}d ${hours ?? 0}h`;
+  if (hours) return `Resets in ${hours}h ${minutes ?? 0}m`;
+  return `Resets in ${minutes ?? 0}m`;
 }
 
 function windowLabel(label: string): string {
