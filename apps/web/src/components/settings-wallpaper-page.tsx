@@ -1,5 +1,10 @@
 import { SectionLabel } from "@/components/settings-section-label";
-import { useSettings, type WallpaperKey } from "@/hooks/use-settings";
+import {
+  useSettings,
+  WALLPAPER_COLORS,
+  type WallpaperColorKey,
+  type WallpaperKey,
+} from "@/hooks/use-settings";
 
 const WALLPAPER_OPTIONS: {
   key: WallpaperKey;
@@ -14,6 +19,13 @@ const WALLPAPER_OPTIONS: {
     src: "/wallpaper-forest-loop.mp4",
     isVideo: true,
   },
+];
+
+const COLOR_OPTIONS: { key: WallpaperColorKey; label: string }[] = [
+  { key: "zinc", label: "Zinc" },
+  { key: "neutral", label: "Neutral" },
+  { key: "stone", label: "Stone" },
+  { key: "umber", label: "Umber" },
 ];
 
 export function WallpaperPage() {
@@ -53,6 +65,36 @@ export function WallpaperPage() {
                 />
               )}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2">
+                <span className="text-11 font-medium text-white/80">
+                  {label}
+                </span>
+              </div>
+              {selected === key && (
+                <div className="absolute inset-0 bg-primary-500/10 ring-inset" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Solid color</SectionLabel>
+        <div className="grid grid-cols-4 gap-3">
+          {COLOR_OPTIONS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => update({ wallpaper: key })}
+              className={`relative overflow-hidden rounded-xl border-2 transition-[border-color,box-shadow] ${
+                selected === key
+                  ? "border-primary-500 shadow-lg shadow-primary-900/30"
+                  : "border-white/10 hover:border-white/25"
+              }`}
+              style={{
+                aspectRatio: "16/9",
+                backgroundColor: WALLPAPER_COLORS[key],
+              }}
+            >
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5">
                 <span className="text-11 font-medium text-white/80">
                   {label}
                 </span>

@@ -36,9 +36,11 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+  --font-sans:
+    "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+  --font-mono:
+    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -146,14 +148,14 @@
   --foreground: oklch(0.96 0.002 250);
   --card: oklch(0.18 0.004 250);
   --card-foreground: oklch(0.96 0.002 250);
-  --popover: oklch(0.20 0.004 250);
+  --popover: oklch(0.2 0.004 250);
   --popover-foreground: oklch(0.96 0.002 250);
   /* Interactive — hue-driven */
-  --primary: oklch(0.70 0.18 var(--accent-hue));
+  --primary: oklch(0.7 0.18 var(--accent-hue));
   --primary-foreground: oklch(0.985 0 0);
   --primary-300: oklch(0.84 0.13 var(--accent-hue));
   --primary-400: oklch(0.78 0.17 var(--accent-hue));
-  --primary-500: oklch(0.70 0.18 var(--accent-hue));
+  --primary-500: oklch(0.7 0.18 var(--accent-hue));
   --primary-900: oklch(0.28 0.09 var(--accent-hue));
   /* Subtle backgrounds */
   --secondary: oklch(0.235 0.004 250);
@@ -170,22 +172,22 @@
   --ring: oklch(0.62 0.12 var(--accent-hue));
   /* Charts */
   --chart-1: oklch(0.55 0.22 265);
-  --chart-2: oklch(0.70 0.17 162);
+  --chart-2: oklch(0.7 0.17 162);
   --chart-3: oklch(0.77 0.18 70);
   --chart-4: oklch(0.65 0.24 304);
   --chart-5: oklch(0.65 0.22 16);
   /* Sidebar — distinct darker panel */
   --sidebar: oklch(0.095 0.004 250);
   --sidebar-foreground: oklch(0.96 0.002 250);
-  --sidebar-primary: oklch(0.70 0.18 var(--accent-hue));
+  --sidebar-primary: oklch(0.7 0.18 var(--accent-hue));
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.22 0.004 250);
   --sidebar-accent-foreground: oklch(0.96 0.002 250);
   --sidebar-border: oklch(1 0 0 / 11%);
-  --sidebar-ring: oklch(0.50 0.005 250);
+  --sidebar-ring: oklch(0.5 0.005 250);
   /* Semantic */
   --income: oklch(0.75 0.22 145);
-  --expense: oklch(0.70 0.22 25);
+  --expense: oklch(0.7 0.22 25);
 }
 
 /* ── Themes ─────────────────────────────────────────────────────────────────── */

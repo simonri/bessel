@@ -13,8 +13,23 @@ export interface ActivityMapping {
   to: string;
 }
 
-export type WallpaperKey = "image" | "video";
+export type WallpaperColorKey = "zinc" | "neutral" | "stone" | "umber";
+export type WallpaperKey = "image" | "video" | WallpaperColorKey;
 export type ThemeKey = "orange" | "green";
+
+// Exact oklch values — kept as literal strings (not CSS variables) since the
+// background color is a per-wallpaper choice, independent of the accent
+// theme's own [data-theme] palette.
+export const WALLPAPER_COLORS: Record<WallpaperColorKey, string> = {
+  zinc: "oklch(14.1% 0.005 285.823)",
+  neutral: "oklch(14.5% 0 none)",
+  stone: "oklch(14.7% 0.004 49.25)",
+  umber: "oklch(14.7% 0.004 49.3)",
+};
+
+export function isWallpaperColor(key: WallpaperKey): key is WallpaperColorKey {
+  return key in WALLPAPER_COLORS;
+}
 
 interface Settings {
   cryptoPairs: string;

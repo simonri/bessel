@@ -13,7 +13,13 @@ import {
 import { Spinner } from "@bessel/ui/components/spinner";
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { useQuery } from "@tanstack/react-query";
-import { CheckSquare, ChevronDown, FolderOpen, X } from "lucide-react";
+import {
+  CheckSquare,
+  FolderOpen,
+  Maximize2,
+  MoreHorizontal,
+  X,
+} from "lucide-react";
 import { memo, Suspense, useEffect, useState } from "react";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { client } from "@/lib/client";
@@ -69,9 +75,9 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
         <button
           onPointerDown={(e) => e.stopPropagation()}
           title="Move to workspace"
-          className="flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
         >
-          <ChevronDown className="size-2.5" />
+          <MoreHorizontal className="size-3" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -126,16 +132,16 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
 
   return (
     <>
-      <div className="flex h-4 min-w-0 items-center rounded-full bg-white/5">
+      <div className="flex h-5 min-w-0 items-center rounded-full bg-white/5">
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={() => setDialogOpen(true)}
           title={task.title}
-          className="flex h-4 min-w-0 max-w-32 items-center gap-1 rounded-full pl-2 pr-1 text-11 leading-none text-white/50 transition-colors hover:text-white/80"
+          className="flex h-5 min-w-0 max-w-32 items-center gap-1 rounded-full pl-2 pr-1 text-11 leading-none text-white/50 transition-colors hover:text-white/80"
         >
-          <CheckSquare className="size-2.5 shrink-0 text-primary-400" />
+          <CheckSquare className="size-3 shrink-0 text-primary-400" />
           <span className="min-w-0 truncate">{task.title}</span>
         </button>
         <button
@@ -144,9 +150,9 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
           onMouseDown={(e) => e.stopPropagation()}
           onClick={() => updateWindowData(entry.id, { attachedTaskId: "" })}
           title="Unassign task"
-          className="flex size-4 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/10 hover:text-white/80"
+          className="flex size-5 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/10 hover:text-white/80"
         >
-          <X className="size-2.5" />
+          <X className="size-3" />
         </button>
       </div>
       <TaskDetailDialogController
@@ -187,9 +193,9 @@ function ProjectSwitcher({ entry }: { entry: WindowEntry }) {
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
           title="Switch project"
-          className="flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
         >
-          <FolderOpen className="size-2.5" />
+          <FolderOpen className="size-3" />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -236,7 +242,7 @@ export const CanvasWindow = memo(function CanvasWindow({
     >
       {/* Title bar — react-grid-layout drag handle (selector: .canvas-window-titlebar) */}
       <div className="canvas-window-titlebar flex shrink-0 cursor-grab items-center gap-1.5 border-b border-white/10 bg-white/5 px-3 py-1.5 active:cursor-grabbing">
-        <Icon className="size-3 text-white/50" />
+        <Icon className="size-3.5 text-white/50" />
         <span className="text-xs font-medium text-white/80">
           {config.title}
           {(dynamicTitle || entry.data?.projectName) && (
@@ -254,10 +260,17 @@ export const CanvasWindow = memo(function CanvasWindow({
           <MoveToWorkspaceMenu entry={entry} />
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => closeWindow(entry.id)}
-            className="flex size-4 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+            title="Full screen"
+            className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
           >
-            <X className="size-2.5" />
+            <Maximize2 className="size-3" />
+          </button>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => closeWindow(entry.id)}
+            className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
+          >
+            <X className="size-3" />
           </button>
         </div>
       </div>

@@ -5,7 +5,11 @@ import {
   GridLayout,
   verticalCompactor,
 } from "react-grid-layout";
-import { useSettings } from "@/hooks/use-settings";
+import {
+  isWallpaperColor,
+  useSettings,
+  WALLPAPER_COLORS,
+} from "@/hooks/use-settings";
 import { CanvasDock } from "./canvas-dock";
 import { setFocusedWindow } from "./canvas-focus";
 import { CanvasTopBar } from "./canvas-topbar";
@@ -278,7 +282,12 @@ export function CanvasShell() {
 
   return (
     <div className="fixed inset-0">
-      {settings.wallpaper === "video" ? (
+      {isWallpaperColor(settings.wallpaper) ? (
+        <div
+          className="absolute inset-0"
+          style={{ backgroundColor: WALLPAPER_COLORS[settings.wallpaper] }}
+        />
+      ) : settings.wallpaper === "video" ? (
         <VideoWallpaper />
       ) : (
         <img
