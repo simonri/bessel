@@ -175,3 +175,52 @@ export function fitToViewport<T extends EngineItem>(items: T[], cols: number, ma
   }
   return result;
 }
+
+/**
+ * Split the grid into `count` equal tiles for a fresh canvas: one item fills
+ * it, two sit side by side, three are equal columns, four make a 2×2 grid;
+ * larger counts fall back to a near-square grid. Leftover cells from uneven
+ * division go to the leading columns/rows so every tile differs by at most
+ * one cell. With an infinite maxRows the tiles take `fallbackRows` in total.
+ */
+export function tileEvenly(
+  count: number,
+  cols: number,
+  maxRows: number,
+  fallbackRows = 20,
+): Box[] {
+  const n = Math.max(0, Math.round(count));
+  if (n === 0) return [];
+  const columns = n <= 3 ? n : Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / columns);
+  // Never hand out a zero-height tile: on a canvas shorter than the tile
+  // rows every row gets one cell and the viewport fit sorts out the overflow.
+  const totalRows = Math.max(
+    rows,
+    Number.isFinite(maxRows) ? Math.round(maxRows) : fallbackRows,
+  );
+  const colWidths = splitEvenly(cols, columns);
+  const rowHeights = splitEvenly(totalRows, rows);
+
+  const boxes: Box[] = [];
+  let y = 0;
+  for (let r = 0; r < rows && boxes.length < n; r++) {
+    const remaining = n - boxes.length;
+    // A short last row re-splits the full width so its tiles are not narrower
+    // than they need to be (e.g. 5 → 3 + 2 columns).
+    const widths = remaining < columns ? splitEvenly(cols, remaining) : colWidths;
+    let x = 0;
+    for (let c = 0; c < widths.length && boxes.length < n; c++) {
+      boxes.push({ x, y, w: widths[c], h: rowHeights[r] });
+      x += widths[c];
+    }
+    y += rowHeights[r];
+  }
+  return boxes;
+}
+
+function splitEvenly(total: number, parts: number): number[] {
+  const base = Math.floor(total / parts);
+  const extra = total - base * parts;
+  return Array.from({ length: parts }, (_, i) => base + (i < extra ? 1 : 0));
+}

@@ -1,14 +1,10 @@
-import {
-  listProjectsV1ProjectsGetOptions,
-  type ProjectSchema,
-} from "@bessel/client";
-import { useQuery } from "@tanstack/react-query";
-import { client } from "@/lib/client";
+import type { ProjectSchema } from "@bessel/client";
+import { useProjects } from "@/hooks/use-projects";
 
 export type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
 export function useProjectsWithPath(): ProjectWithPath[] {
-  const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
+  const { data } = useProjects();
   return (data ?? []).filter((p): p is ProjectWithPath => p.path != null);
 }
 

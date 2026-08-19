@@ -410,8 +410,8 @@ describe("workspace names", () => {
     const { result, unmount } = setup();
     act(() => result.current.addWorkspace());
     const [first, second] = result.current.workspaces;
-    expect(workspaceLabel(first)).toBe("Workspace");
-    expect(workspaceLabel(second)).toBe("Workspace");
+    expect(workspaceLabel(first)).toBe("Session");
+    expect(workspaceLabel(second)).toBe("Session");
 
     act(() => result.current.renameWorkspace(second.id, "  Trading  "));
     expect(result.current.workspaces[1].name).toBe("Trading");
@@ -431,7 +431,7 @@ describe("workspace names", () => {
     act(() => result.current.renameWorkspace(id, "Home"));
     act(() => result.current.renameWorkspace(id, "   "));
     expect(result.current.workspaces[0]).toEqual({ id });
-    expect(workspaceLabel(result.current.workspaces[0])).toBe("Workspace");
+    expect(workspaceLabel(result.current.workspaces[0])).toBe("Session");
   });
 
   it("ignores a non-string stored name", () => {
@@ -439,6 +439,109 @@ describe("workspace names", () => {
       "bessel:workspaces",
       JSON.stringify({
         workspaces: [{ id: "ws-1", name: 42, windows: [] }],
+        activeWorkspaceId: "ws-1",
+      }),
+    );
+    const { result } = setup();
+    expect(result.current.workspaces[0]).toEqual({ id: "ws-1" });
+  });
+});
+
+describe("createSession", () => {
+  it("opens the widgets tiled evenly into a fresh, active canvas under the project", () => {
+    const { result } = setup();
+    const originalWorkspaceId = result.current.activeWorkspaceId;
+    act(() => result.current.setViewportRows(20));
+
+    let id = "";
+    act(() => {
+      id = result.current.createSession({
+        projectId: "proj-1",
+        name: "  Refactor  ",
+        specs: [
+          { module: "claudeCode", data: { projectPath: "/p" } },
+          { module: "claudeCode", data: { projectPath: "/p" } },
+          { module: "codex" },
+          { module: "grok" },
+        ],
+      });
+    });
+
+    expect(id).not.toBe(originalWorkspaceId);
+    expect(result.current.activeWorkspaceId).toBe(id);
+    expect(result.current.workspaces.find((ws) => ws.id === id)).toEqual({
+      id,
+      name: "Refactor",
+      projectId: "proj-1",
+    });
+    expect(result.current.windows).toHaveLength(4);
+    expect(hasNoOverlaps(result.current.windows)).toBe(true);
+    expect(result.current.windows.map((w) => [w.x, w.y, w.w, w.h])).toEqual([
+      [0, 0, 12, 10],
+      [12, 0, 12, 10],
+      [0, 10, 12, 10],
+      [12, 10, 12, 10],
+    ]);
+    expect(result.current.windows[0].data).toEqual({ projectPath: "/p" });
+    // The previous canvas is untouched.
+    expect(result.current.allWindows.every((w) => w.workspaceId === id)).toBe(true);
+  });
+
+  it("persists the project across reloads and keeps it through a rename", () => {
+    const { result, unmount } = setup();
+    let id = "";
+    act(() => {
+      id = result.current.createSession({ projectId: "proj-9", specs: [{ module: "tasks" }] });
+    });
+    act(() => result.current.renameWorkspace(id, "Named"));
+    expect(result.current.workspaces.find((ws) => ws.id === id)).toEqual({
+      id,
+      name: "Named",
+      projectId: "proj-9",
+    });
+
+    act(() => unmount());
+    const reloaded = setup();
+    expect(reloaded.result.current.workspaces.find((ws) => ws.id === id)).toEqual({
+      id,
+      name: "Named",
+      projectId: "proj-9",
+    });
+  });
+
+  it("tolerates an empty spec list (a blank session)", () => {
+    const { result } = setup();
+    act(() => result.current.createSession({ specs: [] }));
+    expect(result.current.workspaces).toHaveLength(2);
+    expect(result.current.windows).toHaveLength(0);
+  });
+});
+
+describe("setWorkspaceProject", () => {
+  it("assigns, reassigns and clears a session's project without touching its name", () => {
+    const { result } = setup();
+    const id = result.current.workspaces[0].id;
+    act(() => result.current.renameWorkspace(id, "Home"));
+
+    act(() => result.current.setWorkspaceProject(id, "proj-a"));
+    expect(result.current.workspaces[0]).toEqual({ id, name: "Home", projectId: "proj-a" });
+
+    act(() => result.current.setWorkspaceProject(id, "proj-b"));
+    expect(result.current.workspaces[0].projectId).toBe("proj-b");
+
+    const before = result.current.workspaces;
+    act(() => result.current.setWorkspaceProject(id, "proj-b"));
+    expect(result.current.workspaces).toBe(before);
+
+    act(() => result.current.setWorkspaceProject(id, null));
+    expect(result.current.workspaces[0]).toEqual({ id, name: "Home" });
+  });
+
+  it("ignores a non-string stored projectId", () => {
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({
+        workspaces: [{ id: "ws-1", projectId: 7, windows: [] }],
         activeWorkspaceId: "ws-1",
       }),
     );

@@ -39,6 +39,12 @@ function useContainerSize() {
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
       const { width, height } = entry.contentRect;
+      // The canvas is display:none while another page (or the New session
+      // form) is showing, and the observer reports that as 0×0. That's not a
+      // viewport — keep the last real measurement so placement decisions
+      // made from other pages (new sessions, palette-opened widgets) still
+      // size for the screen the canvas will come back to.
+      if (width === 0 || height === 0) return;
       // Coalesce to one commit per frame — a live OS-window resize fires the
       // observer continuously, and every commit re-lays-out every grid.
       cancelAnimationFrame(frame);

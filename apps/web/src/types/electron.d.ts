@@ -1,5 +1,15 @@
 export {};
 
+interface ElectronPortEntry {
+  port: number;
+  address: string;
+  pid: number;
+  processName: string;
+  cmdline: string;
+  cwd: string | null;
+  ageSeconds: number | null;
+}
+
 interface ElectronSpotifyStatus {
   running: boolean;
   playing?: boolean;
@@ -176,6 +186,10 @@ declare global {
         onStatusChange: (
           callback: (status: ElectronSpotifyStatus) => void,
         ) => () => void;
+      };
+      ports: {
+        list: () => Promise<{ supported: boolean; entries: ElectronPortEntry[] }>;
+        kill: (pid: number) => Promise<void>;
       };
     };
   }

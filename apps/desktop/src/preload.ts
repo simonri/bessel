@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { PortEntry } from "./ports.js";
 
 interface SpotifyStatus {
   running: boolean;
@@ -144,5 +145,10 @@ contextBridge.exposeInMainWorld("electron", {
     next: (): Promise<void> => ipcRenderer.invoke("spotify:next"),
     onStatusChange: (callback: (status: SpotifyStatus) => void) =>
       subscribe<[SpotifyStatus]>("spotify:status-changed", callback),
+  },
+  ports: {
+    list: (): Promise<{ supported: boolean; entries: PortEntry[] }> =>
+      ipcRenderer.invoke("ports:list"),
+    kill: (pid: number): Promise<void> => ipcRenderer.invoke("ports:kill", pid),
   },
 });

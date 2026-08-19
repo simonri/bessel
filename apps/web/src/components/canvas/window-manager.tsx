@@ -15,6 +15,7 @@ import {
   fitToViewport,
   placeWithShrink,
   sanitizeLayout,
+  tileEvenly,
 } from "./layout-engine";
 import { MODULE_REGISTRY } from "./module-registry";
 
@@ -54,14 +55,44 @@ export type WindowEntry = {
 
 export type WindowSpec = { module: ModuleKey; data?: Record<string, string> };
 
+/**
+ * A workspace is one canvas of windows — surfaced in the UI as a "session"
+ * that belongs to a project (or to none, for ad-hoc canvases).
+ */
 export interface WorkspaceMeta {
   id: string;
-  /** User-given name; absent means "Workspace" (see workspaceLabel). */
+  /** User-given name; absent means "Session" (see workspaceLabel). */
   name?: string;
+  /** Project (API id) this session lives under; absent for unassigned canvases. */
+  projectId?: string;
 }
 
 export function workspaceLabel(ws: WorkspaceMeta): string {
-  return ws.name ?? "Workspace";
+  return ws.name ?? "Session";
+}
+
+/** The user's name when set, otherwise what's open in it ("Claude ×2 · Codex"),
+ *  falling back to the plain default for an empty canvas. */
+export function sessionLabel(
+  ws: WorkspaceMeta,
+  windows: readonly WindowEntry[],
+): string {
+  if (ws.name) return ws.name;
+  const counts = new Map<ModuleKey, number>();
+  for (const win of windows)
+    counts.set(win.module, (counts.get(win.module) ?? 0) + 1);
+  if (counts.size === 0) return workspaceLabel(ws);
+  return Array.from(counts, ([module, count]) => {
+    const { title } = MODULE_REGISTRY[module];
+    return count > 1 ? `${title} ×${count}` : title;
+  }).join(" · ");
+}
+
+export interface SessionInit {
+  projectId?: string;
+  name?: string;
+  /** Windows opened into the fresh canvas, tiled evenly across the viewport. */
+  specs: WindowSpec[];
 }
 
 // Split into four contexts so consumers only re-render for the state they
@@ -94,10 +125,17 @@ interface WindowManagerActions {
     target: "current" | "new",
   ) => { opened: number; skipped: number };
   addWorkspace: () => void;
+  /**
+   * Creates and activates a new canvas whose windows are tiled evenly across
+   * the viewport (1 full, 2 halves, 3 thirds, 4 in a 2×2). Returns its id.
+   */
+  createSession: (init: SessionInit) => string;
   removeWorkspace: (id: string) => void;
   switchWorkspace: (id: string) => void;
-  /** A blank (after trimming) name clears back to the default "Workspace N" label. */
+  /** A blank (after trimming) name clears back to the default "Session" label. */
   renameWorkspace: (id: string, name: string) => void;
+  /** Moves a session under a project; null makes it unassigned. */
+  setWorkspaceProject: (id: string, projectId: string | null) => void;
 }
 
 interface WindowManagerState {
@@ -352,16 +390,20 @@ function loadState(): LoadedState {
         workspaces: Array<{
           id: string;
           name?: unknown;
+          projectId?: unknown;
           windows: StoredWindow[];
         }>;
         activeWorkspaceId: string;
       };
       if (Array.isArray(parsed.workspaces) && parsed.workspaces.length > 0) {
-        const workspaces = parsed.workspaces.map((ws) =>
-          typeof ws.name === "string" && ws.name.trim()
-            ? { id: ws.id, name: ws.name }
-            : { id: ws.id },
-        );
+        const workspaces = parsed.workspaces.map((ws) => {
+          const meta: WorkspaceMeta = { id: ws.id };
+          if (typeof ws.name === "string" && ws.name.trim())
+            meta.name = ws.name;
+          if (typeof ws.projectId === "string" && ws.projectId)
+            meta.projectId = ws.projectId;
+          return meta;
+        });
         const windows = parsed.workspaces.flatMap((ws) =>
           parseWindows(ws.windows ?? [], ws.id),
         );
@@ -463,6 +505,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
         workspaces: current.workspaces.map((ws) => ({
           id: ws.id,
           ...(ws.name ? { name: ws.name } : {}),
+          ...(ws.projectId ? { projectId: ws.projectId } : {}),
           windows: current.windows
             .filter((w) => w.workspaceId === ws.id)
             .map((win) => ({
@@ -759,9 +802,56 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     }));
   }, [commit]);
 
+  const createSession = useCallback(
+    ({ projectId, name, specs }: SessionInit): string => {
+      const id = newId();
+      const tiles = tileEvenly(
+        specs.length,
+        GRID_COLS,
+        viewportRowsRef.current,
+      );
+      const added = specs.map<WindowEntry>((spec, i) => ({
+        id: newId(),
+        module: spec.module,
+        ...tiles[i],
+        data: spec.data,
+        workspaceId: id,
+      }));
+      const meta: WorkspaceMeta = { id };
+      const trimmed = name?.trim();
+      if (trimmed) meta.name = trimmed;
+      if (projectId) meta.projectId = projectId;
+      commit((prev) => ({
+        workspaces: [...prev.workspaces, meta],
+        windows: [...prev.windows, ...added],
+        activeWorkspaceId: id,
+      }));
+      return id;
+    },
+    [commit],
+  );
+
   const switchWorkspace = useCallback(
     (id: string) => {
       commit((prev) => ({ ...prev, activeWorkspaceId: id }));
+    },
+    [commit],
+  );
+
+  const setWorkspaceProject = useCallback(
+    (id: string, projectId: string | null) => {
+      commit((prev) => {
+        const target = prev.workspaces.find((ws) => ws.id === id);
+        if (!target || (target.projectId ?? null) === projectId) return prev;
+        return {
+          ...prev,
+          workspaces: prev.workspaces.map((ws) => {
+            if (ws.id !== id) return ws;
+            const { projectId: _dropped, ...rest } = ws;
+            return projectId ? { ...rest, projectId } : rest;
+          }),
+        };
+      });
     },
     [commit],
   );
@@ -793,13 +883,11 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
         if (!target || (target.name ?? "") === trimmed) return prev;
         return {
           ...prev,
-          workspaces: prev.workspaces.map((ws) =>
-            ws.id !== id
-              ? ws
-              : trimmed
-                ? { id: ws.id, name: trimmed }
-                : { id: ws.id },
-          ),
+          workspaces: prev.workspaces.map((ws) => {
+            if (ws.id !== id) return ws;
+            const { name: _dropped, ...rest } = ws;
+            return trimmed ? { ...rest, name: trimmed } : rest;
+          }),
         };
       });
     },
@@ -820,9 +908,11 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       moveWindowToWorkspace,
       applyTemplate,
       addWorkspace,
+      createSession,
       removeWorkspace,
       switchWorkspace,
       renameWorkspace,
+      setWorkspaceProject,
     }),
     [
       setViewportRows,
@@ -835,9 +925,11 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       moveWindowToWorkspace,
       applyTemplate,
       addWorkspace,
+      createSession,
       removeWorkspace,
       switchWorkspace,
       renameWorkspace,
+      setWorkspaceProject,
     ],
   );
 

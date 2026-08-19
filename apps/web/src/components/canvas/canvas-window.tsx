@@ -21,11 +21,15 @@ import {
   MoreHorizontal,
   X,
 } from "lucide-react";
-import { memo, Suspense, useEffect, useState } from "react";
+import { memo, Suspense, useCallback, useEffect, useState } from "react";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { client } from "@/lib/client";
 import { isDoneStatus } from "@/lib/task-format";
 import { cn } from "@/lib/utils";
+import {
+  setWindowAgentStatus,
+  useWindowAgentStatus,
+} from "./canvas-agent-status";
 import { setFocusedWindow, useIsWindowFocused } from "./canvas-focus";
 import {
   clearFullscreenWindow,
@@ -40,13 +44,14 @@ import {
 } from "./project-picker-menu";
 import {
   type AgentStatus,
+  sessionLabel,
   useWindowActions,
+  useWindowState,
   useWorkspaceMeta,
   type WindowEntry,
   WindowEntryContext,
   WindowStatusContext,
   WindowTitleContext,
-  workspaceLabel,
 } from "./window-manager";
 
 function AgentStatusIndicator({ status }: { status: AgentStatus }) {
@@ -72,6 +77,7 @@ function WindowSpinner() {
 
 function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
   const { workspaces } = useWorkspaceMeta();
+  const { windowsByWorkspace } = useWindowState();
   const { moveWindowToWorkspace } = useWindowActions();
   const others = workspaces.filter((ws) => ws.id !== entry.workspaceId);
   if (others.length === 0) return null;
@@ -81,7 +87,7 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
       <DropdownMenuTrigger asChild>
         <button
           onPointerDown={(e) => e.stopPropagation()}
-          title="Move to workspace"
+          title="Move to session"
           className="flex size-5 items-center justify-center rounded-full text-white/40 transition hover:bg-white/10 hover:text-white/80"
         >
           <MoreHorizontal className="size-3" />
@@ -102,7 +108,7 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
               className="text-white/70 focus:bg-white/10 focus:text-white/90"
               onClick={() => moveWindowToWorkspace(entry.id, ws.id)}
             >
-              Move to {workspaceLabel(ws)}
+              Move to {sessionLabel(ws, windowsByWorkspace.get(ws.id) ?? [])}
             </DropdownMenuItem>
           ),
         )}
@@ -242,7 +248,12 @@ export const CanvasWindow = memo(function CanvasWindow({
   const Icon = config.icon;
   const Component = config.component;
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
-  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
+  const agentStatus = useWindowAgentStatus(entry.id);
+  const setAgentStatus = useCallback(
+    (status: AgentStatus | null) => setWindowAgentStatus(entry.id, status),
+    [entry.id],
+  );
+  useEffect(() => () => setWindowAgentStatus(entry.id, null), [entry.id]);
 
   return (
     <div

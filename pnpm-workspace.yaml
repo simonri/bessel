@@ -12,6 +12,12 @@ allowBuilds:
   sharp: true
   workerd: true
 
+# dbus-next only uses usocket as an optional accelerator. Its native ArrayBuffer
+# allocation is incompatible with Electron's V8 sandbox; Node's built-in Unix
+# socket implementation is portable and fully supports the session bus here.
+ignoredOptionalDependencies:
+  - usocket
+
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.1.13
   vite-plus: 0.1.13

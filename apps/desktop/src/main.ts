@@ -1,9 +1,5 @@
 import * as Sentry from "@sentry/electron/main";
-import {
-  type ChildProcessWithoutNullStreams,
-  execFile,
-  spawn,
-} from "child_process";
+import { execFile } from "node:child_process";
 import crypto from "crypto";
 import {
   app,
@@ -30,7 +26,15 @@ import {
 import { SENTRY_DSN } from "./env.js";
 import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
 import { registerMyAiHandlers } from "./my-ai.js";
+import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
+import {
+  getSpotifyStatus,
+  spotifyNext,
+  spotifyPlayPause,
+  startSpotifyWatcher,
+  stopSpotifyWatcher,
+} from "./spotify.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -149,148 +153,6 @@ function remoteCdArg(p: string): string {
   if (p === "~") return "~";
   if (p.startsWith("~/")) return "~/" + shQuote(p.slice(2));
   return shQuote(p);
-}
-
-// ─── spotify ──────────────────────────────────────────────────────────────────
-// Controlled via playerctl/MPRIS (the local D-Bus interface Spotify's Linux
-// client exposes) rather than the Spotify Web API — no OAuth app registration,
-// no Premium requirement, and no network round-trip, just the local player.
-//
-// Status is pushed, not polled. A naive renderer-side setInterval poll looked
-// fine in dev but took up to ~2 minutes to notice a play/pause in practice:
-// Chromium throttles a hidden/unfocused page's timers, and this topbar spends
-// most of its life behind other windows. IPC sends to the renderer aren't
-// subject to that throttling, so instead a long-lived `playerctl --follow`
-// process streams status the instant Spotify's own D-Bus signal fires, and
-// every line gets broadcast straight to the renderer's query cache.
-//
-// `--follow` can't self-report "no such player" — targeting a player name
-// that doesn't exist just blocks forever with no output and no exit (verified
-// empirically), so it can't be trusted to signal Spotify opening/closing. A
-// cheap watchdog (`playerctl -l`, just a D-Bus name list) polls for that
-// instead, and only that — it never touches metadata/status.
-const PLAYERCTL_PLAYER = "spotify";
-const PLAYERCTL_SEP = "\x1f";
-const PLAYERCTL_STATUS_FIELDS = [
-  "status",
-  "title",
-  "artist",
-  "album",
-  "mpris:artUrl",
-  "mpris:length",
-  "position",
-];
-const SPOTIFY_WATCHDOG_MS = 5000;
-
-interface SpotifyStatus {
-  running: boolean;
-  playing?: boolean;
-  title?: string;
-  artist?: string;
-  album?: string;
-  artUrl?: string;
-  lengthMs?: number;
-  positionMs?: number;
-}
-
-let spotifyStatus: SpotifyStatus = { running: false };
-let spotifyFollowProc: ChildProcessWithoutNullStreams | null = null;
-let spotifyWatchdogTimer: ReturnType<typeof setInterval> | null = null;
-
-async function playerctl(...args: string[]): Promise<string> {
-  const { stdout } = await execFileAsync("playerctl", [
-    "-p",
-    PLAYERCTL_PLAYER,
-    ...args,
-  ]);
-  return stdout.trim();
-}
-
-function setSpotifyStatus(next: SpotifyStatus): void {
-  spotifyStatus = next;
-  broadcast("spotify:status-changed", next);
-}
-
-function parseSpotifyStatusLine(raw: string): SpotifyStatus {
-  const [status, title, artist, album, artUrl, lengthUs, positionUs] =
-    raw.split(PLAYERCTL_SEP);
-  return {
-    running: true,
-    playing: status === "Playing",
-    title: title || "",
-    artist: artist || "",
-    album: album || "",
-    artUrl: artUrl || "",
-    lengthMs: Math.round(Number(lengthUs) / 1000) || 0,
-    positionMs: Math.round(Number(positionUs) / 1000) || 0,
-  };
-}
-
-function startSpotifyFollow(): void {
-  if (spotifyFollowProc) return;
-  const fmt = PLAYERCTL_STATUS_FIELDS.map((f) => `{{${f}}}`).join(
-    PLAYERCTL_SEP,
-  );
-  const proc = spawn("playerctl", [
-    "-p",
-    PLAYERCTL_PLAYER,
-    "metadata",
-    "--format",
-    fmt,
-    "--follow",
-  ]);
-  spotifyFollowProc = proc;
-
-  let buffer = "";
-  proc.stdout.on("data", (chunk: Buffer) => {
-    buffer += chunk.toString();
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (line) setSpotifyStatus(parseSpotifyStatusLine(line));
-    }
-  });
-  const onDone = () => {
-    if (spotifyFollowProc === proc) spotifyFollowProc = null;
-  };
-  proc.on("exit", onDone);
-  proc.on("error", onDone);
-}
-
-function stopSpotifyFollow(): void {
-  spotifyFollowProc?.kill();
-  spotifyFollowProc = null;
-}
-
-async function spotifyWatchdogTick(): Promise<void> {
-  let players: string[] = [];
-  try {
-    const { stdout } = await execFileAsync("playerctl", ["-l"]);
-    players = stdout
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-  } catch {
-    players = [];
-  }
-
-  if (players.includes(PLAYERCTL_PLAYER)) {
-    if (!spotifyFollowProc) startSpotifyFollow();
-  } else {
-    stopSpotifyFollow();
-    if (spotifyStatus.running) setSpotifyStatus({ running: false });
-  }
-}
-
-function startSpotifyWatchdog(): void {
-  spotifyWatchdogTick();
-  spotifyWatchdogTimer = setInterval(spotifyWatchdogTick, SPOTIFY_WATCHDOG_MS);
-}
-
-function stopSpotifyWatchdog(): void {
-  if (spotifyWatchdogTimer) clearInterval(spotifyWatchdogTimer);
-  spotifyWatchdogTimer = null;
-  stopSpotifyFollow();
 }
 
 interface GitFileEntry {
@@ -1512,15 +1374,16 @@ app.whenReady().then(() => {
   registerMyAiHandlers(USER_DATA_DIR);
   registerCliBrokerHandlers(USER_DATA_DIR);
   registerAxiCliInstallHandlers();
+  registerPortsHandlers();
 
-  ipcHandle("spotify:status", async () => spotifyStatus);
+  ipcHandle("spotify:status", async () => getSpotifyStatus());
 
   ipcHandle("spotify:playPause", async () => {
-    await playerctl("play-pause");
+    await spotifyPlayPause();
   });
 
   ipcHandle("spotify:next", async () => {
-    await playerctl("next");
+    await spotifyNext();
   });
 
   const INDEX_HTML = path.join(WEB_DIR, "index.html");
@@ -1542,16 +1405,19 @@ app.whenReady().then(() => {
   });
 
   createWindow();
-  startSpotifyWatchdog();
+  startSpotifyWatcher();
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+      startSpotifyWatcher();
+    }
   });
 });
 
 app.on("window-all-closed", () => {
   for (const p of ptySessions.values()) p.kill();
   ptySessions.clear();
-  stopSpotifyWatchdog();
+  stopSpotifyWatcher();
   if (process.platform !== "darwin") app.quit();
 });

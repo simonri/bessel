@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { CanvasPage } from "@/components/canvas/canvas-page";
 import { CanvasTopBar } from "@/components/canvas/canvas-topbar";
 import { CommandPalette } from "@/components/canvas/command-palette";
+import { NewSessionPage } from "@/components/new-session-page";
 import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
 import {
   isWallpaperColor,
@@ -79,14 +80,15 @@ function loadActivePage(): PageKey {
   return "canvas";
 }
 
-// A non-canvas page: one glass panel filling the page area, styled like a
-// widget body so content reads the same whether it's docked or a full page.
-// Mounted only while active — these are plain data views (TanStack Query
-// caches what they fetch), so remounting is cheap and unmounting frees the
-// map/list DOM the canvas would otherwise keep around forever.
-function ContentPage({ page }: { page: PageKey }) {
-  const { component: Component, noPadding } = PAGE_REGISTRY[page];
-  if (!Component) return null;
+// One glass panel filling the page area, styled like a widget body so content
+// reads the same whether it's docked or a full page.
+function PageFrame({
+  noPadding,
+  children,
+}: {
+  noPadding?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="h-full p-2 animate-in fade-in duration-200 ease-out">
       <div
@@ -101,18 +103,32 @@ function ContentPage({ page }: { page: PageKey }) {
             !noPadding && "overflow-y-auto p-5",
           )}
         >
-          <Suspense
-            fallback={
-              <div className="flex h-full items-center justify-center">
-                <Spinner className="size-5 text-white/60" />
-              </div>
-            }
-          >
-            <Component />
-          </Suspense>
+          {children}
         </div>
       </div>
     </div>
+  );
+}
+
+// A non-canvas page. Mounted only while active — these are plain data views
+// (TanStack Query caches what they fetch), so remounting is cheap and
+// unmounting frees the map/list DOM the canvas would otherwise keep around
+// forever.
+function ContentPage({ page }: { page: PageKey }) {
+  const { component: Component, noPadding } = PAGE_REGISTRY[page];
+  if (!Component) return null;
+  return (
+    <PageFrame noPadding={noPadding}>
+      <Suspense
+        fallback={
+          <div className="flex h-full items-center justify-center">
+            <Spinner className="size-5 text-white/60" />
+          </div>
+        }
+      >
+        <Component />
+      </Suspense>
+    </PageFrame>
   );
 }
 
@@ -122,8 +138,27 @@ function ContentPage({ page }: { page: PageKey }) {
 // so it is mounted for the app's whole life; other pages mount on demand.
 export function AppShell() {
   const [activePage, setActivePage] = useState<PageKey>(loadActivePage);
+  // The "New session" form is transient shell state rather than a page: it
+  // sits over whatever page is active, isn't persisted, and any navigation
+  // dismisses it.
+  const [newSession, setNewSession] = useState<{
+    projectId: string | null;
+  } | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const closeNewSession = useCallback(() => setNewSession(null), []);
+  const selectPage = useCallback((page: PageKey) => {
+    setNewSession(null);
+    setActivePage(page);
+  }, []);
+  const openNewSession = useCallback(
+    (projectId: string | null) => setNewSession({ projectId }),
+    [],
+  );
+  const onSessionCreated = useCallback(
+    () => selectPage("canvas"),
+    [selectPage],
+  );
 
   useEffect(() => {
     try {
@@ -150,16 +185,34 @@ export function AppShell() {
       <div className="relative flex h-full flex-col">
         <CanvasTopBar />
         <div className="flex min-h-0 flex-1">
-          <AppSidebar activePage={activePage} onSelectPage={setActivePage} />
+          <AppSidebar
+            activePage={newSession ? null : activePage}
+            onSelectPage={selectPage}
+            onNewSession={openNewSession}
+          />
           <main className="relative min-w-0 flex-1">
             <div
               className="h-full"
-              style={{ display: activePage === "canvas" ? undefined : "none" }}
+              style={{
+                display:
+                  activePage === "canvas" && !newSession ? undefined : "none",
+              }}
             >
               <CanvasPage />
             </div>
-            {activePage !== "canvas" && (
-              <ContentPage key={activePage} page={activePage} />
+            {newSession ? (
+              <PageFrame>
+                <NewSessionPage
+                  key={newSession.projectId ?? ""}
+                  projectId={newSession.projectId}
+                  onCancel={closeNewSession}
+                  onCreated={onSessionCreated}
+                />
+              </PageFrame>
+            ) : (
+              activePage !== "canvas" && (
+                <ContentPage key={activePage} page={activePage} />
+              )
             )}
           </main>
         </div>
@@ -168,7 +221,7 @@ export function AppShell() {
       <CommandPalette
         open={paletteOpen}
         onClose={closePalette}
-        onNavigate={setActivePage}
+        onNavigate={selectPage}
       />
     </div>
   );

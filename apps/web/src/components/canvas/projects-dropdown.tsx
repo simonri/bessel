@@ -1,7 +1,6 @@
 import {
   createProjectV1ProjectsPostMutation,
   deleteProjectV1ProjectsProjectIdDeleteMutation,
-  listProjectsV1ProjectsGetOptions,
   listProjectsV1ProjectsGetQueryKey,
   type ProjectSchema,
   setProjectLocationV1ProjectsProjectIdLocationPutMutation,
@@ -12,9 +11,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useProjects } from "@/hooks/use-projects";
 import { client } from "@/lib/client";
 
 function basename(p: string): string {
@@ -172,9 +172,7 @@ export function ProjectsDropdown() {
     apply: (path: string) => void;
   } | null>(null);
 
-  const { data: projects = [] } = useQuery(
-    listProjectsV1ProjectsGetOptions({ client }),
-  );
+  const { data: projects = [] } = useProjects();
 
   const invalidate = () =>
     queryClient.invalidateQueries({

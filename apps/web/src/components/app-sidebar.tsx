@@ -6,8 +6,8 @@ import {
 } from "@bessel/ui/components/dropdown-menu";
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
-import { memo, useEffect, useRef, useState } from "react";
-import { WorkspaceTabs } from "@/components/canvas/workspace-tabs";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { ProjectSessions } from "@/components/canvas/project-sessions";
 import {
   MORE_PAGES,
   PAGE_REGISTRY,
@@ -118,14 +118,6 @@ function SidebarResizeHandle({
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-2 pb-1.5 text-xs font-medium text-white/40">
-      {children}
-    </div>
-  );
-}
-
 function PageIcon({ page, isActive }: { page: PageKey; isActive: boolean }) {
   const Icon = PAGE_REGISTRY[page].icon;
   return (
@@ -144,7 +136,7 @@ function MorePagesMenu({
   activePage,
   onSelectPage,
 }: {
-  activePage: PageKey;
+  activePage: PageKey | null;
   onSelectPage: (page: PageKey) => void;
 }) {
   const current = MORE_PAGES.find((key) => key === activePage);
@@ -206,11 +198,16 @@ function MorePagesMenu({
 export const AppSidebar = memo(function AppSidebar({
   activePage,
   onSelectPage,
+  onNewSession,
 }: {
-  activePage: PageKey;
+  /** Null while a transient view (the New session form) covers the page area. */
+  activePage: PageKey | null;
   onSelectPage: (page: PageKey) => void;
+  /** Opens the "New session" page, preselecting `projectId` when given. */
+  onNewSession: (projectId: string | null) => void;
 }) {
   const [width, setWidth] = useState(loadSidebarWidth);
+  const openCanvas = useCallback(() => onSelectPage("canvas"), [onSelectPage]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -256,9 +253,12 @@ export const AppSidebar = memo(function AppSidebar({
           </div>
         </nav>
 
-        <nav aria-label="Workspaces" className="border-t border-white/10 pt-4">
-          <SectionLabel>Workspaces</SectionLabel>
-          <WorkspaceTabs isOnCanvasPage={activePage === "canvas"} />
+        <nav aria-label="Projects" className="border-t border-white/10 pt-4">
+          <ProjectSessions
+            isOnCanvasPage={activePage === "canvas"}
+            onOpenCanvas={openCanvas}
+            onNewSession={onNewSession}
+          />
         </nav>
       </div>
       <SidebarResizeHandle width={width} onResize={setWidth} />

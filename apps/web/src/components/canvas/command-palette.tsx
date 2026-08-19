@@ -1,9 +1,5 @@
-import {
-  listProjectsV1ProjectsGetOptions,
-  type ProjectSchema,
-} from "@bessel/client";
+import type { ProjectSchema } from "@bessel/client";
 import { glassSurface } from "@bessel/ui/lib/glass";
-import { useQuery } from "@tanstack/react-query";
 import { LayoutTemplate, PanelsTopLeft, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -12,19 +8,19 @@ import {
   type PageKey,
   PRIMARY_PAGES,
 } from "@/components/pages";
+import { useProjects } from "@/hooks/use-projects";
 import {
   templateToWindowSpecs,
   useWorkspaceTemplates,
   widgetSummary,
 } from "@/hooks/use-workspace-templates";
-import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { MODULE_ORDER, MODULE_REGISTRY } from "./module-registry";
 import {
+  sessionLabel,
   useWindowActions,
   useWindowState,
   useWorkspaceMeta,
-  workspaceLabel,
 } from "./window-manager";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
@@ -41,10 +37,10 @@ interface PaletteItem {
 function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
   const { openWindow, toggleWindow, applyTemplate, switchWorkspace } =
     useWindowActions();
-  const { isOpen } = useWindowState();
+  const { isOpen, windowsByWorkspace } = useWindowState();
   const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
   const { templates } = useWorkspaceTemplates();
-  const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
+  const { data } = useProjects();
 
   return useMemo(() => {
     const projects = (data ?? []).filter(
@@ -67,9 +63,13 @@ function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
 
     workspaces.forEach((ws) => {
       if (ws.id === activeWorkspaceId) return;
+      const project = ws.projectId
+        ? (data ?? []).find((p) => p.id === ws.projectId)
+        : undefined;
+      const label = sessionLabel(ws, windowsByWorkspace.get(ws.id) ?? []);
       items.push({
         id: `workspace-${ws.id}`,
-        label: `Switch to ${workspaceLabel(ws)}`,
+        label: `Switch to ${project ? `${project.name} / ${label}` : label}`,
         icon: PanelsTopLeft,
         action: () => {
           switchWorkspace(ws.id);
@@ -81,7 +81,7 @@ function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
     for (const template of templates) {
       items.push({
         id: `template-${template.id}`,
-        label: `New workspace from "${template.name}"`,
+        label: `New session from "${template.name}"`,
         sublabel: widgetSummary(template.widgets),
         icon: LayoutTemplate,
         action: () => {
@@ -146,6 +146,7 @@ function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
     data,
     templates,
     workspaces,
+    windowsByWorkspace,
     activeWorkspaceId,
     isOpen,
     openWindow,

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@sentry/electron": "^7.15.0",
+    "dbus-next": "^0.10.2",
     "electron-updater": "^6.8.9",
     "node-pty": "^1.0.0"
   },

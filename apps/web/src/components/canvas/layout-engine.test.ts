@@ -6,6 +6,7 @@ import {
   fitToViewport,
   placeWithShrink,
   sanitizeLayout,
+  tileEvenly,
   type Box,
   type EngineItem,
 } from "./layout-engine";
@@ -314,5 +315,64 @@ describe("property: invariants hold for arbitrary inputs", () => {
         occupied.push(placed);
       }
     }
+  });
+});
+
+describe("tileEvenly", () => {
+  it("fills the canvas with a single tile", () => {
+    expect(tileEvenly(1, COLS, 20)).toEqual([{ x: 0, y: 0, w: 24, h: 20 }]);
+  });
+
+  it("splits two and three tiles into equal full-height columns", () => {
+    expect(tileEvenly(2, COLS, 20)).toEqual([
+      { x: 0, y: 0, w: 12, h: 20 },
+      { x: 12, y: 0, w: 12, h: 20 },
+    ]);
+    expect(tileEvenly(3, COLS, 20)).toEqual([
+      { x: 0, y: 0, w: 8, h: 20 },
+      { x: 8, y: 0, w: 8, h: 20 },
+      { x: 16, y: 0, w: 8, h: 20 },
+    ]);
+  });
+
+  it("arranges four tiles in a 2×2 grid, giving leftover rows to the top row", () => {
+    expect(tileEvenly(4, COLS, 21)).toEqual([
+      { x: 0, y: 0, w: 12, h: 11 },
+      { x: 12, y: 0, w: 12, h: 11 },
+      { x: 0, y: 11, w: 12, h: 10 },
+      { x: 12, y: 11, w: 12, h: 10 },
+    ]);
+  });
+
+  it("uses the fallback height when the viewport is unbounded", () => {
+    expect(tileEvenly(2, COLS, Number.POSITIVE_INFINITY, 16)).toEqual([
+      { x: 0, y: 0, w: 12, h: 16 },
+      { x: 12, y: 0, w: 12, h: 16 },
+    ]);
+  });
+
+  it("never overlaps, stays in bounds and covers every cell for any count", () => {
+    for (let n = 1; n <= 9; n++) {
+      for (const rows of [7, 20, 33]) {
+        const tiles = tileEvenly(n, COLS, rows);
+        expect(tiles).toHaveLength(n);
+        expect(overlapCount(tiles)).toBe(0);
+        for (const t of tiles) {
+          expect(inBounds(t, COLS, rows)).toBe(true);
+          expect(allFiniteInts(t)).toBe(true);
+        }
+        expect(tiles.reduce((area, t) => area + t.w * t.h, 0)).toBe(COLS * rows);
+      }
+    }
+  });
+
+  it("never produces a zero-height tile on a canvas shorter than the tile rows", () => {
+    const tiles = tileEvenly(4, COLS, 1);
+    expect(tiles.every((t) => t.h >= 1 && t.w >= 1)).toBe(true);
+    expect(tiles.map((t) => t.y)).toEqual([0, 0, 1, 1]);
+  });
+
+  it("returns nothing for zero tiles", () => {
+    expect(tileEvenly(0, COLS, 20)).toEqual([]);
   });
 });
