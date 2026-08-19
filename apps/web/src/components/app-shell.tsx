@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Spinner } from "@bessel/ui/components/spinner";
+import { glassSurface } from "@bessel/ui/lib/glass";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CanvasPage } from "@/components/canvas/canvas-page";
 import { CanvasTopBar } from "@/components/canvas/canvas-topbar";
 import { CommandPalette } from "@/components/canvas/command-palette";
-import type { PageKey } from "@/components/pages";
+import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
 import {
   isWallpaperColor,
   useSettings,
   WALLPAPER_COLORS,
 } from "@/hooks/use-settings";
+import { cn } from "@/lib/utils";
 
 // Forward+reverse baked into one clip — browser loops it natively.
 function VideoWallpaper() {
@@ -66,14 +69,67 @@ function Wallpaper() {
   );
 }
 
+const ACTIVE_PAGE_KEY = "bessel:activePage";
+
+function loadActivePage(): PageKey {
+  try {
+    const stored = localStorage.getItem(ACTIVE_PAGE_KEY);
+    if (isPageKey(stored)) return stored;
+  } catch {}
+  return "canvas";
+}
+
+// A non-canvas page: one glass panel filling the page area, styled like a
+// widget body so content reads the same whether it's docked or a full page.
+// Mounted only while active — these are plain data views (TanStack Query
+// caches what they fetch), so remounting is cheap and unmounting frees the
+// map/list DOM the canvas would otherwise keep around forever.
+function ContentPage({ page }: { page: PageKey }) {
+  const { component: Component, noPadding } = PAGE_REGISTRY[page];
+  if (!Component) return null;
+  return (
+    <div className="h-full p-2 animate-in fade-in duration-200 ease-out">
+      <div
+        className={cn(
+          glassSurface({ weight: "medium" }),
+          "flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl",
+        )}
+      >
+        <div
+          className={cn(
+            "flex min-h-0 flex-1 flex-col",
+            !noPadding && "overflow-y-auto p-5",
+          )}
+        >
+          <Suspense
+            fallback={
+              <div className="flex h-full items-center justify-center">
+                <Spinner className="size-5 text-white/60" />
+              </div>
+            }
+          >
+            <Component />
+          </Suspense>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // The always-visible chrome: wallpaper, top bar, left sidebar, and the page
-// area they frame. Pages are hidden/shown rather than unmounted — the canvas
-// hosts live processes (terminals, agent sessions) that must outlive any
-// navigation, so it is mounted for the app's whole life.
+// area they frame. The canvas is hidden/shown rather than unmounted — it hosts
+// live processes (terminals, agent sessions) that must outlive any navigation,
+// so it is mounted for the app's whole life; other pages mount on demand.
 export function AppShell() {
-  const [activePage, setActivePage] = useState<PageKey>("canvas");
+  const [activePage, setActivePage] = useState<PageKey>(loadActivePage);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ACTIVE_PAGE_KEY, activePage);
+    } catch {}
+  }, [activePage]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -102,11 +158,18 @@ export function AppShell() {
             >
               <CanvasPage />
             </div>
+            {activePage !== "canvas" && (
+              <ContentPage key={activePage} page={activePage} />
+            )}
           </main>
         </div>
       </div>
 
-      <CommandPalette open={paletteOpen} onClose={closePalette} />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={closePalette}
+        onNavigate={setActivePage}
+      />
     </div>
   );
 }

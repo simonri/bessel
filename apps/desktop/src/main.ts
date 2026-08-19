@@ -705,6 +705,7 @@ function startAuthLogin(): Promise<number> {
 // Shared by every browser-widget <webview> instance so logging into a site once
 // (YouTube, Twitch, ...) carries over to every widget and survives app restarts.
 const BROWSER_PARTITION = "persist:browser";
+const YOUTUBE_EMBED_REFERRER = "https://getbessel.com/";
 
 // Electron's default UA appends " Bessel/<version> Electron/<version>", which
 // trips Google's "this browser or app may not be secure" block on login. Strip
@@ -897,6 +898,26 @@ app.whenReady().then(() => {
 
   const browserSession = session.fromPartition(BROWSER_PARTITION);
   browserSession.setUserAgent(chromeUserAgent(browserSession));
+  // A top-level YouTube embed in a desktop WebView has no natural embedding
+  // document, so Chromium sends no Referer and YouTube rejects it with player
+  // error 153. Identify Bessel on embed-page requests as required by YouTube;
+  // keep the override scoped so normal browser traffic is untouched.
+  browserSession.webRequest.onBeforeSendHeaders(
+    {
+      urls: [
+        "https://www.youtube.com/embed/*",
+        "https://www.youtube-nocookie.com/embed/*",
+      ],
+    },
+    (details, callback) => {
+      callback({
+        requestHeaders: {
+          ...details.requestHeaders,
+          Referer: YOUTUBE_EMBED_REFERRER,
+        },
+      });
+    },
+  );
   // Fullscreen (video player) and media (camera/mic prompts some sites show
   // regardless of use) are the only permissions a browser widget guest can ask for.
   browserSession.setPermissionRequestHandler(

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useWindowTitle } from "@/components/canvas/window-manager";
+import { isYouTubeEmbedUrl, toYouTubeEmbedUrl } from "@/lib/youtube-url";
 import type {
   DidFailLoadEvent,
   DidNavigateEvent,
@@ -30,6 +31,17 @@ const BROWSER_PARTITION = "persist:browser";
 // so a one-off crash doesn't strand the tab on a dead frame.
 const MAX_CRASH_AUTO_RETRIES = 3;
 const CRASH_RETRY_BASE_DELAY_MS = 1000;
+
+const YOUTUBE_FOCUSED_PLAYER_CSS = `
+  .ytp-endscreen-content,
+  .ytp-ce-element,
+  .ytp-cards-button,
+  .ytp-cards-teaser,
+  .ytp-pause-overlay,
+  .ytp-suggestion-set {
+    display: none !important;
+  }
+`;
 
 const QUICK_LAUNCH = [
   {
@@ -188,7 +200,10 @@ const BrowserToolbar = memo(function BrowserToolbar({
 
 export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
   const webviewRef = useRef<WebviewTag | null>(null);
-  const [currentUrl, setCurrentUrl] = useState(initialUrl ?? "");
+  const initialResolvedUrl = initialUrl
+    ? (toYouTubeEmbedUrl(initialUrl) ?? initialUrl)
+    : "";
+  const [currentUrl, setCurrentUrl] = useState(initialResolvedUrl);
   const [showHome, setShowHome] = useState(!initialUrl);
   const [loading, setLoading] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
@@ -212,10 +227,11 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
   const navigate = useCallback((target: string) => {
     const resolved = resolveAddress(target);
     if (!resolved) return;
+    const destination = toYouTubeEmbedUrl(resolved) ?? resolved;
     setFailed(null);
     setShowHome(false);
-    setCurrentUrl(resolved);
-    webviewRef.current?.loadURL(resolved);
+    setCurrentUrl(destination);
+    webviewRef.current?.loadURL(destination);
   }, []);
 
   useEffect(() => {
@@ -233,9 +249,22 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     };
     const onStopLoading = () => setLoading(false);
 
+    const replaceWithFocusedPlayer = (url: string): boolean => {
+      const focusedUrl = toYouTubeEmbedUrl(url);
+      if (!focusedUrl || isYouTubeEmbedUrl(url)) return false;
+      void wv
+        .executeJavaScript(
+          `window.location.replace(${JSON.stringify(focusedUrl)})`,
+        )
+        .catch(() => wv.loadURL(focusedUrl))
+        .catch(() => undefined);
+      return true;
+    };
+
     const onNavigate = (e: Event) => {
       const url = (e as DidNavigateEvent).url;
       if (!url || url === "about:blank") return;
+      if (replaceWithFocusedPlayer(url)) return;
       setCurrentUrl(url);
       setCanGoBack(wv.canGoBack());
       setCanGoForward(wv.canGoForward());
@@ -243,6 +272,12 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
       // A real navigation completed, so the guest is healthy again — don't
       // let attempts from an earlier, unrelated crash burst count against it.
       crashRetry.attempts = 0;
+    };
+
+    const onDomReady = () => {
+      if (isYouTubeEmbedUrl(wv.getURL())) {
+        void wv.insertCSS(YOUTUBE_FOCUSED_PLAYER_CSS).catch(() => undefined);
+      }
     };
 
     const onTitle = (e: Event) => {
@@ -286,6 +321,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
     wv.addEventListener("did-stop-loading", onStopLoading);
     wv.addEventListener("did-navigate", onNavigate);
     wv.addEventListener("did-navigate-in-page", onNavigate);
+    wv.addEventListener("dom-ready", onDomReady);
     wv.addEventListener("page-title-updated", onTitle);
     wv.addEventListener("did-fail-load", onFail);
     wv.addEventListener("render-process-gone", onRenderProcessGone);
@@ -295,6 +331,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
       wv.removeEventListener("did-stop-loading", onStopLoading);
       wv.removeEventListener("did-navigate", onNavigate);
       wv.removeEventListener("did-navigate-in-page", onNavigate);
+      wv.removeEventListener("dom-ready", onDomReady);
       wv.removeEventListener("page-title-updated", onTitle);
       wv.removeEventListener("did-fail-load", onFail);
       wv.removeEventListener("render-process-gone", onRenderProcessGone);
@@ -333,7 +370,7 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
       <div className="relative min-h-0 flex-1">
         <webview
           ref={webviewRef as unknown as React.Ref<HTMLWebViewElement>}
-          src={initialUrl || "about:blank"}
+          src={initialResolvedUrl || "about:blank"}
           partition={BROWSER_PARTITION}
           allowpopups
           className="absolute inset-0 h-full w-full"

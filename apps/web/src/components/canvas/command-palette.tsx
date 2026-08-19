@@ -7,6 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { LayoutTemplate, PanelsTopLeft, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  MORE_PAGES,
+  PAGE_REGISTRY,
+  type PageKey,
+  PRIMARY_PAGES,
+} from "@/components/pages";
+import {
   templateToWindowSpecs,
   useWorkspaceTemplates,
   widgetSummary,
@@ -32,7 +38,7 @@ interface PaletteItem {
   isOpen?: boolean;
 }
 
-function useItems(onClose: () => void) {
+function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
   const { openWindow, toggleWindow, applyTemplate, switchWorkspace } =
     useWindowActions();
   const { isOpen } = useWindowState();
@@ -45,6 +51,19 @@ function useItems(onClose: () => void) {
       (p): p is ProjectWithPath => p.path != null,
     );
     const items: PaletteItem[] = [];
+
+    for (const key of [...PRIMARY_PAGES, ...MORE_PAGES]) {
+      const page = PAGE_REGISTRY[key];
+      items.push({
+        id: `page-${key}`,
+        label: `Go to ${page.title}`,
+        icon: page.icon,
+        action: () => {
+          onNavigate(key);
+          onClose();
+        },
+      });
+    }
 
     workspaces.forEach((ws, i) => {
       if (ws.id === activeWorkspaceId) return;
@@ -134,6 +153,7 @@ function useItems(onClose: () => void) {
     applyTemplate,
     switchWorkspace,
     onClose,
+    onNavigate,
   ]);
 }
 
@@ -142,20 +162,28 @@ function useItems(onClose: () => void) {
 export function CommandPalette({
   open,
   onClose,
+  onNavigate,
 }: {
   open: boolean;
   onClose: () => void;
+  onNavigate: (page: PageKey) => void;
 }) {
   if (!open) return null;
-  return <CommandPaletteContent onClose={onClose} />;
+  return <CommandPaletteContent onClose={onClose} onNavigate={onNavigate} />;
 }
 
-function CommandPaletteContent({ onClose }: { onClose: () => void }) {
+function CommandPaletteContent({
+  onClose,
+  onNavigate,
+}: {
+  onClose: () => void;
+  onNavigate: (page: PageKey) => void;
+}) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const items = useItems(onClose);
+  const items = useItems(onClose, onNavigate);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

@@ -14,6 +14,8 @@ export interface WebviewTag extends HTMLElement {
   reload(): void;
   stop(): void;
   isLoading(): boolean;
+  executeJavaScript(code: string): Promise<unknown>;
+  insertCSS(css: string): Promise<string>;
 }
 
 export interface DidNavigateEvent extends Event {
