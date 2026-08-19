@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { SectionLabel } from "@/components/settings-section-label";
+import {
+  SettingsButton,
+  SettingsCard,
+  SettingsRow,
+} from "@/components/settings-ui";
 
 export function AboutPage() {
   const [version, setVersion] = useState<string | null>(null);
@@ -34,43 +39,40 @@ export function AboutPage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Application</SectionLabel>
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-13 text-white/60">Version</span>
+        <SettingsCard>
+          <SettingsRow label="Version">
             <span className="font-mono text-13 text-white/80">
               {version ?? "—"}
             </span>
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-12">
-              {status === "idle" && <span className="text-white/50">—</span>}
-              {status === "checking" && (
+          </SettingsRow>
+          <SettingsRow
+            label={
+              status === "idle" ? (
+                <span className="text-white/40">Not checked yet</span>
+              ) : status === "checking" ? (
                 <span className="text-white/50">Checking…</span>
-              )}
-              {status === "up-to-date" && (
+              ) : status === "up-to-date" ? (
                 <span className="text-emerald-400">Up to date</span>
-              )}
-              {status === "available" && (
+              ) : status === "available" ? (
                 <span className="text-primary-400">
                   Update available
                   {availableVersion ? `: v${availableVersion}` : ""}
                 </span>
-              )}
-              {status === "error" && (
+              ) : (
                 <span className="text-red-400">
                   Could not check for updates
                 </span>
-              )}
-            </span>
-            <button
+              )
+            }
+          >
+            <SettingsButton
               onClick={checkForUpdate}
               disabled={status === "checking"}
-              className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-12 font-medium text-white/70 transition-colors hover:bg-white/15 hover:text-white/90 disabled:opacity-40"
             >
               {status === "checking" ? "Checking…" : "Check for updates"}
-            </button>
-          </div>
-        </div>
+            </SettingsButton>
+          </SettingsRow>
+        </SettingsCard>
       </div>
     </div>
   );

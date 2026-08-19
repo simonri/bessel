@@ -24,6 +24,7 @@ import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
 import { MonitorPage } from "@/components/settings-monitor-page";
 import { MyAiPage } from "@/components/settings-my-ai-page";
+import { cn } from "@/lib/utils";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 // systemctl-based install/status only makes sense on Linux — unlike the
@@ -84,12 +85,14 @@ export function SettingsModal({
   onClose: () => void;
 }) {
   const [page, setPage] = useState<SidebarPage>("appearance");
+  const activeItem = NAV_ITEMS.find((n) => n.key === page);
+  const ActiveIcon = activeItem?.icon ?? Settings;
 
   return (
     <GlassDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <GlassDialogContent
         showCloseButton={false}
-        className="flex h-[480px] w-full max-w-[640px] p-0"
+        className="flex h-[520px] w-full max-w-[680px] p-0"
       >
         <GlassDialogTitle className="sr-only">Settings</GlassDialogTitle>
         <GlassDialogDescription className="sr-only">
@@ -97,28 +100,35 @@ export function SettingsModal({
         </GlassDialogDescription>
 
         {/* Sidebar */}
-        <aside className="flex w-44 shrink-0 flex-col bg-black/30">
+        <aside className="flex w-48 shrink-0 flex-col bg-black/20">
           <div className="flex items-center gap-2 px-4 py-4">
-            <Settings className="size-3.5 text-white/30" />
-            <span className="text-11 font-semibold tracking-widest text-white/50">
-              SETTINGS
+            <div className="flex size-6 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.04]">
+              <Settings className="size-3 text-white/40" />
+            </div>
+            <span className="text-11 font-medium tracking-wide text-white/40">
+              Settings
             </span>
           </div>
-          <nav className="flex-1 space-y-0.5 px-2 pb-2">
+          <nav className="flex-1 space-y-0.5 px-2.5 pb-2.5">
             {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
               const active = page === key;
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => setPage(key)}
-                  className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-[background-color,color,box-shadow] ${
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all duration-150 active:scale-[0.98]",
                     active
-                      ? "bg-primary-500 text-white shadow-lg shadow-primary-900/30"
-                      : "text-white/50 hover:bg-white/5 hover:text-white/75"
-                  }`}
+                      ? "bg-white/[0.08] text-white"
+                      : "text-white/45 hover:bg-white/[0.04] hover:text-white/75",
+                  )}
                 >
                   <Icon
-                    className={`size-3.5 shrink-0 ${active ? "text-white/90" : "text-white/30"}`}
+                    className={cn(
+                      "size-3.5 shrink-0",
+                      active ? "text-primary-400" : "text-white/30",
+                    )}
                   />
                   <span className="text-13 font-medium">{label}</span>
                 </button>
@@ -129,16 +139,21 @@ export function SettingsModal({
 
         {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col border-l border-white/[0.06]">
-          <div className="flex items-start justify-between px-6 pt-5 pb-0">
-            <div>
-              <h1 className="text-15 font-semibold text-white/90">
-                {NAV_ITEMS.find((n) => n.key === page)?.label}
-              </h1>
-              <p className="mt-0.5 text-xs text-white/50">
-                {PAGE_DESCRIPTIONS[page]}
-              </p>
+          <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] px-6 py-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.04]">
+                <ActiveIcon className="size-4 text-white/70" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-15 font-semibold text-white/90">
+                  {activeItem?.label}
+                </h1>
+                <p className="truncate text-12 text-white/45">
+                  {PAGE_DESCRIPTIONS[page]}
+                </p>
+              </div>
             </div>
-            <GlassDialogClose className="flex h-7 w-7 items-center justify-center rounded-lg text-white/25 transition-colors pointer-fine:hover:bg-white/5 pointer-fine:hover:text-white/60">
+            <GlassDialogClose className="flex size-7 shrink-0 items-center justify-center rounded-lg text-white/25 transition-colors duration-150 pointer-fine:hover:bg-white/5 pointer-fine:hover:text-white/60">
               <X className="size-3.5" />
             </GlassDialogClose>
           </div>

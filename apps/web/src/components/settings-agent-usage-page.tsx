@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
 import { SectionLabel } from "@/components/settings-section-label";
+import {
+  SettingsButton,
+  SettingsCard,
+  SettingsError,
+  SettingsInstallCta,
+  SettingsLoading,
+  SettingsRow,
+  SettingsToggleRow,
+  StatusDot,
+} from "@/components/settings-ui";
 
 type CollectorStatusResult = {
   installed: boolean;
@@ -58,21 +68,15 @@ export function AgentUsagePage() {
     }
   };
 
-  if (!status) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <span className="text-13 text-white/50">Loading…</span>
-      </div>
-    );
-  }
+  if (!status) return <SettingsLoading />;
 
-  const dotColor = status.failed
-    ? "bg-red-400"
+  const dotTone = status.failed
+    ? "error"
     : status.needsConfig
-      ? "bg-amber-400"
+      ? "warning"
       : status.active
-        ? "bg-emerald-400"
-        : "bg-white/20";
+        ? "active"
+        : "neutral";
 
   const stateLabel = !status.installed
     ? "Not installed"
@@ -88,51 +92,33 @@ export function AgentUsagePage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Background timer</SectionLabel>
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-13 text-white/60">Status</span>
-            <div className="flex items-center gap-2">
-              <span className={`size-1.5 rounded-full ${dotColor}`} />
-              <span className="text-13 text-white/80">{stateLabel}</span>
-            </div>
-          </div>
+        <SettingsCard>
+          <SettingsRow label="Status">
+            <StatusDot tone={dotTone} />
+            <span className="text-13 text-white/80">{stateLabel}</span>
+          </SettingsRow>
 
           {status.installed && !status.needsConfig && (
             <>
-              <div className="border-t border-white/[0.06]" />
-              <div className="flex items-center justify-between">
-                <span className="text-13 text-white/60">Control</span>
-                <button
-                  type="button"
+              <SettingsRow label="Control">
+                <SettingsButton
                   onClick={() => run(() => window.electron!.collector.runNow())}
                   disabled={loading || status.failed}
-                  className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-12 font-medium text-white/70 transition-colors hover:bg-white/15 hover:text-white/90 disabled:opacity-40"
                 >
                   Run now
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-13 text-white/75">Run on a timer</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    run(() =>
-                      window.electron!.collector.setEnabled(!status.enabled),
-                    )
-                  }
-                  disabled={loading}
-                  className={`shrink-0 rounded-lg px-3 py-1.5 text-12 font-medium transition-colors disabled:opacity-40 ${
-                    status.enabled
-                      ? "bg-primary-500 text-white hover:bg-primary-400"
-                      : "bg-white/10 text-white/70 hover:bg-white/15 hover:text-white/90"
-                  }`}
-                >
-                  {status.enabled ? "Enabled" : "Disabled"}
-                </button>
-              </div>
+                </SettingsButton>
+              </SettingsRow>
+              <SettingsToggleRow
+                label="Run on a timer"
+                checked={status.enabled}
+                disabled={loading}
+                onCheckedChange={(enabled) =>
+                  run(() => window.electron!.collector.setEnabled(enabled))
+                }
+              />
             </>
           )}
-        </div>
+        </SettingsCard>
       </div>
 
       {status.needsConfig && (
@@ -144,20 +130,13 @@ export function AgentUsagePage() {
       )}
 
       {!status.installed && (
-        <div>
-          <button
-            type="button"
-            onClick={() => run(() => window.electron!.collector.install())}
-            disabled={loading}
-            className="w-full rounded-xl bg-primary-500 py-2.5 text-13 font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
-          >
-            {loading ? "Installing…" : "Install Agent Usage Tracking"}
-          </button>
-          <p className="mt-2 text-center text-11 text-white/50">
-            Installs a systemd timer that periodically pushes Claude Code token
-            usage and rate limits to Bessel.
-          </p>
-        </div>
+        <SettingsInstallCta
+          loading={loading}
+          onInstall={() => run(() => window.electron!.collector.install())}
+          label="Install Agent Usage Tracking"
+          loadingLabel="Installing…"
+          hint="Installs a systemd timer that periodically pushes Claude Code token usage and rate limits to Bessel."
+        />
       )}
 
       {status.installed && (
@@ -165,13 +144,13 @@ export function AgentUsagePage() {
           type="button"
           onClick={() => run(() => window.electron!.collector.install())}
           disabled={loading}
-          className="w-full text-center text-11 text-white/40 transition-colors hover:text-white/60 disabled:opacity-40"
+          className="w-full text-center text-11 text-white/40 transition-colors duration-150 hover:text-white/60 disabled:opacity-40"
         >
           {loading ? "Reinstalling…" : "Reinstall (updates bundled files)"}
         </button>
       )}
 
-      {error && <p className="text-12 text-red-400">{error}</p>}
+      <SettingsError>{error}</SettingsError>
     </div>
   );
 }

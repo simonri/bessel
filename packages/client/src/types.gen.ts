@@ -602,6 +602,16 @@ export type BodyImportTransactionsV1TransactionsImportPost = {
 };
 
 /**
+ * Body_upload_task_attachment_v1_tasks__task_id__attachments_post
+ */
+export type BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost = {
+  /**
+   * File
+   */
+  file: Blob | File;
+};
+
+/**
  * BulkCategorizeRequest
  */
 export type BulkCategorizeRequest = {
@@ -2403,6 +2413,54 @@ export type SleepSummaryResponse = {
 };
 
 /**
+ * TaskAttachmentSchema
+ */
+export type TaskAttachmentSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Task Id
+   *
+   * ID of the task this attachment belongs to.
+   */
+  task_id: string;
+  /**
+   * Filename
+   *
+   * Original filename.
+   */
+  filename: string;
+  /**
+   * Content Type
+   *
+   * MIME type of the file.
+   */
+  content_type: string;
+  /**
+   * Size Bytes
+   *
+   * File size in bytes.
+   */
+  size_bytes: number;
+};
+
+/**
  * TaskCompleteResponse
  */
 export type TaskCompleteResponse = {
@@ -2611,6 +2669,12 @@ export type TaskSchema = {
    * Parent task ID for recurring chain.
    */
   parent_task_id?: string | null;
+  /**
+   * Attachments
+   *
+   * Image attachments.
+   */
+  attachments?: Array<TaskAttachmentSchema>;
 };
 
 /**
@@ -5492,6 +5556,113 @@ export type UpdateTaskV1TasksTaskIdPatchResponses = {
 
 export type UpdateTaskV1TasksTaskIdPatchResponse =
   UpdateTaskV1TasksTaskIdPatchResponses[keyof UpdateTaskV1TasksTaskIdPatchResponses];
+
+export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData = {
+  body: BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}/attachments";
+};
+
+export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError =
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors[keyof UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors];
+
+export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: TaskAttachmentSchema;
+};
+
+export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse =
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses[keyof UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses];
+
+export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Task Id
+       */
+      task_id: string;
+      /**
+       * Attachment Id
+       */
+      attachment_id: string;
+    };
+    query?: never;
+    url: "/v1/tasks/{task_id}/attachments/{attachment_id}";
+  };
+
+export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError =
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors[keyof DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors];
+
+export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void;
+  };
+
+export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse =
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses[keyof DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses];
+
+export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Task Id
+       */
+      task_id: string;
+      /**
+       * Attachment Id
+       */
+      attachment_id: string;
+    };
+    query?: never;
+    url: "/v1/tasks/{task_id}/attachments/{attachment_id}/file";
+  };
+
+export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetError =
+  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors[keyof GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors];
+
+export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+  };
 
 export type CompleteTaskV1TasksTaskIdCompletePostData = {
   body?: never;

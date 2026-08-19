@@ -54,6 +54,7 @@ import {
   updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
+  uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
 } from "./transformers.gen.js";
 import type {
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
@@ -119,6 +120,9 @@ import type {
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors,
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses,
   DeleteTaskV1TasksTaskIdDeleteData,
   DeleteTaskV1TasksTaskIdDeleteErrors,
   DeleteTaskV1TasksTaskIdDeleteResponses,
@@ -164,6 +168,9 @@ import type {
   GetSleepSummaryV1HealthkitSleepSummaryGetData,
   GetSleepSummaryV1HealthkitSleepSummaryGetErrors,
   GetSleepSummaryV1HealthkitSleepSummaryGetResponses,
+  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData,
+  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors,
+  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses,
   GetTaskV1TasksTaskIdGetData,
   GetTaskV1TasksTaskIdGetErrors,
   GetTaskV1TasksTaskIdGetResponses,
@@ -295,6 +302,9 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
 } from "./types.gen.js";
 
 export type Options<
@@ -1748,6 +1758,75 @@ export const updateTaskV1TasksTaskIdPatch = <
       ...options.headers,
     },
   });
+
+/**
+ * Upload Task Attachment
+ */
+export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
+    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer:
+      uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/{task_id}/attachments",
+    ...options,
+    headers: {
+      "Content-Type": null,
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Task Attachment
+ */
+export const deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses,
+    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/{task_id}/attachments/{attachment_id}",
+    ...options,
+  });
+
+/**
+ * Get Task Attachment File
+ */
+export const getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData,
+      ThrowOnError
+    >,
+  ) =>
+    (options.client ?? client).get<
+      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses,
+      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/v1/tasks/{task_id}/attachments/{attachment_id}/file",
+      ...options,
+    });
 
 /**
  * Complete Task

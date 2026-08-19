@@ -3,22 +3,38 @@ from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response, UploadFile
 from sqlalchemy import false
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
+from api.exceptions import ResourceNotFound, ValidationError
 from api.models.project import Project
 from api.models.task import Task
+from api.models.task_attachment import TaskAttachment
 from api.postgres import AsyncSession, get_db_session
 from api.projects.repository import ProjectRepository
+from api.tasks.attachment_storage import delete_attachment_file, read_attachment_file, save_attachment_file
 from api.tasks.recurrence import compute_next_due_date
-from api.tasks.repository import TaskRepository
-from api.tasks.schemas import TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
+from api.tasks.repository import TaskAttachmentRepository, TaskRepository
+from api.tasks.schemas import TaskAttachmentSchema, TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024
+
+
+async def _get_owned_attachment(session: AsyncSession, task_id: UUID, attachment_id: UUID, user_id: UUID) -> TaskAttachment:
+  # Ownership is checked transitively through the task rather than a
+  # user_id column on the attachment itself — a task the user doesn't own
+  # 404s here before the attachment lookup even runs.
+  await TaskRepository.from_session(session).get_owned_or_404(task_id, user_id, not_found_message="Task not found")
+  attachment = await TaskAttachmentRepository.from_session(session).get_by_id(attachment_id)
+  if attachment is None or attachment.task_id != task_id:
+    raise ResourceNotFound("Attachment not found")
+  return attachment
 
 
 class TaskSortProperty(StrEnum):
@@ -111,6 +127,10 @@ async def create_task(
     task_data["position"] = (max_pos or 0) + 1000
   task = Task(**task_data)
   task.project_obj = project
+  # A freshly constructed (never queried) object's relationships are
+  # "unloaded" rather than known-empty — reading .attachments below would
+  # otherwise trigger a synchronous lazy-load, which errors under asyncio.
+  task.attachments = []
   await repo.create(task, flush=True)
   return TaskSchema.model_validate(task)
 
@@ -176,7 +196,80 @@ async def delete_task(
 ) -> None:
   repo = TaskRepository.from_session(session)
   task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  # Grabbed before delete — the ORM cascade removes the attachment rows, but
+  # the files on disk are only ours to clean up once the DB delete succeeds.
+  attachment_ids = [attachment.id for attachment in task.attachments]
   await repo.delete(task)
+  for attachment_id in attachment_ids:
+    await delete_attachment_file(attachment_id)
+
+
+@router.post(
+  "/{task_id}/attachments",
+  summary="Upload Task Attachment",
+  response_model=TaskAttachmentSchema,
+  status_code=201,
+)
+async def upload_task_attachment(
+  task_id: UUID,
+  file: UploadFile,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> TaskAttachmentSchema:
+  await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+
+  if not (file.content_type or "").startswith("image/"):
+    raise ValidationError("Only image attachments are supported.")
+
+  content = await file.read()
+  if len(content) > MAX_ATTACHMENT_SIZE_BYTES:
+    raise ValidationError("Image is too large (max 15 MB).")
+
+  attachment_repo = TaskAttachmentRepository.from_session(session)
+  attachment = await attachment_repo.create(
+    TaskAttachment(
+      task_id=task_id,
+      filename=file.filename or "image",
+      content_type=file.content_type or "application/octet-stream",
+      size_bytes=len(content),
+    ),
+    flush=True,
+  )
+  # Written only after the row is flushed, so the attachment's (now assigned)
+  # id is what names the file on disk.
+  await save_attachment_file(attachment.id, content)
+  return TaskAttachmentSchema.model_validate(attachment)
+
+
+@router.delete(
+  "/{task_id}/attachments/{attachment_id}",
+  summary="Delete Task Attachment",
+  status_code=204,
+)
+async def delete_task_attachment(
+  task_id: UUID,
+  attachment_id: UUID,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> None:
+  attachment = await _get_owned_attachment(session, task_id, attachment_id, current_user.id)
+  await TaskAttachmentRepository.from_session(session).delete(attachment, flush=True)
+  await delete_attachment_file(attachment_id)
+
+
+@router.get(
+  "/{task_id}/attachments/{attachment_id}/file",
+  summary="Get Task Attachment File",
+)
+async def get_task_attachment_file(
+  task_id: UUID,
+  attachment_id: UUID,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> Response:
+  attachment = await _get_owned_attachment(session, task_id, attachment_id, current_user.id)
+  content = await read_attachment_file(attachment_id)
+  return Response(content=content, media_type=attachment.content_type)
 
 
 @router.post(
@@ -228,6 +321,7 @@ async def complete_task(
       user_id=current_user.id,
     )
     next_task.project_obj = task.project_obj
+    next_task.attachments = []
     await repo.create(next_task, flush=True)
     next_task_schema = TaskSchema.model_validate(next_task)
 

@@ -768,6 +768,20 @@ export const Body_import_transactions_v1_transactions_import_postSchema = {
   title: "Body_import_transactions_v1_transactions_import_post",
 } as const;
 
+export const Body_upload_task_attachment_v1_tasks__task_id__attachments_postSchema =
+  {
+    properties: {
+      file: {
+        type: "string",
+        format: "binary",
+        title: "File",
+      },
+    },
+    type: "object",
+    required: ["file"],
+    title: "Body_upload_task_attachment_v1_tasks__task_id__attachments_post",
+  } as const;
+
 export const BulkCategorizeRequestSchema = {
   properties: {
     description: {
@@ -3657,6 +3671,68 @@ export const SleepSummaryResponseSchema = {
   title: "SleepSummaryResponse",
 } as const;
 
+export const TaskAttachmentSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    task_id: {
+      type: "string",
+      format: "uuid",
+      title: "Task Id",
+      description: "ID of the task this attachment belongs to.",
+    },
+    filename: {
+      type: "string",
+      title: "Filename",
+      description: "Original filename.",
+    },
+    content_type: {
+      type: "string",
+      title: "Content Type",
+      description: "MIME type of the file.",
+    },
+    size_bytes: {
+      type: "integer",
+      title: "Size Bytes",
+      description: "File size in bytes.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "task_id",
+    "filename",
+    "content_type",
+    "size_bytes",
+  ],
+  title: "TaskAttachmentSchema",
+} as const;
+
 export const TaskCompleteResponseSchema = {
   properties: {
     completed_task: {
@@ -4065,6 +4141,14 @@ export const TaskSchemaSchema = {
       ],
       title: "Parent Task Id",
       description: "Parent task ID for recurring chain.",
+    },
+    attachments: {
+      items: {
+        $ref: "#/components/schemas/TaskAttachmentSchema",
+      },
+      type: "array",
+      title: "Attachments",
+      description: "Image attachments.",
     },
   },
   type: "object",

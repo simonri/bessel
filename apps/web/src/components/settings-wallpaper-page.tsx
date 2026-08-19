@@ -40,8 +40,9 @@ export function WallpaperPage() {
           {WALLPAPER_OPTIONS.map(({ key, label, src, isVideo }) => (
             <button
               key={key}
+              type="button"
               onClick={() => update({ wallpaper: key })}
-              className={`relative overflow-hidden rounded-xl border-2 transition-[border-color,box-shadow] ${
+              className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-150 active:scale-[0.98] ${
                 selected === key
                   ? "border-primary-500 shadow-lg shadow-primary-900/30"
                   : "border-white/10 hover:border-white/25"
@@ -83,8 +84,9 @@ export function WallpaperPage() {
           {COLOR_OPTIONS.map(({ key, label }) => (
             <button
               key={key}
+              type="button"
               onClick={() => update({ wallpaper: key })}
-              className={`relative overflow-hidden rounded-xl border-2 transition-[border-color,box-shadow] ${
+              className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-150 active:scale-[0.98] ${
                 selected === key
                   ? "border-primary-500 shadow-lg shadow-primary-900/30"
                   : "border-white/10 hover:border-white/25"

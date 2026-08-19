@@ -1,8 +1,12 @@
-import { useState, useRef } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { format } from "date-fns";
-import { Plus } from "lucide-react";
+import type { TaskAttachmentSchema, TaskSchema } from "@bessel/client";
+import {
+  createTaskV1TasksPostMutation,
+  deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation,
+  listProjectsV1ProjectsGetOptions,
+  listTasksV1TasksGetQueryKey,
+  updateTaskV1TasksTaskIdPatchMutation,
+  uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -13,8 +17,12 @@ import {
   DialogTitle,
 } from "@bessel/ui/components/dialog";
 import { Input } from "@bessel/ui/components/input";
-import { Textarea } from "@bessel/ui/components/textarea";
 import { Label } from "@bessel/ui/components/label";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@bessel/ui/components/popover";
 import {
   Select,
   SelectContent,
@@ -22,19 +30,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@bessel/ui/components/popover";
-import {
-  createTaskV1TasksPostMutation,
-  updateTaskV1TasksTaskIdPatchMutation,
-  listTasksV1TasksGetQueryKey,
-  listProjectsV1ProjectsGetOptions,
-} from "@bessel/client";
-import type { TaskSchema } from "@bessel/client";
+import { Textarea } from "@bessel/ui/components/textarea";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  AttachmentBadge,
+  extractPastedImages,
+  type PendingAttachment,
+  PendingAttachmentBadge,
+} from "@/components/task-attachments";
 import { client } from "@/lib/client";
 
 const PRIORITIES = [
@@ -66,7 +74,9 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = value
-    ? projects.filter((p) => p.toLowerCase().includes(value.toLowerCase()) && p !== value)
+    ? projects.filter(
+        (p) => p.toLowerCase().includes(value.toLowerCase()) && p !== value,
+      )
     : projects;
 
   return (
@@ -90,7 +100,8 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
-          const target = (e as CustomEvent).detail?.originalEvent?.target as Node | null;
+          const target = (e as CustomEvent).detail?.originalEvent
+            ?.target as Node | null;
           if (inputRef.current?.contains(target)) e.preventDefault();
         }}
       >
@@ -140,8 +151,10 @@ function taskToFormValues(task?: TaskSchema) {
     project: task.project ?? "",
     area: task.area ?? "",
     frequency: task.is_recurring ? (task.rrule_frequency ?? "none") : "none",
-    rruleDayOfWeek: task.rrule_day_of_week != null ? String(task.rrule_day_of_week) : "",
-    rruleDayOfMonth: task.rrule_day_of_month != null ? String(task.rrule_day_of_month) : "",
+    rruleDayOfWeek:
+      task.rrule_day_of_week != null ? String(task.rrule_day_of_week) : "",
+    rruleDayOfMonth:
+      task.rrule_day_of_month != null ? String(task.rrule_day_of_month) : "",
   };
 }
 
@@ -162,6 +175,82 @@ export function TaskFormDialog({
     ...listProjectsV1ProjectsGetOptions({ client }),
   });
   const projects = projectsData.map((p) => p.name);
+
+  const [attachments, setAttachments] = useState<TaskAttachmentSchema[]>(
+    task?.attachments ?? [],
+  );
+  // Images pasted before the task exists yet (create mode) — held locally
+  // and uploaded once createMutation returns a real task_id to attach to.
+  const [pendingFiles, setPendingFiles] = useState<PendingAttachment[]>([]);
+  const pendingFilesRef = useRef(pendingFiles);
+  pendingFilesRef.current = pendingFiles;
+  useEffect(
+    () => () => {
+      // Dialog unmounted (e.g. cancelled) with unsaved pastes still queued —
+      // release their blob URLs rather than leaking them. Reads through a
+      // ref, not the pendingFiles closed over at mount time, so this always
+      // sees whatever was queued most recently.
+      for (const p of pendingFilesRef.current)
+        URL.revokeObjectURL(p.previewUrl);
+    },
+    [],
+  );
+
+  const uploadAttachmentMutation = useMutation({
+    ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
+  });
+  const deleteAttachmentMutation = useMutation({
+    ...deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation({
+      client,
+    }),
+  });
+
+  const handleDescriptionPaste = (
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+  ) => {
+    const files = extractPastedImages(e);
+    if (files.length === 0) return;
+    e.preventDefault();
+    if (isEditing) {
+      for (const file of files) {
+        uploadAttachmentMutation.mutate(
+          { client, path: { task_id: task.id }, body: { file } },
+          {
+            onSuccess: (attachment) =>
+              setAttachments((prev) => [...prev, attachment]),
+            onError: () => toast.error(`Failed to attach ${file.name}`),
+          },
+        );
+      }
+    } else {
+      setPendingFiles((prev) => [
+        ...prev,
+        ...files.map((file) => ({
+          file,
+          previewUrl: URL.createObjectURL(file),
+        })),
+      ]);
+    }
+  };
+
+  const removePendingFile = (previewUrl: string) => {
+    URL.revokeObjectURL(previewUrl);
+    setPendingFiles((prev) => prev.filter((p) => p.previewUrl !== previewUrl));
+  };
+
+  const removeExistingAttachment = (attachment: TaskAttachmentSchema) => {
+    deleteAttachmentMutation.mutate(
+      {
+        client,
+        path: { task_id: attachment.task_id, attachment_id: attachment.id },
+      },
+      {
+        onSuccess: () =>
+          setAttachments((prev) => prev.filter((a) => a.id !== attachment.id)),
+        onError: () => toast.error("Failed to remove attachment"),
+      },
+    );
+  };
 
   const form = useForm({
     defaultValues: taskToFormValues(task),
@@ -222,7 +311,20 @@ export function TaskFormDialog({
 
   const createMutation = useMutation({
     ...createTaskV1TasksPostMutation({ client }),
-    onSuccess: () => {
+    onSuccess: async (newTask) => {
+      for (const pending of pendingFiles) {
+        try {
+          await uploadAttachmentMutation.mutateAsync({
+            client,
+            path: { task_id: newTask.id },
+            body: { file: pending.file },
+          });
+        } catch {
+          toast.error(`Failed to attach ${pending.file.name}`);
+        } finally {
+          URL.revokeObjectURL(pending.previewUrl);
+        }
+      }
       void queryClient.invalidateQueries({ queryKey });
       toast.success("Task created");
       form.reset();
@@ -250,12 +352,17 @@ export function TaskFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? onOpenChange(true) : handleClose())}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
           <DialogDescription>
-            {isEditing ? "Update the task details below." : "Add a new task to your board."}
+            {isEditing
+              ? "Update the task details below."
+              : "Add a new task to your board."}
           </DialogDescription>
         </DialogHeader>
 
@@ -296,10 +403,34 @@ export function TaskFormDialog({
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  placeholder="Add more details…"
+                  onPaste={handleDescriptionPaste}
+                  placeholder="Add more details… (paste an image to attach it)"
                   rows={3}
                   className="resize-none"
                 />
+                {(attachments.length > 0 || pendingFiles.length > 0) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {attachments.map((attachment) => (
+                      <AttachmentBadge
+                        key={attachment.id}
+                        attachment={attachment}
+                        onDelete={() => removeExistingAttachment(attachment)}
+                        deleting={
+                          deleteAttachmentMutation.isPending &&
+                          deleteAttachmentMutation.variables?.path
+                            .attachment_id === attachment.id
+                        }
+                      />
+                    ))}
+                    {pendingFiles.map((pending) => (
+                      <PendingAttachmentBadge
+                        key={pending.previewUrl}
+                        pending={pending}
+                        onRemove={() => removePendingFile(pending.previewUrl)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           />
@@ -324,7 +455,10 @@ export function TaskFormDialog({
               children={(field) => (
                 <div className="space-y-2">
                   <Label>Priority</Label>
-                  <Select value={field.state.value} onValueChange={field.handleChange}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={field.handleChange}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -362,7 +496,9 @@ export function TaskFormDialog({
                   <Label>Area</Label>
                   <Select
                     value={field.state.value || "none"}
-                    onValueChange={(v) => field.handleChange(v === "none" ? "" : v)}
+                    onValueChange={(v) =>
+                      field.handleChange(v === "none" ? "" : v)
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select area" />
@@ -386,7 +522,10 @@ export function TaskFormDialog({
             children={(field) => (
               <div className="space-y-2">
                 <Label>Recurrence</Label>
-                <Select value={field.state.value} onValueChange={field.handleChange}>
+                <Select
+                  value={field.state.value}
+                  onValueChange={field.handleChange}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -414,13 +553,17 @@ export function TaskFormDialog({
                         <Label>Day of week</Label>
                         <Select
                           value={field.state.value || "none"}
-                          onValueChange={(v) => field.handleChange(v === "none" ? "" : v)}
+                          onValueChange={(v) =>
+                            field.handleChange(v === "none" ? "" : v)
+                          }
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select day" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">Same as due date</SelectItem>
+                            <SelectItem value="none">
+                              Same as due date
+                            </SelectItem>
                             {[
                               "Monday",
                               "Tuesday",
@@ -467,7 +610,8 @@ export function TaskFormDialog({
 
           {(createMutation.isError || updateMutation.isError) && (
             <p className="text-sm text-destructive">
-              {isEditing ? "Failed to update task." : "Failed to create task."} Please try again.
+              {isEditing ? "Failed to update task." : "Failed to create task."}{" "}
+              Please try again.
             </p>
           )}
 

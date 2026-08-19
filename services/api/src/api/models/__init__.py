@@ -19,6 +19,7 @@ from .recipe import Recipe
 from .security import Security
 from .security_price import SecurityPrice
 from .task import Task
+from .task_attachment import TaskAttachment
 from .trade import Trade
 from .transaction import Transaction
 from .tree_of_alpha_news import TreeOfAlphaNews
@@ -49,6 +50,7 @@ __all__ = [
   "Security",
   "SecurityPrice",
   "Task",
+  "TaskAttachment",
   "Trade",
   "Transaction",
   "TreeOfAlphaNews",

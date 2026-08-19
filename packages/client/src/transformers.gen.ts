@@ -47,6 +47,7 @@ import type {
   UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
 } from "./types.gen.js";
 
 const agentUsageStatusEntrySchemaResponseTransformer = (data: any) => {
@@ -536,6 +537,14 @@ export const updateRecipeV1RecipesRecipeIdPatchResponseTransformer = async (
   return data;
 };
 
+const taskAttachmentSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
 const taskSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
@@ -546,6 +555,11 @@ const taskSchemaSchemaResponseTransformer = (data: any) => {
   }
   if (data.completed_at) {
     data.completed_at = new Date(data.completed_at);
+  }
+  if (data.attachments) {
+    data.attachments = data.attachments.map((item: any) =>
+      taskAttachmentSchemaSchemaResponseTransformer(item),
+    );
   }
   return data;
 };
@@ -584,6 +598,14 @@ export const updateTaskV1TasksTaskIdPatchResponseTransformer = async (
   data = taskSchemaSchemaResponseTransformer(data);
   return data;
 };
+
+export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse> => {
+    data = taskAttachmentSchemaSchemaResponseTransformer(data);
+    return data;
+  };
 
 const taskCompleteResponseSchemaResponseTransformer = (data: any) => {
   data.completed_task = taskSchemaSchemaResponseTransformer(

@@ -5,6 +5,7 @@ from sqlalchemy import func, select, update
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.task import Task
+from api.models.task_attachment import TaskAttachment
 
 
 class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
@@ -25,3 +26,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
       select(Task.area).where(Task.area.is_not(None)).where(Task.user_id == user_id).group_by(Task.area).order_by(func.count().desc())
     )
     return [row[0] for row in result.all()]
+
+
+class TaskAttachmentRepository(RepositoryBase[TaskAttachment], RepositoryIDMixin[TaskAttachment, UUID]):
+  model = TaskAttachment

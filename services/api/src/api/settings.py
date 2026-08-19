@@ -85,6 +85,11 @@ class Settings(BaseSettings):
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000
 
+  # Local file storage for task image attachments. In production this is a
+  # mounted volume (see docker-compose.prod.yml) so uploads survive container
+  # redeploys.
+  TASK_ATTACHMENTS_DIR: str = Field(default="./data/task_attachments")
+
   model_config = SettingsConfigDict(env_prefix="bessel_", env_file_encoding="utf-8", case_sensitive=False, env_file=env_file, extra="allow")
 
   def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:

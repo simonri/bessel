@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
 from api.models.project import Project
+from api.models.task_attachment import TaskAttachment
 
 
 class Task(RecordModel):
@@ -37,6 +38,10 @@ class Task(RecordModel):
   parent_task_id: Mapped[str | None] = mapped_column(Uuid, ForeignKey("tasks.id"), nullable=True)
 
   user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+
+  attachments: Mapped[list[TaskAttachment]] = relationship(
+    "TaskAttachment", lazy="selectin", cascade="all, delete-orphan", order_by="TaskAttachment.created_at"
+  )
 
   @property
   def project(self) -> str | None:

@@ -1,6 +1,6 @@
 import {
-  deleteDeviceV1DevicesDeviceIdDeleteMutation,
   type DeviceSchema,
+  deleteDeviceV1DevicesDeviceIdDeleteMutation,
   listDevicesV1DevicesGetOptions,
   listDevicesV1DevicesGetQueryKey,
   updateDeviceV1DevicesDeviceIdPatchMutation,
@@ -54,7 +54,11 @@ export function DevicesPage() {
       return;
     }
     renameMutation.mutate(
-      { client, path: { device_id: editingId }, body: { name: editName.trim() } },
+      {
+        client,
+        path: { device_id: editingId },
+        body: { name: editName.trim() },
+      },
       { onSuccess: () => setEditingId(null) },
     );
   };
@@ -63,55 +67,66 @@ export function DevicesPage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Devices</SectionLabel>
-        <p className="mb-3 text-12 text-white/50">
-          Each device keeps its own project paths and SSH hosts. Remove a
-          device to forget its saved locations.
+        <p className="mb-3 text-12 text-white/45">
+          Each device keeps its own project paths and SSH hosts. Remove a device
+          to forget its saved locations.
         </p>
-        <div className="space-y-2">
-          {devices.length === 0 && (
+
+        {devices.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-white/10 py-8 text-center">
             <p className="text-13 text-white/40">No devices yet</p>
-          )}
-          {devices.map((d) => (
-            <div
-              key={d.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3"
-            >
-              {editingId === d.id ? (
-                <input
-                  autoFocus
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                  onBlur={saveEdit}
-                  className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-13 text-white/80 outline-none focus:border-primary-500/40"
-                />
-              ) : (
-                <div className="min-w-0">
-                  <p className="truncate text-13 text-white/80">{d.name}</p>
-                  <p className="text-11 text-white/40">
-                    Last active {formatLastSeen(d.last_seen_at)}
-                  </p>
+          </div>
+        )}
+
+        {devices.length > 0 && (
+          <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+            {devices.map((d) => (
+              <div
+                key={d.id}
+                className="flex items-center justify-between gap-3 px-4 py-3"
+              >
+                {editingId === d.id ? (
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                    onBlur={saveEdit}
+                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-13 text-white/80 outline-none transition-colors focus:border-primary-500/40"
+                  />
+                ) : (
+                  <div className="min-w-0">
+                    <p className="truncate text-13 text-white/80">{d.name}</p>
+                    <p className="text-11 text-white/40">
+                      Last active {formatLastSeen(d.last_seen_at)}
+                    </p>
+                  </div>
+                )}
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(d)}
+                    className="rounded-lg p-1.5 text-white/30 transition-colors duration-150 hover:bg-white/5 hover:text-white/70"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      deleteMutation.mutate({
+                        client,
+                        path: { device_id: d.id },
+                      })
+                    }
+                    className="rounded-lg p-1.5 text-white/30 transition-colors duration-150 hover:bg-red-500/10 hover:text-red-400"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
-              )}
-              <div className="flex shrink-0 items-center gap-1">
-                <button
-                  onClick={() => startEdit(d)}
-                  className="rounded p-1.5 text-white/30 transition-colors hover:bg-white/5 hover:text-white/70"
-                >
-                  <Pencil className="size-3.5" />
-                </button>
-                <button
-                  onClick={() =>
-                    deleteMutation.mutate({ client, path: { device_id: d.id } })
-                  }
-                  className="rounded p-1.5 text-white/30 transition-colors hover:bg-white/5 hover:text-red-400"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

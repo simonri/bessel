@@ -1,6 +1,21 @@
-import { useState } from "react";
+import type { TaskSchema } from "@bessel/client";
+import {
+  completeTaskV1TasksTaskIdCompletePostMutation,
+  deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation,
+  deleteTaskV1TasksTaskIdDeleteMutation,
+  getTaskV1TasksTaskIdGetOptions,
+  reopenTaskV1TasksTaskIdReopenPostMutation,
+  updateTaskV1TasksTaskIdPatchMutation,
+} from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@bessel/ui/components/dialog";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 import {
   Calendar,
   CheckCircle2,
@@ -13,30 +28,23 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import type { TaskSchema } from "@bessel/client";
-import {
-  getTaskV1TasksTaskIdGetOptions,
-  completeTaskV1TasksTaskIdCompletePostMutation,
-  reopenTaskV1TasksTaskIdReopenPostMutation,
-  updateTaskV1TasksTaskIdPatchMutation,
-  deleteTaskV1TasksTaskIdDeleteMutation,
-} from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@bessel/ui/components/dialog";
+import { useState } from "react";
+import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { TaskFormDialog } from "@/components/create-task-dialog";
+import { AttachmentBadge } from "@/components/task-attachments";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
-import {
-  STATUS_CONFIG,
-  PRIORITY_CONFIG,
-  formatDueDate,
-  getDueDateColor,
-  formatRecurrence,
-  copyText,
-  buildTaskPrompt,
-  isDoneStatus,
-} from "@/lib/task-format";
 import { client } from "@/lib/client";
+import {
+  buildTaskPrompt,
+  copyText,
+  formatDueDate,
+  formatRecurrence,
+  getDueDateColor,
+  isDoneStatus,
+  PRIORITY_CONFIG,
+  STATUS_CONFIG,
+} from "@/lib/task-format";
 
 export function TaskDetailDialog({
   task,
@@ -46,6 +54,8 @@ export function TaskDetailDialog({
   onEdit,
   onStatusChange,
   onPriorityChange,
+  onDeleteAttachment,
+  deletingAttachmentId,
   completePending,
   reopenPending,
 }: {
@@ -56,6 +66,8 @@ export function TaskDetailDialog({
   onEdit: () => void;
   onStatusChange: (status: string) => void;
   onPriorityChange: (priority: number) => void;
+  onDeleteAttachment: (attachmentId: string) => void;
+  deletingAttachmentId: string | null;
   completePending: boolean;
   reopenPending: boolean;
 }) {
@@ -71,7 +83,11 @@ export function TaskDetailDialog({
           className="text-base leading-snug pr-6 break-words"
           onCopy={(e) => {
             e.preventDefault();
-            const text = window.getSelection()?.toString().replace(/[\n\r]+$/, "") ?? "";
+            const text =
+              window
+                .getSelection()
+                ?.toString()
+                .replace(/[\n\r]+$/, "") ?? "";
             e.clipboardData.setData("text/plain", text);
           }}
         >
@@ -191,12 +207,33 @@ export function TaskDetailDialog({
             </p>
           </div>
         )}
+
+        {/* Attachments */}
+        {(task.attachments?.length ?? 0) > 0 && (
+          <div className={task.description ? "" : "border-t pt-3"}>
+            <div className="flex flex-wrap gap-1.5">
+              {task.attachments?.map((attachment) => (
+                <AttachmentBadge
+                  key={attachment.id}
+                  attachment={attachment}
+                  onDelete={() => onDeleteAttachment(attachment.id)}
+                  deleting={deletingAttachmentId === attachment.id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer actions */}
       <div className="border-t px-5 py-3 flex items-center gap-2">
         {!isDone ? (
-          <Button size="sm" className="text-xs" onClick={onComplete} disabled={completePending}>
+          <Button
+            size="sm"
+            className="text-xs"
+            onClick={onComplete}
+            disabled={completePending}
+          >
             <CheckCircle2 className="size-3.5 mr-1.5" />
             Complete
           </Button>
@@ -212,12 +249,7 @@ export function TaskDetailDialog({
             Reopen
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs"
-          onClick={onEdit}
-        >
+        <Button variant="ghost" size="sm" className="text-xs" onClick={onEdit}>
           <Pencil className="size-3.5 mr-1.5" />
           Edit
         </Button>
@@ -266,7 +298,10 @@ export function TaskDetailDialogController({
   const cache = useTaskCacheHelpers();
 
   const { data: task } = useQuery({
-    ...getTaskV1TasksTaskIdGetOptions({ client, path: { task_id: taskId ?? "" } }),
+    ...getTaskV1TasksTaskIdGetOptions({
+      client,
+      path: { task_id: taskId ?? "" },
+    }),
     enabled: taskId != null,
   });
 
@@ -274,7 +309,11 @@ export function TaskDetailDialogController({
     ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
     onMutate: async ({ path }) => {
       const previous = await cache.cancelAndSnapshot();
-      cache.patchTask(path.task_id, (t) => ({ ...t, status: "done", completed_at: new Date() }));
+      cache.patchTask(path.task_id, (t) => ({
+        ...t,
+        status: "done",
+        completed_at: new Date(),
+      }));
       onOpenChange(false);
       return { previous };
     },
@@ -289,7 +328,11 @@ export function TaskDetailDialogController({
     ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
     onMutate: async ({ path }) => {
       const previous = await cache.cancelAndSnapshot();
-      cache.patchTask(path.task_id, (t) => ({ ...t, status: "todo", completed_at: null }));
+      cache.patchTask(path.task_id, (t) => ({
+        ...t,
+        status: "todo",
+        completed_at: null,
+      }));
       return { previous };
     },
     onError: (_err, _vars, context) => {
@@ -329,25 +372,72 @@ export function TaskDetailDialogController({
     onSettled: () => cache.invalidateAll(),
   });
 
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<
+    string | null
+  >(null);
+  const deleteAttachmentMutation = useMutation({
+    ...deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation({
+      client,
+    }),
+    onMutate: async ({ path }) => {
+      setDeletingAttachmentId(path.attachment_id);
+      const previous = await cache.cancelAndSnapshot();
+      cache.patchTask(path.task_id, (t) => ({
+        ...t,
+        attachments: (t.attachments ?? []).filter(
+          (a) => a.id !== path.attachment_id,
+        ),
+      }));
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      cache.rollback(context?.previous);
+      toast.error("Failed to remove attachment");
+    },
+    onSettled: () => {
+      setDeletingAttachmentId(null);
+      cache.invalidateAll();
+    },
+  });
+
   return (
     <>
       <Dialog open={taskId != null && !!task} onOpenChange={onOpenChange}>
         {task && (
           <TaskDetailDialog
             task={task}
-            onComplete={() => completeMutation.mutate({ client, path: { task_id: task.id } })}
-            onReopen={() => reopenMutation.mutate({ client, path: { task_id: task.id } })}
+            onComplete={() =>
+              completeMutation.mutate({ client, path: { task_id: task.id } })
+            }
+            onReopen={() =>
+              reopenMutation.mutate({ client, path: { task_id: task.id } })
+            }
             onDelete={() => setConfirmDelete(true)}
             onEdit={() => {
               setEditingTask(task);
               onOpenChange(false);
             }}
             onStatusChange={(s) =>
-              updateMutation.mutate({ client, path: { task_id: task.id }, body: { status: s as "todo" } })
+              updateMutation.mutate({
+                client,
+                path: { task_id: task.id },
+                body: { status: s as "todo" },
+              })
             }
             onPriorityChange={(p) =>
-              updateMutation.mutate({ client, path: { task_id: task.id }, body: { priority: p } })
+              updateMutation.mutate({
+                client,
+                path: { task_id: task.id },
+                body: { priority: p },
+              })
             }
+            onDeleteAttachment={(attachmentId) =>
+              deleteAttachmentMutation.mutate({
+                client,
+                path: { task_id: task.id, attachment_id: attachmentId },
+              })
+            }
+            deletingAttachmentId={deletingAttachmentId}
             completePending={completeMutation.isPending}
             reopenPending={reopenMutation.isPending}
           />
@@ -367,10 +457,13 @@ export function TaskDetailDialogController({
         title="Delete task?"
         description={
           <>
-            &ldquo;{task?.title}&rdquo; will be permanently removed. This can&rsquo;t be undone.
+            &ldquo;{task?.title}&rdquo; will be permanently removed. This
+            can&rsquo;t be undone.
           </>
         }
-        onConfirm={() => task && deleteMutation.mutate({ client, path: { task_id: task.id } })}
+        onConfirm={() =>
+          task && deleteMutation.mutate({ client, path: { task_id: task.id } })
+        }
         isPending={deleteMutation.isPending}
       />
     </>

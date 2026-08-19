@@ -19,8 +19,9 @@ export function ThemePage() {
           return (
             <button
               key={key}
+              type="button"
               onClick={() => update({ theme: key })}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-13 font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-13 font-medium transition-all duration-150 active:scale-[0.98] ${
                 isSelected
                   ? "border-white/20 bg-white/10 text-white"
                   : "border-white/[0.07] text-white/50 hover:border-white/15 hover:text-white/70"

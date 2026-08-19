@@ -94,19 +94,11 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
           <MoreHorizontal className="size-3" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={8}
-        className={cn(
-          glassSurface({ weight: "heavy" }),
-          "min-w-40 border-white/10 text-white/80 shadow-2xl",
-        )}
-      >
+      <DropdownMenuContent align="end" className="min-w-40">
         {workspaces.map((ws) =>
           ws.id === entry.workspaceId ? null : (
             <DropdownMenuItem
               key={ws.id}
-              className="text-white/70 focus:bg-white/10 focus:text-white/90"
               onClick={() => moveWindowToWorkspace(entry.id, ws.id)}
             >
               Move to {sessionLabel(ws, windowsByWorkspace.get(ws.id) ?? [])}

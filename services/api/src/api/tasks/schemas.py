@@ -26,6 +26,13 @@ class RruleFrequency(StrEnum):
   yearly = "yearly"
 
 
+class TaskAttachmentSchema(IDSchema, TimestampedSchema):
+  task_id: UUID = Field(description="ID of the task this attachment belongs to.")
+  filename: str = Field(description="Original filename.")
+  content_type: str = Field(description="MIME type of the file.")
+  size_bytes: int = Field(description="File size in bytes.")
+
+
 class TaskSchema(IDSchema, TimestampedSchema):
   title: str = Field(description="Task title.")
   description: str | None = Field(default=None, description="Task description.")
@@ -47,6 +54,8 @@ class TaskSchema(IDSchema, TimestampedSchema):
   rrule_day_of_month: int | None = Field(default=None, description="Day of month for monthly recurrence (1-31).")
 
   parent_task_id: UUID | None = Field(default=None, description="Parent task ID for recurring chain.")
+
+  attachments: list[TaskAttachmentSchema] = Field(default_factory=list, description="Image attachments.")
 
 
 class TaskCreate(Schema):

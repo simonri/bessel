@@ -31,6 +31,7 @@ import {
   deleteProjectV1ProjectsProjectIdDelete,
   deleteRecipeV1RecipesRecipeIdDelete,
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
+  deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete,
   deleteTaskV1TasksTaskIdDelete,
   deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
@@ -47,6 +48,7 @@ import {
   getMeV1AuthMeGet,
   getRecipeV1RecipesRecipeIdGet,
   getSleepSummaryV1HealthkitSleepSummaryGet,
+  getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
   getTaskV1TasksTaskIdGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
@@ -94,6 +96,7 @@ import {
   updateTaskV1TasksTaskIdPatch,
   updateTradeV1InvestmentsTradesTradeIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
+  uploadTaskAttachmentV1TasksTaskIdAttachmentsPost,
 } from "../sdk.gen.js";
 import type {
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
@@ -159,6 +162,9 @@ import type {
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError,
   DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse,
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
+  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
   DeleteTaskV1TasksTaskIdDeleteData,
   DeleteTaskV1TasksTaskIdDeleteError,
   DeleteTaskV1TasksTaskIdDeleteResponse,
@@ -204,6 +210,8 @@ import type {
   GetSleepSummaryV1HealthkitSleepSummaryGetData,
   GetSleepSummaryV1HealthkitSleepSummaryGetError,
   GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
+  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData,
+  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetError,
   GetTaskV1TasksTaskIdGetData,
   GetTaskV1TasksTaskIdGetError,
   GetTaskV1TasksTaskIdGetResponse,
@@ -334,6 +342,9 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
 } from "../types.gen.js";
 
 export type QueryKey<TOptions extends Options> = [
@@ -2881,6 +2892,108 @@ export const updateTaskV1TasksTaskIdPatchMutation = (
   };
   return mutationOptions;
 };
+
+/**
+ * Upload Task Attachment
+ */
+export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation = (
+  options?: Partial<
+    Options<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData>
+  >,
+): UseMutationOptions<
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
+  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
+  Options<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
+    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
+    Options<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await uploadTaskAttachmentV1TasksTaskIdAttachmentsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Task Attachment
+ */
+export const deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation =
+  (
+    options?: Partial<
+      Options<DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData>
+    >,
+  ): UseMutationOptions<
+    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
+    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
+    Options<DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
+      DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
+      Options<DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+export const getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetQueryKey =
+  (
+    options: Options<GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData>,
+  ) =>
+    createQueryKey(
+      "getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet",
+      options,
+    );
+
+/**
+ * Get Task Attachment File
+ */
+export const getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetOptions =
+  (
+    options: Options<GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData>,
+  ) =>
+    queryOptions<
+      unknown,
+      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetError,
+      unknown,
+      ReturnType<
+        typeof getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet(
+            {
+              ...options,
+              ...queryKey[0],
+              signal,
+              throwOnError: true,
+            },
+          );
+        return data;
+      },
+      queryKey:
+        getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetQueryKey(
+          options,
+        ),
+    });
 
 /**
  * Complete Task

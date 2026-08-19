@@ -50,11 +50,7 @@ const ROW_ACTIVE = "bg-white/12 text-white/90";
 const ROW_IDLE = "text-white/55 hover:bg-white/[0.06] hover:text-white/75";
 const ICON_BUTTON =
   "flex size-5 shrink-0 items-center justify-center rounded text-white/35 transition-[background-color,color,opacity,transform] duration-150 hover:bg-white/[0.1] hover:text-white/80 active:scale-95 motion-reduce:active:scale-100";
-const MENU_SURFACE = cn(
-  glassSurface({ weight: "heavy" }),
-  "min-w-40 border-white/10 text-white/80 shadow-2xl",
-);
-const MENU_ITEM = "text-white/70 focus:bg-white/10 focus:text-white/90";
+const MENU_SURFACE = cn(glassSurface({ weight: "heavy" }), "min-w-44");
 
 const COLLAPSED_KEY = "bessel:collapsedProjects";
 const NO_WINDOWS: WindowEntry[] = [];
@@ -266,7 +262,6 @@ function SessionRow({
         }}
       >
         <ContextMenuItem
-          className={MENU_ITEM}
           onSelect={() => {
             pendingRenameRef.current = true;
           }}
@@ -275,7 +270,7 @@ function SessionRow({
           Rename
         </ContextMenuItem>
         <ContextMenuSub>
-          <ContextMenuSubTrigger className={MENU_ITEM}>
+          <ContextMenuSubTrigger>
             <FolderInput className="size-3.5" />
             Move to project
           </ContextMenuSubTrigger>
@@ -284,7 +279,6 @@ function SessionRow({
               <ContextMenuItem
                 key={p.id}
                 disabled={p.id === workspace.projectId}
-                className={MENU_ITEM}
                 onSelect={() => setWorkspaceProject(workspace.id, p.id)}
               >
                 {p.name}
@@ -293,7 +287,6 @@ function SessionRow({
             {projects.length > 0 && <ContextMenuSeparator />}
             <ContextMenuItem
               disabled={!workspace.projectId}
-              className={MENU_ITEM}
               onSelect={() => setWorkspaceProject(workspace.id, null)}
             >
               No project
@@ -301,11 +294,11 @@ function SessionRow({
           </ContextMenuSubContent>
         </ContextMenuSub>
         <ContextMenuItem
+          variant="destructive"
           disabled={!canClose}
-          className="text-red-400/80 focus:bg-white/10 focus:text-red-400"
           onSelect={() => removeWorkspace(workspace.id)}
         >
-          <X className="size-3.5 text-red-400/80" />
+          <X className="size-3.5" />
           Close
         </ContextMenuItem>
       </ContextMenuContent>

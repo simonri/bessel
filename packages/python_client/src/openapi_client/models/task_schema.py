@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 from uuid import UUID
 
 from attrs import define as _attrs_define
@@ -11,6 +11,10 @@ from attrs import field as _attrs_field
 from ..models.rrule_frequency import RruleFrequency
 from ..models.task_status import TaskStatus
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+  from ..models.task_attachment_schema import TaskAttachmentSchema
+
 
 T = TypeVar("T", bound="TaskSchema")
 
@@ -38,6 +42,7 @@ class TaskSchema:
       rrule_day_of_week (int | None | Unset): Day of week for weekly recurrence (0=Mon, 6=Sun).
       rrule_day_of_month (int | None | Unset): Day of month for monthly recurrence (1-31).
       parent_task_id (None | Unset | UUID): Parent task ID for recurring chain.
+      attachments (list[TaskAttachmentSchema] | Unset): Image attachments.
   """
 
   created_at: datetime.datetime
@@ -59,6 +64,7 @@ class TaskSchema:
   rrule_day_of_week: int | None | Unset = UNSET
   rrule_day_of_month: int | None | Unset = UNSET
   parent_task_id: None | Unset | UUID = UNSET
+  attachments: list[TaskAttachmentSchema] | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -161,6 +167,13 @@ class TaskSchema:
     else:
       parent_task_id = self.parent_task_id
 
+    attachments: list[dict[str, Any]] | Unset = UNSET
+    if not isinstance(self.attachments, Unset):
+      attachments = []
+      for attachments_item_data in self.attachments:
+        attachments_item = attachments_item_data.to_dict()
+        attachments.append(attachments_item)
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -201,11 +214,15 @@ class TaskSchema:
       field_dict["rrule_day_of_month"] = rrule_day_of_month
     if parent_task_id is not UNSET:
       field_dict["parent_task_id"] = parent_task_id
+    if attachments is not UNSET:
+      field_dict["attachments"] = attachments
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.task_attachment_schema import TaskAttachmentSchema
+
     d = dict(src_dict)
     created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
@@ -380,6 +397,15 @@ class TaskSchema:
 
     parent_task_id = _parse_parent_task_id(d.pop("parent_task_id", UNSET))
 
+    _attachments = d.pop("attachments", UNSET)
+    attachments: list[TaskAttachmentSchema] | Unset = UNSET
+    if _attachments is not UNSET:
+      attachments = []
+      for attachments_item_data in _attachments:
+        attachments_item = TaskAttachmentSchema.from_dict(attachments_item_data)
+
+        attachments.append(attachments_item)
+
     task_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -400,6 +426,7 @@ class TaskSchema:
       rrule_day_of_week=rrule_day_of_week,
       rrule_day_of_month=rrule_day_of_month,
       parent_task_id=parent_task_id,
+      attachments=attachments,
     )
 
     task_schema.additional_properties = d

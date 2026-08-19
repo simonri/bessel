@@ -26,6 +26,7 @@ from .bank_account_schema import BankAccountSchema
 from .bank_account_sort_property import BankAccountSortProperty
 from .bank_account_update import BankAccountUpdate
 from .body_import_transactions_v1_transactions_import_post import BodyImportTransactionsV1TransactionsImportPost
+from .body_upload_task_attachment_v1_tasks_task_id_attachments_post import BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost
 from .bulk_categorize_request import BulkCategorizeRequest
 from .bulk_categorize_response import BulkCategorizeResponse
 from .bulk_delete_request import BulkDeleteRequest
@@ -107,6 +108,7 @@ from .sleep_daily_entry import SleepDailyEntry
 from .sleep_daily_response import SleepDailyResponse
 from .sleep_stage_summary import SleepStageSummary
 from .sleep_summary_response import SleepSummaryResponse
+from .task_attachment_schema import TaskAttachmentSchema
 from .task_complete_response import TaskCompleteResponse
 from .task_create import TaskCreate
 from .task_list_response import TaskListResponse
@@ -158,6 +160,7 @@ __all__ = (
   "BankAccountSortProperty",
   "BankAccountUpdate",
   "BodyImportTransactionsV1TransactionsImportPost",
+  "BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost",
   "BulkCategorizeRequest",
   "BulkCategorizeResponse",
   "BulkDeleteRequest",
@@ -235,6 +238,7 @@ __all__ = (
   "SleepDailyResponse",
   "SleepStageSummary",
   "SleepSummaryResponse",
+  "TaskAttachmentSchema",
   "TaskCompleteResponse",
   "TaskCreate",
   "TaskListResponse",
