@@ -201,6 +201,8 @@ contextBridge.exposeInMainWorld("electron", {
       ipcRenderer.invoke("vault:trash", root, rel),
     reveal: (root: string, rel: string): Promise<void> =>
       ipcRenderer.invoke("vault:reveal", root, rel),
+    copyImage: (root: string, rel: string): Promise<void> =>
+      ipcRenderer.invoke("vault:copy-image", root, rel),
     watch: (root: string): Promise<void> =>
       ipcRenderer.invoke("vault:watch", root),
     unwatch: (root: string): Promise<void> =>

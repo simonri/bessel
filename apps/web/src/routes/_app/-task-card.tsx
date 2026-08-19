@@ -1,6 +1,7 @@
+import type { TaskSchema } from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { TaskSchema } from "@bessel/client";
 import { Calendar, Circle, CircleCheck, Flag, Repeat } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -118,9 +119,11 @@ export function TaskCard({
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
-        <button
+        <Button
           type="button"
-          className="mt-0.5 shrink-0 text-white/25 pointer-fine:hover:text-emerald-400 transition-[color,transform] duration-150 active:scale-90 motion-reduce:active:scale-100"
+          variant="ghost"
+          size="iconSm"
+          className="mt-0.5 size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-white/25 pointer-fine:hover:text-emerald-400 active:scale-90 motion-reduce:active:scale-100"
           onClick={(e) => {
             e.stopPropagation();
             handleComplete();
@@ -131,7 +134,7 @@ export function TaskCard({
           ) : (
             <Circle className="size-4" />
           )}
-        </button>
+        </Button>
         <TaskCardMeta task={task} />
       </div>
     </div>

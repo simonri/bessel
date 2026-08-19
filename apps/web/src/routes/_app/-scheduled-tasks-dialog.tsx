@@ -1,4 +1,5 @@
 import type { TaskSchema } from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
 import {
   DialogContent,
   DialogDescription,
@@ -53,16 +54,18 @@ export function ScheduledTasksDialog({
                 onClick={() => onSelectTask(task)}
               >
                 <div className="flex items-start gap-2.5">
-                  <button
+                  <Button
                     type="button"
-                    className="mt-0.5 shrink-0 text-white/25 hover:text-emerald-400 transition-colors"
+                    variant="ghost"
+                    size="iconSm"
+                    className="mt-0.5 size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-emerald-400"
                     onClick={(e) => {
                       e.stopPropagation();
                       onCompleteTask(task);
                     }}
                   >
                     <Circle className="size-4" />
-                  </button>
+                  </Button>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="text-13 font-medium text-white/85 leading-snug">
                       {task.title}

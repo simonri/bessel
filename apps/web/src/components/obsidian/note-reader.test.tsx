@@ -124,3 +124,23 @@ describe("NoteReader — wikilinks", () => {
     expect(onOpenLink).toHaveBeenCalledWith("Other Note", { newTab: false });
   });
 });
+
+describe("NoteReader — images", () => {
+  it("renders Markdown images as selectable controls", () => {
+    const { getByRole } = render(
+      createElement(NoteReader, {
+        content: "![Photo](photo.png)",
+        fromRel: "N.md",
+        files: [],
+        root: "/v",
+        onOpenLink: () => {},
+      }),
+    );
+
+    const image = getByRole("img", { name: "Photo" });
+    const button = image.closest("button");
+    expect(button).not.toBeNull();
+    fireEvent.pointerDown(image);
+    expect(button?.dataset.selected).toBe("true");
+  });
+});

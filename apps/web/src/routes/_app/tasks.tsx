@@ -564,31 +564,36 @@ function Tasks() {
         </div>
         <div className="flex items-center gap-2">
           {repeatingTasks.length > 0 && (
-            <button
+            <Button
               type="button"
-              className="flex items-center gap-1.5 text-11 text-white/50 hover:text-violet-400 transition-colors"
+              variant="ghost"
+              size="xs"
+              className="h-auto gap-1.5 px-0 text-11 text-white/50 hover:bg-transparent hover:text-violet-400"
               onClick={() => setRepeatingOpen(true)}
             >
               <Repeat className="size-3.5" />
               {repeatingTasks.length} repeated
-            </button>
+            </Button>
           )}
           <CreateTaskDialog />
         </div>
       </div>
 
       {/* View tabs + project filter */}
-      <div className="flex items-center justify-between border-b border-white/10 shrink-0 px-3">
-        <div className="flex items-center">
+      <div className="flex items-center justify-between shrink-0 px-3 pb-3">
+        <div className="flex items-center gap-1">
           {VIEW_TABS.map((tab) => (
-            <button
+            <Button
               key={tab.value}
               type="button"
-              className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+              variant="ghost"
+              size="sm"
+              shape="pill"
+              className={
                 viewTab === tab.value
-                  ? "border-white/60 text-white/90"
-                  : "border-transparent text-white/50 hover:text-white/60"
-              }`}
+                  ? "bg-white/10 text-white/90 hover:bg-white/10"
+                  : "text-white/50 hover:bg-white/5 hover:text-white/70"
+              }
               onClick={() => {
                 setViewTab(tab.value);
                 // "All" should mean every task, not whatever project was
@@ -599,7 +604,7 @@ function Tasks() {
               }}
             >
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
         {projects.length > 0 && (
@@ -775,28 +780,32 @@ function Tasks() {
                         }
                       >
                         {isDone ? (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="iconSm"
                             title="Reopen"
-                            className="text-white/25 hover:text-white/70 transition-colors shrink-0"
+                            className="size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-white/70"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleReopenTask(task);
                             }}
                           >
                             <RotateCcw className="size-4" />
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
                             type="button"
-                            className="text-white/25 hover:text-emerald-400 transition-colors shrink-0"
+                            variant="ghost"
+                            size="iconSm"
+                            className="size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-emerald-400"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCompleteTask(task);
                             }}
                           >
                             <Circle className="size-4" />
-                          </button>
+                          </Button>
                         )}
                         <div className="min-w-0 flex-1">
                           <span

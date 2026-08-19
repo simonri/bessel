@@ -109,19 +109,21 @@ export function TaskDetailDialog({
               const sc = STATUS_CONFIG[s];
               const Icon = sc.icon;
               return (
-                <button
+                <Button
                   key={s}
                   type="button"
-                  className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+                  variant="ghost"
+                  size="xs"
+                  className={`h-auto rounded-md border px-2 py-1 font-medium ${
                     status === s
-                      ? "border-foreground/20 bg-accent"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      ? "border-foreground/20 bg-accent hover:bg-accent"
+                      : "border-transparent text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                   }`}
                   onClick={() => onStatusChange(s)}
                 >
                   <Icon className={`size-3 ${sc.color}`} />
                   {sc.label}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -132,13 +134,15 @@ export function TaskDetailDialog({
             {[0, 1, 2, 3, 4].map((p) => {
               const pc = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG[0];
               return (
-                <button
+                <Button
                   key={p}
                   type="button"
-                  className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                  variant="ghost"
+                  size="xs"
+                  className={`h-auto rounded-md border px-2 py-1 ${
                     priority === p
-                      ? "border-foreground/20 bg-accent font-medium"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      ? "border-foreground/20 bg-accent font-medium hover:bg-accent"
+                      : "border-transparent font-normal text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                   }`}
                   onClick={() => onPriorityChange(p)}
                 >
@@ -150,7 +154,7 @@ export function TaskDetailDialog({
                       {pc.label}
                     </span>
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>

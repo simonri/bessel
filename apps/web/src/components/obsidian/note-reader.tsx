@@ -17,6 +17,7 @@ import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import { calloutStyle } from "./lib/callouts";
 import { remarkObsidian } from "./lib/remark-obsidian";
 import { basenameOf } from "./lib/wikilinks";
+import { MarkdownImage } from "./markdown-image";
 
 export interface NoteReaderProps {
   content: string;
@@ -561,9 +562,8 @@ function NoteReaderView({
       );
     };
 
-    const img: Components["img"] = ({ src, alt }) => (
-      <img src={src} alt={alt ?? ""} className="max-w-full rounded" />
-    );
+    const img: Components["img"] = ({ src, alt }) =>
+      src ? <MarkdownImage src={src} alt={alt ?? ""} /> : null;
 
     const mark: Components["mark"] = ({ children }) => (
       <mark className="rounded bg-yellow-400/30 px-0.5 text-inherit">

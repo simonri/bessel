@@ -1,7 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import chokidar, { type FSWatcher } from "chokidar";
-import { app, protocol, shell } from "electron";
-import fs from "fs";
-import path from "path";
+import { app, clipboard, nativeImage, protocol, shell } from "electron";
 import { broadcast, ipcHandle } from "./ipc.js";
 import {
   autoSuffixName,
@@ -424,6 +424,18 @@ export function registerVaultHandlers(): void {
     async (_, root: string, rel: string): Promise<void> => {
       const abs = await resolveInsideReal(root, rel);
       shell.showItemInFolder(abs);
+    },
+  );
+
+  ipcHandle(
+    "vault:copy-image",
+    async (_, root: string, rel: string): Promise<void> => {
+      if (kindForRel(rel) !== "image")
+        throw new Error("Only image files can be copied");
+      const abs = await resolveInsideReal(root, rel);
+      const image = nativeImage.createFromPath(abs);
+      if (image.isEmpty()) throw new Error("This image couldn't be decoded");
+      clipboard.writeImage(image);
     },
   );
 

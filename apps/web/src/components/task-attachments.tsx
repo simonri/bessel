@@ -1,5 +1,6 @@
 import type { TaskAttachmentSchema } from "@bessel/client";
 import { getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet } from "@bessel/client";
+import { Button } from "@bessel/ui/components/button";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -165,15 +166,17 @@ export function InlineAttachmentBadge({
         )}
       <span className="max-w-32 truncate">{attachment.filename}</span>
       {onDelete && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="iconSm"
           onClick={onDelete}
           disabled={deleting}
           title="Remove"
-          className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+          className="size-auto p-0 text-muted-foreground hover:bg-transparent hover:text-destructive"
         >
           <X className="size-3" />
-        </button>
+        </Button>
       )}
     </span>
   );

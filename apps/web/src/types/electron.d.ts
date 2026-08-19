@@ -9,8 +9,6 @@ import type {
   VaultWriteResult,
 } from "../components/obsidian/vault-types";
 
-export {};
-
 interface ElectronPortEntry {
   port: number;
   address: string;
@@ -238,6 +236,7 @@ declare global {
         ) => Promise<{ updatedFiles: number }>;
         trash: (root: string, rel: string) => Promise<void>;
         reveal: (root: string, rel: string) => Promise<void>;
+        copyImage: (root: string, rel: string) => Promise<void>;
         watch: (root: string) => Promise<void>;
         unwatch: (root: string) => Promise<void>;
         onChanged: (callback: (event: VaultChangedEvent) => void) => () => void;

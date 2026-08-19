@@ -1,9 +1,27 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ImagePreview } from "./image-preview";
 
-afterEach(cleanup);
+const copyImage = vi.fn().mockResolvedValue(undefined);
+
+beforeEach(() => {
+  copyImage.mockClear();
+  window.electron = {
+    vault: { copyImage },
+  } as unknown as Window["electron"];
+});
+
+afterEach(() => {
+  cleanup();
+  window.electron = undefined;
+});
 
 describe("ImagePreview", () => {
   it("renders a vault image in the app", () => {
@@ -25,5 +43,18 @@ describe("ImagePreview", () => {
 
     expect(screen.getByText("Image unavailable")).toBeTruthy();
     expect(screen.getByText("broken.png couldn't be previewed.")).toBeTruthy();
+  });
+
+  it("offers Copy image only through the context menu", async () => {
+    render(<ImagePreview root="/vault" rel="photo.png" />);
+    const image = screen.getByRole("img", { name: "photo.png" });
+
+    expect(image.closest("button")).toBeNull();
+    fireEvent.contextMenu(image);
+    fireEvent.click(await screen.findByText("Copy image"));
+
+    await waitFor(() =>
+      expect(copyImage).toHaveBeenCalledWith("/vault", "photo.png"),
+    );
   });
 });

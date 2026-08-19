@@ -19,7 +19,10 @@ import {
   WidgetType,
 } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
+import { createElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { isImageRel, parseLinkTarget, resolveLink } from "../lib/wikilinks";
+import { MarkdownImage } from "../markdown-image";
 
 export type EditorMode = "source" | "live";
 
@@ -109,7 +112,9 @@ class HrWidget extends WidgetType {
   }
 }
 
-class ImageWidget extends WidgetType {
+const imageWidgetRoots = new WeakMap<HTMLElement, Root>();
+
+export class ImageWidget extends WidgetType {
   constructor(readonly src: string) {
     super();
   }
@@ -120,12 +125,22 @@ class ImageWidget extends WidgetType {
 
   toDOM() {
     const wrap = document.createElement("div");
-    const img = document.createElement("img");
-    img.src = this.src;
-    img.className = "cm-obsidian-image-widget";
-    img.loading = "lazy";
-    wrap.appendChild(img);
+    const root = createRoot(wrap);
+    imageWidgetRoots.set(wrap, root);
+    root.render(
+      createElement(MarkdownImage, {
+        src: this.src,
+        alt: "Embedded image",
+        className: "my-0 block",
+        imageClassName: "cm-obsidian-image-widget",
+      }),
+    );
     return wrap;
+  }
+
+  destroy(dom: HTMLElement) {
+    imageWidgetRoots.get(dom)?.unmount();
+    imageWidgetRoots.delete(dom);
   }
 }
 
