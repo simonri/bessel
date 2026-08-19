@@ -19,6 +19,7 @@ import {
   useVaultTree,
   useVaultWatcher,
 } from "./hooks/use-vault";
+import { ImagePreview } from "./image-preview";
 import {
   applyTemplate,
   dailyNoteRel,
@@ -101,6 +102,9 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
   const activeRel = uiState.activeTab;
   const info = vaultInfoQuery.data;
   const entries = treeQuery.data ?? [];
+  const activeEntry = activeRel
+    ? entries.find((entry) => entry.rel === activeRel)
+    : undefined;
 
   // A remembered vault path that no longer resolves (folder moved/deleted).
   useEffect(() => {
@@ -376,6 +380,18 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
     [root],
   );
 
+  const handleOpenFile = useCallback(
+    (rel: string, opts: { newTab: boolean }) => {
+      const entry = entries.find((candidate) => candidate.rel === rel);
+      if (entry?.kind === "md" || entry?.kind === "image") {
+        void openNote(rel, opts);
+        return;
+      }
+      toast.info(`Preview isn't available for "${basenameOf(rel)}".`);
+    },
+    [entries, openNote],
+  );
+
   const handlePin = useCallback(
     (rel: string) => {
       openWindow("obsidian", { vault: root, file: rel });
@@ -495,7 +511,7 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
                   : [...prev.expandedDirs, rel],
               }))
             }
-            onOpen={(rel, opts) => void openNote(rel, opts)}
+            onOpen={handleOpenFile}
             onCreateNote={handleCreateNote}
             onCreateFolder={handleCreateFolder}
             onRename={handleTreeRename}
@@ -507,7 +523,9 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
         <ResizableHandle />
         <ResizablePanel minSize="35%">
           <div data-obsidian-note-root className="h-full min-h-0">
-            {activeRel ? (
+            {activeRel && activeEntry?.kind === "image" ? (
+              <ImagePreview root={root} rel={activeRel} />
+            ) : activeRel ? (
               <NoteView
                 ref={noteViewRef}
                 root={root}
@@ -525,7 +543,7 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
             )}
           </div>
         </ResizablePanel>
-        {uiState.sidePanel && (
+        {uiState.sidePanel && activeEntry?.kind === "md" && (
           <>
             <ResizableHandle />
             <ResizablePanel defaultSize="24%" minSize="15%">

@@ -1,6 +1,6 @@
-import fs from "fs";
-import path from "path";
-import { Readable } from "stream";
+import fs from "node:fs";
+import path from "node:path";
+import { Readable } from "node:stream";
 
 export const MIME_TYPES: Record<string, string> = {
   ".html": "text/html",
@@ -14,6 +14,7 @@ export const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".bmp": "image/bmp",
+  ".avif": "image/avif",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
 };

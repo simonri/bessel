@@ -244,7 +244,8 @@ const TreeRow = memo(function TreeRow({
   }
 
   const isMd = node.kind === "md";
-  const isActive = isMd && node.rel === activeRel;
+  const isPreviewable = isMd || node.kind === "image";
+  const isActive = node.rel === activeRel;
   const Icon = iconFor(node.kind);
   const label = isMd ? basenameOf(node.rel) : node.name;
 
@@ -255,8 +256,7 @@ const TreeRow = memo(function TreeRow({
           type="button"
           style={{ paddingLeft: indent + 18 }}
           onClick={(e) => {
-            if (isMd) onOpen(node.rel, { newTab: e.metaKey || e.ctrlKey });
-            else onReveal(node.rel);
+            onOpen(node.rel, { newTab: e.metaKey || e.ctrlKey });
           }}
           className={cn(
             ROW,
@@ -279,7 +279,7 @@ const TreeRow = memo(function TreeRow({
         </button>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        {isMd && (
+        {isPreviewable && (
           <ContextMenuItem onSelect={() => onOpen(node.rel, { newTab: true })}>
             <SquareArrowOutUpRight />
             Open in new tab

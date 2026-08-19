@@ -48,19 +48,20 @@ function IconButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="iconMd"
+      shape="pill"
       onClick={onClick}
       title={title}
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
         active
-          ? "bg-primary/20 text-primary-300"
+          ? "bg-primary/20 text-primary-300 hover:bg-primary/20"
           : "text-white/40 hover:bg-white/[0.06] hover:text-white/75",
       )}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -153,7 +154,12 @@ export function VaultHeader({
       >
         <ListTree className="size-3.5" />
       </IconButton>
-      <Button variant="outline" size="xs" onClick={onOpenInObsidian}>
+      <Button
+        variant="outline"
+        size="xs"
+        shape="pill"
+        onClick={onOpenInObsidian}
+      >
         <ExternalLink className="size-3" />
         Open in Obsidian
       </Button>
