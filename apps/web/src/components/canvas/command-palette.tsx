@@ -65,11 +65,11 @@ function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
       });
     }
 
-    workspaces.forEach((ws, i) => {
+    workspaces.forEach((ws) => {
       if (ws.id === activeWorkspaceId) return;
       items.push({
         id: `workspace-${ws.id}`,
-        label: `Switch to ${workspaceLabel(ws, i)}`,
+        label: `Switch to ${workspaceLabel(ws)}`,
         icon: PanelsTopLeft,
         action: () => {
           switchWorkspace(ws.id);

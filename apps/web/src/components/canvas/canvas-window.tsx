@@ -95,14 +95,14 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
           "min-w-40 border-white/10 text-white/80 shadow-2xl",
         )}
       >
-        {workspaces.map((ws, i) =>
+        {workspaces.map((ws) =>
           ws.id === entry.workspaceId ? null : (
             <DropdownMenuItem
               key={ws.id}
               className="text-white/70 focus:bg-white/10 focus:text-white/90"
               onClick={() => moveWindowToWorkspace(entry.id, ws.id)}
             >
-              Move to {workspaceLabel(ws, i)}
+              Move to {workspaceLabel(ws)}
             </DropdownMenuItem>
           ),
         )}

@@ -223,11 +223,11 @@ describe("viewport-aware placement", () => {
     expect(result.current.windows).toHaveLength(3);
 
     let opened = true;
-    act(() => { opened = result.current.toggleWindow("dashboard"); });
+    act(() => { opened = result.current.toggleWindow("recipes"); });
 
     expect(opened).toBe(false);
     expect(result.current.windows).toHaveLength(3);
-    expect(result.current.isOpen("dashboard")).toBe(false);
+    expect(result.current.isOpen("recipes")).toBe(false);
   });
 
   it("applies a template partially when only some widgets fit, and reports it", () => {
@@ -406,12 +406,12 @@ describe("migration from the legacy slot-based layout", () => {
 });
 
 describe("workspace names", () => {
-  it("defaults to a positional label and persists a rename across reloads", () => {
+  it("defaults to an unnumbered label and persists a rename across reloads", () => {
     const { result, unmount } = setup();
     act(() => result.current.addWorkspace());
     const [first, second] = result.current.workspaces;
-    expect(workspaceLabel(first, 0)).toBe("Workspace 1");
-    expect(workspaceLabel(second, 1)).toBe("Workspace 2");
+    expect(workspaceLabel(first)).toBe("Workspace");
+    expect(workspaceLabel(second)).toBe("Workspace");
 
     act(() => result.current.renameWorkspace(second.id, "  Trading  "));
     expect(result.current.workspaces[1].name).toBe("Trading");
@@ -431,7 +431,7 @@ describe("workspace names", () => {
     act(() => result.current.renameWorkspace(id, "Home"));
     act(() => result.current.renameWorkspace(id, "   "));
     expect(result.current.workspaces[0]).toEqual({ id });
-    expect(workspaceLabel(result.current.workspaces[0], 0)).toBe("Workspace 1");
+    expect(workspaceLabel(result.current.workspaces[0])).toBe("Workspace");
   });
 
   it("ignores a non-string stored name", () => {

@@ -81,3 +81,27 @@ describe("migration from the pre-rebrand key name", () => {
     ]);
   });
 });
+
+describe("removed modules", () => {
+  it("drops Dashboard widgets from persisted templates", () => {
+    window.localStorage.setItem(
+      "bessel:workspace-templates",
+      JSON.stringify([
+        {
+          id: "t1",
+          name: "Saved",
+          widgets: [
+            { id: "dashboard", module: "dashboard", commands: [] },
+            { id: "browser", module: "browser", commands: [] },
+          ],
+        },
+      ]),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.templates[0].widgets).toEqual([
+      { id: "browser", module: "browser", commands: [] },
+    ]);
+  });
+});

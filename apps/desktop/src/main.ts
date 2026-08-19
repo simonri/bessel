@@ -395,31 +395,63 @@ function parsePorcelain(output: string): {
 // trail. This appends timestamped crash/hang/memory diagnostics to a file so
 // the next occurrence can actually be diagnosed.
 let logFilePath = "";
+const LOG_ROTATE_BYTES = 5 * 1024 * 1024;
+// Rendered as one <pre> in the Logs dialog — a multi-MB string sent over IPC
+// and dropped into the DOM in one node has crashed the renderer before (a
+// persistent renderer console error repeating every poll interval grew a
+// single session's log to 19MB, since rotation used to only run at startup).
+const MAX_LOG_READ_BYTES = 2 * 1024 * 1024;
 
-function appendLog(line: string): void {
-  if (!logFilePath) return;
+// A condition that logs the same line every few seconds for a whole session
+// (e.g. a backend request failing on every poll) must not grow the file
+// without bound — collapse runs of the exact same message into one summary.
+let lastLogLine = "";
+let lastLogRepeatCount = 0;
+
+function rotateLogIfNeeded(): void {
+  try {
+    if (fs.statSync(logFilePath).size > LOG_ROTATE_BYTES) {
+      fs.renameSync(logFilePath, `${logFilePath}.old`);
+    }
+  } catch {
+    // no log file yet
+  }
+}
+
+function writeLogLine(line: string): void {
   const entry = `[${new Date().toISOString()}] ${line}\n`;
   // Sync so a fatal error is guaranteed to be on disk before the process can
   // exit (see the uncaughtException handler below).
   try {
     fs.appendFileSync(logFilePath, entry);
+    rotateLogIfNeeded();
   } catch {
     // best-effort logging only
   }
   if (!app.isPackaged) console.log(entry.trimEnd());
 }
 
+function appendLog(line: string): void {
+  if (!logFilePath) return;
+  if (line === lastLogLine) {
+    lastLogRepeatCount++;
+    return;
+  }
+  if (lastLogRepeatCount > 0) {
+    writeLogLine(
+      `(previous line repeated ${lastLogRepeatCount} more time${lastLogRepeatCount === 1 ? "" : "s"})`,
+    );
+  }
+  lastLogLine = line;
+  lastLogRepeatCount = 0;
+  writeLogLine(line);
+}
+
 function initLogging(): void {
   const logDir = app.getPath("logs");
   fs.mkdirSync(logDir, { recursive: true });
   logFilePath = path.join(logDir, "main.log");
-  try {
-    if (fs.statSync(logFilePath).size > 5 * 1024 * 1024) {
-      fs.renameSync(logFilePath, `${logFilePath}.old`);
-    }
-  } catch {
-    // no existing log file yet
-  }
+  rotateLogIfNeeded();
   appendLog(
     `app ready — version ${app.getVersion()}, platform ${process.platform}`,
   );
@@ -1058,7 +1090,7 @@ app.whenReady().then(() => {
 
   ipcHandle("logs:read", (): string => {
     const paths = [`${logFilePath}.old`, logFilePath];
-    return paths
+    const combined = paths
       .filter((p) => p && fs.existsSync(p))
       .map((p) => {
         try {
@@ -1068,6 +1100,15 @@ app.whenReady().then(() => {
         }
       })
       .join("");
+    if (combined.length <= MAX_LOG_READ_BYTES) return combined;
+    // Keep only the most recent bytes, starting at a line boundary — an
+    // oversized on-disk log (a stale file from before in-session rotation
+    // existed, or one that grew between rotation checks) must never be
+    // shipped to the renderer whole.
+    const tail = combined.slice(-MAX_LOG_READ_BYTES);
+    const firstNewline = tail.indexOf("\n");
+    const body = firstNewline === -1 ? tail : tail.slice(firstNewline + 1);
+    return `…(log truncated to the most recent ${MAX_LOG_READ_BYTES / (1024 * 1024)}MB)…\n${body}`;
   });
 
   ipcHandle("logs:reveal", () => {

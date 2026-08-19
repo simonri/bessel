@@ -29,6 +29,25 @@ export interface WorkspaceTemplate {
 const STORAGE_KEY = "bessel:workspace-templates";
 const LEGACY_KEY = "metron:workspace-templates";
 
+function isModuleKey(value: unknown): value is ModuleKey {
+  return typeof value === "string" && Object.hasOwn(MODULE_REGISTRY, value);
+}
+
+function sanitizeTemplates(value: unknown): WorkspaceTemplate[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.map((template) => ({
+    ...template,
+    widgets: Array.isArray(template?.widgets)
+      ? template.widgets.filter(
+          (widget: unknown): widget is TemplateWidget =>
+            !!widget &&
+            typeof widget === "object" &&
+            isModuleKey((widget as { module?: unknown }).module),
+        )
+      : [],
+  }));
+}
+
 function newId() {
   return (
     crypto.randomUUID?.() ??
@@ -40,8 +59,8 @@ function loadTemplates(): WorkspaceTemplate[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      const templates = sanitizeTemplates(JSON.parse(raw));
+      if (templates) return templates;
     }
   } catch {}
 
@@ -50,8 +69,8 @@ function loadTemplates(): WorkspaceTemplate[] {
   try {
     const legacyRaw = localStorage.getItem(LEGACY_KEY);
     if (legacyRaw) {
-      const parsed = JSON.parse(legacyRaw);
-      if (Array.isArray(parsed)) return parsed;
+      const templates = sanitizeTemplates(JSON.parse(legacyRaw));
+      if (templates) return templates;
     }
   } catch {}
 

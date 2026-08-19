@@ -6,7 +6,6 @@ import {
   GitBranch,
   Globe,
   Landmark,
-  LayoutDashboard,
   MapPin,
   Moon,
   SquareTerminal,
@@ -31,16 +30,6 @@ const COMPACT_SIZE = { defaultSize: { w: 8, h: 8 }, minSize: { w: 4, h: 4 } };
 const SESSION_SIZE = { defaultSize: { w: 12, h: 14 }, minSize: { w: 6, h: 6 } };
 
 export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
-  dashboard: {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    component: lazy(() =>
-      import("@/routes/_app/index").then((m) => ({
-        default: m.Route.options.component as React.ComponentType,
-      })),
-    ),
-    ...COMPACT_SIZE,
-  },
   transactions: {
     title: "Transactions",
     icon: ArrowLeftRight,
@@ -206,16 +195,11 @@ const desktopModules: ModuleKey[] = isDesktop
   ? ["claudeCode", "codex", "grok", "terminal", "browser"]
   : [];
 
+// Modules also reachable as sidebar pages (see pages.ts) are left out here —
+// the dock and command palette only offer opening a widget for modules that
+// aren't already a page of their own.
 export const MODULE_ORDER: ModuleKey[] = [
-  "dashboard",
-  "transactions",
-  "accounts",
-  "investments",
   "tasks",
-  "travel",
-  "activity",
-  "sleep",
-  "recipes",
   "gitStatus",
   ...desktopModules,
 ];

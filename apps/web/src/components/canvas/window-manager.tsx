@@ -19,7 +19,6 @@ import {
 import { MODULE_REGISTRY } from "./module-registry";
 
 export type ModuleKey =
-  | "dashboard"
   | "transactions"
   | "accounts"
   | "investments"
@@ -57,12 +56,12 @@ export type WindowSpec = { module: ModuleKey; data?: Record<string, string> };
 
 export interface WorkspaceMeta {
   id: string;
-  /** User-given name; absent means "Workspace N" (see workspaceLabel). */
+  /** User-given name; absent means "Workspace" (see workspaceLabel). */
   name?: string;
 }
 
-export function workspaceLabel(ws: WorkspaceMeta, index: number): string {
-  return ws.name ?? `Workspace ${index + 1}`;
+export function workspaceLabel(ws: WorkspaceMeta): string {
+  return ws.name ?? "Workspace";
 }
 
 // Split into four contexts so consumers only re-render for the state they
@@ -162,7 +161,6 @@ const LEGACY_KEY = "metron:windows";
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
 const ALL_MODULES = new Set<string>([
-  "dashboard",
   "transactions",
   "accounts",
   "investments",

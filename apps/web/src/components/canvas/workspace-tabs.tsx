@@ -9,13 +9,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@bessel/ui/components/tooltip";
 import { glassSurface } from "@bessel/ui/lib/glass";
-import { LayoutGrid, LayoutTemplate, Pencil, Plus, X } from "lucide-react";
+import { LayoutTemplate, Pencil, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   useFlashWorkspace,
@@ -37,11 +32,9 @@ const ICON_BUTTON =
 
 function RenameInput({
   workspace,
-  index,
   onDone,
 }: {
   workspace: WorkspaceMeta;
-  index: number;
   onDone: () => void;
 }) {
   const { renameWorkspace } = useWindowActions();
@@ -64,7 +57,7 @@ function RenameInput({
     <input
       ref={inputRef}
       defaultValue={workspace.name ?? ""}
-      placeholder={workspaceLabel(workspace, index)}
+      placeholder={workspaceLabel(workspace)}
       aria-label="Workspace name"
       onBlur={(e) => commit(e.currentTarget.value)}
       onKeyDown={(e) => {
@@ -82,13 +75,11 @@ function RenameInput({
 
 function WorkspaceTab({
   workspace,
-  index,
   isActive,
   isFlashing,
   canClose,
 }: {
   workspace: WorkspaceMeta;
-  index: number;
   isActive: boolean;
   isFlashing: boolean;
   canClose: boolean;
@@ -97,16 +88,6 @@ function WorkspaceTab({
   const [editing, setEditing] = useState(false);
   const pendingRenameRef = useRef(false);
 
-  const indexBadge = (
-    <span
-      className={cn(
-        "w-4 shrink-0 text-center font-mono text-10 tabular-nums",
-        isActive ? "text-white/60" : "text-white/30",
-      )}
-    >
-      {index + 1}
-    </span>
-  );
   const rowClass = cn(
     "flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-medium",
     isActive ? "bg-white/12 text-white/90" : "text-white/55",
@@ -118,10 +99,8 @@ function WorkspaceTab({
         {editing ? (
           // A plain row while renaming — an <input> can't live inside a <button>.
           <div className={rowClass}>
-            {indexBadge}
             <RenameInput
               workspace={workspace}
-              index={index}
               onDone={() => setEditing(false)}
             />
           </div>
@@ -138,9 +117,8 @@ function WorkspaceTab({
               isFlashing && "animate-workspace-flash",
             )}
           >
-            {indexBadge}
             <span className="min-w-0 flex-1 truncate">
-              {workspaceLabel(workspace, index)}
+              {workspaceLabel(workspace)}
             </span>
           </button>
         )}
@@ -253,26 +231,7 @@ function NewWorkspaceMenu({ addWorkspace }: { addWorkspace: () => void }) {
   );
 }
 
-function AlignButton() {
-  const { alignWorkspace } = useWindowActions();
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          onClick={alignWorkspace}
-          title="Align widgets"
-          className={ICON_BUTTON}
-        >
-          <LayoutGrid className="size-3" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="right">Align widgets</TooltipContent>
-    </Tooltip>
-  );
-}
-
-export function WorkspaceTabs() {
+export function WorkspaceTabs({ isOnCanvasPage }: { isOnCanvasPage: boolean }) {
   const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
   const { addWorkspace } = useWindowActions();
   const flashWorkspace = useFlashWorkspace();
@@ -280,7 +239,7 @@ export function WorkspaceTabs() {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-0.5" role="tablist">
-        {workspaces.map((ws, i) => (
+        {workspaces.map((ws) => (
           <WorkspaceTab
             // Remounting on each move restarts the flash animation even when
             // the same tab is the target twice in a row.
@@ -290,8 +249,10 @@ export function WorkspaceTabs() {
                 : ws.id
             }
             workspace={ws}
-            index={i}
-            isActive={ws.id === activeWorkspaceId}
+            // A workspace only reads as "active" while its windows are
+            // actually on screen — elsewhere, canvas is just mounted in the
+            // background to keep live widgets running, not being viewed.
+            isActive={isOnCanvasPage && ws.id === activeWorkspaceId}
             isFlashing={flashWorkspace?.id === ws.id}
             canClose={workspaces.length > 1}
           />
@@ -299,7 +260,6 @@ export function WorkspaceTabs() {
       </div>
       <div className="mt-1 flex items-center gap-0.5 px-1">
         <NewWorkspaceMenu addWorkspace={addWorkspace} />
-        <AlignButton />
       </div>
     </div>
   );
