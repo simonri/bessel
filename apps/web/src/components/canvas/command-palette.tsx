@@ -4,7 +4,7 @@ import {
 } from "@bessel/client";
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutTemplate, Search } from "lucide-react";
+import { LayoutTemplate, PanelsTopLeft, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   templateToWindowSpecs,
@@ -14,7 +14,12 @@ import {
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { MODULE_ORDER, MODULE_REGISTRY } from "./module-registry";
-import { useWindowActions, useWindowState } from "./window-manager";
+import {
+  useWindowActions,
+  useWindowState,
+  useWorkspaceMeta,
+  workspaceLabel,
+} from "./window-manager";
 
 type ProjectWithPath = Omit<ProjectSchema, "path"> & { path: string };
 
@@ -28,8 +33,10 @@ interface PaletteItem {
 }
 
 function useItems(onClose: () => void) {
-  const { openWindow, toggleWindow, applyTemplate } = useWindowActions();
+  const { openWindow, toggleWindow, applyTemplate, switchWorkspace } =
+    useWindowActions();
   const { isOpen } = useWindowState();
+  const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
   const { templates } = useWorkspaceTemplates();
   const { data } = useQuery(listProjectsV1ProjectsGetOptions({ client }));
 
@@ -38,6 +45,19 @@ function useItems(onClose: () => void) {
       (p): p is ProjectWithPath => p.path != null,
     );
     const items: PaletteItem[] = [];
+
+    workspaces.forEach((ws, i) => {
+      if (ws.id === activeWorkspaceId) return;
+      items.push({
+        id: `workspace-${ws.id}`,
+        label: `Switch to ${workspaceLabel(ws, i)}`,
+        icon: PanelsTopLeft,
+        action: () => {
+          switchWorkspace(ws.id);
+          onClose();
+        },
+      });
+    });
 
     for (const template of templates) {
       items.push({
@@ -106,10 +126,13 @@ function useItems(onClose: () => void) {
   }, [
     data,
     templates,
+    workspaces,
+    activeWorkspaceId,
     isOpen,
     openWindow,
     toggleWindow,
     applyTemplate,
+    switchWorkspace,
     onClose,
   ]);
 }

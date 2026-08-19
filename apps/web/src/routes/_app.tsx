@@ -6,7 +6,7 @@ import { getMeV1AuthMeGetOptions } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { client } from "@/lib/client";
 import { WindowManager } from "@/components/canvas/window-manager";
-import { CanvasShell } from "@/components/canvas/canvas-shell";
+import { AppShell } from "@/components/app-shell";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
 
@@ -41,7 +41,7 @@ function AppLayout() {
     <SettingsProvider>
       <WindowManager>
         <WorkspaceTemplatesProvider>
-          <CanvasShell />
+          <AppShell />
         </WorkspaceTemplatesProvider>
       </WindowManager>
     </SettingsProvider>

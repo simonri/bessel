@@ -80,7 +80,7 @@ export const CanvasDock = memo(function CanvasDock() {
     <div
       className={cn(
         glassSurface({ weight: "light" }),
-        "fixed bottom-0 left-0 right-0 z-50 flex h-10 items-center gap-1 overflow-x-auto border-t border-white/10 px-4",
+        "flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-t border-white/10 px-4",
       )}
     >
       {MODULE_ORDER.map((key) => {

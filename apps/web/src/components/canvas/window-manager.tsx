@@ -351,11 +351,19 @@ function loadState(): LoadedState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as {
-        workspaces: Array<{ id: string; windows: StoredWindow[] }>;
+        workspaces: Array<{
+          id: string;
+          name?: unknown;
+          windows: StoredWindow[];
+        }>;
         activeWorkspaceId: string;
       };
       if (Array.isArray(parsed.workspaces) && parsed.workspaces.length > 0) {
-        const workspaces = parsed.workspaces.map((ws) => ({ id: ws.id }));
+        const workspaces = parsed.workspaces.map((ws) =>
+          typeof ws.name === "string" && ws.name.trim()
+            ? { id: ws.id, name: ws.name }
+            : { id: ws.id },
+        );
         const windows = parsed.workspaces.flatMap((ws) =>
           parseWindows(ws.windows ?? [], ws.id),
         );
@@ -456,6 +464,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       JSON.stringify({
         workspaces: current.workspaces.map((ws) => ({
           id: ws.id,
+          ...(ws.name ? { name: ws.name } : {}),
           windows: current.windows
             .filter((w) => w.workspaceId === ws.id)
             .map((win) => ({
@@ -778,6 +787,27 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
     [commit],
   );
 
+  const renameWorkspace = useCallback(
+    (id: string, name: string) => {
+      const trimmed = name.trim();
+      commit((prev) => {
+        const target = prev.workspaces.find((ws) => ws.id === id);
+        if (!target || (target.name ?? "") === trimmed) return prev;
+        return {
+          ...prev,
+          workspaces: prev.workspaces.map((ws) =>
+            ws.id !== id
+              ? ws
+              : trimmed
+                ? { id: ws.id, name: trimmed }
+                : { id: ws.id },
+          ),
+        };
+      });
+    },
+    [commit],
+  );
+
   // All callbacks are stable ([commit]/[] deps), so this value never changes —
   // action-only consumers never re-render from window churn.
   const actions = useMemo(
@@ -794,6 +824,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       addWorkspace,
       removeWorkspace,
       switchWorkspace,
+      renameWorkspace,
     }),
     [
       setViewportRows,
@@ -808,6 +839,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       addWorkspace,
       removeWorkspace,
       switchWorkspace,
+      renameWorkspace,
     ],
   );
 

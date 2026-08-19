@@ -22,6 +22,15 @@
   z-index: 20;
 }
 
+/* Suppresses the transform transition for a fullscreen toggle's one-frame
+   jump (see canvas-fullscreen.ts's instantWindowId) — a compound selector,
+   not Tailwind's `transition-none` utility, since that utility and the base
+   rule above are equal-specificity single-class selectors and Tailwind's
+   loads first, so the base rule would otherwise always win the cascade. */
+.react-grid-item.transition-none {
+  transition: none;
+}
+
 .react-grid-item.react-grid-placeholder {
   z-index: 1;
   border-radius: 1rem;

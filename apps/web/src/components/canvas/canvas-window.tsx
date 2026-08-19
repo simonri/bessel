@@ -46,6 +46,7 @@ import {
   WindowEntryContext,
   WindowStatusContext,
   WindowTitleContext,
+  workspaceLabel,
 } from "./window-manager";
 
 function AgentStatusIndicator({ status }: { status: AgentStatus }) {
@@ -101,7 +102,7 @@ function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
               className="text-white/70 focus:bg-white/10 focus:text-white/90"
               onClick={() => moveWindowToWorkspace(entry.id, ws.id)}
             >
-              Move to workspace {i + 1}
+              Move to {workspaceLabel(ws, i)}
             </DropdownMenuItem>
           ),
         )}

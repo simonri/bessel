@@ -5,17 +5,11 @@ import {
   GridLayout,
   verticalCompactor,
 } from "react-grid-layout";
-import {
-  isWallpaperColor,
-  useSettings,
-  WALLPAPER_COLORS,
-} from "@/hooks/use-settings";
+import { useSettings } from "@/hooks/use-settings";
 import { CanvasDock } from "./canvas-dock";
 import { setFocusedWindow } from "./canvas-focus";
-import { useFullscreenWindowId } from "./canvas-fullscreen";
-import { CanvasTopBar } from "./canvas-topbar";
+import { useFullscreenWindowId, useInstantWindowId } from "./canvas-fullscreen";
 import { CanvasWindow } from "./canvas-window";
-import { CommandPalette } from "./command-palette";
 import { fitToViewport } from "./layout-engine";
 import { MODULE_REGISTRY } from "./module-registry";
 import {
@@ -29,36 +23,6 @@ import {
 import "./canvas-grid.css";
 
 const NO_WINDOWS: WindowEntry[] = [];
-
-// Forward+reverse baked into one clip — browser loops it natively.
-function VideoWallpaper() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Pause while the window is hidden/minimized — otherwise the loop decodes
-  // full-screen video on the GPU for the app's entire (always-running) life.
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const sync = () => {
-      if (document.hidden) video.pause();
-      else video.play().catch(() => {});
-    };
-    sync();
-    document.addEventListener("visibilitychange", sync);
-    return () => document.removeEventListener("visibilitychange", sync);
-  }, []);
-
-  return (
-    <video
-      ref={videoRef}
-      src="/wallpaper-forest-loop.mp4"
-      muted
-      playsInline
-      loop
-      className="absolute inset-0 h-full w-full object-cover"
-    />
-  );
-}
 
 // The canvas must never scroll, so — unlike react-grid-layout's own width-only
 // useContainerWidth — this measures both dimensions of the available area, so a
@@ -179,6 +143,7 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
   );
   const { compactor, markActive } = useDragAwareCompactor();
   const fullscreenId = useFullscreenWindowId();
+  const instantId = useInstantWindowId();
   // Only meaningful when the fullscreened window actually belongs to this
   // workspace — its own visibility is decided separately (see CanvasWindow).
   const hideSiblings =
@@ -255,7 +220,11 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
           <div
             key={win.id}
             className={
-              hideSiblings && win.id !== fullscreenId ? "invisible" : undefined
+              hideSiblings && win.id !== fullscreenId
+                ? "invisible"
+                : win.id === instantId
+                  ? "transition-none"
+                  : undefined
             }
           >
             <CanvasWindow entry={win} />
@@ -266,13 +235,14 @@ const WorkspaceGrid = memo(function WorkspaceGrid({
   );
 });
 
-export function CanvasShell() {
+// The canvas "page": every workspace's grid (inactive ones display:none so
+// live widgets survive switches) plus the widget dock along the bottom. The
+// always-visible chrome around it (top bar, sidebar, wallpaper) is AppShell's.
+export function CanvasPage() {
   const { windowsByWorkspace } = useWindowState();
   const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
   const { setViewportRows } = useWindowActions();
   const { settings } = useSettings();
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const closePalette = useCallback(() => setPaletteOpen(false), []);
   const { width, height, containerRef, mounted } = useContainerSize();
   const gap = settings.gridGap;
   const maxRows = Math.max(
@@ -286,19 +256,7 @@ export function CanvasShell() {
     if (mounted) setViewportRows(maxRows);
   }, [mounted, maxRows, setViewportRows]);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setPaletteOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener("keydown", handler, { capture: true });
-    return () =>
-      window.removeEventListener("keydown", handler, { capture: true });
-  }, []);
-
-  // Safety net for the select-none toggled in onDragStart/onResizeStart below:
+  // Safety net for the select-none toggled in onDragStart/onResizeStart above:
   // if a drag ends in a way react-grid-layout's onStop doesn't observe (mouse
   // released outside the window, an error mid-callback), this guarantees text
   // selection isn't left permanently disabled app-wide.
@@ -309,48 +267,26 @@ export function CanvasShell() {
   }, []);
 
   return (
-    <div className="fixed inset-0">
-      {isWallpaperColor(settings.wallpaper) ? (
-        <div
-          className="absolute inset-0"
-          style={{ backgroundColor: WALLPAPER_COLORS[settings.wallpaper] }}
-        />
-      ) : settings.wallpaper === "video" ? (
-        <VideoWallpaper />
-      ) : (
-        <img
-          src="/image.png"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-          draggable={false}
-        />
-      )}
-      {settings.wallpaper === "image" && (
-        <div className="absolute inset-0 bg-black/30" />
-      )}
-
-      <div className="relative flex h-full flex-col pt-12 pb-12 animate-in fade-in duration-300 ease-out">
-        <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden px-2">
-          {mounted &&
-            workspaces.map((ws) => (
-              <WorkspaceGrid
-                key={ws.id}
-                workspaceId={ws.id}
-                windows={windowsByWorkspace.get(ws.id) ?? NO_WINDOWS}
-                isActive={ws.id === activeWorkspaceId}
-                width={width}
-                height={height}
-                maxRows={maxRows}
-                gap={gap}
-              />
-            ))}
-        </div>
+    <div className="flex h-full flex-col">
+      <div
+        ref={containerRef}
+        className="min-h-0 flex-1 overflow-hidden px-2 py-2 animate-in fade-in duration-300 ease-out"
+      >
+        {mounted &&
+          workspaces.map((ws) => (
+            <WorkspaceGrid
+              key={ws.id}
+              workspaceId={ws.id}
+              windows={windowsByWorkspace.get(ws.id) ?? NO_WINDOWS}
+              isActive={ws.id === activeWorkspaceId}
+              width={width}
+              height={height}
+              maxRows={maxRows}
+              gap={gap}
+            />
+          ))}
       </div>
-
-      <CanvasTopBar />
       <CanvasDock />
-
-      <CommandPalette open={paletteOpen} onClose={closePalette} />
     </div>
   );
 }

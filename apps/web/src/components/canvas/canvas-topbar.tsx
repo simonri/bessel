@@ -8,7 +8,6 @@ import { NotificationBell } from "@/components/canvas/notification-bell";
 import { ProjectsDropdown } from "@/components/canvas/projects-dropdown";
 import { SpotifyWidget } from "@/components/canvas/spotify-widget";
 import { TimeSinceDropdown } from "@/components/canvas/time-since-dropdown";
-import { WorkspaceSwitcher } from "@/components/canvas/workspace-switcher";
 import { LogsDialog } from "@/components/logs-dialog";
 import { SettingsModal } from "@/components/settings-modal";
 import { useSettings } from "@/hooks/use-settings";
@@ -46,7 +45,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
     <div
       className={cn(
         glassSurface({ weight: "light" }),
-        "fixed left-0 right-0 top-0 z-50 flex h-10 items-center border-b border-white/10 px-4",
+        "relative z-50 flex h-10 shrink-0 items-center border-b border-white/10 px-4",
         isMac && [MAC_TRAFFIC_LIGHT_INSET, "[-webkit-app-region:drag]"],
       )}
     >
@@ -70,12 +69,6 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
             <SpotifyWidget />
           </div>
         )}
-      </div>
-
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className={noDrag}>
-          <WorkspaceSwitcher />
-        </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">

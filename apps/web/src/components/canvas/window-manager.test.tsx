@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { WindowManager, useWindowManager, type WindowEntry } from "./window-manager";
+import {
+  useWindowManager,
+  type WindowEntry,
+  WindowManager,
+  workspaceLabel,
+} from "./window-manager";
 
 // This environment's global `localStorage` is a broken Node stub (no clear/removeItem),
 // not jsdom's Storage implementation — replace it with a real in-memory one for these tests.
@@ -397,5 +402,47 @@ describe("migration from the legacy slot-based layout", () => {
     const { result } = setup();
 
     expect(result.current.windows[0]).toMatchObject({ x: 3, y: 5, w: 8, h: 8 });
+  });
+});
+
+describe("workspace names", () => {
+  it("defaults to a positional label and persists a rename across reloads", () => {
+    const { result, unmount } = setup();
+    act(() => result.current.addWorkspace());
+    const [first, second] = result.current.workspaces;
+    expect(workspaceLabel(first, 0)).toBe("Workspace 1");
+    expect(workspaceLabel(second, 1)).toBe("Workspace 2");
+
+    act(() => result.current.renameWorkspace(second.id, "  Trading  "));
+    expect(result.current.workspaces[1].name).toBe("Trading");
+    expect(result.current.workspaces[0].name).toBeUndefined();
+
+    act(() => unmount());
+    const reloaded = setup();
+    expect(reloaded.result.current.workspaces.map((ws) => ws.name)).toEqual([
+      undefined,
+      "Trading",
+    ]);
+  });
+
+  it("clears the name back to the default when renamed to blank", () => {
+    const { result } = setup();
+    const id = result.current.workspaces[0].id;
+    act(() => result.current.renameWorkspace(id, "Home"));
+    act(() => result.current.renameWorkspace(id, "   "));
+    expect(result.current.workspaces[0]).toEqual({ id });
+    expect(workspaceLabel(result.current.workspaces[0], 0)).toBe("Workspace 1");
+  });
+
+  it("ignores a non-string stored name", () => {
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({
+        workspaces: [{ id: "ws-1", name: 42, windows: [] }],
+        activeWorkspaceId: "ws-1",
+      }),
+    );
+    const { result } = setup();
+    expect(result.current.workspaces[0]).toEqual({ id: "ws-1" });
   });
 });
