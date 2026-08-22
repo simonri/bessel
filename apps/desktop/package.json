@@ -17,7 +17,7 @@
     "release:major": "node scripts/release.mjs major"
   },
   "dependencies": {
-    "@sentry/electron": "^7.15.0",
+    "@sentry/electron": "^7.16.0",
     "chokidar": "^4.0.3",
     "dbus-next": "^0.10.2",
     "electron-updater": "^6.8.9",
