@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@biomejs/biome": "^2.4.15",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.1.2",
     "date-fns": "^4.1.0",
     "emoji-regex": "^10.6.0",
     "turbo": "^2.9.12",
