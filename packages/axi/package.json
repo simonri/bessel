@@ -16,14 +16,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "axi-sdk-js": "^0.1.8"
+    "axi-sdk-js": "^0.1.11"
   },
   "devDependencies": {
     "@bessel/client": "workspace:*",
     "@bessel/tsconfig": "workspace:*",
     "@types/node": "^22.0.0",
-    "esbuild": "^0.28.1",
-    "tsx": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.13",
     "typescript": "^5.8.3",
     "vitest": "^4.1.0"
   }
