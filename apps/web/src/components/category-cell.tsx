@@ -1,19 +1,19 @@
-import { useRef, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CategorySchema } from "@bessel/client";
 import {
-  updateTransactionV1TransactionsTransactionIdPatchMutation,
   listTransactionsV1TransactionsGetQueryKey,
+  updateTransactionV1TransactionsTransactionIdPatchMutation,
 } from "@bessel/client";
 import {
   Combobox,
-  ComboboxInput,
   ComboboxContent,
-  ComboboxList,
-  ComboboxItem,
   ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
   ComboboxLabel,
+  ComboboxList,
 } from "@bessel/ui/components/combobox";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -57,7 +57,10 @@ function useGroupedCategories(categories: CategorySchema[]) {
   }, [categories]);
 }
 
-function filterGroups(groups: GroupedCategory[], query: string): GroupedCategory[] {
+function filterGroups(
+  groups: GroupedCategory[],
+  query: string,
+): GroupedCategory[] {
   if (!query) return groups;
   const q = query.toLowerCase();
   return groups
@@ -80,7 +83,10 @@ export function CategoryCell({
   const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const grouped = useGroupedCategories(categories);
-  const filtered = useMemo(() => filterGroups(grouped, search), [grouped, search]);
+  const filtered = useMemo(
+    () => filterGroups(grouped, search),
+    [grouped, search],
+  );
 
   const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
 
@@ -94,7 +100,9 @@ export function CategoryCell({
         return {
           ...old,
           items: old.items.map((t: any) =>
-            t.id === transactionId ? { ...t, category_id: body.category_id } : t,
+            t.id === transactionId
+              ? { ...t, category_id: body.category_id }
+              : t,
           ),
         };
       });
@@ -154,18 +162,18 @@ export function CategoryCell({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded px-1.5 py-0.5 text-sm hover:bg-accent transition-colors"
+        className="-mx-1.5 flex h-6 max-w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 text-12 text-white/70 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/90"
       >
         {currentCategory ? (
           <>
             <span
-              className="size-2.5 shrink-0 rounded-full"
+              className="size-2 shrink-0 rounded-full"
               style={{ backgroundColor: currentCategory.color }}
             />
-            <span className="truncate max-w-[120px]">{currentCategory.name}</span>
+            <span className="truncate">{currentCategory.name}</span>
           </>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-white/25">—</span>
         )}
       </button>
     );
@@ -176,7 +184,10 @@ export function CategoryCell({
       <Combobox
         open={open}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen && containerRef.current?.contains(document.activeElement)) {
+          if (
+            !nextOpen &&
+            containerRef.current?.contains(document.activeElement)
+          ) {
             return;
           }
           setOpen(nextOpen);
@@ -190,21 +201,21 @@ export function CategoryCell({
       >
         <ComboboxInput
           placeholder="Search..."
-          className="h-7 w-[160px] text-sm"
+          className="h-7 w-full max-w-40 rounded-md border-white/10 bg-white/[0.04] text-12"
           autoFocus
           showTrigger={false}
         />
         <ComboboxContent className="min-w-[220px]">
           <ComboboxList>
             {filtered.length === 0 ? (
-              <div className="text-muted-foreground py-2 text-center text-sm">
+              <div className="py-2 text-center text-12 text-white/40">
                 No categories found
               </div>
             ) : (
               <>
                 {categoryId && !search && (
                   <ComboboxItem value="">
-                    <span className="text-muted-foreground">None</span>
+                    <span className="text-white/45">None</span>
                   </ComboboxItem>
                 )}
                 {filtered.map(({ parent, children }) => (
@@ -213,7 +224,7 @@ export function CategoryCell({
                     {children.map((cat) => (
                       <ComboboxItem key={cat.id} value={cat.id}>
                         <span
-                          className="size-2.5 shrink-0 rounded-full"
+                          className="size-2 shrink-0 rounded-full"
                           style={{ backgroundColor: cat.color }}
                         />
                         {cat.name}

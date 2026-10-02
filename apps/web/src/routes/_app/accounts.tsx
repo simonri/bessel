@@ -4,7 +4,6 @@ import {
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
 } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
@@ -15,11 +14,12 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
+import { IconButton, PageToolbar, PeriodNav } from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
 import { formatMoney } from "@/lib/money";
@@ -81,26 +81,36 @@ function Accounts() {
       {
         accessorKey: "name",
         header: "Name",
+        cell: ({ row }) => (
+          <span className="block truncate font-medium text-white/85">
+            {row.original.name}
+          </span>
+        ),
       },
       {
         accessorKey: "subtype",
         size: 100,
         header: "Type",
         cell: ({ row }) => (
-          <span className="capitalize">{row.original.subtype}</span>
+          <span className="text-white/55 capitalize">
+            {row.original.subtype}
+          </span>
         ),
       },
       {
         accessorKey: "currency",
         size: 80,
         header: "Currency",
+        cell: ({ row }) => (
+          <span className="text-12 text-white/45">{row.original.currency}</span>
+        ),
       },
       {
         accessorKey: "current_balance",
         size: 140,
         header: () => <div className="text-right">Balance</div>,
         cell: ({ row }) => (
-          <div className="text-right font-mono tabular-nums">
+          <div className="text-right font-medium tabular-nums text-white/85">
             {formatMoney(
               row.original.current_balance ?? 0,
               row.original.currency,
@@ -112,7 +122,11 @@ function Accounts() {
         accessorKey: "created_at",
         size: 120,
         header: "Created",
-        cell: ({ row }) => format(row.original.created_at, "yyyy-MM-dd"),
+        cell: ({ row }) => (
+          <span className="text-12 tabular-nums text-white/45">
+            {format(row.original.created_at, "yyyy-MM-dd")}
+          </span>
+        ),
       },
       {
         id: "actions",
@@ -120,14 +134,13 @@ function Accounts() {
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-0.5">
             <EditAccountDialog account={row.original} />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:text-destructive"
+            <IconButton
+              destructive
+              title="Delete account"
               onClick={() => setDeleteTarget(row.original)}
             >
-              <Trash2 className="size-3.5" />
-            </Button>
+              <Trash2 />
+            </IconButton>
           </div>
         ),
       },
@@ -141,22 +154,25 @@ function Accounts() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Accounts</h2>
-          {totalCount > 0 && (
-            <p className="text-muted-foreground text-sm">
+      <PageToolbar
+        description={
+          totalCount > 0 && (
+            <span className="tabular-nums">
               {totalCount} account{totalCount !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
+            </span>
+          )
+        }
+      >
         <CreateAccountDialog />
-      </div>
+      </PageToolbar>
 
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton
+              key={i}
+              className="h-10 w-full rounded-lg bg-white/[0.06]"
+            />
           ))}
         </div>
       ) : (
@@ -169,28 +185,14 @@ function Accounts() {
       )}
 
       {maxPage > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
-            <ChevronLeft className="size-4" />
-            Previous
-          </Button>
-          <span className="text-muted-foreground text-sm tabular-nums">
-            {page} / {maxPage}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-            disabled={page >= maxPage}
-          >
-            Next
-            <ChevronRight className="size-4" />
-          </Button>
+        <div className="flex justify-end">
+          <PeriodNav
+            label={`${page} / ${maxPage}`}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(maxPage, p + 1))}
+            prevDisabled={page <= 1}
+            nextDisabled={page >= maxPage}
+          />
         </div>
       )}
 
@@ -201,8 +203,8 @@ function Accounts() {
         title="Delete account?"
         description={
           <>
-            &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will
-            be permanently removed. This can&rsquo;t be undone.
+            &ldquo;{deleteTarget?.name}&rdquo; and all its transactions will be
+            permanently removed. This can&rsquo;t be undone.
           </>
         }
         onConfirm={() => {

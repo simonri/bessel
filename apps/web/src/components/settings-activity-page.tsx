@@ -1,11 +1,11 @@
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
 import {
-  SettingsEmpty,
-  SettingsIconButton,
-  SettingsInput,
-} from "@/components/settings-ui";
+  EmptyState,
+  IconButton,
+  SectionLabel,
+  TextInput,
+} from "@/components/ui-kit";
 import { type ActivityMapping, useSettings } from "@/hooks/use-settings";
 
 export function ActivityPage() {
@@ -38,31 +38,29 @@ export function ActivityPage() {
 
         {mappings.map((m, i) => (
           <div key={i} className="flex min-w-0 items-center gap-2">
-            <SettingsInput
+            <TextInput
               value={m.from}
               onChange={(e) => change(i, "from", e.target.value)}
               placeholder="com.google.Chrome"
               className="flex-1"
             />
-            <SettingsInput
+            <TextInput
               value={m.to}
               onChange={(e) => change(i, "to", e.target.value)}
               placeholder="Chrome"
               className="flex-1"
             />
-            <SettingsIconButton
+            <IconButton
               destructive
               onClick={() => remove(i)}
               title="Remove mapping"
             >
               <X />
-            </SettingsIconButton>
+            </IconButton>
           </div>
         ))}
 
-        {mappings.length === 0 && (
-          <SettingsEmpty>No mappings yet</SettingsEmpty>
-        )}
+        {mappings.length === 0 && <EmptyState>No mappings yet</EmptyState>}
 
         <button
           type="button"

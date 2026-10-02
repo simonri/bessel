@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
 import {
-  SettingsButton,
-  SettingsCard,
   SettingsError,
   SettingsInstallCta,
   SettingsLoading,
-  SettingsRow,
   SettingsToggleRow,
   StatusDot,
 } from "@/components/settings-ui";
+import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
 
 type CollectorStatusResult = {
   installed: boolean;
@@ -92,22 +89,22 @@ export function AgentUsagePage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Background timer</SectionLabel>
-        <SettingsCard>
-          <SettingsRow label="Status">
+        <Panel>
+          <PanelRow label="Status">
             <StatusDot tone={dotTone} />
             <span className="text-13 text-white/80">{stateLabel}</span>
-          </SettingsRow>
+          </PanelRow>
 
           {status.installed && !status.needsConfig && (
             <>
-              <SettingsRow label="Control">
-                <SettingsButton
+              <PanelRow label="Control">
+                <SoftButton
                   onClick={() => run(() => window.electron!.collector.runNow())}
                   disabled={loading || status.failed}
                 >
                   Run now
-                </SettingsButton>
-              </SettingsRow>
+                </SoftButton>
+              </PanelRow>
               <SettingsToggleRow
                 label="Run on a timer"
                 checked={status.enabled}
@@ -118,7 +115,7 @@ export function AgentUsagePage() {
               />
             </>
           )}
-        </SettingsCard>
+        </Panel>
       </div>
 
       {status.needsConfig && (

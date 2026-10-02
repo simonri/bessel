@@ -8,13 +8,13 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
 import {
-  SettingsCard,
-  SettingsEmpty,
-  SettingsIconButton,
-  SettingsInput,
-} from "@/components/settings-ui";
+  EmptyState,
+  IconButton,
+  Panel,
+  SectionLabel,
+  TextInput,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
 
 function formatLastSeen(value: string | Date): string {
@@ -78,17 +78,17 @@ export function DevicesPage() {
           to forget its saved locations.
         </p>
 
-        {devices.length === 0 && <SettingsEmpty>No devices yet</SettingsEmpty>}
+        {devices.length === 0 && <EmptyState>No devices yet</EmptyState>}
 
         {devices.length > 0 && (
-          <SettingsCard>
+          <Panel>
             {devices.map((d) => (
               <div
                 key={d.id}
                 className="flex items-center justify-between gap-3 px-4 py-3"
               >
                 {editingId === d.id ? (
-                  <SettingsInput
+                  <TextInput
                     autoFocus
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
@@ -105,13 +105,10 @@ export function DevicesPage() {
                   </div>
                 )}
                 <div className="flex shrink-0 items-center gap-1">
-                  <SettingsIconButton
-                    onClick={() => startEdit(d)}
-                    title="Rename"
-                  >
+                  <IconButton onClick={() => startEdit(d)} title="Rename">
                     <Pencil />
-                  </SettingsIconButton>
-                  <SettingsIconButton
+                  </IconButton>
+                  <IconButton
                     destructive
                     title="Remove device"
                     onClick={() =>
@@ -122,11 +119,11 @@ export function DevicesPage() {
                     }
                   >
                     <Trash2 />
-                  </SettingsIconButton>
+                  </IconButton>
                 </div>
               </div>
             ))}
-          </SettingsCard>
+          </Panel>
         )}
       </div>
     </div>

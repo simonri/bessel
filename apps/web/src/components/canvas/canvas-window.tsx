@@ -12,7 +12,6 @@ import {
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
 import { Spinner } from "@bessel/ui/components/spinner";
-import { glassSurface } from "@bessel/ui/lib/glass";
 import { useQuery } from "@tanstack/react-query";
 import {
   CheckSquare,
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import { memo, Suspense, useCallback, useEffect, useState } from "react";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
+import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import { client } from "@/lib/client";
 import { isDoneStatus } from "@/lib/task-format";
 import { cn } from "@/lib/utils";
@@ -263,14 +263,18 @@ export const CanvasWindow = memo(function CanvasWindow({
       data-is-window="true"
       onPointerDown={() => setFocusedWindow(entry.id)}
       className={cn(
-        glassSurface({ weight: "medium" }),
-        "relative flex h-full flex-col overflow-hidden rounded-xl border shadow-2xl transition-[border-color] duration-150",
-        isFocused || isFullscreen ? "border-primary-500" : "border-white/15",
+        WINDOW_FRAME,
+        "transition-[border-color] duration-150",
+        (isFocused || isFullscreen) && "border-primary-500",
       )}
     >
       {/* Title bar — react-grid-layout drag handle (selector: .canvas-window-titlebar) */}
-      <div
-        className="canvas-window-titlebar flex shrink-0 cursor-grab items-center gap-2 border-b border-white/5 bg-[#1f1f1f] py-1 pr-1.5 pl-3 active:cursor-grabbing"
+      <WindowTitleBar
+        icon={Icon}
+        title={config.title}
+        subtitle={dynamicTitle || entry.data?.projectName}
+        leading={agentStatus && <AgentStatusIndicator status={agentStatus} />}
+        className="canvas-window-titlebar cursor-grab active:cursor-grabbing"
         onMouseDownCapture={(event) => {
           if (event.button !== 1) return;
           event.preventDefault();
@@ -279,54 +283,42 @@ export const CanvasWindow = memo(function CanvasWindow({
           clearFullscreenWindow(entry.id);
         }}
       >
-        {agentStatus && <AgentStatusIndicator status={agentStatus} />}
-        <Icon className="size-3.5 text-white/60" />
-        <span className="select-none truncate text-xs font-semibold text-white/90">
-          {config.title}
-          {(dynamicTitle || entry.data?.projectName) && (
-            <span className="ml-1.5 font-normal text-white/50">
-              / {dynamicTitle || entry.data?.projectName}
-            </span>
+        <AttachedTaskButton entry={entry} />
+        {moduleSupportsProject(entry.module) && (
+          <ProjectSwitcher entry={entry} />
+        )}
+        <MoveToWorkspaceMenu entry={entry} />
+        <Button
+          variant="ghost"
+          size="iconSm"
+          shape="pill"
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => toggleFullscreenWindow(entry.id)}
+          title={isFullscreen ? "Exit full screen" : "Full screen"}
+          className="text-white/40 hover:bg-white/10 hover:text-white/80"
+        >
+          {isFullscreen ? (
+            <Minimize2 className="size-3" />
+          ) : (
+            <Maximize2 className="size-3" />
           )}
-        </span>
-        <div className="ml-auto flex min-w-0 items-center gap-0.5">
-          <AttachedTaskButton entry={entry} />
-          {moduleSupportsProject(entry.module) && (
-            <ProjectSwitcher entry={entry} />
-          )}
-          <MoveToWorkspaceMenu entry={entry} />
-          <Button
-            variant="ghost"
-            size="iconSm"
-            shape="pill"
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={() => toggleFullscreenWindow(entry.id)}
-            title={isFullscreen ? "Exit full screen" : "Full screen"}
-            className="text-white/40 hover:bg-white/10 hover:text-white/80"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="size-3" />
-            ) : (
-              <Maximize2 className="size-3" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="iconSm"
-            shape="pill"
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={() => {
-              closeWindow(entry.id);
-              clearFullscreenWindow(entry.id);
-            }}
-            className="text-white/40 hover:bg-white/10 hover:text-white/80"
-          >
-            <X className="size-3" />
-          </Button>
-        </div>
-      </div>
+        </Button>
+        <Button
+          variant="ghost"
+          size="iconSm"
+          shape="pill"
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => {
+            closeWindow(entry.id);
+            clearFullscreenWindow(entry.id);
+          }}
+          className="text-white/40 hover:bg-white/10 hover:text-white/80"
+        >
+          <X className="size-3" />
+        </Button>
+      </WindowTitleBar>
 
       {/* Scrollable content */}
       <div

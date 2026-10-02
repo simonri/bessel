@@ -1,13 +1,38 @@
-import type { PlaceSchema } from "@bessel/client";
-import { Map, Trash2 } from "lucide-react";
+import type { PlaceSchema, PlaceStatus } from "@bessel/client";
+import { Map as MapIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditPlaceDialog } from "@/components/edit-place-dialog";
+import { IconButton } from "@/components/ui-kit";
+import { cn } from "@/lib/utils";
 import { RatingStars } from "./-rating-stars";
 import {
   formatVisitedDate,
   getCategoryIcon,
   getGoogleMapsUrl,
 } from "./-travel-utils";
+
+export function StatusBadge({
+  status,
+  className,
+}: {
+  status?: PlaceStatus | null;
+  className?: string;
+}) {
+  const visited = status === "visited";
+  return (
+    <span
+      className={cn(
+        "inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-11 font-medium",
+        visited
+          ? "bg-emerald-500/10 text-emerald-400"
+          : "bg-primary-500/10 text-primary-300",
+        className,
+      )}
+    >
+      {visited ? "Visited" : "Want to go"}
+    </span>
+  );
+}
 
 export function PlaceCard({
   place,
@@ -27,11 +52,12 @@ export function PlaceCard({
 
   return (
     <div
-      className={`group flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 transition-[background-color,border-color] duration-150 ${
+      className={cn(
+        "group flex min-w-0 cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors duration-150",
         isSelected
-          ? "border-white/20 bg-white/[0.08]"
-          : "border-white/[0.07] bg-white/[0.03] pointer-fine:hover:border-white/10 pointer-fine:hover:bg-white/[0.06]"
-      }`}
+          ? "relative bg-white/[0.07] before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-primary-400"
+          : "pointer-fine:hover:bg-white/[0.04]",
+      )}
       onClick={onSelect}
     >
       {showPhoto ? (
@@ -40,19 +66,19 @@ export function PlaceCard({
           alt=""
           loading="lazy"
           onError={() => setPhotoFailed(true)}
-          className="size-9 shrink-0 rounded-md object-cover"
+          className="size-9 shrink-0 rounded-lg border border-white/[0.07] object-cover"
         />
       ) : (
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/[0.07]">
-          <Icon className="size-4 text-white/45" />
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.04]">
+          <Icon className="size-4 text-white/40" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-white/80">
+        <span className="block truncate text-13 font-medium text-white/85">
           {place.name}
         </span>
         {(place.country || place.category) && (
-          <span className="block truncate text-11 text-white/50">
+          <span className="block truncate text-12 capitalize text-white/45">
             {[place.country, place.category?.replace(/_/g, " ")]
               .filter(Boolean)
               .join(" · ")}
@@ -60,40 +86,35 @@ export function PlaceCard({
         )}
       </div>
       {place.rating && (
-        <div className="hidden shrink-0 sm:block">
+        <div className="hidden shrink-0 @md:block">
           <RatingStars rating={place.rating} />
         </div>
       )}
       {!isVisited && (
-        <span className="hidden shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-10 font-medium text-amber-400/90 sm:block">
-          want to go
-        </span>
+        <StatusBadge status={place.status} className="hidden @md:inline-flex" />
       )}
       {isVisited && !!place.visited_at && (
-        <span className="hidden w-20 shrink-0 text-right text-10 tabular-nums text-white/50 sm:block">
+        <span className="hidden w-20 shrink-0 text-right text-11 tabular-nums text-white/40 @md:block">
           {formatVisitedDate(place.visited_at)}
         </span>
       )}
       <div
-        className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+        className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
         onClick={(e) => e.stopPropagation()}
       >
         <a
           href={getGoogleMapsUrl(place)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-6 w-6 items-center justify-center rounded text-white/30 transition-colors hover:text-white/70"
+          title="Open in Google Maps"
+          className="flex size-7 items-center justify-center rounded-md text-white/40 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85"
         >
-          <Map className="size-3.5" />
+          <MapIcon className="size-3.5" />
         </a>
         <EditPlaceDialog place={place} />
-        <button
-          type="button"
-          className="flex h-6 w-6 items-center justify-center rounded text-white/30 transition-colors hover:text-red-400"
-          onClick={onDelete}
-        >
-          <Trash2 className="size-3.5" />
-        </button>
+        <IconButton destructive title="Delete" onClick={onDelete}>
+          <Trash2 />
+        </IconButton>
       </div>
     </div>
   );

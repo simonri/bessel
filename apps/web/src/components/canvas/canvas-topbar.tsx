@@ -46,7 +46,7 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
   return (
     <div
       className={cn(
-        "relative z-50 flex h-10 shrink-0 items-center border-b border-white/10 bg-[#1e1e1e] pr-2 pl-4",
+        "relative z-50 flex h-10 shrink-0 items-center border-b border-white/10 bg-chrome pr-2 pl-4",
         isMac && [MAC_TRAFFIC_LIGHT_INSET, "[-webkit-app-region:drag]"],
       )}
     >

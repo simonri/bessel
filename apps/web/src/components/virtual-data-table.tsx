@@ -90,16 +90,19 @@ export function VirtualDataTable<TData, TValue>({
   );
 
   return (
-    <div className="rounded-md border">
-      <Table className="table-fixed">
+    <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03]">
+      <Table className="table-fixed text-13">
         <DataTableHeader
           table={table}
-          className="bg-background sticky top-0 z-10"
+          className="bg-white/[0.02] [&_th]:h-9 [&_th]:px-3 [&_th]:text-11 [&_th]:font-medium [&_th]:text-white/45 [&_tr]:border-white/[0.07] [&_tr]:hover:bg-transparent"
         />
         <TableBody>
           {rows.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+            <TableRow className="hover:bg-transparent">
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center text-12 text-white/40"
+              >
                 {emptyMessage}
               </TableCell>
             </TableRow>
@@ -110,7 +113,7 @@ export function VirtualDataTable<TData, TValue>({
                   <tr key={`group-${i}`}>
                     <td
                       colSpan={columns.length}
-                      className="text-muted-foreground border-b px-3 py-1.5 text-xs font-semibold"
+                      className="border-b border-white/[0.05] bg-white/[0.015] px-3 pt-3 pb-1.5 text-11 font-semibold tracking-wide text-white/40"
                     >
                       {item.label}
                     </td>
@@ -170,13 +173,16 @@ function LongPressRow<TData>({
   return (
     <TableRow
       data-state={row.getIsSelected() ? "selected" : undefined}
-      className={cn(pressing && "bg-accent")}
+      className={cn(
+        "border-white/[0.05] text-white/80 transition-colors duration-150 hover:bg-white/[0.03] data-[state=selected]:bg-primary-500/[0.07]",
+        pressing && "bg-white/[0.06]",
+      )}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchEnd}
     >
       {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
+        <TableCell key={cell.id} className="px-3 py-2">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
       ))}

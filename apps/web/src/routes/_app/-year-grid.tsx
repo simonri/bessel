@@ -1,9 +1,15 @@
 import { addDays, format, isSameDay, subDays } from "date-fns";
 import { useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { activityLevel, fmtDur } from "./-activity-utils";
 
-// 5 intensity levels for the year grid (GitHub-style)
-const GRID_ALPHA = [0.07, 0.28, 0.5, 0.72, 0.92];
+// 5 intensity levels for the year grid (GitHub-style), as % of the data colour
+const GRID_MIX = [0, 30, 52, 74, 94];
+
+function cellBackground(color: string, level: number): string {
+  if (level === 0) return "rgb(255 255 255 / 0.06)";
+  return `color-mix(in oklab, ${color} ${GRID_MIX[level]}%, transparent)`;
+}
 
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
 
@@ -90,22 +96,24 @@ function YearGridCell({
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative aspect-square rounded-[2px] transition-shadow cursor-pointer ${
+      type="button"
+      aria-label={format(day.d, "MMM d, yyyy")}
+      aria-pressed={isSelected}
+      className={cn(
+        "relative aspect-square cursor-pointer rounded-[2px] outline-none transition-shadow duration-150 hover:ring-1 hover:ring-inset hover:ring-white/40 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/60",
         isSelected
-          ? "ring-1 ring-inset ring-white/60"
-          : isToday
-            ? "ring-1 ring-inset ring-white/25"
-            : ""
-      }`}
+          ? "ring-1 ring-inset ring-white/80 hover:ring-white/80"
+          : isToday && "ring-1 ring-inset ring-white/30",
+      )}
       style={{
         gridColumn: col,
         gridRow: row,
-        background: `rgba(${color},${GRID_ALPHA[activityLevel(day.secs, maxSecs)]})`,
+        background: cellBackground(color, activityLevel(day.secs, maxSecs)),
       }}
     >
       {visible && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-10 text-white/80">
-          <span className="text-white/50">{format(day.d, "MMM d")} · </span>
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-popover px-2 py-1 text-11 tabular-nums text-white/85 shadow-lg">
+          <span className="text-white/45">{format(day.d, "MMM d")} · </span>
           {day.secs > 0 ? fmtDur(day.secs) : emptyLabel}
         </div>
       )}
@@ -128,6 +136,7 @@ export function YearGrid<T>({
   items: T[];
   getDate: (item: T) => string;
   getValue: (item: T) => number;
+  /** Any CSS color, e.g. `var(--color-primary-500)`. */
   color: string;
   emptyLabel: string;
   selectedDate: Date;
@@ -152,20 +161,15 @@ export function YearGrid<T>({
   });
 
   return (
-    <div className="pt-1">
-      <p className="mb-3 text-11 font-medium text-white/50">{year}</p>
-
+    <div className="@container">
       {/* Outer flex row: [day labels] [month labels + cells] */}
       <div className="flex gap-1.5">
         {/* Day-of-week labels — flex-1 rows track the grid rows automatically */}
-        <div
-          className="flex flex-col shrink-0 select-none"
-          style={{ gap: "3px" }}
-        >
+        <div className="flex shrink-0 select-none flex-col gap-[2px] pt-[18px] @lg:gap-[3px]">
           {DAY_LABELS.map((l, i) => (
             <div
               key={i}
-              className="flex-1 flex items-center justify-end text-8 leading-none text-white/50 pr-0.5"
+              className="flex flex-1 items-center justify-end pr-0.5 text-9 leading-none text-white/35"
             >
               {l}
             </div>
@@ -175,11 +179,11 @@ export function YearGrid<T>({
         {/* Cell column: month labels + cell grid */}
         <div className="flex-1 min-w-0">
           {/* Month labels: % positioned, clipped so they never overflow */}
-          <div className="relative h-3.5 mb-1 overflow-hidden">
+          <div className="relative mb-1 h-3.5 overflow-hidden">
             {monthMarkers.map(({ col, label }) => (
               <span
                 key={label}
-                className="absolute text-9 leading-none font-medium text-white/50 select-none"
+                className="absolute select-none text-10 font-medium leading-none text-white/40"
                 style={{
                   left: `${(col / Math.max(yearGrid.length, 1)) * 100}%`,
                 }}
@@ -191,11 +195,8 @@ export function YearGrid<T>({
 
           {/* Cell grid: uniform 1fr columns so aspect-square resolves correctly */}
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${yearGrid.length}, 1fr)`,
-              gap: "3px",
-            }}
+            className="grid gap-[2px] @lg:gap-[3px]"
+            style={{ gridTemplateColumns: `repeat(${yearGrid.length}, 1fr)` }}
           >
             {yearGrid.map((week, wi) =>
               week.map((day, di) =>

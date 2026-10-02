@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
 import {
-  SettingsButton,
-  SettingsCard,
   SettingsError,
   SettingsInstallCta,
   SettingsLoading,
-  SettingsRow,
   StatusDot,
 } from "@/components/settings-ui";
+import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
 
 type MyAiStatus = { path: string; exists: boolean };
 type CliStatus = {
@@ -27,6 +24,12 @@ export function MyAiPage() {
   const [cliLoading, setCliLoading] = useState(false);
   const [cliError, setCliError] = useState<string | null>(null);
 
+  // undefined = still checking, null = server not reachable (older preload,
+  // or it hasn't finished starting yet — retried a few times below).
+  const [localDataUrl, setLocalDataUrl] = useState<string | null | undefined>(
+    undefined,
+  );
+
   useEffect(() => {
     // Optional-chained on myAi/cli too: a renderer hot-reloaded under an
     // older preload (dev) doesn't have the bridge yet.
@@ -38,6 +41,35 @@ export function MyAiPage() {
       ?.status()
       .then(setCliStatus)
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!window.electron?.localDataServer) {
+      setLocalDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+    let attempt = 0;
+    const poll = () => {
+      window
+        .electron!.localDataServer.getUrl()
+        .then((url) => {
+          if (cancelled) return;
+          if (url || attempt >= 5) {
+            setLocalDataUrl(url);
+          } else {
+            attempt += 1;
+            setTimeout(poll, 1000);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setLocalDataUrl(null);
+        });
+    };
+    poll();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const create = async () => {
@@ -72,29 +104,29 @@ export function MyAiPage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Context folder</SectionLabel>
-        <SettingsCard>
-          <SettingsRow label="Status">
+        <Panel>
+          <PanelRow label="Status">
             <StatusDot tone={status.exists ? "active" : "neutral"} />
             <span className="text-13 text-white/80">
               {status.exists ? "Created" : "Not created"}
             </span>
-          </SettingsRow>
-          <SettingsRow label="Path">
+          </PanelRow>
+          <PanelRow label="Path">
             <span
               className="truncate font-mono text-12 text-white/80"
               title={status.path}
             >
               {status.path}
             </span>
-          </SettingsRow>
+          </PanelRow>
           {status.exists && (
-            <SettingsRow label="Files">
-              <SettingsButton onClick={() => window.electron!.myAi.reveal()}>
+            <PanelRow label="Files">
+              <SoftButton onClick={() => window.electron!.myAi.reveal()}>
                 Reveal info.md
-              </SettingsButton>
-            </SettingsRow>
+              </SoftButton>
+            </PanelRow>
           )}
-        </SettingsCard>
+        </Panel>
       </div>
 
       {!status.exists && (
@@ -109,11 +141,42 @@ export function MyAiPage() {
 
       <SettingsError>{error}</SettingsError>
 
+      {localDataUrl !== null && (
+        <div>
+          <SectionLabel>Local data API</SectionLabel>
+          <Panel>
+            <PanelRow label="Status">
+              <StatusDot tone={localDataUrl ? "active" : "neutral"} />
+              <span className="text-13 text-white/80">
+                {localDataUrl === undefined ? "Checking…" : "Running"}
+              </span>
+            </PanelRow>
+            {localDataUrl && (
+              <PanelRow label="Address">
+                <span
+                  className="truncate font-mono text-12 text-white/80"
+                  title={localDataUrl}
+                >
+                  {localDataUrl}
+                </span>
+              </PanelRow>
+            )}
+          </Panel>
+          {localDataUrl && (
+            <p className="mt-2 text-12 text-white/40">
+              Returns a JSON snapshot of your data (sleep, for now) for a local
+              AI tool to read, e.g.{" "}
+              <code className="font-mono">curl {localDataUrl}</code>.
+            </p>
+          )}
+        </div>
+      )}
+
       {cliStatus && (
         <div>
           <SectionLabel>CLI</SectionLabel>
-          <SettingsCard>
-            <SettingsRow label="Status">
+          <Panel>
+            <PanelRow label="Status">
               <StatusDot tone={cliStatus.installed ? "active" : "neutral"} />
               <span className="text-13 text-white/80">
                 {!cliStatus.supported
@@ -122,18 +185,18 @@ export function MyAiPage() {
                     ? "Installed"
                     : "Not installed"}
               </span>
-            </SettingsRow>
+            </PanelRow>
             {cliStatus.installed && (
-              <SettingsRow label="Path">
+              <PanelRow label="Path">
                 <span
                   className="truncate font-mono text-12 text-white/80"
                   title={cliStatus.shimPath}
                 >
                   {cliStatus.shimPath}
                 </span>
-              </SettingsRow>
+              </PanelRow>
             )}
-          </SettingsCard>
+          </Panel>
         </div>
       )}
 

@@ -2,37 +2,29 @@ import {
   getDailySleepV1HealthkitSleepDailyGetOptions,
   getSleepSummaryV1HealthkitSleepSummaryGetOptions,
 } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { addDays, format, isSameDay, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Moon } from "lucide-react";
 import { useState } from "react";
+import {
+  BarRow,
+  EmptyState,
+  PageToolbar,
+  PeriodNav,
+  SectionLabel,
+  SoftButton,
+  StatTile,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { fmtDur } from "./-activity-utils";
+import { STAGE_META, STAGE_ORDER } from "./-sleep-utils";
 import { YearGrid, yearGridRange } from "./-year-grid";
 
 export const Route = createFileRoute("/_app/sleep")({
   component: SleepPage,
 });
-
-// Fixed stage -> color mapping (entity-based, not sort order) validated with
-// the dataviz skill's palette validator against this app's dark surface.
-const STAGE_ORDER = [
-  "awake",
-  "asleepREM",
-  "asleepCore",
-  "asleepUnspecified",
-  "asleepDeep",
-] as const;
-
-const STAGE_META: Record<string, { label: string; rgb: string }> = {
-  awake: { label: "Awake", rgb: "201,133,0" },
-  asleepREM: { label: "REM", rgb: "25,158,112" },
-  asleepCore: { label: "Core", rgb: "57,135,229" },
-  asleepUnspecified: { label: "Asleep", rgb: "57,135,229" },
-  asleepDeep: { label: "Deep", rgb: "213,81,129" },
-};
 
 // Nights are bucketed noon-to-noon (matches the backend's wake-date
 // attribution), so the window for a selected date runs from noon the day
@@ -80,100 +72,109 @@ function SleepPage() {
     return s ? { key, meta: STAGE_META[key], ...s } : null;
   }).filter((s): s is NonNullable<typeof s> => s !== null && s.secs > 0);
 
+  const night = summary && summary.total_asleep_secs > 0 ? summary : null;
+  const maxStageSecs = Math.max(...stages.map((s) => s.secs), 1);
+  const stageSecs = (key: string) =>
+    stages.find((s) => s.key === key)?.secs ?? 0;
+
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Sleep</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Nightly sleep from Apple Health.
-        </p>
+      <PageToolbar description="Nightly sleep from Apple Health.">
+        {!isCurrentDay && <SoftButton onClick={goToday}>Today</SoftButton>}
+        <PeriodNav
+          label={isCurrentDay ? "Last night" : format(date, "EEE, MMM d, yyyy")}
+          onPrev={prevDay}
+          onNext={nextDay}
+          nextDisabled={isCurrentDay}
+        />
+      </PageToolbar>
+
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
+        <StatTile
+          label="Asleep"
+          value={night ? fmtDur(night.total_asleep_secs) : "—"}
+        />
+        <StatTile
+          label="Deep"
+          value={night ? fmtDur(stageSecs("asleepDeep")) : "—"}
+        />
+        <StatTile
+          label="REM"
+          value={night ? fmtDur(stageSecs("asleepREM")) : "—"}
+        />
+        <StatTile
+          label="Awake"
+          value={night ? fmtDur(stageSecs("awake")) : "—"}
+        />
       </div>
 
-      {/* Date navigation */}
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={prevDay}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="min-w-36 text-center text-sm font-medium">
-          {isCurrentDay ? "Last night" : format(date, "EEE, MMM d, yyyy")}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={nextDay}
-          disabled={isCurrentDay}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        {!isCurrentDay && (
-          <Button variant="ghost" size="sm" onClick={goToday}>
-            Today
-          </Button>
-        )}
-      </div>
-
-      {/* GitHub-style year sleep grid */}
-      <YearGrid
-        year={today.getFullYear()}
-        items={yearDailyData?.nights ?? []}
-        getDate={(n) => n.date}
-        getValue={(n) => n.asleep_secs}
-        color="129,140,248"
-        emptyLabel="No sleep data"
-        selectedDate={date}
-        today={today}
-        onSelectDay={setDate}
-      />
-
-      {/* Selected-night stage breakdown */}
-      {isLoading && !summary ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-6 w-full animate-pulse rounded bg-white/5"
-            />
-          ))}
+      <section>
+        <SectionLabel>{today.getFullYear()}</SectionLabel>
+        <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
+          <YearGrid
+            year={today.getFullYear()}
+            items={yearDailyData?.nights ?? []}
+            getDate={(n) => n.date}
+            getValue={(n) => n.asleep_secs}
+            color="rgb(129 140 248)"
+            emptyLabel="No sleep data"
+            selectedDate={date}
+            today={today}
+            onSelectDay={setDate}
+          />
         </div>
-      ) : !summary || summary.total_asleep_secs === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No sleep data recorded for this night.
-        </p>
-      ) : (
-        <div className="space-y-1.5">
-          <p className="mb-3 text-sm text-white/50">
-            <span className="text-base font-medium text-white/80">
-              {fmtDur(summary.total_asleep_secs)}
-            </span>{" "}
-            asleep
-          </p>
-          {stages.map((stage) => (
-            <div key={stage.key} className="flex items-center gap-3">
-              <span className="w-16 shrink-0 truncate font-mono text-xs text-white/60">
-                {stage.meta.label}
-              </span>
-              <div
-                className="relative h-2 flex-1 overflow-hidden rounded-full"
-                style={{ background: "rgba(255,255,255,0.07)" }}
-              >
+      </section>
+
+      <section>
+        <SectionLabel>Stages</SectionLabel>
+        {isLoading && !summary ? (
+          <div className="space-y-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-4 w-full bg-white/[0.06]" />
+            ))}
+          </div>
+        ) : !night ? (
+          <EmptyState icon={<Moon />} title="No sleep data">
+            Nothing recorded for this night.
+          </EmptyState>
+        ) : (
+          <div className="space-y-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full">
+              {stages.map((stage) => (
                 <div
-                  className="absolute inset-y-0 left-0 w-full rounded-full transition-transform"
+                  key={stage.key}
+                  title={`${stage.meta.label} · ${fmtDur(stage.secs)}`}
+                  className="h-full first:rounded-l-full last:rounded-r-full"
                   style={{
-                    transform: `translateX(-${100 - stage.percentage}%)`,
-                    background: `rgba(${stage.meta.rgb},0.85)`,
+                    flexGrow: stage.secs,
+                    background: `rgb(${stage.meta.rgb} / 0.85)`,
                   }}
                 />
-              </div>
-              <span className="w-14 shrink-0 text-right text-xs tabular-nums text-white/50">
-                {fmtDur(stage.secs)}
-              </span>
-              <span className="w-10 shrink-0 text-right text-11 tabular-nums text-white/50">
-                {stage.percentage.toFixed(1)}%
-              </span>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+            <div className="space-y-2.5">
+              {stages.map((stage) => (
+                <BarRow
+                  key={stage.key}
+                  label={
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ background: `rgb(${stage.meta.rgb})` }}
+                      />
+                      {stage.meta.label}
+                    </span>
+                  }
+                  fraction={stage.secs / maxStageSecs}
+                  value={fmtDur(stage.secs)}
+                  detail={`${stage.percentage.toFixed(1)}%`}
+                  color={`rgb(${stage.meta.rgb} / 0.85)`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

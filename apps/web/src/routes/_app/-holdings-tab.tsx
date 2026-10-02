@@ -1,12 +1,5 @@
 import type { HoldingSchema } from "@bessel/client";
 import { getHoldingsV1InvestmentsHoldingsGetOptions } from "@bessel/client";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@bessel/ui/components/empty";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -15,8 +8,26 @@ import { useMemo } from "react";
 import { CreateSecurityDialog } from "@/components/create-security-dialog";
 import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { DataTable } from "@/components/data-table";
+import {
+  BarRow,
+  EmptyState,
+  Panel,
+  SectionLabel,
+  StatTile,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { formatAmount, formatQuantity } from "@/lib/money";
+import { cn } from "@/lib/utils";
+
+const NUMERIC_CELL = "text-right tabular-nums text-white/70";
+
+function signed(value: number) {
+  return `${value >= 0 ? "+" : ""}${formatAmount(value)}`;
+}
+
+function gainClass(value: number) {
+  return value >= 0 ? "text-income" : "text-expense";
+}
 
 // Module scope: captures nothing, so there's no reason to rebuild the column
 // model (and every cell closure) per render.
@@ -25,10 +36,12 @@ const columns: ColumnDef<HoldingSchema>[] = [
     accessorKey: "security_name",
     header: "Security",
     cell: ({ row }) => (
-      <div>
-        <div className="font-medium">{row.original.security_name}</div>
+      <div className="min-w-0">
+        <div className="truncate font-medium text-white/85">
+          {row.original.security_name}
+        </div>
         {row.original.ticker && (
-          <div className="text-muted-foreground text-xs">
+          <div className="truncate text-11 tracking-wide text-white/40">
             {row.original.ticker}
           </div>
         )}
@@ -40,7 +53,7 @@ const columns: ColumnDef<HoldingSchema>[] = [
     header: "Type",
     size: 100,
     cell: ({ row }) => (
-      <span className="capitalize">
+      <span className="text-white/55 capitalize">
         {row.original.asset_type.replace("_", " ")}
       </span>
     ),
@@ -50,7 +63,7 @@ const columns: ColumnDef<HoldingSchema>[] = [
     header: () => <div className="text-right">Quantity</div>,
     size: 120,
     cell: ({ row }) => (
-      <div className="text-right font-mono tabular-nums">
+      <div className={NUMERIC_CELL}>
         {formatQuantity(row.original.quantity)}
       </div>
     ),
@@ -60,7 +73,7 @@ const columns: ColumnDef<HoldingSchema>[] = [
     header: () => <div className="text-right">Avg Cost</div>,
     size: 120,
     cell: ({ row }) => (
-      <div className="text-right font-mono tabular-nums">
+      <div className={NUMERIC_CELL}>
         {formatAmount(row.original.avg_cost_per_unit)}
       </div>
     ),
@@ -70,10 +83,12 @@ const columns: ColumnDef<HoldingSchema>[] = [
     header: () => <div className="text-right">Price</div>,
     size: 120,
     cell: ({ row }) => (
-      <div className="text-right font-mono tabular-nums">
-        {row.original.current_price != null
-          ? formatAmount(row.original.current_price)
-          : "—"}
+      <div className={NUMERIC_CELL}>
+        {row.original.current_price != null ? (
+          formatAmount(row.original.current_price)
+        ) : (
+          <span className="text-white/30">—</span>
+        )}
       </div>
     ),
   },
@@ -82,10 +97,17 @@ const columns: ColumnDef<HoldingSchema>[] = [
     header: () => <div className="text-right">Value</div>,
     size: 140,
     cell: ({ row }) => (
-      <div className="text-right font-mono tabular-nums">
-        {row.original.current_value != null
-          ? `${formatAmount(row.original.current_value)} ${row.original.currency}`
-          : "—"}
+      <div className="text-right font-medium tabular-nums text-white/85">
+        {row.original.current_value != null ? (
+          <>
+            {formatAmount(row.original.current_value)}
+            <span className="ml-1 text-11 font-normal text-white/40">
+              {row.original.currency}
+            </span>
+          </>
+        ) : (
+          <span className="font-normal text-white/30">—</span>
+        )}
       </div>
     ),
   },
@@ -95,18 +117,16 @@ const columns: ColumnDef<HoldingSchema>[] = [
     size: 170,
     cell: ({ row }) => {
       const { gain_loss, gain_loss_pct, currency } = row.original;
-      if (gain_loss == null) return <div className="text-right">—</div>;
-      const isPositive = gain_loss >= 0;
+      if (gain_loss == null)
+        return <div className="text-right text-white/30">—</div>;
       return (
-        <div
-          className={`text-right font-mono tabular-nums ${isPositive ? "text-income" : "text-expense"}`}
-        >
-          {isPositive ? "+" : ""}
-          {formatAmount(gain_loss)} {currency}
+        <div className={cn("text-right tabular-nums", gainClass(gain_loss))}>
+          {signed(gain_loss)}
+          <span className="ml-1 text-11 text-white/40">{currency}</span>
           {gain_loss_pct != null && (
-            <span className="text-muted-foreground text-xs ml-1">
-              ({isPositive ? "+" : ""}
-              {gain_loss_pct.toFixed(1)}%)
+            <span className="ml-1.5 text-11 opacity-80">
+              {gain_loss_pct >= 0 ? "+" : ""}
+              {gain_loss_pct.toFixed(1)}%
             </span>
           )}
         </div>
@@ -122,7 +142,6 @@ export function HoldingsTab() {
 
   const holdings = data?.items ?? [];
 
-  // Aggregate by asset_type for the donut chart
   const allocationData = useMemo(() => {
     const map = new Map<string, number>();
     for (const h of holdings) {
@@ -136,20 +155,48 @@ export function HoldingsTab() {
       .sort((a, b) => b.value - a.value);
   }, [holdings]);
 
+  // Portfolio totals only make sense when every holding shares a currency.
+  const summary = useMemo(() => {
+    const currencies = new Set(holdings.map((h) => h.currency));
+    if (currencies.size !== 1) return null;
+    let value = 0;
+    let costBasis = 0;
+    let pricedCost = 0;
+    let gain = 0;
+    for (const h of holdings) {
+      costBasis += h.cost_basis;
+      if (h.current_value != null) {
+        value += h.current_value;
+        pricedCost += h.cost_basis;
+        gain += h.gain_loss ?? 0;
+      }
+    }
+    return {
+      currency: [...currencies][0],
+      value,
+      costBasis,
+      gain,
+      gainPct: pricedCost > 0 ? (gain / pricedCost) * 100 : null,
+    };
+  }, [holdings]);
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap gap-x-8 gap-y-3 pb-4 border-b">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="space-y-1.5">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-4 w-20" />
-            </div>
+      <div className="space-y-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              className="h-[4.25rem] rounded-xl bg-white/[0.06]"
+            />
           ))}
         </div>
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton
+              key={i}
+              className="h-10 w-full rounded-lg bg-white/[0.06]"
+            />
           ))}
         </div>
       </div>
@@ -158,52 +205,74 @@ export function HoldingsTab() {
 
   if (holdings.length === 0) {
     return (
-      <Empty className="border">
-        <EmptyMedia>
-          <TrendingUp />
-        </EmptyMedia>
-        <EmptyHeader>
-          <EmptyTitle>No holdings yet</EmptyTitle>
-          <EmptyDescription>
-            Add securities and record trades to get started.
-          </EmptyDescription>
-        </EmptyHeader>
-        <div className="flex gap-2">
+      <EmptyState
+        icon={<TrendingUp />}
+        title="No holdings yet"
+        className="py-12"
+      >
+        <p>Add securities and record trades to get started.</p>
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
           <CreateSecurityDialog />
           <CreateTradeDialog />
         </div>
-      </Empty>
+      </EmptyState>
     );
   }
 
   const totalValue = allocationData.reduce((s, d) => s + d.value, 0);
+  const maxValue = allocationData[0]?.value ?? 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-150">
-      {/* Allocation strip */}
-      {allocationData.length > 0 && (
-        <div className="flex flex-wrap gap-x-8 gap-y-3 pb-4 border-b">
-          {allocationData.map((item) => {
-            const pct =
-              totalValue > 0 ? Math.round((item.value / totalValue) * 100) : 0;
-            return (
-              <div key={item.name}>
-                <p className="text-muted-foreground text-xs capitalize">
-                  {item.name}
-                </p>
-                <p className="mt-0.5 text-base font-medium tabular-nums">
-                  {formatAmount(item.value)}
-                  <span className="ml-1.5 text-xs text-muted-foreground">
-                    {pct}%
-                  </span>
-                </p>
-              </div>
-            );
-          })}
+    <div className="space-y-5 animate-in fade-in duration-150">
+      {summary && (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
+          <StatTile
+            label="Portfolio value"
+            value={formatAmount(summary.value)}
+            hint={summary.currency}
+          />
+          <StatTile
+            label="Cost basis"
+            value={formatAmount(summary.costBasis)}
+            hint={`${holdings.length} holding${holdings.length !== 1 ? "s" : ""}`}
+          />
+          <StatTile
+            label="Gain/Loss"
+            value={
+              <span className={gainClass(summary.gain)}>
+                {signed(summary.gain)}
+              </span>
+            }
+            hint={
+              summary.gainPct != null
+                ? `${summary.gainPct >= 0 ? "+" : ""}${summary.gainPct.toFixed(1)}%`
+                : summary.currency
+            }
+          />
         </div>
       )}
 
-      <DataTable columns={columns} data={holdings} />
+      {allocationData.length > 0 && (
+        <section>
+          <SectionLabel>Allocation</SectionLabel>
+          <Panel className="space-y-2.5 divide-y-0 px-4 py-3.5">
+            {allocationData.map((item) => (
+              <BarRow
+                key={item.name}
+                label={<span className="capitalize">{item.name}</span>}
+                fraction={maxValue > 0 ? item.value / maxValue : 0}
+                value={formatAmount(item.value)}
+                detail={`${totalValue > 0 ? Math.round((item.value / totalValue) * 100) : 0}%`}
+              />
+            ))}
+          </Panel>
+        </section>
+      )}
+
+      <section>
+        <SectionLabel>Positions</SectionLabel>
+        <DataTable columns={columns} data={holdings} />
+      </section>
     </div>
   );
 }

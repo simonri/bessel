@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { fmtBucketTime } from "./-activity-utils";
 
 const DAY_LABELS: { label: string; pct: number }[] = [
@@ -47,19 +48,29 @@ export function ActivityDayBar({
   return (
     <div>
       <div className="relative">
-        <div
-          className="relative flex w-full overflow-hidden rounded"
-          style={{ height: "18px", background: "rgba(255,255,255,0.06)" }}
-        >
+        <div className="relative flex h-5 w-full overflow-hidden rounded-md bg-white/[0.06]">
+          {[25, 50, 75].map((pct) => (
+            <div
+              key={pct}
+              className="absolute inset-y-0 w-px bg-white/[0.06]"
+              style={{ left: `${pct}%` }}
+            />
+          ))}
           {Array.from({ length: n }, (_, i) =>
             activeSet.has(i) ? (
               <div
                 key={i}
-                className="absolute inset-y-0"
+                className={cn(
+                  "absolute inset-y-0 transition-colors duration-150",
+                  hoveredSegment &&
+                    i >= hoveredSegment.start &&
+                    i < hoveredSegment.end
+                    ? "bg-primary-400"
+                    : "bg-primary-500/75",
+                )}
                 style={{
                   left: `${(i / n) * 100}%`,
                   width: `${(1 / n) * 100}%`,
-                  background: "rgba(96,165,250,0.75)",
                 }}
               />
             ) : null,
@@ -76,7 +87,7 @@ export function ActivityDayBar({
 
         {hoveredSegment !== null && (
           <div
-            className="pointer-events-none absolute bottom-full mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-10 text-white/80"
+            className="pointer-events-none absolute bottom-full z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-popover px-2 py-1 text-11 tabular-nums text-white/85 shadow-lg"
             style={{
               left: `${((hoveredSegment.start + hoveredSegment.end) / 2 / n) * 100}%`,
             }}
@@ -86,11 +97,11 @@ export function ActivityDayBar({
           </div>
         )}
       </div>
-      <div className="relative mt-1 select-none" style={{ height: "14px" }}>
+      <div className="relative mt-1.5 h-3 select-none">
         {DAY_LABELS.map(({ label, pct }) => (
           <span
             key={label + pct}
-            className="absolute text-10 leading-none text-white/50"
+            className="absolute text-10 leading-none tabular-nums text-white/35"
             style={{
               left: `${pct}%`,
               transform:

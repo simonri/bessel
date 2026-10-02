@@ -92,7 +92,7 @@ export function SettingsModal({
     <GlassDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <GlassDialogContent
         showCloseButton={false}
-        className="flex h-[520px] w-full max-w-[680px] rounded-xl border-white/15 bg-[#161616] p-0 backdrop-blur-none"
+        className="flex h-[520px] w-full max-w-[680px] p-0"
       >
         <GlassDialogTitle className="sr-only">Settings</GlassDialogTitle>
         <GlassDialogDescription className="sr-only">
@@ -100,7 +100,7 @@ export function SettingsModal({
         </GlassDialogDescription>
 
         {/* Sidebar */}
-        <aside className="flex w-48 shrink-0 flex-col border-r border-white/10 bg-[#1e1e1e]">
+        <aside className="flex w-48 shrink-0 flex-col border-r border-white/10 bg-chrome">
           <div className="flex h-[69px] items-center gap-2 px-4">
             <Settings className="size-3.5 text-white/40" />
             <span className="text-xs font-semibold text-white/60">

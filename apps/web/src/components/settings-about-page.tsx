@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
-import {
-  SettingsButton,
-  SettingsCard,
-  SettingsRow,
-} from "@/components/settings-ui";
+import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
 
 export function AboutPage() {
   const [version, setVersion] = useState<string | null>(null);
@@ -39,13 +34,13 @@ export function AboutPage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Application</SectionLabel>
-        <SettingsCard>
-          <SettingsRow label="Version">
+        <Panel>
+          <PanelRow label="Version">
             <span className="font-mono text-13 text-white/80">
               {version ?? "—"}
             </span>
-          </SettingsRow>
-          <SettingsRow
+          </PanelRow>
+          <PanelRow
             label={
               status === "idle" ? (
                 <span className="text-white/40">Not checked yet</span>
@@ -65,14 +60,14 @@ export function AboutPage() {
               )
             }
           >
-            <SettingsButton
+            <SoftButton
               onClick={checkForUpdate}
               disabled={status === "checking"}
             >
               {status === "checking" ? "Checking…" : "Check for updates"}
-            </SettingsButton>
-          </SettingsRow>
-        </SettingsCard>
+            </SoftButton>
+          </PanelRow>
+        </Panel>
       </div>
     </div>
   );

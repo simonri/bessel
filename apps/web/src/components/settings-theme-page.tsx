@@ -1,4 +1,4 @@
-import { SectionLabel } from "@/components/settings-section-label";
+import { SectionLabel } from "@/components/ui-kit";
 import { type ThemeKey, useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 

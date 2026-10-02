@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
 import {
-  SettingsButton,
-  SettingsCard,
   SettingsError,
   SettingsInstallCta,
   SettingsLoading,
-  SettingsRow,
   SettingsToggleRow,
   StatusDot,
 } from "@/components/settings-ui";
+import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
 
 type MonitorStatusResult = {
   installed: boolean;
@@ -86,16 +83,16 @@ export function MonitorPage() {
     <div className="space-y-5">
       <div>
         <SectionLabel>Background service</SectionLabel>
-        <SettingsCard>
-          <SettingsRow label="Status">
+        <Panel>
+          <PanelRow label="Status">
             <StatusDot tone={dotTone} />
             <span className="text-13 text-white/80">{stateLabel}</span>
-          </SettingsRow>
+          </PanelRow>
 
           {status.installed && (
             <>
-              <SettingsRow label="Control">
-                <SettingsButton
+              <PanelRow label="Control">
+                <SoftButton
                   onClick={() =>
                     run(
                       status.active
@@ -106,8 +103,8 @@ export function MonitorPage() {
                   disabled={loading || status.failed}
                 >
                   {status.active ? "Stop" : "Start"}
-                </SettingsButton>
-              </SettingsRow>
+                </SoftButton>
+              </PanelRow>
               <SettingsToggleRow
                 label="Start on login"
                 checked={status.enabled}
@@ -118,7 +115,7 @@ export function MonitorPage() {
               />
             </>
           )}
-        </SettingsCard>
+        </Panel>
       </div>
 
       {!status.installed && (

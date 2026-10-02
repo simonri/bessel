@@ -5,7 +5,6 @@ import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { cn } from "@bessel/ui/lib/utils";
-import { glassSurface } from "@bessel/ui/lib/glass";
 
 function GlassDialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="glass-dialog" {...props} />;
@@ -27,7 +26,7 @@ function GlassDialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="glass-dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
         className,
       )}
       {...props}
@@ -49,8 +48,7 @@ function GlassDialogContent({
       <DialogPrimitive.Content
         data-slot="glass-dialog-content"
         className={cn(
-          glassSurface({ weight: "medium" }),
-          "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/10 shadow-2xl outline-none",
+          "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-white/15 bg-panel text-white/85 shadow-2xl outline-none",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200",
           className,
         )}
@@ -60,9 +58,9 @@ function GlassDialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="glass-dialog-close"
-            className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-lg text-white/25 transition-colors pointer-fine:hover:bg-white/5 pointer-fine:hover:text-white/60"
+            className="absolute top-3.5 right-3.5 flex size-7 items-center justify-center rounded-md text-white/45 outline-none transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85 focus-visible:ring-1 focus-visible:ring-white/25"
           >
-            <XIcon className="size-3.5" />
+            <XIcon className="size-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

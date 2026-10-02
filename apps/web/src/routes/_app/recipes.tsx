@@ -1,19 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { BookOpen, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { RecipeType, type RecipeSchema } from "@bessel/client";
 import {
   createRecipeV1RecipesPostMutation,
   deleteRecipeV1RecipesRecipeIdDeleteMutation,
   listRecipesV1RecipesGetOptions,
   listRecipesV1RecipesGetQueryKey,
+  type RecipeSchema,
+  RecipeType,
   updateRecipeV1RecipesRecipeIdPatchMutation,
 } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
-import { Badge } from "@bessel/ui/components/badge";
 import {
   Select,
   SelectContent,
@@ -21,10 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@bessel/ui/components/empty";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { BookOpen, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import {
+  EmptyState,
+  IconButton,
+  PrimaryButton,
+  TextInput,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
 
 const RECIPE_TYPE_LABELS: Record<RecipeType, string> = {
   [RecipeType.DESSERT]: "Dessert",
@@ -36,11 +41,45 @@ export const Route = createFileRoute("/_app/recipes")({
   component: Recipes,
 });
 
+function ModeToggle({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      title={label}
+      onClick={onClick}
+      className={cn(
+        "flex h-full items-center gap-1.5 rounded-md px-2.5 text-12 font-medium transition-colors duration-150 [&_svg]:size-3",
+        active
+          ? "bg-white/12 text-white/90"
+          : "text-white/45 hover:text-white/75",
+      )}
+    >
+      {icon}
+      <span className="hidden @lg:inline">{label}</span>
+    </button>
+  );
+}
+
 function Recipes() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
-  const [draft, setDraft] = useState<{ title: string; content: string; recipe_type: RecipeType } | null>(null);
+  const [draft, setDraft] = useState<{
+    title: string;
+    content: string;
+    recipe_type: RecipeType;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecipeSchema | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
@@ -48,12 +87,17 @@ function Recipes() {
   const queryKey = listRecipesV1RecipesGetQueryKey({ client });
 
   const { data } = useQuery(
-    listRecipesV1RecipesGetOptions({ client, query: { limit: 200, sorting: ["title"] } }),
+    listRecipesV1RecipesGetOptions({
+      client,
+      query: { limit: 200, sorting: ["title"] },
+    }),
   );
 
   const recipes = data?.items ?? [];
   const filtered = search
-    ? recipes.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()))
+    ? recipes.filter((r) =>
+        r.title.toLowerCase().includes(search.toLowerCase()),
+      )
     : recipes;
 
   const selected = recipes.find((r) => r.id === selectedId) ?? null;
@@ -61,7 +105,11 @@ function Recipes() {
   // Sync draft when selection changes
   useEffect(() => {
     if (selected) {
-      setDraft({ title: selected.title, content: selected.content, recipe_type: selected.recipe_type });
+      setDraft({
+        title: selected.title,
+        content: selected.content,
+        recipe_type: selected.recipe_type,
+      });
     } else {
       setDraft(null);
     }
@@ -97,7 +145,11 @@ function Recipes() {
   const scheduleSave = (id: string, title: string, content: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      updateMutation.mutate({ client, path: { recipe_id: id }, body: { title, content } });
+      updateMutation.mutate({
+        client,
+        path: { recipe_id: id },
+        body: { title, content },
+      });
     }, 1000);
   };
 
@@ -118,151 +170,173 @@ function Recipes() {
   const handleTypeChange = (value: RecipeType) => {
     if (!draft || !selectedId) return;
     setDraft({ ...draft, recipe_type: value });
-    updateMutation.mutate({ client, path: { recipe_id: selectedId }, body: { recipe_type: value } });
+    updateMutation.mutate({
+      client,
+      path: { recipe_id: selectedId },
+      body: { recipe_type: value },
+    });
   };
 
+  const createRecipe = () =>
+    createMutation.mutate({ client, body: { title: "Untitled", content: "" } });
+
   return (
-    <div className="flex h-full gap-0 -m-4">
-      {/* Left: recipe list */}
-      <div className="flex w-52 shrink-0 flex-col border-r border-white/10">
-        {/* Search + new */}
-        <div className="flex items-center gap-1.5 border-b border-white/10 px-2 py-2">
-          <Search className="size-3.5 shrink-0 text-white/30" />
-          <input
-            type="text"
-            placeholder="Search…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/25 outline-none"
-          />
-          <button
-            type="button"
+    <div className="@container -m-4 flex min-h-0 flex-1">
+      <aside className="flex w-40 shrink-0 flex-col border-r border-white/[0.07] bg-white/[0.015] @2xl:w-56 @lg:w-48">
+        <div className="flex shrink-0 items-center gap-1.5 p-2">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/30" />
+            <TextInput
+              placeholder="Search…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-7 pl-8 text-12"
+            />
+          </div>
+          <IconButton
             title="New recipe"
-            className="shrink-0 text-white/35 hover:text-white/80 transition-colors"
-            onClick={() => createMutation.mutate({ client, body: { title: "Untitled", content: "" } })}
+            aria-label="New recipe"
+            onClick={createRecipe}
           >
-            <Plus className="size-3.5" />
-          </button>
+            <Plus />
+          </IconButton>
         </div>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex items-center justify-between px-3.5 pt-1 pb-1.5">
+          <span className="text-11 font-semibold tracking-wide text-white/40">
+            Recipes
+          </span>
+          <span className="text-11 tabular-nums text-white/35">
+            {filtered.length}
+          </span>
+        </div>
+
+        <div className="flex-1 space-y-px overflow-y-auto px-1.5 pb-2">
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-11 text-white/50">
+            <p className="px-2 py-6 text-center text-12 text-white/40">
               {search ? "No matches" : "No recipes yet"}
             </p>
           ) : (
-            filtered.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                className={`w-full truncate px-3 py-2 text-left text-13 transition-colors ${
-                  r.id === selectedId
-                    ? "bg-white/10 text-white/90"
-                    : "text-white/55 hover:bg-white/5 hover:text-white/80"
-                }`}
-                onClick={() => { setSelectedId(r.id); setMode("preview"); }}
-              >
-                <span className="flex items-center gap-1.5">
-                  <span className="truncate">{r.title || "Untitled"}</span>
-                  {r.recipe_type !== RecipeType.OTHER && (
-                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-9 font-normal text-white/50">
-                      {RECIPE_TYPE_LABELS[r.recipe_type]}
-                    </Badge>
+            filtered.map((r) => {
+              const active = r.id === selectedId;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  className={cn(
+                    "flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-13 transition-colors duration-150",
+                    active
+                      ? "bg-white/[0.08] text-white/90"
+                      : "text-white/60 hover:bg-white/[0.05] hover:text-white/85",
                   )}
-                </span>
-              </button>
-            ))
+                  onClick={() => {
+                    setSelectedId(r.id);
+                    setMode("preview");
+                  }}
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {r.title || "Untitled"}
+                  </span>
+                  {r.recipe_type !== RecipeType.OTHER && (
+                    <span
+                      className={cn(
+                        "shrink-0 rounded px-1.5 py-px text-10 font-medium",
+                        active
+                          ? "bg-primary-500/15 text-primary-300"
+                          : "bg-white/[0.05] text-white/40",
+                      )}
+                    >
+                      {RECIPE_TYPE_LABELS[r.recipe_type]}
+                    </span>
+                  )}
+                </button>
+              );
+            })
           )}
         </div>
-      </div>
+      </aside>
 
-      {/* Right: editor / preview */}
-      <div className="flex flex-1 flex-col min-w-0">
+      <section className="flex min-w-0 flex-1 flex-col">
         {!selected || !draft ? (
-          <div className="flex h-full items-center justify-center">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia>
-                  <BookOpen />
-                </EmptyMedia>
-                <EmptyTitle>No recipe selected</EmptyTitle>
-                <EmptyDescription>Pick a recipe from the list or create a new one.</EmptyDescription>
-              </EmptyHeader>
-              <Button
-                size="sm"
-                onClick={() => createMutation.mutate({ client, body: { title: "Untitled", content: "" } })}
-              >
-                <Plus className="size-3.5 mr-1.5" />
+          <div className="flex h-full items-center justify-center p-4">
+            <EmptyState
+              icon={<BookOpen />}
+              title="No recipe selected"
+              className="w-full max-w-xs border-none"
+            >
+              <p>Pick a recipe from the list or create a new one.</p>
+              <PrimaryButton className="mt-3" onClick={createRecipe}>
+                <Plus />
                 New recipe
-              </Button>
-            </Empty>
+              </PrimaryButton>
+            </EmptyState>
           </div>
         ) : (
           <>
-            {/* Toolbar */}
-            <div className="flex shrink-0 items-center gap-2 border-b border-white/10 px-3 py-2">
+            <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/[0.07] px-4 py-2.5">
               <input
                 type="text"
                 value={draft.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-white/90 placeholder:text-white/30 outline-none"
+                className="min-w-32 flex-1 bg-transparent text-15 font-semibold text-white/90 outline-none placeholder:text-white/25"
                 placeholder="Recipe title"
               />
-              <Select value={draft.recipe_type} onValueChange={(v) => handleTypeChange(v as RecipeType)}>
-                <SelectTrigger size="sm" className="w-28 shrink-0 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(RECIPE_TYPE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center rounded-md border border-white/10 p-0.5 shrink-0">
-                <button
-                  type="button"
-                  className={`flex items-center gap-1 rounded px-2 py-1 text-11 transition-colors ${
-                    mode === "edit" ? "bg-white/10 text-white/80" : "text-white/50 hover:text-white/60"
-                  }`}
-                  onClick={() => setMode("edit")}
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Select
+                  value={draft.recipe_type}
+                  onValueChange={(v) => handleTypeChange(v as RecipeType)}
                 >
-                  <Pencil className="size-3" />
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1 rounded px-2 py-1 text-11 transition-colors ${
-                    mode === "preview" ? "bg-white/10 text-white/80" : "text-white/50 hover:text-white/60"
-                  }`}
-                  onClick={() => setMode("preview")}
+                  <SelectTrigger
+                    size="sm"
+                    className="h-7 w-24 rounded-lg border-white/10 bg-white/[0.04] text-12 text-white/75 hover:bg-white/[0.06]"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(RECIPE_TYPE_LABELS).map(
+                      ([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
+                <div className="flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
+                  <ModeToggle
+                    active={mode === "edit"}
+                    onClick={() => setMode("edit")}
+                    icon={<Pencil />}
+                    label="Edit"
+                  />
+                  <ModeToggle
+                    active={mode === "preview"}
+                    onClick={() => setMode("preview")}
+                    icon={<Eye />}
+                    label="Preview"
+                  />
+                </div>
+                <IconButton
+                  destructive
+                  title="Delete recipe"
+                  aria-label="Delete recipe"
+                  onClick={() => setDeleteTarget(selected)}
                 >
-                  <Eye className="size-3" />
-                  Preview
-                </button>
+                  <Trash2 />
+                </IconButton>
               </div>
-              <button
-                type="button"
-                className="shrink-0 text-white/25 hover:text-red-400 transition-colors"
-                onClick={() => setDeleteTarget(selected)}
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </div>
+            </header>
 
-            {/* Content area */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               {mode === "edit" ? (
                 <textarea
                   value={draft.content}
                   onChange={(e) => handleContentChange(e.target.value)}
                   placeholder="Write your recipe in markdown…"
-                  className="h-full w-full resize-none bg-transparent p-4 text-sm text-white/80 placeholder:text-white/25 outline-none font-mono leading-relaxed"
+                  className="block h-full w-full resize-none bg-transparent px-5 py-4 font-mono text-13 leading-relaxed text-white/80 outline-none placeholder:text-white/25"
                 />
               ) : (
-                <div className="prose prose-invert prose-sm max-w-none p-4 prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10 prose-code:text-emerald-400 prose-code:before:content-none prose-code:after:content-none prose-a:text-blue-400 prose-blockquote:border-l-white/20 prose-hr:border-white/10">
+                <div className="prose prose-invert prose-sm mx-auto max-w-2xl px-5 py-5 text-white/75 prose-headings:font-semibold prose-headings:text-white/90 prose-strong:text-white/90 prose-li:marker:text-white/30 prose-a:text-primary-300 prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-white/[0.06] prose-code:px-1 prose-code:py-px prose-code:font-normal prose-code:text-primary-300 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:border prose-pre:border-white/[0.07] prose-pre:bg-white/[0.03] prose-blockquote:border-l-white/15 prose-blockquote:text-white/55 prose-hr:border-white/[0.07] prose-th:text-white/80 prose-td:border-white/[0.07] prose-tr:border-white/[0.07]">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {draft.content || "*Nothing to preview*"}
                   </ReactMarkdown>
@@ -271,9 +345,8 @@ function Recipes() {
             </div>
           </>
         )}
-      </div>
+      </section>
 
-      {/* Delete confirmation */}
       <ConfirmDeleteDialog
         variant="default"
         open={!!deleteTarget}
@@ -281,7 +354,11 @@ function Recipes() {
         title="Delete recipe?"
         description={<>"{deleteTarget?.title}" will be permanently deleted.</>}
         onConfirm={() =>
-          deleteTarget && deleteMutation.mutate({ client, path: { recipe_id: deleteTarget.id } })
+          deleteTarget &&
+          deleteMutation.mutate({
+            client,
+            path: { recipe_id: deleteTarget.id },
+          })
         }
       />
     </div>

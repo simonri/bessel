@@ -5,15 +5,6 @@ import {
   listSecuritiesV1InvestmentsSecuritiesGetOptions,
   listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
 } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@bessel/ui/components/empty";
-import { Input } from "@bessel/ui/components/input";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
@@ -29,6 +20,12 @@ import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateSecurityDialog } from "@/components/create-security-dialog";
 import { DataTable } from "@/components/data-table";
 import { EditSecurityDialog } from "@/components/edit-security-dialog";
+import {
+  EmptyState,
+  IconButton,
+  PeriodNav,
+  TextInput,
+} from "@/components/ui-kit";
 import { UpdatePriceDialog } from "@/components/update-price-dialog";
 import { client } from "@/lib/client";
 
@@ -73,19 +70,31 @@ export function SecuritiesTab() {
       {
         accessorKey: "name",
         header: "Name",
+        cell: ({ row }) => (
+          <span className="block truncate font-medium text-white/85">
+            {row.original.name}
+          </span>
+        ),
       },
       {
         accessorKey: "ticker",
         header: "Ticker",
         size: 100,
-        cell: ({ row }) => row.original.ticker ?? "—",
+        cell: ({ row }) =>
+          row.original.ticker ? (
+            <span className="text-12 tracking-wide text-white/70">
+              {row.original.ticker}
+            </span>
+          ) : (
+            <span className="text-white/30">—</span>
+          ),
       },
       {
         accessorKey: "asset_type",
         header: "Type",
         size: 120,
         cell: ({ row }) => (
-          <span className="capitalize">
+          <span className="text-white/55 capitalize">
             {row.original.asset_type.replace("_", " ")}
           </span>
         ),
@@ -94,6 +103,9 @@ export function SecuritiesTab() {
         accessorKey: "currency",
         header: "Currency",
         size: 80,
+        cell: ({ row }) => (
+          <span className="text-12 text-white/45">{row.original.currency}</span>
+        ),
       },
       {
         id: "actions",
@@ -102,14 +114,13 @@ export function SecuritiesTab() {
           <div className="flex items-center justify-end gap-0.5">
             <UpdatePriceDialog security={row.original} />
             <EditSecurityDialog security={row.original} />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:text-destructive"
+            <IconButton
+              destructive
+              title="Delete security"
               onClick={() => setDeleteTarget(row.original)}
             >
-              <Trash2 className="size-3.5" />
-            </Button>
+              <Trash2 />
+            </IconButton>
           </div>
         ),
       },
@@ -130,13 +141,13 @@ export function SecuritiesTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <div className="relative max-w-xs flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            placeholder="Search securities..."
+        <div className="relative min-w-0 max-w-xs flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/35" />
+          <TextInput
+            placeholder="Search securities…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-9"
+            className="pl-8"
           />
         </div>
         <CreateSecurityDialog />
@@ -145,46 +156,31 @@ export function SecuritiesTab() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton
+              key={i}
+              className="h-10 w-full rounded-lg bg-white/[0.06]"
+            />
           ))}
         </div>
       ) : securities.length === 0 ? (
-        <Empty className="border">
-          <EmptyMedia>
-            <TrendingUp />
-          </EmptyMedia>
-          <EmptyHeader>
-            <EmptyTitle>No securities</EmptyTitle>
-            <EmptyDescription>
-              Add a security to start tracking your portfolio.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={<TrendingUp />} title="No securities">
+          {search
+            ? "No securities match your search."
+            : "Add a security to start tracking your portfolio."}
+        </EmptyState>
       ) : (
         <DataTable columns={columns} data={securities} />
       )}
 
       {maxPage > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
-            Previous
-          </Button>
-          <span className="text-muted-foreground text-sm">
-            Page {page} of {maxPage}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-            disabled={page >= maxPage}
-          >
-            Next
-          </Button>
+        <div className="flex justify-end">
+          <PeriodNav
+            label={`${page} / ${maxPage}`}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(maxPage, p + 1))}
+            prevDisabled={page <= 1}
+            nextDisabled={page >= maxPage}
+          />
         </div>
       )}
 

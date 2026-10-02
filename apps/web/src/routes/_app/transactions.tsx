@@ -19,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@bessel/ui/components/alert-dialog";
-import { Button } from "@bessel/ui/components/button";
 import { Checkbox } from "@bessel/ui/components/checkbox";
 import {
   DropdownMenu,
@@ -27,13 +26,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@bessel/ui/components/empty";
 import {
   Popover,
   PopoverContent,
@@ -52,8 +44,6 @@ import { format, isToday, isYesterday } from "date-fns";
 import {
   ArrowLeftRight,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   MoreHorizontal,
   Tag,
   Trash2,
@@ -66,6 +56,13 @@ import {
   type TransactionFilters,
   TransactionFiltersBar,
 } from "@/components/transaction-filters";
+import {
+  EmptyState,
+  IconButton,
+  PageToolbar,
+  PeriodNav,
+  SoftButton,
+} from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
 import { formatAmount } from "@/lib/money";
@@ -146,13 +143,12 @@ const TransactionActions = memo(function TransactionActions({
   onToggleBusiness: (id: string, value: boolean) => void;
 }) {
   return (
-    <div className="text-right">
+    <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="size-4" />
-            <span className="sr-only">Open menu</span>
-          </Button>
+          <IconButton aria-label="Open menu">
+            <MoreHorizontal />
+          </IconButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onToggleBusiness(id, !isBusiness)}>
@@ -161,7 +157,7 @@ const TransactionActions = memo(function TransactionActions({
               : "Mark as business expense"}
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-destructive"
+            className="text-red-400 focus:bg-red-500/10 focus:text-red-400"
             onClick={() => onDelete([id])}
           >
             <Trash2 className="size-4" />
@@ -464,12 +460,12 @@ function Transactions() {
         accessorKey: "description",
         header: "Description",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="truncate text-sm">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-13 text-white/85">
               {row.original.description ?? "—"}
             </span>
             {row.original.is_business && (
-              <span className="shrink-0 inline-flex items-center rounded bg-chart-1 px-1.5 py-px text-10 font-semibold text-white">
+              <span className="inline-flex shrink-0 items-center rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 py-px text-10 font-semibold text-primary-300">
                 Business
               </span>
             )}
@@ -482,7 +478,7 @@ function Transactions() {
         header: "Account",
         // hidden on mobile via meta — handled by className on TableCell below
         cell: ({ row }) => (
-          <span className="text-muted-foreground hidden truncate text-xs sm:block">
+          <span className="hidden truncate text-12 text-white/45 sm:block">
             {accountMap.get(row.original.bank_account_id) ?? "—"}
           </span>
         ),
@@ -510,10 +506,10 @@ function Transactions() {
           const sign = row.original.direction === "debit" ? "−" : "+";
           return (
             <div
-              className={`text-right font-mono tabular-nums text-sm ${
+              className={`text-right text-13 font-medium tabular-nums ${
                 row.original.direction === "credit"
                   ? "text-income"
-                  : "text-expense"
+                  : "text-white/80"
               }`}
             >
               {sign}
@@ -554,42 +550,22 @@ function Transactions() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold tracking-tight">Transactions</h2>
+      <PageToolbar
+        description={
+          isLoading
+            ? "Loading…"
+            : `${totalCount} transaction${totalCount !== 1 ? "s" : ""}`
+        }
+      >
+        <PeriodNav
+          label={monthLabel}
+          onPrev={() => navigateMonth(-1)}
+          onNext={() => navigateMonth(1)}
+          nextDisabled={isCurrentMonth}
+        />
         <ImportDialog />
-      </div>
+      </PageToolbar>
 
-      {/* Month navigation */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => navigateMonth(-1)}
-          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="size-4" />
-        </button>
-        <span className="text-sm font-medium w-28 text-center tabular-nums">
-          {monthLabel}
-        </span>
-        <button
-          type="button"
-          onClick={() => navigateMonth(1)}
-          disabled={isCurrentMonth}
-          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded disabled:opacity-25 disabled:cursor-not-allowed"
-          aria-label="Next month"
-        >
-          <ChevronRight className="size-4" />
-        </button>
-        {totalCount > 0 && (
-          <span className="text-muted-foreground text-sm pl-2">
-            {totalCount} transaction{totalCount !== 1 ? "s" : ""}
-          </span>
-        )}
-      </div>
-
-      {/* Inline filter bar */}
       <TransactionFiltersBar
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -599,62 +575,44 @@ function Transactions() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton
+              key={i}
+              className="h-10 w-full rounded-lg bg-white/[0.06]"
+            />
           ))}
         </div>
       ) : transactions.length === 0 ? (
-        <Empty className="border">
-          <EmptyMedia>
-            <ArrowLeftRight />
-          </EmptyMedia>
-          <EmptyHeader>
-            <EmptyTitle>No transactions</EmptyTitle>
-            <EmptyDescription>
-              {Object.keys(filters).length > 0
-                ? "No transactions match your current filters."
-                : "Import a bank export to get started."}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={<ArrowLeftRight />} title="No transactions">
+          {Object.keys(filters).length > 0
+            ? "No transactions match your current filters."
+            : "Import a bank export to get started."}
+        </EmptyState>
       ) : (
         <>
-          <VirtualDataTable
-            columns={columns}
-            data={transactions}
-            getRowId={(row) => row.id}
-            rowSelection={rowSelection}
-            onRowSelectionChange={setRowSelection}
-            getGroupLabel={getDateGroupLabel}
-          />
-
           {selectedCount > 0 && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2">
+              <span className="mr-auto text-12 tabular-nums text-white/55">
                 {selectedCount} row{selectedCount !== 1 ? "s" : ""} selected
               </span>
 
               {/* Bulk categorize */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={bulkUpdateMutation.isPending}
-                  >
-                    <Tag className="size-4" />
+                  <SoftButton disabled={bulkUpdateMutation.isPending}>
+                    <Tag />
                     Categorize
-                    <ChevronDown className="size-3" />
-                  </Button>
+                    <ChevronDown className="text-white/45" />
+                  </SoftButton>
                 </PopoverTrigger>
                 <PopoverContent
                   align="start"
-                  className="max-h-72 w-56 overflow-y-auto p-1.5"
+                  className="max-h-72 w-56 overflow-y-auto rounded-xl p-1.5"
                 >
                   <button
                     type="button"
-                    className="hover:bg-accent text-muted-foreground w-full rounded-sm px-2 py-1.5 text-left text-sm italic"
+                    className="w-full rounded-md px-2 py-1.5 text-left text-13 text-white/50 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/80"
                     onClick={() =>
                       bulkUpdateMutation.mutate({
                         client,
@@ -673,7 +631,7 @@ function Transactions() {
                       <button
                         key={cat.id}
                         type="button"
-                        className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
+                        className="flex w-full min-w-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-13 text-white/80 transition-colors duration-150 hover:bg-white/[0.06]"
                         onClick={() =>
                           bulkUpdateMutation.mutate({
                             client,
@@ -688,23 +646,31 @@ function Transactions() {
                           className="size-2 shrink-0 rounded-full"
                           style={{ backgroundColor: cat.color }}
                         />
-                        {cat.name}
+                        <span className="truncate">{cat.name}</span>
                       </button>
                     ))}
                 </PopoverContent>
               </Popover>
 
-              <Button
-                variant="destructive"
-                size="sm"
+              <SoftButton
                 onClick={() => handleDeleteRows(Object.keys(rowSelection))}
                 disabled={deleteMutation.isPending}
+                className="bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:text-red-300"
               >
-                <Trash2 className="size-4" />
+                <Trash2 />
                 Delete
-              </Button>
+              </SoftButton>
             </div>
           )}
+
+          <VirtualDataTable
+            columns={columns}
+            data={transactions}
+            getRowId={(row) => row.id}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            getGroupLabel={getDateGroupLabel}
+          />
         </>
       )}
 

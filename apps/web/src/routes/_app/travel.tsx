@@ -5,7 +5,14 @@ import {
   listPlacesV1PlacesGetQueryKey,
   updatePlaceV1PlacesPlaceIdPatchMutation,
 } from "@bessel/client";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@bessel/ui/components/empty";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@bessel/ui/components/select";
+import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
   useMutation,
@@ -15,17 +22,16 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Check,
-  ChevronLeft,
-  ChevronRight,
   Globe,
-  Map,
+  Map as MapIcon,
   MapPin,
   Phone,
   Search,
+  SearchX,
   Trash2,
   X,
 } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, type ReactNode, Suspense, useState } from "react";
 
 import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
@@ -37,8 +43,17 @@ const PlaceMap = lazy(() =>
 
 import { toast } from "sonner";
 import { TagDisplay } from "@/components/tag-input";
+import {
+  EmptyState,
+  IconButton,
+  Panel,
+  PeriodNav,
+  SoftButton,
+  TextInput,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
-import { PlaceCard } from "./-place-card";
+import { cn } from "@/lib/utils";
+import { PlaceCard, StatusBadge } from "./-place-card";
 import { RatingStars } from "./-rating-stars";
 import {
   formatVisitedDate,
@@ -65,6 +80,30 @@ function websiteLabel(url: string): string {
   } catch {
     return url;
   }
+}
+
+const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
+  { key: "-created_at", label: "Newest" },
+  { key: "-visited_at", label: "Recently visited" },
+  { key: "-rating", label: "Top rated" },
+  { key: "name", label: "Name" },
+];
+
+function DetailRow({
+  icon,
+  children,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 px-3 py-2.5 text-12 text-white/70">
+      <span className="mt-0.5 shrink-0 text-white/35 [&_svg]:size-3.5">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
 }
 
 function Travel() {
@@ -210,109 +249,120 @@ function Travel() {
 
   const noPlacesAtAll = totalCount === 0 && statusTab === "all" && !q;
 
+  const showFilters = !isLoading && !noPlacesAtAll;
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white/80">Travel</span>
-          {tabCounts.all != null && tabCounts.all > 0 && (
-            <span className="tabular-nums text-xs text-white/50">
-              {tabCounts.all}
-            </span>
-          )}
-        </div>
-        <AddPlaceDialog />
-      </div>
-
-      {/* Body */}
-      {isLoading ? (
-        <div className="flex flex-1 items-center justify-center text-xs text-white/50">
-          Loading…
-        </div>
-      ) : noPlacesAtAll ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia>
-              <MapPin />
-            </EmptyMedia>
-            <EmptyTitle>No places yet</EmptyTitle>
-          </EmptyHeader>
-          <AddPlaceDialog />
-        </Empty>
-      ) : (
-        <div className="flex min-h-0 flex-1">
-          {/* Left: toolbar + map + list */}
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            {/* Toolbar */}
-            <div className="flex shrink-0 flex-wrap items-center gap-2 px-3 pt-3">
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
-                {STATUS_TABS.map((tab) => {
-                  const active = statusTab === tab.key;
-                  return (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => {
-                        setStatusTab(tab.key);
-                        setPage(1);
-                      }}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors ${
-                        active
-                          ? "bg-white/10 text-white/90"
-                          : "text-white/50 hover:text-white/75"
-                      }`}
-                    >
-                      {tab.label}
-                      {tabCounts[tab.key] != null && (
-                        <span
-                          className={`text-10 tabular-nums ${active ? "text-white/50" : "text-white/30"}`}
-                        >
-                          {tabCounts[tab.key]}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="ml-auto flex items-center gap-2">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-white/30" />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search places…"
-                    className="h-7 w-44 rounded-lg border border-white/[0.08] bg-white/[0.04] pl-7 pr-2 text-xs text-white/80 outline-none transition-colors placeholder:text-white/30 focus:border-white/20"
-                  />
-                </div>
-                <select
-                  value={sort}
-                  onChange={(e) => {
-                    setSort(e.target.value as SortKey);
+    <div className="@container flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/[0.07] px-3 py-2">
+        {showFilters && (
+          <div className="flex items-center gap-0.5 rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
+            {STATUS_TABS.map((tab) => {
+              const active = statusTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setStatusTab(tab.key);
                     setPage(1);
                   }}
-                  className="h-7 cursor-pointer rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 text-xs text-white/65 outline-none transition-colors hover:text-white/80 focus:border-white/20"
+                  className={cn(
+                    "flex h-6 items-center gap-1.5 rounded-md px-2.5 text-12 transition-colors duration-150",
+                    active
+                      ? "bg-white/12 text-white/90"
+                      : "text-white/50 hover:bg-white/[0.04] hover:text-white/80",
+                  )}
                 >
-                  <option value="-created_at" className="bg-neutral-900">
-                    Newest
-                  </option>
-                  <option value="-visited_at" className="bg-neutral-900">
-                    Recently visited
-                  </option>
-                  <option value="-rating" className="bg-neutral-900">
-                    Top rated
-                  </option>
-                  <option value="name" className="bg-neutral-900">
-                    Name
-                  </option>
-                </select>
-              </div>
-            </div>
+                  {tab.label}
+                  {tabCounts[tab.key] != null && (
+                    <span
+                      className={cn(
+                        "text-11 tabular-nums",
+                        active ? "text-white/55" : "text-white/30",
+                      )}
+                    >
+                      {tabCounts[tab.key]}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-            {/* Map */}
-            <div className="hidden h-[280px] shrink-0 px-3 pt-3 md:block">
-              <div className="h-full overflow-hidden rounded-xl border border-white/[0.08]">
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+          {showFilters && (
+            <>
+              <div className="relative min-w-32 flex-1 @lg:w-48 @lg:flex-none">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/30" />
+                <TextInput
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search places…"
+                  className="h-7 pl-8 text-12"
+                />
+              </div>
+              <Select
+                value={sort}
+                onValueChange={(value) => {
+                  setSort(value as SortKey);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="h-7! w-auto min-w-0 gap-1.5 rounded-lg border-white/10 bg-white/[0.04] px-2.5 text-12 text-white/70 shadow-none hover:border-white/15 hover:bg-white/[0.06] dark:bg-white/[0.04] dark:hover:bg-white/[0.06] [&_svg:not([class*='text-'])]:text-white/40"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.key} value={option.key}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+          <AddPlaceDialog />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3 p-3">
+          <Skeleton className="hidden h-[280px] rounded-xl bg-white/[0.06] @2xl:block" />
+          <div className="space-y-px overflow-hidden rounded-xl border border-white/[0.07]">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
+                key={i}
+                className="flex items-center gap-3 bg-white/[0.03] px-3 py-2.5"
+              >
+                <Skeleton className="size-9 rounded-lg bg-white/[0.06]" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-2/5 bg-white/[0.06]" />
+                  <Skeleton className="h-2.5 w-1/4 bg-white/[0.06]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : noPlacesAtAll ? (
+        <div className="flex flex-1 items-center justify-center p-4">
+          <EmptyState
+            icon={<MapPin />}
+            title="No places yet"
+            className="w-full max-w-sm"
+          >
+            Save restaurants, sights and spots you want to remember.
+          </EmptyState>
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="hidden h-[280px] shrink-0 px-3 pt-3 @2xl:block">
+              <div className="h-full overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03]">
                 <Suspense fallback={null}>
                   <PlaceMap
                     places={filtered}
@@ -323,18 +373,14 @@ function Travel() {
               </div>
             </div>
 
-            {/* Card list */}
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {filtered.length === 0 ? (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyTitle>
-                      {q ? "No places match your search" : "Nothing here yet"}
-                    </EmptyTitle>
-                  </EmptyHeader>
-                </Empty>
+                <EmptyState
+                  icon={q ? <SearchX /> : <MapPin />}
+                  title={q ? "No places match your search" : "Nothing here yet"}
+                />
               ) : (
-                <div className="space-y-1.5">
+                <Panel>
                   {filtered.map((place) => (
                     <PlaceCard
                       key={place.id}
@@ -344,63 +390,52 @@ function Travel() {
                       onDelete={() => setDeleteTarget(place)}
                     />
                   ))}
-                </div>
+                </Panel>
               )}
               {maxPage > 1 && (
-                <div className="mt-3 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 transition-colors hover:border-white/20 hover:text-white/70 disabled:pointer-events-none disabled:opacity-30"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                  >
-                    <ChevronLeft className="size-4" />
-                  </button>
-                  <span className="text-11 tabular-nums text-white/50">
-                    {page} / {maxPage}
-                  </span>
-                  <button
-                    type="button"
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/40 transition-colors hover:border-white/20 hover:text-white/70 disabled:pointer-events-none disabled:opacity-30"
-                    onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                    disabled={page >= maxPage}
-                  >
-                    <ChevronRight className="size-4" />
-                  </button>
+                <div className="mt-3 flex justify-end">
+                  <PeriodNav
+                    label={`${page} / ${maxPage}`}
+                    onPrev={() => setPage((p) => Math.max(1, p - 1))}
+                    onNext={() => setPage((p) => Math.min(maxPage, p + 1))}
+                    prevDisabled={page <= 1}
+                    nextDisabled={page >= maxPage}
+                    className="[&>span]:min-w-16"
+                  />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right: detail panel */}
           {selectedPlace && (
-            <div className="hidden w-[300px] shrink-0 flex-col overflow-y-auto border-l border-white/[0.08] md:flex">
-              {selectedPlace.photo_url ? (
-                <img
-                  src={selectedPlace.photo_url}
-                  alt=""
-                  className="h-36 w-full shrink-0 border-b border-white/[0.06] object-cover"
-                />
-              ) : (
-                (() => {
-                  const Icon = getCategoryIcon(selectedPlace.category);
-                  return (
-                    <div className="flex h-20 w-full shrink-0 items-center justify-center border-b border-white/[0.06] bg-white/[0.03]">
-                      <Icon className="size-7 text-white/25" />
-                    </div>
-                  );
-                })()
-              )}
+            <aside className="hidden w-[300px] shrink-0 flex-col overflow-y-auto border-l border-white/[0.07] bg-chrome @3xl:flex">
+              <div className="p-3 pb-0">
+                {selectedPlace.photo_url ? (
+                  <img
+                    src={selectedPlace.photo_url}
+                    alt=""
+                    className="h-36 w-full rounded-xl border border-white/[0.07] object-cover"
+                  />
+                ) : (
+                  (() => {
+                    const Icon = getCategoryIcon(selectedPlace.category);
+                    return (
+                      <div className="flex h-24 w-full items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.03]">
+                        <Icon className="size-7 text-white/25" />
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
 
-              <div className="space-y-3 p-4">
-                {/* Title + close */}
+              <div className="space-y-4 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="font-semibold leading-tight text-white/85">
+                    <h3 className="text-15 font-semibold leading-snug text-white/90">
                       {selectedPlace.name}
                     </h3>
                     {(selectedPlace.country || selectedPlace.category) && (
-                      <p className="mt-0.5 text-11 text-white/50">
+                      <p className="mt-0.5 text-12 capitalize text-white/50">
                         {[
                           selectedPlace.country,
                           selectedPlace.category?.replace(/_/g, " "),
@@ -410,30 +445,19 @@ function Travel() {
                       </p>
                     )}
                   </div>
-                  <button
-                    type="button"
+                  <IconButton
                     onClick={() => setSelectedPlace(null)}
-                    className="mt-0.5 shrink-0 text-white/30 transition-colors hover:text-white/70"
+                    title="Close"
+                    className="-mr-1.5 -mt-1"
                   >
-                    <X className="size-4" />
-                  </button>
+                    <X />
+                  </IconButton>
                 </div>
 
-                {/* Status + rating */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-10 font-medium ${
-                      selectedPlace.status === "visited"
-                        ? "bg-emerald-500/15 text-emerald-400"
-                        : "bg-amber-500/10 text-amber-400/90"
-                    }`}
-                  >
-                    {selectedPlace.status === "visited"
-                      ? "Visited"
-                      : "Want to go"}
-                  </span>
+                  <StatusBadge status={selectedPlace.status} />
                   {!!selectedPlace.visited_at && (
-                    <span className="text-11 text-white/50">
+                    <span className="text-12 tabular-nums text-white/45">
                       {formatVisitedDate(selectedPlace.visited_at)}
                     </span>
                   )}
@@ -444,86 +468,83 @@ function Travel() {
                   )}
                 </div>
 
-                {/* Tags */}
                 {(selectedPlace.tags?.length ?? 0) > 0 && (
                   <TagDisplay tags={selectedPlace.tags!} />
                 )}
 
-                {/* Address, links, contact */}
-                <div className="space-y-1.5">
+                <Panel>
                   {selectedPlace.address && (
-                    <div className="flex items-start gap-2 text-white/50">
-                      <MapPin className="mt-0.5 size-3.5 shrink-0" />
-                      <span className="text-11 leading-relaxed">
+                    <DetailRow icon={<MapPin />}>
+                      <span className="leading-relaxed">
                         {selectedPlace.address}
                       </span>
-                    </div>
+                    </DetailRow>
                   )}
-                  <div className="flex items-center gap-2 text-white/50">
-                    <Map className="size-3.5 shrink-0" />
+                  <DetailRow icon={<MapIcon />}>
                     <a
                       href={getGoogleMapsUrl(selectedPlace)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-11 text-primary-400 transition-colors hover:text-primary-300"
+                      className="text-primary-300 transition-colors duration-150 hover:text-primary-200"
                     >
                       View on Google Maps
                     </a>
-                  </div>
+                  </DetailRow>
                   {selectedPlace.website && (
-                    <div className="flex items-center gap-2 text-white/50">
-                      <Globe className="size-3.5 shrink-0" />
+                    <DetailRow icon={<Globe />}>
                       <a
                         href={selectedPlace.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="truncate text-11 text-primary-400 transition-colors hover:text-primary-300"
+                        className="block truncate text-primary-300 transition-colors duration-150 hover:text-primary-200"
                       >
                         {websiteLabel(selectedPlace.website)}
                       </a>
-                    </div>
+                    </DetailRow>
                   )}
                   {selectedPlace.phone && (
-                    <div className="flex items-center gap-2 text-white/50">
-                      <Phone className="size-3.5 shrink-0" />
-                      <span className="text-11">{selectedPlace.phone}</span>
-                    </div>
+                    <DetailRow icon={<Phone />}>
+                      <span className="tabular-nums">
+                        {selectedPlace.phone}
+                      </span>
+                    </DetailRow>
                   )}
-                </div>
+                </Panel>
 
-                {/* Review */}
                 {selectedPlace.review && (
-                  <div className="border-t border-white/[0.06] pt-3">
-                    <p className="text-11 leading-relaxed whitespace-pre-wrap text-white/50">
+                  <div>
+                    <p className="mb-1.5 text-11 font-semibold tracking-wide text-white/40">
+                      Review
+                    </p>
+                    <p className="whitespace-pre-wrap rounded-lg border-l-2 border-primary-500/40 bg-white/[0.03] px-3 py-2 text-12 leading-relaxed text-white/70">
                       {selectedPlace.review}
                     </p>
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-1.5 border-t border-white/[0.06] pt-3">
+                <div className="flex items-center gap-1.5 border-t border-white/[0.07] pt-3">
                   <EditPlaceDialog place={selectedPlace} />
                   {selectedPlace.status !== "visited" && (
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 rounded-md border border-white/[0.08] px-2 py-1 text-11 text-white/50 transition-colors hover:border-emerald-500/30 hover:text-emerald-400 disabled:pointer-events-none disabled:opacity-40"
+                    <SoftButton
                       onClick={() => handleQuickMarkVisited(selectedPlace)}
                       disabled={markVisitedMutation.isPending}
+                      className="hover:bg-emerald-500/10 hover:text-emerald-400"
                     >
-                      <Check className="size-3" />
+                      <Check />
                       Mark visited
-                    </button>
+                    </SoftButton>
                   )}
-                  <button
-                    type="button"
-                    className="ml-auto rounded p-1 text-white/25 transition-colors hover:text-red-400"
+                  <IconButton
+                    destructive
+                    title="Delete"
+                    className="ml-auto"
                     onClick={() => setDeleteTarget(selectedPlace)}
                   >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                    <Trash2 />
+                  </IconButton>
                 </div>
               </div>
-            </div>
+            </aside>
           )}
         </div>
       )}
@@ -536,8 +557,8 @@ function Travel() {
         title="Delete place?"
         description={
           <>
-            &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed.
-            This can&rsquo;t be undone.
+            &ldquo;{deleteTarget?.name}&rdquo; will be permanently removed. This
+            can&rsquo;t be undone.
           </>
         }
         onConfirm={handleConfirmDelete}

@@ -22,23 +22,23 @@ const buttonVariants = cva(
       },
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
+          "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-white/[0.06] disabled:text-white/35 disabled:opacity-100",
         primary:
-          "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
+          "bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-white/[0.06] disabled:text-white/35 disabled:opacity-100",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/70",
+          "bg-white/[0.06] text-white/80 hover:bg-white/[0.1] hover:text-white/90",
         outline:
-          "ring-1 ring-inset ring-border bg-transparent text-foreground hover:bg-accent",
+          "ring-1 ring-inset ring-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.06] hover:text-white/90",
         ghost:
-          "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent",
-        link: "bg-transparent text-muted-foreground hover:text-foreground",
-        destructive: "bg-destructive text-white hover:bg-destructive/90",
+          "bg-transparent text-white/55 hover:text-white/85 hover:bg-white/[0.06]",
+        link: "bg-transparent text-white/55 hover:text-white/85",
+        destructive: "bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-500/25 hover:bg-red-500/25 hover:text-red-200",
         contrast: "bg-foreground text-background hover:bg-foreground/90",
       },
       size: {
-        default: "h-9 px-4 font-medium text-sm [&_svg:not([class*='size-'])]:size-4",
+        default: "h-8 px-3.5 font-medium text-13 [&_svg:not([class*='size-'])]:size-4",
         lg: "h-10 px-4 font-medium text-base [&_svg:not([class*='size-'])]:size-4",
-        sm: "h-8 px-3 font-medium text-sm [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-7 px-2.5 font-medium text-12 [&_svg:not([class*='size-'])]:size-3.5",
         xs: "h-6 px-2 font-medium text-xs [&_svg:not([class*='size-'])]:size-3",
         icon: "size-8 p-0 [&_svg:not([class*='size-'])]:size-4",
         iconSm: "size-5 p-0 [&_svg:not([class*='size-'])]:size-3.5",

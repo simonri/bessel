@@ -3,4 +3,4 @@ export const TOPBAR_ICON_BUTTON =
 
 export const TOPBAR_DIVIDER = "h-4 w-px shrink-0 bg-white/10";
 
-export const TOPBAR_BADGE_RING = "ring-2 ring-[#1e1e1e]";
+export const TOPBAR_BADGE_RING = "ring-2 ring-chrome";

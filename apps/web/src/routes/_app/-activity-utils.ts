@@ -1,3 +1,17 @@
+// Indexed colors for app bars (per app, by position)
+export const APP_COLORS = [
+  "232 113 75", // warm orange
+  "147 131 250", // soft violet
+  "96 165 250", // sky blue
+  "52 211 153", // emerald
+  "251 191 36", // amber
+  "244 114 182", // rose pink
+  "34 211 238", // cyan
+  "192 132 252", // lavender
+  "251 146 60", // peach
+  "74 222 128", // lime
+];
+
 export function activityLevel(
   secs: number,
   maxSecs: number,

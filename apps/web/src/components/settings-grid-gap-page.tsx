@@ -1,5 +1,4 @@
-import { SectionLabel } from "@/components/settings-section-label";
-import { SettingsCard } from "@/components/settings-ui";
+import { Panel, SectionLabel } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 
 export function GridGapPage() {
@@ -8,7 +7,7 @@ export function GridGapPage() {
   return (
     <div>
       <SectionLabel>Grid gap</SectionLabel>
-      <SettingsCard className="p-4">
+      <Panel className="p-4">
         <div className="flex items-center gap-3">
           <input
             type="range"
@@ -23,7 +22,7 @@ export function GridGapPage() {
             {settings.gridGap}px
           </span>
         </div>
-      </SettingsCard>
+      </Panel>
     </div>
   );
 }

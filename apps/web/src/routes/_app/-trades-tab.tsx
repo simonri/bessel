@@ -5,14 +5,6 @@ import {
   listTradesV1InvestmentsTradesGetOptions,
   listTradesV1InvestmentsTradesGetQueryKey,
 } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@bessel/ui/components/empty";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
   keepPreviousData,
@@ -28,8 +20,15 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { DataTable } from "@/components/data-table";
+import {
+  EmptyState,
+  IconButton,
+  PageToolbar,
+  PeriodNav,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { formatAmount, formatQuantity } from "@/lib/money";
+import { cn } from "@/lib/utils";
 
 export function TradesTab() {
   const [page, setPage] = useState(1);
@@ -70,7 +69,11 @@ export function TradesTab() {
         accessorKey: "trade_date",
         header: "Date",
         size: 110,
-        cell: ({ row }) => format(row.original.trade_date, "yyyy-MM-dd"),
+        cell: ({ row }) => (
+          <span className="text-12 tabular-nums text-white/55">
+            {format(row.original.trade_date, "yyyy-MM-dd")}
+          </span>
+        ),
       },
       {
         accessorKey: "trade_type",
@@ -78,7 +81,12 @@ export function TradesTab() {
         size: 70,
         cell: ({ row }) => (
           <span
-            className={`font-medium capitalize ${row.original.trade_type === "buy" ? "text-income" : "text-expense"}`}
+            className={cn(
+              "inline-flex h-5 items-center rounded-md px-1.5 text-11 font-medium capitalize",
+              row.original.trade_type === "buy"
+                ? "bg-emerald-500/10 text-emerald-400"
+                : "bg-red-500/10 text-red-400",
+            )}
           >
             {row.original.trade_type}
           </span>
@@ -89,7 +97,7 @@ export function TradesTab() {
         header: () => <div className="text-right">Quantity</div>,
         size: 120,
         cell: ({ row }) => (
-          <div className="text-right font-mono tabular-nums">
+          <div className="text-right tabular-nums text-white/70">
             {formatQuantity(row.original.quantity)}
           </div>
         ),
@@ -99,7 +107,7 @@ export function TradesTab() {
         header: () => <div className="text-right">Price/Unit</div>,
         size: 120,
         cell: ({ row }) => (
-          <div className="text-right font-mono tabular-nums">
+          <div className="text-right tabular-nums text-white/70">
             {formatAmount(row.original.price_per_unit)}
           </div>
         ),
@@ -112,7 +120,7 @@ export function TradesTab() {
           const total =
             (row.original.quantity * row.original.price_per_unit) / 1_000_000;
           return (
-            <div className="text-right font-mono tabular-nums">
+            <div className="text-right font-medium tabular-nums text-white/85">
               {formatAmount(total)}
             </div>
           );
@@ -122,12 +130,15 @@ export function TradesTab() {
         accessorKey: "currency",
         header: "Ccy",
         size: 60,
+        cell: ({ row }) => (
+          <span className="text-12 text-white/45">{row.original.currency}</span>
+        ),
       },
       {
         accessorKey: "notes",
         header: "Notes",
         cell: ({ row }) => (
-          <span className="block truncate text-muted-foreground">
+          <span className="block truncate text-12 text-white/45">
             {row.original.notes ?? ""}
           </span>
         ),
@@ -136,15 +147,15 @@ export function TradesTab() {
         id: "actions",
         size: 50,
         cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Delete"
-            className="hover:text-destructive"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
+          <div className="flex justify-end">
+            <IconButton
+              destructive
+              title="Delete trade"
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              <Trash2 />
+            </IconButton>
+          </div>
         ),
       },
     ],
@@ -156,53 +167,36 @@ export function TradesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <PageToolbar>
         <CreateTradeDialog />
-      </div>
+      </PageToolbar>
 
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton
+              key={i}
+              className="h-10 w-full rounded-lg bg-white/[0.06]"
+            />
           ))}
         </div>
       ) : trades.length === 0 ? (
-        <Empty className="border">
-          <EmptyMedia>
-            <TrendingUp />
-          </EmptyMedia>
-          <EmptyHeader>
-            <EmptyTitle>No trades yet</EmptyTitle>
-            <EmptyDescription>
-              Record your first trade to see it here.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState icon={<TrendingUp />} title="No trades yet">
+          Record your first trade to see it here.
+        </EmptyState>
       ) : (
         <DataTable columns={columns} data={trades} />
       )}
 
       {maxPage > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
-            Previous
-          </Button>
-          <span className="text-muted-foreground text-sm">
-            Page {page} of {maxPage}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-            disabled={page >= maxPage}
-          >
-            Next
-          </Button>
+        <div className="flex justify-end">
+          <PeriodNav
+            label={`${page} / ${maxPage}`}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(maxPage, p + 1))}
+            prevDisabled={page <= 1}
+            nextDisabled={page >= maxPage}
+          />
         </div>
       )}
 
@@ -213,8 +207,7 @@ export function TradesTab() {
         title="Delete trade?"
         description={
           <>
-            This trade will be permanently removed. This can&rsquo;t be
-            undone.
+            This trade will be permanently removed. This can&rsquo;t be undone.
           </>
         }
         onConfirm={() => {

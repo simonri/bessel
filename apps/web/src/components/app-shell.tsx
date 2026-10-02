@@ -1,5 +1,5 @@
 import { Spinner } from "@bessel/ui/components/spinner";
-import { glassSurface } from "@bessel/ui/lib/glass";
+import { SquarePlus } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CanvasPage } from "@/components/canvas/canvas-page";
@@ -7,6 +7,7 @@ import { CanvasTopBar } from "@/components/canvas/canvas-topbar";
 import { CommandPalette } from "@/components/canvas/command-palette";
 import { NewSessionPage } from "@/components/new-session-page";
 import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
+import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import {
   isWallpaperColor,
   useSettings,
@@ -80,27 +81,27 @@ function loadActivePage(): PageKey {
   return "canvas";
 }
 
-// One glass panel filling the page area, styled like a widget body so content
-// reads the same whether it's docked or a full page.
+// Framed exactly like a canvas widget (title bar included) so a module reads
+// the same whether it's docked or opened as a full page.
 function PageFrame({
+  icon,
+  title,
   noPadding,
   children,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
   noPadding?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="h-full p-2 animate-in fade-in duration-200 ease-out">
-      <div
-        className={cn(
-          glassSurface({ weight: "medium" }),
-          "flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl",
-        )}
-      >
+      <div className={WINDOW_FRAME}>
+        <WindowTitleBar icon={icon} title={title} />
         <div
           className={cn(
             "flex min-h-0 flex-1 flex-col",
-            !noPadding && "overflow-y-auto p-5",
+            !noPadding && "overflow-y-auto p-4",
           )}
         >
           {children}
@@ -115,10 +116,10 @@ function PageFrame({
 // unmounting frees the map/list DOM the canvas would otherwise keep around
 // forever.
 function ContentPage({ page }: { page: PageKey }) {
-  const { component: Component, noPadding } = PAGE_REGISTRY[page];
+  const { component: Component, icon, title, noPadding } = PAGE_REGISTRY[page];
   if (!Component) return null;
   return (
-    <PageFrame noPadding={noPadding}>
+    <PageFrame icon={icon} title={title} noPadding={noPadding}>
       <Suspense
         fallback={
           <div className="flex h-full items-center justify-center">
@@ -201,7 +202,7 @@ export function AppShell() {
               <CanvasPage />
             </div>
             {newSession ? (
-              <PageFrame>
+              <PageFrame icon={SquarePlus} title="New session">
                 <NewSessionPage
                   key={newSession.projectId ?? ""}
                   projectId={newSession.projectId}

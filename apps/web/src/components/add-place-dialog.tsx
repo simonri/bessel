@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@bessel/ui/components/dialog";
 import { Input } from "@bessel/ui/components/input";
+import { PrimaryButton } from "@/components/ui-kit";
 import { Label } from "@bessel/ui/components/label";
 import {
   createPlaceV1PlacesPostMutation,
@@ -127,10 +128,10 @@ export function AddPlaceDialog() {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4" />
-          Add New Place
-        </Button>
+        <PrimaryButton className="h-7 px-2.5">
+          <Plus />
+          Add place
+        </PrimaryButton>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>

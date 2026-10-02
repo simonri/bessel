@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { SectionLabel } from "@/components/settings-section-label";
-import { SettingsCard, SettingsInput } from "@/components/settings-ui";
+import { Panel, SectionLabel, TextInput } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 
 export function TopBarPage() {
@@ -12,7 +11,7 @@ export function TopBarPage() {
   return (
     <div>
       <SectionLabel>Crypto ticker</SectionLabel>
-      <SettingsCard className="p-4">
+      <Panel className="p-4">
         <div className="space-y-1.5">
           <label htmlFor="crypto-pairs" className="block text-13 text-white/80">
             Pairs
@@ -20,7 +19,7 @@ export function TopBarPage() {
           <p className="text-11 text-white/45">
             Comma-separated symbols shown in the top bar, e.g. BTCUSDT,ETHUSDT
           </p>
-          <SettingsInput
+          <TextInput
             id="crypto-pairs"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -30,7 +29,7 @@ export function TopBarPage() {
             className="mt-1"
           />
         </div>
-      </SettingsCard>
+      </Panel>
     </div>
   );
 }

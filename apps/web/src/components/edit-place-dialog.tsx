@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@bessel/ui/components/dialog";
 import { Input } from "@bessel/ui/components/input";
+import { IconButton } from "@/components/ui-kit";
 import { Label } from "@bessel/ui/components/label";
 import type { PlaceSchema } from "@bessel/client";
 import {
@@ -102,9 +103,9 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Edit">
-          <Pencil className="size-4" />
-        </Button>
+        <IconButton title="Edit">
+          <Pencil />
+        </IconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

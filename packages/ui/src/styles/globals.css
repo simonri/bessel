@@ -98,6 +98,14 @@
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
+/* App surfaces: `chrome` is the frame around content (top bar, sidebar, title
+   bars, menus); `panel` is a solid content surface inside a dialog. `static`
+   so the variables are always emitted — `--popover` references chrome. */
+@theme static {
+  --color-chrome: #1e1e1e;
+  --color-panel: #161616;
+}
+
 :root {
   --accent-hue: 40;
   --terminal-cursor: #f97316;
@@ -143,13 +151,13 @@
 }
 
 .dark {
-  /* Surfaces — three clear levels, very subtle cool-black tint for character */
-  --background: oklch(0.125 0.004 250);
-  --foreground: oklch(0.96 0.002 250);
-  --card: oklch(0.18 0.004 250);
-  --card-foreground: oklch(0.96 0.002 250);
-  --popover: #1e1e1e;
-  --popover-foreground: oklch(0.96 0.002 250);
+  /* Surfaces — three clear levels, neutral grey to match the chrome */
+  --background: oklch(0.125 0 0);
+  --foreground: oklch(0.96 0 0);
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: var(--color-chrome);
+  --popover-foreground: oklch(0.96 0 0);
   /* Interactive — hue-driven */
   --primary: oklch(0.7 0.18 var(--accent-hue));
   --primary-foreground: oklch(0.985 0 0);
@@ -158,12 +166,12 @@
   --primary-500: oklch(0.7 0.18 var(--accent-hue));
   --primary-900: oklch(0.28 0.09 var(--accent-hue));
   /* Subtle backgrounds */
-  --secondary: oklch(0.235 0.004 250);
-  --secondary-foreground: oklch(0.96 0.002 250);
-  --muted: oklch(0.22 0.004 250);
-  --muted-foreground: oklch(0.645 0.006 250);
-  --accent: oklch(0.235 0.004 250);
-  --accent-foreground: oklch(0.96 0.002 250);
+  --secondary: oklch(0.235 0 0);
+  --secondary-foreground: oklch(0.96 0 0);
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(0.645 0 0);
+  --accent: oklch(0.235 0 0);
+  --accent-foreground: oklch(0.96 0 0);
   /* Feedback */
   --destructive: oklch(0.65 0.22 22);
   /* Borders — visible but not harsh */
@@ -177,12 +185,12 @@
   --chart-4: oklch(0.65 0.24 304);
   --chart-5: oklch(0.65 0.22 16);
   /* Sidebar — distinct darker panel */
-  --sidebar: oklch(0.095 0.004 250);
-  --sidebar-foreground: oklch(0.96 0.002 250);
+  --sidebar: oklch(0.095 0 0);
+  --sidebar-foreground: oklch(0.96 0 0);
   --sidebar-primary: oklch(0.7 0.18 var(--accent-hue));
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.22 0.004 250);
-  --sidebar-accent-foreground: oklch(0.96 0.002 250);
+  --sidebar-accent: oklch(0.22 0 0);
+  --sidebar-accent-foreground: oklch(0.96 0 0);
   --sidebar-border: oklch(1 0 0 / 11%);
   --sidebar-ring: oklch(0.5 0.005 250);
   /* Semantic */

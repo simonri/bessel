@@ -1,7 +1,5 @@
 import type { BankAccountSchema, CategorySchema } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
 import { Checkbox } from "@bessel/ui/components/checkbox";
-import { Input } from "@bessel/ui/components/input";
 import {
   Popover,
   PopoverContent,
@@ -11,6 +9,7 @@ import { cn } from "@bessel/ui/lib/utils";
 // Note: date range filter removed — month navigation in transactions.tsx handles date scoping
 import { Briefcase, ChevronDown, Search, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { TextInput } from "@/components/ui-kit";
 
 export interface TransactionFilters {
   bank_account_id?: string[];
@@ -41,6 +40,15 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
   );
 }
 
+const CHIP_CLASS =
+  "flex h-8 min-w-0 items-center gap-1.5 rounded-lg border px-3 text-12 font-medium transition-colors duration-150";
+const CHIP_IDLE_CLASS =
+  "border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white/85";
+const CHIP_ACTIVE_CLASS =
+  "border-primary-500/40 bg-primary-500/10 text-white/90";
+const OPTION_CLASS =
+  "flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-13 text-white/80 transition-colors duration-150 hover:bg-white/[0.06]";
+
 // ─── Account multi-select ────────────────────────────────────────────────────
 
 function AccountDropdown({
@@ -67,20 +75,18 @@ function AccountDropdown({
         <button
           type="button"
           className={cn(
-            "flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
-            selected.length > 0
-              ? "border-primary/40 bg-primary/5 text-foreground"
-              : "border-input hover:bg-accent text-muted-foreground",
+            CHIP_CLASS,
+            selected.length > 0 ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
           )}
         >
-          <span className="max-w-[120px] truncate">{label}</span>
+          <span className="max-w-32 truncate">{label}</span>
           {selected.length > 0 ? (
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 onClear();
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="-mr-1 rounded p-0.5 text-white/45 transition-colors duration-150 hover:bg-white/10 hover:text-white/90"
             >
               <X className="size-3" />
             </span>
@@ -89,17 +95,12 @@ function AccountDropdown({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-52 p-1.5">
+      <PopoverContent align="start" className="w-56 rounded-xl p-1.5">
         {accounts.length === 0 ? (
-          <p className="text-muted-foreground py-2 text-center text-sm">
-            No accounts
-          </p>
+          <p className="py-2 text-center text-12 text-white/40">No accounts</p>
         ) : (
           accounts.map((acc) => (
-            <label
-              key={acc.id}
-              className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm"
-            >
+            <label key={acc.id} className={OPTION_CLASS}>
               <Checkbox
                 checked={selected.includes(acc.id)}
                 onCheckedChange={() => onToggle(acc.id)}
@@ -156,20 +157,18 @@ function CategoryDropdown({
         <button
           type="button"
           className={cn(
-            "flex h-8 items-center gap-1.5 rounded-md border px-3 text-sm transition-colors",
-            totalActive > 0
-              ? "border-primary/40 bg-primary/5 text-foreground"
-              : "border-input hover:bg-accent text-muted-foreground",
+            CHIP_CLASS,
+            totalActive > 0 ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
           )}
         >
-          <span className="max-w-[120px] truncate">{label}</span>
+          <span className="max-w-32 truncate">{label}</span>
           {totalActive > 0 ? (
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 onClear();
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="-mr-1 rounded p-0.5 text-white/45 transition-colors duration-150 hover:bg-white/10 hover:text-white/90"
             >
               <X className="size-3" />
             </span>
@@ -180,28 +179,25 @@ function CategoryDropdown({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="max-h-72 w-56 overflow-y-auto p-1.5"
+        className="max-h-72 w-60 overflow-y-auto rounded-xl p-1.5"
       >
-        <label className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm">
+        <label className={OPTION_CLASS}>
           <Checkbox
             checked={uncategorized}
             onCheckedChange={onToggleUncategorized}
           />
-          <span className="text-muted-foreground italic">Uncategorized</span>
+          <span className="text-white/50">Uncategorized</span>
         </label>
         {parents.map((parent) => {
           const kids = childrenByParent.get(parent.id) ?? [];
           if (kids.length === 0) return null;
           return (
             <div key={parent.id}>
-              <div className="text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium">
+              <div className="px-2 pt-2.5 pb-1 text-11 font-semibold tracking-wide text-white/40">
                 {parent.name}
               </div>
               {kids.map((cat) => (
-                <label
-                  key={cat.id}
-                  className="hover:bg-accent flex cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm"
-                >
+                <label key={cat.id} className={OPTION_CLASS}>
                   <Checkbox
                     checked={selected.includes(cat.id)}
                     onCheckedChange={() => onToggle(cat.id)}
@@ -231,7 +227,7 @@ function DirectionToggle({
   onChange: (v: string | undefined) => void;
 }) {
   return (
-    <div className="border-input flex h-8 overflow-hidden rounded-md border text-sm">
+    <div className="flex h-8 shrink-0 items-center gap-0.5 rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
       {(
         [
           { label: "All", value: undefined },
@@ -244,10 +240,10 @@ function DirectionToggle({
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "px-2.5 transition-colors",
+            "h-full rounded-md px-2.5 text-12 font-medium transition-colors duration-150",
             value === opt.value
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              ? "bg-white/12 text-white/90"
+              : "text-white/50 hover:bg-white/[0.06] hover:text-white/85",
           )}
         >
           {opt.label}
@@ -272,14 +268,15 @@ function BusinessToggle({
       onClick={() => onChange(value === true ? undefined : true)}
       title="Show business expenses only"
       className={cn(
-        "flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm transition-colors",
-        value === true
-          ? "border-primary/40 bg-primary/10 text-primary"
-          : "border-input text-muted-foreground hover:bg-accent hover:text-foreground",
+        CHIP_CLASS,
+        "px-2.5",
+        value === true ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
       )}
     >
-      <Briefcase className="size-3.5" />
-      Business expense
+      <Briefcase
+        className={cn("size-3.5", value === true && "text-primary-300")}
+      />
+      Business
     </button>
   );
 }
@@ -294,20 +291,20 @@ function SearchInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="relative">
-      <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2" />
-      <Input
-        type="text"
+    <div className="relative w-full min-w-0 sm:w-48">
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/35" />
+      <TextInput
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search…"
-        className="h-8 w-40 pl-8 text-sm"
+        className="pr-7 pl-8"
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange("")}
-          className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2"
+          aria-label="Clear search"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-white/40 transition-colors duration-150 hover:bg-white/10 hover:text-white/85"
         >
           <X className="size-3" />
         </button>
@@ -315,8 +312,6 @@ function SearchInput({
     </div>
   );
 }
-
-// ─── Date range ──────────────────────────────────────────────────────────────
 
 // ─── Main filter bar ─────────────────────────────────────────────────────────
 
@@ -401,10 +396,9 @@ export function TransactionFiltersBar({
       />
 
       {active && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground h-8 px-2 text-sm"
+        <button
+          type="button"
+          className="flex h-8 items-center gap-1 rounded-md px-2 text-12 font-medium text-white/45 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85"
           onClick={() => {
             setSearchValue("");
             onFiltersChange({});
@@ -412,7 +406,7 @@ export function TransactionFiltersBar({
         >
           <X className="size-3.5" />
           Clear
-        </Button>
+        </button>
       )}
     </div>
   );
