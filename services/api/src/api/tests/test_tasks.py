@@ -2,9 +2,8 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from httpx import AsyncClient
-
 from api.settings import settings
+from httpx import AsyncClient
 
 
 class TestTaskReorder:
@@ -65,8 +64,7 @@ class TestTaskNotFound:
 
 
 A_PNG_BYTES = bytes.fromhex(
-  "89504e470d0a1a0a0000000d494844520000000100000001080600000"
-  "01f15c4890000000a49444154789c6360000002000100ffff03000006000557bfabd40000000049454e44ae426082"
+  "89504e470d0a1a0a0000000d494844520000000100000001080600000" + "01f15c4890000000a49444154789c6360000002000100ffff03000006000557bfabd40000000049454e44ae426082"
 )
 
 
