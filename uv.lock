@@ -217,6 +217,7 @@ dependencies = [
     { name = "python-multipart" },
     { name = "redis" },
     { name = "sentry-sdk" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "sqlalchemy-utils" },
     { name = "starlette" },
     { name = "structlog" },
@@ -270,6 +271,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.22" },
     { name = "redis", specifier = ">=7.1.0" },
     { name = "sentry-sdk", specifier = ">=2.47.0" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.45,<2.1" },
     { name = "sqlalchemy-utils", specifier = ">=0.42.1" },
     { name = "starlette", specifier = ">=0.50.0" },
     { name = "structlog", specifier = ">=25.5.0" },
@@ -1559,6 +1561,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/43/82/0ecd68e172bfe62247e96cb47867c2d68752566811a4e8c9d8f6e7c38a65/sqlalchemy-2.0.46-cp312-cp312-win32.whl", hash = "sha256:412f26bb4ba942d52016edc8d12fb15d91d3cd46b0047ba46e424213ad407bcb", size = 2113155, upload-time = "2026-01-21T18:42:49.748Z" },
     { url = "https://files.pythonhosted.org/packages/bc/2a/2821a45742073fc0331dc132552b30de68ba9563230853437cac54b2b53e/sqlalchemy-2.0.46-cp312-cp312-win_amd64.whl", hash = "sha256:ea3cd46b6713a10216323cda3333514944e510aa691c945334713fca6b5279ff", size = 2140078, upload-time = "2026-01-21T18:42:51.197Z" },
     { url = "https://files.pythonhosted.org/packages/fc/a1/9c4efa03300926601c19c18582531b45aededfb961ab3c3585f1e24f120b/sqlalchemy-2.0.46-py3-none-any.whl", hash = "sha256:f9c11766e7e7c0a2767dda5acb006a118640c9fc0a4104214b96269bfb78399e", size = 1937882, upload-time = "2026-01-21T18:22:10.456Z" },
+]
+
+[package.optional-dependencies]
+asyncio = [
+    { name = "greenlet" },
 ]
 
 [[package]]

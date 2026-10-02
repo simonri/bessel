@@ -28,6 +28,7 @@ dependencies = [
   "botocore>=1.42.6",
   "email-validator>=2.3.0",
   "python-jose[cryptography]>=3.3.0",
+  "sqlalchemy[asyncio]>=2.0.45,<2.1",
   "sqlalchemy-utils>=0.42.1",
   "alembic-utils>=0.8.8",
   "pytest-xdist[psutil]>=3.8.0",
