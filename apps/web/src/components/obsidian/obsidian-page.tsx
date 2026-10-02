@@ -1,4 +1,3 @@
-import { ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useWindowActions,
@@ -12,7 +11,7 @@ import {
   useVaultWatcher,
 } from "./hooks/use-vault";
 import type { NoteMode } from "./lib/vault-state";
-import { basenameOf, resolveLink, stripMd } from "./lib/wikilinks";
+import { basenameOf, resolveLink } from "./lib/wikilinks";
 import { NoteView, type NoteViewHandle } from "./note-view";
 import { VaultPicker } from "./vault-picker";
 import { VaultWorkspace } from "./vault-workspace";
@@ -34,7 +33,7 @@ function ObsidianWidget({
   useVaultWatcher(root);
   const { updateWindowData } = useWindowActions();
   const noteViewRef = useRef<NoteViewHandle>(null);
-  const [mode, setMode] = useState<NoteMode>("live");
+  const [mode, setMode] = useState<NoteMode>("edit");
 
   useEffect(() => () => void noteViewRef.current?.flush(), []);
 
@@ -57,18 +56,6 @@ function ObsidianWidget({
         <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/70">
           {basenameOf(rel)}
         </span>
-        <button
-          type="button"
-          onClick={() =>
-            void window.electron?.shell.openExternal(
-              `obsidian://open?vault=${encodeURIComponent(info?.name ?? "")}&file=${encodeURIComponent(stripMd(rel))}`,
-            )
-          }
-          title="Open in Obsidian"
-          className="shrink-0 text-white/30 transition-colors hover:text-white/70"
-        >
-          <ExternalLink className="size-3.5" />
-        </button>
       </div>
       <div className="min-h-0 flex-1">
         <NoteView

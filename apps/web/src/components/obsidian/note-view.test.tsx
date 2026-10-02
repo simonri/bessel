@@ -71,7 +71,7 @@ function baseProps(overrides: Partial<NoteViewProps> = {}): NoteViewProps {
   return {
     root: ROOT,
     rel: REL,
-    mode: "source" as NoteMode,
+    mode: "edit" as NoteMode,
     files: [REL],
     index: undefined,
     attachmentFolder: "",
@@ -105,6 +105,16 @@ beforeEach(() => {
 });
 
 describe("NoteView", () => {
+  it("offers only Edit and Reading modes", async () => {
+    renderNoteView();
+    await screen.findByDisplayValue("hello");
+
+    expect(screen.getByRole("radio", { name: "Edit" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: "Reading" })).toBeTruthy();
+    expect(screen.queryByRole("radio", { name: "Source" })).toBeNull();
+    expect(screen.queryByRole("radio", { name: "Live" })).toBeNull();
+  });
+
   it("loads the note content", async () => {
     renderNoteView();
     await screen.findByDisplayValue("hello");

@@ -106,4 +106,13 @@ describe("QuickSwitcher — mode switching", () => {
 
     expect(screen.getByPlaceholderText("Search your vault…")).toBeTruthy();
   });
+
+  it("does not expose file switching in search-only mode", () => {
+    renderSwitcher({ searchOnly: true });
+
+    const input = screen.getByPlaceholderText("Search your vault…");
+    expect(screen.queryByText("Files")).toBeNull();
+    fireEvent.keyDown(input, { key: "Tab" });
+    expect(screen.getByPlaceholderText("Search your vault…")).toBeTruthy();
+  });
 });

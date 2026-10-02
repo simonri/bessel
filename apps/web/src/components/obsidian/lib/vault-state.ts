@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type NoteMode = "source" | "live" | "reading";
+export type NoteMode = "edit" | "reading";
 
 /** Per-vault UI state, persisted under `bessel:obsidian:<root>`. */
 export interface VaultUiState {
@@ -17,7 +17,7 @@ export interface VaultUiState {
 export const DEFAULT_VAULT_UI_STATE: VaultUiState = {
   tabs: [],
   activeTab: null,
-  mode: "live",
+  mode: "edit",
   expandedDirs: [],
   sidePanel: null,
 };
@@ -29,11 +29,17 @@ export function vaultStateKey(root: string): string {
 export function loadVaultUiState(root: string): VaultUiState {
   try {
     const raw = localStorage.getItem(vaultStateKey(root));
-    if (raw)
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<VaultUiState> & {
+        mode?: string;
+      };
       return {
         ...DEFAULT_VAULT_UI_STATE,
-        ...(JSON.parse(raw) as Partial<VaultUiState>),
+        ...saved,
+        // Migrate both former editor modes to the single live-preview editor.
+        mode: saved.mode === "reading" ? "reading" : "edit",
       };
+    }
   } catch {}
   return DEFAULT_VAULT_UI_STATE;
 }

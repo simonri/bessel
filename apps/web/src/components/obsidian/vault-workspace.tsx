@@ -20,22 +20,11 @@ import {
   useVaultWatcher,
 } from "./hooks/use-vault";
 import { ImagePreview } from "./image-preview";
-import {
-  applyTemplate,
-  dailyNoteRel,
-  dailyNoteTemplateRel,
-} from "./lib/daily-notes";
 import { useVaultUiState } from "./lib/vault-state";
-import {
-  basenameOf,
-  newNoteRel,
-  parentOf,
-  resolveLink,
-  stripMd,
-} from "./lib/wikilinks";
+import { basenameOf, newNoteRel, parentOf, resolveLink } from "./lib/wikilinks";
 import { NoteView, type NoteViewHandle } from "./note-view";
 import { OutlinePanel } from "./outline-panel";
-import { QuickSwitcher } from "./quick-switcher";
+import { QuickSwitcher as VaultSearchDialog } from "./quick-switcher";
 import { TabsBar } from "./tabs-bar";
 import { VaultHeader } from "./vault-header";
 
@@ -64,17 +53,15 @@ function EmptyNoteState({ onNewNote }: { onNewNote: () => void }) {
       <FileText className="size-8 text-white/15" />
       <p className="text-sm text-white/50">No note open</p>
       <p className="flex items-center gap-1 text-11 text-white/35">
-        <Kbd>Ctrl</Kbd>
-        <Kbd>O</Kbd>
-        <span>to open</span>
+        <span>Select a note in the sidebar or</span>
         <button
           type="button"
           onClick={onNewNote}
-          className="ml-1 flex items-center gap-1 text-white/35 underline-offset-2 hover:text-white/60 hover:underline"
+          className="flex items-center gap-1 text-white/35 underline-offset-2 hover:text-white/60 hover:underline"
         >
           <Kbd>Ctrl</Kbd>
           <Kbd>N</Kbd>
-          <span>to create</span>
+          <span>to create one</span>
         </button>
       </p>
     </div>
@@ -94,9 +81,8 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
   const { settings } = useSettings();
 
   const noteViewRef = useRef<NoteViewHandle>(null);
-  const [switcherOpen, setSwitcherOpen] = useState(false);
-  const [switcherMode, setSwitcherMode] = useState<"files" | "search">("files");
-  const [switcherQuery, setSwitcherQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const pendingScrollRef = useRef<number | null>(null);
 
   const activeRel = uiState.activeTab;
@@ -169,75 +155,11 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
     }
   }, [activeRel, files, createNote, openNote]);
 
-  const createNoteByName = useCallback(
-    async (name: string) => {
-      const rel = newNoteRel(files, "", name);
-      try {
-        const created = await createNote.mutateAsync({ rel });
-        void openNote(created.rel);
-      } catch (e) {
-        toast.error(errorMessage(e, "Couldn't create note"));
-      }
-    },
-    [files, createNote, openNote],
-  );
-
-  const openDailyNote = useCallback(async () => {
-    const config = info?.dailyNotes;
-    if (!config || !treeQuery.isSuccess) return;
-    const rel = dailyNoteRel(config, new Date());
-    if (files.includes(rel)) {
-      void openNote(rel);
-      return;
-    }
-    let content = "";
-    const templateRel = dailyNoteTemplateRel(config);
-    if (templateRel) {
-      try {
-        const { content: tpl } = await window.electron!.vault.read(
-          root,
-          templateRel,
-        );
-        content = applyTemplate(tpl, {
-          title: basenameOf(rel),
-          date: new Date(),
-        });
-      } catch {
-        content = "";
-      }
-    }
-    try {
-      const created = await createNote.mutateAsync({ rel, content });
-      void openNote(created.rel);
-    } catch (e) {
-      toast.error(errorMessage(e, "Couldn't create today's note"));
-    }
-  }, [
-    info?.dailyNotes,
-    treeQuery.isSuccess,
-    files,
-    root,
-    createNote,
-    openNote,
-  ]);
-
-  // Open today's note automatically the first time this vault is entered.
-  const autoOpenedRef = useRef(false);
-  useEffect(() => {
-    if (autoOpenedRef.current) return;
-    if (!info || !treeQuery.isSuccess) return;
-    if (info.openToDaily && uiState.tabs.length === 0) {
-      autoOpenedRef.current = true;
-      void openDailyNote();
-    }
-  }, [info, treeQuery.isSuccess, uiState.tabs.length, openDailyNote]);
-
   const onOpenLink = useCallback(
     (target: string, opts: { newTab: boolean }) => {
       if (target.startsWith("#")) {
-        setSwitcherMode("search");
-        setSwitcherQuery(target);
-        setSwitcherOpen(true);
+        setSearchQuery(target);
+        setSearchOpen(true);
         return;
       }
       if (!activeRel) return;
@@ -405,34 +327,16 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
     }));
   };
 
-  const openInObsidian = useCallback(() => {
-    const vault = encodeURIComponent(info?.name ?? "");
-    const file = activeRel
-      ? `&file=${encodeURIComponent(stripMd(activeRel))}`
-      : "";
-    void window.electron?.shell.openExternal(
-      `obsidian://open?vault=${vault}${file}`,
-    );
-  }, [info?.name, activeRel]);
-
-  // Ctrl+O / Ctrl+N / Ctrl+Shift+F work everywhere in the workspace; Ctrl+W
+  // Ctrl+N / Ctrl+Shift+F work everywhere in the workspace; Ctrl+W
   // only when focus isn't in some other text field (rename box, filter…).
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
       const key = e.key.toLowerCase();
-      if (key === "o" && !e.shiftKey) {
-        e.preventDefault();
-        setSwitcherMode("files");
-        setSwitcherQuery("");
-        setSwitcherOpen(true);
-        return;
-      }
       if (key === "f" && e.shiftKey) {
         e.preventDefault();
-        setSwitcherMode("search");
-        setSwitcherQuery("");
-        setSwitcherOpen(true);
+        setSearchQuery("");
+        setSearchOpen(true);
         return;
       }
       if (key === "n" && !e.shiftKey) {
@@ -467,29 +371,14 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
         info={info}
         recentVaults={settings.obsidianRecentVaults}
         onSwitchVault={onSwitchVault}
-        onOpenSwitcher={() => {
-          setSwitcherMode("files");
-          setSwitcherQuery("");
-          setSwitcherOpen(true);
-        }}
         onOpenSearch={() => {
-          setSwitcherMode("search");
-          setSwitcherQuery("");
-          setSwitcherOpen(true);
+          setSearchQuery("");
+          setSearchOpen(true);
         }}
         onNewNote={() => void newNote()}
-        onToday={() => void openDailyNote()}
         onToggleBacklinks={() => toggleSidePanel("backlinks")}
         onToggleOutline={() => toggleSidePanel("outline")}
         sidePanel={uiState.sidePanel}
-        onOpenInObsidian={openInObsidian}
-      />
-
-      <TabsBar
-        tabs={uiState.tabs}
-        activeTab={uiState.activeTab}
-        onSelect={(rel) => void openNote(rel)}
-        onClose={(rel) => void closeTab(rel)}
       />
 
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
@@ -522,25 +411,33 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel minSize="35%">
-          <div data-obsidian-note-root className="h-full min-h-0">
-            {activeRel && activeEntry?.kind === "image" ? (
-              <ImagePreview root={root} rel={activeRel} />
-            ) : activeRel ? (
-              <NoteView
-                ref={noteViewRef}
-                root={root}
-                rel={activeRel}
-                mode={uiState.mode}
-                files={files}
-                index={indexQuery.data}
-                attachmentFolder={info?.attachmentFolder ?? ""}
-                onOpenLink={onOpenLink}
-                onRename={handleRename}
-                onModeChange={(mode) => updateUiState({ mode })}
-              />
-            ) : (
-              <EmptyNoteState onNewNote={() => void newNote()} />
-            )}
+          <div data-obsidian-note-root className="flex h-full min-h-0 flex-col">
+            <TabsBar
+              tabs={uiState.tabs}
+              activeTab={uiState.activeTab}
+              onSelect={(rel) => void openNote(rel)}
+              onClose={(rel) => void closeTab(rel)}
+            />
+            <div className="min-h-0 flex-1">
+              {activeRel && activeEntry?.kind === "image" ? (
+                <ImagePreview root={root} rel={activeRel} />
+              ) : activeRel ? (
+                <NoteView
+                  ref={noteViewRef}
+                  root={root}
+                  rel={activeRel}
+                  mode={uiState.mode}
+                  files={files}
+                  index={indexQuery.data}
+                  attachmentFolder={info?.attachmentFolder ?? ""}
+                  onOpenLink={onOpenLink}
+                  onRename={handleRename}
+                  onModeChange={(mode) => updateUiState({ mode })}
+                />
+              ) : (
+                <EmptyNoteState onNewNote={() => void newNote()} />
+              )}
+            </div>
           </div>
         </ResizablePanel>
         {uiState.sidePanel && activeEntry?.kind === "md" && (
@@ -567,23 +464,18 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
         )}
       </ResizablePanelGroup>
 
-      <QuickSwitcher
+      <VaultSearchDialog
         root={root}
-        open={switcherOpen}
-        onOpenChange={setSwitcherOpen}
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
         files={files}
-        onSelect={(rel) => {
-          setSwitcherOpen(false);
-          void openNote(rel);
-        }}
-        onCreate={(name) => {
-          setSwitcherOpen(false);
-          void createNoteByName(name);
-        }}
-        initialMode={switcherMode}
-        initialQuery={switcherQuery}
+        onSelect={() => {}}
+        onCreate={() => {}}
+        initialMode="search"
+        initialQuery={searchQuery}
+        searchOnly
         onSelectLine={(rel, line) => {
-          setSwitcherOpen(false);
+          setSearchOpen(false);
           void openNote(rel, { line });
         }}
       />

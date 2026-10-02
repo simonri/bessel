@@ -303,15 +303,8 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
     }, [titleDraft, rel, onRename]);
 
     // ── Mode / Ctrl+E ──────────────────────────────────────────────────────
-    const lastEditModeRef = useRef<"source" | "live">(
-      mode === "reading" ? "live" : mode,
-    );
-    useEffect(() => {
-      if (mode !== "reading") lastEditModeRef.current = mode;
-    }, [mode]);
-
     const toggleReadingMode = useCallback(() => {
-      onModeChange(mode === "reading" ? lastEditModeRef.current : "reading");
+      onModeChange(mode === "reading" ? "edit" : "reading");
     }, [mode, onModeChange]);
 
     const toggleReadingModeRef = useRef(toggleReadingMode);
@@ -496,8 +489,7 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
             variant="outline"
             size="sm"
           >
-            <ToggleGroupItem value="source">Source</ToggleGroupItem>
-            <ToggleGroupItem value="live">Live</ToggleGroupItem>
+            <ToggleGroupItem value="edit">Edit</ToggleGroupItem>
             <ToggleGroupItem value="reading">Reading</ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -547,7 +539,7 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
               ref={editorRef}
               value={buffer}
               onChange={handleChange}
-              mode={mode}
+              mode="live"
               files={files}
               headingsFor={headingsFor}
               fromRel={rel}

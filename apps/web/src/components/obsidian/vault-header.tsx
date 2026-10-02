@@ -8,16 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
 import { cn } from "@bessel/ui/lib/utils";
-import {
-  CalendarDays,
-  ChevronDown,
-  ExternalLink,
-  Files,
-  Link2,
-  ListTree,
-  Plus,
-  Search,
-} from "lucide-react";
+import { ChevronDown, Link2, ListTree, Plus, Search } from "lucide-react";
 import { ObsidianIcon } from "@/components/canvas/brand-icons";
 import type { VaultInfo } from "./vault-types";
 
@@ -26,14 +17,11 @@ export interface VaultHeaderProps {
   info: VaultInfo | undefined;
   recentVaults: readonly string[];
   onSwitchVault: (root?: string) => void;
-  onOpenSwitcher: () => void;
   onOpenSearch: () => void;
   onNewNote: () => void;
-  onToday: () => void;
   onToggleBacklinks: () => void;
   onToggleOutline: () => void;
   sidePanel: "backlinks" | "outline" | null;
-  onOpenInObsidian: () => void;
 }
 
 function IconButton({
@@ -70,14 +58,11 @@ export function VaultHeader({
   info,
   recentVaults,
   onSwitchVault,
-  onOpenSwitcher,
   onOpenSearch,
   onNewNote,
-  onToday,
   onToggleBacklinks,
   onToggleOutline,
   sidePanel,
-  onOpenInObsidian,
 }: VaultHeaderProps) {
   const others = recentVaults.filter((path) => path !== root);
 
@@ -126,17 +111,9 @@ export function VaultHeader({
 
       <div className="min-w-0 flex-1" />
 
-      <IconButton onClick={onOpenSwitcher} title="Quick switcher (Ctrl+O)">
-        <Files className="size-3.5" />
-      </IconButton>
       <IconButton onClick={onOpenSearch} title="Search (Ctrl+Shift+F)">
         <Search className="size-3.5" />
       </IconButton>
-      {info?.dailyNotes && (
-        <IconButton onClick={onToday} title="Today's daily note">
-          <CalendarDays className="size-3.5" />
-        </IconButton>
-      )}
       <IconButton onClick={onNewNote} title="New note (Ctrl+N)">
         <Plus className="size-3.5" />
       </IconButton>
@@ -154,15 +131,6 @@ export function VaultHeader({
       >
         <ListTree className="size-3.5" />
       </IconButton>
-      <Button
-        variant="outline"
-        size="xs"
-        shape="pill"
-        onClick={onOpenInObsidian}
-      >
-        <ExternalLink className="size-3" />
-        Open in Obsidian
-      </Button>
     </div>
   );
 }

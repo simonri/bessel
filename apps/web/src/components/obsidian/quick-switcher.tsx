@@ -37,6 +37,8 @@ export interface QuickSwitcherProps {
   onSelectLine?: (rel: string, line: number) => void;
   /** Query to start with when opened (e.g. a clicked `#tag`). */
   initialQuery?: string;
+  /** Show full-text search only, without exposing the file quick switcher. */
+  searchOnly?: boolean;
 }
 
 type SwitcherMode = "files" | "search";
@@ -120,6 +122,7 @@ export function QuickSwitcher({
   initialMode = "files",
   onSelectLine,
   initialQuery = "",
+  searchOnly = false,
 }: QuickSwitcherProps) {
   const [mode, setMode] = useState<SwitcherMode>(initialMode);
   const [query, setQuery] = useState("");
@@ -127,10 +130,10 @@ export function QuickSwitcher({
 
   useEffect(() => {
     if (!open) return;
-    setMode(initialMode);
+    setMode(searchOnly ? "search" : initialMode);
     setQuery(initialQuery);
     setDebouncedQuery(initialQuery);
-  }, [open, initialMode, initialQuery]);
+  }, [open, initialMode, initialQuery, searchOnly]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 150);
@@ -174,7 +177,7 @@ export function QuickSwitcher({
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Tab") {
+    if (e.key === "Tab" && !searchOnly) {
       e.preventDefault();
       setMode((m) => (m === "files" ? "search" : "files"));
     } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -186,9 +189,13 @@ export function QuickSwitcher({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader className="sr-only">
-        <DialogTitle>Quick switcher</DialogTitle>
+        <DialogTitle>
+          {searchOnly ? "Search vault" : "Quick switcher"}
+        </DialogTitle>
         <DialogDescription>
-          Jump to a note or search your vault
+          {searchOnly
+            ? "Search your vault"
+            : "Jump to a note or search your vault"}
         </DialogDescription>
       </DialogHeader>
       <DialogContent
@@ -196,18 +203,20 @@ export function QuickSwitcher({
         className="top-[20vh] translate-y-0 overflow-hidden p-0 sm:max-w-lg"
       >
         <Command shouldFilter={false} onKeyDown={handleKeyDown}>
-          <div className="flex items-center gap-1 border-b border-white/10 px-2 pt-2 pb-1.5">
-            <ModeTab
-              label="Files"
-              active={mode === "files"}
-              onClick={() => setMode("files")}
-            />
-            <ModeTab
-              label="Search"
-              active={mode === "search"}
-              onClick={() => setMode("search")}
-            />
-          </div>
+          {!searchOnly && (
+            <div className="flex items-center gap-1 border-b border-white/10 px-2 pt-2 pb-1.5">
+              <ModeTab
+                label="Files"
+                active={mode === "files"}
+                onClick={() => setMode("files")}
+              />
+              <ModeTab
+                label="Search"
+                active={mode === "search"}
+                onClick={() => setMode("search")}
+              />
+            </div>
+          )}
           <CommandInput
             autoFocus
             value={query}
