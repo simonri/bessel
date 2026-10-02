@@ -59,6 +59,8 @@ _SCHEMA_VERSION = 2
 METRON_API_URL = os.environ.get("METRON_API_URL", "http://localhost:8100")
 METRON_INTERNAL_API_KEY = os.environ.get("METRON_INTERNAL_API_KEY", "")
 PUSH_BATCH_SIZE = 500
+# Cloudflare's Browser Integrity Check rejects urllib's default User-Agent (1010).
+USER_AGENT = "bessel-monitor/0.1"
 # ─────────────────────────────────────────────────────────────────────────────
 
 _running = True
@@ -460,7 +462,7 @@ def _do_push(source: str, cursor: int) -> tuple[int, int, int]:
                 })
 
             payload = json.dumps({"source": source, "events": events}).encode()
-            headers = {"Content-Type": "application/json"}
+            headers = {"Content-Type": "application/json", "User-Agent": USER_AGENT}
             if METRON_INTERNAL_API_KEY:
                 headers["X-API-Key"] = METRON_INTERNAL_API_KEY
             req = urllib.request.Request(

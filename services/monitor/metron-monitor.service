@@ -5,7 +5,7 @@ After=graphical-session.target
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/uv run --directory %h/.local/share/bessel/monitor python main.py
-Environment=METRON_API_URL=https://vps.tailca3fd9.ts.net
+Environment=METRON_API_URL=https://api.getbessel.com
 EnvironmentFile=-%h/.config/metron/monitor.env
 Restart=on-failure
 RestartSec=5

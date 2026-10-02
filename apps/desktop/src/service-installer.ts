@@ -22,7 +22,10 @@ const execFileAsync = promisify(execFile);
 const SYSTEMD_USER_DIR = path.join(os.homedir(), ".config", "systemd", "user");
 const PAYLOAD_ROOT = path.join(os.homedir(), ".local", "share", "bessel");
 const CONFIG_ROOT = path.join(os.homedir(), ".config", "bessel");
-const DEFAULT_API_BASE_URL = "https://vps.tailca3fd9.ts.net";
+const DEFAULT_API_BASE_URL = "https://api.getbessel.com";
+// The API used to be reachable only over Tailscale. Env files written back
+// then still point there, so installs repoint them at the public host.
+const RETIRED_API_BASE_URLS = new Set(["https://vps.tailca3fd9.ts.net"]);
 const LEGACY_MONITOR_ENV = path.join(
   os.homedir(),
   ".config",
@@ -118,6 +121,23 @@ function parseEnvFile(filePath: string): Record<string, string> {
   return out;
 }
 
+function replaceRetiredApiBaseUrl(filePath: string, key: string): void {
+  if (!fs.existsSync(filePath)) return;
+  const lines = fs.readFileSync(filePath, "utf8").split("\n");
+  let changed = false;
+  const updated = lines.map((line) => {
+    const eq = line.indexOf("=");
+    const name = line.slice(0, eq).trim();
+    const value = line.slice(eq + 1).trim();
+    if (eq === -1 || name !== key || !RETIRED_API_BASE_URLS.has(value)) {
+      return line;
+    }
+    changed = true;
+    return `${key}=${DEFAULT_API_BASE_URL}`;
+  });
+  if (changed) fs.writeFileSync(filePath, updated.join("\n"));
+}
+
 // The collector needs the same shared-secret the monitor already uses to
 // authenticate to the API. If the monitor is already configured on this
 // machine, reuse its key so a second unrelated install step isn't needed —
@@ -156,6 +176,7 @@ export function registerServiceInstallerHandlers(): void {
     assertUvAvailable();
     copyFiles(monitorSrcDir, monitorPayloadDir, ["main.py", "pyproject.toml"]);
     copyFiles(monitorSrcDir, SYSTEMD_USER_DIR, ["metron-monitor.service"]);
+    replaceRetiredApiBaseUrl(LEGACY_MONITOR_ENV, "METRON_API_URL");
     await execFileAsync("systemctl", ["--user", "daemon-reload"]);
     await execFileAsync("systemctl", ["--user", "enable", "metron-monitor"]);
     // restart (not start) so re-running install after an app update actually
@@ -196,6 +217,7 @@ export function registerServiceInstallerHandlers(): void {
       "collect_agent_usage.py",
     ]);
     ensureCollectorEnvFile();
+    replaceRetiredApiBaseUrl(COLLECTOR_ENV, "BESSEL_API_BASE_URL");
     copyFiles(collectorSrcDir, SYSTEMD_USER_DIR, [
       "agent-usage-collector.service",
       "agent-usage-collector.timer",
