@@ -214,6 +214,82 @@ class TestDailySleep:
     nights = {n["date"]: n["asleep_secs"] for n in resp.json()["nights"]}
     assert nights == {"2026-07-02": 1800}
 
+  @pytest.mark.asyncio
+  async def test_night_with_no_asleep_segments_has_null_onset_wake(self, client: AsyncClient) -> None:
+    resp = await client.get(
+      "/v1/healthkit/sleep/daily",
+      params={"start_ts": NOON - 86400, "end_ts": NOON + 86400, "tz_name": "UTC"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["nights"] == []
+
+  @pytest.mark.asyncio
+  async def test_onset_and_wake_time_reported_in_local_time(self, client: AsyncClient) -> None:
+    # 23:00 -> 07:00 UTC is 00:00 -> 08:00 in UTC+1 — onset/wake must reflect
+    # the requested local offset, not the stored UTC instants.
+    start = datetime(2026, 7, 1, 23, 0, tzinfo=UTC)
+    end = datetime(2026, 7, 2, 7, 0, tzinfo=UTC)
+    await _sync(client, [_sample_at(start, end)])
+
+    resp = await client.get(
+      "/v1/healthkit/sleep/daily",
+      params={"start_ts": NOON - 86400, "end_ts": NOON + 86400, "tz_offset_mins": 60},
+    )
+    assert resp.status_code == 200
+    night = resp.json()["nights"][0]
+    assert night["date"] == "2026-07-02"
+    assert night["sleep_onset"] == "2026-07-02T00:00:00+01:00"
+    assert night["wake_time"] == "2026-07-02T08:00:00+01:00"
+
+  @pytest.mark.asyncio
+  async def test_brief_waking_does_not_reset_episode(self, client: AsyncClient) -> None:
+    # Asleep, a 5-minute waking, then asleep again — should read as one
+    # continuous episode from the first segment's start to the last segment's end.
+    start = datetime(2026, 7, 1, 23, 0, tzinfo=UTC)
+    await _sync(
+      client,
+      [
+        _sample_at(start, start + timedelta(hours=3), sleep_value_name="asleepCore"),
+        _sample_at(start + timedelta(hours=3), start + timedelta(hours=3, minutes=5), sleep_value_name="awake"),
+        _sample_at(start + timedelta(hours=3, minutes=5), start + timedelta(hours=8), sleep_value_name="asleepCore"),
+      ],
+    )
+
+    resp = await client.get(
+      "/v1/healthkit/sleep/daily",
+      params={"start_ts": NOON - 86400, "end_ts": NOON + 86400, "tz_name": "UTC"},
+    )
+    assert resp.status_code == 200
+    night = resp.json()["nights"][0]
+    assert night["sleep_onset"] == start.isoformat()
+    assert night["wake_time"] == (start + timedelta(hours=8)).isoformat()
+
+  @pytest.mark.asyncio
+  async def test_long_gap_splits_into_separate_episodes_longest_wins(self, client: AsyncClient) -> None:
+    # A short early-evening nap followed, after a multi-hour gap, by the real
+    # night's sleep — the real (longer) episode should win, not the nap.
+    nap_start = datetime(2026, 7, 1, 18, 0, tzinfo=UTC)
+    real_start = datetime(2026, 7, 2, 0, 0, tzinfo=UTC)
+    real_end = datetime(2026, 7, 2, 7, 0, tzinfo=UTC)
+    await _sync(
+      client,
+      [
+        _sample_at(nap_start, nap_start + timedelta(minutes=20), sleep_value_name="asleepCore"),
+        _sample_at(real_start, real_end, sleep_value_name="asleepCore"),
+      ],
+    )
+
+    resp = await client.get(
+      "/v1/healthkit/sleep/daily",
+      params={"start_ts": NOON - 86400, "end_ts": NOON + 86400, "tz_name": "UTC"},
+    )
+    assert resp.status_code == 200
+    night = resp.json()["nights"][0]
+    assert night["date"] == "2026-07-02"
+    assert night["sleep_onset"] == real_start.isoformat()
+    assert night["wake_time"] == real_end.isoformat()
+    assert night["asleep_secs"] == 20 * 60 + 7 * 3600
+
 
 class TestSleepSummary:
   @pytest.mark.asyncio

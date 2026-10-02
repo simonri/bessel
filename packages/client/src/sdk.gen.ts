@@ -174,6 +174,9 @@ import type {
   GetTaskV1TasksTaskIdGetData,
   GetTaskV1TasksTaskIdGetErrors,
   GetTaskV1TasksTaskIdGetResponses,
+  GetTimelineV1TimelineGetData,
+  GetTimelineV1TimelineGetErrors,
+  GetTimelineV1TimelineGetResponses,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetErrors,
   GetWeatherForecastV1WeatherGetResponses,
@@ -1880,6 +1883,22 @@ export const listAreasV1TasksAreasGet = <ThrowOnError extends boolean = false>(
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/areas",
+    ...options,
+  });
+
+/**
+ * Get Timeline
+ */
+export const getTimelineV1TimelineGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetTimelineV1TimelineGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetTimelineV1TimelineGetResponses,
+    GetTimelineV1TimelineGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/timeline",
     ...options,
   });
 

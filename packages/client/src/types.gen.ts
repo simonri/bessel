@@ -2364,6 +2364,18 @@ export type SleepDailyEntry = {
    * Asleep Secs
    */
   asleep_secs: number;
+  /**
+   * Sleep Onset
+   *
+   * Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode began. Null if no asleep segments were recorded.
+   */
+  sleep_onset?: string | null;
+  /**
+   * Wake Time
+   *
+   * Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode ended. Null if no asleep segments were recorded.
+   */
+  wake_time?: string | null;
 };
 
 /**
@@ -2770,6 +2782,90 @@ export type TaskUpdate = {
    * Rrule Day Of Month
    */
   rrule_day_of_month?: number | null;
+};
+
+/**
+ * TimelineLane
+ */
+export type TimelineLane = {
+  key: TimelineLaneKey;
+  /**
+   * Total Secs
+   *
+   * Seconds attributed to this lane, counting overlapping segments once. Awake sleep segments are shown but not counted.
+   */
+  total_secs: number;
+  /**
+   * Segments
+   *
+   * Segments sorted by start time. Contiguous segments with the same label are merged.
+   */
+  segments: Array<TimelineSegment>;
+};
+
+/**
+ * TimelineLaneKey
+ */
+export const TimelineLaneKey = { SLEEP: "sleep", PC: "pc" } as const;
+
+/**
+ * TimelineLaneKey
+ */
+export type TimelineLaneKey =
+  (typeof TimelineLaneKey)[keyof typeof TimelineLaneKey];
+
+/**
+ * TimelineResponse
+ */
+export type TimelineResponse = {
+  /**
+   * Start Ts
+   */
+  start_ts: number;
+  /**
+   * End Ts
+   */
+  end_ts: number;
+  /**
+   * Source
+   *
+   * Activity source used for the PC lane, or null if no activity has been recorded.
+   */
+  source: string | null;
+  /**
+   * Tracked Secs
+   *
+   * Seconds covered by at least one lane's counted segments.
+   */
+  tracked_secs: number;
+  /**
+   * Lanes
+   */
+  lanes: Array<TimelineLane>;
+};
+
+/**
+ * TimelineSegment
+ */
+export type TimelineSegment = {
+  /**
+   * Start Ts
+   *
+   * Segment start (Unix epoch seconds), clipped to the window.
+   */
+  start_ts: number;
+  /**
+   * End Ts
+   *
+   * Segment end (Unix epoch seconds, exclusive), clipped to the window.
+   */
+  end_ts: number;
+  /**
+   * Label
+   *
+   * What filled this span: the sleep stage for the sleep lane, the app class for the PC lane.
+   */
+  label: string;
 };
 
 /**
@@ -5746,6 +5842,52 @@ export type ListAreasV1TasksAreasGetResponses = {
 
 export type ListAreasV1TasksAreasGetResponse =
   ListAreasV1TasksAreasGetResponses[keyof ListAreasV1TasksAreasGetResponses];
+
+export type GetTimelineV1TimelineGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Ts
+     *
+     * Start of window (Unix epoch seconds, inclusive).
+     */
+    start_ts: number;
+    /**
+     * End Ts
+     *
+     * End of window (Unix epoch seconds, exclusive).
+     */
+    end_ts: number;
+    /**
+     * Source
+     *
+     * Activity source for the PC lane. Defaults to the most recently active source.
+     */
+    source?: string | null;
+  };
+  url: "/v1/timeline";
+};
+
+export type GetTimelineV1TimelineGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTimelineV1TimelineGetError =
+  GetTimelineV1TimelineGetErrors[keyof GetTimelineV1TimelineGetErrors];
+
+export type GetTimelineV1TimelineGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TimelineResponse;
+};
+
+export type GetTimelineV1TimelineGetResponse =
+  GetTimelineV1TimelineGetResponses[keyof GetTimelineV1TimelineGetResponses];
 
 export type DeleteTransactionsV1TransactionsDeleteData = {
   body: BulkDeleteRequest;

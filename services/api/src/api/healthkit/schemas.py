@@ -112,6 +112,14 @@ class HealthKitSleepListResponse(ListResource[HealthKitSleepSampleSchema]):
 class SleepDailyEntry(Schema):
   date: str = Field(description="Wake date (ISO 8601), not the bed date — a night is bucketed to the date the sleeper woke up.")
   asleep_secs: int
+  sleep_onset: str | None = Field(
+    default=None,
+    description="Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode began. Null if no asleep segments were recorded.",
+  )
+  wake_time: str | None = Field(
+    default=None,
+    description="Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode ended. Null if no asleep segments were recorded.",
+  )
 
 
 class SleepDailyResponse(Schema):

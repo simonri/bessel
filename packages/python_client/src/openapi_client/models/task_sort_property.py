@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TaskSortProperty(str, Enum):
+class TaskSortProperty(StrEnum):
   COMPLETED_AT = "completed_at"
   CREATED_AT = "created_at"
   DUE_DATE = "due_date"

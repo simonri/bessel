@@ -1,9 +1,9 @@
 from enum import StrEnum
 
 
-class TradeType(StrEnum):
-  BUY = "buy"
-  SELL = "sell"
+class TimelineLaneKey(StrEnum):
+  PC = "pc"
+  SLEEP = "sleep"
 
   def __str__(self) -> str:
     return str(self.value)

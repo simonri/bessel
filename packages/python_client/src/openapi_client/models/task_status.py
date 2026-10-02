@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
   CANCELLED = "cancelled"
   DONE = "done"
   IN_PROGRESS = "in_progress"

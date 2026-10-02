@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RruleFrequency(str, Enum):
+class RruleFrequency(StrEnum):
   DAILY = "daily"
   MONTHLY = "monthly"
   WEEKLY = "weekly"

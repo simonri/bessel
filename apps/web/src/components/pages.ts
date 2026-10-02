@@ -10,6 +10,7 @@ import { isDesktop } from "@/lib/environment";
 export type PageKey =
   | "canvas"
   | "travel"
+  | "timeline"
   | "activity"
   | "sleep"
   | "recipes"
@@ -37,6 +38,7 @@ function fromModule(key: ModuleKey, noPadding?: boolean): PageConfig {
 export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   canvas: { title: "Canvas", icon: LayoutGrid },
   travel: fromModule("travel", true),
+  timeline: fromModule("timeline"),
   activity: fromModule("activity"),
   sleep: fromModule("sleep"),
   recipes: fromModule("recipes"),
@@ -50,6 +52,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
 export const PRIMARY_PAGES: PageKey[] = [
   "canvas",
   "travel",
+  "timeline",
   "activity",
   "sleep",
   "recipes",

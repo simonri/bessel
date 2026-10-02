@@ -3607,6 +3607,32 @@ export const SleepDailyEntrySchema = {
       type: "integer",
       title: "Asleep Secs",
     },
+    sleep_onset: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sleep Onset",
+      description:
+        "Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode began. Null if no asleep segments were recorded.",
+    },
+    wake_time: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wake Time",
+      description:
+        "Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode ended. Null if no asleep segments were recorded.",
+    },
   },
   type: "object",
   required: ["date", "asleep_secs"],
@@ -4352,6 +4378,104 @@ export const TaskUpdateSchema = {
   },
   type: "object",
   title: "TaskUpdate",
+} as const;
+
+export const TimelineLaneSchema = {
+  properties: {
+    key: {
+      $ref: "#/components/schemas/TimelineLaneKey",
+    },
+    total_secs: {
+      type: "integer",
+      title: "Total Secs",
+      description:
+        "Seconds attributed to this lane, counting overlapping segments once. Awake sleep segments are shown but not counted.",
+    },
+    segments: {
+      items: {
+        $ref: "#/components/schemas/TimelineSegment",
+      },
+      type: "array",
+      title: "Segments",
+      description:
+        "Segments sorted by start time. Contiguous segments with the same label are merged.",
+    },
+  },
+  type: "object",
+  required: ["key", "total_secs", "segments"],
+  title: "TimelineLane",
+} as const;
+
+export const TimelineLaneKeySchema = {
+  type: "string",
+  enum: ["sleep", "pc"],
+  title: "TimelineLaneKey",
+} as const;
+
+export const TimelineResponseSchema = {
+  properties: {
+    start_ts: {
+      type: "integer",
+      title: "Start Ts",
+    },
+    end_ts: {
+      type: "integer",
+      title: "End Ts",
+    },
+    source: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Source",
+      description:
+        "Activity source used for the PC lane, or null if no activity has been recorded.",
+    },
+    tracked_secs: {
+      type: "integer",
+      title: "Tracked Secs",
+      description: "Seconds covered by at least one lane's counted segments.",
+    },
+    lanes: {
+      items: {
+        $ref: "#/components/schemas/TimelineLane",
+      },
+      type: "array",
+      title: "Lanes",
+    },
+  },
+  type: "object",
+  required: ["start_ts", "end_ts", "source", "tracked_secs", "lanes"],
+  title: "TimelineResponse",
+} as const;
+
+export const TimelineSegmentSchema = {
+  properties: {
+    start_ts: {
+      type: "integer",
+      title: "Start Ts",
+      description: "Segment start (Unix epoch seconds), clipped to the window.",
+    },
+    end_ts: {
+      type: "integer",
+      title: "End Ts",
+      description:
+        "Segment end (Unix epoch seconds, exclusive), clipped to the window.",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+      description:
+        "What filled this span: the sleep stage for the sleep lane, the app class for the PC lane.",
+    },
+  },
+  type: "object",
+  required: ["start_ts", "end_ts", "label"],
+  title: "TimelineSegment",
 } as const;
 
 export const TradeCreateSchema = {

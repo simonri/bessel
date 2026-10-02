@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PlaceSortProperty(str, Enum):
+class PlaceSortProperty(StrEnum):
   CREATED_AT = "created_at"
   NAME = "name"
   RATING = "rating"

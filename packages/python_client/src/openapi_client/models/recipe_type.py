@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RecipeType(str, Enum):
+class RecipeType(StrEnum):
   DESSERT = "dessert"
   MAIN = "main"
   OTHER = "other"

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class BankAccountSortProperty(str, Enum):
+class BankAccountSortProperty(StrEnum):
   CREATED_AT = "created_at"
   NAME = "name"
   VALUE_1 = "-created_at"

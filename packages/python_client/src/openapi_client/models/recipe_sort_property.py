@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RecipeSortProperty(str, Enum):
+class RecipeSortProperty(StrEnum):
   CREATED_AT = "created_at"
   MODIFIED_AT = "modified_at"
   TITLE = "title"

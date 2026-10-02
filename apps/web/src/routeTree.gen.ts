@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
+import { Route as AppTimelineRouteImport } from './routes/_app/timeline'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppSleepRouteImport } from './routes/_app/sleep'
 import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
@@ -44,6 +45,11 @@ const AppTravelRoute = AppTravelRouteImport.update({
 const AppTransactionsRoute = AppTransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineRoute = AppTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTasksRoute = AppTasksRouteImport.update({
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/recipes': typeof AppRecipesRoute
   '/sleep': typeof AppSleepRoute
   '/tasks': typeof AppTasksRoute
+  '/timeline': typeof AppTimelineRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
 }
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/recipes': typeof AppRecipesRoute
   '/sleep': typeof AppSleepRoute
   '/tasks': typeof AppTasksRoute
+  '/timeline': typeof AppTimelineRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
   '/': typeof AppIndexRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_app/recipes': typeof AppRecipesRoute
   '/_app/sleep': typeof AppSleepRoute
   '/_app/tasks': typeof AppTasksRoute
+  '/_app/timeline': typeof AppTimelineRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/travel': typeof AppTravelRoute
   '/_app/': typeof AppIndexRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/sleep'
     | '/tasks'
+    | '/timeline'
     | '/transactions'
     | '/travel'
   fileRoutesByTo: FileRoutesByTo
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/recipes'
     | '/sleep'
     | '/tasks'
+    | '/timeline'
     | '/transactions'
     | '/travel'
     | '/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/_app/recipes'
     | '/_app/sleep'
     | '/_app/tasks'
+    | '/_app/timeline'
     | '/_app/transactions'
     | '/_app/travel'
     | '/_app/'
@@ -206,6 +218,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AppTransactionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/timeline': {
+      id: '/_app/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/tasks': {
@@ -268,6 +287,7 @@ interface AppRouteChildren {
   AppRecipesRoute: typeof AppRecipesRoute
   AppSleepRoute: typeof AppSleepRoute
   AppTasksRoute: typeof AppTasksRoute
+  AppTimelineRoute: typeof AppTimelineRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppTravelRoute: typeof AppTravelRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -281,6 +301,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppRecipesRoute: AppRecipesRoute,
   AppSleepRoute: AppSleepRoute,
   AppTasksRoute: AppTasksRoute,
+  AppTimelineRoute: AppTimelineRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppTravelRoute: AppTravelRoute,
   AppIndexRoute: AppIndexRoute,

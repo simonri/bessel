@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TransactionDirection(str, Enum):
+class TransactionDirection(StrEnum):
   CREDIT = "credit"
   DEBIT = "debit"
 

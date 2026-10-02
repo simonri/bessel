@@ -1,6 +1,7 @@
 import {
   Activity,
   ArrowLeftRight,
+  ChartGantt,
   CheckSquare,
   ChefHat,
   GitBranch,
@@ -96,6 +97,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     icon: Moon,
     component: lazy(() =>
       import("@/routes/_app/sleep").then((m) => ({
+        default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...COMPACT_SIZE,
+  },
+  timeline: {
+    title: "Timeline",
+    icon: ChartGantt,
+    component: lazy(() =>
+      import("@/routes/_app/timeline").then((m) => ({
         default: m.Route.options.component as React.ComponentType,
       })),
     ),

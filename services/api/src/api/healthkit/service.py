@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -34,6 +34,12 @@ healthkit_workout_service = HealthKitWorkoutService()
 ASLEEP_STAGES = frozenset({"asleepUnspecified", "asleepCore", "asleepDeep", "asleepREM"})
 EXCLUDED_STAGES = frozenset({"inBed"})
 
+# Segments separated by less than this count as one continuous sleep episode —
+# a brief nighttime waking (bathroom, rolling over) shouldn't read as a fresh
+# bedtime. Only affects onset/wake-time reporting; duration totals are
+# unaffected (they sum every asleep segment regardless of gaps).
+EPISODE_MERGE_GAP_SECS = 90 * 60
+
 
 class SleepSegment:
   __slots__ = ("start_ts", "end_ts", "stage_name")
@@ -66,6 +72,15 @@ def _local_night_bounds(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> tu
   noon_shifted = datetime(shifted.year, shifted.month, shifted.day, 12, tzinfo=UTC)
   boundary_shifted = noon_shifted if shifted < noon_shifted else noon_shifted + timedelta(days=1)
   return boundary_shifted.date().isoformat(), int(boundary_shifted.timestamp()) - tz_offset_mins * 60
+
+
+def local_iso(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> str:
+  """Format an epoch timestamp as a local ISO 8601 string with UTC offset —
+  an AI (or anyone) reading a bare "21:40Z" would misjudge a 23:40 local
+  bedtime, so onset/wake times are never returned in UTC."""
+  if tz is not None:
+    return datetime.fromtimestamp(ts, tz=tz).isoformat()
+  return datetime.fromtimestamp(ts, tz=timezone(timedelta(minutes=tz_offset_mins))).isoformat()
 
 
 class HealthKitSleepService:
@@ -113,6 +128,41 @@ class HealthKitSleepService:
       out.append((wake_date, boundary - cur))
       cur = boundary
     return out
+
+  def nightly_episodes(self, segments: list[SleepSegment], tz: ZoneInfo | None, tz_offset_mins: int) -> dict[str, tuple[int, int]]:
+    """For each wake-date, the (start_ts, end_ts) of that night's longest
+    unbroken sleep episode — for reporting an actual bedtime/wake-up time.
+
+    Unlike split_by_local_night (used for duration totals), segments are
+    bucketed by their own start time, not fragmented at the noon boundary: a
+    sample that starts at 23:00 and ends at 07:00 is one segment with one
+    real start time, and splitting it would make the wake-date bucket's
+    "start" land exactly on a noon boundary rather than an actual bedtime. A
+    segment that starts before a nap-friendly local noon and one that starts
+    after both land in whichever single night their own start time belongs
+    to, which is correct for every ordinary (non-24h-spanning) sleep sample.
+    """
+    by_night: dict[str, list[SleepSegment]] = {}
+    for seg in segments:
+      if seg.stage_name not in ASLEEP_STAGES:
+        continue
+      wake_date, _ = _local_night_bounds(seg.start_ts, tz, tz_offset_mins)
+      by_night.setdefault(wake_date, []).append(seg)
+
+    result: dict[str, tuple[int, int]] = {}
+    for wake_date, night_segments in by_night.items():
+      night_segments.sort(key=lambda s: s.start_ts)
+      episodes: list[tuple[int, int]] = []
+      cur_start, cur_end = night_segments[0].start_ts, night_segments[0].end_ts
+      for seg in night_segments[1:]:
+        if seg.start_ts - cur_end <= EPISODE_MERGE_GAP_SECS:
+          cur_end = max(cur_end, seg.end_ts)
+        else:
+          episodes.append((cur_start, cur_end))
+          cur_start, cur_end = seg.start_ts, seg.end_ts
+      episodes.append((cur_start, cur_end))
+      result[wake_date] = max(episodes, key=lambda e: e[1] - e[0])
+    return result
 
 
 healthkit_sleep_service = HealthKitSleepService()

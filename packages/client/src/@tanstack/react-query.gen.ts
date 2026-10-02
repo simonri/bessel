@@ -50,6 +50,7 @@ import {
   getSleepSummaryV1HealthkitSleepSummaryGet,
   getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
   getTaskV1TasksTaskIdGet,
+  getTimelineV1TimelineGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
@@ -215,6 +216,9 @@ import type {
   GetTaskV1TasksTaskIdGetData,
   GetTaskV1TasksTaskIdGetError,
   GetTaskV1TasksTaskIdGetResponse,
+  GetTimelineV1TimelineGetData,
+  GetTimelineV1TimelineGetError,
+  GetTimelineV1TimelineGetResponse,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetError,
   GetWeatherForecastV1WeatherGetResponse,
@@ -3075,6 +3079,34 @@ export const listAreasV1TasksAreasGetOptions = (
       return data;
     },
     queryKey: listAreasV1TasksAreasGetQueryKey(options),
+  });
+
+export const getTimelineV1TimelineGetQueryKey = (
+  options: Options<GetTimelineV1TimelineGetData>,
+) => createQueryKey("getTimelineV1TimelineGet", options);
+
+/**
+ * Get Timeline
+ */
+export const getTimelineV1TimelineGetOptions = (
+  options: Options<GetTimelineV1TimelineGetData>,
+) =>
+  queryOptions<
+    GetTimelineV1TimelineGetResponse,
+    GetTimelineV1TimelineGetError,
+    GetTimelineV1TimelineGetResponse,
+    ReturnType<typeof getTimelineV1TimelineGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTimelineV1TimelineGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTimelineV1TimelineGetQueryKey(options),
   });
 
 /**

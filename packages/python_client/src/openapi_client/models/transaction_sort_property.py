@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class TransactionSortProperty(str, Enum):
+class TransactionSortProperty(StrEnum):
   AMOUNT = "amount"
   CREATED_AT = "created_at"
   DESCRIPTION = "description"

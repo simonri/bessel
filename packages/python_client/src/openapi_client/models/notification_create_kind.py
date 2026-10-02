@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class NotificationCreateKind(str, Enum):
+class NotificationCreateKind(StrEnum):
   ERROR = "error"
   INFO = "info"
   SUCCESS = "success"

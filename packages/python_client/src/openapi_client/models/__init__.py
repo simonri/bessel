@@ -117,6 +117,10 @@ from .task_schema import TaskSchema
 from .task_sort_property import TaskSortProperty
 from .task_status import TaskStatus
 from .task_update import TaskUpdate
+from .timeline_lane import TimelineLane
+from .timeline_lane_key import TimelineLaneKey
+from .timeline_response import TimelineResponse
+from .timeline_segment import TimelineSegment
 from .trade_create import TradeCreate
 from .trade_list_response import TradeListResponse
 from .trade_schema import TradeSchema
@@ -247,6 +251,10 @@ __all__ = (
   "TaskSortProperty",
   "TaskStatus",
   "TaskUpdate",
+  "TimelineLane",
+  "TimelineLaneKey",
+  "TimelineResponse",
+  "TimelineSegment",
   "TradeCreate",
   "TradeListResponse",
   "TradeSchema",

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PlaceStatus(str, Enum):
+class PlaceStatus(StrEnum):
   VISITED = "visited"
   WANT_TO_GO = "want_to_go"
 

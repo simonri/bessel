@@ -20,7 +20,7 @@ from api.healthkit.schemas import (
   SleepStageSummary,
   SleepSummaryResponse,
 )
-from api.healthkit.service import ASLEEP_STAGES, healthkit_sleep_service, healthkit_workout_service
+from api.healthkit.service import ASLEEP_STAGES, healthkit_sleep_service, healthkit_workout_service, local_iso
 from api.postgres import AsyncSession, get_db_session
 from api.users.dependencies import CurrentDBUser
 
@@ -139,8 +139,18 @@ async def get_daily_sleep(
     for wake_date, secs in healthkit_sleep_service.split_by_local_night(seg, tz, tz_offset_mins):
       nightly[wake_date] = nightly.get(wake_date, 0) + secs
 
+  episodes = healthkit_sleep_service.nightly_episodes(segments, tz, tz_offset_mins)
+
   nights = sorted(
-    [SleepDailyEntry(date=k, asleep_secs=v) for k, v in nightly.items()],
+    [
+      SleepDailyEntry(
+        date=k,
+        asleep_secs=v,
+        sleep_onset=local_iso(episodes[k][0], tz, tz_offset_mins) if k in episodes else None,
+        wake_time=local_iso(episodes[k][1], tz, tz_offset_mins) if k in episodes else None,
+      )
+      for k, v in nightly.items()
+    ],
     key=lambda x: x.date,
   )
   return SleepDailyResponse(nights=nights)
