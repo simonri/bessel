@@ -13,6 +13,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, ExternalLink } from "lucide-react";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
+import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 export function NotificationBell() {
   const queryClient = useQueryClient();
@@ -56,10 +58,19 @@ export function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100">
-          <Bell className="size-4" />
+        <button
+          type="button"
+          title="Notifications"
+          className={TOPBAR_ICON_BUTTON}
+        >
+          <Bell />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-sky-500 text-9 font-bold leading-none text-white">
+            <span
+              className={cn(
+                "absolute top-0.5 right-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary-500 text-9 font-bold leading-none text-white",
+                TOPBAR_BADGE_RING,
+              )}
+            >
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -68,7 +79,7 @@ export function NotificationBell() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="flex w-80 flex-col overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
+        className="flex w-80 flex-col overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
         style={{ maxHeight: "min(28rem, 80vh)" }}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">

@@ -4,7 +4,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
-import { glassSurface } from "@bessel/ui/lib/glass";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ProjectSessions } from "@/components/canvas/project-sessions";
@@ -17,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV_ITEM =
-  "flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-[0.98] motion-reduce:active:scale-100";
+  "flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-medium transition-[background-color,color] duration-150";
 const NAV_ACTIVE = "bg-white/12 text-white/90";
 const NAV_IDLE = "text-white/55 hover:bg-white/[0.06] hover:text-white/75";
 
@@ -164,7 +163,7 @@ function MorePagesMenu({
         align="start"
         sideOffset={8}
         className={cn(
-          glassSurface({ weight: "heavy" }),
+          "bg-popover",
           "min-w-40 border-white/10 text-white/80 shadow-2xl",
         )}
       >
@@ -223,12 +222,7 @@ export const AppSidebar = memo(function AppSidebar({
     // overflow-x non-visible too and clip the resize handle poking out past
     // the right edge, so the scrolling nav content lives in an inner div.
     <aside style={{ width }} className="relative flex shrink-0">
-      <div
-        className={cn(
-          glassSurface({ weight: "light" }),
-          "flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto border-r border-white/10 px-2 py-3",
-        )}
-      >
+      <div className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto border-r border-white/10 bg-[#1e1e1e] px-2 py-3">
         <nav aria-label="Pages">
           <div className="flex flex-col gap-0.5">
             {PRIMARY_PAGES.map((key) => {

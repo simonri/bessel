@@ -18,6 +18,8 @@ import {
 import { Gauge } from "lucide-react";
 import { useState } from "react";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
+import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 const HISTORY_DAYS = 30;
 const STALE_MS = 30 * 60 * 1000;
@@ -130,13 +132,17 @@ export function AgentUsageDropdown() {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          title="Agent Usage"
-          className="relative flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100"
+          type="button"
+          title="Agent usage"
+          className={TOPBAR_ICON_BUTTON}
         >
-          <Gauge className="size-4" />
+          <Gauge />
           {needsAttention && (
             <span
-              className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full ring-2 ring-black/60"
+              className={cn(
+                "absolute top-1 right-1 size-2 rounded-full",
+                TOPBAR_BADGE_RING,
+              )}
               style={{ background: severityColor(95) }}
             />
           )}
@@ -145,7 +151,7 @@ export function AgentUsageDropdown() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="flex w-96 flex-col overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
+        className="flex w-96 flex-col overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
         style={{ maxHeight: "min(32rem, 80vh)" }}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">

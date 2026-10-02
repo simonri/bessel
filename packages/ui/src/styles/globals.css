@@ -148,7 +148,7 @@
   --foreground: oklch(0.96 0.002 250);
   --card: oklch(0.18 0.004 250);
   --card-foreground: oklch(0.96 0.002 250);
-  --popover: oklch(0.2 0.004 250);
+  --popover: #1e1e1e;
   --popover-foreground: oklch(0.96 0.002 250);
   /* Interactive — hue-driven */
   --primary: oklch(0.7 0.18 var(--accent-hue));

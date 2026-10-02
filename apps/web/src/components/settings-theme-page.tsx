@@ -1,5 +1,6 @@
 import { SectionLabel } from "@/components/settings-section-label";
 import { type ThemeKey, useSettings } from "@/hooks/use-settings";
+import { cn } from "@/lib/utils";
 
 const THEME_OPTIONS: { key: ThemeKey; label: string; hue: number }[] = [
   { key: "orange", label: "Orange", hue: 40 },
@@ -21,11 +22,12 @@ export function ThemePage() {
               key={key}
               type="button"
               onClick={() => update({ theme: key })}
-              className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-13 font-medium transition-all duration-150 active:scale-[0.98] ${
+              className={cn(
+                "flex h-8 items-center gap-2 rounded-lg border px-3 text-13 font-medium transition-colors duration-150",
                 isSelected
-                  ? "border-white/20 bg-white/10 text-white"
-                  : "border-white/[0.07] text-white/50 hover:border-white/15 hover:text-white/70"
-              }`}
+                  ? "border-primary-500/60 bg-primary-500/10 text-white/90"
+                  : "border-white/10 text-white/55 hover:border-white/20 hover:text-white/80",
+              )}
             >
               <span
                 className="size-3 rounded-full"

@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
+import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 export function AvatarMenu() {
   const { user, logout } = useAuth0();
@@ -21,11 +22,16 @@ export function AvatarMenu() {
     <Popover>
       <PopoverTrigger asChild>
         <button
+          type="button"
           title={user?.name ?? user?.email ?? "Account"}
-          className="flex items-center justify-center rounded p-0.5 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100"
+          className={TOPBAR_ICON_BUTTON}
         >
           {user?.picture ? (
-            <img src={user.picture} alt="" className="size-5 rounded-full" />
+            <img
+              src={user.picture}
+              alt=""
+              className="size-5 rounded-full ring-1 ring-white/10"
+            />
           ) : (
             <div className="flex size-5 items-center justify-center rounded-full bg-white/10 text-10 font-medium text-white/60">
               {initials}
@@ -36,7 +42,7 @@ export function AvatarMenu() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-52 overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
+        className="w-52 overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
       >
         {user && (
           <div className="border-b border-white/[0.08] px-4 py-3">

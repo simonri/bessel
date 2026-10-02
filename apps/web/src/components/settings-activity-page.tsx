@@ -1,6 +1,11 @@
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { SectionLabel } from "@/components/settings-section-label";
+import {
+  SettingsEmpty,
+  SettingsIconButton,
+  SettingsInput,
+} from "@/components/settings-ui";
 import { type ActivityMapping, useSettings } from "@/hooks/use-settings";
 
 export function ActivityPage() {
@@ -33,40 +38,36 @@ export function ActivityPage() {
 
         {mappings.map((m, i) => (
           <div key={i} className="flex min-w-0 items-center gap-2">
-            <input
-              type="text"
+            <SettingsInput
               value={m.from}
               onChange={(e) => change(i, "from", e.target.value)}
               placeholder="com.google.Chrome"
-              className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors duration-150 focus:border-primary-500/40 focus:bg-white/[0.07]"
+              className="flex-1"
             />
-            <input
-              type="text"
+            <SettingsInput
               value={m.to}
               onChange={(e) => change(i, "to", e.target.value)}
               placeholder="Chrome"
-              className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 outline-none placeholder:text-white/20 transition-colors duration-150 focus:border-primary-500/40 focus:bg-white/[0.07]"
+              className="flex-1"
             />
-            <button
-              type="button"
+            <SettingsIconButton
+              destructive
               onClick={() => remove(i)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/20 transition-colors duration-150 hover:bg-red-500/10 hover:text-red-400"
+              title="Remove mapping"
             >
-              <X className="size-3.5" />
-            </button>
+              <X />
+            </SettingsIconButton>
           </div>
         ))}
 
         {mappings.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/10 py-8 text-center">
-            <p className="text-xs text-white/40">No mappings yet</p>
-          </div>
+          <SettingsEmpty>No mappings yet</SettingsEmpty>
         )}
 
         <button
           type="button"
           onClick={add}
-          className="flex items-center gap-1.5 pt-1 text-12 font-medium text-primary-500/70 transition-colors duration-150 hover:text-primary-400"
+          className="flex items-center gap-1.5 pt-1 text-12 font-medium text-primary-400/80 transition-colors duration-150 hover:text-primary-300"
         >
           <Plus className="size-3.5" />
           Add mapping

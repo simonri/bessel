@@ -28,7 +28,7 @@ const PREVIEW_ROWS = 12;
 // Options are real radio inputs (native arrow-key navigation, form semantics)
 // visually hidden behind a styled label that reacts through the `peer` state.
 const OPTION =
-  "flex cursor-pointer select-none rounded-lg border border-white/10 bg-white/[0.03] text-white/65 transition-[background-color,border-color,color,transform] duration-150 hover:border-white/20 hover:bg-white/[0.06] hover:text-white/85 active:scale-[0.98] motion-reduce:active:scale-100 peer-checked:border-primary-500/70 peer-checked:bg-primary-500/15 peer-checked:text-white/95 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/60";
+  "flex cursor-pointer select-none rounded-lg border border-white/10 bg-white/[0.03] text-white/65 transition-[background-color,border-color,color] duration-150 hover:border-white/20 hover:bg-white/[0.06] hover:text-white/85 peer-checked:border-primary-500/70 peer-checked:bg-primary-500/15 peer-checked:text-white/95 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500/60";
 
 function RadioOption({
   name,
@@ -377,7 +377,7 @@ export function NewSessionPage({
           <button
             type="submit"
             disabled={!isDesktop}
-            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-1.5 text-xs font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100"
+            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-1.5 text-xs font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color] duration-150 hover:bg-primary-400 disabled:opacity-40"
           >
             <Play className="size-3 fill-current" />
             Open {count > 1 ? `${count} × ${agentTitle}` : agentTitle}

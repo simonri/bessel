@@ -1,4 +1,3 @@
-import { glassSurface } from "@bessel/ui/lib/glass";
 import { Network, ScrollText, Settings, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AgentUsageDropdown } from "@/components/canvas/agent-usage-dropdown";
@@ -13,6 +12,7 @@ import { PortsDialog } from "@/components/ports-dialog";
 import { SettingsModal } from "@/components/settings-modal";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
+import { TOPBAR_DIVIDER, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 // memo: takes no props, so canvas re-renders (live resize, workspace switches)
 // never cascade into the ticker/spotify/notification subtrees.
@@ -40,14 +40,13 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
 
   // Non-interactive stretches of the bar (padding, gaps, the title) stay
   // draggable via inheritance from the bar's own drag region below — only the
-  // actual click targets need to opt back out with noDrag.
+  // clusters of click targets need to opt back out with noDrag.
   const noDrag = isMac ? "[-webkit-app-region:no-drag]" : undefined;
 
   return (
     <div
       className={cn(
-        glassSurface({ weight: "light" }),
-        "relative z-50 flex h-10 shrink-0 items-center border-b border-white/10 px-4",
+        "relative z-50 flex h-10 shrink-0 items-center border-b border-white/10 bg-[#1e1e1e] pr-2 pl-4",
         isMac && [MAC_TRAFFIC_LIGHT_INSET, "[-webkit-app-region:drag]"],
       )}
     >
@@ -57,12 +56,12 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
             Bessel
           </span>
           {version && (
-            <span className="rounded bg-white/[0.06] px-1 py-px font-mono text-10 text-white/50">
+            <span className="rounded bg-white/[0.06] px-1.5 py-px font-mono text-10 text-white/45">
               v{version}
             </span>
           )}
         </div>
-        {pairs.length > 0 && <div className="h-3 w-px shrink-0 bg-white/10" />}
+        {pairs.length > 0 && <div className={TOPBAR_DIVIDER} />}
         {pairs.map((pair) => (
           <CryptoPairTicker key={pair} pair={pair} />
         ))}
@@ -73,65 +72,53 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        {window.electron && (
-          <div className={noDrag}>
-            <ProjectsDropdown />
-          </div>
-        )}
-        <div className={noDrag}>
-          <TimeSinceDropdown />
-        </div>
-        <div className={noDrag}>
-          <AgentUsageDropdown />
-        </div>
-        <div className={noDrag}>
-          <NotificationBell />
-        </div>
+      <div className={cn("flex shrink-0 items-center gap-0.5", noDrag)}>
+        {window.electron && <ProjectsDropdown />}
+        <TimeSinceDropdown />
+        <AgentUsageDropdown />
+        <NotificationBell />
+        <div className={cn(TOPBAR_DIVIDER, "mx-1.5")} />
         {window.electron && (
           <button
+            type="button"
             onClick={() => setPortsOpen(true)}
             title="Ports"
-            className={cn(
-              "flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100",
-              noDrag,
-            )}
+            className={TOPBAR_ICON_BUTTON}
           >
-            <Network className="size-4" />
+            <Network />
           </button>
         )}
         {window.electron && (
           <button
+            type="button"
             onClick={() => setLogsOpen(true)}
             title="View logs"
-            className={cn(
-              "flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100",
-              noDrag,
-            )}
+            className={TOPBAR_ICON_BUTTON}
           >
-            <ScrollText className="size-4" />
+            <ScrollText />
           </button>
         )}
         <button
+          type="button"
           onClick={() => setSettingsOpen(true)}
           title="Settings"
-          className={cn(
-            "flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-white/70 active:scale-95 motion-reduce:active:scale-100",
-            noDrag,
-          )}
+          className={TOPBAR_ICON_BUTTON}
         >
-          <Settings className="size-4" />
+          <Settings />
         </button>
-        <div className={noDrag}>
-          <AvatarMenu />
-        </div>
+        <div className={cn(TOPBAR_DIVIDER, "mx-1.5")} />
+        <AvatarMenu />
         {window.electron && !isMac && (
           <button
+            type="button"
             onClick={() => window.electron!.close()}
             title="Close"
-            className="flex items-center justify-center rounded p-1 text-white/40 transition-[color,transform] duration-150 hover:text-red-400 active:scale-95 motion-reduce:active:scale-100"
+            className={cn(
+              TOPBAR_ICON_BUTTON,
+              "ml-1 hover:bg-red-500/15 hover:text-red-400",
+            )}
           >
-            <X className="size-4" />
+            <X />
           </button>
         )}
       </div>

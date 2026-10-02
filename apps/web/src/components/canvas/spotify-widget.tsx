@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pause, Play, SkipForward } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { TOPBAR_DIVIDER, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 const SPOTIFY_STATUS_QUERY_KEY = ["spotify-status"];
+const SPOTIFY_BUTTON = cn(TOPBAR_ICON_BUTTON, "size-6 [&_svg]:size-3.5");
 
 // Only the fields this widget renders. MPRIS emits several duplicate
 // PropertiesChanged per track change, each carrying a different position —
@@ -100,27 +103,25 @@ export function SpotifyWidget() {
 
   return (
     <>
-      <div className="h-3 w-px shrink-0 bg-white/10" />
-      <div className="flex min-w-0 items-center gap-1.5">
+      <div className={TOPBAR_DIVIDER} />
+      <div className="flex min-w-0 items-center gap-0.5">
         <button
+          type="button"
           onClick={togglePlayPause}
           title={isPlaying ? "Pause" : "Play"}
-          className="flex items-center justify-center rounded p-0.5 text-white/50 transition-colors hover:text-white/85"
+          className={SPOTIFY_BUTTON}
         >
-          {isPlaying ? (
-            <Pause className="size-3.5" />
-          ) : (
-            <Play className="size-3.5" />
-          )}
+          {isPlaying ? <Pause /> : <Play />}
         </button>
         <button
+          type="button"
           onClick={skip}
           title="Skip"
-          className="flex items-center justify-center rounded p-0.5 text-white/50 transition-colors hover:text-white/85"
+          className={SPOTIFY_BUTTON}
         >
-          <SkipForward className="size-3.5" />
+          <SkipForward />
         </button>
-        <div className="min-w-0 max-w-44 truncate font-mono text-11 text-white/60">
+        <div className="ml-1.5 min-w-0 max-w-44 truncate text-xs text-white/70">
           {data.title}
           {data.artist && (
             <span className="text-white/50"> · {data.artist}</span>

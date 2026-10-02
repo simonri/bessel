@@ -5,6 +5,7 @@ import {
   type WallpaperColorKey,
   type WallpaperKey,
 } from "@/hooks/use-settings";
+import { cn } from "@/lib/utils";
 
 const WALLPAPER_OPTIONS: {
   key: WallpaperKey;
@@ -42,11 +43,12 @@ export function WallpaperPage() {
               key={key}
               type="button"
               onClick={() => update({ wallpaper: key })}
-              className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-150 active:scale-[0.98] ${
+              className={cn(
+                "relative overflow-hidden rounded-lg border transition-colors duration-150",
                 selected === key
-                  ? "border-primary-500 shadow-lg shadow-primary-900/30"
-                  : "border-white/10 hover:border-white/25"
-              }`}
+                  ? "border-primary-500 ring-1 ring-primary-500"
+                  : "border-white/10 hover:border-white/25",
+              )}
               style={{ aspectRatio: "16/9" }}
             >
               {isVideo ? (
@@ -70,9 +72,6 @@ export function WallpaperPage() {
                   {label}
                 </span>
               </div>
-              {selected === key && (
-                <div className="absolute inset-0 bg-primary-500/10 ring-inset" />
-              )}
             </button>
           ))}
         </div>
@@ -86,11 +85,12 @@ export function WallpaperPage() {
               key={key}
               type="button"
               onClick={() => update({ wallpaper: key })}
-              className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-150 active:scale-[0.98] ${
+              className={cn(
+                "relative overflow-hidden rounded-lg border transition-colors duration-150",
                 selected === key
-                  ? "border-primary-500 shadow-lg shadow-primary-900/30"
-                  : "border-white/10 hover:border-white/25"
-              }`}
+                  ? "border-primary-500 ring-1 ring-primary-500"
+                  : "border-white/10 hover:border-white/25",
+              )}
               style={{
                 aspectRatio: "16/9",
                 backgroundColor: WALLPAPER_COLORS[key],
@@ -101,9 +101,6 @@ export function WallpaperPage() {
                   {label}
                 </span>
               </div>
-              {selected === key && (
-                <div className="absolute inset-0 bg-primary-500/10 ring-inset" />
-              )}
             </button>
           ))}
         </div>

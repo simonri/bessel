@@ -14,7 +14,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
-import { glassSurface } from "@bessel/ui/lib/glass";
 import {
   ChevronRight,
   FolderInput,
@@ -45,12 +44,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const ROW =
-  "flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md text-left text-xs font-medium transition-[background-color,color,transform] duration-150";
+  "flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md text-left text-xs font-medium transition-[background-color,color] duration-150";
 const ROW_ACTIVE = "bg-white/12 text-white/90";
 const ROW_IDLE = "text-white/55 hover:bg-white/[0.06] hover:text-white/75";
 const ICON_BUTTON =
-  "flex size-5 shrink-0 items-center justify-center rounded text-white/35 transition-[background-color,color,opacity,transform] duration-150 hover:bg-white/[0.1] hover:text-white/80 active:scale-95 motion-reduce:active:scale-100";
-const MENU_SURFACE = cn(glassSurface({ weight: "heavy" }), "min-w-44");
+  "flex size-5 shrink-0 items-center justify-center rounded text-white/35 transition-[background-color,color,opacity] duration-150 hover:bg-white/[0.1] hover:text-white/80";
+const MENU_SURFACE = "bg-popover min-w-44";
 
 const COLLAPSED_KEY = "bessel:collapsedProjects";
 const NO_WINDOWS: WindowEntry[] = [];
@@ -237,11 +236,7 @@ function SessionRow({
             onDoubleClick={() => setEditing(true)}
             aria-current={isActive ? "page" : undefined}
             title={label}
-            className={cn(
-              rowClass,
-              "active:scale-[0.98] motion-reduce:active:scale-100",
-              isFlashing && "animate-workspace-flash",
-            )}
+            className={cn(rowClass, isFlashing && "animate-workspace-flash")}
           >
             <StatusDot status={status} />
             <span className="min-w-0 flex-1 truncate">{label}</span>
@@ -446,7 +441,7 @@ function NewSessionMenu({
           align="start"
           sideOffset={8}
           className={cn(
-            glassSurface({ weight: "heavy" }),
+            "bg-popover",
             "w-56 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl",
           )}
         >

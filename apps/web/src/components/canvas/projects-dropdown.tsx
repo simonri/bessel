@@ -16,6 +16,7 @@ import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useProjects } from "@/hooks/use-projects";
 import { client } from "@/lib/client";
+import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 function basename(p: string): string {
   return p.split("/").filter(Boolean).pop() ?? p;
@@ -291,17 +292,14 @@ export function ProjectsDropdown() {
   return (
     <Popover onOpenChange={(open) => !open && reset()}>
       <PopoverTrigger asChild>
-        <button
-          title="Projects"
-          className="flex items-center justify-center rounded p-1 text-white/40 transition-colors hover:text-white/70"
-        >
-          <FolderOpen className="size-4" />
+        <button type="button" title="Projects" className={TOPBAR_ICON_BUTTON}>
+          <FolderOpen />
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="relative w-72 overflow-hidden rounded-xl border-white/10 bg-black/60 p-0 shadow-2xl backdrop-blur-xl"
+        className="relative w-72 overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
       >
         <div className="border-b border-white/10 px-4 py-2.5">
           <span className="text-sm font-medium text-white/80">Projects</span>

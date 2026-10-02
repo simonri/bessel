@@ -9,6 +9,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { SectionLabel } from "@/components/settings-section-label";
+import {
+  SettingsCard,
+  SettingsEmpty,
+  SettingsIconButton,
+  SettingsInput,
+} from "@/components/settings-ui";
 import { client } from "@/lib/client";
 
 function formatLastSeen(value: string | Date): string {
@@ -72,27 +78,23 @@ export function DevicesPage() {
           to forget its saved locations.
         </p>
 
-        {devices.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/10 py-8 text-center">
-            <p className="text-13 text-white/40">No devices yet</p>
-          </div>
-        )}
+        {devices.length === 0 && <SettingsEmpty>No devices yet</SettingsEmpty>}
 
         {devices.length > 0 && (
-          <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+          <SettingsCard>
             {devices.map((d) => (
               <div
                 key={d.id}
                 className="flex items-center justify-between gap-3 px-4 py-3"
               >
                 {editingId === d.id ? (
-                  <input
+                  <SettingsInput
                     autoFocus
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && saveEdit()}
                     onBlur={saveEdit}
-                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-13 text-white/80 outline-none transition-colors focus:border-primary-500/40"
+                    className="h-7 flex-1"
                   />
                 ) : (
                   <div className="min-w-0">
@@ -103,29 +105,28 @@ export function DevicesPage() {
                   </div>
                 )}
                 <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
+                  <SettingsIconButton
                     onClick={() => startEdit(d)}
-                    className="rounded-lg p-1.5 text-white/30 transition-colors duration-150 hover:bg-white/5 hover:text-white/70"
+                    title="Rename"
                   >
-                    <Pencil className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
+                    <Pencil />
+                  </SettingsIconButton>
+                  <SettingsIconButton
+                    destructive
+                    title="Remove device"
                     onClick={() =>
                       deleteMutation.mutate({
                         client,
                         path: { device_id: d.id },
                       })
                     }
-                    className="rounded-lg p-1.5 text-white/30 transition-colors duration-150 hover:bg-red-500/10 hover:text-red-400"
                   >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                    <Trash2 />
+                  </SettingsIconButton>
                 </div>
               </div>
             ))}
-          </div>
+          </SettingsCard>
         )}
       </div>
     </div>

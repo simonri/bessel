@@ -92,7 +92,7 @@ export function SettingsModal({
     <GlassDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <GlassDialogContent
         showCloseButton={false}
-        className="flex h-[520px] w-full max-w-[680px] p-0"
+        className="flex h-[520px] w-full max-w-[680px] rounded-xl border-white/15 bg-[#161616] p-0 backdrop-blur-none"
       >
         <GlassDialogTitle className="sr-only">Settings</GlassDialogTitle>
         <GlassDialogDescription className="sr-only">
@@ -100,16 +100,14 @@ export function SettingsModal({
         </GlassDialogDescription>
 
         {/* Sidebar */}
-        <aside className="flex w-48 shrink-0 flex-col bg-black/20">
-          <div className="flex items-center gap-2 px-4 py-4">
-            <div className="flex size-6 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.04]">
-              <Settings className="size-3 text-white/40" />
-            </div>
-            <span className="text-11 font-medium tracking-wide text-white/40">
+        <aside className="flex w-48 shrink-0 flex-col border-r border-white/10 bg-[#1e1e1e]">
+          <div className="flex h-[69px] items-center gap-2 px-4">
+            <Settings className="size-3.5 text-white/40" />
+            <span className="text-xs font-semibold text-white/60">
               Settings
             </span>
           </div>
-          <nav className="flex-1 space-y-0.5 px-2.5 pb-2.5">
+          <nav className="flex-1 space-y-0.5 px-2 pb-2">
             {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
               const active = page === key;
               return (
@@ -118,19 +116,19 @@ export function SettingsModal({
                   type="button"
                   onClick={() => setPage(key)}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all duration-150 active:scale-[0.98]",
+                    "flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-13 font-medium transition-colors duration-150",
                     active
-                      ? "bg-white/[0.08] text-white"
-                      : "text-white/45 hover:bg-white/[0.04] hover:text-white/75",
+                      ? "bg-white/12 text-white/90"
+                      : "text-white/55 hover:bg-white/[0.06] hover:text-white/80",
                   )}
                 >
                   <Icon
                     className={cn(
                       "size-3.5 shrink-0",
-                      active ? "text-primary-400" : "text-white/30",
+                      active ? "text-primary-400" : "text-white/35",
                     )}
                   />
-                  <span className="text-13 font-medium">{label}</span>
+                  <span className="truncate">{label}</span>
                 </button>
               );
             })}
@@ -138,11 +136,11 @@ export function SettingsModal({
         </aside>
 
         {/* Content */}
-        <div className="flex min-w-0 flex-1 flex-col border-l border-white/[0.06]">
-          <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] px-6 py-4">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex h-[69px] shrink-0 items-center justify-between gap-4 border-b border-white/10 pr-3 pl-6">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.04]">
-                <ActiveIcon className="size-4 text-white/70" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-500/10">
+                <ActiveIcon className="size-4 text-primary-400" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-15 font-semibold text-white/90">
@@ -153,8 +151,11 @@ export function SettingsModal({
                 </p>
               </div>
             </div>
-            <GlassDialogClose className="flex size-7 shrink-0 items-center justify-center rounded-lg text-white/25 transition-colors duration-150 pointer-fine:hover:bg-white/5 pointer-fine:hover:text-white/60">
-              <X className="size-3.5" />
+            <GlassDialogClose
+              title="Close"
+              className="flex size-7 shrink-0 items-center justify-center rounded-md text-white/45 outline-none transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85 focus-visible:ring-1 focus-visible:ring-white/25"
+            >
+              <X className="size-4" />
             </GlassDialogClose>
           </div>
           <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">

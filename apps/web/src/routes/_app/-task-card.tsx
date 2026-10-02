@@ -115,7 +115,7 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color] duration-150 cursor-grab active:cursor-grabbing pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""} ${isCompleting ? "pointer-events-none opacity-0 scale-[0.98] transition-[opacity,transform] duration-[180ms] ease-out" : ""}`}
+      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color] duration-150 cursor-grab active:cursor-grabbing pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""} ${isCompleting ? "pointer-events-none opacity-0 transition-opacity duration-[180ms] ease-out" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-start gap-2.5">
@@ -123,7 +123,7 @@ export function TaskCard({
           type="button"
           variant="ghost"
           size="iconSm"
-          className="mt-0.5 size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-white/25 pointer-fine:hover:text-emerald-400 active:scale-90 motion-reduce:active:scale-100"
+          className="mt-0.5 size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-white/25 pointer-fine:hover:text-emerald-400"
           onClick={(e) => {
             e.stopPropagation();
             handleComplete();

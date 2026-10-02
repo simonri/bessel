@@ -47,7 +47,7 @@ function ProjectPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
+          className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color] duration-150 ${
             active
               ? "text-primary-400"
               : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
@@ -63,7 +63,7 @@ function ProjectPicker({
         align="center"
         sideOffset={8}
         className={cn(
-          glassSurface({ weight: "heavy" }),
+          "bg-popover",
           "w-64 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl",
         )}
       >
@@ -105,7 +105,7 @@ export const CanvasDock = memo(function CanvasDock() {
             onClick={() =>
               config.multiInstance ? openWindow(key) : toggleWindow(key)
             }
-            className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color,transform] duration-150 active:scale-95 motion-reduce:active:scale-100 ${
+            className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color] duration-150 ${
               active
                 ? "text-primary-400"
                 : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
