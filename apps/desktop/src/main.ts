@@ -24,6 +24,7 @@ import {
 } from "./cli-broker.js";
 import { SENTRY_DSN } from "./env.js";
 import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
+import { registerLocalDataServerHandlers } from "./local-data-server.js";
 import { registerMyAiHandlers } from "./my-ai.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
@@ -1328,6 +1329,7 @@ app.whenReady().then(() => {
   registerAxiCliInstallHandlers();
   registerPortsHandlers();
   registerVaultHandlers();
+  registerLocalDataServerHandlers(USER_DATA_DIR);
 
   ipcHandle("spotify:status", async () => getSpotifyStatus());
 

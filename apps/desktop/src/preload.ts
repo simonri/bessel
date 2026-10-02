@@ -214,4 +214,14 @@ contextBridge.exposeInMainWorld("electron", {
     search: (root: string, query: string): Promise<VaultSearchHit[]> =>
       ipcRenderer.invoke("vault:search", root, query),
   },
+  localDataServer: {
+    getUrl: (): Promise<string | null> =>
+      ipcRenderer.invoke("local-data-server:get-url"),
+    onDataRequested: (
+      callback: (requestId: string, windowDays: number) => void,
+    ) =>
+      subscribe<[string, number]>("local-data-server:data-requested", callback),
+    provideData: (requestId: string, payload: unknown): Promise<void> =>
+      ipcRenderer.invoke("local-data-server:provide-data", requestId, payload),
+  },
 });

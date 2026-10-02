@@ -243,6 +243,13 @@ declare global {
         index: (root: string) => Promise<VaultIndex>;
         search: (root: string, query: string) => Promise<VaultSearchHit[]>;
       };
+      localDataServer: {
+        getUrl: () => Promise<string | null>;
+        onDataRequested: (
+          callback: (requestId: string, windowDays: number) => void,
+        ) => () => void;
+        provideData: (requestId: string, payload: unknown) => Promise<void>;
+      };
     };
   }
 }

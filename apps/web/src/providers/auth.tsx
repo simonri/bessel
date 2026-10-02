@@ -7,6 +7,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
 import { client } from "@/lib/client";
+import { LocalDataServerBridge } from "./local-data-server-bridge";
 
 function AuthInterceptor() {
   const { isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
@@ -177,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <AuthInterceptor />
       <ElectronAuthCallback />
       <CliTokenBridge />
+      <LocalDataServerBridge />
       {children}
     </Auth0Provider>
   );
