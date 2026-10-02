@@ -1,6 +1,7 @@
 """
 Seed the database with representative data for local development.
-Truncates all data and rebuilds from scratch.
+Truncates all data and rebuilds from scratch. All dates are relative to the
+day it runs, so "today" always has data.
 
 Run: cd services/api && uv run python -m scripts.seed_db
 """
@@ -37,8 +38,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-TODAY = date(2026, 6, 15)
-NOW = datetime(2026, 6, 15, 12, 0, 0, tzinfo=UTC)
+TODAY = date.today()
+NOW = datetime.now(UTC)
 
 HEARTBEAT = 300  # seconds between activity events
 
@@ -59,6 +60,17 @@ def _activity_blocks(day: date, blocks: list[tuple]) -> list[tuple]:
 
 def d(days_ago: int) -> date:
   return TODAY - timedelta(days=days_ago)
+
+
+def at(days_ago: int, hour: float) -> datetime:
+  """UTC timestamp on d(days_ago), clamped to NOW so completions are never in the future."""
+  day = d(days_ago)
+  return min(datetime(day.year, day.month, day.day, tzinfo=UTC) + timedelta(hours=hour), NOW)
+
+
+def month_start(months_ago: int) -> date:
+  y, m = divmod(TODAY.year * 12 + TODAY.month - 1 - months_ago, 12)
+  return date(y, m + 1, 1)
 
 
 def _hash(s: str) -> str:
@@ -193,16 +205,15 @@ async def seed() -> None:
 
     # Monthly recurring — 3 months
     for m in range(3):
-      month_start = TODAY.replace(day=1) - timedelta(days=m * 30)
-      off = timedelta(days=0)
+      first = month_start(m)
       tx_list += [
-        credit(account=acc_checking, cat="salary", tx_date=month_start + off, desc="LØNN ARBEIDSGIVER AS", amount_nok=62_000),
-        debit(account=acc_checking, cat="rent", tx_date=month_start + off, desc="HUSLEIE BOLIGER AS", amount_nok=13_500),
-        debit(account=acc_checking, cat="internet", tx_date=month_start + timedelta(days=2), desc="TELENOR INTERNETT", amount_nok=699),
-        debit(account=acc_checking, cat="internet", tx_date=month_start + timedelta(days=2), desc="TELENOR MOBIL", amount_nok=549),
-        debit(account=acc_checking, cat="gym", tx_date=month_start + timedelta(days=3), desc="SATS TRENINGSSENTER", amount_nok=449),
-        debit(account=acc_checking, cat="streaming", tx_date=month_start + timedelta(days=5), desc="SPOTIFY PREMIUM", amount_nok=109),
-        debit(account=acc_checking, cat="streaming", tx_date=month_start + timedelta(days=5), desc="NETFLIX", amount_nok=179),
+        credit(account=acc_checking, cat="salary", tx_date=first, desc="LØNN ARBEIDSGIVER AS", amount_nok=62_000),
+        debit(account=acc_checking, cat="rent", tx_date=first, desc="HUSLEIE BOLIGER AS", amount_nok=13_500),
+        debit(account=acc_checking, cat="internet", tx_date=first + timedelta(days=2), desc="TELENOR INTERNETT", amount_nok=699),
+        debit(account=acc_checking, cat="internet", tx_date=first + timedelta(days=2), desc="TELENOR MOBIL", amount_nok=549),
+        debit(account=acc_checking, cat="gym", tx_date=first + timedelta(days=3), desc="SATS TRENINGSSENTER", amount_nok=449),
+        debit(account=acc_checking, cat="streaming", tx_date=first + timedelta(days=5), desc="SPOTIFY PREMIUM", amount_nok=109),
+        debit(account=acc_checking, cat="streaming", tx_date=first + timedelta(days=5), desc="NETFLIX", amount_nok=179),
       ]
 
     # Weekly groceries — 12 weeks
@@ -227,6 +238,7 @@ async def seed() -> None:
 
     # Coffee
     for days_ago, name, nok in [
+      (0, "TIM WENDELBOE", 58),
       (2, "TIM WENDELBOE", 58),
       (5, "FUGLEN OSLO", 64),
       (8, "JAVA ESPRESSOBAR", 52),
@@ -260,6 +272,7 @@ async def seed() -> None:
 
     # Transit
     for days_ago, name, nok in [
+      (0, "RUTER MOBILBILLETT", 37),
       (1, "RUTER MOBILBILLETT", 37),
       (4, "RUTER MOBILBILLETT", 37),
       (7, "RUTER MOBILBILLETT", 37),
@@ -371,7 +384,7 @@ async def seed() -> None:
         project_id=proj_bessel.id,
         area="Engineering",
         position=3,
-        completed_at=datetime(2026, 6, 14, 18, 30, tzinfo=UTC),
+        completed_at=at(1, 18.5),
       ),
       Task(
         title="Implement activity batch endpoint",
@@ -380,9 +393,9 @@ async def seed() -> None:
         project_id=proj_bessel.id,
         area="Engineering",
         position=4,
-        completed_at=datetime(2026, 6, 15, 10, 0, tzinfo=UTC),
+        completed_at=at(0, 10),
       ),
-      Task(title="Q2 performance review", status="todo", priority=1, project_id=proj_work.id, area="Career", due_date=d(-3), position=5),
+      Task(title="Quarterly performance review", status="todo", priority=1, project_id=proj_work.id, area="Career", due_date=d(-3), position=5),
       Task(title="Draft project proposal for client", status="in_progress", priority=2, project_id=proj_work.id, area="Career", due_date=d(2), position=6),
       Task(
         title="Team meeting prep",
@@ -391,7 +404,7 @@ async def seed() -> None:
         project_id=proj_work.id,
         area="Career",
         position=7,
-        completed_at=datetime(2026, 6, 13, 9, 0, tzinfo=UTC),
+        completed_at=at(2, 9),
       ),
       Task(
         title="Send invoice to Consulting AS",
@@ -400,17 +413,18 @@ async def seed() -> None:
         project_id=proj_work.id,
         area="Career",
         position=8,
-        completed_at=datetime(2026, 6, 10, 15, 0, tzinfo=UTC),
+        completed_at=at(5, 15),
       ),
       Task(title="Book dentist appointment", status="todo", priority=1, area="Health", due_date=d(-10), position=9),
       Task(title="Try new running route – Nordmarka", status="todo", priority=0, area="Health", tags=["running", "outdoors"], position=10),
       Task(
         title="Morning stretch routine", status="todo", priority=1, area="Health", is_recurring=True, rrule_frequency="daily", rrule_interval=1, position=11
       ),
-      Task(title="Call mom", status="todo", priority=1, area="Personal", due_date=d(-1), position=12),
+      Task(title="Call mom", status="todo", priority=1, area="Personal", due_date=d(0), position=12),
+      Task(title="Pick up dry cleaning", status="todo", priority=0, area="Personal", due_date=d(0), position=16),
       Task(title="Read Thinking Fast and Slow", status="in_progress", priority=0, area="Personal", tags=["books"], position=13),
-      Task(title="Plan summer holiday", status="todo", priority=1, area="Personal", tags=["travel"], position=14),
-      Task(title="Fix bike brakes", status="done", priority=2, area="Personal", position=15, completed_at=datetime(2026, 6, 8, 16, 0, tzinfo=UTC)),
+      Task(title="Plan next holiday", status="todo", priority=1, area="Personal", tags=["travel"], position=14),
+      Task(title="Fix bike brakes", status="done", priority=2, area="Personal", position=15, completed_at=at(7, 16)),
     ]
     for task in tasks:
       session.add(task)
@@ -542,16 +556,17 @@ async def seed() -> None:
 
     # ── 11. Activity events ───────────────────────────────────────────────
     # 30-day history with varied daily profiles.
-    # Each day spec is (days_ago, [(start_h, end_h, app_class), ...]).
+    # Each day spec is (index, [(start_h, end_h, app_class), ...]), authored as
+    # if index 0 were a Monday; specs are re-aligned to real weekdays below.
     # Days omitted from the list = no activity (weekends off, holidays).
     # App classes: code, terminal, browser, slack, figma, notion, mail, zoom
     _day_specs: list[tuple[int, list[tuple]]] = [
-      # d(0) Mon June 15 — morning session
+      # d(0) Mon — morning session
       (0, [(9.0, 10.5, "code"), (10.5, 11.0, "browser"), (11.0, 12.5, "code"), (12.5, 13.5, "terminal")]),
-      # d(1) Sun June 14 — light weekend session
+      # d(1) Sun — light weekend session
       (1, [(10.5, 12.0, "browser"), (12.0, 13.5, "code"), (15.0, 16.5, "code")]),
-      # d(2) Sat June 13 — off
-      # d(3) Fri June 12 — solid day
+      # d(2) Sat — off
+      # d(3) Fri — solid day
       (
         3,
         [
@@ -564,7 +579,7 @@ async def seed() -> None:
           (18.0, 19.0, "code"),
         ],
       ),
-      # d(4) Thu June 11 — heavy coding
+      # d(4) Thu — heavy coding
       (
         4,
         [
@@ -578,7 +593,7 @@ async def seed() -> None:
           (19.0, 19.5, "terminal"),
         ],
       ),
-      # d(5) Wed June 10 — meeting-heavy
+      # d(5) Wed — meeting-heavy
       (
         5,
         [
@@ -591,7 +606,7 @@ async def seed() -> None:
           (17.5, 18.0, "mail"),
         ],
       ),
-      # d(6) Tue June 9 — heavy coding + design
+      # d(6) Tue — heavy coding + design
       (
         6,
         [
@@ -604,18 +619,18 @@ async def seed() -> None:
           (18.0, 18.5, "browser"),
         ],
       ),
-      # d(7) Mon June 8 — normal
+      # d(7) Mon — normal
       (7, [(9.0, 11.0, "code"), (11.0, 11.5, "mail"), (11.5, 13.0, "code"), (14.0, 16.0, "code"), (16.0, 16.5, "slack"), (16.5, 17.5, "browser")]),
-      # d(8) Sun June 7 — off
-      # d(9) Sat June 6 — short session
+      # d(8) Sun — off
+      # d(9) Sat — short session
       (9, [(11.0, 12.5, "code"), (12.5, 13.0, "browser")]),
-      # d(10) Fri June 5 — productive
+      # d(10) Fri — productive
       (10, [(8.0, 10.0, "code"), (10.0, 10.5, "slack"), (10.5, 12.5, "code"), (13.5, 16.0, "code"), (16.0, 17.0, "terminal"), (17.0, 19.0, "code")]),
-      # d(11) Thu June 4 — normal
+      # d(11) Thu — normal
       (11, [(8.5, 10.5, "code"), (10.5, 11.0, "browser"), (11.0, 12.5, "code"), (13.5, 15.0, "code"), (15.0, 15.5, "terminal"), (15.5, 17.5, "code")]),
-      # d(12) Wed June 3 — design-focused
+      # d(12) Wed — design-focused
       (12, [(9.0, 11.0, "figma"), (11.0, 12.0, "code"), (13.0, 14.5, "figma"), (14.5, 15.5, "browser"), (15.5, 17.5, "code"), (17.5, 18.0, "figma")]),
-      # d(13) Tue June 2 — heavy day
+      # d(13) Tue — heavy day
       (
         13,
         [
@@ -628,14 +643,14 @@ async def seed() -> None:
           (18.5, 19.0, "browser"),
         ],
       ),
-      # d(14) Mon June 1 — start of week, email-heavy morning
+      # d(14) Mon — start of week, email-heavy morning
       (14, [(9.0, 10.5, "mail"), (10.5, 12.5, "code"), (13.5, 15.5, "code"), (15.5, 16.0, "slack"), (16.0, 17.5, "notion")]),
-      # d(15) Sun May 31 — off
-      # d(16) Sat May 30 — light afternoon
+      # d(15) Sun — off
+      # d(16) Sat — light afternoon
       (16, [(14.0, 16.0, "browser"), (16.0, 17.0, "code")]),
-      # d(17) Fri May 29 — good day
+      # d(17) Fri — good day
       (17, [(8.5, 10.5, "code"), (10.5, 11.0, "terminal"), (11.0, 12.5, "code"), (13.5, 16.0, "code"), (16.0, 17.0, "slack"), (17.0, 18.5, "code")]),
-      # d(18) Thu May 28 — heaviest day of the period
+      # d(18) Thu — heaviest day of the period
       (
         18,
         [
@@ -649,21 +664,21 @@ async def seed() -> None:
           (19.0, 19.5, "terminal"),
         ],
       ),
-      # d(19) Wed May 27 — meetings + code
+      # d(19) Wed — meetings + code
       (19, [(9.0, 10.5, "zoom"), (10.5, 12.0, "code"), (13.5, 14.5, "zoom"), (14.5, 16.0, "browser"), (16.0, 17.5, "code")]),
-      # d(20) Tue May 26 — normal + figma
+      # d(20) Tue — normal + figma
       (20, [(8.5, 10.5, "code"), (10.5, 11.5, "figma"), (11.5, 12.5, "code"), (13.5, 15.0, "code"), (15.0, 15.5, "slack"), (15.5, 17.0, "code")]),
-      # d(21) Mon May 25 — holiday, short afternoon
+      # d(21) Mon — holiday, short afternoon
       (21, [(13.0, 14.5, "code"), (14.5, 15.5, "browser")]),
-      # d(22) Sun May 24 — off
-      # d(23) Sat May 23 — off
-      # d(24) Fri May 22 — productive end of week
+      # d(22) Sun — off
+      # d(23) Sat — off
+      # d(24) Fri — productive end of week
       (24, [(8.0, 10.0, "code"), (10.0, 10.5, "slack"), (10.5, 12.5, "code"), (13.5, 16.0, "code"), (16.0, 17.5, "browser"), (17.5, 19.0, "code")]),
-      # d(25) Thu May 21 — normal
+      # d(25) Thu — normal
       (25, [(9.0, 11.0, "code"), (11.0, 11.5, "browser"), (11.5, 12.5, "code"), (13.5, 15.0, "code"), (15.0, 15.5, "terminal"), (15.5, 17.5, "code")]),
-      # d(26) Wed May 20 — mixed
+      # d(26) Wed — mixed
       (26, [(8.5, 10.5, "code"), (10.5, 11.0, "slack"), (11.0, 12.5, "browser"), (13.5, 16.0, "code"), (16.0, 17.0, "figma"), (17.0, 18.0, "code")]),
-      # d(27) Tue May 19 — heavy
+      # d(27) Tue — heavy
       (
         27,
         [
@@ -676,14 +691,26 @@ async def seed() -> None:
           (18.5, 19.0, "browser"),
         ],
       ),
-      # d(28) Mon May 18 — lighter Monday
+      # d(28) Mon — lighter Monday
       (28, [(10.0, 12.0, "code"), (12.0, 12.5, "mail"), (13.5, 15.5, "code"), (15.5, 16.5, "notion")]),
-      # d(29) Sun May 17 — off
+      # d(29) Sun — off
     ]
 
+    activity_patterns = dict(_day_specs)
+    activity_days = 30
+    weekday_offset = -TODAY.weekday() % 7
+    active_days = 0
     all_activity: list[tuple] = []
-    for days_ago, blocks in _day_specs:
-      all_activity.extend(_activity_blocks(d(days_ago), blocks))
+    for days_ago in range(activity_days):
+      index = days_ago + weekday_offset
+      if index >= activity_days:
+        index -= 7
+      blocks = activity_patterns.get(index)
+      if days_ago == 0 and not blocks:
+        blocks = activity_patterns[1]  # light session so today is never empty
+      if blocks:
+        active_days += 1
+        all_activity.extend(_activity_blocks(d(days_ago), blocks))
     all_activity.sort(key=lambda e: e[0])
 
     for local_id, (ts, state, app_class) in enumerate(all_activity, 1):
@@ -697,7 +724,7 @@ async def seed() -> None:
         )
       )
     await session.flush()
-    print(f"Seeded {len(all_activity)} activity events across {len(_day_specs)} active days.")
+    print(f"Seeded {len(all_activity)} activity events across {active_days} active days.")
 
     # ── 12. HealthKit workouts ────────────────────────────────────────────
     # user_id is left NULL like every other user-owned row above — claimed by
@@ -711,6 +738,7 @@ async def seed() -> None:
 
     # (days_ago, start_hour, (type, type_name), duration_min, energy_kcal, distance_m, avg_hr, min_hr, max_hr, indoor)
     workout_specs = [
+      (0, 10.0, RUNNING, 32, 360, 5600, 154, 99, 175, False),
       (1, 7.0, RUNNING, 30, 340, 5200, 152, 98, 174, False),
       (3, 18.0, STRENGTH, 55, 320, None, 118, 85, 152, True),
       (5, 7.0, RUNNING, 35, 390, 6000, 155, 100, 178, False),
@@ -832,7 +860,7 @@ async def seed() -> None:
     print(f"   Trades:        {len(trades)}")
     print(f"   Tasks:         {len(tasks)}")
     print(f"   Places:        {len(places)}")
-    print(f"   Activity:      {len(all_activity)} events  ({len(_day_specs)} active days)")
+    print(f"   Activity:      {len(all_activity)} events  ({active_days} active days)")
     print(f"   Workouts:      {len(workouts)}")
     print(f"   Sleep samples: {len(sleep_samples)}  ({SLEEP_NIGHTS} nights)")
 
