@@ -1,17 +1,3 @@
-// Indexed colors for app bars (per app, by position)
-export const APP_COLORS = [
-  "232 113 75", // warm orange
-  "147 131 250", // soft violet
-  "96 165 250", // sky blue
-  "52 211 153", // emerald
-  "251 191 36", // amber
-  "244 114 182", // rose pink
-  "34 211 238", // cyan
-  "192 132 252", // lavender
-  "251 146 60", // peach
-  "74 222 128", // lime
-];
-
 export function activityLevel(
   secs: number,
   maxSecs: number,
@@ -35,13 +21,4 @@ export function fmtDur(secs: number): string {
   if (m >= 60)
     return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
   return `${m}m`;
-}
-
-export function fmtBucketTime(bucketIdx: number, n: number): string {
-  const totalMins = Math.round(bucketIdx * ((24 * 60) / n)) % (24 * 60);
-  const h = Math.floor(totalMins / 60);
-  const m = totalMins % 60;
-  const period = h < 12 ? "AM" : "PM";
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
