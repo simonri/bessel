@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardPaste,
+  Clock,
   Lightbulb,
   Plus,
   TriangleAlert,
@@ -131,15 +132,19 @@ function replaceAt<T>(list: T[], index: number, value: T): T[] {
 
 // --- small controls ------------------------------------------------------------
 
-const CARD = "rounded-xl bg-white/[0.04] ring-1 ring-white/[0.06]";
+const CARD = "rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06]";
 const FIELD =
   "h-8 min-w-0 rounded-lg bg-white/[0.04] px-2.5 text-13 text-white/90 outline-none ring-1 ring-white/[0.06] transition-[background-color,box-shadow] duration-150 placeholder:text-white/25 hover:bg-white/[0.06] focus:bg-white/[0.06] focus:ring-primary-400/40";
 const GHOST_FIELD =
-  "h-8 min-w-0 rounded-lg bg-transparent px-2 text-13 text-white/90 outline-none transition-[background-color,box-shadow] duration-150 placeholder:text-white/25 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-primary-400/40";
+  "h-8 min-w-0 rounded-lg bg-transparent px-2.5 text-13 text-white/90 outline-none transition-[background-color,box-shadow] duration-150 placeholder:text-white/25 hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-primary-400/40";
+// Placeholders only appear on the row being worked on, so a long list
+// isn't a wall of grey "note" hints.
+const ROW_PLACEHOLDER =
+  "placeholder:text-transparent group-hover/row:placeholder:text-white/25 focus:placeholder:text-white/25";
 const ICON_BUTTON =
   "flex size-6 shrink-0 items-center justify-center rounded-md text-white/35 transition-colors hover:bg-white/[0.08] hover:text-white/80 focus-visible:bg-white/[0.08] focus-visible:text-white/80 outline-none disabled:pointer-events-none disabled:opacity-30";
 const ADD_BUTTON =
-  "flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-white/50 transition-colors hover:bg-primary-500/10 hover:text-primary-300 focus-visible:bg-primary-500/10 focus-visible:text-primary-300 outline-none";
+  "flex h-8 w-fit items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-white/50 transition-colors hover:bg-primary-500/10 hover:text-primary-300 focus-visible:bg-primary-500/10 focus-visible:text-primary-300 outline-none";
 
 function AutoTextarea({
   value,
@@ -235,7 +240,7 @@ function AmountInput({
         setDraft(null);
       }}
       onKeyDown={onKeyDown}
-      className={cn(GHOST_FIELD, "w-14 text-right tabular-nums")}
+      className={cn(GHOST_FIELD, "w-full tabular-nums", ROW_PLACEHOLDER)}
     />
   );
 }
@@ -250,10 +255,13 @@ function SectionHeading({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-3 px-1">
-      <div>
-        <h3 className="text-xs font-semibold text-white/70">{title}</h3>
-        {hint && <p className="mt-0.5 text-11 text-white/35">{hint}</p>}
+    <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h3 className="flex items-center gap-2 text-13 font-semibold text-white/80">
+          <span aria-hidden className="size-1.5 rounded-full bg-primary-400" />
+          {title}
+        </h3>
+        {hint && <p className="pl-3.5 text-11 text-white/35">{hint}</p>}
       </div>
       {children}
     </div>
@@ -296,6 +304,10 @@ function MoveButtons({
 }
 
 // --- ingredients ----------------------------------------------------------------
+
+// Amount, unit, ingredient, note, row actions.
+const INGREDIENT_GRID =
+  "grid grid-cols-[3.25rem_3.75rem_minmax(0,1.4fr)_minmax(0,1fr)_auto] gap-x-1";
 
 function IngredientGroupCard({
   group,
@@ -343,7 +355,7 @@ function IngredientGroupCard({
     !item.name && item.amount == null && !item.unit && !item.note;
 
   return (
-    <div className={cn(CARD, "flex flex-col gap-1 p-2")}>
+    <div className={cn(CARD, "group/card flex flex-col gap-1 p-2")}>
       <div className="flex items-center gap-1">
         <input
           aria-label={`Ingredient group ${groupIndex + 1} name`}
@@ -352,26 +364,26 @@ function IngredientGroupCard({
           onChange={(e) => onChange({ ...group, title: e.target.value })}
           className={cn(
             GHOST_FIELD,
-            "flex-1 font-medium text-white/80 placeholder:font-normal",
+            "flex-1 font-medium text-white/85 placeholder:font-normal",
           )}
         />
         {groupCount > 1 && (
-          <MoveButtons
-            index={groupIndex}
-            count={groupCount}
-            label="group"
-            onMove={onMove}
-          />
-        )}
-        {groupCount > 1 && (
-          <button
-            type="button"
-            aria-label={`Remove group ${group.title || groupIndex + 1}`}
-            onClick={onRemove}
-            className={ICON_BUTTON}
-          >
-            <X className="size-3.5" />
-          </button>
+          <div className="flex opacity-0 transition-opacity duration-150 group-focus-within/card:opacity-100 group-hover/card:opacity-100">
+            <MoveButtons
+              index={groupIndex}
+              count={groupCount}
+              label="group"
+              onMove={onMove}
+            />
+            <button
+              type="button"
+              aria-label={`Remove group ${group.title || groupIndex + 1}`}
+              onClick={onRemove}
+              className={ICON_BUTTON}
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -383,7 +395,10 @@ function IngredientGroupCard({
               <li
                 // biome-ignore lint/suspicious/noArrayIndexKey: rows have no identity of their own
                 key={row}
-                className="group/row flex items-center gap-1 rounded-lg focus-within:bg-white/[0.02] hover:bg-white/[0.02]"
+                className={cn(
+                  INGREDIENT_GRID,
+                  "group/row items-center rounded-lg focus-within:bg-white/[0.03] hover:bg-white/[0.03]",
+                )}
               >
                 <AmountInput
                   label={`Amount for ${label}`}
@@ -395,7 +410,7 @@ function IngredientGroupCard({
                   placeholder="dl"
                   value={item.unit ?? ""}
                   onChange={(e) => setItem(row, { unit: e.target.value })}
-                  className={cn(GHOST_FIELD, "w-16")}
+                  className={cn(GHOST_FIELD, "w-full", ROW_PLACEHOLDER)}
                 />
                 <input
                   ref={(el) => registerName(row, el)}
@@ -424,14 +439,18 @@ function IngredientGroupCard({
                     const pasted = parseIngredientLines(text);
                     if (pasted.length) insertAfter(row, pasted);
                   }}
-                  className={cn(GHOST_FIELD, "flex-[2]")}
+                  className={cn(GHOST_FIELD, "w-full")}
                 />
                 <input
                   aria-label={`Note for ${label}`}
-                  placeholder="note"
+                  placeholder="Note"
                   value={item.note ?? ""}
                   onChange={(e) => setItem(row, { note: e.target.value })}
-                  className={cn(GHOST_FIELD, "flex-1 text-white/55")}
+                  className={cn(
+                    GHOST_FIELD,
+                    "w-full text-white/55",
+                    ROW_PLACEHOLDER,
+                  )}
                 />
                 <div className="flex opacity-0 transition-opacity duration-150 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
                   <MoveButtons
@@ -533,7 +552,7 @@ function IngredientsEditor({
   }, [pendingFocus]);
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-2.5">
       <SectionHeading
         title="Ingredients"
         hint="Enter adds a row. Paste a whole list and it splits into rows."
@@ -716,13 +735,19 @@ function StepCard({
           value={step.text ?? ""}
           onChange={(text) => onChange({ ...step, text })}
         />
-        <input
-          aria-label={`Step ${n} time`}
-          placeholder="How long? e.g. 5 min + 30 min chill"
-          value={step.time_label ?? ""}
-          onChange={(e) => onChange({ ...step, time_label: e.target.value })}
-          className={FIELD}
-        />
+        <div className="relative flex w-full items-center sm:w-72">
+          <Clock
+            aria-hidden
+            className="pointer-events-none absolute left-2.5 size-3.5 text-white/35"
+          />
+          <input
+            aria-label={`Step ${n} time`}
+            placeholder="How long? e.g. 5 min"
+            value={step.time_label ?? ""}
+            onChange={(e) => onChange({ ...step, time_label: e.target.value })}
+            className={cn(FIELD, "w-full pl-8")}
+          />
+        </div>
         {callouts.map((callout, c) => (
           <CalloutEditor
             // biome-ignore lint/suspicious/noArrayIndexKey: callouts have no identity of their own
@@ -748,7 +773,7 @@ function StepCard({
               callouts: [...callouts, { kind: "tip", label: null, text: "" }],
             })
           }
-          className={cn(ADD_BUTTON, "self-start")}
+          className={ADD_BUTTON}
         >
           <Lightbulb className="size-3.5" />
           Add tip
@@ -774,8 +799,8 @@ export function RecipeEditor({
   const set = (patch: Partial<RecipeBody>) => onChange({ ...value, ...patch });
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-2">
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 py-5">
+      <section className="flex flex-col gap-2.5">
         <SectionHeading title="About" />
         <div className={cn(CARD, "flex flex-col gap-2 p-3")}>
           <AutoTextarea
@@ -784,9 +809,9 @@ export function RecipeEditor({
             value={value.intro ?? ""}
             onChange={(intro) => set({ intro })}
           />
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 @lg:grid-cols-3">
             <label className="flex flex-col gap-1">
-              <span className="px-1 text-11 text-white/40">Makes</span>
+              <span className="px-2.5 text-11 text-white/40">Makes</span>
               <input
                 placeholder="e.g. 3 burgers"
                 value={value.yield_text ?? ""}
@@ -795,7 +820,7 @@ export function RecipeEditor({
               />
             </label>
             <div className="flex flex-col gap-1">
-              <span aria-hidden className="px-1 text-11 text-white/40">
+              <span aria-hidden className="px-2.5 text-11 text-white/40">
                 Total time
               </span>
               <MinutesInput
@@ -806,7 +831,7 @@ export function RecipeEditor({
               />
             </div>
             <div className="flex flex-col gap-1">
-              <span aria-hidden className="px-1 text-11 text-white/40">
+              <span aria-hidden className="px-2.5 text-11 text-white/40">
                 Hands-on time
               </span>
               <MinutesInput
@@ -825,7 +850,7 @@ export function RecipeEditor({
         onChange={(ingredient_groups) => set({ ingredient_groups })}
       />
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-2.5">
         <SectionHeading title="Steps" hint="One card per step, in order." />
         {steps.length === 0 ? (
           <p
@@ -852,14 +877,14 @@ export function RecipeEditor({
         <button
           type="button"
           onClick={() => set({ steps: [...steps, emptyStep()] })}
-          className={cn(ADD_BUTTON, "self-start")}
+          className={ADD_BUTTON}
         >
           <Plus className="size-3.5" />
           Add step
         </button>
       </section>
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-2.5">
         <SectionHeading
           title="Extra sections"
           hint="Golden rules, variations, serving ideas…"
@@ -914,7 +939,7 @@ export function RecipeEditor({
           onClick={() =>
             set({ sections: [...sections, { title: "", text: "" }] })
           }
-          className={cn(ADD_BUTTON, "self-start")}
+          className={ADD_BUTTON}
         >
           <Plus className="size-3.5" />
           Add section

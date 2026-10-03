@@ -110,7 +110,7 @@ function IngredientRow({
         <span
           aria-hidden
           className={cn(
-            "mt-[3px] flex size-4 shrink-0 items-center justify-center rounded-full transition-[background-color,box-shadow] duration-200",
+            "mt-px flex size-4 shrink-0 items-center justify-center rounded-full transition-[background-color,box-shadow] duration-200",
             checked
               ? "bg-primary-500 shadow-[0_0_0_1.5px_var(--color-primary-500)]"
               : "shadow-[inset_0_0_0_1.5px_rgb(255_255_255/0.25)] group-hover:shadow-[inset_0_0_0_1.5px_var(--color-primary-400)]",
@@ -131,26 +131,27 @@ function IngredientRow({
         </span>
         <span
           className={cn(
-            "min-w-0 leading-snug transition-colors duration-200",
+            "flex min-w-0 flex-1 gap-2 leading-snug transition-colors duration-200",
             checked && "text-white/35 line-through decoration-white/30",
           )}
         >
-          {quantity && (
-            <span
-              className={cn(
-                "font-medium tabular-nums",
-                checked ? "text-white/35" : "text-white/90",
-              )}
-            >
-              {quantity}{" "}
-            </span>
-          )}
-          {item.name}
-          {item.note && (
-            <span className={cn(checked ? "text-white/25" : "text-white/45")}>
-              , {item.note}
-            </span>
-          )}
+          {/* A fixed column, so every name starts on the same line. */}
+          <span
+            className={cn(
+              "w-16 shrink-0 font-medium tabular-nums",
+              checked ? "text-white/35" : "text-white/90",
+            )}
+          >
+            {quantity}
+          </span>
+          <span className="min-w-0">
+            {item.name}
+            {item.note && (
+              <span className={cn(checked ? "text-white/25" : "text-white/45")}>
+                , {item.note}
+              </span>
+            )}
+          </span>
         </span>
       </button>
     </li>
