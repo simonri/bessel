@@ -1,50 +1,27 @@
 import type { TaskSchema } from "@bessel/client";
-import { Button } from "@bessel/ui/components/button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Calendar, Circle, CircleCheck, Flag, Repeat } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import {
-  formatDueDate,
-  formatRecurrence,
-  getDueDateColor,
-  PRIORITY_CONFIG,
-} from "@/lib/task-format";
+import { CompleteCheck } from "@/components/tasks/complete-check";
+import { TaskMeta } from "@/components/tasks/task-row";
+import { useDelayedComplete } from "@/components/tasks/use-delayed-complete";
+import { cn } from "@/lib/utils";
 
-function TaskCardMeta({ task }: { task: TaskSchema }) {
-  const priority = task.priority ?? 0;
-  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-  const dueLabel = formatDueDate(task.due_date);
-  const dueColor = getDueDateColor(task.due_date);
-  const recurrence = formatRecurrence(task);
+const CARD =
+  "rounded-xl bg-white/[0.04] p-2.5 ring-1 ring-white/[0.06] transition-[background-color,box-shadow,opacity,transform] duration-200 ease-out";
 
+function CardBody({
+  task,
+  check,
+}: {
+  task: TaskSchema;
+  check: React.ReactNode;
+}) {
   return (
-    <div className="min-w-0 flex-1 space-y-1">
-      <div className="text-13 font-medium text-white/85 leading-snug">
-        {task.title}
-      </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        {dueLabel && (
-          <span className={`flex items-center gap-1 text-11 ${dueColor}`}>
-            <Calendar className="size-3" />
-            {dueLabel}
-          </span>
-        )}
-        {recurrence && (
-          <span className="flex items-center gap-1 text-11 text-white/50">
-            <Repeat className="size-3" />
-            {recurrence}
-          </span>
-        )}
-        {priority >= 3 && <Flag className={`size-3 ${priorityConfig.color}`} />}
-        {task.project && (
-          <span className="text-11 text-white/50 bg-white/10 rounded px-1.5 py-0">
-            {task.project}
-          </span>
-        )}
-        {task.area && (
-          <span className="text-11 text-white/50">{task.area}</span>
-        )}
+    <div className="flex items-start gap-2.5">
+      {check}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="text-13 leading-snug text-white/85">{task.title}</span>
+        <TaskMeta task={task} />
       </div>
     </div>
   );
@@ -59,9 +36,6 @@ export function TaskCard({
   onSelect: () => void;
   onComplete: () => void;
 }) {
-  const priority = task.priority ?? 0;
-  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-
   const {
     attributes,
     listeners,
@@ -69,90 +43,52 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({
-    id: task.id,
-    data: { task },
-  });
-
-  const [isCompleting, setIsCompleting] = useState(false);
-  const completeTimer = useRef<number | null>(null);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
-
-  // If the card unmounts while the exit is playing (filter change, refetch),
-  // still deliver the completion — never lose the click.
-  useEffect(
-    () => () => {
-      if (completeTimer.current != null) {
-        window.clearTimeout(completeTimer.current);
-        onCompleteRef.current();
-      }
-    },
-    [],
-  );
-
-  const handleComplete = () => {
-    if (isCompleting) return;
-    setIsCompleting(true);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      onComplete();
-      return;
-    }
-    completeTimer.current = window.setTimeout(() => {
-      completeTimer.current = null;
-      onComplete();
-    }, 180);
-  };
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  } = useSortable({ id: task.id, data: { task } });
+  const { phase, complete } = useDelayedComplete(onComplete);
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
-      className={`rounded-lg border border-white/10 bg-white/5 p-2.5 transition-[background-color,border-color] duration-150 cursor-grab active:cursor-grabbing pointer-fine:hover:bg-white/10 pointer-fine:hover:border-white/20 last:mb-3 ${priorityConfig.border} ${isDragging ? "opacity-30" : ""} ${isCompleting ? "pointer-events-none opacity-0 transition-opacity duration-[180ms] ease-out" : ""}`}
       onClick={onSelect}
+      className={cn(
+        CARD,
+        "cursor-grab last:mb-3 active:cursor-grabbing pointer-fine:hover:bg-white/[0.07] pointer-fine:hover:ring-white/10",
+        isDragging && "opacity-30",
+        phase === "leaving" && "pointer-events-none scale-[0.98] opacity-0",
+      )}
     >
-      <div className="flex items-start gap-2.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="iconSm"
-          className="mt-0.5 size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-white/25 pointer-fine:hover:text-emerald-400"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleComplete();
-          }}
-        >
-          {isCompleting ? (
-            <CircleCheck className="size-4 text-emerald-400" />
-          ) : (
-            <Circle className="size-4" />
-          )}
-        </Button>
-        <TaskCardMeta task={task} />
-      </div>
+      <CardBody
+        task={task}
+        check={
+          <CompleteCheck
+            checked={phase !== "idle"}
+            onToggle={complete}
+            label={`Complete ${task.title}`}
+            className="mt-px"
+          />
+        }
+      />
     </div>
   );
 }
 
 export function DragCard({ task }: { task: TaskSchema }) {
-  const priority = task.priority ?? 0;
-  const priorityConfig = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0];
-
   return (
     <div
-      className={`rounded-lg border border-white/25 bg-white/10 p-2.5 shadow-2xl cursor-grabbing ${priorityConfig.border}`}
+      className={cn(
+        CARD,
+        "cursor-grabbing bg-white/[0.09] shadow-2xl ring-white/15",
+      )}
     >
-      <div className="flex items-start gap-2.5">
-        <Circle className="size-4 mt-0.5 shrink-0 text-white/25" />
-        <TaskCardMeta task={task} />
-      </div>
+      <CardBody
+        task={task}
+        check={
+          <span className="mt-px size-[18px] shrink-0 rounded-full shadow-[inset_0_0_0_1.5px_rgb(255_255_255/0.25)]" />
+        }
+      />
     </div>
   );
 }

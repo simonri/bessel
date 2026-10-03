@@ -56,3 +56,34 @@ html, body {
     transform: scaleY(0.6);
   }
 }
+
+/* Task completion: the check draws in, a few sparkles fly out. */
+@keyframes check-draw {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
+}
+
+.animate-check-draw {
+  stroke-dasharray: 16;
+  animation: check-draw 0.28s var(--ease-out) 0.06s both;
+}
+
+@keyframes sparkle {
+  0% { transform: rotate(var(--angle)) translateY(0) scale(0.4); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: rotate(var(--angle)) translateY(-13px) scale(1); opacity: 0; }
+}
+
+.animate-sparkle {
+  animation: sparkle 0.55s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-check-draw,
+  .animate-sparkle {
+    animation: none;
+  }
+  .animate-sparkle {
+    opacity: 0;
+  }
+}

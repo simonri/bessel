@@ -10,14 +10,6 @@ import {
   updateTaskV1TasksTaskIdPatchMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
-import { Dialog } from "@bessel/ui/components/dialog";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@bessel/ui/components/empty";
 import {
   Select,
   SelectContent,
@@ -47,45 +39,37 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
-import {
-  CheckSquare,
-  ChevronLeft,
-  ChevronRight,
-  Circle,
-  Flag,
-  Folder,
-  Repeat,
-  RotateCcw,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Folder } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { CreateTaskDialog } from "@/components/create-task-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
+import { DoneSummary } from "@/components/tasks/done-summary";
+import {
+  ProgressRing,
+  useTaskProgress,
+} from "@/components/tasks/progress-ring";
+import { QuickAddTask } from "@/components/tasks/quick-add";
+import { RoutinesStrip } from "@/components/tasks/routines-strip";
+import { TaskRow } from "@/components/tasks/task-row";
+import { TodayView } from "@/components/tasks/today-view";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
 import { isDesktop } from "@/lib/environment";
-import {
-  buildTaskPrompt,
-  formatDueDate,
-  getDueDateColor,
-  isRepeatingTask,
-  PRIORITY_CONFIG,
-  STATUS_CONFIG,
-} from "@/lib/task-format";
+import { buildTaskPrompt, isRepeatingTask } from "@/lib/task-format";
+import { cn } from "@/lib/utils";
 import { BoardColumn } from "./-board-column";
 import { ProjectFilterButton } from "./-project-filter-button";
-import { ScheduledTasksDialog } from "./-scheduled-tasks-dialog";
 import { DragCard } from "./-task-card";
 
 export const Route = createFileRoute("/_app/tasks")({
   component: Tasks,
 });
 
-type ViewTab = "board" | "done" | "all";
+type ViewTab = "today" | "board" | "done" | "all";
 
 const VIEW_TABS: { label: string; value: ViewTab }[] = [
+  { label: "Today", value: "today" },
   { label: "Board", value: "board" },
   { label: "Done", value: "done" },
   { label: "All", value: "all" },
@@ -104,15 +88,27 @@ const dropAnimationConfig: DropAnimation = {
   }),
 };
 
+function FirstTaskHint() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-1 pb-10 text-center">
+      <p className="text-sm font-medium text-white/80">What's on your mind?</p>
+      <p className="text-xs text-white/45">
+        Add your first task above - try "Call mom tomorrow".
+      </p>
+    </div>
+  );
+}
+
+const NO_TASKS: TaskSchema[] = [];
+
 // ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
 function Tasks() {
-  const [viewTab, setViewTab] = useState<ViewTab>("board");
+  const [viewTab, setViewTab] = useState<ViewTab>("today");
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [repeatingOpen, setRepeatingOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
   const [localOrder, setLocalOrder] = useState<{
     todo: string[];
@@ -136,18 +132,20 @@ function Tasks() {
       window.removeEventListener("pointermove", track, { capture: true });
   }, []);
 
-  // Board only ever renders todo/in_progress tasks — filtering server-side keeps
-  // its result set small so the (done-heavy) pagination limit never truncates it.
+  // Today and Board only ever render todo/in_progress tasks — filtering
+  // server-side keeps the result set small so the (done-heavy) pagination
+  // limit never truncates it.
+  const showsOpenTasks = viewTab === "today" || viewTab === "board";
   const statusFilter =
     viewTab === "done"
       ? [TaskStatus.DONE]
-      : viewTab === "board"
+      : showsOpenTasks
         ? [TaskStatus.TODO, TaskStatus.IN_PROGRESS]
         : undefined;
   const sortingValue =
     viewTab === "done"
       ? ["-completed_at" as "-created_at"]
-      : viewTab === "board"
+      : showsOpenTasks
         ? ["position" as "-created_at"]
         : ["-created_at" as const];
 
@@ -293,12 +291,20 @@ function Tasks() {
     setSelectedTaskId(task.id);
   };
 
-  const handleCompleteTask = (task: TaskSchema) => {
-    completeMutation.mutate({ client, path: { task_id: task.id } });
-  };
-
   const handleReopenTask = (task: TaskSchema) => {
     reopenMutation.mutate({ client, path: { task_id: task.id } });
+  };
+
+  const handleCompleteTask = (task: TaskSchema) => {
+    completeMutation.mutate(
+      { client, path: { task_id: task.id } },
+      {
+        onSuccess: () =>
+          toast(`“${task.title}” done`, {
+            action: { label: "Undo", onClick: () => handleReopenTask(task) },
+          }),
+      },
+    );
   };
 
   const sensors = useSensors(
@@ -515,12 +521,13 @@ function Tasks() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const totalCount = data?.pagination.total_count ?? 0;
   const maxPage = data?.pagination.max_page ?? 1;
 
   const repeatingTasks = allTasks.filter(
     (t) => (t.status ?? "todo") === "todo" && isRepeatingTask(t),
   );
+
+  const progress = useTaskProgress(showsOpenTasks ? allTasks : NO_TASKS);
 
   const boardTasks =
     viewTab === "board"
@@ -545,176 +552,155 @@ function Tasks() {
     };
   })();
 
-  const activeCount =
-    viewTab === "board" && boardTasks
-      ? boardTasks.todo.length + boardTasks.in_progress.length
-      : totalCount;
-
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5 shrink-0 px-3 pt-4">
-        <div className="flex items-baseline gap-2">
-          <h2 className="text-base font-semibold text-white/90">Tasks</h2>
-          {activeCount > 0 && (
-            <span className="text-11 text-white/50 tabular-nums">
-              {activeCount}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {repeatingTasks.length > 0 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className="h-auto gap-1.5 px-0 text-11 text-white/50 hover:bg-transparent hover:text-violet-400"
-              onClick={() => setRepeatingOpen(true)}
-            >
-              <Repeat className="size-3.5" />
-              {repeatingTasks.length} repeated
-            </Button>
-          )}
-          <CreateTaskDialog />
-        </div>
-      </div>
-
-      {/* View tabs + project filter */}
-      <div className="flex items-center justify-between shrink-0 px-3 pb-3">
-        <div className="flex items-center gap-1">
-          {VIEW_TABS.map((tab) => (
-            <Button
-              key={tab.value}
-              type="button"
-              variant="ghost"
-              size="sm"
-              shape="pill"
-              className={
-                viewTab === tab.value
-                  ? "bg-white/10 text-white/90 hover:bg-white/10"
-                  : "text-white/50 hover:bg-white/5 hover:text-white/70"
-              }
-              onClick={() => {
-                setViewTab(tab.value);
-                // "All" should mean every task, not whatever project was
-                // last selected while on Board/Done — otherwise a leftover
-                // project filter silently hides tasks from the All tab.
-                if (tab.value === "all") setProjectFilter(null);
-                setPage(1);
-              }}
-            >
-              {tab.label}
-            </Button>
-          ))}
-        </div>
-        {projects.length > 0 && (
-          <div
-            ref={projectFilterAreaRef}
-            className="relative flex flex-1 min-w-0 items-center justify-end overflow-hidden pb-px"
-          >
-            <div
-              ref={projectPillsMeasureRef}
-              className="pointer-events-none invisible absolute right-0 flex items-center gap-1"
-              aria-hidden="true"
-            >
-              <ProjectFilterButton
-                active={projectFilter === null}
-                onClick={() => {}}
-              >
-                All
-              </ProjectFilterButton>
-              {projects.map((p) => (
-                <ProjectFilterButton
-                  key={p.id}
-                  active={false}
-                  onClick={() => {}}
-                >
-                  {p.name}
-                </ProjectFilterButton>
-              ))}
-            </div>
-            {projectFilterCollapsed ? (
-              <Select
-                value={projectFilter ?? ALL_PROJECTS_VALUE}
-                onValueChange={(value) => {
-                  setProjectFilter(value === ALL_PROJECTS_VALUE ? null : value);
+      {/* Header: views, project filter, today's progress, quick add */}
+      <div className="flex shrink-0 flex-col gap-3 px-3 pt-3 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
+            {VIEW_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                aria-pressed={viewTab === tab.value}
+                className={cn(
+                  "h-6 rounded-full px-3 text-xs font-medium transition-[background-color,color] duration-150",
+                  viewTab === tab.value
+                    ? "bg-white/[0.12] text-white/90 shadow-sm"
+                    : "text-white/45 hover:text-white/75",
+                )}
+                onClick={() => {
+                  setViewTab(tab.value);
+                  // "All" should mean every task, not whatever project was
+                  // last selected while on another view — otherwise a
+                  // leftover project filter silently hides tasks from it.
+                  if (tab.value === "all") setProjectFilter(null);
                   setPage(1);
                 }}
               >
-                <SelectTrigger
-                  size="xs"
-                  className="w-auto max-w-32 shrink-0 gap-1 border-0 bg-transparent font-medium text-white/60 shadow-none transition-colors hover:bg-white/[0.06] hover:text-white/80 dark:bg-transparent dark:hover:bg-white/[0.06]"
-                >
-                  <Folder className="size-3" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_PROJECTS_VALUE}>All</SelectItem>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.name}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="flex items-center gap-1">
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {projects.length > 0 && (
+            <div
+              ref={projectFilterAreaRef}
+              className="relative flex flex-1 min-w-0 items-center justify-end overflow-hidden pb-px"
+            >
+              <div
+                ref={projectPillsMeasureRef}
+                className="pointer-events-none invisible absolute right-0 flex items-center gap-1"
+                aria-hidden="true"
+              >
                 <ProjectFilterButton
                   active={projectFilter === null}
-                  onClick={() => {
-                    setProjectFilter(null);
-                    setPage(1);
-                  }}
+                  onClick={() => {}}
                 >
                   All
                 </ProjectFilterButton>
                 {projects.map((p) => (
                   <ProjectFilterButton
                     key={p.id}
-                    active={projectFilter === p.name}
-                    onClick={() => {
-                      setProjectFilter(p.name);
-                      setPage(1);
-                    }}
+                    active={false}
+                    onClick={() => {}}
                   >
                     {p.name}
                   </ProjectFilterButton>
                 ))}
               </div>
-            )}
-          </div>
-        )}
+              {projectFilterCollapsed ? (
+                <Select
+                  value={projectFilter ?? ALL_PROJECTS_VALUE}
+                  onValueChange={(value) => {
+                    setProjectFilter(
+                      value === ALL_PROJECTS_VALUE ? null : value,
+                    );
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger
+                    size="xs"
+                    className="w-auto max-w-32 shrink-0 gap-1 border-0 bg-transparent font-medium text-white/60 shadow-none transition-colors hover:bg-white/[0.06] hover:text-white/80 dark:bg-transparent dark:hover:bg-white/[0.06]"
+                  >
+                    <Folder className="size-3" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_PROJECTS_VALUE}>All</SelectItem>
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.name}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <ProjectFilterButton
+                    active={projectFilter === null}
+                    onClick={() => {
+                      setProjectFilter(null);
+                      setPage(1);
+                    }}
+                  >
+                    All
+                  </ProjectFilterButton>
+                  {projects.map((p) => (
+                    <ProjectFilterButton
+                      key={p.id}
+                      project={p.name}
+                      active={projectFilter === p.name}
+                      onClick={() => {
+                        setProjectFilter(p.name);
+                        setPage(1);
+                      }}
+                    >
+                      {p.name}
+                    </ProjectFilterButton>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {showsOpenTasks && (
+            <ProgressRing done={progress.doneToday} total={progress.total} />
+          )}
+        </div>
+        {viewTab !== "done" && <QuickAddTask defaultProject={projectFilter} />}
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 pt-5 px-3 flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col px-3">
         {isLoading ? (
-          <div className="flex flex-1 gap-4">
-            {[0, 1].map((col) => (
-              <div key={col} className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-20" />
-                {[0, 1, 2].map((row) => (
-                  <Skeleton key={row} className="h-16 w-full rounded-lg" />
-                ))}
-              </div>
+          <div className="flex flex-1 flex-col gap-2 pt-1">
+            {[0, 1, 2, 3].map((row) => (
+              <Skeleton key={row} className="h-11 w-full rounded-xl" />
             ))}
           </div>
-        ) : allTasks.length === 0 && viewTab === "board" ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyMedia>
-                <CheckSquare />
-              </EmptyMedia>
-              <EmptyTitle>No tasks yet</EmptyTitle>
-              <EmptyDescription>
-                Create your first task to start organizing your work.
-              </EmptyDescription>
-            </EmptyHeader>
-            <CreateTaskDialog />
-          </Empty>
-        ) : (
-          <>
-            {viewTab === "board" && boardTasks ? (
+        ) : viewTab === "today" ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <RoutinesStrip
+              tasks={repeatingTasks}
+              onSelectTask={handleSelectTask}
+              onCompleteTask={handleCompleteTask}
+            />
+            <TodayView
+              tasks={allTasks}
+              onSelectTask={handleSelectTask}
+              onCompleteTask={handleCompleteTask}
+              draggableToClaude={isDesktop}
+            />
+          </div>
+        ) : viewTab === "board" && boardTasks ? (
+          allTasks.length === 0 ? (
+            <FirstTaskHint />
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+              <RoutinesStrip
+                tasks={repeatingTasks}
+                onSelectTask={handleSelectTask}
+                onCompleteTask={handleCompleteTask}
+              />
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -746,155 +732,61 @@ function Tasks() {
                     document.body,
                   )}
               </DndContext>
-            ) : (
-              /* Done / All list view */
-              <div className="overflow-y-auto flex-1 min-h-0">
-                <div className="space-y-1">
-                  {allTasks.map((task) => {
-                    const status = task.status ?? "todo";
-                    const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.todo;
-                    const StatusIcon = config.icon;
-                    const isDone = status === "done" || status === "cancelled";
-                    const priority = task.priority ?? 0;
-
-                    return (
-                      <div
-                        key={task.id}
-                        className="flex items-center gap-3 rounded-md border border-white/10 bg-white/5 px-3 py-2.5 transition-colors cursor-pointer hover:bg-white/10 hover:border-white/20 last:mb-3"
-                        onClick={() => handleSelectTask(task)}
-                        draggable={isDesktop}
-                        onDragStart={
-                          isDesktop
-                            ? (e) => {
-                                e.dataTransfer.setData(
-                                  "bessel/task-prompt",
-                                  buildTaskPrompt(task),
-                                );
-                                e.dataTransfer.setData(
-                                  "bessel/task-id",
-                                  task.id,
-                                );
-                                e.dataTransfer.effectAllowed = "copy";
-                              }
-                            : undefined
-                        }
-                      >
-                        {isDone ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="iconSm"
-                            title="Reopen"
-                            className="size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-white/70"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleReopenTask(task);
-                            }}
-                          >
-                            <RotateCcw className="size-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="iconSm"
-                            className="size-4 shrink-0 p-0 text-white/25 hover:bg-transparent hover:text-emerald-400"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCompleteTask(task);
-                            }}
-                          >
-                            <Circle className="size-4" />
-                          </Button>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <span
-                            className={`text-13 ${isDone ? "line-through text-white/50" : "font-medium text-white/85"}`}
-                          >
-                            {task.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {task.is_recurring && (
-                            <Repeat className="size-3 text-white/30" />
-                          )}
-                          {priority >= 3 && (
-                            <Flag
-                              className={`size-3 ${(PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG[0]).color}`}
-                            />
-                          )}
-                          <StatusIcon className={`size-3.5 ${config.color}`} />
-                          {task.due_date && (
-                            <span
-                              className={`text-11 ${getDueDateColor(task.due_date)}`}
-                            >
-                              {formatDueDate(task.due_date)}
-                            </span>
-                          )}
-                          {isDone && task.completed_at && (
-                            <span className="text-11 text-white/50">
-                              {format(
-                                task.completed_at instanceof Date
-                                  ? task.completed_at
-                                  : new Date(String(task.completed_at)),
-                                "MMM d",
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {allTasks.length === 0 && (
-                    <div className="text-white/50 text-center text-xs py-8">
-                      {viewTab === "done"
-                        ? "No completed tasks yet."
-                        : "No tasks."}
-                    </div>
-                  )}
-                </div>
-                {maxPage > 1 && (
-                  <div className="flex items-center justify-end gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page <= 1}
-                    >
-                      <ChevronLeft className="size-4" />
-                      Previous
-                    </Button>
-                    <span className="text-muted-foreground text-sm tabular-nums">
-                      {page} / {maxPage}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                      disabled={page >= maxPage}
-                    >
-                      Next
-                      <ChevronRight className="size-4" />
-                    </Button>
-                  </div>
-                )}
+            </div>
+          )
+        ) : (
+          /* Done / All list view */
+          <div className="min-h-0 flex-1 overflow-y-auto pb-3">
+            {viewTab === "done" && (
+              <DoneSummary count={progress.doneThisWeek} />
+            )}
+            <div className="mt-2 flex flex-col gap-0.5">
+              {allTasks.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  onSelect={() => handleSelectTask(task)}
+                  onComplete={() => handleCompleteTask(task)}
+                  onReopen={() => handleReopenTask(task)}
+                  draggableToClaude={isDesktop}
+                />
+              ))}
+              {allTasks.length === 0 && (
+                <p className="py-8 text-center text-xs text-white/40">
+                  {viewTab === "done"
+                    ? "Finished tasks land here."
+                    : "No tasks yet - add one above."}
+                </p>
+              )}
+            </div>
+            {maxPage > 1 && (
+              <div className="flex items-center justify-end gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="size-4" />
+                  Previous
+                </Button>
+                <span className="text-muted-foreground text-sm tabular-nums">
+                  {page} / {maxPage}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                  disabled={page >= maxPage}
+                >
+                  Next
+                  <ChevronRight className="size-4" />
+                </Button>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
-
-      {/* Repeating tasks dialog */}
-      <Dialog open={repeatingOpen} onOpenChange={setRepeatingOpen}>
-        <ScheduledTasksDialog
-          tasks={repeatingTasks}
-          onSelectTask={(task) => {
-            setRepeatingOpen(false);
-            setSelectedTaskId(task.id);
-          }}
-          onCompleteTask={handleCompleteTask}
-        />
-      </Dialog>
 
       {/* Task detail dialog */}
       <TaskDetailDialogController
