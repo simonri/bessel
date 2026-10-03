@@ -1,19 +1,10 @@
 import pytest
-from httpx import AsyncClient
-from sqlalchemy import select
-
 from api.models.recipe import Recipe
 from api.postgres import AsyncSession
-from api.recipes.body import (
-  RecipeBody,
-  RecipeIngredient,
-  RecipeStep,
-  format_amount,
-  parse_ingredient_line,
-  parse_markdown,
-  render_markdown,
-)
+from api.recipes.body import RecipeBody, RecipeIngredient, RecipeStep, format_amount, parse_ingredient_line, parse_markdown, render_markdown
 from api.tests.fixtures.database import SaveFixture
+from httpx import AsyncClient
+from sqlalchemy import select
 
 GRANOLA = """## Ingredienser
 **Torrt:**
