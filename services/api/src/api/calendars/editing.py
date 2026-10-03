@@ -16,7 +16,7 @@ import httpx
 import structlog
 
 from api.calendars import http as provider_http
-from api.calendars.edits import EditScope, EventChanges, TargetEvent, UnsupportedEditError
+from api.calendars.edits import EditScope, EventChanges, Reply, TargetEvent, UnsupportedEditError
 from api.calendars.google import GoogleCalendarClient
 from api.calendars.google_edits import GoogleEventEditor
 from api.calendars.icloud import ICloudCalendarClient
@@ -34,7 +34,7 @@ from api.calendars.providers import (
   ProviderUnavailableError,
 )
 from api.calendars.repository import CalendarEventRepository, CalendarRepository
-from api.calendars.schemas import EventCreate, EventUpdate
+from api.calendars.schemas import EventCreate, EventReplyUpdate, EventUpdate
 from api.calendars.service import calendar_service, require_google_config, sync_window
 from api.common.encryption import decrypt
 from api.exceptions import ConflictError, ForbiddenError, ResourceNotFound, ServiceUnavailableError, ValidationError
@@ -58,6 +58,8 @@ class EventEditor(Protocol):
   async def update(self, target: TargetEvent, changes: EventChanges, scope: EditScope, destination: str | None = None) -> str: ...
 
   async def delete(self, target: TargetEvent, scope: EditScope) -> None: ...
+
+  async def respond(self, target: TargetEvent, reply: Reply, scope: EditScope) -> str: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,7 +133,8 @@ class CalendarEditService:
     events = CalendarEventRepository.from_session(session)
     event, calendar, account = await events.get_owned_with_context(event_id, user_id)
     _ensure_writable(account, calendar)
-    if not event.editable:
+    changes = body.to_changes(all_day=event.all_day)
+    if not event.editable and not changes.only_color:
       raise ForbiddenError("Only the organizer can change this event")
     destination = calendar
     if body.calendar_id is not None and body.calendar_id != calendar.id:
@@ -140,7 +143,6 @@ class CalendarEditService:
         raise ValidationError("Events can only move between calendars of the same account", status_code=422)
       _ensure_writable(account, destination)
 
-    changes = body.to_changes(all_day=event.all_day)
     target = _target(event, calendar)
     near = changes.timing.start if changes.timing else target.start
     affected = [calendar] if destination is calendar else [calendar, destination]
@@ -165,6 +167,20 @@ class CalendarEditService:
       raise ForbiddenError("Only the organizer can delete this event")
     async with self._writing(session, redis, account, [calendar], time_zone=time_zone, send_updates=notify_guests) as provider:
       await provider.editor.delete(_target(event, calendar), scope)
+
+  async def respond_to_event(self, session: AsyncSession, redis: Redis, user_id: UUID, event_id: UUID, body: EventReplyUpdate) -> CalendarEvent | None:
+    """Answers an invitation. Allowed on events the account can't edit: a guest
+    may always change their own reply."""
+    events = CalendarEventRepository.from_session(session)
+    event, calendar, account = await events.get_owned_with_context(event_id, user_id)
+    if event.my_response is None:
+      raise ValidationError("You're not a guest of this event", status_code=422)
+    _ensure_writable(account, calendar)
+    target = _target(event, calendar)
+    # Replies carry no times; the zone only matters for editing.
+    async with self._writing(session, redis, account, [calendar], time_zone="UTC", send_updates=body.notify_organizer) as provider:
+      provider_id = await provider.editor.respond(target, body.response, body.scope)
+    return await events.find_written(calendar.id, provider_id, target.start)
 
   @asynccontextmanager
   async def _writing(

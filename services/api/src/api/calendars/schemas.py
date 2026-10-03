@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import EmailStr, Field, field_validator, model_validator
 
-from api.calendars.edits import EVENT_FIELDS, EditScope, EventChanges, EventTiming
+from api.calendars.edits import EVENT_FIELDS, GOOGLE_COLOR_IDS, EditScope, EventChanges, EventTiming, Reply
 from api.calendars.providers import AttendeeResponse
 from api.calendars.recurrence import Frequency, Recurrence, from_rule, to_rule
 from api.common.schemas import Schema
@@ -36,6 +36,7 @@ class CalendarAccountSchema(Schema):
   provider: CalendarProvider
   email: str
   can_write: bool = Field(description="False when the account was connected read-only and must be reconnected to edit.")
+  can_read_people: bool = Field(default=False, description="Google: contacts access was granted, so guests show real names and photos.")
   last_synced_at: datetime | None
   sync_error: str | None = Field(description="Why the last sync failed, or null if it succeeded.")
   calendars: list[CalendarSchema]
@@ -67,6 +68,10 @@ class CalendarEventAttendee(Schema):
   email: str
   name: str | None
   response: AttendeeResponse
+  # Defaults cover rows synced before these were recorded.
+  is_self: bool = Field(default=False, description="This is the account itself.")
+  is_organizer: bool = Field(default=False, description="This guest organizes the event.")
+  photo_url: str | None = Field(default=None, description="Profile photo from the account's contacts or directory.")
 
 
 # Local calendar values are strings on purpose: a JSON datetime would be read as
@@ -128,6 +133,7 @@ class CalendarEventSchema(Schema):
   busy: bool = Field(description="False when the event is marked free/transparent.")
   recurring: bool
   editable: bool = Field(description="False for invitations organized by someone else and provider-managed events.")
+  color_id: str | None = Field(default=None, description="Google event colour id; null means the calendar's colour.")
   rule: str | None = Field(default=None, validation_alias="rrule", description="The series' RRULE value, if it repeats.")
   recurrence: RecurrenceSchema | None = Field(default=None, description="`rule` in structured form; null when not repeating or not representable.")
 
@@ -218,10 +224,18 @@ class EventFieldsInput(Schema):
   recurrence: RecurrenceSchema | None = Field(default=None, description="How the event repeats; null stops it repeating.")
   busy: bool | None = Field(default=None, description="False shows the time as free.")
   add_conference: bool | None = Field(default=None, description="Adds a Google Meet link (Google only).")
+  color_id: str | None = Field(default=None, description="Google event colour id (1-11); null uses the calendar's colour (Google only).")
   time_zone: str = Field(description="Zone the user is viewing the calendar in; used to read `recurrence.until`.")
   notify_guests: bool = Field(default=True, description="Email guests about the change (Google only).")
 
   _zone = field_validator("time_zone")(_check_time_zone)
+
+  @field_validator("color_id")
+  @classmethod
+  def _known_color(cls, value: str | None) -> str | None:
+    if value is not None and value not in GOOGLE_COLOR_IDS:
+      raise ValueError("Unknown event colour")
+    return value
 
   @field_validator("timing")
   @classmethod
@@ -246,6 +260,7 @@ class EventFieldsInput(Schema):
       rule=rule,
       busy=self.busy if self.busy is not None else True,
       add_conference=bool(self.add_conference),
+      color_id=self.color_id,
     )
 
 
@@ -256,6 +271,19 @@ class EventCreate(EventFieldsInput):
 class EventUpdate(EventFieldsInput):
   scope: EditScope = Field(default=EditScope.this, description="For repeating events: this occurrence, this and following, or all.")
   calendar_id: UUID | None = Field(default=None, description="Move the event to another calendar of the same account.")
+
+
+class EventReplyUpdate(Schema):
+  response: Reply = Field(description="Your answer to the invitation.")
+  scope: EditScope = Field(default=EditScope.this, description="For repeating events: this occurrence or all of them.")
+  notify_organizer: bool = Field(default=True, description="Email the organizer your answer (Google only; iCloud always does).")
+
+  @field_validator("scope")
+  @classmethod
+  def _no_following(cls, scope: EditScope) -> EditScope:
+    if scope == EditScope.following:
+      raise ValueError("Answer this occurrence or all of them")
+    return scope
 
 
 class EventWriteResponse(Schema):

@@ -55,6 +55,8 @@ from .device_schema import DeviceSchema
 from .device_update import DeviceUpdate
 from .edit_scope import EditScope
 from .event_create import EventCreate
+from .event_reply_update import EventReplyUpdate
+from .event_reply_update_response import EventReplyUpdateResponse
 from .event_time_input import EventTimeInput
 from .event_timing_input import EventTimingInput
 from .event_update import EventUpdate
@@ -219,6 +221,8 @@ __all__ = (
   "DeviceUpdate",
   "EditScope",
   "EventCreate",
+  "EventReplyUpdate",
+  "EventReplyUpdateResponse",
   "EventTimeInput",
   "EventTimingInput",
   "EventUpdate",

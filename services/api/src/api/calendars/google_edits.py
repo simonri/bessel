@@ -13,7 +13,7 @@ from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from api.calendars.edits import EditScope, EventChanges, EventTiming, TargetEvent, UnsupportedEditError, parse_moment, wall_clock_delta
+from api.calendars.edits import EditScope, EventChanges, EventTiming, Reply, TargetEvent, UnsupportedEditError, parse_moment, wall_clock_delta
 from api.calendars.google import GoogleCalendarClient
 from api.calendars.providers import ProviderError
 from api.calendars.recurrence import shift_weekdays, split_rule
@@ -76,6 +76,9 @@ def changes_body(changes: EventChanges, *, current: dict[str, Any] | None = None
     body["attendees"] = _attendees(changes.attendees, (current or {}).get("attendees", []))
   if changes.has("busy"):
     body["transparency"] = "opaque" if changes.busy else "transparent"
+  if changes.has("color_id"):
+    # Null clears the event's colour back to the calendar's.
+    body["colorId"] = changes.color_id
   if changes.has("add_conference") and changes.add_conference and not (current or {}).get("conferenceData"):
     body["conferenceData"] = {"createRequest": {"requestId": uuid4().hex, "conferenceSolutionKey": {"type": "hangoutsMeet"}}}
   return body
@@ -179,6 +182,20 @@ class GoogleEventEditor:
       return await self._update_following(calendar_id, target, parent, parent_start, zone, changes)
     await self._update_series(calendar_id, target, parent, parent_start, zone, changes)
     return target.series_id or target.external_id
+
+  async def respond(self, target: TargetEvent, reply: Reply, scope: EditScope) -> str:
+    """Answers an invitation as this account; returns the id of the event to show."""
+    if target.recurring and scope == EditScope.following:
+      raise UnsupportedEditError("Answer this occurrence or the whole series")
+    event_id = (target.series_id or target.external_id) if target.recurring and scope == EditScope.all else target.external_id
+    current = await self.client.get_event(self.token, target.calendar_external_id, event_id)
+    attendees = current.get("attendees", [])
+    if not any(a.get("self") for a in attendees):
+      raise UnsupportedEditError("You're not a guest of this event")
+    # Google replaces the whole list, so send everyone back with only our reply changed.
+    body = {"attendees": [{**a, "responseStatus": reply} if a.get("self") else a for a in attendees]}
+    await self.client.patch_event(self.token, target.calendar_external_id, event_id, body, etag=current.get("etag"), send_updates=self.send_updates)
+    return event_id
 
   async def _update_single(self, calendar_id: str, event_id: str, etag: str | None, changes: EventChanges) -> str:
     current = await self.client.get_event(self.token, calendar_id, event_id) if changes.has("attendees") or changes.has("rule") else None

@@ -19,6 +19,7 @@ const details: CalendarEventDetails = {
   creatorEmail: null,
   attendees: [],
   myResponse: null,
+  colorId: null,
   conferenceUrl: null,
   htmlLink: null,
   busy: true,

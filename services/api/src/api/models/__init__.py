@@ -7,6 +7,7 @@ from .base import Model
 from .calendar import Calendar
 from .calendar_account import CalendarAccount
 from .calendar_event import CalendarEvent
+from .calendar_person import CalendarPerson
 from .category import Category
 from .counter import Counter, CounterReset
 from .device import Device
@@ -40,6 +41,7 @@ __all__ = [
   "Calendar",
   "CalendarAccount",
   "CalendarEvent",
+  "CalendarPerson",
   "Category",
   "Counter",
   "CounterReset",

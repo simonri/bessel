@@ -132,7 +132,7 @@ function ActivityPage() {
             value={activeSource ?? ""}
             onValueChange={(v) => setSource(v)}
           >
-            <SelectTrigger className="h-8 w-44 min-w-0 rounded-lg border-white/10 bg-white/[0.04] text-13">
+            <SelectTrigger className="w-44 min-w-0 border-white/10 bg-white/[0.04]">
               <SelectValue placeholder="Select machine" />
             </SelectTrigger>
             <SelectContent>

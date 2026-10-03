@@ -414,3 +414,181 @@ class TestLocking:
 
     assert resp.status_code == 503
     assert await redis.get(f"calendars:sync:{account.id}") is None
+
+
+INVITE_ICS = """BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//EN
+BEGIN:VEVENT
+UID:standup
+DTSTAMP:20261001T000000Z
+DTSTART:20261007T070000Z
+DTEND:20261007T073000Z
+RRULE:FREQ=DAILY;COUNT=3
+SUMMARY:Standup
+SEQUENCE:4
+ORGANIZER:mailto:boss@corp.com
+ATTENDEE;PARTSTAT=ACCEPTED:mailto:boss@corp.com
+ATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:Me@iCloud.com
+END:VEVENT
+END:VCALENDAR
+"""
+
+
+def _google_invite(event_id: str, **fields: Any) -> dict[str, Any]:
+  return google_event(
+    event_id,
+    organizer={"email": "boss@corp.com"},
+    attendees=[
+      {"email": "boss@corp.com", "organizer": True, "responseStatus": "accepted"},
+      {"email": PRIMARY, "self": True, "responseStatus": "needsAction"},
+    ],
+    **fields,
+  )
+
+
+class TestRespond:
+  @pytest.mark.asyncio
+  async def test_google_reply_changes_only_my_status_and_tells_the_organizer(
+    self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis
+  ) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, _google_invite("invite"))
+    [event] = await seed.sync_google(calendar)
+    assert event.my_response == "needs_action" and not event.editable
+
+    resp = await client.put(f"/v1/calendars/events/{event.id}/response", json={"response": "accepted"})
+
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["event"]["my_response"] == "accepted"
+    [patch] = [r for r in google.writes() if r.method == "PATCH"]
+    assert patch.path.endswith("/events/invite")
+    assert patch.params["sendUpdates"] == "all"
+    assert "if-match" in patch.headers
+    assert patch.body == {
+      "attendees": [
+        {"email": "boss@corp.com", "organizer": True, "responseStatus": "accepted"},
+        {"email": PRIMARY, "self": True, "responseStatus": "accepted"},
+      ]
+    }
+
+  @pytest.mark.asyncio
+  async def test_google_reply_to_a_whole_series_without_emailing(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, _google_invite("series", recurrence=["RRULE:FREQ=DAILY;COUNT=3"]))
+    google.add(
+      PRIMARY,
+      _google_invite("series_20261007T070000Z", recurringEventId="series", originalStartTime={"dateTime": "2026-10-07T09:00:00+02:00"}),
+    )
+    events = await seed.sync_google(calendar)
+    instance = next(e for e in events if e.external_id == "series_20261007T070000Z")
+
+    resp = await client.put(f"/v1/calendars/events/{instance.id}/response", json={"response": "declined", "scope": "all", "notify_organizer": False})
+
+    assert resp.status_code == 200, resp.text
+    [patch] = [r for r in google.writes() if r.method == "PATCH"]
+    assert patch.path.endswith("/events/series")
+    assert patch.params["sendUpdates"] == "none"
+    assert google.get(PRIMARY, "series")["attendees"][1]["responseStatus"] == "declined"
+
+  @pytest.mark.asyncio
+  async def test_icloud_reply_to_one_occurrence(self, client: AsyncClient, seed: Seed, caldav: FakeCalDAV, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(CalendarProvider.icloud), ICLOUD_HOME)
+    href = f"{ICLOUD_HOME}standup.ics"
+    caldav.put(href, INVITE_ICS)
+    events = sorted(await seed.sync_icloud(calendar), key=lambda e: e.start_at or 0)
+    assert [e.my_response for e in events] == ["needs_action"] * 3
+
+    resp = await client.put(f"/v1/calendars/events/{events[1].id}/response", json={"response": "tentative"})
+
+    assert resp.status_code == 200, resp.text
+    stored = caldav.data(href)
+    assert "PARTSTAT=TENTATIVE" in stored and "RECURRENCE-ID" in stored
+    assert "SEQUENCE:4" in stored and "SEQUENCE:5" not in stored
+    replies = sorted((e["start_at"], e["my_response"]) for e in (await client.get("/v1/calendars/events", params=_week())).json()["events"])
+    assert [r for _, r in replies] == ["needs_action", "tentative", "needs_action"]
+
+  @pytest.mark.asyncio
+  async def test_icloud_reply_to_all(self, client: AsyncClient, seed: Seed, caldav: FakeCalDAV, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(CalendarProvider.icloud), ICLOUD_HOME)
+    href = f"{ICLOUD_HOME}standup.ics"
+    caldav.put(href, INVITE_ICS)
+    [first, *_] = await seed.sync_icloud(calendar)
+
+    resp = await client.put(f"/v1/calendars/events/{first.id}/response", json={"response": "accepted", "scope": "all"})
+
+    assert resp.status_code == 200, resp.text
+    stored = caldav.data(href)
+    assert "PARTSTAT=ACCEPTED:mailto:Me@iCloud.com" in stored.replace("\r\n ", "")
+    assert "RSVP=TRUE" not in stored and "RECURRENCE-ID" not in stored
+
+  @pytest.mark.asyncio
+  async def test_rejects_events_without_an_invitation(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, google_event("mine"))
+    [event] = await seed.sync_google(calendar)
+
+    resp = await client.put(f"/v1/calendars/events/{event.id}/response", json={"response": "accepted"})
+
+    assert resp.status_code == 422
+    assert google.writes() == []
+
+  @pytest.mark.parametrize("payload", [{"response": "needs_action"}, {"response": "maybe"}, {"response": "accepted", "scope": "following"}])
+  @pytest.mark.asyncio
+  async def test_rejects_invalid_replies(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis, payload: dict[str, Any]) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, _google_invite("invite"))
+    [event] = await seed.sync_google(calendar)
+    assert (await client.put(f"/v1/calendars/events/{event.id}/response", json=payload)).status_code == 422
+
+  @pytest.mark.asyncio
+  async def test_needs_write_access(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(can_write=False), PRIMARY)
+    google.add(PRIMARY, _google_invite("invite"))
+    [event] = await seed.sync_google(calendar)
+    assert (await client.put(f"/v1/calendars/events/{event.id}/response", json={"response": "accepted"})).status_code == 403
+
+
+def _week() -> dict[str, int]:
+  return {"start_ts": int(datetime(2026, 10, 5, tzinfo=UTC).timestamp()), "end_ts": int(datetime(2026, 10, 12, tzinfo=UTC).timestamp())}
+
+
+class TestColor:
+  @pytest.mark.asyncio
+  async def test_sets_and_clears_a_google_event_colour(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, google_event("e1"))
+    [event] = await seed.sync_google(calendar)
+
+    resp = await client.patch(f"/v1/calendars/events/{event.id}", json=body(color_id="11"))
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["event"]["color_id"] == "11"
+    assert google.writes()[-1].body == {"colorId": "11"}
+
+    resp = await client.patch(f"/v1/calendars/events/{event.id}", json=body(color_id=None))
+    assert resp.status_code == 200, resp.text
+    assert google.writes()[-1].body == {"colorId": None}
+
+  @pytest.mark.asyncio
+  async def test_guests_may_colour_an_invitation_but_not_change_it(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, google_event("invite", organizer={"email": "boss@corp.com"}))
+    [event] = await seed.sync_google(calendar)
+
+    assert (await client.patch(f"/v1/calendars/events/{event.id}", json=body(color_id="5"))).status_code == 200
+    assert (await client.patch(f"/v1/calendars/events/{event.id}", json=body(color_id="6", title="x"))).status_code == 403
+
+  @pytest.mark.asyncio
+  async def test_rejects_unknown_colours_and_icloud(
+    self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, caldav: FakeCalDAV, redis: Redis
+  ) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.add(PRIMARY, google_event("e1"))
+    [event] = await seed.sync_google(calendar)
+    assert (await client.patch(f"/v1/calendars/events/{event.id}", json=body(color_id="12"))).status_code == 422
+
+    icloud = await seed.calendar(await seed.account(CalendarProvider.icloud), ICLOUD_HOME)
+    created = await client.post(f"/v1/calendars/{icloud.id}/events", json=body(title="Gym", timing=timed("2026-10-08T07:00", "2026-10-08T08:00")))
+    resp = await client.patch(f"/v1/calendars/events/{created.json()['event']['id']}", json=body(color_id="3"))
+    assert resp.status_code == 422
+    assert "colours" in resp.json()["detail"]

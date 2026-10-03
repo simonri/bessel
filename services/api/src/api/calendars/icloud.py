@@ -55,22 +55,24 @@ def _text_prop(component: IEvent, name: str) -> str | None:
   return str(value).strip() or None if value is not None else None
 
 
-def _email(address: object) -> str:
+def mailto_address(address: object) -> str:
   value = str(address)
   return value[7:] if value.lower().startswith("mailto:") else value
 
 
-def _attendees(component: IEvent) -> list[ProviderAttendee]:
+def _attendees(component: IEvent, owner_addresses: frozenset[str], organizer_email: str | None) -> list[ProviderAttendee]:
   raw = component.get("ATTENDEE")
   addresses = raw if isinstance(raw, list) else [raw] if raw is not None else []
   return [
     ProviderAttendee(
-      email=_email(address),
+      email=mailto_address(address),
       name=address.params.get("CN"),
       response=_PARTSTAT.get(str(address.params.get("PARTSTAT", "")).upper(), "needs_action"),
+      is_self=mailto_address(address).lower() in owner_addresses,
+      is_organizer=mailto_address(address).lower() == organizer_email,
     )
     for address in addresses
-    if _email(address)
+    if mailto_address(address)
   ]
 
 
@@ -90,8 +92,8 @@ def _occurrence(component: IEvent, recurring: bool, resource: ICalResource, owne
   instance = recurrence_id.dt if recurrence_id is not None else start
   organizer = component.get("ORGANIZER")
   location, description, url = _text_prop(component, "LOCATION"), _text_prop(component, "DESCRIPTION"), _text_prop(component, "URL")
-  organizer_email = _email(organizer).lower() if organizer is not None else None
-  attendees = _attendees(component)
+  organizer_email = mailto_address(organizer).lower() if organizer is not None else None
+  attendees = _attendees(component, owner_addresses, organizer_email)
   common = {
     # Single events key on the UID alone so moving them keeps the same row.
     "external_id": f"{uid}/{instance.isoformat()}" if recurring else uid,
@@ -99,9 +101,9 @@ def _occurrence(component: IEvent, recurring: bool, resource: ICalResource, owne
     "location": location,
     "description": description,
     "creator_name": organizer.params.get("CN") if organizer is not None else None,
-    "creator_email": _email(organizer) if organizer is not None else None,
+    "creator_email": mailto_address(organizer) if organizer is not None else None,
     "attendees": attendees,
-    "my_response": next((a.response for a in attendees if a.email.lower() in owner_addresses), None),
+    "my_response": next((a.response for a in attendees if a.is_self), None),
     "conference_url": find_conference_url(url, location, description),
     "busy": str(component.get("TRANSP", "OPAQUE")).upper() != "TRANSPARENT",
     "recurring": recurring,
@@ -173,9 +175,14 @@ class ICloudCalendarClient:
       self._home = urljoin(principal, home)
       addresses = {self.apple_id.lower()}
       if prop is not None:
-        addresses |= {_email(href.text.strip()).lower() for href in prop.iterfind("c:calendar-user-address-set/d:href", NS) if href.text}
+        addresses |= {mailto_address(href.text.strip()).lower() for href in prop.iterfind("c:calendar-user-address-set/d:href", NS) if href.text}
       self._owner_addresses = frozenset(addresses)
     return self._home, self._owner_addresses
+
+  async def owner_addresses(self) -> frozenset[str]:
+    """Every address this account is invited or organizes as, lowercased."""
+    _, addresses = await self._discover()
+    return addresses
 
   async def list_calendars(self) -> list[ProviderCalendar]:
     home, _ = await self._discover()

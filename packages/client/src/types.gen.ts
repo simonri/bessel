@@ -713,6 +713,12 @@ export type CalendarAccountSchema = {
    */
   can_write: boolean;
   /**
+   * Can Read People
+   *
+   * Google: contacts access was granted, so guests show real names and photos.
+   */
+  can_read_people?: boolean;
+  /**
    * Last Synced At
    */
   last_synced_at: Date | null;
@@ -744,6 +750,24 @@ export type CalendarEventAttendee = {
    * Response
    */
   response: "accepted" | "declined" | "tentative" | "needs_action";
+  /**
+   * Is Self
+   *
+   * This is the account itself.
+   */
+  is_self?: boolean;
+  /**
+   * Is Organizer
+   *
+   * This guest organizes the event.
+   */
+  is_organizer?: boolean;
+  /**
+   * Photo Url
+   *
+   * Profile photo from the account's contacts or directory.
+   */
+  photo_url?: string | null;
 };
 
 /**
@@ -856,6 +880,12 @@ export type CalendarEventSchema = {
    * False for invitations organized by someone else and provider-managed events.
    */
   editable: boolean;
+  /**
+   * Color Id
+   *
+   * Google event colour id; null means the calendar's colour.
+   */
+  color_id?: string | null;
   /**
    * Rule
    *
@@ -1230,6 +1260,12 @@ export type EventCreate = {
    */
   add_conference?: boolean | null;
   /**
+   * Color Id
+   *
+   * Google event colour id (1-11); null uses the calendar's colour (Google only).
+   */
+  color_id?: string | null;
+  /**
    * Time Zone
    *
    * Zone the user is viewing the calendar in; used to read `recurrence.until`.
@@ -1241,6 +1277,28 @@ export type EventCreate = {
    * Email guests about the change (Google only).
    */
   notify_guests?: boolean;
+};
+
+/**
+ * EventReplyUpdate
+ */
+export type EventReplyUpdate = {
+  /**
+   * Response
+   *
+   * Your answer to the invitation.
+   */
+  response: "accepted" | "declined" | "tentative";
+  /**
+   * For repeating events: this occurrence or all of them.
+   */
+  scope?: EditScope;
+  /**
+   * Notify Organizer
+   *
+   * Email the organizer your answer (Google only; iCloud always does).
+   */
+  notify_organizer?: boolean;
 };
 
 /**
@@ -1317,6 +1375,12 @@ export type EventUpdate = {
    * Adds a Google Meet link (Google only).
    */
   add_conference?: boolean | null;
+  /**
+   * Color Id
+   *
+   * Google event colour id (1-11); null uses the calendar's colour (Google only).
+   */
+  color_id?: string | null;
   /**
    * Time Zone
    *
@@ -4723,6 +4787,39 @@ export type UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses = {
 
 export type UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse =
   UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses[keyof UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses];
+
+export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData = {
+  body: EventReplyUpdate;
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string;
+  };
+  query?: never;
+  url: "/v1/calendars/events/{event_id}/response";
+};
+
+export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError =
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors[keyof RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors];
+
+export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: EventWriteResponse;
+  };
+
+export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse =
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses[keyof RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses];
 
 export type ListCategoriesV1CategoriesGetData = {
   body?: never;

@@ -2,6 +2,7 @@ import type { CalendarEventSchema } from "@bessel/client";
 import { describe, expect, it } from "vitest";
 import {
   applyOptimistic,
+  applyReply,
   errorDetail,
   eventFieldsBody,
 } from "./use-event-mutations";
@@ -120,6 +121,36 @@ describe("applyOptimistic", () => {
 
   it("moves calendars", () => {
     expect(applyOptimistic(row, {}, TZ, "c2").calendar_id).toBe("c2");
+  });
+});
+
+describe("applyReply", () => {
+  it("changes my answer and my row, nobody else's", () => {
+    const invite: CalendarEventSchema = {
+      ...row,
+      my_response: "needs_action",
+      attendees: [
+        {
+          email: "boss@x.com",
+          name: null,
+          response: "accepted",
+          is_organizer: true,
+        },
+        {
+          email: "me@x.com",
+          name: null,
+          response: "needs_action",
+          is_self: true,
+        },
+      ],
+    };
+    const next = applyReply(invite, "declined");
+    expect(next.my_response).toBe("declined");
+    expect(next.attendees.map((a) => a.response)).toEqual([
+      "accepted",
+      "declined",
+    ]);
+    expect(invite.my_response).toBe("needs_action");
   });
 });
 

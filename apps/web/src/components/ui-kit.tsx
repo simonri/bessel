@@ -1,3 +1,8 @@
+import {
+  CONTROL_HEIGHT,
+  CONTROL_SQUARE,
+  type ControlSize,
+} from "@bessel/ui/lib/control-size";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type {
   ButtonHTMLAttributes,
@@ -136,14 +141,19 @@ export function TextInput({
 
 export function IconButton({
   destructive,
+  size = "sm",
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { destructive?: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  destructive?: boolean;
+  size?: Exclude<ControlSize, "lg">;
+}) {
   return (
     <button
       type="button"
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md text-white/40 outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-white/25 disabled:pointer-events-none disabled:opacity-30 [&_svg]:size-3.5",
+        CONTROL_SQUARE[size],
+        "flex shrink-0 items-center justify-center rounded-md text-white/40 outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-white/25 disabled:pointer-events-none disabled:opacity-30 [&_svg]:size-3.5",
         destructive
           ? "hover:bg-red-500/10 hover:text-red-400"
           : "hover:bg-white/[0.06] hover:text-white/85",
@@ -155,14 +165,18 @@ export function IconButton({
 }
 
 export function SoftButton({
+  size = "sm",
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  size?: "sm" | "default";
+}) {
   return (
     <button
       type="button"
       className={cn(
-        "inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-md bg-white/[0.06] px-2.5 text-12 font-medium text-white/75 transition-colors duration-150 hover:bg-white/[0.1] hover:text-white/90 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-3.5",
+        CONTROL_HEIGHT[size],
+        "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-white/[0.06] px-2.5 text-12 font-medium text-white/75 transition-colors duration-150 hover:bg-white/[0.1] hover:text-white/90 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-3.5",
         className,
       )}
       {...props}
@@ -171,14 +185,19 @@ export function SoftButton({
 }
 
 export function PrimaryButton({
+  size = "default",
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  size?: "sm" | "default";
+}) {
   return (
     <button
       type="button"
       className={cn(
-        "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-primary-500/25 bg-primary-500/10 px-4 text-12 font-medium text-primary-300 transition-colors duration-150 hover:border-primary-500/40 hover:bg-primary-500/[0.16] hover:text-primary-200 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-3.5",
+        CONTROL_HEIGHT[size],
+        size === "sm" ? "rounded-md px-3" : "rounded-lg px-4",
+        "inline-flex items-center justify-center gap-1.5 border border-primary-500/25 bg-primary-500/10 text-12 font-medium text-primary-300 transition-colors duration-150 hover:border-primary-500/40 hover:bg-primary-500/[0.16] hover:text-primary-200 disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-3.5",
         className,
       )}
       {...props}

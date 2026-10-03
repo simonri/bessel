@@ -288,7 +288,7 @@ function Recipes() {
                 >
                   <SelectTrigger
                     size="sm"
-                    className="h-7 w-24 rounded-lg border-white/10 bg-white/[0.04] text-12 text-white/75 hover:bg-white/[0.06]"
+                    className="w-24 rounded-lg border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.06]"
                   >
                     <SelectValue />
                   </SelectTrigger>

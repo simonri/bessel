@@ -45,6 +45,7 @@ class CalendarEventSchema:
       visibility (CalendarEventSchemaVisibilityType0 | None): Null means the calendar's default.
       my_response (CalendarEventSchemaMyResponseType0 | None | Unset): The account's own reply when it's a guest; null
           when not invited.
+      color_id (None | str | Unset): Google event colour id; null means the calendar's colour.
       rule (None | str | Unset): The series' RRULE value, if it repeats.
       recurrence (None | RecurrenceSchema | Unset): `rule` in structured form; null when not repeating or not
           representable.
@@ -70,6 +71,7 @@ class CalendarEventSchema:
   editable: bool
   visibility: CalendarEventSchemaVisibilityType0 | None
   my_response: CalendarEventSchemaMyResponseType0 | None | Unset = UNSET
+  color_id: None | str | Unset = UNSET
   rule: None | str | Unset = UNSET
   recurrence: None | RecurrenceSchema | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -152,6 +154,12 @@ class CalendarEventSchema:
     else:
       my_response = self.my_response
 
+    color_id: None | str | Unset
+    if isinstance(self.color_id, Unset):
+      color_id = UNSET
+    else:
+      color_id = self.color_id
+
     rule: None | str | Unset
     if isinstance(self.rule, Unset):
       rule = UNSET
@@ -193,6 +201,8 @@ class CalendarEventSchema:
     )
     if my_response is not UNSET:
       field_dict["my_response"] = my_response
+    if color_id is not UNSET:
+      field_dict["color_id"] = color_id
     if rule is not UNSET:
       field_dict["rule"] = rule
     if recurrence is not UNSET:
@@ -361,6 +371,15 @@ class CalendarEventSchema:
 
     my_response = _parse_my_response(d.pop("my_response", UNSET))
 
+    def _parse_color_id(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    color_id = _parse_color_id(d.pop("color_id", UNSET))
+
     def _parse_rule(data: object) -> None | str | Unset:
       if data is None:
         return data
@@ -408,6 +427,7 @@ class CalendarEventSchema:
       editable=editable,
       visibility=visibility,
       my_response=my_response,
+      color_id=color_id,
       rule=rule,
       recurrence=recurrence,
     )

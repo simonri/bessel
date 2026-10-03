@@ -128,7 +128,7 @@ export function AddPlaceDialog() {
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
       <DialogTrigger asChild>
-        <PrimaryButton className="h-7 px-2.5">
+        <PrimaryButton size="sm">
           <Plus />
           Add place
         </PrimaryButton>

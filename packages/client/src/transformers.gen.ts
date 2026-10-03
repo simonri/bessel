@@ -43,6 +43,7 @@ import type {
   ListTransactionsV1TransactionsGetResponse,
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
   SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
@@ -212,6 +213,14 @@ export const updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer
   async (
     data: any,
   ): Promise<UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse> => {
+    data = eventWriteResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+export const respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer =
+  async (
+    data: any,
+  ): Promise<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse> => {
     data = eventWriteResponseSchemaResponseTransformer(data);
     return data;
   };

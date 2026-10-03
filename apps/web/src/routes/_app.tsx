@@ -1,14 +1,15 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { getMeV1AuthMeGetOptions } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
-import { client } from "@/lib/client";
-import { WindowManager } from "@/components/canvas/window-manager";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
+import { EventReminders } from "@/components/calendar/event-reminders";
+import { WindowManager } from "@/components/canvas/window-manager";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
+import { client } from "@/lib/client";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -39,6 +40,7 @@ function AppLayout() {
 
   return (
     <SettingsProvider>
+      <EventReminders />
       <WindowManager>
         <WorkspaceTemplatesProvider>
           <AppShell />

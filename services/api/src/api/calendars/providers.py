@@ -61,10 +61,22 @@ class ProviderCalendar:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderPerson:
+  """Someone the account knows (a contact or colleague), for names and photos."""
+
+  email: str
+  name: str | None
+  photo_url: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class ProviderAttendee:
   email: str
   name: str | None
   response: AttendeeResponse
+  # This account itself, and whoever organizes the event.
+  is_self: bool = False
+  is_organizer: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,6 +107,8 @@ class ProviderEvent:
   original_start: str | None = None
   rrule: str | None = None
   etag: str | None = None
+  # Google only: the event's own colour ("1".."11"), overriding the calendar's.
+  color_id: str | None = None
   # iCloud only: the .ics resource holding the event (and its whole series).
   resource_href: str | None = None
 

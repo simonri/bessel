@@ -31,6 +31,7 @@ class EventUpdate:
       recurrence (None | RecurrenceSchema | Unset): How the event repeats; null stops it repeating.
       busy (bool | None | Unset): False shows the time as free.
       add_conference (bool | None | Unset): Adds a Google Meet link (Google only).
+      color_id (None | str | Unset): Google event colour id (1-11); null uses the calendar's colour (Google only).
       notify_guests (bool | Unset): Email guests about the change (Google only). Default: True.
       scope (EditScope | Unset): Which occurrences of a repeating event a change applies to.
       calendar_id (None | Unset | UUID): Move the event to another calendar of the same account.
@@ -45,6 +46,7 @@ class EventUpdate:
   recurrence: None | RecurrenceSchema | Unset = UNSET
   busy: bool | None | Unset = UNSET
   add_conference: bool | None | Unset = UNSET
+  color_id: None | str | Unset = UNSET
   notify_guests: bool | Unset = True
   scope: EditScope | Unset = UNSET
   calendar_id: None | Unset | UUID = UNSET
@@ -111,6 +113,12 @@ class EventUpdate:
     else:
       add_conference = self.add_conference
 
+    color_id: None | str | Unset
+    if isinstance(self.color_id, Unset):
+      color_id = UNSET
+    else:
+      color_id = self.color_id
+
     notify_guests = self.notify_guests
 
     scope: str | Unset = UNSET
@@ -148,6 +156,8 @@ class EventUpdate:
       field_dict["busy"] = busy
     if add_conference is not UNSET:
       field_dict["add_conference"] = add_conference
+    if color_id is not UNSET:
+      field_dict["color_id"] = color_id
     if notify_guests is not UNSET:
       field_dict["notify_guests"] = notify_guests
     if scope is not UNSET:
@@ -261,6 +271,15 @@ class EventUpdate:
 
     add_conference = _parse_add_conference(d.pop("add_conference", UNSET))
 
+    def _parse_color_id(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    color_id = _parse_color_id(d.pop("color_id", UNSET))
+
     notify_guests = d.pop("notify_guests", UNSET)
 
     _scope = d.pop("scope", UNSET)
@@ -297,6 +316,7 @@ class EventUpdate:
       recurrence=recurrence,
       busy=busy,
       add_conference=add_conference,
+      color_id=color_id,
       notify_guests=notify_guests,
       scope=scope,
       calendar_id=calendar_id,

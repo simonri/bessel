@@ -5,6 +5,7 @@ import structlog
 
 from api.calendars import push
 from api.calendars.locks import AccountBusyError, account_lock
+from api.calendars.people import refresh_people
 from api.calendars.providers import ProviderAuthError, ProviderError
 from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarRepository
 from api.calendars.service import SYNC_ACCOUNT_ACTOR, calendar_service
@@ -35,6 +36,12 @@ async def sync_calendar_account(account_id: str) -> None:
     await push.renew_google_channels(AsyncSessionMaker, UUID(account_id))
   except (ProviderError, httpx.HTTPError):
     log.warning("calendar_channel_renewal_failed", account_id=account_id, exc_info=True)
+  # Names and photos are a nicety: failing to fetch them never fails a sync.
+  try:
+    if await refresh_people(AsyncSessionMaker, UUID(account_id)):
+      await push.publish_change(redis, user_id)
+  except (ProviderError, httpx.HTTPError):
+    log.warning("calendar_people_refresh_failed", account_id=account_id, exc_info=True)
 
 
 async def _sync(account_id: UUID) -> UUID | None:

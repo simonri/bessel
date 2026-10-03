@@ -48,6 +48,8 @@ class CalendarEvent(RecordModel):
   original_start: Mapped[str | None] = mapped_column(String(64), nullable=True)
   # Provider version tag for optimistic concurrency (If-Match).
   etag: Mapped[str | None] = mapped_column(String(255), nullable=True)
+  # Google's event colour id; null shows the calendar's colour.
+  color_id: Mapped[str | None] = mapped_column(String(2), nullable=True)
   # The series' RRULE value (no "RRULE:" prefix), copied onto each occurrence.
   rrule: Mapped[str | None] = mapped_column(String(1024), nullable=True)
   # iCloud: URL of the .ics resource holding the event and its series.

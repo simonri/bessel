@@ -16,9 +16,9 @@ from icalendar import Calendar as ICalendar
 from icalendar import Event as IEvent
 from icalendar import vRecur
 
-from api.calendars.edits import EditScope, EventChanges, EventTiming, TargetEvent, UnsupportedEditError, wall_clock_delta
+from api.calendars.edits import EditScope, EventChanges, EventTiming, Reply, TargetEvent, UnsupportedEditError, wall_clock_delta
 from api.calendars.google_edits import day_shift, series_timing
-from api.calendars.icloud import ICloudCalendarClient
+from api.calendars.icloud import ICloudCalendarClient, mailto_address
 from api.calendars.providers import ProviderConflictError, ProviderError
 from api.calendars.recurrence import format_rule, parse_rule, shift_weekdays, split_rule
 
@@ -191,6 +191,8 @@ def _check_supported(changes: EventChanges) -> None:
     raise UnsupportedEditError("Guests on iCloud events can't be changed from Bessel")
   if changes.has("add_conference") and changes.add_conference:
     raise UnsupportedEditError("Video calls can only be added to Google events")
+  if changes.has("color_id"):
+    raise UnsupportedEditError("Event colours are only supported on Google events")
 
 
 # --- edits -------------------------------------------------------------------
@@ -234,6 +236,16 @@ def edit_occurrence(data: str, uid: str, slot: Moment, start: Moment, end: Momen
   if changes.has("rule"):
     raise UnsupportedEditError("A single occurrence can't change how the series repeats")
   calendar = _parse(data)
+  override = _override_for(calendar, uid, slot, start, end)
+  if changes.timing is not None:
+    _set_times(override, changes.timing.start, changes.timing.end)
+  _apply_fields(override, changes)
+  _touch(override, now)
+  return _serialize(calendar)
+
+
+def _override_for(calendar: ICalendar, uid: str, slot: Moment, start: Moment, end: Moment) -> IEvent:
+  """The occurrence's override, added (as a copy of the series) if it has none."""
   master, overrides = _components(calendar, uid)
   master_start = _start(master)
   override = next((o for o in overrides if (rid := _recurrence_id(o)) is not None and _same(rid, _like(master_start, slot))), None)
@@ -243,10 +255,41 @@ def edit_occurrence(data: str, uid: str, slot: Moment, start: Moment, end: Momen
     override.add("SEQUENCE", int(master.get("SEQUENCE", 0)))
     _set_times(override, start, end)
     calendar.add_component(override)
-  if changes.timing is not None:
-    _set_times(override, changes.timing.start, changes.timing.end)
-  _apply_fields(override, changes)
-  _touch(override, now)
+  return override
+
+
+_PARTSTAT: dict[str, str] = {"accepted": "ACCEPTED", "declined": "DECLINED", "tentative": "TENTATIVE"}
+
+
+def _set_reply(component: IEvent, owners: frozenset[str], reply: Reply) -> bool:
+  raw = component.get("ATTENDEE")
+  attendees = raw if isinstance(raw, list) else [raw] if raw is not None else []
+  answered = False
+  for attendee in attendees:
+    if mailto_address(attendee).lower() in owners:
+      attendee.params["PARTSTAT"] = _PARTSTAT[reply]
+      attendee.params.pop("RSVP", None)
+      answered = True
+  return answered
+
+
+def respond(data: str, uid: str, reply: Reply, owners: frozenset[str], now: datetime, occurrence: tuple[Moment, Moment, Moment] | None = None) -> str:
+  """Sets this account's PARTSTAT, on one occurrence (slot, start, end) or the
+  whole event. iCloud then sends the organizer the reply itself. SEQUENCE is
+  the organizer's to bump, so only DTSTAMP changes."""
+  calendar = _parse(data)
+  if occurrence is None:
+    master, overrides = _components(calendar, uid)
+    components = [master, *overrides]
+  else:
+    components = [_override_for(calendar, uid, *occurrence)]
+  answered = False
+  for component in components:
+    if _set_reply(component, owners, reply):
+      _set(component, "DTSTAMP", now)
+      answered = True
+  if not answered:
+    raise UnsupportedEditError("You're not a guest of this event")
   return _serialize(calendar)
 
 
@@ -462,6 +505,17 @@ class ICloudEventEditor:
     else:
       await self.client.put_resource(href, updated, etag=etag)
     return uid
+
+  async def respond(self, target: TargetEvent, reply: Reply, scope: EditScope) -> str:
+    if target.recurring and scope == EditScope.following:
+      raise UnsupportedEditError("Answer this occurrence or the whole series")
+    href = _require_href(target)
+    data, etag = await self.client.get_resource(href)
+    _check_etag(target, etag)
+    occurrence = (target.original_slot(), target.start, target.end) if target.recurring and scope == EditScope.this else None
+    updated = respond(data, _uid_of(target), reply, await self.client.owner_addresses(), self.now(), occurrence)
+    await self.client.put_resource(href, updated, etag=etag)
+    return _uid_of(target)
 
   async def delete(self, target: TargetEvent, scope: EditScope) -> None:
     href = _require_href(target)

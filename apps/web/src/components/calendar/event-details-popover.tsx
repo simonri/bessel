@@ -17,12 +17,9 @@ import {
 import { addDays, format, isSameDay, parseISO } from "date-fns";
 import {
   ArrowRight,
-  Check,
-  Circle,
   Clock,
   ExternalLink,
   Globe,
-  HelpCircle,
   Lock,
   MapPin,
   MoreHorizontal,
@@ -38,9 +35,9 @@ import { cn } from "@/lib/utils";
 import { shortOffsetLabel } from "./calendar-timezone";
 import type {
   CalendarAccount,
-  CalendarAttendee,
   CalendarEvent,
   CalendarInfo,
+  Reply,
 } from "./calendar-types";
 import {
   cityOf,
@@ -48,14 +45,9 @@ import {
   EventEditor,
   type SaveRequest,
 } from "./event-editor";
-import {
-  fmtDuration,
-  fmtTime,
-  httpUrl,
-  Row,
-  Section,
-} from "./event-fields";
+import { fmtDuration, fmtTime, httpUrl, Row, Section } from "./event-fields";
 import { describeRecurrence } from "./event-payload";
+import { canReply, ParticipantList, RsvpBar } from "./participants";
 import {
   PLACEMENT_GAP,
   useFixedPlacement,
@@ -63,31 +55,8 @@ import {
 } from "./popover-placement";
 import { SCOPE_LABELS } from "./scope-menu";
 
-const MAX_GUESTS_SHOWN = 8;
 const URL_PATTERN = /(https?:\/\/[^\s<>"']+)/g;
 const TRAILING_PUNCTUATION = /[.,;:!?)\]]+$/;
-
-const RESPONSE_META: Record<
-  CalendarAttendee["response"],
-  { label: string; icon: ReactNode }
-> = {
-  accepted: {
-    label: "Going",
-    icon: <Check className="size-3 text-emerald-400" strokeWidth={3} />,
-  },
-  declined: {
-    label: "Declined",
-    icon: <X className="size-3 text-red-400" strokeWidth={3} />,
-  },
-  tentative: {
-    label: "Maybe",
-    icon: <HelpCircle className="size-3 text-amber-400" />,
-  },
-  needs_action: {
-    label: "Awaiting",
-    icon: <Circle className="size-2.5 text-white/30" />,
-  },
-};
 
 function hostOf(url: string): string {
   try {
@@ -178,38 +147,6 @@ function When({ event }: { event: CalendarEvent }) {
   );
 }
 
-function Guests({ attendees }: { attendees: CalendarAttendee[] }) {
-  const going = attendees.filter((a) => a.response === "accepted").length;
-  const shown = attendees.slice(0, MAX_GUESTS_SHOWN);
-  return (
-    <div className="w-full px-1.5">
-      <p className="leading-7 text-white/45">
-        {attendees.length} {attendees.length === 1 ? "guest" : "guests"} -{" "}
-        {going} going
-      </p>
-      <ul>
-        {shown.map((a) => (
-          <li
-            key={a.email}
-            className="flex h-7 items-center gap-2"
-            title={RESPONSE_META[a.response].label}
-          >
-            <span className="flex size-3 shrink-0 items-center justify-center">
-              {RESPONSE_META[a.response].icon}
-            </span>
-            <span className="truncate text-white/80">{a.name ?? a.email}</span>
-          </li>
-        ))}
-      </ul>
-      {attendees.length > shown.length && (
-        <p className="leading-7 text-white/40">
-          and {attendees.length - shown.length} more
-        </p>
-      )}
-    </div>
-  );
-}
-
 function Location({ location }: { location: string }) {
   if (/^https?:\/\//.test(location)) {
     return (
@@ -242,14 +179,12 @@ export function readOnlyReason(
   return null;
 }
 
-function ReadOnlyNotice({
-  reason,
-  event,
+/** The account was connected without edit access; reconnecting grants it.
+ *  Other read-only cases (invitations, read-only calendars) explain themselves. */
+function ReconnectNotice({
   account,
   onReconnect,
 }: {
-  reason: ReadOnlyReason;
-  event: CalendarEvent;
   account: CalendarAccount | undefined;
   onReconnect: () => void;
 }) {
@@ -257,13 +192,9 @@ function ReadOnlyNotice({
     <div className="mx-4 mb-3 flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-12 text-white/55">
       <Lock className="size-3.5 shrink-0 text-white/35" />
       <span className="min-w-0 flex-1">
-        {reason === "reconnect"
-          ? `${account?.email ?? "This account"} is connected read-only.`
-          : reason === "calendar"
-            ? "This calendar is read-only."
-            : `Invitation from ${event.details.creatorName ?? event.details.creatorEmail ?? "someone else"}; only the organizer can change it.`}
+        {account?.email ?? "This account"} is connected read-only.
       </span>
-      {reason === "reconnect" && account?.provider === "google" && (
+      {account?.provider === "google" && (
         <button
           type="button"
           onClick={onReconnect}
@@ -281,11 +212,16 @@ function EventDetailsView({
   calendar,
   account,
   timeZone,
+  replying,
+  onReply,
 }: {
   event: CalendarEvent;
   calendar: CalendarInfo | undefined;
   account: CalendarAccount | undefined;
   timeZone: string;
+  replying: boolean;
+  /** Set when this account can answer the invitation. */
+  onReply?: (reply: Reply, scope: EditScope) => void;
 }) {
   const d = event.details;
   const conferenceUrl = httpUrl(d.conferenceUrl);
@@ -328,17 +264,30 @@ function EventDetailsView({
 
       {(d.creatorEmail || d.attendees.length > 0) && (
         <Section>
-          <Row icon={<User />}>
-            {d.creatorEmail && (
+          {d.attendees.length > 0 ? (
+            <ParticipantList attendees={d.attendees} />
+          ) : (
+            <Row icon={<User />}>
               <p className="w-full truncate px-1.5 leading-7 text-white/85">
                 Created by{" "}
-                <span className="text-white/45" title={d.creatorEmail}>
+                <span className="text-white/45" title={d.creatorEmail ?? ""}>
                   {d.creatorName ?? d.creatorEmail}
                 </span>
               </p>
-            )}
-            {d.attendees.length > 0 && <Guests attendees={d.attendees} />}
-          </Row>
+            </Row>
+          )}
+          {onReply && d.myResponse && (
+            <Row>
+              <div className="w-full">
+                <RsvpBar
+                  value={d.myResponse}
+                  recurring={d.recurring}
+                  disabled={replying}
+                  onReply={onReply}
+                />
+              </div>
+            </Row>
+          )}
         </Section>
       )}
 
@@ -384,11 +333,12 @@ function EventDetailsView({
           <span className="truncate px-1.5 text-white/85">
             {calendar?.name ?? "Calendar"}
           </span>
-          {account && (
-            <span className="truncate text-12 text-white/40">
-              {account.email}
-            </span>
-          )}
+          {account &&
+            account.email.toLowerCase() !== calendar?.name.toLowerCase() && (
+              <span className="truncate text-12 text-white/40">
+                {account.email}
+              </span>
+            )}
         </Row>
         <Row>
           <span className="px-1.5 text-white/85">
@@ -471,6 +421,8 @@ export function EventPopover({
   saving,
   onSave,
   onDelete,
+  onReply,
+  replying,
   onReconnect,
   onClose,
   onDirtyChange,
@@ -487,6 +439,9 @@ export function EventPopover({
   saving: boolean;
   onSave: (request: SaveRequest) => void;
   onDelete: (scope: EditScope | undefined, notifyGuests: boolean) => void;
+  /** Answers the shown invitation. */
+  onReply: (reply: Reply, scope: EditScope) => void;
+  replying: boolean;
   onReconnect: () => void;
   onClose: () => void;
   /** Unsaved edits are open; the page holds off switching events meanwhile. */
@@ -520,6 +475,11 @@ export function EventPopover({
   const googleLink =
     account?.provider === "google" ? httpUrl(event?.details.htmlLink) : null;
   const canDelete = editing && event !== null;
+  const replyable =
+    event !== null &&
+    canReply(event.details.attendees) &&
+    account?.canWrite === true &&
+    calendar?.writable === true;
 
   const requestClose = () => {
     if (dirty) setConfirmDiscard(true);
@@ -679,6 +639,8 @@ export function EventPopover({
                   timeZone={timeZone}
                   saving={saving}
                   onSave={onSave}
+                  replying={replying}
+                  onReply={replyable ? onReply : undefined}
                   onCancel={() => {
                     setDirty(false);
                     onClose();
@@ -688,10 +650,8 @@ export function EventPopover({
               ) : (
                 event && (
                   <>
-                    {reason && (
-                      <ReadOnlyNotice
-                        reason={reason}
-                        event={event}
+                    {reason === "reconnect" && (
+                      <ReconnectNotice
                         account={account}
                         onReconnect={onReconnect}
                       />
@@ -701,6 +661,8 @@ export function EventPopover({
                       calendar={calendar}
                       account={account}
                       timeZone={timeZone}
+                      replying={replying}
+                      onReply={replyable ? onReply : undefined}
                     />
                   </>
                 )

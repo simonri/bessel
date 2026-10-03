@@ -254,7 +254,7 @@ class TestEventDetails:
     assert event is not None
     assert (event.creator_name, event.creator_email) == (None, "suseson@gmail.com")
     assert event.description == "Bring towel\nPool 2\nSchedule (https://example.com/x)"
-    assert event.attendees == [ProviderAttendee(email="me@gmail.com", name=None, response="tentative")]
+    assert event.attendees == [ProviderAttendee(email="me@gmail.com", name=None, response="tentative", is_self=True)]
     assert event.conference_url == "https://meet.google.com/abc"
     assert (event.busy, event.recurring, event.visibility) == (False, True, None)
 
@@ -463,7 +463,9 @@ class TestSyncAndEvents:
     assert [(c["id"], c["name"], c["color"], c["hidden"]) for c in calendars] == [(work_id, "Work (renamed)", "#0000ff", True)]
     events = (await client.get("/v1/calendars/events", params={"start_ts": int(WEEK_START.timestamp()), "end_ts": int(WEEK_END.timestamp())})).json()["events"]
     assert [(e["title"], e["start_at"], e["description"], e["busy"]) for e in events] == [("Moved", "2026-10-06T11:00:00Z", "Now with notes", False)]
-    assert events[0]["attendees"] == [{"email": "al@example.com", "name": "Al", "response": "accepted"}]
+    assert events[0]["attendees"] == [
+      {"email": "al@example.com", "name": "Al", "response": "accepted", "is_self": False, "is_organizer": False, "photo_url": None}
+    ]
     assert account.last_synced_at is not None
 
   @pytest.mark.asyncio

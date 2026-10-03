@@ -50,6 +50,7 @@ import {
   listTransactionsV1TransactionsGetResponseTransformer,
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
+  respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
   setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
@@ -289,6 +290,9 @@ import type {
   ReorderTasksV1TasksReorderPatchData,
   ReorderTasksV1TasksReorderPatchErrors,
   ReorderTasksV1TasksReorderPatchResponses,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses,
   RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
   RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors,
   RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses,
@@ -924,6 +928,33 @@ export const updateCalendarEventV1CalendarsEventsEventIdPatch = <
       updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/events/{event_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Answer Calendar Invitation
+ */
+export const respondToCalendarEventV1CalendarsEventsEventIdResponsePut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).put<
+    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses,
+    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/events/{event_id}/response",
     ...options,
     headers: {
       "Content-Type": "application/json",

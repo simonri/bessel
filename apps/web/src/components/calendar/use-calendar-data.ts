@@ -86,6 +86,7 @@ function toAccounts(data: CalendarAccountListResponse | undefined) {
       lastSyncedAt: a.last_synced_at,
       syncError: a.sync_error,
       canWrite: a.can_write,
+      canReadPeople: a.can_read_people ?? false,
     });
     for (const c of a.calendars) {
       calendars.push({
@@ -112,7 +113,14 @@ export function toCalendarEvent(e: CalendarEventSchema): CalendarEvent | null {
       description: e.description,
       creatorName: e.creator_name,
       creatorEmail: e.creator_email,
-      attendees: e.attendees,
+      attendees: e.attendees.map((a) => ({
+        email: a.email,
+        name: a.name,
+        response: a.response,
+        isSelf: a.is_self ?? false,
+        isOrganizer: a.is_organizer ?? false,
+        photoUrl: a.photo_url ?? null,
+      })),
       myResponse: e.my_response ?? null,
       conferenceUrl: e.conference_url,
       htmlLink: e.html_link,
@@ -120,6 +128,7 @@ export function toCalendarEvent(e: CalendarEventSchema): CalendarEvent | null {
       recurring: e.recurring,
       visibility: e.visibility,
       editable: e.editable,
+      colorId: e.color_id ?? null,
       rule: e.rule ?? null,
       recurrence: e.recurrence ?? null,
     },

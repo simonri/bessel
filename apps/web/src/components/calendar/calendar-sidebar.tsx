@@ -5,6 +5,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
+import { Switch } from "@bessel/ui/components/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +14,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertCircle,
+  Bell,
   Check,
   ChevronRight,
   MoreHorizontal,
@@ -20,12 +22,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { IconButton } from "@/components/ui-kit";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import type {
   CalendarAccount,
   CalendarInfo,
   CalendarViewMode,
 } from "./calendar-types";
+import { notificationsSupported, REMINDER_MINUTES } from "./event-reminders";
 import { ICloudConnectDialog } from "./icloud-connect-dialog";
 import { MiniMonth } from "./mini-month";
 import type { CalendarActions } from "./use-calendar-data";
@@ -143,12 +147,63 @@ export function CalendarSidebar({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <ReminderToggle />
+
       <ICloudConnectDialog
         open={icloudOpen}
         onOpenChange={setICloudOpen}
         onConnect={actions.connectICloud}
       />
     </aside>
+  );
+}
+
+function ReminderToggle() {
+  const { settings, update } = useSettings();
+  const [permission, setPermission] = useState(() =>
+    notificationsSupported() ? Notification.permission : "denied",
+  );
+  if (!notificationsSupported()) return null;
+  const on = settings.calendarReminders && permission === "granted";
+
+  const toggle = async () => {
+    if (on) {
+      update({ calendarReminders: false });
+      return;
+    }
+    // Browsers only show the permission prompt in response to a click.
+    const result =
+      permission === "granted"
+        ? permission
+        : await Notification.requestPermission();
+    setPermission(result);
+    if (result === "granted") update({ calendarReminders: true });
+  };
+
+  return (
+    <div className="mt-auto pt-3">
+      <div className="flex h-7 items-center gap-2.5 rounded-md px-2 text-12 text-white/55">
+        <Bell className="size-3.5 shrink-0" />
+        <label
+          htmlFor="event-reminders"
+          className="min-w-0 flex-1 cursor-pointer truncate"
+        >
+          Remind {REMINDER_MINUTES} min before
+        </label>
+        <Switch
+          id="event-reminders"
+          size="sm"
+          checked={on}
+          onCheckedChange={() => void toggle()}
+        />
+      </div>
+      {permission === "denied" && (
+        <p className="px-2 pt-1 text-11 leading-snug text-amber-200/70">
+          Notifications are blocked. Allow them for Bessel in your browser or
+          system settings.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -217,7 +272,8 @@ function AccountHeader({
         <DropdownMenuTrigger asChild>
           <IconButton
             title="Account options"
-            className="size-5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+            size="xs"
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
           >
             <MoreHorizontal />
           </IconButton>
@@ -228,7 +284,13 @@ function AccountHeader({
           </p>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={onSync}>Sync now</DropdownMenuItem>
-          {account.provider === "google" && account.syncError && (
+          {account.provider === "google" && !account.canReadPeople && (
+            <p className="max-w-56 px-2.5 pb-1.5 text-11 text-white/40">
+              Reconnect to show guests' names and photos.
+            </p>
+          )}
+          {account.provider === "google" && (
+            // Also how newly added permissions get granted.
             <DropdownMenuItem onSelect={onReconnect}>
               Reconnect
             </DropdownMenuItem>

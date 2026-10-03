@@ -90,6 +90,7 @@ import {
   type Options,
   reopenTaskV1TasksTaskIdReopenPost,
   reorderTasksV1TasksReorderPatch,
+  respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
   revokeIngestTokenV1IngestTokensTokenIdDelete,
   searchGooglePlacesV1PlacesSearchGet,
   setProjectLocationV1ProjectsProjectIdLocationPut,
@@ -336,6 +337,9 @@ import type {
   ReorderTasksV1TasksReorderPatchData,
   ReorderTasksV1TasksReorderPatchError,
   ReorderTasksV1TasksReorderPatchResponse,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError,
+  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
   RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
   RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
   RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
@@ -1277,6 +1281,37 @@ export const updateCalendarEventV1CalendarsEventsEventIdPatchMutation = (
   };
   return mutationOptions;
 };
+
+/**
+ * Answer Calendar Invitation
+ */
+export const respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation =
+  (
+    options?: Partial<
+      Options<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData>
+    >,
+  ): UseMutationOptions<
+    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
+    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError,
+    Options<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
+      RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError,
+      Options<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await respondToCalendarEventV1CalendarsEventsEventIdResponsePut({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
 
 export const listCategoriesV1CategoriesGetQueryKey = (
   options?: Options<ListCategoriesV1CategoriesGetData>,

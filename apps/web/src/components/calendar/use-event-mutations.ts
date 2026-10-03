@@ -6,6 +6,7 @@ import {
   type EditScope,
   type EventUpdate,
   type RecurrenceSchema,
+  respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation,
   updateCalendarEventV1CalendarsEventsEventIdPatchMutation,
 } from "@bessel/client";
 import {
@@ -17,7 +18,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 import { fromWallClock } from "./calendar-timezone";
-import type { CalendarEvent } from "./calendar-types";
+import type { CalendarEvent, Reply } from "./calendar-types";
 import { type EventDraftTiming, timingPayload } from "./event-payload";
 import {
   accountsQueryKey,
@@ -37,6 +38,8 @@ export interface EventChangesInput {
   recurrence?: RecurrenceSchema | null;
   busy?: boolean;
   addConference?: boolean;
+  /** Google event colour id; null goes back to the calendar's colour. */
+  colorId?: string | null;
 }
 
 export interface WriteOptions {
@@ -64,6 +67,7 @@ export function eventFieldsBody(
   if ("recurrence" in changes) body.recurrence = changes.recurrence ?? null;
   if ("busy" in changes) body.busy = changes.busy;
   if (changes.addConference) body.add_conference = true;
+  if ("colorId" in changes) body.color_id = changes.colorId ?? null;
   return body;
 }
 
@@ -113,6 +117,7 @@ export function applyOptimistic(
   if ("location" in changes) next.location = changes.location || null;
   if ("description" in changes) next.description = changes.description || null;
   if ("busy" in changes && changes.busy !== undefined) next.busy = changes.busy;
+  if ("colorId" in changes) next.color_id = changes.colorId ?? null;
   if (changes.timing) {
     const { allDay, start, end } = changes.timing;
     next.all_day = allDay;
@@ -130,6 +135,20 @@ export function applyOptimistic(
     }
   }
   return next;
+}
+
+/** The cached API row with this account's answer changed. */
+export function applyReply(
+  event: CalendarEventSchema,
+  reply: Reply,
+): CalendarEventSchema {
+  return {
+    ...event,
+    my_response: reply,
+    attendees: event.attendees.map((a) =>
+      a.is_self ? { ...a, response: reply } : a,
+    ),
+  };
 }
 
 export function useEventMutations(timeZone: string) {
@@ -155,6 +174,15 @@ export function useEventMutations(timeZone: string) {
     onSettled: settle,
   });
 
+  const reply = useMutation({
+    ...respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation({
+      client,
+    }),
+    onError: (error) =>
+      toast.error(errorDetail(error, "Couldn't send your answer")),
+    onSettled: settle,
+  });
+
   const remove = useMutation({
     ...deleteCalendarEventV1CalendarsEventsEventIdDeleteMutation({ client }),
     onError: (error) =>
@@ -164,6 +192,30 @@ export function useEventMutations(timeZone: string) {
 
   return {
     isSaving: create.isPending || update.isPending || remove.isPending,
+    isReplying: reply.isPending,
+
+    async respondToEvent(
+      event: CalendarEvent,
+      answer: Reply,
+      scope: EditScope = "this",
+    ): Promise<void> {
+      const caches = snapshotEvents(queryClient);
+      await queryClient.cancelQueries({
+        predicate: (query) => isEventsQuery(query.queryKey),
+      });
+      updateCachedEvents(queryClient, (events) =>
+        events.map((e) => (e.id === event.id ? applyReply(e, answer) : e)),
+      );
+      try {
+        await reply.mutateAsync({
+          path: { event_id: event.id },
+          body: { response: answer, scope },
+        });
+      } catch (error) {
+        restoreEvents(queryClient, caches);
+        throw error;
+      }
+    },
 
     async createEvent(
       calendarId: string,

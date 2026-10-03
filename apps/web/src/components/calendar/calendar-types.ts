@@ -10,6 +10,8 @@ export interface CalendarAccount {
   syncError: string | null;
   /** False when connected read-only; reconnecting grants edit access. */
   canWrite: boolean;
+  /** Google: guests can be named from contacts; false until reconnected. */
+  canReadPeople: boolean;
 }
 
 export interface CalendarInfo {
@@ -23,10 +25,24 @@ export interface CalendarInfo {
   primary: boolean;
 }
 
+export type AttendeeResponse =
+  | "accepted"
+  | "declined"
+  | "tentative"
+  | "needs_action";
+
+/** A guest's answer; "needs_action" means they haven't answered yet. */
+export type Reply = Exclude<AttendeeResponse, "needs_action">;
+
 export interface CalendarAttendee {
   email: string;
   name: string | null;
-  response: "accepted" | "declined" | "tentative" | "needs_action";
+  response: AttendeeResponse;
+  /** The connected account itself. */
+  isSelf: boolean;
+  isOrganizer: boolean;
+  /** From the account's contacts or company directory, when known. */
+  photoUrl: string | null;
 }
 
 export interface CalendarEventDetails {
@@ -45,6 +61,8 @@ export interface CalendarEventDetails {
   visibility: "public" | "private" | "confidential" | null;
   /** False for invitations organized by someone else. */
   editable: boolean;
+  /** Google's per-event colour id; null shows the calendar's colour. */
+  colorId: string | null;
   /** The series' raw RRULE; set even when `recurrence` can't represent it. */
   rule: string | null;
   recurrence: RecurrenceSchema | null;

@@ -1,4 +1,5 @@
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -11,13 +12,15 @@ from api.calendars import push
 from api.calendars.google import GoogleCalendarClient, authorize_url
 from api.calendars.icloud import ICloudCalendarClient
 from api.calendars.providers import ProviderAuthError, ProviderCalendar, ProviderEvent
-from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarRepository
+from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarPersonRepository, CalendarRepository
+from api.calendars.schemas import CalendarEventSchema
 from api.common.encryption import InvalidToken, decrypt, encrypt
 from api.common.utils import utc_now
 from api.exceptions import ServiceUnavailableError, ValidationError
 from api.logging import Logger
 from api.models.calendar import Calendar
 from api.models.calendar_account import CalendarAccount, CalendarProvider
+from api.models.calendar_event import CalendarEvent
 from api.settings import settings
 from api.worker import enqueue_job
 
@@ -39,6 +42,7 @@ class AccountSnapshot:
   events: dict[str, list[ProviderEvent]]
   # Re-read on every sync so granting or revoking edit access in Google shows up.
   can_write: bool = True
+  can_read_people: bool = False
 
 
 def sync_window() -> tuple[datetime, datetime]:
@@ -147,7 +151,7 @@ class CalendarService:
         grant = await google.refresh_access_token(secret)
         calendars = await google.list_calendars(grant.access_token)
         events = {c.external_id: await google.list_events(grant.access_token, c.external_id, start, end) for c in calendars}
-      return AccountSnapshot(calendars, events, can_write=grant.can_write)
+      return AccountSnapshot(calendars, events, can_write=grant.can_write, can_read_people=grant.can_read_people)
 
     async with provider_http.client() as http:
       icloud = ICloudCalendarClient(http, email, secret)
@@ -170,6 +174,19 @@ class CalendarService:
     async with provider_http.client() as http:
       return await ICloudCalendarClient(http, email, decrypt(encrypted_credentials)).list_calendars()
 
+  async def event_schemas(self, people: CalendarPersonRepository, user_id: UUID, events: Sequence[CalendarEvent]) -> list[CalendarEventSchema]:
+    """Events as returned by the API, with guests named and pictured from the
+    user's own accounts' contacts when the event itself doesn't name them."""
+    schemas = [CalendarEventSchema.model_validate(event) for event in events]
+    known = await people.lookup_for_user(user_id, {a.email.lower() for s in schemas for a in s.attendees})
+    for schema in schemas:
+      for attendee in schema.attendees:
+        person = known.get(attendee.email.lower())
+        if person is not None:
+          attendee.name = attendee.name or person.name
+          attendee.photo_url = person.photo_url
+    return schemas
+
   async def apply_snapshot(
     self,
     calendars: CalendarRepository,
@@ -181,6 +198,7 @@ class CalendarService:
     for external_id, calendar in by_external_id.items():
       await events.replace_for_calendar(calendar, snapshot.events.get(external_id, []))
     account.can_write = snapshot.can_write
+    account.can_read_people = snapshot.can_read_people
     account.last_synced_at = utc_now()
     account.sync_error = None
 

@@ -100,6 +100,8 @@ export function shortOffsetLabel(timeZone: string, date: Date): string {
 
 export interface TimeZoneOption {
   id: string;
+  /** Lowercased offset, name, city and id, for search. */
+  search: string;
   /** `GMT+02:00`; plain `GMT` is normalized to `GMT+00:00` so columns align. */
   offset: string;
   offsetMinutes: number;
@@ -120,12 +122,16 @@ export function timeZoneOptions(at: Date): TimeZoneOption[] {
   return ids
     .map((id) => {
       const longOffset = zoneName(id, at, "longOffset");
+      const offset = longOffset === "GMT" ? "GMT+00:00" : longOffset;
+      const name = zoneName(id, at, "long");
+      const city = (id.split("/").at(-1) ?? id).replaceAll("_", " ");
       return {
         id,
-        offset: longOffset === "GMT" ? "GMT+00:00" : longOffset,
+        search: [offset, name, city, id].join(" ").toLowerCase(),
+        offset,
         offsetMinutes: parseOffset(longOffset),
-        name: zoneName(id, at, "long"),
-        city: (id.split("/").at(-1) ?? id).replaceAll("_", " "),
+        name,
+        city,
       };
     })
     .sort(
@@ -134,6 +140,16 @@ export function timeZoneOptions(at: Date): TimeZoneOption[] {
         a.name.localeCompare(b.name) ||
         a.city.localeCompare(b.city),
     );
+}
+
+let cached: { hour: number; options: TimeZoneOption[] } | null = null;
+
+/** `timeZoneOptions` for now, built once per hour: offsets only change at
+ *  DST switches, which happen on the hour, and building takes ~100ms. */
+export function currentTimeZoneOptions(now = new Date()): TimeZoneOption[] {
+  const hour = Math.floor(now.getTime() / 3_600_000);
+  if (cached?.hour !== hour) cached = { hour, options: timeZoneOptions(now) };
+  return cached.options;
 }
 
 function isValidTimeZone(timeZone: string): boolean {

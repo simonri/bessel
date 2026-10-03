@@ -92,6 +92,16 @@ export function moveTiming(
   };
 }
 
+/** An event whose start was dragged by `minutes`, never shorter than the minimum. */
+export function resizeStartTiming(
+  timing: EventDraftTiming,
+  minutes: number,
+): EventDraftTiming {
+  const start = addMinutes(timing.start, minutes);
+  const maximum = addMinutes(timing.end, -MIN_DURATION_MINUTES);
+  return { ...timing, start: start > maximum ? maximum : start };
+}
+
 /** An event whose end was dragged by `minutes`, never shorter than the minimum. */
 export function resizeTiming(
   timing: EventDraftTiming,

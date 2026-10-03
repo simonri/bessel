@@ -7,6 +7,7 @@ import {
   minuteDelta,
   minutesAt,
   moveTiming,
+  resizeStartTiming,
   resizeTiming,
   sameTiming,
 } from "./grid-geometry";
@@ -117,6 +118,17 @@ describe("moveTiming / resizeTiming", () => {
   it("resizes the end with a minimum length", () => {
     expect(resizeTiming(timing, 30).end).toEqual(wed(11));
     expect(resizeTiming(timing, -200).end).toEqual(wed(9, 15));
+  });
+
+  it("resizes the start with a minimum length, keeping the end", () => {
+    expect(resizeStartTiming(timing, -30)).toEqual({
+      ...timing,
+      start: wed(8, 30),
+    });
+    expect(resizeStartTiming(timing, 200)).toEqual({
+      ...timing,
+      start: wed(10, 15),
+    });
   });
 
   it("detects no-op drags", () => {

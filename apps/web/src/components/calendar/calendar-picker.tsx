@@ -4,6 +4,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
 import { Check, ChevronDown } from "lucide-react";
@@ -37,6 +38,15 @@ export function groupByAccount(
       calendars: calendars.filter((c) => c.accountId === account.id),
     }))
     .filter((group) => group.calendars.length > 0);
+}
+
+/** An account whose only calendar is named after it (Google's primary
+ *  calendar is): its header would just repeat the calendar's name. */
+export function namesItsAccount(group: CalendarGroup): boolean {
+  return (
+    group.calendars.length === 1 &&
+    group.calendars[0].name.toLowerCase() === group.account.email.toLowerCase()
+  );
 }
 
 function Swatch({ color }: { color: string | undefined }) {
@@ -86,16 +96,19 @@ export function CalendarPicker({
         collisionPadding={12}
         className="max-h-[min(420px,var(--radix-dropdown-menu-content-available-height))] min-w-56 overflow-y-auto"
       >
-        {groupByAccount(calendars, accounts).map((group) => (
+        {groupByAccount(calendars, accounts).map((group, i) => (
           <DropdownMenuGroup key={group.account.id}>
-            <DropdownMenuLabel className="flex items-center gap-2 pl-8 text-12 font-normal tracking-normal text-white/45">
-              <span className="truncate">{group.account.email}</span>
-              {group.provider && (
-                <span className="ml-auto text-11 text-white/30">
-                  {group.provider}
-                </span>
-              )}
-            </DropdownMenuLabel>
+            {i > 0 && <DropdownMenuSeparator />}
+            {!namesItsAccount(group) && (
+              <DropdownMenuLabel className="flex items-center gap-2 pl-8 text-12 font-normal tracking-normal text-white/45">
+                <span className="truncate">{group.account.email}</span>
+                {group.provider && (
+                  <span className="ml-auto text-11 text-white/30">
+                    {group.provider}
+                  </span>
+                )}
+              </DropdownMenuLabel>
+            )}
             {group.calendars.map((calendar) => (
               <DropdownMenuItem
                 key={calendar.id}
@@ -111,6 +124,11 @@ export function CalendarPicker({
                 </span>
                 <Swatch color={calendar.color} />
                 <span className="truncate">{calendar.name}</span>
+                {namesItsAccount(group) && group.provider && (
+                  <span className="ml-auto pl-2 text-11 text-white/30">
+                    {group.provider}
+                  </span>
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>

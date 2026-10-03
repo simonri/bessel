@@ -21,7 +21,6 @@ import {
   Repeat,
   User,
   Video,
-  X,
 } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { PrimaryButton, SoftButton } from "@/components/ui-kit";
@@ -32,6 +31,7 @@ import type {
   CalendarAccount,
   CalendarEvent,
   CalendarInfo,
+  Reply,
 } from "./calendar-types";
 import {
   DateSelect,
@@ -56,10 +56,9 @@ import {
   withStart,
 } from "./event-payload";
 import { sameTiming } from "./grid-geometry";
+import { ParticipantEditor, ParticipantList, RsvpBar } from "./participants";
 import { allowedScopes, ScopeMenuItems } from "./scope-menu";
 import type { EventChangesInput } from "./use-event-mutations";
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface EditorSubject {
   /** Null while creating a new event. */
@@ -223,60 +222,6 @@ function TimingFields({
   );
 }
 
-function GuestField({
-  attendees,
-  onChange,
-}: {
-  attendees: string[];
-  onChange: (attendees: string[]) => void;
-}) {
-  const [draft, setDraft] = useState("");
-  const invalid = draft.trim() !== "" && !EMAIL.test(draft.trim());
-  const add = () => {
-    const email = draft.trim().toLowerCase();
-    if (!EMAIL.test(email)) return;
-    if (!attendees.includes(email)) onChange([...attendees, email]);
-    setDraft("");
-  };
-  return (
-    <>
-      {attendees.map((email) => (
-        <div
-          key={email}
-          className="group flex h-7 w-full items-center gap-2 rounded-md px-1.5 text-white/80 hover:bg-white/[0.04]"
-        >
-          <span className="min-w-0 flex-1 truncate">{email}</span>
-          <button
-            type="button"
-            aria-label={`Remove ${email}`}
-            onClick={() => onChange(attendees.filter((a) => a !== email))}
-            className="rounded p-0.5 text-white/40 opacity-0 group-hover:opacity-100 hover:bg-white/[0.08] hover:text-white/80 focus-visible:opacity-100"
-          >
-            <X className="size-3" />
-          </button>
-        </div>
-      ))}
-      <input
-        className={cn(plainFieldClass, invalid && "text-red-300")}
-        placeholder="Add participant"
-        aria-label="Add participant"
-        value={draft}
-        aria-invalid={invalid}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={add}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === ",") {
-            e.preventDefault();
-            add();
-          } else if (e.key === "Backspace" && !draft && attendees.length) {
-            onChange(attendees.slice(0, -1));
-          }
-        }}
-      />
-    </>
-  );
-}
-
 export function EventEditor({
   subject,
   calendars,
@@ -284,6 +229,8 @@ export function EventEditor({
   timeZone,
   saving,
   onSave,
+  replying = false,
+  onReply,
   onCancel,
   onDirtyChange,
 }: {
@@ -295,6 +242,9 @@ export function EventEditor({
   timeZone: string;
   saving: boolean;
   onSave: (request: SaveRequest) => void;
+  replying?: boolean;
+  /** Set when this account can answer the invitation. */
+  onReply?: (reply: Reply, scope: EditScope) => void;
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
@@ -415,7 +365,11 @@ export function EventEditor({
             value={form.repeat}
             onValueChange={(v) => update("repeat", v as RepeatPresetKey)}
           >
-            <SelectTrigger aria-label="Repeat" className={plainSelectClass}>
+            <SelectTrigger
+              size="sm"
+              aria-label="Repeat"
+              className={plainSelectClass}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -438,28 +392,43 @@ export function EventEditor({
       </Section>
 
       <Section>
-        <Row icon={<User />}>
-          {details?.creatorEmail && (
+        {details?.creatorEmail && !hasGuests && (
+          <Row icon={<User />}>
             <p className="w-full truncate px-1.5 leading-7 text-white/85">
               Created by{" "}
               <span className="text-white/45" title={details.creatorEmail}>
                 {details.creatorName ?? details.creatorEmail}
               </span>
             </p>
-          )}
-          {isGoogle ? (
-            <GuestField
-              attendees={form.attendees}
-              onChange={(a) => update("attendees", a)}
-            />
-          ) : (
+          </Row>
+        )}
+        {isGoogle ? (
+          <ParticipantEditor
+            emails={form.attendees}
+            known={details?.attendees ?? []}
+            onChange={(a) => update("attendees", a)}
+          />
+        ) : hasGuests && details ? (
+          <ParticipantList attendees={details.attendees} />
+        ) : (
+          <Row icon={<User />}>
             <p className="px-1.5 leading-7 text-white/35">
-              {hasGuests
-                ? `${form.attendees.length} participants - edit them in Apple Calendar`
-                : "Participants aren't supported for iCloud"}
+              Participants aren't supported for iCloud
             </p>
-          )}
-        </Row>
+          </Row>
+        )}
+        {onReply && details?.myResponse && (
+          <Row>
+            <div className="w-full">
+              <RsvpBar
+                value={details.myResponse}
+                recurring={recurring}
+                disabled={replying}
+                onReply={onReply}
+              />
+            </div>
+          </Row>
+        )}
       </Section>
 
       <Section>
@@ -527,7 +496,11 @@ export function EventEditor({
             value={form.busy ? "busy" : "free"}
             onValueChange={(v) => update("busy", v === "busy")}
           >
-            <SelectTrigger aria-label="Show as" className={plainSelectClass}>
+            <SelectTrigger
+              size="sm"
+              aria-label="Show as"
+              className={plainSelectClass}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -555,7 +528,7 @@ export function EventEditor({
           {recurring && !isNew ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <PrimaryButton className="h-7" disabled={saving}>
+                <PrimaryButton size="sm" disabled={saving}>
                   {saving ? "Saving…" : "Save"}
                 </PrimaryButton>
               </DropdownMenuTrigger>
@@ -568,7 +541,7 @@ export function EventEditor({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <PrimaryButton className="h-7" disabled={saving} onClick={save}>
+            <PrimaryButton size="sm" disabled={saving} onClick={save}>
               {saving ? "Saving…" : isNew ? "Create" : "Save"}
             </PrimaryButton>
           )}

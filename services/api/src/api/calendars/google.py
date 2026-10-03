@@ -4,6 +4,7 @@ from typing import Any
 from urllib.parse import quote, urlencode
 
 import httpx
+import structlog
 
 from api.calendars.providers import (
   AttendeeResponse,
@@ -14,6 +15,7 @@ from api.calendars.providers import (
   ProviderEvent,
   ProviderForbiddenError,
   ProviderNotFoundError,
+  ProviderPerson,
   ProviderRejectedError,
   ProviderScopeError,
   ProviderUnavailableError,
@@ -21,7 +23,10 @@ from api.calendars.providers import (
   html_to_text,
   normalize_color,
 )
+from api.logging import Logger
 from api.settings import settings
+
+log: Logger = structlog.get_logger()
 
 AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -32,7 +37,19 @@ API_URL = "https://www.googleapis.com/calendar/v3"
 # untick scopes on Google's consent screen, so writes check what was granted.
 READ_SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
 WRITE_SCOPE = "https://www.googleapis.com/auth/calendar.events"
-SCOPES = f"openid email {READ_SCOPE} {WRITE_SCOPE}"
+# Read-only access to who people are: saved contacts, people the account has
+# emailed ("other contacts") and, on Workspace, the company directory.
+PEOPLE_SCOPES = (
+  "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/contacts.other.readonly",
+  "https://www.googleapis.com/auth/directory.readonly",
+)
+SCOPES = " ".join(["openid", "email", READ_SCOPE, WRITE_SCOPE, *PEOPLE_SCOPES])
+PEOPLE_API_URL = "https://people.googleapis.com/v1"
+PEOPLE_FIELDS = "names,emailAddresses,photos"
+PEOPLE_PAGE_SIZE = "1000"
+# Large company directories are capped; people beyond this keep their address.
+PEOPLE_MAX_PAGES = 5
 WRITABLE_ACCESS_ROLES = frozenset({"owner", "writer"})
 # Gmail-generated, birthday, focus time etc. have restricted editing; only
 # ordinary events are offered for editing.
@@ -109,7 +126,13 @@ def _parse_event(item: dict[str, Any]) -> ProviderEvent | None:
     "creator_name": creator.get("displayName"),
     "creator_email": creator.get("email"),
     "attendees": [
-      ProviderAttendee(email=a["email"], name=a.get("displayName"), response=_RESPONSES.get(a.get("responseStatus", ""), "needs_action"))
+      ProviderAttendee(
+        email=a["email"],
+        name=a.get("displayName"),
+        response=_RESPONSES.get(a.get("responseStatus", ""), "needs_action"),
+        is_self=bool(a.get("self")),
+        is_organizer=bool(a.get("organizer")),
+      )
       for a in item.get("attendees", [])
       if a.get("email") and not a.get("resource")
     ],
@@ -126,6 +149,7 @@ def _parse_event(item: dict[str, Any]) -> ProviderEvent | None:
     "series_id": item.get("recurringEventId"),
     "original_start": _original_start(item),
     "etag": item.get("etag"),
+    "color_id": item.get("colorId"),
   }
   if "date" in start:
     return ProviderEvent(**details, all_day=True, start_date=date.fromisoformat(start["date"]), end_date=date.fromisoformat(end["date"]))
@@ -140,6 +164,32 @@ class GoogleGrant:
   # Absent when Google didn't reissue one (reconnecting an existing grant).
   refresh_token: str | None
   can_write: bool
+  # Any of the People scopes; each source is tried and skipped if not granted.
+  can_read_people: bool = False
+
+
+def _grant(data: dict[str, Any], refresh_token: str | None) -> GoogleGrant:
+  granted = set(data.get("scope", "").split())
+  return GoogleGrant(
+    access_token=data["access_token"],
+    refresh_token=refresh_token,
+    can_write=WRITE_SCOPE in granted,
+    can_read_people=bool(granted & set(PEOPLE_SCOPES)),
+  )
+
+
+def _people_from(person: dict[str, Any]) -> list[ProviderPerson]:
+  """One entry per address on a People API person."""
+  names = person.get("names", [])
+  name = next((n.get("displayName") for n in names if n.get("metadata", {}).get("primary")), None) or next(
+    (n.get("displayName") for n in names if n.get("displayName")), None
+  )
+  photo = next((p.get("url") for p in person.get("photos", []) if p.get("url") and not p.get("default")), None)
+  return [
+    ProviderPerson(email=e["value"].strip().lower(), name=name.strip() if name else None, photo_url=photo)
+    for e in person.get("emailAddresses", [])
+    if e.get("value")
+  ]
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,15 +206,11 @@ class GoogleCalendarClient:
 
   async def exchange_code(self, code: str) -> GoogleGrant:
     data = await self._token_request({"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri()})
-    return GoogleGrant(
-      access_token=data["access_token"],
-      refresh_token=data.get("refresh_token"),
-      can_write=WRITE_SCOPE in data.get("scope", "").split(),
-    )
+    return _grant(data, data.get("refresh_token"))
 
   async def refresh_access_token(self, refresh_token: str) -> GoogleGrant:
     data = await self._token_request({"grant_type": "refresh_token", "refresh_token": refresh_token})
-    return GoogleGrant(access_token=data["access_token"], refresh_token=None, can_write=WRITE_SCOPE in data.get("scope", "").split())
+    return _grant(data, None)
 
   async def get_email(self, access_token: str) -> str:
     response = await self.http.get(USERINFO_URL, headers=_auth(access_token))
@@ -268,6 +314,50 @@ class GoogleCalendarClient:
     # A channel that already expired is as stopped as it gets.
     if response.status_code != 404:
       _write_result(response, expect_body=False)
+
+  async def list_people(self, access_token: str) -> list[ProviderPerson]:
+    """Everyone the account can name: saved contacts first (the user chose
+    those names), then the Workspace directory, then other contacts. A source
+    that isn't granted or doesn't exist (no directory on Gmail) is skipped."""
+    sources = (
+      (f"{PEOPLE_API_URL}/people/me/connections", {"personFields": PEOPLE_FIELDS}, "connections"),
+      (
+        f"{PEOPLE_API_URL}/people:listDirectoryPeople",
+        {"readMask": PEOPLE_FIELDS, "sources": "DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE"},
+        "people",
+      ),
+      (f"{PEOPLE_API_URL}/otherContacts", {"readMask": PEOPLE_FIELDS}, "otherContacts"),
+    )
+    found: dict[str, ProviderPerson] = {}
+    for url, params, key in sources:
+      for person in await self._people_pages(access_token, url, params, key):
+        for entry in _people_from(person):
+          known = found.get(entry.email)
+          if known is None:
+            found[entry.email] = entry
+          elif known.photo_url is None and entry.photo_url:
+            found[entry.email] = replace(known, photo_url=entry.photo_url)
+    return list(found.values())
+
+  async def _people_pages(self, access_token: str, url: str, params: dict[str, str], key: str) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    page_token: str | None = None
+    for _ in range(PEOPLE_MAX_PAGES):
+      response = await self.http.get(
+        url, headers=_auth(access_token), params={**params, "pageSize": PEOPLE_PAGE_SIZE, **({"pageToken": page_token} if page_token else {})}
+      )
+      if response.status_code == 401:
+        raise ProviderAuthError("Google rejected the access token")
+      if response.status_code >= 400:
+        # Not granted, People API off, or no directory: just this source is missing.
+        log.info("google_people_source_skipped", source=key, status=response.status_code)
+        return items
+      body = response.json()
+      items.extend(body.get(key, []))
+      page_token = body.get("nextPageToken")
+      if not page_token:
+        break
+    return items
 
   async def revoke(self, token: str) -> None:
     await self.http.post(REVOKE_URL, data={"token": token})

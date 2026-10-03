@@ -58,6 +58,7 @@ AUDITED: set[str] = {
   "POST /v1/calendars/{calendar_id}/events",
   "PATCH /v1/calendars/events/{event_id}",
   "DELETE /v1/calendars/events/{event_id}",
+  "PUT /v1/calendars/events/{event_id}/response",
   "POST /v1/calendars/google/callback",
   "GET /v1/categories",
   "GET /v1/counters",
@@ -636,6 +637,8 @@ class TestCalendars:
     assert changed.status_code == 404, changed.text
     deleted = await other_client.delete(f"/v1/calendars/events/{event_id}", params={"time_zone": "Europe/Stockholm"})
     assert deleted.status_code == 404, deleted.text
+    replied = await other_client.put(f"/v1/calendars/events/{event_id}/response", json={"response": "declined"})
+    assert replied.status_code == 404, replied.text
 
     titles = (await session.execute(select(CalendarEvent.title).where(CalendarEvent.calendar_id == calendar.id))).scalars().all()
     assert titles == ["A's meeting"]

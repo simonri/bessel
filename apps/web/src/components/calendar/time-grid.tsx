@@ -1,5 +1,10 @@
-import { format, isSameDay, isWeekend, parseISO } from "date-fns";
 import {
+  ContextMenu,
+  ContextMenuTrigger,
+} from "@bessel/ui/components/context-menu";
+import { format, isSameDay, parseISO } from "date-fns";
+import {
+  type ReactNode,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useLayoutEffect,
@@ -18,6 +23,7 @@ import type {
   CalendarEvent,
   TimedCalendarEvent,
 } from "./calendar-types";
+import { eventColor } from "./event-colors";
 import type { EventDraftTiming } from "./event-payload";
 import {
   allDayRange,
@@ -27,6 +33,7 @@ import {
   minuteDelta,
   minutesAt,
   moveTiming,
+  resizeStartTiming,
   resizeTiming,
   sameTiming,
 } from "./grid-geometry";
@@ -46,7 +53,7 @@ type Interaction =
   | { kind: "create"; dayIndex: number; from: number; to: number }
   | { kind: "create-all-day"; from: number; to: number }
   | {
-      kind: "move" | "resize";
+      kind: "move" | "resize-start" | "resize-end";
       eventId: string;
       timing: EventDraftTiming;
       originX: number;
@@ -105,6 +112,14 @@ function point(e: { clientX: number; clientY: number }, el: HTMLElement) {
   };
 }
 
+/** React bubbles events out of portals (an event's right-click menu) into
+ *  their owner's handlers; the grid only reacts to presses on its own DOM. */
+function fromPortal(e: { currentTarget: EventTarget; target: EventTarget }) {
+  return !(
+    e.target instanceof Node && (e.currentTarget as Node).contains(e.target)
+  );
+}
+
 function onEventChip(target: EventTarget): boolean {
   return (
     target instanceof Element && target.closest("[data-event-chip]") !== null
@@ -117,6 +132,7 @@ export function TimeGrid({
   colorOf,
   selectedEventId,
   editableIds,
+  renderMenu,
   canCreate,
   timeZone,
   onTimeZoneChange,
@@ -133,6 +149,11 @@ export function TimeGrid({
   selectedEventId: string | null;
   /** Events the user may drag and resize. */
   editableIds: ReadonlySet<string>;
+  /** The right-click menu for an event (given its chip), if it has one. */
+  renderMenu?: (
+    event: CalendarEvent,
+    chip: () => HTMLElement | null,
+  ) => ReactNode;
   canCreate: boolean;
   timeZone: string;
   onTimeZoneChange: (timeZone: string) => void;
@@ -156,7 +177,8 @@ export function TimeGrid({
   // A drag ends with a click on whatever is under the pointer; ignore it.
   const suppressClick = useRef(false);
   // Pointer capture retargets a double click on a chip to the grid, so
-  // remember whether the press that led to it was on empty space.
+  // remember whether the press that led to it was on empty space. Set while
+  // capturing: a chip's own press handler stops the event from bubbling.
   const pressedEmpty = useRef(false);
   const gridTemplateColumns = `${GUTTER} repeat(${days.length}, minmax(0, 1fr))`;
 
@@ -196,11 +218,13 @@ export function TimeGrid({
   }, [interaction]);
 
   const previewTiming = (current: Interaction): EventDraftTiming | null => {
-    if (current.kind === "move" || current.kind === "resize") {
+    if (current.kind !== "create" && current.kind !== "create-all-day") {
       if (!current.started) return null;
       return current.kind === "move"
         ? moveTiming(current.timing, current.days, current.minutes)
-        : resizeTiming(current.timing, current.minutes);
+        : current.kind === "resize-start"
+          ? resizeStartTiming(current.timing, current.minutes)
+          : resizeTiming(current.timing, current.minutes);
     }
     return null;
   };
@@ -208,7 +232,8 @@ export function TimeGrid({
   const preview = interaction ? previewTiming(interaction) : null;
   const draggedId =
     interaction &&
-    (interaction.kind === "move" || interaction.kind === "resize")
+    interaction.kind !== "create" &&
+    interaction.kind !== "create-all-day"
       ? interaction.eventId
       : null;
   const shown = events.map((event) =>
@@ -246,7 +271,7 @@ export function TimeGrid({
   const startEventDrag = (
     e: ReactPointerEvent,
     event: CalendarEvent,
-    kind: "move" | "resize",
+    kind: "move" | "resize-start" | "resize-end",
     container: HTMLElement | null,
   ) => {
     if (e.button !== 0 || !container || !editableIds.has(event.id)) return;
@@ -330,7 +355,16 @@ export function TimeGrid({
     }
   };
 
+  const draftOr = (event: CalendarEvent, color: string) =>
+    event.id === DRAFT_ID ? undefined : color;
+  const chipColor = (event: CalendarEvent) =>
+    eventColor(event.details.colorId) ?? colorOf(event.calendarId);
+
   const chipProps = (event: CalendarEvent) => ({
+    menu:
+      event.id === DRAFT_ID
+        ? undefined
+        : renderMenu?.(event, () => chipRefs.current.get(event.id) ?? null),
     selected: event.id === selectedEventId,
     draft: event.id === DRAFT_ID,
     dragging: event.id === draggedId && preview !== null,
@@ -376,24 +410,15 @@ export function TimeGrid({
             <button
               key={day.toISOString()}
               type="button"
-              onClick={() => onSelectDay(day)}
-              className="flex h-8 items-center justify-center gap-1.5 text-12 outline-none"
+              title="Double-click to show this day"
+              onDoubleClick={() => onSelectDay(day)}
+              className="flex h-8 items-center justify-center gap-1.5 text-12 text-white/40 outline-none"
             >
-              <span
-                className={cn(
-                  isWeekend(day) ? "text-white/40" : "text-white/55",
-                )}
-              >
-                {format(day, "EEE")}
-              </span>
+              <span>{format(day, "EEE")}</span>
               <span
                 className={cn(
                   "flex h-5 min-w-5 items-center justify-center rounded-md px-1 tabular-nums",
-                  isToday
-                    ? "bg-red-500 font-semibold text-white"
-                    : isWeekend(day)
-                      ? "text-white/40"
-                      : "text-white/75",
+                  isToday && "bg-red-500 font-semibold text-white",
                 )}
               >
                 {format(day, "d")}
@@ -412,8 +437,10 @@ export function TimeGrid({
             gridColumn: `2 / span ${days.length}`,
             height: allDayRows * ALL_DAY_ROW_HEIGHT + 6,
           }}
+          onPointerDownCapture={(e) => {
+            pressedEmpty.current = !fromPortal(e) && !onEventChip(e.target);
+          }}
           onPointerDown={(e) => {
-            pressedEmpty.current = !onEventChip(e.target);
             if (!canCreate || e.button !== 0 || !pressedEmpty.current) return;
             e.currentTarget.setPointerCapture(e.pointerId);
             const p = point(e, e.currentTarget);
@@ -421,7 +448,7 @@ export function TimeGrid({
             setInteraction({ kind: "create-all-day", from: index, to: index });
           }}
           onDoubleClick={(e) => {
-            if (!canCreate || !pressedEmpty.current) return;
+            if (!canCreate || !pressedEmpty.current || fromPortal(e)) return;
             const p = point(e, e.currentTarget);
             const index = dayIndexAt(p.x, p.width, days.length);
             onCreate(allDayRange(days, index, index));
@@ -444,7 +471,8 @@ export function TimeGrid({
             >
               <EventChip
                 title={event.title}
-                color={colorOf(event.calendarId)}
+                color={chipColor(event)}
+                accent={draftOr(event, colorOf(event.calendarId))}
                 past={event.endDate <= todayIso}
                 onDragStart={(e) =>
                   startEventDrag(e, event, "move", allDayRef.current)
@@ -489,8 +517,10 @@ export function TimeGrid({
             gridColumn: `2 / span ${days.length}`,
             height: 24 * HOUR_HEIGHT,
           }}
+          onPointerDownCapture={(e) => {
+            pressedEmpty.current = !fromPortal(e) && !onEventChip(e.target);
+          }}
           onPointerDown={(e) => {
-            pressedEmpty.current = !onEventChip(e.target);
             if (!canCreate || e.button !== 0 || !pressedEmpty.current) return;
             e.currentTarget.setPointerCapture(e.pointerId);
             const p = point(e, e.currentTarget);
@@ -503,7 +533,7 @@ export function TimeGrid({
             });
           }}
           onDoubleClick={(e) => {
-            if (!canCreate || !pressedEmpty.current) return;
+            if (!canCreate || !pressedEmpty.current || fromPortal(e)) return;
             const p = point(e, e.currentTarget);
             const minutes = minutesAt(p.y);
             onCreate(
@@ -562,12 +592,18 @@ export function TimeGrid({
                           ? format(event.start, "h:mm")
                           : `${format(event.start, "h:mm")}–${format(event.end, "h:mm a")}`
                       }
-                      color={colorOf(event.calendarId)}
+                      color={chipColor(event)}
+                      accent={draftOr(event, colorOf(event.calendarId))}
                       onDragStart={(e) =>
                         startEventDrag(e, event, "move", columnsRef.current)
                       }
-                      onResizeStart={(e) =>
-                        startEventDrag(e, event, "resize", columnsRef.current)
+                      onResizeStart={(edge, e) =>
+                        startEventDrag(
+                          e,
+                          event,
+                          edge === "start" ? "resize-start" : "resize-end",
+                          columnsRef.current,
+                        )
                       }
                       className={cn(
                         "h-full",
@@ -608,6 +644,11 @@ function DayDividers({ days }: { days: Date[] }) {
 
 // Relative luminance (WCAG) decides whether a solid calendar-color fill needs
 // dark text; pale provider colors like #9fe1e7 are unreadable under white.
+/** `color` blended into the app background: a solid tint, not a transparent one. */
+function onBackground(color: string, percent: number): string {
+  return `color-mix(in oklab, ${color} ${percent}%, var(--background))`;
+}
+
 function isLightColor(hex: string): boolean {
   const match = /^#([0-9a-f]{6})$/i.exec(hex);
   if (!match) return false;
@@ -624,12 +665,14 @@ function EventChip({
   title,
   subtitle,
   color,
+  accent,
   past,
   selected,
   draft,
   dragging,
   editable,
   unconfirmed,
+  menu,
   chipRef,
   onSelect,
   onDragStart,
@@ -639,6 +682,9 @@ function EventChip({
   title: string;
   subtitle?: string;
   color: string;
+  /** The left bar: the calendar's colour, so a recoloured event still shows
+   *  which calendar (and account) it belongs to. Defaults to `color`. */
+  accent?: string;
   /** Already over; drawn faded like Notion so the rest of the day stands out. */
   past: boolean;
   selected: boolean;
@@ -648,17 +694,23 @@ function EventChip({
   editable: boolean;
   /** An invitation not yet answered: outlined with dashes, like Notion. */
   unconfirmed: boolean;
+  /** Right-click menu content. */
+  menu?: ReactNode;
   chipRef: (element: HTMLElement | null) => void;
   onSelect: () => void;
   onDragStart: (e: ReactPointerEvent) => void;
-  onResizeStart?: (e: ReactPointerEvent) => void;
+  /** Timed events: a drag on the top or bottom edge moves that end. */
+  onResizeStart?: (edge: "start" | "end", e: ReactPointerEvent) => void;
   className?: string;
 }) {
   const fill = draft ? DRAFT_COLOR : color;
   const solid = selected && !draft;
   const dashed = unconfirmed && !draft;
   const darkText = solid && isLightColor(fill);
-  return (
+  const bar = draft ? fill : (accent ?? fill);
+  // Past events are drawn in quieter colours rather than see-through.
+  const muted = past && !selected;
+  const chip = (
     <button
       ref={chipRef}
       type="button"
@@ -667,21 +719,24 @@ function EventChip({
       onPointerDown={editable ? onDragStart : undefined}
       aria-pressed={selected}
       className={cn(
-        "group/chip relative flex w-full overflow-hidden rounded-[5px] border-l-[3px] px-1.5 py-0.5 text-left text-11 leading-tight outline-none transition-[filter,opacity] duration-150 hover:brightness-125 focus-visible:ring-1 focus-visible:ring-white/40",
-        past && !selected && "opacity-50 hover:opacity-75",
+        "group/chip relative flex w-full overflow-hidden rounded-[5px] border-l-[3px] px-1.5 py-0.5 text-left text-11 leading-tight outline-none transition-[filter] duration-150 focus-visible:ring-1 focus-visible:ring-white/40",
+        !selected && "hover:brightness-125",
         editable && "cursor-grab active:cursor-grabbing",
         draft && "border border-dashed border-white/40",
         dashed && !solid && "border border-l border-dashed",
-        dragging && "z-20 opacity-90 shadow-lg ring-1 ring-white/30",
+        dragging && "z-20 shadow-lg ring-1 ring-white/30",
         className,
       )}
       style={{
         ...(dashed && !solid
-          ? { borderColor: `color-mix(in oklab, ${fill} 55%, transparent)` }
-          : { borderLeftColor: fill }),
+          ? { borderColor: onBackground(fill, 55) }
+          : {
+              borderLeftColor: muted ? onBackground(bar, 45) : bar,
+            }),
+        // Opaque, so the grid lines never show through an event.
         background: solid
           ? fill
-          : `color-mix(in oklab, ${fill} ${dashed ? 10 : 28}%, transparent)`,
+          : onBackground(fill, dashed ? 10 : muted ? 13 : 28),
       }}
     >
       <span
@@ -689,7 +744,7 @@ function EventChip({
           "truncate font-medium",
           darkText
             ? "text-black/85"
-            : draft && !title
+            : (draft && !title) || muted
               ? "text-white/45"
               : "text-white/90",
         )}
@@ -704,22 +759,36 @@ function EventChip({
               ? "text-black/60"
               : solid
                 ? "text-white/80"
-                : "text-white/55",
+                : muted
+                  ? "text-white/35"
+                  : "text-white/55",
           )}
         >
           {subtitle}
         </span>
       )}
-      {editable && onResizeStart && (
-        // Resize handle along the bottom edge.
-        <span
-          aria-hidden
-          onPointerDown={onResizeStart}
-          className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize opacity-0 group-hover/chip:opacity-100"
-        >
-          <span className="mx-auto mt-0.5 block h-0.5 w-6 rounded-full bg-white/60" />
-        </span>
-      )}
+      {editable &&
+        onResizeStart &&
+        (["start", "end"] as const).map((edge) => (
+          // Invisible strip along the edge; only the cursor gives it away.
+          <span
+            key={edge}
+            aria-hidden
+            data-resize-edge={edge}
+            onPointerDown={(e) => onResizeStart(edge, e)}
+            className={cn(
+              "absolute inset-x-0 h-1.5 cursor-ns-resize",
+              edge === "start" ? "top-0" : "bottom-0",
+            )}
+          />
+        ))}
     </button>
+  );
+  if (!menu) return chip;
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{chip}</ContextMenuTrigger>
+      {menu}
+    </ContextMenu>
   );
 }

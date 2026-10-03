@@ -3,17 +3,18 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, delete, or_, select
+from sqlalchemy import and_, delete, func, literal_column, or_, select, union
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import selectinload
 
-from api.calendars.providers import ProviderCalendar, ProviderEvent
+from api.calendars.providers import ProviderCalendar, ProviderEvent, ProviderPerson
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.common.utils import generate_uuid, utc_now
 from api.exceptions import ResourceNotFound
 from api.models.calendar import Calendar
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
+from api.models.calendar_person import CalendarPerson
 
 UPSERT_BATCH_SIZE = 1000
 _EVENT_SYNC_COLUMNS = (
@@ -40,6 +41,7 @@ _EVENT_SYNC_COLUMNS = (
   "rrule",
   "etag",
   "resource_href",
+  "color_id",
 )
 
 
@@ -178,7 +180,7 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
         "description": e.description,
         "creator_name": e.creator_name[:255] if e.creator_name else None,
         "creator_email": e.creator_email[:320] if e.creator_email else None,
-        "attendees": [{"email": a.email, "name": a.name, "response": a.response} for a in e.attendees],
+        "attendees": [{"email": a.email, "name": a.name, "response": a.response, "is_self": a.is_self, "is_organizer": a.is_organizer} for a in e.attendees],
         "my_response": e.my_response,
         "conference_url": e.conference_url if e.conference_url and len(e.conference_url) <= 2048 else None,
         "html_link": e.html_link if e.html_link and len(e.html_link) <= 2048 else None,
@@ -191,6 +193,7 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
         "rrule": e.rrule,
         "etag": e.etag,
         "resource_href": e.resource_href,
+        "color_id": e.color_id,
       }
       for e in {e.external_id: e for e in events}.values()
     ]
@@ -261,6 +264,52 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
       .order_by(CalendarEvent.start_at, CalendarEvent.start_date)
     )
     return await self.get_all(statement)
+
+  async def emails_for_account(self, account: CalendarAccount) -> set[str]:
+    """Every guest and organizer address on the account's synced events, lowercased."""
+    on_account = select(Calendar.id).where(Calendar.account_id == account.id).scalar_subquery()
+    attendee = func.jsonb_array_elements(CalendarEvent.attendees).table_valued("value").alias("attendee")
+    guests = (
+      select(func.lower(attendee.c.value.op("->>")(literal_column("'email'"))).label("email"))
+      .select_from(CalendarEvent)
+      .join(attendee, literal_column("true"))
+      .where(CalendarEvent.calendar_id.in_(on_account))
+    )
+    creators = select(func.lower(CalendarEvent.creator_email).label("email")).where(
+      CalendarEvent.calendar_id.in_(on_account), CalendarEvent.creator_email.is_not(None)
+    )
+    result = await self.session.execute(union(guests, creators))
+    return {email for email in result.scalars().all() if email}
+
+
+class CalendarPersonRepository(RepositoryBase[CalendarPerson]):
+  model = CalendarPerson
+
+  async def replace_for_account(self, account: CalendarAccount, people: Sequence[ProviderPerson]) -> None:
+    await self.session.execute(delete(CalendarPerson).where(CalendarPerson.account_id == account.id))
+    unique = {p.email: p for p in people if p.name or p.photo_url}
+    if unique:
+      await self.session.execute(
+        insert(CalendarPerson).values(
+          [
+            {"id": generate_uuid(), "created_at": utc_now(), "account_id": account.id, "email": p.email, "name": p.name, "photo_url": p.photo_url}
+            for p in unique.values()
+          ]
+        )
+      )
+
+  async def lookup_for_user(self, user_id: UUID, emails: set[str]) -> dict[str, CalendarPerson]:
+    """Names and photos the user's own accounts have for these addresses
+    (lowercased); with several, the oldest account wins."""
+    if not emails:
+      return {}
+    statement = (
+      self.get_base_statement()
+      .join(CalendarAccount, CalendarPerson.account_id == CalendarAccount.id)
+      .where(CalendarAccount.user_id == user_id, CalendarPerson.email.in_(emails))
+      .order_by(CalendarAccount.created_at.desc())
+    )
+    return {person.email: person for person in await self.get_all(statement)}
 
 
 def _as_utc(value: datetime | date | None) -> datetime:

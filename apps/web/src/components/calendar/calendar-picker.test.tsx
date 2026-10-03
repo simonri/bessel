@@ -24,6 +24,7 @@ const account = (
   lastSyncedAt: null,
   syncError: null,
   canWrite: true,
+  canReadPeople: true,
 });
 const calendar = (id: string, accountId: string): CalendarInfo => ({
   id,

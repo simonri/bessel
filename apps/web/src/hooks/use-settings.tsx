@@ -41,6 +41,8 @@ interface Settings {
   obsidianVaultPath: string | null;
   /** Most recently opened vault paths, newest first, capped at 5. */
   obsidianRecentVaults: string[];
+  /** Desktop notification shortly before calendar events start. */
+  calendarReminders: boolean;
 }
 
 const STORAGE_KEY = "bessel:settings";
@@ -53,6 +55,7 @@ const DEFAULT_SETTINGS: Settings = {
   gridGap: 4,
   obsidianVaultPath: null,
   obsidianRecentVaults: [],
+  calendarReminders: true,
 };
 
 function loadSettings(): Settings {

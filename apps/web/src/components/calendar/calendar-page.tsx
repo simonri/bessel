@@ -6,22 +6,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import { addDays, format, isSameDay, isSameMonth } from "date-fns";
-import { ChevronLeft, ChevronRight, PanelLeft, Plus } from "lucide-react";
-import { type RefObject, useLayoutEffect, useRef, useState } from "react";
+import { addDays, isSameDay } from "date-fns";
+import { ChevronLeft, ChevronRight, PanelLeft } from "lucide-react";
+import {
+  type RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { IconButton, SoftButton } from "@/components/ui-kit";
-import { visibleDays } from "./calendar-dates";
+import { headerMonth, visibleDays } from "./calendar-dates";
 import { CalendarSidebar } from "./calendar-sidebar";
 import { toWallClock, useCalendarTimeZone } from "./calendar-timezone";
 import type {
   CalendarEvent,
   CalendarInfo,
   CalendarViewMode,
+  Reply,
 } from "./calendar-types";
+import {
+  DeletePrompt,
+  EventContextMenu,
+  type EventMenuOptions,
+} from "./event-context-menu";
 import { EventPopover, readOnlyReason } from "./event-details-popover";
 import type { EditorSubject, SaveRequest } from "./event-editor";
 import type { EventDraftTiming } from "./event-payload";
+import { PeopleProvider } from "./people";
 import { MovePrompt, moveNeedsPrompt } from "./scope-menu";
 import { DRAFT_ID, TimeGrid, timingOf, withTiming } from "./time-grid";
 import { useCalendarChanges } from "./use-calendar-changes";
@@ -67,7 +80,12 @@ export function useCalendarNavigation(timeZone: string): CalendarNavigation {
 /** Event writes the view performs; the real implementation is useEventMutations. */
 export type EventWriter = Pick<
   EventMutations,
-  "isSaving" | "createEvent" | "updateEvent" | "deleteEvent"
+  | "isSaving"
+  | "isReplying"
+  | "createEvent"
+  | "updateEvent"
+  | "deleteEvent"
+  | "respondToEvent"
 >;
 
 export function CalendarPage() {
@@ -161,6 +179,10 @@ export function CalendarView({
     recurring: boolean;
     hasGuests: boolean;
   } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    event: CalendarEvent;
+    anchor: HTMLElement | null;
+  } | null>(null);
   // While the editor holds unsaved changes, other selections wait; the
   // popover asks whether to discard them.
   const [editorDirty, setEditorDirty] = useState(false);
@@ -170,7 +192,7 @@ export function CalendarView({
   const [selectionRange, setSelectionRange] = useState(rangeKey);
   if (selectionRange !== rangeKey) {
     setSelectionRange(rangeKey);
-    // A draft made for the newly shown days (e.g. "New event") survives.
+    // A draft on the newly shown days survives.
     setSelection((current) =>
       current?.kind === "draft" &&
       days.some((d) => isSameDay(d, current.timing.start))
@@ -209,6 +231,49 @@ export function CalendarView({
       .map((e) => e.id),
   );
 
+  const menuOptions = (event: CalendarEvent): EventMenuOptions => {
+    const calendar = calendarById.get(event.calendarId);
+    const account = calendar && accountById.get(calendar.accountId);
+    return {
+      colors:
+        account?.provider === "google" &&
+        account.canWrite &&
+        calendar?.writable === true,
+      delete: editableIds.has(event.id),
+    };
+  };
+
+  const setColor = (event: CalendarEvent, colorId: string | null) => {
+    // A colour is the viewer's own: never email guests about it.
+    mutations
+      .updateEvent(event, { colorId }, { notifyGuests: false })
+      .catch(() => {});
+  };
+
+  const renderMenu = (event: CalendarEvent, chip: () => HTMLElement | null) => {
+    const options = menuOptions(event);
+    if (!options.colors && !options.delete) return null;
+    return (
+      <EventContextMenu
+        colorId={event.details.colorId}
+        options={options}
+        onColor={(colorId) => setColor(event, colorId)}
+        onDelete={() => setPendingDelete({ event, anchor: chip() })}
+      />
+    );
+  };
+
+  const confirmDelete = async (scope: EditScope, notifyGuests: boolean) => {
+    if (!pendingDelete) return;
+    const { event } = pendingDelete;
+    setPendingDelete(null);
+    if (selection?.kind === "event" && selection.eventId === event.id) {
+      setSelection(null);
+    }
+    // Reported by the mutation, which also puts the event back.
+    await mutations.deleteEvent(event, { scope, notifyGuests }).catch(() => {});
+  };
+
   const displayEvents = visibleEvents.map((e) =>
     pendingMove?.eventId === e.id ? withTiming(e, pendingMove.timing) : e,
   );
@@ -235,6 +300,32 @@ export function CalendarView({
     selection?.kind === "event"
       ? (visibleEvents.find((e) => e.id === selection.eventId) ?? null)
       : null;
+
+  // Delete (or Backspace) removes the selected event, after the same prompt
+  // as the right-click menu; never while typing.
+  const deleteKeyTarget =
+    selectedEvent && !editorDirty && menuOptions(selectedEvent).delete
+      ? selectedEvent
+      : null;
+  useEffect(() => {
+    if (!deleteKeyTarget) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest("input, textarea, select, [contenteditable='true']")
+      ) {
+        return;
+      }
+      e.preventDefault();
+      setSelection(null);
+      setPendingDelete({ event: deleteKeyTarget, anchor });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [deleteKeyTarget, anchor]);
+
   const subject: EditorSubject | null =
     selection?.kind === "draft"
       ? {
@@ -307,6 +398,12 @@ export function CalendarView({
     }
   };
 
+  const reply = (answer: Reply, scope: EditScope) => {
+    if (!selectedEvent) return;
+    // Errors are reported and the answer is rolled back by the mutation.
+    mutations.respondToEvent(selectedEvent, answer, scope).catch(() => {});
+  };
+
   const commitMove = (
     eventId: string,
     timing: EventDraftTiming,
@@ -343,146 +440,150 @@ export function CalendarView({
     }
   };
 
-  const newEvent = () => {
-    if (editorDirty) return;
-    const now = toWallClock(new Date(), timeZone);
-    const start = new Date(now);
-    start.setMinutes(now.getMinutes() < 30 ? 30 : 60, 0, 0);
-    if (!days.some((d) => isSameDay(d, start))) setDate(start);
-    startCreating({
-      allDay: false,
-      start,
-      end: new Date(start.getTime() + 3600_000),
-    });
-  };
-
   const step = view === "week" ? 7 : 1;
-  const first = days[0];
-  const last = days[days.length - 1];
-  const title = isSameMonth(first, last)
-    ? format(first, "MMMM yyyy")
-    : `${format(first, "MMM")} – ${format(last, "MMM yyyy")}`;
+  const title = headerMonth(days, today);
 
   return (
-    <div ref={rootRef} className="flex h-full min-h-0">
-      {sidebarOpen && (
-        <CalendarSidebar
-          date={date}
-          view={view}
-          today={today}
-          accounts={accounts}
-          calendars={calendars}
-          actions={actions}
-          onSelectDate={setDate}
-        />
-      )}
+    <PeopleProvider events={events}>
+      <div ref={rootRef} className="flex h-full min-h-0">
+        {sidebarOpen && (
+          <CalendarSidebar
+            date={date}
+            view={view}
+            today={today}
+            accounts={accounts}
+            calendars={calendars}
+            actions={actions}
+            onSelectDate={setDate}
+          />
+        )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
-          <IconButton
-            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-            onClick={() => setSidebarPinned(!sidebarOpen)}
-          >
-            <PanelLeft />
-          </IconButton>
-          <h2 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-white/90">
-            {title}
-          </h2>
-          {writableCalendars.length > 0 && (
-            <SoftButton onClick={newEvent} aria-label="New event">
-              <Plus />
-              New
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
+            <IconButton
+              title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              onClick={() => setSidebarPinned(!sidebarOpen)}
+            >
+              <PanelLeft />
+            </IconButton>
+            <h2 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-white/90">
+              {title}
+            </h2>
+            <Select
+              value={view}
+              onValueChange={(v) => setView(v as CalendarViewMode)}
+            >
+              <SelectTrigger
+                size="sm"
+                aria-label="View"
+                // Same soft look as the buttons beside it.
+                className="w-24 min-w-0 border-transparent bg-white/[0.06] font-medium text-white/75 shadow-none hover:border-transparent hover:bg-white/[0.1] dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">Week</SelectItem>
+                <SelectItem value="day">Day</SelectItem>
+              </SelectContent>
+            </Select>
+            <SoftButton
+              onClick={() => setDate(toWallClock(new Date(), timeZone))}
+            >
+              Today
             </SoftButton>
-          )}
-          <Select
-            value={view}
-            onValueChange={(v) => setView(v as CalendarViewMode)}
-          >
-            <SelectTrigger className="h-7 w-24 min-w-0 rounded-md border-white/10 bg-white/[0.04] text-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="day">Day</SelectItem>
-            </SelectContent>
-          </Select>
-          <SoftButton
-            onClick={() => setDate(toWallClock(new Date(), timeZone))}
-          >
-            Today
-          </SoftButton>
-          <div className="flex">
-            <IconButton
-              title={view === "week" ? "Previous week" : "Previous day"}
-              onClick={() => setDate((d) => addDays(d, -step))}
-            >
-              <ChevronLeft />
-            </IconButton>
-            <IconButton
-              title={view === "week" ? "Next week" : "Next day"}
-              onClick={() => setDate((d) => addDays(d, step))}
-            >
-              <ChevronRight />
-            </IconButton>
-          </div>
-        </header>
-        <TimeGrid
-          days={days}
-          events={displayEvents}
-          colorOf={(id) => calendarById.get(id)?.color ?? FALLBACK_COLOR}
-          selectedEventId={selectedId}
-          editableIds={editableIds}
-          canCreate={writableCalendars.length > 0}
-          timeZone={timeZone}
-          onTimeZoneChange={onTimeZoneChange}
-          onSelectDay={(day) => {
-            setDate(day);
-            setView("day");
-          }}
-          onSelectEvent={(eventId) =>
-            !editorDirty &&
-            setSelection((current) =>
-              current?.kind === "event" && current.eventId === eventId
-                ? null
-                : { kind: "event", eventId },
-            )
-          }
-          onSelectedAnchor={setAnchor}
-          onCreate={startCreating}
-          onMove={handleMove}
-        />
-        <EventPopover
-          subject={subject}
-          anchor={anchor}
-          calendars={calendars}
-          writableCalendars={writableCalendars}
-          accounts={accounts}
-          timeZone={timeZone}
-          saving={mutations.isSaving}
-          onSave={(request) => void save(request)}
-          onDelete={(scope, notifyGuests) => void remove(scope, notifyGuests)}
-          onReconnect={actions.connectGoogle}
-          onClose={() => setSelection(null)}
-          onDirtyChange={setEditorDirty}
-        />
-        <MovePrompt
-          key={pendingMove?.eventId ?? "none"}
-          anchor={pendingMove?.anchor ?? null}
-          recurring={pendingMove?.recurring ?? false}
-          hasGuests={pendingMove?.hasGuests ?? false}
-          onConfirm={(scope, notifyGuests) =>
-            pendingMove &&
-            commitMove(
-              pendingMove.eventId,
-              pendingMove.timing,
-              scope,
-              notifyGuests,
-            )
-          }
-          onCancel={() => setPendingMove(null)}
-        />
+            <div className="flex">
+              <IconButton
+                title={view === "week" ? "Previous week" : "Previous day"}
+                onClick={() => setDate((d) => addDays(d, -step))}
+              >
+                <ChevronLeft />
+              </IconButton>
+              <IconButton
+                title={view === "week" ? "Next week" : "Next day"}
+                onClick={() => setDate((d) => addDays(d, step))}
+              >
+                <ChevronRight />
+              </IconButton>
+            </div>
+          </header>
+          <TimeGrid
+            days={days}
+            events={displayEvents}
+            colorOf={(id) => calendarById.get(id)?.color ?? FALLBACK_COLOR}
+            selectedEventId={selectedId}
+            editableIds={editableIds}
+            canCreate={writableCalendars.length > 0}
+            timeZone={timeZone}
+            onTimeZoneChange={onTimeZoneChange}
+            onSelectDay={(day) => {
+              setDate(day);
+              setView("day");
+            }}
+            onSelectEvent={(eventId) =>
+              !editorDirty &&
+              setSelection((current) =>
+                current?.kind === "event" && current.eventId === eventId
+                  ? null
+                  : { kind: "event", eventId },
+              )
+            }
+            onSelectedAnchor={setAnchor}
+            onCreate={startCreating}
+            onMove={handleMove}
+            renderMenu={renderMenu}
+          />
+          <EventPopover
+            subject={subject}
+            anchor={anchor}
+            calendars={calendars}
+            writableCalendars={writableCalendars}
+            accounts={accounts}
+            timeZone={timeZone}
+            saving={mutations.isSaving}
+            onSave={(request) => void save(request)}
+            onDelete={(scope, notifyGuests) => void remove(scope, notifyGuests)}
+            onReply={reply}
+            replying={mutations.isReplying}
+            onReconnect={actions.connectGoogle}
+            onClose={() => setSelection(null)}
+            onDirtyChange={setEditorDirty}
+          />
+          <DeletePrompt
+            key={`delete:${pendingDelete?.event.id ?? ""}`}
+            anchor={pendingDelete?.anchor ?? null}
+            recurring={pendingDelete?.event.details.recurring ?? false}
+            hasGuests={
+              !!pendingDelete &&
+              accountById.get(
+                calendarById.get(pendingDelete.event.calendarId)?.accountId ??
+                  "",
+              )?.provider === "google" &&
+              pendingDelete.event.details.attendees.length > 0
+            }
+            onConfirm={(scope, notifyGuests) =>
+              void confirmDelete(scope, notifyGuests)
+            }
+            onCancel={() => setPendingDelete(null)}
+          />
+          <MovePrompt
+            key={`move:${pendingMove?.eventId ?? ""}`}
+            anchor={pendingMove?.anchor ?? null}
+            recurring={pendingMove?.recurring ?? false}
+            hasGuests={pendingMove?.hasGuests ?? false}
+            onConfirm={(scope, notifyGuests) =>
+              pendingMove &&
+              commitMove(
+                pendingMove.eventId,
+                pendingMove.timing,
+                scope,
+                notifyGuests,
+              )
+            }
+            onCancel={() => setPendingMove(null)}
+          />
+        </div>
       </div>
-    </div>
+    </PeopleProvider>
   );
 }
 
@@ -493,6 +594,7 @@ const EMPTY_DETAILS: CalendarEvent["details"] = {
   creatorEmail: null,
   attendees: [],
   myResponse: null,
+  colorId: null,
   conferenceUrl: null,
   htmlLink: null,
   busy: true,

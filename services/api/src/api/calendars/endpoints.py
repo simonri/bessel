@@ -12,15 +12,15 @@ from api.calendars import push
 from api.calendars.editing import calendar_edit_service
 from api.calendars.edits import EditScope
 from api.calendars.providers import ProviderAuthError
-from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarRepository
+from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarPersonRepository, CalendarRepository
 from api.calendars.schemas import (
   CalendarAccountListResponse,
   CalendarAccountSchema,
   CalendarEventListResponse,
-  CalendarEventSchema,
   CalendarSchema,
   CalendarUpdate,
   EventCreate,
+  EventReplyUpdate,
   EventUpdate,
   EventWriteResponse,
   GoogleAuthorizeResponse,
@@ -30,6 +30,7 @@ from api.calendars.schemas import (
 from api.calendars.service import OAuthCallbackError, calendar_service
 from api.exceptions import ServiceUnavailableError, ValidationError
 from api.logging import Logger
+from api.models.calendar_event import CalendarEvent
 from api.postgres import AsyncSession, get_db_session
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
@@ -164,7 +165,14 @@ async def list_calendar_events(
     datetime.fromtimestamp(start_ts, tz=UTC),
     datetime.fromtimestamp(end_ts, tz=UTC),
   )
-  return CalendarEventListResponse(events=[CalendarEventSchema.model_validate(e) for e in events])
+  return CalendarEventListResponse(events=await calendar_service.event_schemas(CalendarPersonRepository.from_session(session), current_user.id, events))
+
+
+async def _write_response(session: AsyncSession, user_id: UUID, event: CalendarEvent | None) -> EventWriteResponse:
+  if event is None:
+    return EventWriteResponse(event=None)
+  [schema] = await calendar_service.event_schemas(CalendarPersonRepository.from_session(session), user_id, [event])
+  return EventWriteResponse(event=schema)
 
 
 @router.post("/{calendar_id}/events", summary="Create Calendar Event", response_model=EventWriteResponse, status_code=201)
@@ -176,7 +184,7 @@ async def create_calendar_event(
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
   event = await calendar_edit_service.create_event(session, redis, current_user.id, calendar_id, body)
-  return EventWriteResponse(event=CalendarEventSchema.model_validate(event) if event else None)
+  return await _write_response(session, current_user.id, event)
 
 
 @router.patch("/events/{event_id}", summary="Update Calendar Event", response_model=EventWriteResponse)
@@ -188,7 +196,19 @@ async def update_calendar_event(
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
   event = await calendar_edit_service.update_event(session, redis, current_user.id, event_id, body)
-  return EventWriteResponse(event=CalendarEventSchema.model_validate(event) if event else None)
+  return await _write_response(session, current_user.id, event)
+
+
+@router.put("/events/{event_id}/response", summary="Answer Calendar Invitation", response_model=EventWriteResponse)
+async def respond_to_calendar_event(
+  event_id: UUID,
+  body: EventReplyUpdate,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  redis: Annotated[Redis, Depends(get_redis)],
+  current_user: CurrentDBUser,
+) -> EventWriteResponse:
+  event = await calendar_edit_service.respond_to_event(session, redis, current_user.id, event_id, body)
+  return await _write_response(session, current_user.id, event)
 
 
 @router.delete("/events/{event_id}", summary="Delete Calendar Event", status_code=204)

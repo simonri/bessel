@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import StrEnum
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 
@@ -12,6 +13,10 @@ class EditScope(StrEnum):
   this = "this"
   following = "following"
   all = "all"
+
+
+# A guest's answer to an invitation.
+Reply = Literal["accepted", "declined", "tentative"]
 
 
 class UnsupportedEditError(Exception):
@@ -31,7 +36,9 @@ class EventTiming:
     return not isinstance(self.start, datetime)
 
 
-EVENT_FIELDS = frozenset({"title", "timing", "location", "description", "attendees", "rule", "busy", "add_conference"})
+EVENT_FIELDS = frozenset({"title", "timing", "location", "description", "attendees", "rule", "busy", "add_conference", "color_id"})
+# Google's event colours ("1".."11"); null shows the calendar's colour.
+GOOGLE_COLOR_IDS = frozenset(str(i) for i in range(1, 12))
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +55,7 @@ class EventChanges:
   rule: str | None = None
   busy: bool = True
   add_conference: bool = False
+  color_id: str | None = None
 
   def __post_init__(self) -> None:
     unknown = self.provided - EVENT_FIELDS
@@ -55,6 +63,11 @@ class EventChanges:
       raise ValueError(f"Unknown event fields: {sorted(unknown)}")
     if "timing" in self.provided and self.timing is None:
       raise ValueError("timing can't be cleared")
+
+  @property
+  def only_color(self) -> bool:
+    """A colour is the viewer's own setting, so even guests may change it."""
+    return self.provided == frozenset({"color_id"})
 
   def has(self, name: str) -> bool:
     return name in self.provided

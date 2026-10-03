@@ -9,6 +9,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.calendar_provider import CalendarProvider
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
   from ..models.calendar_schema import CalendarSchema
@@ -28,6 +29,8 @@ class CalendarAccountSchema:
       last_synced_at (datetime.datetime | None):
       sync_error (None | str): Why the last sync failed, or null if it succeeded.
       calendars (list[CalendarSchema]):
+      can_read_people (bool | Unset): Google: contacts access was granted, so guests show real names and photos.
+          Default: False.
   """
 
   id: UUID
@@ -37,6 +40,7 @@ class CalendarAccountSchema:
   last_synced_at: datetime.datetime | None
   sync_error: None | str
   calendars: list[CalendarSchema]
+  can_read_people: bool | Unset = False
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -62,6 +66,8 @@ class CalendarAccountSchema:
       calendars_item = calendars_item_data.to_dict()
       calendars.append(calendars_item)
 
+    can_read_people = self.can_read_people
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -75,6 +81,8 @@ class CalendarAccountSchema:
         "calendars": calendars,
       }
     )
+    if can_read_people is not UNSET:
+      field_dict["can_read_people"] = can_read_people
 
     return field_dict
 
@@ -120,6 +128,8 @@ class CalendarAccountSchema:
 
       calendars.append(calendars_item)
 
+    can_read_people = d.pop("can_read_people", UNSET)
+
     calendar_account_schema = cls(
       id=id,
       provider=provider,
@@ -128,6 +138,7 @@ class CalendarAccountSchema:
       last_synced_at=last_synced_at,
       sync_error=sync_error,
       calendars=calendars,
+      can_read_people=can_read_people,
     )
 
     calendar_account_schema.additional_properties = d

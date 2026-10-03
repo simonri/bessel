@@ -25,6 +25,7 @@ const account: CalendarAccount = {
   lastSyncedAt: null,
   syncError: null,
   canWrite: true,
+  canReadPeople: true,
 };
 const calendar: CalendarInfo = {
   id: "c",
@@ -51,6 +52,7 @@ function event(id: string, title: string, editable = true): CalendarEvent {
       creatorEmail: "boss@corp.com",
       attendees: [],
       myResponse: null,
+      colorId: null,
       conferenceUrl: null,
       htmlLink: null,
       busy: true,
@@ -91,7 +93,11 @@ describe("readOnlyReason", () => {
 describe("EventPopover", () => {
   function popover(
     shown: CalendarEvent | null,
-    handlers: { onSave?: () => void; onDelete?: () => void } = {},
+    handlers: {
+      onSave?: () => void;
+      onDelete?: () => void;
+      onReply?: () => void;
+    } = {},
   ) {
     const anchor = document.body.appendChild(document.createElement("div"));
     const timed = shown && !shown.allDay ? shown : null;
@@ -112,6 +118,8 @@ describe("EventPopover", () => {
         saving={false}
         onSave={handlers.onSave ?? vi.fn()}
         onDelete={handlers.onDelete ?? vi.fn()}
+        onReply={handlers.onReply ?? vi.fn()}
+        replying={false}
         onReconnect={vi.fn()}
         onClose={vi.fn()}
         onDirtyChange={vi.fn()}
@@ -189,7 +197,14 @@ describe("EventPopover", () => {
     const onDelete = vi.fn();
     const withGuests = event("a", "First");
     withGuests.details.attendees = [
-      { email: "al@x.com", name: null, response: "accepted" },
+      {
+        email: "al@x.com",
+        name: null,
+        response: "accepted",
+        isSelf: false,
+        isOrganizer: false,
+        photoUrl: null,
+      },
     ];
     render(popover(withGuests, { onDelete }));
 
@@ -244,9 +259,88 @@ describe("EventPopover", () => {
     );
   });
 
-  it("shows invitations read-only with the reason", () => {
+  it("shows invitations read-only, without a notice", () => {
     render(popover(event("i", "Boss meeting", false)));
     expect(screen.queryByLabelText("Title")).toBeNull();
-    expect(screen.getByText(/only the organizer can change it/)).toBeTruthy();
+    expect(screen.getByText("Boss meeting")).toBeTruthy();
+    expect(screen.queryByText(/organizer can change/)).toBeNull();
+  });
+
+  it("shows a read-only calendar's event without a notice", () => {
+    render(
+      <EventPopover
+        {...popover(event("r", "Holiday")).props}
+        calendars={[{ ...calendar, writable: false }]}
+      />,
+    );
+    expect(screen.getByText("Holiday")).toBeTruthy();
+    expect(screen.queryByText(/read-only/)).toBeNull();
+  });
+
+  it("offers to reconnect an account connected without edit access", () => {
+    render(
+      <EventPopover
+        {...popover(event("r", "Planning")).props}
+        accounts={[{ ...account, canWrite: false }]}
+      />,
+    );
+    expect(screen.getByText(/connected read-only/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Reconnect to edit" }),
+    ).toBeTruthy();
+  });
+
+  it("lets a guest answer an invitation they can't edit", () => {
+    const onReply = vi.fn();
+    const invite = event("i", "Mistrezz.AI x OhAPI", false);
+    invite.details.myResponse = "needs_action";
+    invite.details.attendees = [
+      {
+        email: "boss@corp.com",
+        name: null,
+        response: "accepted",
+        isSelf: false,
+        isOrganizer: true,
+        photoUrl: null,
+      },
+      {
+        email: "me@gmail.com",
+        name: null,
+        response: "needs_action",
+        isSelf: true,
+        isOrganizer: false,
+        photoUrl: null,
+      },
+    ];
+    render(popover(invite, { onReply }));
+
+    expect(screen.getByText("2 participants")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Maybe" }));
+    expect(onReply).toHaveBeenCalledWith("tentative", "this");
+  });
+
+  it("shows no answer buttons to the organizer", () => {
+    const mine = event("m", "My meeting");
+    mine.details.myResponse = "accepted";
+    mine.details.attendees = [
+      {
+        email: "me@gmail.com",
+        name: null,
+        response: "accepted",
+        isSelf: true,
+        isOrganizer: true,
+        photoUrl: null,
+      },
+      {
+        email: "al@x.com",
+        name: null,
+        response: "needs_action",
+        isSelf: false,
+        isOrganizer: false,
+        photoUrl: null,
+      },
+    ];
+    render(popover(mine));
+    expect(screen.queryByRole("group", { name: "Going?" })).toBeNull();
   });
 });

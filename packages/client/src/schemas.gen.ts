@@ -918,6 +918,13 @@ export const CalendarAccountSchemaSchema = {
       description:
         "False when the account was connected read-only and must be reconnected to edit.",
     },
+    can_read_people: {
+      type: "boolean",
+      title: "Can Read People",
+      description:
+        "Google: contacts access was granted, so guests show real names and photos.",
+      default: false,
+    },
     last_synced_at: {
       anyOf: [
         {
@@ -984,6 +991,30 @@ export const CalendarEventAttendeeSchema = {
       type: "string",
       enum: ["accepted", "declined", "tentative", "needs_action"],
       title: "Response",
+    },
+    is_self: {
+      type: "boolean",
+      title: "Is Self",
+      description: "This is the account itself.",
+      default: false,
+    },
+    is_organizer: {
+      type: "boolean",
+      title: "Is Organizer",
+      description: "This guest organizes the event.",
+      default: false,
+    },
+    photo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Photo Url",
+      description: "Profile photo from the account's contacts or directory.",
     },
   },
   type: "object",
@@ -1182,6 +1213,18 @@ export const CalendarEventSchemaSchema = {
       title: "Editable",
       description:
         "False for invitations organized by someone else and provider-managed events.",
+    },
+    color_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color Id",
+      description: "Google event colour id; null means the calendar's colour.",
     },
     rule: {
       anyOf: [
@@ -1734,6 +1777,19 @@ export const EventCreateSchema = {
       title: "Add Conference",
       description: "Adds a Google Meet link (Google only).",
     },
+    color_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color Id",
+      description:
+        "Google event colour id (1-11); null uses the calendar's colour (Google only).",
+    },
     time_zone: {
       type: "string",
       title: "Time Zone",
@@ -1750,6 +1806,32 @@ export const EventCreateSchema = {
   type: "object",
   required: ["timing", "time_zone"],
   title: "EventCreate",
+} as const;
+
+export const EventReplyUpdateSchema = {
+  properties: {
+    response: {
+      type: "string",
+      enum: ["accepted", "declined", "tentative"],
+      title: "Response",
+      description: "Your answer to the invitation.",
+    },
+    scope: {
+      $ref: "#/components/schemas/EditScope",
+      description: "For repeating events: this occurrence or all of them.",
+      default: "this",
+    },
+    notify_organizer: {
+      type: "boolean",
+      title: "Notify Organizer",
+      description:
+        "Email the organizer your answer (Google only; iCloud always does).",
+      default: true,
+    },
+  },
+  type: "object",
+  required: ["response"],
+  title: "EventReplyUpdate",
 } as const;
 
 export const EventTimeInputSchema = {
@@ -1907,6 +1989,19 @@ export const EventUpdateSchema = {
       ],
       title: "Add Conference",
       description: "Adds a Google Meet link (Google only).",
+    },
+    color_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color Id",
+      description:
+        "Google event colour id (1-11); null uses the calendar's colour (Google only).",
     },
     time_zone: {
       type: "string",

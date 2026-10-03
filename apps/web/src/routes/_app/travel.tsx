@@ -311,7 +311,7 @@ function Travel() {
               >
                 <SelectTrigger
                   size="sm"
-                  className="h-7! w-auto min-w-0 gap-1.5 rounded-lg border-white/10 bg-white/[0.04] px-2.5 text-12 text-white/70 shadow-none hover:border-white/15 hover:bg-white/[0.06] dark:bg-white/[0.04] dark:hover:bg-white/[0.06] [&_svg:not([class*='text-'])]:text-white/40"
+                  className="w-auto min-w-0 gap-1.5 rounded-lg border-white/10 bg-white/[0.04] text-white/70 shadow-none hover:border-white/15 hover:bg-white/[0.06] dark:bg-white/[0.04] dark:hover:bg-white/[0.06] [&_svg:not([class*='text-'])]:text-white/40"
                 >
                   <SelectValue />
                 </SelectTrigger>

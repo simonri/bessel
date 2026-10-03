@@ -25,23 +25,14 @@ import {
   SoftButton,
   StatTile,
 } from "@/components/ui-kit";
-import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
-import { APP_COLORS, fmtDur, localDayBounds } from "./-activity-utils";
-import { STAGE_META, STAGE_ORDER } from "./-sleep-utils";
+import { fmtDur, localDayBounds } from "./-activity-utils";
 
 export const Route = createFileRoute("/_app/timeline")({
   component: TimelinePage,
 });
 
-const OTHER_RGB = "148 148 160";
 const AXIS_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
-
-interface LegendItem {
-  label: string;
-  rgb: string;
-  secs: number;
-}
 
 interface LaneView {
   key: TimelineLaneKey;
@@ -49,75 +40,36 @@ interface LaneView {
   icon: React.ComponentType<{ className?: string }>;
   totalSecs: number;
   segments: (TimelineSegment & { name: string; rgb: string })[];
-  legend: LegendItem[];
 }
 
-function secsBy<T extends TimelineSegment>(
-  segments: T[],
-  keyOf: (s: T) => string,
-): Map<string, number> {
-  const totals = new Map<string, number>();
-  for (const s of segments) {
-    const key = keyOf(s);
-    totals.set(key, (totals.get(key) ?? 0) + s.end_ts - s.start_ts);
+// Each lane is one bar: segments closer than a minute apart merge into a
+// single session, whatever stage or app it was.
+const MERGE_GAP_SECS = 60;
+const LANES: Record<
+  TimelineLaneKey,
+  Pick<LaneView, "title" | "icon"> & { rgb: string }
+> = {
+  sleep: { title: "Sleep", icon: Moon, rgb: "147 131 250" },
+  pc: { title: "PC", icon: Monitor, rgb: "96 165 250" },
+};
+
+function laneView(lane: TimelineLane): LaneView {
+  const { title, icon, rgb } = LANES[lane.key];
+  const sessions: LaneView["segments"] = [];
+  for (const s of [...lane.segments].sort((a, b) => a.start_ts - b.start_ts)) {
+    const last = sessions.at(-1);
+    if (last && s.start_ts - last.end_ts <= MERGE_GAP_SECS) {
+      last.end_ts = Math.max(last.end_ts, s.end_ts);
+    } else {
+      sessions.push({ ...s, label: title, name: title, rgb });
+    }
   }
-  return totals;
-}
-
-function sleepLaneView(lane: TimelineLane): LaneView {
-  const totals = secsBy(lane.segments, (s) => s.label);
-  const meta = (stage: string) =>
-    STAGE_META[stage] ?? { label: stage, rgb: OTHER_RGB };
   return {
     key: lane.key,
-    title: "Sleep",
-    icon: Moon,
+    title,
+    icon,
     totalSecs: lane.total_secs,
-    segments: lane.segments.map((s) => ({
-      ...s,
-      name: meta(s.label).label,
-      rgb: meta(s.label).rgb,
-    })),
-    legend: STAGE_ORDER.filter((stage) => totals.has(stage)).map((stage) => ({
-      ...meta(stage),
-      secs: totals.get(stage) ?? 0,
-    })),
-  };
-}
-
-// Apps are grouped by their display name (so activity mappings merge them)
-// and ranked by time; the long tail folds into "Other".
-function pcLaneView(
-  lane: TimelineLane,
-  mapName: (name: string) => string,
-): LaneView {
-  const named = lane.segments.map((s) => ({ ...s, name: mapName(s.label) }));
-  const ranked = [...secsBy(named, (s) => s.name)].sort((a, b) => b[1] - a[1]);
-  const colored = ranked.slice(0, APP_COLORS.length - 1);
-  const colorOf = new Map(colored.map(([name], i) => [name, APP_COLORS[i]]));
-  const otherSecs = ranked
-    .slice(colored.length)
-    .reduce((sum, [, secs]) => sum + secs, 0);
-
-  return {
-    key: lane.key,
-    title: "PC",
-    icon: Monitor,
-    totalSecs: lane.total_secs,
-    segments: named.map((s) => ({
-      ...s,
-      rgb: colorOf.get(s.name) ?? OTHER_RGB,
-    })),
-    legend: [
-      ...colored.map(([name, secs]) => ({
-        label: name,
-        rgb: colorOf.get(name) ?? OTHER_RGB,
-        secs,
-      })),
-      ...(otherSecs > 0
-        ? [{ label: "Other", rgb: OTHER_RGB, secs: otherSecs }]
-        : []),
-    ],
+    segments: sessions,
   };
 }
 
@@ -129,12 +81,7 @@ function TimelinePage() {
   const today = new Date();
   const [date, setDate] = useState(today);
   const [source, setSource] = useState<string | null>(null);
-  const { settings } = useSettings();
   const isCurrentDay = isSameDay(date, today);
-
-  const mapName = (name: string) =>
-    settings.activityMappings.find((m) => m.from && m.from === name)?.to ||
-    name;
 
   const { data: sourcesData } = useQuery({
     ...listActivitySourcesV1ActivitySourcesGetOptions({ client }),
@@ -154,12 +101,7 @@ function TimelinePage() {
     placeholderData: keepPreviousData,
   });
 
-  const laneViews: Record<TimelineLaneKey, (lane: TimelineLane) => LaneView> =
-    {
-      sleep: sleepLaneView,
-      pc: (lane) => pcLaneView(lane, mapName),
-    };
-  const lanes = timeline?.lanes.map((lane) => laneViews[lane.key](lane)) ?? [];
+  const lanes = timeline?.lanes.map(laneView) ?? [];
   const laneSecs = (key: TimelineLaneKey) =>
     lanes.find((l) => l.key === key)?.totalSecs ?? 0;
 
@@ -177,7 +119,7 @@ function TimelinePage() {
             value={source ?? timeline?.source ?? ""}
             onValueChange={(v) => setSource(v)}
           >
-            <SelectTrigger className="h-8 w-44 min-w-0 rounded-lg border-white/10 bg-white/[0.04] text-13">
+            <SelectTrigger className="w-44 min-w-0 border-white/10 bg-white/[0.04]">
               <SelectValue placeholder="Select machine" />
             </SelectTrigger>
             <SelectContent>
@@ -227,10 +169,11 @@ function TimelinePage() {
           ) : (
             <>
               <HourAxis date={date} startTs={startTs} endTs={endTs} />
-              {lanes.map((lane) => (
+              {lanes.map((lane, i) => (
                 <Lane
                   key={lane.key}
                   lane={lane}
+                  nowBadge={i === 0}
                   startTs={startTs}
                   endTs={endTs}
                   nowTs={isCurrentDay ? nowTs : null}
@@ -296,8 +239,10 @@ function Lane({
   startTs,
   endTs,
   nowTs,
+  nowBadge,
 }: {
   lane: LaneView;
+  nowBadge: boolean;
   startTs: number;
   endTs: number;
   nowTs: number | null;
@@ -305,26 +250,32 @@ function Lane({
   const [hovered, setHovered] = useState<number | null>(null);
   const hoveredSegment = hovered !== null ? lane.segments[hovered] : null;
   const Icon = lane.icon;
+  const nowPct =
+    nowTs !== null && nowTs < endTs ? pctOf(nowTs, startTs, endTs) : null;
 
   return (
     <div>
-      <div className="mb-1.5 flex items-center gap-2 text-12">
+      <div className="relative mb-1.5 flex items-center gap-2 text-12">
         <Icon className="size-3.5 shrink-0 text-white/45" />
         <span className="font-medium text-white/80">{lane.title}</span>
         <span className="ml-auto tabular-nums text-white/50">
           {lane.segments.length > 0 ? fmtDur(lane.totalSecs) : "No data"}
         </span>
+        {nowBadge && nowPct !== null && (
+          <span
+            className="pointer-events-none absolute top-1/2 rounded-full bg-red-500 px-1.5 text-10 font-semibold leading-4 text-white"
+            style={{
+              left: `${Math.min(Math.max(nowPct, 2), 98)}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            Now
+          </span>
+        )}
       </div>
 
       <div className="relative">
         <div className="relative h-6 w-full overflow-hidden rounded-md bg-white/[0.04]">
-          {[25, 50, 75].map((pct) => (
-            <div
-              key={pct}
-              className="absolute inset-y-0 w-px bg-white/[0.06]"
-              style={{ left: `${pct}%` }}
-            />
-          ))}
           {lane.segments.map((seg, i) => (
             <div
               key={`${seg.start_ts}-${seg.end_ts}-${seg.label}`}
@@ -339,10 +290,10 @@ function Lane({
               onMouseLeave={() => setHovered(null)}
             />
           ))}
-          {nowTs !== null && nowTs < endTs && (
+          {nowPct !== null && (
             <div
-              className="pointer-events-none absolute inset-y-0 w-px bg-white/60"
-              style={{ left: `${pctOf(nowTs, startTs, endTs)}%` }}
+              className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-red-500"
+              style={{ left: `${nowPct}%` }}
             />
           )}
         </div>
@@ -374,26 +325,6 @@ function Lane({
           </div>
         )}
       </div>
-
-      {lane.legend.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-          {lane.legend.map((item) => (
-            <span
-              key={item.label}
-              className="flex items-center gap-1.5 text-11 text-white/55"
-            >
-              <span
-                className="size-2 shrink-0 rounded-full"
-                style={{ background: `rgb(${item.rgb})` }}
-              />
-              {item.label}
-              <span className="tabular-nums text-white/35">
-                {fmtDur(item.secs)}
-              </span>
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

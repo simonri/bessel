@@ -185,6 +185,10 @@ class TestICloudSyncFields:
     assert events["Their meeting"].my_response == "needs_action"
     assert events["Mine"].my_response is None
 
+  def test_marks_self_and_organizer(self) -> None:
+    attendees = {a.email: (a.is_self, a.is_organizer) for a in self._events()["Their meeting"].attendees}
+    assert attendees == {"boss@corp.com": (False, True), "Me@Risberg.eu": (True, False)}
+
   def test_series_occurrences(self) -> None:
     standups = sorted((e for e in self._expand() if e.title == "Standup"), key=lambda e: e.external_id)
     assert [e.external_id for e in standups] == ["series/2026-10-05T08:00:00+02:00", "series/2026-10-06T08:00:00+02:00"]

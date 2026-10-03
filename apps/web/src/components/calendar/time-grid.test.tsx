@@ -1,4 +1,8 @@
 // @vitest-environment jsdom
+import {
+  ContextMenuContent,
+  ContextMenuItem,
+} from "@bessel/ui/components/context-menu";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { CalendarEvent } from "./calendar-types";
@@ -36,6 +40,7 @@ const event: CalendarEvent = {
     creatorEmail: null,
     attendees: [],
     myResponse: null,
+    colorId: null,
     conferenceUrl: null,
     htmlLink: null,
     busy: true,
@@ -202,6 +207,17 @@ describe("TimeGrid", () => {
       });
     });
 
+    it("double clicking an event after clicking empty time doesn't create one", () => {
+      const { onCreate, chip } = renderGrid(true);
+      const grid = columns(chip);
+      // An earlier press on empty time must not count for the event's clicks.
+      press(grid, grid, 15 * 48);
+      press(chip, grid, 10);
+      press(chip, grid, 10);
+      fireEvent.doubleClick(grid, { clientX: 10, clientY: 10 });
+      expect(onCreate).not.toHaveBeenCalled();
+    });
+
     it("double clicking an event doesn't create one", () => {
       const { onCreate, chip } = renderGrid(true);
       const grid = columns(chip);
@@ -244,5 +260,189 @@ describe("TimeGrid", () => {
     expect(renderGrid(false, answered).chip.className).not.toContain(
       "border-dashed",
     );
+  });
+
+  it("resizes from either edge, with no visible grab bar", () => {
+    const { onMove, chip } = renderGrid(true);
+    const grid = chip.closest(".touch-none") as HTMLElement;
+    const edge = (name: string) =>
+      chip.querySelector(`[data-resize-edge="${name}"]`) as HTMLElement;
+    expect(edge("start").childElementCount).toBe(0);
+    expect(edge("end").childElementCount).toBe(0);
+
+    fireEvent.pointerDown(edge("start"), {
+      button: 0,
+      pointerId: 1,
+      clientX: 10,
+      clientY: 10,
+    });
+    fireEvent.pointerMove(grid, {
+      pointerId: 1,
+      clientX: 10,
+      clientY: 10 - 24,
+    });
+    fireEvent.pointerUp(grid, { pointerId: 1, clientX: 10, clientY: 10 - 24 });
+    expect(onMove.mock.calls[0][1]).toMatchObject({
+      start: new Date(2026, 9, 6, 9, 30),
+      end: new Date(2026, 9, 6, 11),
+    });
+
+    fireEvent.pointerDown(edge("end"), {
+      button: 0,
+      pointerId: 1,
+      clientX: 10,
+      clientY: 40,
+    });
+    fireEvent.pointerMove(grid, {
+      pointerId: 1,
+      clientX: 10,
+      clientY: 40 + 24,
+    });
+    fireEvent.pointerUp(grid, { pointerId: 1, clientX: 10, clientY: 40 + 24 });
+    expect(onMove.mock.calls[1][1]).toMatchObject({
+      start: new Date(2026, 9, 6, 10),
+      end: new Date(2026, 9, 6, 11, 30),
+    });
+  });
+
+  it("fills an event with its own colour, keeps the calendar's bar, and opens its menu on right-click", () => {
+    const coloured = { ...event, details: { ...event.details, colorId: "11" } };
+    const renderMenu = vi.fn(() => null);
+    render(
+      <TimeGrid
+        days={days}
+        events={[coloured]}
+        colorOf={() => "#4986e7"}
+        selectedEventId={null}
+        editableIds={new Set(["e1"])}
+        renderMenu={renderMenu}
+        canCreate
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={() => {}}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={() => {}}
+        onMove={() => {}}
+      />,
+    );
+    const chip = screen.getByRole("button", { name: /Planning/ });
+    // The bar keeps the calendar's colour; the event's own colour fills it.
+    expect(chip.style.borderLeftColor).toBe("rgb(73, 134, 231)");
+    // Mixed into the background, not transparent: grid lines stay hidden.
+    expect(chip.style.background).toBe(
+      "color-mix(in oklab, #e5534b 28%, var(--background))",
+    );
+    expect(renderMenu).toHaveBeenCalledWith(coloured, expect.any(Function));
+  });
+
+  it("ignores presses inside an event's menu, which React bubbles to the grid", () => {
+    const onCreate = vi.fn();
+    const onPick = vi.fn();
+    render(
+      <TimeGrid
+        days={days}
+        events={[event]}
+        colorOf={() => "#4986e7"}
+        selectedEventId={null}
+        editableIds={new Set(["e1"])}
+        renderMenu={() => (
+          <ContextMenuContent>
+            <ContextMenuItem onSelect={onPick}>Pick</ContextMenuItem>
+          </ContextMenuContent>
+        )}
+        canCreate
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={() => {}}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={onCreate}
+        onMove={() => {}}
+      />,
+    );
+    const chip = screen.getByRole("button", { name: /Planning/ });
+    const grid = chip.closest(".touch-none") as HTMLElement;
+    fireEvent.contextMenu(chip);
+    const item = screen.getByRole("menuitem", { name: "Pick" });
+
+    fireEvent.pointerDown(item, {
+      button: 0,
+      pointerId: 1,
+      clientX: 10,
+      clientY: 13 * 48,
+    });
+    fireEvent.pointerMove(grid, {
+      pointerId: 1,
+      clientX: 10,
+      clientY: 15 * 48,
+    });
+    fireEvent.pointerUp(grid, { pointerId: 1, clientX: 10, clientY: 15 * 48 });
+    fireEvent.doubleClick(item);
+    expect(onCreate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Pick" }));
+    expect(onPick).toHaveBeenCalled();
+  });
+
+  it("keeps events opaque, past ones muted, and the selected one free of hover", () => {
+    const past = {
+      ...event,
+      id: "old",
+      title: "Old",
+      start: new Date(2020, 0, 1, 9),
+      end: new Date(2020, 0, 1, 10),
+    };
+    render(
+      <TimeGrid
+        days={[new Date(2020, 0, 1), ...days.slice(1)]}
+        events={[past, event]}
+        colorOf={() => "#4986e7"}
+        selectedEventId="e1"
+        editableIds={new Set()}
+        canCreate
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={() => {}}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={() => {}}
+        onMove={() => {}}
+      />,
+    );
+    const old = screen.getByRole("button", { name: /Old/ });
+    expect(old.className).not.toMatch(/opacity/);
+    expect(old.style.background).toBe(
+      "color-mix(in oklab, #4986e7 13%, var(--background))",
+    );
+    expect(old.className).toContain("hover:brightness-125");
+    const selected = screen.getByRole("button", { name: /Planning/ });
+    expect(selected.className).not.toContain("hover:brightness");
+  });
+
+  it("shows a day on double-click of its header, not a single click", () => {
+    const onSelectDay = vi.fn();
+    render(
+      <TimeGrid
+        days={days}
+        events={[]}
+        colorOf={() => "#4986e7"}
+        selectedEventId={null}
+        editableIds={new Set()}
+        canCreate
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={onSelectDay}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={() => {}}
+        onMove={() => {}}
+      />,
+    );
+    const header = screen.getByRole("button", { name: /Tue\s*6/ });
+    fireEvent.click(header);
+    expect(onSelectDay).not.toHaveBeenCalled();
+    fireEvent.doubleClick(header);
+    expect(onSelectDay).toHaveBeenCalledWith(days[1]);
   });
 });

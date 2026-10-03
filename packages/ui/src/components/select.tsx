@@ -1,5 +1,6 @@
 "use client";
 
+import { CONTROL_HEIGHT, type ControlSize } from "@bessel/ui/lib/control-size";
 import { cn } from "@bessel/ui/lib/utils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";
@@ -23,20 +24,28 @@ function SelectValue({
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
+const TRIGGER_SIZE = {
+  xs: "rounded-md px-2 text-11",
+  sm: "rounded-md px-2.5 text-12",
+  default: "rounded-lg px-3 text-13",
+} as const;
+
 function SelectTrigger({
   className,
   size = "default",
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
+  size?: Exclude<ControlSize, "lg">;
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-white/10 text-white/85 data-[placeholder]:text-white/35 [&_svg:not([class*='text-'])]:text-white/40 hover:border-white/15 focus-visible:border-primary-500/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive flex w-full items-center justify-between gap-2 rounded-lg border bg-white/[0.04] px-3 py-2 text-13 whitespace-nowrap transition-colors duration-150 outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-8 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "border-white/10 text-white/85 data-[placeholder]:text-white/35 [&_svg:not([class*='text-'])]:text-white/40 hover:border-white/15 focus-visible:border-primary-500/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive flex w-full items-center justify-between gap-2 border bg-white/[0.04] whitespace-nowrap transition-colors duration-150 outline-none disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        CONTROL_HEIGHT[size],
+        TRIGGER_SIZE[size],
         className,
       )}
       {...props}

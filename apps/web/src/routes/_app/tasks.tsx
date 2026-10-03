@@ -642,8 +642,8 @@ function Tasks() {
                 }}
               >
                 <SelectTrigger
-                  size="sm"
-                  className="h-auto w-auto max-w-32 shrink-0 gap-1 rounded-md border-0 bg-transparent px-2 py-1 text-11 font-medium text-white/60 shadow-none transition-colors hover:bg-white/[0.06] hover:text-white/80 data-[size=sm]:h-auto dark:bg-transparent dark:hover:bg-white/[0.06]"
+                  size="xs"
+                  className="w-auto max-w-32 shrink-0 gap-1 border-0 bg-transparent font-medium text-white/60 shadow-none transition-colors hover:bg-white/[0.06] hover:text-white/80 dark:bg-transparent dark:hover:bg-white/[0.06]"
                 >
                   <Folder className="size-3" />
                   <SelectValue />
