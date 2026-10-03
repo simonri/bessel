@@ -29,6 +29,7 @@ export type ModuleKey =
   | "sleep"
   | "timeline"
   | "googleTimeline"
+  | "hyperliquid"
   | "calendar"
   | "recipes"
   | "claudeCode"

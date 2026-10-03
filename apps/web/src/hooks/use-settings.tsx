@@ -48,6 +48,8 @@ interface Settings {
   obsidianRecentVaults: string[];
   /** Desktop notification shortly before calendar events start. */
   calendarReminders: boolean;
+  /** Hyperliquid account shown on the Hyperliquid page; public, read-only. */
+  hyperliquidAddress: string | null;
 }
 
 const STORAGE_KEY = "bessel:settings";
@@ -61,6 +63,7 @@ const DEFAULT_SETTINGS: Settings = {
   obsidianVaultPath: null,
   obsidianRecentVaults: [],
   calendarReminders: true,
+  hyperliquidAddress: null,
 };
 
 function withDefaults(stored: Partial<Settings>): Settings {

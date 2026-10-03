@@ -2,6 +2,7 @@ import {
   Activity,
   ArrowLeftRight,
   CalendarDays,
+  ChartCandlestick,
   ChartGantt,
   CheckSquare,
   ChefHat,
@@ -113,6 +114,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
       })),
     ),
     ...COMPACT_SIZE,
+  },
+  hyperliquid: {
+    title: "Hyperliquid",
+    icon: ChartCandlestick,
+    component: lazy(() =>
+      import("@/routes/_app/hyperliquid").then((m) => ({
+        default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...SESSION_SIZE,
   },
   googleTimeline: {
     title: "Google Timeline",
