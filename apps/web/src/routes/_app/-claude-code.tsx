@@ -255,6 +255,7 @@ function BackgroundClaude() {
       taskDropZone
       commands={startedHere ? decodeCommands(entry?.data?.commands) : []}
       ignoreTitle
+      blockSuspend
     />
   );
 }

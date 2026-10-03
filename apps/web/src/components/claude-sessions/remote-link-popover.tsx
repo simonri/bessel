@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { claudeSessionsApi, useClaudeSession } from "./claude-sessions-store";
 
 const RETRY_MS = 3_000;
+const SLOW_MS = 20_000;
 const COPIED_MS = 1_500;
 
 function QrCode({ value }: { value: string }) {
@@ -42,6 +43,13 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
   const session = useClaudeSession(sessionKey);
   const url = session?.remoteUrl ?? null;
   const [copied, setCopied] = useState(false);
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    if (url) return;
+    const t = setTimeout(() => setSlow(true), SLOW_MS);
+    return () => clearTimeout(t);
+  }, [url]);
 
   // The link appears once Remote Control has connected, which can take a few
   // seconds after a session starts — keep asking while the popover is open.
@@ -75,6 +83,12 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
         <p className="text-xs text-white/50">
           Waiting for Remote Control to connect…
         </p>
+        {slow && (
+          <p className="text-11 leading-relaxed text-white/40">
+            This is taking a while. Remote Control needs Claude Code signed in
+            with a claude.ai Pro or Max account on this machine.
+          </p>
+        )}
       </div>
     );
   }

@@ -61,7 +61,11 @@ export interface ClaudeSessionDeps {
 }
 
 function nameFor(input: string): string {
-  const trimmed = input.replace(/\s+/g, " ").trim();
+  // A leading dash would read as a flag on the claude command line.
+  const trimmed = input
+    .replace(/\s+/g, " ")
+    .replace(/^[\s-]+/, "")
+    .trim();
   return (trimmed || "Claude").slice(0, MAX_NAME_LENGTH);
 }
 
@@ -82,6 +86,7 @@ class ClaudeSessionManager {
   private readonly lastStatus = new Map<string, ClaudeSessionStatus>();
   private readonly remoteUrlCheckedAt = new Map<string, number>();
   private lastSnapshot = "";
+  private readonly reservedNames = new Set<string>();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private polling: Promise<void> | null = null;
 
@@ -127,7 +132,6 @@ class ClaudeSessionManager {
   async create(input: CreateClaudeSessionInput): Promise<ClaudeSessionView> {
     const cwd = input.cwd || app.getPath("home");
     assertDirectory(cwd);
-    const name = this.uniqueName(nameFor(input.name));
     const resumeId = input.resumeSessionId;
     if (resumeId) {
       const known = this.store.sessions.find(
@@ -138,7 +142,17 @@ class ClaudeSessionManager {
     }
     const resume =
       resumeId && transcriptExists(cwd, resumeId) ? resumeId : undefined;
-    const { bgId, sessionId } = await this.startBackground(cwd, name, resume);
+    // Held until the session is stored: windows opened together all create
+    // at once, and must not all pick the same free name.
+    const name = this.uniqueName(nameFor(input.name));
+    this.reservedNames.add(name);
+    let started: { bgId: string; sessionId: string };
+    try {
+      started = await this.startBackground(cwd, name, resume);
+    } finally {
+      this.reservedNames.delete(name);
+    }
+    const { bgId, sessionId } = started;
     const session: StoredClaudeSession = {
       key: crypto.randomUUID(),
       bgId,
@@ -496,11 +510,12 @@ class ClaudeSessionManager {
 
   /** Live sessions get distinct names — it's how they're told apart on the phone. */
   private uniqueName(base: string): string {
-    const taken = new Set(
-      this.store.sessions
+    const taken = new Set([
+      ...this.reservedNames,
+      ...this.store.sessions
         .filter((s) => s.endedAt === undefined)
         .map((s) => s.name),
-    );
+    ]);
     if (!taken.has(base)) return base;
     for (let n = 2; ; n++)
       if (!taken.has(`${base} ${n}`)) return `${base} ${n}`;
