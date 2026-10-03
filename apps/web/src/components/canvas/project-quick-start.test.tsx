@@ -157,7 +157,7 @@ describe("ProjectQuickStart", () => {
     });
     act(() => sub.focus());
     fireEvent.keyDown(sub, { key: "ArrowRight" });
-    await screen.findByRole("menuitem", { name: /Widget icons/ });
+    await screen.findByRole("menuitem", { name: /^Widget icons/ });
     fireEvent.keyDown(sub, { key: "ArrowRight" });
     await waitFor(() =>
       expect(document.activeElement?.textContent).toContain("Widget icons"),
@@ -169,6 +169,35 @@ describe("ProjectQuickStart", () => {
       claudeSessionId: "c-1",
       claudeSessionName: "Widget icons",
     });
+  });
+
+  it("continues a past conversation in the background", async () => {
+    const { manager } = mount();
+    const sub = await screen.findByRole("menuitem", {
+      name: /Continue a conversation/,
+    });
+    act(() => sub.focus());
+    fireEvent.keyDown(sub, { key: "ArrowRight" });
+    await screen.findByRole("menuitem", { name: /^Widget icons/ });
+    fireEvent.keyDown(sub, { key: "ArrowRight" });
+    await waitFor(() =>
+      expect(document.activeElement?.textContent).toContain("Widget icons"),
+    );
+    fireEvent.keyDown(document.activeElement as Element, { key: "ArrowDown" });
+    await waitFor(() =>
+      expect(document.activeElement?.getAttribute("aria-label")).toBe(
+        "Resume “Widget icons” in background",
+      ),
+    );
+    fireEvent.keyDown(document.activeElement as Element, { key: "Enter" });
+
+    expect(claude.create).toHaveBeenCalledWith({
+      cwd: "/home/me/metron",
+      name: "Widget icons",
+      projectId: "p1",
+      resumeSessionId: "c-1",
+    });
+    expect(claudeWindows(manager())).toHaveLength(0);
   });
 
   it("opens an empty session under the project", async () => {
