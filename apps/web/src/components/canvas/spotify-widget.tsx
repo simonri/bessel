@@ -16,6 +16,24 @@ interface ProjectedSpotifyStatus {
   playing?: boolean;
   title?: string;
   artist?: string;
+  coverUrl?: string;
+}
+
+// Spotify cover ids encode the size: "…b273…" is 640px, "…4851…" is 64px —
+// plenty for a 20px thumbnail on a 2x screen. Older clients report a dead
+// open.spotify.com/image/<id> URL for the same image.
+const ALBUM_ART_640 = "ab67616d0000b273";
+const ALBUM_ART_64 = "ab67616d00004851";
+
+export function thumbnailUrl(artUrl: string | undefined): string | undefined {
+  if (!artUrl) return undefined;
+  const url = artUrl.replace(
+    "https://open.spotify.com/image/",
+    "https://i.scdn.co/image/",
+  );
+  return url.startsWith("https://i.scdn.co/image/")
+    ? url.replace(ALBUM_ART_640, ALBUM_ART_64)
+    : undefined;
 }
 
 function projectStatus(status: {
@@ -23,13 +41,29 @@ function projectStatus(status: {
   playing?: boolean;
   title?: string;
   artist?: string;
+  artUrl?: string;
 }): ProjectedSpotifyStatus {
   return {
     running: status.running,
     playing: status.playing,
     title: status.title,
     artist: status.artist,
+    coverUrl: thumbnailUrl(status.artUrl),
   };
+}
+
+function Cover({ url }: { url: string | undefined }) {
+  const [failed, setFailed] = useState<string | null>(null);
+  if (!url || failed === url) return null;
+  return (
+    <img
+      src={url}
+      alt=""
+      draggable={false}
+      onError={() => setFailed(url)}
+      className="ml-1 size-5 shrink-0 rounded-[3px] object-cover ring-1 ring-white/10"
+    />
+  );
 }
 // Backstop only — the main process pushes a status update the instant Spotify's
 // own D-Bus signal fires, normally well under a second. This just guarantees the
@@ -121,6 +155,7 @@ export function SpotifyWidget() {
         >
           <SkipForward />
         </button>
+        <Cover url={data.coverUrl} />
         <div className="ml-1.5 min-w-0 max-w-44 truncate text-xs text-white/70">
           {data.title}
           {data.artist && (
