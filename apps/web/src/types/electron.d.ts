@@ -150,6 +150,7 @@ declare global {
         create: (input: CreateClaudeSessionInput) => Promise<ClaudeSessionView>;
         resume: (key: string) => Promise<ClaudeSessionView>;
         end: (key: string) => Promise<void>;
+        rename: (key: string, name: string) => Promise<ClaudeSessionView>;
         remove: (key: string) => Promise<void>;
         adopt: (bgId: string, projectId?: string) => Promise<ClaudeSessionView>;
         remoteUrl: (key: string) => Promise<string | null>;

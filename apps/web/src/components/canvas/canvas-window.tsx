@@ -20,16 +20,25 @@ import {
   Maximize2,
   Minimize2,
   MoreHorizontal,
+  Pencil,
   Power,
   Smartphone,
   X,
 } from "lucide-react";
-import { memo, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   isLive,
   useClaudeSession,
 } from "@/components/claude-sessions/claude-sessions-store";
 import { RemoteLinkPopover } from "@/components/claude-sessions/remote-link-popover";
+import { SessionName } from "@/components/claude-sessions/session-name";
 import {
   STATUS_DOT_TITLE,
   StatusDot,
@@ -86,7 +95,14 @@ function WindowSpinner() {
   );
 }
 
-function WindowMenu({ entry }: { entry: WindowEntry }) {
+function WindowMenu({
+  entry,
+  onRename,
+}: {
+  entry: WindowEntry;
+  /** Set for windows whose name can be edited in the title bar. */
+  onRename?: () => void;
+}) {
   const { workspaces } = useWorkspaceMeta();
   const { windowsByWorkspace } = useWindowState();
   const { moveWindowToWorkspace } = useWindowActions();
@@ -96,9 +112,12 @@ function WindowMenu({ entry }: { entry: WindowEntry }) {
       : undefined,
   );
   const { requestEnd, endDialog } = useEndClaudeSession();
+  // Closing the menu refocuses its trigger, which would blur the rename
+  // input straight away.
+  const renameRequested = useRef(false);
   const others = workspaces.filter((ws) => ws.id !== entry.workspaceId);
   const canEnd = claudeSession !== null && isLive(claudeSession.status);
-  if (others.length === 0 && !canEnd) return null;
+  if (others.length === 0 && !canEnd && !onRename) return null;
 
   return (
     <>
@@ -115,7 +134,29 @@ function WindowMenu({ entry }: { entry: WindowEntry }) {
             <MoreHorizontal className="size-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-40">
+        <DropdownMenuContent
+          align="end"
+          className="min-w-40"
+          onCloseAutoFocus={(e) => {
+            if (!renameRequested.current) return;
+            renameRequested.current = false;
+            e.preventDefault();
+            onRename?.();
+          }}
+        >
+          {onRename && (
+            <>
+              <DropdownMenuItem
+                onClick={() => {
+                  renameRequested.current = true;
+                }}
+              >
+                <Pencil className="size-3.5" />
+                Rename session
+              </DropdownMenuItem>
+              {others.length > 0 && <DropdownMenuSeparator />}
+            </>
+          )}
           {others.map((ws) => (
             <DropdownMenuItem
               key={ws.id}
@@ -300,8 +341,8 @@ export const CanvasWindow = memo(function CanvasWindow({
 }: {
   entry: WindowEntry;
 }) {
-  const { closeWindow } = useWindowActions();
-  const { activeWorkspaceId } = useWorkspaceMeta();
+  const { closeWindow, renameWorkspace } = useWindowActions();
+  const { activeWorkspaceId, workspaces } = useWorkspaceMeta();
   const isFocused = useIsWindowFocused(entry.id);
   // Only "shown" fullscreen while its own workspace is the one on screen —
   // switching away just falls back to the normal grid slot (hidden along
@@ -319,6 +360,18 @@ export const CanvasWindow = memo(function CanvasWindow({
     [entry.id],
   );
   useEffect(() => () => setWindowAgentStatus(entry.id, null), [entry.id]);
+  const claudeSession = useClaudeSession(
+    entry.module === "claudeCode"
+      ? entry.data?.[CLAUDE_SESSION_KEY] || undefined
+      : undefined,
+  );
+  const [renaming, setRenaming] = useState(false);
+  // A canvas session opened for a Claude session is named after it; keep
+  // the two in step unless the canvas session was renamed on its own.
+  const followRename = (name: string, previous: string) => {
+    const workspace = workspaces.find((ws) => ws.id === entry.workspaceId);
+    if (workspace?.name === previous) renameWorkspace(workspace.id, name);
+  };
 
   return (
     <div
@@ -334,7 +387,18 @@ export const CanvasWindow = memo(function CanvasWindow({
       <WindowTitleBar
         icon={Icon}
         title={config.title}
-        subtitle={dynamicTitle || entry.data?.projectName}
+        subtitle={
+          claudeSession ? (
+            <SessionName
+              session={claudeSession}
+              editing={renaming}
+              onEditingChange={setRenaming}
+              onRenamed={followRename}
+            />
+          ) : (
+            dynamicTitle || entry.data?.projectName
+          )
+        }
         leading={agentStatus && <AgentStatusIndicator status={agentStatus} />}
         className="canvas-window-titlebar cursor-grab active:cursor-grabbing"
         onMouseDownCapture={(event) => {
@@ -350,7 +414,10 @@ export const CanvasWindow = memo(function CanvasWindow({
           <ProjectSwitcher entry={entry} />
         )}
         {entry.module === "claudeCode" && <RemoteLinkButton entry={entry} />}
-        <WindowMenu entry={entry} />
+        <WindowMenu
+          entry={entry}
+          onRename={claudeSession ? () => setRenaming(true) : undefined}
+        />
         <Button
           variant="ghost"
           size="iconSm"

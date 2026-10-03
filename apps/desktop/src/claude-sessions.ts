@@ -270,6 +270,21 @@ class ClaudeSessionManager {
       );
   }
 
+  /**
+   * Renames the session in Bessel. Claude keeps the name it was started with
+   * (there's no CLI to change it) and takes the new one on its next restart.
+   */
+  rename(key: string, name: string): ClaudeSessionView {
+    const session = this.require(key);
+    const base = nameFor(name);
+    if (base !== session.name) {
+      session.name = this.uniqueName(base, session.key);
+      this.save();
+      this.publish();
+    }
+    return this.view(session);
+  }
+
   remove(key: string): void {
     const session = this.require(key);
     if (session.endedAt === undefined)
@@ -564,11 +579,11 @@ class ClaudeSessionManager {
   // --- state -----------------------------------------------------------
 
   /** Live sessions get distinct names — it's how they're told apart on the phone. */
-  private uniqueName(base: string): string {
+  private uniqueName(base: string, exceptKey?: string): string {
     const taken = new Set([
       ...this.reservedNames,
       ...this.store.sessions
-        .filter((s) => s.endedAt === undefined)
+        .filter((s) => s.endedAt === undefined && s.key !== exceptKey)
         .map((s) => s.name),
     ]);
     if (!taken.has(base)) return base;
@@ -719,6 +734,9 @@ export function registerClaudeSessionHandlers(deps: ClaudeSessionDeps): void {
   );
   ipcHandle("claudeSessions:end", (_, key: string) =>
     requireManager().end(key),
+  );
+  ipcHandle("claudeSessions:rename", (_, key: string, name: string) =>
+    requireManager().rename(key, String(name ?? "")),
   );
   ipcHandle("claudeSessions:remove", (_, key: string) =>
     requireManager().remove(key),
