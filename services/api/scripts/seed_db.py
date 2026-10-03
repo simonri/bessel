@@ -34,6 +34,7 @@ from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
 from api.settings import settings
+from api.users.repository import UserRepository
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -548,6 +549,186 @@ async def seed() -> None:
         status="want_to_go",
         tags=["fjord", "norway", "scenic", "books"],
       ),
+      Place(
+        name="Dishoom Shoreditch",
+        address="7 Boundary St, London",
+        country="United Kingdom",
+        latitude=51.5245,
+        longitude=-0.0768,
+        category="restaurant",
+        status="visited",
+        rating=5,
+        visited_at=d(39),
+        review="Black daal and bacon naan roll for breakfast. Worth the wait.",
+        tags=["food", "london", "indian"],
+      ),
+      Place(
+        name="Tate Modern",
+        address="Bankside, London",
+        country="United Kingdom",
+        latitude=51.5076,
+        longitude=-0.0994,
+        category="museum",
+        status="visited",
+        rating=4,
+        visited_at=d(38),
+        review="Turbine Hall installation was the highlight. Free entry, go early.",
+        tags=["art", "london", "free"],
+      ),
+      Place(
+        name="Borough Market",
+        address="8 Southwark St, London",
+        country="United Kingdom",
+        latitude=51.5055,
+        longitude=-0.091,
+        category="market",
+        status="visited",
+        rating=4,
+        visited_at=d(38),
+        review="Great for grazing lunch. Crowded at noon.",
+        tags=["food", "london", "market"],
+      ),
+      Place(
+        name="The Churchill Arms",
+        address="119 Kensington Church St, London",
+        country="United Kingdom",
+        latitude=51.5069,
+        longitude=-0.1947,
+        category="bar",
+        status="visited",
+        rating=4,
+        visited_at=d(37),
+        review="Flower-covered pub with surprisingly good Thai food in the back.",
+        tags=["pub", "london"],
+      ),
+      Place(
+        name="Bryggen",
+        address="Bryggen, Bergen",
+        country="Norway",
+        latitude=60.3975,
+        longitude=5.3245,
+        category="landmark",
+        status="visited",
+        rating=5,
+        visited_at=d(57),
+        review="UNESCO wharf. Wander the wooden alleys behind the facades.",
+        tags=["bergen", "history", "unesco"],
+      ),
+      Place(
+        name="Fløyen",
+        address="Fløyfjellet, Bergen",
+        country="Norway",
+        latitude=60.3946,
+        longitude=5.3434,
+        category="park",
+        status="visited",
+        rating=4,
+        visited_at=d(56),
+        review="Took the funicular up, hiked down. Views over the whole city.",
+        tags=["bergen", "hiking", "views"],
+      ),
+      Place(
+        name="Colonialen 44",
+        address="Kong Oscars gate 44, Bergen",
+        country="Norway",
+        latitude=60.394,
+        longitude=5.3304,
+        category="restaurant",
+        status="visited",
+        rating=4,
+        visited_at=d(56),
+        review="Seasonal Norwegian menu. Excellent fish course.",
+        tags=["bergen", "food"],
+      ),
+      Place(
+        name="Munchmuseet",
+        address="Edvard Munchs plass 1, Oslo",
+        country="Norway",
+        latitude=59.9059,
+        longitude=10.7554,
+        category="museum",
+        status="visited",
+        rating=4,
+        visited_at=d(1),
+        review="The Scream rotation every hour. Rooftop bar has the best fjord view.",
+        tags=["oslo", "art", "museum"],
+      ),
+      Place(
+        name="Himkok",
+        address="Storgata 27, Oslo",
+        country="Norway",
+        latitude=59.9143,
+        longitude=10.752,
+        category="bar",
+        status="visited",
+        rating=5,
+        visited_at=d(9),
+        review="World-class cocktails with local spirits. Book a table.",
+        tags=["oslo", "cocktails"],
+      ),
+      Place(
+        name="Åpent Bakeri",
+        address="Inkognitogata 33, Oslo",
+        country="Norway",
+        latitude=59.9195,
+        longitude=10.7291,
+        category="bakery",
+        status="visited",
+        rating=4,
+        visited_at=d(0),
+        review="Cardamom buns still warm on a Saturday morning.",
+        tags=["oslo", "bakery", "coffee"],
+      ),
+      Place(
+        name="Noma",
+        address="Refshalevej 96, Copenhagen",
+        country="Denmark",
+        latitude=55.683,
+        longitude=12.6105,
+        category="restaurant",
+        status="want_to_go",
+        tags=["copenhagen", "fine-dining", "nordic"],
+      ),
+      Place(
+        name="Louisiana Museum of Modern Art",
+        address="Gl Strandvej 13, Humlebæk",
+        country="Denmark",
+        latitude=55.9686,
+        longitude=12.5426,
+        category="museum",
+        status="want_to_go",
+        tags=["art", "denmark", "day-trip"],
+      ),
+      Place(
+        name="Sagrada Família",
+        address="Carrer de Mallorca 401, Barcelona",
+        country="Spain",
+        latitude=41.4036,
+        longitude=2.1744,
+        category="church",
+        status="want_to_go",
+        tags=["barcelona", "architecture", "gaudi"],
+      ),
+      Place(
+        name="Tsukiji Outer Market",
+        address="Tsukiji 4-16, Tokyo",
+        country="Japan",
+        latitude=35.6655,
+        longitude=139.7707,
+        category="market",
+        status="want_to_go",
+        tags=["tokyo", "food", "market"],
+      ),
+      Place(
+        name="Hotel Arctic",
+        address="Mittarfimmut B-1128, Ilulissat",
+        country="Greenland",
+        latitude=69.2167,
+        longitude=-51.0985,
+        category="hotel",
+        status="want_to_go",
+        tags=["greenland", "icebergs", "bucket-list"],
+      ),
     ]
     for place in places:
       session.add(place)
@@ -727,8 +908,6 @@ async def seed() -> None:
     print(f"Seeded {len(all_activity)} activity events across {active_days} active days.")
 
     # ── 12. HealthKit workouts ────────────────────────────────────────────
-    # user_id is left NULL like every other user-owned row above — claimed by
-    # the first user to log in (see UserRepository.claim_orphaned_data).
     # Raw values match Apple's HKWorkoutActivityType enum.
     RUNNING = (37, "running")
     CYCLING = (13, "cycling")
@@ -790,7 +969,8 @@ async def seed() -> None:
     print(f"Seeded {len(workouts)} HealthKit workouts.")
 
     # ── 13. HealthKit sleep samples ───────────────────────────────────────
-    # One night per day for the last 28 days, generated as a sequence of
+    # One night per day for the last ~6 months (a few skipped, as if the
+    # watch wasn't worn), generated as a sequence of
     # stage segments (inBed buffer, repeating core/deep/REM cycles with
     # occasional awakenings, inBed buffer before waking). Raw values match
     # Apple's HKCategoryValueSleepAnalysis enum.
@@ -802,7 +982,8 @@ async def seed() -> None:
       "asleepDeep": 4,
       "asleepREM": 5,
     }
-    SLEEP_NIGHTS = 28
+    SLEEP_NIGHTS = 180
+    SKIPPED_NIGHT_RATE = 0.04
 
     def _sleep_cycles(rng: random.Random, target_minutes: float) -> list[tuple[str, int]]:
       segments: list[tuple[str, int]] = [("inBed", rng.randint(5, 20))]
@@ -822,6 +1003,8 @@ async def seed() -> None:
     sleep_rng = random.Random(20260615)
     sleep_samples: list[HealthKitSleepSample] = []
     for days_ago in range(SLEEP_NIGHTS):
+      if days_ago > 1 and sleep_rng.random() < SKIPPED_NIGHT_RATE:
+        continue
       bed_day = d(days_ago) - timedelta(days=1)
       is_weekend_night = bed_day.weekday() >= 4  # Fri/Sat night in -> later, longer
       bedtime_hour = sleep_rng.uniform(23.5, 25.0) if is_weekend_night else sleep_rng.uniform(22.5, 23.75)
@@ -848,7 +1031,18 @@ async def seed() -> None:
     for sample in sleep_samples:
       session.add(sample)
     await session.flush()
-    print(f"Seeded {len(sleep_samples)} HealthKit sleep samples across {SLEEP_NIGHTS} nights.")
+    print(f"Seeded {len(sleep_samples)} HealthKit sleep samples over the last {SLEEP_NIGHTS} nights.")
+
+    # ── Ownership ─────────────────────────────────────────────────────────
+    # Rows are created with a NULL user_id. Signup only claims those for the
+    # very first user, so when a local user already exists, hand them over
+    # now — otherwise the reseeded data is invisible to them.
+    owner = (await session.execute(text("SELECT id, email FROM users WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1"))).first()
+    if owner:
+      await UserRepository.from_session(session).claim_orphaned_data(owner.id)
+      print(f"Assigned seeded data to existing user {owner.email or owner.id}.")
+    else:
+      print("No user yet; seeded data will be claimed by the first login.")
 
     # ── Commit ────────────────────────────────────────────────────────────
     await session.commit()
@@ -862,7 +1056,7 @@ async def seed() -> None:
     print(f"   Places:        {len(places)}")
     print(f"   Activity:      {len(all_activity)} events  ({active_days} active days)")
     print(f"   Workouts:      {len(workouts)}")
-    print(f"   Sleep samples: {len(sleep_samples)}  ({SLEEP_NIGHTS} nights)")
+    print(f"   Sleep samples: {len(sleep_samples)}  (last {SLEEP_NIGHTS} nights)")
 
   await engine.dispose()
 
