@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
@@ -40,6 +41,12 @@ class CalendarUpdate(Schema):
   hidden: bool
 
 
+class CalendarEventAttendee(Schema):
+  email: str
+  name: str | None
+  response: Literal["accepted", "declined", "tentative", "needs_action"]
+
+
 class CalendarEventSchema(Schema):
   id: UUID
   calendar_id: UUID
@@ -50,6 +57,15 @@ class CalendarEventSchema(Schema):
   end_at: datetime | None = Field(description="Timed events only.")
   start_date: date | None = Field(description="All-day events only.")
   end_date: date | None = Field(description="All-day events only; exclusive.")
+  description: str | None = Field(description="Plain text; never HTML.")
+  creator_name: str | None
+  creator_email: str | None
+  attendees: list[CalendarEventAttendee]
+  conference_url: str | None = Field(description="Video meeting link, if any.")
+  html_link: str | None = Field(description="Event page in the provider's own UI (Google only).")
+  busy: bool = Field(description="False when the event is marked free/transparent.")
+  recurring: bool
+  visibility: Literal["public", "private", "confidential"] | None = Field(description="Null means the calendar's default.")
 
 
 class CalendarEventListResponse(Schema):

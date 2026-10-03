@@ -1,7 +1,9 @@
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Boolean, CheckConstraint, Date, ForeignKey, Index, String, UniqueConstraint, Uuid
+from sqlalchemy import TIMESTAMP, Boolean, CheckConstraint, Date, ForeignKey, Index, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from api.models.base import RecordModel
@@ -23,6 +25,18 @@ class CalendarEvent(RecordModel):
   end_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
   end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+  description: Mapped[str | None] = mapped_column(Text, nullable=True)
+  creator_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+  creator_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+  # [{"email", "name", "response"}]; response is accepted/declined/tentative/needs_action.
+  attendees: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+  conference_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+  # Link to the event in the provider's own UI (Google only).
+  html_link: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+  busy: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+  recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+  # public/private/confidential; null means the calendar's default.
+  visibility: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
   __table_args__ = (
     UniqueConstraint("calendar_id", "external_id", name="calendar_events_calendar_id_external_id_key"),

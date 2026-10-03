@@ -16,6 +16,24 @@ from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
 
 UPSERT_BATCH_SIZE = 1000
+_EVENT_SYNC_COLUMNS = (
+  "title",
+  "location",
+  "all_day",
+  "start_at",
+  "end_at",
+  "start_date",
+  "end_date",
+  "description",
+  "creator_name",
+  "creator_email",
+  "attendees",
+  "conference_url",
+  "html_link",
+  "busy",
+  "recurring",
+  "visibility",
+)
 
 
 class CalendarAccountRepository(RepositoryBase[CalendarAccount], RepositoryIDMixin[CalendarAccount, UUID]):
@@ -115,6 +133,15 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
         "end_at": e.end_at,
         "start_date": e.start_date,
         "end_date": e.end_date,
+        "description": e.description,
+        "creator_name": e.creator_name[:255] if e.creator_name else None,
+        "creator_email": e.creator_email[:320] if e.creator_email else None,
+        "attendees": [{"email": a.email, "name": a.name, "response": a.response} for a in e.attendees],
+        "conference_url": e.conference_url if e.conference_url and len(e.conference_url) <= 2048 else None,
+        "html_link": e.html_link if e.html_link and len(e.html_link) <= 2048 else None,
+        "busy": e.busy,
+        "recurring": e.recurring,
+        "visibility": e.visibility,
       }
       for e in {e.external_id: e for e in events}.values()
     ]
@@ -123,7 +150,7 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
       statement = statement.on_conflict_do_update(
         constraint="calendar_events_calendar_id_external_id_key",
         set_={
-          **{column: statement.excluded[column] for column in ("title", "location", "all_day", "start_at", "end_at", "start_date", "end_date")},
+          **{column: statement.excluded[column] for column in _EVENT_SYNC_COLUMNS},
           "modified_at": utc_now(),
         },
       )

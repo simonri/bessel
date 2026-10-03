@@ -17,10 +17,31 @@ export interface CalendarInfo {
   hidden: boolean;
 }
 
+export interface CalendarAttendee {
+  email: string;
+  name: string | null;
+  response: "accepted" | "declined" | "tentative" | "needs_action";
+}
+
+export interface CalendarEventDetails {
+  location: string | null;
+  description: string | null;
+  creatorName: string | null;
+  creatorEmail: string | null;
+  attendees: CalendarAttendee[];
+  conferenceUrl: string | null;
+  /** The event in the provider's own UI (Google only). */
+  htmlLink: string | null;
+  busy: boolean;
+  recurring: boolean;
+  visibility: "public" | "private" | "confidential" | null;
+}
+
 interface CalendarEventBase {
   id: string;
   calendarId: string;
   title: string;
+  details: CalendarEventDetails;
 }
 
 export interface TimedCalendarEvent extends CalendarEventBase {

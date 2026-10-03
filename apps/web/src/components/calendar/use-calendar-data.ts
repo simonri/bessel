@@ -138,7 +138,23 @@ export function useCalendarData(range: {
 
   const { accounts, calendars } = toAccounts(accountsData);
   const events = (eventsData?.events ?? []).flatMap((e): CalendarEvent[] => {
-    const base = { id: e.id, calendarId: e.calendar_id, title: e.title };
+    const base = {
+      id: e.id,
+      calendarId: e.calendar_id,
+      title: e.title,
+      details: {
+        location: e.location,
+        description: e.description,
+        creatorName: e.creator_name,
+        creatorEmail: e.creator_email,
+        attendees: e.attendees,
+        conferenceUrl: e.conference_url,
+        htmlLink: e.html_link,
+        busy: e.busy,
+        recurring: e.recurring,
+        visibility: e.visibility,
+      },
+    };
     if (e.all_day && e.start_date && e.end_date) {
       return [
         {

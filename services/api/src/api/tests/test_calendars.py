@@ -5,9 +5,9 @@ from uuid import UUID
 import httpx
 import pytest
 from api.calendars import google
-from api.calendars.google import GoogleCalendarClient
+from api.calendars.google import GoogleCalendarClient, _parse_event
 from api.calendars.icloud import ICloudCalendarClient, expand_events
-from api.calendars.providers import ProviderAuthError, ProviderCalendar, ProviderEvent
+from api.calendars.providers import ProviderAttendee, ProviderAuthError, ProviderCalendar, ProviderEvent, html_to_text
 from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarRepository
 from api.calendars.service import AccountSnapshot, calendar_service
 from api.common.encryption import decrypt, encrypt
@@ -178,6 +178,90 @@ class TestICloudClient:
         await ICloudCalendarClient(http, "me@icloud.com", "wrong").list_calendars()
 
 
+DETAILED_ICAL = """BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:planning
+DTSTART:20261006T130000Z
+DTEND:20261006T140000Z
+RRULE:FREQ=WEEKLY;COUNT=2
+SUMMARY:Planning
+LOCATION:https://acme.zoom.us/j/123?pwd=abc
+DESCRIPTION:Agenda in the doc
+ORGANIZER;CN=Bob:MAILTO:bob@example.com
+ATTENDEE;CN=Al;PARTSTAT=ACCEPTED:mailto:al@example.com
+ATTENDEE;PARTSTAT=DECLINED:mailto:cy@example.com
+TRANSP:TRANSPARENT
+CLASS:PRIVATE
+END:VEVENT
+BEGIN:VEVENT
+UID:solo
+DTSTART:20261007T090000Z
+DTEND:20261007T100000Z
+ATTENDEE;CN=Al:mailto:al@example.com
+SUMMARY:Solo
+END:VEVENT
+END:VCALENDAR"""
+
+
+class TestEventDetails:
+  def test_ical_details(self) -> None:
+    events = {e.title: e for e in expand_events([DETAILED_ICAL], WEEK_START, WEEK_END)}
+    planning, solo = events["Planning"], events["Solo"]
+
+    assert (planning.creator_name, planning.creator_email) == ("Bob", "bob@example.com")
+    assert planning.attendees == [
+      ProviderAttendee(email="al@example.com", name="Al", response="accepted"),
+      ProviderAttendee(email="cy@example.com", name=None, response="declined"),
+    ]
+    assert planning.conference_url == "https://acme.zoom.us/j/123?pwd=abc"
+    assert (planning.busy, planning.recurring, planning.visibility, planning.description) == (False, True, "private", "Agenda in the doc")
+    assert solo.attendees == [ProviderAttendee(email="al@example.com", name="Al", response="needs_action")]
+    assert (solo.busy, solo.recurring, solo.conference_url) == (True, False, None)
+
+  def test_ical_override_counts_as_recurring(self) -> None:
+    moved = next(e for e in expand_events([ICAL], WEEK_START, WEEK_END) if e.title == "Standup (moved)")
+    assert moved.recurring
+
+  def test_google_details(self) -> None:
+    event = _parse_event(
+      {
+        "id": "e1",
+        "summary": "Linser Simme",
+        "start": {"dateTime": "2026-10-07T17:00:00+02:00"},
+        "end": {"dateTime": "2026-10-07T18:00:00+02:00"},
+        "creator": {"email": "suseson@gmail.com"},
+        "organizer": {"email": "family@group.calendar.google.com", "displayName": "Familjen"},
+        "description": "Bring towel<br>Pool 2<br><a href=\"https://example.com/x\">Schedule</a>",
+        "attendees": [
+          {"email": "me@gmail.com", "responseStatus": "tentative", "self": True},
+          {"email": "room@resource.calendar.google.com", "resource": True, "responseStatus": "accepted"},
+        ],
+        "conferenceData": {"entryPoints": [{"entryPointType": "phone", "uri": "tel:+1"}, {"entryPointType": "video", "uri": "https://meet.google.com/abc"}]},
+        "htmlLink": "https://www.google.com/calendar/event?eid=x",
+        "transparency": "transparent",
+        "recurringEventId": "series",
+        "visibility": "default",
+      }
+    )
+
+    assert event is not None
+    assert (event.creator_name, event.creator_email) == (None, "suseson@gmail.com")
+    assert event.description == "Bring towel\nPool 2\nSchedule (https://example.com/x)"
+    assert event.attendees == [ProviderAttendee(email="me@gmail.com", name=None, response="tentative")]
+    assert event.conference_url == "https://meet.google.com/abc"
+    assert (event.busy, event.recurring, event.visibility) == (False, True, None)
+
+  def test_google_conference_falls_back_to_links_in_text(self) -> None:
+    base = {"id": "e", "start": {"date": "2026-10-07"}, "end": {"date": "2026-10-08"}}
+    assert _parse_event({**base, "hangoutLink": "https://meet.google.com/h"}).conference_url == "https://meet.google.com/h"  # type: ignore[union-attr]
+    assert _parse_event({**base, "description": "Join: https://acme.zoom.us/j/9 thanks"}).conference_url == "https://acme.zoom.us/j/9"  # type: ignore[union-attr]
+
+  def test_html_to_text_leaves_plain_text_alone(self) -> None:
+    assert html_to_text("a < b\nnext") == "a < b\nnext"
+    assert html_to_text("") is None
+
+
 class TestGoogleClient:
   @pytest.mark.asyncio
   async def test_list_calendars_paginates_and_maps(self, google_configured: None) -> None:
@@ -231,7 +315,8 @@ class TestGoogleClient:
 
 class TestGoogleConnect:
   @pytest.mark.asyncio
-  async def test_authorize_requires_configuration(self, client: AsyncClient) -> None:
+  async def test_authorize_requires_configuration(self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "")
     resp = await client.post("/v1/calendars/google/authorize")
     assert resp.status_code == 503
 
@@ -344,14 +429,29 @@ class TestSyncAndEvents:
       account_id,
       AccountSnapshot(
         calendars=[ProviderCalendar("work", "Work (renamed)", "#0000ff", hidden_by_default=False)],
-        events={"work": [_timed("w1", datetime(2026, 10, 6, 11, tzinfo=UTC), datetime(2026, 10, 6, 12, tzinfo=UTC), title="Moved")]},
+        events={
+          "work": [
+            ProviderEvent(
+              external_id="w1",
+              title="Moved",
+              location=None,
+              all_day=False,
+              start_at=datetime(2026, 10, 6, 11, tzinfo=UTC),
+              end_at=datetime(2026, 10, 6, 12, tzinfo=UTC),
+              description="Now with notes",
+              attendees=[ProviderAttendee(email="al@example.com", name="Al", response="accepted")],
+              busy=False,
+            )
+          ]
+        },
       ),
     )
 
     calendars = (await client.get("/v1/calendars/accounts")).json()["accounts"][0]["calendars"]
     assert [(c["id"], c["name"], c["color"], c["hidden"]) for c in calendars] == [(work_id, "Work (renamed)", "#0000ff", True)]
     events = (await client.get("/v1/calendars/events", params={"start_ts": int(WEEK_START.timestamp()), "end_ts": int(WEEK_END.timestamp())})).json()["events"]
-    assert [(e["title"], e["start_at"]) for e in events] == [("Moved", "2026-10-06T11:00:00Z")]
+    assert [(e["title"], e["start_at"], e["description"], e["busy"]) for e in events] == [("Moved", "2026-10-06T11:00:00Z", "Now with notes", False)]
+    assert events[0]["attendees"] == [{"email": "al@example.com", "name": "Al", "response": "accepted"}]
     assert account.last_synced_at is not None
 
   @pytest.mark.asyncio

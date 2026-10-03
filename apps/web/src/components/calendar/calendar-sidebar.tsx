@@ -5,6 +5,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@bessel/ui/components/tooltip";
 import { formatDistanceToNow } from "date-fns";
 import { AlertCircle, Check, MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
@@ -130,10 +135,20 @@ function AccountHeader({
         {account.email}
       </h3>
       {account.syncError ? (
-        <AlertCircle
-          className="size-3 shrink-0 text-amber-400"
-          aria-label={account.syncError}
-        />
+        <Tooltip delayDuration={150}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Sync problem: ${account.syncError}`}
+              className="flex shrink-0 rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-amber-400/60"
+            >
+              <AlertCircle className="size-3 text-amber-400" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={6} className="max-w-60">
+            {account.syncError}
+          </TooltipContent>
+        </Tooltip>
       ) : (
         !account.lastSyncedAt && (
           <span className="shrink-0 text-10 text-white/30">Syncing…</span>

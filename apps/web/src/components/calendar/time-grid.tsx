@@ -6,11 +6,13 @@ import {
   layoutAllDayEvents,
   layoutDayEvents,
 } from "./calendar-layout";
+import { toWallClock } from "./calendar-timezone";
 import type {
   AllDayCalendarEvent,
   CalendarEvent,
   TimedCalendarEvent,
 } from "./calendar-types";
+import { TimeZonePicker } from "./timezone-picker";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const ALL_DAY_ROW_HEIGHT = 22;
@@ -33,24 +35,33 @@ export function TimeGrid({
   days,
   events,
   colorOf,
+  selectedEventId,
+  timeZone,
+  onTimeZoneChange,
   onSelectDay,
+  onSelectEvent,
 }: {
   days: Date[];
+  /** Timed events already converted to wall-clock time in `timeZone`. */
   events: CalendarEvent[];
   colorOf: (calendarId: string) => string;
+  selectedEventId: string | null;
+  timeZone: string;
+  onTimeZoneChange: (timeZone: string) => void;
   onSelectDay: (day: Date) => void;
+  onSelectEvent: (eventId: string, anchor: HTMLElement) => void;
 }) {
-  const now = useNow();
+  const now = toWallClock(useNow(), timeZone);
   const scrollRef = useRef<HTMLDivElement>(null);
   const gridTemplateColumns = `${GUTTER} repeat(${days.length}, minmax(0, 1fr))`;
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const current = new Date();
+    const current = toWallClock(new Date(), timeZone);
     const minutes = current.getHours() * 60 + current.getMinutes() - 90;
     el.scrollTop = Math.max(0, (minutes / 60) * HOUR_HEIGHT);
-  }, []);
+  }, [timeZone]);
 
   const timed = events.filter((e): e is TimedCalendarEvent => !e.allDay);
   const allDay = layoutAllDayEvents(
@@ -61,9 +72,10 @@ export function TimeGrid({
   const allDayRows = Math.max(1, ...allDay.map((e) => e.row + 1));
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const nowTop = (nowMinutes / 60) * HOUR_HEIGHT;
+  const todayIso = format(now, "yyyy-MM-dd");
   const todayIndex = days.findIndex((d) => isSameDay(d, now));
   const hourLabels = HOURS.slice(1).filter(
-    (h) => todayIndex === -1 || Math.abs(h * 60 - nowMinutes) >= 15,
+    (h) => todayIndex === -1 || Math.abs(h * 60 - nowMinutes) >= 20,
   );
 
   return (
@@ -72,8 +84,8 @@ export function TimeGrid({
         className={cn(COLUMNS_CLASS, "shrink-0 overflow-hidden")}
         style={{ gridTemplateColumns }}
       >
-        <div className="flex items-center justify-end pr-2 text-10 text-white/35">
-          {format(now, "O")}
+        <div className="flex items-center justify-end pr-1">
+          <TimeZonePicker timeZone={timeZone} onChange={onTimeZoneChange} />
         </div>
         {days.map((day) => {
           const isToday = isSameDay(day, now);
@@ -132,6 +144,9 @@ export function TimeGrid({
               <EventChip
                 title={event.title}
                 color={colorOf(event.calendarId)}
+                past={event.endDate <= todayIso}
+                selected={event.id === selectedEventId}
+                onSelect={(anchor) => onSelectEvent(event.id, anchor)}
                 className="h-full items-center"
               />
             </div>
@@ -156,10 +171,10 @@ export function TimeGrid({
           ))}
           {todayIndex !== -1 && (
             <span
-              className="absolute right-2 -translate-y-1/2 text-10 font-medium tabular-nums text-red-400"
+              className="absolute right-1 z-10 -translate-y-1/2 rounded-[4px] bg-red-500 px-1 py-px text-10 font-medium tabular-nums text-white"
               style={{ top: nowTop }}
             >
-              {format(now, "h:mm a")}
+              {format(now, "h:mma")}
             </span>
           )}
         </div>
@@ -179,6 +194,12 @@ export function TimeGrid({
             />
           ))}
           <DayDividers days={days} />
+          {todayIndex !== -1 && days.length > 1 && (
+            <div
+              className="pointer-events-none absolute inset-x-0 z-10 h-px bg-red-400/50"
+              style={{ top: nowTop }}
+            />
+          )}
 
           {days.map((day, i) => (
             <div
@@ -203,12 +224,15 @@ export function TimeGrid({
                   >
                     <EventChip
                       title={event.title}
+                      past={event.end <= now}
                       subtitle={
                         height < COMPACT_EVENT_HEIGHT
                           ? format(event.start, "h:mm")
                           : `${format(event.start, "h:mm")}–${format(event.end, "h:mm a")}`
                       }
                       color={colorOf(event.calendarId)}
+                      selected={event.id === selectedEventId}
+                      onSelect={(anchor) => onSelectEvent(event.id, anchor)}
                       className={cn(
                         "h-full",
                         height < COMPACT_EVENT_HEIGHT
@@ -245,35 +269,76 @@ function DayDividers({ days }: { days: Date[] }) {
   ));
 }
 
+// Relative luminance (WCAG) decides whether a solid calendar-color fill needs
+// dark text; pale provider colors like #9fe1e7 are unreadable under white.
+function isLightColor(hex: string): boolean {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!match) return false;
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const c = Number.parseInt(match[1].slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4;
+}
+
 function EventChip({
   title,
   subtitle,
   color,
+  past,
+  selected,
+  onSelect,
   className,
 }: {
   title: string;
   subtitle?: string;
   color: string;
+  /** Already over; drawn faded like Notion so the rest of the day stands out. */
+  past: boolean;
+  selected: boolean;
+  onSelect: (anchor: HTMLElement) => void;
   className?: string;
 }) {
+  const darkText = selected && isLightColor(color);
   return (
-    <div
-      title={subtitle ? `${title} · ${subtitle}` : title}
+    <button
+      type="button"
+      onClick={(e) => onSelect(e.currentTarget)}
+      aria-pressed={selected}
       className={cn(
-        "flex overflow-hidden rounded-[5px] border-l-[3px] px-1.5 py-0.5 text-11 leading-tight",
+        "flex w-full overflow-hidden rounded-[5px] border-l-[3px] px-1.5 py-0.5 text-left text-11 leading-tight outline-none transition-[filter,opacity] duration-150 hover:brightness-125 focus-visible:ring-1 focus-visible:ring-white/40",
+        past && !selected && "opacity-50 hover:opacity-75",
         className,
       )}
       style={{
         borderLeftColor: color,
-        background: `color-mix(in oklab, ${color} 28%, transparent)`,
+        background: selected
+          ? color
+          : `color-mix(in oklab, ${color} 28%, transparent)`,
       }}
     >
-      <span className="truncate font-medium text-white/90">{title}</span>
+      <span
+        className={cn(
+          "truncate font-medium",
+          darkText ? "text-black/85" : "text-white/90",
+        )}
+      >
+        {title}
+      </span>
       {subtitle && (
-        <span className="shrink-0 truncate text-10 text-white/55">
+        <span
+          className={cn(
+            "shrink-0 truncate text-10",
+            darkText
+              ? "text-black/60"
+              : selected
+                ? "text-white/80"
+                : "text-white/55",
+          )}
+        >
           {subtitle}
         </span>
       )}
-    </div>
+    </button>
   );
 }

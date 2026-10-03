@@ -8,7 +8,7 @@ import recurring_ical_events
 from icalendar import Calendar as ICalendar
 from icalendar import Event as IEvent
 
-from api.calendars.providers import ProviderAuthError, ProviderCalendar, ProviderEvent, normalize_color
+from api.calendars.providers import AttendeeResponse, ProviderAttendee, ProviderAuthError, ProviderCalendar, ProviderEvent, find_conference_url, normalize_color
 
 CALDAV_URL = "https://caldav.icloud.com/"
 DEFAULT_COLOR = "#34aadc"
@@ -21,15 +21,58 @@ def _as_aware(value: datetime) -> datetime:
   return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
 
 
-def _occurrence(component: IEvent) -> ProviderEvent:
+_PARTSTAT: dict[str, AttendeeResponse] = {
+  "ACCEPTED": "accepted",
+  "DECLINED": "declined",
+  "TENTATIVE": "tentative",
+  "NEEDS-ACTION": "needs_action",
+}
+_VISIBILITY = {"PRIVATE": "private", "CONFIDENTIAL": "confidential", "PUBLIC": "public"}
+
+
+def _text_prop(component: IEvent, name: str) -> str | None:
+  value = component.get(name)
+  return str(value).strip() or None if value is not None else None
+
+
+def _email(address: object) -> str:
+  value = str(address)
+  return value[7:] if value.lower().startswith("mailto:") else value
+
+
+def _attendees(component: IEvent) -> list[ProviderAttendee]:
+  raw = component.get("ATTENDEE")
+  addresses = raw if isinstance(raw, list) else [raw] if raw is not None else []
+  return [
+    ProviderAttendee(
+      email=_email(address),
+      name=address.params.get("CN"),
+      response=_PARTSTAT.get(str(address.params.get("PARTSTAT", "")).upper(), "needs_action"),
+    )
+    for address in addresses
+    if _email(address)
+  ]
+
+
+def _occurrence(component: IEvent, recurring: bool) -> ProviderEvent:
   uid = str(component.get("UID", ""))
   start, end = component.start, component.end
   recurrence_id = component.get("RECURRENCE-ID")
   instance = recurrence_id.dt if recurrence_id is not None else start
+  organizer = component.get("ORGANIZER")
+  location, description, url = _text_prop(component, "LOCATION"), _text_prop(component, "DESCRIPTION"), _text_prop(component, "URL")
   common = {
     "external_id": f"{uid}/{instance.isoformat()}",
-    "title": str(component.get("SUMMARY") or "(No title)"),
-    "location": str(component["LOCATION"]) if component.get("LOCATION") else None,
+    "title": _text_prop(component, "SUMMARY") or "(No title)",
+    "location": location,
+    "description": description,
+    "creator_name": organizer.params.get("CN") if organizer is not None else None,
+    "creator_email": _email(organizer) if organizer is not None else None,
+    "attendees": _attendees(component),
+    "conference_url": find_conference_url(url, location, description),
+    "busy": str(component.get("TRANSP", "OPAQUE")).upper() != "TRANSPARENT",
+    "recurring": recurring,
+    "visibility": _VISIBILITY.get(str(component.get("CLASS", "")).upper()),
   }
   if isinstance(start, datetime):
     end_at = _as_aware(end) if isinstance(end, datetime) else _as_aware(start)
@@ -47,10 +90,12 @@ def expand_events(ical_documents: Iterable[str], start: datetime, end: datetime)
   events: dict[str, ProviderEvent] = {}
   for document in ical_documents:
     calendar = ICalendar.from_ical(document)
+    # Expanded occurrences drop RRULE, so note which series repeat up front.
+    recurring_uids = {str(c.get("UID")) for c in calendar.walk("VEVENT") if any(c.get(prop) is not None for prop in ("RRULE", "RDATE", "RECURRENCE-ID"))}
     for component in recurring_ical_events.of(calendar).between(start, end):
       if component.name != "VEVENT":
         continue
-      event = _occurrence(component)
+      event = _occurrence(component, str(component.get("UID")) in recurring_uids)
       events[event.external_id] = event
   return list(events.values())
 

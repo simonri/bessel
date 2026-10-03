@@ -34,8 +34,11 @@ from .bulk_update_request import BulkUpdateRequest
 from .bulk_update_response import BulkUpdateResponse
 from .calendar_account_list_response import CalendarAccountListResponse
 from .calendar_account_schema import CalendarAccountSchema
+from .calendar_event_attendee import CalendarEventAttendee
+from .calendar_event_attendee_response import CalendarEventAttendeeResponse
 from .calendar_event_list_response import CalendarEventListResponse
 from .calendar_event_schema import CalendarEventSchema
+from .calendar_event_schema_visibility_type_0 import CalendarEventSchemaVisibilityType0
 from .calendar_provider import CalendarProvider
 from .calendar_schema import CalendarSchema
 from .calendar_update import CalendarUpdate
@@ -181,8 +184,11 @@ __all__ = (
   "BulkUpdateResponse",
   "CalendarAccountListResponse",
   "CalendarAccountSchema",
+  "CalendarEventAttendee",
+  "CalendarEventAttendeeResponse",
   "CalendarEventListResponse",
   "CalendarEventSchema",
+  "CalendarEventSchemaVisibilityType0",
   "CalendarProvider",
   "CalendarSchema",
   "CalendarUpdate",

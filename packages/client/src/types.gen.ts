@@ -723,6 +723,24 @@ export type CalendarAccountSchema = {
 };
 
 /**
+ * CalendarEventAttendee
+ */
+export type CalendarEventAttendee = {
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Name
+   */
+  name: string | null;
+  /**
+   * Response
+   */
+  response: "accepted" | "declined" | "tentative" | "needs_action";
+};
+
+/**
  * CalendarEventListResponse
  */
 export type CalendarEventListResponse = {
@@ -780,6 +798,52 @@ export type CalendarEventSchema = {
    * All-day events only; exclusive.
    */
   end_date: Date | null;
+  /**
+   * Description
+   *
+   * Plain text; never HTML.
+   */
+  description: string | null;
+  /**
+   * Creator Name
+   */
+  creator_name: string | null;
+  /**
+   * Creator Email
+   */
+  creator_email: string | null;
+  /**
+   * Attendees
+   */
+  attendees: Array<CalendarEventAttendee>;
+  /**
+   * Conference Url
+   *
+   * Video meeting link, if any.
+   */
+  conference_url: string | null;
+  /**
+   * Html Link
+   *
+   * Event page in the provider's own UI (Google only).
+   */
+  html_link: string | null;
+  /**
+   * Busy
+   *
+   * False when the event is marked free/transparent.
+   */
+  busy: boolean;
+  /**
+   * Recurring
+   */
+  recurring: boolean;
+  /**
+   * Visibility
+   *
+   * Null means the calendar's default.
+   */
+  visibility: "public" | "private" | "confidential" | null;
 };
 
 /**

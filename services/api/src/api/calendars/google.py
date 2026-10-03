@@ -4,7 +4,16 @@ from urllib.parse import quote, urlencode
 
 import httpx
 
-from api.calendars.providers import ProviderAuthError, ProviderCalendar, ProviderEvent, normalize_color
+from api.calendars.providers import (
+  AttendeeResponse,
+  ProviderAttendee,
+  ProviderAuthError,
+  ProviderCalendar,
+  ProviderEvent,
+  find_conference_url,
+  html_to_text,
+  normalize_color,
+)
 from api.settings import settings
 
 AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -35,15 +44,50 @@ def authorize_url(state: str) -> str:
   return f"{AUTHORIZE_URL}?{urlencode(params)}"
 
 
+_RESPONSES: dict[str, AttendeeResponse] = {
+  "accepted": "accepted",
+  "declined": "declined",
+  "tentative": "tentative",
+  "needsAction": "needs_action",
+}
+
+
+def _conference_url(item: dict[str, Any], description: str | None) -> str | None:
+  for entry in item.get("conferenceData", {}).get("entryPoints", []):
+    if entry.get("entryPointType") == "video" and entry.get("uri"):
+      return entry["uri"]
+  return item.get("hangoutLink") or find_conference_url(item.get("location"), description)
+
+
 def _parse_event(item: dict[str, Any]) -> ProviderEvent | None:
   if item.get("status") == "cancelled":
     return None
   start, end = item.get("start", {}), item.get("end", {})
-  common = {"external_id": item["id"], "title": item.get("summary") or "(No title)", "location": item.get("location")}
+  # `creator` is who made the event; `organizer` is often the calendar itself.
+  creator = item.get("creator") or item.get("organizer") or {}
+  description = html_to_text(item.get("description"))
+  details = {
+    "external_id": item["id"],
+    "title": item.get("summary") or "(No title)",
+    "location": item.get("location"),
+    "description": description,
+    "creator_name": creator.get("displayName"),
+    "creator_email": creator.get("email"),
+    "attendees": [
+      ProviderAttendee(email=a["email"], name=a.get("displayName"), response=_RESPONSES.get(a.get("responseStatus", ""), "needs_action"))
+      for a in item.get("attendees", [])
+      if a.get("email") and not a.get("resource")
+    ],
+    "conference_url": _conference_url(item, description),
+    "html_link": item.get("htmlLink"),
+    "busy": item.get("transparency") != "transparent",
+    "recurring": "recurringEventId" in item,
+    "visibility": item.get("visibility") if item.get("visibility") in ("public", "private", "confidential") else None,
+  }
   if "date" in start:
-    return ProviderEvent(**common, all_day=True, start_date=date.fromisoformat(start["date"]), end_date=date.fromisoformat(end["date"]))
+    return ProviderEvent(**details, all_day=True, start_date=date.fromisoformat(start["date"]), end_date=date.fromisoformat(end["date"]))
   if "dateTime" in start:
-    return ProviderEvent(**common, all_day=False, start_at=datetime.fromisoformat(start["dateTime"]), end_at=datetime.fromisoformat(end["dateTime"]))
+    return ProviderEvent(**details, all_day=False, start_at=datetime.fromisoformat(start["dateTime"]), end_at=datetime.fromisoformat(end["dateTime"]))
   return None
 
 

@@ -300,6 +300,7 @@ export {
   type BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
   type CalendarAccountListResponse,
   type CalendarAccountSchema,
+  type CalendarEventAttendee,
   type CalendarEventListResponse,
   type CalendarEventSchema,
   CalendarProvider,

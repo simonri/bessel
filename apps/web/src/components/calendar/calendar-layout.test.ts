@@ -5,9 +5,25 @@ import {
   layoutDayEvents,
   MIN_EVENT_HEIGHT,
 } from "./calendar-layout";
-import type { AllDayCalendarEvent, TimedCalendarEvent } from "./calendar-types";
+import type {
+  AllDayCalendarEvent,
+  CalendarEventDetails,
+  TimedCalendarEvent,
+} from "./calendar-types";
 
 const DAY = new Date(2026, 9, 7);
+const details: CalendarEventDetails = {
+  location: null,
+  description: null,
+  creatorName: null,
+  creatorEmail: null,
+  attendees: [],
+  conferenceUrl: null,
+  htmlLink: null,
+  busy: true,
+  recurring: false,
+  visibility: null,
+};
 
 function timed(
   id: string,
@@ -20,6 +36,7 @@ function timed(
     id,
     calendarId: "c",
     title: id,
+    details,
     allDay: false,
     start: new Date(2026, 9, 7 + dayOffset, sh, sm),
     end: new Date(2026, 9, 7 + endDayOffset, eh, em),
@@ -31,7 +48,15 @@ function allDay(
   startDate: string,
   endDate: string,
 ): AllDayCalendarEvent {
-  return { id, calendarId: "c", title: id, allDay: true, startDate, endDate };
+  return {
+    id,
+    calendarId: "c",
+    title: id,
+    details,
+    allDay: true,
+    startDate,
+    endDate,
+  };
 }
 
 describe("layoutDayEvents", () => {

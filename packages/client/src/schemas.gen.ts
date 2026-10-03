@@ -954,6 +954,34 @@ export const CalendarAccountSchemaSchema = {
   title: "CalendarAccountSchema",
 } as const;
 
+export const CalendarEventAttendeeSchema = {
+  properties: {
+    email: {
+      type: "string",
+      title: "Email",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    response: {
+      type: "string",
+      enum: ["accepted", "declined", "tentative", "needs_action"],
+      title: "Response",
+    },
+  },
+  type: "object",
+  required: ["email", "name", "response"],
+  title: "CalendarEventAttendee",
+} as const;
+
 export const CalendarEventListResponseSchema = {
   properties: {
     events: {
@@ -1052,6 +1080,93 @@ export const CalendarEventSchemaSchema = {
       title: "End Date",
       description: "All-day events only; exclusive.",
     },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+      description: "Plain text; never HTML.",
+    },
+    creator_name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Creator Name",
+    },
+    creator_email: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Creator Email",
+    },
+    attendees: {
+      items: {
+        $ref: "#/components/schemas/CalendarEventAttendee",
+      },
+      type: "array",
+      title: "Attendees",
+    },
+    conference_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Conference Url",
+      description: "Video meeting link, if any.",
+    },
+    html_link: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Html Link",
+      description: "Event page in the provider's own UI (Google only).",
+    },
+    busy: {
+      type: "boolean",
+      title: "Busy",
+      description: "False when the event is marked free/transparent.",
+    },
+    recurring: {
+      type: "boolean",
+      title: "Recurring",
+    },
+    visibility: {
+      anyOf: [
+        {
+          type: "string",
+          enum: ["public", "private", "confidential"],
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Visibility",
+      description: "Null means the calendar's default.",
+    },
   },
   type: "object",
   required: [
@@ -1064,6 +1179,15 @@ export const CalendarEventSchemaSchema = {
     "end_at",
     "start_date",
     "end_date",
+    "description",
+    "creator_name",
+    "creator_email",
+    "attendees",
+    "conference_url",
+    "html_link",
+    "busy",
+    "recurring",
+    "visibility",
   ],
   title: "CalendarEventSchema",
 } as const;
