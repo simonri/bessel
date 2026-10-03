@@ -20,6 +20,7 @@ import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppSleepRouteImport } from './routes/_app/sleep'
 import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
+import { Route as AppHyperliquidRouteImport } from './routes/_app/hyperliquid'
 import { Route as AppGoogleTimelineRouteImport } from './routes/_app/google-timeline'
 import { Route as AppCountersRouteImport } from './routes/_app/counters'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
@@ -80,6 +81,11 @@ const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
   path: '/investments',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHyperliquidRoute = AppHyperliquidRouteImport.update({
+  id: '/hyperliquid',
+  path: '/hyperliquid',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGoogleTimelineRoute = AppGoogleTimelineRouteImport.update({
   id: '/google-timeline',
   path: '/google-timeline',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AppCalendarRoute
   '/counters': typeof AppCountersRoute
   '/google-timeline': typeof AppGoogleTimelineRoute
+  '/hyperliquid': typeof AppHyperliquidRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
   '/sleep': typeof AppSleepRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarRoute
   '/counters': typeof AppCountersRoute
   '/google-timeline': typeof AppGoogleTimelineRoute
+  '/hyperliquid': typeof AppHyperliquidRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
   '/sleep': typeof AppSleepRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/counters': typeof AppCountersRoute
   '/_app/google-timeline': typeof AppGoogleTimelineRoute
+  '/_app/hyperliquid': typeof AppHyperliquidRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/recipes': typeof AppRecipesRoute
   '/_app/sleep': typeof AppSleepRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/counters'
     | '/google-timeline'
+    | '/hyperliquid'
     | '/investments'
     | '/recipes'
     | '/sleep'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/counters'
     | '/google-timeline'
+    | '/hyperliquid'
     | '/investments'
     | '/recipes'
     | '/sleep'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/_app/calendar'
     | '/_app/counters'
     | '/_app/google-timeline'
+    | '/_app/hyperliquid'
     | '/_app/investments'
     | '/_app/recipes'
     | '/_app/sleep'
@@ -299,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvestmentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/hyperliquid': {
+      id: '/_app/hyperliquid'
+      path: '/hyperliquid'
+      fullPath: '/hyperliquid'
+      preLoaderRoute: typeof AppHyperliquidRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/google-timeline': {
       id: '/_app/google-timeline'
       path: '/google-timeline'
@@ -343,6 +362,7 @@ interface AppRouteChildren {
   AppCalendarRoute: typeof AppCalendarRoute
   AppCountersRoute: typeof AppCountersRoute
   AppGoogleTimelineRoute: typeof AppGoogleTimelineRoute
+  AppHyperliquidRoute: typeof AppHyperliquidRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppRecipesRoute: typeof AppRecipesRoute
   AppSleepRoute: typeof AppSleepRoute
@@ -359,6 +379,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalendarRoute: AppCalendarRoute,
   AppCountersRoute: AppCountersRoute,
   AppGoogleTimelineRoute: AppGoogleTimelineRoute,
+  AppHyperliquidRoute: AppHyperliquidRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppRecipesRoute: AppRecipesRoute,
   AppSleepRoute: AppSleepRoute,

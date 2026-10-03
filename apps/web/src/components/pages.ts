@@ -13,6 +13,7 @@ export type PageKey =
   | "travel"
   | "timeline"
   | "googleTimeline"
+  | "hyperliquid"
   | "calendar"
   | "activity"
   | "sleep"
@@ -44,6 +45,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   travel: fromModule("travel", true),
   timeline: fromModule("timeline"),
   googleTimeline: fromModule("googleTimeline"),
+  hyperliquid: fromModule("hyperliquid"),
   calendar: fromModule("calendar", true),
   activity: fromModule("activity"),
   sleep: fromModule("sleep"),
@@ -71,6 +73,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "timeline",
   "googleTimeline",
   "activity",
+  "hyperliquid",
   "sleep",
   "recipes",
   ...(isDesktop ? (["obsidian"] as PageKey[]) : []),
