@@ -1,5 +1,5 @@
 import { glassSurface } from "@bessel/ui/lib/glass";
-import { ArrowLeft, Check, Play } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Play } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { tileEvenly } from "@/components/canvas/layout-engine";
@@ -317,6 +317,7 @@ export function NewSessionPage({
   const [conversationId, setConversationId] = useState(NEW_CONVERSATION);
   const [runMode, setRunMode] = useState<RunMode>("open");
   const [starting, setStarting] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const formId = useId();
   const { sessions } = useClaudeSessions();
   const openClaudeSession = useOpenClaudeSession(useShowCanvas());
@@ -430,6 +431,14 @@ export function NewSessionPage({
           ? `Start ${effectiveCount} in background`
           : "Start in background"
         : `Open ${effectiveCount > 1 ? `${effectiveCount} × ${agentTitle}` : agentTitle}`;
+
+  const optionsSummary = [
+    background ? "In background" : null,
+    effectiveCount > 1 ? `${effectiveCount} windows` : "1 window",
+    name.trim() ? `“${name.trim()}”` : null,
+  ]
+    .filter(Boolean)
+    .join(" - ");
 
   // No agents to spawn, so no need to gate on isDesktop like submit() does.
   const skip = () => {
@@ -560,80 +569,111 @@ export function NewSessionPage({
         </Field>
       )}
 
-      {canBackground && (
-        <Field label="Run">
-          <fieldset className="grid grid-cols-2 gap-2">
-            <legend className="sr-only">Run</legend>
-            {(
-              [
-                ["open", "Open now", "In a new canvas"],
-                ["background", "In background", "No window, reach it anywhere"],
-              ] as const
-            ).map(([mode, title, description]) => (
-              <RadioOption
-                key={mode}
-                name={`${formId}-run`}
-                value={mode}
-                checked={runMode === mode}
-                onSelect={() => setRunMode(mode)}
-                className="flex-col gap-0.5 px-3 py-2.5"
-              >
-                <span className="text-xs font-medium">{title}</span>
-                <span className="text-11 text-white/45">{description}</span>
-              </RadioOption>
-            ))}
-          </fieldset>
-        </Field>
-      )}
-
-      <Field
-        label="How many"
-        hint={conversation ? "One per conversation" : undefined}
-      >
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <fieldset className="flex gap-2">
-              <legend className="sr-only">How many</legend>
-              {COUNTS.map((n) => (
-                <RadioOption
-                  key={n}
-                  name={`${formId}-count`}
-                  value={String(n)}
-                  checked={n === effectiveCount}
-                  disabled={conversation !== null && n !== 1}
-                  onSelect={() => setCount(n)}
-                  className="size-9 items-center justify-center font-mono text-sm tabular-nums"
-                >
-                  {n}
-                </RadioOption>
-              ))}
-            </fieldset>
-            <span className="text-xs text-white/40">
-              session{effectiveCount > 1 ? "s" : ""}
-              {background ? ", in the background" : ", tiled evenly"}
+      <div className="flex flex-col gap-6">
+        <button
+          type="button"
+          onClick={() => setShowOptions((v) => !v)}
+          aria-expanded={showOptions}
+          className="flex w-fit items-center gap-1.5 text-11 font-medium uppercase tracking-wide text-white/40 transition-colors hover:text-white/70"
+        >
+          <ChevronRight
+            className={cn(
+              "size-3.5 transition-transform duration-150",
+              showOptions && "rotate-90",
+            )}
+          />
+          Options
+          {!showOptions && (
+            <span className="normal-case tracking-normal text-white/30">
+              {optionsSummary}
             </span>
-          </div>
-          {!background && (
-            <LayoutPreview count={effectiveCount} agent={agent} />
           )}
-        </div>
-      </Field>
+        </button>
+        {showOptions && (
+          <>
+            {canBackground && (
+              <Field label="Run">
+                <fieldset className="grid grid-cols-2 gap-2">
+                  <legend className="sr-only">Run</legend>
+                  {(
+                    [
+                      ["open", "Open now", "In a new canvas"],
+                      [
+                        "background",
+                        "In background",
+                        "No window, reach it anywhere",
+                      ],
+                    ] as const
+                  ).map(([mode, title, description]) => (
+                    <RadioOption
+                      key={mode}
+                      name={`${formId}-run`}
+                      value={mode}
+                      checked={runMode === mode}
+                      onSelect={() => setRunMode(mode)}
+                      className="flex-col gap-0.5 px-3 py-2.5"
+                    >
+                      <span className="text-xs font-medium">{title}</span>
+                      <span className="text-11 text-white/45">
+                        {description}
+                      </span>
+                    </RadioOption>
+                  ))}
+                </fieldset>
+              </Field>
+            )}
 
-      <Field label="Name" hint="Optional">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={defaultName}
-          aria-label="Session name"
-          className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-white/90 outline-none transition-colors placeholder:text-white/30 focus:border-primary-500/50"
-        />
-      </Field>
+            <Field
+              label="How many"
+              hint={conversation ? "One per conversation" : undefined}
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <fieldset className="flex gap-2">
+                    <legend className="sr-only">How many</legend>
+                    {COUNTS.map((n) => (
+                      <RadioOption
+                        key={n}
+                        name={`${formId}-count`}
+                        value={String(n)}
+                        checked={n === effectiveCount}
+                        disabled={conversation !== null && n !== 1}
+                        onSelect={() => setCount(n)}
+                        className="size-9 items-center justify-center font-mono text-sm tabular-nums"
+                      >
+                        {n}
+                      </RadioOption>
+                    ))}
+                  </fieldset>
+                  <span className="text-xs text-white/40">
+                    session{effectiveCount > 1 ? "s" : ""}
+                    {background ? ", in the background" : ", tiled evenly"}
+                  </span>
+                </div>
+                {!background && (
+                  <LayoutPreview count={effectiveCount} agent={agent} />
+                )}
+              </div>
+            </Field>
+
+            <Field label="Name" hint="Optional">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={defaultName}
+                aria-label="Session name"
+                className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-white/90 outline-none transition-colors placeholder:text-white/30 focus:border-primary-500/50"
+              />
+            </Field>
+          </>
+        )}
+      </div>
 
       {!isDesktop && (
         <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-200/80">
-          Agent widgets require the desktop app — Skip still opens an empty
-          canvas here.
+          Agent widgets require the desktop app. You can still open an empty
+          session here.
         </p>
       )}
 
@@ -651,7 +691,7 @@ export function NewSessionPage({
             onClick={skip}
             className="rounded-lg border border-white/10 px-3.5 py-1.5 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white/90"
           >
-            Skip
+            Empty session
           </button>
           <button
             type="submit"

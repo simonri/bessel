@@ -6,6 +6,7 @@ import {
   render,
   screen,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ClaudeSessionsSnapshot,
@@ -22,8 +23,9 @@ const PROJECTS = [
   { id: "p3", name: "elsewhere", path: null, ssh_host: null },
 ];
 
+const projectsMock = vi.hoisted(() => ({ list: [] as unknown[] }));
 vi.mock("@/hooks/use-projects", () => ({
-  useProjects: () => ({ data: PROJECTS, isSuccess: true }),
+  useProjects: () => ({ data: projectsMock.list, isSuccess: true }),
 }));
 
 function memoryStorage(): Storage {
@@ -94,6 +96,7 @@ function claudeSession(
 
 afterEach(cleanup);
 beforeEach(() => {
+  projectsMock.list = PROJECTS;
   window.localStorage.clear();
   act(() => pushSnapshot({ sessions: [], external: [], available: true }));
 });
@@ -114,23 +117,25 @@ function mount(props: Partial<Parameters<typeof ProjectSessions>[0]> = {}) {
   const onOpenCanvas = vi.fn();
   const onNewSession = vi.fn();
   render(
-    <WindowManager>
-      <WorkspaceTemplatesProvider>
-        <Capture />
-        <ProjectSessions
-          isOnCanvasPage
-          onOpenCanvas={onOpenCanvas}
-          onNewSession={onNewSession}
-          {...props}
-        />
-      </WorkspaceTemplatesProvider>
-    </WindowManager>,
+    <QueryClientProvider client={new QueryClient()}>
+      <WindowManager>
+        <WorkspaceTemplatesProvider>
+          <Capture />
+          <ProjectSessions
+            isOnCanvasPage
+            onOpenCanvas={onOpenCanvas}
+            onNewSession={onNewSession}
+            {...props}
+          />
+        </WorkspaceTemplatesProvider>
+      </WindowManager>
+    </QueryClientProvider>,
   );
   return { manager: () => captured!, onOpenCanvas, onNewSession };
 }
 
 describe("ProjectSessions", () => {
-  it("nests sessions under their project and files the rest under Other", () => {
+  it("nests sessions under their project and files the rest under No project", () => {
     seed(
       [
         {
@@ -142,8 +147,8 @@ describe("ProjectSessions", () => {
             { module: "tasks", x: 4, y: 0, w: 4, h: 4 },
           ],
         },
-        { id: "b", projectId: "gone", windows: [] },
-        { id: "c", windows: [] },
+        { id: "b", projectId: "gone", name: "Orphaned", windows: [] },
+        { id: "c", name: "Scratch", windows: [] },
       ],
       "a",
     );
@@ -151,9 +156,9 @@ describe("ProjectSessions", () => {
 
     for (const p of PROJECTS) expect(screen.getByText(p.name)).toBeTruthy();
     expect(screen.getByText("Refactor")).toBeTruthy();
-    expect(screen.getByText("Other")).toBeTruthy();
-    // Two unassigned sessions with nothing open both read as the default label.
-    expect(screen.getAllByText("Session")).toHaveLength(2);
+    expect(screen.getByText("No project")).toBeTruthy();
+    expect(screen.getByText("Orphaned")).toBeTruthy();
+    expect(screen.getByText("Scratch")).toBeTruthy();
     // The project's badge sums windows across its sessions; the session's own
     // badge shows its count.
     expect(screen.getAllByText("2")).toHaveLength(2);
@@ -228,14 +233,31 @@ describe("ProjectSessions", () => {
     expect(onOpenCanvas).toHaveBeenCalledTimes(1);
   });
 
-  it("offers a New session button per configured project, none for unconfigured ones", () => {
-    seed([{ id: "a", windows: [] }], "a");
+  it("offers quick start for configured projects and a folder picker for the rest", () => {
+    seed([{ id: "a", name: "Loose", windows: [] }], "a");
     const { onNewSession } = mount();
-    fireEvent.click(screen.getByLabelText("New session in metron"));
+
+    fireEvent.click(screen.getByLabelText("Start something in metron"));
+    expect(screen.getByText("More options…")).toBeTruthy();
+    fireEvent.click(screen.getByText("More options…"));
     expect(onNewSession).toHaveBeenLastCalledWith("p1");
-    expect(screen.queryByLabelText("New session in elsewhere")).toBeNull();
-    fireEvent.click(screen.getByLabelText("New session in Other"));
+
+    expect(
+      screen.getByLabelText("Set elsewhere's folder on this device"),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("New session"));
     expect(onNewSession).toHaveBeenLastCalledWith(null);
+  });
+
+  it("invites adding a first project when there are none", () => {
+    seed([{ id: "a", windows: [] }], "a");
+    mount();
+    expect(screen.queryByText("Add your first project")).toBeNull();
+    cleanup();
+
+    projectsMock.list = [];
+    mount();
+    expect(screen.getByText("Add your first project")).toBeTruthy();
   });
 
   it("collapses a project, remembering it across remounts", () => {
@@ -358,8 +380,8 @@ describe("ProjectSessions", () => {
       expect(screen.getByText("Fix calendar")).toBeTruthy();
       expect(screen.queryByText("Open in a window")).toBeNull();
       expect(screen.queryByText("Finished long ago")).toBeNull();
-      // Unknown directory, no project: filed under Other.
-      expect(screen.getByText("Other")).toBeTruthy();
+      // Unknown directory, no project.
+      expect(screen.getByText("No project")).toBeTruthy();
       expect(screen.getByText("Scratch")).toBeTruthy();
     });
 

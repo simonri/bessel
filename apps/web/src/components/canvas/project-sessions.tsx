@@ -10,14 +10,10 @@ import {
   ContextMenuTrigger,
 } from "@bessel/ui/components/context-menu";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@bessel/ui/components/popover";
-import {
   AppWindow,
   ChevronRight,
   FolderInput,
+  FolderPlus,
   LayoutTemplate,
   Pencil,
   Plus,
@@ -26,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useSessionAgentStatus } from "@/components/canvas/canvas-agent-status";
 import {
   sessionLabel,
@@ -51,13 +48,13 @@ import {
   useAttachedSessionKeys,
   useOpenClaudeSession,
 } from "@/components/claude-sessions/use-open-claude-session";
+import { useProjectMutations } from "@/hooks/use-project-mutations";
 import { useProjects } from "@/hooks/use-projects";
-import {
-  templateToWindowSpecs,
-  useWorkspaceTemplates,
-  widgetSummary,
-} from "@/hooks/use-workspace-templates";
+import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { NewProjectPopover } from "./new-project-popover";
+import type { ProjectWithPath } from "./project-picker-menu";
+import { ProjectQuickStart } from "./project-quick-start";
 
 const ROW =
   "flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md text-left text-xs font-medium transition-[background-color,color] duration-150";
@@ -70,7 +67,7 @@ const MENU_SURFACE = "bg-popover min-w-44";
 const COLLAPSED_KEY = "bessel:collapsedProjects";
 const NO_WINDOWS: WindowEntry[] = [];
 const NO_BACKGROUND: ClaudeSessionView[] = [];
-const NO_PROJECT_LABEL = "Other";
+const NO_PROJECT_LABEL = "No project";
 
 function loadCollapsed(): Set<string> {
   try {
@@ -389,8 +386,12 @@ function ProjectGroup({
   flash,
   collapsed,
   onToggle,
-  onNewSession,
-  newSessionHint,
+  quickStartProject,
+  onMoreOptions,
+  onSetFolder,
+  autoOpenQuickStart,
+  onAutoOpened,
+  onShowCanvas,
   canClose,
   onOpen,
   onOpenBackground,
@@ -406,9 +407,16 @@ function ProjectGroup({
   flash: { id: string; seq: number } | null;
   collapsed: boolean;
   onToggle: (id: string) => void;
-  /** Absent when a session can't be started here (project not configured on this device). */
-  onNewSession?: () => void;
-  newSessionHint?: string;
+  /** A project usable on this device: "+" offers its quick-start menu. */
+  quickStartProject?: ProjectWithPath;
+  /** The full New session page — the "+" itself where there's no quick start. */
+  onMoreOptions?: () => void;
+  /** A project with no folder on this device yet. */
+  onSetFolder?: () => void;
+  /** Open the quick-start menu right away (a project that was just added). */
+  autoOpenQuickStart?: boolean;
+  onAutoOpened?: () => void;
+  onShowCanvas: () => void;
   canClose: boolean;
   onOpen: (id: string) => void;
   onOpenBackground: (session: ClaudeSessionView) => void;
@@ -421,52 +429,95 @@ function ProjectGroup({
     0,
   );
   const containsActive = sessions.some((ws) => ws.id === activeWorkspaceId);
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
+  const unconfigured = onSetFolder !== undefined;
+
+  useEffect(() => {
+    if (!autoOpenQuickStart || !quickStartProject) return;
+    setQuickStartOpen(true);
+    onAutoOpened?.();
+  }, [autoOpenQuickStart, quickStartProject, onAutoOpened]);
+
+  const start = quickStartProject
+    ? () => setQuickStartOpen(true)
+    : (onMoreOptions ?? onSetFolder);
+  const startLabel = quickStartProject
+    ? `Start something in ${name}`
+    : unconfigured
+      ? `Set ${name}'s folder on this device`
+      : "New session";
+
+  const header = (
+    <div
+      className={cn(
+        "group",
+        ROW,
+        "pr-1",
+        unconfigured
+          ? "text-white/35"
+          : containsActive && collapsed
+            ? "text-white/80"
+            : "text-white/65",
+        "hover:bg-white/[0.06] hover:text-white/85",
+        quickStartOpen && "bg-white/[0.06] text-white/85",
+      )}
+    >
+      <button
+        type="button"
+        // A project with nothing open yet has nothing to expand — clicking
+        // it goes straight to starting something there.
+        onClick={() => (hasSessions ? onToggle(id) : start?.())}
+        aria-expanded={hasSessions ? expanded : undefined}
+        title={hasSessions ? name : startLabel}
+        className="flex h-full min-w-0 flex-1 items-center gap-2 pl-2 text-left"
+      >
+        <ChevronRight
+          className={cn(
+            "size-3.5 shrink-0 transition-[transform,color] duration-150",
+            hasSessions ? "text-white/35" : "text-transparent",
+            expanded && "rotate-90",
+          )}
+        />
+        <span className="min-w-0 flex-1 truncate">{name}</span>
+        <CountBadge count={totalWindows} />
+      </button>
+      {start && (
+        <button
+          type="button"
+          onClick={start}
+          title={startLabel}
+          aria-label={startLabel}
+          className={cn(
+            ICON_BUTTON,
+            "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+            quickStartOpen && "opacity-100",
+          )}
+        >
+          {unconfigured ? (
+            <FolderPlus className="size-3" />
+          ) : (
+            <Plus className="size-3" />
+          )}
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-0.5">
-      <div
-        className={cn(
-          "group",
-          ROW,
-          "pr-1",
-          containsActive && collapsed ? "text-white/80" : "text-white/65",
-          "hover:bg-white/[0.06] hover:text-white/85",
-        )}
-      >
-        <button
-          type="button"
-          // A project with nothing open yet has nothing to expand — clicking
-          // it goes straight to starting its first session.
-          onClick={() => (hasSessions ? onToggle(id) : onNewSession?.())}
-          aria-expanded={hasSessions ? expanded : undefined}
-          title={newSessionHint ?? name}
-          className="flex h-full min-w-0 flex-1 items-center gap-2 pl-2 text-left"
+      {quickStartProject ? (
+        <ProjectQuickStart
+          project={quickStartProject}
+          open={quickStartOpen}
+          onOpenChange={setQuickStartOpen}
+          onShowCanvas={onShowCanvas}
+          onMoreOptions={() => onMoreOptions?.()}
         >
-          <ChevronRight
-            className={cn(
-              "size-3.5 shrink-0 transition-[transform,color] duration-150",
-              hasSessions ? "text-white/35" : "text-transparent",
-              expanded && "rotate-90",
-            )}
-          />
-          <span className="min-w-0 flex-1 truncate">{name}</span>
-          <CountBadge count={totalWindows} />
-        </button>
-        {onNewSession && (
-          <button
-            type="button"
-            onClick={onNewSession}
-            title={`New session in ${name}`}
-            aria-label={`New session in ${name}`}
-            className={cn(
-              ICON_BUTTON,
-              "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
-            )}
-          >
-            <Plus className="size-3" />
-          </button>
-        )}
-      </div>
+          {header}
+        </ProjectQuickStart>
+      ) : (
+        header
+      )}
       {expanded && (
         <div className="flex flex-col gap-0.5">
           {sessions.map((ws) => (
@@ -497,116 +548,81 @@ function ProjectGroup({
   );
 }
 
-// Header "+": the generic entry points that don't belong to one project — a
-// "New session" page with the project still to pick, a blank canvas, and the
-// saved templates.
-function NewSessionMenu({
-  onNewSession,
-  onBlankSession,
-  onOpenCanvas,
+// Header actions: saved canvas templates (applied from a project's quick
+// start) and adding a project.
+function HeaderActions({
+  newProjectOpen,
+  onNewProjectOpenChange,
+  onProjectCreated,
 }: {
-  onNewSession: () => void;
-  onBlankSession: () => void;
-  onOpenCanvas: () => void;
+  newProjectOpen: boolean;
+  onNewProjectOpenChange: (open: boolean) => void;
+  onProjectCreated: (project: ProjectSchema) => void;
 }) {
-  const { templates } = useWorkspaceTemplates();
-  const { applyTemplate } = useWindowActions();
-  const [open, setOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
-
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   return (
-    <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            title="New session"
-            aria-label="New session"
-            className={ICON_BUTTON}
-          >
-            <Plus className="size-3" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          side="right"
-          align="start"
-          sideOffset={8}
-          className={cn(
-            "bg-popover",
-            "w-56 overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl",
-          )}
+    <div className="flex items-center gap-0.5">
+      <button
+        type="button"
+        onClick={() => setTemplatesOpen(true)}
+        title="Templates"
+        aria-label="Templates"
+        className={cn(
+          ICON_BUTTON,
+          "opacity-0 group-hover/header:opacity-100 focus-visible:opacity-100",
+        )}
+      >
+        <LayoutTemplate className="size-3" />
+      </button>
+      <NewProjectPopover
+        open={newProjectOpen}
+        onOpenChange={onNewProjectOpenChange}
+        onCreated={onProjectCreated}
+      >
+        <button
+          type="button"
+          title="New project"
+          aria-label="New project"
+          className={ICON_BUTTON}
         >
-          <button
-            type="button"
-            onClick={() => {
-              onNewSession();
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/5 hover:text-white/95"
-          >
-            <Plus className="size-3.5 shrink-0" />
-            New session…
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onBlankSession();
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 border-t border-white/[0.06] px-3 py-2.5 text-left text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white/90"
-          >
-            <LayoutTemplate className="size-3.5 shrink-0" />
-            Blank session
-          </button>
-
-          {templates.length > 0 && (
-            <div className="max-h-48 overflow-y-auto border-t border-white/[0.06]">
-              {templates.map((t) => (
-                <button
-                  type="button"
-                  key={t.id}
-                  onClick={() => {
-                    applyTemplate(templateToWindowSpecs(t), "new");
-                    onOpenCanvas();
-                    setOpen(false);
-                  }}
-                  className="flex w-full flex-col px-3 py-2 text-left transition-colors hover:bg-white/5"
-                >
-                  <span className="text-sm text-white/80">{t.name}</span>
-                  <span className="truncate text-11 text-white/50">
-                    {widgetSummary(t.widgets)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              setManageOpen(true);
-              setOpen(false);
-            }}
-            className="flex w-full items-center gap-2 border-t border-white/[0.06] px-3 py-2.5 text-left text-xs font-medium text-white/50 transition-colors hover:bg-white/5 hover:text-white/70"
-          >
-            <LayoutTemplate className="size-3.5 shrink-0" />
-            Manage templates…
-          </button>
-        </PopoverContent>
-      </Popover>
+          <Plus className="size-3" />
+        </button>
+      </NewProjectPopover>
       <WorkspaceTemplatesDialog
-        open={manageOpen}
-        onOpenChange={setManageOpen}
+        open={templatesOpen}
+        onOpenChange={setTemplatesOpen}
       />
-    </>
+    </div>
+  );
+}
+
+function FirstProjectCard({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="mx-1 mt-1 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs font-medium text-white/80">
+        Add your first project
+      </p>
+      <p className="text-11 leading-relaxed text-white/45">
+        Pick a folder you work in. Bessel opens Claude, terminals and git there.
+      </p>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="flex h-7 w-fit items-center gap-1.5 rounded-md bg-primary-500 px-2.5 text-xs font-medium text-white transition-[background-color] duration-150 hover:bg-primary-400"
+      >
+        <Plus className="size-3" />
+        Add project
+      </button>
+    </div>
   );
 }
 
 /**
  * The sidebar's project tree: every project from the API with its sessions
- * (canvases) nested under it, plus an "Other" group for sessions that belong
- * to no project. Clicking a session switches to it and brings the canvas on
- * screen; each project's hover "+" opens the New session page for it.
+ * (canvases) nested under it, plus a "No project" group for sessions that
+ * belong to none. Clicking a session switches to it and brings the canvas on
+ * screen; a project's "+" (or clicking one with nothing open) offers its
+ * quick-start menu.
  */
 export function ProjectSessions({
   isOnCanvasPage,
@@ -620,7 +636,27 @@ export function ProjectSessions({
   const { data: projects } = useProjects();
   const { workspaces, activeWorkspaceId } = useWorkspaceMeta();
   const { windowsByWorkspace } = useWindowState();
-  const { switchWorkspace, addWorkspace } = useWindowActions();
+  const { switchWorkspace } = useWindowActions();
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [quickStartFor, setQuickStartFor] = useState<string | null>(null);
+  const clearQuickStartFor = useCallback(() => setQuickStartFor(null), []);
+  const { setLocation } = useProjectMutations();
+
+  const setFolder = async (project: ProjectSchema) => {
+    const path = await window.electron?.selectFolder();
+    if (!path) return;
+    setLocation.mutate(
+      {
+        client,
+        path: { project_id: project.id },
+        body: { path, ssh_host: null },
+      },
+      {
+        onSuccess: () => setQuickStartFor(project.id),
+        onError: () => toast.error(`Couldn't set ${project.name}'s folder`),
+      },
+    );
+  };
   const flash = useFlashWorkspace();
   const { collapsed, toggle } = useCollapsedProjects();
   useAdoptLegacySessions(projects);
@@ -686,15 +722,12 @@ export function ProjectSessions({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-0.5 flex h-7 items-center justify-between pl-2 pr-1">
+      <div className="group/header mb-0.5 flex h-7 items-center justify-between pl-2 pr-1">
         <span className="text-xs font-medium text-white/40">Projects</span>
-        <NewSessionMenu
-          onNewSession={() => onNewSession(null)}
-          onBlankSession={() => {
-            addWorkspace();
-            onOpenCanvas();
-          }}
-          onOpenCanvas={onOpenCanvas}
+        <HeaderActions
+          newProjectOpen={newProjectOpen}
+          onNewProjectOpenChange={setNewProjectOpen}
+          onProjectCreated={(project) => setQuickStartFor(project.id)}
         />
       </div>
       <div className="flex flex-col gap-0.5">
@@ -711,10 +744,12 @@ export function ProjectSessions({
             flash={flash}
             collapsed={collapsed.has(p.id)}
             onToggle={toggle}
-            onNewSession={p.path ? () => onNewSession(p.id) : undefined}
-            newSessionHint={
-              p.path ? undefined : `${p.name} — not configured on this device`
-            }
+            quickStartProject={p.path ? { ...p, path: p.path } : undefined}
+            onMoreOptions={() => onNewSession(p.id)}
+            onSetFolder={p.path ? undefined : () => void setFolder(p)}
+            autoOpenQuickStart={quickStartFor === p.id}
+            onAutoOpened={clearQuickStartFor}
+            onShowCanvas={onOpenCanvas}
             canClose={canClose}
             onOpen={openSession}
             onOpenBackground={openBackground}
@@ -733,19 +768,17 @@ export function ProjectSessions({
             flash={flash}
             collapsed={collapsed.has("__other")}
             onToggle={toggle}
-            onNewSession={() => onNewSession(null)}
+            onMoreOptions={() => onNewSession(null)}
+            onShowCanvas={onOpenCanvas}
             canClose={canClose}
             onOpen={openSession}
             onOpenBackground={openBackground}
             onEndBackground={requestEnd}
           />
         )}
-        {projectList.length === 0 &&
-          unassigned.length + backgroundUnassigned.length === 0 && (
-            <p className="px-2 py-1 text-11 text-white/35">
-              No projects yet — add one from the top bar.
-            </p>
-          )}
+        {projectList.length === 0 && (
+          <FirstProjectCard onAdd={() => setNewProjectOpen(true)} />
+        )}
       </div>
       {endDialog}
     </div>

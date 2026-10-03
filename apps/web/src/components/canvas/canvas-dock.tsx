@@ -12,6 +12,7 @@ import {
   type ProjectWithPath,
   useProjectsWithPath,
 } from "./project-picker-menu";
+import { projectWindowData, useActiveProject } from "./use-active-project";
 import { useWindowActions, useWindowState } from "./window-manager";
 
 function ProjectPicker({
@@ -24,18 +25,10 @@ function ProjectPicker({
   const { openWindow } = useWindowActions();
   const [open, setOpen] = useState(false);
   const projects = useProjectsWithPath();
+  const activeProject = useActiveProject();
 
   const launch = (project?: ProjectWithPath) => {
-    openWindow(
-      moduleKey,
-      project
-        ? {
-            projectPath: project.path,
-            projectName: project.name,
-            ...(project.ssh_host ? { projectSshHost: project.ssh_host } : {}),
-          }
-        : undefined,
-    );
+    openWindow(moduleKey, projectWindowData(project));
     setOpen(false);
   };
 
@@ -47,12 +40,28 @@ function ProjectPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
+          // Inside a project's session the project is already known: a click
+          // opens right there, and right-click still offers the full list.
+          onClick={(e) => {
+            if (!activeProject) return;
+            e.preventDefault();
+            launch(activeProject);
+          }}
+          onContextMenu={(e) => {
+            if (!activeProject) return;
+            e.preventDefault();
+            setOpen(true);
+          }}
           className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color] duration-150 ${
             active
               ? "text-primary-400"
               : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
           }`}
-          title={config.title}
+          title={
+            activeProject
+              ? `${config.title} in ${activeProject.name} (right-click for another project)`
+              : config.title
+          }
         >
           <Icon className="size-3.5 shrink-0" />
           <span className="hidden lg:inline">{config.title}</span>

@@ -443,10 +443,16 @@ function loadState(): LoadedState {
         const windows = parsed.workspaces.flatMap((ws) =>
           parseWindows(ws.windows ?? [], ws.id),
         );
+        // Unnamed sessions left with nothing in them are leftovers, not
+        // something to come back to — they only clutter the sidebar.
+        const kept = workspaces.filter(
+          (ws) => ws.name || windows.some((w) => w.workspaceId === ws.id),
+        );
+        const live = kept.length > 0 ? kept : [workspaces[0]];
         const activeId =
-          workspaces.find((ws) => ws.id === parsed.activeWorkspaceId)?.id ??
-          workspaces[0].id;
-        return { workspaces, windows, activeWorkspaceId: activeId };
+          live.find((ws) => ws.id === parsed.activeWorkspaceId)?.id ??
+          live[live.length - 1].id;
+        return { workspaces: live, windows, activeWorkspaceId: activeId };
       }
     }
   } catch {}

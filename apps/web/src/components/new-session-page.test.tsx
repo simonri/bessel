@@ -115,9 +115,13 @@ function mount(projectId: string | null) {
   return { manager: () => captured!, onCancel, onCreated };
 }
 
+const openOptions = () =>
+  fireEvent.click(screen.getByRole("button", { name: /Options/ }));
+
 describe("NewSessionPage", () => {
   it("preselects the project and opens N agents tiled evenly into a new session", () => {
     const { manager, onCreated } = mount("p2");
+    openOptions();
     expect(
       (screen.getByRole("radio", { name: /^remote/ }) as HTMLInputElement)
         .checked,
@@ -182,13 +186,14 @@ describe("NewSessionPage", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it("Skip opens a new workspace with no widgets, keeping the chosen project and name", () => {
+  it("Empty session opens a new session with no widgets, keeping the chosen project and name", () => {
     const { manager, onCreated } = mount("p1");
+    openOptions();
     fireEvent.change(screen.getByLabelText("Session name"), {
       target: { value: "Scratch" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    fireEvent.click(screen.getByRole("button", { name: "Empty session" }));
 
     expect(onCreated).toHaveBeenCalledTimes(1);
     const { workspaces, activeWorkspaceId, windows } = manager();
@@ -202,6 +207,7 @@ describe("NewSessionPage", () => {
 
   it("resumes a past conversation of the project in a single window", async () => {
     const { manager, onCreated } = mount("p1");
+    openOptions();
     fireEvent.click(screen.getByLabelText("3"));
     fireEvent.click(await screen.findByRole("radio", { name: /Widget icons/ }));
 
@@ -230,6 +236,7 @@ describe("NewSessionPage", () => {
 
   it("starts sessions in the background without opening windows", async () => {
     const { manager, onCancel, onCreated } = mount("p1");
+    openOptions();
     fireEvent.click(screen.getByLabelText("2"));
     fireEvent.click(screen.getByRole("radio", { name: /In background/ }));
     fireEvent.click(

@@ -419,10 +419,34 @@ describe("workspace names", () => {
 
     act(() => unmount());
     const reloaded = setup();
+    // The other one was empty and unnamed: not worth keeping across a reload.
     expect(reloaded.result.current.workspaces.map((ws) => ws.name)).toEqual([
-      undefined,
       "Trading",
     ]);
+  });
+
+  it("drops empty unnamed sessions on load, keeping at least one", () => {
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({
+        workspaces: [
+          { id: "empty", windows: [] },
+          { id: "named", name: "Ideas", windows: [] },
+          { id: "used", windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }] },
+        ],
+        activeWorkspaceId: "empty",
+      }),
+    );
+    const { result, unmount } = setup();
+    expect(result.current.workspaces.map((ws) => ws.id)).toEqual(["named", "used"]);
+    expect(result.current.activeWorkspaceId).toBe("used");
+    act(() => unmount());
+
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({ workspaces: [{ id: "only", windows: [] }], activeWorkspaceId: "only" }),
+    );
+    expect(setup().result.current.workspaces.map((ws) => ws.id)).toEqual(["only"]);
   });
 
   it("clears the name back to the default when renamed to blank", () => {
