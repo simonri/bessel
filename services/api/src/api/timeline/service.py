@@ -55,13 +55,13 @@ class TimelineService:
     )
 
     if source is None:
-      sources = await activity_repo.get_sources()
+      sources = await activity_repo.get_sources(user_id)
       source = sources[0] if sources else None
 
     active: list[Interval] = []
     pc_segments: list[TimelineSegment] = []
     if source is not None:
-      for seg in await ActivityService().get_active_segments(activity_repo, source, start_ts, end_ts):
+      for seg in await ActivityService().get_active_segments(activity_repo, user_id, source, start_ts, end_ts):
         active.append((seg.start_ts, seg.end_ts))
         pc_segments.append(TimelineSegment(start_ts=seg.start_ts, end_ts=seg.end_ts, label=seg.app_class or "(unknown)"))
     pc_lane = TimelineLane(key=TimelineLaneKey.pc, total_secs=_total_secs(active), segments=_merge_contiguous(pc_segments))

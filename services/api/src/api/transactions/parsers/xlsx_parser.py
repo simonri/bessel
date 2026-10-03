@@ -1,15 +1,31 @@
+import zipfile
 from collections import Counter
 from datetime import date
 from io import BytesIO
 
+from api.exceptions import ValidationError
 from api.models.bank_profile import BankProfile
 from api.models.transaction import TransactionDirection
 from api.transactions.parsers.base import ParsedTransaction, compute_dedup_hash
 from openpyxl import load_workbook
 
+# An XLSX is a zip; a tiny upload can expand to gigabytes (zip bomb).
+MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
+
+
+def _check_uncompressed_size(content: bytes) -> None:
+  try:
+    with zipfile.ZipFile(BytesIO(content)) as archive:
+      total = sum(info.file_size for info in archive.infolist())
+  except zipfile.BadZipFile as e:
+    raise ValidationError("Not a valid XLSX file.") from e
+  if total > MAX_UNCOMPRESSED_BYTES:
+    raise ValidationError("XLSX file expands too large to import.", status_code=413)
+
 
 async def parse_xlsx(content: bytes, profile: BankProfile) -> list[ParsedTransaction]:
   """Parse XLSX content using the column mapping from a BankProfile."""
+  _check_uncompressed_size(content)
   wb = load_workbook(filename=BytesIO(content), read_only=True, data_only=True)
   ws = wb.active
   if ws is None:

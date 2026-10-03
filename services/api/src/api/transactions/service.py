@@ -31,6 +31,7 @@ class TransactionService:
     # 1. Store raw: create ImportBatch
     batch = await repo.create_import_batch(
       ImportBatch(
+        user_id=user_id,
         bank_name=bank_name,
         file_format=file_format,
         raw_content=raw_content,

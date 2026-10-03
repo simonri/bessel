@@ -21,6 +21,11 @@ import { SNAP_MINUTES } from "./grid-geometry";
 
 const DAY_MINUTES = 24 * 60;
 
+/** Event details come from whoever sent the invite; only open http(s) links. */
+export function httpUrl(url: string | null | undefined): string | null {
+  return url && /^https?:\/\//i.test(url) ? url : null;
+}
+
 export function fmtTime(d: Date): string {
   return format(d, d.getMinutes() === 0 ? "h a" : "h:mm a");
 }

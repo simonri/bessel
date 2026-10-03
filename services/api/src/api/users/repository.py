@@ -1,31 +1,10 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.user import User
-
-# All tables that carry a user_id column. Pre-auth rows have user_id NULL and are
-# claimed by the first user ever created.
-_USER_OWNED_TABLES = [
-  "tasks",
-  "projects",
-  "categories",
-  "transactions",
-  "bank_accounts",
-  "places",
-  "counters",
-  "counter_resets",
-  "recipes",
-  "notifications",
-  "activity_events",
-  "trades",
-  "healthkit_workouts",
-  "healthkit_sleep_samples",
-  "agent_usage_daily",
-  "agent_usage_status",
-]
 
 
 class UserRepository(RepositoryBase[User], RepositoryIDMixin[User, UUID]):
@@ -42,10 +21,3 @@ class UserRepository(RepositoryBase[User], RepositoryIDMixin[User, UUID]):
   async def count(self) -> int:
     result = await self.session.execute(select(func.count()).select_from(User))
     return result.scalar_one()
-
-  async def claim_orphaned_data(self, user_id: UUID) -> None:
-    for table in _USER_OWNED_TABLES:
-      await self.session.execute(
-        text(f"UPDATE {table} SET user_id = :uid WHERE user_id IS NULL"),
-        {"uid": str(user_id)},
-      )

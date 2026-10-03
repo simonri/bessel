@@ -34,8 +34,7 @@ from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
 from api.settings import settings
-from api.users.repository import UserRepository
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -119,6 +118,17 @@ async def seed() -> None:
   async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore[call-overload]
 
   async with async_session() as session:
+    owner = (await session.execute(text("SELECT id, email FROM users WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1"))).first()
+    if owner is None:
+      sys.exit("No user in the database yet: log in to the local app once, then reseed.")
+
+    # Every seeded row belongs to the local user.
+    @event.listens_for(session.sync_session, "before_flush")
+    def _assign_owner(sync_session, _flush_context, _instances) -> None:
+      for obj in sync_session.new:
+        if hasattr(obj, "user_id") and obj.user_id is None:
+          obj.user_id = owner.id
+
     # ── 1. Truncate ───────────────────────────────────────────────────────
     for table in [
       "activity_events",
@@ -1032,17 +1042,6 @@ async def seed() -> None:
       session.add(sample)
     await session.flush()
     print(f"Seeded {len(sleep_samples)} HealthKit sleep samples over the last {SLEEP_NIGHTS} nights.")
-
-    # ── Ownership ─────────────────────────────────────────────────────────
-    # Rows are created with a NULL user_id. Signup only claims those for the
-    # very first user, so when a local user already exists, hand them over
-    # now — otherwise the reseeded data is invisible to them.
-    owner = (await session.execute(text("SELECT id, email FROM users WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1"))).first()
-    if owner:
-      await UserRepository.from_session(session).claim_orphaned_data(owner.id)
-      print(f"Assigned seeded data to existing user {owner.email or owner.id}.")
-    else:
-      print("No user yet; seeded data will be claimed by the first login.")
 
     # ── Commit ────────────────────────────────────────────────────────────
     await session.commit()

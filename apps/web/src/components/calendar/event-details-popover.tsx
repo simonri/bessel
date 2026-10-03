@@ -48,7 +48,13 @@ import {
   EventEditor,
   type SaveRequest,
 } from "./event-editor";
-import { fmtDuration, fmtTime, Row, Section } from "./event-fields";
+import {
+  fmtDuration,
+  fmtTime,
+  httpUrl,
+  Row,
+  Section,
+} from "./event-fields";
 import { describeRecurrence } from "./event-payload";
 import {
   PLACEMENT_GAP,
@@ -282,7 +288,8 @@ function EventDetailsView({
   timeZone: string;
 }) {
   const d = event.details;
-  const conferenceHost = d.conferenceUrl ? hostOf(d.conferenceUrl) : null;
+  const conferenceUrl = httpUrl(d.conferenceUrl);
+  const conferenceHost = conferenceUrl ? hostOf(conferenceUrl) : null;
   return (
     <>
       <h2 className="px-4 pb-3 text-15 font-medium break-words text-white/90">
@@ -335,12 +342,12 @@ function EventDetailsView({
         </Section>
       )}
 
-      {(d.conferenceUrl || d.location) && (
+      {(conferenceUrl || d.location) && (
         <Section>
-          {d.conferenceUrl && (
+          {conferenceUrl && (
             <Row icon={<Video />}>
               <a
-                href={d.conferenceUrl}
+                href={conferenceUrl}
                 target="_blank"
                 rel="noreferrer noopener"
                 className="ml-1.5 inline-flex h-7 items-center rounded-md bg-sky-500/15 px-2.5 text-12 font-medium text-sky-200 transition-colors hover:bg-sky-500/25"
@@ -349,7 +356,7 @@ function EventDetailsView({
               </a>
             </Row>
           )}
-          {d.location && d.location !== d.conferenceUrl && (
+          {d.location && d.location !== conferenceUrl && (
             <Row icon={<MapPin />}>
               <Location location={d.location} />
             </Row>
@@ -511,7 +518,7 @@ export function EventPopover({
   const editing = subject !== null && reason === null;
   const recurring = event?.details.recurring ?? false;
   const googleLink =
-    account?.provider === "google" ? (event?.details.htmlLink ?? null) : null;
+    account?.provider === "google" ? httpUrl(event?.details.htmlLink) : null;
   const canDelete = editing && event !== null;
 
   const requestClose = () => {

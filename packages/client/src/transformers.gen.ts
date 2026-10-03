@@ -7,6 +7,7 @@ import type {
   CreateBankAccountV1BankAccountsPostResponse,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
   CreateCounterV1CountersPostResponse,
+  CreateIngestTokenV1IngestTokensPostResponse,
   CreateNotificationV1NotificationsPostResponse,
   CreatePlaceV1PlacesPostResponse,
   CreateProjectV1ProjectsPostResponse,
@@ -29,6 +30,7 @@ import type {
   ListDevicesV1DevicesGetResponse,
   ListHealthkitSleepV1HealthkitSleepGetResponse,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
+  ListIngestTokensV1IngestTokensGetResponse,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetResponse,
   ListProjectsV1ProjectsGetResponse,
@@ -362,6 +364,44 @@ export const listHealthkitSleepV1HealthkitSleepGetResponseTransformer = async (
   data: any,
 ): Promise<ListHealthkitSleepV1HealthkitSleepGetResponse> => {
   data = healthKitSleepListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const ingestTokenSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.last_used_at) {
+    data.last_used_at = new Date(data.last_used_at);
+  }
+  return data;
+};
+
+export const listIngestTokensV1IngestTokensGetResponseTransformer = async (
+  data: any,
+): Promise<ListIngestTokensV1IngestTokensGetResponse> => {
+  data = data.map((item: any) =>
+    ingestTokenSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const ingestTokenCreatedSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.last_used_at) {
+    data.last_used_at = new Date(data.last_used_at);
+  }
+  return data;
+};
+
+export const createIngestTokenV1IngestTokensPostResponseTransformer = async (
+  data: any,
+): Promise<CreateIngestTokenV1IngestTokensPostResponse> => {
+  data = ingestTokenCreatedSchemaResponseTransformer(data);
   return data;
 };
 

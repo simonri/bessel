@@ -1,5 +1,6 @@
 import time
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from api.activity.repository import ActivityRepository
@@ -37,7 +38,7 @@ def _local_day_bounds(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> tupl
 
 
 class ActivityService:
-  async def get_active_segments(self, repo: ActivityRepository, source: str, start_ts: int, end_ts: int) -> list[ActiveSegment]:
+  async def get_active_segments(self, repo: ActivityRepository, user_id: UUID, source: str, start_ts: int, end_ts: int) -> list[ActiveSegment]:
     """Active-time segments within [start_ts, end_ts), clipped to the window.
 
     Seeds the timeline with the last event before start_ts so a session that
@@ -45,8 +46,8 @@ class ActivityService:
     portion of it that falls inside the window, instead of being silently
     dropped.
     """
-    events = await repo.get_events_in_range(start_ts, end_ts, source)
-    leading = await repo.get_last_event_before(start_ts, source)
+    events = await repo.get_events_in_range(user_id, start_ts, end_ts, source)
+    leading = await repo.get_last_event_before(user_id, start_ts, source)
     timeline = ([leading] if leading is not None else []) + events
 
     tail_ts = min(int(time.time()), end_ts)

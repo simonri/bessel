@@ -22,6 +22,7 @@ import {
   registerAxiCliInstallHandlers,
   registerCliBrokerHandlers,
 } from "./cli-broker.js";
+import { contentSecurityPolicyFor, withContentSecurityPolicy } from "./csp.js";
 import { SENTRY_DSN } from "./env.js";
 import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
 import { registerLocalDataServerHandlers } from "./local-data-server.js";
@@ -36,7 +37,11 @@ import {
   stopSpotifyWatcher,
 } from "./spotify.js";
 import { isImageFile, MIME_TYPES, serveLocalFile } from "./static-files.js";
-import { registerVaultHandlers, registerVaultProtocol } from "./vault.js";
+import {
+  approveVaultRoot,
+  registerVaultHandlers,
+  registerVaultProtocol,
+} from "./vault.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -935,7 +940,11 @@ app.whenReady().then(() => {
     const result = win
       ? await dialog.showOpenDialog(win, options)
       : await dialog.showOpenDialog(options);
-    return result.canceled ? null : (result.filePaths[0] ?? null);
+    const selected = result.canceled ? null : (result.filePaths[0] ?? null);
+    // A folder the user just picked is trusted as a vault root too (the same
+    // dialog backs the Obsidian vault picker).
+    if (selected) approveVaultRoot(selected);
+    return selected;
   });
 
   ipcHandle("ssh:list-dir", async (_, host: string, dirPath: string) => {
@@ -1353,9 +1362,18 @@ app.whenReady().then(() => {
         );
         if (resolved.startsWith(WEB_DIR + path.sep)) target = resolved;
       }
-      return await serveLocalFile(target, request.headers.get("range"));
+      const response = await serveLocalFile(
+        target,
+        request.headers.get("range"),
+      );
+      return target.endsWith(".html")
+        ? withContentSecurityPolicy(response, contentSecurityPolicyFor(target))
+        : response;
     } catch {
-      return serveLocalFile(INDEX_HTML, null);
+      return withContentSecurityPolicy(
+        await serveLocalFile(INDEX_HTML, null),
+        contentSecurityPolicyFor(INDEX_HTML),
+      );
     }
   });
   registerVaultProtocol(serveLocalFile);

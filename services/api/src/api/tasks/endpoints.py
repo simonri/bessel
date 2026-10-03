@@ -8,6 +8,7 @@ from sqlalchemy import false
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
+from api.common.uploads import detect_image_type, read_upload
 from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound, ValidationError
 from api.models.project import Project
@@ -24,6 +25,7 @@ from api.users.dependencies import CurrentDBUser
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024
+MAX_ATTACHMENT_STORAGE_PER_USER_BYTES = 1024 * 1024 * 1024
 
 
 async def _get_owned_attachment(session: AsyncSession, task_id: UUID, attachment_id: UUID, user_id: UUID) -> TaskAttachment:
@@ -218,19 +220,19 @@ async def upload_task_attachment(
 ) -> TaskAttachmentSchema:
   await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
 
-  if not (file.content_type or "").startswith("image/"):
-    raise ValidationError("Only image attachments are supported.")
-
-  content = await file.read()
-  if len(content) > MAX_ATTACHMENT_SIZE_BYTES:
-    raise ValidationError("Image is too large (max 15 MB).")
+  content = await read_upload(file, MAX_ATTACHMENT_SIZE_BYTES, "Image is too large (max 15 MB).")
+  content_type = detect_image_type(content)
+  if content_type is None:
+    raise ValidationError("Only PNG, JPEG, GIF, WebP, HEIC and AVIF images are supported.")
 
   attachment_repo = TaskAttachmentRepository.from_session(session)
+  if await attachment_repo.total_bytes_for_user(current_user.id) + len(content) > MAX_ATTACHMENT_STORAGE_PER_USER_BYTES:
+    raise ValidationError("Attachment storage limit reached (1 GB).", status_code=413)
   attachment = await attachment_repo.create(
     TaskAttachment(
       task_id=task_id,
-      filename=file.filename or "image",
-      content_type=file.content_type or "application/octet-stream",
+      filename=(file.filename or "image")[:255],
+      content_type=content_type,
       size_bytes=len(content),
     ),
     flush=True,
@@ -269,7 +271,15 @@ async def get_task_attachment_file(
 ) -> Response:
   attachment = await _get_owned_attachment(session, task_id, attachment_id, current_user.id)
   content = await read_attachment_file(attachment_id)
-  return Response(content=content, media_type=attachment.content_type)
+  return Response(
+    content=content,
+    media_type=attachment.content_type,
+    headers={
+      "Content-Disposition": "attachment",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+    },
+  )
 
 
 @router.post(

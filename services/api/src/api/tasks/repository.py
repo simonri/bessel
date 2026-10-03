@@ -30,3 +30,8 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
 
 class TaskAttachmentRepository(RepositoryBase[TaskAttachment], RepositoryIDMixin[TaskAttachment, UUID]):
   model = TaskAttachment
+
+  async def total_bytes_for_user(self, user_id: UUID) -> int:
+    statement = select(func.coalesce(func.sum(TaskAttachment.size_bytes), 0)).join(Task, Task.id == TaskAttachment.task_id).where(Task.user_id == user_id)
+    result = await self.session.execute(statement)
+    return int(result.scalar_one())

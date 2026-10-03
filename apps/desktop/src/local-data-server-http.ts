@@ -1,8 +1,16 @@
+import crypto from "crypto";
 import http from "http";
 
 export const DEFAULT_WINDOW_DAYS = 90;
 export const MAX_WINDOW_DAYS = 365;
 const REQUEST_TIMEOUT_MS = 10_000;
+export const SECRET_HEADER = "x-bessel-data-secret";
+
+function secretsMatch(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 function sendJson(
   res: http.ServerResponse,
@@ -30,6 +38,7 @@ function parseWindowDays(url: string | undefined): number {
 // the renderer.
 export function createLocalDataServer(
   requestPayload: (windowDays: number) => Promise<unknown>,
+  secret: string,
 ): http.Server {
   const server = http.createServer((req, res) => {
     if (req.method !== "GET") {
@@ -54,6 +63,17 @@ export function createLocalDataServer(
       sendJson(res, 403, {
         error: "forbidden",
         message: "Invalid Host header.",
+      });
+      return;
+    }
+
+    // Any local process can reach a loopback port, so the data is only handed
+    // to callers that can read the secret from this profile's 0600 files.
+    const provided = req.headers[SECRET_HEADER];
+    if (typeof provided !== "string" || !secretsMatch(provided, secret)) {
+      sendJson(res, 401, {
+        error: "unauthorized",
+        message: `Missing or invalid ${SECRET_HEADER} header — read "secret" from local-data-server.json in the Bessel profile directory.`,
       });
       return;
     }

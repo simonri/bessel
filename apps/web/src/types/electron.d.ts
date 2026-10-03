@@ -145,7 +145,7 @@ declare global {
           idleSource: string | null;
           idleWarning: string | null;
         }>;
-        install: () => Promise<void>;
+        install: (ingestToken: string) => Promise<void>;
         start: () => Promise<void>;
         stop: () => Promise<void>;
         setEnabled: (enabled: boolean) => Promise<void>;
@@ -160,7 +160,7 @@ declare global {
           needsConfig: boolean;
           envPath: string;
         }>;
-        install: () => Promise<void>;
+        install: (ingestToken: string) => Promise<void>;
         runNow: () => Promise<void>;
         setEnabled: (enabled: boolean) => Promise<void>;
       };
@@ -247,6 +247,7 @@ declare global {
       };
       localDataServer: {
         getUrl: () => Promise<string | null>;
+        getDiscoveryPath: () => Promise<string>;
         onDataRequested: (
           callback: (requestId: string, windowDays: number) => void,
         ) => () => void;

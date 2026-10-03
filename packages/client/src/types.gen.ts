@@ -1965,6 +1965,88 @@ export type ImportResponse = {
 };
 
 /**
+ * IngestTokenCreate
+ */
+export type IngestTokenCreate = {
+  /**
+   * Name
+   *
+   * Identifies the daemon and machine, e.g. 'monitor:laptop'. Creating a token revokes earlier tokens with the same name.
+   */
+  name: string;
+};
+
+/**
+ * IngestTokenCreated
+ */
+export type IngestTokenCreated = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Last Used At
+   */
+  last_used_at: Date | null;
+  /**
+   * Token
+   *
+   * The secret. Returned only once; store it in the daemon's env file.
+   */
+  token: string;
+};
+
+/**
+ * IngestTokenSchema
+ */
+export type IngestTokenSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Last Used At
+   */
+  last_used_at: Date | null;
+};
+
+/**
  * KlarnaImportRequest
  */
 export type KlarnaImportRequest = {
@@ -5202,6 +5284,84 @@ export type GetSleepSummaryV1HealthkitSleepSummaryGetResponses = {
 
 export type GetSleepSummaryV1HealthkitSleepSummaryGetResponse =
   GetSleepSummaryV1HealthkitSleepSummaryGetResponses[keyof GetSleepSummaryV1HealthkitSleepSummaryGetResponses];
+
+export type ListIngestTokensV1IngestTokensGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/ingest-tokens";
+};
+
+export type ListIngestTokensV1IngestTokensGetResponses = {
+  /**
+   * Response List Ingest Tokens V1 Ingest Tokens Get
+   *
+   * Successful Response
+   */
+  200: Array<IngestTokenSchema>;
+};
+
+export type ListIngestTokensV1IngestTokensGetResponse =
+  ListIngestTokensV1IngestTokensGetResponses[keyof ListIngestTokensV1IngestTokensGetResponses];
+
+export type CreateIngestTokenV1IngestTokensPostData = {
+  body: IngestTokenCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/ingest-tokens";
+};
+
+export type CreateIngestTokenV1IngestTokensPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateIngestTokenV1IngestTokensPostError =
+  CreateIngestTokenV1IngestTokensPostErrors[keyof CreateIngestTokenV1IngestTokensPostErrors];
+
+export type CreateIngestTokenV1IngestTokensPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: IngestTokenCreated;
+};
+
+export type CreateIngestTokenV1IngestTokensPostResponse =
+  CreateIngestTokenV1IngestTokensPostResponses[keyof CreateIngestTokenV1IngestTokensPostResponses];
+
+export type RevokeIngestTokenV1IngestTokensTokenIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Token Id
+     */
+    token_id: string;
+  };
+  query?: never;
+  url: "/v1/ingest-tokens/{token_id}";
+};
+
+export type RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type RevokeIngestTokenV1IngestTokensTokenIdDeleteError =
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors[keyof RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors];
+
+export type RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse =
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses[keyof RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses];
 
 export type ListSecuritiesV1InvestmentsSecuritiesGetData = {
   body?: never;

@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Query
 
 from api.agent_usage.repository import AgentUsageDailyRepository, AgentUsageStatusRepository
 from api.agent_usage.schemas import (
@@ -13,36 +13,29 @@ from api.agent_usage.schemas import (
   AgentUsageSyncResponse,
 )
 from api.agent_usage.service import agent_usage_service
-from api.exceptions import UnauthorizedError
+from api.ingest_tokens.dependencies import IngestUserId
 from api.postgres import AsyncSession, get_db_session
-from api.settings import settings
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/agent-usage", tags=["agent-usage"])
-
-
-def _verify_internal_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
-  expected = settings.INTERNAL_API_KEY
-  if not expected or x_api_key != expected:
-    raise UnauthorizedError("Invalid or missing API key")
 
 
 @router.post(
   "/sync",
   summary="Sync Agent Usage",
   response_model=AgentUsageSyncResponse,
-  dependencies=[Depends(_verify_internal_api_key)],
 )
 async def sync_agent_usage(
   body: AgentUsageSyncRequest,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  user_id: IngestUserId,
 ) -> AgentUsageSyncResponse:
   if not body.daily and not body.rate_limits:
     return AgentUsageSyncResponse(daily_synced=0, status_synced=0)
 
   daily_repo = AgentUsageDailyRepository.from_session(session)
   status_repo = AgentUsageStatusRepository.from_session(session)
-  daily_synced, status_synced = await agent_usage_service.sync(daily_repo, status_repo, body)
+  daily_synced, status_synced = await agent_usage_service.sync(user_id, daily_repo, status_repo, body)
   return AgentUsageSyncResponse(daily_synced=daily_synced, status_synced=status_synced)
 
 
@@ -56,7 +49,7 @@ async def get_agent_usage_status(
   current_user: CurrentDBUser,
 ) -> AgentUsageStatusResponse:
   repo = AgentUsageStatusRepository.from_session(session)
-  entries = await repo.get_latest()
+  entries = await repo.get_latest(current_user.id)
   return AgentUsageStatusResponse(entries=[AgentUsageStatusEntry.model_validate(e) for e in entries])
 
 
@@ -72,7 +65,7 @@ async def get_agent_usage_daily(
   end_date: Annotated[date, Query(description="End of range (inclusive).")],
 ) -> AgentUsageDailyResponse:
   repo = AgentUsageDailyRepository.from_session(session)
-  entries = await repo.get_entries(start_date, end_date)
+  entries = await repo.get_entries(current_user.id, start_date, end_date)
   return AgentUsageDailyResponse(
     entries=[
       AgentUsageDailyEntry(

@@ -150,7 +150,9 @@ def _icloud_handler(request: httpx.Request) -> httpx.Response:
         _response("/1234/calendars/", "<d:resourcetype><d:collection/></d:resourcetype>"),
         _response(
           "/1234/calendars/home/",
-          _calendar_props("Home", "VEVENT", '<a:calendar-color>#34AADCFF</a:calendar-color><cs:getctag xmlns:cs="http://calendarserver.org/ns/">ctag-1</cs:getctag>'),
+          _calendar_props(
+            "Home", "VEVENT", '<a:calendar-color>#34AADCFF</a:calendar-color><cs:getctag xmlns:cs="http://calendarserver.org/ns/">ctag-1</cs:getctag>'
+          ),
         ),
         _response(
           "/1234/calendars/reminders/",

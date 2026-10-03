@@ -156,24 +156,46 @@ function replaceRetiredApiBaseUrl(filePath: string, key: string): void {
   if (changed) fs.writeFileSync(filePath, updated.join("\n"));
 }
 
-// The collector needs the same shared-secret the monitor already uses to
-// authenticate to the API. If the monitor is already configured on this
-// machine, reuse its key so a second unrelated install step isn't needed —
-// otherwise leave the key blank and let `collector:status` report that the
-// env file needs a value filled in by hand. There's no self-serve secret
-// provisioning in this app, so a machine with neither unit configured yet
-// genuinely can't bootstrap this on its own.
+// Ingest tokens are minted by the API for the signed-in user (the renderer
+// holds the Auth0 session, so it requests one and passes it in) and tie
+// everything a daemon pushes to that user.
+const INGEST_TOKEN_PATTERN = /^bsl_[A-Za-z0-9_-]{32,64}$/;
+
+function assertIngestToken(token: unknown): asserts token is string {
+  if (typeof token !== "string" || !INGEST_TOKEN_PATTERN.test(token)) {
+    throw new Error("Invalid ingest token");
+  }
+}
+
+// Sets keys in a KEY=value env file, keeping every other line, and keeps the
+// file owner-only since it holds a credential.
+function upsertEnvVars(filePath: string, vars: Record<string, string>): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const lines = fs.existsSync(filePath)
+    ? fs.readFileSync(filePath, "utf8").split("\n")
+    : [];
+  const pending = new Map(Object.entries(vars));
+  const updated = lines.map((line) => {
+    const eq = line.indexOf("=");
+    const name = eq === -1 ? "" : line.slice(0, eq).trim();
+    if (!pending.has(name)) return line;
+    const value = pending.get(name);
+    pending.delete(name);
+    return `${name}=${value}`;
+  });
+  while (updated.length > 0 && updated[updated.length - 1] === "") updated.pop();
+  for (const [name, value] of pending) updated.push(`${name}=${value}`);
+  fs.writeFileSync(filePath, `${updated.join("\n")}\n`, { mode: 0o600 });
+  fs.chmodSync(filePath, 0o600);
+}
+
 function ensureCollectorEnvFile(): void {
   if (fs.existsSync(COLLECTOR_ENV)) return;
-  fs.mkdirSync(CONFIG_ROOT, { recursive: true });
   const legacy = parseEnvFile(LEGACY_MONITOR_ENV);
-  const contents = [
-    `BESSEL_API_BASE_URL=${legacy.METRON_API_URL ?? DEFAULT_API_BASE_URL}`,
-    `BESSEL_INTERNAL_API_KEY=${legacy.METRON_INTERNAL_API_KEY ?? ""}`,
-    `DEVICE_NAME=${os.hostname()}`,
-    "",
-  ].join("\n");
-  fs.writeFileSync(COLLECTOR_ENV, contents, { mode: 0o600 });
+  upsertEnvVars(COLLECTOR_ENV, {
+    BESSEL_API_BASE_URL: legacy.METRON_API_URL ?? DEFAULT_API_BASE_URL,
+    DEVICE_NAME: os.hostname(),
+  });
 }
 
 export function registerServiceInstallerHandlers(): void {
@@ -196,8 +218,10 @@ export function registerServiceInstallerHandlers(): void {
     };
   });
 
-  ipcHandle("monitor:install", async () => {
+  ipcHandle("monitor:install", async (_, ingestToken: unknown) => {
+    assertIngestToken(ingestToken);
     assertUvAvailable();
+    upsertEnvVars(LEGACY_MONITOR_ENV, { METRON_INTERNAL_API_KEY: ingestToken });
     copyFiles(monitorSrcDir, monitorPayloadDir, ["main.py", "pyproject.toml"]);
     copyFiles(monitorSrcDir, SYSTEMD_USER_DIR, ["metron-monitor.service"]);
     replaceRetiredApiBaseUrl(LEGACY_MONITOR_ENV, "METRON_API_URL");
@@ -235,12 +259,14 @@ export function registerServiceInstallerHandlers(): void {
     };
   });
 
-  ipcHandle("collector:install", async () => {
+  ipcHandle("collector:install", async (_, ingestToken: unknown) => {
+    assertIngestToken(ingestToken);
     assertUvAvailable();
     copyFiles(collectorSrcDir, collectorPayloadDir, [
       "collect_agent_usage.py",
     ]);
     ensureCollectorEnvFile();
+    upsertEnvVars(COLLECTOR_ENV, { BESSEL_INTERNAL_API_KEY: ingestToken });
     replaceRetiredApiBaseUrl(COLLECTOR_ENV, "BESSEL_API_BASE_URL");
     copyFiles(collectorSrcDir, SYSTEMD_USER_DIR, [
       "agent-usage-collector.service",

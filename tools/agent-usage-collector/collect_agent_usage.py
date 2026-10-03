@@ -13,7 +13,7 @@ Configuration is via environment variables (see .env.example):
   CLAUDE_CREDENTIALS_PATH   default: ~/.claude/.credentials.json
   CLAUDE_PROJECTS_PATH      default: ~/.claude/projects
   BESSEL_API_BASE_URL       e.g. https://bessel.example.com
-  BESSEL_INTERNAL_API_KEY   shared secret, matches the API's INTERNAL_API_KEY
+  BESSEL_INTERNAL_API_KEY   ingest token for your account (written by the desktop app's installer)
   DEVICE_NAME               default: this machine's hostname
 
 Usage:

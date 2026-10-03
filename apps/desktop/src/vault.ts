@@ -16,6 +16,7 @@ import {
   tempFileName,
   truncateAroundMatch,
 } from "./vault-core.js";
+import { VaultRootRegistry } from "./vault-roots.js";
 import type {
   DailyNotesConfig,
   VaultChange,
@@ -31,9 +32,33 @@ import type {
 } from "./vault-types.js";
 import { VAULT_CONFLICT_ERROR } from "./vault-types.js";
 
-function assertValidRoot(root: string): void {
-  if (typeof root !== "string" || !path.isAbsolute(root))
-    throw new Error("Vault root must be an absolute path");
+let registry: VaultRootRegistry | null = null;
+
+function vaultRoots(): VaultRootRegistry {
+  registry ??= new VaultRootRegistry(
+    path.join(app.getPath("userData"), "vault-roots.json"),
+  );
+  return registry;
+}
+
+/** Called for folders the user picks in the native folder dialog. */
+export function approveVaultRoot(root: string): void {
+  vaultRoots().approve(root);
+}
+
+// Every channel below takes the vault root as its first argument; it must be
+// one the main process approved, never just whatever the renderer sends.
+function vaultHandle(
+  channel: string,
+  listener: (
+    event: Electron.IpcMainInvokeEvent,
+    root: string,
+    ...args: any[]
+  ) => unknown,
+): void {
+  ipcHandle(channel, (event, root: unknown, ...args: any[]) =>
+    listener(event, vaultRoots().assertApproved(root), ...args),
+  );
 }
 
 async function pathExists(target: string): Promise<boolean> {
@@ -223,6 +248,11 @@ export function registerVaultProtocol(
       const root = url.searchParams.get("root");
       const rel = url.searchParams.get("path");
       if (!root || rel === null) return new Response(null, { status: 404 });
+      try {
+        vaultRoots().assertApproved(root);
+      } catch {
+        return new Response(null, { status: 403 });
+      }
       const abs = await resolveInsideReal(root, rel);
       return await serveLocalFile(abs, request.headers.get("range"));
     } catch {
@@ -239,11 +269,11 @@ export function registerVaultHandlers(): void {
     const exists = !!stat?.isDirectory();
     const isVault =
       exists && (await pathExists(path.join(defaultPath, ".obsidian")));
+    if (exists) vaultRoots().approve(defaultPath);
     return { path: defaultPath, exists, isVault };
   });
 
-  ipcHandle("vault:inspect", async (_, root: string): Promise<VaultInfo> => {
-    assertValidRoot(root);
+  vaultHandle("vault:inspect", async (_, root: string): Promise<VaultInfo> => {
     const name = path.basename(root);
     const isVault = await pathExists(path.join(root, ".obsidian"));
 
@@ -289,12 +319,11 @@ export function registerVaultHandlers(): void {
     };
   });
 
-  ipcHandle("vault:list", async (_, root: string): Promise<VaultEntry[]> => {
-    assertValidRoot(root);
+  vaultHandle("vault:list", async (_, root: string): Promise<VaultEntry[]> => {
     return walkVaultEntries(root);
   });
 
-  ipcHandle(
+  vaultHandle(
     "vault:read",
     async (_, root: string, rel: string): Promise<VaultReadResult> => {
       const abs = await resolveInsideReal(root, rel);
@@ -306,7 +335,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:write",
     async (
       _,
@@ -330,7 +359,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:write-binary",
     async (
       _,
@@ -348,7 +377,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:create",
     async (
       _,
@@ -366,7 +395,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:mkdir",
     async (_, root: string, rel: string): Promise<void> => {
       const abs = await resolveInsideReal(root, rel);
@@ -374,7 +403,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:rename",
     async (
       _,
@@ -411,7 +440,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:trash",
     async (_, root: string, rel: string): Promise<void> => {
       const abs = await resolveInsideReal(root, rel);
@@ -419,7 +448,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:reveal",
     async (_, root: string, rel: string): Promise<void> => {
       const abs = await resolveInsideReal(root, rel);
@@ -427,7 +456,7 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle(
+  vaultHandle(
     "vault:copy-image",
     async (_, root: string, rel: string): Promise<void> => {
       if (kindForRel(rel) !== "image")
@@ -439,16 +468,15 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  ipcHandle("vault:watch", async (_, root: string): Promise<void> => {
-    assertValidRoot(root);
+  vaultHandle("vault:watch", async (_, root: string): Promise<void> => {
     watchRoot(root);
   });
 
-  ipcHandle("vault:unwatch", async (_, root: string): Promise<void> => {
+  vaultHandle("vault:unwatch", async (_, root: string): Promise<void> => {
     unwatchRoot(root);
   });
 
-  ipcHandle("vault:index", async (_, root: string): Promise<VaultIndex> => {
+  vaultHandle("vault:index", async (_, root: string): Promise<VaultIndex> => {
     const rels = await listMarkdownRels(root);
     const files: VaultIndex["files"] = {};
     for (const rel of rels) {
@@ -460,7 +488,7 @@ export function registerVaultHandlers(): void {
     return { files };
   });
 
-  ipcHandle(
+  vaultHandle(
     "vault:search",
     async (_, root: string, query: string): Promise<VaultSearchHit[]> => {
       const trimmed = query.trim();

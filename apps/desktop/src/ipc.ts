@@ -1,8 +1,10 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 
+// The Vite dev server is only trusted in development: in a packaged build,
+// whatever happens to listen on localhost:3001 must never get IPC access.
 export const TRUSTED_ORIGINS = new Set([
-  "http://localhost:3001",
   "app://localhost",
+  ...(app.isPackaged ? [] : ["http://localhost:3001"]),
 ]);
 
 function isTrustedSender(

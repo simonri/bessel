@@ -37,7 +37,7 @@ class Task(RecordModel):
   # Chain linking for recurring instances
   parent_task_id: Mapped[str | None] = mapped_column(Uuid, ForeignKey("tasks.id"), nullable=True)
 
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
 
   attachments: Mapped[list[TaskAttachment]] = relationship(
     "TaskAttachment", lazy="selectin", cascade="all, delete-orphan", order_by="TaskAttachment.created_at"

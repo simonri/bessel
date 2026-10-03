@@ -9,9 +9,9 @@ from api.models.base import RecordModel
 
 class AgentUsageDaily(RecordModel):
   __tablename__ = "agent_usage_daily"
-  __table_args__ = (UniqueConstraint("device", "agent", "date", "model"),)
+  __table_args__ = (UniqueConstraint("user_id", "device", "agent", "date", "model"),)
 
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
   device: Mapped[str] = mapped_column(String(100), nullable=False)
   agent: Mapped[str] = mapped_column(String(50), nullable=False)
   date: Mapped[date] = mapped_column(Date, nullable=False, index=True)

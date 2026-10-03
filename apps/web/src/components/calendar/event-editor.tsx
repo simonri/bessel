@@ -37,6 +37,7 @@ import {
   DateSelect,
   endTimeOptions,
   fmtDuration,
+  httpUrl,
   plainControlClass,
   plainFieldClass,
   Row,
@@ -316,6 +317,7 @@ export function EventEditor({
   const presets = repeatPresets(form.timing.start);
   const hasGuests = form.attendees.length > 0;
   const details = subject.event?.details;
+  const conferenceUrl = httpUrl(details?.conferenceUrl);
 
   useEffect(() => {
     onDirtyChange(touched);
@@ -462,9 +464,9 @@ export function EventEditor({
 
       <Section>
         <Row icon={<Video />}>
-          {details?.conferenceUrl ? (
+          {conferenceUrl ? (
             <a
-              href={details.conferenceUrl}
+              href={conferenceUrl}
               target="_blank"
               rel="noreferrer noopener"
               className={cn(plainControlClass, "text-sky-300/90")}

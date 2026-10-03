@@ -14,6 +14,7 @@ import {
   createBankAccountV1BankAccountsPostResponseTransformer,
   createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
   createCounterV1CountersPostResponseTransformer,
+  createIngestTokenV1IngestTokensPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
   createProjectV1ProjectsPostResponseTransformer,
@@ -36,6 +37,7 @@ import {
   listDevicesV1DevicesGetResponseTransformer,
   listHealthkitSleepV1HealthkitSleepGetResponseTransformer,
   listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
+  listIngestTokensV1IngestTokensGetResponseTransformer,
   listNotificationsV1NotificationsGetResponseTransformer,
   listPlacesV1PlacesGetResponseTransformer,
   listProjectsV1ProjectsGetResponseTransformer,
@@ -89,6 +91,9 @@ import type {
   CreateCounterV1CountersPostData,
   CreateCounterV1CountersPostErrors,
   CreateCounterV1CountersPostResponses,
+  CreateIngestTokenV1IngestTokensPostData,
+  CreateIngestTokenV1IngestTokensPostErrors,
+  CreateIngestTokenV1IngestTokensPostResponses,
   CreateNotificationV1NotificationsPostData,
   CreateNotificationV1NotificationsPostErrors,
   CreateNotificationV1NotificationsPostResponses,
@@ -239,6 +244,8 @@ import type {
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
+  ListIngestTokensV1IngestTokensGetData,
+  ListIngestTokensV1IngestTokensGetResponses,
   ListNotificationsV1NotificationsGetData,
   ListNotificationsV1NotificationsGetResponses,
   ListPlacesV1PlacesGetData,
@@ -282,6 +289,9 @@ import type {
   ReorderTasksV1TasksReorderPatchData,
   ReorderTasksV1TasksReorderPatchErrors,
   ReorderTasksV1TasksReorderPatchResponses,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses,
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetErrors,
   SearchGooglePlacesV1PlacesSearchGetResponses,
@@ -1269,6 +1279,69 @@ export const getSleepSummaryV1HealthkitSleepSummaryGet = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/healthkit/sleep/summary",
+    ...options,
+  });
+
+/**
+ * List Ingest Tokens
+ */
+export const listIngestTokensV1IngestTokensGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListIngestTokensV1IngestTokensGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListIngestTokensV1IngestTokensGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listIngestTokensV1IngestTokensGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/ingest-tokens",
+    ...options,
+  });
+
+/**
+ * Create Ingest Token
+ */
+export const createIngestTokenV1IngestTokensPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateIngestTokenV1IngestTokensPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateIngestTokenV1IngestTokensPostResponses,
+    CreateIngestTokenV1IngestTokensPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createIngestTokenV1IngestTokensPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/ingest-tokens",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Revoke Ingest Token
+ */
+export const revokeIngestTokenV1IngestTokensTokenIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses,
+    RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/ingest-tokens/{token_id}",
     ...options,
   });
 

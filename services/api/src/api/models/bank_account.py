@@ -13,4 +13,4 @@ class BankAccount(RecordModel):
   currency: Mapped[str] = mapped_column(String(3), nullable=False)
   base_balance: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
   subtype: Mapped[str] = mapped_column(String(255), nullable=False)
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

@@ -3,6 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 import httpx
+import structlog
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.exceptions import ServiceUnavailableError
@@ -13,6 +14,8 @@ from api.postgres import AsyncSession, get_db_session
 from api.settings import settings
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query
+
+log = structlog.get_logger()
 
 # Generic Google Places types that don't describe what the place actually is
 _GENERIC_TYPES = frozenset(
@@ -128,7 +131,9 @@ async def search_google_places(
       )
       response.raise_for_status()
     except httpx.HTTPError as e:
-      raise ServiceUnavailableError(f"Google Places request failed: {e}", status_code=502) from e
+      # The exception text includes the request URL, which carries the API key.
+      log.warning("Google Places request failed", error_type=type(e).__name__, status=getattr(getattr(e, "response", None), "status_code", None))
+      raise ServiceUnavailableError("Place search is unavailable right now.", status_code=502) from e
     data = response.json()
 
   results: list[GooglePlaceSearchResult] = []

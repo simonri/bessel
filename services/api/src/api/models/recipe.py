@@ -19,4 +19,4 @@ class Recipe(RecordModel):
   title: Mapped[str] = mapped_column(String(500), nullable=False, index=True)
   content: Mapped[str] = mapped_column(Text, nullable=False, default="")
   recipe_type: Mapped[str] = mapped_column(String(20), nullable=False, default=RecipeType.other.value)
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

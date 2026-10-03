@@ -155,7 +155,7 @@ async def fetch_klarna_items(
       try:
         response = await http.post(KLARNA_URL, json=payload, headers=headers)
       except httpx.RequestError as e:
-        raise ServiceUnavailableError(f"Failed to reach Klarna: {e}", status_code=502) from e
+        raise ServiceUnavailableError("Klarna is unavailable right now.", status_code=502) from e
 
       if response.status_code != 200:
         raise ServiceUnavailableError(

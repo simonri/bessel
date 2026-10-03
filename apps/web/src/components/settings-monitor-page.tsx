@@ -7,6 +7,7 @@ import {
   StatusDot,
 } from "@/components/settings-ui";
 import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
+import { createIngestToken } from "@/lib/ingest-token";
 
 type MonitorStatusResult = {
   installed: boolean;
@@ -139,7 +140,13 @@ export function MonitorPage() {
       {!status.installed && (
         <SettingsInstallCta
           loading={loading}
-          onInstall={() => run(() => window.electron!.monitor.install())}
+          onInstall={() =>
+            run(async () =>
+              window.electron!.monitor.install(
+                await createIngestToken("monitor"),
+              ),
+            )
+          }
           label="Install Service"
           loadingLabel="Installing…"
           hint="Installs a systemd user service that tracks your active window and syncs to the API."
@@ -149,7 +156,13 @@ export function MonitorPage() {
       {status.installed && (
         <button
           type="button"
-          onClick={() => run(() => window.electron!.monitor.install())}
+          onClick={() =>
+            run(async () =>
+              window.electron!.monitor.install(
+                await createIngestToken("monitor"),
+              ),
+            )
+          }
           disabled={loading}
           className="w-full text-center text-11 text-white/40 transition-colors duration-150 hover:text-white/60 disabled:opacity-40"
         >
