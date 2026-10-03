@@ -52,6 +52,8 @@ import {
   getHoldingsV1InvestmentsHoldingsGet,
   getIntradayActivityV1ActivityIntradayGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
+  getLocationHistoryDayV1LocationHistoryDayGet,
+  getLocationHistorySummaryV1LocationHistorySummaryGet,
   getMeV1AuthMeGet,
   getRecipeV1RecipesRecipeIdGet,
   getSleepSummaryV1HealthkitSleepSummaryGet,
@@ -61,6 +63,7 @@ import {
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
+  importLocationHistoryV1LocationHistoryImportPost,
   importTransactionsV1TransactionsImportPost,
   ingestActivityBatchV1ActivityBatchPost,
   listActivitySourcesV1ActivitySourcesGet,
@@ -238,6 +241,11 @@ import type {
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetError,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
+  GetLocationHistoryDayV1LocationHistoryDayGetData,
+  GetLocationHistoryDayV1LocationHistoryDayGetError,
+  GetLocationHistoryDayV1LocationHistoryDayGetResponse,
+  GetLocationHistorySummaryV1LocationHistorySummaryGetData,
+  GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponse,
   GetRecipeV1RecipesRecipeIdGetData,
@@ -261,6 +269,9 @@ import type {
   ImportKlarnaTransactionsV1KlarnaImportPostData,
   ImportKlarnaTransactionsV1KlarnaImportPostError,
   ImportKlarnaTransactionsV1KlarnaImportPostResponse,
+  ImportLocationHistoryV1LocationHistoryImportPostData,
+  ImportLocationHistoryV1LocationHistoryImportPostError,
+  ImportLocationHistoryV1LocationHistoryImportPostResponse,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostError,
   ImportTransactionsV1TransactionsImportPostResponse,
@@ -2539,6 +2550,105 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
       return data;
     },
     queryKey: getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey(options),
+  });
+
+/**
+ * Import Google Timeline
+ *
+ * Import a Timeline.json from Google Maps' "Export Timeline data".
+ *
+ * Safe to repeat: segments already stored are left as they are, edited ones
+ * are updated, and ones the phone no longer has within the export's span are
+ * removed. An export older than what's stored never overrides it.
+ */
+export const importLocationHistoryV1LocationHistoryImportPostMutation = (
+  options?: Partial<
+    Options<ImportLocationHistoryV1LocationHistoryImportPostData>
+  >,
+): UseMutationOptions<
+  ImportLocationHistoryV1LocationHistoryImportPostResponse,
+  ImportLocationHistoryV1LocationHistoryImportPostError,
+  Options<ImportLocationHistoryV1LocationHistoryImportPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ImportLocationHistoryV1LocationHistoryImportPostResponse,
+    ImportLocationHistoryV1LocationHistoryImportPostError,
+    Options<ImportLocationHistoryV1LocationHistoryImportPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await importLocationHistoryV1LocationHistoryImportPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey = (
+  options?: Options<GetLocationHistorySummaryV1LocationHistorySummaryGetData>,
+) =>
+  createQueryKey(
+    "getLocationHistorySummaryV1LocationHistorySummaryGet",
+    options,
+  );
+
+/**
+ * Get Location History Summary
+ */
+export const getLocationHistorySummaryV1LocationHistorySummaryGetOptions = (
+  options?: Options<GetLocationHistorySummaryV1LocationHistorySummaryGetData>,
+) =>
+  queryOptions<
+    GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
+    DefaultError,
+    GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
+    ReturnType<
+      typeof getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey
+    >
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } =
+        await getLocationHistorySummaryV1LocationHistorySummaryGet({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey:
+      getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey(options),
+  });
+
+export const getLocationHistoryDayV1LocationHistoryDayGetQueryKey = (
+  options: Options<GetLocationHistoryDayV1LocationHistoryDayGetData>,
+) => createQueryKey("getLocationHistoryDayV1LocationHistoryDayGet", options);
+
+/**
+ * Get Location History Day
+ */
+export const getLocationHistoryDayV1LocationHistoryDayGetOptions = (
+  options: Options<GetLocationHistoryDayV1LocationHistoryDayGetData>,
+) =>
+  queryOptions<
+    GetLocationHistoryDayV1LocationHistoryDayGetResponse,
+    GetLocationHistoryDayV1LocationHistoryDayGetError,
+    GetLocationHistoryDayV1LocationHistoryDayGetResponse,
+    ReturnType<typeof getLocationHistoryDayV1LocationHistoryDayGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLocationHistoryDayV1LocationHistoryDayGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLocationHistoryDayV1LocationHistoryDayGetQueryKey(options),
   });
 
 export const listNotificationsV1NotificationsGetQueryKey = (

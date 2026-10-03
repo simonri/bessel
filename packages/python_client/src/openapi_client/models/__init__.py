@@ -25,6 +25,7 @@ from .bank_account_list_response import BankAccountListResponse
 from .bank_account_schema import BankAccountSchema
 from .bank_account_sort_property import BankAccountSortProperty
 from .bank_account_update import BankAccountUpdate
+from .body_import_location_history_v1_location_history_import_post import BodyImportLocationHistoryV1LocationHistoryImportPost
 from .body_import_transactions_v1_transactions_import_post import BodyImportTransactionsV1TransactionsImportPost
 from .body_upload_task_attachment_v1_tasks_task_id_attachments_post import BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost
 from .bulk_categorize_request import BulkCategorizeRequest
@@ -93,6 +94,12 @@ from .ingest_token_create import IngestTokenCreate
 from .ingest_token_created import IngestTokenCreated
 from .ingest_token_schema import IngestTokenSchema
 from .klarna_import_request import KlarnaImportRequest
+from .location_activity import LocationActivity
+from .location_day import LocationDay
+from .location_history_summary import LocationHistorySummary
+from .location_import_schema import LocationImportSchema
+from .location_point import LocationPoint
+from .location_visit import LocationVisit
 from .mark_all_notifications_read_v1_notifications_read_all_post_response_mark_all_notifications_read_v1_notifications_read_all_post import (
   MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost,
 )
@@ -191,6 +198,7 @@ __all__ = (
   "BankAccountSchema",
   "BankAccountSortProperty",
   "BankAccountUpdate",
+  "BodyImportLocationHistoryV1LocationHistoryImportPost",
   "BodyImportTransactionsV1TransactionsImportPost",
   "BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost",
   "BulkCategorizeRequest",
@@ -257,6 +265,12 @@ __all__ = (
   "IngestTokenCreated",
   "IngestTokenSchema",
   "KlarnaImportRequest",
+  "LocationActivity",
+  "LocationDay",
+  "LocationHistorySummary",
+  "LocationImportSchema",
+  "LocationPoint",
+  "LocationVisit",
   "MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost",
   "MeResponse",
   "MonthlyFlow",

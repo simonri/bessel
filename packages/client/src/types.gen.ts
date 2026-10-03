@@ -592,6 +592,16 @@ export type BankAccountUpdate = {
 };
 
 /**
+ * Body_import_location_history_v1_location_history_import_post
+ */
+export type BodyImportLocationHistoryV1LocationHistoryImportPost = {
+  /**
+   * File
+   */
+  file: Blob | File;
+};
+
+/**
  * Body_import_transactions_v1_transactions_import_post
  */
 export type BodyImportTransactionsV1TransactionsImportPost = {
@@ -2126,6 +2136,249 @@ export type KlarnaImportRequest = {
    * Cookie
    */
   cookie?: string | null;
+};
+
+/**
+ * LocationActivity
+ */
+export type LocationActivity = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Start At
+   */
+  start_at: Date;
+  /**
+   * End At
+   */
+  end_at: Date;
+  /**
+   * Utc Offset Minutes
+   */
+  utc_offset_minutes: number | null;
+  /**
+   * Activity Type
+   *
+   * How Google thinks you moved, e.g. walking, in passenger vehicle, flying.
+   */
+  activity_type: string | null;
+  /**
+   * Distance Meters
+   */
+  distance_meters: number | null;
+  /**
+   * Start Latitude
+   */
+  start_latitude: number | null;
+  /**
+   * Start Longitude
+   */
+  start_longitude: number | null;
+  /**
+   * End Latitude
+   */
+  end_latitude: number | null;
+  /**
+   * End Longitude
+   */
+  end_longitude: number | null;
+};
+
+/**
+ * LocationDay
+ */
+export type LocationDay = {
+  /**
+   * Date
+   */
+  date: Date;
+  /**
+   * Visits
+   *
+   * Visits overlapping the day, by start time.
+   */
+  visits: Array<LocationVisit>;
+  /**
+   * Activities
+   *
+   * Trips overlapping the day, by start time.
+   */
+  activities: Array<LocationActivity>;
+  /**
+   * Path
+   *
+   * Recorded route points within the day, by time.
+   */
+  path: Array<LocationPoint>;
+};
+
+/**
+ * LocationHistorySummary
+ */
+export type LocationHistorySummary = {
+  /**
+   * Days
+   *
+   * Local dates with at least one visit or trip, ascending.
+   */
+  days: Array<Date>;
+  last_import: LocationImportSchema | null;
+  /**
+   * Place Names
+   *
+   * Whether place names can be looked up.
+   */
+  place_names: boolean;
+};
+
+/**
+ * LocationImportSchema
+ */
+export type LocationImportSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Created At
+   */
+  created_at: Date;
+  /**
+   * Filename
+   */
+  filename: string | null;
+  /**
+   * Format
+   *
+   * ios or android.
+   */
+  format: string;
+  /**
+   * As Of
+   *
+   * The export's latest recorded moment.
+   */
+  as_of: Date;
+  /**
+   * Range Start
+   */
+  range_start: Date;
+  /**
+   * Range End
+   */
+  range_end: Date;
+  /**
+   * Segments
+   *
+   * Visits, trips and route stretches read from the file.
+   */
+  segments: number;
+  /**
+   * Added
+   */
+  added: number;
+  /**
+   * Updated
+   */
+  updated: number;
+  /**
+   * Removed
+   *
+   * Segments the phone no longer has, within the export's span.
+   */
+  removed: number;
+  /**
+   * Unchanged
+   */
+  unchanged: number;
+  /**
+   * Stale
+   *
+   * Segments skipped because a newer export already decided them.
+   */
+  stale: number;
+};
+
+/**
+ * LocationPoint
+ */
+export type LocationPoint = {
+  /**
+   * Latitude
+   */
+  latitude: number;
+  /**
+   * Longitude
+   */
+  longitude: number;
+  /**
+   * Ts
+   *
+   * Unix epoch seconds.
+   */
+  ts: number;
+};
+
+/**
+ * LocationVisit
+ */
+export type LocationVisit = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Start At
+   */
+  start_at: Date;
+  /**
+   * End At
+   */
+  end_at: Date;
+  /**
+   * Utc Offset Minutes
+   *
+   * UTC offset where the visit happened.
+   */
+  utc_offset_minutes: number | null;
+  /**
+   * Place Id
+   *
+   * Google place ID.
+   */
+  place_id: string | null;
+  /**
+   * Name
+   *
+   * The place's name, when it could be looked up.
+   */
+  name: string | null;
+  /**
+   * Address
+   */
+  address: string | null;
+  /**
+   * Semantic Type
+   *
+   * Google's label for the place, e.g. Home, Work, Searched Address.
+   */
+  semantic_type: string | null;
+  /**
+   * Hierarchy Level
+   *
+   * 0 for a top-level visit; higher for a visit inside another, like a shop in a mall.
+   */
+  hierarchy_level: number;
+  /**
+   * Latitude
+   */
+  latitude: number | null;
+  /**
+   * Longitude
+   */
+  longitude: number | null;
 };
 
 /**
@@ -5865,6 +6118,84 @@ export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses = {
 
 export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse =
   GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses[keyof GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses];
+
+export type ImportLocationHistoryV1LocationHistoryImportPostData = {
+  body: BodyImportLocationHistoryV1LocationHistoryImportPost;
+  path?: never;
+  query?: never;
+  url: "/v1/location-history/import";
+};
+
+export type ImportLocationHistoryV1LocationHistoryImportPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ImportLocationHistoryV1LocationHistoryImportPostError =
+  ImportLocationHistoryV1LocationHistoryImportPostErrors[keyof ImportLocationHistoryV1LocationHistoryImportPostErrors];
+
+export type ImportLocationHistoryV1LocationHistoryImportPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocationImportSchema;
+};
+
+export type ImportLocationHistoryV1LocationHistoryImportPostResponse =
+  ImportLocationHistoryV1LocationHistoryImportPostResponses[keyof ImportLocationHistoryV1LocationHistoryImportPostResponses];
+
+export type GetLocationHistorySummaryV1LocationHistorySummaryGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/location-history/summary";
+};
+
+export type GetLocationHistorySummaryV1LocationHistorySummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocationHistorySummary;
+};
+
+export type GetLocationHistorySummaryV1LocationHistorySummaryGetResponse =
+  GetLocationHistorySummaryV1LocationHistorySummaryGetResponses[keyof GetLocationHistorySummaryV1LocationHistorySummaryGetResponses];
+
+export type GetLocationHistoryDayV1LocationHistoryDayGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Date
+     *
+     * Local date where the segments happened.
+     */
+    date: Date;
+  };
+  url: "/v1/location-history/day";
+};
+
+export type GetLocationHistoryDayV1LocationHistoryDayGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetLocationHistoryDayV1LocationHistoryDayGetError =
+  GetLocationHistoryDayV1LocationHistoryDayGetErrors[keyof GetLocationHistoryDayV1LocationHistoryDayGetErrors];
+
+export type GetLocationHistoryDayV1LocationHistoryDayGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: LocationDay;
+};
+
+export type GetLocationHistoryDayV1LocationHistoryDayGetResponse =
+  GetLocationHistoryDayV1LocationHistoryDayGetResponses[keyof GetLocationHistoryDayV1LocationHistoryDayGetResponses];
 
 export type ListNotificationsV1NotificationsGetData = {
   body?: never;

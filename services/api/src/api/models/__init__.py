@@ -15,6 +15,8 @@ from .healthkit_sleep_sample import HealthKitSleepSample
 from .healthkit_workout import HealthKitWorkout
 from .import_batch import ImportBatch
 from .ingest_token import IngestToken
+from .location_import import LocationImport
+from .location_segment import LocationSegment
 from .notification import Notification
 from .place import Place
 from .project import Project
@@ -50,6 +52,8 @@ __all__ = [
   "HealthKitWorkout",
   "ImportBatch",
   "IngestToken",
+  "LocationImport",
+  "LocationSegment",
   "Model",
   "Notification",
   "Place",

@@ -26,9 +26,12 @@ import {
   createTradeV1InvestmentsTradesPostResponseTransformer,
   getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+  getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
+  getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
   getTaskV1TasksTaskIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
+  importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
   listCalendarEventsV1CalendarsEventsGetResponseTransformer,
@@ -189,6 +192,11 @@ import type {
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
+  GetLocationHistoryDayV1LocationHistoryDayGetData,
+  GetLocationHistoryDayV1LocationHistoryDayGetErrors,
+  GetLocationHistoryDayV1LocationHistoryDayGetResponses,
+  GetLocationHistorySummaryV1LocationHistorySummaryGetData,
+  GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponses,
   GetRecipeV1RecipesRecipeIdGetData,
@@ -214,6 +222,9 @@ import type {
   ImportKlarnaTransactionsV1KlarnaImportPostData,
   ImportKlarnaTransactionsV1KlarnaImportPostErrors,
   ImportKlarnaTransactionsV1KlarnaImportPostResponses,
+  ImportLocationHistoryV1LocationHistoryImportPostData,
+  ImportLocationHistoryV1LocationHistoryImportPostErrors,
+  ImportLocationHistoryV1LocationHistoryImportPostResponses,
   ImportTransactionsV1TransactionsImportPostData,
   ImportTransactionsV1TransactionsImportPostErrors,
   ImportTransactionsV1TransactionsImportPostResponses,
@@ -1644,6 +1655,86 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/crypto/price/{coin_id}",
+    ...options,
+  });
+
+/**
+ * Import Google Timeline
+ *
+ * Import a Timeline.json from Google Maps' "Export Timeline data".
+ *
+ * Safe to repeat: segments already stored are left as they are, edited ones
+ * are updated, and ones the phone no longer has within the export's span are
+ * removed. An export older than what's stored never overrides it.
+ */
+export const importLocationHistoryV1LocationHistoryImportPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ImportLocationHistoryV1LocationHistoryImportPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    ImportLocationHistoryV1LocationHistoryImportPostResponses,
+    ImportLocationHistoryV1LocationHistoryImportPostErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer:
+      importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/location-history/import",
+    ...options,
+    headers: {
+      "Content-Type": null,
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Location History Summary
+ */
+export const getLocationHistorySummaryV1LocationHistorySummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetLocationHistorySummaryV1LocationHistorySummaryGetData,
+    ThrowOnError
+  >,
+) =>
+  (options?.client ?? client).get<
+    GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/location-history/summary",
+    ...options,
+  });
+
+/**
+ * Get Location History Day
+ */
+export const getLocationHistoryDayV1LocationHistoryDayGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetLocationHistoryDayV1LocationHistoryDayGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    GetLocationHistoryDayV1LocationHistoryDayGetResponses,
+    GetLocationHistoryDayV1LocationHistoryDayGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/location-history/day",
     ...options,
   });
 

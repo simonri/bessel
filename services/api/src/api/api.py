@@ -12,6 +12,7 @@ from api.healthkit.endpoints import router as healthkit_router
 from api.ingest_tokens.endpoints import router as ingest_tokens_router
 from api.investments.endpoints import router as investments_router
 from api.klarna.endpoints import router as klarna_router
+from api.location_history.endpoints import router as location_history_router
 from api.notifications.endpoints import router as notifications_router
 from api.places.endpoints import router as places_router
 from api.projects.endpoints import router as projects_router
@@ -34,6 +35,7 @@ router.include_router(devices_router)
 router.include_router(healthkit_router)
 router.include_router(ingest_tokens_router)
 router.include_router(investments_router)
+router.include_router(location_history_router)
 router.include_router(notifications_router)
 router.include_router(places_router)
 router.include_router(projects_router)

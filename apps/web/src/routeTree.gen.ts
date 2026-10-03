@@ -20,6 +20,7 @@ import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppSleepRouteImport } from './routes/_app/sleep'
 import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
+import { Route as AppGoogleTimelineRouteImport } from './routes/_app/google-timeline'
 import { Route as AppCountersRouteImport } from './routes/_app/counters'
 import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppActivityRouteImport } from './routes/_app/activity'
@@ -79,6 +80,11 @@ const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
   path: '/investments',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGoogleTimelineRoute = AppGoogleTimelineRouteImport.update({
+  id: '/google-timeline',
+  path: '/google-timeline',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCountersRoute = AppCountersRouteImport.update({
   id: '/counters',
   path: '/counters',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/activity': typeof AppActivityRoute
   '/calendar': typeof AppCalendarRoute
   '/counters': typeof AppCountersRoute
+  '/google-timeline': typeof AppGoogleTimelineRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
   '/sleep': typeof AppSleepRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/activity': typeof AppActivityRoute
   '/calendar': typeof AppCalendarRoute
   '/counters': typeof AppCountersRoute
+  '/google-timeline': typeof AppGoogleTimelineRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
   '/sleep': typeof AppSleepRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/_app/activity': typeof AppActivityRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/counters': typeof AppCountersRoute
+  '/_app/google-timeline': typeof AppGoogleTimelineRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/recipes': typeof AppRecipesRoute
   '/_app/sleep': typeof AppSleepRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/calendar'
     | '/counters'
+    | '/google-timeline'
     | '/investments'
     | '/recipes'
     | '/sleep'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/activity'
     | '/calendar'
     | '/counters'
+    | '/google-timeline'
     | '/investments'
     | '/recipes'
     | '/sleep'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/_app/activity'
     | '/_app/calendar'
     | '/_app/counters'
+    | '/_app/google-timeline'
     | '/_app/investments'
     | '/_app/recipes'
     | '/_app/sleep'
@@ -287,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvestmentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/google-timeline': {
+      id: '/_app/google-timeline'
+      path: '/google-timeline'
+      fullPath: '/google-timeline'
+      preLoaderRoute: typeof AppGoogleTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/counters': {
       id: '/_app/counters'
       path: '/counters'
@@ -323,6 +342,7 @@ interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppCountersRoute: typeof AppCountersRoute
+  AppGoogleTimelineRoute: typeof AppGoogleTimelineRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppRecipesRoute: typeof AppRecipesRoute
   AppSleepRoute: typeof AppSleepRoute
@@ -338,6 +358,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppCountersRoute: AppCountersRoute,
+  AppGoogleTimelineRoute: AppGoogleTimelineRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppRecipesRoute: AppRecipesRoute,
   AppSleepRoute: AppSleepRoute,

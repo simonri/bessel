@@ -12,6 +12,7 @@ export type PageKey =
   | "canvas"
   | "travel"
   | "timeline"
+  | "googleTimeline"
   | "calendar"
   | "activity"
   | "sleep"
@@ -42,6 +43,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   canvas: { title: "Canvas", icon: LayoutGrid },
   travel: fromModule("travel", true),
   timeline: fromModule("timeline"),
+  googleTimeline: fromModule("googleTimeline"),
   calendar: fromModule("calendar", true),
   activity: fromModule("activity"),
   sleep: fromModule("sleep"),
@@ -67,6 +69,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "travel",
   "calendar",
   "timeline",
+  "googleTimeline",
   "activity",
   "sleep",
   "recipes",

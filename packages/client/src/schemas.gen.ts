@@ -755,6 +755,21 @@ export const BankAccountUpdateSchema = {
   title: "BankAccountUpdate",
 } as const;
 
+export const Body_import_location_history_v1_location_history_import_postSchema =
+  {
+    properties: {
+      file: {
+        type: "string",
+        contentMediaType: "application/octet-stream",
+        title: "File",
+        format: "binary",
+      },
+    },
+    type: "object",
+    required: ["file"],
+    title: "Body_import_location_history_v1_location_history_import_post",
+  } as const;
+
 export const Body_import_transactions_v1_transactions_import_postSchema = {
   properties: {
     file: {
@@ -3172,6 +3187,425 @@ export const KlarnaImportRequestSchema = {
   type: "object",
   required: ["bank_account_id", "authorization"],
   title: "KlarnaImportRequest",
+} as const;
+
+export const LocationActivitySchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    start_at: {
+      type: "string",
+      format: "date-time",
+      title: "Start At",
+    },
+    end_at: {
+      type: "string",
+      format: "date-time",
+      title: "End At",
+    },
+    utc_offset_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Utc Offset Minutes",
+    },
+    activity_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Activity Type",
+      description:
+        "How Google thinks you moved, e.g. walking, in passenger vehicle, flying.",
+    },
+    distance_meters: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Distance Meters",
+    },
+    start_latitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Latitude",
+    },
+    start_longitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Longitude",
+    },
+    end_latitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Latitude",
+    },
+    end_longitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Longitude",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "start_at",
+    "end_at",
+    "utc_offset_minutes",
+    "activity_type",
+    "distance_meters",
+    "start_latitude",
+    "start_longitude",
+    "end_latitude",
+    "end_longitude",
+  ],
+  title: "LocationActivity",
+} as const;
+
+export const LocationDaySchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    visits: {
+      items: {
+        $ref: "#/components/schemas/LocationVisit",
+      },
+      type: "array",
+      title: "Visits",
+      description: "Visits overlapping the day, by start time.",
+    },
+    activities: {
+      items: {
+        $ref: "#/components/schemas/LocationActivity",
+      },
+      type: "array",
+      title: "Activities",
+      description: "Trips overlapping the day, by start time.",
+    },
+    path: {
+      items: {
+        $ref: "#/components/schemas/LocationPoint",
+      },
+      type: "array",
+      title: "Path",
+      description: "Recorded route points within the day, by time.",
+    },
+  },
+  type: "object",
+  required: ["date", "visits", "activities", "path"],
+  title: "LocationDay",
+} as const;
+
+export const LocationHistorySummarySchema = {
+  properties: {
+    days: {
+      items: {
+        type: "string",
+        format: "date",
+      },
+      type: "array",
+      title: "Days",
+      description: "Local dates with at least one visit or trip, ascending.",
+    },
+    last_import: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/LocationImportSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    place_names: {
+      type: "boolean",
+      title: "Place Names",
+      description: "Whether place names can be looked up.",
+    },
+  },
+  type: "object",
+  required: ["days", "last_import", "place_names"],
+  title: "LocationHistorySummary",
+} as const;
+
+export const LocationImportSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+    },
+    filename: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Filename",
+    },
+    format: {
+      type: "string",
+      title: "Format",
+      description: "ios or android.",
+    },
+    as_of: {
+      type: "string",
+      format: "date-time",
+      title: "As Of",
+      description: "The export's latest recorded moment.",
+    },
+    range_start: {
+      type: "string",
+      format: "date-time",
+      title: "Range Start",
+    },
+    range_end: {
+      type: "string",
+      format: "date-time",
+      title: "Range End",
+    },
+    segments: {
+      type: "integer",
+      title: "Segments",
+      description: "Visits, trips and route stretches read from the file.",
+    },
+    added: {
+      type: "integer",
+      title: "Added",
+    },
+    updated: {
+      type: "integer",
+      title: "Updated",
+    },
+    removed: {
+      type: "integer",
+      title: "Removed",
+      description:
+        "Segments the phone no longer has, within the export's span.",
+    },
+    unchanged: {
+      type: "integer",
+      title: "Unchanged",
+    },
+    stale: {
+      type: "integer",
+      title: "Stale",
+      description:
+        "Segments skipped because a newer export already decided them.",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "created_at",
+    "filename",
+    "format",
+    "as_of",
+    "range_start",
+    "range_end",
+    "segments",
+    "added",
+    "updated",
+    "removed",
+    "unchanged",
+    "stale",
+  ],
+  title: "LocationImportSchema",
+} as const;
+
+export const LocationPointSchema = {
+  properties: {
+    latitude: {
+      type: "number",
+      title: "Latitude",
+    },
+    longitude: {
+      type: "number",
+      title: "Longitude",
+    },
+    ts: {
+      type: "integer",
+      title: "Ts",
+      description: "Unix epoch seconds.",
+    },
+  },
+  type: "object",
+  required: ["latitude", "longitude", "ts"],
+  title: "LocationPoint",
+} as const;
+
+export const LocationVisitSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    start_at: {
+      type: "string",
+      format: "date-time",
+      title: "Start At",
+    },
+    end_at: {
+      type: "string",
+      format: "date-time",
+      title: "End At",
+    },
+    utc_offset_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Utc Offset Minutes",
+      description: "UTC offset where the visit happened.",
+    },
+    place_id: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Place Id",
+      description: "Google place ID.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "The place's name, when it could be looked up.",
+    },
+    address: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Address",
+    },
+    semantic_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Semantic Type",
+      description:
+        "Google's label for the place, e.g. Home, Work, Searched Address.",
+    },
+    hierarchy_level: {
+      type: "integer",
+      title: "Hierarchy Level",
+      description:
+        "0 for a top-level visit; higher for a visit inside another, like a shop in a mall.",
+    },
+    latitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Latitude",
+    },
+    longitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Longitude",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "start_at",
+    "end_at",
+    "utc_offset_minutes",
+    "place_id",
+    "name",
+    "address",
+    "semantic_type",
+    "hierarchy_level",
+    "latitude",
+    "longitude",
+  ],
+  title: "LocationVisit",
 } as const;
 
 export const MeResponseSchema = {
