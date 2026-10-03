@@ -222,7 +222,7 @@ export function SpotifyWidget() {
       <Equalizer playing={isPlaying} />
       <div
         title={data.artist ? `${data.title} - ${data.artist}` : data.title}
-        className="min-w-0 flex-1 truncate text-xs text-white/85"
+        className="min-w-0 flex-1 truncate text-xs text-white/85 max-sm:hidden"
       >
         {data.title}
         {data.artist && <span className="text-white/45"> - {data.artist}</span>}

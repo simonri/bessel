@@ -45,27 +45,30 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
   // clusters of click targets need to opt back out with noDrag.
   const noDrag = isMac ? "[-webkit-app-region:no-drag]" : undefined;
 
+  // The sides split the spare width equally so the player sits centered, but
+  // the controls on the right never shrink: when the window narrows the
+  // player truncates and the left side gives way instead of overlapping.
   return (
     <div
       className={cn(
-        "relative z-50 grid h-11 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-b border-white/[0.06] bg-chrome pr-2 pl-4",
+        "relative z-50 flex h-11 shrink-0 items-center gap-4 border-b border-white/[0.06] bg-chrome pr-2 pl-4",
         isMac && [MAC_TRAFFIC_LIGHT_INSET, "[-webkit-app-region:drag]"],
       )}
     >
-      <div className="flex min-w-0 items-center gap-4">
+      <div className="flex min-w-0 flex-1 basis-0 items-center gap-4">
         <div className="flex shrink-0 items-center gap-2">
           <BesselMark />
-          <span className="text-[15px] font-medium tracking-tight text-white/90">
+          <span className="text-[15px] font-medium tracking-tight text-white/90 max-md:hidden">
             Bessel
           </span>
           {version && (
-            <span className="rounded-full bg-white/[0.06] px-2 py-px text-10 font-medium tabular-nums text-white/45">
+            <span className="rounded-full bg-white/[0.06] px-2 py-px text-10 font-medium tabular-nums text-white/45 max-lg:hidden">
               v{version}
             </span>
           )}
         </div>
         {pairs.length > 0 && (
-          <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden max-lg:hidden">
             {pairs.map((pair) => (
               <CryptoPairTicker key={pair} pair={pair} />
             ))}
@@ -78,7 +81,10 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
       </div>
 
       <div
-        className={cn("flex min-w-0 items-center justify-end gap-3", noDrag)}
+        className={cn(
+          "flex min-w-max flex-1 basis-0 items-center justify-end gap-3 max-md:gap-1.5",
+          noDrag,
+        )}
       >
         <div className={TOPBAR_GROUP}>
           {window.electron && <ProjectsDropdown />}
