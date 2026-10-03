@@ -77,9 +77,9 @@ function Cover({ url }: { url: string | undefined }) {
   );
 }
 
-// The cover itself, blown up and blurred behind the pill: a glow that takes
-// on each song's colours without having to read the image's pixels.
-function AmbientGlow({ url }: { url: string | undefined }) {
+// A faint halo around the cover in its own colours — the cover itself,
+// blurred, so it needs no pixel reading.
+function CoverHalo({ url }: { url: string | undefined }) {
   if (!url) return null;
   return (
     <img
@@ -87,7 +87,7 @@ function AmbientGlow({ url }: { url: string | undefined }) {
       alt=""
       aria-hidden
       draggable={false}
-      className="pointer-events-none absolute inset-x-4 -inset-y-1 -z-10 h-[calc(100%+0.5rem)] w-[calc(100%-2rem)] scale-110 rounded-full object-cover opacity-50 blur-xl saturate-150 transition-opacity duration-700 animate-in fade-in"
+      className="pointer-events-none absolute top-1 left-1 -z-10 size-6 scale-125 rounded-md object-cover opacity-40 blur-md animate-in fade-in duration-700"
     />
   );
 }
@@ -216,7 +216,7 @@ export function SpotifyWidget() {
       onPointerLeave={() => setHovered(false)}
       className="relative isolate flex h-8 min-w-0 max-w-[26rem] items-center gap-2 rounded-full bg-white/[0.05] pr-1 pl-1 ring-1 ring-white/[0.07] backdrop-blur-md"
     >
-      <AmbientGlow key={`glow-${data.coverUrl}`} url={data.coverUrl} />
+      <CoverHalo key={`halo-${data.coverUrl}`} url={data.coverUrl} />
       <Cover key={data.coverUrl ?? "none"} url={data.coverUrl} />
       <Equalizer playing={isPlaying} />
       <div

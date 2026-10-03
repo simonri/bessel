@@ -1,24 +1,22 @@
 import { cn } from "@/lib/utils";
 
-/** Bessel's mark: a four-petal flower in the accent colour. */
+// Same mark as the landing page (apps/landing/src/components/logo.tsx): a
+// damped wave, the shape of a Bessel function.
 export function BesselMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
+      fill="none"
       aria-hidden
-      className={cn(
-        "size-[18px] shrink-0 text-primary-400 transition-transform duration-500 ease-out",
-        className,
-      )}
+      className={cn("size-5 shrink-0 text-primary-400", className)}
     >
-      <g fill="currentColor">
-        <circle cx="12" cy="6.5" r="5" />
-        <circle cx="17.5" cy="12" r="5" />
-        <circle cx="12" cy="17.5" r="5" />
-        <circle cx="6.5" cy="12" r="5" />
-      </g>
-      <circle cx="12" cy="12" r="3" className="fill-chrome" />
-      <circle cx="12" cy="12" r="1.6" className="fill-primary-300" />
+      <path
+        d="M2 12C3.2 5.5 4.8 5.5 6 12C7.2 18.5 8.8 18.5 10 12C10.9 7.4 12.1 7.4 13 12C13.9 15.4 15.1 15.4 16 12C16.7 9.6 17.8 9.6 18.5 12C19.1 13.8 19.9 13.8 20.5 12C20.9 10.9 21.5 10.9 22 12"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

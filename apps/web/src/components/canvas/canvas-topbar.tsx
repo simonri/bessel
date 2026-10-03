@@ -53,9 +53,9 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
       )}
     >
       <div className="flex min-w-0 items-center gap-4">
-        <div className="group flex shrink-0 items-center gap-2">
-          <BesselMark className="group-hover:rotate-45" />
-          <span className="text-sm font-semibold tracking-tight text-white/90">
+        <div className="flex shrink-0 items-center gap-2">
+          <BesselMark />
+          <span className="text-[15px] font-medium tracking-tight text-white/90">
             Bessel
           </span>
           {version && (
