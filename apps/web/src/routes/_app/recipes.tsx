@@ -4,44 +4,39 @@ import {
   listRecipesV1RecipesGetOptions,
   listRecipesV1RecipesGetQueryKey,
   type RecipeSchema,
-  RecipeType,
+  type RecipeType,
   updateRecipeV1RecipesRecipeIdPatchMutation,
 } from "@bessel/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@bessel/ui/components/select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import {
+  ChefHat,
+  LayoutGrid,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { RecipeGallery } from "@/components/recipes/recipe-gallery";
+import { NEW_RECIPE_TEMPLATE } from "@/components/recipes/recipe-meta";
+import { RecipeReader } from "@/components/recipes/recipe-reader";
 import {
-  EmptyState,
-  IconButton,
-  PrimaryButton,
-  TextInput,
-} from "@/components/ui-kit";
+  RECIPE_TYPE_META,
+  RECIPE_TYPES,
+  typeTint,
+} from "@/components/recipes/recipe-style";
+import { IconButton } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
-
-const RECIPE_TYPE_LABELS: Record<RecipeType, string> = {
-  [RecipeType.DESSERT]: "Dessert",
-  [RecipeType.MAIN]: "Main",
-  [RecipeType.OTHER]: "Other",
-};
 
 export const Route = createFileRoute("/_app/recipes")({
   component: Recipes,
 });
 
-function ModeToggle({
+function Segment({
   active,
   onClick,
   icon,
@@ -49,7 +44,7 @@ function ModeToggle({
 }: {
   active: boolean;
   onClick: () => void;
-  icon: ReactNode;
+  icon?: ReactNode;
   label: string;
 }) {
   return (
@@ -59,9 +54,9 @@ function ModeToggle({
       title={label}
       onClick={onClick}
       className={cn(
-        "flex h-full items-center gap-1.5 rounded-md px-2.5 text-12 font-medium transition-colors duration-150 [&_svg]:size-3",
+        "flex h-full items-center gap-1.5 rounded-full px-2.5 text-12 font-medium transition-[background-color,color] duration-150 [&_svg]:size-3",
         active
-          ? "bg-white/12 text-white/90"
+          ? "bg-white/[0.12] text-white/90"
           : "text-white/45 hover:text-white/75",
       )}
     >
@@ -71,8 +66,42 @@ function ModeToggle({
   );
 }
 
+function FilterChip({
+  active,
+  onClick,
+  children,
+  style,
+  title,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  style?: React.CSSProperties;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      aria-pressed={active}
+      onClick={onClick}
+      style={active ? style : undefined}
+      className={cn(
+        "flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-11 font-medium transition-colors duration-150",
+        active
+          ? !style && "bg-white/10 text-white/85"
+          : "text-white/45 hover:bg-white/[0.05] hover:text-white/75",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 function Recipes() {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<RecipeType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [draft, setDraft] = useState<{
@@ -94,11 +123,14 @@ function Recipes() {
   );
 
   const recipes = data?.items ?? [];
-  const filtered = search
-    ? recipes.filter((r) =>
-        r.title.toLowerCase().includes(search.toLowerCase()),
-      )
-    : recipes;
+  const query = search.trim().toLowerCase();
+  const filtered = recipes.filter(
+    (r) =>
+      (!typeFilter || r.recipe_type === typeFilter) &&
+      (!query ||
+        r.title.toLowerCase().includes(query) ||
+        r.content.toLowerCase().includes(query)),
+  );
 
   const selected = recipes.find((r) => r.id === selectedId) ?? null;
 
@@ -178,77 +210,100 @@ function Recipes() {
   };
 
   const createRecipe = () =>
-    createMutation.mutate({ client, body: { title: "Untitled", content: "" } });
+    createMutation.mutate({
+      client,
+      body: {
+        title: "",
+        content: NEW_RECIPE_TEMPLATE,
+        ...(typeFilter ? { recipe_type: typeFilter } : {}),
+      },
+    });
+
+  const openRecipe = (recipe: RecipeSchema) => {
+    setSelectedId(recipe.id);
+    setMode("preview");
+  };
 
   return (
     <div className="@container -m-4 flex min-h-0 flex-1">
-      <aside className="flex w-40 shrink-0 flex-col border-r border-white/[0.07] bg-white/[0.015] @2xl:w-56 @lg:w-48">
-        <div className="flex shrink-0 items-center gap-1.5 p-2">
+      <aside className="flex w-44 shrink-0 flex-col border-r border-white/[0.06] bg-white/[0.015] @2xl:w-64 @lg:w-52">
+        <div className="flex shrink-0 items-center gap-1.5 p-2.5 pb-2">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-white/30" />
-            <TextInput
-              placeholder="Search…"
+            <input
+              type="search"
+              placeholder="Search recipes…"
+              aria-label="Search recipes"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-7 pl-8 text-12"
+              className="h-8 w-full rounded-full bg-white/[0.05] pr-3 pl-8 text-12 text-white/85 ring-1 ring-white/[0.06] outline-none transition-[box-shadow,background-color] placeholder:text-white/30 focus:bg-white/[0.07] focus:ring-primary-400/40"
             />
           </div>
-          <IconButton
+          <button
+            type="button"
             title="New recipe"
             aria-label="New recipe"
             onClick={createRecipe}
+            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-95"
           >
-            <Plus />
-          </IconButton>
+            <Plus className="size-4" />
+          </button>
         </div>
 
-        <div className="flex items-center justify-between px-3.5 pt-1 pb-1.5">
-          <span className="text-11 font-semibold tracking-wide text-white/40">
-            Recipes
-          </span>
-          <span className="text-11 tabular-nums text-white/35">
-            {filtered.length}
-          </span>
+        <div className="flex shrink-0 items-center gap-0.5 px-2.5 pb-2">
+          <FilterChip
+            active={typeFilter === null}
+            onClick={() => setTypeFilter(null)}
+          >
+            All
+          </FilterChip>
+          {RECIPE_TYPES.map((type) => (
+            <FilterChip
+              key={type}
+              active={typeFilter === type}
+              onClick={() => setTypeFilter(typeFilter === type ? null : type)}
+              style={typeTint(type)}
+              title={RECIPE_TYPE_META[type].plural}
+            >
+              <span aria-hidden>{RECIPE_TYPE_META[type].emoji}</span>
+              <span className="hidden @2xl:inline">
+                {RECIPE_TYPE_META[type].plural}
+              </span>
+            </FilterChip>
+          ))}
         </div>
 
-        <div className="flex-1 space-y-px overflow-y-auto px-1.5 pb-2">
+        <div className="flex-1 space-y-0.5 overflow-y-auto px-1.5 pb-2">
           {filtered.length === 0 ? (
             <p className="px-2 py-6 text-center text-12 text-white/40">
-              {search ? "No matches" : "No recipes yet"}
+              {recipes.length === 0 ? "No recipes yet" : "No matches"}
             </p>
           ) : (
             filtered.map((r) => {
               const active = r.id === selectedId;
+              const meta = RECIPE_TYPE_META[r.recipe_type];
               return (
                 <button
                   key={r.id}
                   type="button"
                   className={cn(
-                    "flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left text-13 transition-colors duration-150",
+                    "flex w-full min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 text-left text-13 transition-colors duration-150",
                     active
                       ? "bg-white/[0.08] text-white/90"
-                      : "text-white/60 hover:bg-white/[0.05] hover:text-white/85",
+                      : "text-white/65 hover:bg-white/[0.05] hover:text-white/85",
                   )}
-                  onClick={() => {
-                    setSelectedId(r.id);
-                    setMode("preview");
-                  }}
+                  onClick={() => openRecipe(r)}
                 >
+                  <span
+                    aria-hidden
+                    className="flex size-6 shrink-0 items-center justify-center rounded-lg text-13"
+                    style={typeTint(r.recipe_type, active ? 0.22 : 0.12)}
+                  >
+                    {meta.emoji}
+                  </span>
                   <span className="min-w-0 flex-1 truncate">
                     {r.title || "Untitled"}
                   </span>
-                  {r.recipe_type !== RecipeType.OTHER && (
-                    <span
-                      className={cn(
-                        "shrink-0 rounded px-1.5 py-px text-10 font-medium",
-                        active
-                          ? "bg-primary-500/15 text-primary-300"
-                          : "bg-white/[0.05] text-white/40",
-                      )}
-                    >
-                      {RECIPE_TYPE_LABELS[r.recipe_type]}
-                    </span>
-                  )}
                 </button>
               );
             })
@@ -258,62 +313,77 @@ function Recipes() {
 
       <section className="flex min-w-0 flex-1 flex-col">
         {!selected || !draft ? (
-          <div className="flex h-full items-center justify-center p-4">
-            <EmptyState
-              icon={<BookOpen />}
-              title="No recipe selected"
-              className="w-full max-w-xs border-none"
-            >
-              <p>Pick a recipe from the list or create a new one.</p>
-              <PrimaryButton className="mt-3" onClick={createRecipe}>
-                <Plus />
-                New recipe
-              </PrimaryButton>
-            </EmptyState>
-          </div>
+          <RecipeGallery
+            recipes={filtered}
+            totalCount={recipes.length}
+            filtered={filtered.length !== recipes.length}
+            onOpen={openRecipe}
+            onCreate={createRecipe}
+          />
         ) : (
           <>
-            <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/[0.07] px-4 py-2.5">
-              <input
-                type="text"
-                value={draft.title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                className="min-w-32 flex-1 bg-transparent text-15 font-semibold text-white/90 outline-none placeholder:text-white/25"
-                placeholder="Recipe title"
-              />
+            <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/[0.06] px-3 py-2">
+              <IconButton
+                title="All recipes"
+                aria-label="All recipes"
+                onClick={() => setSelectedId(null)}
+              >
+                <LayoutGrid />
+              </IconButton>
+              {mode === "edit" ? (
+                <input
+                  type="text"
+                  value={draft.title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  className="min-w-32 flex-1 bg-transparent text-15 font-semibold text-white/90 outline-none placeholder:text-white/25"
+                  placeholder="What's it called?"
+                  // biome-ignore lint/a11y/noAutofocus: a brand-new recipe starts by naming it
+                  autoFocus={!draft.title}
+                />
+              ) : (
+                <div className="min-w-0 flex-1" />
+              )}
               <div className="flex shrink-0 items-center gap-1.5">
-                <Select
-                  value={draft.recipe_type}
-                  onValueChange={(v) => handleTypeChange(v as RecipeType)}
-                >
-                  <SelectTrigger
-                    size="sm"
-                    className="w-24 rounded-lg border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.06]"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(RECIPE_TYPE_LABELS).map(
-                      ([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-                <div className="flex h-7 items-center rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
-                  <ModeToggle
+                {mode === "edit" && (
+                  <div className="flex h-7 items-center gap-0.5 rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
+                    {RECIPE_TYPES.map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={draft.recipe_type === type}
+                        title={RECIPE_TYPE_META[type].label}
+                        onClick={() => handleTypeChange(type)}
+                        style={
+                          draft.recipe_type === type
+                            ? typeTint(type, 0.2)
+                            : undefined
+                        }
+                        className={cn(
+                          "flex h-full items-center gap-1 rounded-full px-2 text-12 font-medium transition-colors duration-150",
+                          draft.recipe_type !== type &&
+                            "text-white/45 hover:text-white/75",
+                        )}
+                      >
+                        <span aria-hidden>{RECIPE_TYPE_META[type].emoji}</span>
+                        <span className="hidden @2xl:inline">
+                          {RECIPE_TYPE_META[type].label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex h-7 items-center rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
+                  <Segment
+                    active={mode === "preview"}
+                    onClick={() => setMode("preview")}
+                    icon={<ChefHat />}
+                    label="Cook"
+                  />
+                  <Segment
                     active={mode === "edit"}
                     onClick={() => setMode("edit")}
                     icon={<Pencil />}
                     label="Edit"
-                  />
-                  <ModeToggle
-                    active={mode === "preview"}
-                    onClick={() => setMode("preview")}
-                    icon={<Eye />}
-                    label="Preview"
                   />
                 </div>
                 <IconButton
@@ -332,15 +402,17 @@ function Recipes() {
                 <textarea
                   value={draft.content}
                   onChange={(e) => handleContentChange(e.target.value)}
-                  placeholder="Write your recipe in markdown…"
+                  aria-label="Recipe"
+                  placeholder="List ingredients with - and steps with 1. 2. 3. …"
                   className="block h-full w-full resize-none bg-transparent px-5 py-4 font-mono text-13 leading-relaxed text-white/80 outline-none placeholder:text-white/25"
                 />
               ) : (
-                <div className="prose prose-invert prose-sm mx-auto max-w-2xl px-5 py-5 text-white/75 prose-headings:font-semibold prose-headings:text-white/90 prose-strong:text-white/90 prose-li:marker:text-white/30 prose-a:text-primary-300 prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-white/[0.06] prose-code:px-1 prose-code:py-px prose-code:font-normal prose-code:text-primary-300 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:border prose-pre:border-white/[0.07] prose-pre:bg-white/[0.03] prose-blockquote:border-l-white/15 prose-blockquote:text-white/55 prose-hr:border-white/[0.07] prose-th:text-white/80 prose-td:border-white/[0.07] prose-tr:border-white/[0.07]">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {draft.content || "*Nothing to preview*"}
-                  </ReactMarkdown>
-                </div>
+                <RecipeReader
+                  key={selected.id}
+                  title={draft.title}
+                  type={draft.recipe_type}
+                  content={draft.content}
+                />
               )}
             </div>
           </>
@@ -351,8 +423,10 @@ function Recipes() {
         variant="default"
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Delete recipe?"
-        description={<>"{deleteTarget?.title}" will be permanently deleted.</>}
+        title="Delete this recipe?"
+        description={
+          <>"{deleteTarget?.title || "Untitled"}" will be gone for good.</>
+        }
         onConfirm={() =>
           deleteTarget &&
           deleteMutation.mutate({
