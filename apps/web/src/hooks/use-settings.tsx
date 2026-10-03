@@ -52,6 +52,8 @@ interface Settings {
   calendarReminders: boolean;
   /** Hyperliquid account shown on the Hyperliquid page; public, read-only. */
   hyperliquidAddress: string | null;
+  /** Sidebar page order; pages missing from it keep their default slot. */
+  navOrder: string[];
 }
 
 const STORAGE_KEY = "bessel:settings";
@@ -66,6 +68,7 @@ const DEFAULT_SETTINGS: Settings = {
   obsidianRecentVaults: [],
   calendarReminders: true,
   hyperliquidAddress: null,
+  navOrder: [],
 };
 
 function withDefaults(stored: Partial<Settings>): Settings {

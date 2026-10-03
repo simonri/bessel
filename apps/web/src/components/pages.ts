@@ -89,6 +89,25 @@ export const MORE_PAGES: PageKey[] = [
 
 const ALL_PAGES = new Set<string>([...PRIMARY_PAGES, ...MORE_PAGES]);
 
+/**
+ * PRIMARY_PAGES in the user's saved order. Pages the order doesn't mention
+ * (added since it was saved, or desktop-only) keep their default slot.
+ */
+export function orderPrimaryPages(order: readonly string[]): PageKey[] {
+  const rank = new Map(
+    order
+      .filter((key) => PRIMARY_PAGES.includes(key as PageKey))
+      .map((key, i) => [key, i]),
+  );
+  const ordered = PRIMARY_PAGES.filter((key) => rank.has(key)).sort(
+    (a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0),
+  );
+  for (const [i, key] of PRIMARY_PAGES.entries()) {
+    if (!rank.has(key)) ordered.splice(Math.min(i, ordered.length), 0, key);
+  }
+  return ordered;
+}
+
 export function isPageKey(value: unknown): value is PageKey {
   return typeof value === "string" && ALL_PAGES.has(value);
 }

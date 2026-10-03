@@ -4,15 +4,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  type Modifier,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ProjectSessions } from "@/components/canvas/project-sessions";
 import {
   MORE_PAGES,
+  orderPrimaryPages,
   PAGE_REGISTRY,
   type PageKey,
-  PRIMARY_PAGES,
 } from "@/components/pages";
+import { useSettings } from "@/hooks/use-settings";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 
@@ -130,6 +147,43 @@ function PageIcon({ page, isActive }: { page: PageKey; isActive: boolean }) {
   );
 }
 
+const verticalOnly: Modifier = ({ transform }) => ({ ...transform, x: 0 });
+
+// Draggable to reorder. dnd-kit swallows the click that ends a drag, so a
+// drop doesn't also navigate to the dragged page.
+function SortablePageItem({
+  page,
+  isActive,
+  onSelectPage,
+}: {
+  page: PageKey;
+  isActive: boolean;
+  onSelectPage: (page: PageKey) => void;
+}) {
+  const { listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: page });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={() => onSelectPage(page)}
+      aria-current={isActive ? "page" : undefined}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={cn(
+        NAV_ITEM,
+        isActive ? NAV_ACTIVE : NAV_IDLE,
+        isDragging && "relative z-10 bg-white/10 text-white/85 shadow-lg",
+      )}
+      // Pointer-only reordering: dnd-kit's ARIA attributes would turn the
+      // button into a "sortable" and steal Enter/Space from navigation.
+      {...listeners}
+    >
+      <PageIcon page={page} isActive={isActive} />
+      <span className="truncate">{PAGE_REGISTRY[page].title}</span>
+    </button>
+  );
+}
+
 // Secondary pages behind one item. While one of them is open the item takes
 // on that page's icon and title, so the sidebar always shows where you are.
 function MorePagesMenu({
@@ -208,6 +262,22 @@ export const AppSidebar = memo(function AppSidebar({
 }) {
   const [width, setWidth] = useState(loadSidebarWidth);
   const openCanvas = useCallback(() => onSelectPage("canvas"), [onSelectPage]);
+  const { settings, update } = useSettings();
+  const pages = orderPrimaryPages(settings.navOrder);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
+
+  const reorder = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    update({
+      navOrder: arrayMove(
+        pages,
+        pages.indexOf(active.id as PageKey),
+        pages.indexOf(over.id as PageKey),
+      ),
+    });
+  };
 
   useEffect(() => {
     const t = setTimeout(
@@ -225,21 +295,26 @@ export const AppSidebar = memo(function AppSidebar({
       <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto border-r border-white/10 bg-chrome px-2 py-3">
         <nav aria-label="Pages">
           <div className="flex flex-col gap-0.5">
-            {PRIMARY_PAGES.map((key) => {
-              const isActive = key === activePage;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onSelectPage(key)}
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(NAV_ITEM, isActive ? NAV_ACTIVE : NAV_IDLE)}
-                >
-                  <PageIcon page={key} isActive={isActive} />
-                  <span className="truncate">{PAGE_REGISTRY[key].title}</span>
-                </button>
-              );
-            })}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[verticalOnly]}
+              onDragEnd={reorder}
+            >
+              <SortableContext
+                items={pages}
+                strategy={verticalListSortingStrategy}
+              >
+                {pages.map((key) => (
+                  <SortablePageItem
+                    key={key}
+                    page={key}
+                    isActive={key === activePage}
+                    onSelectPage={onSelectPage}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
             <MorePagesMenu
               activePage={activePage}
               onSelectPage={onSelectPage}
