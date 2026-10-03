@@ -10,6 +10,7 @@ import { addDays, isSameDay } from "date-fns";
 import { ChevronLeft, ChevronRight, PanelLeft } from "lucide-react";
 import {
   type RefObject,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -72,9 +73,21 @@ export interface CalendarNavigation {
   setView: (view: CalendarViewMode) => void;
 }
 
+const VIEW_KEY = "bessel:calendar-view";
+const VIEW_MODES: readonly CalendarViewMode[] = ["week", "centered", "day"];
+
+function rememberedView(): CalendarViewMode {
+  const stored = userStorage.getItem(VIEW_KEY);
+  return VIEW_MODES.find((mode) => mode === stored) ?? "week";
+}
+
 export function useCalendarNavigation(timeZone: string): CalendarNavigation {
   const [date, setDate] = useState(() => toWallClock(new Date(), timeZone));
-  const [view, setView] = useState<CalendarViewMode>("week");
+  const [view, setViewState] = useState(rememberedView);
+  const setView = useCallback((next: CalendarViewMode) => {
+    setViewState(next);
+    userStorage.setItem(VIEW_KEY, next);
+  }, []);
   return { date, view, days: visibleDays(date, view), setDate, setView };
 }
 
