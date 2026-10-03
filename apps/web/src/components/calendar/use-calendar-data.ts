@@ -1,6 +1,7 @@
 import {
   authorizeGoogleV1CalendarsGoogleAuthorizePostMutation,
   type CalendarAccountListResponse,
+  type CalendarEventSchema,
   connectIcloudV1CalendarsIcloudPostMutation,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteMutation,
   listCalendarAccountsV1CalendarsAccountsGetOptions,
@@ -55,19 +56,23 @@ function startConnectPolling(queryClient: QueryClient) {
 }
 
 // The client parses `YYYY-MM-DD` as UTC midnight; read it back the same way.
-function isoDate(d: Date): string {
+export function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function invalidateEvents(queryClient: QueryClient) {
+export const EVENTS_QUERY_ID = "listCalendarEventsV1CalendarsEventsGet";
+
+export function isEventsQuery(queryKey: readonly unknown[]): boolean {
+  return (queryKey[0] as { _id?: string } | undefined)?._id === EVENTS_QUERY_ID;
+}
+
+export function invalidateEvents(queryClient: QueryClient) {
   void queryClient.invalidateQueries({
-    predicate: (query) =>
-      (query.queryKey[0] as { _id?: string } | undefined)?._id ===
-      "listCalendarEventsV1CalendarsEventsGet",
+    predicate: (query) => isEventsQuery(query.queryKey),
   });
 }
 
-const accountsQueryKey = () =>
+export const accountsQueryKey = () =>
   listCalendarAccountsV1CalendarsAccountsGetQueryKey({ client });
 
 function toAccounts(data: CalendarAccountListResponse | undefined) {
@@ -80,6 +85,7 @@ function toAccounts(data: CalendarAccountListResponse | undefined) {
       email: a.email,
       lastSyncedAt: a.last_synced_at,
       syncError: a.sync_error,
+      canWrite: a.can_write,
     });
     for (const c of a.calendars) {
       calendars.push({
@@ -88,10 +94,48 @@ function toAccounts(data: CalendarAccountListResponse | undefined) {
         name: c.name,
         color: c.color,
         hidden: c.hidden,
+        writable: c.writable,
+        primary: c.primary,
       });
     }
   }
   return { accounts, calendars };
+}
+
+export function toCalendarEvent(e: CalendarEventSchema): CalendarEvent | null {
+  const base = {
+    id: e.id,
+    calendarId: e.calendar_id,
+    title: e.title,
+    details: {
+      location: e.location,
+      description: e.description,
+      creatorName: e.creator_name,
+      creatorEmail: e.creator_email,
+      attendees: e.attendees,
+      myResponse: e.my_response ?? null,
+      conferenceUrl: e.conference_url,
+      htmlLink: e.html_link,
+      busy: e.busy,
+      recurring: e.recurring,
+      visibility: e.visibility,
+      editable: e.editable,
+      rule: e.rule ?? null,
+      recurrence: e.recurrence ?? null,
+    },
+  };
+  if (e.all_day && e.start_date && e.end_date) {
+    return {
+      ...base,
+      allDay: true,
+      startDate: isoDate(e.start_date),
+      endDate: isoDate(e.end_date),
+    };
+  }
+  if (!e.all_day && e.start_at && e.end_at) {
+    return { ...base, allDay: false, start: e.start_at, end: e.end_at };
+  }
+  return null;
 }
 
 /** Accounts, calendars and the events overlapping [start, end). */
@@ -109,6 +153,7 @@ export function useCalendarData(range: {
       );
       return pending || Date.now() < pollUntil ? CONNECT_POLL_MS : false;
     },
+    refetchOnWindowFocus: true,
   });
 
   const startTs = Math.floor(range.start.getTime() / 1000);
@@ -121,6 +166,7 @@ export function useCalendarData(range: {
     enabled: (accountsData?.accounts.length ?? 0) > 0,
     placeholderData: keepPreviousData,
     refetchInterval: EVENTS_REFRESH_MS,
+    refetchOnWindowFocus: true,
   });
 
   // A finished sync shows up as a newer last_synced_at; pull fresh events then.
@@ -137,38 +183,9 @@ export function useCalendarData(range: {
   }, [latestSync, queryClient]);
 
   const { accounts, calendars } = toAccounts(accountsData);
-  const events = (eventsData?.events ?? []).flatMap((e): CalendarEvent[] => {
-    const base = {
-      id: e.id,
-      calendarId: e.calendar_id,
-      title: e.title,
-      details: {
-        location: e.location,
-        description: e.description,
-        creatorName: e.creator_name,
-        creatorEmail: e.creator_email,
-        attendees: e.attendees,
-        conferenceUrl: e.conference_url,
-        htmlLink: e.html_link,
-        busy: e.busy,
-        recurring: e.recurring,
-        visibility: e.visibility,
-      },
-    };
-    if (e.all_day && e.start_date && e.end_date) {
-      return [
-        {
-          ...base,
-          allDay: true,
-          startDate: isoDate(e.start_date),
-          endDate: isoDate(e.end_date),
-        },
-      ];
-    }
-    if (!e.all_day && e.start_at && e.end_at) {
-      return [{ ...base, allDay: false, start: e.start_at, end: e.end_at }];
-    }
-    return [];
+  const events = (eventsData?.events ?? []).flatMap((e) => {
+    const event = toCalendarEvent(e);
+    return event ? [event] : [];
   });
 
   return { accounts, calendars, events };

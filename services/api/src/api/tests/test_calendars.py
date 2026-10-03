@@ -1,15 +1,15 @@
 from datetime import UTC, date, datetime
 from urllib.parse import parse_qs, urlparse
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 import pytest
 from api.calendars import google
-from api.calendars.google import GoogleCalendarClient, _parse_event
-from api.calendars.icloud import ICloudCalendarClient, expand_events
+from api.calendars.google import GoogleCalendarClient, GoogleGrant, _parse_event
+from api.calendars.icloud import ICalResource, ICloudCalendarClient, expand_events
 from api.calendars.providers import ProviderAttendee, ProviderAuthError, ProviderCalendar, ProviderEvent, html_to_text
 from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarRepository
-from api.calendars.service import AccountSnapshot, calendar_service
+from api.calendars.service import AccountSnapshot, OAuthCallbackError, calendar_service
 from api.common.encryption import decrypt, encrypt
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.user import User
@@ -96,9 +96,13 @@ END:VEVENT
 END:VCALENDAR"""
 
 
+def _resource(data: str, href: str = "https://p1-caldav.icloud.com/1/calendars/home/a.ics") -> ICalResource:
+  return ICalResource(href=href, etag='"etag-1"', data=data)
+
+
 class TestExpandICalEvents:
   def test_recurrence_exdate_and_override(self) -> None:
-    events = {e.external_id: e for e in expand_events([ICAL], WEEK_START, WEEK_END)}
+    events = {e.external_id: e for e in expand_events([_resource(ICAL)], WEEK_START, WEEK_END)}
     standups = sorted((e for e in events.values() if not e.all_day), key=lambda e: e.start_at or WEEK_START)
 
     assert [e.title for e in standups] == ["Standup", "Standup (moved)", "Standup", "Standup"]
@@ -106,11 +110,11 @@ class TestExpandICalEvents:
     assert len({e.external_id for e in standups}) == 4
 
   def test_all_day_without_dtend_lasts_one_day(self) -> None:
-    holiday = next(e for e in expand_events([ICAL], WEEK_START, WEEK_END) if e.all_day)
+    holiday = next(e for e in expand_events([_resource(ICAL)], WEEK_START, WEEK_END) if e.all_day)
     assert (holiday.start_date, holiday.end_date, holiday.location) == (date(2026, 10, 8), date(2026, 10, 9), "Everywhere")
 
   def test_occurrences_outside_window_dropped(self) -> None:
-    assert expand_events([ICAL], datetime(2026, 11, 1, tzinfo=UTC), datetime(2026, 11, 8, tzinfo=UTC)) == []
+    assert expand_events([_resource(ICAL)], datetime(2026, 11, 1, tzinfo=UTC), datetime(2026, 11, 8, tzinfo=UTC)) == []
 
 
 def _multistatus(*responses: str) -> str:
@@ -146,7 +150,7 @@ def _icloud_handler(request: httpx.Request) -> httpx.Response:
         _response("/1234/calendars/", "<d:resourcetype><d:collection/></d:resourcetype>"),
         _response(
           "/1234/calendars/home/",
-          _calendar_props("Home", "VEVENT", "<a:calendar-color>#34AADCFF</a:calendar-color>"),
+          _calendar_props("Home", "VEVENT", '<a:calendar-color>#34AADCFF</a:calendar-color><cs:getctag xmlns:cs="http://calendarserver.org/ns/">ctag-1</cs:getctag>'),
         ),
         _response(
           "/1234/calendars/reminders/",
@@ -168,7 +172,7 @@ class TestICloudClient:
       calendars = await icloud.list_calendars()
       events = await icloud.list_events(calendars[0].external_id, WEEK_START, WEEK_END)
 
-    assert calendars == [ProviderCalendar(external_id=f"{ICLOUD_HOME}home/", name="Home", color="#34aadc")]
+    assert calendars == [ProviderCalendar(external_id=f"{ICLOUD_HOME}home/", name="Home", color="#34aadc", change_tag="ctag-1")]
     assert sorted(e.title for e in events) == ["Holiday", "Standup", "Standup", "Standup", "Standup (moved)"]
 
   @pytest.mark.asyncio
@@ -206,7 +210,7 @@ END:VCALENDAR"""
 
 class TestEventDetails:
   def test_ical_details(self) -> None:
-    events = {e.title: e for e in expand_events([DETAILED_ICAL], WEEK_START, WEEK_END)}
+    events = {e.title: e for e in expand_events([_resource(DETAILED_ICAL)], WEEK_START, WEEK_END)}
     planning, solo = events["Planning"], events["Solo"]
 
     assert (planning.creator_name, planning.creator_email) == ("Bob", "bob@example.com")
@@ -220,7 +224,7 @@ class TestEventDetails:
     assert (solo.busy, solo.recurring, solo.conference_url) == (True, False, None)
 
   def test_ical_override_counts_as_recurring(self) -> None:
-    moved = next(e for e in expand_events([ICAL], WEEK_START, WEEK_END) if e.title == "Standup (moved)")
+    moved = next(e for e in expand_events([_resource(ICAL)], WEEK_START, WEEK_END) if e.title == "Standup (moved)")
     assert moved.recurring
 
   def test_google_details(self) -> None:
@@ -327,21 +331,21 @@ class TestGoogleConnect:
     params = parse_qs(urlparse(resp.json()["url"]).query)
     assert params["access_type"] == ["offline"]
     assert params["prompt"] == ["consent"]
-    assert params["redirect_uri"] == [f"{settings.API_BASE_URL}/v1/calendars/google/callback"]
+    assert params["redirect_uri"] == [f"{settings.FRONTEND_BASE_URL}/oauth/google-calendar"]
     assert params["state"][0]
 
   @pytest.mark.asyncio
   async def test_callback_creates_account_and_enqueues_sync(
     self, client: AsyncClient, session: AsyncSession, google_configured: None, job_queue_manager: JobQueueManager, mocker: MockerFixture
   ) -> None:
-    mocker.patch.object(GoogleCalendarClient, "exchange_code", return_value=("access", "refresh-secret"))
+    mocker.patch.object(GoogleCalendarClient, "exchange_code", return_value=GoogleGrant("access", "refresh-secret", can_write=True))
     mocker.patch.object(GoogleCalendarClient, "get_email", return_value="me@gmail.com")
     state = parse_qs(urlparse((await client.post("/v1/calendars/google/authorize")).json()["url"]).query)["state"][0]
 
-    resp = await client.get("/v1/calendars/google/callback", params={"code": "c", "state": state})
+    resp = await client.post("/v1/calendars/google/callback", json={"code": "c", "state": state})
 
-    assert resp.status_code == 200
-    assert "me@gmail.com" in resp.text
+    assert resp.status_code == 201
+    assert resp.json()["email"] == "me@gmail.com"
     account = (await session.execute(select(CalendarAccount))).scalar_one()
     assert account.email == "me@gmail.com"
     assert "refresh-secret" not in account.encrypted_credentials
@@ -361,13 +365,13 @@ class TestGoogleConnect:
     account_id = await _account(
       save_fixture, await _current_user_id(client, session), email="me@gmail.com", secret="old-refresh", sync_error="Reconnect the account."
     )
-    mocker.patch.object(GoogleCalendarClient, "exchange_code", return_value=("access", None))
+    mocker.patch.object(GoogleCalendarClient, "exchange_code", return_value=GoogleGrant("access", None, can_write=False))
     mocker.patch.object(GoogleCalendarClient, "get_email", return_value="me@gmail.com")
     state = parse_qs(urlparse((await client.post("/v1/calendars/google/authorize")).json()["url"]).query)["state"][0]
 
-    resp = await client.get("/v1/calendars/google/callback", params={"code": "c", "state": state})
+    resp = await client.post("/v1/calendars/google/callback", json={"code": "c", "state": state})
 
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     account = await CalendarAccountRepository.from_session(session).get_by_id(account_id)
     assert account is not None
     assert decrypt(account.encrypted_credentials) == "old-refresh"
@@ -375,14 +379,20 @@ class TestGoogleConnect:
 
   @pytest.mark.asyncio
   async def test_callback_rejects_tampered_state(self, client: AsyncClient, google_configured: None) -> None:
-    resp = await client.get("/v1/calendars/google/callback", params={"code": "c", "state": "forged"})
+    resp = await client.post("/v1/calendars/google/callback", json={"code": "c", "state": "forged"})
     assert resp.status_code == 400
     assert "expired" in resp.text
 
   @pytest.mark.asyncio
-  async def test_callback_handles_denied_consent(self, client: AsyncClient) -> None:
-    resp = await client.get("/v1/calendars/google/callback", params={"error": "access_denied", "state": "x"})
-    assert resp.status_code == 400
+  async def test_callback_rejects_state_from_another_user(self, session: AsyncSession, google_configured: None, mocker: MockerFixture) -> None:
+    exchange = mocker.patch.object(GoogleCalendarClient, "exchange_code")
+    state = parse_qs(urlparse(calendar_service.google_authorize_url(uuid4())).query)["state"][0]
+
+    with pytest.raises(OAuthCallbackError, match="different Bessel account"):
+      await calendar_service.complete_google_connect(CalendarAccountRepository.from_session(session), uuid4(), code="c", state=state)
+
+    exchange.assert_not_called()
+    assert (await session.execute(select(CalendarAccount))).scalar_one_or_none() is None
 
 
 class TestICloudConnect:

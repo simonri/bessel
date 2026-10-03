@@ -24,6 +24,7 @@ class CalendarAccountSchema:
       id (UUID):
       provider (CalendarProvider):
       email (str):
+      can_write (bool): False when the account was connected read-only and must be reconnected to edit.
       last_synced_at (datetime.datetime | None):
       sync_error (None | str): Why the last sync failed, or null if it succeeded.
       calendars (list[CalendarSchema]):
@@ -32,6 +33,7 @@ class CalendarAccountSchema:
   id: UUID
   provider: CalendarProvider
   email: str
+  can_write: bool
   last_synced_at: datetime.datetime | None
   sync_error: None | str
   calendars: list[CalendarSchema]
@@ -43,6 +45,8 @@ class CalendarAccountSchema:
     provider = self.provider.value
 
     email = self.email
+
+    can_write = self.can_write
 
     last_synced_at: None | str
     if isinstance(self.last_synced_at, datetime.datetime):
@@ -65,6 +69,7 @@ class CalendarAccountSchema:
         "id": id,
         "provider": provider,
         "email": email,
+        "can_write": can_write,
         "last_synced_at": last_synced_at,
         "sync_error": sync_error,
         "calendars": calendars,
@@ -83,6 +88,8 @@ class CalendarAccountSchema:
     provider = CalendarProvider(d.pop("provider"))
 
     email = d.pop("email")
+
+    can_write = d.pop("can_write")
 
     def _parse_last_synced_at(data: object) -> datetime.datetime | None:
       if data is None:
@@ -117,6 +124,7 @@ class CalendarAccountSchema:
       id=id,
       provider=provider,
       email=email,
+      can_write=can_write,
       last_synced_at=last_synced_at,
       sync_error=sync_error,
       calendars=calendars,

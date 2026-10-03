@@ -877,6 +877,52 @@
         ]
       }
     },
+    "/v1/calendars/google/callback": {
+      "post": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Complete Google Calendar Connection",
+        "operationId": "complete_google_connect_v1_calendars_google_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleCallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarAccountSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/calendars/icloud": {
       "post": {
         "tags": [
@@ -1114,6 +1160,195 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/calendars/{calendar_id}/events": {
+      "post": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Create Calendar Event",
+        "operationId": "create_calendar_event_v1_calendars__calendar_id__events_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendar_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Calendar Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventWriteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/calendars/events/{event_id}": {
+      "patch": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Update Calendar Event",
+        "operationId": "update_calendar_event_v1_calendars_events__event_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventWriteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Delete Calendar Event",
+        "operationId": "delete_calendar_event_v1_calendars_events__event_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          },
+          {
+            "name": "time_zone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Zone the user is viewing the calendar in.",
+              "title": "Time Zone"
+            },
+            "description": "Zone the user is viewing the calendar in."
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/EditScope",
+              "description": "For repeating events: this occurrence, this and following, or all.",
+              "default": "this"
+            },
+            "description": "For repeating events: this occurrence, this and following, or all."
+          },
+          {
+            "name": "notify_guests",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Email guests a cancellation (Google only).",
+              "default": true,
+              "title": "Notify Guests"
+            },
+            "description": "Email guests a cancellation (Google only)."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -6175,8 +6410,9 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
-            "title": "File"
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "format": "binary"
           }
         },
         "type": "object",
@@ -6189,8 +6425,9 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
-            "title": "File"
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "format": "binary"
           }
         },
         "type": "object",
@@ -6334,6 +6571,11 @@
             "type": "string",
             "title": "Email"
           },
+          "can_write": {
+            "type": "boolean",
+            "title": "Can Write",
+            "description": "False when the account was connected read-only and must be reconnected to edit."
+          },
           "last_synced_at": {
             "anyOf": [
               {
@@ -6371,6 +6613,7 @@
           "id",
           "provider",
           "email",
+          "can_write",
           "last_synced_at",
           "sync_error",
           "calendars"
@@ -6553,6 +6796,24 @@
             "type": "array",
             "title": "Attendees"
           },
+          "my_response": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "accepted",
+                  "declined",
+                  "tentative",
+                  "needs_action"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Response",
+            "description": "The account's own reply when it's a guest; null when not invited."
+          },
           "conference_url": {
             "anyOf": [
               {
@@ -6585,6 +6846,34 @@
           "recurring": {
             "type": "boolean",
             "title": "Recurring"
+          },
+          "editable": {
+            "type": "boolean",
+            "title": "Editable",
+            "description": "False for invitations organized by someone else and provider-managed events."
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule",
+            "description": "The series' RRULE value, if it repeats."
+          },
+          "recurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurrenceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`rule` in structured form; null when not repeating or not representable."
           },
           "visibility": {
             "anyOf": [
@@ -6623,6 +6912,7 @@
           "html_link",
           "busy",
           "recurring",
+          "editable",
           "visibility"
         ],
         "title": "CalendarEventSchema"
@@ -6654,6 +6944,15 @@
           "hidden": {
             "type": "boolean",
             "title": "Hidden"
+          },
+          "writable": {
+            "type": "boolean",
+            "title": "Writable",
+            "description": "Events can be added and changed in this calendar."
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary"
           }
         },
         "type": "object",
@@ -6661,7 +6960,9 @@
           "id",
           "name",
           "color",
-          "hidden"
+          "hidden",
+          "writable",
+          "primary"
         ],
         "title": "CalendarSchema"
       },
@@ -7030,6 +7331,345 @@
         ],
         "title": "DeviceUpdate"
       },
+      "EditScope": {
+        "type": "string",
+        "enum": [
+          "this",
+          "following",
+          "all"
+        ],
+        "title": "EditScope",
+        "description": "Which occurrences of a repeating event a change applies to."
+      },
+      "EventCreate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "timing": {
+            "$ref": "#/components/schemas/EventTimingInput"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "attendees": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "type": "array",
+                "maxItems": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendees",
+            "description": "Guest emails (Google only); replaces the guest list."
+          },
+          "recurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurrenceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the event repeats; null stops it repeating."
+          },
+          "busy": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Busy",
+            "description": "False shows the time as free."
+          },
+          "add_conference": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Add Conference",
+            "description": "Adds a Google Meet link (Google only)."
+          },
+          "time_zone": {
+            "type": "string",
+            "title": "Time Zone",
+            "description": "Zone the user is viewing the calendar in; used to read `recurrence.until`."
+          },
+          "notify_guests": {
+            "type": "boolean",
+            "title": "Notify Guests",
+            "description": "Email guests about the change (Google only).",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "timing",
+          "time_zone"
+        ],
+        "title": "EventCreate"
+      },
+      "EventTimeInput": {
+        "properties": {
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date",
+            "description": "All-day events: the calendar date, YYYY-MM-DD.",
+            "examples": [
+              "2026-10-07"
+            ]
+          },
+          "date_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Time",
+            "description": "Timed events: local wall-clock time without an offset, YYYY-MM-DDTHH:MM.",
+            "examples": [
+              "2026-10-07T17:00"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "EventTimeInput"
+      },
+      "EventTimingInput": {
+        "properties": {
+          "start": {
+            "$ref": "#/components/schemas/EventTimeInput"
+          },
+          "end": {
+            "$ref": "#/components/schemas/EventTimeInput",
+            "description": "Exclusive. For all-day events, the day after the last day."
+          },
+          "time_zone": {
+            "type": "string",
+            "title": "Time Zone",
+            "description": "IANA zone the times are in, e.g. Europe/Stockholm."
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "time_zone"
+        ],
+        "title": "EventTimingInput"
+      },
+      "EventUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "timing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventTimingInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "attendees": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "type": "array",
+                "maxItems": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendees",
+            "description": "Guest emails (Google only); replaces the guest list."
+          },
+          "recurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurrenceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the event repeats; null stops it repeating."
+          },
+          "busy": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Busy",
+            "description": "False shows the time as free."
+          },
+          "add_conference": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Add Conference",
+            "description": "Adds a Google Meet link (Google only)."
+          },
+          "time_zone": {
+            "type": "string",
+            "title": "Time Zone",
+            "description": "Zone the user is viewing the calendar in; used to read `recurrence.until`."
+          },
+          "notify_guests": {
+            "type": "boolean",
+            "title": "Notify Guests",
+            "description": "Email guests about the change (Google only).",
+            "default": true
+          },
+          "scope": {
+            "$ref": "#/components/schemas/EditScope",
+            "description": "For repeating events: this occurrence, this and following, or all.",
+            "default": "this"
+          },
+          "calendar_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Id",
+            "description": "Move the event to another calendar of the same account."
+          }
+        },
+        "type": "object",
+        "required": [
+          "time_zone"
+        ],
+        "title": "EventUpdate"
+      },
+      "EventWriteResponse": {
+        "properties": {
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarEventSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The written event as synced back, or null if it falls outside the synced window."
+          }
+        },
+        "type": "object",
+        "required": [
+          "event"
+        ],
+        "title": "EventWriteResponse"
+      },
       "GoogleAuthorizeResponse": {
         "properties": {
           "url": {
@@ -7043,6 +7683,30 @@
           "url"
         ],
         "title": "GoogleAuthorizeResponse"
+      },
+      "GoogleCallbackRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Code",
+            "description": "Authorization code Google appended to the redirect."
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "State",
+            "description": "Opaque state from the authorize URL, echoed back by Google."
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "GoogleCallbackRequest"
       },
       "GooglePlaceSearchResponse": {
         "properties": {
@@ -9168,6 +9832,76 @@
         },
         "type": "object",
         "title": "RecipeUpdate"
+      },
+      "RecurrenceSchema": {
+        "properties": {
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly",
+              "yearly"
+            ],
+            "title": "Frequency"
+          },
+          "interval": {
+            "type": "integer",
+            "maximum": 99.0,
+            "minimum": 1.0,
+            "title": "Interval",
+            "default": 1
+          },
+          "by_weekday": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "MO",
+                "TU",
+                "WE",
+                "TH",
+                "FR",
+                "SA",
+                "SU"
+              ]
+            },
+            "type": "array",
+            "title": "By Weekday",
+            "description": "Weekly rules only; empty means the start date's weekday."
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 730.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count",
+            "description": "Number of occurrences. Mutually exclusive with `until`."
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until",
+            "description": "Last day that may hold an occurrence (inclusive), YYYY-MM-DD."
+          }
+        },
+        "type": "object",
+        "required": [
+          "frequency"
+        ],
+        "title": "RecurrenceSchema"
       },
       "RruleFrequency": {
         "type": "string",

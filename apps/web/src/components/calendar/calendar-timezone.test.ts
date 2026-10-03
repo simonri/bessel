@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  fromWallClock,
   shortOffsetLabel,
   timeZoneOptions,
   toWallClock,
@@ -56,4 +57,31 @@ describe("timeZoneOptions", () => {
 it("shortOffsetLabel", () => {
   expect(shortOffsetLabel("Europe/Stockholm", INSTANT)).toBe("GMT+2");
   expect(shortOffsetLabel("Asia/Kolkata", INSTANT)).toBe("GMT+5:30");
+});
+
+describe("fromWallClock", () => {
+  const wall = (y: number, mo: number, d: number, h: number, mi = 0) =>
+    new Date(y, mo - 1, d, h, mi);
+
+  it("inverts toWallClock", () => {
+    for (const zone of ["Asia/Tokyo", "America/New_York", "Asia/Kolkata"]) {
+      expect(fromWallClock(toWallClock(INSTANT, zone), zone)).toEqual(INSTANT);
+    }
+  });
+
+  it("reads wall-clock fields as times in the zone", () => {
+    expect(
+      fromWallClock(wall(2026, 10, 7, 17), "Asia/Tokyo").toISOString(),
+    ).toBe("2026-10-07T08:00:00.000Z");
+  });
+
+  it("handles both sides of a DST change", () => {
+    // New York leaves daylight time on 1 Nov 2026.
+    expect(
+      fromWallClock(wall(2026, 10, 31, 9), "America/New_York").toISOString(),
+    ).toBe("2026-10-31T13:00:00.000Z");
+    expect(
+      fromWallClock(wall(2026, 11, 2, 9), "America/New_York").toISOString(),
+    ).toBe("2026-11-02T14:00:00.000Z");
+  });
 });

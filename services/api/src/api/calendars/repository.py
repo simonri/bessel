@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -28,11 +28,18 @@ _EVENT_SYNC_COLUMNS = (
   "creator_name",
   "creator_email",
   "attendees",
+  "my_response",
   "conference_url",
   "html_link",
   "busy",
   "recurring",
   "visibility",
+  "editable",
+  "series_id",
+  "original_start",
+  "rrule",
+  "etag",
+  "resource_href",
 )
 
 
@@ -62,12 +69,15 @@ class CalendarAccountRepository(RepositoryBase[CalendarAccount], RepositoryIDMix
     )
     return await self.get_one_or_none(statement)
 
-  async def list_ids(self) -> list[UUID]:
-    result = await self.session.execute(select(CalendarAccount.id))
+  async def list_ids(self, provider: CalendarProvider | None = None) -> list[UUID]:
+    statement = select(CalendarAccount.id)
+    if provider is not None:
+      statement = statement.where(CalendarAccount.provider == provider)
+    result = await self.session.execute(statement)
     return list(result.scalars().all())
 
 
-class CalendarRepository(RepositoryBase[Calendar]):
+class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, UUID]):
   model = Calendar
 
   async def get_owned(self, calendar_id: UUID, user_id: UUID) -> Calendar:
@@ -80,6 +90,28 @@ class CalendarRepository(RepositoryBase[Calendar]):
     if calendar is None:
       raise ResourceNotFound("Calendar not found")
     return calendar
+
+  async def get_owned_with_account(self, calendar_id: UUID, user_id: UUID) -> tuple[Calendar, CalendarAccount]:
+    statement = (
+      select(Calendar, CalendarAccount)
+      .join(CalendarAccount, Calendar.account_id == CalendarAccount.id)
+      .where(Calendar.id == calendar_id, CalendarAccount.user_id == user_id)
+    )
+    row = (await self.session.execute(statement)).one_or_none()
+    if row is None:
+      raise ResourceNotFound("Calendar not found")
+    return row[0], row[1]
+
+  async def list_for_account(self, account: CalendarAccount) -> Sequence[Calendar]:
+    return await self.get_all(self.get_base_statement().where(Calendar.account_id == account.id).order_by(Calendar.created_at))
+
+  async def get_with_account(self, calendar_id: UUID) -> tuple[Calendar, CalendarAccount] | None:
+    statement = select(Calendar, CalendarAccount).join(CalendarAccount, Calendar.account_id == CalendarAccount.id).where(Calendar.id == calendar_id)
+    row = (await self.session.execute(statement)).one_or_none()
+    return (row[0], row[1]) if row is not None else None
+
+  async def get_by_push_channel(self, channel_id: str) -> Calendar | None:
+    return await self.get_one_or_none(self.get_base_statement().where(Calendar.push_channel_id == channel_id))
 
   async def sync_for_account(self, account: CalendarAccount, calendars: Sequence[ProviderCalendar]) -> dict[str, Calendar]:
     """Mirror the provider's calendar list. `hidden` is only seeded on insert so
@@ -95,13 +127,23 @@ class CalendarRepository(RepositoryBase[Calendar]):
             "name": c.name,
             "color": c.color,
             "hidden": c.hidden_by_default,
+            "writable": c.writable,
+            "primary": c.primary,
+            "change_tag": c.change_tag,
           }
           for c in {c.external_id: c for c in calendars}.values()
         ]
       )
       statement = statement.on_conflict_do_update(
         constraint="calendars_account_id_external_id_key",
-        set_={"name": statement.excluded.name, "color": statement.excluded.color, "modified_at": utc_now()},
+        set_={
+          "name": statement.excluded.name,
+          "color": statement.excluded.color,
+          "writable": statement.excluded.writable,
+          "primary": statement.excluded.primary,
+          "change_tag": statement.excluded.change_tag,
+          "modified_at": utc_now(),
+        },
       )
       await self.session.execute(statement)
 
@@ -137,11 +179,18 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
         "creator_name": e.creator_name[:255] if e.creator_name else None,
         "creator_email": e.creator_email[:320] if e.creator_email else None,
         "attendees": [{"email": a.email, "name": a.name, "response": a.response} for a in e.attendees],
+        "my_response": e.my_response,
         "conference_url": e.conference_url if e.conference_url and len(e.conference_url) <= 2048 else None,
         "html_link": e.html_link if e.html_link and len(e.html_link) <= 2048 else None,
         "busy": e.busy,
         "recurring": e.recurring,
         "visibility": e.visibility,
+        "editable": e.editable,
+        "series_id": e.series_id,
+        "original_start": e.original_start,
+        "rrule": e.rrule,
+        "etag": e.etag,
+        "resource_href": e.resource_href,
       }
       for e in {e.external_id: e for e in events}.values()
     ]
@@ -163,6 +212,36 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
       )
     )
 
+  async def get_owned_with_context(self, event_id: UUID, user_id: UUID) -> tuple[CalendarEvent, Calendar, CalendarAccount]:
+    statement = (
+      select(CalendarEvent, Calendar, CalendarAccount)
+      .join(Calendar, CalendarEvent.calendar_id == Calendar.id)
+      .join(CalendarAccount, Calendar.account_id == CalendarAccount.id)
+      .where(CalendarEvent.id == event_id, CalendarAccount.user_id == user_id)
+    )
+    row = (await self.session.execute(statement)).one_or_none()
+    if row is None:
+      raise ResourceNotFound("Event not found")
+    return row[0], row[1], row[2]
+
+  async def find_written(self, calendar_id: UUID, provider_id: str, near: datetime | date | None) -> CalendarEvent | None:
+    """The synced row for an event or series the provider just wrote, closest to `near`."""
+    statement = (
+      self.get_base_statement()
+      .where(
+        CalendarEvent.calendar_id == calendar_id,
+        or_(CalendarEvent.external_id == provider_id, CalendarEvent.series_id == provider_id),
+      )
+      # The rows were just rewritten by a bulk upsert; don't serve stale objects
+      # this session loaded before the write.
+      .execution_options(populate_existing=True)
+    )
+    rows = list(await self.get_all(statement))
+    if not rows or near is None:
+      return rows[0] if rows else None
+    target = _as_utc(near)
+    return min(rows, key=lambda row: abs((_as_utc(row.start_at or row.start_date) - target).total_seconds()))
+
   async def list_in_range(self, user_id: UUID, start: datetime, end: datetime) -> Sequence[CalendarEvent]:
     # All-day spans are calendar dates with no zone; pad a day each side and
     # let the client place them in its own local days.
@@ -182,3 +261,11 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
       .order_by(CalendarEvent.start_at, CalendarEvent.start_date)
     )
     return await self.get_all(statement)
+
+
+def _as_utc(value: datetime | date | None) -> datetime:
+  if isinstance(value, datetime):
+    return value.astimezone(UTC)
+  if isinstance(value, date):
+    return datetime(value.year, value.month, value.day, tzinfo=UTC)
+  return datetime.min.replace(tzinfo=UTC)

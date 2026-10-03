@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import TIMESTAMP, Boolean, Enum, ForeignKey, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
@@ -27,6 +27,8 @@ class CalendarAccount(RecordModel):
   email: Mapped[str] = mapped_column(String(320), nullable=False)
   # Fernet-encrypted: a Google refresh token or an iCloud app-specific password.
   encrypted_credentials: Mapped[str] = mapped_column(Text, nullable=False)
+  # Whether the credentials allow changing events (Google: the events scope was granted).
+  can_write: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   sync_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 

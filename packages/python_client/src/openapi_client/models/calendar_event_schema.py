@@ -8,10 +8,13 @@ from uuid import UUID
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.calendar_event_schema_my_response_type_0 import CalendarEventSchemaMyResponseType0
 from ..models.calendar_event_schema_visibility_type_0 import CalendarEventSchemaVisibilityType0
+from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
   from ..models.calendar_event_attendee import CalendarEventAttendee
+  from ..models.recurrence_schema import RecurrenceSchema
 
 
 T = TypeVar("T", bound="CalendarEventSchema")
@@ -38,7 +41,13 @@ class CalendarEventSchema:
       html_link (None | str): Event page in the provider's own UI (Google only).
       busy (bool): False when the event is marked free/transparent.
       recurring (bool):
+      editable (bool): False for invitations organized by someone else and provider-managed events.
       visibility (CalendarEventSchemaVisibilityType0 | None): Null means the calendar's default.
+      my_response (CalendarEventSchemaMyResponseType0 | None | Unset): The account's own reply when it's a guest; null
+          when not invited.
+      rule (None | str | Unset): The series' RRULE value, if it repeats.
+      recurrence (None | RecurrenceSchema | Unset): `rule` in structured form; null when not repeating or not
+          representable.
   """
 
   id: UUID
@@ -58,10 +67,16 @@ class CalendarEventSchema:
   html_link: None | str
   busy: bool
   recurring: bool
+  editable: bool
   visibility: CalendarEventSchemaVisibilityType0 | None
+  my_response: CalendarEventSchemaMyResponseType0 | None | Unset = UNSET
+  rule: None | str | Unset = UNSET
+  recurrence: None | RecurrenceSchema | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
+    from ..models.recurrence_schema import RecurrenceSchema
+
     id = str(self.id)
 
     calendar_id = str(self.calendar_id)
@@ -121,11 +136,35 @@ class CalendarEventSchema:
 
     recurring = self.recurring
 
+    editable = self.editable
+
     visibility: None | str
     if isinstance(self.visibility, CalendarEventSchemaVisibilityType0):
       visibility = self.visibility.value
     else:
       visibility = self.visibility
+
+    my_response: None | str | Unset
+    if isinstance(self.my_response, Unset):
+      my_response = UNSET
+    elif isinstance(self.my_response, CalendarEventSchemaMyResponseType0):
+      my_response = self.my_response.value
+    else:
+      my_response = self.my_response
+
+    rule: None | str | Unset
+    if isinstance(self.rule, Unset):
+      rule = UNSET
+    else:
+      rule = self.rule
+
+    recurrence: dict[str, Any] | None | Unset
+    if isinstance(self.recurrence, Unset):
+      recurrence = UNSET
+    elif isinstance(self.recurrence, RecurrenceSchema):
+      recurrence = self.recurrence.to_dict()
+    else:
+      recurrence = self.recurrence
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -148,15 +187,23 @@ class CalendarEventSchema:
         "html_link": html_link,
         "busy": busy,
         "recurring": recurring,
+        "editable": editable,
         "visibility": visibility,
       }
     )
+    if my_response is not UNSET:
+      field_dict["my_response"] = my_response
+    if rule is not UNSET:
+      field_dict["rule"] = rule
+    if recurrence is not UNSET:
+      field_dict["recurrence"] = recurrence
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     from ..models.calendar_event_attendee import CalendarEventAttendee
+    from ..models.recurrence_schema import RecurrenceSchema
 
     d = dict(src_dict)
     id = UUID(d.pop("id"))
@@ -280,6 +327,8 @@ class CalendarEventSchema:
 
     recurring = d.pop("recurring")
 
+    editable = d.pop("editable")
+
     def _parse_visibility(data: object) -> CalendarEventSchemaVisibilityType0 | None:
       if data is None:
         return data
@@ -294,6 +343,49 @@ class CalendarEventSchema:
       return cast(CalendarEventSchemaVisibilityType0 | None, data)
 
     visibility = _parse_visibility(d.pop("visibility"))
+
+    def _parse_my_response(data: object) -> CalendarEventSchemaMyResponseType0 | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      try:
+        if not isinstance(data, str):
+          raise TypeError()
+        my_response_type_0 = CalendarEventSchemaMyResponseType0(data)
+
+        return my_response_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(CalendarEventSchemaMyResponseType0 | None | Unset, data)
+
+    my_response = _parse_my_response(d.pop("my_response", UNSET))
+
+    def _parse_rule(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    rule = _parse_rule(d.pop("rule", UNSET))
+
+    def _parse_recurrence(data: object) -> None | RecurrenceSchema | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      try:
+        if not isinstance(data, dict):
+          raise TypeError()
+        recurrence_type_0 = RecurrenceSchema.from_dict(data)
+
+        return recurrence_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(None | RecurrenceSchema | Unset, data)
+
+    recurrence = _parse_recurrence(d.pop("recurrence", UNSET))
 
     calendar_event_schema = cls(
       id=id,
@@ -313,7 +405,11 @@ class CalendarEventSchema:
       html_link=html_link,
       busy=busy,
       recurring=recurring,
+      editable=editable,
       visibility=visibility,
+      my_response=my_response,
+      rule=rule,
+      recurrence=recurrence,
     )
 
     calendar_event_schema.additional_properties = d

@@ -11,9 +11,16 @@ import {
   TooltipTrigger,
 } from "@bessel/ui/components/tooltip";
 import { formatDistanceToNow } from "date-fns";
-import { AlertCircle, Check, MoreHorizontal, Plus } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  ChevronRight,
+  MoreHorizontal,
+  Plus,
+} from "lucide-react";
 import { useState } from "react";
 import { IconButton } from "@/components/ui-kit";
+import { cn } from "@/lib/utils";
 import type {
   CalendarAccount,
   CalendarInfo,
@@ -22,6 +29,37 @@ import type {
 import { ICloudConnectDialog } from "./icloud-connect-dialog";
 import { MiniMonth } from "./mini-month";
 import type { CalendarActions } from "./use-calendar-data";
+
+const COLLAPSED_KEY = "bessel:calendar-collapsed-accounts";
+
+function readCollapsed(): Set<string> {
+  try {
+    const stored = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]");
+    return new Set(Array.isArray(stored) ? stored.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** Account ids whose calendar lists are folded away, remembered per device. */
+export function useCollapsedAccounts(): [
+  Set<string>,
+  (accountId: string) => void,
+] {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const toggle = (accountId: string) =>
+    setCollapsed((current) => {
+      const next = new Set(current);
+      if (!next.delete(accountId)) next.add(accountId);
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]));
+      } catch {
+        // Not remembered, but still collapses for this visit.
+      }
+      return next;
+    });
+  return [collapsed, toggle];
+}
 
 export function CalendarSidebar({
   date,
@@ -41,6 +79,7 @@ export function CalendarSidebar({
   onSelectDate: (date: Date) => void;
 }) {
   const [icloudOpen, setICloudOpen] = useState(false);
+  const [collapsed, toggleCollapsed] = useCollapsedAccounts();
 
   return (
     <aside className="flex w-60 shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] px-2 py-3">
@@ -61,12 +100,16 @@ export function CalendarSidebar({
           <section key={account.id}>
             <AccountHeader
               account={account}
+              expanded={!collapsed.has(account.id)}
+              onToggle={() => toggleCollapsed(account.id)}
               onSync={() => actions.syncAccount(account.id)}
               onReconnect={actions.connectGoogle}
               onDisconnect={() => actions.disconnectAccount(account.id)}
             />
             {calendars
-              .filter((c) => c.accountId === account.id)
+              .filter(
+                (c) => c.accountId === account.id && !collapsed.has(account.id),
+              )
               .map((calendar) => (
                 <CalendarToggle
                   key={calendar.id}
@@ -111,11 +154,15 @@ export function CalendarSidebar({
 
 function AccountHeader({
   account,
+  expanded,
+  onToggle,
   onSync,
   onReconnect,
   onDisconnect,
 }: {
   account: CalendarAccount;
+  expanded: boolean;
+  onToggle: () => void;
   onSync: () => void;
   onReconnect: () => void;
   onDisconnect: () => void;
@@ -127,12 +174,24 @@ function AccountHeader({
       : "Syncing…";
 
   return (
-    <div className="group flex items-center gap-1.5 pr-0.5 pl-2">
-      <h3
-        className="min-w-0 flex-1 truncate text-11 text-white/40"
-        title={status}
-      >
-        {account.email}
+    <div className="group flex items-center gap-1.5 pr-0.5">
+      <h3 className="min-w-0 flex-1">
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={onToggle}
+          title={status}
+          className="flex h-6 w-full min-w-0 items-center gap-1 rounded-md pr-1 pl-2 text-left text-11 text-white/40 outline-none transition-colors duration-150 hover:text-white/70 focus-visible:ring-1 focus-visible:ring-white/25"
+        >
+          <span className="truncate">{account.email}</span>
+          <ChevronRight
+            className={cn(
+              "size-3 shrink-0 text-white/30 opacity-0 transition-[transform,opacity] duration-150 group-hover:opacity-100",
+              expanded && "rotate-90",
+              !expanded && "opacity-100",
+            )}
+          />
+        </button>
       </h3>
       {account.syncError ? (
         <Tooltip delayDuration={150}>

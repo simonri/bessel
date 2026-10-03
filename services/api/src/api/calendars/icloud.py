@@ -1,5 +1,7 @@
 from collections.abc import Iterable
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from urllib.parse import urljoin
 from xml.etree import ElementTree
 
@@ -8,11 +10,24 @@ import recurring_ical_events
 from icalendar import Calendar as ICalendar
 from icalendar import Event as IEvent
 
-from api.calendars.providers import AttendeeResponse, ProviderAttendee, ProviderAuthError, ProviderCalendar, ProviderEvent, find_conference_url, normalize_color
+from api.calendars.providers import (
+  AttendeeResponse,
+  ProviderAttendee,
+  ProviderAuthError,
+  ProviderCalendar,
+  ProviderConflictError,
+  ProviderEvent,
+  ProviderForbiddenError,
+  ProviderNotFoundError,
+  ProviderRejectedError,
+  ProviderUnavailableError,
+  find_conference_url,
+  normalize_color,
+)
 
 CALDAV_URL = "https://caldav.icloud.com/"
 DEFAULT_COLOR = "#34aadc"
-NS = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:caldav", "a": "http://apple.com/ns/ical/"}
+NS = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:caldav", "a": "http://apple.com/ns/ical/", "cs": "http://calendarserver.org/ns/"}
 NS_DECL = " ".join(f'xmlns:{prefix}="{uri}"' for prefix, uri in NS.items())
 
 
@@ -28,6 +43,11 @@ _PARTSTAT: dict[str, AttendeeResponse] = {
   "NEEDS-ACTION": "needs_action",
 }
 _VISIBILITY = {"PRIVATE": "private", "CONFIDENTIAL": "confidential", "PUBLIC": "public"}
+
+
+def _ical_text(value: Any) -> str:
+  raw = value.to_ical()
+  return raw.decode() if isinstance(raw, bytes) else str(raw)
 
 
 def _text_prop(component: IEvent, name: str) -> str | None:
@@ -54,25 +74,44 @@ def _attendees(component: IEvent) -> list[ProviderAttendee]:
   ]
 
 
-def _occurrence(component: IEvent, recurring: bool) -> ProviderEvent:
+@dataclass(frozen=True, slots=True)
+class ICalResource:
+  """One CalDAV object: a VCALENDAR holding an event and its overrides."""
+
+  href: str
+  etag: str | None
+  data: str
+
+
+def _occurrence(component: IEvent, recurring: bool, resource: ICalResource, owner_addresses: frozenset[str]) -> ProviderEvent:
   uid = str(component.get("UID", ""))
   start, end = component.start, component.end
   recurrence_id = component.get("RECURRENCE-ID")
   instance = recurrence_id.dt if recurrence_id is not None else start
   organizer = component.get("ORGANIZER")
   location, description, url = _text_prop(component, "LOCATION"), _text_prop(component, "DESCRIPTION"), _text_prop(component, "URL")
+  organizer_email = _email(organizer).lower() if organizer is not None else None
+  attendees = _attendees(component)
   common = {
-    "external_id": f"{uid}/{instance.isoformat()}",
+    # Single events key on the UID alone so moving them keeps the same row.
+    "external_id": f"{uid}/{instance.isoformat()}" if recurring else uid,
     "title": _text_prop(component, "SUMMARY") or "(No title)",
     "location": location,
     "description": description,
     "creator_name": organizer.params.get("CN") if organizer is not None else None,
     "creator_email": _email(organizer) if organizer is not None else None,
-    "attendees": _attendees(component),
+    "attendees": attendees,
+    "my_response": next((a.response for a in attendees if a.email.lower() in owner_addresses), None),
     "conference_url": find_conference_url(url, location, description),
     "busy": str(component.get("TRANSP", "OPAQUE")).upper() != "TRANSPARENT",
     "recurring": recurring,
     "visibility": _VISIBILITY.get(str(component.get("CLASS", "")).upper()),
+    # Invitations from others live in the calendar too; only the organizer edits.
+    "editable": organizer_email is None or organizer_email in owner_addresses,
+    "series_id": uid if recurring else None,
+    "original_start": instance.isoformat() if recurring else None,
+    "etag": resource.etag,
+    "resource_href": resource.href,
   }
   if isinstance(start, datetime):
     end_at = _as_aware(end) if isinstance(end, datetime) else _as_aware(start)
@@ -81,38 +120,68 @@ def _occurrence(component: IEvent, recurring: bool) -> ProviderEvent:
   return ProviderEvent(**common, all_day=True, start_date=start, end_date=end_date)
 
 
-def expand_events(ical_documents: Iterable[str], start: datetime, end: datetime) -> list[ProviderEvent]:
-  """Expands each VCALENDAR document into the occurrences overlapping [start, end).
+def expand_events(
+  resources: Iterable[ICalResource],
+  start: datetime,
+  end: datetime,
+  owner_addresses: frozenset[str] = frozenset(),
+) -> list[ProviderEvent]:
+  """Expands each VCALENDAR resource into the occurrences overlapping [start, end).
 
   Expansion happens here rather than on the server so EXDATE and RECURRENCE-ID
   overrides behave the same regardless of the server's CalDAV quirks.
   """
   events: dict[str, ProviderEvent] = {}
-  for document in ical_documents:
-    calendar = ICalendar.from_ical(document)
+  for resource in resources:
+    calendar = ICalendar.from_ical(resource.data)
     # Expanded occurrences drop RRULE, so note which series repeat up front.
     recurring_uids = {str(c.get("UID")) for c in calendar.walk("VEVENT") if any(c.get(prop) is not None for prop in ("RRULE", "RDATE", "RECURRENCE-ID"))}
+    rules = {str(c.get("UID")): _ical_text(c["RRULE"]) for c in calendar.walk("VEVENT") if c.get("RRULE") is not None and c.get("RECURRENCE-ID") is None}
     for component in recurring_ical_events.of(calendar).between(start, end):
       if component.name != "VEVENT":
         continue
-      event = _occurrence(component, str(component.get("UID")) in recurring_uids)
+      uid = str(component.get("UID"))
+      event = _occurrence(component, uid in recurring_uids, resource, owner_addresses)
+      if uid in rules:
+        event = replace(event, rrule=rules[uid])
       events[event.external_id] = event
   return list(events.values())
 
 
+WRITE_PRIVILEGES = ("d:write", "d:write-content", "d:all")
+
+
 class ICloudCalendarClient:
-  """Minimal read-only CalDAV client: principal -> calendar home -> calendars -> events."""
+  """Minimal CalDAV client: principal -> calendar home -> calendars -> events."""
 
   def __init__(self, http: httpx.AsyncClient, apple_id: str, app_password: str) -> None:
     self.http = http
+    self.apple_id = apple_id
     self.auth = httpx.BasicAuth(apple_id, app_password)
+    self._home: str | None = None
+    self._owner_addresses: frozenset[str] | None = None
+
+  async def _discover(self) -> tuple[str, frozenset[str]]:
+    """Calendar home URL and every address the account organizes events as."""
+    if self._home is None or self._owner_addresses is None:
+      principal = await self._find_href(CALDAV_URL, "<d:current-user-principal/>", "d:current-user-principal")
+      responses = await self._propfind(principal, "<c:calendar-home-set/><c:calendar-user-address-set/>", depth="0")
+      prop = _ok_prop(responses[0]) if responses else None
+      home = _text(prop, "c:calendar-home-set/d:href") if prop is not None else None
+      if not home:
+        raise ProviderAuthError("iCloud didn't return a calendar account for these credentials")
+      self._home = urljoin(principal, home)
+      addresses = {self.apple_id.lower()}
+      if prop is not None:
+        addresses |= {_email(href.text.strip()).lower() for href in prop.iterfind("c:calendar-user-address-set/d:href", NS) if href.text}
+      self._owner_addresses = frozenset(addresses)
+    return self._home, self._owner_addresses
 
   async def list_calendars(self) -> list[ProviderCalendar]:
-    principal = await self._find_href(CALDAV_URL, "<d:current-user-principal/>", "d:current-user-principal")
-    home = await self._find_href(principal, "<c:calendar-home-set/>", "c:calendar-home-set")
+    home, _ = await self._discover()
     responses = await self._propfind(
       home,
-      "<d:resourcetype/><d:displayname/><a:calendar-color/><c:supported-calendar-component-set/>",
+      "<d:resourcetype/><d:displayname/><a:calendar-color/><c:supported-calendar-component-set/><d:current-user-privilege-set/><cs:getctag/><d:sync-token/>",
       depth="1",
     )
     calendars: list[ProviderCalendar] = []
@@ -129,6 +198,8 @@ class ICloudCalendarClient:
           external_id=urljoin(home, _text(response, "d:href")),
           name=_text(prop, "d:displayname") or "Calendar",
           color=normalize_color(_text(prop, "a:calendar-color"), DEFAULT_COLOR),
+          writable=any(prop.find(f"d:current-user-privilege-set/d:privilege/{p}", NS) is not None for p in WRITE_PRIVILEGES),
+          change_tag=_text(prop, "cs:getctag") or _text(prop, "d:sync-token"),
         )
       )
     return calendars
@@ -136,14 +207,39 @@ class ICloudCalendarClient:
   async def list_events(self, calendar_url: str, start: datetime, end: datetime) -> list[ProviderEvent]:
     body = f"""<?xml version="1.0" encoding="utf-8"?>
 <c:calendar-query {NS_DECL}>
-  <d:prop><c:calendar-data/></d:prop>
+  <d:prop><d:getetag/><c:calendar-data/></d:prop>
   <c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT">
     <c:time-range start="{_caldav_time(start)}" end="{_caldav_time(end)}"/>
   </c:comp-filter></c:comp-filter></c:filter>
 </c:calendar-query>"""
+    _, owner_addresses = await self._discover()
     root = await self._request("REPORT", calendar_url, body, depth="1")
-    documents = [data.text for data in root.iterfind("d:response/d:propstat/d:prop/c:calendar-data", NS) if data.text]
-    return expand_events(documents, start, end)
+    resources = [
+      ICalResource(href=urljoin(calendar_url, href), etag=_text(prop, "d:getetag"), data=data)
+      for response in root.iterfind("d:response", NS)
+      if (prop := _ok_prop(response)) is not None and (href := _text(response, "d:href")) and (data := _text(prop, "c:calendar-data"))
+    ]
+    return expand_events(resources, start, end, owner_addresses)
+
+  async def get_resource(self, href: str) -> tuple[str, str | None]:
+    """The .ics document at `href` and its current ETag."""
+    response = await self.http.get(href, auth=self.auth)
+    _check_write(response)
+    return response.text, response.headers.get("ETag")
+
+  async def put_resource(self, href: str, data: str, *, etag: str | None = None, create: bool = False) -> None:
+    headers = {"Content-Type": "text/calendar; charset=utf-8"}
+    if create:
+      headers["If-None-Match"] = "*"
+    elif etag:
+      headers["If-Match"] = etag
+    _check_write(await self.http.put(href, content=data.encode(), auth=self.auth, headers=headers))
+
+  async def delete_resource(self, href: str, *, etag: str | None) -> None:
+    response = await self.http.delete(href, auth=self.auth, headers={"If-Match": etag} if etag else {})
+    # Deleting something already gone is the outcome the caller wanted.
+    if response.status_code not in (404, 410):
+      _check_write(response)
 
   async def _find_href(self, url: str, prop_xml: str, prop_path: str) -> str:
     for response in await self._propfind(url, prop_xml, depth="0"):
@@ -168,6 +264,23 @@ class ICloudCalendarClient:
       raise ProviderAuthError("iCloud rejected the Apple ID or app-specific password")
     response.raise_for_status()
     return ElementTree.fromstring(response.content)
+
+
+def _check_write(response: httpx.Response) -> None:
+  status = response.status_code
+  if status < 400:
+    return
+  if status == 401:
+    raise ProviderAuthError("iCloud rejected the Apple ID or app-specific password")
+  if status == 403:
+    raise ProviderForbiddenError("iCloud doesn't allow changing events in this calendar")
+  if status in (404, 410):
+    raise ProviderNotFoundError("The event no longer exists in iCloud")
+  if status == 412:
+    raise ProviderConflictError("The event changed in iCloud")
+  if status == 429 or status >= 500:
+    raise ProviderUnavailableError("iCloud is busy, try again in a moment")
+  raise ProviderRejectedError(f"iCloud rejected the change ({status})")
 
 
 def _ok_prop(response: ElementTree.Element) -> ElementTree.Element | None:

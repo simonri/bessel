@@ -1,3 +1,5 @@
+import type { RecurrenceSchema } from "@bessel/client";
+
 export type CalendarProvider = "google" | "icloud";
 
 export interface CalendarAccount {
@@ -6,6 +8,8 @@ export interface CalendarAccount {
   email: string;
   lastSyncedAt: Date | null;
   syncError: string | null;
+  /** False when connected read-only; reconnecting grants edit access. */
+  canWrite: boolean;
 }
 
 export interface CalendarInfo {
@@ -15,6 +19,8 @@ export interface CalendarInfo {
   /** Hex color as supplied by the provider. */
   color: string;
   hidden: boolean;
+  writable: boolean;
+  primary: boolean;
 }
 
 export interface CalendarAttendee {
@@ -29,12 +35,19 @@ export interface CalendarEventDetails {
   creatorName: string | null;
   creatorEmail: string | null;
   attendees: CalendarAttendee[];
+  /** This account's reply when it's a guest; null when it isn't invited. */
+  myResponse: CalendarAttendee["response"] | null;
   conferenceUrl: string | null;
   /** The event in the provider's own UI (Google only). */
   htmlLink: string | null;
   busy: boolean;
   recurring: boolean;
   visibility: "public" | "private" | "confidential" | null;
+  /** False for invitations organized by someone else. */
+  editable: boolean;
+  /** The series' raw RRULE; set even when `recurrence` can't represent it. */
+  rule: string | null;
+  recurrence: RecurrenceSchema | null;
 }
 
 interface CalendarEventBase {

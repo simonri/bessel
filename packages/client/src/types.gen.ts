@@ -707,6 +707,12 @@ export type CalendarAccountSchema = {
    */
   email: string;
   /**
+   * Can Write
+   *
+   * False when the account was connected read-only and must be reconnected to edit.
+   */
+  can_write: boolean;
+  /**
    * Last Synced At
    */
   last_synced_at: Date | null;
@@ -817,6 +823,12 @@ export type CalendarEventSchema = {
    */
   attendees: Array<CalendarEventAttendee>;
   /**
+   * My Response
+   *
+   * The account's own reply when it's a guest; null when not invited.
+   */
+  my_response?: "accepted" | "declined" | "tentative" | "needs_action" | null;
+  /**
    * Conference Url
    *
    * Video meeting link, if any.
@@ -838,6 +850,22 @@ export type CalendarEventSchema = {
    * Recurring
    */
   recurring: boolean;
+  /**
+   * Editable
+   *
+   * False for invitations organized by someone else and provider-managed events.
+   */
+  editable: boolean;
+  /**
+   * Rule
+   *
+   * The series' RRULE value, if it repeats.
+   */
+  rule?: string | null;
+  /**
+   * `rule` in structured form; null when not repeating or not representable.
+   */
+  recurrence?: RecurrenceSchema | null;
   /**
    * Visibility
    *
@@ -879,6 +907,16 @@ export type CalendarSchema = {
    * Hidden
    */
   hidden: boolean;
+  /**
+   * Writable
+   *
+   * Events can be added and changed in this calendar.
+   */
+  writable: boolean;
+  /**
+   * Primary
+   */
+  primary: boolean;
 };
 
 /**
@@ -1135,6 +1173,185 @@ export type DeviceUpdate = {
 };
 
 /**
+ * EditScope
+ *
+ * Which occurrences of a repeating event a change applies to.
+ */
+export const EditScope = {
+  THIS: "this",
+  FOLLOWING: "following",
+  ALL: "all",
+} as const;
+
+/**
+ * EditScope
+ *
+ * Which occurrences of a repeating event a change applies to.
+ */
+export type EditScope = (typeof EditScope)[keyof typeof EditScope];
+
+/**
+ * EventCreate
+ */
+export type EventCreate = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  timing: EventTimingInput;
+  /**
+   * Location
+   */
+  location?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Attendees
+   *
+   * Guest emails (Google only); replaces the guest list.
+   */
+  attendees?: Array<string> | null;
+  /**
+   * How the event repeats; null stops it repeating.
+   */
+  recurrence?: RecurrenceSchema | null;
+  /**
+   * Busy
+   *
+   * False shows the time as free.
+   */
+  busy?: boolean | null;
+  /**
+   * Add Conference
+   *
+   * Adds a Google Meet link (Google only).
+   */
+  add_conference?: boolean | null;
+  /**
+   * Time Zone
+   *
+   * Zone the user is viewing the calendar in; used to read `recurrence.until`.
+   */
+  time_zone: string;
+  /**
+   * Notify Guests
+   *
+   * Email guests about the change (Google only).
+   */
+  notify_guests?: boolean;
+};
+
+/**
+ * EventTimeInput
+ */
+export type EventTimeInput = {
+  /**
+   * Date
+   *
+   * All-day events: the calendar date, YYYY-MM-DD.
+   */
+  date?: string | null;
+  /**
+   * Date Time
+   *
+   * Timed events: local wall-clock time without an offset, YYYY-MM-DDTHH:MM.
+   */
+  date_time?: string | null;
+};
+
+/**
+ * EventTimingInput
+ */
+export type EventTimingInput = {
+  start: EventTimeInput;
+  /**
+   * Exclusive. For all-day events, the day after the last day.
+   */
+  end: EventTimeInput;
+  /**
+   * Time Zone
+   *
+   * IANA zone the times are in, e.g. Europe/Stockholm.
+   */
+  time_zone: string;
+};
+
+/**
+ * EventUpdate
+ */
+export type EventUpdate = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  timing?: EventTimingInput | null;
+  /**
+   * Location
+   */
+  location?: string | null;
+  /**
+   * Description
+   */
+  description?: string | null;
+  /**
+   * Attendees
+   *
+   * Guest emails (Google only); replaces the guest list.
+   */
+  attendees?: Array<string> | null;
+  /**
+   * How the event repeats; null stops it repeating.
+   */
+  recurrence?: RecurrenceSchema | null;
+  /**
+   * Busy
+   *
+   * False shows the time as free.
+   */
+  busy?: boolean | null;
+  /**
+   * Add Conference
+   *
+   * Adds a Google Meet link (Google only).
+   */
+  add_conference?: boolean | null;
+  /**
+   * Time Zone
+   *
+   * Zone the user is viewing the calendar in; used to read `recurrence.until`.
+   */
+  time_zone: string;
+  /**
+   * Notify Guests
+   *
+   * Email guests about the change (Google only).
+   */
+  notify_guests?: boolean;
+  /**
+   * For repeating events: this occurrence, this and following, or all.
+   */
+  scope?: EditScope;
+  /**
+   * Calendar Id
+   *
+   * Move the event to another calendar of the same account.
+   */
+  calendar_id?: string | null;
+};
+
+/**
+ * EventWriteResponse
+ */
+export type EventWriteResponse = {
+  /**
+   * The written event as synced back, or null if it falls outside the synced window.
+   */
+  event: CalendarEventSchema | null;
+};
+
+/**
  * GoogleAuthorizeResponse
  */
 export type GoogleAuthorizeResponse = {
@@ -1144,6 +1361,24 @@ export type GoogleAuthorizeResponse = {
    * Google consent URL to open in a browser.
    */
   url: string;
+};
+
+/**
+ * GoogleCallbackRequest
+ */
+export type GoogleCallbackRequest = {
+  /**
+   * Code
+   *
+   * Authorization code Google appended to the redirect.
+   */
+  code: string;
+  /**
+   * State
+   *
+   * Opaque state from the authorize URL, echoed back by Google.
+   */
+  state: string;
 };
 
 /**
@@ -2397,6 +2632,38 @@ export type RecipeUpdate = {
    */
   content?: string | null;
   recipe_type?: RecipeType | null;
+};
+
+/**
+ * RecurrenceSchema
+ */
+export type RecurrenceSchema = {
+  /**
+   * Frequency
+   */
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  /**
+   * Interval
+   */
+  interval?: number;
+  /**
+   * By Weekday
+   *
+   * Weekly rules only; empty means the start date's weekday.
+   */
+  by_weekday?: Array<"MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU">;
+  /**
+   * Count
+   *
+   * Number of occurrences. Mutually exclusive with `until`.
+   */
+  count?: number | null;
+  /**
+   * Until
+   *
+   * Last day that may hold an occurrence (inclusive), YYYY-MM-DD.
+   */
+  until?: string | null;
 };
 
 /**
@@ -4073,6 +4340,33 @@ export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses = {
 export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse =
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses[keyof AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses];
 
+export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostData = {
+  body: GoogleCallbackRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/calendars/google/callback";
+};
+
+export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostError =
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors[keyof CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors];
+
+export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: CalendarAccountSchema;
+};
+
+export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse =
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses[keyof CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses];
+
 export type ConnectIcloudV1CalendarsIcloudPostData = {
   body: ICloudConnectRequest;
   path?: never;
@@ -4234,6 +4528,119 @@ export type ListCalendarEventsV1CalendarsEventsGetResponses = {
 
 export type ListCalendarEventsV1CalendarsEventsGetResponse =
   ListCalendarEventsV1CalendarsEventsGetResponses[keyof ListCalendarEventsV1CalendarsEventsGetResponses];
+
+export type CreateCalendarEventV1CalendarsCalendarIdEventsPostData = {
+  body: EventCreate;
+  path: {
+    /**
+     * Calendar Id
+     */
+    calendar_id: string;
+  };
+  query?: never;
+  url: "/v1/calendars/{calendar_id}/events";
+};
+
+export type CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCalendarEventV1CalendarsCalendarIdEventsPostError =
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors[keyof CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors];
+
+export type CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: EventWriteResponse;
+};
+
+export type CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse =
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses[keyof CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses];
+
+export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string;
+  };
+  query: {
+    /**
+     * Time Zone
+     *
+     * Zone the user is viewing the calendar in.
+     */
+    time_zone: string;
+    /**
+     * For repeating events: this occurrence, this and following, or all.
+     */
+    scope?: EditScope;
+    /**
+     * Notify Guests
+     *
+     * Email guests a cancellation (Google only).
+     */
+    notify_guests?: boolean;
+  };
+  url: "/v1/calendars/events/{event_id}";
+};
+
+export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteError =
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors[keyof DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors];
+
+export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse =
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses[keyof DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses];
+
+export type UpdateCalendarEventV1CalendarsEventsEventIdPatchData = {
+  body: EventUpdate;
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string;
+  };
+  query?: never;
+  url: "/v1/calendars/events/{event_id}";
+};
+
+export type UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCalendarEventV1CalendarsEventsEventIdPatchError =
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors[keyof UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors];
+
+export type UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventWriteResponse;
+};
+
+export type UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse =
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses[keyof UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses];
 
 export type ListCategoriesV1CategoriesGetData = {
   body?: never;

@@ -42,7 +42,7 @@ class Settings(BaseSettings):
       "app://localhost",
     ]
   )
-  FRONTEND_BASE_URL: str = Field(default="http://localhost:5173")
+  FRONTEND_BASE_URL: str = Field(default="http://localhost:3001")
   # Public URL of this API, used to build OAuth redirect URIs.
   API_BASE_URL: str = Field(default="http://127.0.0.1:8100")
 

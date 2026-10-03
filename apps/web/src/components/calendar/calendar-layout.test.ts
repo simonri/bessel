@@ -18,11 +18,15 @@ const details: CalendarEventDetails = {
   creatorName: null,
   creatorEmail: null,
   attendees: [],
+  myResponse: null,
   conferenceUrl: null,
   htmlLink: null,
   busy: true,
   recurring: false,
   visibility: null,
+  editable: true,
+  rule: null,
+  recurrence: null,
 };
 
 function timed(

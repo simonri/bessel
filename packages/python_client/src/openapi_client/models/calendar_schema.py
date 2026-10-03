@@ -18,12 +18,16 @@ class CalendarSchema:
       name (str):
       color (str): Hex color, `#rrggbb`.
       hidden (bool):
+      writable (bool): Events can be added and changed in this calendar.
+      primary (bool):
   """
 
   id: UUID
   name: str
   color: str
   hidden: bool
+  writable: bool
+  primary: bool
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -35,6 +39,10 @@ class CalendarSchema:
 
     hidden = self.hidden
 
+    writable = self.writable
+
+    primary = self.primary
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -43,6 +51,8 @@ class CalendarSchema:
         "name": name,
         "color": color,
         "hidden": hidden,
+        "writable": writable,
+        "primary": primary,
       }
     )
 
@@ -59,11 +69,17 @@ class CalendarSchema:
 
     hidden = d.pop("hidden")
 
+    writable = d.pop("writable")
+
+    primary = d.pop("primary")
+
     calendar_schema = cls(
       id=id,
       name=name,
       color=color,
       hidden=hidden,
+      writable=writable,
+      primary=primary,
     )
 
     calendar_schema.additional_properties = d

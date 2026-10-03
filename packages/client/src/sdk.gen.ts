@@ -8,9 +8,11 @@ import {
   type TDataShape,
 } from "./client/index.js";
 import {
+  completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   connectIcloudV1CalendarsIcloudPostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
+  createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
   createCounterV1CountersPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
   createPlaceV1PlacesPostResponseTransformer,
@@ -48,6 +50,7 @@ import {
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+  updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
   updateCounterV1CountersCounterIdPatchResponseTransformer,
   updateDeviceV1DevicesDeviceIdPatchResponseTransformer,
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
@@ -68,6 +71,9 @@ import type {
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostErrors,
   CompleteTaskV1TasksTaskIdCompletePostResponses,
@@ -77,6 +83,9 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses,
   CreateCounterV1CountersPostData,
   CreateCounterV1CountersPostErrors,
   CreateCounterV1CountersPostResponses,
@@ -110,6 +119,9 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses,
   DeleteCounterV1CountersCounterIdDeleteData,
   DeleteCounterV1CountersCounterIdDeleteErrors,
   DeleteCounterV1CountersCounterIdDeleteResponses,
@@ -297,6 +309,9 @@ import type {
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchData,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses,
   UpdateCalendarV1CalendarsCalendarIdPatchData,
   UpdateCalendarV1CalendarsCalendarIdPatchErrors,
   UpdateCalendarV1CalendarsCalendarIdPatchResponses,
@@ -698,6 +713,33 @@ export const authorizeGoogleV1CalendarsGoogleAuthorizePost = <
   });
 
 /**
+ * Complete Google Calendar Connection
+ */
+export const completeGoogleConnectV1CalendarsGoogleCallbackPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
+    CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/google/callback",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * Connect iCloud Calendar
  */
 export const connectIcloudV1CalendarsIcloudPost = <
@@ -802,6 +844,81 @@ export const listCalendarEventsV1CalendarsEventsGet = <
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/events",
     ...options,
+  });
+
+/**
+ * Create Calendar Event
+ */
+export const createCalendarEventV1CalendarsCalendarIdEventsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses,
+    CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/{calendar_id}/events",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Calendar Event
+ */
+export const deleteCalendarEventV1CalendarsEventsEventIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses,
+    DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/events/{event_id}",
+    ...options,
+  });
+
+/**
+ * Update Calendar Event
+ */
+export const updateCalendarEventV1CalendarsEventsEventIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateCalendarEventV1CalendarsEventsEventIdPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses,
+    UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/events/{event_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

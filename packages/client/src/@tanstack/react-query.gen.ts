@@ -13,9 +13,11 @@ import {
   authorizeGoogleV1CalendarsGoogleAuthorizePost,
   bulkUpdateTransactionsV1TransactionsBulkPatch,
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
+  completeGoogleConnectV1CalendarsGoogleCallbackPost,
   completeTaskV1TasksTaskIdCompletePost,
   connectIcloudV1CalendarsIcloudPost,
   createBankAccountV1BankAccountsPost,
+  createCalendarEventV1CalendarsCalendarIdEventsPost,
   createCounterV1CountersPost,
   createNotificationV1NotificationsPost,
   createPlaceV1PlacesPost,
@@ -27,6 +29,7 @@ import {
   createTaskV1TasksPost,
   createTradeV1InvestmentsTradesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
+  deleteCalendarEventV1CalendarsEventsEventIdDelete,
   deleteCounterV1CountersCounterIdDelete,
   deleteDeviceV1DevicesDeviceIdDelete,
   deletePlaceV1PlacesPlaceIdDelete,
@@ -94,6 +97,7 @@ import {
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
+  updateCalendarEventV1CalendarsEventsEventIdPatch,
   updateCalendarV1CalendarsCalendarIdPatch,
   updateCounterV1CountersCounterIdPatch,
   updateDeviceV1DevicesDeviceIdPatch,
@@ -115,6 +119,9 @@ import type {
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostError,
   CompleteTaskV1TasksTaskIdCompletePostResponse,
@@ -124,6 +131,9 @@ import type {
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostError,
   CreateBankAccountV1BankAccountsPostResponse,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
   CreateCounterV1CountersPostData,
   CreateCounterV1CountersPostError,
   CreateCounterV1CountersPostResponse,
@@ -157,6 +167,9 @@ import type {
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
   DeleteCounterV1CountersCounterIdDeleteData,
   DeleteCounterV1CountersCounterIdDeleteError,
   DeleteCounterV1CountersCounterIdDeleteResponse,
@@ -341,6 +354,9 @@ import type {
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchData,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchError,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
   UpdateCalendarV1CalendarsCalendarIdPatchData,
   UpdateCalendarV1CalendarsCalendarIdPatchError,
   UpdateCalendarV1CalendarsCalendarIdPatchResponse,
@@ -989,6 +1005,37 @@ export const authorizeGoogleV1CalendarsGoogleAuthorizePostMutation = (
 };
 
 /**
+ * Complete Google Calendar Connection
+ */
+export const completeGoogleConnectV1CalendarsGoogleCallbackPostMutation = (
+  options?: Partial<
+    Options<CompleteGoogleConnectV1CalendarsGoogleCallbackPostData>
+  >,
+): UseMutationOptions<
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
+  CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
+  Options<CompleteGoogleConnectV1CalendarsGoogleCallbackPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
+    CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
+    Options<CompleteGoogleConnectV1CalendarsGoogleCallbackPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await completeGoogleConnectV1CalendarsGoogleCallbackPost(
+        {
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        },
+      );
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Connect iCloud Calendar
  */
 export const connectIcloudV1CalendarsIcloudPostMutation = (
@@ -1130,6 +1177,95 @@ export const listCalendarEventsV1CalendarsEventsGetOptions = (
     },
     queryKey: listCalendarEventsV1CalendarsEventsGetQueryKey(options),
   });
+
+/**
+ * Create Calendar Event
+ */
+export const createCalendarEventV1CalendarsCalendarIdEventsPostMutation = (
+  options?: Partial<
+    Options<CreateCalendarEventV1CalendarsCalendarIdEventsPostData>
+  >,
+): UseMutationOptions<
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
+  CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
+  Options<CreateCalendarEventV1CalendarsCalendarIdEventsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
+    CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
+    Options<CreateCalendarEventV1CalendarsCalendarIdEventsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createCalendarEventV1CalendarsCalendarIdEventsPost(
+        {
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        },
+      );
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Calendar Event
+ */
+export const deleteCalendarEventV1CalendarsEventsEventIdDeleteMutation = (
+  options?: Partial<
+    Options<DeleteCalendarEventV1CalendarsEventsEventIdDeleteData>
+  >,
+): UseMutationOptions<
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
+  DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
+  Options<DeleteCalendarEventV1CalendarsEventsEventIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
+    DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
+    Options<DeleteCalendarEventV1CalendarsEventsEventIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteCalendarEventV1CalendarsEventsEventIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Calendar Event
+ */
+export const updateCalendarEventV1CalendarsEventsEventIdPatchMutation = (
+  options?: Partial<
+    Options<UpdateCalendarEventV1CalendarsEventsEventIdPatchData>
+  >,
+): UseMutationOptions<
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
+  UpdateCalendarEventV1CalendarsEventsEventIdPatchError,
+  Options<UpdateCalendarEventV1CalendarsEventsEventIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
+    UpdateCalendarEventV1CalendarsEventsEventIdPatchError,
+    Options<UpdateCalendarEventV1CalendarsEventsEventIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCalendarEventV1CalendarsEventsEventIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listCategoriesV1CategoriesGetQueryKey = (
   options?: Options<ListCategoriesV1CategoriesGetData>,

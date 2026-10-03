@@ -38,6 +38,7 @@ from .calendar_event_attendee import CalendarEventAttendee
 from .calendar_event_attendee_response import CalendarEventAttendeeResponse
 from .calendar_event_list_response import CalendarEventListResponse
 from .calendar_event_schema import CalendarEventSchema
+from .calendar_event_schema_my_response_type_0 import CalendarEventSchemaMyResponseType0
 from .calendar_event_schema_visibility_type_0 import CalendarEventSchemaVisibilityType0
 from .calendar_provider import CalendarProvider
 from .calendar_schema import CalendarSchema
@@ -52,10 +53,17 @@ from .counter_update import CounterUpdate
 from .crypto_price_schema import CryptoPriceSchema
 from .device_schema import DeviceSchema
 from .device_update import DeviceUpdate
+from .edit_scope import EditScope
+from .event_create import EventCreate
+from .event_time_input import EventTimeInput
+from .event_timing_input import EventTimingInput
+from .event_update import EventUpdate
+from .event_write_response import EventWriteResponse
 from .get_klarna_transactions_v1_klarna_transactions_get_response_get_klarna_transactions_v1_klarna_transactions_get import (
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet,
 )
 from .google_authorize_response import GoogleAuthorizeResponse
+from .google_callback_request import GoogleCallbackRequest
 from .google_place_search_response import GooglePlaceSearchResponse
 from .google_place_search_result import GooglePlaceSearchResult
 from .health_kit_sleep_list_response import HealthKitSleepListResponse
@@ -108,6 +116,9 @@ from .recipe_schema import RecipeSchema
 from .recipe_sort_property import RecipeSortProperty
 from .recipe_type import RecipeType
 from .recipe_update import RecipeUpdate
+from .recurrence_schema import RecurrenceSchema
+from .recurrence_schema_by_weekday_item import RecurrenceSchemaByWeekdayItem
+from .recurrence_schema_frequency import RecurrenceSchemaFrequency
 from .rrule_frequency import RruleFrequency
 from .security_create import SecurityCreate
 from .security_list_response import SecurityListResponse
@@ -188,6 +199,7 @@ __all__ = (
   "CalendarEventAttendeeResponse",
   "CalendarEventListResponse",
   "CalendarEventSchema",
+  "CalendarEventSchemaMyResponseType0",
   "CalendarEventSchemaVisibilityType0",
   "CalendarProvider",
   "CalendarSchema",
@@ -202,8 +214,15 @@ __all__ = (
   "CryptoPriceSchema",
   "DeviceSchema",
   "DeviceUpdate",
+  "EditScope",
+  "EventCreate",
+  "EventTimeInput",
+  "EventTimingInput",
+  "EventUpdate",
+  "EventWriteResponse",
   "GetKlarnaTransactionsV1KlarnaTransactionsGetResponseGetKlarnaTransactionsV1KlarnaTransactionsGet",
   "GoogleAuthorizeResponse",
+  "GoogleCallbackRequest",
   "GooglePlaceSearchResponse",
   "GooglePlaceSearchResult",
   "HealthKitSleepListResponse",
@@ -254,6 +273,9 @@ __all__ = (
   "RecipeSortProperty",
   "RecipeType",
   "RecipeUpdate",
+  "RecurrenceSchema",
+  "RecurrenceSchemaByWeekdayItem",
+  "RecurrenceSchemaFrequency",
   "RruleFrequency",
   "SecurityCreate",
   "SecurityListResponse",

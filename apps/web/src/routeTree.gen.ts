@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as OauthGoogleCalendarRouteImport } from './routes/oauth/google-calendar'
 import { Route as AppTravelRouteImport } from './routes/_app/travel'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppTimelineRouteImport } from './routes/_app/timeline'
@@ -37,6 +38,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const OauthGoogleCalendarRoute = OauthGoogleCalendarRouteImport.update({
+  id: '/oauth/google-calendar',
+  path: '/oauth/google-calendar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppTravelRoute = AppTravelRouteImport.update({
   id: '/travel',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof AppTimelineRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
+  '/oauth/google-calendar': typeof OauthGoogleCalendarRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/timeline': typeof AppTimelineRoute
   '/transactions': typeof AppTransactionsRoute
   '/travel': typeof AppTravelRoute
+  '/oauth/google-calendar': typeof OauthGoogleCalendarRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_app/timeline': typeof AppTimelineRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/travel': typeof AppTravelRoute
+  '/oauth/google-calendar': typeof OauthGoogleCalendarRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/transactions'
     | '/travel'
+    | '/oauth/google-calendar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/transactions'
     | '/travel'
+    | '/oauth/google-calendar'
     | '/'
   id:
     | '__root__'
@@ -187,12 +198,14 @@ export interface FileRouteTypes {
     | '/_app/timeline'
     | '/_app/transactions'
     | '/_app/travel'
+    | '/oauth/google-calendar'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OauthGoogleCalendarRoute: typeof OauthGoogleCalendarRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/oauth/google-calendar': {
+      id: '/oauth/google-calendar'
+      path: '/oauth/google-calendar'
+      fullPath: '/oauth/google-calendar'
+      preLoaderRoute: typeof OauthGoogleCalendarRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/travel': {
       id: '/_app/travel'
@@ -333,6 +353,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  OauthGoogleCalendarRoute: OauthGoogleCalendarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -30,6 +30,8 @@ class CalendarEvent(RecordModel):
   creator_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
   # [{"email", "name", "response"}]; response is accepted/declined/tentative/needs_action.
   attendees: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+  # The account's own reply when it's a guest (same values); null otherwise.
+  my_response: Mapped[str | None] = mapped_column(String(16), nullable=True)
   conference_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
   # Link to the event in the provider's own UI (Google only).
   html_link: Mapped[str | None] = mapped_column(String(2048), nullable=True)
@@ -37,6 +39,19 @@ class CalendarEvent(RecordModel):
   recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
   # public/private/confidential; null means the calendar's default.
   visibility: Mapped[str | None] = mapped_column(String(32), nullable=True)
+  # False for invitations the account doesn't organize and provider-managed events.
+  editable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+  # Google: the parent event id; iCloud: the series UID. Null for single events.
+  series_id: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+  # The occurrence's slot in its series as the provider wrote it (ISO date or
+  # datetime); stays put when the occurrence itself is moved.
+  original_start: Mapped[str | None] = mapped_column(String(64), nullable=True)
+  # Provider version tag for optimistic concurrency (If-Match).
+  etag: Mapped[str | None] = mapped_column(String(255), nullable=True)
+  # The series' RRULE value (no "RRULE:" prefix), copied onto each occurrence.
+  rrule: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+  # iCloud: URL of the .ics resource holding the event and its series.
+  resource_href: Mapped[str | None] = mapped_column(String(2048), nullable=True)
 
   __table_args__ = (
     UniqueConstraint("calendar_id", "external_id", name="calendar_events_calendar_id_external_id_key"),

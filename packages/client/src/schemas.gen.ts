@@ -759,8 +759,9 @@ export const Body_import_transactions_v1_transactions_import_postSchema = {
   properties: {
     file: {
       type: "string",
-      format: "binary",
+      contentMediaType: "application/octet-stream",
       title: "File",
+      format: "binary",
     },
   },
   type: "object",
@@ -773,8 +774,9 @@ export const Body_upload_task_attachment_v1_tasks__task_id__attachments_postSche
     properties: {
       file: {
         type: "string",
-        format: "binary",
+        contentMediaType: "application/octet-stream",
         title: "File",
+        format: "binary",
       },
     },
     type: "object",
@@ -910,6 +912,12 @@ export const CalendarAccountSchemaSchema = {
       type: "string",
       title: "Email",
     },
+    can_write: {
+      type: "boolean",
+      title: "Can Write",
+      description:
+        "False when the account was connected read-only and must be reconnected to edit.",
+    },
     last_synced_at: {
       anyOf: [
         {
@@ -947,6 +955,7 @@ export const CalendarAccountSchemaSchema = {
     "id",
     "provider",
     "email",
+    "can_write",
     "last_synced_at",
     "sync_error",
     "calendars",
@@ -1121,6 +1130,20 @@ export const CalendarEventSchemaSchema = {
       type: "array",
       title: "Attendees",
     },
+    my_response: {
+      anyOf: [
+        {
+          type: "string",
+          enum: ["accepted", "declined", "tentative", "needs_action"],
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "My Response",
+      description:
+        "The account's own reply when it's a guest; null when not invited.",
+    },
     conference_url: {
       anyOf: [
         {
@@ -1153,6 +1176,36 @@ export const CalendarEventSchemaSchema = {
     recurring: {
       type: "boolean",
       title: "Recurring",
+    },
+    editable: {
+      type: "boolean",
+      title: "Editable",
+      description:
+        "False for invitations organized by someone else and provider-managed events.",
+    },
+    rule: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rule",
+      description: "The series' RRULE value, if it repeats.",
+    },
+    recurrence: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurrenceSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "`rule` in structured form; null when not repeating or not representable.",
     },
     visibility: {
       anyOf: [
@@ -1187,6 +1240,7 @@ export const CalendarEventSchemaSchema = {
     "html_link",
     "busy",
     "recurring",
+    "editable",
     "visibility",
   ],
   title: "CalendarEventSchema",
@@ -1218,9 +1272,18 @@ export const CalendarSchemaSchema = {
       type: "boolean",
       title: "Hidden",
     },
+    writable: {
+      type: "boolean",
+      title: "Writable",
+      description: "Events can be added and changed in this calendar.",
+    },
+    primary: {
+      type: "boolean",
+      title: "Primary",
+    },
   },
   type: "object",
-  required: ["id", "name", "color", "hidden"],
+  required: ["id", "name", "color", "hidden", "writable", "primary"],
   title: "CalendarSchema",
 } as const;
 
@@ -1571,6 +1634,337 @@ export const DeviceUpdateSchema = {
   title: "DeviceUpdate",
 } as const;
 
+export const EditScopeSchema = {
+  type: "string",
+  enum: ["this", "following", "all"],
+  title: "EditScope",
+  description: "Which occurrences of a repeating event a change applies to.",
+} as const;
+
+export const EventCreateSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 1024,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    timing: {
+      $ref: "#/components/schemas/EventTimingInput",
+    },
+    location: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 1024,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Location",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 8192,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    attendees: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+            format: "email",
+          },
+          type: "array",
+          maxItems: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Attendees",
+      description: "Guest emails (Google only); replaces the guest list.",
+    },
+    recurrence: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurrenceSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "How the event repeats; null stops it repeating.",
+    },
+    busy: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Busy",
+      description: "False shows the time as free.",
+    },
+    add_conference: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Add Conference",
+      description: "Adds a Google Meet link (Google only).",
+    },
+    time_zone: {
+      type: "string",
+      title: "Time Zone",
+      description:
+        "Zone the user is viewing the calendar in; used to read `recurrence.until`.",
+    },
+    notify_guests: {
+      type: "boolean",
+      title: "Notify Guests",
+      description: "Email guests about the change (Google only).",
+      default: true,
+    },
+  },
+  type: "object",
+  required: ["timing", "time_zone"],
+  title: "EventCreate",
+} as const;
+
+export const EventTimeInputSchema = {
+  properties: {
+    date: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Date",
+      description: "All-day events: the calendar date, YYYY-MM-DD.",
+      examples: ["2026-10-07"],
+    },
+    date_time: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Date Time",
+      description:
+        "Timed events: local wall-clock time without an offset, YYYY-MM-DDTHH:MM.",
+      examples: ["2026-10-07T17:00"],
+    },
+  },
+  type: "object",
+  title: "EventTimeInput",
+} as const;
+
+export const EventTimingInputSchema = {
+  properties: {
+    start: {
+      $ref: "#/components/schemas/EventTimeInput",
+    },
+    end: {
+      $ref: "#/components/schemas/EventTimeInput",
+      description: "Exclusive. For all-day events, the day after the last day.",
+    },
+    time_zone: {
+      type: "string",
+      title: "Time Zone",
+      description: "IANA zone the times are in, e.g. Europe/Stockholm.",
+    },
+  },
+  type: "object",
+  required: ["start", "end", "time_zone"],
+  title: "EventTimingInput",
+} as const;
+
+export const EventUpdateSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 1024,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    timing: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/EventTimingInput",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    location: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 1024,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Location",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 8192,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    attendees: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+            format: "email",
+          },
+          type: "array",
+          maxItems: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Attendees",
+      description: "Guest emails (Google only); replaces the guest list.",
+    },
+    recurrence: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurrenceSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "How the event repeats; null stops it repeating.",
+    },
+    busy: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Busy",
+      description: "False shows the time as free.",
+    },
+    add_conference: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Add Conference",
+      description: "Adds a Google Meet link (Google only).",
+    },
+    time_zone: {
+      type: "string",
+      title: "Time Zone",
+      description:
+        "Zone the user is viewing the calendar in; used to read `recurrence.until`.",
+    },
+    notify_guests: {
+      type: "boolean",
+      title: "Notify Guests",
+      description: "Email guests about the change (Google only).",
+      default: true,
+    },
+    scope: {
+      $ref: "#/components/schemas/EditScope",
+      description:
+        "For repeating events: this occurrence, this and following, or all.",
+      default: "this",
+    },
+    calendar_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Calendar Id",
+      description: "Move the event to another calendar of the same account.",
+    },
+  },
+  type: "object",
+  required: ["time_zone"],
+  title: "EventUpdate",
+} as const;
+
+export const EventWriteResponseSchema = {
+  properties: {
+    event: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/CalendarEventSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "The written event as synced back, or null if it falls outside the synced window.",
+    },
+  },
+  type: "object",
+  required: ["event"],
+  title: "EventWriteResponse",
+} as const;
+
 export const GoogleAuthorizeResponseSchema = {
   properties: {
     url: {
@@ -1582,6 +1976,29 @@ export const GoogleAuthorizeResponseSchema = {
   type: "object",
   required: ["url"],
   title: "GoogleAuthorizeResponse",
+} as const;
+
+export const GoogleCallbackRequestSchema = {
+  properties: {
+    code: {
+      type: "string",
+      maxLength: 2048,
+      minLength: 1,
+      title: "Code",
+      description: "Authorization code Google appended to the redirect.",
+    },
+    state: {
+      type: "string",
+      maxLength: 4096,
+      minLength: 1,
+      title: "State",
+      description:
+        "Opaque state from the authorize URL, echoed back by Google.",
+    },
+  },
+  type: "object",
+  required: ["code", "state"],
+  title: "GoogleCallbackRequest",
 } as const;
 
 export const GooglePlaceSearchResponseSchema = {
@@ -3673,6 +4090,63 @@ export const RecipeUpdateSchema = {
   },
   type: "object",
   title: "RecipeUpdate",
+} as const;
+
+export const RecurrenceSchemaSchema = {
+  properties: {
+    frequency: {
+      type: "string",
+      enum: ["daily", "weekly", "monthly", "yearly"],
+      title: "Frequency",
+    },
+    interval: {
+      type: "integer",
+      maximum: 99,
+      minimum: 1,
+      title: "Interval",
+      default: 1,
+    },
+    by_weekday: {
+      items: {
+        type: "string",
+        enum: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"],
+      },
+      type: "array",
+      title: "By Weekday",
+      description: "Weekly rules only; empty means the start date's weekday.",
+    },
+    count: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 730,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Count",
+      description: "Number of occurrences. Mutually exclusive with `until`.",
+    },
+    until: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Until",
+      description:
+        "Last day that may hold an occurrence (inclusive), YYYY-MM-DD.",
+    },
+  },
+  type: "object",
+  required: ["frequency"],
+  title: "RecurrenceSchema",
 } as const;
 
 export const RruleFrequencySchema = {

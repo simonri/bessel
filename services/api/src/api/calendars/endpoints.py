@@ -1,13 +1,16 @@
 from datetime import UTC, datetime
-from html import escape
 from typing import Annotated
 from uuid import UUID
 
 import httpx
 import structlog
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi.responses import StreamingResponse
 
+from api.auth.dependencies import CurrentUser
+from api.calendars import push
+from api.calendars.editing import calendar_edit_service
+from api.calendars.edits import EditScope
 from api.calendars.providers import ProviderAuthError
 from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository, CalendarRepository
 from api.calendars.schemas import (
@@ -17,14 +20,20 @@ from api.calendars.schemas import (
   CalendarEventSchema,
   CalendarSchema,
   CalendarUpdate,
+  EventCreate,
+  EventUpdate,
+  EventWriteResponse,
   GoogleAuthorizeResponse,
+  GoogleCallbackRequest,
   ICloudConnectRequest,
 )
 from api.calendars.service import OAuthCallbackError, calendar_service
-from api.exceptions import ValidationError
+from api.exceptions import ServiceUnavailableError, ValidationError
 from api.logging import Logger
 from api.postgres import AsyncSession, get_db_session
+from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
+from api.users.service import user_service
 
 log: Logger = structlog.get_logger()
 
@@ -47,34 +56,55 @@ async def authorize_google(current_user: CurrentDBUser) -> GoogleAuthorizeRespon
   return GoogleAuthorizeResponse(url=calendar_service.google_authorize_url(current_user.id))
 
 
-def _callback_page(title: str, message: str, status_code: int = 200) -> HTMLResponse:
-  body = f"""<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>{escape(title)}</title>
-<style>body{{margin:0;min-height:100vh;display:grid;place-items:center;background:#111;color:#eee;font:15px system-ui,sans-serif}}
-main{{max-width:28rem;padding:2rem;text-align:center}}h1{{font-size:18px;font-weight:600}}p{{color:#aaa;line-height:1.5}}</style></head>
-<body><main><h1>{escape(title)}</h1><p>{escape(message)}</p></main></body></html>"""
-  return HTMLResponse(body, status_code=status_code)
-
-
-# Google redirects the browser here as a plain page load, so there's no bearer
-# token: the user comes from the encrypted, short-lived `state` instead.
-@router.get("/google/callback", include_in_schema=False)
-async def google_callback(
+@router.post("/google/webhook", include_in_schema=False)
+async def google_calendar_webhook(
+  request: Request,
   session: Annotated[AsyncSession, Depends(get_db_session)],
-  state: str = "",
-  code: str | None = None,
-  error: str | None = None,
-) -> HTMLResponse:
-  if error or not code:
-    return _callback_page("Google Calendar not connected", "Access wasn't granted. You can close this tab.", 400)
+  redis: Annotated[Redis, Depends(get_redis)],
+) -> Response:
+  """Google's change notifications. Unauthenticated by design: each channel's
+  secret token, checked in the handler, is what proves a call is genuine."""
+  await push.handle_google_notification(CalendarRepository.from_session(session), redis, push.GoogleNotification.from_headers(request.headers))
+  return Response(status_code=200)
+
+
+async def _stream_user_id(
+  user_info: CurrentUser,
+  # Function scope commits and returns the connection before streaming starts;
+  # a page can keep this stream open for hours.
+  session: Annotated[AsyncSession, Depends(get_db_session, scope="function")],
+) -> UUID:
+  return (await user_service.get_or_create_by_sub(session, user_info.sub, user_info.email)).id
+
+
+@router.get("/changes", include_in_schema=False)
+async def stream_calendar_changes(
+  user_id: Annotated[UUID, Depends(_stream_user_id)],
+  redis: Annotated[Redis, Depends(get_redis)],
+) -> StreamingResponse:
+  """Server-sent `changed` events whenever a sync of the user's calendars lands."""
+  return StreamingResponse(
+    push.change_events(redis, user_id),
+    media_type="text/event-stream",
+    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+  )
+
+
+@router.post("/google/callback", summary="Complete Google Calendar Connection", response_model=CalendarAccountSchema, status_code=201)
+async def complete_google_connect(
+  body: GoogleCallbackRequest,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> CalendarAccountSchema:
+  accounts = CalendarAccountRepository.from_session(session)
   try:
-    account = await calendar_service.complete_google_connect(CalendarAccountRepository.from_session(session), code=code, state=state)
+    account = await calendar_service.complete_google_connect(accounts, current_user.id, code=body.code, state=body.state)
   except OAuthCallbackError as e:
-    return _callback_page("Google Calendar not connected", str(e), 400)
-  except (httpx.HTTPError, ProviderAuthError):
+    raise ValidationError(str(e)) from e
+  except (httpx.HTTPError, ProviderAuthError) as e:
     log.exception("google_calendar_connect_failed")
-    return _callback_page("Google Calendar not connected", "Google couldn't complete the sign-in. Try again from Bessel.", 502)
-  return _callback_page("Google Calendar connected", f"{account.email} is syncing to Bessel. You can close this tab.")
+    raise ServiceUnavailableError("Google couldn't complete the sign-in. Try again from Bessel.", status_code=502) from e
+  return CalendarAccountSchema.model_validate(await accounts.get_owned(account.id, current_user.id))
 
 
 @router.post("/icloud", summary="Connect iCloud Calendar", response_model=CalendarAccountSchema, status_code=201)
@@ -135,3 +165,40 @@ async def list_calendar_events(
     datetime.fromtimestamp(end_ts, tz=UTC),
   )
   return CalendarEventListResponse(events=[CalendarEventSchema.model_validate(e) for e in events])
+
+
+@router.post("/{calendar_id}/events", summary="Create Calendar Event", response_model=EventWriteResponse, status_code=201)
+async def create_calendar_event(
+  calendar_id: UUID,
+  body: EventCreate,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  redis: Annotated[Redis, Depends(get_redis)],
+  current_user: CurrentDBUser,
+) -> EventWriteResponse:
+  event = await calendar_edit_service.create_event(session, redis, current_user.id, calendar_id, body)
+  return EventWriteResponse(event=CalendarEventSchema.model_validate(event) if event else None)
+
+
+@router.patch("/events/{event_id}", summary="Update Calendar Event", response_model=EventWriteResponse)
+async def update_calendar_event(
+  event_id: UUID,
+  body: EventUpdate,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  redis: Annotated[Redis, Depends(get_redis)],
+  current_user: CurrentDBUser,
+) -> EventWriteResponse:
+  event = await calendar_edit_service.update_event(session, redis, current_user.id, event_id, body)
+  return EventWriteResponse(event=CalendarEventSchema.model_validate(event) if event else None)
+
+
+@router.delete("/events/{event_id}", summary="Delete Calendar Event", status_code=204)
+async def delete_calendar_event(
+  event_id: UUID,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  redis: Annotated[Redis, Depends(get_redis)],
+  current_user: CurrentDBUser,
+  time_zone: Annotated[str, Query(description="Zone the user is viewing the calendar in.")],
+  scope: Annotated[EditScope, Query(description="For repeating events: this occurrence, this and following, or all.")] = EditScope.this,
+  notify_guests: Annotated[bool, Query(description="Email guests a cancellation (Google only).")] = True,
+) -> None:
+  await calendar_edit_service.delete_event(session, redis, current_user.id, event_id, scope, time_zone=time_zone, notify_guests=notify_guests)

@@ -49,6 +49,38 @@ export function toWallClock(date: Date, timeZone: string): Date {
   );
 }
 
+function offsetMs(instant: number, timeZone: string): number {
+  const wall = toWallClock(new Date(instant), timeZone);
+  const wallAsUtc = Date.UTC(
+    wall.getFullYear(),
+    wall.getMonth(),
+    wall.getDate(),
+    wall.getHours(),
+    wall.getMinutes(),
+    wall.getSeconds(),
+    wall.getMilliseconds(),
+  );
+  return wallAsUtc - instant;
+}
+
+/** The instant whose wall-clock time in `timeZone` is `wall`'s local fields;
+ *  the inverse of toWallClock. Nonexistent DST-gap times resolve forwards. */
+export function fromWallClock(wall: Date, timeZone: string): Date {
+  if (timeZone === systemTimeZone()) return wall;
+  const asUtc = Date.UTC(
+    wall.getFullYear(),
+    wall.getMonth(),
+    wall.getDate(),
+    wall.getHours(),
+    wall.getMinutes(),
+    wall.getSeconds(),
+    wall.getMilliseconds(),
+  );
+  // Two passes: the offset at the first guess can differ near DST changes.
+  const guess = asUtc - offsetMs(asUtc, timeZone);
+  return new Date(asUtc - offsetMs(guess, timeZone));
+}
+
 function zoneName(
   timeZone: string,
   date: Date,
