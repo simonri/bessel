@@ -12,7 +12,7 @@ function RecipeCard({
   onOpen: () => void;
 }) {
   const meta = RECIPE_TYPE_META[recipe.recipe_type];
-  const summary = describeRecipe(recipe.content);
+  const summary = describeRecipe(recipe.body);
   return (
     <button
       type="button"
