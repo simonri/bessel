@@ -12,7 +12,6 @@ import {
   ClipboardPaste,
   Lightbulb,
   Plus,
-  Timer,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -43,7 +42,6 @@ const emptyStep = (): RecipeStep => ({
   title: null,
   text: "",
   time_label: null,
-  timer_minutes: null,
   callouts: [],
 });
 
@@ -93,7 +91,6 @@ export function cleanRecipeBody(body: RecipeBody): RecipeBody {
       title: trimmed(step.title),
       text: step.text?.trim() ?? "",
       time_label: trimmed(step.time_label),
-      timer_minutes: positiveMinutes(step.timer_minutes),
       callouts: (step.callouts ?? [])
         .map((c) => ({
           kind: c.kind ?? "tip",
@@ -719,27 +716,13 @@ function StepCard({
           value={step.text ?? ""}
           onChange={(text) => onChange({ ...step, text })}
         />
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            aria-label={`Step ${n} time`}
-            placeholder="e.g. 5 min + 30 min chill"
-            value={step.time_label ?? ""}
-            onChange={(e) => onChange({ ...step, time_label: e.target.value })}
-            className={cn(FIELD, "min-w-40 flex-1")}
-          />
-          <div className="flex w-32 items-center gap-1.5">
-            <Timer
-              aria-hidden
-              className="size-3.5 shrink-0 text-primary-300/80"
-            />
-            <MinutesInput
-              label={`Step ${n} timer`}
-              placeholder="Timer"
-              value={step.timer_minutes}
-              onChange={(timer_minutes) => onChange({ ...step, timer_minutes })}
-            />
-          </div>
-        </div>
+        <input
+          aria-label={`Step ${n} time`}
+          placeholder="How long? e.g. 5 min + 30 min chill"
+          value={step.time_label ?? ""}
+          onChange={(e) => onChange({ ...step, time_label: e.target.value })}
+          className={FIELD}
+        />
         {callouts.map((callout, c) => (
           <CalloutEditor
             // biome-ignore lint/suspicious/noArrayIndexKey: callouts have no identity of their own

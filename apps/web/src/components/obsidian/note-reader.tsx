@@ -208,9 +208,7 @@ function FrontmatterTable({ raw }: { raw: string }) {
   if (!entries.length) return null;
   return (
     <div className="not-prose mb-4 rounded-md border border-white/10 bg-white/5 p-3 text-13">
-      <div className="mb-1.5 text-11 font-medium uppercase tracking-wide text-white/40">
-        Properties
-      </div>
+      <div className="mb-1.5 text-11 font-medium text-white/40">Properties</div>
       <dl className="space-y-1">
         {entries.map((entry, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: frontmatter lines never reorder

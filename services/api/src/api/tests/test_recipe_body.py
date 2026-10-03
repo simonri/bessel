@@ -123,7 +123,7 @@ class TestParseMarkdown:
     assert body.ingredient_groups[0].title == "Puckarna"
 
     dressing, pan, build = body.steps
-    assert (dressing.title, dressing.time_label, dressing.timer_minutes) == ("Gör burgardressingen", "5 min + 30 min i kyl", 5)
+    assert (dressing.title, dressing.time_label) == ("Gör burgardressingen", "5 min + 30 min i kyl")
     assert dressing.text == "Blanda allt. Ställ i kylen."
     assert [(c.kind, c.label, c.text) for c in dressing.callouts] == [("tip", "Proffstips", "En extra droppe gurklag.")]
     assert [(c.kind, c.label) for c in pan.callouts] == [("warning", "Vanligaste misstaget")]
@@ -141,7 +141,7 @@ SIMPLE_BODY = RecipeBody(
   intro="Snabb lunch.",
   total_minutes=15,
   ingredient_groups=[{"items": [{"amount": 2, "unit": "st", "name": "ägg"}]}],  # type: ignore[list-item]
-  steps=[RecipeStep(title="Koka", text="Koka äggen.", time_label="8 min", timer_minutes=8)],
+  steps=[RecipeStep(title="Koka", text="Koka äggen.", time_label="8 min")],
 )
 
 

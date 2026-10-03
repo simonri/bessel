@@ -656,7 +656,7 @@ export function GitStatus() {
                 )}
 
                 <SectionHeader
-                  label="Staged Changes"
+                  label="Staged changes"
                   count={staged.length}
                   open={stagedOpen}
                   onToggle={() => setStagedOpen((o) => !o)}

@@ -5003,19 +5003,6 @@ export const RecipeStepSchema = {
       title: "Time Label",
       description: "e.g. '5 min + 30 min i kyl'.",
     },
-    timer_minutes: {
-      anyOf: [
-        {
-          type: "integer",
-          maximum: 1440,
-          minimum: 1,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Timer Minutes",
-    },
     callouts: {
       items: {
         $ref: "#/components/schemas/RecipeCallout",

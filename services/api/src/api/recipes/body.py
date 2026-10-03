@@ -37,7 +37,6 @@ class RecipeStep(Schema):
   title: str | None = Field(default=None, max_length=200)
   text: str = Field(default="", max_length=5000, description="Markdown.")
   time_label: str | None = Field(default=None, max_length=100, description="e.g. '5 min + 30 min i kyl'.")
-  timer_minutes: int | None = Field(default=None, ge=1, le=1440)
   callouts: list[RecipeCallout] = Field(default_factory=list, max_length=10)
 
 
@@ -145,11 +144,6 @@ def _minutes(text: str) -> int | None:
   return round(total) or None
 
 
-def _first_minutes(text: str) -> int | None:
-  match = re.search(r"(\d+)(?:\s*[–-]\s*\d+)?\s*min", text)
-  return int(match.group(1)) if match else None
-
-
 def _append_line(text: str, line: str) -> str:
   if not text:
     return line
@@ -196,11 +190,9 @@ def parse_markdown(content: str) -> RecipeBody:
       elif mode == "ingredients" and level >= 3:
         group = new_group(clean)
       elif mode == "steps" and _STEP_NUMBER_RE.match(clean):
-        label = time.group(1).strip() if time else None
         step = RecipeStep(
           title=_STEP_NUMBER_RE.sub("", clean).strip(),
-          time_label=label,
-          timer_minutes=_first_minutes(label) if label else None,
+          time_label=time.group(1).strip() if time else None,
         )
         body.steps.append(step)
       else:

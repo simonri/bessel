@@ -110,9 +110,7 @@ function Field({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <span className="text-11 font-medium uppercase tracking-wide text-white/40">
-          {label}
-        </span>
+        <span className="text-11 font-medium text-white/40">{label}</span>
         {hint && <span className="text-11 text-white/35">{hint}</span>}
       </div>
       {children}
@@ -574,7 +572,7 @@ export function NewSessionPage({
           type="button"
           onClick={() => setShowOptions((v) => !v)}
           aria-expanded={showOptions}
-          className="flex w-fit items-center gap-1.5 text-11 font-medium uppercase tracking-wide text-white/40 transition-colors hover:text-white/70"
+          className="flex w-fit items-center gap-1.5 text-11 font-medium text-white/40 transition-colors hover:text-white/70"
         >
           <ChevronRight
             className={cn(

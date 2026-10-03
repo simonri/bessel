@@ -125,13 +125,13 @@ describe("RecipeEditor steps", () => {
     fireEvent.change(screen.getByLabelText("Step 1 title"), {
       target: { value: "Rosta" },
     });
-    fireEvent.change(screen.getByLabelText("Step 1 timer"), {
-      target: { value: "25" },
+    fireEvent.change(screen.getByLabelText("Step 1 time"), {
+      target: { value: "25 min" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Move step 1 down" }));
 
     expect(latest.steps?.map((s) => s.title)).toEqual([null, "Rosta"]);
-    expect(latest.steps?.[1].timer_minutes).toBe(25);
+    expect(latest.steps?.[1].time_label).toBe("25 min");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Add tip" })[1]);
     fireEvent.click(screen.getByRole("button", { name: "Warning" }));
@@ -166,7 +166,6 @@ describe("cleanRecipeBody", () => {
           title: " Stek ",
           text: " Het panna. ",
           time_label: "",
-          timer_minutes: null,
           callouts: [
             { kind: "tip", label: "", text: "  " },
             { kind: "warning", label: " Obs ", text: " Inte teflon. " },
@@ -176,7 +175,6 @@ describe("cleanRecipeBody", () => {
           title: "",
           text: "  ",
           time_label: "5 min",
-          timer_minutes: 5,
           callouts: [],
         },
       ],
@@ -202,7 +200,6 @@ describe("cleanRecipeBody", () => {
           title: "Stek",
           text: "Het panna.",
           time_label: null,
-          timer_minutes: null,
           callouts: [{ kind: "warning", label: "Obs", text: "Inte teflon." }],
         },
       ],

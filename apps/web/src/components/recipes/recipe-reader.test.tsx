@@ -1,23 +1,10 @@
 // @vitest-environment jsdom
 import type { RecipeBody } from "@bessel/client";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
 import { RecipeReader } from "./recipe-reader";
 
-const toast = vi.hoisted(() => vi.fn());
-vi.mock("sonner", () => ({ toast }));
-
-beforeEach(() => toast.mockReset());
-afterEach(() => {
-  cleanup();
-  vi.useRealTimers();
-});
+afterEach(cleanup);
 
 const BURGER: RecipeBody = {
   yield_text: "3 burgare",
@@ -38,7 +25,6 @@ const BURGER: RecipeBody = {
       title: "Gör dressingen",
       text: "Blanda **allt**.",
       time_label: "5 min + 30 min i kyl",
-      timer_minutes: 5,
       callouts: [{ kind: "tip", label: "Proffstips", text: "Gurklag." }],
     },
     {
@@ -79,34 +65,6 @@ it("lets ingredients be ticked off", () => {
       .getByRole("button", { name: /lökpulver/ })
       .getAttribute("aria-pressed"),
   ).toBe("false");
-});
-
-it("counts a step timer down and says when it's done", () => {
-  vi.useFakeTimers();
-  render(<RecipeReader title="Hamburgare" type="main" body={BURGER} />);
-
-  fireEvent.click(screen.getByRole("button", { name: "5 min + 30 min i kyl" }));
-  act(() => vi.advanceTimersByTime(60_000));
-  expect(screen.getByText("4:00")).toBeTruthy();
-
-  act(() => vi.advanceTimersByTime(4 * 60_000));
-  expect(toast).toHaveBeenCalledWith("⏰ Timer done: Gör dressingen");
-  expect(screen.getByRole("button", { name: "Done!" })).toBeTruthy();
-});
-
-it("cancels a running timer", () => {
-  vi.useFakeTimers();
-  render(<RecipeReader title="Hamburgare" type="main" body={BURGER} />);
-
-  fireEvent.click(screen.getByRole("button", { name: "5 min + 30 min i kyl" }));
-  act(() => vi.advanceTimersByTime(2_000));
-  fireEvent.click(screen.getByRole("button", { name: "Cancel timer" }));
-  act(() => vi.advanceTimersByTime(10 * 60_000));
-
-  expect(toast).not.toHaveBeenCalled();
-  expect(
-    screen.getByRole("button", { name: "5 min + 30 min i kyl" }),
-  ).toBeTruthy();
 });
 
 it("nudges towards Edit when there's nothing written", () => {

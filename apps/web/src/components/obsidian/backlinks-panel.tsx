@@ -59,7 +59,7 @@ export function BacklinksPanel({
 
   return (
     <div className="overflow-y-auto py-2">
-      <p className="px-3 pb-1.5 text-11 font-medium tracking-wide text-white/40 uppercase">
+      <p className="px-3 pb-1.5 text-11 font-medium text-white/40">
         Backlinks ({count})
       </p>
       {groups.map((group) => (
