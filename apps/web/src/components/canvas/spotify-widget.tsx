@@ -60,11 +60,12 @@ function projectStatus(status: {
 
 const PROGRESS_POLL_MS = 1000;
 
-// Remounted per track (keyed on the URL), so a new cover fades in.
+// Round so it nests in the pill: the pill's radius (16px) minus the 4px inset
+// is exactly half the cover. Remounted per track, so a new cover fades in.
 function Cover({ url }: { url: string | undefined }) {
   const [failed, setFailed] = useState(false);
   if (!url || failed) {
-    return <span className="size-6 shrink-0 rounded-md bg-white/[0.08]" />;
+    return <span className="size-6 shrink-0 rounded-full bg-white/[0.08]" />;
   }
   return (
     <img
@@ -72,7 +73,7 @@ function Cover({ url }: { url: string | undefined }) {
       alt=""
       draggable={false}
       onError={() => setFailed(true)}
-      className="size-6 shrink-0 rounded-md object-cover ring-1 ring-white/10 animate-in fade-in duration-500"
+      className="size-6 shrink-0 rounded-full object-cover ring-1 ring-white/10 animate-in fade-in duration-500"
     />
   );
 }
@@ -87,7 +88,7 @@ function CoverHalo({ url }: { url: string | undefined }) {
       alt=""
       aria-hidden
       draggable={false}
-      className="pointer-events-none absolute top-1 left-1 -z-10 size-6 scale-125 rounded-md object-cover opacity-40 blur-md animate-in fade-in duration-700"
+      className="pointer-events-none absolute top-1 left-1 -z-10 size-6 scale-125 rounded-full object-cover opacity-40 blur-md animate-in fade-in duration-700"
     />
   );
 }

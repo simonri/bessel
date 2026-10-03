@@ -33,10 +33,10 @@ export function AvatarMenu() {
               <img
                 src={user.picture}
                 alt=""
-                className="size-5 rounded-full ring-[1.5px] ring-primary-400/70 ring-offset-[1.5px] ring-offset-chrome"
+                className="size-5 rounded-full ring-[1.5px] ring-white/25 ring-offset-[1.5px] ring-offset-chrome"
               />
             ) : (
-              <div className="flex size-5 items-center justify-center rounded-full bg-primary-500/20 text-9 font-semibold text-primary-300 ring-[1.5px] ring-primary-400/70 ring-offset-[1.5px] ring-offset-chrome">
+              <div className="flex size-5 items-center justify-center rounded-full bg-white/10 text-9 font-semibold text-white/70 ring-[1.5px] ring-white/25 ring-offset-[1.5px] ring-offset-chrome">
                 {initials}
               </div>
             )}
@@ -60,7 +60,7 @@ export function AvatarMenu() {
           onClick={() =>
             logout({ logoutParams: { returnTo: window.location.origin } })
           }
-          className="flex w-full items-center px-4 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white/90"
+          className="flex w-full items-center px-4 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
         >
           Log out
         </button>
