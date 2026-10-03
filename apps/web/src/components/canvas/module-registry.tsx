@@ -10,6 +10,7 @@ import {
   Landmark,
   MapPin,
   Moon,
+  Route,
   SquareTerminal,
   TrendingUp,
 } from "lucide-react";
@@ -112,6 +113,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
       })),
     ),
     ...COMPACT_SIZE,
+  },
+  googleTimeline: {
+    title: "Google Timeline",
+    icon: Route,
+    component: lazy(() =>
+      import("@/routes/_app/google-timeline").then((m) => ({
+        default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...SESSION_SIZE,
   },
   calendar: {
     title: "Calendar",

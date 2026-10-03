@@ -5,6 +5,7 @@ as A, then checks B can't read it, can't touch it by id, and can't change it
 through any write. TestCoverage fails when an API route isn't covered here.
 """
 
+import json
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -85,6 +86,9 @@ AUDITED: set[str] = {
   "DELETE /v1/investments/trades/{trade_id}",
   "PATCH /v1/investments/trades/{trade_id}",
   "POST /v1/klarna/import",
+  "GET /v1/location-history/day",
+  "POST /v1/location-history/import",
+  "GET /v1/location-history/summary",
   "GET /v1/notifications",
   "POST /v1/notifications",
   "POST /v1/notifications/read-all",
@@ -241,6 +245,35 @@ class TestPlaces:
     assert (await other_client.delete(f"/v1/places/{place['id']}")).status_code == 404
 
     assert [p["name"] for p in (await client.get("/v1/places")).json()["items"]] == ["A's cafe"]
+
+
+class TestLocationHistory:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_read_or_change_location_history(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    def visit(day: int, place: str) -> dict[str, Any]:
+      return {
+        "startTime": f"2026-09-0{day}T10:00:00.000+02:00",
+        "endTime": f"2026-09-0{day}T11:00:00.000+02:00",
+        "visit": {"hierarchyLevel": "0", "topCandidate": {"placeID": place, "placeLocation": "geo:59.3,18.0"}},
+      }
+
+    async def upload(c: AsyncClient, segments: list[dict[str, Any]]) -> dict[str, Any]:
+      resp = await c.post("/v1/location-history/import", files={"file": ("Timeline.json", json.dumps(segments).encode(), "application/json")})
+      assert resp.status_code == 200, resp.text
+      return resp.json()
+
+    await upload(client, [visit(1, "a-home"), visit(2, "a-office"), visit(3, "a-gym")])
+
+    summary = (await other_client.get("/v1/location-history/summary")).json()
+    assert summary["days"] == [] and summary["last_import"] is None
+    assert (await other_client.get("/v1/location-history/day", params={"date": "2026-09-01"})).json()["visits"] == []
+
+    # The same segments from B are B's own: nothing of A's is matched, edited or removed.
+    other = await upload(other_client, [visit(1, "b-home"), visit(3, "a-gym")])
+    assert (other["added"], other["updated"], other["removed"], other["unchanged"]) == (2, 0, 0, 0)
+
+    assert [v["place_id"] for v in (await client.get("/v1/location-history/day", params={"date": "2026-09-01"})).json()["visits"]] == ["a-home"]
+    assert (await client.get("/v1/location-history/summary")).json()["days"] == ["2026-09-01", "2026-09-02", "2026-09-03"]
 
 
 class TestRecipes:

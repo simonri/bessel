@@ -2,6 +2,7 @@ import L from "leaflet";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import type { PlaceSchema } from "@bessel/client";
+import { addDarkBasemap } from "@/lib/map-tiles";
 
 function createDotIcon(color: string, selected = false) {
   const r = selected ? 6 : 4.5;
@@ -70,15 +71,7 @@ export function PlaceMap({
 
     // Dark basemap to match the app (the satellite imagery read as a foreign
     // element in an otherwise dark UI, and place dots got lost on it).
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
-      },
-    ).addTo(map);
+    addDarkBasemap(map);
 
     mapInstanceRef.current = map;
 

@@ -19,9 +19,12 @@ import type {
   CreateTradeV1InvestmentsTradesPostResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+  GetLocationHistoryDayV1LocationHistoryDayGetResponse,
+  GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
   GetTaskV1TasksTaskIdGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
+  ImportLocationHistoryV1LocationHistoryImportPostResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListCalendarAccountsV1CalendarsAccountsGetResponse,
   ListCalendarEventsV1CalendarsEventsGetResponse,
@@ -520,6 +523,71 @@ export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostRespo
     data: any,
   ): Promise<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse> => {
     data = securityPriceSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const locationImportSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  data.as_of = new Date(data.as_of);
+  data.range_start = new Date(data.range_start);
+  data.range_end = new Date(data.range_end);
+  return data;
+};
+
+export const importLocationHistoryV1LocationHistoryImportPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<ImportLocationHistoryV1LocationHistoryImportPostResponse> => {
+    data = locationImportSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const locationHistorySummarySchemaResponseTransformer = (data: any) => {
+  data.days = data.days.map((item: any) => new Date(item));
+  if (data.last_import) {
+    data.last_import = locationImportSchemaSchemaResponseTransformer(
+      data.last_import,
+    );
+  }
+  return data;
+};
+
+export const getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<GetLocationHistorySummaryV1LocationHistorySummaryGetResponse> => {
+    data = locationHistorySummarySchemaResponseTransformer(data);
+    return data;
+  };
+
+const locationVisitSchemaResponseTransformer = (data: any) => {
+  data.start_at = new Date(data.start_at);
+  data.end_at = new Date(data.end_at);
+  return data;
+};
+
+const locationActivitySchemaResponseTransformer = (data: any) => {
+  data.start_at = new Date(data.start_at);
+  data.end_at = new Date(data.end_at);
+  return data;
+};
+
+const locationDaySchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  data.visits = data.visits.map((item: any) =>
+    locationVisitSchemaResponseTransformer(item),
+  );
+  data.activities = data.activities.map((item: any) =>
+    locationActivitySchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<GetLocationHistoryDayV1LocationHistoryDayGetResponse> => {
+    data = locationDaySchemaResponseTransformer(data);
     return data;
   };
 
