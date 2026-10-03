@@ -3169,10 +3169,6 @@ export type RecipeStep = {
    */
   time_label?: string | null;
   /**
-   * Timer Minutes
-   */
-  timer_minutes?: number | null;
-  /**
    * Callouts
    */
   callouts?: Array<RecipeCallout>;

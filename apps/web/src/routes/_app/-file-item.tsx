@@ -116,7 +116,7 @@ export function SectionHeader({
       className="group flex cursor-pointer items-center gap-1 px-2 py-[5px] hover:bg-white/[0.03]"
     >
       <Chevron className="size-3 shrink-0 text-white/40" />
-      <span className="flex-1 text-10 font-semibold uppercase tracking-wider text-white/50">
+      <span className="flex-1 text-10 font-semibold text-white/50">
         {label}
       </span>
       {count > 0 && (

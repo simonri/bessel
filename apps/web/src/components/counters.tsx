@@ -1,14 +1,3 @@
-import { useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckCircle2,
-  Clock,
-  Plus,
-  RotateCcw,
-  Timer,
-  Trash2,
-  X,
-} from "lucide-react";
 import type { CounterResetSchema, CounterSchema } from "@bessel/client";
 import {
   createCounterV1CountersPostMutation,
@@ -28,6 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@bessel/ui/components/dialog";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CheckCircle2,
+  Clock,
+  Plus,
+  RotateCcw,
+  Timer,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { client } from "@/lib/client";
@@ -82,7 +82,8 @@ export function Counters() {
 
   const updateMutation = useMutation({
     ...updateCounterV1CountersCounterIdPatchMutation({ client }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: countersKey }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: countersKey }),
     onError: () => toast.error("Failed to rename counter"),
   });
 
@@ -150,9 +151,7 @@ export function Counters() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
-        <span className="text-11 font-medium uppercase tracking-wider text-white/50">
-          Time since
-        </span>
+        <span className="text-11 font-medium text-white/50">Time since</span>
         <button
           type="button"
           title="New counter"
@@ -350,7 +349,9 @@ function CounterDetailDialog({
                 className="w-full bg-transparent outline-none"
               />
             </DialogTitle>
-            <DialogDescription className="sr-only">Counter details</DialogDescription>
+            <DialogDescription className="sr-only">
+              Counter details
+            </DialogDescription>
           </DialogHeader>
 
           {/* Stats */}

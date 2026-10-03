@@ -72,7 +72,6 @@ _RECIPE_SCHEMA = _object(
           "title": _nullable(_STRING),
           "text": _STRING,
           "time_label": _nullable(_STRING),
-          "timer_minutes": _nullable(_INTEGER),
           "callouts": {
             "type": "array",
             "items": _object(
@@ -121,9 +120,8 @@ in note ("finely chopped", "or butter").
 title null.
 - Steps: one step per instruction in order. title is null unless the source itself gives the step a \
 heading; never make titles up, and drop the step number ("### 3. Fry the onions" → "Fry the onions"). \
-text may use light markdown. time_label is the step's duration as written, if any; timer_minutes is \
-set only for a real wait or cooking time a timer helps with (bake 25 min → 25; for a range use the \
-lower number: 25-30 min → 25), else null.
+text may use light markdown. time_label is the step's duration as written ("25-30 min"), if any, else \
+null.
 - Callouts: only text the source explicitly marks as a tip, note or warning (e.g. "Tips:", "Proffstips", \
 "Note:", a blockquote, or a separate "don't skip this" remark) becomes a callout on its step: "warning" \
 for mistakes to avoid, otherwise "tip". Keep the label if the text has one. Never turn an ordinary \
@@ -191,7 +189,6 @@ def _normalize(recipe: dict[str, Any]) -> dict[str, Any]:
         "title": title,
         "text": text,
         "time_label": _clean_text(step.get("time_label"), 100),
-        "timer_minutes": _positive_int(step.get("timer_minutes"), 1440),
         "callouts": callouts[:10],
       }
     )

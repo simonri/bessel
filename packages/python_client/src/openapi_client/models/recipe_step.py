@@ -22,14 +22,12 @@ class RecipeStep:
       title (None | str | Unset):
       text (str | Unset): Markdown. Default: ''.
       time_label (None | str | Unset): e.g. '5 min + 30 min i kyl'.
-      timer_minutes (int | None | Unset):
       callouts (list[RecipeCallout] | Unset):
   """
 
   title: None | str | Unset = UNSET
   text: str | Unset = ''
   time_label: None | str | Unset = UNSET
-  timer_minutes: int | None | Unset = UNSET
   callouts: list[RecipeCallout] | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -48,12 +46,6 @@ class RecipeStep:
     else:
       time_label = self.time_label
 
-    timer_minutes: int | None | Unset
-    if isinstance(self.timer_minutes, Unset):
-      timer_minutes = UNSET
-    else:
-      timer_minutes = self.timer_minutes
-
     callouts: list[dict[str, Any]] | Unset = UNSET
     if not isinstance(self.callouts, Unset):
       callouts = []
@@ -70,8 +62,6 @@ class RecipeStep:
       field_dict["text"] = text
     if time_label is not UNSET:
       field_dict["time_label"] = time_label
-    if timer_minutes is not UNSET:
-      field_dict["timer_minutes"] = timer_minutes
     if callouts is not UNSET:
       field_dict["callouts"] = callouts
 
@@ -103,15 +93,6 @@ class RecipeStep:
 
     time_label = _parse_time_label(d.pop("time_label", UNSET))
 
-    def _parse_timer_minutes(data: object) -> int | None | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(int | None | Unset, data)
-
-    timer_minutes = _parse_timer_minutes(d.pop("timer_minutes", UNSET))
-
     _callouts = d.pop("callouts", UNSET)
     callouts: list[RecipeCallout] | Unset = UNSET
     if _callouts is not UNSET:
@@ -125,7 +106,6 @@ class RecipeStep:
       title=title,
       text=text,
       time_label=time_label,
-      timer_minutes=timer_minutes,
       callouts=callouts,
     )
 

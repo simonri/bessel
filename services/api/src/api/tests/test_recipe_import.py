@@ -27,15 +27,14 @@ RECIPE: dict[str, Any] = {
     {"title": "Tom", "items": []},
   ],
   "steps": [
-    {"title": None, "text": "Vispa ihop allt.", "time_label": None, "timer_minutes": None, "callouts": []},
+    {"title": None, "text": "Vispa ihop allt.", "time_label": None, "callouts": []},
     {
       "title": None,
       "text": "Stek i smör.",
       "time_label": "2 min per sida",
-      "timer_minutes": 0,
       "callouts": [{"kind": "tip", "label": None, "text": "Låt smeten vila."}],
     },
-    {"title": "", "text": "", "time_label": None, "timer_minutes": None, "callouts": []},
+    {"title": "", "text": "", "time_label": None, "callouts": []},
   ],
   "sections": [],
 }
@@ -89,7 +88,7 @@ class TestRecipeImport:
       }
     ]
     assert [s["text"] for s in body["steps"]] == ["Vispa ihop allt.", "Stek i smör."]
-    assert body["steps"][1]["timer_minutes"] is None
+    assert body["steps"][1]["time_label"] == "2 min per sida"
     assert body["steps"][1]["callouts"] == [{"kind": "tip", "label": None, "text": "Låt smeten vila."}]
 
   @pytest.mark.asyncio

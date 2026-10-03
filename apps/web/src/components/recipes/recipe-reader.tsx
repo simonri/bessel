@@ -5,19 +5,10 @@ import type {
   RecipeStep,
   RecipeType,
 } from "@bessel/client";
-import {
-  AlertTriangle,
-  Clock,
-  Flame,
-  Lightbulb,
-  Timer,
-  Users,
-  X,
-} from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { AlertTriangle, Clock, Flame, Lightbulb, Users } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { describeRecipe, formatAmount, formatMinutes } from "./recipe-meta";
 import { RECIPE_TYPE_META, typeGradient, typeTint } from "./recipe-style";
@@ -69,7 +60,7 @@ function Prose({ text, className }: { text: string; className?: string }) {
 
 function SectionHeading({ children }: { children: ReactNode }) {
   return (
-    <h3 className="mb-2 flex items-center gap-2 text-11 font-semibold tracking-wide text-white/50 uppercase">
+    <h3 className="mb-2 flex items-center gap-2 text-13 font-semibold text-white/80">
       <span aria-hidden className="size-1.5 rounded-full bg-primary-400" />
       {children}
     </h3>
@@ -194,189 +185,21 @@ function Callout({ callout }: { callout: RecipeCallout }) {
   );
 }
 
-const TICK_MS = 1000;
-const DONE_FLASH_MS = 4000;
-
-function formatRemaining(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function notifyTimerDone(label: string) {
-  toast(`⏰ Timer done: ${label}`);
-  try {
-    if ("Notification" in window && Notification.permission === "granted")
-      new Notification("Timer done", { body: label });
-  } catch {
-    // Notifications are a nicety; the toast already said it.
-  }
-}
-
-function askNotificationPermission() {
-  try {
-    if ("Notification" in window && Notification.permission === "default")
-      void Notification.requestPermission().catch(() => {});
-  } catch {}
-}
-
-/** Countdown timers per step; several can run at once. */
-function useStepTimers(labelFor: (index: number) => string) {
-  const [endsAt, setEndsAt] = useState<Record<number, number>>({});
-  const [justDone, setJustDone] = useState<ReadonlySet<number>>(new Set());
-  const [now, setNow] = useState(() => Date.now());
-  const endsAtRef = useRef(endsAt);
-  endsAtRef.current = endsAt;
-  const labelRef = useRef(labelFor);
-  labelRef.current = labelFor;
-  const flashTimers = useRef<number[]>([]);
-  const running = Object.keys(endsAt).length > 0;
-
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => {
-      const t = Date.now();
-      setNow(t);
-      const finished = Object.entries(endsAtRef.current)
-        .filter(([, end]) => end <= t)
-        .map(([index]) => Number(index));
-      if (finished.length === 0) return;
-      setEndsAt((prev) => {
-        const next = { ...prev };
-        for (const index of finished) delete next[index];
-        return next;
-      });
-      setJustDone((prev) => new Set([...prev, ...finished]));
-      for (const index of finished) {
-        notifyTimerDone(labelRef.current(index));
-        flashTimers.current.push(
-          window.setTimeout(
-            () =>
-              setJustDone((prev) => {
-                const next = new Set(prev);
-                next.delete(index);
-                return next;
-              }),
-            DONE_FLASH_MS,
-          ),
-        );
-      }
-    }, TICK_MS);
-    return () => window.clearInterval(id);
-  }, [running]);
-
-  useEffect(
-    () => () => {
-      for (const id of flashTimers.current) window.clearTimeout(id);
-    },
-    [],
-  );
-
-  return {
-    remaining: (index: number) =>
-      endsAt[index] != null ? endsAt[index] - now : null,
-    justDone: (index: number) => justDone.has(index),
-    start: (index: number, minutes: number) => {
-      askNotificationPermission();
-      const t = Date.now();
-      setNow(t);
-      setEndsAt((prev) => ({ ...prev, [index]: t + minutes * 60_000 }));
-    },
-    cancel: (index: number) =>
-      setEndsAt((prev) => {
-        const { [index]: _, ...rest } = prev;
-        return rest;
-      }),
-  };
-}
-
-function StepTimer({
-  minutes,
-  label,
-  remaining,
-  done,
-  onStart,
-  onCancel,
-}: {
-  minutes: number;
-  /** The step's own time text ("30–40 min"); the timer still runs `minutes`. */
-  label?: string | null;
-  remaining: number | null;
-  done: boolean;
-  onStart: () => void;
-  onCancel: () => void;
-}) {
-  if (remaining !== null) {
-    return (
-      <span className="inline-flex h-6 items-center gap-1 rounded-full bg-primary-500/20 pr-0.5 pl-2 text-11 font-medium text-primary-200 tabular-nums ring-1 ring-primary-400/25">
-        <Timer className="size-3 motion-safe:animate-pulse" />
-        {formatRemaining(remaining)}
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label="Cancel timer"
-          className="flex size-5 items-center justify-center rounded-full text-primary-200/70 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <X className="size-3" />
-        </button>
-      </span>
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={onStart}
-      title={`Start a ${minutes} min timer`}
-      className={cn(
-        "inline-flex h-6 items-center gap-1 rounded-full px-2 text-11 font-medium transition-colors",
-        done
-          ? "bg-primary-500/25 text-primary-200 motion-safe:animate-pulse"
-          : "bg-white/[0.06] text-white/60 hover:bg-primary-500/15 hover:text-primary-200",
-      )}
-    >
-      <Timer className="size-3" />
-      {done ? "Done!" : (label ?? `${minutes} min`)}
-    </button>
-  );
-}
-
-function Step({
-  step,
-  number,
-  timer,
-}: {
-  step: RecipeStep;
-  number: number;
-  timer: ReturnType<typeof useStepTimers>;
-}) {
-  const index = number - 1;
+function Step({ step, number }: { step: RecipeStep; number: number }) {
   return (
     <li className="flex gap-3">
       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500/15 text-11 font-semibold text-primary-300">
         {number}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">
-        {(step.title || step.time_label || step.timer_minutes) && (
+        {(step.title || step.time_label) && (
           <div className="flex flex-wrap items-center gap-1.5">
             {step.title && (
               <span className="font-medium text-white/90">{step.title}</span>
             )}
-            {step.time_label && !step.timer_minutes && (
-              <span className="inline-flex h-5 items-center rounded-full bg-white/[0.05] px-2 text-11 text-white/50">
-                {step.time_label}
-              </span>
+            {step.time_label && (
+              <MetaChip icon={Clock}>{step.time_label}</MetaChip>
             )}
-            {step.timer_minutes ? (
-              <StepTimer
-                minutes={step.timer_minutes}
-                label={step.time_label}
-                remaining={timer.remaining(index)}
-                done={timer.justDone(index)}
-                onStart={() => timer.start(index, step.timer_minutes ?? 0)}
-                onCancel={() => timer.cancel(index)}
-              />
-            ) : null}
           </div>
         )}
         {step.text && <Prose text={step.text} />}
@@ -399,7 +222,7 @@ function isEmpty(body: RecipeBody): boolean {
 }
 
 /** A recipe laid out for cooking from: a soft header, tickable
- *  ingredients, numbered steps with timers, tips and extra notes. */
+ *  ingredients, numbered steps, tips and extra notes. */
 export function RecipeReader({
   title,
   type,
@@ -417,10 +240,6 @@ export function RecipeReader({
   const steps = body.steps ?? [];
   const sections = body.sections ?? [];
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
-  const timer = useStepTimers((index) => {
-    const step = steps[index];
-    return step?.title || `Step ${index + 1}`;
-  });
 
   const toggle = (key: string) =>
     setTicked((prev) => {
@@ -521,7 +340,6 @@ export function RecipeReader({
                     key={i}
                     step={step}
                     number={i + 1}
-                    timer={timer}
                   />
                 ))}
               </ol>
