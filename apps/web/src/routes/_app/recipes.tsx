@@ -3,6 +3,7 @@ import {
   deleteRecipeV1RecipesRecipeIdDeleteMutation,
   listRecipesV1RecipesGetOptions,
   listRecipesV1RecipesGetQueryKey,
+  type RecipeBody,
   type RecipeSchema,
   type RecipeType,
   updateRecipeV1RecipesRecipeIdPatchMutation,
@@ -20,8 +21,13 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import {
+  cleanRecipeBody,
+  emptyRecipeBody,
+  RecipeEditor,
+} from "@/components/recipes/recipe-editor";
 import { RecipeGallery } from "@/components/recipes/recipe-gallery";
-import { NEW_RECIPE_TEMPLATE } from "@/components/recipes/recipe-meta";
+import { matchesRecipe } from "@/components/recipes/recipe-meta";
 import { RecipeReader } from "@/components/recipes/recipe-reader";
 import {
   RECIPE_TYPE_META,
@@ -106,7 +112,7 @@ function Recipes() {
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [draft, setDraft] = useState<{
     title: string;
-    content: string;
+    body: RecipeBody;
     recipe_type: RecipeType;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecipeSchema | null>(null);
@@ -123,29 +129,31 @@ function Recipes() {
   );
 
   const recipes = data?.items ?? [];
-  const query = search.trim().toLowerCase();
+  const query = search.trim();
   const filtered = recipes.filter(
     (r) =>
       (!typeFilter || r.recipe_type === typeFilter) &&
-      (!query ||
-        r.title.toLowerCase().includes(query) ||
-        r.content.toLowerCase().includes(query)),
+      (!query || matchesRecipe(r, query)),
   );
 
   const selected = recipes.find((r) => r.id === selectedId) ?? null;
 
-  // Sync draft when selection changes
+  // Load the draft when a recipe opens — not on every save: the server
+  // returns the cleaned body, which would wipe rows still being filled in.
+  const selectedKey = selected?.id ?? null;
   useEffect(() => {
-    if (selected) {
-      setDraft({
-        title: selected.title,
-        content: selected.content,
-        recipe_type: selected.recipe_type,
-      });
-    } else {
+    if (!selected) {
       setDraft(null);
+      return;
     }
-  }, [selectedId, selected?.modified_at]);
+    const { body } = selected;
+    const blank = !body.ingredient_groups?.length && !body.steps?.length;
+    setDraft({
+      title: selected.title,
+      body: blank ? { ...body, ...emptyRecipeBody() } : body,
+      recipe_type: selected.recipe_type,
+    });
+  }, [selectedKey]);
 
   const createMutation = useMutation({
     ...createRecipeV1RecipesPostMutation({ client }),
@@ -174,13 +182,13 @@ function Recipes() {
   });
 
   // Debounced auto-save
-  const scheduleSave = (id: string, title: string, content: string) => {
+  const scheduleSave = (id: string, title: string, body: RecipeBody) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       updateMutation.mutate({
         client,
         path: { recipe_id: id },
-        body: { title, content },
+        body: { title, body: cleanRecipeBody(body) },
       });
     }, 1000);
   };
@@ -189,14 +197,14 @@ function Recipes() {
     if (!draft || !selectedId) return;
     const next = { ...draft, title: value };
     setDraft(next);
-    scheduleSave(selectedId, next.title, next.content);
+    scheduleSave(selectedId, next.title, next.body);
   };
 
-  const handleContentChange = (value: string) => {
+  const handleBodyChange = (value: RecipeBody) => {
     if (!draft || !selectedId) return;
-    const next = { ...draft, content: value };
+    const next = { ...draft, body: value };
     setDraft(next);
-    scheduleSave(selectedId, next.title, next.content);
+    scheduleSave(selectedId, next.title, next.body);
   };
 
   const handleTypeChange = (value: RecipeType) => {
@@ -214,7 +222,7 @@ function Recipes() {
       client,
       body: {
         title: "",
-        content: NEW_RECIPE_TEMPLATE,
+        body: cleanRecipeBody(emptyRecipeBody()),
         ...(typeFilter ? { recipe_type: typeFilter } : {}),
       },
     });
@@ -399,19 +407,13 @@ function Recipes() {
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               {mode === "edit" ? (
-                <textarea
-                  value={draft.content}
-                  onChange={(e) => handleContentChange(e.target.value)}
-                  aria-label="Recipe"
-                  placeholder="List ingredients with - and steps with 1. 2. 3. …"
-                  className="block h-full w-full resize-none bg-transparent px-5 py-4 font-mono text-13 leading-relaxed text-white/80 outline-none placeholder:text-white/25"
-                />
+                <RecipeEditor value={draft.body} onChange={handleBodyChange} />
               ) : (
                 <RecipeReader
                   key={selected.id}
                   title={draft.title}
                   type={draft.recipe_type}
-                  content={draft.content}
+                  body={draft.body}
                 />
               )}
             </div>

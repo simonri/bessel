@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.recipe_type import RecipeType
+
+if TYPE_CHECKING:
+  from ..models.recipe_body import RecipeBody
+
 
 T = TypeVar("T", bound="RecipeSchema")
 
@@ -22,6 +26,7 @@ class RecipeSchema:
       title (str):
       content (str):
       recipe_type (RecipeType):
+      body (RecipeBody):
   """
 
   created_at: datetime.datetime
@@ -30,6 +35,7 @@ class RecipeSchema:
   title: str
   content: str
   recipe_type: RecipeType
+  body: RecipeBody
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -49,6 +55,8 @@ class RecipeSchema:
 
     recipe_type = self.recipe_type.value
 
+    body = self.body.to_dict()
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -59,6 +67,7 @@ class RecipeSchema:
         "title": title,
         "content": content,
         "recipe_type": recipe_type,
+        "body": body,
       }
     )
 
@@ -66,6 +75,8 @@ class RecipeSchema:
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.recipe_body import RecipeBody
+
     d = dict(src_dict)
     created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
@@ -92,6 +103,8 @@ class RecipeSchema:
 
     recipe_type = RecipeType(d.pop("recipe_type"))
 
+    body = RecipeBody.from_dict(d.pop("body"))
+
     recipe_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -99,6 +112,7 @@ class RecipeSchema:
       title=title,
       content=content,
       recipe_type=recipe_type,
+      body=body,
     )
 
     recipe_schema.additional_properties = d

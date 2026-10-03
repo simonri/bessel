@@ -4600,6 +4600,120 @@ export const ProjectUpdateSchema = {
   title: "ProjectUpdate",
 } as const;
 
+export const RecipeBodySchema = {
+  properties: {
+    intro: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Intro",
+    },
+    yield_text: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Yield Text",
+      description: "e.g. '3 burgare (6 puckar à ca 85 g)'.",
+    },
+    total_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 10080,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Total Minutes",
+    },
+    active_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 10080,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Active Minutes",
+    },
+    ingredient_groups: {
+      items: {
+        $ref: "#/components/schemas/RecipeIngredientGroup",
+      },
+      type: "array",
+      maxItems: 30,
+      title: "Ingredient Groups",
+    },
+    steps: {
+      items: {
+        $ref: "#/components/schemas/RecipeStep",
+      },
+      type: "array",
+      maxItems: 100,
+      title: "Steps",
+    },
+    sections: {
+      items: {
+        $ref: "#/components/schemas/RecipeSection",
+      },
+      type: "array",
+      maxItems: 20,
+      title: "Sections",
+    },
+  },
+  type: "object",
+  title: "RecipeBody",
+} as const;
+
+export const RecipeCalloutSchema = {
+  properties: {
+    kind: {
+      type: "string",
+      enum: ["tip", "warning"],
+      title: "Kind",
+      default: "tip",
+    },
+    label: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Label",
+      description: "e.g. 'Proffstips'.",
+    },
+    text: {
+      type: "string",
+      maxLength: 2000,
+      title: "Text",
+    },
+  },
+  type: "object",
+  required: ["text"],
+  title: "RecipeCallout",
+} as const;
+
 export const RecipeCreateSchema = {
   properties: {
     title: {
@@ -4615,10 +4729,99 @@ export const RecipeCreateSchema = {
       $ref: "#/components/schemas/RecipeType",
       default: "other",
     },
+    body: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecipeBody",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
   },
   type: "object",
   required: ["title"],
   title: "RecipeCreate",
+} as const;
+
+export const RecipeIngredientSchema = {
+  properties: {
+    amount: {
+      anyOf: [
+        {
+          type: "number",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Amount",
+      description: "Quantity, e.g. 1.5 for 1½.",
+    },
+    unit: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 30,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Unit",
+    },
+    name: {
+      type: "string",
+      maxLength: 300,
+      minLength: 1,
+      title: "Name",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "Preparation or alternatives, e.g. 'grovhackade'.",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "RecipeIngredient",
+} as const;
+
+export const RecipeIngredientGroupSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    items: {
+      items: {
+        $ref: "#/components/schemas/RecipeIngredient",
+      },
+      type: "array",
+      maxItems: 100,
+      title: "Items",
+    },
+  },
+  type: "object",
+  title: "RecipeIngredientGroup",
 } as const;
 
 export const RecipeListResponseSchema = {
@@ -4677,6 +4880,9 @@ export const RecipeSchemaSchema = {
     recipe_type: {
       $ref: "#/components/schemas/RecipeType",
     },
+    body: {
+      $ref: "#/components/schemas/RecipeBody",
+    },
   },
   type: "object",
   required: [
@@ -4686,8 +4892,29 @@ export const RecipeSchemaSchema = {
     "title",
     "content",
     "recipe_type",
+    "body",
   ],
   title: "RecipeSchema",
+} as const;
+
+export const RecipeSectionSchema = {
+  properties: {
+    title: {
+      type: "string",
+      maxLength: 200,
+      title: "Title",
+    },
+    text: {
+      type: "string",
+      maxLength: 10000,
+      title: "Text",
+      description: "Markdown.",
+      default: "",
+    },
+  },
+  type: "object",
+  required: ["title"],
+  title: "RecipeSection",
 } as const;
 
 export const RecipeSortPropertySchema = {
@@ -4701,6 +4928,66 @@ export const RecipeSortPropertySchema = {
     "-modified_at",
   ],
   title: "RecipeSortProperty",
+} as const;
+
+export const RecipeStepSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    text: {
+      type: "string",
+      maxLength: 5000,
+      title: "Text",
+      description: "Markdown.",
+      default: "",
+    },
+    time_label: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Label",
+      description: "e.g. '5 min + 30 min i kyl'.",
+    },
+    timer_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 1440,
+          minimum: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Timer Minutes",
+    },
+    callouts: {
+      items: {
+        $ref: "#/components/schemas/RecipeCallout",
+      },
+      type: "array",
+      maxItems: 10,
+      title: "Callouts",
+    },
+  },
+  type: "object",
+  title: "RecipeStep",
 } as const;
 
 export const RecipeTypeSchema = {
@@ -4737,6 +5024,16 @@ export const RecipeUpdateSchema = {
       anyOf: [
         {
           $ref: "#/components/schemas/RecipeType",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    body: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecipeBody",
         },
         {
           type: "null",

@@ -122,10 +122,17 @@ from .project_create import ProjectCreate
 from .project_location_update import ProjectLocationUpdate
 from .project_schema import ProjectSchema
 from .project_update import ProjectUpdate
+from .recipe_body import RecipeBody
+from .recipe_callout import RecipeCallout
+from .recipe_callout_kind import RecipeCalloutKind
 from .recipe_create import RecipeCreate
+from .recipe_ingredient import RecipeIngredient
+from .recipe_ingredient_group import RecipeIngredientGroup
 from .recipe_list_response import RecipeListResponse
 from .recipe_schema import RecipeSchema
+from .recipe_section import RecipeSection
 from .recipe_sort_property import RecipeSortProperty
+from .recipe_step import RecipeStep
 from .recipe_type import RecipeType
 from .recipe_update import RecipeUpdate
 from .recurrence_schema import RecurrenceSchema
@@ -291,10 +298,17 @@ __all__ = (
   "ProjectLocationUpdate",
   "ProjectSchema",
   "ProjectUpdate",
+  "RecipeBody",
+  "RecipeCallout",
+  "RecipeCalloutKind",
   "RecipeCreate",
+  "RecipeIngredient",
+  "RecipeIngredientGroup",
   "RecipeListResponse",
   "RecipeSchema",
+  "RecipeSection",
   "RecipeSortProperty",
+  "RecipeStep",
   "RecipeType",
   "RecipeUpdate",
   "RecurrenceSchema",
