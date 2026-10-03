@@ -107,7 +107,10 @@ function assertUvAvailable(): void {
   );
 }
 
-function resolvePayloadSrcDir(resourceName: string, devRelativeDir: string): string {
+function resolvePayloadSrcDir(
+  resourceName: string,
+  devRelativeDir: string,
+): string {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, resourceName);
   }
@@ -161,6 +164,11 @@ function replaceRetiredApiBaseUrl(filePath: string, key: string): void {
 // everything a daemon pushes to that user.
 const INGEST_TOKEN_PATTERN = /^bsl_[A-Za-z0-9_-]{32,64}$/;
 
+/** Installs from before per-user ingest tokens carry a key the API rejects. */
+function hasIngestToken(envPath: string, key: string): boolean {
+  return INGEST_TOKEN_PATTERN.test(parseEnvFile(envPath)[key] ?? "");
+}
+
 function assertIngestToken(token: unknown): asserts token is string {
   if (typeof token !== "string" || !INGEST_TOKEN_PATTERN.test(token)) {
     throw new Error("Invalid ingest token");
@@ -183,7 +191,8 @@ function upsertEnvVars(filePath: string, vars: Record<string, string>): void {
     pending.delete(name);
     return `${name}=${value}`;
   });
-  while (updated.length > 0 && updated[updated.length - 1] === "") updated.pop();
+  while (updated.length > 0 && updated[updated.length - 1] === "")
+    updated.pop();
   for (const [name, value] of pending) updated.push(`${name}=${value}`);
   fs.writeFileSync(filePath, `${updated.join("\n")}\n`, { mode: 0o600 });
   fs.chmodSync(filePath, 0o600);
@@ -213,6 +222,9 @@ export function registerServiceInstallerHandlers(): void {
     const idle = base.active ? readMonitorIdleStatus() : null;
     return {
       ...base,
+      needsConfig:
+        base.installed &&
+        !hasIngestToken(LEGACY_MONITOR_ENV, "METRON_INTERNAL_API_KEY"),
       idleSource: idle?.idle_source ?? null,
       idleWarning: idle?.warning ?? null,
     };
@@ -251,10 +263,11 @@ export function registerServiceInstallerHandlers(): void {
   // ─── agent usage collector ──────────────────────────────────────────────
   ipcHandle("collector:status", async () => {
     const base = await queryUnitStatus("agent-usage-collector.timer");
-    const env = parseEnvFile(COLLECTOR_ENV);
     return {
       ...base,
-      needsConfig: base.installed && !env.BESSEL_INTERNAL_API_KEY,
+      needsConfig:
+        base.installed &&
+        !hasIngestToken(COLLECTOR_ENV, "BESSEL_INTERNAL_API_KEY"),
       envPath: COLLECTOR_ENV,
     };
   });
@@ -262,9 +275,7 @@ export function registerServiceInstallerHandlers(): void {
   ipcHandle("collector:install", async (_, ingestToken: unknown) => {
     assertIngestToken(ingestToken);
     assertUvAvailable();
-    copyFiles(collectorSrcDir, collectorPayloadDir, [
-      "collect_agent_usage.py",
-    ]);
+    copyFiles(collectorSrcDir, collectorPayloadDir, ["collect_agent_usage.py"]);
     ensureCollectorEnvFile();
     upsertEnvVars(COLLECTOR_ENV, { BESSEL_INTERNAL_API_KEY: ingestToken });
     replaceRetiredApiBaseUrl(COLLECTOR_ENV, "BESSEL_API_BASE_URL");

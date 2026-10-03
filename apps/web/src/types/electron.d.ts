@@ -167,6 +167,7 @@ declare global {
           enabled: boolean;
           failed: boolean;
           state: string;
+          needsConfig: boolean;
           idleSource: string | null;
           idleWarning: string | null;
         }>;

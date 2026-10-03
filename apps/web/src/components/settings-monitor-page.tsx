@@ -15,6 +15,7 @@ type MonitorStatusResult = {
   enabled: boolean;
   failed: boolean;
   state: string;
+  needsConfig: boolean;
   idleSource: string | null;
   idleWarning: string | null;
 };
@@ -39,6 +40,7 @@ export function MonitorPage() {
             prev.enabled === s.enabled &&
             prev.failed === s.failed &&
             prev.state === s.state &&
+            prev.needsConfig === s.needsConfig &&
             prev.idleSource === s.idleSource &&
             prev.idleWarning === s.idleWarning
               ? prev
@@ -78,16 +80,20 @@ export function MonitorPage() {
 
   const dotTone = status.failed
     ? "error"
-    : status.active
-      ? "active"
-      : "neutral";
+    : status.needsConfig
+      ? "warning"
+      : status.active
+        ? "active"
+        : "neutral";
   const stateLabel = !status.installed
     ? "Not installed"
-    : status.failed
-      ? "Failed"
-      : status.active
-        ? "Running"
-        : "Stopped";
+    : status.needsConfig
+      ? "Needs configuration"
+      : status.failed
+        ? "Failed"
+        : status.active
+          ? "Running"
+          : "Stopped";
 
   return (
     <div className="space-y-5">
@@ -135,6 +141,12 @@ export function MonitorPage() {
             </>
           )}
         </Panel>
+        {status.needsConfig && (
+          <p className="mt-2.5 text-12 text-amber-300/80">
+            This machine isn't connected to your account yet. Reinstall to
+            connect it.
+          </p>
+        )}
         {status.active && status.idleWarning && (
           <p className="mt-2.5 text-12 text-amber-300/80">
             {status.idleWarning}
