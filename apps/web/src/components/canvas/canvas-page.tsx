@@ -7,6 +7,7 @@ import {
 } from "react-grid-layout";
 import { useSettings } from "@/hooks/use-settings";
 import { CanvasDock } from "./canvas-dock";
+import { CanvasEmptyState } from "./canvas-empty-state";
 import { setFocusedWindow } from "./canvas-focus";
 import { useFullscreenWindowId, useInstantWindowId } from "./canvas-fullscreen";
 import { CanvasWindow } from "./canvas-window";
@@ -284,7 +285,7 @@ export function CanvasPage() {
     <div className="flex h-full flex-col">
       <div
         ref={containerRef}
-        className="min-h-0 flex-1 overflow-hidden px-2 py-2 animate-in fade-in duration-300 ease-out"
+        className="relative min-h-0 flex-1 overflow-hidden px-2 py-2 animate-in fade-in duration-300 ease-out"
       >
         {mounted &&
           workspaces.map((ws) => (
@@ -300,6 +301,7 @@ export function CanvasPage() {
               gap={gap}
             />
           ))}
+        {mounted && <CanvasEmptyState />}
       </div>
       <CanvasDock />
     </div>

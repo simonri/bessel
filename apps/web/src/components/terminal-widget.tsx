@@ -29,6 +29,11 @@ interface TerminalWidgetProps {
    *  report via WindowStatusContext. Only meaningful for TUI agent CLIs
    *  (Claude, ...) that use this convention — not a generic shell. */
   detectAgentStatus?: boolean;
+  /** Don't show the program's OSC window title as the window subtitle. */
+  ignoreTitle?: boolean;
+  /** Swallow Ctrl+Z: with no shell to return to, a suspended program would
+   *  just freeze the terminal. */
+  blockSuspend?: boolean;
 }
 
 // A command is only sent once the PTY has been quiet for this long — i.e. the
@@ -70,6 +75,8 @@ export function TerminalWidget({
   taskDropZone = false,
   commands = [],
   detectAgentStatus = false,
+  ignoreTitle = false,
+  blockSuspend = false,
 }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -226,6 +233,14 @@ export function TerminalWidget({
 
     terminal.attachCustomKeyEventHandler((e) => {
       if (
+        blockSuspend &&
+        e.ctrlKey &&
+        !e.shiftKey &&
+        !e.altKey &&
+        e.code === "KeyZ"
+      )
+        return false;
+      if (
         e.type === "keydown" &&
         e.ctrlKey &&
         e.shiftKey &&
@@ -311,6 +326,7 @@ export function TerminalWidget({
         if (status) setWindowStatusRef.current?.(status);
         return;
       }
+      if (ignoreTitle) return;
       setWindowTitleRef.current?.(title || null);
     });
 
@@ -371,7 +387,7 @@ export function TerminalWidget({
       terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
     };
-    // mount/unmount only — command/args/cwd/commands/detectAgentStatus are
+    // mount/unmount only — command/args/cwd/commands and the flags are
     // captured here or in spawnConfig ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

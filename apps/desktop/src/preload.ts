@@ -1,4 +1,10 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type {
+  ClaudeConversation,
+  ClaudeSessionsSnapshot,
+  ClaudeSessionView,
+  CreateClaudeSessionInput,
+} from "./claude-sessions-types.js";
 import type { PortEntry } from "./ports.js";
 import type {
   VaultChangedEvent,
@@ -108,6 +114,28 @@ contextBridge.exposeInMainWorld("electron", {
         (_sid, code) => callback(code),
         (sid) => sid === sessionId,
       ),
+  },
+  claudeSessions: {
+    snapshot: (): Promise<ClaudeSessionsSnapshot> =>
+      ipcRenderer.invoke("claudeSessions:snapshot"),
+    create: (input: CreateClaudeSessionInput): Promise<ClaudeSessionView> =>
+      ipcRenderer.invoke("claudeSessions:create", input),
+    resume: (key: string): Promise<ClaudeSessionView> =>
+      ipcRenderer.invoke("claudeSessions:resume", key),
+    end: (key: string): Promise<void> =>
+      ipcRenderer.invoke("claudeSessions:end", key),
+    remove: (key: string): Promise<void> =>
+      ipcRenderer.invoke("claudeSessions:remove", key),
+    adopt: (bgId: string, projectId?: string): Promise<ClaudeSessionView> =>
+      ipcRenderer.invoke("claudeSessions:adopt", bgId, projectId),
+    remoteUrl: (key: string): Promise<string | null> =>
+      ipcRenderer.invoke("claudeSessions:remoteUrl", key),
+    conversations: (cwd: string): Promise<ClaudeConversation[]> =>
+      ipcRenderer.invoke("claudeSessions:conversations", cwd),
+    onChanged: (callback: (snapshot: ClaudeSessionsSnapshot) => void) =>
+      subscribe<[ClaudeSessionsSnapshot]>("claudeSessions:changed", callback),
+    onOpenRequested: (callback: (key: string) => void) =>
+      subscribe<[string]>("claudeSessions:open", callback),
   },
   monitor: {
     status: () => ipcRenderer.invoke("monitor:status"),

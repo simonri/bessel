@@ -32,16 +32,22 @@ export function useWindowAgentStatus(id: string): AgentStatus | null {
   );
 }
 
-/** Rolls a set of windows up to one status: any agent still working wins over
- *  all of them sitting free; null when none of them has reported. */
+const PRIORITY: Record<AgentStatus, number> = {
+  free: 1,
+  waiting: 2,
+  working: 3,
+};
+
+/** Rolls a set of windows up to one status — working over waiting over
+ *  free; null when none of them has reported. */
 export function aggregateAgentStatus(
   windowIds: readonly string[],
 ): AgentStatus | null {
   let result: AgentStatus | null = null;
   for (const id of windowIds) {
     const status = statuses.get(id);
-    if (status === "working") return "working";
-    if (status === "free") result = "free";
+    if (status && (!result || PRIORITY[status] > PRIORITY[result]))
+      result = status;
   }
   return result;
 }

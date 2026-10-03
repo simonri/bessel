@@ -68,6 +68,9 @@ export interface WorkspaceMeta {
   name?: string;
   /** Project (API id) this session lives under; absent for unassigned canvases. */
   projectId?: string;
+  /** Opened just to show background Claude sessions — it goes away once its
+   *  last window closes, since the sessions themselves live on elsewhere. */
+  closeWhenEmpty?: true;
 }
 
 export function workspaceLabel(ws: WorkspaceMeta): string {
@@ -96,6 +99,7 @@ export interface SessionInit {
   name?: string;
   /** Windows opened into the fresh canvas, tiled evenly across the viewport. */
   specs: WindowSpec[];
+  closeWhenEmpty?: boolean;
 }
 
 // Split into four contexts so consumers only re-render for the state they
@@ -184,9 +188,10 @@ export function useWindowTitle() {
 }
 
 /** Whether an agent CLI (Claude, ...) running inside a terminal widget is
- *  currently generating a response ("working") or sitting at a prompt
- *  ("free"). Null means no signal yet (not detected, or not applicable). */
-export type AgentStatus = "working" | "free";
+ *  currently generating a response ("working"), blocked on the user
+ *  ("waiting"), or sitting at a prompt ("free"). Null means no signal yet
+ *  (not detected, or not applicable). */
+export type AgentStatus = "working" | "waiting" | "free";
 
 export const WindowStatusContext = createContext<
   ((status: AgentStatus | null) => void) | null
@@ -380,6 +385,30 @@ function parseWindows(raw: unknown[], workspaceId: string): WindowEntry[] {
   return changed ? withEngineBoxes(windows, items) : windows;
 }
 
+/** Drops `closeWhenEmpty` workspaces left without windows (keeping at least one). */
+function pruneEmptied(
+  state: LoadedState,
+  sourceIds: readonly string[],
+): LoadedState {
+  const emptied = new Set(
+    sourceIds.filter(
+      (id) =>
+        state.workspaces.find((ws) => ws.id === id)?.closeWhenEmpty &&
+        !state.windows.some((w) => w.workspaceId === id),
+    ),
+  );
+  if (emptied.size === 0) return state;
+  const remaining = state.workspaces.filter((ws) => !emptied.has(ws.id));
+  if (remaining.length === 0) return state;
+  return {
+    ...state,
+    workspaces: remaining,
+    activeWorkspaceId: emptied.has(state.activeWorkspaceId)
+      ? remaining[remaining.length - 1].id
+      : state.activeWorkspaceId,
+  };
+}
+
 interface LoadedState {
   workspaces: WorkspaceMeta[];
   windows: WindowEntry[];
@@ -396,6 +425,7 @@ function loadState(): LoadedState {
           id: string;
           name?: unknown;
           projectId?: unknown;
+          closeWhenEmpty?: unknown;
           windows: StoredWindow[];
         }>;
         activeWorkspaceId: string;
@@ -407,15 +437,22 @@ function loadState(): LoadedState {
             meta.name = ws.name;
           if (typeof ws.projectId === "string" && ws.projectId)
             meta.projectId = ws.projectId;
+          if (ws.closeWhenEmpty === true) meta.closeWhenEmpty = true;
           return meta;
         });
         const windows = parsed.workspaces.flatMap((ws) =>
           parseWindows(ws.windows ?? [], ws.id),
         );
+        // Unnamed sessions left with nothing in them are leftovers, not
+        // something to come back to — they only clutter the sidebar.
+        const kept = workspaces.filter(
+          (ws) => ws.name || windows.some((w) => w.workspaceId === ws.id),
+        );
+        const live = kept.length > 0 ? kept : [workspaces[0]];
         const activeId =
-          workspaces.find((ws) => ws.id === parsed.activeWorkspaceId)?.id ??
-          workspaces[0].id;
-        return { workspaces, windows, activeWorkspaceId: activeId };
+          live.find((ws) => ws.id === parsed.activeWorkspaceId)?.id ??
+          live[live.length - 1].id;
+        return { workspaces: live, windows, activeWorkspaceId: activeId };
       }
     }
   } catch {}
@@ -511,6 +548,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
           id: ws.id,
           ...(ws.name ? { name: ws.name } : {}),
           ...(ws.projectId ? { projectId: ws.projectId } : {}),
+          ...(ws.closeWhenEmpty ? { closeWhenEmpty: true } : {}),
           windows: current.windows
             .filter((w) => w.workspaceId === ws.id)
             .map((win) => ({
@@ -613,10 +651,14 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
 
   const closeWindow = useCallback(
     (id: string) => {
-      commit((prev) => ({
-        ...prev,
-        windows: prev.windows.filter((w) => w.id !== id),
-      }));
+      commit((prev) => {
+        const closing = prev.windows.find((w) => w.id === id);
+        if (!closing) return prev;
+        return pruneEmptied(
+          { ...prev, windows: prev.windows.filter((w) => w.id !== id) },
+          [closing.workspaceId],
+        );
+      });
     },
     [commit],
   );
@@ -731,14 +773,19 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
         toast.warning("No room in that workspace — free up space there first");
         return false;
       }
-      commit((p) => ({
-        ...p,
-        windows: p.windows.map((w) =>
-          w.id === windowId
-            ? { ...w, workspaceId: targetWorkspaceId, ...placed }
-            : w,
+      commit((p) =>
+        pruneEmptied(
+          {
+            ...p,
+            windows: p.windows.map((w) =>
+              w.id === windowId
+                ? { ...w, workspaceId: targetWorkspaceId, ...placed }
+                : w,
+            ),
+          },
+          [moving.workspaceId],
         ),
-      }));
+      );
       setFlashWorkspace((prev) => ({
         id: targetWorkspaceId,
         seq: (prev?.seq ?? 0) + 1,
@@ -808,7 +855,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   }, [commit]);
 
   const createSession = useCallback(
-    ({ projectId, name, specs }: SessionInit): string => {
+    ({ projectId, name, specs, closeWhenEmpty }: SessionInit): string => {
       const id = newId();
       const tiles = tileEvenly(
         specs.length,
@@ -826,6 +873,7 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       const trimmed = name?.trim();
       if (trimmed) meta.name = trimmed;
       if (projectId) meta.projectId = projectId;
+      if (closeWhenEmpty && specs.length > 0) meta.closeWhenEmpty = true;
       commit((prev) => ({
         workspaces: [...prev.workspaces, meta],
         windows: [...prev.windows, ...added],
@@ -890,7 +938,8 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
           ...prev,
           workspaces: prev.workspaces.map((ws) => {
             if (ws.id !== id) return ws;
-            const { name: _dropped, ...rest } = ws;
+            // Named by the user, it's theirs to keep even when emptied.
+            const { name: _dropped, closeWhenEmpty: _kept, ...rest } = ws;
             return trimmed ? { ...rest, name: trimmed } : rest;
           }),
         };

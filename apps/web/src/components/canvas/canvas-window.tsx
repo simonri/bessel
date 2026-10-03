@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
 import {
@@ -19,9 +20,22 @@ import {
   Maximize2,
   Minimize2,
   MoreHorizontal,
+  Power,
+  Smartphone,
   X,
 } from "lucide-react";
 import { memo, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  isLive,
+  useClaudeSession,
+} from "@/components/claude-sessions/claude-sessions-store";
+import { RemoteLinkPopover } from "@/components/claude-sessions/remote-link-popover";
+import {
+  STATUS_DOT_TITLE,
+  StatusDot,
+} from "@/components/claude-sessions/status-dot";
+import { useEndClaudeSession } from "@/components/claude-sessions/use-end-session";
+import { CLAUDE_SESSION_KEY } from "@/components/claude-sessions/use-open-claude-session";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import { client } from "@/lib/client";
@@ -56,15 +70,10 @@ import {
 } from "./window-manager";
 
 function AgentStatusIndicator({ status }: { status: AgentStatus }) {
-  const isWorking = status === "working";
   return (
-    <span
-      title={isWorking ? "Working" : "Free"}
-      className={cn(
-        "size-1.5 shrink-0 rounded-full",
-        isWorking ? "bg-amber-400 animate-pulse" : "bg-emerald-400",
-      )}
-    />
+    <span title={STATUS_DOT_TITLE[status]} className="flex">
+      <StatusDot status={status} />
+    </span>
   );
 }
 
@@ -76,40 +85,85 @@ function WindowSpinner() {
   );
 }
 
-function MoveToWorkspaceMenu({ entry }: { entry: WindowEntry }) {
+function WindowMenu({ entry }: { entry: WindowEntry }) {
   const { workspaces } = useWorkspaceMeta();
   const { windowsByWorkspace } = useWindowState();
   const { moveWindowToWorkspace } = useWindowActions();
+  const claudeSession = useClaudeSession(
+    entry.module === "claudeCode"
+      ? entry.data?.[CLAUDE_SESSION_KEY] || undefined
+      : undefined,
+  );
+  const { requestEnd, endDialog } = useEndClaudeSession();
   const others = workspaces.filter((ws) => ws.id !== entry.workspaceId);
-  if (others.length === 0) return null;
+  const canEnd = claudeSession !== null && isLive(claudeSession.status);
+  if (others.length === 0 && !canEnd) return null;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="iconSm"
-          shape="pill"
-          onPointerDown={(e) => e.stopPropagation()}
-          title="Move to session"
-          className="text-white/40 hover:bg-white/10 hover:text-white/80"
-        >
-          <MoreHorizontal className="size-3" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-40">
-        {workspaces.map((ws) =>
-          ws.id === entry.workspaceId ? null : (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="iconSm"
+            shape="pill"
+            onPointerDown={(e) => e.stopPropagation()}
+            title="More"
+            className="text-white/40 hover:bg-white/10 hover:text-white/80"
+          >
+            <MoreHorizontal className="size-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-40">
+          {others.map((ws) => (
             <DropdownMenuItem
               key={ws.id}
               onClick={() => moveWindowToWorkspace(entry.id, ws.id)}
             >
               Move to {sessionLabel(ws, windowsByWorkspace.get(ws.id) ?? [])}
             </DropdownMenuItem>
-          ),
+          ))}
+          {canEnd && others.length > 0 && <DropdownMenuSeparator />}
+          {canEnd && (
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => requestEnd(claudeSession)}
+            >
+              <Power className="size-3.5" />
+              End session
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {endDialog}
+    </>
+  );
+}
+
+// Background Claude sessions are reachable from the phone: the title bar
+// offers the link while one is live.
+function RemoteLinkButton({ entry }: { entry: WindowEntry }) {
+  const session = useClaudeSession(
+    entry.data?.[CLAUDE_SESSION_KEY] || undefined,
+  );
+  if (!session || !isLive(session.status)) return null;
+  return (
+    <RemoteLinkPopover sessionKey={session.key} side="bottom" align="end">
+      <Button
+        variant="ghost"
+        size="iconSm"
+        shape="pill"
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        title="Open on phone"
+        className={cn(
+          "hover:bg-white/10 hover:text-white/80",
+          session.remoteUrl ? "text-white/40" : "text-white/25",
         )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      >
+        <Smartphone className="size-3" />
+      </Button>
+    </RemoteLinkPopover>
   );
 }
 
@@ -193,9 +247,13 @@ function ProjectSwitcher({ entry }: { entry: WindowEntry }) {
       projectName: project?.name ?? "",
       projectSshHost: project?.ssh_host ?? "",
     };
-    // Force a brand-new Claude session in the new directory rather than
-    // resuming the old project's conversation.
-    if (entry.module === "claudeCode") patch.claudeSessionId = "";
+    // Start a new Claude session in the new directory rather than resuming
+    // the old project's conversation; the old one keeps running in the
+    // background.
+    if (entry.module === "claudeCode") {
+      patch.claudeSessionId = "";
+      patch[CLAUDE_SESSION_KEY] = "";
+    }
     updateWindowData(entry.id, patch);
     setOpen(false);
   };
@@ -287,7 +345,8 @@ export const CanvasWindow = memo(function CanvasWindow({
         {moduleSupportsProject(entry.module) && (
           <ProjectSwitcher entry={entry} />
         )}
-        <MoveToWorkspaceMenu entry={entry} />
+        {entry.module === "claudeCode" && <RemoteLinkButton entry={entry} />}
+        <WindowMenu entry={entry} />
         <Button
           variant="ghost"
           size="iconSm"
