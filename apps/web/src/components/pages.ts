@@ -1,4 +1,5 @@
-import { LayoutGrid } from "lucide-react";
+import { Bot, LayoutGrid } from "lucide-react";
+import { lazy } from "react";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
 import type { ModuleKey } from "@/components/canvas/window-manager";
 import { isDesktop } from "@/lib/environment";
@@ -18,7 +19,8 @@ export type PageKey =
   | "transactions"
   | "accounts"
   | "investments"
-  | "obsidian";
+  | "obsidian"
+  | "sessions";
 
 export interface PageConfig {
   title: string;
@@ -48,6 +50,15 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   accounts: fromModule("accounts"),
   investments: fromModule("investments"),
   obsidian: fromModule("obsidian", true),
+  sessions: {
+    title: "Sessions",
+    icon: Bot,
+    component: lazy(() =>
+      import("@/components/claude-sessions/sessions-page").then((m) => ({
+        default: m.SessionsPage,
+      })),
+    ),
+  },
 };
 
 /** Shown as top-level sidebar items. */
@@ -67,6 +78,7 @@ export const MORE_PAGES: PageKey[] = [
   "transactions",
   "accounts",
   "investments",
+  ...(isDesktop ? (["sessions"] as PageKey[]) : []),
 ];
 
 const ALL_PAGES = new Set<string>([...PRIMARY_PAGES, ...MORE_PAGES]);

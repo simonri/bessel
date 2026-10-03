@@ -19,6 +19,11 @@ import os from "os";
 import path from "path";
 import { promisify } from "util";
 import {
+  confirmCloseWithClaudeSessions,
+  registerClaudeSessionHandlers,
+  stopClaudeSessions,
+} from "./claude-sessions.js";
+import {
   registerAxiCliInstallHandlers,
   registerCliBrokerHandlers,
 } from "./cli-broker.js";
@@ -494,6 +499,25 @@ function resolveShellPath(): Promise<string | null> {
   return shellPathPromise;
 }
 
+async function childProcessEnv(): Promise<NodeJS.ProcessEnv> {
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+  // Set when Bessel itself was started from a Claude Code session (dev);
+  // the claude CLI would otherwise treat its children as nested sessions.
+  delete env.CLAUDECODE;
+  delete env.CLAUDE_CODE_ENTRYPOINT;
+
+  const shellPath = await resolveShellPath();
+  if (shellPath) {
+    env.PATH = shellPath;
+  } else if (process.platform === "darwin") {
+    // Resolution failed (exotic shell, slow rc files) — at least cover
+    // the standard Homebrew locations rather than launchd's bare PATH.
+    env.PATH = `${env.PATH}:/opt/homebrew/bin:/usr/local/bin`;
+  }
+  return env;
+}
+
 // Widgets persist a `claude --session-id <uuid>` across app restarts and
 // reconnect with `--resume <uuid>` — but that id is captured as soon as the
 // widget opens, before the CLI has necessarily written anything under
@@ -716,6 +740,8 @@ function createWindow() {
       event.preventDefault();
     }
   });
+
+  confirmCloseWithClaudeSessions(win);
 
   if (!app.isPackaged) {
     win.loadURL("http://localhost:3001");
@@ -987,17 +1013,7 @@ app.whenReady().then(() => {
     ) => {
       if (ptySessions.has(sessionId)) return;
 
-      const env = { ...process.env };
-      delete env.ELECTRON_RUN_AS_NODE;
-
-      const shellPath = await resolveShellPath();
-      if (shellPath) {
-        env.PATH = shellPath;
-      } else if (process.platform === "darwin") {
-        // Resolution failed (exotic shell, slow rc files) — at least cover
-        // the standard Homebrew locations rather than launchd's bare PATH.
-        env.PATH = `${env.PATH}:/opt/homebrew/bin:/usr/local/bin`;
-      }
+      const env = await childProcessEnv();
 
       const isDefaultShell = config.command === "default-shell";
       const command = isDefaultShell
@@ -1333,6 +1349,20 @@ app.whenReady().then(() => {
   });
 
   registerServiceInstallerHandlers();
+  registerClaudeSessionHandlers({
+    log: appendLog,
+    childEnv: childProcessEnv,
+    showWindow: () => {
+      const [win] = BrowserWindow.getAllWindows();
+      if (!win) {
+        createWindow();
+        return;
+      }
+      if (win.isMinimized()) win.restore();
+      win.show();
+      win.focus();
+    },
+  });
   registerMyAiHandlers(USER_DATA_DIR);
   registerCliBrokerHandlers(USER_DATA_DIR);
   registerAxiCliInstallHandlers();
@@ -1389,9 +1419,15 @@ app.whenReady().then(() => {
   });
 });
 
+// Claude sessions run in Claude's own background service, so this only
+// closes terminal views — the sessions themselves keep running.
 app.on("window-all-closed", () => {
   for (const p of ptySessions.values()) p.kill();
   ptySessions.clear();
   stopSpotifyWatcher();
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("will-quit", () => {
+  stopClaudeSessions();
 });

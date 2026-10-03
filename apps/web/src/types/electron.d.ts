@@ -1,4 +1,10 @@
 import type {
+  ClaudeConversation,
+  ClaudeSessionsSnapshot,
+  ClaudeSessionView,
+  CreateClaudeSessionInput,
+} from "../components/claude-sessions/claude-sessions-types";
+import type {
   VaultChangedEvent,
   VaultDefaultPath,
   VaultEntry,
@@ -134,6 +140,20 @@ declare global {
           sessionId: string,
           callback: (code: number) => void,
         ) => () => void;
+      };
+      claudeSessions: {
+        snapshot: () => Promise<ClaudeSessionsSnapshot>;
+        create: (input: CreateClaudeSessionInput) => Promise<ClaudeSessionView>;
+        resume: (key: string) => Promise<ClaudeSessionView>;
+        end: (key: string) => Promise<void>;
+        remove: (key: string) => Promise<void>;
+        adopt: (bgId: string, projectId?: string) => Promise<ClaudeSessionView>;
+        remoteUrl: (key: string) => Promise<string | null>;
+        conversations: (cwd: string) => Promise<ClaudeConversation[]>;
+        onChanged: (
+          callback: (snapshot: ClaudeSessionsSnapshot) => void,
+        ) => () => void;
+        onOpenRequested: (callback: (key: string) => void) => () => void;
       };
       monitor: {
         status: () => Promise<{

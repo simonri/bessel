@@ -29,6 +29,8 @@ interface TerminalWidgetProps {
    *  report via WindowStatusContext. Only meaningful for TUI agent CLIs
    *  (Claude, ...) that use this convention — not a generic shell. */
   detectAgentStatus?: boolean;
+  /** Don't show the program's OSC window title as the window subtitle. */
+  ignoreTitle?: boolean;
 }
 
 // A command is only sent once the PTY has been quiet for this long — i.e. the
@@ -70,6 +72,7 @@ export function TerminalWidget({
   taskDropZone = false,
   commands = [],
   detectAgentStatus = false,
+  ignoreTitle = false,
 }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -311,6 +314,7 @@ export function TerminalWidget({
         if (status) setWindowStatusRef.current?.(status);
         return;
       }
+      if (ignoreTitle) return;
       setWindowTitleRef.current?.(title || null);
     });
 
@@ -371,7 +375,7 @@ export function TerminalWidget({
       terminalRef.current = null;
       window.electron?.terminal.kill(sessionId);
     };
-    // mount/unmount only — command/args/cwd/commands/detectAgentStatus are
+    // mount/unmount only — command/args/cwd/commands/detectAgentStatus/ignoreTitle are
     // captured here or in spawnConfig ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

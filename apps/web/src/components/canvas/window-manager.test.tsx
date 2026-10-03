@@ -549,3 +549,68 @@ describe("setWorkspaceProject", () => {
     expect(result.current.workspaces[0]).toEqual({ id: "ws-1" });
   });
 });
+
+describe("closeWhenEmpty sessions", () => {
+  it("goes away with its last window, falling back to another session", () => {
+    const { result } = setup();
+    const home = result.current.activeWorkspaceId;
+    let id = "";
+    act(() => {
+      id = result.current.createSession({
+        name: "Fix calendar",
+        closeWhenEmpty: true,
+        specs: [{ module: "tasks" }, { module: "accounts" }],
+      });
+    });
+    const [first, second] = result.current.allWindows.filter(
+      (w) => w.workspaceId === id,
+    );
+
+    act(() => result.current.closeWindow(first.id));
+    expect(result.current.workspaces.some((ws) => ws.id === id)).toBe(true);
+
+    act(() => result.current.moveWindowToWorkspace(second.id, home));
+    expect(result.current.workspaces.some((ws) => ws.id === id)).toBe(false);
+    expect(result.current.activeWorkspaceId).toBe(home);
+  });
+
+  it("is kept once the user names it", () => {
+    const { result } = setup();
+    let id = "";
+    act(() => {
+      id = result.current.createSession({
+        closeWhenEmpty: true,
+        specs: [{ module: "tasks" }],
+      });
+    });
+    act(() => result.current.renameWorkspace(id, "Mine"));
+    act(() =>
+      result.current.closeWindow(
+        result.current.allWindows.find((w) => w.workspaceId === id)!.id,
+      ),
+    );
+
+    expect(result.current.workspaces.find((ws) => ws.id === id)?.name).toBe(
+      "Mine",
+    );
+  });
+
+  it("never removes the last remaining session", () => {
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({
+        workspaces: [
+          {
+            id: "only",
+            closeWhenEmpty: true,
+            windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }],
+          },
+        ],
+        activeWorkspaceId: "only",
+      }),
+    );
+    const { result } = setup();
+    act(() => result.current.closeWindow(result.current.allWindows[0].id));
+    expect(result.current.workspaces.map((ws) => ws.id)).toEqual(["only"]);
+  });
+});

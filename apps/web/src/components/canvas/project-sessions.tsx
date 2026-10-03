@@ -15,17 +15,19 @@ import {
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
 import {
+  AppWindow,
   ChevronRight,
   FolderInput,
   LayoutTemplate,
   Pencil,
   Plus,
+  Power,
+  Smartphone,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSessionAgentStatus } from "@/components/canvas/canvas-agent-status";
 import {
-  type AgentStatus,
   sessionLabel,
   useFlashWorkspace,
   useWindowActions,
@@ -35,6 +37,20 @@ import {
   type WorkspaceMeta,
 } from "@/components/canvas/window-manager";
 import { WorkspaceTemplatesDialog } from "@/components/canvas/workspace-template-dialog";
+import {
+  isLive,
+  STATUS_LABEL,
+  toAgentStatus,
+  useClaudeSessions,
+} from "@/components/claude-sessions/claude-sessions-store";
+import type { ClaudeSessionView } from "@/components/claude-sessions/claude-sessions-types";
+import { RemoteLinkPopover } from "@/components/claude-sessions/remote-link-popover";
+import { StatusDot } from "@/components/claude-sessions/status-dot";
+import { useEndClaudeSession } from "@/components/claude-sessions/use-end-session";
+import {
+  useAttachedSessionKeys,
+  useOpenClaudeSession,
+} from "@/components/claude-sessions/use-open-claude-session";
 import { useProjects } from "@/hooks/use-projects";
 import {
   templateToWindowSpecs,
@@ -53,6 +69,7 @@ const MENU_SURFACE = "bg-popover min-w-44";
 
 const COLLAPSED_KEY = "bessel:collapsedProjects";
 const NO_WINDOWS: WindowEntry[] = [];
+const NO_BACKGROUND: ClaudeSessionView[] = [];
 const NO_PROJECT_LABEL = "Other";
 
 function loadCollapsed(): Set<string> {
@@ -132,20 +149,6 @@ function CountBadge({ count }: { count: number }) {
   );
 }
 
-function StatusDot({ status }: { status: AgentStatus | null }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "size-1.5 shrink-0 rounded-full transition-colors duration-300",
-        status === "working" && "animate-pulse bg-amber-400",
-        status === "free" && "bg-emerald-400",
-        status === null && "bg-white/20",
-      )}
-    />
-  );
-}
-
 function RenameInput({
   workspace,
   placeholder,
@@ -214,7 +217,11 @@ function SessionRow({
   const windowIds = useMemo(() => windows.map((w) => w.id), [windows]);
   const status = useSessionAgentStatus(windowIds);
   const label = sessionLabel(workspace, windows);
-  const rowClass = cn(ROW, "gap-2 pl-7.5 pr-1.5", isActive ? ROW_ACTIVE : ROW_IDLE);
+  const rowClass = cn(
+    ROW,
+    "gap-2 pl-7.5 pr-1.5",
+    isActive ? ROW_ACTIVE : ROW_IDLE,
+  );
 
   return (
     <ContextMenu>
@@ -301,10 +308,81 @@ function SessionRow({
   );
 }
 
+// A Claude session running in the background with no window showing it.
+// Dimmer than a canvas session: it's there, but not open.
+function BackgroundSessionRow({
+  session,
+  onOpen,
+  onEnd,
+}: {
+  session: ClaudeSessionView;
+  onOpen: (session: ClaudeSessionView) => void;
+  onEnd: (session: ClaudeSessionView) => void;
+}) {
+  const status = toAgentStatus(session.status);
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          className={cn(
+            "group/bg",
+            ROW,
+            "gap-1 pl-7.5 pr-1",
+            "text-white/45 hover:bg-white/[0.06] hover:text-white/75",
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => onOpen(session)}
+            title={`${session.name} - ${STATUS_LABEL[session.status]}, running in the background`}
+            className="flex h-full min-w-0 flex-1 items-center gap-2 text-left"
+          >
+            <StatusDot status={status} />
+            <span className="min-w-0 flex-1 truncate">{session.name}</span>
+          </button>
+          {/* Out of the layout until needed, so the name gets the full width. */}
+          <div className="hidden shrink-0 items-center group-focus-within/bg:flex group-hover/bg:flex has-[[data-state=open]]:flex">
+            <RemoteLinkPopover sessionKey={session.key}>
+              <button
+                type="button"
+                title="Open on phone"
+                aria-label={`Open ${session.name} on phone`}
+                className={ICON_BUTTON}
+              >
+                <Smartphone className="size-3" />
+              </button>
+            </RemoteLinkPopover>
+            <button
+              type="button"
+              onClick={() => onEnd(session)}
+              title="End session"
+              aria-label={`End ${session.name}`}
+              className={ICON_BUTTON}
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className={MENU_SURFACE}>
+        <ContextMenuItem onSelect={() => onOpen(session)}>
+          <AppWindow className="size-3.5" />
+          Open
+        </ContextMenuItem>
+        <ContextMenuItem variant="destructive" onSelect={() => onEnd(session)}>
+          <Power className="size-3.5" />
+          End session
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
 function ProjectGroup({
   id,
   name,
   sessions,
+  background,
   windowsByWorkspace,
   projects,
   activeWorkspaceId,
@@ -315,10 +393,13 @@ function ProjectGroup({
   newSessionHint,
   canClose,
   onOpen,
+  onOpenBackground,
+  onEndBackground,
 }: {
   id: string;
   name: string;
   sessions: WorkspaceMeta[];
+  background: ClaudeSessionView[];
   windowsByWorkspace: ReadonlyMap<string, WindowEntry[]>;
   projects: readonly ProjectSchema[];
   activeWorkspaceId: string | null;
@@ -330,8 +411,10 @@ function ProjectGroup({
   newSessionHint?: string;
   canClose: boolean;
   onOpen: (id: string) => void;
+  onOpenBackground: (session: ClaudeSessionView) => void;
+  onEndBackground: (session: ClaudeSessionView) => void;
 }) {
-  const hasSessions = sessions.length > 0;
+  const hasSessions = sessions.length + background.length > 0;
   const expanded = hasSessions && !collapsed;
   const totalWindows = sessions.reduce(
     (sum, ws) => sum + (windowsByWorkspace.get(ws.id)?.length ?? 0),
@@ -398,6 +481,14 @@ function ProjectGroup({
               isFlashing={flash?.id === ws.id}
               canClose={canClose}
               onOpen={onOpen}
+            />
+          ))}
+          {background.map((session) => (
+            <BackgroundSessionRow
+              key={session.key}
+              session={session}
+              onOpen={onOpenBackground}
+              onEnd={onEndBackground}
             />
           ))}
         </div>
@@ -533,6 +624,10 @@ export function ProjectSessions({
   const flash = useFlashWorkspace();
   const { collapsed, toggle } = useCollapsedProjects();
   useAdoptLegacySessions(projects);
+  const { sessions: claudeSessions } = useClaudeSessions();
+  const attachedKeys = useAttachedSessionKeys();
+  const openBackground = useOpenClaudeSession(onOpenCanvas);
+  const { requestEnd, endDialog } = useEndClaudeSession();
 
   const projectList = projects ?? [];
   const { byProject, unassigned } = useMemo(() => {
@@ -550,6 +645,30 @@ export function ProjectSessions({
     }
     return { byProject, unassigned };
   }, [projectList, workspaces]);
+
+  const { backgroundByProject, backgroundUnassigned } = useMemo(() => {
+    const byPath = new Map<string, string>();
+    for (const p of projectList)
+      if (p.path && !p.ssh_host) byPath.set(p.path, p.id);
+    const known = new Set(projectList.map((p) => p.id));
+    const backgroundByProject = new Map<string, ClaudeSessionView[]>();
+    const backgroundUnassigned: ClaudeSessionView[] = [];
+    for (const session of claudeSessions) {
+      if (!isLive(session.status) || attachedKeys.has(session.key)) continue;
+      const projectId =
+        session.projectId && known.has(session.projectId)
+          ? session.projectId
+          : byPath.get(session.cwd);
+      if (!projectId) {
+        backgroundUnassigned.push(session);
+        continue;
+      }
+      const list = backgroundByProject.get(projectId);
+      if (list) list.push(session);
+      else backgroundByProject.set(projectId, [session]);
+    }
+    return { backgroundByProject, backgroundUnassigned };
+  }, [projectList, claudeSessions, attachedKeys]);
 
   const openSession = useCallback(
     (id: string) => {
@@ -585,6 +704,7 @@ export function ProjectSessions({
             id={p.id}
             name={p.name}
             sessions={byProject.get(p.id) ?? []}
+            background={backgroundByProject.get(p.id) ?? NO_BACKGROUND}
             windowsByWorkspace={windowsByWorkspace}
             projects={projectList}
             activeWorkspaceId={shownActiveId}
@@ -597,13 +717,16 @@ export function ProjectSessions({
             }
             canClose={canClose}
             onOpen={openSession}
+            onOpenBackground={openBackground}
+            onEndBackground={requestEnd}
           />
         ))}
-        {unassigned.length > 0 && (
+        {unassigned.length + backgroundUnassigned.length > 0 && (
           <ProjectGroup
             id="__other"
             name={NO_PROJECT_LABEL}
             sessions={unassigned}
+            background={backgroundUnassigned}
             windowsByWorkspace={windowsByWorkspace}
             projects={projectList}
             activeWorkspaceId={shownActiveId}
@@ -613,14 +736,18 @@ export function ProjectSessions({
             onNewSession={() => onNewSession(null)}
             canClose={canClose}
             onOpen={openSession}
+            onOpenBackground={openBackground}
+            onEndBackground={requestEnd}
           />
         )}
-        {projectList.length === 0 && unassigned.length === 0 && (
-          <p className="px-2 py-1 text-11 text-white/35">
-            No projects yet — add one from the top bar.
-          </p>
-        )}
+        {projectList.length === 0 &&
+          unassigned.length + backgroundUnassigned.length === 0 && (
+            <p className="px-2 py-1 text-11 text-white/35">
+              No projects yet — add one from the top bar.
+            </p>
+          )}
       </div>
+      {endDialog}
     </div>
   );
 }
