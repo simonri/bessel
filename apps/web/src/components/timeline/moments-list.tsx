@@ -10,16 +10,14 @@ const KIND: Record<Moment["kind"], { icon: typeof Moon; hue: number }> = {
   place: { icon: MapPin, hue: LANE_META.places.hue },
 };
 
+const RAIL = "absolute left-1/2 w-px -translate-x-1/2 bg-white/[0.08]";
+
 /** The day as a short, readable story. */
 export function MomentsList({ moments }: { moments: Moment[] }) {
   if (moments.length === 0) return null;
   return (
-    <ol className="relative flex flex-col">
-      <span
-        aria-hidden
-        className="absolute top-3 bottom-3 left-[4.75rem] w-px bg-white/[0.07]"
-      />
-      {moments.map((m) => {
+    <ol className="flex flex-col">
+      {moments.map((m, i) => {
         const { icon: Icon, hue } = KIND[m.kind] ?? { icon: LogIn, hue: 0 };
         return (
           <li
@@ -29,11 +27,30 @@ export function MomentsList({ moments }: { moments: Moment[] }) {
             <span className="w-14 shrink-0 text-right text-11 tabular-nums text-white/40">
               {format(new Date(m.ts * 1000), "h:mma").toLowerCase()}
             </span>
-            <span
-              className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full ring-4 ring-[var(--color-panel)]"
-              style={{ backgroundColor: pastel(hue, 0.18), color: pastel(hue) }}
-            >
-              <Icon className="size-3" />
+            {/* The rail is drawn per row, above and below each icon, so it
+                always runs through the icons' centres and stops at the ends. */}
+            <span className="relative flex shrink-0 items-center self-stretch">
+              {i > 0 && (
+                <span
+                  aria-hidden
+                  className={`${RAIL} -top-1.5 bottom-[calc(50%+0.875rem)]`}
+                />
+              )}
+              {i < moments.length - 1 && (
+                <span
+                  aria-hidden
+                  className={`${RAIL} top-[calc(50%+0.875rem)] -bottom-1.5`}
+                />
+              )}
+              <span
+                className="flex size-6 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: pastel(hue, 0.18),
+                  color: pastel(hue),
+                }}
+              >
+                <Icon className="size-3" />
+              </span>
             </span>
             <span className="min-w-0 flex-1 truncate text-13 text-white/80">
               {m.text}
