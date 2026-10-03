@@ -299,15 +299,6 @@ function HyperliquidAccount({
             )}
           </Panel>
 
-          {accounts.length > 1 && (
-            <Accounts
-              accounts={accounts}
-              selected={selected}
-              onSelect={setSelected}
-              accountValue={(a) => currentValue(portfolioOf(a))}
-            />
-          )}
-
           {/* Open positions need the full width; with none, both panels are small. */}
           <div
             className={cn(
@@ -376,65 +367,6 @@ function AccountPicker({
         })}
       </SelectContent>
     </Select>
-  );
-}
-
-function Accounts({
-  accounts,
-  selected,
-  onSelect,
-  accountValue,
-}: {
-  accounts: SubAccount[];
-  selected: string;
-  onSelect: (address: string) => void;
-  accountValue: (address: string) => number | null;
-}) {
-  return (
-    <section>
-      <SectionLabel
-        action={
-          <span className="text-11 text-white/35">{accounts.length}</span>
-        }
-      >
-        Accounts
-      </SectionLabel>
-      <div className="grid grid-cols-1 gap-2 @xl:grid-cols-2 @4xl:grid-cols-4">
-        {accounts.map((account, i) => {
-          const value = accountValue(account.address);
-          const active = account.address === selected;
-          return (
-            <button
-              key={account.address}
-              type="button"
-              aria-pressed={active}
-              onClick={() => onSelect(account.address)}
-              className={cn(
-                "min-w-0 rounded-xl border px-3.5 py-3 text-left outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-white/25",
-                active
-                  ? "border-primary-500/40 bg-primary-500/[0.08]"
-                  : "border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.05]",
-              )}
-            >
-              <span className="flex items-center justify-between gap-2">
-                <span className="truncate text-12 font-medium text-white/80">
-                  {account.name}
-                </span>
-                {i === 0 && (
-                  <span className="shrink-0 text-10 text-white/35">Main</span>
-                )}
-              </span>
-              <span className="mt-1 block text-15 font-semibold tabular-nums text-white/90">
-                {value === null ? "—" : formatUsd(value)}
-              </span>
-              <span className="block font-mono text-10 text-white/35">
-                {shortAddress(account.address)}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
   );
 }
 
@@ -543,7 +475,7 @@ function PnlChart({ points, range }: { points: Point[]; range: Range }) {
           />
           <Area
             dataKey="value"
-            type="monotone"
+            type="stepAfter"
             baseValue={0}
             stroke={LINE}
             strokeWidth={2}
