@@ -7,6 +7,7 @@ import {
   StatusDot,
 } from "@/components/settings-ui";
 import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
+import { createIngestToken } from "@/lib/ingest-token";
 
 type CollectorStatusResult = {
   installed: boolean;
@@ -120,16 +121,21 @@ export function AgentUsagePage() {
 
       {status.needsConfig && (
         <p className="text-12 text-amber-300/80">
-          Add <code className="text-amber-200">BESSEL_INTERNAL_API_KEY</code> to{" "}
-          <code className="text-amber-200">{status.envPath}</code>, then restart
-          the timer.
+          This machine isn't connected to your account yet. Reinstall to
+          connect it.
         </p>
       )}
 
       {!status.installed && (
         <SettingsInstallCta
           loading={loading}
-          onInstall={() => run(() => window.electron!.collector.install())}
+          onInstall={() =>
+            run(async () =>
+              window.electron!.collector.install(
+                await createIngestToken("agent-usage"),
+              ),
+            )
+          }
           label="Install Agent Usage Tracking"
           loadingLabel="Installing…"
           hint="Installs a systemd timer that periodically pushes Claude Code token usage and rate limits to Bessel."
@@ -139,7 +145,13 @@ export function AgentUsagePage() {
       {status.installed && (
         <button
           type="button"
-          onClick={() => run(() => window.electron!.collector.install())}
+          onClick={() =>
+            run(async () =>
+              window.electron!.collector.install(
+                await createIngestToken("agent-usage"),
+              ),
+            )
+          }
           disabled={loading}
           className="w-full text-center text-11 text-white/40 transition-colors duration-150 hover:text-white/60 disabled:opacity-40"
         >

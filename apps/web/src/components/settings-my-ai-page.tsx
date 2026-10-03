@@ -29,6 +29,7 @@ export function MyAiPage() {
   const [localDataUrl, setLocalDataUrl] = useState<string | null | undefined>(
     undefined,
   );
+  const [discoveryPath, setDiscoveryPath] = useState<string | null>(null);
 
   useEffect(() => {
     // Optional-chained on myAi/cli too: a renderer hot-reloaded under an
@@ -50,6 +51,12 @@ export function MyAiPage() {
     }
     let cancelled = false;
     let attempt = 0;
+    window.electron.localDataServer
+      .getDiscoveryPath?.()
+      .then((p) => {
+        if (!cancelled) setDiscoveryPath(p);
+      })
+      .catch(() => {});
     const poll = () => {
       window
         .electron!.localDataServer.getUrl()
@@ -165,8 +172,14 @@ export function MyAiPage() {
           {localDataUrl && (
             <p className="mt-2 text-12 text-white/40">
               Returns a JSON snapshot of your data (sleep, for now) for a local
-              AI tool to read, e.g.{" "}
-              <code className="font-mono">curl {localDataUrl}</code>.
+              AI tool to read. Requests need the secret from the app&apos;s
+              discovery file, e.g.{" "}
+              <code className="break-all font-mono">
+                curl -H &quot;X-Bessel-Data-Secret: $(jq -r .secret &apos;
+                {discoveryPath ?? "local-data-server.json"}&apos;)&quot;{" "}
+                {localDataUrl}
+              </code>
+              .
             </p>
           )}
         </div>

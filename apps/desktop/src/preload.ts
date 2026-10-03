@@ -111,7 +111,8 @@ contextBridge.exposeInMainWorld("electron", {
   },
   monitor: {
     status: () => ipcRenderer.invoke("monitor:status"),
-    install: () => ipcRenderer.invoke("monitor:install"),
+    install: (ingestToken: string) =>
+      ipcRenderer.invoke("monitor:install", ingestToken),
     start: () => ipcRenderer.invoke("monitor:start"),
     stop: () => ipcRenderer.invoke("monitor:stop"),
     setEnabled: (enabled: boolean) =>
@@ -119,7 +120,8 @@ contextBridge.exposeInMainWorld("electron", {
   },
   collector: {
     status: () => ipcRenderer.invoke("collector:status"),
-    install: () => ipcRenderer.invoke("collector:install"),
+    install: (ingestToken: string) =>
+      ipcRenderer.invoke("collector:install", ingestToken),
     runNow: () => ipcRenderer.invoke("collector:runNow"),
     setEnabled: (enabled: boolean) =>
       ipcRenderer.invoke("collector:setEnabled", enabled),
@@ -217,6 +219,8 @@ contextBridge.exposeInMainWorld("electron", {
   localDataServer: {
     getUrl: (): Promise<string | null> =>
       ipcRenderer.invoke("local-data-server:get-url"),
+    getDiscoveryPath: (): Promise<string> =>
+      ipcRenderer.invoke("local-data-server:get-discovery-path"),
     onDataRequested: (
       callback: (requestId: string, windowDays: number) => void,
     ) =>

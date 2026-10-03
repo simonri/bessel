@@ -31,6 +31,11 @@ const MAX_GUESTS_SHOWN = 8;
 const URL_PATTERN = /(https?:\/\/[^\s<>"']+)/g;
 const TRAILING_PUNCTUATION = /[.,;:!?)\]]+$/;
 
+// Event details come from whoever sent the invite; only open http(s) links.
+function httpUrl(url: string | null | undefined): string | null {
+  return url && /^https?:\/\//i.test(url) ? url : null;
+}
+
 const RESPONSE_META: Record<
   CalendarAttendee["response"],
   { label: string; icon: ReactNode }
@@ -232,7 +237,9 @@ export function EventDetailsPopover({
   onClose: () => void;
 }) {
   const d = event?.details;
-  const conferenceHost = d?.conferenceUrl ? hostOf(d.conferenceUrl) : null;
+  const conferenceUrl = httpUrl(d?.conferenceUrl);
+  const htmlLink = httpUrl(d?.htmlLink);
+  const conferenceHost = conferenceUrl ? hostOf(conferenceUrl) : null;
 
   return (
     <Popover
@@ -257,10 +264,10 @@ export function EventDetailsPopover({
           <div className="flex max-h-[min(640px,var(--radix-popover-content-available-height))] flex-col">
             <div className="flex shrink-0 items-center gap-1 py-2 pr-2 pl-4">
               <span className="flex-1 text-12 text-white/45">Event</span>
-              {d.htmlLink && account?.provider === "google" && (
+              {htmlLink && account?.provider === "google" && (
                 <IconButton
                   title="Open in Google Calendar"
-                  onClick={() => window.open(d.htmlLink ?? "", "_blank")}
+                  onClick={() => window.open(htmlLink, "_blank")}
                 >
                   <ExternalLink />
                 </IconButton>
@@ -304,12 +311,12 @@ export function EventDetailsPopover({
                 </Section>
               )}
 
-              {(d.conferenceUrl || d.location) && (
+              {(conferenceUrl || d.location) && (
                 <Section>
-                  {d.conferenceUrl && (
+                  {conferenceUrl && (
                     <Row icon={<Video />}>
                       <a
-                        href={d.conferenceUrl}
+                        href={conferenceUrl}
                         target="_blank"
                         rel="noreferrer noopener"
                         className="inline-flex h-7 items-center rounded-md bg-sky-500/15 px-2.5 text-12 font-medium text-sky-200 transition-colors hover:bg-sky-500/25"
