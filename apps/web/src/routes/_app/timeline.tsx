@@ -140,7 +140,7 @@ function TimelinePage() {
             {[0, 1].map((row) => (
               <Skeleton
                 key={row}
-                className="h-8 w-full rounded-full bg-white/[0.06]"
+                className="h-8 w-full rounded-sm bg-white/[0.06]"
               />
             ))}
           </div>

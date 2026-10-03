@@ -70,7 +70,7 @@ function Block({
     <div
       onMouseEnter={() => onHover(block)}
       onMouseLeave={() => onHover(null)}
-      className="absolute inset-y-0.5 flex min-w-[3px] items-center overflow-hidden rounded-full px-2 transition-[opacity,filter] duration-200 hover:brightness-110"
+      className="absolute inset-y-0.5 flex min-w-[3px] items-center overflow-hidden px-2 shadow-[inset_-1px_0_0_rgb(0_0_0/0.45)] transition-[opacity,filter] duration-200 hover:brightness-110"
       style={{
         left: `${left}%`,
         width: `${width}%`,
@@ -117,7 +117,7 @@ function LaneLabel({ lane }: { lane: RibbonLane }) {
   );
 }
 
-/** The day left to right: one rounded track per lane, with "now" on today. */
+/** The day left to right: one track per lane, with "now" on today. */
 export function DayRibbon({
   date,
   lanes,
@@ -218,7 +218,7 @@ function LaneRow({
       <div className={cn("relative", hoveredHere && "z-20")}>
         <div
           data-lane-bar
-          className="relative h-8 w-full overflow-hidden rounded-full bg-white/[0.04] ring-1 ring-white/[0.05]"
+          className="relative h-8 w-full overflow-hidden rounded-sm bg-white/[0.04] ring-1 ring-white/[0.05]"
         >
           <div
             aria-hidden
