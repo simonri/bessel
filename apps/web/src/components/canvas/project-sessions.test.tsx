@@ -95,10 +95,10 @@ describe("ProjectSessions", () => {
       "a",
     );
     const { manager } = mount();
-    expect(screen.getByText("Tasks ×2 · Git")).toBeTruthy();
+    expect(screen.getByText("Tasks ×2 - Git")).toBeTruthy();
 
     const [first, second] = manager().allWindows;
-    const dot = () => screen.getByTitle("Tasks ×2 · Git").querySelector("span[aria-hidden]")!;
+    const dot = () => screen.getByTitle("Tasks ×2 - Git").querySelector("span[aria-hidden]")!;
     expect(dot().className).toContain("bg-white/20");
     act(() => setWindowAgentStatus(first.id, "free"));
     expect(dot().className).toContain("bg-emerald-400");

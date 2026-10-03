@@ -81,7 +81,7 @@ export function PlaceCard({
           <span className="block truncate text-12 capitalize text-white/45">
             {[place.country, place.category?.replace(/_/g, " ")]
               .filter(Boolean)
-              .join(" · ")}
+              .join(" - ")}
           </span>
         )}
       </div>

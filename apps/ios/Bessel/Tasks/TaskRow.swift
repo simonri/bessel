@@ -32,7 +32,7 @@ struct TaskRow: View {
                     HStack(spacing: 6) {
                         ForEach(Array(metaItems.enumerated()), id: \.offset) { index, item in
                             if index > 0 {
-                                Text("·")
+                                Text("-")
                                     .font(.caption)
                                     .foregroundStyle(Theme.mutedForeground.opacity(0.5))
                             }

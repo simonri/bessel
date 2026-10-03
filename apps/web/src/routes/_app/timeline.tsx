@@ -366,9 +366,9 @@ function Lane({
           >
             <span className="font-medium">{hoveredSegment.name}</span>
             <span className="text-white/50">
-              {" · "}
+              {" - "}
               {fmtClock(hoveredSegment.start_ts)} –{" "}
-              {fmtClock(hoveredSegment.end_ts)} ·{" "}
+              {fmtClock(hoveredSegment.end_ts)} -{" "}
               {fmtDur(hoveredSegment.end_ts - hoveredSegment.start_ts)}
             </span>
           </div>

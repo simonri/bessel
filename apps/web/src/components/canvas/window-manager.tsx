@@ -74,7 +74,7 @@ export function workspaceLabel(ws: WorkspaceMeta): string {
   return ws.name ?? "Session";
 }
 
-/** The user's name when set, otherwise what's open in it ("Claude ×2 · Codex"),
+/** The user's name when set, otherwise what's open in it ("Claude ×2 - Codex"),
  *  falling back to the plain default for an empty canvas. */
 export function sessionLabel(
   ws: WorkspaceMeta,
@@ -88,7 +88,7 @@ export function sessionLabel(
   return Array.from(counts, ([module, count]) => {
     const { title } = MODULE_REGISTRY[module];
     return count > 1 ? `${title} ×${count}` : title;
-  }).join(" · ");
+  }).join(" - ");
 }
 
 export interface SessionInit {

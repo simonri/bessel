@@ -178,7 +178,7 @@ function Guests({ attendees }: { attendees: CalendarAttendee[] }) {
   return (
     <div className="space-y-1">
       <p className="text-12 text-white/45">
-        {attendees.length} {attendees.length === 1 ? "guest" : "guests"} ·{" "}
+        {attendees.length} {attendees.length === 1 ? "guest" : "guests"} -{" "}
         {going} going
       </p>
       <ul className="space-y-1">

@@ -80,7 +80,7 @@ export function CryptoPairTicker({ pair }: { pair: string }) {
       <span className="font-mono text-10 font-medium tracking-wider text-primary-400/75">
         {pair}
       </span>
-      <span className="text-white/30">·</span>
+      <span className="text-white/30">-</span>
       <span className="font-mono text-11 font-medium tabular-nums text-white/75">
         {formatted ?? "—"}
       </span>

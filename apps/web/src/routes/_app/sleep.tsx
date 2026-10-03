@@ -143,7 +143,7 @@ function SleepPage() {
               {stages.map((stage) => (
                 <div
                   key={stage.key}
-                  title={`${stage.meta.label} · ${fmtDur(stage.secs)}`}
+                  title={`${stage.meta.label} - ${fmtDur(stage.secs)}`}
                   className="h-full first:rounded-l-full last:rounded-r-full"
                   style={{
                     flexGrow: stage.secs,

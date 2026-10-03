@@ -441,7 +441,7 @@ function Travel() {
                           selectedPlace.category?.replace(/_/g, " "),
                         ]
                           .filter(Boolean)
-                          .join(" · ")}
+                          .join(" - ")}
                       </p>
                     )}
                   </div>

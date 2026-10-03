@@ -496,7 +496,7 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
 
         <div className="flex shrink-0 items-center gap-1.5 px-5 pt-1 pb-2 text-11 text-white/40">
           <span>{statusLabel}</span>
-          <span>·</span>
+          <span>-</span>
           <span>
             {wordCount} word{wordCount === 1 ? "" : "s"}
           </span>

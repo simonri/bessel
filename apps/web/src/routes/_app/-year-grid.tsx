@@ -113,7 +113,7 @@ function YearGridCell({
     >
       {visible && (
         <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-popover px-2 py-1 text-11 tabular-nums text-white/85 shadow-lg">
-          <span className="text-white/45">{format(day.d, "MMM d")} · </span>
+          <span className="text-white/45">{format(day.d, "MMM d")} - </span>
           {day.secs > 0 ? fmtDur(day.secs) : emptyLabel}
         </div>
       )}

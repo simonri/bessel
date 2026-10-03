@@ -341,19 +341,19 @@ const PLATFORMS: {
     id: "mac",
     icon: <AppleLogo className="size-6" />,
     name: "macOS",
-    detail: "Apple Silicon · .dmg",
+    detail: "Apple Silicon - .dmg",
   },
   {
     id: "windows",
     icon: <WindowsLogo className="size-6" />,
     name: "Windows",
-    detail: "64-bit installer · .exe",
+    detail: "64-bit installer - .exe",
   },
   {
     id: "linux",
     icon: <LinuxLogo className="size-6" />,
     name: "Linux",
-    detail: "AppImage · x64",
+    detail: "AppImage - x64",
   },
 ];
 

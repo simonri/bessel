@@ -83,7 +83,7 @@ export function widgetSummary(widgets: TemplateWidget[]): string {
     counts.set(w.module, (counts.get(w.module) ?? 0) + 1);
   return Array.from(counts.entries())
     .map(([module, count]) => `${count} ${MODULE_REGISTRY[module].title}`)
-    .join(" · ");
+    .join(" - ");
 }
 
 export function templateToWindowSpecs(

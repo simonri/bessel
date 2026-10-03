@@ -27,7 +27,7 @@ Add strong custom curves as Tailwind v4 theme tokens in `packages/ui/src/styles/
 /* Motion tokens. Strong curves for deliberate UI motion; overriding the
    Tailwind defaults means `ease-out` / `ease-in-out` utilities pick these up.
    Duration convention (Tailwind numeric utilities are the scale):
-   100–150ms press/hover · 150–250ms dropdowns · 200–300ms modals/windows.
+   100–150ms press/hover - 150–250ms dropdowns - 200–300ms modals/windows.
    UI motion stays under 300ms. */
 @theme {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);

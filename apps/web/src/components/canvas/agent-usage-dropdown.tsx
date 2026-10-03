@@ -196,7 +196,7 @@ export function AgentUsageDropdown() {
                               stale ? "text-white/30" : "text-white/50"
                             }
                           >
-                            {entry.utilization_pct.toFixed(0)}% ·{" "}
+                            {entry.utilization_pct.toFixed(0)}% -{" "}
                             {formatDistanceToNowStrict(observedAt)} ago
                             {stale ? " (stale)" : ""}
                           </span>
@@ -264,7 +264,7 @@ export function AgentUsageDropdown() {
                         {hoveredDate === d.date && (
                           <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-10 text-white/80">
                             <span className="text-white/50">
-                              {format(new Date(d.date), "MMM d")} ·{" "}
+                              {format(new Date(d.date), "MMM d")} -{" "}
                             </span>
                             {d.total > 0
                               ? `${fmtTokens(d.total)} tokens`

@@ -121,7 +121,7 @@ private struct WorkoutRow: View {
                 Text(workout.activityLabel)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Theme.foreground)
-                Text(metaItems.joined(separator: " · "))
+                Text(metaItems.joined(separator: " - "))
                     .font(.caption)
                     .foregroundStyle(Theme.mutedForeground)
             }

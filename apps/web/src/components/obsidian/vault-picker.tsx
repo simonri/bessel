@@ -84,7 +84,7 @@ function VaultCard({
             {disabled
               ? "Folder not found"
               : info
-                ? `${path} · ${info.noteCount} note${info.noteCount === 1 ? "" : "s"}`
+                ? `${path} - ${info.noteCount} note${info.noteCount === 1 ? "" : "s"}`
                 : path}
           </p>
         </div>

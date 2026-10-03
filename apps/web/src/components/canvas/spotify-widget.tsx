@@ -124,7 +124,7 @@ export function SpotifyWidget() {
         <div className="ml-1.5 min-w-0 max-w-44 truncate text-xs text-white/70">
           {data.title}
           {data.artist && (
-            <span className="text-white/50"> · {data.artist}</span>
+            <span className="text-white/50"> - {data.artist}</span>
           )}
         </div>
       </div>
