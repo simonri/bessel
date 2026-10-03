@@ -214,7 +214,7 @@ function SessionRow({
   const windowIds = useMemo(() => windows.map((w) => w.id), [windows]);
   const status = useSessionAgentStatus(windowIds);
   const label = sessionLabel(workspace, windows);
-  const rowClass = cn(ROW, "pl-6 pr-1.5", isActive ? ROW_ACTIVE : ROW_IDLE);
+  const rowClass = cn(ROW, "gap-2 pl-7.5 pr-1.5", isActive ? ROW_ACTIVE : ROW_IDLE);
 
   return (
     <ContextMenu>
@@ -357,11 +357,11 @@ function ProjectGroup({
           onClick={() => (hasSessions ? onToggle(id) : onNewSession?.())}
           aria-expanded={hasSessions ? expanded : undefined}
           title={newSessionHint ?? name}
-          className="flex h-full min-w-0 flex-1 items-center gap-1 pl-1 text-left"
+          className="flex h-full min-w-0 flex-1 items-center gap-2 pl-2 text-left"
         >
           <ChevronRight
             className={cn(
-              "size-3 shrink-0 transition-[transform,color] duration-150",
+              "size-3.5 shrink-0 transition-[transform,color] duration-150",
               hasSessions ? "text-white/35" : "text-transparent",
               expanded && "rotate-90",
             )}
@@ -567,7 +567,7 @@ export function ProjectSessions({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-1.5 flex h-5 items-center justify-between pl-2 pr-1">
+      <div className="mb-0.5 flex h-7 items-center justify-between pl-2 pr-1">
         <span className="text-xs font-medium text-white/40">Projects</span>
         <NewSessionMenu
           onNewSession={() => onNewSession(null)}

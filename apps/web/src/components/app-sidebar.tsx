@@ -222,7 +222,7 @@ export const AppSidebar = memo(function AppSidebar({
     // overflow-x non-visible too and clip the resize handle poking out past
     // the right edge, so the scrolling nav content lives in an inner div.
     <aside style={{ width }} className="relative flex shrink-0">
-      <div className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto border-r border-white/10 bg-chrome px-2 py-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto border-r border-white/10 bg-chrome px-2 py-3">
         <nav aria-label="Pages">
           <div className="flex flex-col gap-0.5">
             {PRIMARY_PAGES.map((key) => {
@@ -247,7 +247,7 @@ export const AppSidebar = memo(function AppSidebar({
           </div>
         </nav>
 
-        <nav aria-label="Projects" className="border-t border-white/10 pt-4">
+        <nav aria-label="Projects" className="border-t border-white/10 pt-3">
           <ProjectSessions
             isOnCanvasPage={activePage === "canvas"}
             onOpenCanvas={openCanvas}
