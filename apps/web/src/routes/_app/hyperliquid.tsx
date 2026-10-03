@@ -18,6 +18,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -283,7 +284,7 @@ function HyperliquidAccount({
           <Panel className="divide-y-0 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-13 font-medium text-white/80">
-                {scope === "total" ? "Account value" : "Perps account value"}
+                {scope === "total" ? "PnL" : "Perps PnL"}
               </p>
               <div className="flex items-center gap-2">
                 <Toggle
@@ -304,7 +305,7 @@ function HyperliquidAccount({
               </div>
             </div>
             {series ? (
-              <BalanceChart points={series.value} range={range} />
+              <PnlChart points={series.pnl} range={range} />
             ) : (
               <Skeleton className="h-64 w-full bg-white/[0.04]" />
             )}
@@ -475,7 +476,7 @@ function Toggle<T extends string>({
 const LINE = "var(--color-primary-400)";
 const TICK = { fill: "rgb(255 255 255 / 0.4)", fontSize: 11 };
 
-function BalanceChart({ points, range }: { points: Point[]; range: Range }) {
+function PnlChart({ points, range }: { points: Point[]; range: Range }) {
   if (points.length < 2) {
     return (
       <p className="flex h-64 items-center justify-center text-12 text-white/40">
@@ -491,12 +492,6 @@ function BalanceChart({ points, range }: { points: Point[]; range: Range }) {
           data={points}
           margin={{ top: 8, right: 4, bottom: 0, left: 4 }}
         >
-          <defs>
-            <linearGradient id="hl-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={LINE} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={LINE} stopOpacity={0} />
-            </linearGradient>
-          </defs>
           <CartesianGrid vertical={false} stroke="rgb(255 255 255 / 0.06)" />
           <XAxis
             dataKey="ts"
@@ -531,19 +526,31 @@ function BalanceChart({ points, range }: { points: Point[]; range: Range }) {
                   <p className="text-white/50">
                     {formatTime(point.ts, range, true)}
                   </p>
-                  <p className="font-medium tabular-nums text-white/90">
-                    {formatUsd(point.value)}
+                  <p
+                    className={cn(
+                      "font-medium tabular-nums",
+                      pnlTone(point.value),
+                    )}
+                  >
+                    {formatSignedUsd(point.value)}
                   </p>
                 </div>
               );
             }}
           />
+          <ReferenceLine
+            y={0}
+            stroke="rgb(255 255 255 / 0.25)"
+            strokeDasharray="3 3"
+          />
           <Area
             dataKey="value"
             type="monotone"
+            baseValue={0}
             stroke={LINE}
             strokeWidth={2}
-            fill="url(#hl-fill)"
+            fill={LINE}
+            fillOpacity={0.1}
             isAnimationActive={false}
             activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--background)" }}
           />

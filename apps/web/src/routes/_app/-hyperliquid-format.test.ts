@@ -26,16 +26,16 @@ describe("hyperliquid formatting", () => {
   });
 
   it("puts the value axis on round steps", () => {
-    expect(valueAxis([35117, 36825]).ticks).toEqual([
-      35000, 35500, 36000, 36500, 37000,
-    ]);
     expect(valueAxis([0, 38300]).ticks).toEqual([
       0, 10000, 20000, 30000, 40000,
     ]);
-    // A flat balance still gets a span.
-    const flat = valueAxis([15000.01, 15000.01]);
-    expect(flat.domain[0]).toBeLessThan(15000.01);
-    expect(flat.domain[1]).toBeGreaterThan(15000.01);
+    // Always includes zero, so gains and losses read against it.
+    expect(valueAxis([120, 1201]).ticks).toEqual([0, 500, 1000, 1500]);
+    expect(valueAxis([-120, 300]).ticks).toEqual([-200, 0, 200, 400]);
+    expect(valueAxis([-950, -40]).domain).toEqual([-1000, 0]);
+    // A flat line still gets a span, with distinct labels.
+    const flat = valueAxis([0, 0]);
+    expect(flat.domain[1]).toBeGreaterThan(flat.domain[0]);
     expect(new Set(flat.ticks.map(axisUsdFormatter(flat.ticks))).size).toBe(
       flat.ticks.length,
     );

@@ -55,21 +55,30 @@ export interface ValueAxis {
   ticks: number[];
 }
 
-/** Y-axis on round steps covering the values, never zero-height: a flat
- *  balance would otherwise stack every tick on one value. */
+/** Y-axis on round steps covering the values (and zero, so gains and
+ *  losses read against it), never zero-height: a flat line would otherwise
+ *  stack every tick on one value. */
 export function valueAxis(values: number[], tickCount = 5): ValueAxis {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = Math.max(max - min, Math.abs(max) * 0.01, 1);
+  const min = Math.min(0, ...values);
+  const max = Math.max(0, ...values);
+  const span = Math.max(
+    max - min,
+    Math.max(Math.abs(min), Math.abs(max)) * 0.01,
+    1,
+  );
   const step = niceStep(span / (tickCount - 1));
-  // A line within a tenth of a step of an edge gets another step of air.
+  // A line within a tenth of a step of an edge gets another step of air;
+  // zero itself is a fine edge.
   let low = Math.floor(min / step) * step;
-  if (min - low < step / 10) low -= step;
-  low = Math.max(0, low);
+  if (min < 0 && min - low < step / 10) low -= step;
   let high = Math.ceil(max / step) * step;
-  if (high - max < step / 10) high += step;
-  const ticks: number[] = [];
-  for (let t = low; t <= high + step / 2; t += step) ticks.push(t);
+  if (max > 0 && high - max < step / 10) high += step;
+  if (high === low) high = low + step;
+  const count = Math.round((high - low) / step);
+  // Built from the index, not by adding: repeated float additions drift.
+  const ticks = Array.from({ length: count + 1 }, (_, i) =>
+    Number((low + i * step).toFixed(10)),
+  );
   return { domain: [low, high], ticks };
 }
 
