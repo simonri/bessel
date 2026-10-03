@@ -134,14 +134,24 @@ class TestRecipeImport:
 
   @pytest.mark.asyncio
   async def test_gives_up_after_two_bad_outputs(self, client: AsyncClient, llm: FakeOpenRouter) -> None:
-    llm.responses.append(_completion("{\"status\": \"ok\"", finish_reason="length"))
     llm.responses.append(_completion("[]"))
+    llm.responses.append(_completion("not json"))
 
     resp = await client.post("/v1/recipes/import", json={"text": "Pannkakor"})
 
     assert resp.status_code == 422
     assert resp.json()["error"] == "RecipeImportError"
     assert len(llm.requests) == 2
+
+  @pytest.mark.asyncio
+  async def test_truncated_answer_is_not_retried(self, client: AsyncClient, llm: FakeOpenRouter) -> None:
+    llm.responses.append(_completion('{"status": "ok"', finish_reason="length"))
+
+    resp = await client.post("/v1/recipes/import", json={"text": "Pannkakor"})
+
+    assert resp.status_code == 422
+    assert "too long" in resp.json()["detail"]
+    assert len(llm.requests) == 1
 
   @pytest.mark.asyncio
   async def test_upstream_failure(self, client: AsyncClient, llm: FakeOpenRouter) -> None:

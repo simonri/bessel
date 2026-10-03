@@ -252,8 +252,53 @@ function Recipes() {
     onError: () => toast.error("Failed to delete recipe"),
   });
 
+  // Hook-level callbacks, unlike per-call ones, still run after the page
+  // unmounts, so a tidy finishing while you're elsewhere is still saved.
+  const restoreMutation = useMutation({
+    ...updateRecipeV1RecipesRecipeIdPatchMutation({ client }),
+    onSuccess: (restored) => {
+      void queryClient.invalidateQueries({ queryKey });
+      if (selectedIdRef.current === restored.id) setDraft(draftFrom(restored));
+    },
+    onError: () => toast.error("Couldn't undo"),
+  });
+
+  const tidyTarget = useRef<RecipeSchema | null>(null);
   const tidyMutation = useMutation({
     ...structureRecipeTextV1RecipesImportPostMutation({ client }),
+    onSuccess: (result) => {
+      const recipe = tidyTarget.current;
+      if (!recipe) return;
+      const title = recipe.title || result.title;
+      if (selectedIdRef.current === recipe.id) {
+        setDraft((d) => d && { ...d, title, body: result.body });
+      }
+      updateMutation.mutate({
+        client,
+        path: { recipe_id: recipe.id },
+        body: { title, body: result.body },
+      });
+      toast.success("All tidied up", {
+        description: "Ingredients, steps and timers are sorted.",
+        action: {
+          label: "Undo",
+          onClick: () =>
+            restoreMutation.mutate({
+              client,
+              path: { recipe_id: recipe.id },
+              body: { title: recipe.title, content: recipe.content },
+            }),
+        },
+      });
+    },
+    onError: (error) =>
+      toast.error("Couldn't tidy this one", {
+        description: errorDetail(error, IMPORT_FALLBACK_ERROR),
+      }),
+    onSettled: () => {
+      tidyTarget.current = null;
+      setTidyingId(null);
+    },
   });
 
   // Debounced auto-save
@@ -326,52 +371,16 @@ function Recipes() {
   // tap away: restoring `content` alone puts the recipe back exactly as it was.
   const tidyRecipe = (recipe: RecipeSchema) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    tidyTarget.current = recipe;
     setTidyingId(recipe.id);
-    const text = recipe.title
-      ? `# ${recipe.title}\n\n${recipe.content}`
-      : recipe.content;
-    tidyMutation.mutate(
-      { client, body: { text } },
-      {
-        onSuccess: (result) => {
-          const title = recipe.title || result.title;
-          if (selectedIdRef.current === recipe.id) {
-            setDraft((d) => d && { ...d, title, body: result.body });
-          }
-          updateMutation.mutate({
-            client,
-            path: { recipe_id: recipe.id },
-            body: { title, body: result.body },
-          });
-          toast.success("All tidied up", {
-            description: "Ingredients, steps and timers are sorted.",
-            action: {
-              label: "Undo",
-              onClick: () =>
-                updateMutation.mutate(
-                  {
-                    client,
-                    path: { recipe_id: recipe.id },
-                    body: { title: recipe.title, content: recipe.content },
-                  },
-                  {
-                    onSuccess: (restored) => {
-                      if (selectedIdRef.current === restored.id) {
-                        setDraft(draftFrom(restored));
-                      }
-                    },
-                  },
-                ),
-            },
-          });
-        },
-        onError: (error) =>
-          toast.error("Couldn't tidy this one", {
-            description: errorDetail(error, IMPORT_FALLBACK_ERROR),
-          }),
-        onSettled: () => setTidyingId(null),
+    tidyMutation.mutate({
+      client,
+      body: {
+        text: recipe.title
+          ? `# ${recipe.title}\n\n${recipe.content}`
+          : recipe.content,
       },
-    );
+    });
   };
 
   const openRecipe = (recipe: RecipeSchema) => {

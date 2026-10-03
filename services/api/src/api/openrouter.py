@@ -26,6 +26,10 @@ class LLMOutputError(Exception):
   """The model answered, but not with JSON matching the requested shape."""
 
 
+class LLMTruncatedError(LLMOutputError):
+  """The answer hit the token limit before it was complete."""
+
+
 def client() -> httpx.AsyncClient:
   """HTTP client for OpenRouter (swapped for fakes in tests)."""
   return httpx.AsyncClient(timeout=TIMEOUT_SECONDS)
@@ -75,7 +79,7 @@ async def complete_json(
   except (ValueError, KeyError, IndexError, TypeError) as e:
     raise LLMOutputError("Malformed completion response") from e
   if choice.get("finish_reason") == "length":
-    raise LLMOutputError("Completion was cut off")
+    raise LLMTruncatedError("Completion was cut off")
   try:
     parsed = json.loads(content)
   except (TypeError, ValueError) as e:

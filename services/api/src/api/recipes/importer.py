@@ -246,6 +246,10 @@ async def import_recipe(text: str) -> RecipeImportResult:
         max_tokens=8000,
       )
       return _to_result(answer)
+    except openrouter.LLMTruncatedError as e:
+      # Deterministic sampling would cut off at the same place again.
+      log.warning("recipes.import.truncated", model=settings.RECIPE_IMPORT_MODEL)
+      raise RecipeImportError("That recipe is too long to sort in one go - try pasting a shorter part.") from e
     except (openrouter.LLMOutputError, ValidationError) as e:
       log.warning("recipes.import.bad_output", attempt=attempt, model=settings.RECIPE_IMPORT_MODEL, error=str(e))
 
