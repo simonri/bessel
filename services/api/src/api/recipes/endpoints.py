@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -8,6 +8,7 @@ from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.models.recipe import Recipe
 from api.postgres import AsyncSession, get_db_session
+from api.recipes.body import RecipeBody, render_markdown
 from api.recipes.repository import RecipeRepository
 from api.recipes.schemas import RecipeCreate, RecipeListResponse, RecipeSchema, RecipeUpdate
 from api.users.dependencies import CurrentDBUser
@@ -22,6 +23,13 @@ class RecipeSortProperty(StrEnum):
 
 
 sorting_getter = SortingGetter(RecipeSortProperty, default_sorting=["title"])
+
+
+def _content_fields(content: str, body: RecipeBody | None) -> dict[str, Any]:
+  """A structured body is the source of truth; `content` mirrors it as markdown."""
+  if body is None:
+    return {"content": content, "body": None}
+  return {"content": render_markdown(body), "body": body.model_dump(mode="json")}
 
 
 @router.get("", summary="List Recipes", response_model=RecipeListResponse)
@@ -52,7 +60,12 @@ async def create_recipe(
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
   recipe = await repo.create(
-    Recipe(title=body.title, content=body.content, recipe_type=body.recipe_type, user_id=current_user.id),
+    Recipe(
+      title=body.title,
+      recipe_type=body.recipe_type,
+      user_id=current_user.id,
+      **_content_fields(body.content, body.body),
+    ),
     flush=True,
   )
   return RecipeSchema.model_validate(recipe)
@@ -78,7 +91,13 @@ async def update_recipe(
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
-  update_data = body.model_dump(exclude_unset=True)
+  update_data = body.model_dump(exclude_unset=True, exclude={"content", "body"})
+  if body.body is not None:
+    update_data |= _content_fields("", body.body)
+  elif body.content is not None:
+    # A client that only edits markdown (older desktop builds): the stored
+    # structure is now stale, so the markdown becomes the source again.
+    update_data |= _content_fields(body.content, None)
   recipe = await repo.update(recipe, update_dict=update_data)
   return RecipeSchema.model_validate(recipe)
 

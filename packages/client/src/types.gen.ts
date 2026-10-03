@@ -2928,6 +2928,62 @@ export type ProjectUpdate = {
 };
 
 /**
+ * RecipeBody
+ */
+export type RecipeBody = {
+  /**
+   * Intro
+   */
+  intro?: string | null;
+  /**
+   * Yield Text
+   *
+   * e.g. '3 burgare (6 puckar à ca 85 g)'.
+   */
+  yield_text?: string | null;
+  /**
+   * Total Minutes
+   */
+  total_minutes?: number | null;
+  /**
+   * Active Minutes
+   */
+  active_minutes?: number | null;
+  /**
+   * Ingredient Groups
+   */
+  ingredient_groups?: Array<RecipeIngredientGroup>;
+  /**
+   * Steps
+   */
+  steps?: Array<RecipeStep>;
+  /**
+   * Sections
+   */
+  sections?: Array<RecipeSection>;
+};
+
+/**
+ * RecipeCallout
+ */
+export type RecipeCallout = {
+  /**
+   * Kind
+   */
+  kind?: "tip" | "warning";
+  /**
+   * Label
+   *
+   * e.g. 'Proffstips'.
+   */
+  label?: string | null;
+  /**
+   * Text
+   */
+  text: string;
+};
+
+/**
  * RecipeCreate
  */
 export type RecipeCreate = {
@@ -2940,6 +2996,47 @@ export type RecipeCreate = {
    */
   content?: string;
   recipe_type?: RecipeType;
+  body?: RecipeBody | null;
+};
+
+/**
+ * RecipeIngredient
+ */
+export type RecipeIngredient = {
+  /**
+   * Amount
+   *
+   * Quantity, e.g. 1.5 for 1½.
+   */
+  amount?: number | null;
+  /**
+   * Unit
+   */
+  unit?: string | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Note
+   *
+   * Preparation or alternatives, e.g. 'grovhackade'.
+   */
+  note?: string | null;
+};
+
+/**
+ * RecipeIngredientGroup
+ */
+export type RecipeIngredientGroup = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Items
+   */
+  items?: Array<RecipeIngredient>;
 };
 
 /**
@@ -2984,6 +3081,23 @@ export type RecipeSchema = {
    */
   content: string;
   recipe_type: RecipeType;
+  body: RecipeBody;
+};
+
+/**
+ * RecipeSection
+ */
+export type RecipeSection = {
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Text
+   *
+   * Markdown.
+   */
+  text?: string;
 };
 
 /**
@@ -3003,6 +3117,36 @@ export const RecipeSortProperty = {
  */
 export type RecipeSortProperty =
   (typeof RecipeSortProperty)[keyof typeof RecipeSortProperty];
+
+/**
+ * RecipeStep
+ */
+export type RecipeStep = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  /**
+   * Text
+   *
+   * Markdown.
+   */
+  text?: string;
+  /**
+   * Time Label
+   *
+   * e.g. '5 min + 30 min i kyl'.
+   */
+  time_label?: string | null;
+  /**
+   * Timer Minutes
+   */
+  timer_minutes?: number | null;
+  /**
+   * Callouts
+   */
+  callouts?: Array<RecipeCallout>;
+};
 
 /**
  * RecipeType
@@ -3031,6 +3175,7 @@ export type RecipeUpdate = {
    */
   content?: string | null;
   recipe_type?: RecipeType | null;
+  body?: RecipeBody | null;
 };
 
 /**

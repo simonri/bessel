@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.recipe_type import RecipeType
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+  from ..models.recipe_body import RecipeBody
+
 
 T = TypeVar("T", bound="RecipeUpdate")
 
@@ -19,14 +23,18 @@ class RecipeUpdate:
       title (None | str | Unset):
       content (None | str | Unset):
       recipe_type (None | RecipeType | Unset):
+      body (None | RecipeBody | Unset):
   """
 
   title: None | str | Unset = UNSET
   content: None | str | Unset = UNSET
   recipe_type: None | RecipeType | Unset = UNSET
+  body: None | RecipeBody | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
+    from ..models.recipe_body import RecipeBody
+
     title: None | str | Unset
     if isinstance(self.title, Unset):
       title = UNSET
@@ -47,6 +55,14 @@ class RecipeUpdate:
     else:
       recipe_type = self.recipe_type
 
+    body: dict[str, Any] | None | Unset
+    if isinstance(self.body, Unset):
+      body = UNSET
+    elif isinstance(self.body, RecipeBody):
+      body = self.body.to_dict()
+    else:
+      body = self.body
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update({})
@@ -56,11 +72,15 @@ class RecipeUpdate:
       field_dict["content"] = content
     if recipe_type is not UNSET:
       field_dict["recipe_type"] = recipe_type
+    if body is not UNSET:
+      field_dict["body"] = body
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.recipe_body import RecipeBody
+
     d = dict(src_dict)
 
     def _parse_title(data: object) -> None | str | Unset:
@@ -98,10 +118,28 @@ class RecipeUpdate:
 
     recipe_type = _parse_recipe_type(d.pop("recipe_type", UNSET))
 
+    def _parse_body(data: object) -> None | RecipeBody | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      try:
+        if not isinstance(data, dict):
+          raise TypeError()
+        body_type_0 = RecipeBody.from_dict(data)
+
+        return body_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(None | RecipeBody | Unset, data)
+
+    body = _parse_body(d.pop("body", UNSET))
+
     recipe_update = cls(
       title=title,
       content=content,
       recipe_type=recipe_type,
+      body=body,
     )
 
     recipe_update.additional_properties = d
