@@ -14,6 +14,8 @@ type MonitorStatusResult = {
   enabled: boolean;
   failed: boolean;
   state: string;
+  idleSource: string | null;
+  idleWarning: string | null;
 };
 
 export function MonitorPage() {
@@ -35,7 +37,9 @@ export function MonitorPage() {
             prev.active === s.active &&
             prev.enabled === s.enabled &&
             prev.failed === s.failed &&
-            prev.state === s.state
+            prev.state === s.state &&
+            prev.idleSource === s.idleSource &&
+            prev.idleWarning === s.idleWarning
               ? prev
               : s,
           );
@@ -89,6 +93,15 @@ export function MonitorPage() {
             <span className="text-13 text-white/80">{stateLabel}</span>
           </PanelRow>
 
+          {status.active && (
+            <PanelRow label="Idle detection">
+              <StatusDot tone={status.idleSource ? "active" : "warning"} />
+              <span className="text-13 text-white/80">
+                {status.idleSource ?? "Not working"}
+              </span>
+            </PanelRow>
+          )}
+
           {status.installed && (
             <>
               <PanelRow label="Control">
@@ -116,6 +129,11 @@ export function MonitorPage() {
             </>
           )}
         </Panel>
+        {status.active && status.idleWarning && (
+          <p className="mt-2.5 text-12 text-amber-300/80">
+            {status.idleWarning}
+          </p>
+        )}
       </div>
 
       {!status.installed && (

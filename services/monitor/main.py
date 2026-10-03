@@ -20,6 +20,7 @@ import argparse
 import csv
 import json
 import os
+import shutil
 import signal
 import socket
 import sqlite3
@@ -42,18 +43,19 @@ IDLE_THRESHOLD_SECS = 60
 # time when the tracker wasn't running.
 HEARTBEAT_SECS = 300
 
-# hypridle/swayidle listener that enables accurate idle detection on Hyprland/Sway:
-#   listener {
-#     timeout    = 60
-#     on-timeout = date +%s > /tmp/activity-tracker-idle
-#     on-resume  = rm -f /tmp/activity-tracker-idle
-#   }
-# Without this file the tracker falls back to loginctl IdleHint (boolean).
+# On Hyprland/Sway the tracker runs its own swayidle, which writes the epoch
+# second inactivity began to this file and removes it on input. An external
+# hypridle listener writing the same file also works.
 IDLE_FILE = Path("/tmp/activity-tracker-idle")
+LOCK_CHECK_SECS = 10
+SWAYIDLE_RESTART_SECS = 30
+STATUS_CHECK_SECS = 30
 
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "activity-tracker"
 DB_PATH = DATA_DIR / "activity.db"
 CURSOR_PATH = DATA_DIR / "push_cursor"
+# Read by the desktop app's Settings → Monitor page.
+STATUS_PATH = DATA_DIR / "status.json"
 _SCHEMA_VERSION = 2
 
 METRON_API_URL = os.environ.get("METRON_API_URL", "http://localhost:8100")
@@ -174,22 +176,114 @@ def _idle_secs_gnome():
     return None
 
 
-def _idle_hint_logind():
-    """Boolean idle state from logind; used as fallback when IDLE_FILE isn't written."""
-    session_id = os.environ.get("XDG_SESSION_ID")
-    if not session_id:
+def _screen_locked():
+    if shutil.which("omarchy-shell"):
+        return _run(["omarchy-shell", "-q", "lock", "isLocked"]) == "true"
+    return _run(["pidof", "hyprlock"]) is not None
+
+
+class WaylandIdle:
+    """Idle signal on Hyprland/Sway that doesn't depend on the desktop shell.
+
+    Runs its own swayidle (ext-idle-notify-v1) writing IDLE_FILE, restarts it
+    if it dies, and treats a locked screen as idle straight away.
+    """
+
+    def __init__(self):
+        self._proc = None
+        self._restart_at = 0.0
+        self._locked = False
+        self._lock_checked_at = float("-inf")
+
+    def start(self):
+        if shutil.which("swayidle") is None:
+            self._restart_at = time.monotonic() + SWAYIDLE_RESTART_SECS
+            return
+        IDLE_FILE.unlink(missing_ok=True)
+        # Backdate by the threshold: swayidle only fires after it has elapsed.
+        on_idle = f"echo $(($(date +%s) - {IDLE_THRESHOLD_SECS})) > {IDLE_FILE}"
+        self._proc = subprocess.Popen(
+            ["swayidle", "-w", "timeout", str(IDLE_THRESHOLD_SECS), on_idle, "resume", f"rm -f {IDLE_FILE}"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def stop(self):
+        if self._proc is not None and self._proc.poll() is None:
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self._proc.kill()
+        self._proc = None
+        IDLE_FILE.unlink(missing_ok=True)
+
+    def _supervise(self):
+        if self._proc is not None and self._proc.poll() is not None:
+            # A file left behind by a dead swayidle would report idle forever.
+            IDLE_FILE.unlink(missing_ok=True)
+            self._proc = None
+            self._restart_at = time.monotonic() + SWAYIDLE_RESTART_SECS
+            print("metron-monitor  swayidle exited; restarting shortly", file=sys.stderr, flush=True)
+        if self._proc is None and time.monotonic() >= self._restart_at:
+            self.start()
+
+    @property
+    def source(self):
+        if self._proc is not None and self._proc.poll() is None:
+            return "swayidle"
+        if _run(["pidof", "hypridle"]) is not None:
+            return "hypridle"
         return None
-    out = _run(["loginctl", "show-session", session_id, "--value", "--property=IdleHint"])
-    if out == "yes":
-        return True
-    if out == "no":
-        return False
-    return None
+
+    @property
+    def lock_source(self):
+        if shutil.which("omarchy-shell"):
+            return "omarchy-shell"
+        if shutil.which("hyprlock"):
+            return "hyprlock"
+        return None
+
+    def is_idle(self):
+        self._supervise()
+        try:
+            since = int(IDLE_FILE.read_text().strip())
+            if time.time() - since >= IDLE_THRESHOLD_SECS:
+                return True
+        except (FileNotFoundError, ValueError):
+            pass
+        now = time.monotonic()
+        if now - self._lock_checked_at >= LOCK_CHECK_SECS:
+            self._lock_checked_at = now
+            self._locked = _screen_locked()
+        return self._locked
+
+
+def _idle_status(backend, wayland_idle):
+    if wayland_idle is not None:
+        source = wayland_idle.source
+        warning = None if source else "No idle detection: swayidle isn't installed, so all time is recorded as active."
+        return {"idle_source": source, "lock_source": wayland_idle.lock_source, "warning": warning}
+    if backend == "x11":
+        ok = shutil.which("xprintidle") is not None
+        return {
+            "idle_source": "xprintidle" if ok else None,
+            "lock_source": None,
+            "warning": None if ok else "No idle detection: xprintidle isn't installed, so all time is recorded as active.",
+        }
+    return {"idle_source": "gnome-mutter", "lock_source": None, "warning": None}
+
+
+def _write_status(status):
+    payload = {**status, "updated_at": datetime.now(timezone.utc).isoformat()}
+    tmp = STATUS_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps(payload))
+    tmp.replace(STATUS_PATH)
 
 
 # ─── sampler ─────────────────────────────────────────────────────────────────
 
-def make_sampler(backend):
+def make_sampler(backend, wayland_idle):
     _win = {
         "x11": _window_x11,
         "hyprland": _window_hyprland,
@@ -203,13 +297,7 @@ def make_sampler(backend):
         if backend == "gnome-wayland":
             secs = _idle_secs_gnome()
             return secs is not None and secs >= IDLE_THRESHOLD_SECS
-        # Hyprland / Sway: prefer the idle file, fall back to logind
-        try:
-            since = int(IDLE_FILE.read_text().strip())
-            return (time.time() - since) >= IDLE_THRESHOLD_SECS
-        except (FileNotFoundError, ValueError):
-            pass
-        return _idle_hint_logind() is True
+        return wayland_idle.is_idle()
 
     def sample():
         title, cls, workspace = _win()
@@ -300,12 +388,20 @@ def track(source: str) -> None:
     if backend == "unknown":
         sys.exit("Cannot detect display server — set DISPLAY or Wayland env vars.")
     conn = _open_db()
-    sample = make_sampler(backend)
+    wayland_idle = WaylandIdle() if backend in ("hyprland", "sway") else None
+    if wayland_idle is not None:
+        wayland_idle.start()
+    sample = make_sampler(backend, wayland_idle)
 
-    idle_method = "idle file" if IDLE_FILE.exists() else "loginctl IdleHint"
-    if backend in ("hyprland", "sway") and not IDLE_FILE.exists():
-        idle_method = f"loginctl IdleHint (add hypridle listener → {IDLE_FILE} for accuracy)"
-    print(f"metron-monitor  backend={backend}  idle={idle_method}  db={DB_PATH}  source={source}", flush=True)
+    status = _idle_status(backend, wayland_idle)
+    _write_status(status)
+    print(
+        f"metron-monitor  backend={backend}  idle={status['idle_source']}  lock={status['lock_source']}  db={DB_PATH}  source={source}",
+        flush=True,
+    )
+    if status["warning"]:
+        print(f"metron-monitor  WARNING: {status['warning']}", file=sys.stderr, flush=True)
+    status_checked_at = time.monotonic()
 
     t = threading.Thread(target=_auto_push_loop, args=(source,), daemon=True)
     t.start()
@@ -326,8 +422,18 @@ def track(source: str) -> None:
                 conn.commit()
                 last_key = key
                 last_write_ts = now
+            if time.monotonic() - status_checked_at >= STATUS_CHECK_SECS:
+                status_checked_at = time.monotonic()
+                new_status = _idle_status(backend, wayland_idle)
+                if new_status != status:
+                    status = new_status
+                    _write_status(status)
+                    if status["warning"]:
+                        print(f"metron-monitor  WARNING: {status['warning']}", file=sys.stderr, flush=True)
             time.sleep(POLL_SECONDS)
     finally:
+        if wayland_idle is not None:
+            wayland_idle.stop()
         conn.close()
 
 

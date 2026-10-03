@@ -142,6 +142,8 @@ declare global {
           enabled: boolean;
           failed: boolean;
           state: string;
+          idleSource: string | null;
+          idleWarning: string | null;
         }>;
         install: () => Promise<void>;
         start: () => Promise<void>;

@@ -51,6 +51,24 @@ async function querySystemctl(...args: string[]): Promise<string> {
   }
 }
 
+// Written by the running monitor (services/monitor/main.py STATUS_PATH).
+const MONITOR_STATUS_FILE = path.join(
+  process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share"),
+  "activity-tracker",
+  "status.json",
+);
+
+function readMonitorIdleStatus(): {
+  idle_source: string | null;
+  warning: string | null;
+} | null {
+  try {
+    return JSON.parse(fs.readFileSync(MONITOR_STATUS_FILE, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
 async function queryUnitStatus(unitName: string): Promise<UnitStatusResult> {
   const unitFile = path.join(SYSTEMD_USER_DIR, unitName);
   if (!fs.existsSync(unitFile)) {
@@ -168,9 +186,15 @@ export function registerServiceInstallerHandlers(): void {
   const collectorPayloadDir = path.join(PAYLOAD_ROOT, "agent-usage-collector");
 
   // ─── monitor ────────────────────────────────────────────────────────────
-  ipcHandle("monitor:status", async () =>
-    queryUnitStatus("metron-monitor.service"),
-  );
+  ipcHandle("monitor:status", async () => {
+    const base = await queryUnitStatus("metron-monitor.service");
+    const idle = base.active ? readMonitorIdleStatus() : null;
+    return {
+      ...base,
+      idleSource: idle?.idle_source ?? null,
+      idleWarning: idle?.warning ?? null,
+    };
+  });
 
   ipcHandle("monitor:install", async () => {
     assertUvAvailable();
