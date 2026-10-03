@@ -433,7 +433,8 @@ export function CalendarView({
     }
   };
 
-  const step = view === "week" ? 7 : 1;
+  const step = view === "day" ? 1 : 7;
+  const unit = view === "day" ? "day" : "week";
   const title = headerMonth(days, today);
 
   return (
@@ -470,12 +471,13 @@ export function CalendarView({
                 size="sm"
                 aria-label="View"
                 // Same soft look as the buttons beside it.
-                className="w-24 min-w-0 border-transparent bg-white/[0.06] font-medium text-white/75 shadow-none hover:border-transparent hover:bg-white/[0.1] dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+                className="w-auto min-w-24 border-transparent bg-white/[0.06] font-medium text-white/75 shadow-none hover:border-transparent hover:bg-white/[0.1] dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="week">Week</SelectItem>
+                <SelectItem value="centered">Today in middle</SelectItem>
                 <SelectItem value="day">Day</SelectItem>
               </SelectContent>
             </Select>
@@ -486,13 +488,13 @@ export function CalendarView({
             </SoftButton>
             <div className="flex">
               <IconButton
-                title={view === "week" ? "Previous week" : "Previous day"}
+                title={`Previous ${unit}`}
                 onClick={() => setDate((d) => addDays(d, -step))}
               >
                 <ChevronLeft />
               </IconButton>
               <IconButton
-                title={view === "week" ? "Next week" : "Next day"}
+                title={`Next ${unit}`}
                 onClick={() => setDate((d) => addDays(d, step))}
               >
                 <ChevronRight />

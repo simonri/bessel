@@ -2,6 +2,8 @@ import { addDays, format, isSameDay, startOfWeek } from "date-fns";
 import type { CalendarViewMode } from "./calendar-types";
 
 export const WEEK_OPTIONS = { weekStartsOn: 1 } as const;
+/** Days shown either side of the selected day in the "centered" view. */
+export const CENTERED_RADIUS = 3;
 
 /** The month a range of days is "in": today's month while today is shown,
  *  otherwise the month most of the days fall in (the later one on a tie). */
@@ -20,9 +22,11 @@ export function headerMonth(days: Date[], today: Date): string {
 }
 
 export function visibleDays(date: Date, view: CalendarViewMode): Date[] {
-  if (view === "day") {
-    return [new Date(date.getFullYear(), date.getMonth(), date.getDate())];
-  }
-  const start = startOfWeek(date, WEEK_OPTIONS);
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  if (view === "day") return [day];
+  const start =
+    view === "centered"
+      ? addDays(day, -CENTERED_RADIUS)
+      : startOfWeek(date, WEEK_OPTIONS);
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }

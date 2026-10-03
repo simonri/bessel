@@ -1,6 +1,7 @@
 import {
   addDays,
   addMonths,
+  differenceInCalendarDays,
   format,
   isSameDay,
   isSameMonth,
@@ -12,7 +13,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { IconButton } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
-import { WEEK_OPTIONS } from "./calendar-dates";
+import { CENTERED_RADIUS, WEEK_OPTIONS } from "./calendar-dates";
 import type { CalendarViewMode } from "./calendar-types";
 
 const WEEKDAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -44,10 +45,14 @@ export function MiniMonth({
     Array.from({ length: 7 }, (_, d) => addDays(gridStart, w * 7 + d)),
   );
 
-  const isHighlighted = (day: Date) =>
-    view === "week"
-      ? isSameWeek(day, selected, WEEK_OPTIONS)
-      : isSameDay(day, selected);
+  const isHighlighted = (day: Date) => {
+    if (view === "week") return isSameWeek(day, selected, WEEK_OPTIONS);
+    if (view === "centered")
+      return (
+        Math.abs(differenceInCalendarDays(day, selected)) <= CENTERED_RADIUS
+      );
+    return isSameDay(day, selected);
+  };
 
   return (
     <div className="select-none">
@@ -91,7 +96,7 @@ export function MiniMonth({
           >
             {week.map((day) => {
               const isToday = isSameDay(day, today);
-              const dayHighlighted = view === "day" && isHighlighted(day);
+              const dayHighlighted = view !== "week" && isHighlighted(day);
               return (
                 <button
                   key={day.toISOString()}

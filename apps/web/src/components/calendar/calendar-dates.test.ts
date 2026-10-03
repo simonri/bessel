@@ -32,3 +32,11 @@ describe("headerMonth", () => {
     ).toBe("September 2026");
   });
 });
+
+describe("visibleDays", () => {
+  it("centers the selected day with three days either side", () => {
+    const days = visibleDays(new Date(2026, 9, 4, 15), "centered");
+    expect(days.map((d) => d.getDate())).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(days[0].getHours()).toBe(0);
+  });
+});

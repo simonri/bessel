@@ -91,4 +91,5 @@ export interface AllDayCalendarEvent extends CalendarEventBase {
 
 export type CalendarEvent = TimedCalendarEvent | AllDayCalendarEvent;
 
-export type CalendarViewMode = "week" | "day";
+/** "centered" shows the selected day with three days either side. */
+export type CalendarViewMode = "week" | "centered" | "day";
