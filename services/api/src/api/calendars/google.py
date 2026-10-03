@@ -2,6 +2,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from typing import Any
 from urllib.parse import quote, urlencode
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 import structlog
@@ -154,8 +155,19 @@ def _parse_event(item: dict[str, Any]) -> ProviderEvent | None:
   if "date" in start:
     return ProviderEvent(**details, all_day=True, start_date=date.fromisoformat(start["date"]), end_date=date.fromisoformat(end["date"]))
   if "dateTime" in start:
-    return ProviderEvent(**details, all_day=False, start_at=datetime.fromisoformat(start["dateTime"]), end_at=datetime.fromisoformat(end["dateTime"]))
+    return ProviderEvent(**details, all_day=False, start_at=_parse_date_time(start), end_at=_parse_date_time(end))
   return None
+
+
+def _parse_date_time(value: dict[str, Any]) -> datetime:
+  # Google may omit the offset, in which case `timeZone` says where the time is.
+  parsed = datetime.fromisoformat(value["dateTime"])
+  if parsed.tzinfo is not None:
+    return parsed
+  try:
+    return parsed.replace(tzinfo=ZoneInfo(value.get("timeZone") or "UTC"))
+  except (ZoneInfoNotFoundError, ValueError):
+    return parsed.replace(tzinfo=UTC)
 
 
 @dataclass(frozen=True, slots=True)
