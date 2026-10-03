@@ -4,18 +4,28 @@ import {
   listRecipesV1RecipesGetOptions,
   listRecipesV1RecipesGetQueryKey,
   type RecipeBody,
+  type RecipeImportResult,
   type RecipeSchema,
   type RecipeType,
+  structureRecipeTextV1RecipesImportPostMutation,
   updateRecipeV1RecipesRecipeIdPatchMutation,
 } from "@bessel/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@bessel/ui/components/dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ChefHat,
+  FilePen,
   LayoutGrid,
   Pencil,
   Plus,
   Search,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -27,6 +37,10 @@ import {
   RecipeEditor,
 } from "@/components/recipes/recipe-editor";
 import { RecipeGallery } from "@/components/recipes/recipe-gallery";
+import {
+  IMPORT_FALLBACK_ERROR,
+  RecipeImportDialog,
+} from "@/components/recipes/recipe-import-dialog";
 import { matchesRecipe } from "@/components/recipes/recipe-meta";
 import { RecipeReader } from "@/components/recipes/recipe-reader";
 import {
@@ -34,7 +48,9 @@ import {
   RECIPE_TYPES,
   typeTint,
 } from "@/components/recipes/recipe-style";
+import { RecipeTidyBanner } from "@/components/recipes/recipe-tidy-banner";
 import { IconButton } from "@/components/ui-kit";
+import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 
@@ -105,17 +121,80 @@ function FilterChip({
   );
 }
 
+type RecipeDraft = {
+  title: string;
+  body: RecipeBody;
+  recipe_type: RecipeType;
+};
+
+function draftFrom(recipe: RecipeSchema): RecipeDraft {
+  const { body } = recipe;
+  const blank = !body.ingredient_groups?.length && !body.steps?.length;
+  return {
+    title: recipe.title,
+    body: blank ? { ...body, ...emptyRecipeBody() } : body,
+    recipe_type: recipe.recipe_type,
+  };
+}
+
+function NewRecipeMenu({
+  onBlank,
+  onPaste,
+}: {
+  onBlank: () => void;
+  onPaste: () => void;
+}) {
+  const item =
+    "flex cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 outline-none transition-colors data-[highlighted]:bg-white/[0.06]";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title="New recipe"
+          aria-label="New recipe"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-95 data-[state=open]:bg-primary-400"
+        >
+          <Plus className="size-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={6}
+        className="w-64 rounded-xl border-white/10 bg-popover p-1 shadow-2xl"
+      >
+        <DropdownMenuItem className={item} onSelect={onPaste}>
+          <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary-300" />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-13 text-white/85">Paste a recipe</span>
+            <span className="text-11 text-white/40">
+              From anywhere - it gets sorted for you
+            </span>
+          </span>
+        </DropdownMenuItem>
+        <DropdownMenuItem className={item} onSelect={onBlank}>
+          <FilePen className="mt-0.5 size-3.5 shrink-0 text-white/50" />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-13 text-white/85">Write from scratch</span>
+            <span className="text-11 text-white/40">
+              Start with a blank card
+            </span>
+          </span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function Recipes() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<RecipeType | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
-  const [draft, setDraft] = useState<{
-    title: string;
-    body: RecipeBody;
-    recipe_type: RecipeType;
-  } | null>(null);
+  const [draft, setDraft] = useState<RecipeDraft | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecipeSchema | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [tidyingId, setTidyingId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
 
@@ -141,18 +220,10 @@ function Recipes() {
   // Load the draft when a recipe opens — not on every save: the server
   // returns the cleaned body, which would wipe rows still being filled in.
   const selectedKey = selected?.id ?? null;
+  const selectedIdRef = useRef(selectedKey);
+  selectedIdRef.current = selectedKey;
   useEffect(() => {
-    if (!selected) {
-      setDraft(null);
-      return;
-    }
-    const { body } = selected;
-    const blank = !body.ingredient_groups?.length && !body.steps?.length;
-    setDraft({
-      title: selected.title,
-      body: blank ? { ...body, ...emptyRecipeBody() } : body,
-      recipe_type: selected.recipe_type,
-    });
+    setDraft(selected ? draftFrom(selected) : null);
   }, [selectedKey]);
 
   const createMutation = useMutation({
@@ -179,6 +250,55 @@ function Recipes() {
       setDeleteTarget(null);
     },
     onError: () => toast.error("Failed to delete recipe"),
+  });
+
+  // Hook-level callbacks, unlike per-call ones, still run after the page
+  // unmounts, so a tidy finishing while you're elsewhere is still saved.
+  const restoreMutation = useMutation({
+    ...updateRecipeV1RecipesRecipeIdPatchMutation({ client }),
+    onSuccess: (restored) => {
+      void queryClient.invalidateQueries({ queryKey });
+      if (selectedIdRef.current === restored.id) setDraft(draftFrom(restored));
+    },
+    onError: () => toast.error("Couldn't undo"),
+  });
+
+  const tidyTarget = useRef<RecipeSchema | null>(null);
+  const tidyMutation = useMutation({
+    ...structureRecipeTextV1RecipesImportPostMutation({ client }),
+    onSuccess: (result) => {
+      const recipe = tidyTarget.current;
+      if (!recipe) return;
+      const title = recipe.title || result.title;
+      if (selectedIdRef.current === recipe.id) {
+        setDraft((d) => d && { ...d, title, body: result.body });
+      }
+      updateMutation.mutate({
+        client,
+        path: { recipe_id: recipe.id },
+        body: { title, body: result.body },
+      });
+      toast.success("All tidied up", {
+        description: "Ingredients, steps and timers are sorted.",
+        action: {
+          label: "Undo",
+          onClick: () =>
+            restoreMutation.mutate({
+              client,
+              path: { recipe_id: recipe.id },
+              body: { title: recipe.title, content: recipe.content },
+            }),
+        },
+      });
+    },
+    onError: (error) =>
+      toast.error("Couldn't tidy this one", {
+        description: errorDetail(error, IMPORT_FALLBACK_ERROR),
+      }),
+    onSettled: () => {
+      tidyTarget.current = null;
+      setTidyingId(null);
+    },
   });
 
   // Debounced auto-save
@@ -227,6 +347,42 @@ function Recipes() {
       },
     });
 
+  const createFromImport = (result: RecipeImportResult) =>
+    createMutation.mutate(
+      {
+        client,
+        body: {
+          title: result.title,
+          recipe_type: result.recipe_type,
+          body: result.body,
+        },
+      },
+      {
+        onSuccess: () => {
+          setMode("preview");
+          toast.success("Recipe added", {
+            description: "Give it a quick look - tweak anything in Edit.",
+          });
+        },
+      },
+    );
+
+  // Structures a recipe that is still plain markdown. The old text stays one
+  // tap away: restoring `content` alone puts the recipe back exactly as it was.
+  const tidyRecipe = (recipe: RecipeSchema) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    tidyTarget.current = recipe;
+    setTidyingId(recipe.id);
+    tidyMutation.mutate({
+      client,
+      body: {
+        text: recipe.title
+          ? `# ${recipe.title}\n\n${recipe.content}`
+          : recipe.content,
+      },
+    });
+  };
+
   const openRecipe = (recipe: RecipeSchema) => {
     setSelectedId(recipe.id);
     setMode("preview");
@@ -247,15 +403,10 @@ function Recipes() {
               className="h-8 w-full rounded-full bg-white/[0.05] pr-3 pl-8 text-12 text-white/85 ring-1 ring-white/[0.06] outline-none transition-[box-shadow,background-color] placeholder:text-white/30 focus:bg-white/[0.07] focus:ring-primary-400/40"
             />
           </div>
-          <button
-            type="button"
-            title="New recipe"
-            aria-label="New recipe"
-            onClick={createRecipe}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-95"
-          >
-            <Plus className="size-4" />
-          </button>
+          <NewRecipeMenu
+            onBlank={createRecipe}
+            onPaste={() => setImportOpen(true)}
+          />
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5 px-2.5 pb-2">
@@ -327,6 +478,7 @@ function Recipes() {
             filtered={filtered.length !== recipes.length}
             onOpen={openRecipe}
             onCreate={createRecipe}
+            onImport={() => setImportOpen(true)}
           />
         ) : (
           <>
@@ -406,20 +558,44 @@ function Recipes() {
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {mode === "edit" ? (
-                <RecipeEditor value={draft.body} onChange={handleBodyChange} />
-              ) : (
-                <RecipeReader
-                  key={selected.id}
-                  title={draft.title}
-                  type={draft.recipe_type}
-                  body={draft.body}
+              {!selected.structured && (
+                <RecipeTidyBanner
+                  pending={tidyingId === selected.id}
+                  disabled={tidyingId !== null}
+                  onTidy={() => tidyRecipe(selected)}
                 />
               )}
+              <div
+                inert={tidyingId === selected.id}
+                className={cn(
+                  "transition-opacity duration-300",
+                  tidyingId === selected.id && "opacity-40",
+                )}
+              >
+                {mode === "edit" ? (
+                  <RecipeEditor
+                    value={draft.body}
+                    onChange={handleBodyChange}
+                  />
+                ) : (
+                  <RecipeReader
+                    key={selected.id}
+                    title={draft.title}
+                    type={draft.recipe_type}
+                    body={draft.body}
+                  />
+                )}
+              </div>
             </div>
           </>
         )}
       </section>
+
+      <RecipeImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={createFromImport}
+      />
 
       <ConfirmDeleteDialog
         variant="default"

@@ -1,5 +1,5 @@
 import type { RecipeSchema } from "@bessel/client";
-import { Plus, Shuffle } from "lucide-react";
+import { Plus, Shuffle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { describeRecipe } from "./recipe-meta";
 import { RECIPE_TYPE_META, typeGradient } from "./recipe-style";
@@ -49,12 +49,14 @@ export function RecipeGallery({
   filtered,
   onOpen,
   onCreate,
+  onImport,
 }: {
   recipes: RecipeSchema[];
   totalCount: number;
   filtered: boolean;
   onOpen: (recipe: RecipeSchema) => void;
   onCreate: () => void;
+  onImport: () => void;
 }) {
   if (totalCount === 0) {
     return (
@@ -67,17 +69,28 @@ export function RecipeGallery({
             Your cookbook is empty
           </p>
           <p className="mt-1 text-xs text-white/45">
-            Save the recipes you love so they're always one click away.
+            Paste one from anywhere and it gets sorted into ingredients and
+            steps.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="mt-1 flex h-8 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-xs font-medium text-white transition-colors hover:bg-primary-400"
-        >
-          <Plus className="size-3.5" />
-          Add your first recipe
-        </button>
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={onImport}
+            className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-xs font-medium text-white transition-colors hover:bg-primary-400"
+          >
+            <Sparkles className="size-3.5" />
+            Paste a recipe
+          </button>
+          <button
+            type="button"
+            onClick={onCreate}
+            className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-white/60 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white/85"
+          >
+            <Plus className="size-3.5" />
+            Write one
+          </button>
+        </div>
       </div>
     );
   }
@@ -100,15 +113,25 @@ export function RecipeGallery({
                 : `${totalCount} recipe${totalCount === 1 ? "" : "s"} in your cookbook`}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={surprise}
-            disabled={recipes.length === 0}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500/15 px-3.5 text-xs font-medium text-primary-300 ring-1 ring-primary-400/20 transition-colors hover:bg-primary-500/25 disabled:opacity-40"
-          >
-            <Shuffle className="size-3.5" />
-            Surprise me
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onImport}
+              className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-white/60 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white/85"
+            >
+              <Sparkles className="size-3.5" />
+              Paste a recipe
+            </button>
+            <button
+              type="button"
+              onClick={surprise}
+              disabled={recipes.length === 0}
+              className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500/15 px-3.5 text-xs font-medium text-primary-300 ring-1 ring-primary-400/20 transition-colors hover:bg-primary-500/25 disabled:opacity-40"
+            >
+              <Shuffle className="size-3.5" />
+              Surprise me
+            </button>
+          </div>
         </div>
         {recipes.length === 0 ? (
           <p className="py-10 text-center text-xs text-white/45">

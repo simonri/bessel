@@ -16,6 +16,7 @@ import {
 } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
 import { fromWallClock } from "./calendar-timezone";
 import type { CalendarEvent, Reply } from "./calendar-types";
@@ -69,14 +70,6 @@ export function eventFieldsBody(
   if (changes.addConference) body.add_conference = true;
   if ("colorId" in changes) body.color_id = changes.colorId ?? null;
   return body;
-}
-
-export function errorDetail(error: unknown, fallback: string): string {
-  if (error && typeof error === "object" && "detail" in error) {
-    const detail = (error as { detail: unknown }).detail;
-    if (typeof detail === "string") return detail;
-  }
-  return fallback;
 }
 
 type EventCaches = [

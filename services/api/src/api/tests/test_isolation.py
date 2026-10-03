@@ -139,6 +139,7 @@ EXEMPT: dict[str, str] = {
   "GET /v1/weather": "Public weather data, no user data",
   "GET /v1/investments/crypto/price/{coin_id}": "Public price data, no user data",
   "GET /v1/places/search": "External Google Places lookup, no stored data",
+  "POST /v1/recipes/import": "Structures the posted text with an LLM; reads and stores nothing",
   "POST /v1/calendars/google/authorize": "Starts the caller's own connection flow",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
   "GET /v1/klarna/transactions": "Proxies the caller's own Klarna credentials; reads no Bessel data",

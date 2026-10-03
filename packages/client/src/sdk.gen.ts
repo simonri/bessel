@@ -316,6 +316,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
+  StructureRecipeTextV1RecipesImportPostData,
+  StructureRecipeTextV1RecipesImportPostErrors,
+  StructureRecipeTextV1RecipesImportPostResponses,
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostErrors,
   SyncAgentUsageV1AgentUsageSyncPostResponses,
@@ -2062,6 +2065,30 @@ export const createRecipeV1RecipesPost = <ThrowOnError extends boolean = false>(
     responseTransformer: createRecipeV1RecipesPostResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Structure Recipe Text
+ *
+ * Turn free-form recipe text into the structured format with an LLM. Nothing is saved.
+ */
+export const structureRecipeTextV1RecipesImportPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<StructureRecipeTextV1RecipesImportPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    StructureRecipeTextV1RecipesImportPostResponses,
+    StructureRecipeTextV1RecipesImportPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recipes/import",
     ...options,
     headers: {
       "Content-Type": "application/json",

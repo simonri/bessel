@@ -98,6 +98,7 @@ import {
   searchGooglePlacesV1PlacesSearchGet,
   setProjectLocationV1ProjectsProjectIdLocationPut,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
+  structureRecipeTextV1RecipesImportPost,
   syncAgentUsageV1AgentUsageSyncPost,
   syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
@@ -363,6 +364,9 @@ import type {
   SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
+  StructureRecipeTextV1RecipesImportPostData,
+  StructureRecipeTextV1RecipesImportPostError,
+  StructureRecipeTextV1RecipesImportPostResponse,
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostError,
   SyncAgentUsageV1AgentUsageSyncPostResponse,
@@ -3188,6 +3192,35 @@ export const createRecipeV1RecipesPostMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await createRecipeV1RecipesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Structure Recipe Text
+ *
+ * Turn free-form recipe text into the structured format with an LLM. Nothing is saved.
+ */
+export const structureRecipeTextV1RecipesImportPostMutation = (
+  options?: Partial<Options<StructureRecipeTextV1RecipesImportPostData>>,
+): UseMutationOptions<
+  StructureRecipeTextV1RecipesImportPostResponse,
+  StructureRecipeTextV1RecipesImportPostError,
+  Options<StructureRecipeTextV1RecipesImportPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    StructureRecipeTextV1RecipesImportPostResponse,
+    StructureRecipeTextV1RecipesImportPostError,
+    Options<StructureRecipeTextV1RecipesImportPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await structureRecipeTextV1RecipesImportPost({
         ...options,
         ...fnOptions,
         throwOnError: true,

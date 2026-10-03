@@ -128,7 +128,8 @@ _CALLOUT_RE = re.compile(r"^>\s*(?:\*\*(.+?):?\*\*:?\s*)?(.*)$")
 _INGREDIENTS_RE = re.compile(r"^(ingrediens|ingredient)", re.IGNORECASE)
 _STEPS_RE = re.compile(r"^(gör så här|så gör du|instruktion|tillagning|method|instructions|directions)", re.IGNORECASE)
 _WARNING_RE = re.compile(r"misstag|varning|undvik|mistake|warning|avoid", re.IGNORECASE)
-_META_RE = re.compile(r"\*\*([^*]+?):\*\*\s*([^·]+)")
+# Values run to the next "**Label:**", whether joined by "-" or the older "·".
+_META_RE = re.compile(r"\*\*([^*]+?):\*\*\s*(.+?)(?=\s+[-·]\s+\*\*|$)")
 
 
 def _minutes(text: str) -> int | None:
@@ -285,7 +286,7 @@ def render_markdown(body: RecipeBody) -> str:
   if body.active_minutes:
     meta.append(f"**Aktiv tid:** {_format_duration(body.active_minutes)}")
   if meta:
-    out += [" · ".join(meta), ""]
+    out += [" - ".join(meta), ""]
   if body.intro:
     out += [body.intro, ""]
   if body.ingredient_groups:
