@@ -1,22 +1,24 @@
 import {
   getDailySleepV1HealthkitSleepDailyGetOptions,
   getSleepSummaryV1HealthkitSleepSummaryGetOptions,
+  getTimelineV1TimelineGetOptions,
 } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { addDays, format, isSameDay, subDays } from "date-fns";
-import { Moon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { NightChart } from "@/components/sleep/night-chart";
+import { RhythmChart } from "@/components/sleep/rhythm-chart";
+import { SleepCards } from "@/components/sleep/sleep-cards";
 import {
-  BarRow,
-  EmptyState,
-  PageToolbar,
-  PeriodNav,
-  SectionLabel,
-  SoftButton,
-  StatTile,
-} from "@/components/ui-kit";
+  consistencyLabel,
+  nightMood,
+  rhythmStats,
+} from "@/components/sleep/sleep-summary";
+import { StageBreakdown } from "@/components/sleep/stage-breakdown";
+import { DayNav } from "@/components/timeline/day-nav";
+import { SectionLabel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { fmtDur } from "./-activity-utils";
 import { STAGE_META, STAGE_ORDER } from "./-sleep-utils";
@@ -25,6 +27,10 @@ import { YearGrid, yearGridRange } from "./-year-grid";
 export const Route = createFileRoute("/_app/sleep")({
   component: SleepPage,
 });
+
+const RHYTHM_NIGHTS = 14;
+const SKELETON_ROWS = ["awake", "rem", "core", "deep"];
+const CARD = "rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]";
 
 // Nights are bucketed noon-to-noon (matches the backend's wake-date
 // attribution), so the window for a selected date runs from noon the day
@@ -40,6 +46,7 @@ function SleepPage() {
   const [date, setDate] = useState(today);
   const isCurrentDay = isSameDay(date, today);
   const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const dateKey = format(date, "yyyy-MM-dd");
 
   const [startTs, endTs] = localNightBounds(date);
   const { data: summary, isLoading } = useQuery({
@@ -50,8 +57,36 @@ function SleepPage() {
     placeholderData: keepPreviousData,
   });
 
-  const [yearRangeStart, yearRangeEnd] = yearGridRange(today);
+  // The timeline's sleep lane carries every stage segment of the night,
+  // which is what the hypnogram draws.
+  const { data: nightTimeline } = useQuery({
+    ...getTimelineV1TimelineGetOptions({
+      client,
+      query: { start_ts: startTs, end_ts: endTs },
+    }),
+    placeholderData: keepPreviousData,
+  });
 
+  const rhythmDays = useMemo(
+    () =>
+      Array.from({ length: RHYTHM_NIGHTS }, (_, i) =>
+        subDays(date, RHYTHM_NIGHTS - 1 - i),
+      ),
+    [date],
+  );
+  const { data: recent } = useQuery({
+    ...getDailySleepV1HealthkitSleepDailyGetOptions({
+      client,
+      query: {
+        start_ts: localNightBounds(rhythmDays[0])[0],
+        end_ts: endTs,
+        tz_name: tzName,
+      },
+    }),
+    placeholderData: keepPreviousData,
+  });
+
+  const [yearRangeStart, yearRangeEnd] = yearGridRange(today);
   const { data: yearDailyData } = useQuery({
     ...getDailySleepV1HealthkitSleepDailyGetOptions({
       client,
@@ -63,117 +98,129 @@ function SleepPage() {
     }),
   });
 
-  const prevDay = () => setDate((d) => subDays(d, 1));
-  const nextDay = () => setDate((d) => addDays(d, 1));
-  const goToday = () => setDate(today);
+  const recentNights = recent?.nights ?? [];
+  const thisNight = recentNights.find((n) => n.date === dateKey) ?? null;
+  // "Usual" is the other nights in the window, so tonight doesn't pull the
+  // average toward itself.
+  const usual = rhythmStats(recentNights.filter((n) => n.date !== dateKey));
+  const rhythm = rhythmStats(recentNights);
 
   const stages = STAGE_ORDER.map((key) => {
     const s = summary?.stages.find((x) => x.stage === key);
-    return s ? { key, meta: STAGE_META[key], ...s } : null;
-  }).filter((s): s is NonNullable<typeof s> => s !== null && s.secs > 0);
-
-  const night = summary && summary.total_asleep_secs > 0 ? summary : null;
-  const maxStageSecs = Math.max(...stages.map((s) => s.secs), 1);
+    return s && s.secs > 0
+      ? { key: key as string, secs: s.secs, percentage: s.percentage }
+      : null;
+  }).filter((s): s is NonNullable<typeof s> => s !== null);
   const stageSecs = (key: string) =>
     stages.find((s) => s.key === key)?.secs ?? 0;
 
-  return (
-    <div className="space-y-5">
-      <PageToolbar description="Nightly sleep from Apple Health.">
-        {!isCurrentDay && <SoftButton onClick={goToday}>Today</SoftButton>}
-        <PeriodNav
-          label={isCurrentDay ? "Last night" : format(date, "EEE, MMM d, yyyy")}
-          onPrev={prevDay}
-          onNext={nextDay}
-          nextDisabled={isCurrentDay}
-        />
-      </PageToolbar>
+  const night = summary && summary.total_asleep_secs > 0 ? summary : null;
+  const sleepSegments = (
+    nightTimeline?.lanes.find((l) => l.key === "sleep")?.segments ?? []
+  ).filter((s) => s.label in STAGE_META);
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
-        <StatTile
-          label="Asleep"
-          value={night ? fmtDur(night.total_asleep_secs) : "—"}
+  const sentence = night
+    ? `You slept ${fmtDur(night.total_asleep_secs)} - ${nightMood(night.total_asleep_secs)}`
+    : "No sleep recorded for this night.";
+
+  return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight text-white/90">
+            {isCurrentDay ? "Last night" : format(date, "EEEE d MMMM")}
+          </h1>
+          <p className="mt-1 text-13 text-white/55">{sentence}</p>
+        </div>
+        <DayNav
+          label={isCurrentDay ? "Last night" : format(date, "EEE d MMM")}
+          onPrev={() => setDate((d) => subDays(d, 1))}
+          onNext={() => setDate((d) => addDays(d, 1))}
+          nextDisabled={isCurrentDay}
+          onToday={isCurrentDay ? undefined : () => setDate(today)}
         />
-        <StatTile
-          label="Deep"
-          value={night ? fmtDur(stageSecs("asleepDeep")) : "—"}
-        />
-        <StatTile
-          label="REM"
-          value={night ? fmtDur(stageSecs("asleepREM")) : "—"}
-        />
-        <StatTile
-          label="Awake"
-          value={night ? fmtDur(stageSecs("awake")) : "—"}
-        />
-      </div>
+      </header>
+
+      <SleepCards
+        asleepSecs={night?.total_asleep_secs ?? null}
+        usualAsleepSecs={usual.avgAsleepSecs}
+        onset={thisNight?.sleep_onset ?? null}
+        wake={thisNight?.wake_time ?? null}
+        usualBedtime={usual.avgBedtime}
+        usualWake={usual.avgWake}
+        deepSecs={stageSecs("asleepDeep")}
+        remSecs={stageSecs("asleepREM")}
+      />
+
+      <section>
+        <SectionLabel>The night</SectionLabel>
+        {isLoading && !summary ? (
+          <div className={`${CARD} space-y-2.5`}>
+            {SKELETON_ROWS.map((row) => (
+              <Skeleton key={row} className="h-5 w-full bg-white/[0.06]" />
+            ))}
+          </div>
+        ) : !night ? (
+          <div
+            className={`${CARD} flex flex-col items-center gap-1 py-10 text-center`}
+          >
+            <p className="text-sm font-medium text-white/80">
+              No sleep here yet 🌙
+            </p>
+            <p className="max-w-sm text-xs leading-relaxed text-white/45">
+              Sleep comes from Apple Health through the Bessel app on your
+              iPhone. Wear your watch to bed and the night shows up here.
+            </p>
+          </div>
+        ) : (
+          <div className={`${CARD} @container flex flex-col gap-5`}>
+            <NightChart segments={sleepSegments} />
+            <StageBreakdown stages={stages} />
+          </div>
+        )}
+      </section>
+
+      {rhythm.nights > 1 && (
+        <section>
+          <SectionLabel>Your rhythm</SectionLabel>
+          <div className={`${CARD} flex flex-col gap-4`}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-13 font-medium text-white/80">
+                {consistencyLabel(rhythm.bedtimeSpread)}
+              </p>
+              <p className="text-11 text-white/45">
+                Last {RHYTHM_NIGHTS} nights - usually{" "}
+                {rhythm.avgAsleepSecs !== null &&
+                  fmtDur(Math.round(rhythm.avgAsleepSecs))}
+              </p>
+            </div>
+            <RhythmChart
+              days={rhythmDays}
+              nights={recentNights}
+              selected={date}
+              avgBedtime={rhythm.avgBedtime}
+              avgWake={rhythm.avgWake}
+              onSelect={setDate}
+            />
+          </div>
+        </section>
+      )}
 
       <section>
         <SectionLabel>{today.getFullYear()}</SectionLabel>
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
+        <div className={CARD}>
           <YearGrid
             year={today.getFullYear()}
             items={yearDailyData?.nights ?? []}
             getDate={(n) => n.date}
             getValue={(n) => n.asleep_secs}
-            color="rgb(129 140 248)"
+            color="oklch(0.78 0.09 290)"
             emptyLabel="No sleep data"
             selectedDate={date}
             today={today}
             onSelectDay={setDate}
           />
         </div>
-      </section>
-
-      <section>
-        <SectionLabel>Stages</SectionLabel>
-        {isLoading && !summary ? (
-          <div className="space-y-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-4 w-full bg-white/[0.06]" />
-            ))}
-          </div>
-        ) : !night ? (
-          <EmptyState icon={<Moon />} title="No sleep data">
-            Nothing recorded for this night.
-          </EmptyState>
-        ) : (
-          <div className="space-y-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-            <div className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full">
-              {stages.map((stage) => (
-                <div
-                  key={stage.key}
-                  title={`${stage.meta.label} - ${fmtDur(stage.secs)}`}
-                  className="h-full first:rounded-l-full last:rounded-r-full"
-                  style={{
-                    flexGrow: stage.secs,
-                    background: `rgb(${stage.meta.rgb} / 0.85)`,
-                  }}
-                />
-              ))}
-            </div>
-            <div className="space-y-2.5">
-              {stages.map((stage) => (
-                <BarRow
-                  key={stage.key}
-                  label={
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ background: `rgb(${stage.meta.rgb})` }}
-                      />
-                      {stage.meta.label}
-                    </span>
-                  }
-                  fraction={stage.secs / maxStageSecs}
-                  value={fmtDur(stage.secs)}
-                  detail={`${stage.percentage.toFixed(1)}%`}
-                  color={`rgb(${stage.meta.rgb} / 0.85)`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </section>
     </div>
   );
