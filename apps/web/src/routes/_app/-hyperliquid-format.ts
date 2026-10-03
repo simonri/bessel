@@ -185,8 +185,35 @@ export function timeTicks(start: number, end: number, range: Range): number[] {
   return ticks;
 }
 
-/** Text tone for a signed amount. */
+/** Text tone for a signed amount: soft pastels, never the accent colour. */
 export function pnlTone(value: number | null): string {
   if (!value) return "text-white/90";
-  return value > 0 ? "text-emerald-400" : "text-red-400";
+  return value > 0 ? "text-emerald-300" : "text-rose-300";
+}
+
+const RANGE_PHRASES: Record<Range, string> = {
+  day: "in the last 24h",
+  week: "over the last 7 days",
+  month: "over the last 30 days",
+  allTime: "all time",
+};
+
+/** The page's one-line answer to "how am I doing?". */
+export function pnlHeadline(pnl: number | null, range: Range): string {
+  const when = RANGE_PHRASES[range];
+  if (pnl === null) return "Catching up with Hyperliquid…";
+  if (Math.abs(pnl) < 0.005) return `Flat ${when}`;
+  return pnl > 0
+    ? `You're up ${formatUsd(pnl)} ${when} ✨`
+    : `You're down ${formatUsd(-pnl)} ${when}`;
+}
+
+/** How far the mark can move before liquidation, as a fraction of the
+ *  mark; null without a liquidation price (or a mark to measure from). */
+export function liquidationDistance(
+  mark: number | undefined,
+  liquidationPrice: number | null,
+): number | null {
+  if (liquidationPrice === null || !mark) return null;
+  return Math.abs(mark - liquidationPrice) / mark;
 }

@@ -7,6 +7,8 @@ import {
   formatSignedUsd,
   formatUsd,
   formatVolume,
+  liquidationDistance,
+  pnlHeadline,
   pnlTone,
   timeTicks,
   valueAxis,
@@ -56,7 +58,7 @@ describe("hyperliquid formatting", () => {
 
   it("tones PnL by sign", () => {
     expect(pnlTone(5)).toContain("emerald");
-    expect(pnlTone(-5)).toContain("red");
+    expect(pnlTone(-5)).toContain("rose");
     expect(pnlTone(0)).toBe("text-white/90");
     expect(pnlTone(null)).toBe("text-white/90");
   });
@@ -81,5 +83,21 @@ describe("hyperliquid formatting", () => {
     expect(new Set(all.map((t) => new Date(t).getDate()))).toEqual(
       new Set([1]),
     );
+  });
+
+  it("sums up the range in one friendly line", () => {
+    expect(pnlHeadline(1714.54, "month")).toBe(
+      "You're up $1,714.54 over the last 30 days ✨",
+    );
+    expect(pnlHeadline(-40, "day")).toBe("You're down $40.00 in the last 24h");
+    expect(pnlHeadline(0, "week")).toBe("Flat over the last 7 days");
+    expect(pnlHeadline(null, "allTime")).toBe("Catching up with Hyperliquid…");
+  });
+
+  it("measures how far the mark is from liquidation", () => {
+    expect(liquidationDistance(100, 80)).toBeCloseTo(0.2);
+    expect(liquidationDistance(100, 120)).toBeCloseTo(0.2);
+    expect(liquidationDistance(100, null)).toBeNull();
+    expect(liquidationDistance(undefined, 80)).toBeNull();
   });
 });
