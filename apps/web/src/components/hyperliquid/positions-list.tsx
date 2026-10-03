@@ -33,14 +33,7 @@ export function LiveBadge({ live }: { live: boolean }) {
   );
 }
 
-// Below 10% the position is one sharp move from liquidation.
-function liquidationTone(distance: number): string {
-  if (distance < 0.1) return "bg-rose-300";
-  if (distance < 0.25) return "bg-amber-300";
-  return "bg-emerald-300/80";
-}
-
-function LiquidationMeter({
+function Liquidation({
   mark,
   liquidationPrice,
 }: {
@@ -56,24 +49,9 @@ function LiquidationMeter({
       <span className="text-white/40">Liq.</span>
       <span className="text-white/65">{formatPrice(liquidationPrice)}</span>
       {distance !== null && (
-        <>
-          <span
-            aria-hidden
-            className="h-1 w-10 overflow-hidden rounded-full bg-white/10"
-          >
-            <span
-              className={cn(
-                "block h-full rounded-full",
-                liquidationTone(distance),
-              )}
-              // Half the mark away already reads as "far".
-              style={{ width: `${Math.min(1, distance / 0.5) * 100}%` }}
-            />
-          </span>
-          <span className="text-white/40">
-            {Math.round(distance * 100)}% away
-          </span>
-        </>
+        <span className="text-white/40">
+          {Math.round(distance * 100)}% away
+        </span>
       )}
     </span>
   );
@@ -115,7 +93,7 @@ function PositionCard({
               {mark === undefined ? "—" : formatPrice(mark)}
             </span>
           </span>
-          <LiquidationMeter mark={mark} liquidationPrice={p.liquidationPrice} />
+          <Liquidation mark={mark} liquidationPrice={p.liquidationPrice} />
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-0.5 tabular-nums">
