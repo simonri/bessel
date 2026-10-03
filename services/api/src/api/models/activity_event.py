@@ -16,9 +16,9 @@ class ActivityEvent(RecordModel):
   workspace: Mapped[str | None] = mapped_column(String(100), nullable=True)
   source: Mapped[str] = mapped_column(String(100), nullable=False)
   local_id: Mapped[int] = mapped_column(Integer, nullable=False)
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
 
   __table_args__ = (
-    UniqueConstraint("source", "local_id", name="activity_events_source_local_id_key"),
-    Index("ix_activity_events_source_ts", "source", "ts"),
+    UniqueConstraint("user_id", "source", "local_id", name="activity_events_user_id_source_local_id_key"),
+    Index("ix_activity_events_user_id_source_ts", "user_id", "source", "ts"),
   )

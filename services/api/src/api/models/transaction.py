@@ -48,4 +48,4 @@ class Transaction(RecordModel):
   def raw_transaction(cls) -> Mapped["RawTransaction | None"]:
     return relationship("RawTransaction", lazy="raise")
 
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

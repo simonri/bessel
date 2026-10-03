@@ -13,6 +13,7 @@ from .device import Device
 from .healthkit_sleep_sample import HealthKitSleepSample
 from .healthkit_workout import HealthKitWorkout
 from .import_batch import ImportBatch
+from .ingest_token import IngestToken
 from .notification import Notification
 from .place import Place
 from .project import Project
@@ -46,6 +47,7 @@ __all__ = [
   "HealthKitSleepSample",
   "HealthKitWorkout",
   "ImportBatch",
+  "IngestToken",
   "Model",
   "Notification",
   "Place",

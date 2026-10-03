@@ -15,6 +15,9 @@ log = structlog.get_logger()
 security = HTTPBearer()
 
 JWKS_CACHE_TTL = 3600
+# Minimum gap between refreshes triggered by an unknown key id, so tokens with
+# random `kid`s can't make us hammer Auth0.
+JWKS_MIN_REFRESH_INTERVAL = 60
 
 
 class JWKSClient:
@@ -26,6 +29,10 @@ class JWKSClient:
     if cls._jwks is None:
       return False
     return (time.monotonic() - cls._cache_timestamp) < JWKS_CACHE_TTL
+
+  @classmethod
+  def can_force_refresh(cls) -> bool:
+    return (time.monotonic() - cls._cache_timestamp) >= JWKS_MIN_REFRESH_INTERVAL
 
   @classmethod
   async def get_jwks(cls, *, force_refresh: bool = False) -> dict | None:
@@ -57,7 +64,7 @@ async def _get_signing_key(token: str) -> dict:
   kid = unverified_header.get("kid")
 
   key = _find_key(await JWKSClient.get_jwks(), kid)
-  if key is None:
+  if key is None and JWKSClient.can_force_refresh():
     # Unknown kid usually means Auth0 rotated its signing keys; refresh once
     # before rejecting, otherwise every login fails until the cache TTL expires.
     key = _find_key(await JWKSClient.get_jwks(force_refresh=True), kid)

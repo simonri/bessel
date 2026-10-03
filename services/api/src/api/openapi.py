@@ -13,6 +13,7 @@ class OpenAPIParameters(TypedDict):
   description: str
   docs_url: str | None
   redoc_url: str | None
+  openapi_url: str | None
   servers: list[dict[str, Any]] | None
 
 
@@ -23,6 +24,7 @@ OPENAPI_PARAMETERS: OpenAPIParameters = {
   "description": "Hello! This is the Bessel API.",
   "docs_url": None if settings.is_environment({Environment.production}) else "/docs",
   "redoc_url": None if settings.is_environment({Environment.production}) else "/redoc",
+  "openapi_url": None if settings.is_environment({Environment.production}) else "/openapi.json",
   "servers": [
     {
       "url": "https://api.getbessel.com",

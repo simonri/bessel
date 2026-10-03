@@ -8,11 +8,15 @@ machine's `~/.claude` directory, so this has to be a local push.
 
 ## Setup
 
-1. Set `INTERNAL_API_KEY` in the Bessel API's environment (Infisical, on the
-   VPS) if it isn't already set for another ingest path.
+The desktop app does all of this: Settings → Agent Usage → Install creates an
+ingest token for your account, writes the env file and installs the timer. To
+set it up by hand instead:
+
+1. Create an ingest token for your account: `POST /v1/ingest-tokens` with
+   `{"name": "agent-usage@<machine>"}` while signed in. The token is shown once.
 2. `mkdir -p ~/.config/bessel && cp .env.example ~/.config/bessel/agent-usage-collector.env`,
-   then fill in `BESSEL_API_BASE_URL` and `BESSEL_INTERNAL_API_KEY` (same
-   value as step 1).
+   `chmod 600` it, then fill in `BESSEL_API_BASE_URL` and set
+   `BESSEL_INTERNAL_API_KEY` to the token from step 1.
 3. Try it once by hand: `uv run collect_agent_usage.py --dry-run` — spot-check
    the printed token totals look right, then drop `--dry-run` to push for real.
 4. Install the timer:

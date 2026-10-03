@@ -80,9 +80,6 @@ class Settings(BaseSettings):
   AUTH0_AUDIENCE: str = ""
   AUTH0_ALGORITHMS: list[str] = ["RS256"]
 
-  # Internal API key for service-to-service calls (e.g. activity monitor)
-  INTERNAL_API_KEY: str = ""
-
   # Google Places
   GOOGLE_PLACES_API_KEY: str = ""
 

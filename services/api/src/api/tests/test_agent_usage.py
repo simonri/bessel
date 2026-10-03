@@ -1,18 +1,15 @@
 from typing import Any
 
 import pytest
-from api.settings import settings
 from httpx import AsyncClient
 
-API_KEY = "test-agent-usage-key"
 DEVICE = "test-laptop"
 AGENT = "claude-code"
 
 
 @pytest.fixture
-def api_key(monkeypatch: pytest.MonkeyPatch) -> str:
-  monkeypatch.setattr(settings, "INTERNAL_API_KEY", API_KEY)
-  return API_KEY
+def api_key(ingest_headers: dict[str, str]) -> str:
+  return ingest_headers["X-Api-Key"]
 
 
 def _daily_upload(date: str, model: str = "claude-opus-4", input_tokens: int = 100, output_tokens: int = 50) -> dict[str, Any]:
@@ -76,9 +73,7 @@ class TestSyncAgentUsage:
     assert resp.status_code == 401
 
   @pytest.mark.asyncio
-  async def test_unset_internal_api_key_rejects_everything(self, client: AsyncClient) -> None:
-    # No `api_key` fixture used here: settings.INTERNAL_API_KEY defaults to "",
-    # which must never authenticate a request no matter the header value.
+  async def test_empty_api_key_rejected(self, client: AsyncClient, api_key: str) -> None:
     resp = await client.post(
       "/v1/agent-usage/sync",
       json={"daily": [], "rate_limits": []},

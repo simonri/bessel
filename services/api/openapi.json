@@ -2010,6 +2010,121 @@
         }
       }
     },
+    "/v1/ingest-tokens": {
+      "get": {
+        "tags": [
+          "ingest-tokens"
+        ],
+        "summary": "List Ingest Tokens",
+        "operationId": "list_ingest_tokens_v1_ingest_tokens_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IngestTokenSchema"
+                  },
+                  "type": "array",
+                  "title": "Response List Ingest Tokens V1 Ingest Tokens Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ingest-tokens"
+        ],
+        "summary": "Create Ingest Token",
+        "operationId": "create_ingest_token_v1_ingest_tokens_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestTokenCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestTokenCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/ingest-tokens/{token_id}": {
+      "delete": {
+        "tags": [
+          "ingest-tokens"
+        ],
+        "summary": "Revoke Ingest Token",
+        "operationId": "revoke_ingest_token_v1_ingest_tokens__token_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Token Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/investments/securities": {
       "get": {
         "tags": [
@@ -6175,8 +6290,9 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
-            "title": "File"
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "format": "binary"
           }
         },
         "type": "object",
@@ -6189,8 +6305,9 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
-            "title": "File"
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "format": "binary"
           }
         },
         "type": "object",
@@ -7971,6 +8088,136 @@
           "skipped"
         ],
         "title": "ImportResponse"
+      },
+      "IngestTokenCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Identifies the daemon and machine, e.g. 'monitor:laptop'. Creating a token revokes earlier tokens with the same name."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "IngestTokenCreate"
+      },
+      "IngestTokenCreated": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp of the object."
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At",
+            "description": "Last modification timestamp of the object."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token",
+            "description": "The secret. Returned only once; store it in the daemon's env file."
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "modified_at",
+          "id",
+          "name",
+          "last_used_at",
+          "token"
+        ],
+        "title": "IngestTokenCreated"
+      },
+      "IngestTokenSchema": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp of the object."
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At",
+            "description": "Last modification timestamp of the object."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "modified_at",
+          "id",
+          "name",
+          "last_used_at"
+        ],
+        "title": "IngestTokenSchema"
       },
       "KlarnaImportRequest": {
         "properties": {

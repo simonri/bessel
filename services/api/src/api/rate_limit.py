@@ -1,8 +1,7 @@
+import ipaddress
 from collections.abc import Sequence
 
 from ratelimit import RateLimitMiddleware, Rule
-from ratelimit.auths import EmptyInformation
-from ratelimit.auths.ip import client_ip
 from ratelimit.backends.redis import RedisBackend
 from ratelimit.types import ASGIApp, Scope
 
@@ -13,15 +12,55 @@ from api.settings import Environment, settings
 _rate_limit_redis: Redis | None = None
 
 
-async def _authenticate(scope: Scope) -> tuple[str, RateLimitGroup]:
+def _header(scope: Scope, name: bytes) -> str | None:
+  for key, value in scope.get("headers", []):
+    if key == name:
+      return value.decode("latin-1").strip()
+  return None
+
+
+def _is_public(ip: str) -> bool:
   try:
-    ip, _ = await client_ip(scope)
-    return ip, RateLimitGroup.default
-  except EmptyInformation:
-    return "random-ip", RateLimitGroup.default
+    return ipaddress.ip_address(ip).is_global
+  except ValueError:
+    return False
 
 
+def client_ip(scope: Scope) -> str | None:
+  """The real client IP behind Cloudflare → Traefik.
+
+  Traefik sets X-Real-IP to its direct peer. For traffic through the
+  Cloudflare tunnel that peer is the private cloudflared container, so the
+  client is in CF-Connecting-IP. Anything else reached Traefik directly, and
+  X-Real-IP is already the client — CF-Connecting-IP from such a request is
+  attacker-controlled and ignored.
+  """
+  real_ip = _header(scope, b"x-real-ip")
+  if real_ip and _is_public(real_ip):
+    return real_ip
+  cf_ip = _header(scope, b"cf-connecting-ip")
+  if cf_ip and _is_public(cf_ip):
+    return cf_ip
+  client = scope.get("client")
+  return client[0] if client else None
+
+
+async def _authenticate(scope: Scope) -> tuple[str, RateLimitGroup]:
+  return client_ip(scope) or "unknown", RateLimitGroup.default
+
+
+# First matching pattern wins, so costly endpoints come before the catch-all.
 _PRODUCTION_RULES: dict[str, Sequence[Rule]] = {
+  # Each search spends quota on the paid Google Places key.
+  r"^/v1/places/search": [Rule(group=RateLimitGroup.default, minute=30, zone="places-search")],
+  r"^/v1/tasks/[^/]+/attachments$": [
+    Rule(group=RateLimitGroup.default, method="post", minute=30, zone="uploads"),
+    Rule(group=RateLimitGroup.default, minute=500, zone="api"),
+  ],
+  r"^/v1/transactions/import": [Rule(group=RateLimitGroup.default, minute=10, zone="imports")],
+  r"^/v1/klarna": [Rule(group=RateLimitGroup.default, minute=10, zone="imports")],
+  r"^/v1/ingest-tokens": [Rule(group=RateLimitGroup.default, minute=10, zone="ingest-tokens")],
+  r"^/v1/calendars/(google/authorize|icloud|accounts/[^/]+/sync)": [Rule(group=RateLimitGroup.default, minute=10, zone="calendar-connect")],
   "^/v1": [
     Rule(group=RateLimitGroup.restricted, minute=60, zone="api"),
     Rule(group=RateLimitGroup.default, minute=500, zone="api"),

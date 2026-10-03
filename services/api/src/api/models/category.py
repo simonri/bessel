@@ -14,4 +14,4 @@ class Category(RecordModel):
   color: Mapped[str] = mapped_column(String(7), nullable=False, default="#6B7280")
   excluded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
   parent_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("categories.id", ondelete="CASCADE"), nullable=True)
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

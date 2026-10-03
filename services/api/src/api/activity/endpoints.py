@@ -1,7 +1,7 @@
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Query
 
 from api.activity.repository import ActivityRepository
 from api.activity.schemas import (
@@ -16,18 +16,12 @@ from api.activity.schemas import (
   ActivitySummaryResponse,
 )
 from api.activity.service import ActivityService
-from api.exceptions import UnauthorizedError, ValidationError
+from api.exceptions import ValidationError
+from api.ingest_tokens.dependencies import IngestUserId
 from api.postgres import AsyncSession, get_db_session
-from api.settings import settings
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/activity", tags=["activity"])
-
-
-def _verify_internal_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
-  expected = settings.INTERNAL_API_KEY
-  if not expected or x_api_key != expected:
-    raise UnauthorizedError("Invalid or missing API key")
 
 
 @router.post(
@@ -35,11 +29,11 @@ def _verify_internal_api_key(x_api_key: Annotated[str | None, Header()] = None) 
   summary="Ingest Activity Events",
   response_model=ActivityBatchResponse,
   status_code=200,
-  dependencies=[Depends(_verify_internal_api_key)],
 )
 async def ingest_activity_batch(
   body: ActivityBatchRequest,
   session: Annotated[AsyncSession, Depends(get_db_session)],
+  user_id: IngestUserId,
 ) -> ActivityBatchResponse:
   if not body.events:
     return ActivityBatchResponse(inserted=0, skipped=0)
@@ -53,6 +47,7 @@ async def ingest_activity_batch(
       "workspace": ev.workspace,
       "source": body.source,
       "local_id": ev.local_id,
+      "user_id": user_id,
     }
     for ev in body.events
   ]
@@ -73,7 +68,7 @@ async def list_activity_sources(
   current_user: CurrentDBUser,
 ) -> ActivitySourcesResponse:
   repo = ActivityRepository.from_session(session)
-  sources = await repo.get_sources()
+  sources = await repo.get_sources(current_user.id)
   return ActivitySourcesResponse(sources=sources)
 
 
@@ -91,8 +86,8 @@ async def get_activity_summary(
 ) -> ActivitySummaryResponse:
   repo = ActivityRepository.from_session(session)
   service = ActivityService()
-  segments = await service.get_active_segments(repo, source, start_ts, end_ts)
-  sources = await repo.get_sources()
+  segments = await service.get_active_segments(repo, current_user.id, source, start_ts, end_ts)
+  sources = await repo.get_sources(current_user.id)
 
   totals: dict[str, int] = {}
   total_active = 0
@@ -148,7 +143,7 @@ async def get_daily_activity(
 
   repo = ActivityRepository.from_session(session)
   service = ActivityService()
-  segments = await service.get_active_segments(repo, source, start_ts, end_ts)
+  segments = await service.get_active_segments(repo, current_user.id, source, start_ts, end_ts)
 
   daily: dict[str, int] = {}
   for seg in segments:
@@ -177,7 +172,7 @@ async def get_intraday_activity(
 ) -> ActivityIntradayResponse:
   repo = ActivityRepository.from_session(session)
   service = ActivityService()
-  segments = await service.get_active_segments(repo, source, start_ts, end_ts)
+  segments = await service.get_active_segments(repo, current_user.id, source, start_ts, end_ts)
 
   bucket_secs = bucket_mins * 60
   total_buckets = (end_ts - start_ts) // bucket_secs

@@ -84,11 +84,11 @@ class TestTimeline:
     assert data["tracked_secs"] == 8 * 3600
 
   @pytest.mark.asyncio
-  async def test_contiguous_same_app_segments_merge(self, client: AsyncClient, save_fixture: SaveFixture) -> None:
-    await save_fixture(_ev(1, _ts(9)))
-    await save_fixture(_ev(2, _ts(9, 5)))
-    await save_fixture(_ev(3, _ts(9, 10), app_class="firefox"))
-    await save_fixture(_ev(4, _ts(9, 15), state="idle"))
+  async def test_contiguous_same_app_segments_merge(self, client: AsyncClient, save_owned: SaveFixture) -> None:
+    await save_owned(_ev(1, _ts(9)))
+    await save_owned(_ev(2, _ts(9, 5)))
+    await save_owned(_ev(3, _ts(9, 10), app_class="firefox"))
+    await save_owned(_ev(4, _ts(9, 15), state="idle"))
 
     data = await _timeline(client)
     assert data["source"] == SOURCE
@@ -100,21 +100,21 @@ class TestTimeline:
     assert pc["total_secs"] == 15 * 60
 
   @pytest.mark.asyncio
-  async def test_explicit_source(self, client: AsyncClient, save_fixture: SaveFixture) -> None:
-    await save_fixture(_ev(1, _ts(9), source="laptop"))
-    await save_fixture(_ev(2, _ts(9, 5), state="idle", source="laptop"))
-    await save_fixture(_ev(3, _ts(10)))
-    await save_fixture(_ev(4, _ts(10, 5), state="idle"))
+  async def test_explicit_source(self, client: AsyncClient, save_owned: SaveFixture) -> None:
+    await save_owned(_ev(1, _ts(9), source="laptop"))
+    await save_owned(_ev(2, _ts(9, 5), state="idle", source="laptop"))
+    await save_owned(_ev(3, _ts(10)))
+    await save_owned(_ev(4, _ts(10, 5), state="idle"))
 
     data = await _timeline(client, source="laptop")
     assert data["source"] == "laptop"
     assert _lane(data, "pc")["segments"][0]["start_ts"] == _ts(9)
 
   @pytest.mark.asyncio
-  async def test_tracked_secs_unions_lanes(self, client: AsyncClient, save_fixture: SaveFixture) -> None:
+  async def test_tracked_secs_unions_lanes(self, client: AsyncClient, save_owned: SaveFixture) -> None:
     await _sync_sleep(client, [_sleep(_ts(0), _ts(1))])
-    await save_fixture(_ev(1, _ts(0, 55)))
-    await save_fixture(_ev(2, _ts(1, 5), state="idle"))
+    await save_owned(_ev(1, _ts(0, 55)))
+    await save_owned(_ev(2, _ts(1, 5), state="idle"))
 
     data = await _timeline(client)
     assert data["tracked_secs"] == 3600 + 5 * 60

@@ -31,17 +31,8 @@ class UserService:
       create=lambda new_user: repo.create(new_user, flush=True),
     )
 
-    if not created:
-      return user
-
-    log.info("Created new user", user_id=str(user.id), email=email)
-
-    # Only the first user ever claims pre-auth data; later signups must not
-    # steal rows that happen to have a NULL user_id.
-    if await repo.count() == 1:
-      await repo.claim_orphaned_data(user.id)
-      log.info("Claimed orphaned data", user_id=str(user.id))
-
+    if created:
+      log.info("Created new user", user_id=str(user.id), email=email)
     return user
 
 

@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from api.agent_usage.repository import AgentUsageDailyRepository, AgentUsageStatusRepository
 from api.agent_usage.schemas import AgentUsageSyncRequest
@@ -6,11 +7,9 @@ from api.common.utils import utc_now
 
 
 class AgentUsageService:
-  # user_id is deliberately never set here: rows land with user_id NULL,
-  # same as ActivityEvent, and get attached to the real user by
-  # UserRepository.claim_orphaned_data on next login.
   async def sync(
     self,
+    user_id: UUID,
     daily_repo: AgentUsageDailyRepository,
     status_repo: AgentUsageStatusRepository,
     request: AgentUsageSyncRequest,
@@ -23,6 +22,7 @@ class AgentUsageService:
       for entry in upload.models:
         key = (upload.device, upload.agent, upload.date, entry.model)
         daily_rows[key] = {
+          "user_id": user_id,
           "device": upload.device,
           "agent": upload.agent,
           "date": upload.date,
@@ -38,6 +38,7 @@ class AgentUsageService:
     for rate_limit in request.rate_limits:
       key = (rate_limit.device, rate_limit.agent, rate_limit.window_label)
       status_rows[key] = {
+        "user_id": user_id,
         "device": rate_limit.device,
         "agent": rate_limit.agent,
         "window_label": rate_limit.window_label,

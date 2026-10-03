@@ -759,8 +759,9 @@ export const Body_import_transactions_v1_transactions_import_postSchema = {
   properties: {
     file: {
       type: "string",
-      format: "binary",
+      contentMediaType: "application/octet-stream",
       title: "File",
+      format: "binary",
     },
   },
   type: "object",
@@ -773,8 +774,9 @@ export const Body_upload_task_attachment_v1_tasks__task_id__attachments_postSche
     properties: {
       file: {
         type: "string",
-        format: "binary",
+        contentMediaType: "application/octet-stream",
         title: "File",
+        format: "binary",
       },
     },
     type: "object",
@@ -2505,6 +2507,133 @@ export const ImportResponseSchema = {
   type: "object",
   required: ["created", "skipped"],
   title: "ImportResponse",
+} as const;
+
+export const IngestTokenCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      minLength: 1,
+      title: "Name",
+      description:
+        "Identifies the daemon and machine, e.g. 'monitor:laptop'. Creating a token revokes earlier tokens with the same name.",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "IngestTokenCreate",
+} as const;
+
+export const IngestTokenCreatedSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    last_used_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Used At",
+    },
+    token: {
+      type: "string",
+      title: "Token",
+      description:
+        "The secret. Returned only once; store it in the daemon's env file.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "last_used_at",
+    "token",
+  ],
+  title: "IngestTokenCreated",
+} as const;
+
+export const IngestTokenSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    last_used_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Used At",
+    },
+  },
+  type: "object",
+  required: ["created_at", "modified_at", "id", "name", "last_used_at"],
+  title: "IngestTokenSchema",
 } as const;
 
 export const KlarnaImportRequestSchema = {

@@ -3,8 +3,10 @@ from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
 
+from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
+from api.common.uploads import read_upload
 from api.exceptions import ResourceNotFound
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, get_db_session
@@ -32,6 +34,8 @@ from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query, UploadFile
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
+
+MAX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024
 
 
 class TransactionSortProperty(StrEnum):
@@ -112,11 +116,12 @@ async def import_transactions(
 
   Duplicate transactions (by dedup hash) are automatically skipped.
   """
+  await BankAccountRepository.from_session(session).get_owned_or_404(bank_account_id, current_user.id, not_found_message="Bank account not found")
   profile = await BankProfileRepository.from_session(session).get_by_bank_name(bank)
   if profile is None:
     raise ResourceNotFound(f"Unknown bank profile: {bank}")
 
-  content = await file.read()
+  content = await read_upload(file, MAX_IMPORT_SIZE_BYTES, "File is too large (max 10 MB).")
 
   if profile.file_format == "xlsx":
     parsed = await parse_xlsx(content, profile)

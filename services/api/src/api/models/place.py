@@ -27,4 +27,4 @@ class Place(RecordModel):
   photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
   website: Mapped[str | None] = mapped_column(String(500), nullable=True)
   phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
-  user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("users.id"), nullable=True, index=True)
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

@@ -278,7 +278,7 @@ async def get_crypto_price(
         params={"ids": coin_id, "vs_currencies": currency, "include_24hr_change": "true"},
       )
     except httpx.RequestError as e:
-      raise ServiceUnavailableError(f"Failed to reach CoinGecko: {e}", status_code=502) from e
+      raise ServiceUnavailableError("Price data is unavailable right now.", status_code=502) from e
 
   if response.status_code != 200:
     raise ServiceUnavailableError(

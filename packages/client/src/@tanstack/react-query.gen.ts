@@ -17,6 +17,7 @@ import {
   connectIcloudV1CalendarsIcloudPost,
   createBankAccountV1BankAccountsPost,
   createCounterV1CountersPost,
+  createIngestTokenV1IngestTokensPost,
   createNotificationV1NotificationsPost,
   createPlaceV1PlacesPost,
   createProjectV1ProjectsPost,
@@ -69,6 +70,7 @@ import {
   listDevicesV1DevicesGet,
   listHealthkitSleepV1HealthkitSleepGet,
   listHealthkitWorkoutsV1HealthkitWorkoutsGet,
+  listIngestTokensV1IngestTokensGet,
   listNotificationsV1NotificationsGet,
   listPlacesV1PlacesGet,
   listProjectsV1ProjectsGet,
@@ -85,6 +87,7 @@ import {
   type Options,
   reopenTaskV1TasksTaskIdReopenPost,
   reorderTasksV1TasksReorderPatch,
+  revokeIngestTokenV1IngestTokensTokenIdDelete,
   searchGooglePlacesV1PlacesSearchGet,
   setProjectLocationV1ProjectsProjectIdLocationPut,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
@@ -127,6 +130,9 @@ import type {
   CreateCounterV1CountersPostData,
   CreateCounterV1CountersPostError,
   CreateCounterV1CountersPostResponse,
+  CreateIngestTokenV1IngestTokensPostData,
+  CreateIngestTokenV1IngestTokensPostError,
+  CreateIngestTokenV1IngestTokensPostResponse,
   CreateNotificationV1NotificationsPostData,
   CreateNotificationV1NotificationsPostError,
   CreateNotificationV1NotificationsPostResponse,
@@ -272,6 +278,8 @@ import type {
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
+  ListIngestTokensV1IngestTokensGetData,
+  ListIngestTokensV1IngestTokensGetResponse,
   ListNotificationsV1NotificationsGetData,
   ListNotificationsV1NotificationsGetResponse,
   ListPlacesV1PlacesGetData,
@@ -315,6 +323,9 @@ import type {
   ReorderTasksV1TasksReorderPatchData,
   ReorderTasksV1TasksReorderPatchError,
   ReorderTasksV1TasksReorderPatchResponse,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetError,
   SearchGooglePlacesV1PlacesSearchGetResponse,
@@ -1756,6 +1767,88 @@ export const getSleepSummaryV1HealthkitSleepSummaryGetOptions = (
     },
     queryKey: getSleepSummaryV1HealthkitSleepSummaryGetQueryKey(options),
   });
+
+export const listIngestTokensV1IngestTokensGetQueryKey = (
+  options?: Options<ListIngestTokensV1IngestTokensGetData>,
+) => createQueryKey("listIngestTokensV1IngestTokensGet", options);
+
+/**
+ * List Ingest Tokens
+ */
+export const listIngestTokensV1IngestTokensGetOptions = (
+  options?: Options<ListIngestTokensV1IngestTokensGetData>,
+) =>
+  queryOptions<
+    ListIngestTokensV1IngestTokensGetResponse,
+    DefaultError,
+    ListIngestTokensV1IngestTokensGetResponse,
+    ReturnType<typeof listIngestTokensV1IngestTokensGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listIngestTokensV1IngestTokensGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listIngestTokensV1IngestTokensGetQueryKey(options),
+  });
+
+/**
+ * Create Ingest Token
+ */
+export const createIngestTokenV1IngestTokensPostMutation = (
+  options?: Partial<Options<CreateIngestTokenV1IngestTokensPostData>>,
+): UseMutationOptions<
+  CreateIngestTokenV1IngestTokensPostResponse,
+  CreateIngestTokenV1IngestTokensPostError,
+  Options<CreateIngestTokenV1IngestTokensPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateIngestTokenV1IngestTokensPostResponse,
+    CreateIngestTokenV1IngestTokensPostError,
+    Options<CreateIngestTokenV1IngestTokensPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createIngestTokenV1IngestTokensPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Revoke Ingest Token
+ */
+export const revokeIngestTokenV1IngestTokensTokenIdDeleteMutation = (
+  options?: Partial<Options<RevokeIngestTokenV1IngestTokensTokenIdDeleteData>>,
+): UseMutationOptions<
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
+  RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
+  Options<RevokeIngestTokenV1IngestTokensTokenIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
+    RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
+    Options<RevokeIngestTokenV1IngestTokensTokenIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await revokeIngestTokenV1IngestTokensTokenIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listSecuritiesV1InvestmentsSecuritiesGetQueryKey = (
   options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
