@@ -20,6 +20,7 @@ import { Route as AppSleepRouteImport } from './routes/_app/sleep'
 import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
 import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
 import { Route as AppCountersRouteImport } from './routes/_app/counters'
+import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
 
@@ -77,6 +78,11 @@ const AppCountersRoute = AppCountersRouteImport.update({
   path: '/counters',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppActivityRoute = AppActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/accounts': typeof AppAccountsRoute
   '/activity': typeof AppActivityRoute
+  '/calendar': typeof AppCalendarRoute
   '/counters': typeof AppCountersRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/accounts': typeof AppAccountsRoute
   '/activity': typeof AppActivityRoute
+  '/calendar': typeof AppCalendarRoute
   '/counters': typeof AppCountersRoute
   '/investments': typeof AppInvestmentsRoute
   '/recipes': typeof AppRecipesRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/accounts': typeof AppAccountsRoute
   '/_app/activity': typeof AppActivityRoute
+  '/_app/calendar': typeof AppCalendarRoute
   '/_app/counters': typeof AppCountersRoute
   '/_app/investments': typeof AppInvestmentsRoute
   '/_app/recipes': typeof AppRecipesRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/accounts'
     | '/activity'
+    | '/calendar'
     | '/counters'
     | '/investments'
     | '/recipes'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/accounts'
     | '/activity'
+    | '/calendar'
     | '/counters'
     | '/investments'
     | '/recipes'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/accounts'
     | '/_app/activity'
+    | '/_app/calendar'
     | '/_app/counters'
     | '/_app/investments'
     | '/_app/recipes'
@@ -262,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCountersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/activity': {
       id: '/_app/activity'
       path: '/activity'
@@ -282,6 +301,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAccountsRoute: typeof AppAccountsRoute
   AppActivityRoute: typeof AppActivityRoute
+  AppCalendarRoute: typeof AppCalendarRoute
   AppCountersRoute: typeof AppCountersRoute
   AppInvestmentsRoute: typeof AppInvestmentsRoute
   AppRecipesRoute: typeof AppRecipesRoute
@@ -296,6 +316,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAccountsRoute: AppAccountsRoute,
   AppActivityRoute: AppActivityRoute,
+  AppCalendarRoute: AppCalendarRoute,
   AppCountersRoute: AppCountersRoute,
   AppInvestmentsRoute: AppInvestmentsRoute,
   AppRecipesRoute: AppRecipesRoute,

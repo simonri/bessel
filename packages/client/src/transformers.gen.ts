@@ -2,6 +2,7 @@
 
 import type {
   CompleteTaskV1TasksTaskIdCompletePostResponse,
+  ConnectIcloudV1CalendarsIcloudPostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
   CreateCounterV1CountersPostResponse,
   CreateNotificationV1NotificationsPostResponse,
@@ -19,6 +20,8 @@ import type {
   GetTaskV1TasksTaskIdGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
   ListBankAccountsV1BankAccountsGetResponse,
+  ListCalendarAccountsV1CalendarsAccountsGetResponse,
+  ListCalendarEventsV1CalendarsEventsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetResponse,
@@ -117,6 +120,65 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransforme
     data = bankAccountSchemaSchemaResponseTransformer(data);
     return data;
   };
+
+const calendarAccountSchemaSchemaResponseTransformer = (data: any) => {
+  if (data.last_synced_at) {
+    data.last_synced_at = new Date(data.last_synced_at);
+  }
+  return data;
+};
+
+const calendarAccountListResponseSchemaResponseTransformer = (data: any) => {
+  data.accounts = data.accounts.map((item: any) =>
+    calendarAccountSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listCalendarAccountsV1CalendarsAccountsGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<ListCalendarAccountsV1CalendarsAccountsGetResponse> => {
+    data = calendarAccountListResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+export const connectIcloudV1CalendarsIcloudPostResponseTransformer = async (
+  data: any,
+): Promise<ConnectIcloudV1CalendarsIcloudPostResponse> => {
+  data = calendarAccountSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const calendarEventSchemaSchemaResponseTransformer = (data: any) => {
+  if (data.start_at) {
+    data.start_at = new Date(data.start_at);
+  }
+  if (data.end_at) {
+    data.end_at = new Date(data.end_at);
+  }
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
+  }
+  if (data.end_date) {
+    data.end_date = new Date(data.end_date);
+  }
+  return data;
+};
+
+const calendarEventListResponseSchemaResponseTransformer = (data: any) => {
+  data.events = data.events.map((item: any) =>
+    calendarEventSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listCalendarEventsV1CalendarsEventsGetResponseTransformer = async (
+  data: any,
+): Promise<ListCalendarEventsV1CalendarsEventsGetResponse> => {
+  data = calendarEventListResponseSchemaResponseTransformer(data);
+  return data;
+};
 
 const categorySchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

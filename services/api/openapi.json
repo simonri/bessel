@@ -825,6 +825,309 @@
         }
       }
     },
+    "/v1/calendars/accounts": {
+      "get": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "List Calendar Accounts",
+        "operationId": "list_calendar_accounts_v1_calendars_accounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarAccountListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/calendars/google/authorize": {
+      "post": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Start Google Calendar Connection",
+        "operationId": "authorize_google_v1_calendars_google_authorize_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleAuthorizeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/calendars/icloud": {
+      "post": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Connect iCloud Calendar",
+        "operationId": "connect_icloud_v1_calendars_icloud_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ICloudConnectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarAccountSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/calendars/accounts/{account_id}": {
+      "delete": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Disconnect Calendar Account",
+        "operationId": "disconnect_calendar_account_v1_calendars_accounts__account_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/calendars/accounts/{account_id}/sync": {
+      "post": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Sync Calendar Account",
+        "operationId": "sync_calendar_account_v1_calendars_accounts__account_id__sync_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/calendars/{calendar_id}": {
+      "patch": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "Update Calendar",
+        "operationId": "update_calendar_v1_calendars__calendar_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendar_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Calendar Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/calendars/events": {
+      "get": {
+        "tags": [
+          "calendars"
+        ],
+        "summary": "List Calendar Events",
+        "operationId": "list_calendar_events_v1_calendars_events_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Start of window (Unix epoch seconds, inclusive).",
+              "title": "Start Ts"
+            },
+            "description": "Start of window (Unix epoch seconds, inclusive)."
+          },
+          {
+            "name": "end_ts",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "End of window (Unix epoch seconds, exclusive).",
+              "title": "End Ts"
+            },
+            "description": "End of window (Unix epoch seconds, exclusive)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarEventListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/categories": {
       "get": {
         "tags": [
@@ -6001,6 +6304,244 @@
         ],
         "title": "BulkUpdateResponse"
       },
+      "CalendarAccountListResponse": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarAccountSchema"
+            },
+            "type": "array",
+            "title": "Accounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "accounts"
+        ],
+        "title": "CalendarAccountListResponse"
+      },
+      "CalendarAccountSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/CalendarProvider"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "sync_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Error",
+            "description": "Why the last sync failed, or null if it succeeded."
+          },
+          "calendars": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarSchema"
+            },
+            "type": "array",
+            "title": "Calendars"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "email",
+          "last_synced_at",
+          "sync_error",
+          "calendars"
+        ],
+        "title": "CalendarAccountSchema"
+      },
+      "CalendarEventListResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarEventSchema"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "CalendarEventListResponse"
+      },
+      "CalendarEventSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "calendar_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Calendar Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "all_day": {
+            "type": "boolean",
+            "title": "All Day"
+          },
+          "start_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start At",
+            "description": "Timed events only."
+          },
+          "end_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End At",
+            "description": "Timed events only."
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date",
+            "description": "All-day events only."
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date",
+            "description": "All-day events only; exclusive."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "calendar_id",
+          "title",
+          "location",
+          "all_day",
+          "start_at",
+          "end_at",
+          "start_date",
+          "end_date"
+        ],
+        "title": "CalendarEventSchema"
+      },
+      "CalendarProvider": {
+        "type": "string",
+        "enum": [
+          "google",
+          "icloud"
+        ],
+        "title": "CalendarProvider"
+      },
+      "CalendarSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "description": "Hex color, `#rrggbb`."
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "color",
+          "hidden"
+        ],
+        "title": "CalendarSchema"
+      },
+      "CalendarUpdate": {
+        "properties": {
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hidden"
+        ],
+        "title": "CalendarUpdate"
+      },
       "CategoryListResponse": {
         "properties": {
           "items": {
@@ -6352,6 +6893,20 @@
           "name"
         ],
         "title": "DeviceUpdate"
+      },
+      "GoogleAuthorizeResponse": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Google consent URL to open in a browser."
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "GoogleAuthorizeResponse"
       },
       "GooglePlaceSearchResponse": {
         "properties": {
@@ -7237,6 +7792,29 @@
           "items"
         ],
         "title": "HoldingsResponse"
+      },
+      "ICloudConnectRequest": {
+        "properties": {
+          "apple_id": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Apple Id"
+          },
+          "app_password": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "App Password",
+            "description": "App-specific password from account.apple.com."
+          }
+        },
+        "type": "object",
+        "required": [
+          "apple_id",
+          "app_password"
+        ],
+        "title": "ICloudConnectRequest"
       },
       "ImportResponse": {
         "properties": {

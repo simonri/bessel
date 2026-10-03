@@ -28,6 +28,7 @@ export type ModuleKey =
   | "activity"
   | "sleep"
   | "timeline"
+  | "calendar"
   | "recipes"
   | "claudeCode"
   | "codex"

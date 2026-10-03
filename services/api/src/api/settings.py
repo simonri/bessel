@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     ]
   )
   FRONTEND_BASE_URL: str = Field(default="http://localhost:5173")
+  # Public URL of this API, used to build OAuth redirect URIs.
+  API_BASE_URL: str = Field(default="http://127.0.0.1:8100")
+
+  # Fernet key (`Fernet.generate_key()`) encrypting third-party credentials at rest.
+  CREDENTIALS_ENCRYPTION_KEY: str = ""
 
   # Redis
   REDIS_HOST: str = "127.0.0.1"
@@ -80,6 +85,10 @@ class Settings(BaseSettings):
 
   # Google Places
   GOOGLE_PLACES_API_KEY: str = ""
+
+  # Google Calendar OAuth (web application client)
+  GOOGLE_OAUTH_CLIENT_ID: str = ""
+  GOOGLE_OAUTH_CLIENT_SECRET: str = ""
 
   # Worker
   WORKER_MAX_RETRIES: int = 20

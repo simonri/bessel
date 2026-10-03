@@ -9,6 +9,7 @@ import {
 } from "./client/index.js";
 import {
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
+  connectIcloudV1CalendarsIcloudPostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
   createCounterV1CountersPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
@@ -26,6 +27,8 @@ import {
   getTaskV1TasksTaskIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
+  listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
+  listCalendarEventsV1CalendarsEventsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
   listCountersV1CountersGetResponseTransformer,
   listDevicesV1DevicesGetResponseTransformer,
@@ -57,6 +60,8 @@ import {
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
 } from "./transformers.gen.js";
 import type {
+  AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
+  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
   BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
   BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
@@ -66,6 +71,9 @@ import type {
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostErrors,
   CompleteTaskV1TasksTaskIdCompletePostResponses,
+  ConnectIcloudV1CalendarsIcloudPostData,
+  ConnectIcloudV1CalendarsIcloudPostErrors,
+  ConnectIcloudV1CalendarsIcloudPostResponses,
   CreateBankAccountV1BankAccountsPostData,
   CreateBankAccountV1BankAccountsPostErrors,
   CreateBankAccountV1BankAccountsPostResponses,
@@ -132,6 +140,9 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
+  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
+  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
+  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetErrors,
   GetActivitySummaryV1ActivitySummaryGetResponses,
@@ -198,6 +209,11 @@ import type {
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetErrors,
   ListBankAccountsV1BankAccountsGetResponses,
+  ListCalendarAccountsV1CalendarsAccountsGetData,
+  ListCalendarAccountsV1CalendarsAccountsGetResponses,
+  ListCalendarEventsV1CalendarsEventsGetData,
+  ListCalendarEventsV1CalendarsEventsGetErrors,
+  ListCalendarEventsV1CalendarsEventsGetResponses,
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
@@ -266,6 +282,9 @@ import type {
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostErrors,
   SyncAgentUsageV1AgentUsageSyncPostResponses,
+  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
+  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
+  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
   SyncHealthkitSleepV1HealthkitSleepSyncPostData,
   SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
   SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
@@ -278,6 +297,9 @@ import type {
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
+  UpdateCalendarV1CalendarsCalendarIdPatchData,
+  UpdateCalendarV1CalendarsCalendarIdPatchErrors,
+  UpdateCalendarV1CalendarsCalendarIdPatchResponses,
   UpdateCounterV1CountersCounterIdPatchData,
   UpdateCounterV1CountersCounterIdPatchErrors,
   UpdateCounterV1CountersCounterIdPatchResponses,
@@ -629,6 +651,157 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * List Calendar Accounts
+ */
+export const listCalendarAccountsV1CalendarsAccountsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    ListCalendarAccountsV1CalendarsAccountsGetData,
+    ThrowOnError
+  >,
+) =>
+  (options?.client ?? client).get<
+    ListCalendarAccountsV1CalendarsAccountsGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/accounts",
+    ...options,
+  });
+
+/**
+ * Start Google Calendar Connection
+ */
+export const authorizeGoogleV1CalendarsGoogleAuthorizePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
+    ThrowOnError
+  >,
+) =>
+  (options?.client ?? client).post<
+    AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/google/authorize",
+    ...options,
+  });
+
+/**
+ * Connect iCloud Calendar
+ */
+export const connectIcloudV1CalendarsIcloudPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ConnectIcloudV1CalendarsIcloudPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    ConnectIcloudV1CalendarsIcloudPostResponses,
+    ConnectIcloudV1CalendarsIcloudPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: connectIcloudV1CalendarsIcloudPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/icloud",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Disconnect Calendar Account
+ */
+export const disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
+    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/accounts/{account_id}",
+    ...options,
+  });
+
+/**
+ * Sync Calendar Account
+ */
+export const syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
+    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/accounts/{account_id}/sync",
+    ...options,
+  });
+
+/**
+ * Update Calendar
+ */
+export const updateCalendarV1CalendarsCalendarIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateCalendarV1CalendarsCalendarIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateCalendarV1CalendarsCalendarIdPatchResponses,
+    UpdateCalendarV1CalendarsCalendarIdPatchErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/{calendar_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Calendar Events
+ */
+export const listCalendarEventsV1CalendarsEventsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ListCalendarEventsV1CalendarsEventsGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    ListCalendarEventsV1CalendarsEventsGetResponses,
+    ListCalendarEventsV1CalendarsEventsGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listCalendarEventsV1CalendarsEventsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/calendars/events",
+    ...options,
   });
 
 /**

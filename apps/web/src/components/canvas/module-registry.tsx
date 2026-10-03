@@ -1,6 +1,7 @@
 import {
   Activity,
   ArrowLeftRight,
+  CalendarDays,
   ChartGantt,
   CheckSquare,
   ChefHat,
@@ -111,6 +112,17 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
       })),
     ),
     ...COMPACT_SIZE,
+  },
+  calendar: {
+    title: "Calendar",
+    icon: CalendarDays,
+    component: lazy(() =>
+      import("@/components/calendar/calendar-page").then((m) => ({
+        default: m.CalendarPage,
+      })),
+    ),
+    ...SESSION_SIZE,
+    noPadding: true,
   },
   recipes: {
     title: "Recipes",

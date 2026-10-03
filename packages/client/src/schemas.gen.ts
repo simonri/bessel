@@ -881,6 +881,237 @@ export const BulkUpdateResponseSchema = {
   title: "BulkUpdateResponse",
 } as const;
 
+export const CalendarAccountListResponseSchema = {
+  properties: {
+    accounts: {
+      items: {
+        $ref: "#/components/schemas/CalendarAccountSchema",
+      },
+      type: "array",
+      title: "Accounts",
+    },
+  },
+  type: "object",
+  required: ["accounts"],
+  title: "CalendarAccountListResponse",
+} as const;
+
+export const CalendarAccountSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    provider: {
+      $ref: "#/components/schemas/CalendarProvider",
+    },
+    email: {
+      type: "string",
+      title: "Email",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+    sync_error: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync Error",
+      description: "Why the last sync failed, or null if it succeeded.",
+    },
+    calendars: {
+      items: {
+        $ref: "#/components/schemas/CalendarSchema",
+      },
+      type: "array",
+      title: "Calendars",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "provider",
+    "email",
+    "last_synced_at",
+    "sync_error",
+    "calendars",
+  ],
+  title: "CalendarAccountSchema",
+} as const;
+
+export const CalendarEventListResponseSchema = {
+  properties: {
+    events: {
+      items: {
+        $ref: "#/components/schemas/CalendarEventSchema",
+      },
+      type: "array",
+      title: "Events",
+    },
+  },
+  type: "object",
+  required: ["events"],
+  title: "CalendarEventListResponse",
+} as const;
+
+export const CalendarEventSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    calendar_id: {
+      type: "string",
+      format: "uuid",
+      title: "Calendar Id",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    location: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Location",
+    },
+    all_day: {
+      type: "boolean",
+      title: "All Day",
+    },
+    start_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start At",
+      description: "Timed events only.",
+    },
+    end_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End At",
+      description: "Timed events only.",
+    },
+    start_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Date",
+      description: "All-day events only.",
+    },
+    end_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Date",
+      description: "All-day events only; exclusive.",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "calendar_id",
+    "title",
+    "location",
+    "all_day",
+    "start_at",
+    "end_at",
+    "start_date",
+    "end_date",
+  ],
+  title: "CalendarEventSchema",
+} as const;
+
+export const CalendarProviderSchema = {
+  type: "string",
+  enum: ["google", "icloud"],
+  title: "CalendarProvider",
+} as const;
+
+export const CalendarSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    color: {
+      type: "string",
+      title: "Color",
+      description: "Hex color, `#rrggbb`.",
+    },
+    hidden: {
+      type: "boolean",
+      title: "Hidden",
+    },
+  },
+  type: "object",
+  required: ["id", "name", "color", "hidden"],
+  title: "CalendarSchema",
+} as const;
+
+export const CalendarUpdateSchema = {
+  properties: {
+    hidden: {
+      type: "boolean",
+      title: "Hidden",
+    },
+  },
+  type: "object",
+  required: ["hidden"],
+  title: "CalendarUpdate",
+} as const;
+
 export const CategoryListResponseSchema = {
   properties: {
     items: {
@@ -1214,6 +1445,19 @@ export const DeviceUpdateSchema = {
   type: "object",
   required: ["name"],
   title: "DeviceUpdate",
+} as const;
+
+export const GoogleAuthorizeResponseSchema = {
+  properties: {
+    url: {
+      type: "string",
+      title: "Url",
+      description: "Google consent URL to open in a browser.",
+    },
+  },
+  type: "object",
+  required: ["url"],
+  title: "GoogleAuthorizeResponse",
 } as const;
 
 export const GooglePlaceSearchResponseSchema = {
@@ -2098,6 +2342,27 @@ export const HoldingsResponseSchema = {
   type: "object",
   required: ["items"],
   title: "HoldingsResponse",
+} as const;
+
+export const ICloudConnectRequestSchema = {
+  properties: {
+    apple_id: {
+      type: "string",
+      maxLength: 320,
+      minLength: 3,
+      title: "Apple Id",
+    },
+    app_password: {
+      type: "string",
+      maxLength: 64,
+      minLength: 1,
+      title: "App Password",
+      description: "App-specific password from account.apple.com.",
+    },
+  },
+  type: "object",
+  required: ["apple_id", "app_password"],
+  title: "ICloudConnectRequest",
 } as const;
 
 export const ImportResponseSchema = {

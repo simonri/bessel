@@ -4,6 +4,9 @@ from .agent_usage_status import AgentUsageStatus
 from .bank_account import BankAccount
 from .bank_profile import BankProfile
 from .base import Model
+from .calendar import Calendar
+from .calendar_account import CalendarAccount
+from .calendar_event import CalendarEvent
 from .category import Category
 from .counter import Counter, CounterReset
 from .device import Device
@@ -33,6 +36,9 @@ __all__ = [
   "User",
   "BankAccount",
   "BankProfile",
+  "Calendar",
+  "CalendarAccount",
+  "CalendarEvent",
   "Category",
   "Counter",
   "CounterReset",

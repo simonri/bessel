@@ -684,6 +684,150 @@ export type BulkUpdateResponse = {
 };
 
 /**
+ * CalendarAccountListResponse
+ */
+export type CalendarAccountListResponse = {
+  /**
+   * Accounts
+   */
+  accounts: Array<CalendarAccountSchema>;
+};
+
+/**
+ * CalendarAccountSchema
+ */
+export type CalendarAccountSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  provider: CalendarProvider;
+  /**
+   * Email
+   */
+  email: string;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+  /**
+   * Sync Error
+   *
+   * Why the last sync failed, or null if it succeeded.
+   */
+  sync_error: string | null;
+  /**
+   * Calendars
+   */
+  calendars: Array<CalendarSchema>;
+};
+
+/**
+ * CalendarEventListResponse
+ */
+export type CalendarEventListResponse = {
+  /**
+   * Events
+   */
+  events: Array<CalendarEventSchema>;
+};
+
+/**
+ * CalendarEventSchema
+ */
+export type CalendarEventSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Calendar Id
+   */
+  calendar_id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * Location
+   */
+  location: string | null;
+  /**
+   * All Day
+   */
+  all_day: boolean;
+  /**
+   * Start At
+   *
+   * Timed events only.
+   */
+  start_at: Date | null;
+  /**
+   * End At
+   *
+   * Timed events only.
+   */
+  end_at: Date | null;
+  /**
+   * Start Date
+   *
+   * All-day events only.
+   */
+  start_date: Date | null;
+  /**
+   * End Date
+   *
+   * All-day events only; exclusive.
+   */
+  end_date: Date | null;
+};
+
+/**
+ * CalendarProvider
+ */
+export const CalendarProvider = { GOOGLE: "google", ICLOUD: "icloud" } as const;
+
+/**
+ * CalendarProvider
+ */
+export type CalendarProvider =
+  (typeof CalendarProvider)[keyof typeof CalendarProvider];
+
+/**
+ * CalendarSchema
+ */
+export type CalendarSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Color
+   *
+   * Hex color, `#rrggbb`.
+   */
+  color: string;
+  /**
+   * Hidden
+   */
+  hidden: boolean;
+};
+
+/**
+ * CalendarUpdate
+ */
+export type CalendarUpdate = {
+  /**
+   * Hidden
+   */
+  hidden: boolean;
+};
+
+/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -924,6 +1068,18 @@ export type DeviceUpdate = {
    * Name
    */
   name: string;
+};
+
+/**
+ * GoogleAuthorizeResponse
+ */
+export type GoogleAuthorizeResponse = {
+  /**
+   * Url
+   *
+   * Google consent URL to open in a browser.
+   */
+  url: string;
 };
 
 /**
@@ -1473,6 +1629,22 @@ export type HoldingsResponse = {
    * Items
    */
   items: Array<HoldingSchema>;
+};
+
+/**
+ * ICloudConnectRequest
+ */
+export type ICloudConnectRequest = {
+  /**
+   * Apple Id
+   */
+  apple_id: string;
+  /**
+   * App Password
+   *
+   * App-specific password from account.apple.com.
+   */
+  app_password: string;
 };
 
 /**
@@ -3802,6 +3974,202 @@ export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses = {
 
 export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse =
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses];
+
+export type ListCalendarAccountsV1CalendarsAccountsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/calendars/accounts";
+};
+
+export type ListCalendarAccountsV1CalendarsAccountsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CalendarAccountListResponse;
+};
+
+export type ListCalendarAccountsV1CalendarsAccountsGetResponse =
+  ListCalendarAccountsV1CalendarsAccountsGetResponses[keyof ListCalendarAccountsV1CalendarsAccountsGetResponses];
+
+export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/calendars/google/authorize";
+};
+
+export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoogleAuthorizeResponse;
+};
+
+export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse =
+  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses[keyof AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses];
+
+export type ConnectIcloudV1CalendarsIcloudPostData = {
+  body: ICloudConnectRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/calendars/icloud";
+};
+
+export type ConnectIcloudV1CalendarsIcloudPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ConnectIcloudV1CalendarsIcloudPostError =
+  ConnectIcloudV1CalendarsIcloudPostErrors[keyof ConnectIcloudV1CalendarsIcloudPostErrors];
+
+export type ConnectIcloudV1CalendarsIcloudPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: CalendarAccountSchema;
+};
+
+export type ConnectIcloudV1CalendarsIcloudPostResponse =
+  ConnectIcloudV1CalendarsIcloudPostResponses[keyof ConnectIcloudV1CalendarsIcloudPostResponses];
+
+export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Account Id
+     */
+    account_id: string;
+  };
+  query?: never;
+  url: "/v1/calendars/accounts/{account_id}";
+};
+
+export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError =
+  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors[keyof DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors];
+
+export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void;
+  };
+
+export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse =
+  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses[keyof DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses];
+
+export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData = {
+  body?: never;
+  path: {
+    /**
+     * Account Id
+     */
+    account_id: string;
+  };
+  query?: never;
+  url: "/v1/calendars/accounts/{account_id}/sync";
+};
+
+export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError =
+  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors[keyof SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors];
+
+export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown;
+};
+
+export type UpdateCalendarV1CalendarsCalendarIdPatchData = {
+  body: CalendarUpdate;
+  path: {
+    /**
+     * Calendar Id
+     */
+    calendar_id: string;
+  };
+  query?: never;
+  url: "/v1/calendars/{calendar_id}";
+};
+
+export type UpdateCalendarV1CalendarsCalendarIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCalendarV1CalendarsCalendarIdPatchError =
+  UpdateCalendarV1CalendarsCalendarIdPatchErrors[keyof UpdateCalendarV1CalendarsCalendarIdPatchErrors];
+
+export type UpdateCalendarV1CalendarsCalendarIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: CalendarSchema;
+};
+
+export type UpdateCalendarV1CalendarsCalendarIdPatchResponse =
+  UpdateCalendarV1CalendarsCalendarIdPatchResponses[keyof UpdateCalendarV1CalendarsCalendarIdPatchResponses];
+
+export type ListCalendarEventsV1CalendarsEventsGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start Ts
+     *
+     * Start of window (Unix epoch seconds, inclusive).
+     */
+    start_ts: number;
+    /**
+     * End Ts
+     *
+     * End of window (Unix epoch seconds, exclusive).
+     */
+    end_ts: number;
+  };
+  url: "/v1/calendars/events";
+};
+
+export type ListCalendarEventsV1CalendarsEventsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListCalendarEventsV1CalendarsEventsGetError =
+  ListCalendarEventsV1CalendarsEventsGetErrors[keyof ListCalendarEventsV1CalendarsEventsGetErrors];
+
+export type ListCalendarEventsV1CalendarsEventsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CalendarEventListResponse;
+};
+
+export type ListCalendarEventsV1CalendarsEventsGetResponse =
+  ListCalendarEventsV1CalendarsEventsGetResponses[keyof ListCalendarEventsV1CalendarsEventsGetResponses];
 
 export type ListCategoriesV1CategoriesGetData = {
   body?: never;

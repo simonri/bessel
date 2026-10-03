@@ -44,6 +44,9 @@ dependencies = [
   "opentelemetry-instrumentation-httpx>=0.60b1",
   "python-multipart>=0.0.22",
   "openpyxl>=3.1.5",
+  "recurring-ical-events>=3.8.2",
+  "icalendar>=7.3.0",
+  "cryptography>=46.0.4",
 ]
 
 [dependency-groups]
