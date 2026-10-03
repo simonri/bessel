@@ -30,7 +30,6 @@ from .task import Task
 from .task_attachment import TaskAttachment
 from .trade import Trade
 from .transaction import Transaction
-from .tree_of_alpha_news import TreeOfAlphaNews
 from .user import User
 from .weather_cache import WeatherCache
 
@@ -69,6 +68,5 @@ __all__ = [
   "TaskAttachment",
   "Trade",
   "Transaction",
-  "TreeOfAlphaNews",
   "WeatherCache",
 ]
