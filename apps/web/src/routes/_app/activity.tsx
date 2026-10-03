@@ -17,22 +17,35 @@ import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { addDays, format, isSameDay, subDays } from "date-fns";
-import { Activity, Clock } from "lucide-react";
 import { useState } from "react";
+import { ActivityCards } from "@/components/activity/activity-cards";
 import {
-  BarRow,
-  EmptyState,
-  PageToolbar,
-  PeriodNav,
-  SectionLabel,
-  SoftButton,
-  StatTile,
-} from "@/components/ui-kit";
+  activitySentence,
+  comparedToUsual,
+  longestSession,
+  prettyAppName,
+  screenLane,
+  sessionsFromBuckets,
+  usualSecs,
+  weekEndingOn,
+} from "@/components/activity/activity-insights";
+import { AppBreakdown } from "@/components/activity/app-breakdown";
+import { DayRhythm } from "@/components/activity/day-rhythm";
+import { WeekStrip } from "@/components/activity/week-strip";
+import { DayNav } from "@/components/timeline/day-nav";
+import { DayRibbon } from "@/components/timeline/day-ribbon";
 import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
-import { ActivityDayBar } from "./-activity-day-bar";
-import { APP_COLORS, fmtDur, localDayBounds } from "./-activity-utils";
+import { localDayBounds } from "./-activity-utils";
 import { YearGrid, yearGridRange } from "./-year-grid";
+
+const SURFACE = "rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]";
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-2 px-1 text-xs font-medium text-white/55">{children}</h3>
+  );
+}
 
 export const Route = createFileRoute("/_app/activity")({
   component: ActivityPage,
@@ -48,7 +61,7 @@ function ActivityPage() {
     const match = settings.activityMappings.find(
       (m) => m.from && m.from === name,
     );
-    return match?.to || name;
+    return match?.to || prettyAppName(name);
   };
 
   const isCurrentDay = isSameDay(date, today);
@@ -114,142 +127,173 @@ function ActivityPage() {
     enabled: !!activeSource,
   });
 
-  const prevDay = () => setDate((d) => subDays(d, 1));
-  const nextDay = () => setDate((d) => addDays(d, 1));
-  const goToday = () => setDate(today);
-
   const daySummary = summary && summary.total_active_secs > 0 ? summary : null;
-  const maxAppSecs = Math.max(
-    ...(daySummary?.apps.map((app) => app.active_secs) ?? []),
-    1,
+  const totalSecs = daySummary?.total_active_secs ?? 0;
+  const days = yearDailyData?.days ?? [];
+  const usual = usualSecs(days, date);
+  const sessions = sessionsFromBuckets(
+    intradayData?.buckets ?? [],
+    intradayData?.bucket_mins ?? 15,
+    startTs,
   );
+  const topApp = daySummary?.apps[0]
+    ? {
+        name: mapName(daySummary.apps[0].app_class),
+        percentage: daySummary.apps[0].percentage,
+      }
+    : null;
+  const sentence = activitySentence({
+    totalSecs,
+    usual,
+    topApp: topApp?.name ?? null,
+    isToday: isCurrentDay,
+  });
 
   return (
-    <div className="space-y-5">
-      <PageToolbar description="Time tracking from the desktop monitor.">
-        {sources.length > 1 && (
-          <Select
-            value={activeSource ?? ""}
-            onValueChange={(v) => setSource(v)}
-          >
-            <SelectTrigger className="w-44 min-w-0 border-white/10 bg-white/[0.04]">
-              <SelectValue placeholder="Select machine" />
-            </SelectTrigger>
-            <SelectContent>
-              {sources.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold tracking-tight text-white/90">
+            {isCurrentDay
+              ? "Your screen time"
+              : `How ${format(date, "EEEE")} went`}
+          </h2>
+          <p className="mt-0.5 text-xs text-white/50">
+            {sources.length === 0 && sourcesData
+              ? "See where your hours go, one day at a time."
+              : summary
+                ? sentence
+                : "\u00a0"}
+          </p>
+        </div>
         {sources.length > 0 && (
-          <>
-            {!isCurrentDay && <SoftButton onClick={goToday}>Today</SoftButton>}
-            <PeriodNav
-              label={isCurrentDay ? "Today" : format(date, "EEE, MMM d, yyyy")}
-              onPrev={prevDay}
-              onNext={nextDay}
+          <div className="flex flex-wrap items-center gap-2">
+            {sources.length > 1 && (
+              <Select
+                value={activeSource ?? ""}
+                onValueChange={(v) => setSource(v)}
+              >
+                <SelectTrigger
+                  size="default"
+                  className="w-auto min-w-0 gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-xs ring-1 ring-white/[0.06] dark:bg-white/[0.04]"
+                >
+                  <SelectValue placeholder="Select machine" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sources.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <DayNav
+              label={isCurrentDay ? "Today" : format(date, "EEE, MMM d")}
+              onPrev={() => setDate((d) => subDays(d, 1))}
+              onNext={() => setDate((d) => addDays(d, 1))}
               nextDisabled={isCurrentDay}
+              onToday={isCurrentDay ? undefined : () => setDate(today)}
             />
-          </>
+          </div>
         )}
-      </PageToolbar>
+      </header>
 
       {!sourcesData ? (
-        <div className="space-y-3">
-          <Skeleton className="h-20 w-full rounded-xl bg-white/[0.06]" />
-          <Skeleton className="h-32 w-full rounded-xl bg-white/[0.06]" />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-24 w-full rounded-2xl bg-white/[0.05]" />
+          <Skeleton className="h-28 w-full rounded-2xl bg-white/[0.05]" />
         </div>
       ) : sources.length === 0 ? (
-        <EmptyState icon={<Activity />} title="No activity yet">
-          Run{" "}
-          <code className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-mono text-11 text-white/75">
-            ./main.py --push
-          </code>{" "}
-          in{" "}
-          <code className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-mono text-11 text-white/75">
-            services/monitor
-          </code>{" "}
-          to sync your activity history.
-        </EmptyState>
+        <div
+          className={`${SURFACE} flex flex-col items-center gap-1.5 px-6 py-14 text-center`}
+        >
+          <p className="text-sm font-medium text-white/85">
+            Your screen time lives here 💻
+          </p>
+          <p className="max-w-sm text-xs leading-relaxed text-white/50">
+            Turn on the activity monitor in Settings → Services on your
+            computer, and Bessel will show where your hours go.
+          </p>
+        </div>
       ) : (
         <>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
-            <StatTile
-              label="Active time"
-              value={daySummary ? fmtDur(daySummary.total_active_secs) : "—"}
-              hint={sources.length === 1 ? activeSource : undefined}
-            />
-            <StatTile
-              label="Apps used"
-              value={daySummary?.apps.length ?? "—"}
-              hint={
-                daySummary?.apps[0]
-                  ? `Top: ${mapName(daySummary.apps[0].app_class)}`
-                  : undefined
-              }
-            />
-            <StatTile
-              label="Tasks completed"
-              value={completedTasksData?.pagination.total_count ?? "—"}
-            />
+          <ActivityCards
+            totalSecs={totalSecs}
+            compared={comparedToUsual(totalSecs, usual)}
+            longest={longestSession(sessions)}
+            topApp={topApp}
+            tasksDone={completedTasksData?.pagination.total_count ?? null}
+          />
+
+          <section className={`${SURFACE} p-4`}>
+            {sessions.length > 0 ? (
+              <DayRibbon
+                date={date}
+                lanes={[screenLane(sessions, totalSecs)]}
+                startTs={startTs}
+                endTs={endTs}
+                nowTs={isCurrentDay ? Date.now() / 1000 : null}
+              />
+            ) : (
+              <p className="py-6 text-center text-xs text-white/45">
+                {isCurrentDay
+                  ? "Nothing on the clock yet today 🌿"
+                  : "A screen-free day 🌿"}
+              </p>
+            )}
+          </section>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <section className="min-w-0">
+              <SectionTitle>Where the time went</SectionTitle>
+              {isLoading && !summary ? (
+                <div className={`${SURFACE} flex flex-col gap-3 p-4`}>
+                  {[1, 2, 3, 4, 5].map((row) => (
+                    <Skeleton
+                      key={row}
+                      className="h-7 w-full bg-white/[0.05]"
+                    />
+                  ))}
+                </div>
+              ) : daySummary ? (
+                <AppBreakdown apps={daySummary.apps} displayName={mapName} />
+              ) : (
+                <p
+                  className={`${SURFACE} px-4 py-8 text-center text-xs text-white/45`}
+                >
+                  No apps used this day.
+                </p>
+              )}
+            </section>
+            <section className="flex min-w-0 flex-col">
+              <SectionTitle>Compared to the week</SectionTitle>
+              <div className="flex flex-col gap-3">
+                <WeekStrip
+                  days={weekEndingOn(days, date, today)}
+                  usual={usual}
+                  onSelect={setDate}
+                />
+                <DayRhythm sessions={sessions} isToday={isCurrentDay} />
+              </div>
+            </section>
           </div>
 
           <section>
-            <SectionLabel>{today.getFullYear()}</SectionLabel>
-            <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3">
+            <SectionTitle>Your {today.getFullYear()}</SectionTitle>
+            <div className={`${SURFACE} p-3`}>
               <YearGrid
                 year={today.getFullYear()}
-                items={yearDailyData?.days ?? []}
+                items={days}
                 getDate={(d) => d.date}
                 getValue={(d) => d.active_secs}
                 color="var(--color-primary-500)"
-                emptyLabel="No activity"
+                emptyLabel="No screen time"
                 selectedDate={date}
                 today={today}
                 onSelectDay={setDate}
               />
             </div>
-          </section>
-
-          <section>
-            <SectionLabel>Timeline</SectionLabel>
-            <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 pt-4 pb-3">
-              <ActivityDayBar
-                buckets={intradayData?.buckets ?? []}
-                totalBuckets={intradayData?.total_buckets ?? 96}
-              />
-            </div>
-          </section>
-
-          <section>
-            <SectionLabel>By app</SectionLabel>
-            {isLoading && !summary ? (
-              <div className="space-y-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-4 w-full bg-white/[0.06]" />
-                ))}
-              </div>
-            ) : !daySummary ? (
-              <EmptyState icon={<Clock />} title="Nothing tracked">
-                No activity recorded for this day.
-              </EmptyState>
-            ) : (
-              <div className="space-y-2.5 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
-                {daySummary.apps.map((app, i) => (
-                  <BarRow
-                    key={app.app_class}
-                    label={mapName(app.app_class)}
-                    fraction={app.active_secs / maxAppSecs}
-                    value={fmtDur(app.active_secs)}
-                    detail={`${app.percentage.toFixed(1)}%`}
-                    color={`rgb(${APP_COLORS[i % APP_COLORS.length]} / 0.8)`}
-                  />
-                ))}
-              </div>
-            )}
           </section>
         </>
       )}
