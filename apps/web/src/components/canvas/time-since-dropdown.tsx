@@ -6,14 +6,21 @@ import {
 import { Timer } from "lucide-react";
 import { Counters } from "@/components/counters";
 import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TopbarTooltip } from "./topbar-tooltip";
 
 export function TimeSinceDropdown() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" title="Time since" className={TOPBAR_ICON_BUTTON}>
-          <Timer />
-        </button>
+        <TopbarTooltip label="Time since">
+          <button
+            type="button"
+            aria-label="Time since"
+            className={TOPBAR_ICON_BUTTON}
+          >
+            <Timer />
+          </button>
+        </TopbarTooltip>
       </PopoverTrigger>
       <PopoverContent
         align="end"

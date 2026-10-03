@@ -38,3 +38,21 @@ html, body {
 .animate-workspace-flash {
   animation: workspace-flash 0.5s var(--ease-out);
 }
+
+/* Now-playing equalizer: three bars bouncing out of phase. */
+@keyframes equalizer {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.animate-equalizer {
+  transform-origin: bottom;
+  animation: equalizer 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-equalizer {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+}

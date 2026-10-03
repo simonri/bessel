@@ -12,7 +12,9 @@ import { PortsDialog } from "@/components/ports-dialog";
 import { SettingsModal } from "@/components/settings-modal";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
-import { TOPBAR_DIVIDER, TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { BesselMark } from "./bessel-mark";
+import { TOPBAR_GROUP, TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TopbarTooltip } from "./topbar-tooltip";
 
 // memo: takes no props, so canvas re-renders (live resize, workspace switches)
 // never cascade into the ticker/spotify/notification subtrees.
@@ -46,81 +48,100 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
   return (
     <div
       className={cn(
-        "relative z-50 flex h-10 shrink-0 items-center border-b border-white/10 bg-chrome pr-2 pl-4",
+        "relative z-50 grid h-11 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-b border-white/[0.06] bg-chrome pr-2 pl-4",
         isMac && [MAC_TRAFFIC_LIGHT_INSET, "[-webkit-app-region:drag]"],
       )}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-5">
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="text-sm font-semibold tracking-wide text-white/90">
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="group flex shrink-0 items-center gap-2">
+          <BesselMark className="group-hover:rotate-45" />
+          <span className="text-sm font-semibold tracking-tight text-white/90">
             Bessel
           </span>
           {version && (
-            <span className="rounded bg-white/[0.06] px-1.5 py-px font-mono text-10 text-white/45">
+            <span className="rounded-full bg-white/[0.06] px-2 py-px text-10 font-medium tabular-nums text-white/45">
               v{version}
             </span>
           )}
         </div>
-        {pairs.length > 0 && <div className={TOPBAR_DIVIDER} />}
-        {pairs.map((pair) => (
-          <CryptoPairTicker key={pair} pair={pair} />
-        ))}
-        {window.electron && (
-          <div className={cn("flex items-center gap-5", noDrag)}>
-            <SpotifyWidget />
+        {pairs.length > 0 && (
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+            {pairs.map((pair) => (
+              <CryptoPairTicker key={pair} pair={pair} />
+            ))}
           </div>
         )}
       </div>
 
-      <div className={cn("flex shrink-0 items-center gap-0.5", noDrag)}>
-        {window.electron && <ProjectsDropdown />}
-        <TimeSinceDropdown />
-        <AgentUsageDropdown />
-        <NotificationBell />
-        <div className={cn(TOPBAR_DIVIDER, "mx-1.5")} />
-        {window.electron && (
-          <button
-            type="button"
-            onClick={() => setPortsOpen(true)}
-            title="Ports"
-            className={TOPBAR_ICON_BUTTON}
-          >
-            <Network />
-          </button>
-        )}
-        {window.electron && (
-          <button
-            type="button"
-            onClick={() => setLogsOpen(true)}
-            title="View logs"
-            className={TOPBAR_ICON_BUTTON}
-          >
-            <ScrollText />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          title="Settings"
-          className={TOPBAR_ICON_BUTTON}
-        >
-          <Settings />
-        </button>
-        <div className={cn(TOPBAR_DIVIDER, "mx-1.5")} />
-        <AvatarMenu />
-        {window.electron && !isMac && (
-          <button
-            type="button"
-            onClick={() => window.electron!.close()}
-            title="Close"
-            className={cn(
-              TOPBAR_ICON_BUTTON,
-              "ml-1 hover:bg-red-500/15 hover:text-red-400",
-            )}
-          >
-            <X />
-          </button>
-        )}
+      <div className={cn("flex min-w-0 justify-center", noDrag)}>
+        {window.electron && <SpotifyWidget />}
+      </div>
+
+      <div
+        className={cn("flex min-w-0 items-center justify-end gap-3", noDrag)}
+      >
+        <div className={TOPBAR_GROUP}>
+          {window.electron && <ProjectsDropdown />}
+          <TimeSinceDropdown />
+          <AgentUsageDropdown />
+        </div>
+        <div className={TOPBAR_GROUP}>
+          <NotificationBell />
+        </div>
+        <div className={TOPBAR_GROUP}>
+          {window.electron && (
+            <TopbarTooltip label="Ports">
+              <button
+                type="button"
+                onClick={() => setPortsOpen(true)}
+                aria-label="Ports"
+                className={TOPBAR_ICON_BUTTON}
+              >
+                <Network />
+              </button>
+            </TopbarTooltip>
+          )}
+          {window.electron && (
+            <TopbarTooltip label="Logs">
+              <button
+                type="button"
+                onClick={() => setLogsOpen(true)}
+                aria-label="Logs"
+                className={TOPBAR_ICON_BUTTON}
+              >
+                <ScrollText />
+              </button>
+            </TopbarTooltip>
+          )}
+          <TopbarTooltip label="Settings">
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Settings"
+              className={TOPBAR_ICON_BUTTON}
+            >
+              <Settings />
+            </button>
+          </TopbarTooltip>
+        </div>
+        <div className={TOPBAR_GROUP}>
+          <AvatarMenu />
+          {window.electron && !isMac && (
+            <TopbarTooltip label="Close Bessel">
+              <button
+                type="button"
+                onClick={() => window.electron!.close()}
+                aria-label="Close Bessel"
+                className={cn(
+                  TOPBAR_ICON_BUTTON,
+                  "rounded-full text-white/30 hover:bg-red-500/15 hover:text-red-300",
+                )}
+              >
+                <X />
+              </button>
+            </TopbarTooltip>
+          )}
+        </div>
       </div>
 
       <SettingsModal

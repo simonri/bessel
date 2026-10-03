@@ -15,6 +15,7 @@ import { Bell, ExternalLink } from "lucide-react";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TopbarTooltip } from "./topbar-tooltip";
 
 export function NotificationBell() {
   const queryClient = useQueryClient();
@@ -58,23 +59,34 @@ export function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          title="Notifications"
-          className={TOPBAR_ICON_BUTTON}
+        <TopbarTooltip
+          label={
+            unreadCount > 0
+              ? `Notifications - ${unreadCount} unread`
+              : "Notifications"
+          }
         >
-          <Bell />
-          {unreadCount > 0 && (
-            <span
-              className={cn(
-                "absolute top-0.5 right-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary-500 text-9 font-bold leading-none text-white",
-                TOPBAR_BADGE_RING,
-              )}
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          )}
-        </button>
+          <button
+            type="button"
+            aria-label={
+              unreadCount > 0
+                ? `Notifications, ${unreadCount} unread`
+                : "Notifications"
+            }
+            className={TOPBAR_ICON_BUTTON}
+          >
+            <Bell />
+            {unreadCount > 0 && (
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute top-1 right-1 size-2 rounded-full bg-primary-400 animate-in zoom-in-50 duration-300",
+                  TOPBAR_BADGE_RING,
+                )}
+              />
+            )}
+          </button>
+        </TopbarTooltip>
       </PopoverTrigger>
       <PopoverContent
         align="end"

@@ -183,6 +183,8 @@ contextBridge.exposeInMainWorld("electron", {
       ipcRenderer.invoke("spotify:status"),
     playPause: (): Promise<void> => ipcRenderer.invoke("spotify:playPause"),
     next: (): Promise<void> => ipcRenderer.invoke("spotify:next"),
+    getPositionMs: (): Promise<number | null> =>
+      ipcRenderer.invoke("spotify:position"),
     onStatusChange: (callback: (status: SpotifyStatus) => void) =>
       subscribe<[SpotifyStatus]>("spotify:status-changed", callback),
   },

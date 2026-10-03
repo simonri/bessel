@@ -108,6 +108,7 @@
 
 :root {
   --accent-hue: 40;
+  --accent-chroma: 1;
   --terminal-cursor: #f97316;
   --terminal-selection: #f9731644;
   --radius: 0.4rem;
@@ -117,12 +118,12 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.62 0.17 var(--accent-hue));
+  --primary: oklch(0.62 calc(0.17 * var(--accent-chroma)) var(--accent-hue));
   --primary-foreground: oklch(0.985 0 0);
-  --primary-300: oklch(0.86 0.12 var(--accent-hue));
-  --primary-400: oklch(0.77 0.16 var(--accent-hue));
-  --primary-500: oklch(0.62 0.17 var(--accent-hue));
-  --primary-900: oklch(0.26 0.09 var(--accent-hue));
+  --primary-300: oklch(0.86 calc(0.12 * var(--accent-chroma)) var(--accent-hue));
+  --primary-400: oklch(0.77 calc(0.16 * var(--accent-chroma)) var(--accent-hue));
+  --primary-500: oklch(0.62 calc(0.17 * var(--accent-chroma)) var(--accent-hue));
+  --primary-900: oklch(0.26 calc(0.09 * var(--accent-chroma)) var(--accent-hue));
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -159,12 +160,12 @@
   --popover: var(--color-chrome);
   --popover-foreground: oklch(0.96 0 0);
   /* Interactive — hue-driven */
-  --primary: oklch(0.7 0.18 var(--accent-hue));
+  --primary: oklch(0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue));
   --primary-foreground: oklch(0.985 0 0);
-  --primary-300: oklch(0.84 0.13 var(--accent-hue));
-  --primary-400: oklch(0.78 0.17 var(--accent-hue));
-  --primary-500: oklch(0.7 0.18 var(--accent-hue));
-  --primary-900: oklch(0.28 0.09 var(--accent-hue));
+  --primary-300: oklch(0.84 calc(0.13 * var(--accent-chroma)) var(--accent-hue));
+  --primary-400: oklch(0.78 calc(0.17 * var(--accent-chroma)) var(--accent-hue));
+  --primary-500: oklch(0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue));
+  --primary-900: oklch(0.28 calc(0.09 * var(--accent-chroma)) var(--accent-hue));
   /* Subtle backgrounds */
   --secondary: oklch(0.235 0 0);
   --secondary-foreground: oklch(0.96 0 0);
@@ -177,7 +178,7 @@
   /* Borders — visible but not harsh */
   --border: oklch(1 0 0 / 11%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.62 0.12 var(--accent-hue));
+  --ring: oklch(0.62 calc(0.12 * var(--accent-chroma)) var(--accent-hue));
   /* Charts */
   --chart-1: oklch(0.55 0.22 265);
   --chart-2: oklch(0.7 0.17 162);
@@ -187,7 +188,7 @@
   /* Sidebar — distinct darker panel */
   --sidebar: oklch(0.095 0 0);
   --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-primary: oklch(0.7 0.18 var(--accent-hue));
+  --sidebar-primary: oklch(0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue));
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.22 0 0);
   --sidebar-accent-foreground: oklch(0.96 0 0);
@@ -201,16 +202,44 @@
 /* ── Themes ─────────────────────────────────────────────────────────────────── */
 /* Place after .dark so [data-theme] wins the cascade for --accent-hue */
 
+/* Accent themes. Every --primary* step is oklch(L, C × --accent-chroma,
+   --accent-hue), so a theme only picks a hue and how saturated it is; the
+   lightness ladder is shared. Keep in sync with THEME_OPTIONS in
+   apps/web/src/components/settings-theme-page.tsx. */
+
 [data-theme="orange"] {
-  --accent-hue: 40;
-  --terminal-cursor: #f97316;
-  --terminal-selection: #f9731644;
+  --accent-hue: 45;
+  --accent-chroma: 0.92;
+  --terminal-cursor: #f0773b;
+  --terminal-selection: #f0773b44;
 }
 
 [data-theme="green"] {
-  --accent-hue: 145;
-  --terminal-cursor: #22c55e;
-  --terminal-selection: #22c55e44;
+  --accent-hue: 150;
+  --accent-chroma: 0.6;
+  --terminal-cursor: #6ab17a;
+  --terminal-selection: #6ab17a44;
+}
+
+[data-theme="rose"] {
+  --accent-hue: 0;
+  --accent-chroma: 0.85;
+  --terminal-cursor: #e9719a;
+  --terminal-selection: #e9719a44;
+}
+
+[data-theme="lilac"] {
+  --accent-hue: 305;
+  --accent-chroma: 0.75;
+  --terminal-cursor: #b287e1;
+  --terminal-selection: #b287e144;
+}
+
+[data-theme="sky"] {
+  --accent-hue: 235;
+  --accent-chroma: 0.75;
+  --terminal-cursor: #2eaae6;
+  --terminal-selection: #2eaae644;
 }
 
 @layer base {

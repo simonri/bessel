@@ -20,6 +20,7 @@ import { useState } from "react";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TopbarTooltip } from "./topbar-tooltip";
 
 const HISTORY_DAYS = 30;
 const STALE_MS = 30 * 60 * 1000;
@@ -131,22 +132,24 @@ export function AgentUsageDropdown() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          title="Agent usage"
-          className={TOPBAR_ICON_BUTTON}
-        >
-          <Gauge />
-          {needsAttention && (
-            <span
-              className={cn(
-                "absolute top-1 right-1 size-2 rounded-full",
-                TOPBAR_BADGE_RING,
-              )}
-              style={{ background: severityColor(95) }}
-            />
-          )}
-        </button>
+        <TopbarTooltip label="Agent usage">
+          <button
+            type="button"
+            aria-label="Agent usage"
+            className={TOPBAR_ICON_BUTTON}
+          >
+            <Gauge />
+            {needsAttention && (
+              <span
+                className={cn(
+                  "absolute top-1 right-1 size-2 rounded-full",
+                  TOPBAR_BADGE_RING,
+                )}
+                style={{ background: severityColor(95) }}
+              />
+            )}
+          </button>
+        </TopbarTooltip>
       </PopoverTrigger>
       <PopoverContent
         align="end"

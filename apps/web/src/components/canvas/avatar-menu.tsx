@@ -4,7 +4,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
+import { cn } from "@/lib/utils";
 import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TopbarTooltip } from "./topbar-tooltip";
 
 export function AvatarMenu() {
   const { user, logout } = useAuth0();
@@ -21,23 +23,25 @@ export function AvatarMenu() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          title={user?.name ?? user?.email ?? "Account"}
-          className={TOPBAR_ICON_BUTTON}
-        >
-          {user?.picture ? (
-            <img
-              src={user.picture}
-              alt=""
-              className="size-5 rounded-full ring-1 ring-white/10"
-            />
-          ) : (
-            <div className="flex size-5 items-center justify-center rounded-full bg-white/10 text-10 font-medium text-white/60">
-              {initials}
-            </div>
-          )}
-        </button>
+        <TopbarTooltip label={user?.name ?? user?.email ?? "Account"}>
+          <button
+            type="button"
+            aria-label={user?.name ?? user?.email ?? "Account"}
+            className={cn(TOPBAR_ICON_BUTTON, "rounded-full")}
+          >
+            {user?.picture ? (
+              <img
+                src={user.picture}
+                alt=""
+                className="size-5 rounded-full ring-[1.5px] ring-primary-400/70 ring-offset-[1.5px] ring-offset-chrome"
+              />
+            ) : (
+              <div className="flex size-5 items-center justify-center rounded-full bg-primary-500/20 text-9 font-semibold text-primary-300 ring-[1.5px] ring-primary-400/70 ring-offset-[1.5px] ring-offset-chrome">
+                {initials}
+              </div>
+            )}
+          </button>
+        </TopbarTooltip>
       </PopoverTrigger>
       <PopoverContent
         align="end"

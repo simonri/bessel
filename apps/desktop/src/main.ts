@@ -35,6 +35,7 @@ import { registerMyAiHandlers } from "./my-ai.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
+  getSpotifyPositionMs,
   getSpotifyStatus,
   spotifyNext,
   spotifyPlayPause,
@@ -1371,6 +1372,7 @@ app.whenReady().then(() => {
   registerLocalDataServerHandlers(USER_DATA_DIR);
 
   ipcHandle("spotify:status", async () => getSpotifyStatus());
+  ipcHandle("spotify:position", () => getSpotifyPositionMs());
 
   ipcHandle("spotify:playPause", async () => {
     await spotifyPlayPause();

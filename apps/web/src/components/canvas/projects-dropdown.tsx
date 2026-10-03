@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useProjects } from "@/hooks/use-projects";
 import { client } from "@/lib/client";
 import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TopbarTooltip } from "./topbar-tooltip";
 
 function basename(p: string): string {
   return p.split("/").filter(Boolean).pop() ?? p;
@@ -292,9 +293,15 @@ export function ProjectsDropdown() {
   return (
     <Popover onOpenChange={(open) => !open && reset()}>
       <PopoverTrigger asChild>
-        <button type="button" title="Projects" className={TOPBAR_ICON_BUTTON}>
-          <FolderOpen />
-        </button>
+        <TopbarTooltip label="Projects">
+          <button
+            type="button"
+            aria-label="Projects"
+            className={TOPBAR_ICON_BUTTON}
+          >
+            <FolderOpen />
+          </button>
+        </TopbarTooltip>
       </PopoverTrigger>
       <PopoverContent
         align="end"

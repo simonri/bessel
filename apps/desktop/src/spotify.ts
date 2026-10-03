@@ -130,6 +130,21 @@ export function getSpotifyStatus(): SpotifyStatus {
   return status;
 }
 
+/** Playback position in ms. MPRIS doesn't signal Position changes, so it's
+ *  read on demand rather than pushed with the status. */
+export async function getSpotifyPositionMs(): Promise<number | null> {
+  if (!properties) return null;
+  try {
+    const position = (await properties.Get(
+      PLAYER_INTERFACE,
+      "Position",
+    )) as Variant;
+    return Math.round(numberValue(variantValue(position)) / 1000);
+  } catch {
+    return null;
+  }
+}
+
 export async function spotifyPlayPause(): Promise<void> {
   if (!player) throw new Error("Spotify is not running");
   await player.PlayPause();

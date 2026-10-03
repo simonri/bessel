@@ -15,7 +15,12 @@ export interface ActivityMapping {
 
 export type WallpaperColorKey = "zinc" | "neutral" | "stone" | "umber";
 export type WallpaperKey = "image" | "video" | WallpaperColorKey;
-export type ThemeKey = "orange" | "green";
+export const THEME_KEYS = ["orange", "green", "rose", "lilac", "sky"] as const;
+export type ThemeKey = (typeof THEME_KEYS)[number];
+
+function isThemeKey(value: unknown): value is ThemeKey {
+  return (THEME_KEYS as readonly unknown[]).includes(value);
+}
 
 // Exact oklch values — kept as literal strings (not CSS variables) since the
 // background color is a per-wallpaper choice, independent of the accent
@@ -58,11 +63,17 @@ const DEFAULT_SETTINGS: Settings = {
   calendarReminders: true,
 };
 
+function withDefaults(stored: Partial<Settings>): Settings {
+  const settings = { ...DEFAULT_SETTINGS, ...stored };
+  // A theme that was removed (or a hand-edited value) would leave no accent.
+  if (!isThemeKey(settings.theme)) settings.theme = DEFAULT_SETTINGS.theme;
+  return settings;
+}
+
 function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw)
-      return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) return withDefaults(JSON.parse(raw) as Partial<Settings>);
   } catch {}
 
   // Falls back to the pre-rebrand key name — see window-manager.tsx's
@@ -70,10 +81,7 @@ function loadSettings(): Settings {
   try {
     const legacyRaw = localStorage.getItem(LEGACY_KEY);
     if (legacyRaw)
-      return {
-        ...DEFAULT_SETTINGS,
-        ...(JSON.parse(legacyRaw) as Partial<Settings>),
-      };
+      return withDefaults(JSON.parse(legacyRaw) as Partial<Settings>);
   } catch {}
 
   return DEFAULT_SETTINGS;

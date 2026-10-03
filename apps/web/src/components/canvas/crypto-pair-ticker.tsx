@@ -2,6 +2,7 @@ import { getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions } from "@bessel/
 import { useQuery } from "@tanstack/react-query";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
 
 // Map trading pair symbols to CoinGecko IDs and quote currencies
 const QUOTE_SUFFIXES: [string, string][] = [
@@ -76,19 +77,25 @@ export function CryptoPairTicker({ pair }: { pair: string }) {
   const isPositive = pct !== null && pct >= 0;
 
   return (
-    <div className="flex items-center gap-1">
-      <span className="font-mono text-10 font-medium tracking-wider text-primary-400/75">
+    <div className="flex h-6 shrink-0 items-center gap-1.5 rounded-full bg-white/[0.04] px-2.5 ring-1 ring-white/[0.06]">
+      <span className="text-10 font-semibold tracking-wide text-white/45">
         {pair}
       </span>
-      <span className="text-white/30">-</span>
-      <span className="font-mono text-11 font-medium tabular-nums text-white/75">
-        {formatted ?? "—"}
-      </span>
+      {formatted === null ? (
+        <span className="h-2 w-12 animate-pulse rounded-full bg-white/10">
+          <span className="sr-only">Loading price</span>
+        </span>
+      ) : (
+        <span className="text-11 font-medium tabular-nums text-white/85">
+          {formatted}
+        </span>
+      )}
       {pct !== null && (
         <span
-          className={`flex items-center gap-0.5 font-mono text-10 tabular-nums ${
-            isPositive ? "text-emerald-400/80" : "text-red-400/80"
-          }`}
+          className={cn(
+            "flex items-center gap-0.5 text-10 font-medium tabular-nums",
+            isPositive ? "text-emerald-400/90" : "text-rose-400/90",
+          )}
         >
           {isPositive ? (
             <TrendingUp className="size-2.5" />

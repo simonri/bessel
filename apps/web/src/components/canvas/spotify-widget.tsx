@@ -2,10 +2,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pause, Play, SkipForward } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { TOPBAR_DIVIDER, TOPBAR_ICON_BUTTON } from "./topbar-styles";
+import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
 
 const SPOTIFY_STATUS_QUERY_KEY = ["spotify-status"];
-const SPOTIFY_BUTTON = cn(TOPBAR_ICON_BUTTON, "size-6 [&_svg]:size-3.5");
+const SPOTIFY_BUTTON = cn(
+  TOPBAR_ICON_BUTTON,
+  "size-6 rounded-full text-white/60 [&_svg]:size-3",
+);
 
 // Only the fields this widget renders. MPRIS emits several duplicate
 // PropertiesChanged per track change, each carrying a different position —
@@ -17,6 +20,7 @@ interface ProjectedSpotifyStatus {
   title?: string;
   artist?: string;
   coverUrl?: string;
+  lengthMs?: number;
 }
 
 // Spotify cover ids encode the size: "…b273…" is 640px, "…4851…" is 64px —
@@ -42,6 +46,7 @@ function projectStatus(status: {
   title?: string;
   artist?: string;
   artUrl?: string;
+  lengthMs?: number;
 }): ProjectedSpotifyStatus {
   return {
     running: status.running,
@@ -49,22 +54,86 @@ function projectStatus(status: {
     title: status.title,
     artist: status.artist,
     coverUrl: thumbnailUrl(status.artUrl),
+    lengthMs: status.lengthMs,
   };
 }
 
+const PROGRESS_POLL_MS = 1000;
+
+// Remounted per track (keyed on the URL), so a new cover fades in.
 function Cover({ url }: { url: string | undefined }) {
-  const [failed, setFailed] = useState<string | null>(null);
-  if (!url || failed === url) return null;
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) {
+    return <span className="size-6 shrink-0 rounded-md bg-white/[0.08]" />;
+  }
   return (
     <img
       src={url}
       alt=""
       draggable={false}
-      onError={() => setFailed(url)}
-      className="ml-1 size-5 shrink-0 rounded-[3px] object-cover ring-1 ring-white/10"
+      onError={() => setFailed(true)}
+      className="size-6 shrink-0 rounded-md object-cover ring-1 ring-white/10 animate-in fade-in duration-500"
     />
   );
 }
+
+// The cover itself, blown up and blurred behind the pill: a glow that takes
+// on each song's colours without having to read the image's pixels.
+function AmbientGlow({ url }: { url: string | undefined }) {
+  if (!url) return null;
+  return (
+    <img
+      src={url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className="pointer-events-none absolute inset-x-4 -inset-y-1 -z-10 h-[calc(100%+0.5rem)] w-[calc(100%-2rem)] scale-110 rounded-full object-cover opacity-50 blur-xl saturate-150 transition-opacity duration-700 animate-in fade-in"
+    />
+  );
+}
+
+function Equalizer({ playing }: { playing: boolean }) {
+  return (
+    <span aria-hidden className="flex h-2.5 shrink-0 items-end gap-[2px]">
+      {[0, 0.25, 0.5].map((delay) => (
+        <span
+          key={delay}
+          className={cn(
+            "h-full w-[2px] rounded-full bg-primary-400",
+            playing ? "animate-equalizer" : "scale-y-[0.35]",
+          )}
+          style={playing ? { animationDelay: `${delay}s` } : undefined}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Polls the playback position while `active` (MPRIS never pushes it). */
+function usePlaybackProgress(active: boolean, lengthMs: number | undefined) {
+  const [progress, setProgress] = useState<number | null>(null);
+  useEffect(() => {
+    const getPosition = window.electron?.spotify.getPositionMs;
+    if (!active || !lengthMs || !getPosition) {
+      setProgress(null);
+      return;
+    }
+    let cancelled = false;
+    const read = () =>
+      getPosition().then((ms) => {
+        if (!cancelled)
+          setProgress(ms === null ? null : Math.min(1, ms / lengthMs));
+      });
+    void read();
+    const timer = setInterval(read, PROGRESS_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [active, lengthMs]);
+  return progress;
+}
+
 // Backstop only — the main process pushes a status update the instant Spotify's
 // own D-Bus signal fires, normally well under a second. This just guarantees the
 // optimistic icon doesn't get stuck if a push is ever lost (e.g. Spotify closes
@@ -81,6 +150,7 @@ export function SpotifyWidget() {
   // optimistic icon to the wrong state for a frame.
   const pendingPlaying = useRef<boolean | null>(null);
   const optimisticTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [hovered, setHovered] = useState(false);
 
   const { data } = useQuery({
     queryKey: SPOTIFY_STATUS_QUERY_KEY,
@@ -114,6 +184,11 @@ export function SpotifyWidget() {
     });
   }, [queryClient]);
 
+  const progress = usePlaybackProgress(
+    hovered && Boolean(data?.running),
+    data?.lengthMs,
+  );
+
   if (!data?.running) return null;
 
   const isPlaying = optimisticPlaying ?? data.playing ?? false;
@@ -136,33 +211,54 @@ export function SpotifyWidget() {
   };
 
   return (
-    <>
-      <div className={TOPBAR_DIVIDER} />
-      <div className="flex min-w-0 items-center gap-0.5">
+    <div
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      className="relative isolate flex h-8 min-w-0 max-w-[26rem] items-center gap-2 rounded-full bg-white/[0.05] pr-1 pl-1 ring-1 ring-white/[0.07] backdrop-blur-md"
+    >
+      <AmbientGlow key={`glow-${data.coverUrl}`} url={data.coverUrl} />
+      <Cover key={data.coverUrl ?? "none"} url={data.coverUrl} />
+      <Equalizer playing={isPlaying} />
+      <div
+        title={data.artist ? `${data.title} - ${data.artist}` : data.title}
+        className="min-w-0 flex-1 truncate text-xs text-white/85"
+      >
+        {data.title}
+        {data.artist && <span className="text-white/45"> - {data.artist}</span>}
+      </div>
+      <div className="flex shrink-0 items-center">
         <button
           type="button"
           onClick={togglePlayPause}
-          title={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? "Pause" : "Play"}
           className={SPOTIFY_BUTTON}
         >
-          {isPlaying ? <Pause /> : <Play />}
+          {isPlaying ? (
+            <Pause className="fill-current" />
+          ) : (
+            <Play className="fill-current" />
+          )}
         </button>
         <button
           type="button"
           onClick={skip}
-          title="Skip"
+          aria-label="Skip"
           className={SPOTIFY_BUTTON}
         >
-          <SkipForward />
+          <SkipForward className="fill-current" />
         </button>
-        <Cover url={data.coverUrl} />
-        <div className="ml-1.5 min-w-0 max-w-44 truncate text-xs text-white/70">
-          {data.title}
-          {data.artist && (
-            <span className="text-white/50"> - {data.artist}</span>
-          )}
-        </div>
       </div>
-    </>
+      {progress !== null && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-4 bottom-0 h-[2px] overflow-hidden rounded-full bg-white/10"
+        >
+          <span
+            className="block h-full rounded-full bg-primary-400 transition-[width] duration-1000 ease-linear"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </span>
+      )}
+    </div>
   );
 }

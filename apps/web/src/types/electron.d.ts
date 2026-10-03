@@ -214,6 +214,8 @@ declare global {
         getStatus: () => Promise<ElectronSpotifyStatus>;
         playPause: () => Promise<void>;
         next: () => Promise<void>;
+        /** Absent in desktop builds before 0.1.44. */
+        getPositionMs?: () => Promise<number | null>;
         onStatusChange: (
           callback: (status: ElectronSpotifyStatus) => void,
         ) => () => void;
