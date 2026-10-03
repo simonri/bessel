@@ -9,8 +9,9 @@ from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.models.recipe import Recipe
 from api.postgres import AsyncSession, get_db_session
 from api.recipes.body import RecipeBody, render_markdown
+from api.recipes.importer import import_recipe
 from api.recipes.repository import RecipeRepository
-from api.recipes.schemas import RecipeCreate, RecipeListResponse, RecipeSchema, RecipeUpdate
+from api.recipes.schemas import RecipeCreate, RecipeImportRequest, RecipeImportResult, RecipeListResponse, RecipeSchema, RecipeUpdate
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -69,6 +70,12 @@ async def create_recipe(
     flush=True,
   )
   return RecipeSchema.model_validate(recipe)
+
+
+@router.post("/import", summary="Structure Recipe Text", response_model=RecipeImportResult)
+async def structure_recipe_text(_current_user: CurrentDBUser, body: RecipeImportRequest) -> RecipeImportResult:
+  """Turn free-form recipe text into the structured format with an LLM. Nothing is saved."""
+  return await import_recipe(body.text)
 
 
 @router.get("/{recipe_id}", summary="Get Recipe", response_model=RecipeSchema)

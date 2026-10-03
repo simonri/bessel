@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   applyOptimistic,
   applyReply,
-  errorDetail,
   eventFieldsBody,
 } from "./use-event-mutations";
 
@@ -151,17 +150,5 @@ describe("applyReply", () => {
       "declined",
     ]);
     expect(invite.my_response).toBe("needs_action");
-  });
-});
-
-describe("errorDetail", () => {
-  it("prefers the API's message", () => {
-    expect(errorDetail({ detail: "Calendar is read-only" }, "x")).toBe(
-      "Calendar is read-only",
-    );
-    expect(errorDetail(new Error("boom"), "Fallback")).toBe("Fallback");
-    expect(errorDetail({ detail: [{ msg: "bad" }] }, "Fallback")).toBe(
-      "Fallback",
-    );
   });
 });

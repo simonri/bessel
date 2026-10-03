@@ -87,6 +87,10 @@ class Settings(BaseSettings):
   GOOGLE_OAUTH_CLIENT_ID: str = ""
   GOOGLE_OAUTH_CLIENT_SECRET: str = ""
 
+  # OpenRouter (LLM features such as recipe import)
+  OPENROUTER_API_KEY: str = ""
+  RECIPE_IMPORT_MODEL: str = "google/gemini-3.1-flash-lite"
+
   # Worker
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000

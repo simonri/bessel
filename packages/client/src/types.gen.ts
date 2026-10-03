@@ -3000,6 +3000,30 @@ export type RecipeCreate = {
 };
 
 /**
+ * RecipeImportRequest
+ */
+export type RecipeImportRequest = {
+  /**
+   * Text
+   *
+   * Recipe text in any form: markdown, notes, or a copied web page.
+   */
+  text: string;
+};
+
+/**
+ * RecipeImportResult
+ */
+export type RecipeImportResult = {
+  /**
+   * Title
+   */
+  title: string;
+  recipe_type: RecipeType;
+  body: RecipeBody;
+};
+
+/**
  * RecipeIngredient
  */
 export type RecipeIngredient = {
@@ -3082,6 +3106,12 @@ export type RecipeSchema = {
   content: string;
   recipe_type: RecipeType;
   body: RecipeBody;
+  /**
+   * Structured
+   *
+   * False when `body` was derived from markdown on the fly rather than saved.
+   */
+  structured: boolean;
 };
 
 /**
@@ -6894,6 +6924,33 @@ export type CreateRecipeV1RecipesPostResponses = {
 
 export type CreateRecipeV1RecipesPostResponse =
   CreateRecipeV1RecipesPostResponses[keyof CreateRecipeV1RecipesPostResponses];
+
+export type StructureRecipeTextV1RecipesImportPostData = {
+  body: RecipeImportRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/recipes/import";
+};
+
+export type StructureRecipeTextV1RecipesImportPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type StructureRecipeTextV1RecipesImportPostError =
+  StructureRecipeTextV1RecipesImportPostErrors[keyof StructureRecipeTextV1RecipesImportPostErrors];
+
+export type StructureRecipeTextV1RecipesImportPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeImportResult;
+};
+
+export type StructureRecipeTextV1RecipesImportPostResponse =
+  StructureRecipeTextV1RecipesImportPostResponses[keyof StructureRecipeTextV1RecipesImportPostResponses];
 
 export type DeleteRecipeV1RecipesRecipeIdDeleteData = {
   body?: never;

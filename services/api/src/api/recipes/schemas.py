@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
@@ -13,12 +13,12 @@ class RecipeSchema(IDSchema, TimestampedSchema):
   content: str
   recipe_type: RecipeType
   body: RecipeBody
+  structured: bool = Field(description="False when `body` was derived from markdown on the fly rather than saved.")
 
   @model_validator(mode="before")
   @classmethod
   def _read_legacy_markdown(cls, data: Any) -> Any:
-    # Recipes saved before structured bodies existed only have markdown.
-    if isinstance(data, Recipe) and data.body is None:
+    if isinstance(data, Recipe):
       return {
         "id": data.id,
         "created_at": data.created_at,
@@ -26,7 +26,9 @@ class RecipeSchema(IDSchema, TimestampedSchema):
         "title": data.title,
         "content": data.content,
         "recipe_type": data.recipe_type,
-        "body": parse_markdown(data.content),
+        # Recipes saved before structured bodies existed only have markdown.
+        "body": data.body if data.body is not None else parse_markdown(data.content),
+        "structured": data.body is not None,
       }
     return data
 
@@ -43,6 +45,16 @@ class RecipeUpdate(Schema):
   content: str | None = None
   recipe_type: RecipeType | None = None
   body: RecipeBody | None = None
+
+
+class RecipeImportRequest(Schema):
+  text: str = Field(description="Recipe text in any form: markdown, notes, or a copied web page.")
+
+
+class RecipeImportResult(Schema):
+  title: str
+  recipe_type: RecipeType
+  body: RecipeBody
 
 
 class RecipeListResponse(ListResource[RecipeSchema]):

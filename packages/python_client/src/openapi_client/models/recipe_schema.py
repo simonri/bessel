@@ -27,6 +27,7 @@ class RecipeSchema:
       content (str):
       recipe_type (RecipeType):
       body (RecipeBody):
+      structured (bool): False when `body` was derived from markdown on the fly rather than saved.
   """
 
   created_at: datetime.datetime
@@ -36,6 +37,7 @@ class RecipeSchema:
   content: str
   recipe_type: RecipeType
   body: RecipeBody
+  structured: bool
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -57,6 +59,8 @@ class RecipeSchema:
 
     body = self.body.to_dict()
 
+    structured = self.structured
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -68,6 +72,7 @@ class RecipeSchema:
         "content": content,
         "recipe_type": recipe_type,
         "body": body,
+        "structured": structured,
       }
     )
 
@@ -105,6 +110,8 @@ class RecipeSchema:
 
     body = RecipeBody.from_dict(d.pop("body"))
 
+    structured = d.pop("structured")
+
     recipe_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -113,6 +120,7 @@ class RecipeSchema:
       content=content,
       recipe_type=recipe_type,
       body=body,
+      structured=structured,
     )
 
     recipe_schema.additional_properties = d

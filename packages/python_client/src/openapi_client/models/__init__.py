@@ -126,6 +126,8 @@ from .recipe_body import RecipeBody
 from .recipe_callout import RecipeCallout
 from .recipe_callout_kind import RecipeCalloutKind
 from .recipe_create import RecipeCreate
+from .recipe_import_request import RecipeImportRequest
+from .recipe_import_result import RecipeImportResult
 from .recipe_ingredient import RecipeIngredient
 from .recipe_ingredient_group import RecipeIngredientGroup
 from .recipe_list_response import RecipeListResponse
@@ -302,6 +304,8 @@ __all__ = (
   "RecipeCallout",
   "RecipeCalloutKind",
   "RecipeCreate",
+  "RecipeImportRequest",
+  "RecipeImportResult",
   "RecipeIngredient",
   "RecipeIngredientGroup",
   "RecipeListResponse",

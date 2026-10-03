@@ -4745,6 +4745,38 @@ export const RecipeCreateSchema = {
   title: "RecipeCreate",
 } as const;
 
+export const RecipeImportRequestSchema = {
+  properties: {
+    text: {
+      type: "string",
+      title: "Text",
+      description:
+        "Recipe text in any form: markdown, notes, or a copied web page.",
+    },
+  },
+  type: "object",
+  required: ["text"],
+  title: "RecipeImportRequest",
+} as const;
+
+export const RecipeImportResultSchema = {
+  properties: {
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    recipe_type: {
+      $ref: "#/components/schemas/RecipeType",
+    },
+    body: {
+      $ref: "#/components/schemas/RecipeBody",
+    },
+  },
+  type: "object",
+  required: ["title", "recipe_type", "body"],
+  title: "RecipeImportResult",
+} as const;
+
 export const RecipeIngredientSchema = {
   properties: {
     amount: {
@@ -4883,6 +4915,12 @@ export const RecipeSchemaSchema = {
     body: {
       $ref: "#/components/schemas/RecipeBody",
     },
+    structured: {
+      type: "boolean",
+      title: "Structured",
+      description:
+        "False when `body` was derived from markdown on the fly rather than saved.",
+    },
   },
   type: "object",
   required: [
@@ -4893,6 +4931,7 @@ export const RecipeSchemaSchema = {
     "content",
     "recipe_type",
     "body",
+    "structured",
   ],
   title: "RecipeSchema",
 } as const;
