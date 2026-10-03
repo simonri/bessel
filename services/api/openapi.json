@@ -3083,15 +3083,41 @@
         "summary": "Import Google Timeline",
         "description": "Import a Timeline.json from Google Maps' \"Export Timeline data\".\n\nSafe to repeat: segments already stored are left as they are, edited ones\nare updated, and ones the phone no longer has within the export's span are\nremoved. An export older than what's stored never overrides it.",
         "operationId": "import_location_history_v1_location_history_import_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exported_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "When the file was exported (its modified time). Lets a fresh export remove its latest segments.",
+              "title": "Exported At"
+            },
+            "description": "When the file was exported (its modified time). Lets a fresh export remove its latest segments."
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/Body_import_location_history_v1_location_history_import_post"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -3114,12 +3140,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/v1/location-history/summary": {

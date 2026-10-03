@@ -6122,7 +6122,14 @@ export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse =
 export type ImportLocationHistoryV1LocationHistoryImportPostData = {
   body: BodyImportLocationHistoryV1LocationHistoryImportPost;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Exported At
+     *
+     * When the file was exported (its modified time). Lets a fresh export remove its latest segments.
+     */
+    exported_at?: Date | null;
+  };
   url: "/v1/location-history/import";
 };
 

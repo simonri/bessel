@@ -3,6 +3,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 from uuid import UUID
 
+from api.common.utils import utc_now
 from api.location_history import place_names
 from api.location_history.merge import plan_merge
 from api.location_history.parser import ParsedSegment, TimelineFormatError, parse_timeline
@@ -69,17 +70,21 @@ class LocationHistoryService:
     user_id: UUID,
     content: bytes,
     filename: str | None,
+    exported_at: datetime | None = None,
   ) -> LocationImport:
     # Parsing a large export is CPU-bound; keep it off the event loop.
     timeline = await asyncio.to_thread(parse_timeline, content)
     range_start, range_end = timeline.range_start, timeline.range_end
     if range_start is None or range_end is None:
       raise TimelineFormatError("The export is empty: there's no Timeline data on the phone it came from.")
-    as_of = range_end
+    # The file doesn't say when it was exported. Its latest moment is a lower
+    # bound; the export time, when known, also tells a fresh export with its
+    # last trip deleted apart from an old backup, and covers everything up to it.
+    as_of = max(range_end, min(exported_at, utc_now())) if exported_at else range_end
 
     await segment_repo.lock_for_import(user_id)
     stored = await segment_repo.stored_for_merge(user_id)
-    plan = plan_merge(timeline.segments, stored, as_of, range_start, range_end)
+    plan = plan_merge(timeline.segments, stored, as_of, range_start, as_of)
 
     await segment_repo.upsert([_row(user_id, s, as_of) for s in plan.upserts])
     await segment_repo.confirm(user_id, plan.confirmed, as_of)

@@ -72,6 +72,8 @@ function importSummary(result: LocationImportSchema): string {
     result.added && `${result.added.toLocaleString()} added`,
     result.updated && `${result.updated.toLocaleString()} updated`,
     result.removed && `${result.removed.toLocaleString()} removed`,
+    result.stale &&
+      `${result.stale.toLocaleString()} skipped: a newer export already covers them`,
   ].filter(Boolean);
   return changes.length ? changes.join(", ") : "Already up to date";
 }
@@ -115,7 +117,13 @@ function useTimelineImport(onImported: () => void) {
       onChange={(e) => {
         const file = e.target.files?.[0];
         e.target.value = "";
-        if (file) mutation.mutate({ client, body: { file } });
+        if (!file) return;
+        mutation.mutate({
+          client,
+          body: { file },
+          // When the phone wrote the file: tells a fresh export from an old one.
+          query: { exported_at: new Date(file.lastModified) },
+        });
       }}
     />
   );

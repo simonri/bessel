@@ -63,8 +63,9 @@ def _bytes(data: Any) -> bytes:
   return json.dumps(data).encode()
 
 
-async def _import(client: AsyncClient, data: Any, status: int = 200) -> dict[str, Any]:
-  resp = await client.post("/v1/location-history/import", files={"file": ("Timeline.json", _bytes(data), "application/json")})
+async def _import(client: AsyncClient, data: Any, status: int = 200, exported_at: str | None = None) -> dict[str, Any]:
+  params = {"exported_at": exported_at} if exported_at else {}
+  resp = await client.post("/v1/location-history/import", params=params, files={"file": ("Timeline.json", _bytes(data), "application/json")})
   assert resp.status_code == status, resp.text
   return resp.json()
 
@@ -312,6 +313,28 @@ class TestImport:
     assert _counts(backup) == (0, 0, 0, 0, 12)
     assert (await _day_view(client, "2026-09-02"))["visits"] == []
     assert (await _day_view(client, "2026-09-01"))["visits"][0]["place_id"] == "renamed-home"
+
+  @pytest.mark.asyncio
+  async def test_fresh_export_removes_its_latest_segments(self, client: AsyncClient) -> None:
+    await _import(client, _export(1, 2), exported_at="2026-09-02T20:00:00Z")
+    # The last visit of the 2nd deleted on the phone: the file now ends earlier.
+    trimmed = _export(1, 2)[:-2] + [_export(2)[-1]]
+    result = await _import(client, trimmed, exported_at="2026-09-03T08:00:00Z")
+    assert _counts(result) == (0, 0, 1, 7, 0)
+    assert [v["place_id"] for v in (await _day_view(client, "2026-09-02"))["visits"]] == ["home-id"]
+
+  @pytest.mark.asyncio
+  async def test_old_file_with_old_export_time_changes_nothing(self, client: AsyncClient) -> None:
+    await _import(client, _export(1, 2), exported_at="2026-09-03T08:00:00Z")
+    edited = _export(1)
+    edited[0]["visit"]["topCandidate"]["placeID"] = "old-guess"
+    assert _counts(await _import(client, edited, exported_at="2026-09-01T18:00:00Z")) == (0, 0, 0, 0, 4)
+    assert (await _day_view(client, "2026-09-01"))["visits"][0]["place_id"] == "home-id"
+
+  @pytest.mark.asyncio
+  async def test_export_time_in_the_future_is_capped(self, client: AsyncClient) -> None:
+    result = await _import(client, _export(1), exported_at="2999-01-01T00:00:00Z")
+    assert result["as_of"] < "2999"
 
   @pytest.mark.asyncio
   async def test_deleted_then_restored_segment_comes_back(self, client: AsyncClient) -> None:

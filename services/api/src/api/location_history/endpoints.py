@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, UploadFile
@@ -25,6 +25,10 @@ async def import_location_history(
   file: UploadFile,
   session: Annotated[AsyncSession, Depends(get_db_session)],
   current_user: CurrentDBUser,
+  exported_at: Annotated[
+    datetime | None,
+    Query(description="When the file was exported (its modified time). Lets a fresh export remove its latest segments."),
+  ] = None,
 ) -> LocationImportSchema:
   """Import a Timeline.json from Google Maps' "Export Timeline data".
 
@@ -39,6 +43,7 @@ async def import_location_history(
     current_user.id,
     content,
     file.filename,
+    exported_at,
   )
   return LocationImportSchema.model_validate(record)
 
