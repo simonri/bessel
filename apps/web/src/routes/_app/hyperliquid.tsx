@@ -12,7 +12,7 @@ import {
 } from "@bessel/ui/components/toggle-group";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLink, LogOut, Wallet } from "lucide-react";
+import { LogOut, Wallet } from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 import {
   Area,
@@ -31,16 +31,14 @@ import {
   Panel,
   PrimaryButton,
   SectionLabel,
-  SoftButton,
   StatTile,
   TextInput,
 } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 import {
+  atMark,
   currentValue,
-  explorerUrl,
   fetchMids,
-  fetchPerpState,
   fetchPortfolio,
   fetchSpotBalances,
   fetchSubAccounts,
@@ -58,6 +56,7 @@ import {
   shortAddress,
   spotValue,
 } from "@/lib/hyperliquid";
+import { useHyperliquidPerp } from "@/lib/hyperliquid-live";
 import { cn } from "@/lib/utils";
 import {
   axisUsdFormatter,
@@ -169,7 +168,7 @@ function HyperliquidAccount({
   onDisconnect: () => void;
 }) {
   const [selected, setSelected] = useState(master);
-  const [range, setRange] = useState<Range>("week");
+  const [range, setRange] = useState<Range>("month");
   const [scope, setScope] = useState<Scope>("total");
 
   const { data: subAccounts = [] } = useQuery({
@@ -191,11 +190,8 @@ function HyperliquidAccount({
   const selectedPortfolio =
     portfolios[accounts.findIndex((a) => a.address === selected)];
 
-  const { data: perp } = useQuery({
-    queryKey: ["hyperliquid", "perp", selected],
-    queryFn: ({ signal }) => fetchPerpState(selected, signal),
-    refetchInterval: REFRESH_MS,
-  });
+  const live = useHyperliquidPerp(selected);
+  const perp = live.perp;
   const { data: spot } = useQuery({
     queryKey: ["hyperliquid", "spot", selected],
     queryFn: ({ signal }) => fetchSpotBalances(selected, signal),
@@ -228,14 +224,6 @@ function HyperliquidAccount({
           />
         }
       >
-        <SoftButton
-          onClick={() =>
-            window.open(explorerUrl(selected), "_blank", "noopener,noreferrer")
-          }
-        >
-          <ExternalLink />
-          Hypurrscan
-        </SoftButton>
         <IconButton title="Disconnect" onClick={onDisconnect} size="default">
           <LogOut />
         </IconButton>
@@ -320,8 +308,18 @@ function HyperliquidAccount({
             />
           )}
 
-          <div className="grid gap-4 @4xl:grid-cols-2">
-            <Positions perp={perp} />
+          {/* Open positions need the full width; with none, both panels are small. */}
+          <div
+            className={cn(
+              "grid gap-4",
+              !perp?.positions.length && "@4xl:grid-cols-2",
+            )}
+          >
+            <Positions
+              perp={perp}
+              marks={live.marks}
+              live={live.status === "live"}
+            />
             <SpotBalances spot={spot} mids={mids} />
           </div>
         </>
@@ -560,16 +558,35 @@ function PnlChart({ points, range }: { points: Point[]; range: Range }) {
   );
 }
 
-function Positions({ perp }: { perp: PerpState | undefined }) {
+function Positions({
+  perp,
+  marks,
+  live,
+}: {
+  perp: PerpState | undefined;
+  marks: Record<string, number>;
+  live: boolean;
+}) {
   return (
     <section>
       <SectionLabel
         action={
-          perp && perp.positions.length > 0 ? (
-            <span className="text-11 text-white/35">
-              {perp.positions.length}
-            </span>
-          ) : undefined
+          <span
+            className="flex items-center gap-1.5 text-11 text-white/40"
+            title={
+              live
+                ? "Streaming from Hyperliquid"
+                : "Reconnecting; refreshing every minute meanwhile"
+            }
+          >
+            <span
+              className={cn(
+                "size-1.5 rounded-full",
+                live ? "bg-emerald-400" : "bg-white/25",
+              )}
+            />
+            {live ? "Live" : "Reconnecting"}
+          </span>
         }
       >
         Positions
@@ -590,55 +607,64 @@ function Positions({ perp }: { perp: PerpState | undefined }) {
                   <th className="px-2 py-2 text-right font-medium">Size</th>
                   <th className="px-2 py-2 text-right font-medium">Value</th>
                   <th className="px-2 py-2 text-right font-medium">Entry</th>
+                  <th className="px-2 py-2 text-right font-medium">Mark</th>
                   <th className="px-2 py-2 text-right font-medium">Liq.</th>
                   <th className="px-4 py-2 text-right font-medium">PnL</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05] tabular-nums">
-                {perp.positions.map((p) => (
-                  <tr key={p.coin}>
-                    <td className="px-4 py-2">
-                      <span className="font-medium text-white/85">
-                        {p.coin}
-                      </span>
-                      <span
+                {perp.positions
+                  .map((p) => ({
+                    ...atMark(p, marks[p.coin]),
+                    mark: marks[p.coin],
+                  }))
+                  .map((p) => (
+                    <tr key={p.coin}>
+                      <td className="px-4 py-2">
+                        <span className="font-medium text-white/85">
+                          {p.coin}
+                        </span>
+                        <span
+                          className={cn(
+                            "ml-1.5 text-11",
+                            p.size >= 0
+                              ? "text-emerald-400/80"
+                              : "text-red-400/80",
+                          )}
+                        >
+                          {p.size >= 0 ? "Long" : "Short"} {p.leverage}×
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 text-right text-white/70">
+                        {formatAmount(Math.abs(p.size))}
+                      </td>
+                      <td className="px-2 py-2 text-right text-white/70">
+                        {formatUsd(p.value)}
+                      </td>
+                      <td className="px-2 py-2 text-right text-white/55">
+                        {formatPrice(p.entryPrice)}
+                      </td>
+                      <td className="px-2 py-2 text-right text-white/70">
+                        {p.mark === undefined ? "—" : formatPrice(p.mark)}
+                      </td>
+                      <td className="px-2 py-2 text-right text-white/55">
+                        {p.liquidationPrice === null
+                          ? "—"
+                          : formatPrice(p.liquidationPrice)}
+                      </td>
+                      <td
                         className={cn(
-                          "ml-1.5 text-11",
-                          p.size >= 0
-                            ? "text-emerald-400/80"
-                            : "text-red-400/80",
+                          "px-4 py-2 text-right",
+                          pnlTone(p.unrealizedPnl),
                         )}
                       >
-                        {p.size >= 0 ? "Long" : "Short"} {p.leverage}×
-                      </span>
-                    </td>
-                    <td className="px-2 py-2 text-right text-white/70">
-                      {formatAmount(Math.abs(p.size))}
-                    </td>
-                    <td className="px-2 py-2 text-right text-white/70">
-                      {formatUsd(p.value)}
-                    </td>
-                    <td className="px-2 py-2 text-right text-white/55">
-                      {formatPrice(p.entryPrice)}
-                    </td>
-                    <td className="px-2 py-2 text-right text-white/55">
-                      {p.liquidationPrice === null
-                        ? "—"
-                        : formatPrice(p.liquidationPrice)}
-                    </td>
-                    <td
-                      className={cn(
-                        "px-4 py-2 text-right",
-                        pnlTone(p.unrealizedPnl),
-                      )}
-                    >
-                      {formatSignedUsd(p.unrealizedPnl)}
-                      <span className="ml-1 text-11 opacity-70">
-                        {formatPercent(p.returnOnEquity)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        {formatSignedUsd(p.unrealizedPnl)}
+                        <span className="ml-1 text-11 opacity-70">
+                          {formatPercent(p.returnOnEquity)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

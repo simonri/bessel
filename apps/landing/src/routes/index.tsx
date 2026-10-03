@@ -38,6 +38,7 @@ const PLATFORM_LABEL: Record<Platform, string> = {
 
 const GITHUB_URL = "https://github.com/simonri/bessel";
 const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
+const APP_URL = "https://app.getbessel.com";
 
 // Applied to every link that leaves the landing page (a different domain,
 // including subdomains like app.getbessel.com) so it opens in a new tab
@@ -118,7 +119,7 @@ function Nav() {
             </a>
           ))}
         </nav>
-        <div className="col-start-3 flex items-center justify-end gap-5">
+        <div className="col-start-3 flex items-center justify-end gap-3 sm:gap-4">
           <a
             href={GITHUB_URL}
             aria-label="GitHub"
@@ -126,6 +127,13 @@ function Nav() {
             {...EXTERNAL_LINK_PROPS}
           >
             <GitHubLogo className="size-4.5" />
+          </a>
+          <a
+            href={APP_URL}
+            className="hidden rounded-full border border-white/15 px-4 py-1.5 text-sm font-medium text-foreground transition-[transform,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] sm:inline-flex pointer-fine:hover:border-white/30 pointer-fine:hover:bg-white/[0.06]"
+            {...EXTERNAL_LINK_PROPS}
+          >
+            Sign in
           </a>
           <a
             href="#download"
@@ -156,6 +164,14 @@ function Nav() {
               {link.label}
             </a>
           ))}
+          <a
+            href={APP_URL}
+            onClick={() => setMenuOpen(false)}
+            className="rounded-lg px-2 py-2.5 text-sm text-muted-foreground transition-colors duration-150 pointer-fine:hover:text-foreground sm:hidden"
+            {...EXTERNAL_LINK_PROPS}
+          >
+            Sign in
+          </a>
         </nav>
       )}
     </header>

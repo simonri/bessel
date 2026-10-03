@@ -134,7 +134,7 @@ export interface PerpState {
   positions: Position[];
 }
 
-type RawPerpState = {
+export type RawPerpState = {
   marginSummary: { accountValue: string; totalMarginUsed: string };
   withdrawable: string;
   assetPositions: {
@@ -155,10 +155,12 @@ export async function fetchPerpState(
   user: string,
   signal?: AbortSignal,
 ): Promise<PerpState> {
-  const raw = await info<RawPerpState>(
-    { type: "clearinghouseState", user },
-    signal,
+  return parsePerpState(
+    await info<RawPerpState>({ type: "clearinghouseState", user }, signal),
   );
+}
+
+export function parsePerpState(raw: RawPerpState): PerpState {
   return {
     accountValue: Number(raw.marginSummary.accountValue),
     withdrawable: Number(raw.withdrawable),
@@ -175,6 +177,21 @@ export async function fetchPerpState(
       leverage: p.leverage.value,
       leverageType: p.leverage.type,
     })),
+  };
+}
+
+/** The position at a newer mark price, as Hyperliquid itself values it:
+ *  PnL against entry, and return on the margin the entry required. */
+export function atMark(position: Position, mark: number | undefined): Position {
+  if (mark === undefined) return position;
+  const unrealizedPnl = position.size * (mark - position.entryPrice);
+  const margin =
+    (Math.abs(position.size) * position.entryPrice) / position.leverage;
+  return {
+    ...position,
+    value: Math.abs(position.size) * mark,
+    unrealizedPnl,
+    returnOnEquity: margin ? unrealizedPnl / margin : 0,
   };
 }
 
