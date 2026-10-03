@@ -158,7 +158,9 @@ def plan_tier(credentials_path: Path) -> str | None:
   login = data.get("claudeAiOauth")
   if not isinstance(login, dict):
     return None
-  return login.get("subscriptionType") or None
+  # rateLimitTier carries the plan's multiplier ("default_claude_max_5x");
+  # subscriptionType alone ("max") doesn't.
+  return login.get("rateLimitTier") or login.get("subscriptionType") or None
 
 
 def _normalize_utilization(value: Any, *, percent_scale: bool) -> float | None:

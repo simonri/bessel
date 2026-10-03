@@ -11,22 +11,28 @@ import { useQuery } from "@tanstack/react-query";
 import {
   format,
   formatDistanceToNowStrict,
-  intervalToDuration,
-  isPast,
   parseISO,
   subDays,
 } from "date-fns";
-import { Gauge } from "lucide-react";
+import { ArrowUpRight, Gauge } from "lucide-react";
 import { useMemo, useState } from "react";
 import { client } from "@/lib/client";
 import { apiDate, localIsoDay, useLocalDay } from "@/lib/local-day";
 import { cn } from "@/lib/utils";
+import {
+  latestLimits,
+  limitLabel,
+  planLabel,
+  resetLabel,
+} from "./agent-usage-limits";
 import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
 
 const HISTORY_DAYS = 30;
 const STALE_MS = 30 * 60 * 1000;
 const WARN_THRESHOLD_PCT = 85;
+const USAGE_SETTINGS_URL = "https://claude.ai/settings/usage";
+const LIMIT_COLOR = "#3987e5";
 
 // Dark-mode categorical steps from the dataviz skill's validated default
 // palette (slots 1-4: blue, orange, aqua, yellow) — fixed order, never cycled.
@@ -45,26 +51,6 @@ function fmtTokens(n: number): string {
   if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
   if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
   return String(n);
-}
-
-// formatDistanceToNowStrict rounds to a single largest unit — a reset 20
-// hours out reads as "1 day", which is misleading for a countdown. Always
-// pair the largest unit with the next one down instead.
-function resetLabel(resetsAt: Date): string {
-  if (isPast(resetsAt)) return "Resets any moment";
-  const { days, hours, minutes } = intervalToDuration({
-    start: new Date(),
-    end: resetsAt,
-  });
-  if (days) return `Resets in ${days}d ${hours ?? 0}h`;
-  if (hours) return `Resets in ${hours}h ${minutes ?? 0}m`;
-  return `Resets in ${minutes ?? 0}m`;
-}
-
-function windowLabel(label: string): string {
-  if (label === "session_5h") return "Session (5h)";
-  if (label === "week") return "Weekly";
-  return label.replace(/_/g, " ");
 }
 
 function entryTotal(e: {
@@ -108,6 +94,12 @@ export function AgentUsageDropdown() {
 
   const entries = daily?.entries ?? [];
   const statusEntries = status?.entries ?? [];
+  const limits = latestLimits(statusEntries);
+  const plan = planLabel(limits.find((l) => l.tier)?.tier);
+  const lastObserved = Math.max(
+    ...limits.map((l) => new Date(l.observed_at).getTime()),
+  );
+  const stale = limits.length > 0 && Date.now() - lastObserved > STALE_MS;
 
   const models = Array.from(new Set(entries.map((e) => e.model))).sort();
   const totalsByDate = new Map<string, Record<string, number>>();
@@ -130,7 +122,7 @@ export function AgentUsageDropdown() {
 
   const loading = (statusLoading || dailyLoading) && !status && !daily;
   const hasAnyData = statusEntries.length > 0 || entries.length > 0;
-  const needsAttention = statusEntries.some(
+  const needsAttention = limits.some(
     (e) => e.utilization_pct >= WARN_THRESHOLD_PCT,
   );
 
@@ -162,79 +154,82 @@ export function AgentUsageDropdown() {
         className="flex w-96 flex-col overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
         style={{ maxHeight: "min(32rem, 80vh)" }}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
-          <span className="text-sm font-medium text-white/80">Agent Usage</span>
-        </div>
+        <a
+          href={USAGE_SETTINGS_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="group flex shrink-0 items-center justify-between gap-2 px-4 pt-3 pb-1 text-13 text-white/55 transition-colors hover:text-white/80"
+        >
+          <span className="truncate">
+            Plan usage limits{plan ? ` - ${plan}` : ""}
+          </span>
+          <ArrowUpRight className="size-3.5 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
+        </a>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2 pb-4">
           {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className="space-y-3">
+              {["session", "week", "scoped"].map((row) => (
                 <div
-                  key={i}
-                  className="h-6 w-full animate-pulse rounded bg-white/5"
+                  key={row}
+                  className="h-8 w-full animate-pulse rounded bg-white/5"
                 />
               ))}
             </div>
           ) : !hasAnyData ? (
             <p className="text-xs text-white/50">
-              No agent usage data yet — install the collector script (
-              <code className="font-mono">tools/agent-usage-collector</code>) on
-              a machine running Claude Code.
+              No agent usage data yet - install the collector from Settings,
+              Agent usage on a machine running Claude Code.
             </p>
           ) : (
             <div className="space-y-5">
-              {statusEntries.length > 0 && (
-                <div className="space-y-3">
-                  {statusEntries.map((entry) => {
-                    const observedAt = new Date(entry.observed_at);
-                    const stale = Date.now() - observedAt.getTime() > STALE_MS;
-                    const color = severityColor(entry.utilization_pct);
+              {limits.length > 0 && (
+                <div className="space-y-3.5">
+                  {limits.map((limit) => {
+                    const pct = Math.round(limit.utilization_pct);
                     return (
-                      <div
-                        key={`${entry.device}-${entry.agent}-${entry.window_label}`}
-                        className="space-y-1"
-                      >
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-white/70">
-                            {windowLabel(entry.window_label)}
+                      <div key={limit.window_label} className="space-y-1.5">
+                        <div className="flex items-baseline gap-3 text-13">
+                          <span className="min-w-0 flex-1 truncate text-white/85">
+                            {limitLabel(limit.window_label)}
                           </span>
-                          <span
-                            className={
-                              stale ? "text-white/30" : "text-white/50"
-                            }
-                          >
-                            {entry.utilization_pct.toFixed(0)}% -{" "}
-                            {formatDistanceToNowStrict(observedAt)} ago
-                            {stale ? " (stale)" : ""}
+                          {limit.resets_at && (
+                            <span className="shrink-0 text-white/45">
+                              {resetLabel(new Date(limit.resets_at))}
+                            </span>
+                          )}
+                          <span className="w-9 shrink-0 text-right tabular-nums text-white/70">
+                            {pct}%
                           </span>
                         </div>
-                        {entry.resets_at && (
-                          <div className="text-right text-10 text-white/35">
-                            {resetLabel(new Date(entry.resets_at))}
-                          </div>
-                        )}
-                        <div
-                          className="relative h-2 w-full overflow-hidden rounded-full"
-                          style={{ background: "rgba(255,255,255,0.07)" }}
-                        >
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.08]">
                           <div
-                            className="absolute inset-y-0 left-0 w-full rounded-full transition-transform"
+                            className="h-full rounded-full transition-[width] duration-500 ease-out"
                             style={{
-                              transform: `translateX(-${100 - entry.utilization_pct}%)`,
-                              background: color,
-                              opacity: stale ? 0.4 : 1,
+                              width: `${Math.min(100, limit.utilization_pct)}%`,
+                              background:
+                                pct >= WARN_THRESHOLD_PCT
+                                  ? severityColor(pct)
+                                  : LIMIT_COLOR,
+                              opacity: stale ? 0.45 : 1,
                             }}
                           />
                         </div>
                       </div>
                     );
                   })}
+                  {stale && (
+                    <p className="text-11 text-amber-300/75">
+                      Last updated{" "}
+                      {formatDistanceToNowStrict(new Date(lastObserved))} ago.
+                      Check the collector in Settings, Agent usage.
+                    </p>
+                  )}
                 </div>
               )}
 
               {entries.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 border-t border-white/[0.06] pt-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-white/50">
                       Last {HISTORY_DAYS} days
