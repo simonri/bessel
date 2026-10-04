@@ -4,9 +4,8 @@ struct TasksView: View {
     let auth: AuthSession
 
     @State private var store: TasksStore
-    @State private var showingCreate = false
     @State private var editingTask: TaskItem?
-    @Namespace private var tabUnderline
+    @Environment(ToastCenter.self) private var toasts
 
     init(auth: AuthSession) {
         self.auth = auth
@@ -15,17 +14,41 @@ struct TasksView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                tabBar
-                content
+            List {
+                filters
+                if store.hasLoaded {
+                    switch store.mode {
+                    case .today: todayContent
+                    case .board: boardContent
+                    case .done: doneContent
+                    }
+                }
             }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(18)
+            .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .overlay(alignment: .bottomTrailing) { composeButton }
+            .overlay {
+                if !store.hasLoaded {
+                    ProgressView()
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                if store.mode != .done {
+                    QuickAddBar(store: store)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 20)
+                        .padding(.bottom, 8)
+                        .background(
+                            LinearGradient(colors: [Theme.background.opacity(0), Theme.background], startPoint: .top, endPoint: .center)
+                                .ignoresSafeArea()
+                        )
+                }
+            }
             .navigationTitle("Tasks")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbarContent }
-            .sheet(isPresented: $showingCreate) {
-                TaskFormView(store: store, task: nil)
+            .toolbarTitleDisplayMode(.inlineLarge)
+            .toolbar {
+                ProfileToolbarItem(auth: auth)
             }
             .sheet(item: $editingTask) { task in
                 TaskFormView(store: store, task: task)
@@ -35,61 +58,231 @@ struct TasksView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .task { await store.loadEverything() }
-            .refreshable { await store.loadEverything() }
+            .task { await store.load() }
+            .refreshable { await store.load() }
+            .sensoryFeedback(.selection, trigger: store.mode)
         }
     }
 
-    /// X-style text tabs: colour carries selection, a single primary underline
-    /// slides between them. Only the underline animates — content switches instantly.
-    private var tabBar: some View {
-        HStack(spacing: 0) {
-            ForEach(TasksStore.Tab.allCases) { tab in
-                Button {
-                    store.tab = tab
-                } label: {
-                    VStack(spacing: 8) {
-                        Text(tab.rawValue)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(store.tab == tab ? Theme.foreground : Theme.mutedForeground)
-                        ZStack {
-                            Color.clear.frame(height: 2)
-                            if store.tab == tab {
-                                Capsule()
-                                    .fill(Theme.primary)
-                                    .frame(width: 40, height: 2)
-                                    .matchedGeometryEffect(id: "underline", in: tabUnderline)
+    // MARK: - Filters
+
+    /// Lives in a section header: list rows are clipped to the rounded
+    /// section shape, which cut the pills off at the edges.
+    private var filters: some View {
+        Section {
+        } header: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    ForEach(TasksStore.Mode.allCases) { mode in
+                        FilterPill(title: mode.rawValue, isSelected: store.mode == mode) {
+                            withAnimation(.snappy) { store.mode = mode }
+                        }
+                    }
+                }
+                if !store.projects.isEmpty {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 6) {
+                            ForEach(store.projects, id: \.self) { project in
+                                let isSelected = store.projectFilter == project
+                                Button {
+                                    withAnimation(.snappy) {
+                                        store.projectFilter = isSelected ? nil : project
+                                    }
+                                } label: {
+                                    Chip(text: project, hue: PastelHue.forName(project), systemImage: isSelected ? "checkmark" : nil, isSelected: store.projectFilter == nil || isSelected)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
-                    .padding(.top, 6)
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+                    .scrollIndicators(.hidden)
+                    .scrollClipDisabled()
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(store.tab == tab ? [.isSelected] : [])
             }
-        }
-        .animation(.easeOut(duration: 0.15), value: store.tab)
-        .overlay(alignment: .bottom) {
-            Theme.border.frame(height: 0.5)
+            .textCase(nil)
+            .padding(.horizontal, -16)
+            .padding(.bottom, 4)
         }
     }
 
-    private var composeButton: some View {
-        Button {
-            showingCreate = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 52, height: 52)
-                .background(Theme.primary, in: Circle())
-                .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
+    // MARK: - Today
+
+    @ViewBuilder
+    private var todayContent: some View {
+        let progress = store.progress
+        if progress.total > 0 {
+            Section {
+                ProgressCard(done: progress.done, total: progress.total)
+            }
         }
-        .padding(.trailing, 20)
-        .padding(.bottom, 16)
-        .accessibilityLabel("New task")
+
+        if !store.routines.isEmpty {
+            Section {
+            } header: {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Routines", systemImage: "repeat")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.mutedForeground)
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 8) {
+                            ForEach(store.routines) { task in
+                                RoutineChip(task: task, onSelect: { editingTask = task }) {
+                                    Task { await store.complete(task, toasts: toasts) }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .scrollIndicators(.hidden)
+                    .padding(.horizontal, -32)
+                }
+                .textCase(nil)
+            }
+        }
+
+        let groups = store.whenGroups()
+        if groups.isEmpty {
+            Section {
+                EmptyState(emoji: "🌷", title: "All clear", detail: "Enjoy your day. Add something below whenever you're ready.")
+                    .padding(.vertical, 40)
+                    .listRowBackground(Color.clear)
+            }
+        }
+        ForEach(groups) { group in
+            Section {
+                ForEach(group.tasks) { task in
+                    openRow(task)
+                }
+            } header: {
+                SectionHeading(
+                    title: group.title,
+                    count: group.tasks.count,
+                    tint: group.key == .overdue ? Theme.dueOverdue : Theme.mutedForeground
+                )
+            }
+        }
+    }
+
+    // MARK: - Board
+
+    @ViewBuilder
+    private var boardContent: some View {
+        if store.boardTodo.isEmpty && store.boardDoing.isEmpty {
+            Section {
+                EmptyState(emoji: "🫧", title: "Nothing on the board", detail: "Add a task below to get started.")
+                    .padding(.vertical, 40)
+                    .listRowBackground(Color.clear)
+            }
+        }
+        boardSection("Doing", tasks: store.boardDoing, status: .inProgress)
+        boardSection("To do", tasks: store.boardTodo, status: .todo)
+    }
+
+    @ViewBuilder
+    private func boardSection(_ title: String, tasks: [TaskItem], status: TaskStatus) -> some View {
+        if !tasks.isEmpty {
+            Section {
+                ForEach(tasks) { task in
+                    openRow(task)
+                }
+                .onMove { source, destination in
+                    Task { await store.move(in: status, from: source, to: destination) }
+                }
+            } header: {
+                SectionHeading(title: title, count: tasks.count)
+            } footer: {
+                if status == .todo, tasks.count > 1 {
+                    Text("Touch and hold a task to reorder.")
+                        .font(.caption)
+                        .foregroundStyle(Theme.faintForeground)
+                }
+            }
+        }
+    }
+
+    // MARK: - Done
+
+    @ViewBuilder
+    private var doneContent: some View {
+        let thisWeek = store.progress.thisWeek
+        Section {
+            Text(thisWeek > 0
+                ? "You finished \(thisWeek) \(thisWeek == 1 ? "thing" : "things") this week ✨"
+                : "Nothing finished this week yet. You've got this.")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(thisWeek > 0 ? Theme.primary : Theme.mutedForeground)
+                .listRowBackground(thisWeek > 0 ? Theme.primarySoft : Theme.card)
+        }
+
+        if !store.visibleDone.isEmpty {
+            Section {
+                ForEach(store.visibleDone) { task in
+                    TaskRow(task: task, onComplete: nil)
+                        .contentShape(Rectangle())
+                        .onTapGesture { editingTask = task }
+                        .listRowBackground(Theme.card)
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                Task { await store.reopen(task) }
+                            } label: {
+                                Label("Reopen", systemImage: "arrow.uturn.backward")
+                            }
+                            .tint(Theme.info)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                store.delete(task, toasts: toasts)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                }
+                if store.canLoadMoreDone {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                    .task { await store.loadMoreDone() }
+                }
+            }
+        }
+    }
+
+    // MARK: - Rows
+
+    private func openRow(_ task: TaskItem) -> some View {
+        TaskRow(task: task) {
+            Task { await store.complete(task, toasts: toasts) }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { editingTask = task }
+        .listRowBackground(Theme.card)
+        .listRowSeparatorTint(Theme.border)
+        .swipeActions(edge: .leading) {
+            Button {
+                Task { await store.complete(task, toasts: toasts) }
+            } label: {
+                Label("Done", systemImage: "checkmark")
+            }
+            .tint(Theme.primary)
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                store.delete(task, toasts: toasts)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+            if task.status == .todo {
+                Button {
+                    Task { try? await store.update(task, with: .status(.inProgress, for: task)) }
+                } label: {
+                    Label("Start", systemImage: "play")
+                }
+                .tint(Theme.info)
+            }
+        }
     }
 
     private var errorBinding: Binding<Bool> {
@@ -98,200 +291,198 @@ struct TasksView: View {
             set: { if !$0 { store.errorMessage = nil } }
         )
     }
+}
 
-    @ViewBuilder
-    private var content: some View {
-        if !store.hasLoaded {
-            Spacer()
-            ProgressView()
-                .tint(Theme.mutedForeground)
-            Spacer()
-        } else {
-            switch store.tab {
-            case .board: boardList
-            case .done: doneList
-            case .all: allList
-            }
-        }
-    }
+/// Today's progress as a ring and a friendly line.
+private struct ProgressCard: View {
+    let done: Int
+    let total: Int
 
-    private var boardList: some View {
-        List {
-            boardSection("To Do", tasks: store.filtered(store.boardTodo), status: .todo)
-            boardSection("In Progress", tasks: store.filtered(store.boardInProgress), status: .inProgress)
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .overlay {
-            if store.filtered(store.board).isEmpty {
-                emptyState("No tasks", detail: "Add one with the + button.")
-            }
-        }
-    }
+    private var fraction: Double { total == 0 ? 0 : min(1, Double(done) / Double(total)) }
+    private var isComplete: Bool { total > 0 && done >= total }
 
-    private func boardSection(_ title: String, tasks: [TaskItem], status: TaskStatus) -> some View {
-        Section {
-            ForEach(tasks) { task in
-                TaskRow(task: task, onComplete: { complete(task) })
-                    .contentShape(Rectangle())
-                    .onTapGesture { editingTask = task }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await store.delete(task) }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .swipeActions(edge: .leading) {
-                        Button {
-                            complete(task)
-                        } label: {
-                            Label("Done", systemImage: "checkmark.circle")
-                        }
-                        .tint(Theme.primary)
-                    }
-            }
-            .onMove { source, destination in
-                Task { await store.moveBoardTasks(in: status, from: source, to: destination) }
-            }
-            .listRowBackground(Theme.background)
-            .listRowSeparatorTint(Theme.border)
-            .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
-        } header: {
-            if !tasks.isEmpty {
-                sectionLabel(title)
-            }
-        }
-    }
-
-    private var doneList: some View {
-        List {
-            ForEach(store.filtered(store.done)) { task in
-                TaskRow(task: task, onComplete: nil)
-                    .contentShape(Rectangle())
-                    .onTapGesture { editingTask = task }
-                    .swipeActions(edge: .leading) {
-                        Button {
-                            Task { await store.reopen(task) }
-                        } label: {
-                            Label("Reopen", systemImage: "arrow.counterclockwise")
-                        }
-                        .tint(Theme.primary)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await store.delete(task) }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .listRowBackground(Theme.background)
-                    .listRowSeparatorTint(Theme.border)
-                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
-            }
-            if store.canLoadMoreDone {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                        .tint(Theme.mutedForeground)
-                    Spacer()
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .stroke(Theme.fill, lineWidth: 5)
+                Circle()
+                    .trim(from: 0, to: fraction)
+                    .stroke(Theme.primary, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 0.6), value: fraction)
+                if isComplete {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.primary)
                 }
-                .listRowBackground(Theme.background)
-                .listRowSeparator(.hidden)
-                .task { await store.loadMoreDone() }
             }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .overlay {
-            if store.filtered(store.done).isEmpty {
-                emptyState("No completed tasks", detail: "Completed tasks show up here.")
-            }
-        }
-    }
+            .frame(width: 40, height: 40)
 
-    private var allList: some View {
-        List {
-            ForEach(store.filtered(store.all)) { task in
-                TaskRow(task: task, onComplete: task.status == .done ? nil : { complete(task) })
-                    .contentShape(Rectangle())
-                    .onTapGesture { editingTask = task }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await store.delete(task) }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .listRowBackground(Theme.background)
-                    .listRowSeparatorTint(Theme.border)
-                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .overlay {
-            if store.filtered(store.all).isEmpty {
-                emptyState("No tasks", detail: "Add one with the + button.")
-            }
-        }
-    }
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Menu {
-                Button("All projects") { setFilter(nil) }
-                ForEach(store.projects, id: \.self) { project in
-                    Button {
-                        setFilter(project)
-                    } label: {
-                        if store.projectFilter == project {
-                            Label(project, systemImage: "checkmark")
-                        } else {
-                            Text(project)
-                        }
-                    }
-                }
-            } label: {
-                Image(systemName: store.projectFilter == nil
-                    ? "line.3.horizontal.decrease.circle"
-                    : "line.3.horizontal.decrease.circle.fill")
-            }
-            .accessibilityLabel("Filter by project")
-        }
-    }
-
-    private func sectionLabel(_ title: String) -> some View {
-        Text(title)
-            .font(.footnote.weight(.medium))
-            .textCase(nil)
-            .foregroundStyle(Theme.mutedForeground)
-    }
-
-    private func emptyState(_ title: String, detail: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checklist")
-                .font(.system(size: 28, weight: .light))
-                .foregroundStyle(Theme.mutedForeground.opacity(0.4))
-            VStack(spacing: 4) {
-                Text(title)
-                    .font(.body.weight(.medium))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isComplete ? "All done for today ✨" : "\(done) of \(total) done today")
+                    .font(.headline)
                     .foregroundStyle(Theme.foreground)
-                Text(detail)
-                    .font(.footnote)
+                Text(subtitle)
+                    .font(.subheadline)
                     .foregroundStyle(Theme.mutedForeground)
             }
         }
-        .allowsHitTesting(false)
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
     }
 
-    private func complete(_ task: TaskItem) {
-        Task { await store.complete(task) }
+    private var subtitle: String {
+        if isComplete { return "Go enjoy the rest of your day." }
+        let remaining = total - done
+        if done == 0 { return "\(Greeting.now()). Let's start small." }
+        return remaining == 1 ? "Just one more to go." : "\(remaining) more to go, you're doing great."
+    }
+}
+
+/// A repeating task as a small capsule you can tick off in place.
+private struct RoutineChip: View {
+    let task: TaskItem
+    let onSelect: () -> Void
+    let onComplete: () -> Void
+
+    @State private var isTicked = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button {
+                guard !isTicked else { return }
+                isTicked = true
+                Task {
+                    try? await Task.sleep(for: .milliseconds(450))
+                    onComplete()
+                }
+            } label: {
+                CheckCircle(isChecked: isTicked, size: 18)
+            }
+            .buttonStyle(.plain)
+            .sensoryFeedback(.success, trigger: isTicked) { _, new in new }
+            .accessibilityLabel("Complete \(task.title)")
+
+            Button(action: onSelect) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(task.title)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(isTicked ? Theme.mutedForeground : Theme.foreground)
+                        .strikethrough(isTicked, color: Theme.faintForeground)
+                    if let recurrence = task.recurrenceLabel {
+                        Text(recurrence)
+                            .font(.caption)
+                            .foregroundStyle(Theme.faintForeground)
+                    }
+                }
+                .lineLimit(1)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 10)
+        .padding(.trailing, 14)
+        .padding(.vertical, 9)
+        .background(Theme.card, in: Capsule())
+    }
+}
+
+/// The always-there "Add a task" field. Understands "fri", "#project" and "!".
+private struct QuickAddBar: View {
+    let store: TasksStore
+
+    @State private var text = ""
+    @State private var isSaving = false
+    @FocusState private var isFocused: Bool
+
+    private var parsed: QuickTask {
+        QuickTask.parse(text, projects: store.projects)
     }
 
-    private func setFilter(_ project: String?) {
-        store.projectFilter = project
-        Task { await store.loadEverything() }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isFocused {
+                hint
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+            HStack(spacing: 10) {
+                Image(systemName: "plus")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.primary)
+                TextField("Add a task", text: $text)
+                    .focused($isFocused)
+                    .submitLabel(.done)
+                    .onSubmit(submit)
+                if !text.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Button(action: submit) {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 30, height: 30)
+                            .background(Theme.primary, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isSaving)
+                    .accessibilityLabel("Add task")
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 8)
+            .frame(height: 50)
+            .background(Theme.card, in: Capsule())
+            .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
+        }
+        .animation(.snappy, value: isFocused)
+        .animation(.snappy, value: text.isEmpty)
+    }
+
+    @ViewBuilder
+    private var hint: some View {
+        let tokens = parsed.tokens
+        HStack(spacing: 6) {
+            if tokens.isEmpty {
+                Text("Try \"Call mum fri #home !\"")
+                    .font(.caption)
+                    .foregroundStyle(Theme.mutedForeground)
+            }
+            ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
+                switch token.kind {
+                case .due:
+                    Chip(text: token.label, hue: 32, systemImage: "calendar")
+                case .project:
+                    Chip(text: token.label, hue: PastelHue.forName(token.label), systemImage: "number")
+                case .priority:
+                    Chip(text: token.label, hue: 15, systemImage: "flag.fill")
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.thinMaterial, in: Capsule())
+    }
+
+    private func submit() {
+        let task = parsed
+        guard !task.title.isEmpty, !isSaving else { return }
+        isSaving = true
+        let draft = TaskCreate(
+            title: task.title,
+            description: nil,
+            status: .todo,
+            priority: task.priority,
+            dueDate: task.dueDate,
+            project: task.project ?? store.projectFilter,
+            area: nil
+        )
+        Task {
+            defer { isSaving = false }
+            do {
+                try await store.create(draft)
+                text = ""
+            } catch {
+                store.errorMessage = error.localizedDescription
+            }
+        }
     }
 }

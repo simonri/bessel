@@ -29,6 +29,10 @@ CONFIGS=${CONFIGS:-"Debug Release"}
 
 xcodegen generate
 
+# Shown in the app's Profile, so you can tell which build is on the phone.
+MARKETING_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+CURRENT_PROJECT_VERSION=$(git rev-list --count HEAD)
+
 DEVICE_ID=$(xcrun devicectl list devices --hide-headers 2>/dev/null \
   | grep -F "$DEVICE_NAME" | grep -oE '[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}' | head -1)
 if [[ -z "$DEVICE_ID" ]]; then
@@ -44,6 +48,8 @@ for CONFIG in $CONFIGS; do
     -destination "platform=iOS,name=$DEVICE_NAME" \
     -derivedDataPath build \
     -allowProvisioningUpdates \
+    ${MARKETING_VERSION:+MARKETING_VERSION="$MARKETING_VERSION"} \
+    CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
     build
 
   xcrun devicectl device install app --device "$DEVICE_ID" \

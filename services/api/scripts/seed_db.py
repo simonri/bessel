@@ -24,6 +24,7 @@ from api.models import (
   HealthKitWorkout,
   Place,
   Project,
+  Recipe,
   Security,
   SecurityPrice,
   Task,
@@ -33,6 +34,7 @@ from api.models import (
 from api.models.security import AssetType
 from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
+from api.recipes.body import RecipeBody, render_markdown
 from api.settings import settings
 from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -112,6 +114,141 @@ CHILD_CATS = [
 ]
 
 
+# ── Recipes ───────────────────────────────────────────────────────────────────
+SEED_RECIPES: list[tuple[str, str, dict]] = [
+  (
+    "Creamy tomato pasta",
+    "main",
+    {
+      "intro": "A weeknight favourite that tastes like it took much longer.",
+      "yield_text": "2 servings",
+      "total_minutes": 25,
+      "ingredient_groups": [
+        {
+          "items": [
+            {"amount": 200, "unit": "g", "name": "rigatoni"},
+            {"amount": 1, "name": "shallot", "note": "finely chopped"},
+            {"amount": 2, "unit": "klyftor", "name": "garlic", "note": "grated"},
+            {"amount": 400, "unit": "g", "name": "crushed tomatoes"},
+            {"amount": 1, "unit": "dl", "name": "cream"},
+            {"amount": 0.5, "unit": "dl", "name": "parmesan", "note": "plus more to serve"},
+            {"name": "basil", "note": "a handful"},
+          ]
+        }
+      ],
+      "steps": [
+        {"text": "Cook the pasta in well-salted water until just al dente. Save a cup of the pasta water."},
+        {
+          "text": "Soften the shallot in olive oil, add the garlic for 30 seconds, then the tomatoes. Simmer for 10 minutes.",
+          "time_label": "10 min",
+        },
+        {
+          "text": "Stir in the cream and parmesan, then toss with the pasta and a splash of pasta water until glossy.",
+          "callouts": [{"kind": "tip", "text": "Pasta water makes the sauce cling, so add it a little at a time."}],
+        },
+        {"text": "Tear over the basil and serve with extra parmesan."},
+      ],
+    },
+  ),
+  (
+    "Cinnamon buns",
+    "dessert",
+    {
+      "intro": "Soft, swirly and very Swedish.",
+      "yield_text": "about 24 buns",
+      "total_minutes": 150,
+      "active_minutes": 45,
+      "ingredient_groups": [
+        {
+          "title": "Dough",
+          "items": [
+            {"amount": 25, "unit": "g", "name": "fresh yeast"},
+            {"amount": 3, "unit": "dl", "name": "milk", "note": "lukewarm"},
+            {"amount": 100, "unit": "g", "name": "butter", "note": "soft"},
+            {"amount": 0.75, "unit": "dl", "name": "sugar"},
+            {"amount": 1, "unit": "tsk", "name": "ground cardamom"},
+            {"amount": 8, "unit": "dl", "name": "flour"},
+          ],
+        },
+        {
+          "title": "Filling",
+          "items": [
+            {"amount": 100, "unit": "g", "name": "butter", "note": "soft"},
+            {"amount": 0.75, "unit": "dl", "name": "sugar"},
+            {"amount": 1, "unit": "msk", "name": "cinnamon"},
+          ],
+        },
+      ],
+      "steps": [
+        {"title": "Make the dough", "text": "Dissolve the yeast in the milk, then work in the rest of the dough ingredients until smooth."},
+        {"title": "Let it rise", "text": "Cover and leave somewhere warm until doubled.", "time_label": "45 min"},
+        {
+          "title": "Fill and roll",
+          "text": "Roll the dough out, spread the filling, roll it up and cut into slices. Place in paper cases.",
+          "callouts": [{"kind": "warning", "label": "Careful", "text": "Don't roll too thin or the filling leaks out in the oven."}],
+        },
+        {"title": "Bake", "text": "Rise again for 30 minutes, brush with egg and bake at 225°C.", "time_label": "8 min"},
+      ],
+    },
+  ),
+  (
+    "Green goddess bowl",
+    "other",
+    {
+      "yield_text": "1 big bowl",
+      "total_minutes": 15,
+      "ingredient_groups": [
+        {
+          "items": [
+            {"amount": 1, "unit": "dl", "name": "quinoa", "note": "cooked"},
+            {"amount": 0.5, "name": "avocado"},
+            {"name": "baby spinach", "note": "a big handful"},
+            {"amount": 0.5, "name": "cucumber", "note": "sliced"},
+            {"amount": 2, "unit": "msk", "name": "Greek yoghurt"},
+            {"amount": 1, "unit": "msk", "name": "pumpkin seeds", "note": "toasted"},
+          ]
+        }
+      ],
+      "steps": [
+        {"text": "Blend the yoghurt with half the avocado, a squeeze of lemon and a pinch of salt for the dressing."},
+        {"text": "Pile everything else in a bowl, spoon over the dressing and finish with the seeds."},
+      ],
+    },
+  ),
+  (
+    "Chocolate chip cookies",
+    "dessert",
+    {
+      "intro": "Crispy edges, gooey middles.",
+      "yield_text": "16 cookies",
+      "total_minutes": 30,
+      "ingredient_groups": [
+        {
+          "items": [
+            {"amount": 115, "unit": "g", "name": "butter", "note": "browned and cooled"},
+            {"amount": 1, "unit": "dl", "name": "brown sugar"},
+            {"amount": 1, "name": "egg"},
+            {"amount": 2.5, "unit": "dl", "name": "flour"},
+            {"amount": 0.5, "unit": "tsk", "name": "baking soda"},
+            {"amount": 100, "unit": "g", "name": "dark chocolate", "note": "chopped"},
+            {"name": "flaky salt"},
+          ]
+        }
+      ],
+      "steps": [
+        {"text": "Whisk the brown butter with the sugar and egg until glossy."},
+        {"text": "Fold in the flour, baking soda and chocolate. Chill the dough if you can.", "time_label": "30 min (optional)"},
+        {
+          "text": "Scoop onto a tray and bake at 180°C until golden at the edges.",
+          "time_label": "10 min",
+          "callouts": [{"kind": "tip", "label": "Pro tip", "text": "Sprinkle flaky salt on top as soon as they come out."}],
+        },
+      ],
+    },
+  ),
+]
+
+
 async def seed() -> None:
   dsn = settings.get_postgres_dsn("asyncpg")
   engine = create_async_engine(dsn)
@@ -145,6 +282,7 @@ async def seed() -> None:
       "categories",
       "healthkit_workouts",
       "healthkit_sleep_samples",
+      "recipes",
     ]:
       await session.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
     await session.commit()
@@ -921,7 +1059,7 @@ async def seed() -> None:
     # Raw values match Apple's HKWorkoutActivityType enum.
     RUNNING = (37, "running")
     CYCLING = (13, "cycling")
-    STRENGTH = (50, "traditionalStrengthTraining")
+    STRENGTH = (50, "traditional_strength_training")
     YOGA = (57, "yoga")
     HIKING = (24, "hiking")
 
@@ -1043,6 +1181,15 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(sleep_samples)} HealthKit sleep samples over the last {SLEEP_NIGHTS} nights.")
 
+    # ── 14. Recipes ───────────────────────────────────────────────────────
+    recipes = []
+    for title, recipe_type, body in SEED_RECIPES:
+      parsed = RecipeBody.model_validate(body)
+      recipes.append(Recipe(title=title, recipe_type=recipe_type, body=parsed.model_dump(mode="json"), content=render_markdown(parsed)))
+    session.add_all(recipes)
+    await session.flush()
+    print(f"Seeded {len(recipes)} recipes.")
+
     # ── Commit ────────────────────────────────────────────────────────────
     await session.commit()
     print("\n✅ Database seeded successfully!")
@@ -1056,6 +1203,7 @@ async def seed() -> None:
     print(f"   Activity:      {len(all_activity)} events  ({active_days} active days)")
     print(f"   Workouts:      {len(workouts)}")
     print(f"   Sleep samples: {len(sleep_samples)}  (last {SLEEP_NIGHTS} nights)")
+    print(f"   Recipes:       {len(recipes)}")
 
   await engine.dispose()
 

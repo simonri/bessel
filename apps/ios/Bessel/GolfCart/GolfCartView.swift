@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct GolfCartView: View {
-    /// Panes in MainTabView stay mounted with opacity toggling, so tab
-    /// selection is passed in and drives the session task instead of
-    /// onAppear/onDisappear.
+    let auth: AuthSession
+    /// Tabs stay mounted, so tab selection is passed in and drives the
+    /// Bluetooth session instead of onAppear/onDisappear.
     let isActive: Bool
 
     @State private var store = GolfCartStore()
@@ -20,7 +20,10 @@ struct GolfCartView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background)
                 .navigationTitle("Golf cart")
-                .navigationBarTitleDisplayMode(.inline)
+                .toolbarTitleDisplayMode(.inlineLarge)
+                .toolbar {
+                    ProfileToolbarItem(auth: auth)
+                }
                 .task(id: SessionID(active: isActive && scenePhase == .active, attempt: store.attempt)) {
                     guard isActive && scenePhase == .active else { return }
                     await store.run()

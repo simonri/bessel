@@ -5,7 +5,10 @@ struct RecipesView: View {
 
     @State private var store: RecipesStore
     @State private var search = ""
-    @State private var path = NavigationPath()
+    @State private var typeFilter: RecipeType?
+    @State private var path: [UUID] = []
+    @State private var composer: RecipeComposer?
+    @Environment(ToastCenter.self) private var toasts
 
     init(auth: AuthSession) {
         self.auth = auth
@@ -13,109 +16,131 @@ struct RecipesView: View {
     }
 
     private var filtered: [RecipeItem] {
-        guard !search.isEmpty else { return store.recipes }
-        return store.recipes.filter { $0.title.localizedCaseInsensitiveContains(search) }
+        store.recipes.filter { recipe in
+            if let typeFilter, recipe.recipeType != typeFilter { return false }
+            guard !search.isEmpty else { return true }
+            return recipe.title.localizedCaseInsensitiveContains(search)
+                || recipe.body.ingredientGroups.contains { group in
+                    group.items.contains { $0.name.localizedCaseInsensitiveContains(search) }
+                }
+        }
     }
 
     var body: some View {
         NavigationStack(path: $path) {
-            content
-                .background(Theme.background)
-                .navigationTitle("Recipes")
-                .navigationBarTitleDisplayMode(.inline)
-                .searchable(text: $search, prompt: "Search recipes")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: createRecipe) {
-                            Image(systemName: "plus")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    filters
+                    if store.hasLoaded {
+                        if filtered.isEmpty {
+                            emptyState
+                                .padding(.top, 60)
+                        } else {
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                                ForEach(filtered) { recipe in
+                                    NavigationLink(value: recipe.id) {
+                                        RecipeCard(recipe: recipe)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            store.delete(recipe, toasts: toasts)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        .accessibilityLabel("New recipe")
                     }
                 }
-                .navigationDestination(for: RecipeItem.self) { recipe in
-                    RecipeDetailView(store: store, recipe: recipe)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
+            }
+            .background(Theme.background)
+            .overlay {
+                if !store.hasLoaded { ProgressView() }
+            }
+            .navigationTitle("Recipes")
+            .toolbarTitleDisplayMode(.inlineLarge)
+            .searchable(text: $search, prompt: "Search recipes or ingredients")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            composer = .paste
+                        } label: {
+                            Label("Paste a recipe", systemImage: "doc.on.clipboard")
+                        }
+                        Button {
+                            composer = .scratch
+                        } label: {
+                            Label("Start from scratch", systemImage: "square.and.pencil")
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("New recipe")
                 }
-                .alert("Something went wrong", isPresented: errorBinding) {
-                    Button("OK", role: .cancel) {}
-                } message: {
-                    Text(store.errorMessage ?? "")
+                ProfileToolbarItem(auth: auth)
+            }
+            .navigationDestination(for: UUID.self) { id in
+                RecipeDetailView(store: store, recipeID: id)
+            }
+            .sheet(item: $composer) { composer in
+                switch composer {
+                case .paste:
+                    RecipePasteView(store: store) { created in path.append(created.id) }
+                case .scratch:
+                    RecipeEditorView(store: store, recipe: nil) { created in path.append(created.id) }
                 }
-                .task { await store.load() }
-                .refreshable { await store.load() }
+            }
+            .alert("Something went wrong", isPresented: errorBinding) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(store.errorMessage ?? "")
+            }
+            .task { await store.load() }
+            .refreshable { await store.load() }
         }
+    }
+
+    private var filters: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                FilterPill(title: "All", isSelected: typeFilter == nil) {
+                    withAnimation(.snappy) { typeFilter = nil }
+                }
+                ForEach(RecipeType.allCases) { type in
+                    FilterPill(title: "\(type.emoji) \(type.plural)", isSelected: typeFilter == type) {
+                        withAnimation(.snappy) { typeFilter = typeFilter == type ? nil : type }
+                    }
+                }
+                if filtered.count > 1 {
+                    FilterPill(title: "🎲 Surprise me", isSelected: false) {
+                        if let pick = filtered.randomElement() { path.append(pick.id) }
+                    }
+                }
+            }
+        }
+        .scrollIndicators(.hidden)
     }
 
     @ViewBuilder
-    private var content: some View {
-        if !store.hasLoaded {
-            ProgressView()
-                .tint(Theme.mutedForeground)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            List {
-                ForEach(filtered) { recipe in
-                    NavigationLink(value: recipe) {
-                        row(recipe)
-                    }
-                    .listRowBackground(Theme.background)
-                    .listRowSeparatorTint(Theme.border)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await store.delete(recipe) }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                }
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .overlay {
-                if filtered.isEmpty {
-                    emptyState
-                }
-            }
-        }
-    }
-
-    private func row(_ recipe: RecipeItem) -> some View {
-        HStack(spacing: 8) {
-            Text(recipe.title.isEmpty ? "Untitled" : recipe.title)
-                .font(.subheadline)
-                .foregroundStyle(Theme.foreground)
-                .lineLimit(1)
-            if recipe.recipeType != .other {
-                Text(recipe.recipeType.label)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.mutedForeground)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .overlay(
-                        Capsule().stroke(Theme.border, lineWidth: 1)
-                    )
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 4)
-    }
-
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "book")
-                .font(.system(size: 28, weight: .light))
-                .foregroundStyle(Theme.mutedForeground.opacity(0.4))
-            VStack(spacing: 4) {
-                Text(search.isEmpty ? "No recipes yet" : "No matches")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Theme.foreground)
-                if search.isEmpty {
-                    Text("Add one with the + button.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.mutedForeground)
-                }
+        if store.recipes.isEmpty {
+            VStack(spacing: 16) {
+                EmptyState(emoji: "🍳", title: "What are we cooking?", detail: "Paste a recipe from anywhere and Bessel tidies it into ingredients and steps.")
+                Button("Paste a recipe") { composer = .paste }
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 22)
+                    .frame(height: 46)
+                    .background(Theme.primary, in: Capsule())
             }
+        } else {
+            EmptyState(emoji: "🔍", title: "No matches", detail: "Try another word or filter.")
         }
-        .allowsHitTesting(false)
     }
 
     private var errorBinding: Binding<Bool> {
@@ -124,12 +149,57 @@ struct RecipesView: View {
             set: { if !$0 { store.errorMessage = nil } }
         )
     }
+}
 
-    private func createRecipe() {
-        Task {
-            if let created = await store.create(RecipeCreate(title: "Untitled")) {
-                path.append(created)
+enum RecipeComposer: String, Identifiable {
+    case paste, scratch
+    var id: String { rawValue }
+}
+
+private struct RecipeCard: View {
+    let recipe: RecipeItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack {
+                LinearGradient(
+                    colors: [Theme.pastelWash(recipe.recipeType.hue, strength: 1.6), Theme.pastelWash(recipe.recipeType.hue + 40, strength: 0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Text(recipe.recipeType.emoji)
+                    .font(.system(size: 44))
             }
+            .frame(height: 104)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(recipe.title.isEmpty ? "Untitled" : recipe.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.foreground)
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+                Text(meta)
+                    .font(.caption)
+                    .foregroundStyle(Theme.mutedForeground)
+                    .lineLimit(1)
+            }
+            .padding(12)
         }
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    private var meta: String {
+        var parts: [String] = []
+        if let minutes = recipe.body.totalMinutes {
+            parts.append(RecipeDetailView.minutesLabel(minutes))
+        }
+        if recipe.ingredientCount > 0 {
+            parts.append("\(recipe.ingredientCount) ingredients")
+        } else if !recipe.body.steps.isEmpty {
+            parts.append("\(recipe.body.steps.count) steps")
+        }
+        return parts.isEmpty ? recipe.recipeType.label : parts.joined(separator: " · ")
     }
 }

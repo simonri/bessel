@@ -1,7 +1,24 @@
 # Bessel iOS
 
-Native SwiftUI app (iOS 17+). Currently implements auth (the same Auth0 + Google
-OAuth the web/desktop apps use) and the tasks/todo list.
+Native SwiftUI app (iOS 17+), light and dark. Signs in with the same Auth0 +
+Google OAuth the web/desktop apps use. Tabs: Tasks, Health (Apple Health sleep
+and workouts), Recipes, Places and Golf cart; your profile opens from the avatar
+in each tab's navigation bar.
+
+### Simulator against a local API
+
+Debug builds accept two launch environment variables, so the Simulator can skip
+Google sign-in when pointed at a local API that trusts any token:
+
+```bash
+(cd services/api && uv run python -m scripts.dev_auth_api)   # :8200, development only
+SIMCTL_CHILD_BESSEL_DEBUG_TOKEN=dev \
+SIMCTL_CHILD_BESSEL_API_BASE_URL=http://127.0.0.1:8200 \
+  xcrun simctl launch booted com.simonri.bessel.dev
+```
+
+`BESSEL_TAB` (`tasks`, `health`, `recipes`, `places`, `golfCart`) picks the
+starting tab. None of this is compiled into Release builds.
 
 The Xcode project is generated — `Bessel.xcodeproj` is gitignored. Source of truth
 is `project.yml` (XcodeGen).
@@ -78,8 +95,8 @@ constraints:
 ### Ship a new prod build
 
 ```bash
-make ios-deploy
-# or: CONFIGS=Release apps/ios/scripts/deploy.sh
+make ios-deploy-prod
+# or: CONFIGS=Release apps/ios/scripts/deploy.sh  (make ios-deploy does dev and prod)
 ```
 
 Direct-installs over Wi-Fi (or USB) via `xcodebuild -allowProvisioningUpdates`
