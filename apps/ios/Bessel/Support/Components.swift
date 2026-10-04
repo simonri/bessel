@@ -113,13 +113,9 @@ struct Composer<Accessories: View>: View {
                 .submitLabel(.done)
                 .onSubmit(onSubmit)
             HStack(spacing: 8) {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 6) {
-                        accessories
-                    }
-                    .fixedSize()
+                ChipRow(spacing: 6) {
+                    accessories
                 }
-                .sidewaysOnly()
                 Button(action: onSubmit) {
                     Group {
                         if isSending {
@@ -143,6 +139,50 @@ struct Composer<Accessories: View>: View {
         .padding(.bottom, 14)
         .liquidGlass(in: RoundedRectangle(cornerRadius: 30, style: .continuous))
         .onAppear { isFocused.wrappedValue = true }
+    }
+}
+
+/// A row of chips that scrolls sideways only. A horizontal ScrollView claims
+/// far more height than its content, so the row is sized to its chips,
+/// measured from an invisible copy.
+struct ChipRow<Content: View>: View {
+    var spacing: CGFloat = 8
+    var inset: CGFloat = 0
+    @ViewBuilder let content: () -> Content
+
+    @State private var height: CGFloat?
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            row
+        }
+        .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+        // A page's content margins (room for the + button) are inherited by
+        // every scroll view inside it; a chip row must not pick them up.
+        .contentMargins(.all, 0, for: .scrollContent)
+        .frame(height: height)
+        .background(alignment: .topLeading) {
+            row
+                .fixedSize()
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { height = proxy.size.height }
+                            .onChange(of: proxy.size.height) { _, new in height = new }
+                    }
+                }
+                .opacity(0)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var row: some View {
+        HStack(spacing: spacing) {
+            content()
+        }
+        .padding(.horizontal, inset)
     }
 }
 
@@ -194,12 +234,19 @@ struct SectionHeading: View {
 }
 
 extension View {
-    /// For horizontal chip rows: they scroll sideways and never up and down.
-    func sidewaysOnly() -> some View {
-        self
-            .scrollIndicators(.hidden)
-            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-            .fixedSize(horizontal: false, vertical: true)
+    /// Pins search and filters above a scroll view, so they stay put while
+    /// the content scrolls underneath.
+    /// A plain stack rather than a top safe-area inset, which iOS sizes
+    /// wrongly here and lets the chips overlap.
+    func stickyHeader(@ViewBuilder _ content: () -> some View) -> some View {
+        VStack(spacing: 0) {
+            content()
+                .padding(.horizontal, 16)
+                .padding(.top, Theme.pageTop)
+                .padding(.bottom, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            self
+        }
     }
 
     /// The system's Liquid Glass on iOS 26 (the same material as native

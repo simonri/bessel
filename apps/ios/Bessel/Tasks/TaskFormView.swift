@@ -173,25 +173,22 @@ struct TaskFormView: View {
             ("Next week", QuickTask.parse("next week", projects: []).dueDate),
             ("No date", nil),
         ]
-        return ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(options, id: \.0) { label, date in
-                    FilterPill(title: label, isSelected: !showingDatePicker && sameDay(dueDate, date)) {
-                        withAnimation(.snappy) {
-                            dueDate = date
-                            showingDatePicker = false
-                        }
-                    }
-                }
-                FilterPill(title: customDateLabel, isSelected: showingDatePicker || isCustomDate) {
+        return ChipRow {
+            ForEach(options, id: \.0) { label, date in
+                FilterPill(title: label, isSelected: !showingDatePicker && sameDay(dueDate, date)) {
                     withAnimation(.snappy) {
-                        if dueDate == nil { dueDate = today }
-                        showingDatePicker.toggle()
+                        dueDate = date
+                        showingDatePicker = false
                     }
                 }
             }
+            FilterPill(title: customDateLabel, isSelected: showingDatePicker || isCustomDate) {
+                withAnimation(.snappy) {
+                    if dueDate == nil { dueDate = today }
+                    showingDatePicker.toggle()
+                }
+            }
         }
-        .sidewaysOnly()
     }
 
     private var isCustomDate: Bool {

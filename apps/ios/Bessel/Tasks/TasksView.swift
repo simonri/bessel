@@ -18,7 +18,6 @@ struct TasksView: View {
     var body: some View {
         NavigationStack {
             List {
-                filters
                 if store.hasLoaded {
                     switch store.mode {
                     case .today: todayContent
@@ -30,10 +29,11 @@ struct TasksView: View {
             .listStyle(.insetGrouped)
             .refreshable { await store.load() }
             .listSectionSpacing(18)
-            .contentMargins(.top, Theme.pageTop - 8, for: .scrollContent)
+            .contentMargins(.top, 0, for: .scrollContent)
+            .contentMargins(.bottom, 80, for: .scrollContent)
             .scrollContentBackground(.hidden)
             .scrollDismissesKeyboard(.immediately)
-            .contentMargins(.bottom, 80, for: .scrollContent)
+            .stickyHeader { filters }
             .background(Theme.background)
             .overlay {
                 if !store.hasLoaded {
@@ -92,42 +92,32 @@ struct TasksView: View {
 
     // MARK: - Filters
 
-    /// Lives in a section header: list rows are clipped to the rounded
-    /// section shape, which cut the pills off at the edges.
+    /// Pinned above the list, so switching views is always in reach.
     private var filters: some View {
-        Section {
-        } header: {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    ForEach(TasksStore.Mode.allCases) { mode in
-                        FilterPill(title: mode.rawValue, isSelected: store.mode == mode) {
-                            withAnimation(.snappy) { store.mode = mode }
-                        }
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                ForEach(TasksStore.Mode.allCases) { mode in
+                    FilterPill(title: mode.rawValue, isSelected: store.mode == mode) {
+                        withAnimation(.snappy) { store.mode = mode }
                     }
-                }
-                if !store.projects.isEmpty {
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 6) {
-                            ForEach(store.projects, id: \.self) { project in
-                                let isSelected = store.projectFilter == project
-                                Button {
-                                    withAnimation(.snappy) {
-                                        store.projectFilter = isSelected ? nil : project
-                                    }
-                                } label: {
-                                    Chip(text: project, hue: PastelHue.forName(project), systemImage: isSelected ? "checkmark" : nil, isSelected: store.projectFilter == nil || isSelected)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                    .sidewaysOnly()
-                    .scrollClipDisabled()
                 }
             }
-            .textCase(nil)
-            .padding(.horizontal, -16)
-            .padding(.bottom, 4)
+            if !store.projects.isEmpty {
+                ChipRow(spacing: 6) {
+                    ForEach(store.projects, id: \.self) { project in
+                        let isSelected = store.projectFilter == project
+                        Button {
+                            withAnimation(.snappy) {
+                                store.projectFilter = isSelected ? nil : project
+                            }
+                        } label: {
+                            Chip(text: project, hue: PastelHue.forName(project), systemImage: isSelected ? "checkmark" : nil, isSelected: store.projectFilter == nil || isSelected)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .scrollClipDisabled()
+            }
         }
     }
 
@@ -149,18 +139,14 @@ struct TasksView: View {
                     Label("Routines", systemImage: "repeat")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.mutedForeground)
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 8) {
-                            ForEach(store.routines) { task in
-                                RoutineChip(task: task, onSelect: { editingTask = task }) {
-                                    Task { await store.complete(task, toasts: toasts) }
-                                }
-                                .contextMenu { copyMenu(task) }
+                    ChipRow(inset: 16) {
+                        ForEach(store.routines) { task in
+                            RoutineChip(task: task, onSelect: { editingTask = task }) {
+                                Task { await store.complete(task, toasts: toasts) }
                             }
+                            .contextMenu { copyMenu(task) }
                         }
-                        .padding(.horizontal, 16)
                     }
-                    .sidewaysOnly()
                     .padding(.horizontal, -32)
                 }
                 .textCase(nil)

@@ -34,8 +34,6 @@ struct RecipesView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    searchField
-                    filters
                     if store.hasLoaded {
                         if filtered.isEmpty {
                             emptyState
@@ -59,13 +57,19 @@ struct RecipesView: View {
                         }
                     }
                 }
-                .padding(.top, Theme.pageTop)
+                .padding(.top, 4)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
             .scrollDismissesKeyboard(.immediately)
             .refreshable { await store.load() }
             .contentMargins(.bottom, 80, for: .scrollContent)
+            .stickyHeader {
+                VStack(alignment: .leading, spacing: 12) {
+                    searchField
+                    filters
+                }
+            }
             .background(Theme.background)
             .overlay {
                 if !store.hasLoaded { ProgressView() }
@@ -189,24 +193,21 @@ struct RecipesView: View {
     }
 
     private var filters: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                FilterPill(title: "All", isSelected: typeFilter == nil) {
-                    withAnimation(.snappy) { typeFilter = nil }
+        ChipRow {
+            FilterPill(title: "All", isSelected: typeFilter == nil) {
+                withAnimation(.snappy) { typeFilter = nil }
+            }
+            ForEach(RecipeType.allCases) { type in
+                FilterPill(title: "\(type.emoji) \(type.plural)", isSelected: typeFilter == type) {
+                    withAnimation(.snappy) { typeFilter = typeFilter == type ? nil : type }
                 }
-                ForEach(RecipeType.allCases) { type in
-                    FilterPill(title: "\(type.emoji) \(type.plural)", isSelected: typeFilter == type) {
-                        withAnimation(.snappy) { typeFilter = typeFilter == type ? nil : type }
-                    }
-                }
-                if filtered.count > 1 {
-                    FilterPill(title: "🎲 Surprise me", isSelected: false) {
-                        if let pick = filtered.randomElement() { path.append(pick.id) }
-                    }
+            }
+            if filtered.count > 1 {
+                FilterPill(title: "🎲 Surprise me", isSelected: false) {
+                    if let pick = filtered.randomElement() { path.append(pick.id) }
                 }
             }
         }
-        .sidewaysOnly()
     }
 
     @ViewBuilder
