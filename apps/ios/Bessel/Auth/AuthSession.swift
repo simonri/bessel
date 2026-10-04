@@ -47,6 +47,15 @@ final class AuthSession {
 
     func restore() {
         defer { if state == .restoring { state = .signedOut } }
+        #if DEBUG
+        // Simulator screenshots against a local API that trusts any token.
+        if let token = ProcessInfo.processInfo.environment["BESSEL_DEBUG_TOKEN"] {
+            tokens = TokenSet(accessToken: token, refreshToken: nil, expiresAt: .distantFuture)
+            userEmail = "demo@bessel.app"
+            state = .signedIn
+            return
+        }
+        #endif
         guard let data = KeychainStore.load(Self.tokensKey),
               let stored = try? JSONDecoder().decode(TokenSet.self, from: data)
         else { return }
@@ -98,6 +107,7 @@ final class AuthSession {
         // The sync cursor belongs to this account's data; a different account
         // signing in must start from scratch or its history would never upload.
         WorkoutSyncAnchor.clear()
+        SleepSyncAnchor.clear()
         state = .signedOut
     }
 

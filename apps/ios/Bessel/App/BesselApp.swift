@@ -7,8 +7,8 @@ struct BesselApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(auth: auth)
-                .preferredColorScheme(.dark)
                 .tint(Theme.primary)
+                .fontDesign(.rounded)
                 .background(Theme.background)
         }
     }

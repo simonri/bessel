@@ -22,7 +22,8 @@ targets:
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1"
-        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
     entitlements:
       path: Bessel/Bessel.entitlements
       properties:
@@ -31,13 +32,14 @@ targets:
       path: Bessel/Info.plist
       properties:
         CFBundleDisplayName: $(BESSEL_APP_NAME)
-        NSHealthShareUsageDescription: Bessel reads your workouts from Health to sync them to your account.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSHealthShareUsageDescription: Bessel reads your workouts and sleep from Health to sync them to your account.
         NSBluetoothAlwaysUsageDescription: Bessel connects to the golf cart's battery monitor over Bluetooth to show live battery status.
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-        UIUserInterfaceStyle: Dark
         ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:
           - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)

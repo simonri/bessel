@@ -1,45 +1,96 @@
 import SwiftUI
 
-struct SettingsView: View {
+struct ProfileView: View {
     let auth: AuthSession
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmingSignOut = false
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    if let email = auth.userEmail {
-                        LabeledContent("Email", value: email)
-                            .foregroundStyle(Theme.foreground)
+            ScrollView {
+                VStack(spacing: 28) {
+                    header
+                    VStack(spacing: 0) {
+                        row("Apple Health", value: healthStatus, systemImage: "heart.fill", hue: 0)
+                        Divider().overlay(Theme.border).padding(.leading, 52)
+                        row("Version", value: Self.versionLabel, systemImage: "sparkles", hue: 270)
                     }
-                    Button("Sign out", role: .destructive) {
-                        auth.signOut()
-                    }
-                } header: {
-                    Text("Account")
-                        .font(.footnote.weight(.medium))
-                        .textCase(nil)
-                        .foregroundStyle(Theme.mutedForeground)
-                }
-                .listRowBackground(Theme.card)
-                .listRowSeparatorTint(Theme.border)
+                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 
-                Section {
-                } footer: {
-                    VStack(spacing: 8) {
-                        BesselMark(size: 22, color: Theme.mutedForeground.opacity(0.5))
-                        Text("Bessel \(Self.versionLabel)")
-                            .font(.caption)
-                            .foregroundStyle(Theme.mutedForeground.opacity(0.7))
+                    Button(role: .destructive) {
+                        confirmingSignOut = true
+                    } label: {
+                        Text("Sign out")
+                            .font(.body.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 24)
+                    .tint(Theme.destructive)
+
+                    BesselMark(size: 22, color: Theme.faintForeground)
+                        .padding(.top, 8)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+            }
+            .background(Theme.background)
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(Theme.background)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .confirmationDialog("Sign out of Bessel?", isPresented: $confirmingSignOut, titleVisibility: .visible) {
+                Button("Sign out", role: .destructive) {
+                    dismiss()
+                    auth.signOut()
+                }
+            }
         }
+        .presentationDetents([.medium, .large])
+        .presentationCornerRadius(28)
+    }
+
+    private var header: some View {
+        let hue = PastelHue.forName(auth.userEmail ?? "")
+        return VStack(spacing: 10) {
+            Text(auth.userEmail?.first.map { String($0).uppercased() } ?? "B")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(Theme.pastel(hue))
+                .frame(width: 76, height: 76)
+                .background(Theme.pastelWash(hue, strength: 1.4), in: Circle())
+            if let email = auth.userEmail {
+                Text(email)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.mutedForeground)
+            }
+        }
+    }
+
+    private func row(_ title: String, value: String, systemImage: String, hue: Double) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.pastel(hue))
+                .frame(width: 28, height: 28)
+                .background(Theme.pastelWash(hue), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            Text(title)
+                .foregroundStyle(Theme.foreground)
+            Spacer()
+            Text(value)
+                .foregroundStyle(Theme.mutedForeground)
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+    }
+
+    private var healthStatus: String {
+        guard let lastSynced = WorkoutSyncAnchor.lastSyncedAt else { return "Not connected" }
+        return "Synced \(lastSynced.formatted(.relative(presentation: .named)))"
     }
 
     private static let versionLabel: String = {

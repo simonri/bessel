@@ -2,7 +2,14 @@ import Foundation
 
 /// Build-time configuration injected from Config/Config.xcconfig via Info.plist.
 enum AppConfig {
-    static let apiBaseURL = URL(string: infoValue("API_BASE_URL"))!
+    static let apiBaseURL: URL = {
+        #if DEBUG
+        if let override = ProcessInfo.processInfo.environment["BESSEL_API_BASE_URL"], let url = URL(string: override) {
+            return url
+        }
+        #endif
+        return URL(string: infoValue("API_BASE_URL"))!
+    }()
     static let auth0Domain = infoValue("AUTH0_DOMAIN")
     static let auth0ClientID = infoValue("AUTH0_CLIENT_ID")
     static let auth0Audience = infoValue("AUTH0_AUDIENCE")

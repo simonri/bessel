@@ -2,36 +2,30 @@ import SwiftUI
 
 enum AppTab: String, CaseIterable, Identifiable {
     case tasks
-    case workouts
+    case health
     case recipes
     case places
-    case money
     case golfCart
-    case settings
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .tasks: "Tasks"
-        case .workouts: "Workouts"
+        case .health: "Health"
         case .recipes: "Recipes"
         case .places: "Places"
-        case .money: "Money"
         case .golfCart: "Golf cart"
-        case .settings: "Settings"
         }
     }
 
-    func icon(selected: Bool) -> String {
+    var icon: String {
         switch self {
-        case .tasks: "checklist"
-        case .workouts: "figure.run"
-        case .recipes: selected ? "book.fill" : "book"
-        case .places: selected ? "map.fill" : "map"
-        case .money: selected ? "creditcard.fill" : "creditcard"
-        case .golfCart: selected ? "bolt.car.fill" : "bolt.car"
-        case .settings: selected ? "gearshape.fill" : "gearshape"
+        case .tasks: "checkmark.circle"
+        case .health: "heart"
+        case .recipes: "fork.knife"
+        case .places: "mappin.and.ellipse"
+        case .golfCart: "bolt.car"
         }
     }
 }
@@ -40,84 +34,68 @@ struct MainTabView: View {
     let auth: AuthSession
 
     @State private var selection: AppTab = .tasks
+    @State private var toasts = ToastCenter()
 
     var body: some View {
-        // The bar lives below the panes in the layout (not in a safe-area inset)
-        // because NavigationStack does not propagate parent safe-area insets to
-        // its content — panes would extend behind the bar.
-        VStack(spacing: 0) {
-            ZStack {
-                pane(.tasks) { TasksView(auth: auth) }
-                pane(.workouts) { WorkoutsView(auth: auth) }
-                pane(.recipes) { RecipesView(auth: auth) }
-                pane(.places) { ComingSoonView(tab: .places) }
-                pane(.money) { ComingSoonView(tab: .money) }
-                pane(.golfCart) { GolfCartView(isActive: selection == .golfCart) }
-                pane(.settings) { SettingsView(auth: auth) }
-            }
-            bottomBar
+        TabView(selection: $selection) {
+            TasksView(auth: auth)
+                .tabItem { Label(AppTab.tasks.title, systemImage: AppTab.tasks.icon) }
+                .tag(AppTab.tasks)
+            HealthView(auth: auth, isActive: selection == .health)
+                .tabItem { Label(AppTab.health.title, systemImage: AppTab.health.icon) }
+                .tag(AppTab.health)
+            RecipesView(auth: auth)
+                .tabItem { Label(AppTab.recipes.title, systemImage: AppTab.recipes.icon) }
+                .tag(AppTab.recipes)
+            PlacesView(auth: auth)
+                .tabItem { Label(AppTab.places.title, systemImage: AppTab.places.icon) }
+                .tag(AppTab.places)
+            GolfCartView(auth: auth, isActive: selection == .golfCart)
+                .tabItem { Label(AppTab.golfCart.title, systemImage: AppTab.golfCart.icon) }
+                .tag(AppTab.golfCart)
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .environment(toasts)
+        .overlay(alignment: .bottom) {
+            ToastOverlay(center: toasts)
+                .padding(.bottom, 64)
+        }
         .sensoryFeedback(.selection, trigger: selection)
+        .onAppear(perform: applyLaunchTab)
     }
 
-    /// Panes stay in the hierarchy so each tab keeps its state; selection
-    /// toggles visibility directly, without TabView's crossfade.
-    private func pane(_ tab: AppTab, @ViewBuilder content: () -> some View) -> some View {
-        content()
-            .opacity(selection == tab ? 1 : 0)
-            .allowsHitTesting(selection == tab)
-            .accessibilityHidden(selection != tab)
-    }
-
-    private var bottomBar: some View {
-        HStack(spacing: 0) {
-            ForEach(AppTab.allCases) { tab in
-                Button {
-                    selection = tab
-                } label: {
-                    Image(systemName: tab.icon(selected: selection == tab))
-                        .font(.system(size: 21, weight: .medium))
-                        .foregroundStyle(selection == tab ? Theme.foreground : Theme.mutedForeground)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(tab.title)
-                .accessibilityAddTraits(selection == tab ? [.isSelected] : [])
-            }
+    private func applyLaunchTab() {
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["BESSEL_TAB"], let tab = AppTab(rawValue: raw) {
+            selection = tab
         }
-        .background(Theme.background)
-        .overlay(alignment: .top) {
-            Theme.border.frame(height: 0.5)
-        }
+        #endif
     }
 }
 
-private struct ComingSoonView: View {
-    let tab: AppTab
+/// The round avatar in each tab's navigation bar; opens your profile.
+struct ProfileButton: View {
+    let auth: AuthSession
+
+    @State private var showingProfile = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Theme.background.ignoresSafeArea()
-                VStack(spacing: 12) {
-                    Image(systemName: tab.icon(selected: false))
-                        .font(.system(size: 28, weight: .light))
-                        .foregroundStyle(Theme.mutedForeground.opacity(0.4))
-                    VStack(spacing: 4) {
-                        Text(tab.title)
-                            .font(.body.weight(.medium))
-                            .foregroundStyle(Theme.foreground)
-                        Text("Coming soon")
-                            .font(.footnote)
-                            .foregroundStyle(Theme.mutedForeground)
-                    }
-                }
-            }
-            .navigationTitle(tab.title)
-            .navigationBarTitleDisplayMode(.inline)
+        Button {
+            showingProfile = true
+        } label: {
+            Text(initial)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.pastel(PastelHue.forName(auth.userEmail ?? "")))
+                .frame(width: 32, height: 32)
+                .background(Theme.pastelWash(PastelHue.forName(auth.userEmail ?? ""), strength: 1.4), in: Circle())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Profile")
+        .sheet(isPresented: $showingProfile) {
+            ProfileView(auth: auth)
+        }
+    }
+
+    private var initial: String {
+        auth.userEmail?.first.map { String($0).uppercased() } ?? "B"
     }
 }

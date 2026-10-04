@@ -71,6 +71,19 @@ struct TaskUpdate: Encodable {
         case dueDate = "due_date"
     }
 
+    /// The task as it is, with only its status changed.
+    static func status(_ status: TaskStatus, for task: TaskItem) -> TaskUpdate {
+        TaskUpdate(
+            title: task.title,
+            description: task.description,
+            status: status,
+            priority: task.priority,
+            dueDate: task.dueDate,
+            project: task.project,
+            area: task.area
+        )
+    }
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(title, forKey: .title)
@@ -109,6 +122,11 @@ struct Project: Decodable, Identifiable {
 }
 
 extension TaskItem {
+    static func daysUntil(_ date: Date, now: Date = .now) -> Int {
+        let calendar = Calendar.current
+        return calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: date)).day ?? 0
+    }
+
     var priorityLabel: String? {
         switch priority {
         case 1: "Low"

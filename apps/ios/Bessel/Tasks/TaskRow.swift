@@ -2,113 +2,107 @@ import SwiftUI
 
 struct TaskRow: View {
     let task: TaskItem
+    /// Nil for finished tasks, which show a static tick.
     let onComplete: (() -> Void)?
+
+    @State private var isTicked = false
+
+    private var isDone: Bool { task.status == .done || isTicked }
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            if let onComplete {
-                Button(action: onComplete) {
-                    Image(systemName: "circle")
-                        .font(.system(size: 18, weight: .light))
-                        .foregroundStyle(Theme.mutedForeground.opacity(0.5))
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 1)
-            } else if task.status == .done {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 18, weight: .light))
-                    .foregroundStyle(Theme.mutedForeground.opacity(0.5))
+            Button(action: tick) {
+                CheckCircle(isChecked: isDone)
                     .padding(.top, 1)
+                    .contentShape(Rectangle().inset(by: -8))
             }
+            .buttonStyle(.plain)
+            .disabled(onComplete == nil)
+            .sensoryFeedback(.success, trigger: isTicked) { _, new in new }
+            .accessibilityLabel(isDone ? "Completed" : "Complete \(task.title)")
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(task.title)
-                    .font(.subheadline)
-                    .foregroundStyle(task.status == .done ? Theme.mutedForeground : Theme.foreground)
-                    .strikethrough(task.status == .done, color: Theme.mutedForeground.opacity(0.5))
-                    .lineLimit(2)
+                    .font(.body)
+                    .foregroundStyle(isDone ? Theme.mutedForeground : Theme.foreground)
+                    .strikethrough(isDone, color: Theme.faintForeground)
+                    .lineLimit(3)
+                    .animation(.easeOut(duration: 0.2), value: isDone)
 
-                if !metaItems.isEmpty {
-                    HStack(spacing: 6) {
-                        ForEach(Array(metaItems.enumerated()), id: \.offset) { index, item in
-                            if index > 0 {
-                                Text("-")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.mutedForeground.opacity(0.5))
-                            }
-                            metaView(item)
-                        }
-                    }
-                    .lineLimit(1)
+                if hasMeta {
+                    meta
                 }
             }
 
             Spacer(minLength: 0)
 
-            // Low priority is near-default — a flag for it is decoration, not signal.
-            if task.priority >= 2 {
+            if task.priority >= 2, !isDone {
                 Image(systemName: "flag.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.priorityColor(task.priority))
-                    .padding(.top, 4)
+                    .padding(.top, 5)
+                    .accessibilityLabel("\(task.priorityLabel ?? "") priority")
             }
         }
-        .padding(.vertical, 6)
-        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+        .padding(.vertical, 4)
     }
 
-    private enum MetaItem {
-        case text(String, Color)
-        case recurrence(String)
+    private func tick() {
+        guard let onComplete, !isTicked else { return }
+        isTicked = true
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            onComplete()
+        }
     }
 
-    private var metaItems: [MetaItem] {
-        var items: [MetaItem] = []
-        if task.status == .done, let completedAt = task.completedAt {
-            items.append(.text(completedAt.formatted(.relative(presentation: .named)), Theme.dueLater))
-        } else if let dueDate = task.dueDate {
-            items.append(.text(Self.dueLabel(for: dueDate), dueColor(for: dueDate)))
-        }
-        if let recurrence = task.recurrenceLabel {
-            items.append(.recurrence(recurrence))
-        }
-        if let project = task.project {
-            items.append(.text(project, Theme.mutedForeground))
-        }
-        if let area = task.area {
-            items.append(.text(area, Theme.mutedForeground.opacity(0.7)))
-        }
-        return items
+    private var hasMeta: Bool {
+        task.dueDate != nil || task.completedAt != nil || task.project != nil || task.recurrenceLabel != nil || task.area != nil
     }
 
-    @ViewBuilder
-    private func metaView(_ item: MetaItem) -> some View {
-        switch item {
-        case .text(let text, let color):
-            Text(text)
-                .font(.caption)
-                .foregroundStyle(color)
-        case .recurrence(let label):
-            HStack(spacing: 3) {
-                Image(systemName: "repeat")
-                    .font(.system(size: 10))
-                Text(label)
+    private var meta: some View {
+        HStack(spacing: 8) {
+            if task.status == .done, let completedAt = task.completedAt {
+                Text(completedAt.formatted(.relative(presentation: .named)))
+                    .font(.caption)
+                    .foregroundStyle(Theme.faintForeground)
+            } else if let due = task.dueDate {
+                Label(QuickTask.dueLabel(due), systemImage: "calendar")
+                    .labelStyle(CompactLabelStyle())
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(dueColor(due))
             }
-            .font(.caption)
-            .foregroundStyle(Theme.mutedForeground)
+            if let recurrence = task.recurrenceLabel {
+                Label(recurrence, systemImage: "repeat")
+                    .labelStyle(CompactLabelStyle())
+                    .font(.caption)
+                    .foregroundStyle(Theme.mutedForeground)
+            }
+            if let project = task.project {
+                Chip(text: project, hue: PastelHue.forName(project))
+            } else if let area = task.area {
+                Text(area)
+                    .font(.caption)
+                    .foregroundStyle(Theme.faintForeground)
+            }
         }
+        .lineLimit(1)
     }
 
-    private func dueColor(for date: Date) -> Color {
-        if Calendar.current.isDateInToday(date) { return Theme.dueToday }
-        if date < Calendar.current.startOfDay(for: .now) { return Theme.dueOverdue }
-        return Theme.dueLater
+    private func dueColor(_ date: Date) -> Color {
+        let days = TaskItem.daysUntil(date)
+        if days < 0 { return Theme.dueOverdue }
+        if days == 0 { return Theme.dueToday }
+        return Theme.mutedForeground
     }
+}
 
-    private static func dueLabel(for date: Date) -> String {
-        if Calendar.current.isDateInToday(date) { return "Today" }
-        if Calendar.current.isDateInTomorrow(date) { return "Tomorrow" }
-        if Calendar.current.isDateInYesterday(date) { return "Yesterday" }
-        return date.formatted(.dateTime.day().month(.abbreviated))
+struct CompactLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 3) {
+            configuration.icon
+                .imageScale(.small)
+            configuration.title
+        }
     }
 }
