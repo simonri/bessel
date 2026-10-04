@@ -8,6 +8,7 @@ struct PlacesView: View {
     @State private var showingMap = false
     @State private var adding = false
     @State private var selectedID: UUID?
+    @State private var justAddedID: UUID?
     @State private var cameraPosition: MapCameraPosition = .automatic
     @Environment(ToastCenter.self) private var toasts
 
@@ -47,10 +48,15 @@ struct PlacesView: View {
                     ProfileButton(auth: auth)
                 }
             }
-            .sheet(isPresented: $adding) {
+            // The new place opens once the add sheet is gone; presenting a
+            // sheet while another is dismissing is dropped.
+            .sheet(isPresented: $adding, onDismiss: {
+                selectedID = justAddedID
+                justAddedID = nil
+            }) {
                 AddPlaceView(store: store) { created in
                     store.status = created.status
-                    selectedID = created.id
+                    justAddedID = created.id
                 }
             }
             .sheet(item: selectedPlace) { selection in

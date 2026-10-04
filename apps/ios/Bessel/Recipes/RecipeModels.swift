@@ -207,7 +207,8 @@ enum IngredientLine {
         var rest = Substring(text)
         var amount: Double?
 
-        let digits = rest.prefix { $0.isNumber || $0 == "." || $0 == "," }
+        // ASCII only: "¾".isNumber is true, and the glyphs are handled below.
+        let digits = rest.prefix { $0.isASCII && ($0.isNumber || $0 == "." || $0 == ",") }
         var cursor = rest.dropFirst(digits.count)
         let fraction = cursor.first.flatMap { fractions[$0] }
         if fraction != nil { cursor = cursor.dropFirst() }

@@ -130,8 +130,8 @@ struct AddPlaceView: View {
             do {
                 let item = try await PlaceSearch.resolve(completion)
                 let created = try await store.create(PlaceSearch.draft(from: item, fallbackName: completion.title, status: status))
-                dismiss()
                 onAdded(created)
+                dismiss()
             } catch {
                 errorMessage = "Couldn't add that place. Try again in a moment."
             }

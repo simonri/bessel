@@ -24,6 +24,28 @@ struct RecipeEditorView: View {
         let id = UUID()
         var title: String
         var lines: String
+        /// The group this came from; kept as-is unless its lines were edited.
+        var source: RecipeBody.IngredientGroup?
+
+        init(title: String, lines: String) {
+            self.title = title
+            self.lines = lines
+        }
+
+        init(_ group: RecipeBody.IngredientGroup) {
+            title = group.title ?? ""
+            lines = group.items.map(IngredientLine.format).joined(separator: "\n")
+            source = group
+        }
+
+        var items: [RecipeBody.Ingredient] {
+            if let source, lines == GroupDraft(source).lines { return source.items }
+            return lines
+                .split(whereSeparator: \.isNewline)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+                .map(IngredientLine.parse)
+        }
     }
 
     struct StepDraft: Identifiable {
@@ -43,9 +65,7 @@ struct RecipeEditorView: View {
         _type = State(initialValue: recipe?.recipeType ?? draft?.recipeType ?? .main)
         _totalMinutes = State(initialValue: body.totalMinutes.map(String.init) ?? "")
         _yieldText = State(initialValue: body.yieldText ?? "")
-        let groupDrafts = body.ingredientGroups.map {
-            GroupDraft(title: $0.title ?? "", lines: $0.items.map(IngredientLine.format).joined(separator: "\n"))
-        }
+        let groupDrafts = body.ingredientGroups.map(GroupDraft.init)
         _groups = State(initialValue: groupDrafts.isEmpty ? [GroupDraft(title: "", lines: "")] : groupDrafts)
         let stepDrafts = body.steps.map { StepDraft(text: $0.text, source: $0) }
         _steps = State(initialValue: stepDrafts.isEmpty ? [StepDraft(text: "", source: nil)] : stepDrafts)
@@ -180,11 +200,7 @@ struct RecipeEditorView: View {
         body.yieldText = trimmedYield.isEmpty ? nil : trimmedYield
         body.totalMinutes = Int(totalMinutes.trimmingCharacters(in: .whitespaces)).flatMap { $0 > 0 ? $0 : nil }
         body.ingredientGroups = groups.compactMap { group in
-            let items = group.lines
-                .split(whereSeparator: \.isNewline)
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
-                .map(IngredientLine.parse)
+            let items = group.items
             let groupTitle = group.title.trimmingCharacters(in: .whitespaces)
             guard !items.isEmpty || !groupTitle.isEmpty else { return nil }
             return RecipeBody.IngredientGroup(title: groupTitle.isEmpty ? nil : groupTitle, items: items)
