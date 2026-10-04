@@ -38,12 +38,6 @@ import {
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
-  isValidFolderName,
-  listConfiguredHosts,
-  SSH_HOST_PATTERN,
-  sshConfigPath,
-} from "./ssh-config.js";
-import {
   getSpotifyPositionMs,
   getSpotifyStatus,
   spotifyNext,
@@ -51,6 +45,12 @@ import {
   startSpotifyWatcher,
   stopSpotifyWatcher,
 } from "./spotify.js";
+import {
+  isValidFolderName,
+  listConfiguredHosts,
+  SSH_HOST_PATTERN,
+  sshConfigPath,
+} from "./ssh-config.js";
 import { isImageFile, MIME_TYPES, serveLocalFile } from "./static-files.js";
 import { OutputCoalescer, terminalSize } from "./terminal-core.js";
 import {
@@ -184,25 +184,36 @@ function assertSshHost(host: unknown): asserts host is string {
     throw new Error(`Invalid SSH host: ${String(host)}`);
 }
 
+const SSH_TIMEOUT_MS = 30_000;
+
 // Non-interactive: keys and agents only, never a password prompt. A host seen
 // for the first time is trusted (a changed key still fails), and a login that
 // hangs after connecting is cut off rather than spinning forever.
-function sshRun(host: string, remoteCommand: string) {
-  return execFileAsync(
-    "ssh",
-    [
-      "-o",
-      "BatchMode=yes",
-      "-o",
-      "ConnectTimeout=10",
-      "-o",
-      "StrictHostKeyChecking=accept-new",
-      "--",
-      host,
-      remoteCommand,
-    ],
-    { maxBuffer: 8 * 1024 * 1024, timeout: 30_000 },
-  );
+async function sshRun(host: string, remoteCommand: string) {
+  try {
+    return await execFileAsync(
+      "ssh",
+      [
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=10",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "--",
+        host,
+        remoteCommand,
+      ],
+      { maxBuffer: 8 * 1024 * 1024, timeout: SSH_TIMEOUT_MS },
+    );
+  } catch (err) {
+    // A killed process's message is just "Command failed"; say why.
+    if ((err as { killed?: boolean }).killed)
+      throw new Error(
+        `Timed out after ${SSH_TIMEOUT_MS / 1000} seconds waiting for ${host}`,
+      );
+    throw err;
+  }
 }
 
 function remoteCdArg(p: string): string {

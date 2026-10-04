@@ -18,6 +18,15 @@ describe("explainSshError", () => {
       "refused the connection",
     ],
     ["ssh: connect to host vps port 22: Connection timed out", "didn't answer"],
+    ["Timed out after 30 seconds waiting for vps", "didn't answer"],
+    [
+      "bash: line 1: cd: /root: Permission denied",
+      "don't have access to that folder",
+    ],
+    [
+      "mkdir: cannot create directory '/srv/x': Permission denied",
+      "don't have access to that folder",
+    ],
     [
       "@ WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED! @",
       "identity has changed",

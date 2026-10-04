@@ -15,11 +15,14 @@ export function explainSshError(error: unknown, host: string): string {
   if (/remote host identification has changed/i.test(raw))
     return `${host}'s identity has changed since you last connected. If you expected that, remove its old entry from ~/.ssh/known_hosts and try again.`;
   if (
-    /permission denied|publickey|authentication|host key verification/i.test(
+    /permission denied \(|publickey|too many authentication|host key verification/i.test(
       raw,
     )
   )
     return `${host} didn't accept your SSH key. Bessel signs in with keys only, not passwords. Make sure \`ssh ${host}\` works in a terminal without asking for a password.`;
+  // The remote shell's own refusal (`cd: /root: Permission denied`).
+  if (/permission denied/i.test(raw))
+    return "You don't have access to that folder.";
   if (/connection refused/i.test(raw))
     return `${host} refused the connection. Check that SSH is running on it and the port is right.`;
   if (
