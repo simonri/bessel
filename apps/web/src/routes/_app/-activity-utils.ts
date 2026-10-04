@@ -10,9 +10,15 @@ export function activityLevel(
   return 4;
 }
 
-export function localDayBounds(d: Date): [number, number] {
-  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+/** The day `d` falls on, running from `startHour` to `startHour` the next day. */
+export function localDayBounds(d: Date, startHour = 0): [number, number] {
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), startHour);
+  const end = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate() + 1,
+    startHour,
+  );
   return [Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000)];
 }
 

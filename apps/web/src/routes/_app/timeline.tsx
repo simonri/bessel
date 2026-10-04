@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { addDays, format, isSameDay, subDays } from "date-fns";
+import { addDays, format, isSameDay, subDays, subHours } from "date-fns";
 import { useMemo, useState } from "react";
 import { DayNav } from "@/components/timeline/day-nav";
 import { DayRibbon } from "@/components/timeline/day-ribbon";
@@ -30,12 +30,16 @@ import { client } from "@/lib/client";
 import { fmtDur, localDayBounds } from "./-activity-utils";
 import { dayParam } from "./-google-timeline-utils";
 
+// Days run 6am to 6am: a night out past midnight still belongs to the day
+// before, and sleep shows whole at the start of the next.
+const DAY_START_HOUR = 6;
+
 export const Route = createFileRoute("/_app/timeline")({
   component: TimelinePage,
 });
 
 function TimelinePage() {
-  const today = new Date();
+  const today = subHours(new Date(), DAY_START_HOUR);
   const [date, setDate] = useState(today);
   const [source, setSource] = useState<string | null>(null);
   const isToday = isSameDay(date, today);
@@ -45,7 +49,7 @@ function TimelinePage() {
   });
   const sources = sourcesData?.sources ?? [];
 
-  const [startTs, endTs] = localDayBounds(date);
+  const [startTs, endTs] = localDayBounds(date, DAY_START_HOUR);
   const { data: timeline, isLoading } = useQuery({
     ...getTimelineV1TimelineGetOptions({
       client,
@@ -59,8 +63,11 @@ function TimelinePage() {
   });
 
   // Places come from an imported Google Timeline; most days may have none.
+  // The day ends at 6am, so its last hours are on the next calendar date.
   const dayKey = format(date, "yyyy-MM-dd");
+  const nextDayKey = format(addDays(date, 1), "yyyy-MM-dd");
   const locationDate = useMemo(() => dayParam(dayKey), [dayKey]);
+  const nextLocationDate = useMemo(() => dayParam(nextDayKey), [nextDayKey]);
   const { data: locationDay } = useQuery({
     ...getLocationHistoryDayV1LocationHistoryDayGetOptions({
       client,
@@ -68,12 +75,25 @@ function TimelinePage() {
     }),
     retry: false,
   });
+  const { data: nextLocationDay } = useQuery({
+    ...getLocationHistoryDayV1LocationHistoryDayGetOptions({
+      client,
+      query: { date: nextLocationDate },
+    }),
+    retry: false,
+  });
 
   const lanes = useMemo(() => {
     const activity = timeline?.lanes.map(activityLane) ?? [];
-    const places = placesLane(locationDay?.visits ?? [], startTs, endTs);
+    // A visit spanning midnight comes back for both dates.
+    const visits = new Map(
+      [...(locationDay?.visits ?? []), ...(nextLocationDay?.visits ?? [])].map(
+        (v) => [v.id, v],
+      ),
+    );
+    const places = placesLane([...visits.values()], startTs, endTs);
     return places.blocks.length > 0 ? [...activity, places] : activity;
-  }, [timeline, locationDay, startTs, endTs]);
+  }, [timeline, locationDay, nextLocationDay, startTs, endTs]);
 
   const nowTs = Math.floor(Date.now() / 1000);
   const elapsedSecs = Math.max(0, Math.min(nowTs, endTs) - startTs);

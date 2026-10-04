@@ -6,7 +6,7 @@ import { fmtDur } from "@/routes/_app/-activity-utils";
 import type { RibbonBlock, RibbonLane, RibbonLaneKey } from "./day-summary";
 import { LANE_META } from "./day-summary";
 
-const AXIS_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+const AXIS_STEPS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 // Shaded as night behind the lanes: before 6am and from 10pm.
 const NIGHT_BEFORE = 6;
 const NIGHT_FROM = 22;
@@ -136,14 +136,20 @@ export function DayRibbon({
     nowTs !== null && nowTs > startTs && nowTs < endTs
       ? pctOf(nowTs, startTs, endTs)
       : null;
-  const nightEndPct = pctOf(hourTs(date, NIGHT_BEFORE), startTs, endTs);
+  // The day can start after midnight; hourTs rolls hours past 23 over.
+  const startHour = new Date(startTs * 1000).getHours();
+  const axisHours = AXIS_STEPS.map((step) => startHour + step);
+  const nightEndPct = Math.max(
+    0,
+    pctOf(hourTs(date, NIGHT_BEFORE), startTs, endTs),
+  );
   const nightStartPct = pctOf(hourTs(date, NIGHT_FROM), startTs, endTs);
 
   return (
     <div className="grid grid-cols-[minmax(5.5rem,8rem)_1fr] items-center gap-x-4 gap-y-3">
       <span />
       <div className="relative h-4 select-none">
-        {AXIS_HOURS.map((hour) => {
+        {axisHours.map((hour, i) => {
           const pct = pctOf(hourTs(date, hour), startTs, endTs);
           // Make room for the "now" pill.
           if (nowPct !== null && Math.abs(pct - nowPct) < 4) return null;
@@ -154,9 +160,9 @@ export function DayRibbon({
               style={{
                 left: `${pct}%`,
                 transform:
-                  hour === 0
+                  i === 0
                     ? "none"
-                    : hour === 24
+                    : i === axisHours.length - 1
                       ? "translateX(-100%)"
                       : "translateX(-50%)",
               }}
