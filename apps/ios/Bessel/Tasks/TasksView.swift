@@ -5,6 +5,7 @@ struct TasksView: View {
 
     @State private var store: TasksStore
     @State private var editingTask: TaskItem?
+    @FocusState private var quickAddFocused: Bool
     @Environment(ToastCenter.self) private var toasts
 
     init(auth: AuthSession) {
@@ -28,22 +29,27 @@ struct TasksView: View {
             .listSectionSpacing(18)
             .contentMargins(.top, Theme.pageTop - 8, for: .scrollContent)
             .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.immediately)
             .background(Theme.background)
             .overlay {
                 if !store.hasLoaded {
                     ProgressView()
                 }
             }
+            .overlay {
+                // While typing, a tap anywhere outside the field just ends editing.
+                if quickAddFocused {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { quickAddFocused = false }
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 if store.mode != .done {
-                    QuickAddBar(store: store)
+                    QuickAddBar(store: store, isFocused: $quickAddFocused)
                         .padding(.horizontal, 16)
-                        .padding(.top, 20)
+                        .padding(.top, 8)
                         .padding(.bottom, 8)
-                        .background(
-                            LinearGradient(colors: [Theme.background.opacity(0), Theme.background], startPoint: .top, endPoint: .center)
-                                .ignoresSafeArea()
-                        )
                 }
             }
             .navigationTitle("Tasks")
@@ -391,10 +397,10 @@ private struct RoutineChip: View {
 /// The always-there "Add a task" field. Understands "fri", "#project" and "!".
 private struct QuickAddBar: View {
     let store: TasksStore
+    var isFocused: FocusState<Bool>.Binding
 
     @State private var text = ""
     @State private var isSaving = false
-    @FocusState private var isFocused: Bool
 
     private var parsed: QuickTask {
         QuickTask.parse(text, projects: store.projects)
@@ -402,7 +408,7 @@ private struct QuickAddBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if isFocused {
+            if isFocused.wrappedValue {
                 hint
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -411,7 +417,7 @@ private struct QuickAddBar: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.primary)
                 TextField("Add a task", text: $text)
-                    .focused($isFocused)
+                    .focused(isFocused)
                     .submitLabel(.done)
                     .onSubmit(submit)
                 if !text.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -430,11 +436,10 @@ private struct QuickAddBar: View {
             }
             .padding(.leading, 16)
             .padding(.trailing, 8)
-            .frame(height: 50)
-            .background(Theme.card, in: Capsule())
-            .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
+            .frame(height: 52)
+            .liquidGlass(in: Capsule())
         }
-        .animation(.snappy, value: isFocused)
+        .animation(.snappy, value: isFocused.wrappedValue)
         .animation(.snappy, value: text.isEmpty)
     }
 
@@ -460,7 +465,7 @@ private struct QuickAddBar: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(.thinMaterial, in: Capsule())
+        .liquidGlass(in: Capsule())
     }
 
     private func submit() {

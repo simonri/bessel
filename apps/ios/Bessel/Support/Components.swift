@@ -120,6 +120,17 @@ struct SectionHeading: View {
 }
 
 extension View {
+    /// The system's Liquid Glass on iOS 26 (the same material as native
+    /// floating bars and text boxes); a blur material before that.
+    @ViewBuilder
+    func liquidGlass(in shape: some Shape) -> some View {
+        if #available(iOS 26.0, *) {
+            glassEffect(.regular.interactive(), in: shape)
+        } else {
+            background(.regularMaterial, in: shape)
+        }
+    }
+
     /// A rounded card on the page background.
     func card(padding: CGFloat = 16) -> some View {
         self
