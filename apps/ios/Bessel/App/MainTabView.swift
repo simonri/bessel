@@ -41,18 +41,23 @@ struct MainTabView: View {
             TasksView(auth: auth)
                 .tabItem { Label(AppTab.tasks.title, systemImage: AppTab.tasks.icon) }
                 .tag(AppTab.tasks)
+                .floatingTabBar()
             HealthView(auth: auth, isActive: selection == .health)
                 .tabItem { Label(AppTab.health.title, systemImage: AppTab.health.icon) }
                 .tag(AppTab.health)
+                .floatingTabBar()
             RecipesView(auth: auth)
                 .tabItem { Label(AppTab.recipes.title, systemImage: AppTab.recipes.icon) }
                 .tag(AppTab.recipes)
+                .floatingTabBar()
             PlacesView(auth: auth)
                 .tabItem { Label(AppTab.places.title, systemImage: AppTab.places.icon) }
                 .tag(AppTab.places)
+                .floatingTabBar()
             GolfCartView(auth: auth, isActive: selection == .golfCart)
                 .tabItem { Label(AppTab.golfCart.title, systemImage: AppTab.golfCart.icon) }
                 .tag(AppTab.golfCart)
+                .floatingTabBar()
         }
         .environment(toasts)
         .overlay(alignment: .bottom) {
@@ -69,6 +74,20 @@ struct MainTabView: View {
             selection = tab
         }
         #endif
+    }
+}
+
+private extension View {
+    /// Content runs all the way under the floating glass tab bar, with no
+    /// solid bar background or darkening edge effect behind it.
+    @ViewBuilder
+    func floatingTabBar() -> some View {
+        if #available(iOS 26.0, *) {
+            toolbarBackgroundVisibility(.hidden, for: .tabBar)
+                .scrollEdgeEffectHidden(true, for: .bottom)
+        } else {
+            toolbarBackground(.hidden, for: .tabBar)
+        }
     }
 }
 
