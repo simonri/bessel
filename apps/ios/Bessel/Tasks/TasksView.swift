@@ -5,7 +5,9 @@ struct TasksView: View {
 
     @State private var store: TasksStore
     @State private var editingTask: TaskItem?
-    @FocusState private var quickAddFocused: Bool
+    @State private var composing = false
+    @State private var draft = ""
+    @FocusState private var composerFocused: Bool
     @Environment(ToastCenter.self) private var toasts
 
     init(auth: AuthSession) {
@@ -30,6 +32,7 @@ struct TasksView: View {
             .contentMargins(.top, Theme.pageTop - 8, for: .scrollContent)
             .scrollContentBackground(.hidden)
             .scrollDismissesKeyboard(.immediately)
+            .contentMargins(.bottom, 80, for: .scrollContent)
             .background(Theme.background)
             .overlay {
                 if !store.hasLoaded {
@@ -37,20 +40,36 @@ struct TasksView: View {
                 }
             }
             .overlay {
-                // While typing, a tap anywhere outside the field just ends editing.
-                if quickAddFocused {
+                // While composing, a tap anywhere outside the card just closes it.
+                if composing {
                     Color.clear
                         .contentShape(Rectangle())
-                        .onTapGesture { quickAddFocused = false }
+                        .onTapGesture {
+                            composerFocused = false
+                            withAnimation(.snappy) { composing = false }
+                        }
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if !composing {
+                    FloatingAddButton(label: "New task") {
+                        withAnimation(.snappy) { composing = true }
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 12)
+                    .transition(.scale.combined(with: .opacity))
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if store.mode != .done {
-                    QuickAddBar(store: store, isFocused: $quickAddFocused)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                if composing {
+                    TaskComposer(store: store, text: $draft, isFocused: $composerFocused)
+                        .padding(.horizontal, 10)
                         .padding(.bottom, 8)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+            }
+            .onChange(of: composerFocused) { _, focused in
+                if !focused { withAnimation(.snappy) { composing = false } }
             }
             .navigationTitle("Tasks")
             .toolbarTitleDisplayMode(.inlineLarge)
@@ -394,12 +413,12 @@ private struct RoutineChip: View {
     }
 }
 
-/// The always-there "Add a task" field. Understands "fri", "#project" and "!".
-private struct QuickAddBar: View {
+/// Quick add for tasks. Understands "fri", "#project" and "!".
+private struct TaskComposer: View {
     let store: TasksStore
+    @Binding var text: String
     var isFocused: FocusState<Bool>.Binding
 
-    @State private var text = ""
     @State private var isSaving = false
 
     private var parsed: QuickTask {
@@ -407,50 +426,11 @@ private struct QuickAddBar: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if isFocused.wrappedValue {
-                hint
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
-            HStack(spacing: 10) {
-                Image(systemName: "plus")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Theme.primary)
-                TextField("Add a task", text: $text)
-                    .focused(isFocused)
-                    .submitLabel(.done)
-                    .onSubmit(submit)
-                if !text.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Button(action: submit) {
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 30, height: 30)
-                            .background(Theme.primary, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isSaving)
-                    .accessibilityLabel("Add task")
-                    .transition(.scale.combined(with: .opacity))
-                }
-            }
-            .padding(.leading, 16)
-            .padding(.trailing, 8)
-            .frame(height: 52)
-            .liquidGlass(in: Capsule())
-        }
-        .animation(.snappy, value: isFocused.wrappedValue)
-        .animation(.snappy, value: text.isEmpty)
-    }
-
-    @ViewBuilder
-    private var hint: some View {
-        let tokens = parsed.tokens
-        HStack(spacing: 6) {
+        Composer(placeholder: "Task name", text: $text, isFocused: isFocused, isSending: isSaving, onSubmit: submit) {
+            let tokens = parsed.tokens
             if tokens.isEmpty {
-                Text("Try \"Call mum fri #home !\"")
-                    .font(.caption)
-                    .foregroundStyle(Theme.mutedForeground)
+                Chip(text: store.projectFilter ?? "No project", hue: PastelHue.forName(store.projectFilter ?? ""), systemImage: "number", isSelected: store.projectFilter != nil)
+                Chip(text: "Try \"fri\" or \"!\"", hue: 32, systemImage: "calendar", isSelected: false)
             }
             ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
                 switch token.kind {
@@ -463,9 +443,6 @@ private struct QuickAddBar: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .liquidGlass(in: Capsule())
     }
 
     private func submit() {

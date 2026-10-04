@@ -65,6 +65,10 @@ struct MainTabView: View {
                 .padding(.bottom, 64)
         }
         .sensoryFeedback(.selection, trigger: selection)
+        .onChange(of: selection) {
+            // An open composer on the tab you left shouldn't keep the keyboard up.
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .onAppear(perform: applyLaunchTab)
     }
 

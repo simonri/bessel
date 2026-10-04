@@ -72,6 +72,79 @@ struct CheckCircle: View {
     }
 }
 
+/// The round glass "+" in a page's bottom-right corner.
+struct FloatingAddButton: View {
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(Theme.primary)
+                .frame(width: 58, height: 58)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .liquidGlass(in: Circle())
+        .accessibilityLabel(label)
+    }
+}
+
+/// A floating glass card for quickly adding something: a text field on top,
+/// chips and a send button underneath. Sits just above the keyboard.
+struct Composer<Accessories: View>: View {
+    let placeholder: String
+    @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+    var isSending = false
+    let onSubmit: () -> Void
+    @ViewBuilder let accessories: Accessories
+
+    private var canSend: Bool {
+        !text.trimmingCharacters(in: .whitespaces).isEmpty && !isSending
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            TextField(placeholder, text: $text)
+                .font(.title3)
+                .focused(isFocused)
+                .submitLabel(.done)
+                .onSubmit(onSubmit)
+            HStack(spacing: 8) {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        accessories
+                    }
+                }
+                .scrollIndicators(.hidden)
+                Button(action: onSubmit) {
+                    Group {
+                        if isSending {
+                            ProgressView().tint(.white)
+                        } else {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                    }
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Theme.primary.opacity(canSend || isSending ? 1 : 0.4), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
+                .accessibilityLabel("Add")
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+        .liquidGlass(in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .onAppear { isFocused.wrappedValue = true }
+    }
+}
+
 /// Friendly empty state: an emoji, a line, and an optional hint.
 struct EmptyState: View {
     let emoji: String
