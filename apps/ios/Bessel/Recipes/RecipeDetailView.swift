@@ -148,7 +148,7 @@ struct RecipeDetailView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.selection, trigger: isTicked)
+        .haptic(.selection, trigger: isTicked)
     }
 
     private func quantity(_ item: RecipeBody.Ingredient) -> String {

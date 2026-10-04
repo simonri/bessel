@@ -18,7 +18,7 @@ struct TaskRow: View {
             }
             .buttonStyle(.plain)
             .disabled(onComplete == nil)
-            .sensoryFeedback(.success, trigger: isTicked) { _, new in new }
+            .haptic(.success, trigger: isTicked) { _, new in new }
             .accessibilityLabel(isDone ? "Completed" : "Complete \(task.title)")
 
             VStack(alignment: .leading, spacing: 6) {

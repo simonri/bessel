@@ -86,7 +86,7 @@ struct TasksView: View {
             }
             .task { await store.load() }
             .refreshable { await store.load() }
-            .sensoryFeedback(.selection, trigger: store.mode)
+            .haptic(.selection, trigger: store.mode)
         }
     }
 
@@ -387,7 +387,7 @@ private struct RoutineChip: View {
                 CheckCircle(isChecked: isTicked, size: 18)
             }
             .buttonStyle(.plain)
-            .sensoryFeedback(.success, trigger: isTicked) { _, new in new }
+            .haptic(.success, trigger: isTicked) { _, new in new }
             .accessibilityLabel("Complete \(task.title)")
 
             Button(action: onSelect) {

@@ -398,7 +398,7 @@ struct PlaceDetailView: View {
                             .foregroundStyle(star <= (place.rating ?? 0) ? Theme.warning : Theme.faintForeground)
                     }
                     .buttonStyle(.plain)
-                    .sensoryFeedback(.selection, trigger: place.rating)
+                    .haptic(.selection, trigger: place.rating)
                     .accessibilityLabel("\(star) star\(star == 1 ? "" : "s")")
                 }
             }
