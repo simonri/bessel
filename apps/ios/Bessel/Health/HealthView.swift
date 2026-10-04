@@ -5,18 +5,22 @@ struct HealthView: View {
     let isActive: Bool
 
     @State private var store: HealthStore
+    @State private var timeline: DayTimeline
     @Environment(\.scenePhase) private var scenePhase
 
     init(auth: AuthSession, isActive: Bool) {
         self.auth = auth
         self.isActive = isActive
-        _store = State(initialValue: HealthStore(client: APIClient(auth: auth)))
+        let client = APIClient(auth: auth)
+        _store = State(initialValue: HealthStore(client: client))
+        _timeline = State(initialValue: DayTimeline(client: client))
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    TimelineCard(timeline: timeline)
                     if !store.isConnected {
                         ConnectHealthCard(isSyncing: store.isSyncing) {
                             Task { await store.connect() }
@@ -42,6 +46,7 @@ struct HealthView: View {
             .refreshable {
                 await store.syncIfNeeded()
                 await store.load()
+                await timeline.load()
             }
             .background(Theme.background)
             .overlay {
@@ -61,6 +66,7 @@ struct HealthView: View {
             .task(id: isActive && scenePhase == .active) {
                 guard isActive, scenePhase == .active else { return }
                 await store.syncIfNeeded()
+                await timeline.load()
             }
         }
     }
