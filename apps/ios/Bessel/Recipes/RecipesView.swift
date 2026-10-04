@@ -41,7 +41,7 @@ struct RecipesView: View {
                             emptyState
                                 .padding(.top, 60)
                         } else {
-                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 14, alignment: .top), GridItem(.flexible(), spacing: 14, alignment: .top)], spacing: 22) {
                                 ForEach(filtered) { recipe in
                                     NavigationLink(value: recipe.id) {
                                         RecipeCard(recipe: recipe)
@@ -239,50 +239,73 @@ enum RecipeSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
+/// Pinterest-style: a square tinted tile with the type's emoji and the cook
+/// time, the name and details underneath on the page.
 private struct RecipeCard: View {
     let recipe: RecipeItem
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                LinearGradient(
-                    colors: [Theme.pastelWash(recipe.recipeType.hue, strength: 1.6), Theme.pastelWash(recipe.recipeType.hue + 40, strength: 0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                Text(recipe.recipeType.emoji)
-                    .font(.system(size: 44))
-            }
-            .frame(height: 104)
+    private var hue: Double { recipe.recipeType.hue }
 
-            VStack(alignment: .leading, spacing: 4) {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            tile
+            VStack(alignment: .leading, spacing: 3) {
                 Text(recipe.title.isEmpty ? "Untitled" : recipe.title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.foreground)
-                    .lineLimit(2, reservesSpace: true)
+                    .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                Text(meta)
-                    .font(.caption)
-                    .foregroundStyle(Theme.mutedForeground)
-                    .lineLimit(1)
+                if let meta {
+                    Text(meta)
+                        .font(.caption)
+                        .foregroundStyle(Theme.mutedForeground)
+                        .lineLimit(1)
+                }
             }
-            .padding(12)
+            .padding(.horizontal, 4)
         }
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .contentShape(Rectangle())
     }
 
-    private var meta: String {
-        var parts: [String] = []
-        if let minutes = recipe.body.totalMinutes {
-            parts.append(RecipeDetailView.minutesLabel(minutes))
+    private var tile: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Theme.pastelSolid(hue).opacity(0.55), Theme.pastelSolid(hue + 40).opacity(0.3)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            Circle()
+                .fill(.white.opacity(0.25))
+                .frame(width: 96, height: 96)
+                .blur(radius: 18)
+            Text(recipe.recipeType.emoji)
+                .font(.system(size: 58))
+                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
         }
+        .aspectRatio(1, contentMode: .fit)
+        .overlay(alignment: .bottomLeading) {
+            if let minutes = recipe.body.totalMinutes {
+                Label(RecipeDetailView.minutesLabel(minutes), systemImage: "clock")
+                    .labelStyle(CompactLabelStyle())
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Theme.foreground)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .padding(10)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private var meta: String? {
+        var parts: [String] = []
         if recipe.ingredientCount > 0 {
             parts.append("\(recipe.ingredientCount) ingredients")
-        } else if !recipe.body.steps.isEmpty {
+        }
+        if !recipe.body.steps.isEmpty {
             parts.append("\(recipe.body.steps.count) steps")
         }
-        return parts.isEmpty ? recipe.recipeType.label : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
