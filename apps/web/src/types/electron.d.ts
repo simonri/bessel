@@ -66,6 +66,11 @@ declare global {
         host: string,
         dirPath: string,
       ) => Promise<{ cwd: string; dirs: string[] }>;
+      ssh: {
+        hosts: () => Promise<{ hosts: string[]; configExists: boolean }>;
+        openConfig: () => Promise<void>;
+        mkdir: (host: string, parent: string, name: string) => Promise<string>;
+      };
       git: {
         status: (path: string) => Promise<{
           branch: string;

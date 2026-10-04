@@ -48,12 +48,12 @@ import {
   useAttachedSessionKeys,
   useOpenClaudeSession,
 } from "@/components/claude-sessions/use-open-claude-session";
+import { NewProjectDialog } from "@/components/projects/new-project-dialog";
 import { useProjectMutations } from "@/hooks/use-project-mutations";
 import { useProjects } from "@/hooks/use-projects";
 import { client } from "@/lib/client";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
-import { NewProjectPopover } from "./new-project-popover";
 import type { ProjectWithPath } from "./project-picker-menu";
 import { ProjectQuickStart } from "./project-quick-start";
 
@@ -573,20 +573,20 @@ function HeaderActions({
       >
         <LayoutTemplate className="size-3" />
       </button>
-      <NewProjectPopover
+      <button
+        type="button"
+        onClick={() => onNewProjectOpenChange(true)}
+        title="New project"
+        aria-label="New project"
+        className={ICON_BUTTON}
+      >
+        <Plus className="size-3" />
+      </button>
+      <NewProjectDialog
         open={newProjectOpen}
         onOpenChange={onNewProjectOpenChange}
         onCreated={onProjectCreated}
-      >
-        <button
-          type="button"
-          title="New project"
-          aria-label="New project"
-          className={ICON_BUTTON}
-        >
-          <Plus className="size-3" />
-        </button>
-      </NewProjectPopover>
+      />
       <WorkspaceTemplatesDialog
         open={templatesOpen}
         onOpenChange={setTemplatesOpen}

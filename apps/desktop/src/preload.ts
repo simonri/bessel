@@ -79,6 +79,13 @@ const bridge = {
     dirPath: string,
   ): Promise<{ cwd: string; dirs: string[] }> =>
     ipcRenderer.invoke("ssh:list-dir", host, dirPath),
+  ssh: {
+    hosts: (): Promise<{ hosts: string[]; configExists: boolean }> =>
+      ipcRenderer.invoke("ssh:hosts"),
+    openConfig: (): Promise<void> => ipcRenderer.invoke("ssh:open-config"),
+    mkdir: (host: string, parent: string, name: string): Promise<string> =>
+      ipcRenderer.invoke("ssh:mkdir", host, parent, name),
+  },
   shell: {
     openExternal: (url: string) =>
       ipcRenderer.invoke("shell:open-external", url),

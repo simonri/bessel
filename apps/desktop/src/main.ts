@@ -38,6 +38,12 @@ import {
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
+  isValidFolderName,
+  listConfiguredHosts,
+  SSH_HOST_PATTERN,
+  sshConfigPath,
+} from "./ssh-config.js";
+import {
   getSpotifyPositionMs,
   getSpotifyStatus,
   spotifyNext,
@@ -168,6 +174,37 @@ function shQuote(s: string): string {
 
 // Build a `cd` argument that stays safe under the remote shell while still
 // letting a leading ~ expand to the remote home directory.
+function assertSshHost(host: unknown): asserts host is string {
+  // A leading dash would be read as an ssh option.
+  if (
+    typeof host !== "string" ||
+    host.startsWith("-") ||
+    !SSH_HOST_PATTERN.test(host)
+  )
+    throw new Error(`Invalid SSH host: ${String(host)}`);
+}
+
+// Non-interactive: keys and agents only, never a password prompt. A host seen
+// for the first time is trusted (a changed key still fails), and a login that
+// hangs after connecting is cut off rather than spinning forever.
+function sshRun(host: string, remoteCommand: string) {
+  return execFileAsync(
+    "ssh",
+    [
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "ConnectTimeout=10",
+      "-o",
+      "StrictHostKeyChecking=accept-new",
+      "--",
+      host,
+      remoteCommand,
+    ],
+    { maxBuffer: 8 * 1024 * 1024, timeout: 30_000 },
+  );
+}
+
 function remoteCdArg(p: string): string {
   if (p === "~") return "~";
   if (p.startsWith("~/")) return "~/" + shQuote(p.slice(2));
@@ -1034,22 +1071,22 @@ app.whenReady().then(() => {
     return selected;
   });
 
+  ipcHandle("ssh:hosts", () => ({
+    hosts: listConfiguredHosts(),
+    configExists: fs.existsSync(sshConfigPath()),
+  }));
+
+  ipcHandle("ssh:open-config", async () => {
+    const error = await shell.openPath(sshConfigPath());
+    if (error) throw new Error(error);
+  });
+
   ipcHandle("ssh:list-dir", async (_, host: string, dirPath: string) => {
-    if (
-      typeof host !== "string" ||
-      host.startsWith("-") ||
-      !/^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9][A-Za-z0-9.-]*$/.test(host)
-    ) {
-      throw new Error(`Invalid SSH host: ${host}`);
-    }
+    assertSshHost(host);
     const cdArg = remoteCdArg(dirPath?.trim() ? dirPath.trim() : "~");
     // Sentinel markers isolate our output from anything a remote rc file prints.
     const remote = `cd ${cdArg} && printf '\\n@@CWD@@\\n' && pwd && printf '@@DIRS@@\\n' && ls -1Ap`;
-    const { stdout } = await execFileAsync(
-      "ssh",
-      ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "--", host, remote],
-      { maxBuffer: 8 * 1024 * 1024 },
-    );
+    const { stdout } = await sshRun(host, remote);
     const cwdTag = "@@CWD@@\n";
     const dirsTag = "@@DIRS@@\n";
     const cwdAt = stdout.indexOf(cwdTag);
@@ -1066,6 +1103,20 @@ app.whenReady().then(() => {
       .sort((a, b) => a.localeCompare(b));
     return { cwd, dirs };
   });
+
+  ipcHandle(
+    "ssh:mkdir",
+    async (_, host: string, parent: string, name: string) => {
+      assertSshHost(host);
+      if (typeof parent !== "string" || !parent.startsWith("/"))
+        throw new Error("Parent folder must be an absolute path");
+      if (typeof name !== "string" || !isValidFolderName(name.trim()))
+        throw new Error("That isn't a valid folder name");
+      const target = path.posix.join(parent, name.trim());
+      await sshRun(host, `mkdir -- ${shQuote(target)}`);
+      return target;
+    },
+  );
 
   ipcHandle(
     "terminal:spawn",
