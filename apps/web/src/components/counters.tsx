@@ -18,19 +18,19 @@ import {
   DialogTitle,
 } from "@bessel/ui/components/dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckCircle2,
-  Clock,
-  Plus,
-  RotateCcw,
-  Timer,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CheckCircle2, Clock, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  TOPBAR_PANEL_ROW,
+  TOPBAR_PANEL_ROW_ICON,
+  TopbarPanelBody,
+  TopbarPanelEmpty,
+  TopbarPanelHeader,
+} from "@/components/canvas/topbar-panel";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
 
 function formatTimeSince(date: Date | null | undefined): string {
   if (!date) return "Never";
@@ -139,6 +139,11 @@ export function Counters() {
     onError: () => toast.error("Failed to undo reset"),
   });
 
+  const startAdding = () => {
+    setAddingName("");
+    setTimeout(() => addInputRef.current?.focus(), 0);
+  };
+
   const handleAddSubmit = () => {
     // Enter submits, then the input's blur submits again before a re-render
     // could show the mutation as pending.
@@ -160,28 +165,25 @@ export function Counters() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
-        <span className="text-11 font-medium text-white/50">Time since</span>
-        <button
-          type="button"
-          title="New counter"
-          className="text-white/35 transition-colors hover:text-white/70"
-          onClick={() => {
-            setAddingName("");
-            setTimeout(() => addInputRef.current?.focus(), 0);
-          }}
-        >
-          <Plus className="size-3.5" />
-        </button>
-      </div>
+    <>
+      <TopbarPanelHeader
+        title="Time since"
+        action={
+          <button
+            type="button"
+            title="New counter"
+            aria-label="New counter"
+            className={cn(TOPBAR_PANEL_ROW_ICON, "opacity-100")}
+            onClick={startAdding}
+          >
+            <Plus />
+          </button>
+        }
+      />
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Inline add row */}
+      <TopbarPanelBody>
         {addingName !== null && (
-          <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3">
+          <div className={cn(TOPBAR_PANEL_ROW, "bg-white/[0.04]")}>
             <input
               ref={addInputRef}
               type="text"
@@ -193,36 +195,23 @@ export function Counters() {
               }}
               onBlur={handleAddSubmit}
               placeholder="Counter name…"
-              className="min-w-0 flex-1 bg-transparent text-sm text-white/80 outline-none placeholder:text-white/25"
+              aria-label="Counter name"
+              className="min-w-0 flex-1 bg-transparent text-white/85 outline-none placeholder:text-white/30"
             />
-            <button
-              type="button"
-              className="shrink-0 text-white/25 transition-colors hover:text-white/60"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setAddingName(null);
-              }}
-            >
-              <X className="size-3.5" />
-            </button>
           </div>
         )}
 
         {counters.length === 0 && addingName === null ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 py-12 text-center">
-            <Timer className="size-8 text-white/10" />
-            <p className="text-xs text-white/50">No counters yet</p>
+          <TopbarPanelEmpty>
+            No counters yet.{" "}
             <button
               type="button"
-              className="mt-1 text-xs text-white/50 underline-offset-2 hover:text-white/60 hover:underline"
-              onClick={() => {
-                setAddingName("");
-                setTimeout(() => addInputRef.current?.focus(), 0);
-              }}
+              className="text-white/60 underline-offset-2 hover:text-white/85 hover:underline"
+              onClick={startAdding}
             >
               Add one
             </button>
-          </div>
+          </TopbarPanelEmpty>
         ) : (
           counters.map((counter) => (
             <CounterRow
@@ -238,7 +227,7 @@ export function Counters() {
             />
           ))
         )}
-      </div>
+      </TopbarPanelBody>
 
       {/* Detail dialog */}
       {selected && (
@@ -266,7 +255,7 @@ export function Counters() {
           }
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -280,29 +269,25 @@ function CounterRow({
   onReset: () => void;
 }) {
   return (
-    <div className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5">
+    <div className={TOPBAR_PANEL_ROW}>
       <button
         type="button"
-        className="min-w-0 flex-1 text-left"
+        className="min-w-0 flex-1 truncate text-left text-white/85"
         onClick={onClick}
       >
-        <span className="block truncate text-sm text-white/80">
-          {counter.name}
-        </span>
+        {counter.name}
       </button>
-      <span className="shrink-0 font-mono text-xs tabular-nums text-white/50">
+      <span className="shrink-0 tabular-nums text-white/45">
         {formatTimeSince(counter.last_reset_at)}
       </span>
       <button
         type="button"
         title="Mark as done"
-        className="shrink-0 text-white/20 transition-colors hover:text-emerald-400"
-        onClick={(e) => {
-          e.stopPropagation();
-          onReset();
-        }}
+        aria-label={`Mark ${counter.name} as done`}
+        className="flex size-6 shrink-0 items-center justify-center rounded-md text-white/25 transition-colors duration-150 hover:bg-white/[0.06] hover:text-emerald-400"
+        onClick={onReset}
       >
-        <CheckCircle2 className="size-4" />
+        <CheckCircle2 className="size-3.5" />
       </button>
     </div>
   );

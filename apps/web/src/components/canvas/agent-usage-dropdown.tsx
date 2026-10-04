@@ -2,11 +2,7 @@ import {
   getAgentUsageDailyV1AgentUsageDailyGetOptions,
   getAgentUsageStatusV1AgentUsageStatusGetOptions,
 } from "@bessel/client";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@bessel/ui/components/popover";
+import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
 import { useQuery } from "@tanstack/react-query";
 import {
   format,
@@ -14,7 +10,7 @@ import {
   parseISO,
   subDays,
 } from "date-fns";
-import { ArrowUpRight, Gauge } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { useMemo, useState } from "react";
 import { client } from "@/lib/client";
 import { apiDate, localIsoDay, useLocalDay } from "@/lib/local-day";
@@ -25,6 +21,7 @@ import {
   planLabel,
   resetLabel,
 } from "./agent-usage-limits";
+import { TopbarPanel, TopbarPanelHeader } from "./topbar-panel";
 import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
 
@@ -148,23 +145,11 @@ export function AgentUsageDropdown() {
           </button>
         </TopbarTooltip>
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="flex w-96 flex-col overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
-        style={{ maxHeight: "min(32rem, 80vh)" }}
-      >
-        <a
+      <TopbarPanel width="lg">
+        <TopbarPanelHeader
+          title={`Plan usage limits${plan ? ` - ${plan}` : ""}`}
           href={USAGE_SETTINGS_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="group flex shrink-0 items-center justify-between gap-2 px-4 pt-3 pb-1 text-13 text-white/55 transition-colors hover:text-white/80"
-        >
-          <span className="truncate">
-            Plan usage limits{plan ? ` - ${plan}` : ""}
-          </span>
-          <ArrowUpRight className="size-3.5 shrink-0 text-white/35 transition-colors group-hover:text-white/70" />
-        </a>
+        />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2 pb-4">
           {loading ? (
@@ -319,7 +304,7 @@ export function AgentUsageDropdown() {
             </div>
           )}
         </div>
-      </PopoverContent>
+      </TopbarPanel>
     </Popover>
   );
 }

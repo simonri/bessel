@@ -6,11 +6,7 @@ import {
   setProjectLocationV1ProjectsProjectIdLocationPutMutation,
   updateProjectV1ProjectsProjectIdPatchMutation,
 } from "@bessel/client";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@bessel/ui/components/popover";
+import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -19,6 +15,16 @@ import { useProjects } from "@/hooks/use-projects";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
+import { cn } from "@/lib/utils";
+import {
+  TOPBAR_PANEL_ROW,
+  TOPBAR_PANEL_ROW_ICON,
+  TopbarPanel,
+  TopbarPanelBody,
+  TopbarPanelEmpty,
+  TopbarPanelFooter,
+  TopbarPanelHeader,
+} from "./topbar-panel";
 import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
 
@@ -83,12 +89,13 @@ function SshFolderPicker({
   }, [load, initialPath]);
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col bg-black/90 backdrop-blur-xl">
+    <div className="absolute inset-0 z-10 flex flex-col bg-popover">
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
         <span className="truncate text-xs font-medium text-white/70">
           {host}
         </span>
         <button
+          type="button"
           onClick={onCancel}
           className="shrink-0 text-white/30 transition-colors hover:text-white/70"
         >
@@ -108,6 +115,7 @@ function SshFolderPicker({
           <div className="space-y-2 px-3 py-4">
             <p className="text-xs leading-relaxed text-red-400/80">{error}</p>
             <button
+              type="button"
               onClick={() => load("~")}
               className="rounded border border-white/10 bg-white/5 px-2 py-1 text-11 text-white/60 transition-colors hover:bg-white/10 hover:text-white/80"
             >
@@ -119,6 +127,7 @@ function SshFolderPicker({
           <div className="flex flex-col">
             {cwd && cwd !== "/" && (
               <button
+                type="button"
                 onClick={() => cwd && load(parentDir(cwd))}
                 className="px-3 py-1.5 text-left text-xs text-white/50 transition-colors hover:bg-white/5"
               >
@@ -132,6 +141,7 @@ function SshFolderPicker({
             )}
             {dirs.map((d) => (
               <button
+                type="button"
                 key={d}
                 onClick={() => cwd && load(joinDir(cwd, d))}
                 className="truncate px-3 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5"
@@ -144,12 +154,14 @@ function SshFolderPicker({
       </div>
       <div className="flex justify-end gap-1.5 border-t border-white/10 px-3 py-2">
         <button
+          type="button"
           onClick={onCancel}
           className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
         >
           Cancel
         </button>
         <button
+          type="button"
           onClick={() => cwd && onSelect(cwd)}
           disabled={!cwd}
           className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
@@ -324,28 +336,17 @@ export function ProjectsDropdown() {
           </button>
         </TopbarTooltip>
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="relative w-72 overflow-hidden rounded-xl border-white/10 bg-popover p-0 shadow-2xl"
-      >
-        <div className="border-b border-white/10 px-4 py-2.5">
-          <span className="text-sm font-medium text-white/80">Projects</span>
-        </div>
+      <TopbarPanel>
+        <TopbarPanelHeader title="Projects" />
 
-        <div className="max-h-72 overflow-y-auto">
+        <TopbarPanelBody>
           {projects.length === 0 && (
-            <div className="py-6 text-center text-xs text-white/50">
-              No projects yet
-            </div>
+            <TopbarPanelEmpty>No projects yet</TopbarPanelEmpty>
           )}
           {projects.map((p) => (
-            <div
-              key={p.id}
-              className="border-b border-white/[0.06] last:border-0"
-            >
+            <div key={p.id}>
               {editingId === p.id ? (
-                <div className="space-y-2 p-3">
+                <div className="space-y-2 rounded-lg bg-white/[0.03] p-2">
                   <input
                     type="text"
                     value={editName}
@@ -373,6 +374,7 @@ export function ProjectsDropdown() {
                       className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                     />
                     <button
+                      type="button"
                       onClick={() =>
                         browsePath(editSshHost, editPath, (path, name) => {
                           setEditPath(path);
@@ -386,12 +388,14 @@ export function ProjectsDropdown() {
                   </div>
                   <div className="flex justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => setEditingId(null)}
                       className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
                     >
                       Cancel
                     </button>
                     <button
+                      type="button"
                       onClick={saveEdit}
                       disabled={
                         !editName.trim() ||
@@ -406,12 +410,10 @@ export function ProjectsDropdown() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-3 py-2.5">
+                <div className={TOPBAR_PANEL_ROW}>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-white/80">
-                      {p.name}
-                    </p>
-                    <p className="truncate text-11 text-white/50">
+                    <p className="truncate text-white/85">{p.name}</p>
+                    <p className="truncate text-12 text-white/45">
                       {p.path
                         ? p.ssh_host
                           ? `${p.ssh_host}:${p.path}`
@@ -420,26 +422,32 @@ export function ProjectsDropdown() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => startEdit(p)}
-                    className="shrink-0 text-white/25 transition-colors hover:text-white/70"
+                    title="Edit"
+                    aria-label={`Edit ${p.name}`}
+                    className={TOPBAR_PANEL_ROW_ICON}
                   >
-                    <Pencil className="size-3" />
+                    <Pencil />
                   </button>
                   <button
+                    type="button"
                     onClick={() => deleteProject(p.id)}
-                    className="shrink-0 text-white/25 transition-colors hover:text-red-400"
+                    title="Delete"
+                    aria-label={`Delete ${p.name}`}
+                    className={cn(TOPBAR_PANEL_ROW_ICON, "hover:text-red-400")}
                   >
-                    <Trash2 className="size-3" />
+                    <Trash2 />
                   </button>
                 </div>
               )}
             </div>
           ))}
-        </div>
+        </TopbarPanelBody>
 
-        <div className="border-t border-white/10">
+        <TopbarPanelFooter>
           {showAdd ? (
-            <div className="space-y-2 p-3">
+            <div className="space-y-2">
               <input
                 type="text"
                 value={addName}
@@ -464,6 +472,7 @@ export function ProjectsDropdown() {
                   className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                 />
                 <button
+                  type="button"
                   onClick={() =>
                     browsePath(addSshHost, addPath, (path, name) => {
                       setAddPath(path);
@@ -477,6 +486,7 @@ export function ProjectsDropdown() {
               </div>
               <div className="flex justify-end gap-1.5">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowAdd(false);
                     setAddName("");
@@ -487,6 +497,7 @@ export function ProjectsDropdown() {
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={saveAdd}
                   disabled={!addName.trim() || !addPath.trim()}
                   className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
@@ -497,17 +508,21 @@ export function ProjectsDropdown() {
             </div>
           ) : (
             <button
+              type="button"
               onClick={() => {
                 setShowAdd(true);
                 setEditingId(null);
               }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-primary-400 transition-colors hover:bg-white/[0.04] hover:text-primary-300"
+              className={cn(
+                TOPBAR_PANEL_ROW,
+                "w-full text-white/55 hover:text-white/85",
+              )}
             >
               <Plus className="size-3.5" />
               Add project
             </button>
           )}
-        </div>
+        </TopbarPanelFooter>
 
         {sshBrowse && (
           <SshFolderPicker
@@ -520,7 +535,7 @@ export function ProjectsDropdown() {
             }}
           />
         )}
-      </PopoverContent>
+      </TopbarPanel>
     </Popover>
   );
 }
