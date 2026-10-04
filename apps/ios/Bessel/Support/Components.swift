@@ -86,7 +86,7 @@ struct FloatingAddButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .liquidGlass(in: Circle())
+        .liquidGlass(in: Circle(), interactive: true)
         .accessibilityLabel(label)
     }
 }
@@ -204,10 +204,12 @@ extension View {
 
     /// The system's Liquid Glass on iOS 26 (the same material as native
     /// floating bars and text boxes); a blur material before that.
+    /// `interactive` makes it stretch under your finger: right for buttons,
+    /// wrong for cards you type and swipe chips in.
     @ViewBuilder
-    func liquidGlass(in shape: some Shape) -> some View {
+    func liquidGlass(in shape: some Shape, interactive: Bool = false) -> some View {
         if #available(iOS 26.0, *) {
-            glassEffect(.regular.interactive(), in: shape)
+            glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
         } else {
             background(.regularMaterial, in: shape)
         }
