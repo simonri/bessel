@@ -127,6 +127,16 @@ extension TaskItem {
         return calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: date)).day ?? 0
     }
 
+    /// The task as a prompt for Claude, same text as the desktop app's copy
+    /// (apps/web/src/lib/task-format.ts buildTaskPrompt).
+    var claudePrompt: String {
+        var parts = ["Implement this task:\nTitle: \(title)"]
+        if let description, !description.isEmpty {
+            parts.append("Description: \(description)")
+        }
+        return parts.joined(separator: "\n\n")
+    }
+
     var priorityLabel: String? {
         switch priority {
         case 1: "Low"

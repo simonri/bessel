@@ -155,6 +155,7 @@ struct TasksView: View {
                                 RoutineChip(task: task, onSelect: { editingTask = task }) {
                                     Task { await store.complete(task, toasts: toasts) }
                                 }
+                                .contextMenu { copyMenu(task) }
                             }
                         }
                         .padding(.horizontal, 16)
@@ -246,6 +247,7 @@ struct TasksView: View {
                     TaskRow(task: task, onComplete: nil)
                         .contentShape(Rectangle())
                         .onTapGesture { editingTask = task }
+                        .contextMenu { copyMenu(task) }
                         .listRowBackground(Theme.card)
                         .swipeActions(edge: .leading) {
                             Button {
@@ -284,6 +286,7 @@ struct TasksView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { editingTask = task }
+        .contextMenu { copyMenu(task) }
         .listRowBackground(Theme.card)
         .listRowSeparatorTint(Theme.border)
         .swipeActions(edge: .leading) {
@@ -308,6 +311,17 @@ struct TasksView: View {
                 }
                 .tint(Theme.info)
             }
+        }
+    }
+
+    /// Press and hold a task: copy it as a prompt to paste into Claude.
+    @ViewBuilder
+    private func copyMenu(_ task: TaskItem) -> some View {
+        Button {
+            UIPasteboard.general.string = task.claudePrompt
+            toasts.show("Copied for Claude")
+        } label: {
+            Label("Copy task", systemImage: "doc.on.doc")
         }
     }
 

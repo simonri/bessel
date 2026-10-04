@@ -31,32 +31,25 @@ struct TaskFormView: View {
                 }
                 .listRowBackground(Theme.card)
 
-                Section {
+                pickerSection("Status") {
                     HStack(spacing: 8) {
                         statusPill("To do", .todo)
                         statusPill("Doing", .inProgress)
                         statusPill("Done", .done)
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                } header: {
-                    SectionHeading(title: "Status")
                 }
 
-                Section {
+                pickerSection("When") {
                     dueChips
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
+                } rows: {
                     if showingDatePicker {
                         DatePicker("Due", selection: dueBinding, displayedComponents: .date)
                             .datePickerStyle(.graphical)
                             .listRowBackground(Theme.card)
                     }
-                } header: {
-                    SectionHeading(title: "When")
                 }
 
-                Section {
+                pickerSection("Priority") {
                     HStack(spacing: 8) {
                         priorityPill("None", 0)
                         priorityPill("Low", 1)
@@ -64,10 +57,6 @@ struct TaskFormView: View {
                         priorityPill("High", 3)
                         priorityPill("Urgent", 4)
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                } header: {
-                    SectionHeading(title: "Priority")
                 }
 
                 Section {
@@ -125,6 +114,26 @@ struct TaskFormView: View {
     }
 
     // MARK: - Pieces
+
+    /// Pills live in the section header: form rows are clipped to the rounded
+    /// card, which cut off their edges and the selected outline.
+    private func pickerSection(
+        _ title: String,
+        @ViewBuilder pills: () -> some View,
+        @ViewBuilder rows: () -> some View = { EmptyView() }
+    ) -> some View {
+        Section {
+            rows()
+        } header: {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionHeading(title: title)
+                pills()
+                    .padding(.horizontal, -16)
+            }
+            .textCase(nil)
+            .padding(.bottom, 4)
+        }
+    }
 
     private func statusPill(_ label: String, _ value: TaskStatus) -> some View {
         FilterPill(title: label, isSelected: status == value) {
