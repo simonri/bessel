@@ -64,6 +64,7 @@ struct RecipesView: View {
                 .padding(.bottom, 24)
             }
             .scrollDismissesKeyboard(.immediately)
+            .refreshable { await store.load() }
             .contentMargins(.bottom, 80, for: .scrollContent)
             .background(Theme.background)
             .overlay {
@@ -126,7 +127,6 @@ struct RecipesView: View {
                 Text(store.errorMessage ?? "")
             }
             .task { await store.load() }
-            .refreshable { await store.load() }
         }
     }
 

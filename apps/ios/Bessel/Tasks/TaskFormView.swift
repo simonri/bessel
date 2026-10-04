@@ -120,6 +120,7 @@ struct TaskFormView: View {
         }
         .presentationDetents([.large])
         .presentationCornerRadius(28)
+        .presentationDragIndicator(.hidden)
         .interactiveDismissDisabled(isSaving)
     }
 

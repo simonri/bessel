@@ -191,6 +191,7 @@ struct RecipeEditorView: View {
             }
         }
         .presentationCornerRadius(28)
+        .presentationDragIndicator(.hidden)
         .interactiveDismissDisabled(isSaving)
     }
 
@@ -328,6 +329,7 @@ struct RecipePasteView: View {
             }
         }
         .presentationCornerRadius(28)
+        .presentationDragIndicator(.hidden)
     }
 
     private func tidy() {

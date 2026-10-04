@@ -28,6 +28,7 @@ struct TasksView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .refreshable { await store.load() }
             .listSectionSpacing(18)
             .contentMargins(.top, Theme.pageTop - 8, for: .scrollContent)
             .scrollContentBackground(.hidden)
@@ -85,7 +86,6 @@ struct TasksView: View {
                 Text(store.errorMessage ?? "")
             }
             .task { await store.load() }
-            .refreshable { await store.load() }
             .haptic(.selection, trigger: store.mode)
         }
     }

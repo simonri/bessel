@@ -70,6 +70,7 @@ struct AddPlaceView: View {
             .onAppear { isFocused = true }
         }
         .presentationCornerRadius(28)
+        .presentationDragIndicator(.hidden)
     }
 
     @ViewBuilder

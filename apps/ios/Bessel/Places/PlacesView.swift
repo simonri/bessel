@@ -314,6 +314,7 @@ struct PlaceDetailView: View {
         }
         .presentationDetents([.medium, .large])
         .presentationCornerRadius(28)
+        .presentationDragIndicator(.hidden)
     }
 
     private func header(_ place: PlaceItem) -> some View {

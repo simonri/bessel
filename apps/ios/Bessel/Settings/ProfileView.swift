@@ -69,6 +69,7 @@ struct ProfileView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 32)
             }
+            .scrollBounceBehavior(.basedOnSize)
             .background(Theme.background)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -91,6 +92,7 @@ struct ProfileView: View {
         }
         .presentationDetents([.large])
         .presentationCornerRadius(32)
+        .presentationDragIndicator(.hidden)
     }
 
     // MARK: - Pieces

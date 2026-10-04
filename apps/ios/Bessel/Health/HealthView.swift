@@ -39,6 +39,10 @@ struct HealthView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
+            .refreshable {
+                await store.syncIfNeeded()
+                await store.load()
+            }
             .background(Theme.background)
             .overlay {
                 if !store.hasLoaded { ProgressView() }
@@ -57,10 +61,6 @@ struct HealthView: View {
             .task(id: isActive && scenePhase == .active) {
                 guard isActive, scenePhase == .active else { return }
                 await store.syncIfNeeded()
-            }
-            .refreshable {
-                await store.syncIfNeeded()
-                await store.load()
             }
         }
     }
