@@ -30,6 +30,7 @@ struct RecipesView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    searchField
                     filters
                     if store.hasLoaded {
                         if filtered.isEmpty {
@@ -64,7 +65,6 @@ struct RecipesView: View {
             }
             .navigationTitle("Recipes")
             .toolbarTitleDisplayMode(.inlineLarge)
-            .searchable(text: $search, prompt: "Search recipes or ingredients")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -104,6 +104,30 @@ struct RecipesView: View {
             .task { await store.load() }
             .refreshable { await store.load() }
         }
+    }
+
+    /// In the page rather than `.searchable`, whose bar sits flush under the title.
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Theme.mutedForeground)
+            TextField("Search recipes or ingredients", text: $search)
+                .submitLabel(.search)
+                .autocorrectionDisabled()
+            if !search.isEmpty {
+                Button {
+                    search = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Theme.faintForeground)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 44)
+        .background(Theme.fill, in: Capsule())
     }
 
     private var filters: some View {

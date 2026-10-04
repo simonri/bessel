@@ -230,7 +230,7 @@ private struct NightChart: View {
                 let span = max(end.timeIntervalSince(start), 1)
                 ZStack(alignment: .topLeading) {
                     ForEach(0..<4, id: \.self) { level in
-                        Capsule()
+                        Rectangle()
                             .fill(Theme.fill)
                             .frame(height: rowHeight)
                             .offset(y: CGFloat(level) * (rowHeight + rowGap))
@@ -238,7 +238,7 @@ private struct NightChart: View {
                     ForEach(segments) { segment in
                         let x = segment.start.timeIntervalSince(start) / span * geometry.size.width
                         let width = max(segment.duration / span * geometry.size.width, 2)
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        Rectangle()
                             .fill(segment.stage.color)
                             .frame(width: width, height: rowHeight)
                             .offset(x: x, y: CGFloat(segment.stage.level) * (rowHeight + rowGap))
@@ -326,7 +326,7 @@ private struct WeekCard: View {
                 ForEach(nights) { night in
                     let isLast = night == nights.last
                     VStack(spacing: 6) {
-                        Capsule()
+                        Rectangle()
                             .fill(isLast ? SleepStage.asleepREM.color : SleepStage.asleepREM.color.opacity(0.4))
                             .frame(height: max(8, 96 * min(night.asleep / 3600, maxHours) / maxHours))
                         Text(night.wakeDate.formatted(.dateTime.weekday(.narrow)))
