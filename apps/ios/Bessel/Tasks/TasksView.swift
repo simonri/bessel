@@ -46,10 +46,9 @@ struct TasksView: View {
                 }
             }
             .navigationTitle("Tasks")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProfileButton(auth: auth)
-                }
+                ProfileToolbarItem(auth: auth)
             }
             .sheet(item: $editingTask) { task in
                 TaskFormView(store: store, task: task)
@@ -67,8 +66,11 @@ struct TasksView: View {
 
     // MARK: - Filters
 
+    /// Lives in a section header: list rows are clipped to the rounded
+    /// section shape, which cut the pills off at the edges.
     private var filters: some View {
         Section {
+        } header: {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 8) {
                     ForEach(TasksStore.Mode.allCases) { mode in
@@ -94,10 +96,12 @@ struct TasksView: View {
                         }
                     }
                     .scrollIndicators(.hidden)
+                    .scrollClipDisabled()
                 }
             }
-            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
-            .listRowBackground(Color.clear)
+            .textCase(nil)
+            .padding(.horizontal, -16)
+            .padding(.bottom, 4)
         }
     }
 
@@ -114,24 +118,25 @@ struct TasksView: View {
 
         if !store.routines.isEmpty {
             Section {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 8) {
-                        ForEach(store.routines) { task in
-                            RoutineChip(task: task, onSelect: { editingTask = task }) {
-                                Task { await store.complete(task, toasts: toasts) }
+            } header: {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Routines", systemImage: "repeat")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.mutedForeground)
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 8) {
+                            ForEach(store.routines) { task in
+                                RoutineChip(task: task, onSelect: { editingTask = task }) {
+                                    Task { await store.complete(task, toasts: toasts) }
+                                }
                             }
                         }
+                        .padding(.horizontal, 16)
                     }
-                    .padding(.horizontal, 4)
+                    .scrollIndicators(.hidden)
+                    .padding(.horizontal, -32)
                 }
-                .scrollIndicators(.hidden)
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                .listRowBackground(Color.clear)
-            } header: {
-                Label("Routines", systemImage: "repeat")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.mutedForeground)
-                    .textCase(nil)
+                .textCase(nil)
             }
         }
 

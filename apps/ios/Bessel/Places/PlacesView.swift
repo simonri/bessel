@@ -31,22 +31,13 @@ struct PlacesView: View {
             }
             .background(Theme.background)
             .navigationTitle("Places")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        withAnimation(.snappy) { showingMap.toggle() }
-                    } label: {
-                        Image(systemName: showingMap ? "list.bullet" : "map")
-                    }
-                    .accessibilityLabel(showingMap ? "Show list" : "Show map")
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { adding = true } label: { Image(systemName: "plus") }
                         .accessibilityLabel("Add place")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProfileButton(auth: auth)
-                }
+                ProfileToolbarItem(auth: auth)
             }
             // The new place opens once the add sheet is gone; presenting a
             // sheet while another is dismissing is dropped.
@@ -79,6 +70,17 @@ struct PlacesView: View {
                 }
             }
             Spacer()
+            Button {
+                withAnimation(.snappy) { showingMap.toggle() }
+            } label: {
+                Image(systemName: showingMap ? "list.bullet" : "map")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.foreground)
+                    .frame(width: 36, height: 36)
+                    .background(Theme.fill, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showingMap ? "Show list" : "Show map")
         }
     }
 

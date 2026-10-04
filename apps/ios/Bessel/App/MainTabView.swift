@@ -72,6 +72,25 @@ struct MainTabView: View {
     }
 }
 
+/// The avatar as its own toolbar item. On iOS 26 it stands alone instead of
+/// sitting inside the bar's glass bubble (a circle in a circle).
+struct ProfileToolbarItem: ToolbarContent {
+    let auth: AuthSession
+
+    var body: some ToolbarContent {
+        if #available(iOS 26.0, *) {
+            ToolbarItem(placement: .topBarTrailing) {
+                ProfileButton(auth: auth)
+            }
+            .sharedBackgroundVisibility(.hidden)
+        } else {
+            ToolbarItem(placement: .topBarTrailing) {
+                ProfileButton(auth: auth)
+            }
+        }
+    }
+}
+
 /// The round avatar in each tab's navigation bar; opens your profile.
 struct ProfileButton: View {
     let auth: AuthSession

@@ -43,10 +43,9 @@ struct HealthView: View {
                 if !store.hasLoaded { ProgressView() }
             }
             .navigationTitle("Health")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProfileButton(auth: auth)
-                }
+                ProfileToolbarItem(auth: auth)
             }
             .alert("Something went wrong", isPresented: errorBinding) {
                 Button("OK", role: .cancel) {}

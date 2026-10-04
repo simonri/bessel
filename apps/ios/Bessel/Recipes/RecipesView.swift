@@ -62,6 +62,7 @@ struct RecipesView: View {
                 if !store.hasLoaded { ProgressView() }
             }
             .navigationTitle("Recipes")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .searchable(text: $search, prompt: "Search recipes or ingredients")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -81,9 +82,7 @@ struct RecipesView: View {
                     }
                     .accessibilityLabel("New recipe")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProfileButton(auth: auth)
-                }
+                ProfileToolbarItem(auth: auth)
             }
             .navigationDestination(for: UUID.self) { id in
                 RecipeDetailView(store: store, recipeID: id)

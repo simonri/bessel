@@ -20,10 +20,9 @@ struct GolfCartView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background)
                 .navigationTitle("Golf cart")
+                .toolbarTitleDisplayMode(.inlineLarge)
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        ProfileButton(auth: auth)
-                    }
+                    ProfileToolbarItem(auth: auth)
                 }
                 .task(id: SessionID(active: isActive && scenePhase == .active, attempt: store.attempt)) {
                     guard isActive && scenePhase == .active else { return }
