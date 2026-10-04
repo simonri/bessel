@@ -54,6 +54,7 @@ struct RecipesView: View {
                         }
                     }
                 }
+                .padding(.top, Theme.pageTop)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }

@@ -35,6 +35,7 @@ struct HealthView: View {
                     }
                     syncFooter
                 }
+                .padding(.top, Theme.pageTop)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }

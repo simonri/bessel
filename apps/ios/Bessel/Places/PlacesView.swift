@@ -22,6 +22,7 @@ struct PlacesView: View {
             VStack(spacing: 0) {
                 statusPicker
                     .padding(.horizontal, 16)
+                    .padding(.top, Theme.pageTop)
                     .padding(.bottom, 12)
                 if showingMap {
                     map

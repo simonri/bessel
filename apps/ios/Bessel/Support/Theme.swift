@@ -6,6 +6,9 @@ import UIKit
 /// app uses (oklch values mirrored from apps/web) so a project, recipe type or
 /// sleep stage is the same colour everywhere.
 enum Theme {
+    /// Space between the navigation bar and a page's first content.
+    static let pageTop: CGFloat = 16
+
     static let background = adaptive(light: .oklch(0.985, 0.006, 70), dark: .oklch(0.15, 0.004, 285))
     static let card = adaptive(light: .oklch(1, 0, 0), dark: .oklch(0.205, 0.005, 285))
     static let fill = adaptive(light: .oklch(0.955, 0.008, 60), dark: .oklch(0.255, 0.006, 285))

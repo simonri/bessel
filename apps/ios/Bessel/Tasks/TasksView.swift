@@ -26,6 +26,7 @@ struct TasksView: View {
             }
             .listStyle(.insetGrouped)
             .listSectionSpacing(18)
+            .contentMargins(.top, Theme.pageTop - 8, for: .scrollContent)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .overlay {

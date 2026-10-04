@@ -65,7 +65,7 @@ struct GolfCartView: View {
                 detailRows(reading)
             }
             .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.top, Theme.pageTop)
             .padding(.bottom, 24)
         }
         .refreshable { await store.refresh() }
