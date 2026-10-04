@@ -95,8 +95,8 @@ constraints:
 ### Ship a new prod build
 
 ```bash
-make ios-deploy
-# or: CONFIGS=Release apps/ios/scripts/deploy.sh
+make ios-deploy-prod
+# or: CONFIGS=Release apps/ios/scripts/deploy.sh  (make ios-deploy does dev and prod)
 ```
 
 Direct-installs over Wi-Fi (or USB) via `xcodebuild -allowProvisioningUpdates`
