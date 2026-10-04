@@ -224,16 +224,25 @@ private struct NightChart: View {
     private let rowHeight: CGFloat = 14
     private let rowGap: CGFloat = 6
 
+    /// Only the stages that happened get a row, still awake-to-deep top down.
+    private var levels: [Int] {
+        Set(segments.map(\.stage.level)).sorted()
+    }
+
+    private func y(_ level: Int) -> CGFloat {
+        CGFloat(levels.firstIndex(of: level) ?? 0) * (rowHeight + rowGap)
+    }
+
     var body: some View {
         VStack(spacing: 6) {
             GeometryReader { geometry in
                 let span = max(end.timeIntervalSince(start), 1)
                 ZStack(alignment: .topLeading) {
-                    ForEach(0..<4, id: \.self) { level in
+                    ForEach(levels, id: \.self) { level in
                         Rectangle()
                             .fill(Theme.fill)
                             .frame(height: rowHeight)
-                            .offset(y: CGFloat(level) * (rowHeight + rowGap))
+                            .offset(y: y(level))
                     }
                     ForEach(segments) { segment in
                         let x = segment.start.timeIntervalSince(start) / span * geometry.size.width
@@ -241,11 +250,11 @@ private struct NightChart: View {
                         Rectangle()
                             .fill(segment.stage.color)
                             .frame(width: width, height: rowHeight)
-                            .offset(x: x, y: CGFloat(segment.stage.level) * (rowHeight + rowGap))
+                            .offset(x: x, y: y(segment.stage.level))
                     }
                 }
             }
-            .frame(height: 4 * rowHeight + 3 * rowGap)
+            .frame(height: CGFloat(levels.count) * rowHeight + CGFloat(max(levels.count - 1, 0)) * rowGap)
             .accessibilityHidden(true)
 
             HStack {
