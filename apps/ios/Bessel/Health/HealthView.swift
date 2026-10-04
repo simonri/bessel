@@ -238,19 +238,20 @@ private struct NightChart: View {
             GeometryReader { geometry in
                 let span = max(end.timeIntervalSince(start), 1)
                 ZStack(alignment: .topLeading) {
+                    // Rounded track per stage; its blocks are square, clipped to the track.
                     ForEach(levels, id: \.self) { level in
-                        Rectangle()
-                            .fill(Theme.fill)
-                            .frame(height: rowHeight)
-                            .offset(y: y(level))
-                    }
-                    ForEach(segments) { segment in
-                        let x = segment.start.timeIntervalSince(start) / span * geometry.size.width
-                        let width = max(segment.duration / span * geometry.size.width, 2)
-                        Rectangle()
-                            .fill(segment.stage.color)
-                            .frame(width: width, height: rowHeight)
-                            .offset(x: x, y: y(segment.stage.level))
+                        ZStack(alignment: .leading) {
+                            Theme.fill
+                            ForEach(segments.filter { $0.stage.level == level }) { segment in
+                                Rectangle()
+                                    .fill(segment.stage.color)
+                                    .frame(width: max(segment.duration / span * geometry.size.width, 2))
+                                    .offset(x: segment.start.timeIntervalSince(start) / span * geometry.size.width)
+                            }
+                        }
+                        .frame(width: geometry.size.width, height: rowHeight)
+                        .clipShape(Capsule())
+                        .offset(y: y(level))
                     }
                 }
             }
@@ -335,7 +336,7 @@ private struct WeekCard: View {
                 ForEach(nights) { night in
                     let isLast = night == nights.last
                     VStack(spacing: 6) {
-                        Rectangle()
+                        Capsule()
                             .fill(isLast ? SleepStage.asleepREM.color : SleepStage.asleepREM.color.opacity(0.4))
                             .frame(height: max(8, 96 * min(night.asleep / 3600, maxHours) / maxHours))
                         Text(night.wakeDate.formatted(.dateTime.weekday(.narrow)))
