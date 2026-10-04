@@ -206,7 +206,7 @@ struct RecipesView: View {
                 }
             }
         }
-        .scrollIndicators(.hidden)
+        .sidewaysOnly()
     }
 
     @ViewBuilder

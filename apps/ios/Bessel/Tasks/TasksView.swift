@@ -121,7 +121,7 @@ struct TasksView: View {
                             }
                         }
                     }
-                    .scrollIndicators(.hidden)
+                    .sidewaysOnly()
                     .scrollClipDisabled()
                 }
             }
@@ -159,7 +159,7 @@ struct TasksView: View {
                         }
                         .padding(.horizontal, 16)
                     }
-                    .scrollIndicators(.hidden)
+                    .sidewaysOnly()
                     .padding(.horizontal, -32)
                 }
                 .textCase(nil)

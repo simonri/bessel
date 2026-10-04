@@ -181,7 +181,7 @@ struct TaskFormView: View {
                 }
             }
         }
-        .scrollIndicators(.hidden)
+        .sidewaysOnly()
     }
 
     private var isCustomDate: Bool {

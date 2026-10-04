@@ -117,8 +117,9 @@ struct Composer<Accessories: View>: View {
                     HStack(spacing: 6) {
                         accessories
                     }
+                    .fixedSize()
                 }
-                .scrollIndicators(.hidden)
+                .sidewaysOnly()
                 Button(action: onSubmit) {
                     Group {
                         if isSending {
@@ -193,6 +194,14 @@ struct SectionHeading: View {
 }
 
 extension View {
+    /// For horizontal chip rows: they scroll sideways and never up and down.
+    func sidewaysOnly() -> some View {
+        self
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     /// The system's Liquid Glass on iOS 26 (the same material as native
     /// floating bars and text boxes); a blur material before that.
     @ViewBuilder
