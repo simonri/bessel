@@ -17,6 +17,8 @@ from api.exception_handlers import add_exception_handlers
 from api.health import router as health_router
 from api.logging import Logger
 from api.logging import configure as configure_logging
+from api.mcp.server import build_routes as build_mcp_routes
+from api.mcp.server import build_server as build_mcp_server
 from api.middlewares import FlushEnqueuedWorkerJobsMiddleware
 from api.openapi import OPENAPI_PARAMETERS, set_openapi_generator
 from api.postgres import AsyncSessionMiddleware, create_async_engine, create_sync_engine
@@ -79,12 +81,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
   log.info("Bessel API started")
 
-  yield {
-    "async_engine": async_engine,
-    "async_sessionmaker": async_sessionmaker,
-    "sync_engine": sync_engine,
-    "redis": redis,
-  }
+  async with app.state.mcp_server.session_manager.run():
+    yield {
+      "async_engine": async_engine,
+      "async_sessionmaker": async_sessionmaker,
+      "sync_engine": sync_engine,
+      "redis": redis,
+    }
 
   await redis.close(True)
   await rate_limit.dispose_redis()
@@ -107,6 +110,9 @@ def create_app() -> FastAPI:
 
   app.include_router(health_router)
   app.include_router(api_router)
+
+  app.state.mcp_server = build_mcp_server()
+  app.router.routes.extend(build_mcp_routes(app.state.mcp_server))
 
   return app
 

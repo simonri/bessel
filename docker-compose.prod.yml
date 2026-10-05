@@ -105,6 +105,7 @@ services:
       BESSEL_AUTH0_AUDIENCE: ${BESSEL_AUTH0_AUDIENCE}
       BESSEL_GOOGLE_PLACES_API_KEY: ${BESSEL_GOOGLE_PLACES_API_KEY:-}
       BESSEL_API_BASE_URL: ${BESSEL_API_BASE_URL:-https://api.getbessel.com}
+      BESSEL_MCP_RESOURCE_URL: ${BESSEL_MCP_RESOURCE_URL:-https://api.getbessel.com/mcp}
       BESSEL_CREDENTIALS_ENCRYPTION_KEY: ${BESSEL_CREDENTIALS_ENCRYPTION_KEY:-}
       BESSEL_GOOGLE_OAUTH_CLIENT_ID: ${BESSEL_GOOGLE_OAUTH_CLIENT_ID:-}
       BESSEL_GOOGLE_OAUTH_CLIENT_SECRET: ${BESSEL_GOOGLE_OAUTH_CLIENT_SECRET:-}
@@ -125,7 +126,8 @@ services:
       # Traefik through the Cloudflare Tunnel in /home/infra/cloudflared. Separate
       # cert resolver since the default DNS-01 Cloudflare token on this box isn't
       # scoped to this zone
-      - "traefik.http.routers.bessel-api-public.rule=Host(`api.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
+      # `/mcp` is the remote MCP server Claude connects to; the well-known path is its OAuth protected resource metadata.
+      - "traefik.http.routers.bessel-api-public.rule=Host(`api.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`) || Path(`/mcp`) || Path(`/.well-known/oauth-protected-resource/mcp`))"
       - "traefik.http.routers.bessel-api-public.entrypoints=websecure"
       - "traefik.http.routers.bessel-api-public.tls.certresolver=letsencrypt-http"
       - "traefik.http.routers.bessel-api-public.service=metron-api"

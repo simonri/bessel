@@ -4,6 +4,7 @@ from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from api.activity.repository import ActivityRepository
+from api.activity.schemas import ActivityAppSummary, ActivitySummaryResponse
 
 # Events are written at most every HEARTBEAT_SECS (300s) by the tracker; cap
 # inter-event gaps at 2x that so tracker downtime / suspend gaps don't inflate
@@ -38,6 +39,24 @@ def _local_day_bounds(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> tupl
 
 
 class ActivityService:
+  async def summarize(self, repo: ActivityRepository, user_id: UUID, source: str, start_ts: int, end_ts: int) -> ActivitySummaryResponse:
+    """Active time on `source` in the window, broken down per app."""
+    segments = await self.get_active_segments(repo, user_id, source, start_ts, end_ts)
+    sources = await repo.get_sources(user_id)
+
+    totals: dict[str, int] = {}
+    total_active = 0
+    for seg in segments:
+      key = seg.app_class or "(unknown)"
+      totals[key] = totals.get(key, 0) + seg.duration
+      total_active += seg.duration
+
+    apps = sorted(
+      [ActivityAppSummary(app_class=k, active_secs=v, percentage=v / total_active * 100 if total_active > 0 else 0.0) for k, v in totals.items()],
+      key=lambda x: -x.active_secs,
+    )
+    return ActivitySummaryResponse(source=source, sources=sources, total_active_secs=total_active, apps=apps)
+
   async def get_active_segments(self, repo: ActivityRepository, user_id: UUID, source: str, start_ts: int, end_ts: int) -> list[ActiveSegment]:
     """Active-time segments within [start_ts, end_ts), clipped to the window.
 

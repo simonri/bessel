@@ -63,6 +63,9 @@ _PRODUCTION_RULES: dict[str, Sequence[Rule]] = {
   r"^/v1/recipes/import$": [Rule(group=RateLimitGroup.default, minute=5, hour=30, zone="recipe-import")],
   r"^/v1/ingest-tokens": [Rule(group=RateLimitGroup.default, minute=10, zone="ingest-tokens")],
   r"^/v1/calendars/(google/authorize|icloud|accounts/[^/]+/sync)": [Rule(group=RateLimitGroup.default, minute=10, zone="calendar-connect")],
+  # Claude's connector traffic all arrives from Anthropic's egress range, so this
+  # per-IP budget is shared by every user's MCP calls.
+  r"^/mcp$": [Rule(group=RateLimitGroup.default, minute=600, zone="mcp")],
   "^/v1": [
     Rule(group=RateLimitGroup.restricted, minute=60, zone="api"),
     Rule(group=RateLimitGroup.default, minute=500, zone="api"),

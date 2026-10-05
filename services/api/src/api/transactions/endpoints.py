@@ -21,7 +21,6 @@ from api.transactions.schemas import (
   BulkUpdateResponse,
   CategorySpending,
   ImportResponse,
-  MonthlyFlow,
   MonthlyFlowResponse,
   MonthlySpendingResponse,
   TransactionListResponse,
@@ -69,24 +68,17 @@ async def list_transactions(
 ) -> TransactionListResponse:
   """List transactions."""
   repo = TransactionRepository.from_session(session)
-  statement = repo.get_base_statement().where(Transaction.user_id == current_user.id)
-
-  if bank_account_id:
-    statement = statement.where(Transaction.bank_account_id.in_(bank_account_id))
-  if category_id:
-    statement = statement.where(Transaction.category_id.in_(category_id))
-  if uncategorized:
-    statement = statement.where(Transaction.category_id.is_(None))
-  if direction:
-    statement = statement.where(Transaction.direction == direction)
-  if search:
-    statement = statement.where(Transaction.description.ilike(f"%{search}%"))
-  if date_from:
-    statement = statement.where(Transaction.transaction_date >= date_from)
-  if date_to:
-    statement = statement.where(Transaction.transaction_date <= date_to)
-  if is_business is not None:
-    statement = statement.where(Transaction.is_business == is_business)
+  statement = repo.get_filtered_statement(
+    current_user.id,
+    bank_account_ids=bank_account_id,
+    category_ids=category_id,
+    uncategorized=uncategorized,
+    direction=direction,
+    search=search,
+    date_from=date_from,
+    date_to=date_to,
+    is_business=is_business,
+  )
 
   statement = apply_sorting(statement, Transaction, sorting)
   # Stable tiebreaker so row order never shifts after unrelated updates (e.g. category)
@@ -269,31 +261,5 @@ async def monthly_flow(
   months: int = Query(6, description="Number of months to look back (including current)."),
 ) -> MonthlyFlowResponse:
   """Return income and expenses aggregated per month."""
-  from dateutil.relativedelta import relativedelta
-
-  today = date.today()
-  start = today.replace(day=1) - relativedelta(months=months - 1)
-
-  repo = TransactionRepository.from_session(session)
-  rows = await repo.monthly_flow_totals(user_id=current_user.id, start=start)
-
-  buckets: dict[tuple[int, int], dict[str, int]] = {}
-  for row in rows:
-    key = (int(row.yr), int(row.mo))
-    if key not in buckets:
-      buckets[key] = {"income": 0, "expenses": 0}
-    if row.direction == "credit":
-      buckets[key]["income"] = row.total
-    else:
-      buckets[key]["expenses"] = row.total
-
-  # Fill in missing months with zeros
-  items: list[MonthlyFlow] = []
-  cursor = start
-  while cursor <= today:
-    key = (cursor.year, cursor.month)
-    b = buckets.get(key, {"income": 0, "expenses": 0})
-    items.append(MonthlyFlow(year=cursor.year, month=cursor.month, **b))
-    cursor += relativedelta(months=1)
-
+  items = await transaction_service.monthly_flow(TransactionRepository.from_session(session), current_user.id, months=months, today=date.today())
   return MonthlyFlowResponse(items=items)

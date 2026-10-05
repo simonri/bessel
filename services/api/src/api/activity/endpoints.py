@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query
 
 from api.activity.repository import ActivityRepository
 from api.activity.schemas import (
-  ActivityAppSummary,
   ActivityBatchRequest,
   ActivityBatchResponse,
   ActivityDailyEntry,
@@ -84,37 +83,7 @@ async def get_activity_summary(
   end_ts: Annotated[int, Query(description="End of time window (Unix epoch seconds, exclusive).")],
   source: Annotated[str, Query(description="Machine source to query.")],
 ) -> ActivitySummaryResponse:
-  repo = ActivityRepository.from_session(session)
-  service = ActivityService()
-  segments = await service.get_active_segments(repo, current_user.id, source, start_ts, end_ts)
-  sources = await repo.get_sources(current_user.id)
-
-  totals: dict[str, int] = {}
-  total_active = 0
-
-  for seg in segments:
-    key = seg.app_class or "(unknown)"
-    totals[key] = totals.get(key, 0) + seg.duration
-    total_active += seg.duration
-
-  apps = sorted(
-    [
-      ActivityAppSummary(
-        app_class=k,
-        active_secs=v,
-        percentage=v / total_active * 100 if total_active > 0 else 0.0,
-      )
-      for k, v in totals.items()
-    ],
-    key=lambda x: -x.active_secs,
-  )
-
-  return ActivitySummaryResponse(
-    source=source,
-    sources=sources,
-    total_active_secs=total_active,
-    apps=apps,
-  )
+  return await ActivityService().summarize(ActivityRepository.from_session(session), current_user.id, source, start_ts, end_ts)
 
 
 @router.get(

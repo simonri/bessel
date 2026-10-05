@@ -4,7 +4,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, UploadFile
-from sqlalchemy import false
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
@@ -80,23 +79,16 @@ async def list_tasks(
   completed_before: int | None = Query(default=None, description="Filter tasks completed before this Unix timestamp (exclusive)."),
 ) -> TaskListResponse:
   repo = TaskRepository.from_session(session)
-  statement = repo.get_base_statement().where(Task.user_id == current_user.id)
-
-  if status is not None:
-    statement = statement.where(Task.status.in_(status))
-  if priority is not None:
-    statement = statement.where(Task.priority == priority)
-  if project is not None:
-    project_obj = await ProjectRepository.from_session(session).get_by_name(project, user_id=current_user.id)
-    statement = statement.where(Task.project_id == project_obj.id) if project_obj else statement.where(false())
-  if area is not None:
-    statement = statement.where(Task.area == area)
-  if is_recurring is not None:
-    statement = statement.where(Task.is_recurring == is_recurring)
-  if completed_after is not None:
-    statement = statement.where(Task.completed_at >= datetime.fromtimestamp(completed_after, tz=UTC))
-  if completed_before is not None:
-    statement = statement.where(Task.completed_at < datetime.fromtimestamp(completed_before, tz=UTC))
+  statement = repo.get_filtered_statement(
+    current_user.id,
+    statuses=status,
+    priority=priority,
+    project=project,
+    area=area,
+    is_recurring=is_recurring,
+    completed_after=datetime.fromtimestamp(completed_after, tz=UTC) if completed_after is not None else None,
+    completed_before=datetime.fromtimestamp(completed_before, tz=UTC) if completed_before is not None else None,
+  )
 
   statement = apply_sorting(statement, Task, sorting)
 

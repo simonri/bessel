@@ -9,12 +9,44 @@ from api.models.category import Category
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
-from sqlalchemy import Row, case, delete, extract, func, or_, select, update
+from sqlalchemy import Row, Select, case, delete, extract, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 
 class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Transaction, UUID]):
   model = Transaction
+
+  def get_filtered_statement(
+    self,
+    user_id: UUID,
+    *,
+    bank_account_ids: Sequence[UUID] | None = None,
+    category_ids: Sequence[UUID] | None = None,
+    uncategorized: bool = False,
+    direction: TransactionDirection | str | None = None,
+    search: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    is_business: bool | None = None,
+  ) -> Select[tuple[Transaction]]:
+    statement = self.get_base_statement().where(Transaction.user_id == user_id)
+    if bank_account_ids:
+      statement = statement.where(Transaction.bank_account_id.in_(bank_account_ids))
+    if category_ids:
+      statement = statement.where(Transaction.category_id.in_(category_ids))
+    if uncategorized:
+      statement = statement.where(Transaction.category_id.is_(None))
+    if direction:
+      statement = statement.where(Transaction.direction == direction)
+    if search:
+      statement = statement.where(Transaction.description.ilike(f"%{search}%"))
+    if date_from:
+      statement = statement.where(Transaction.transaction_date >= date_from)
+    if date_to:
+      statement = statement.where(Transaction.transaction_date <= date_to)
+    if is_business is not None:
+      statement = statement.where(Transaction.is_business == is_business)
+    return statement
 
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:
     self.session.add(batch)
