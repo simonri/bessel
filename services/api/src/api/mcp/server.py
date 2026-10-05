@@ -1,14 +1,15 @@
 from urllib.parse import urlsplit
 
-from api.mcp.auth import Auth0TokenVerifier
-from api.mcp.tools import TOOLS
-from api.settings import Environment, settings
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import AnyHttpUrl
 from starlette.routing import Route
+
+from api.mcp.auth import Auth0TokenVerifier
+from api.mcp.tools import TOOLS
+from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
 Read-only access to the user's Bessel life dashboard: calendar, bank transactions, \
@@ -43,7 +44,9 @@ def build_server() -> MCPServer:
 
 def _transport_security() -> TransportSecuritySettings:
   allowed_hosts = [urlsplit(settings.MCP_RESOURCE_URL).netloc]
-  allowed_origins: list[str] = []
+  # Claude's hosted connectors call from Anthropic's servers; allow its origin
+  # in case a request carries one.
+  allowed_origins = ["https://claude.ai"]
   if settings.is_development():
     # MCP Inspector and other local clients.
     allowed_hosts += ["localhost:*", "127.0.0.1:*"]

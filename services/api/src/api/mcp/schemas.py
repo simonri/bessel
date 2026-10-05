@@ -4,6 +4,8 @@ internal bookkeeping (dedup hashes, UI positions, colours) is left out."""
 from datetime import date, datetime
 from uuid import UUID
 
+from pydantic import Field
+
 from api.activity.schemas import ActivitySummaryResponse
 from api.calendars.providers import AttendeeResponse
 from api.common.schemas import Schema
@@ -13,7 +15,6 @@ from api.models.recipe import RecipeType
 from api.models.transaction import TransactionDirection
 from api.tasks.schemas import TaskStatus
 from api.transactions.schemas import MonthlyFlow
-from pydantic import Field
 
 
 class CalendarAttendee(Schema):

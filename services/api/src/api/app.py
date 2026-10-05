@@ -1,9 +1,10 @@
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 from typing import TypedDict
 
 import structlog
 from fastapi import FastAPI
+from mcp.server.mcpserver import MCPServer
 from starlette.types import Scope
 
 from api import (
@@ -81,7 +82,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
   log.info("Bessel API started")
 
-  async with app.state.mcp_server.session_manager.run():
+  mcp_server: MCPServer | None = app.state.mcp_server
+  async with mcp_server.session_manager.run() if mcp_server else nullcontext():
     yield {
       "async_engine": async_engine,
       "async_sessionmaker": async_sessionmaker,
@@ -111,8 +113,12 @@ def create_app() -> FastAPI:
   app.include_router(health_router)
   app.include_router(api_router)
 
-  app.state.mcp_server = build_mcp_server()
-  app.router.routes.extend(build_mcp_routes(app.state.mcp_server))
+  app.state.mcp_server = None
+  if settings.AUTH0_DOMAIN:
+    app.state.mcp_server = build_mcp_server()
+    app.router.routes.extend(build_mcp_routes(app.state.mcp_server))
+  else:
+    log.warning("MCP server disabled: AUTH0_DOMAIN is not set")
 
   return app
 

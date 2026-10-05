@@ -9,6 +9,11 @@ from typing import Annotated
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from mcp.server.mcpserver import Context
+from mcp.server.mcpserver.exceptions import ToolError
+from pydantic import Field
+from sqlalchemy import func
+
 from api.activity.repository import ActivityRepository
 from api.activity.service import ActivityService
 from api.calendars.repository import CalendarEventRepository, CalendarPersonRepository
@@ -30,10 +35,6 @@ from api.tasks.repository import TaskRepository
 from api.tasks.schemas import TaskStatus
 from api.transactions.repository import TransactionRepository
 from api.transactions.service import transaction_service
-from mcp.server.mcpserver import Context
-from mcp.server.mcpserver.exceptions import ToolError
-from pydantic import Field
-from sqlalchemy import func
 
 MAX_CALENDAR_DAYS = 62
 MAX_SLEEP_DAYS = 92

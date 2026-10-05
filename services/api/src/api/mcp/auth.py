@@ -1,7 +1,8 @@
 import structlog
+from mcp.server.auth.provider import AccessToken
+
 from api.auth.dependencies import InvalidTokenError, decode_access_token
 from api.settings import settings
-from mcp.server.auth.provider import AccessToken
 
 log = structlog.get_logger()
 

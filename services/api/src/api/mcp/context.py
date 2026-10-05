@@ -1,14 +1,15 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from api.exceptions import BesselError
-from api.models.user import User
-from api.postgres import AsyncSession
-from api.users.service import user_service
 from mcp.server.auth.middleware.bearer_auth import AuthenticatedUser
 from mcp.server.mcpserver import Context
 from mcp.server.mcpserver.exceptions import ToolError
 from starlette.requests import Request
+
+from api.exceptions import BesselError
+from api.models.user import User
+from api.postgres import AsyncSession
+from api.users.service import user_service
 
 
 @asynccontextmanager

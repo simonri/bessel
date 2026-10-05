@@ -11,9 +11,9 @@ import pytest
 import pytest_asyncio
 from api.app import app as bessel_app
 from api.auth.dependencies import JWKSClient
-from api.common.encryption import encrypt
 from api.mcp.auth import Auth0TokenVerifier
 from api.mcp.server import build_routes, build_server
+from api.mcp.tools import TOOLS
 from api.models.activity_event import ActivityEvent
 from api.models.bank_account import BankAccount
 from api.models.calendar import Calendar
@@ -23,7 +23,10 @@ from api.models.category import Category
 from api.models.healthkit_sleep_sample import HealthKitSleepSample
 from api.models.healthkit_workout import HealthKitWorkout
 from api.models.recipe import Recipe
+from api.models.security import AssetType, Security
+from api.models.security_price import SecurityPrice
 from api.models.task import Task
+from api.models.trade import Trade, TradeType
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.postgres import AsyncSession
@@ -85,13 +88,15 @@ def serve(session: AsyncSession, mocker: MockerFixture) -> ServeFixture:
   return _serve
 
 
-@pytest.fixture
-def connect(serve: ServeFixture) -> ConnectFixture:
+@pytest.fixture(params=["auto", "legacy"])
+def connect(serve: ServeFixture, request: pytest.FixtureRequest) -> ConnectFixture:
+  """Connects an SDK client, once per protocol path: the current per-request one and the legacy initialize handshake."""
+
   @asynccontextmanager
   async def _connect(token: str = "token-a") -> AsyncIterator[Client]:
     async with serve() as app:
       http_client = httpx2.AsyncClient(transport=httpx2.ASGITransport(app=app), headers={"Authorization": f"Bearer {token}"})
-      async with Client(streamable_http_client(MCP_URL, http_client=http_client)) as client:
+      async with Client(streamable_http_client(MCP_URL, http_client=http_client), mode=request.param) as client:
         yield client
 
   return _connect
@@ -347,12 +352,14 @@ class TestTransactions:
     assert (await _call(connect, "search_transactions", token="token-b"))["transactions"] == []
     assert (await _call(connect, "list_transaction_categories", token="token-b"))["categories"] == []
     assert (await _call(connect, "get_spending_by_category", {"year": 2026, "month": 9}, token="token-b"))["categories"] == []
+    flow = await _call(connect, "get_monthly_cash_flow", {"months": 36}, token="token-b")
+    assert all(m["income"] == 0 and m["expenses"] == 0 for m in flow["months"])
 
 
 class TestCalendar:
   @pytest.mark.asyncio
   async def test_events_in_local_days(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
-    account = CalendarAccount(user_id=user.id, provider=CalendarProvider.google, email="me@example.com", encrypted_credentials=encrypt("refresh"))
+    account = CalendarAccount(user_id=user.id, provider=CalendarProvider.google, email="me@example.com", encrypted_credentials="unused")
     await save_fixture(account)
     calendar = Calendar(account_id=account.id, external_id="primary", name="Personal", color="#16a765")
     await save_fixture(calendar)
@@ -405,6 +412,8 @@ class TestHealth:
     assert [(n["date"], n["asleep_secs"]) for n in sleep["nights"]] == [("2026-10-04", 8 * 3600)]
     assert sleep["total_asleep_secs"] == 8 * 3600
     assert (await _call(connect, "get_sleep", {"start_date": "2026-10-03", "end_date": "2026-10-03", "timezone": "Europe/Stockholm"}))["nights"] == []
+    other = await _call(connect, "get_sleep", {"start_date": "2026-10-04", "end_date": "2026-10-04", "timezone": "Europe/Stockholm"}, token="token-b")
+    assert other == {"nights": [], "total_asleep_secs": 0, "stages": []}
 
   @pytest.mark.asyncio
   async def test_workouts(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
@@ -440,6 +449,11 @@ class TestComputerActivity:
     assert summary["apps"][0]["app_class"] == "kitty"
     assert summary["total_active_secs"] > 0
 
+    args = {"start_date": "2026-10-04", "end_date": "2026-10-04", "timezone": "UTC"}
+    assert await _call_error(connect, "get_computer_activity", args, token="token-b") == "No computer activity has been recorded."
+    theirs = await _call(connect, "get_computer_activity", {**args, "source": "laptop"}, token="token-b")
+    assert (theirs["total_active_secs"], theirs["apps"], theirs["sources"]) == (0, [], [])
+
   @pytest.mark.asyncio
   async def test_no_activity_is_a_tool_error(self, connect: ConnectFixture) -> None:
     args = {"start_date": "2026-10-04", "end_date": "2026-10-04", "timezone": "UTC"}
@@ -448,5 +462,46 @@ class TestComputerActivity:
 
 class TestInvestments:
   @pytest.mark.asyncio
-  async def test_empty_holdings(self, connect: ConnectFixture) -> None:
-    assert (await _call(connect, "get_investment_holdings"))["holdings"] == []
+  async def test_holdings_are_valued_at_latest_price(self, connect: ConnectFixture, save_owned: SaveFixture, save_fixture: SaveFixture) -> None:
+    account = BankAccount(name="ISK", currency="SEK", subtype="investment")
+    await save_owned(account)
+    fund = Security(name="Global Index", ticker="GLOB", asset_type=AssetType.mutual_fund, currency="SEK")
+    await save_fixture(fund)
+    await save_owned(
+      Trade(
+        security_id=fund.id,
+        bank_account_id=account.id,
+        trade_type=TradeType.buy,
+        trade_date=date(2026, 1, 2),
+        quantity=10_000_000,
+        price_per_unit=10_000,
+        currency="SEK",
+      )
+    )
+    await save_fixture(SecurityPrice(security_id=fund.id, price_date=date(2026, 10, 1), price_per_unit=12_000, currency="SEK"))
+
+    [holding] = (await _call(connect, "get_investment_holdings"))["holdings"]
+    assert (holding["security_name"], holding["quantity"], holding["cost_basis"], holding["current_value"]) == ("Global Index", 10_000_000, 100_000, 120_000)
+    assert (await _call(connect, "get_investment_holdings", token="token-b"))["holdings"] == []
+
+
+# Tools whose tests above check that a second user sees none of the first user's data.
+ISOLATION_TESTED = {
+  "get_calendar_events",
+  "search_transactions",
+  "get_spending_by_category",
+  "get_monthly_cash_flow",
+  "list_transaction_categories",
+  "search_recipes",
+  "get_recipe",
+  "search_tasks",
+  "get_task",
+  "get_sleep",
+  "list_workouts",
+  "get_computer_activity",
+  "get_investment_holdings",
+}
+
+
+def test_every_tool_has_an_isolation_test() -> None:
+  assert {fn.__name__ for fn, _ in TOOLS} == ISOLATION_TESTED, "Add a cross-user test for the new tool and list it in ISOLATION_TESTED."
