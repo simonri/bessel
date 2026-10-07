@@ -13,10 +13,12 @@ enum EventEditorTarget: Identifiable {
     }
 }
 
-/// A move or resize waiting on "which events?" or "email guests?".
+/// A move or resize waiting on "which events?" and then "email guests?".
 struct PendingRetime: Identifiable {
     let event: CalendarEvent
     let timing: EventTiming
+    /// Nil until chosen; non-repeating events are always `.this`.
+    var scope: EditScope?
     var id: UUID { event.id }
 }
 
@@ -298,33 +300,53 @@ struct CalendarView: View {
         editorTarget = .new(EventTiming(allDay: false, start: start, end: end))
     }
 
-    /// Repeating events ask which ones; Google events with guests ask about emailing.
+    /// Repeating events ask which ones; Google events with guests then ask
+    /// whether to email them, like the desktop's "Email guests" choice.
     private func requestRetime(_ event: CalendarEvent, _ timing: EventTiming) {
-        let emailsGuests = event.hasGuests && store.account(for: event.calendarId)?.isGoogle == true
-        if event.recurring || emailsGuests {
-            pendingRetime = PendingRetime(event: event, timing: timing)
+        if event.recurring {
+            pendingRetime = PendingRetime(event: event, timing: timing, scope: nil)
+        } else if emailsGuests(event) {
+            pendingRetime = PendingRetime(event: event, timing: timing, scope: .this)
         } else {
             Task { await store.retime(event, to: timing, scope: .this, notifyGuests: false) }
         }
     }
 
+    private func emailsGuests(_ event: CalendarEvent) -> Bool {
+        event.hasGuests && store.account(for: event.calendarId)?.isGoogle == true
+    }
+
     private var retimeTitle: String {
         guard let pending = pendingRetime else { return "" }
-        return pending.event.recurring ? "Change which events?" : "Email guests about the change?"
+        return pending.scope == nil ? "Change which events?" : "Email guests about the change?"
     }
 
     @ViewBuilder
     private func retimeButtons(_ pending: PendingRetime) -> some View {
-        let notify = pending.event.hasGuests && store.account(for: pending.event.calendarId)?.isGoogle == true
-        if pending.event.recurring {
-            ForEach(EditScope.allCases) { scope in
-                Button(scope.label) { commitRetime(pending, scope: scope, notify: notify) }
-            }
+        if let scope = pending.scope {
+            Button("Send update") { commitRetime(pending, scope: scope, notify: true) }
+            Button("Don't send") { commitRetime(pending, scope: scope, notify: false) }
         } else {
-            Button("Send update") { commitRetime(pending, scope: .this, notify: true) }
-            Button("Don't send") { commitRetime(pending, scope: .this, notify: false) }
+            ForEach(EditScope.allCases) { scope in
+                Button(scope.label) { chooseScope(pending, scope) }
+            }
         }
         Button("Cancel", role: .cancel) { cancelRetime() }
+    }
+
+    private func chooseScope(_ pending: PendingRetime, _ scope: EditScope) {
+        guard emailsGuests(pending.event) else {
+            commitRetime(pending, scope: scope, notify: false)
+            return
+        }
+        pendingRetime = nil
+        var next = pending
+        next.scope = scope
+        Task {
+            // Let the first dialog close before asking the second question.
+            try? await Task.sleep(for: .milliseconds(400))
+            pendingRetime = next
+        }
     }
 
     private func commitRetime(_ pending: PendingRetime, scope: EditScope, notify: Bool) {
@@ -362,6 +384,8 @@ private struct DayColumn: View {
     @State private var dragOffset: CGSize = .zero
     @State private var resizingID: UUID?
     @State private var resizeDelta: CGFloat = 0
+    /// Lifting the finger after a hold also counts as a tap; ignore that one.
+    @State private var heldID: UUID?
 
     var body: some View {
         let placed = CalendarLayout.layoutDay(store.visibleEvents, day: day)
@@ -375,6 +399,7 @@ private struct DayColumn: View {
                 eventView(item)
             }
         }
+        .haptic(.impact(weight: .medium), trigger: draggingID) { _, new in new != nil }
     }
 
     @ViewBuilder
@@ -388,6 +413,7 @@ private struct DayColumn: View {
         let height = max(item.height + (isResizing ? resizeDelta : 0), CalendarLayout.minEventHeight)
 
         EventChip(event: event, store: store, isSelected: isSelected || isDragging, height: height)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
             .frame(width: width - 3, height: height - 1)
             .overlay(alignment: .bottom) {
                 if isSelected && editable && !isDragging {
@@ -399,9 +425,24 @@ private struct DayColumn: View {
             .zIndex(isDragging || isSelected ? 1 : 0)
             .shadow(color: .black.opacity(isDragging ? 0.2 : 0), radius: 8, y: 4)
             .onTapGesture {
-                if isSelected { selectedID = nil } else { onOpen(event) }
+                if heldID == event.id {
+                    heldID = nil
+                } else if isSelected {
+                    selectedID = nil
+                } else {
+                    onOpen(event)
+                }
             }
             .gesture(editable ? moveGesture(event) : nil)
+            // A hold that never moves never reaches the drag; select it here
+            // so the resize handle shows.
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.3).onEnded { _ in
+                    guard editable else { return }
+                    selectedID = event.id
+                    heldID = event.id
+                }
+            )
             .animation(.snappy(duration: 0.2), value: isDragging)
     }
 
@@ -415,7 +456,6 @@ private struct DayColumn: View {
                     draggingID = event.id
                     selectedID = event.id
                     Self.isDraggingEvent = true
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 }
                 let translation = drag?.translation ?? .zero
                 let dayDelta = clampedDayDelta(translation.width)
@@ -434,10 +474,15 @@ private struct DayColumn: View {
                         Self.isDraggingEvent = false
                     }
                 }
-                guard case .second(true, let drag) = value, let drag else { return }
-                let dayDelta = clampedDayDelta(drag.translation.width)
-                let minuteDelta = CalendarLayout.snappedDelta(forDY: drag.translation.height)
-                guard dayDelta != 0 || minuteDelta != 0 else { return }
+                guard case .second(true, let drag) = value else { return }
+                let translation = drag?.translation ?? .zero
+                let dayDelta = clampedDayDelta(translation.width)
+                let minuteDelta = CalendarLayout.snappedDelta(forDY: translation.height)
+                guard dayDelta != 0 || minuteDelta != 0 else {
+                    // A hold without moving selects it, showing the resize handle.
+                    selectedID = event.id
+                    return
+                }
                 let shift = TimeInterval(minuteDelta * 60)
                 let calendar = Calendar.current
                 let start = calendar.date(byAdding: .day, value: dayDelta, to: event.start)!.addingTimeInterval(shift)

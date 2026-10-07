@@ -10,6 +10,8 @@ struct EventDetailSheet: View {
     @Environment(\.openURL) private var openURL
     @State private var confirmingDelete = false
     @State private var pendingReply: String?
+    /// A repeating event's chosen delete scope, waiting on "email guests?".
+    @State private var deleteScope: EditScope?
 
     private var event: CalendarEvent? { store.events.first { $0.id == eventID } }
 
@@ -110,6 +112,17 @@ struct EventDetailSheet: View {
         }
         .confirmationDialog(deleteTitle(event), isPresented: $confirmingDelete, titleVisibility: .visible) {
             deleteButtons(event)
+        }
+        .confirmationDialog(
+            "Email guests about the cancellation?",
+            isPresented: Binding(get: { deleteScope != nil }, set: { if !$0 { deleteScope = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let scope = deleteScope {
+                Button("Delete and email guests", role: .destructive) { delete(event, scope: scope, notify: true) }
+                Button("Delete without emailing", role: .destructive) { delete(event, scope: scope, notify: false) }
+            }
+            Button("Cancel", role: .cancel) { deleteScope = nil }
         }
         .confirmationDialog("Answer for which events?", isPresented: Binding(get: { pendingReply != nil }, set: { if !$0 { pendingReply = nil } }), titleVisibility: .visible) {
             Button("This event") { reply(event, scope: .this) }
@@ -255,7 +268,17 @@ struct EventDetailSheet: View {
         let emailsGuests = event.hasGuests && store.account(for: event.calendarId)?.isGoogle == true
         if event.recurring {
             ForEach(EditScope.allCases) { scope in
-                Button(scope.label, role: .destructive) { delete(event, scope: scope, notify: emailsGuests) }
+                Button(scope.label, role: .destructive) {
+                    guard emailsGuests else {
+                        delete(event, scope: scope, notify: false)
+                        return
+                    }
+                    Task {
+                        // Let this dialog close before asking about guests.
+                        try? await Task.sleep(for: .milliseconds(400))
+                        deleteScope = scope
+                    }
+                }
             }
         } else if emailsGuests {
             Button("Delete and email guests", role: .destructive) { delete(event, scope: .this, notify: true) }
@@ -267,6 +290,7 @@ struct EventDetailSheet: View {
     }
 
     private func delete(_ event: CalendarEvent, scope: EditScope, notify: Bool) {
+        deleteScope = nil
         dismiss()
         Task { await store.delete(event, scope: scope, notifyGuests: notify) }
     }
