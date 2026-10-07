@@ -1,6 +1,7 @@
 import BackgroundTasks
 import Foundation
 import os
+import UIKit
 
 /// Uploads new workouts and sleep now and then while the app is closed, so the
 /// web and desktop are up to date without opening the phone app first. iOS
@@ -33,6 +34,9 @@ enum HealthBackgroundSync {
     private static func handle(_ task: BGAppRefreshTask) {
         schedule()
         let work = Task { @MainActor in
+            // Before the first unlock the keychain can't be read, and restoring
+            // then would look like being signed out.
+            guard UIApplication.shared.isProtectedDataAvailable else { return false }
             let auth = AuthSession.shared
             if auth.state == .restoring { auth.restore() }
             guard auth.state == .signedIn else { return true }

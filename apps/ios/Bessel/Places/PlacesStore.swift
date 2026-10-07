@@ -25,7 +25,7 @@ final class PlacesStore {
         outbox = services.outbox
         cache = services.cache
         if let saved = cache.load([PlaceItem].self, key: Self.cacheKey) {
-            places = saved
+            places = saved.filter { !outbox.pendingIDs.contains($0.id) }
             hasLoaded = true
         }
     }

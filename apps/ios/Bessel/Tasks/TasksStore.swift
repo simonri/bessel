@@ -74,8 +74,9 @@ final class TasksStore {
         outbox = services.outbox
         cache = services.cache
         if let snapshot = cache.load(Snapshot.self, key: Self.cacheKey) {
-            open = snapshot.open
-            done = snapshot.done
+            let pending = outbox.pendingIDs
+            open = snapshot.open.filter { !pending.contains($0.id) && $0.status != .unknown }
+            done = snapshot.done.filter { !pending.contains($0.id) }
             doneMaxPage = snapshot.doneMaxPage
             projects = snapshot.projects
             areas = snapshot.areas

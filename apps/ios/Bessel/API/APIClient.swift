@@ -239,6 +239,9 @@ final class APIClient {
         case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed:
             // Never reached the server.
             return retryPolicy.backoff(attempt: attempt)
+        case .timedOut where request.timeout > Self.requestTimeout:
+            // A slow, costly request (a model call) isn't worth running twice.
+            return nil
         case .timedOut, .networkConnectionLost:
             return replaySafe ? retryPolicy.backoff(attempt: attempt) : nil
         default:

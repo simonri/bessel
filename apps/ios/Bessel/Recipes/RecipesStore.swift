@@ -24,7 +24,7 @@ final class RecipesStore {
         outbox = services.outbox
         cache = services.cache
         if let saved = cache.load([RecipeItem].self, key: Self.cacheKey) {
-            recipes = saved
+            recipes = saved.filter { !outbox.pendingIDs.contains($0.id) }
             hasLoaded = true
         }
     }
