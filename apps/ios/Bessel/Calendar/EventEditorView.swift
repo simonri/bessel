@@ -364,7 +364,7 @@ struct EventEditorView: View {
                 try await work()
                 dismiss()
             } catch {
-                errorMessage = CalendarStore.message(for: error)
+                errorMessage = error.userMessage
             }
         }
     }

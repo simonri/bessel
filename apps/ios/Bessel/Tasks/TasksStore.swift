@@ -43,15 +43,44 @@ final class TasksStore {
     private(set) var projects: [String] = []
     private(set) var areas: [String] = []
     private(set) var hasLoaded = false
+    /// A change that didn't go through; shown as an alert.
     var errorMessage: String?
+    /// A refresh that didn't go through; shown quietly over what's already there.
+    var loadError: String?
 
     private let client: APIClient
+    private let outbox: DeleteOutbox
+    private let cache: ResponseCache
+    @ObservationIgnored private var loads = LoadGeneration()
+    @ObservationIgnored private let changes = SerialQueues<UUID>()
     private var donePage = 1
     private var doneMaxPage = 1
-    private var pendingDeletes: [UUID: Task<Void, Never>] = [:]
+    /// Bumped by every full load, so a "load more" that started before it
+    /// doesn't append a page from the old list.
+    @ObservationIgnored private var doneEpoch = 0
 
-    init(client: APIClient) {
-        self.client = client
+    private struct Snapshot: Codable {
+        let open: [TaskItem]
+        let done: [TaskItem]
+        let doneMaxPage: Int
+        let projects: [String]
+        let areas: [String]
+    }
+
+    private static let cacheKey = "tasks.v1"
+
+    init(services: AppServices) {
+        client = services.client
+        outbox = services.outbox
+        cache = services.cache
+        if let snapshot = cache.load(Snapshot.self, key: Self.cacheKey) {
+            open = snapshot.open
+            done = snapshot.done
+            doneMaxPage = snapshot.doneMaxPage
+            projects = snapshot.projects
+            areas = snapshot.areas
+            hasLoaded = true
+        }
     }
 
     var canLoadMoreDone: Bool { donePage < doneMaxPage }
@@ -111,41 +140,56 @@ final class TasksStore {
 
     // MARK: - Loading
 
+    func loadIfStale() async {
+        guard loads.isStale(maxAge: AppServices.freshFor) else { return }
+        await load()
+    }
+
     func load() async {
+        let ticket = loads.begin()
         defer { hasLoaded = true }
         do {
-            async let openTask: TaskListResponse = client.get("/v1/tasks", query: [
+            async let openTask: [TaskItem] = client.getAllPages("/v1/tasks", query: [
                 URLQueryItem(name: "status", value: "todo"),
                 URLQueryItem(name: "status", value: "in_progress"),
                 URLQueryItem(name: "sorting", value: "position"),
-                URLQueryItem(name: "limit", value: "200"),
             ])
             async let doneTask: TaskListResponse = client.get("/v1/tasks", query: doneQuery(page: 1))
             async let projectsTask: [Project] = client.get("/v1/projects")
             async let areasTask: [String] = client.get("/v1/tasks/areas")
+            let (openItems, doneResponse, projectList, areaList) = try await (openTask, doneTask, projectsTask, areasTask)
+            guard loads.isCurrent(ticket) else { return }
 
-            let pendingIDs = Set(pendingDeletes.keys)
-            open = try await openTask.items.filter { !pendingIDs.contains($0.id) }
-            let doneResponse = try await doneTask
-            done = doneResponse.items.filter { !pendingIDs.contains($0.id) }
+            let pending = outbox.pendingIDs
+            open = openItems.filter { !pending.contains($0.id) && $0.status != .unknown }
+            done = doneResponse.items.filter { !pending.contains($0.id) }
             donePage = 1
             doneMaxPage = doneResponse.pagination.maxPage
-            projects = try await projectsTask.map(\.name).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-            areas = try await areasTask
+            doneEpoch += 1
+            projects = projectList.map(\.name).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            areas = areaList
+            loadError = nil
+            loads.finish(ticket)
+            cache.save(Snapshot(open: openItems, done: doneResponse.items, doneMaxPage: doneMaxPage, projects: projects, areas: areas), as: Self.cacheKey)
         } catch {
-            report(error)
+            guard loads.isCurrent(ticket), !error.isCancellation else { return }
+            loadError = error.userMessage
         }
     }
 
     func loadMoreDone() async {
         guard canLoadMoreDone else { return }
+        let epoch = doneEpoch
         do {
             let response: TaskListResponse = try await client.get("/v1/tasks", query: doneQuery(page: donePage + 1))
+            guard epoch == doneEpoch else { return }
             donePage += 1
             doneMaxPage = response.pagination.maxPage
-            done += response.items
+            let known = Set(done.map(\.id)).union(outbox.pendingIDs)
+            done += response.items.filter { !known.contains($0.id) }
         } catch {
-            report(error)
+            guard !error.isCancellation else { return }
+            loadError = error.userMessage
         }
     }
 
@@ -161,25 +205,32 @@ final class TasksStore {
     // MARK: - Mutations
 
     func create(_ draft: TaskCreate) async throws {
+        loads.invalidate()
         let created: TaskItem = try await client.post("/v1/tasks", body: draft)
-        withAnimation(.snappy) { open.append(created) }
+        withAnimation(.snappy) { place(created) }
         rememberProject(created.project)
     }
 
     func update(_ task: TaskItem, with update: TaskUpdate) async throws {
-        let updated: TaskItem = try await client.patch("/v1/tasks/\(task.id)", body: update)
+        loads.invalidate()
+        let updated: TaskItem = try await changes.run(task.id) { [client] in
+            try await client.patch("/v1/tasks/\(task.id)", body: update)
+        }
         withAnimation(.snappy) { place(updated) }
         rememberProject(updated.project)
     }
 
     func complete(_ task: TaskItem, toasts: ToastCenter) async {
+        loads.invalidate()
         withAnimation(.snappy) { open.removeAll { $0.id == task.id } }
         do {
-            let response: TaskCompleteResponse = try await client.post("/v1/tasks/\(task.id)/complete")
+            let response: TaskCompleteResponse = try await changes.run(task.id) { [client] in
+                try await client.post("/v1/tasks/\(task.id)/complete")
+            }
             withAnimation(.snappy) {
-                done.insert(response.completedTask, at: 0)
+                place(response.completedTask)
                 if let next = response.nextTask, next.status != .done {
-                    open.append(next)
+                    place(next)
                 }
             }
             toasts.show(completionMessage) { [weak self] in
@@ -191,17 +242,39 @@ final class TasksStore {
         }
     }
 
+    /// Puts the task back and removes the next occurrence it spawned, in one
+    /// request where the server supports it so the two can't come apart.
     private func undoComplete(_ response: TaskCompleteResponse) async {
+        loads.invalidate()
+        let task = response.completedTask
         if let next = response.nextTask {
             withAnimation(.snappy) { open.removeAll { $0.id == next.id } }
-            try? await client.deleteNoContent("/v1/tasks/\(next.id)")
         }
-        await reopen(response.completedTask)
+        do {
+            let reopened: TaskItem = try await changes.run(task.id) { [client] in
+                do {
+                    return try await client.post("/v1/tasks/\(task.id)/undo-complete")
+                } catch let error as APIError where error.isMissingRoute {
+                    // An older server: the same thing in two steps.
+                    if let next = response.nextTask {
+                        try? await client.deleteNoContent("/v1/tasks/\(next.id)")
+                    }
+                    return try await client.post("/v1/tasks/\(task.id)/reopen")
+                }
+            }
+            withAnimation(.snappy) { place(reopened) }
+        } catch {
+            report(error)
+            await load()
+        }
     }
 
     func reopen(_ task: TaskItem) async {
+        loads.invalidate()
         do {
-            let reopened: TaskItem = try await client.post("/v1/tasks/\(task.id)/reopen")
+            let reopened: TaskItem = try await changes.run(task.id) { [client] in
+                try await client.post("/v1/tasks/\(task.id)/reopen")
+            }
             withAnimation(.snappy) { place(reopened) }
         } catch {
             report(error)
@@ -211,25 +284,15 @@ final class TasksStore {
     /// Hides the task right away and deletes it for real after the undo
     /// window, so Undo never has to recreate it.
     func delete(_ task: TaskItem, toasts: ToastCenter) {
+        loads.invalidate()
         let wasOpen = open.contains { $0.id == task.id }
         withAnimation(.snappy) {
             open.removeAll { $0.id == task.id }
             done.removeAll { $0.id == task.id }
         }
-        pendingDeletes[task.id] = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(4.5))
-            guard !Task.isCancelled, let self else { return }
-            pendingDeletes[task.id] = nil
-            do {
-                try await client.deleteNoContent("/v1/tasks/\(task.id)")
-            } catch {
-                report(error)
-                await load()
-            }
-        }
+        outbox.schedule(task.id, path: "/v1/tasks/\(task.id)")
         toasts.show("Task deleted") { [weak self] in
-            guard let self else { return }
-            pendingDeletes.removeValue(forKey: task.id)?.cancel()
+            guard let self, outbox.cancel(task.id) else { return }
             withAnimation(.snappy) {
                 if wasOpen {
                     self.open.append(task)
@@ -251,6 +314,7 @@ final class TasksStore {
             task.position = Double(index + 1) * 1000
             return task
         }
+        loads.invalidate()
         let positions = Dictionary(uniqueKeysWithValues: reordered.map { ($0.id, $0.position) })
         open = open.map { task in
             var task = task
@@ -277,7 +341,7 @@ final class TasksStore {
             open.sort { $0.position < $1.position }
         case .done:
             done.insert(task, at: 0)
-        case .cancelled:
+        case .cancelled, .unknown:
             break
         }
     }
@@ -296,6 +360,6 @@ final class TasksStore {
 
     private func report(_ error: Error) {
         if error.isCancellation { return }
-        errorMessage = error.localizedDescription
+        errorMessage = error.userMessage
     }
 }

@@ -12,13 +12,36 @@ final class CalendarStore {
     private(set) var accounts: [CalendarAccount] = []
     private(set) var events: [CalendarEvent] = []
     private(set) var hasLoaded = false
+    /// A change that didn't go through; shown as an alert.
     var errorMessage: String?
+    /// A refresh that didn't go through; shown quietly over what's already there.
+    var loadError: String?
 
     private let client: APIClient
+    private let cache: ResponseCache
+    @ObservationIgnored private var loads = LoadGeneration()
+    @ObservationIgnored private let changes = SerialQueues<UUID>()
     private static let defaultCalendarKey = "calendar.defaultCalendar"
 
-    init(client: APIClient) {
-        self.client = client
+    private struct Snapshot: Codable {
+        let firstDay: Date
+        let accounts: [CalendarAccount]
+        let events: [CalendarEvent]
+    }
+
+    private static let cacheKey = "calendar.v1"
+
+    init(services: AppServices) {
+        client = services.client
+        cache = services.cache
+        if let snapshot = cache.load(Snapshot.self, key: Self.cacheKey) {
+            accounts = snapshot.accounts
+            // Last time's events only help when it's still the same week.
+            if Calendar.current.isDate(snapshot.firstDay, inSameDayAs: firstDay) {
+                events = snapshot.events
+            }
+            hasLoaded = true
+        }
     }
 
     // MARK: - Derived
@@ -127,30 +150,44 @@ final class CalendarStore {
 
     // MARK: - Loading
 
+    func loadIfStale() async {
+        guard loads.isStale(maxAge: AppServices.freshFor) else { return }
+        await load()
+    }
+
     func load() async {
         defer { hasLoaded = true }
         do {
             let response: CalendarAccountListResponse = try await client.get("/v1/calendars/accounts")
             accounts = response.accounts
         } catch {
-            report(error)
+            if !error.isCancellation { loadError = error.userMessage }
         }
         await loadEvents()
     }
 
     /// One day either side of what's shown, so time-zone edges are covered.
+    /// Only the newest request lands, so flicking through weeks never ends on
+    /// a week you've already left.
     func loadEvents() async {
+        let ticket = loads.begin()
+        let week = firstDay
         let calendar = Calendar.current
-        let start = calendar.date(byAdding: .day, value: -1, to: firstDay)!
+        let start = calendar.date(byAdding: .day, value: -1, to: week)!
         let end = calendar.date(byAdding: .day, value: 1, to: lastDayEnd)!
         do {
             let response: CalendarEventListResponse = try await client.get("/v1/calendars/events", query: [
                 URLQueryItem(name: "start_ts", value: String(Int(start.timeIntervalSince1970))),
                 URLQueryItem(name: "end_ts", value: String(Int(end.timeIntervalSince1970))),
             ])
+            guard loads.isCurrent(ticket) else { return }
             events = response.events
+            loadError = nil
+            loads.finish(ticket)
+            cache.save(Snapshot(firstDay: week, accounts: accounts, events: response.events), as: Self.cacheKey)
         } catch {
-            report(error)
+            guard loads.isCurrent(ticket), !error.isCancellation else { return }
+            loadError = error.userMessage
         }
     }
 
@@ -158,6 +195,7 @@ final class CalendarStore {
 
     /// Creates an event. `fields` are the editor's values as API JSON.
     func create(in calendarID: UUID, fields: [String: JSONValue]) async throws {
+        loads.invalidate()
         var body = fields
         body["time_zone"] = .string(timeZone)
         let response: EventWriteResponse = try await client.post("/v1/calendars/\(calendarID)/events", body: JSONValue.object(body))
@@ -181,7 +219,10 @@ final class CalendarStore {
         body["calendar_id"] = calendarID.map { .string($0.uuidString) } ?? .null
         body["time_zone"] = .string(timeZone)
         body["notify_guests"] = .bool(notifyGuests)
-        let response: EventWriteResponse = try await client.patch("/v1/calendars/events/\(event.id)", body: JSONValue.object(body))
+        loads.invalidate()
+        let response: EventWriteResponse = try await changes.run(event.id) { [client] in
+            try await client.patch("/v1/calendars/events/\(event.id)", body: JSONValue.object(body))
+        }
         if let updated = response.event, let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index] = updated
         }
@@ -201,13 +242,19 @@ final class CalendarStore {
     }
 
     func delete(_ event: CalendarEvent, scope: EditScope, notifyGuests: Bool) async {
+        loads.invalidate()
         withAnimation(.snappy) { events.removeAll { $0.id == event.id } }
+        let query = [
+            URLQueryItem(name: "scope", value: scope.rawValue),
+            URLQueryItem(name: "time_zone", value: timeZone),
+            URLQueryItem(name: "notify_guests", value: notifyGuests ? "true" : "false"),
+        ]
         do {
-            try await client.deleteNoContent("/v1/calendars/events/\(event.id)", query: [
-                URLQueryItem(name: "scope", value: scope.rawValue),
-                URLQueryItem(name: "time_zone", value: timeZone),
-                URLQueryItem(name: "notify_guests", value: notifyGuests ? "true" : "false"),
-            ])
+            try await changes.run(event.id) { [client] in
+                try await client.deleteNoContent("/v1/calendars/events/\(event.id)", query: query)
+            }
+        } catch let error as APIError where error.statusCode == 404 {
+            // Already gone.
         } catch {
             report(error)
         }
@@ -215,14 +262,15 @@ final class CalendarStore {
     }
 
     func respond(_ event: CalendarEvent, response: String, scope: EditScope) async {
+        loads.invalidate()
         if let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index].myResponse = response
         }
+        let body = JSONValue.object(["response": .string(response), "scope": .string(scope.rawValue)])
         do {
-            let _: EventWriteResponse = try await client.put(
-                "/v1/calendars/events/\(event.id)/response",
-                body: JSONValue.object(["response": .string(response), "scope": .string(scope.rawValue)])
-            )
+            let _: EventWriteResponse = try await changes.run(event.id) { [client] in
+                try await client.put("/v1/calendars/events/\(event.id)/response", body: body)
+            }
         } catch {
             report(error)
         }
@@ -253,17 +301,6 @@ final class CalendarStore {
 
     func report(_ error: Error) {
         if error.isCancellation { return }
-        errorMessage = Self.message(for: error)
-    }
-
-    /// The API's own `detail` when there is one, so errors read as sentences.
-    static func message(for error: Error) -> String {
-        if let apiError = error as? APIError,
-           let data = apiError.detail.data(using: .utf8),
-           let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let detail = body["detail"] as? String {
-            return detail
-        }
-        return error.localizedDescription
+        errorMessage = error.userMessage
     }
 }

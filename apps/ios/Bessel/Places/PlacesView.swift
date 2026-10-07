@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PlacesView: View {
     let auth: AuthSession
+    let isActive: Bool
 
     @State private var store: PlacesStore
     @State private var showingMap = false
@@ -12,9 +13,10 @@ struct PlacesView: View {
     @State private var cameraPosition: MapCameraPosition = .automatic
     @Environment(ToastCenter.self) private var toasts
 
-    init(auth: AuthSession) {
+    init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
-        _store = State(initialValue: PlacesStore(client: APIClient(auth: auth)))
+        self.isActive = isActive
+        _store = State(initialValue: PlacesStore(services: services))
     }
 
     var body: some View {
@@ -59,7 +61,8 @@ struct PlacesView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .task { await store.load() }
+            .refreshWhileVisible(isActive) { await store.loadIfStale() }
+            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
         }
     }
 

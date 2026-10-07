@@ -5,12 +5,12 @@ import Observation
 struct TimelineResponse: Decodable {
     let startTs: Int
     let endTs: Int
-    let lanes: [Lane]
+    @Lossy var lanes: [Lane]
 
     struct Lane: Decodable {
         let key: String
         let totalSecs: Int
-        let segments: [Segment]
+        @Lossy var segments: [Segment]
     }
 
     struct Segment: Decodable {
@@ -21,7 +21,7 @@ struct TimelineResponse: Decodable {
 
 /// /v1/location-history/day: places visited, from an imported Google Timeline.
 struct LocationDayResponse: Decodable {
-    let visits: [Visit]
+    @Lossy var visits: [Visit]
 
     struct Visit: Decodable {
         let startAt: Date
@@ -93,8 +93,10 @@ final class DayTimeline {
     private(set) var day: Date = Calendar.current.startOfDay(for: .now)
     private(set) var lanes: [RibbonLane] = []
     private(set) var hasLoaded = false
+    @ObservationIgnored private var loadedDay: Date?
 
     private let client: APIClient
+    @ObservationIgnored private var loads = LoadGeneration()
 
     /// Segments closer than a minute apart are one session.
     private static let mergeGap: TimeInterval = 60
@@ -114,7 +116,14 @@ final class DayTimeline {
         await load()
     }
 
+    func loadIfStale() async {
+        guard loads.isStale(maxAge: AppServices.freshFor) else { return }
+        await load()
+    }
+
     func load() async {
+        let ticket = loads.begin()
+        let shownDay = day
         let start = Int(day.timeIntervalSince1970)
         let end = Int(dayEnd.timeIntervalSince1970)
         do {
@@ -131,10 +140,15 @@ final class DayTimeline {
                 let places = placesLane(location.visits)
                 if !places.blocks.isEmpty { lanes.append(places) }
             }
+            guard loads.isCurrent(ticket) else { return }
             self.lanes = lanes
+            loads.finish(ticket)
         } catch {
-            lanes = []
+            // Keep what's there for the same day; another day's lanes would mislead.
+            guard loads.isCurrent(ticket), !error.isCancellation else { return }
+            if !hasLoaded || shownDay != loadedDay { lanes = [] }
         }
+        loadedDay = shownDay
         hasLoaded = true
     }
 

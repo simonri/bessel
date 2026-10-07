@@ -3,20 +3,20 @@ import SwiftUI
 // MARK: - Reading
 
 struct CalendarAccountListResponse: Decodable {
-    let accounts: [CalendarAccount]
+    @Lossy var accounts: [CalendarAccount]
 }
 
-struct CalendarAccount: Decodable, Identifiable, Hashable {
+struct CalendarAccount: Codable, Identifiable, Hashable {
     let id: UUID
     let provider: String
     let email: String
     let canWrite: Bool
-    let calendars: [CalendarInfo]
+    @Lossy var calendars: [CalendarInfo]
 
     var isGoogle: Bool { provider == "google" }
 }
 
-struct CalendarInfo: Decodable, Identifiable, Hashable {
+struct CalendarInfo: Codable, Identifiable, Hashable {
     let id: UUID
     let name: String
     let color: String
@@ -28,14 +28,14 @@ struct CalendarInfo: Decodable, Identifiable, Hashable {
 }
 
 struct CalendarEventListResponse: Decodable {
-    let events: [CalendarEvent]
+    @Lossy var events: [CalendarEvent]
 }
 
 struct EventWriteResponse: Decodable {
     let event: CalendarEvent?
 }
 
-struct CalendarAttendee: Decodable, Hashable {
+struct CalendarAttendee: Codable, Hashable {
     let email: String
     let name: String?
     let response: String
@@ -53,7 +53,7 @@ struct EventRecurrence: Codable, Hashable {
 
 /// One event from /v1/calendars/events. All-day dates stay strings: they are
 /// calendar days, not instants, and must not shift with time zones.
-struct CalendarEvent: Decodable, Identifiable, Hashable {
+struct CalendarEvent: Codable, Identifiable, Hashable {
     let id: UUID
     var calendarId: UUID
     var title: String

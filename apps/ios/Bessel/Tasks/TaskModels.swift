@@ -1,10 +1,14 @@
 import Foundation
 
-enum TaskStatus: String, Codable, CaseIterable, Identifiable {
+enum TaskStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
     case todo
     case inProgress = "in_progress"
     case done
     case cancelled
+    /// A status added on the server after this build; such tasks aren't listed.
+    case unknown
+
+    static let allCases: [TaskStatus] = [.todo, .inProgress, .done, .cancelled]
 
     var id: String { rawValue }
 
@@ -14,6 +18,7 @@ enum TaskStatus: String, Codable, CaseIterable, Identifiable {
         case .inProgress: "In Progress"
         case .done: "Done"
         case .cancelled: "Cancelled"
+        case .unknown: "Other"
         }
     }
 }
@@ -107,7 +112,7 @@ struct TaskCompleteResponse: Decodable {
 }
 
 struct TaskListResponse: Decodable {
-    let items: [TaskItem]
+    @Lossy var items: [TaskItem]
     let pagination: Pagination
 
     struct Pagination: Decodable {

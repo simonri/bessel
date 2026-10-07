@@ -74,7 +74,7 @@ struct WorkoutSyncResponse: Decodable {
     let deleted: Int
 }
 
-struct HealthKitWorkoutItem: Decodable, Identifiable, Hashable {
+struct HealthKitWorkoutItem: Codable, Identifiable, Hashable {
     let id: UUID
     let healthkitUuid: UUID
     let workoutActivityType: Int
@@ -88,7 +88,7 @@ struct HealthKitWorkoutItem: Decodable, Identifiable, Hashable {
 }
 
 struct WorkoutListResponse: Decodable {
-    let items: [HealthKitWorkoutItem]
+    @Lossy var items: [HealthKitWorkoutItem]
     let pagination: Pagination
 
     struct Pagination: Decodable {

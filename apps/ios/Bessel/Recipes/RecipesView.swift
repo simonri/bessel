@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RecipesView: View {
     let auth: AuthSession
+    let isActive: Bool
 
     @State private var store: RecipesStore
     @State private var search = ""
@@ -14,9 +15,10 @@ struct RecipesView: View {
     @FocusState private var composerFocused: Bool
     @Environment(ToastCenter.self) private var toasts
 
-    init(auth: AuthSession) {
+    init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
-        _store = State(initialValue: RecipesStore(client: APIClient(auth: auth)))
+        self.isActive = isActive
+        _store = State(initialValue: RecipesStore(services: services))
     }
 
     private var filtered: [RecipeItem] {
@@ -130,7 +132,8 @@ struct RecipesView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .task { await store.load() }
+            .refreshWhileVisible(isActive) { await store.loadIfStale() }
+            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
         }
     }
 

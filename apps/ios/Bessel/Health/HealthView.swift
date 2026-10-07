@@ -6,14 +6,12 @@ struct HealthView: View {
 
     @State private var store: HealthStore
     @State private var timeline: DayTimeline
-    @Environment(\.scenePhase) private var scenePhase
 
-    init(auth: AuthSession, isActive: Bool) {
+    init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
         self.isActive = isActive
-        let client = APIClient(auth: auth)
-        _store = State(initialValue: HealthStore(client: client))
-        _timeline = State(initialValue: DayTimeline(client: client))
+        _store = State(initialValue: HealthStore(client: services.client, cache: services.cache))
+        _timeline = State(initialValue: DayTimeline(client: services.client))
     }
 
     var body: some View {
@@ -62,12 +60,12 @@ struct HealthView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .task { await store.load() }
-            .task(id: isActive && scenePhase == .active) {
-                guard isActive, scenePhase == .active else { return }
+            .refreshWhileVisible(isActive) {
                 await store.syncIfNeeded()
-                await timeline.load()
+                await store.loadIfStale()
+                await timeline.loadIfStale()
             }
+            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
         }
     }
 

@@ -45,11 +45,11 @@ struct SleepSyncResponse: Decodable {
 }
 
 struct SleepDailyResponse: Decodable {
-    let nights: [SleepDailyEntry]
+    @Lossy var nights: [SleepDailyEntry]
 }
 
 /// One night from /v1/healthkit/sleep/daily, bucketed to the date you woke up.
-struct SleepDailyEntry: Decodable {
+struct SleepDailyEntry: Codable {
     let date: String
     let asleepSecs: Int
     let sleepOnset: String?
@@ -73,14 +73,14 @@ struct SleepNight: Identifiable, Equatable {
     }
 }
 
-struct HealthKitSleepSampleItem: Decodable {
+struct HealthKitSleepSampleItem: Codable {
     let sleepValueName: String
     let startDate: Date
     let endDate: Date
 }
 
 struct SleepSampleListResponse: Decodable {
-    let items: [HealthKitSleepSampleItem]
+    @Lossy var items: [HealthKitSleepSampleItem]
 }
 
 /// Sleep stages with the same calm night-time pastels as the web Sleep page

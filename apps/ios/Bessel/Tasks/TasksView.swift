@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TasksView: View {
     let auth: AuthSession
+    let isActive: Bool
 
     @State private var store: TasksStore
     @State private var editingTask: TaskItem?
@@ -11,9 +12,10 @@ struct TasksView: View {
     @FocusState private var composerFocused: Bool
     @Environment(ToastCenter.self) private var toasts
 
-    init(auth: AuthSession) {
+    init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
-        _store = State(initialValue: TasksStore(client: APIClient(auth: auth)))
+        self.isActive = isActive
+        _store = State(initialValue: TasksStore(services: services))
     }
 
     var body: some View {
@@ -98,7 +100,8 @@ struct TasksView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .task { await store.load() }
+            .refreshWhileVisible(isActive) { await store.loadIfStale() }
+            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
             .haptic(.selection, trigger: store.mode)
         }
     }
@@ -482,7 +485,7 @@ private struct TaskComposer: View {
                 text = ""
                 isFocused.wrappedValue = false
             } catch {
-                store.errorMessage = error.localizedDescription
+                store.errorMessage = error.userMessage
             }
         }
     }

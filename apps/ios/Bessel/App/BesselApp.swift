@@ -3,10 +3,11 @@ import UIKit
 
 @main
 struct BesselApp: App {
-    @State private var auth = AuthSession()
+    @State private var auth = AuthSession.shared
     @AppStorage(Preferences.appearanceKey) private var appearance: AppearancePreference = .system
 
     init() {
+        HealthBackgroundSync.register()
         // Page titles a touch smaller than the system's 34pt large title.
         UINavigationBar.appearance().largeTitleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 28, weight: .bold),

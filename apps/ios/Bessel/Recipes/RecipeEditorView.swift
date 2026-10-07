@@ -240,7 +240,7 @@ struct RecipeEditorView: View {
                     onCreated(created)
                 }
             } catch {
-                errorMessage = "Couldn't save: \(error.localizedDescription)"
+                errorMessage = error.userMessage
             }
         }
     }

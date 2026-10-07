@@ -1,8 +1,12 @@
 import Foundation
 
-enum PlaceStatus: String, Codable, CaseIterable, Identifiable {
+enum PlaceStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
     case wantToGo = "want_to_go"
     case visited
+    /// A status added on the server after this build; such places aren't listed.
+    case unknown
+
+    static let allCases: [PlaceStatus] = [.wantToGo, .visited]
 
     var id: String { rawValue }
 
@@ -10,11 +14,12 @@ enum PlaceStatus: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .wantToGo: "Want to go"
         case .visited: "Been there"
+        case .unknown: "Other"
         }
     }
 }
 
-struct PlaceItem: Decodable, Identifiable, Hashable {
+struct PlaceItem: Codable, Identifiable, Hashable {
     let id: UUID
     let createdAt: Date
     var name: String
@@ -37,7 +42,7 @@ struct PlaceItem: Decodable, Identifiable, Hashable {
 }
 
 struct PlaceListResponse: Decodable {
-    let items: [PlaceItem]
+    @Lossy var items: [PlaceItem]
 }
 
 struct PlaceCreate: Encodable {

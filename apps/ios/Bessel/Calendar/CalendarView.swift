@@ -17,17 +17,17 @@ enum EventEditorTarget: Identifiable {
 /// Monday to Sunday with their events, and a month to jump around in.
 struct CalendarView: View {
     let auth: AuthSession
+    let isActive: Bool
 
     @State private var store: CalendarStore
     @State private var detailEvent: CalendarEvent?
     @State private var editorTarget: EventEditorTarget?
     @State private var dayList: Date?
     @State private var showingCalendars = false
-    @Environment(\.scenePhase) private var scenePhase
-
-    init(auth: AuthSession) {
+    init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
-        _store = State(initialValue: CalendarStore(client: APIClient(auth: auth)))
+        self.isActive = isActive
+        _store = State(initialValue: CalendarStore(services: services))
     }
 
     var body: some View {
@@ -77,18 +77,16 @@ struct CalendarView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .task { await store.load() }
-            .task(id: scenePhase) {
-                guard scenePhase == .active, store.hasLoaded else { return }
-                await store.loadEvents()
-            }
-            .task {
-                // Keep up with changes made elsewhere, like the desktop does.
+            .refreshWhileVisible(isActive) {
+                await store.loadIfStale()
+                // Keep up with changes made elsewhere while it's on screen, like the desktop does.
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(300))
+                    guard !Task.isCancelled else { return }
                     await store.loadEvents()
                 }
             }
+            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
         }
     }
 

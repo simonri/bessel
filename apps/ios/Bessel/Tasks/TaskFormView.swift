@@ -271,7 +271,7 @@ struct TaskFormView: View {
                 try await store.update(task, with: update)
                 dismiss()
             } catch {
-                errorMessage = "Couldn't save: \(error.localizedDescription)"
+                errorMessage = error.userMessage
             }
         }
     }

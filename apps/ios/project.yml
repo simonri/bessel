@@ -19,6 +19,8 @@ targets:
       - Bessel
     scheme:
       gatherCoverageData: false
+      testTargets:
+        - BesselTests
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1"
@@ -45,10 +47,24 @@ targets:
           - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
             CFBundleURLSchemes:
               - $(PRODUCT_BUNDLE_IDENTIFIER)
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - $(PRODUCT_BUNDLE_IDENTIFIER).health-sync
         NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
+          NSAllowsLocalNetworking: true
         AUTH_CALLBACK_SCHEME: $(PRODUCT_BUNDLE_IDENTIFIER)
         API_BASE_URL: $(API_BASE_URL)
         AUTH0_DOMAIN: $(AUTH0_DOMAIN)
         AUTH0_CLIENT_ID: $(AUTH0_CLIENT_ID)
         AUTH0_AUDIENCE: $(AUTH0_AUDIENCE)
+  BesselTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - BesselTests
+    dependencies:
+      - target: Bessel
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES

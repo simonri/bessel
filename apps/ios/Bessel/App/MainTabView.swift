@@ -33,28 +33,35 @@ enum AppTab: String, CaseIterable, Identifiable {
 struct MainTabView: View {
     let auth: AuthSession
 
+    @State private var services: AppServices
     @State private var selection: AppTab = .tasks
     @State private var toasts = ToastCenter()
+    @Environment(\.scenePhase) private var scenePhase
+
+    init(auth: AuthSession) {
+        self.auth = auth
+        _services = State(initialValue: AppServices(auth: auth))
+    }
 
     var body: some View {
         TabView(selection: $selection) {
-            TasksView(auth: auth)
+            TasksView(auth: auth, services: services, isActive: selection == .tasks)
                 .tabItem { Label(AppTab.tasks.title, systemImage: AppTab.tasks.icon) }
                 .tag(AppTab.tasks)
                 .floatingTabBar()
-            CalendarView(auth: auth)
+            CalendarView(auth: auth, services: services, isActive: selection == .calendar)
                 .tabItem { Label(AppTab.calendar.title, systemImage: AppTab.calendar.icon) }
                 .tag(AppTab.calendar)
                 .floatingTabBar()
-            HealthView(auth: auth, isActive: selection == .health)
+            HealthView(auth: auth, services: services, isActive: selection == .health)
                 .tabItem { Label(AppTab.health.title, systemImage: AppTab.health.icon) }
                 .tag(AppTab.health)
                 .floatingTabBar()
-            RecipesView(auth: auth)
+            RecipesView(auth: auth, services: services, isActive: selection == .recipes)
                 .tabItem { Label(AppTab.recipes.title, systemImage: AppTab.recipes.icon) }
                 .tag(AppTab.recipes)
                 .floatingTabBar()
-            PlacesView(auth: auth)
+            PlacesView(auth: auth, services: services, isActive: selection == .places)
                 .tabItem { Label(AppTab.places.title, systemImage: AppTab.places.icon) }
                 .tag(AppTab.places)
                 .floatingTabBar()
@@ -70,6 +77,17 @@ struct MainTabView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
         .onAppear(perform: applyLaunchTab)
+        .task { await services.outbox.retry() }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            // Deletes waiting out Undo go now, while there's still time to send them.
+            case .background:
+                services.outbox.flushInBackground()
+                HealthBackgroundSync.schedule()
+            case .active: Task { await services.outbox.retry() }
+            default: break
+            }
+        }
     }
 
     private func applyLaunchTab() {

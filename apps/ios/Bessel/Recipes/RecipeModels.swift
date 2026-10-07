@@ -1,9 +1,12 @@
 import Foundation
 
-enum RecipeType: String, Codable, CaseIterable, Identifiable {
+enum RecipeType: String, Codable, CaseIterable, Identifiable, LenientEnum {
     case main
     case dessert
     case other
+
+    /// Kinds added on the server after this build file under Other.
+    static var unknown: RecipeType { .other }
 
     var id: String { rawValue }
 
@@ -41,7 +44,7 @@ enum RecipeType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct RecipeItem: Decodable, Identifiable, Hashable {
+struct RecipeItem: Codable, Identifiable, Hashable {
     let id: UUID
     let createdAt: Date
     let modifiedAt: Date?
@@ -170,7 +173,7 @@ struct RecipeImportResult: Decodable {
 }
 
 struct RecipeListResponse: Decodable {
-    let items: [RecipeItem]
+    @Lossy var items: [RecipeItem]
 }
 
 /// Ingredient lines as text and back, matching the API's own parser

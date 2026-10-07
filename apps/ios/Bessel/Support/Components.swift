@@ -278,22 +278,34 @@ extension View {
     }
 }
 
-/// A short message at the bottom of the screen, with an optional Undo.
+/// A short message at the bottom of the screen, with an optional action like Undo.
 @MainActor
 @Observable
 final class ToastCenter {
     struct Toast: Identifiable {
         let id = UUID()
         let message: String
-        let undo: (() -> Void)?
+        let actionTitle: String
+        let action: (() -> Void)?
     }
 
     private(set) var current: Toast?
     private var dismissTask: Task<Void, Never>?
 
     func show(_ message: String, undo: (() -> Void)? = nil) {
+        show(message, actionTitle: "Undo", action: undo)
+    }
+
+    /// For news nobody asked for, like a refresh that failed: never pushes
+    /// aside a toast that's still offering Undo.
+    func showQuietly(_ message: String, actionTitle: String, action: @escaping () -> Void) {
+        guard current?.action == nil else { return }
+        show(message, actionTitle: actionTitle, action: action)
+    }
+
+    private func show(_ message: String, actionTitle: String, action: (() -> Void)?) {
         dismissTask?.cancel()
-        let toast = Toast(message: message, undo: undo)
+        let toast = Toast(message: message, actionTitle: actionTitle, action: action)
         withAnimation(.snappy) { current = toast }
         dismissTask = Task {
             try? await Task.sleep(for: .seconds(4))
@@ -319,9 +331,9 @@ struct ToastOverlay: View {
                     .foregroundStyle(Theme.background)
                     .lineLimit(2)
                 Spacer(minLength: 0)
-                if let undo = toast.undo {
-                    Button("Undo") {
-                        undo()
+                if let action = toast.action {
+                    Button(toast.actionTitle) {
+                        action()
                         center.dismiss(toast.id)
                     }
                     .font(.subheadline.weight(.semibold))

@@ -13,13 +13,18 @@ struct TokenSet: Codable {
 enum AuthError: LocalizedError {
     case notAuthenticated
     case invalidCallback
-    case tokenRequestFailed(String)
+    /// Auth0 said no for good: the sign-in or refresh token is revoked,
+    /// expired or wrong. Only this ends the session.
+    case rejected(String)
+    /// Auth0 couldn't answer right now (outage, rate limit). The session stays.
+    case tokenRequestFailed(status: Int)
 
     var errorDescription: String? {
         switch self {
-        case .notAuthenticated: "Not signed in"
-        case .invalidCallback: "Sign-in was interrupted"
-        case .tokenRequestFailed(let detail): "Sign-in failed: \(detail)"
+        case .notAuthenticated: "You've been signed out. Sign in again to continue."
+        case .invalidCallback: "Sign-in was interrupted. Try again."
+        case .rejected: "Sign-in didn't go through. Try again."
+        case .tokenRequestFailed: "Couldn't reach the sign-in service. Try again in a moment."
         }
     }
 }
@@ -36,8 +41,15 @@ final class AuthSession {
         case signedIn
     }
 
+    /// One per app: a background task and the screens must share it, or two
+    /// copies could each spend the same single-use refresh token.
+    static let shared = AuthSession()
+
     private(set) var state: State = .restoring
     private(set) var userEmail: String?
+    /// The signed-in account's stable id (the token's `sub`), which scopes
+    /// what the app keeps on disk.
+    private(set) var accountID: String?
 
     private var tokens: TokenSet?
     private var refreshTask: Task<TokenSet, Error>?
@@ -50,9 +62,7 @@ final class AuthSession {
         #if DEBUG
         // Simulator screenshots against a local API that trusts any token.
         if let token = ProcessInfo.processInfo.environment["BESSEL_DEBUG_TOKEN"] {
-            tokens = TokenSet(accessToken: token, refreshToken: nil, expiresAt: .distantFuture)
-            userEmail = "demo@bessel.app"
-            state = .signedIn
+            useStaticToken(token)
             return
         }
         #endif
@@ -61,8 +71,20 @@ final class AuthSession {
         else { return }
         tokens = stored
         userEmail = (KeychainStore.load("email")).flatMap { String(data: $0, encoding: .utf8) }
+        accountID = Self.claims(of: stored.accessToken)?["sub"] as? String
         state = .signedIn
     }
+
+    #if DEBUG
+    /// Signs in with a fixed token, for screenshots and tests against an API
+    /// that trusts any token.
+    func useStaticToken(_ token: String) {
+        tokens = TokenSet(accessToken: token, refreshToken: nil, expiresAt: .distantFuture)
+        userEmail = "demo@bessel.app"
+        accountID = "debug"
+        state = .signedIn
+    }
+    #endif
 
     func signIn() async throws {
         let verifier = PKCE.randomURLSafeString(bytes: 64)
@@ -100,6 +122,7 @@ final class AuthSession {
     func signOut() {
         tokens = nil
         userEmail = nil
+        accountID = nil
         refreshTask?.cancel()
         refreshTask = nil
         KeychainStore.delete(Self.tokensKey)
@@ -108,6 +131,8 @@ final class AuthSession {
         // signing in must start from scratch or its history would never upload.
         WorkoutSyncAnchor.clear()
         SleepSyncAnchor.clear()
+        ResponseCache.removeAll()
+        DeleteOutbox.clear()
         state = .signedOut
     }
 
@@ -138,9 +163,11 @@ final class AuthSession {
         defer { refreshTask = nil }
         do {
             return try await task.value
-        } catch let error as AuthError {
+        } catch AuthError.rejected(let reason) {
+            // Only a refresh token Auth0 won't accept ends the session. An outage,
+            // a rate limit or no signal must not sign everyone out at once.
             signOut()
-            throw error
+            throw AuthError.rejected(reason)
         }
     }
 
@@ -152,6 +179,7 @@ final class AuthSession {
             expiresAt: Date(timeIntervalSinceNow: TimeInterval(response.expiresIn))
         )
         tokens = set
+        accountID = Self.claims(of: response.accessToken)?["sub"] as? String ?? accountID
         if let data = try? JSONEncoder().encode(set) {
             KeychainStore.save(Self.tokensKey, data: data)
         }
@@ -185,12 +213,27 @@ final class AuthSession {
             .joined(separator: "&")
             .data(using: .utf8)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            let detail = String(data: data, encoding: .utf8) ?? "unknown error"
-            throw AuthError.tokenRequestFailed(detail)
+        request.timeoutInterval = APIClient.requestTimeout
+
+        let (data, response) = try await URLSession.bessel.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 else {
+            if let reason = Self.rejection(status: status, body: data) {
+                throw AuthError.rejected(reason)
+            }
+            throw AuthError.tokenRequestFailed(status: status)
         }
         return try JSONDecoder().decode(TokenResponse.self, from: data)
+    }
+
+    /// The OAuth error when Auth0 refused the grant itself, as opposed to failing
+    /// to answer. https://www.rfc-editor.org/rfc/rfc6749#section-5.2
+    nonisolated static func rejection(status: Int, body: Data) -> String? {
+        guard [400, 401, 403].contains(status) else { return nil }
+        let error = (try? JSONSerialization.jsonObject(with: body) as? [String: Any])?["error"] as? String
+        let fatal: Set<String> = ["invalid_grant", "invalid_client", "unauthorized_client", "access_denied", "invalid_request"]
+        guard let error, fatal.contains(error) else { return nil }
+        return error
     }
 
     private func authenticate(url: URL) async throws -> URL {
@@ -214,14 +257,17 @@ final class AuthSession {
     }
 
     private static func email(fromIDToken idToken: String) -> String? {
-        let segments = idToken.split(separator: ".")
+        claims(of: idToken)?["email"] as? String
+    }
+
+    /// A JWT's payload, unverified: only for picking out who it belongs to.
+    private static func claims(of jwt: String) -> [String: Any]? {
+        let segments = jwt.split(separator: ".")
         guard segments.count >= 2 else { return nil }
         var base64 = String(segments[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
-        guard let data = Data(base64Encoded: base64),
-              let claims = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else { return nil }
-        return claims["email"] as? String
+        guard let data = Data(base64Encoded: base64) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     }
 }
 

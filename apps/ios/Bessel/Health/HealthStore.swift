@@ -10,14 +10,32 @@ final class HealthStore {
     private(set) var hasLoaded = false
     private(set) var isSyncing = false
     private(set) var lastSyncedAt: Date?
+    /// Connecting to Health didn't work; shown as an alert.
     var errorMessage: String?
+    /// A refresh that didn't go through; shown quietly over what's already there.
+    var loadError: String?
 
     private let client: APIClient
+    private let cache: ResponseCache?
     private let healthKit = HealthKitService()
+    @ObservationIgnored private var loads = LoadGeneration()
 
-    init(client: APIClient) {
+    private struct Snapshot: Codable {
+        let workouts: [HealthKitWorkoutItem]
+        let nights: [SleepDailyEntry]
+        let samples: [HealthKitSleepSampleItem]
+    }
+
+    private static let cacheKey = "health.v1"
+
+    init(client: APIClient, cache: ResponseCache?) {
         self.client = client
+        self.cache = cache
         lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
+        if let snapshot = cache?.load(Snapshot.self, key: Self.cacheKey) {
+            apply(snapshot)
+            hasLoaded = true
+        }
     }
 
     /// Health was connected once on this device; from then on sync runs quietly.
@@ -37,7 +55,13 @@ final class HealthStore {
         return workouts.filter { $0.startDate >= weekAgo }
     }
 
+    func loadIfStale() async {
+        guard loads.isStale(maxAge: AppServices.freshFor) else { return }
+        await load()
+    }
+
     func load() async {
+        let ticket = loads.begin()
         defer { hasLoaded = true }
         let now = Int(Date.now.timeIntervalSince1970)
         do {
@@ -57,12 +81,22 @@ final class HealthStore {
                 "/v1/healthkit/sleep",
                 query: [URLQueryItem(name: "limit", value: "150")]
             )
-            workouts = try await workoutsTask.items
-            nights = try await sleepTask.nights.compactMap(SleepNight.init)
-            lastNightSegments = segments(for: nights.last, from: try await samplesTask.items)
+            let snapshot = try await Snapshot(workouts: workoutsTask.items, nights: sleepTask.nights, samples: samplesTask.items)
+            guard loads.isCurrent(ticket) else { return }
+            apply(snapshot)
+            loadError = nil
+            loads.finish(ticket)
+            cache?.save(snapshot, as: Self.cacheKey)
         } catch {
-            report(error)
+            guard loads.isCurrent(ticket), !error.isCancellation else { return }
+            loadError = error.userMessage
         }
+    }
+
+    private func apply(_ snapshot: Snapshot) {
+        workouts = snapshot.workouts
+        nights = snapshot.nights.compactMap(SleepNight.init)
+        lastNightSegments = segments(for: nights.last, from: snapshot.samples)
     }
 
     /// Asks for Health access (iOS shows the prompt once) and uploads what changed.
@@ -75,6 +109,22 @@ final class HealthStore {
         guard isConnected else { return }
         if let lastSyncedAt, Date.now.timeIntervalSince(lastSyncedAt) < 5 * 60 { return }
         await sync(showErrors: false)
+    }
+
+    /// Uploads what changed while the app was in the background. Returns
+    /// whether it finished; Health can't be read while the phone is locked.
+    func syncInBackground() async -> Bool {
+        guard isConnected, HealthKitService.isAvailable else { return true }
+        do {
+            try await syncWorkouts()
+            try await syncSleep()
+            WorkoutSyncAnchor.lastSyncedAt = .now
+            SleepSyncAnchor.lastSyncedAt = .now
+            lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// Uploads everything HealthKit reports as changed since the persisted anchors
@@ -146,6 +196,6 @@ final class HealthStore {
 
     private func report(_ error: Error) {
         if error.isCancellation { return }
-        errorMessage = error.localizedDescription
+        errorMessage = error.userMessage
     }
 }
