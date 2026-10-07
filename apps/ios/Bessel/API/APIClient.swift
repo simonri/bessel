@@ -7,6 +7,14 @@ struct APIError: LocalizedError {
     var errorDescription: String? { "API error \(statusCode): \(detail)" }
 }
 
+extension Error {
+    /// Work stopped on purpose, like leaving a screen mid-load: Swift's own
+    /// cancellation or URLSession's cancelled request. Not worth showing.
+    var isCancellation: Bool {
+        self is CancellationError || (self as? URLError)?.code == .cancelled
+    }
+}
+
 /// Thin URLSession client for the Bessel API. Attaches the Auth0 bearer token and
 /// retries once with a forced refresh on 401, mirroring the web client interceptor.
 @MainActor

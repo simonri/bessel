@@ -88,7 +88,7 @@ final class PlacesStore {
     }
 
     private func report(_ error: Error) {
-        if error is CancellationError { return }
+        if error.isCancellation { return }
         errorMessage = error.localizedDescription
     }
 }

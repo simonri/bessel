@@ -295,7 +295,7 @@ final class TasksStore {
     }
 
     private func report(_ error: Error) {
-        if error is CancellationError { return }
+        if error.isCancellation { return }
         errorMessage = error.localizedDescription
     }
 }

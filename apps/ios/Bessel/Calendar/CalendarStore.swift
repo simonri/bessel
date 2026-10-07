@@ -252,7 +252,7 @@ final class CalendarStore {
     }
 
     func report(_ error: Error) {
-        if error is CancellationError { return }
+        if error.isCancellation { return }
         errorMessage = Self.message(for: error)
     }
 
