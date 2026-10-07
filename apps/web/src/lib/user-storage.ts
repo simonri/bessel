@@ -73,15 +73,31 @@ function migrateLegacyKeys(prefix: string) {
   }
 }
 
+let watchingOtherTabs = false;
+
+/** Another tab logging out locks this one too, so its pending persists can't
+ *  write the cleared data back. */
+function watchForLogoutInOtherTabs() {
+  if (watchingOtherTabs) return;
+  watchingOtherTabs = true;
+  window.addEventListener("storage", (e) => {
+    if (e.key === FORCE_LOGIN_PROMPT_KEY && e.newValue !== null)
+      scope = { kind: "locked" };
+  });
+}
+
 /**
  * Binds storage to `sub`. The first user to log in on this device inherits
  * whatever unscoped data predates per-user storage; later users start clean.
- * Idempotent — safe to call on every render.
+ * Idempotent — safe to call on every render. A logout's lock is kept until
+ * the page reloads, which logging out always ends in.
  */
 export function activateUserStorage(sub: string) {
   const prefix = `${SCOPE_PREFIX}${encodeURIComponent(sub)}:`;
+  if (scope.kind === "locked") return;
   if (scope.kind === "user" && scope.prefix === prefix) return;
   scope = { kind: "user", prefix };
+  watchForLogoutInOtherTabs();
   try {
     if (localStorage.getItem(MIGRATED_KEY) === null) {
       migrateLegacyKeys(prefix);

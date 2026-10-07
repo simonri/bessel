@@ -45,15 +45,21 @@ function fnv1a(input: string): string {
 }
 
 /**
- * Stable per window and spawn config: a remount of the same window reattaches,
- * while a changed config (e.g. attaching to a different Claude session) gets a
- * fresh PTY.
+ * Stable per window and process identity: a remount of the same window
+ * reattaches, while a different identity (e.g. attaching to another Claude
+ * session) gets a fresh PTY. The identity defaults to the spawn config; pass
+ * a string when the args legitimately differ between mounts of the same
+ * process (`--session-id X` on first launch, `--resume X` afterwards).
  */
 export function terminalSessionId(
   windowId: string,
-  config: SpawnConfig,
+  identity: SpawnConfig | string,
 ): string {
-  return `${windowId}:${fnv1a(JSON.stringify([config.command, config.args, config.cwd ?? null]))}`;
+  const key =
+    typeof identity === "string"
+      ? identity
+      : JSON.stringify([identity.command, identity.args, identity.cwd ?? null]);
+  return `${windowId}:${fnv1a(key)}`;
 }
 
 function append(session: Session, data: string) {

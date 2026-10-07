@@ -67,6 +67,15 @@ describe("terminalSessionId", () => {
       terminalSessionId("w1", { command: "claude", args: ["attach", "b"] }),
     );
   });
+
+  it("can be pinned by an explicit key when the args vary between mounts", () => {
+    expect(terminalSessionId("w1", "claude-session-1")).toBe(
+      terminalSessionId("w1", "claude-session-1"),
+    );
+    expect(terminalSessionId("w1", "claude-session-1")).not.toBe(
+      terminalSessionId("w1", "claude-session-2"),
+    );
+  });
 });
 
 describe("attach / detach", () => {

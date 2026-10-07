@@ -39,6 +39,9 @@ interface TerminalWidgetProps {
   /** Swallow Ctrl+Z: with no shell to return to, a suspended program would
    *  just freeze the terminal. */
   blockSuspend?: boolean;
+  /** Identifies the process across remounts of the same window; defaults to
+   *  command/args/cwd. See terminalSessionId. */
+  sessionKey?: string;
 }
 
 // A command is only sent once the PTY has been quiet for this long — i.e. the
@@ -82,6 +85,7 @@ export function TerminalWidget({
   detectAgentStatus = false,
   ignoreTitle = false,
   blockSuspend = false,
+  sessionKey,
 }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -93,7 +97,7 @@ export function TerminalWidget({
   const sessionId = useRef(
     windowId === null
       ? crypto.randomUUID()
-      : terminalSessionId(windowId, { command, args, cwd }),
+      : terminalSessionId(windowId, sessionKey ?? { command, args, cwd }),
   ).current;
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const savedSelectionRef = useRef("");
@@ -349,8 +353,14 @@ export function TerminalWidget({
         });
     } else {
       if (session.replay) terminal.write(session.replay);
-      // The PTY still has the previous view's size.
-      window.electron.terminal.resize(sessionId, terminal.cols, terminal.rows);
+      // The PTY still has the previous view's size. In a hidden workspace
+      // there's nothing to fit yet; the ResizeObserver syncs it once shown.
+      if (el.clientWidth > 0 && el.clientHeight > 0)
+        window.electron.terminal.resize(
+          sessionId,
+          terminal.cols,
+          terminal.rows,
+        );
       if (session.exitCode !== null) handleExit(session.exitCode);
     }
 

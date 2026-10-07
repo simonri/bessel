@@ -133,8 +133,34 @@ describe("clearUserStorage", () => {
     ).toBe("bob-canvas");
     expect(shouldForceLoginPrompt()).toBe(true);
 
+    // A re-render before the logout redirect must not unlock storage.
+    activateUserStorage(ALICE);
+    userStorage.setItem("bessel:workspaces", "late-write");
+    expect(
+      window.localStorage.getItem("bessel:user:auth0%7Calice:workspaces"),
+    ).toBeNull();
+    expect(shouldForceLoginPrompt()).toBe(true);
+
+    // The next page load's sign-in clears the forced prompt.
+    resetUserStorageForTests();
     activateUserStorage(ALICE);
     expect(shouldForceLoginPrompt()).toBe(false);
+  });
+
+  it("locks when another tab logs out", () => {
+    activateUserStorage(ALICE);
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "bessel:force-login-prompt",
+        newValue: "1",
+      }),
+    );
+
+    userStorage.setItem("bessel:workspaces", "stale-tab");
+
+    expect(
+      window.localStorage.getItem("bessel:user:auth0%7Calice:workspaces"),
+    ).toBeNull();
   });
 
   it("drops writes that land after logout (pagehide flushes, debounces)", () => {
