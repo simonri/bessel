@@ -80,9 +80,46 @@ function vaultHandle(
     ...args: any[]
   ) => unknown,
 ): void {
-  ipcHandle(channel, (event, root: unknown, ...args: any[]) =>
-    listener(event, vaultRoots().assertApproved(root), ...args),
-  );
+  ipcHandle(channel, (event, root: unknown, ...args: any[]) => {
+    const result = listener(event, vaultRoots().assertApproved(root), ...args);
+    if (MUTATING_CHANNELS.has(channel) && result instanceof Promise)
+      trackWrite(result);
+    return result;
+  });
+}
+
+// A note saved from the renderer's pagehide handler arrives just as the
+// window closes; quitting must not cut that write off halfway.
+const MUTATING_CHANNELS = new Set([
+  "vault:write",
+  "vault:write-binary",
+  "vault:create",
+  "vault:mkdir",
+  "vault:rename",
+  "vault:trash",
+]);
+const pendingWrites = new Set<Promise<unknown>>();
+
+function trackWrite(task: Promise<unknown>): void {
+  pendingWrites.add(task);
+  const done = () => pendingWrites.delete(task);
+  task.then(done, done);
+}
+
+export function hasPendingVaultWrites(): boolean {
+  return pendingWrites.size > 0;
+}
+
+/** Resolves once the vault writes received so far settle, or after `timeoutMs`. */
+export async function settleVaultWrites(timeoutMs: number): Promise<void> {
+  let timer: NodeJS.Timeout | undefined;
+  await Promise.race([
+    Promise.allSettled([...pendingWrites]),
+    new Promise((resolve) => {
+      timer = setTimeout(resolve, timeoutMs);
+    }),
+  ]);
+  clearTimeout(timer);
 }
 
 async function pathExists(target: string): Promise<boolean> {
@@ -222,9 +259,10 @@ function trackSender(sender: Electron.WebContents): void {
   const id = sender.id;
   sender.once("destroyed", () => releaseSender(id));
   sender.on("render-process-gone", () => releaseSender(id));
-  sender.on("did-start-navigation", (details) => {
-    if (details.isMainFrame && !details.isSameDocument) releaseSender(id);
-  });
+  // Committed cross-document navigations only (reloads included): a
+  // navigation the will-navigate guard cancels leaves the page, and its
+  // watches, alive.
+  sender.on("did-navigate", () => releaseSender(id));
 }
 
 function watchRoot(sender: Electron.WebContents, root: string): void {

@@ -236,7 +236,6 @@ describe("NoteView", () => {
     fireEvent.change(screen.getByTestId("mock-editor"), {
       target: { value: "hello there" },
     });
-    window.dispatchEvent(new Event("beforeunload"));
     window.dispatchEvent(new Event("pagehide"));
 
     expect(vault.write).toHaveBeenCalledTimes(1);

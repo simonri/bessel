@@ -278,33 +278,23 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
 
     // Closing or reloading the window never runs React cleanups, and the
     // async save path can't reach IPC before the page is gone — send the
-    // write synchronously from the unload handler instead (best effort).
-    const unloadSentRef = useRef<string | null>(null);
+    // write synchronously from pagehide instead (best effort). Not
+    // beforeunload: that also fires for navigations main then cancels.
     useEffect(() => {
-      function onUnload() {
+      function onPageHide() {
         const saveRel = relRef.current;
         const content = bufferRef.current;
-        if (
-          saveRel === null ||
-          content === lastSavedRef.current ||
-          content === unloadSentRef.current
-        )
-          return;
+        if (saveRel === null || content === lastSavedRef.current) return;
         const api = window.electron?.vault;
         if (!api) return;
-        unloadSentRef.current = content;
         // A save of this note still in flight moves the mtime; main applies
         // writes to a file in order, so this one lands after it.
         const expectedMtimeMs =
           inFlightRelRef.current === saveRel ? null : loadedMtimeRef.current;
         void api.write(root, saveRel, content, expectedMtimeMs).catch(() => {});
       }
-      window.addEventListener("beforeunload", onUnload);
-      window.addEventListener("pagehide", onUnload);
-      return () => {
-        window.removeEventListener("beforeunload", onUnload);
-        window.removeEventListener("pagehide", onUnload);
-      };
+      window.addEventListener("pagehide", onPageHide);
+      return () => window.removeEventListener("pagehide", onPageHide);
     }, [root]);
 
     const handleChange = useCallback(

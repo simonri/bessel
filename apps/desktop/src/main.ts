@@ -55,8 +55,10 @@ import { isImageFile, MIME_TYPES, serveLocalFile } from "./static-files.js";
 import { OutputCoalescer, terminalSize } from "./terminal-core.js";
 import {
   approveVaultRoot,
+  hasPendingVaultWrites,
   registerVaultHandlers,
   registerVaultProtocol,
+  settleVaultWrites,
 } from "./vault.js";
 
 const execFileAsync = promisify(execFile);
@@ -636,10 +638,13 @@ function startAuthLogin(): Promise<number> {
   authCallbackServer?.close();
 
   const server = http.createServer((req, res) => {
-    const url = new URL(
-      req.url ?? "/",
-      `http://127.0.0.1:${AUTH_CALLBACK_PORT}`,
-    );
+    let url: URL;
+    try {
+      url = new URL(req.url ?? "/", `http://127.0.0.1:${AUTH_CALLBACK_PORT}`);
+    } catch {
+      res.writeHead(400).end();
+      return;
+    }
     if (url.pathname !== AUTH_CALLBACK_PATH) {
       res.writeHead(404).end();
       return;
@@ -1539,6 +1544,15 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-app.on("will-quit", () => {
+const VAULT_WRITE_QUIT_GRACE_MS = 3000;
+let vaultWritesSettled = false;
+
+app.on("will-quit", (event) => {
+  if (!vaultWritesSettled && hasPendingVaultWrites()) {
+    event.preventDefault();
+    vaultWritesSettled = true;
+    void settleVaultWrites(VAULT_WRITE_QUIT_GRACE_MS).finally(() => app.quit());
+    return;
+  }
   stopClaudeSessions();
 });
