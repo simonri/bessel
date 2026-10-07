@@ -71,7 +71,7 @@ struct RecipeDetailView: View {
                 .frame(width: 64, height: 64)
                 .background(Theme.pastelWash(type.hue, strength: 1.5), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             Text(recipe.title.isEmpty ? "Untitled" : recipe.title)
-                .font(.largeTitle.weight(.bold))
+                .font(.title.weight(.bold))
                 .foregroundStyle(Theme.foreground)
             HStack(spacing: 6) {
                 Chip(text: type.label, hue: type.hue)

@@ -6,6 +6,13 @@ struct BesselApp: App {
     @State private var auth = AuthSession()
     @AppStorage(Preferences.appearanceKey) private var appearance: AppearancePreference = .system
 
+    init() {
+        // Page titles a touch smaller than the system's 34pt large title.
+        UINavigationBar.appearance().largeTitleTextAttributes = [
+            .font: UIFont.systemFont(ofSize: 28, weight: .bold),
+        ]
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView(auth: auth)

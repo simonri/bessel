@@ -107,11 +107,18 @@ struct Composer<Accessories: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            TextField(placeholder, text: $text)
+            // Wraps onto more lines instead of scrolling sideways; Return still
+            // sends (a vertical field types a newline, so catch it).
+            TextField(placeholder, text: $text, axis: .vertical)
                 .font(.title3)
+                .lineLimit(1...5)
                 .focused(isFocused)
                 .submitLabel(.done)
-                .onSubmit(onSubmit)
+                .onChange(of: text) { _, new in
+                    guard new.contains("\n") else { return }
+                    text = new.replacingOccurrences(of: "\n", with: "")
+                    onSubmit()
+                }
             HStack(spacing: 8) {
                 ChipRow(spacing: 6) {
                     accessories

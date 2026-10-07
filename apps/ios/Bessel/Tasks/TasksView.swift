@@ -5,6 +5,7 @@ struct TasksView: View {
 
     @State private var store: TasksStore
     @State private var editingTask: TaskItem?
+    @State private var confirmingDelete: TaskItem?
     @State private var composing = false
     @State private var draft = ""
     @FocusState private var composerFocused: Bool
@@ -80,6 +81,18 @@ struct TasksView: View {
             .sheet(item: $editingTask) { task in
                 TaskFormView(store: store, task: task)
             }
+            .confirmationDialog(
+                "Delete this task?",
+                isPresented: Binding(get: { confirmingDelete != nil }, set: { if !$0 { confirmingDelete = nil } }),
+                titleVisibility: .visible,
+                presenting: confirmingDelete
+            ) { task in
+                Button("Delete", role: .destructive) {
+                    store.delete(task, toasts: toasts)
+                }
+            } message: { task in
+                Text(task.title)
+            }
             .alert("Something went wrong", isPresented: errorBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -94,31 +107,58 @@ struct TasksView: View {
 
     /// Pinned above the list, so switching views is always in reach.
     private var filters: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                ForEach(TasksStore.Mode.allCases) { mode in
-                    FilterPill(title: mode.rawValue, isSelected: store.mode == mode) {
-                        withAnimation(.snappy) { store.mode = mode }
-                    }
+        HStack(spacing: 8) {
+            ForEach(TasksStore.Mode.allCases) { mode in
+                FilterPill(title: mode.rawValue, isSelected: store.mode == mode) {
+                    withAnimation(.snappy) { store.mode = mode }
                 }
             }
+            Spacer(minLength: 0)
             if !store.projects.isEmpty {
-                ChipRow(spacing: 6) {
-                    ForEach(store.projects, id: \.self) { project in
-                        let isSelected = store.projectFilter == project
-                        Button {
-                            withAnimation(.snappy) {
-                                store.projectFilter = isSelected ? nil : project
-                            }
-                        } label: {
-                            Chip(text: project, hue: PastelHue.forName(project), systemImage: isSelected ? "checkmark" : nil, isSelected: store.projectFilter == nil || isSelected)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .scrollClipDisabled()
+                projectFilterMenu
             }
         }
+    }
+
+    /// One button that opens a checklist of projects; pick as many as you like.
+    private var projectFilterMenu: some View {
+        Menu {
+            Button {
+                withAnimation(.snappy) { store.projectFilter = [] }
+            } label: {
+                if store.projectFilter.isEmpty {
+                    Label("All projects", systemImage: "checkmark")
+                } else {
+                    Text("All projects")
+                }
+            }
+            Divider()
+            ForEach(store.projects, id: \.self) { project in
+                Toggle(project, isOn: Binding(
+                    get: { store.projectFilter.contains(project) },
+                    set: { isOn in
+                        withAnimation(.snappy) {
+                            if isOn { store.projectFilter.insert(project) } else { store.projectFilter.remove(project) }
+                        }
+                    }
+                ))
+            }
+        } label: {
+            let filter = store.projectFilter
+            HStack(spacing: 5) {
+                Image(systemName: "line.3.horizontal.decrease")
+                    .font(.system(size: 13, weight: .semibold))
+                Text(filter.isEmpty ? "Projects" : filter.count == 1 ? filter.first! : "\(filter.count) projects")
+                    .lineLimit(1)
+            }
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(filter.isEmpty ? Theme.foreground : Theme.background)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(filter.isEmpty ? Theme.fill : Theme.foreground, in: Capsule())
+        }
+        .menuActionDismissBehavior(.disabled)
+        .accessibilityLabel("Filter by project")
     }
 
     // MARK: - Today
@@ -137,7 +177,7 @@ struct TasksView: View {
                             RoutineChip(task: task, onSelect: { editingTask = task }) {
                                 Task { await store.complete(task, toasts: toasts) }
                             }
-                            .contextMenu { copyMenu(task) }
+                            .contextMenu { taskMenu(task) }
                         }
                     }
                     .padding(.horizontal, -32)
@@ -226,7 +266,7 @@ struct TasksView: View {
                     TaskRow(task: task, onComplete: nil)
                         .contentShape(Rectangle())
                         .onTapGesture { editingTask = task }
-                        .contextMenu { copyMenu(task) }
+                        .contextMenu { taskMenu(task) }
                         .listRowBackground(Theme.card)
                         .swipeActions(edge: .leading) {
                             Button {
@@ -265,7 +305,7 @@ struct TasksView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { editingTask = task }
-        .contextMenu { copyMenu(task) }
+        .contextMenu { taskMenu(task) }
         .listRowBackground(Theme.card)
         .listRowSeparatorTint(Theme.border)
         .swipeActions(edge: .leading) {
@@ -293,14 +333,19 @@ struct TasksView: View {
         }
     }
 
-    /// Press and hold a task: copy it as a prompt to paste into Claude.
+    /// Press and hold a task: copy it as a prompt for Claude, or delete it.
     @ViewBuilder
-    private func copyMenu(_ task: TaskItem) -> some View {
+    private func taskMenu(_ task: TaskItem) -> some View {
         Button {
             UIPasteboard.general.string = task.claudePrompt
             toasts.show("Copied for Claude")
         } label: {
             Label("Copy task", systemImage: "doc.on.doc")
+        }
+        Button(role: .destructive) {
+            confirmingDelete = task
+        } label: {
+            Label("Delete", systemImage: "trash")
         }
     }
 
@@ -373,7 +418,7 @@ private struct TaskComposer: View {
         self.store = store
         _text = text
         self.isFocused = isFocused
-        _chosenProject = State(initialValue: store.projectFilter)
+        _chosenProject = State(initialValue: store.projectFilter.count == 1 ? store.projectFilter.first : nil)
     }
 
     private var parsed: QuickTask {

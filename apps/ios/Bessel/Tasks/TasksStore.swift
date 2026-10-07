@@ -36,7 +36,8 @@ final class TasksStore {
     }
 
     var mode: Mode = .today
-    var projectFilter: String?
+    /// Projects to show; empty shows everything.
+    var projectFilter: Set<String> = []
     private(set) var open: [TaskItem] = []
     private(set) var done: [TaskItem] = []
     private(set) var projects: [String] = []
@@ -58,7 +59,7 @@ final class TasksStore {
     // MARK: - Derived lists
 
     private func matchesFilter(_ task: TaskItem) -> Bool {
-        projectFilter == nil || task.project == projectFilter
+        projectFilter.isEmpty || task.project.map(projectFilter.contains) == true
     }
 
     var routines: [TaskItem] {
