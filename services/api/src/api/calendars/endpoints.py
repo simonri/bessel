@@ -28,10 +28,10 @@ from api.calendars.schemas import (
   ICloudConnectRequest,
 )
 from api.calendars.service import OAuthCallbackError, calendar_service
-from api.exceptions import ServiceUnavailableError, ValidationError
+from api.exceptions import ServiceUnavailableError, TooManyRequestsError, ValidationError
 from api.logging import Logger
 from api.models.calendar_event import CalendarEvent
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import AsyncSession, DBSession
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
 from api.users.service import user_service
@@ -45,7 +45,7 @@ MAX_EVENT_WINDOW_SECS = 62 * 86400
 
 @router.get("/accounts", summary="List Calendar Accounts", response_model=CalendarAccountListResponse)
 async def list_calendar_accounts(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> CalendarAccountListResponse:
   accounts = await CalendarAccountRepository.from_session(session).list_for_user(current_user.id)
@@ -60,7 +60,7 @@ async def authorize_google(current_user: CurrentDBUser) -> GoogleAuthorizeRespon
 @router.post("/google/webhook", include_in_schema=False)
 async def google_calendar_webhook(
   request: Request,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   redis: Annotated[Redis, Depends(get_redis)],
 ) -> Response:
   """Google's change notifications. Unauthenticated by design: each channel's
@@ -71,9 +71,9 @@ async def google_calendar_webhook(
 
 async def _stream_user_id(
   user_info: CurrentUser,
-  # Function scope commits and returns the connection before streaming starts;
-  # a page can keep this stream open for hours.
-  session: Annotated[AsyncSession, Depends(get_db_session, scope="function")],
+  # Committed, returning its connection, before streaming starts: a page keeps
+  # this stream open for up to an hour.
+  session: DBSession,
 ) -> UUID:
   return (await user_service.get_or_create_by_sub(session, user_info.sub, user_info.email)).id
 
@@ -84,8 +84,12 @@ async def stream_calendar_changes(
   redis: Annotated[Redis, Depends(get_redis)],
 ) -> StreamingResponse:
   """Server-sent `changed` events whenever a sync of the user's calendars lands."""
+  try:
+    slot = await push.claim_stream_slot(redis, user_id)
+  except push.TooManyStreamsError as e:
+    raise TooManyRequestsError("Too many open calendar update streams. Close some Bessel windows and try again.") from e
   return StreamingResponse(
-    push.change_events(redis, user_id),
+    push.change_events(redis, user_id, slot=slot),
     media_type="text/event-stream",
     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
   )
@@ -94,7 +98,7 @@ async def stream_calendar_changes(
 @router.post("/google/callback", summary="Complete Google Calendar Connection", response_model=CalendarAccountSchema, status_code=201)
 async def complete_google_connect(
   body: GoogleCallbackRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> CalendarAccountSchema:
   accounts = CalendarAccountRepository.from_session(session)
@@ -111,7 +115,7 @@ async def complete_google_connect(
 @router.post("/icloud", summary="Connect iCloud Calendar", response_model=CalendarAccountSchema, status_code=201)
 async def connect_icloud(
   body: ICloudConnectRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> CalendarAccountSchema:
   accounts = CalendarAccountRepository.from_session(session)
@@ -122,7 +126,7 @@ async def connect_icloud(
 @router.delete("/accounts/{account_id}", summary="Disconnect Calendar Account", status_code=204)
 async def disconnect_calendar_account(
   account_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   accounts = CalendarAccountRepository.from_session(session)
@@ -132,7 +136,7 @@ async def disconnect_calendar_account(
 @router.post("/accounts/{account_id}/sync", summary="Sync Calendar Account", status_code=202)
 async def sync_calendar_account(
   account_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   account = await CalendarAccountRepository.from_session(session).get_owned(account_id, current_user.id)
@@ -143,7 +147,7 @@ async def sync_calendar_account(
 async def update_calendar(
   calendar_id: UUID,
   body: CalendarUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> CalendarSchema:
   calendar = await CalendarRepository.from_session(session).get_owned(calendar_id, current_user.id)
@@ -153,7 +157,7 @@ async def update_calendar(
 
 @router.get("/events", summary="List Calendar Events", response_model=CalendarEventListResponse)
 async def list_calendar_events(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],
@@ -179,7 +183,7 @@ async def _write_response(session: AsyncSession, user_id: UUID, event: CalendarE
 async def create_calendar_event(
   calendar_id: UUID,
   body: EventCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   redis: Annotated[Redis, Depends(get_redis)],
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
@@ -191,7 +195,7 @@ async def create_calendar_event(
 async def update_calendar_event(
   event_id: UUID,
   body: EventUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   redis: Annotated[Redis, Depends(get_redis)],
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
@@ -203,7 +207,7 @@ async def update_calendar_event(
 async def respond_to_calendar_event(
   event_id: UUID,
   body: EventReplyUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   redis: Annotated[Redis, Depends(get_redis)],
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
@@ -214,7 +218,7 @@ async def respond_to_calendar_event(
 @router.delete("/events/{event_id}", summary="Delete Calendar Event", status_code=204)
 async def delete_calendar_event(
   event_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   redis: Annotated[Redis, Depends(get_redis)],
   current_user: CurrentDBUser,
   time_zone: Annotated[str, Query(description="Zone the user is viewing the calendar in.")],

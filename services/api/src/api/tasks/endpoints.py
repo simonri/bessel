@@ -13,7 +13,7 @@ from api.exceptions import ResourceNotFound, ValidationError
 from api.models.project import Project
 from api.models.task import Task
 from api.models.task_attachment import TaskAttachment
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import AsyncSession, DBSession
 from api.projects.repository import ProjectRepository
 from api.tasks.attachment_storage import delete_attachment_file, read_attachment_file, save_attachment_file
 from api.tasks.recurrence import compute_next_due_date
@@ -66,7 +66,7 @@ async def _resolve_project(session: AsyncSession, name: str | None, user_id: UUI
   response_model=TaskListResponse,
 )
 async def list_tasks(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TaskSortProperty]], Depends(sorting_getter)],
@@ -108,7 +108,7 @@ async def list_tasks(
 )
 async def create_task(
   body: TaskCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
@@ -138,7 +138,7 @@ async def create_task(
 )
 async def reorder_tasks(
   body: list[TaskReorderItem],
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = TaskRepository.from_session(session)
@@ -161,7 +161,7 @@ async def reorder_tasks(
 async def update_task(
   task_id: UUID,
   body: TaskUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
@@ -185,7 +185,7 @@ async def update_task(
 )
 async def delete_task(
   task_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = TaskRepository.from_session(session)
@@ -207,7 +207,7 @@ async def delete_task(
 async def upload_task_attachment(
   task_id: UUID,
   file: UploadFile,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskAttachmentSchema:
   await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
@@ -243,7 +243,7 @@ async def upload_task_attachment(
 async def delete_task_attachment(
   task_id: UUID,
   attachment_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   attachment = await _get_owned_attachment(session, task_id, attachment_id, current_user.id)
@@ -258,7 +258,7 @@ async def delete_task_attachment(
 async def get_task_attachment_file(
   task_id: UUID,
   attachment_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> Response:
   attachment = await _get_owned_attachment(session, task_id, attachment_id, current_user.id)
@@ -281,7 +281,7 @@ async def get_task_attachment_file(
 )
 async def complete_task(
   task_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskCompleteResponse:
   repo = TaskRepository.from_session(session)
@@ -340,7 +340,7 @@ async def complete_task(
 )
 async def reopen_task(
   task_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   repo = TaskRepository.from_session(session)
@@ -356,7 +356,7 @@ async def reopen_task(
 )
 async def undo_complete_task(
   task_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   """Reopen a task and remove the next occurrence completing it spawned, in one
@@ -383,7 +383,7 @@ async def undo_complete_task(
   response_model=list[str],
 )
 async def list_areas(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> list[str]:
   repo = TaskRepository.from_session(session)
@@ -399,7 +399,7 @@ async def list_areas(
 )
 async def get_task(
   task_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
   task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")

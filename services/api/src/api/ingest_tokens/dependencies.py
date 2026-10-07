@@ -7,11 +7,11 @@ from api.common.utils import utc_now
 from api.exceptions import UnauthorizedError
 from api.ingest_tokens.repository import IngestTokenRepository
 from api.ingest_tokens.service import hash_token
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 
 
 async def get_ingest_user_id(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   x_api_key: Annotated[str | None, Header()] = None,
 ) -> UUID:
   """Resolve the owner of the ingest token a local daemon sends in X-Api-Key."""

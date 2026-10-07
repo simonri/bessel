@@ -1,13 +1,13 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi import APIRouter, Query, UploadFile
 
 from api.common.uploads import read_upload
 from api.location_history.repository import LocationImportRepository, LocationSegmentRepository
 from api.location_history.schemas import LocationDay, LocationHistorySummary, LocationImportSchema
 from api.location_history.service import location_history_service
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/location-history", tags=["location-history"])
@@ -23,7 +23,7 @@ MAX_IMPORT_SIZE_BYTES = 200 * 1024 * 1024
 )
 async def import_location_history(
   file: UploadFile,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   exported_at: Annotated[
     datetime | None,
@@ -54,7 +54,7 @@ async def import_location_history(
   response_model=LocationHistorySummary,
 )
 async def get_location_history_summary(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> LocationHistorySummary:
   return await location_history_service.summary(
@@ -70,7 +70,7 @@ async def get_location_history_summary(
   response_model=LocationDay,
 )
 async def get_location_history_day(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   day: Annotated[date, Query(alias="date", description="Local date where the segments happened.")],
 ) -> LocationDay:

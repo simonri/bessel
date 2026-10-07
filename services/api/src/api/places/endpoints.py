@@ -10,7 +10,7 @@ from api.exceptions import ServiceUnavailableError
 from api.models.place import Place
 from api.places.repository import PlaceRepository
 from api.places.schemas import GooglePlaceSearchResponse, GooglePlaceSearchResult, PlaceCreate, PlaceListResponse, PlaceSchema, PlaceStatus, PlaceUpdate
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.settings import settings
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query
@@ -87,7 +87,7 @@ sorting_getter = SortingGetter(PlaceSortProperty, default_sorting=["-created_at"
   response_model=PlaceListResponse,
 )
 async def list_places(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[PlaceSortProperty]], Depends(sorting_getter)],
@@ -176,7 +176,7 @@ async def search_google_places(
 )
 async def create_place(
   body: PlaceCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
@@ -193,7 +193,7 @@ async def create_place(
 async def update_place(
   place_id: UUID,
   body: PlaceUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
@@ -213,7 +213,7 @@ async def update_place(
 )
 async def delete_place(
   place_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = PlaceRepository.from_session(session)

@@ -9,7 +9,7 @@ from api.bank_accounts.schemas import BankAccountCreate, BankAccountListResponse
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.models.bank_account import BankAccount
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import AsyncSession, DBSession
 from api.transactions.repository import TransactionRepository
 from api.users.dependencies import CurrentDBUser
 
@@ -40,7 +40,7 @@ def _to_schema(account: BankAccount, balance: int) -> BankAccountSchema:
   response_model=BankAccountListResponse,
 )
 async def list_bank_accounts(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[BankAccountSortProperty]], Depends(sorting_getter)],
@@ -67,7 +67,7 @@ async def list_bank_accounts(
 )
 async def get_bank_account(
   bank_account_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> BankAccountSchema:
   """Get a bank account by ID."""
@@ -85,7 +85,7 @@ async def get_bank_account(
 )
 async def create_bank_account(
   body: BankAccountCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> BankAccountSchema:
   """Create a new bank account."""
@@ -109,7 +109,7 @@ async def create_bank_account(
 async def update_bank_account(
   bank_account_id: UUID,
   body: BankAccountUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> BankAccountSchema:
   """Update a bank account."""
@@ -131,7 +131,7 @@ async def update_bank_account(
 )
 async def delete_bank_account(
   bank_account_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   """Delete a bank account and all its transactions."""

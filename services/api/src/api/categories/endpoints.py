@@ -1,12 +1,10 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from api.categories.repository import CategoryRepository
 from api.categories.schemas import CategoryListResponse, CategorySchema
 from api.common.pagination import PaginationParamsQuery
 from api.models.category import Category
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/categories", tags=["categories"])
@@ -18,7 +16,7 @@ router = APIRouter(prefix="/categories", tags=["categories"])
   response_model=CategoryListResponse,
 )
 async def list_categories(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> CategoryListResponse:
