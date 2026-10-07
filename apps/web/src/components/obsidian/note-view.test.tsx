@@ -175,4 +175,71 @@ describe("NoteView", () => {
     await screen.findByDisplayValue("changed on disk");
     expect(screen.queryByText("This note changed on disk")).toBeNull();
   });
+
+  it("still saves the outgoing note's edits when switching notes mid-save", async () => {
+    const OTHER = "Other.md";
+    let releaseFirstWrite!: (value: { mtimeMs: number }) => void;
+    const write = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (releaseFirstWrite = resolve)),
+      )
+      .mockResolvedValue({ mtimeMs: 300 });
+    const vault = mockVault({
+      read: vi.fn((_root: string, rel: string) =>
+        Promise.resolve({
+          content: rel === OTHER ? "other" : "hello",
+          mtimeMs: 100,
+        }),
+      ),
+      write,
+    } as Partial<VaultApi>);
+    window.electron = { vault } as unknown as Window["electron"];
+    const { rerender, client, props } = renderNoteView();
+    await screen.findByDisplayValue("hello");
+
+    vi.useFakeTimers();
+    fireEvent.change(screen.getByTestId("mock-editor"), {
+      target: { value: "hello 1" },
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(write).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByTestId("mock-editor"), {
+      target: { value: "hello 12" },
+    });
+    rerender(
+      <QueryClientProvider client={client}>
+        <NoteView {...props} rel={OTHER} />
+      </QueryClientProvider>,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    await act(async () => {
+      releaseFirstWrite({ mtimeMs: 200 });
+      await vi.advanceTimersByTimeAsync(50);
+    });
+
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(write).toHaveBeenLastCalledWith(ROOT, REL, "hello 12", 200);
+  });
+
+  it("writes unsaved edits synchronously when the page unloads", async () => {
+    const vault = mockVault();
+    window.electron = { vault } as unknown as Window["electron"];
+    renderNoteView();
+    await screen.findByDisplayValue("hello");
+
+    fireEvent.change(screen.getByTestId("mock-editor"), {
+      target: { value: "hello there" },
+    });
+    window.dispatchEvent(new Event("beforeunload"));
+    window.dispatchEvent(new Event("pagehide"));
+
+    expect(vault.write).toHaveBeenCalledTimes(1);
+    expect(vault.write).toHaveBeenCalledWith(ROOT, REL, "hello there", 100);
+  });
 });

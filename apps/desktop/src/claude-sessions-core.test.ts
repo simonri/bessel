@@ -4,6 +4,8 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   agentStatus,
+  appendTail,
+  isSessionId,
   listConversations,
   parseAgents,
   parseBackgroundedId,
@@ -271,5 +273,22 @@ describe("transcripts", () => {
       },
     ]);
     expect(listConversations("/elsewhere", 10)).toEqual([]);
+  });
+});
+
+describe("isSessionId", () => {
+  it("accepts UUIDs only", () => {
+    expect(isSessionId("1b4e28ba-2fa1-11d2-883f-0016d3cca427")).toBe(true);
+    expect(isSessionId("../../etc/passwd")).toBe(false);
+    expect(isSessionId("--dangerous-flag")).toBe(false);
+    expect(isSessionId("1b4e28ba-2fa1-11d2-883f-0016d3cca427/x")).toBe(false);
+    expect(isSessionId(undefined)).toBe(false);
+  });
+});
+
+describe("appendTail", () => {
+  it("keeps the most recent output within the cap", () => {
+    expect(appendTail("abc", "def", 10)).toBe("abcdef");
+    expect(appendTail("abc", "def", 4)).toBe("cdef");
   });
 });

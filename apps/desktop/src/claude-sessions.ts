@@ -5,7 +5,9 @@ import path from "node:path";
 import { app, BrowserWindow, dialog, Notification } from "electron";
 import {
   agentStatus,
+  appendTail,
   isRunning,
+  isSessionId,
   isUntrustedWorkspaceError,
   listConversations,
   parseAgents,
@@ -29,6 +31,9 @@ import {
 import { broadcast, ipcHandle } from "./ipc.js";
 
 const POLL_MS = 2_000;
+// Nothing of ours is live: only external sessions could change, and those
+// don't need a two-second refresh.
+const IDLE_POLL_MS = 15_000;
 const CLI_TIMEOUT_MS = 30_000;
 // A session Bessel just started or woke may take a moment to report as
 // running; until then it's "starting", not ended.
@@ -40,6 +45,9 @@ const ENDED_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 const ENDED_MAX_COUNT = 30;
 const MAX_NAME_LENGTH = 100;
 const CONVERSATION_LIMIT = 25;
+// Only the tail matters (the latest Remote Control URL), and a long-running
+// session's log can be large.
+const LOGS_TAIL_CHARS = 256 * 1024;
 
 interface StoreFile {
   sessions: StoredClaudeSession[];
@@ -89,6 +97,8 @@ class ClaudeSessionManager {
   private readonly reservedNames = new Set<string>();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private polling: Promise<void> | null = null;
+  private stopped = false;
+  private readonly reviving = new Map<string, Promise<void>>();
 
   constructor(
     private readonly storePath: string,
@@ -102,6 +112,7 @@ class ClaudeSessionManager {
   }
 
   stop(): void {
+    this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
   }
@@ -133,6 +144,8 @@ class ClaudeSessionManager {
     const cwd = input.cwd || app.getPath("home");
     assertDirectory(cwd);
     const resumeId = input.resumeSessionId;
+    if (resumeId && !isSessionId(resumeId))
+      throw new Error("Invalid Claude session id");
     if (resumeId) {
       const known = this.store.sessions.find(
         (s) =>
@@ -178,14 +191,35 @@ class ClaudeSessionManager {
     return this.view(session);
   }
 
-  private async revive(session: StoredClaudeSession): Promise<void> {
+  // Startup reconcile, a poll and the user's "Resume" can all ask for the
+  // same session at once; they share one attempt instead of each spawning a
+  // background session.
+  private revive(session: StoredClaudeSession): Promise<void> {
+    const inFlight = this.reviving.get(session.key);
+    if (inFlight) return inFlight;
     const status = agentStatus(this.agentFor(session));
     if (
       session.endedAt === undefined &&
       (isRunning(status) || this.pending.has(session.key))
     )
-      return;
+      return Promise.resolve();
 
+    const wasPending = this.pending.has(session.key);
+    this.markPending(session.key);
+    const attempt = this.reviveNow(session, status)
+      .catch((err: unknown) => {
+        if (!wasPending) this.pending.delete(session.key);
+        throw err;
+      })
+      .finally(() => this.reviving.delete(session.key));
+    this.reviving.set(session.key, attempt);
+    return attempt;
+  }
+
+  private async reviveNow(
+    session: StoredClaudeSession,
+    status: ClaudeSessionStatus,
+  ): Promise<void> {
     // Claude may have dropped a stopped session since the last poll.
     const respawned =
       status === "stopped" &&
@@ -286,9 +320,17 @@ class ClaudeSessionManager {
     this.timer = null;
     this.polling ??= this.poll().finally(() => {
       this.polling = null;
-      this.timer = setTimeout(() => void this.refresh(), POLL_MS);
+      if (this.stopped) return;
+      this.timer = setTimeout(() => void this.refresh(), this.pollInterval());
     });
     return this.polling;
+  }
+
+  private pollInterval(): number {
+    const live =
+      this.pending.size > 0 ||
+      this.store.sessions.some((s) => s.endedAt === undefined);
+    return live ? POLL_MS : IDLE_POLL_MS;
   }
 
   private async poll(): Promise<void> {
@@ -410,7 +452,11 @@ class ClaudeSessionManager {
     this.remoteUrlCheckedAt.set(session.key, Date.now());
     try {
       const url = parseRemoteUrl(
-        (await this.cli(["logs", session.bgId])).stdout,
+        (
+          await this.cli(["logs", session.bgId], undefined, {
+            tailChars: LOGS_TAIL_CHARS,
+          })
+        ).stdout,
       );
       if (url && url !== session.remoteUrl) {
         session.remoteUrl = url;
@@ -478,7 +524,10 @@ class ClaudeSessionManager {
   private async cli(
     args: string[],
     cwd?: string,
-    { allowFailure = false }: { allowFailure?: boolean } = {},
+    {
+      allowFailure = false,
+      tailChars = Number.POSITIVE_INFINITY,
+    }: { allowFailure?: boolean; tailChars?: number } = {},
   ): Promise<CliResult> {
     const env = await this.deps.childEnv();
     return new Promise((resolve, reject) => {
@@ -491,8 +540,14 @@ class ClaudeSessionManager {
       });
       let stdout = "";
       let stderr = "";
-      child.stdout.on("data", (d: Buffer) => (stdout += d.toString()));
-      child.stderr.on("data", (d: Buffer) => (stderr += d.toString()));
+      child.stdout.on(
+        "data",
+        (d: Buffer) => (stdout = appendTail(stdout, d.toString(), tailChars)),
+      );
+      child.stderr.on(
+        "data",
+        (d: Buffer) => (stderr = appendTail(stderr, d.toString(), tailChars)),
+      );
       child.on("error", reject);
       child.on("close", (code) => {
         if (code === 0 || allowFailure) resolve({ code, stdout, stderr });

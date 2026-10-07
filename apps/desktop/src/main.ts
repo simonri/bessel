@@ -23,13 +23,22 @@ import {
   registerClaudeSessionHandlers,
   stopClaudeSessions,
 } from "./claude-sessions.js";
+import { isSessionId } from "./claude-sessions-core.js";
 import {
   registerAxiCliInstallHandlers,
   registerCliBrokerHandlers,
 } from "./cli-broker.js";
 import { contentSecurityPolicyFor, withContentSecurityPolicy } from "./csp.js";
 import { SENTRY_DSN } from "./env.js";
-import { broadcast, ipcHandle, ipcOn, TRUSTED_ORIGINS } from "./ipc.js";
+import {
+  broadcast,
+  getMainWindow,
+  ipcHandle,
+  ipcOn,
+  setIpcErrorReporter,
+  setMainWindow,
+  TRUSTED_ORIGINS,
+} from "./ipc.js";
 import { registerLocalDataServerHandlers } from "./local-data-server.js";
 import { registerMyAiHandlers } from "./my-ai.js";
 import { registerPortsHandlers } from "./ports.js";
@@ -43,6 +52,7 @@ import {
   stopSpotifyWatcher,
 } from "./spotify.js";
 import { isImageFile, MIME_TYPES, serveLocalFile } from "./static-files.js";
+import { OutputCoalescer, terminalSize } from "./terminal-core.js";
 import {
   approveVaultRoot,
   registerVaultHandlers,
@@ -126,7 +136,7 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0);
 }
 app.on("second-instance", () => {
-  const win = BrowserWindow.getAllWindows()[0];
+  const win = getMainWindow();
   if (!win) return;
   if (win.isMinimized()) win.restore();
   win.focus();
@@ -341,6 +351,12 @@ function initLogging(): void {
     // process exits — captureException alone doesn't guarantee delivery.
     void Sentry.flush(2000).finally(() => app.exit(1));
   });
+  setIpcErrorReporter((channel, err) => {
+    appendLog(
+      `ipc "${channel}" listener threw: ${(err as Error)?.stack ?? err}`,
+    );
+    Sentry.captureException(err);
+  });
   process.on("unhandledRejection", (reason) => {
     appendLog(`unhandledRejection: ${reason}`);
     Sentry.captureException(reason);
@@ -437,7 +453,16 @@ function loadAuthCache(): Record<string, string> {
 function saveAuthCache(): void {
   if (!authCachePath || !isRealEncryptionAvailable()) return;
   const encrypted = safeStorage.encryptString(JSON.stringify(authCache));
-  fs.writeFileSync(authCachePath, encrypted);
+  // tmp + rename so a crash mid-write can't leave a truncated cache behind.
+  const tmp = `${authCachePath}.tmp`;
+  try {
+    fs.writeFileSync(tmp, encrypted, { mode: 0o600 });
+    fs.renameSync(tmp, authCachePath);
+    fs.chmodSync(authCachePath, 0o600);
+  } catch (err) {
+    fs.rmSync(tmp, { force: true });
+    throw err;
+  }
 }
 
 // ─── device identity ────────────────────────────────────────────────────────
@@ -467,7 +492,24 @@ function loadOrCreateDeviceInfo(): DeviceInfo {
   return info;
 }
 
-const ptySessions = new Map<string, pty.IPty>();
+interface PtySession {
+  /** Distinguishes a respawn under the same id from the PTY it replaced. */
+  generation: number;
+  /** null while the spawn is still resolving the child environment. */
+  pty: pty.IPty | null;
+  output: OutputCoalescer;
+}
+
+const ptySessions = new Map<string, PtySession>();
+let ptyGeneration = 0;
+
+function killPtySession(sessionId: string): void {
+  const session = ptySessions.get(sessionId);
+  if (!session) return;
+  ptySessions.delete(sessionId);
+  session.output.discard();
+  session.pty?.kill();
+}
 
 // macOS GUI apps inherit launchd's minimal environment (PATH is just
 // /usr/bin:/bin:/usr/sbin:/sbin), not the user's shell environment — so
@@ -540,7 +582,7 @@ function downgradeStaleClaudeResume(args: string[], cwd: string): void {
   const resumeIdx = args.indexOf("--resume");
   if (resumeIdx === -1) return;
   const sessionId = args[resumeIdx + 1];
-  if (!sessionId) return;
+  if (!isSessionId(sessionId)) return;
   const transcript = path.join(claudeProjectDir(cwd), `${sessionId}.jsonl`);
   if (!fs.existsSync(transcript)) {
     args[resumeIdx] = "--session-id";
@@ -594,8 +636,23 @@ function startAuthLogin(): Promise<number> {
   authCallbackServer?.close();
 
   const server = http.createServer((req, res) => {
-    if (!req.url?.startsWith(AUTH_CALLBACK_PATH)) {
+    const url = new URL(
+      req.url ?? "/",
+      `http://127.0.0.1:${AUTH_CALLBACK_PORT}`,
+    );
+    if (url.pathname !== AUTH_CALLBACK_PATH) {
       res.writeHead(404).end();
+      return;
+    }
+    // Anything else on this path (a stray request, a prefetch) must not end
+    // the attempt. Auth0 reports a denied or failed login with `error` +
+    // `state` instead of `code`, which the renderer still needs to see.
+    const { searchParams } = url;
+    if (
+      !searchParams.get("state") ||
+      !(searchParams.get("code") || searchParams.get("error"))
+    ) {
+      res.writeHead(400).end();
       return;
     }
     broadcast(
@@ -609,7 +666,7 @@ function startAuthLogin(): Promise<number> {
         "background:#0a0a0a;color:#ffffff88;font:14px system-ui,sans-serif'>" +
         "Signed in — you can close this tab and return to Bessel.</body>",
     );
-    const win = BrowserWindow.getAllWindows()[0];
+    const win = getMainWindow();
     if (win) {
       if (win.isMinimized()) win.restore();
       win.focus();
@@ -732,7 +789,7 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  win.webContents.on("will-navigate", (event, url) => {
+  const guardNavigation = (event: Electron.Event, url: string) => {
     try {
       const parsed = new URL(url);
       if (!NAVIGATION_ALLOWED_ORIGINS.has(`${parsed.protocol}//${parsed.host}`))
@@ -740,7 +797,11 @@ function createWindow() {
     } catch {
       event.preventDefault();
     }
-  });
+  };
+  win.webContents.on("will-navigate", guardNavigation);
+  win.webContents.on("will-redirect", guardNavigation);
+
+  setMainWindow(win);
 
   confirmCloseWithClaudeSessions(win);
 
@@ -959,7 +1020,7 @@ app.whenReady().then(() => {
     if (logFilePath) shell.showItemInFolder(logFilePath);
   });
 
-  ipcHandle("dialog:select-folder", async (event) => {
+  ipcHandle("dialog:select-folder", async (event, purpose?: unknown) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     const options: Electron.OpenDialogOptions = {
       properties: ["openDirectory"],
@@ -968,14 +1029,18 @@ app.whenReady().then(() => {
       ? await dialog.showOpenDialog(win, options)
       : await dialog.showOpenDialog(options);
     const selected = result.canceled ? null : (result.filePaths[0] ?? null);
-    // A folder the user just picked is trusted as a vault root too (the same
-    // dialog backs the Obsidian vault picker).
-    if (selected) approveVaultRoot(selected);
+    // The same dialog backs project pickers; only a pick made for a vault
+    // grants vault access to the folder.
+    if (selected && purpose === "vault") approveVaultRoot(selected);
     return selected;
   });
 
   ipcHandle("ssh:list-dir", async (_, host: string, dirPath: string) => {
-    if (!/^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9][A-Za-z0-9.-]*$/.test(host)) {
+    if (
+      typeof host !== "string" ||
+      host.startsWith("-") ||
+      !/^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9][A-Za-z0-9.-]*$/.test(host)
+    ) {
       throw new Error(`Invalid SSH host: ${host}`);
     }
     const cdArg = remoteCdArg(dirPath?.trim() ? dirPath.trim() : "~");
@@ -983,7 +1048,7 @@ app.whenReady().then(() => {
     const remote = `cd ${cdArg} && printf '\\n@@CWD@@\\n' && pwd && printf '@@DIRS@@\\n' && ls -1Ap`;
     const { stdout } = await execFileAsync(
       "ssh",
-      ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, remote],
+      ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "--", host, remote],
       { maxBuffer: 8 * 1024 * 1024 },
     );
     const cwdTag = "@@CWD@@\n";
@@ -1011,10 +1076,34 @@ app.whenReady().then(() => {
       cols: number,
       rows: number,
       config: { command: string; args: string[]; cwd?: string },
-    ) => {
-      if (ptySessions.has(sessionId)) return;
+    ): Promise<number | undefined> => {
+      if (typeof sessionId !== "string" || !sessionId)
+        throw new Error("Invalid terminal session id");
+      const size = terminalSize(cols, rows) ?? { cols: 80, rows: 24 };
+      const existing = ptySessions.get(sessionId);
+      if (existing) return existing.generation;
 
-      const env = await childProcessEnv();
+      // Reserved before the first await so a concurrent spawn for the same id
+      // sees it, and a kill during the await can cancel this spawn.
+      const generation = ++ptyGeneration;
+      const session: PtySession = {
+        generation,
+        pty: null,
+        output: new OutputCoalescer((data) =>
+          broadcast("terminal:data", sessionId, data, generation),
+        ),
+      };
+      ptySessions.set(sessionId, session);
+
+      let env: NodeJS.ProcessEnv;
+      try {
+        env = await childProcessEnv();
+      } catch (err) {
+        if (ptySessions.get(sessionId) === session)
+          ptySessions.delete(sessionId);
+        throw err;
+      }
+      if (ptySessions.get(sessionId) !== session) return undefined;
 
       const isDefaultShell = config.command === "default-shell";
       const command = isDefaultShell
@@ -1037,12 +1126,13 @@ app.whenReady().then(() => {
       try {
         p = pty.spawn(command, args, {
           name: "xterm-256color",
-          cols,
-          rows,
+          cols: size.cols,
+          rows: size.rows,
           cwd: config.cwd ?? env.HOME ?? process.cwd(),
           env,
         });
       } catch (err) {
+        ptySessions.delete(sessionId);
         appendLog(
           `terminal spawn failed command=${command} cwd=${config.cwd ?? ""} ` +
             `PATH=${env.PATH}: ${(err as Error).message}`,
@@ -1052,33 +1142,39 @@ app.whenReady().then(() => {
         );
       }
 
-      ptySessions.set(sessionId, p);
+      session.pty = p;
 
       p.onData((data) => {
-        broadcast("terminal:data", sessionId, data);
+        if (ptySessions.get(sessionId) === session) session.output.push(data);
       });
 
       p.onExit(({ exitCode }) => {
-        broadcast("terminal:exit", sessionId, exitCode ?? 0);
+        // A kill + respawn under the same id has already replaced this entry;
+        // its exit must neither remove the new PTY nor reach the new view.
+        if (ptySessions.get(sessionId) !== session) return;
+        session.output.flush();
         ptySessions.delete(sessionId);
+        broadcast("terminal:exit", sessionId, exitCode ?? 0, generation);
       });
+      return generation;
     },
   );
 
-  ipcOn("terminal:input", (_, sessionId: string, data: string) => {
-    ptySessions.get(sessionId)?.write(data);
+  ipcOn("terminal:input", (_, sessionId: string, data: unknown) => {
+    if (typeof data !== "string") return;
+    ptySessions.get(sessionId)?.pty?.write(data);
   });
 
   ipcOn(
     "terminal:resize",
-    (_, sessionId: string, cols: number, rows: number) => {
-      ptySessions.get(sessionId)?.resize(cols, rows);
+    (_, sessionId: string, cols: unknown, rows: unknown) => {
+      const size = terminalSize(cols, rows);
+      if (size) ptySessions.get(sessionId)?.pty?.resize(size.cols, size.rows);
     },
   );
 
   ipcOn("terminal:kill", (_, sessionId: string) => {
-    ptySessions.get(sessionId)?.kill();
-    ptySessions.delete(sessionId);
+    killPtySession(sessionId);
   });
 
   ipcHandle("git:status", async (_, repoPath: string) => {
@@ -1135,6 +1231,15 @@ app.whenReady().then(() => {
     }
   };
 
+  const assertInsideRepo = (repoPath: string, file: unknown): void => {
+    if (typeof repoPath !== "string" || typeof file !== "string" || !file)
+      throw new Error("Invalid repository path");
+    const repoRoot = path.resolve(repoPath);
+    const target = path.resolve(repoRoot, file);
+    if (!target.startsWith(repoRoot + path.sep))
+      throw new Error(`Refusing to read path outside repository: ${file}`);
+  };
+
   const readWorkingTreeFile = (repoPath: string, file: string): string => {
     try {
       return fs.readFileSync(path.join(repoPath, file), "utf8");
@@ -1175,6 +1280,7 @@ app.whenReady().then(() => {
       staged: boolean,
       untracked: boolean,
     ) => {
+      assertInsideRepo(repoPath, file);
       if (isImageFile(file)) {
         const mimeType = MIME_TYPES[path.extname(file).toLowerCase()];
         const toDataUri = (buf: Buffer | null) =>
@@ -1205,7 +1311,7 @@ app.whenReady().then(() => {
         const newContent = readWorkingTreeFile(repoPath, file);
         try {
           const diff = await gitRun(
-            ["diff", "--no-index", "/dev/null", file],
+            ["diff", "--no-index", "--", "/dev/null", file],
             repoPath,
           );
           return { kind: "text" as const, diff, oldContent: "", newContent };
@@ -1321,13 +1427,17 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcHandle("git:log", async (_, repoPath: string, limit = 30) => {
+  ipcHandle("git:log", async (_, repoPath: string, limit?: unknown) => {
+    const count =
+      typeof limit === "number" && Number.isFinite(limit)
+        ? Math.min(Math.max(Math.trunc(limit), 1), 1000)
+        : 30;
     const SEP = "%x1f";
     const out = await gitRun(
       [
         "log",
         `--format=%H${SEP}%h${SEP}%s${SEP}%an${SEP}%ar${SEP}%D`,
-        `-${limit}`,
+        `-${count}`,
       ],
       repoPath,
     );
@@ -1354,7 +1464,7 @@ app.whenReady().then(() => {
     log: appendLog,
     childEnv: childProcessEnv,
     showWindow: () => {
-      const [win] = BrowserWindow.getAllWindows();
+      const win = getMainWindow();
       if (!win) {
         createWindow();
         return;
@@ -1365,11 +1475,11 @@ app.whenReady().then(() => {
     },
   });
   registerMyAiHandlers(USER_DATA_DIR);
-  registerCliBrokerHandlers(USER_DATA_DIR);
+  registerCliBrokerHandlers(USER_DATA_DIR, appendLog);
   registerAxiCliInstallHandlers();
   registerPortsHandlers();
-  registerVaultHandlers();
-  registerLocalDataServerHandlers(USER_DATA_DIR);
+  registerVaultHandlers(appendLog);
+  registerLocalDataServerHandlers(USER_DATA_DIR, appendLog);
 
   ipcHandle("spotify:status", async () => getSpotifyStatus());
   ipcHandle("spotify:position", () => getSpotifyPositionMs());
@@ -1414,7 +1524,7 @@ app.whenReady().then(() => {
   startSpotifyWatcher();
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (!getMainWindow()) {
       createWindow();
       startSpotifyWatcher();
     }
@@ -1424,8 +1534,7 @@ app.whenReady().then(() => {
 // Claude sessions run in Claude's own background service, so this only
 // closes terminal views — the sessions themselves keep running.
 app.on("window-all-closed", () => {
-  for (const p of ptySessions.values()) p.kill();
-  ptySessions.clear();
+  for (const sessionId of [...ptySessions.keys()]) killPtySession(sessionId);
   stopSpotifyWatcher();
   if (process.platform !== "darwin") app.quit();
 });

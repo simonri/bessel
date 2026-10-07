@@ -1,8 +1,8 @@
 import crypto from "crypto";
-import { app, BrowserWindow } from "electron";
+import { app } from "electron";
 import fs from "fs";
 import path from "path";
-import { ipcHandle } from "./ipc.js";
+import { getMainWindow, ipcHandle } from "./ipc.js";
 import {
   createLocalDataServer,
   SECRET_HEADER,
@@ -71,7 +71,10 @@ interface PendingDataRequest {
   resolve: (payload: unknown) => void;
 }
 
-export function registerLocalDataServerHandlers(userDataDir: string): void {
+export function registerLocalDataServerHandlers(
+  userDataDir: string,
+  log: (line: string) => void,
+): void {
   const pending = new Map<string, PendingDataRequest>();
   let currentPort: number | null = null;
 
@@ -94,7 +97,7 @@ export function registerLocalDataServerHandlers(userDataDir: string): void {
   );
 
   const requestPayload = (windowDays: number): Promise<unknown> => {
-    const win = BrowserWindow.getAllWindows()[0];
+    const win = getMainWindow();
     if (!win) {
       return Promise.reject(
         new Error("Open and log into the Bessel desktop app first"),
@@ -137,6 +140,10 @@ export function registerLocalDataServerHandlers(userDataDir: string): void {
 
   const secret = loadOrCreateSecret(userDataDir);
   const server = createLocalDataServer(requestPayload, secret);
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    log(`local data server failed: ${err.code ?? err.message}`);
+    currentPort = null;
+  });
   server.listen(0, "127.0.0.1", () => {
     const address = server.address();
     currentPort = typeof address === "object" && address ? address.port : null;

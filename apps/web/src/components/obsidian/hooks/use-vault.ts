@@ -134,6 +134,13 @@ export interface SaveNoteInput {
   expectedMtimeMs: number | null;
 }
 
+export interface RenameEntryInput {
+  from: string;
+  to: string;
+  /** Notes with unsaved edits, whose links main must leave alone. */
+  skip?: string[];
+}
+
 export function useVaultMutations(root: string) {
   const queryClient = useQueryClient();
 
@@ -165,8 +172,8 @@ export function useVaultMutations(root: string) {
   });
 
   const renameEntry = useMutation({
-    mutationFn: ({ from, to }: { from: string; to: string }) =>
-      vault().rename(root, from, to),
+    mutationFn: ({ from, to, skip }: RenameEntryInput) =>
+      vault().rename(root, from, to, skip?.length ? { skip } : undefined),
     onSuccess: (_, { from }) => {
       queryClient.removeQueries({ queryKey: vaultKeys.note(root, from) });
       void invalidateTree();
