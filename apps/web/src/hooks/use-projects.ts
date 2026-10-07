@@ -5,12 +5,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { client } from "@/lib/client";
+import { userStorage } from "@/lib/user-storage";
 
 const CACHE_KEY = "bessel:projectsCache";
 
 function loadCachedProjects(): ProjectSchema[] | undefined {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = userStorage.getItem(CACHE_KEY);
     if (!raw) return undefined;
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as ProjectSchema[]) : undefined;
@@ -36,9 +37,7 @@ export function useProjects() {
 
   useEffect(() => {
     if (!query.isSuccess || query.isPlaceholderData) return;
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(query.data));
-    } catch {}
+    userStorage.setItem(CACHE_KEY, JSON.stringify(query.data));
   }, [query.isSuccess, query.isPlaceholderData, query.data]);
 
   return query;

@@ -96,7 +96,7 @@ describe("dueReminders", () => {
 describe("reminderBody", () => {
   it("says how soon, when and where", () => {
     expect(reminderBody(timed("x", 8, { location: "Office" }), NOW)).toBe(
-      "In 8 min · 10:00–11:00 · Office",
+      "In 8 min - 10:00–11:00 - Office",
     );
     expect(reminderBody(timed("x", 0.2), NOW)).toMatch(/^In 1 min/);
   });

@@ -24,6 +24,7 @@ vi.mock("./module-registry", async () => {
       },
     },
     moduleSupportsProject: () => false,
+    isAvailableModule: (key: unknown) => key === "tasks",
   };
 });
 

@@ -248,9 +248,25 @@ export function moduleSupportsProject(module: ModuleKey): boolean {
   );
 }
 
-const desktopModules: ModuleKey[] = isDesktop
-  ? ["claudeCode", "codex", "grok", "terminal", "browser", "obsidian"]
-  : [];
+const DESKTOP_ONLY_MODULES: ReadonlySet<ModuleKey> = new Set([
+  "claudeCode",
+  "codex",
+  "grok",
+  "terminal",
+  "browser",
+  "obsidian",
+]);
+
+export function isModuleKey(value: unknown): value is ModuleKey {
+  return typeof value === "string" && Object.hasOwn(MODULE_REGISTRY, value);
+}
+
+/** Whether a (possibly persisted, untrusted) module key can be opened here. */
+export function isAvailableModule(value: unknown): value is ModuleKey {
+  return isModuleKey(value) && (isDesktop || !DESKTOP_ONLY_MODULES.has(value));
+}
+
+const desktopModules: ModuleKey[] = isDesktop ? [...DESKTOP_ONLY_MODULES] : [];
 
 // Modules also reachable as sidebar pages (see pages.ts) are left out here —
 // the dock and command palette only offer opening a widget for modules that

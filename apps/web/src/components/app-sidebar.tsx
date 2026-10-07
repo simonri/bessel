@@ -13,6 +13,7 @@ import {
   type PageKey,
   PRIMARY_PAGES,
 } from "@/components/pages";
+import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEM =
@@ -30,13 +31,13 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function loadSidebarWidth(): number {
-  try {
-    const stored = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
-    if (Number.isFinite(stored))
-      return clamp(stored, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH);
-  } catch {}
-  return DEFAULT_SIDEBAR_WIDTH;
+export function loadSidebarWidth(): number {
+  const raw = userStorage.getItem(SIDEBAR_WIDTH_KEY);
+  // Number(null) and Number("") are 0, which would clamp to the minimum.
+  const stored = raw ? Number(raw) : Number.NaN;
+  return Number.isFinite(stored)
+    ? clamp(stored, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH)
+    : DEFAULT_SIDEBAR_WIDTH;
 }
 
 // Drag surface pinned over the aside's right border. Pointer capture (rather
@@ -209,11 +210,10 @@ export const AppSidebar = memo(function AppSidebar({
   const openCanvas = useCallback(() => onSelectPage("canvas"), [onSelectPage]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      try {
-        localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width));
-      } catch {}
-    }, PERSIST_DEBOUNCE_MS);
+    const t = setTimeout(
+      () => userStorage.setItem(SIDEBAR_WIDTH_KEY, String(width)),
+      PERSIST_DEBOUNCE_MS,
+    );
     return () => clearTimeout(t);
   }, [width]);
 

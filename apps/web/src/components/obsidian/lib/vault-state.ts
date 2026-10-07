@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { userStorage } from "@/lib/user-storage";
 
 export type NoteMode = "edit" | "reading";
 
@@ -28,7 +29,7 @@ export function vaultStateKey(root: string): string {
 
 export function loadVaultUiState(root: string): VaultUiState {
   try {
-    const raw = localStorage.getItem(vaultStateKey(root));
+    const raw = userStorage.getItem(vaultStateKey(root));
     if (raw) {
       const saved = JSON.parse(raw) as Partial<VaultUiState> & {
         mode?: string;
@@ -45,9 +46,7 @@ export function loadVaultUiState(root: string): VaultUiState {
 }
 
 export function saveVaultUiState(root: string, state: VaultUiState): void {
-  try {
-    localStorage.setItem(vaultStateKey(root), JSON.stringify(state));
-  } catch {}
+  userStorage.setItem(vaultStateKey(root), JSON.stringify(state));
 }
 
 export function useVaultUiState(root: string) {

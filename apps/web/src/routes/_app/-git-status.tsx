@@ -12,7 +12,11 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useWindowVisible } from "@/components/canvas/window-manager";
+import {
+  useWindowActions,
+  useWindowEntry,
+  useWindowVisible,
+} from "@/components/canvas/window-manager";
 import { WidgetErrorBoundary } from "@/components/widget-error-boundary";
 import { client } from "@/lib/client";
 import { CommitItem } from "./-commit-item";
@@ -96,8 +100,19 @@ export function GitStatus() {
   );
   const unconfiguredCount = localProjects.length - projects.length;
 
-  const [selectedProject, setSelectedProject] =
-    useState<ProjectWithPath | null>(null);
+  // The choice lives in the window's data (persisted with the canvas) as an
+  // id, so a renamed/moved/deleted project is picked up from the fresh list
+  // rather than a stale copy. As a plain page there's no window to keep it.
+  const entry = useWindowEntry();
+  const { updateWindowData } = useWindowActions();
+  const [pageProjectId, setPageProjectId] = useState<string | null>(null);
+  const chosenProjectId = entry ? entry.data?.projectId : pageProjectId;
+  const selectedProject: ProjectWithPath | null =
+    projects.find((p) => p.id === chosenProjectId) ?? projects[0] ?? null;
+  const selectProject = (projectId: string) => {
+    if (entry) updateWindowData(entry.id, { projectId });
+    else setPageProjectId(projectId);
+  };
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [anchorKey, setAnchorKey] = useState<string | null>(null);
@@ -151,11 +166,13 @@ export function GitStatus() {
     window.addEventListener("mouseup", onUp);
   };
 
+  const selectedProjectPath = selectedProject?.path;
   useEffect(() => {
-    if (!selectedProject && projects.length > 0) {
-      setSelectedProject(projects[0] ?? null);
-    }
-  }, [projects, selectedProject]);
+    setSelectedFile(null);
+    setSelectedKeys(new Set());
+    setAnchorKey(null);
+    setError(null);
+  }, [selectedProjectPath]);
 
   // Runs on mousedown (not click), like a native file explorer — selection
   // responds on press, and a press that turns into a drag doesn't matter here
@@ -466,14 +483,7 @@ export function GitStatus() {
       <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.06] px-3 py-1.5">
         <select
           value={selectedProject?.id ?? ""}
-          onChange={(e) => {
-            const p = projects.find((p) => p.id === e.target.value) ?? null;
-            setSelectedProject(p);
-            setSelectedFile(null);
-            setSelectedKeys(new Set());
-            setAnchorKey(null);
-            setError(null);
-          }}
+          onChange={(e) => selectProject(e.target.value)}
           className="min-w-0 flex-1 cursor-pointer truncate bg-transparent text-xs text-white/65 outline-none"
         >
           {projects.map((p) => (

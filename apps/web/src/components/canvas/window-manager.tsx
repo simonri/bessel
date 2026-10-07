@@ -9,6 +9,8 @@ import {
 } from "react";
 import { type Layout as RglLayout, verticalCompactor } from "react-grid-layout";
 import { toast } from "sonner";
+import { pruneTerminalSessions } from "@/lib/terminal-sessions";
+import { userStorage, userStorageKey } from "@/lib/user-storage";
 import {
   type Box,
   type EngineItem,
@@ -17,7 +19,7 @@ import {
   sanitizeLayout,
   tileEvenly,
 } from "./layout-engine";
-import { MODULE_REGISTRY } from "./module-registry";
+import { isAvailableModule, MODULE_REGISTRY } from "./module-registry";
 
 export type ModuleKey =
   | "transactions"
@@ -204,23 +206,9 @@ export function useWindowStatus() {
 }
 
 const STORAGE_KEY = "bessel:workspaces";
+const BACKUP_KEY = `${STORAGE_KEY}.bak`;
 const LEGACY_KEY = "metron:windows";
-
-const isDesktop = typeof window !== "undefined" && !!window.electron;
-
-const ALL_MODULES = new Set<string>([
-  "transactions",
-  "accounts",
-  "investments",
-  "tasks",
-  "travel",
-  "activity",
-  "recipes",
-  "gitStatus",
-  ...(isDesktop
-    ? ["claudeCode", "codex", "grok", "terminal", "browser", "obsidian"]
-    : []),
-]);
+const STORAGE_VERSION = 2;
 
 function newId() {
   return (
@@ -326,9 +314,17 @@ function isNewFormat(e: StoredWindow): e is StoredWindowNew {
   );
 }
 
+function parseData(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const entries = Object.entries(raw).filter(
+    (entry): entry is [string, string] => typeof entry[1] === "string",
+  );
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
 function parseWindows(raw: unknown[], workspaceId: string): WindowEntry[] {
   const entries = (raw as StoredWindow[]).filter(
-    (e) => e && typeof e === "object" && ALL_MODULES.has(e.module),
+    (e) => e && typeof e === "object" && isAvailableModule(e.module),
   );
 
   let migrated = false;
@@ -343,7 +339,7 @@ function parseWindows(raw: unknown[], workspaceId: string): WindowEntry[] {
         y: e.y,
         w: e.w,
         h: e.h,
-        data: e.data,
+        data: parseData(e.data),
         workspaceId,
       });
     } else if (typeof (e as StoredWindowLegacy).slot === "number") {
@@ -359,7 +355,7 @@ function parseWindows(raw: unknown[], workspaceId: string): WindowEntry[] {
         y,
         w,
         h,
-        data: e.data,
+        data: parseData(e.data),
         workspaceId,
       });
     }
@@ -417,51 +413,88 @@ interface LoadedState {
   activeWorkspaceId: string;
 }
 
-function loadState(): LoadedState {
-  // Try current workspaces format
+/** A workspace and its windows, or null when the stored entry is unusable. */
+function parseWorkspace(
+  raw: unknown,
+): { meta: WorkspaceMeta; windows: WindowEntry[] } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const ws = raw as Record<string, unknown>;
+  if (typeof ws.id !== "string" || !ws.id) return null;
+  if (ws.windows !== undefined && !Array.isArray(ws.windows)) return null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as {
-        workspaces: Array<{
-          id: string;
-          name?: unknown;
-          projectId?: unknown;
-          closeWhenEmpty?: unknown;
-          windows: StoredWindow[];
-        }>;
-        activeWorkspaceId: string;
-      };
-      if (Array.isArray(parsed.workspaces) && parsed.workspaces.length > 0) {
-        const workspaces = parsed.workspaces.map((ws) => {
-          const meta: WorkspaceMeta = { id: ws.id };
-          if (typeof ws.name === "string" && ws.name.trim())
-            meta.name = ws.name;
-          if (typeof ws.projectId === "string" && ws.projectId)
-            meta.projectId = ws.projectId;
-          if (ws.closeWhenEmpty === true) meta.closeWhenEmpty = true;
-          return meta;
-        });
-        const windows = parsed.workspaces.flatMap((ws) =>
-          parseWindows(ws.windows ?? [], ws.id),
-        );
-        // Unnamed sessions left with nothing in them are leftovers, not
-        // something to come back to — they only clutter the sidebar.
-        const kept = workspaces.filter(
-          (ws) => ws.name || windows.some((w) => w.workspaceId === ws.id),
-        );
-        const live = kept.length > 0 ? kept : [workspaces[0]];
-        const activeId =
-          live.find((ws) => ws.id === parsed.activeWorkspaceId)?.id ??
-          live[live.length - 1].id;
-        return { workspaces: live, windows, activeWorkspaceId: activeId };
-      }
-    }
-  } catch {}
+    const windows = parseWindows(ws.windows ?? [], ws.id);
+    const meta: WorkspaceMeta = { id: ws.id };
+    if (typeof ws.name === "string" && ws.name.trim()) meta.name = ws.name;
+    if (typeof ws.projectId === "string" && ws.projectId)
+      meta.projectId = ws.projectId;
+    if (ws.closeWhenEmpty === true) meta.closeWhenEmpty = true;
+    return { meta, windows };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parses the stored canvas, skipping only the workspaces that are malformed.
+ * Whenever anything is dropped (or the blob is unreadable), the raw blob is
+ * first copied to BACKUP_KEY — the next persist overwrites the original.
+ */
+function parseStoredState(raw: string): LoadedState | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    userStorage.setItem(BACKUP_KEY, raw);
+    return null;
+  }
+  const stored = (parsed ?? {}) as {
+    version?: unknown;
+    workspaces?: unknown;
+    activeWorkspaceId?: unknown;
+  };
+  if (!Array.isArray(stored.workspaces) || stored.workspaces.length === 0) {
+    userStorage.setItem(BACKUP_KEY, raw);
+    return null;
+  }
+
+  const workspaces: WorkspaceMeta[] = [];
+  const windows: WindowEntry[] = [];
+  const seen = new Set<string>();
+  for (const entry of stored.workspaces) {
+    const result = parseWorkspace(entry);
+    if (!result || seen.has(result.meta.id)) continue;
+    seen.add(result.meta.id);
+    workspaces.push(result.meta);
+    windows.push(...result.windows);
+  }
+  const fromNewerVersion =
+    typeof stored.version === "number" && stored.version > STORAGE_VERSION;
+  if (workspaces.length < stored.workspaces.length || fromNewerVersion)
+    userStorage.setItem(BACKUP_KEY, raw);
+  if (workspaces.length === 0) return null;
+
+  // Unnamed sessions left with nothing in them are leftovers, not
+  // something to come back to — they only clutter the sidebar.
+  const kept = workspaces.filter(
+    (ws) => ws.name || windows.some((w) => w.workspaceId === ws.id),
+  );
+  const live = kept.length > 0 ? kept : [workspaces[0]];
+  const activeId =
+    live.find((ws) => ws.id === stored.activeWorkspaceId)?.id ??
+    live[live.length - 1].id;
+  return { workspaces: live, windows, activeWorkspaceId: activeId };
+}
+
+function loadState(): LoadedState {
+  const raw = userStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const state = parseStoredState(raw);
+    if (state) return state;
+  }
 
   // Migrate from legacy flat-windows format
   try {
-    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    const legacyRaw = userStorage.getItem(LEGACY_KEY);
     if (legacyRaw) {
       const id = newId();
       const windows = parseWindows(JSON.parse(legacyRaw) as unknown[], id);
@@ -543,9 +576,10 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       persistTimerRef.current = null;
     }
     const current = stateRef.current;
-    localStorage.setItem(
+    userStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
+        version: STORAGE_VERSION,
         workspaces: current.workspaces.map((ws) => ({
           id: ws.id,
           ...(ws.name ? { name: ws.name } : {}),
@@ -570,8 +604,16 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   // Debounced: commits arrive in bursts (drag stops, a browser widget saving
   // its URL per navigation), and serializing every workspace synchronously on
   // each one would block the interaction path.
+  // Set when `state` was just reloaded from another tab's write, which must
+  // not be echoed back (the tabs would keep re-triggering each other).
+  const skipPersistRef = useRef(false);
   useEffect(() => {
     if (persistTimerRef.current !== null) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = null;
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false;
+      return;
+    }
     persistTimerRef.current = setTimeout(persistNow, PERSIST_DEBOUNCE_MS);
   }, [state, persistNow]);
 
@@ -585,6 +627,26 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
       flush();
     };
   }, [persistNow]);
+
+  // Web only in practice (desktop is single-window): another tab saved its
+  // canvas, so adopt it rather than overwrite it on our next persist.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.newValue === null || e.key !== userStorageKey(STORAGE_KEY)) return;
+      const next = loadState();
+      skipPersistRef.current = true;
+      stateRef.current = next;
+      setState(next);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // A terminal's PTY outlives its view (so moving its window doesn't kill
+  // it); it's only killed here, once its window is gone from the canvas.
+  useEffect(() => {
+    pruneTerminalSessions(new Set(allWindows.map((w) => w.id)));
+  }, [allWindows]);
 
   useEffect(() => {
     if (!flashWorkspace) return;
@@ -669,12 +731,16 @@ export function WindowManager({ children }: { children: React.ReactNode }) {
   // updates target windows by id/workspaceId — not just the active workspace.
   const updateWindowData = useCallback(
     (windowId: string, patch: Record<string, string>) => {
-      commit((prev) => ({
-        ...prev,
-        windows: prev.windows.map((w) =>
-          w.id === windowId ? { ...w, data: { ...w.data, ...patch } } : w,
-        ),
-      }));
+      commit((prev) => {
+        // A late save from a window that has since closed.
+        if (!prev.windows.some((w) => w.id === windowId)) return prev;
+        return {
+          ...prev,
+          windows: prev.windows.map((w) =>
+            w.id === windowId ? { ...w, data: { ...w.data, ...patch } } : w,
+          ),
+        };
+      });
     },
     [commit],
   );

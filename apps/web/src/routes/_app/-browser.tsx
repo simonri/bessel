@@ -13,11 +13,19 @@ const PERSIST_DELAY_MS = 800;
 export function BrowserPage() {
   const entry = useWindowEntry();
   const { updateWindowData } = useWindowActions();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRef = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    save: () => void;
+  } | null>(null);
 
+  // Unmounting (closing, or moving the window to another workspace) saves
+  // the last URL rather than dropping it.
   useEffect(
     () => () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      const pending = pendingRef.current;
+      if (!pending) return;
+      clearTimeout(pending.timer);
+      pending.save();
     },
     [],
   );
@@ -25,11 +33,15 @@ export function BrowserPage() {
   const handleUrlChange = useCallback(
     (url: string) => {
       if (!entry) return;
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(
-        () => updateWindowData(entry.id, { url }),
-        PERSIST_DELAY_MS,
-      );
+      if (pendingRef.current) clearTimeout(pendingRef.current.timer);
+      const save = () => {
+        pendingRef.current = null;
+        updateWindowData(entry.id, { url });
+      };
+      pendingRef.current = {
+        timer: setTimeout(save, PERSIST_DELAY_MS),
+        save,
+      };
     },
     [entry, updateWindowData],
   );
