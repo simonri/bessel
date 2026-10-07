@@ -9,6 +9,7 @@ struct RecipeDetailView: View {
     @Environment(ToastCenter.self) private var toasts
     @State private var ticked: Set<String> = []
     @State private var editing = false
+    @State private var cooking = false
 
     var body: some View {
         Group {
@@ -17,6 +18,9 @@ struct RecipeDetailView: View {
                     .toolbar { toolbar(recipe) }
                     .sheet(isPresented: $editing) {
                         RecipeEditorView(store: store, recipe: recipe) { _ in }
+                    }
+                    .fullScreenCover(isPresented: $cooking) {
+                        CookingModeView(recipe: recipe, ticked: $ticked)
                     }
             } else {
                 EmptyState(emoji: "🍽️", title: "This recipe is gone")
@@ -112,48 +116,13 @@ struct RecipeDetailView: View {
                                 .padding(.bottom, 4)
                         }
                         ForEach(Array(group.items.enumerated()), id: \.offset) { index, item in
-                            ingredientRow(item, key: "\(groupIndex)-\(index)")
+                            IngredientRow(item: item, key: "\(groupIndex)-\(index)", ticked: $ticked)
                         }
                     }
                 }
             }
             .card()
         }
-    }
-
-    private func ingredientRow(_ item: RecipeBody.Ingredient, key: String) -> some View {
-        let isTicked = ticked.contains(key)
-        return Button {
-            withAnimation(.snappy) {
-                if isTicked { ticked.remove(key) } else { ticked.insert(key) }
-            }
-        } label: {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                CheckCircle(isChecked: isTicked, tint: Theme.positive, size: 20)
-                    .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
-                VStack(alignment: .leading, spacing: 1) {
-                    (Text(quantity(item)).fontWeight(.semibold) + Text(item.name))
-                        .foregroundStyle(isTicked ? Theme.faintForeground : Theme.foreground)
-                        .strikethrough(isTicked, color: Theme.faintForeground)
-                    if let note = item.note {
-                        Text(note)
-                            .font(.caption)
-                            .foregroundStyle(Theme.faintForeground)
-                    }
-                }
-                Spacer(minLength: 0)
-            }
-            .font(.body)
-            .padding(.vertical, 6)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .haptic(.selection, trigger: isTicked)
-    }
-
-    private func quantity(_ item: RecipeBody.Ingredient) -> String {
-        let parts = [item.amount.map(IngredientLine.formatAmount), item.unit].compactMap { $0 }
-        return parts.isEmpty ? "" : parts.joined(separator: " ") + " "
     }
 
     // MARK: - Steps
@@ -197,6 +166,15 @@ struct RecipeDetailView: View {
 
     @ToolbarContentBuilder
     private func toolbar(_ recipe: RecipeItem) -> some ToolbarContent {
+        if !recipe.body.steps.isEmpty {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    cooking = true
+                } label: {
+                    Label("Cook", systemImage: "frying.pan")
+                }
+            }
+        }
         ToolbarItem(placement: .topBarTrailing) {
             Button("Edit") { editing = true }
         }
@@ -225,7 +203,7 @@ struct RecipeDetailView: View {
     }
 }
 
-private struct CalloutCard: View {
+struct CalloutCard: View {
     let callout: RecipeBody.Callout
 
     private var isWarning: Bool { callout.kind == "warning" }
@@ -245,6 +223,50 @@ private struct CalloutCard: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.pastelWash(hue), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+/// An ingredient you tick off as you add it. `ticked` holds the keys of the
+/// ingredients already used, shared by the recipe page and cooking mode.
+struct IngredientRow: View {
+    let item: RecipeBody.Ingredient
+    let key: String
+    @Binding var ticked: Set<String>
+
+    private var isTicked: Bool { ticked.contains(key) }
+
+    var body: some View {
+        Button {
+            withAnimation(.snappy) {
+                if isTicked { ticked.remove(key) } else { ticked.insert(key) }
+            }
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                CheckCircle(isChecked: isTicked, tint: Theme.positive, size: 20)
+                    .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
+                VStack(alignment: .leading, spacing: 1) {
+                    (Text(quantity).fontWeight(.semibold) + Text(item.name))
+                        .foregroundStyle(isTicked ? Theme.faintForeground : Theme.foreground)
+                        .strikethrough(isTicked, color: Theme.faintForeground)
+                    if let note = item.note {
+                        Text(note)
+                            .font(.caption)
+                            .foregroundStyle(Theme.faintForeground)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .font(.body)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .haptic(.selection, trigger: isTicked)
+    }
+
+    private var quantity: String {
+        let parts = [item.amount.map(IngredientLine.formatAmount), item.unit].compactMap { $0 }
+        return parts.isEmpty ? "" : parts.joined(separator: " ") + " "
     }
 }
 
