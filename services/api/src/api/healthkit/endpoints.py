@@ -1,7 +1,7 @@
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from api.common.pagination import PaginationParamsQuery
 from api.exceptions import ValidationError
@@ -19,7 +19,7 @@ from api.healthkit.schemas import (
   SleepSummaryResponse,
 )
 from api.healthkit.service import healthkit_sleep_service, healthkit_workout_service
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/healthkit", tags=["healthkit"])
@@ -32,7 +32,7 @@ router = APIRouter(prefix="/healthkit", tags=["healthkit"])
 )
 async def sync_healthkit_workouts(
   body: HealthKitWorkoutSyncRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> HealthKitWorkoutSyncResponse:
   if not body.workouts and not body.deleted_uuids:
@@ -49,7 +49,7 @@ async def sync_healthkit_workouts(
   response_model=HealthKitWorkoutListResponse,
 )
 async def list_healthkit_workouts(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> HealthKitWorkoutListResponse:
@@ -70,7 +70,7 @@ async def list_healthkit_workouts(
 )
 async def sync_healthkit_sleep(
   body: HealthKitSleepSyncRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> HealthKitSleepSyncResponse:
   if not body.samples and not body.deleted_uuids:
@@ -87,7 +87,7 @@ async def sync_healthkit_sleep(
   response_model=HealthKitSleepListResponse,
 )
 async def list_healthkit_sleep(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> HealthKitSleepListResponse:
@@ -115,7 +115,7 @@ def _parse_tz(tz_name: str | None) -> ZoneInfo | None:
   response_model=SleepDailyResponse,
 )
 async def get_daily_sleep(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
@@ -137,7 +137,7 @@ async def get_daily_sleep(
   response_model=SleepSummaryResponse,
 )
 async def get_sleep_summary(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],

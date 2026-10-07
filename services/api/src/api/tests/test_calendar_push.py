@@ -1,9 +1,11 @@
 import asyncio
+import time
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+import anyio
 import httpx
 import pytest
 import pytest_asyncio
@@ -376,6 +378,20 @@ class TestAccountSync:
     assert calendar.push_channel_id in google.channels
 
   @pytest.mark.asyncio
+  async def test_failure_is_published_after_it_is_recorded(
+    self, session: AsyncSession, save_fixture: SaveFixture, google: FakeGoogleCalendar, redis: Redis, worker: None, commits: list[str], mocker: MockerFixture
+  ) -> None:
+    account = await _google_account(save_fixture, await _user(save_fixture))
+    mocker.patch.object(GoogleCalendarClient, "refresh_access_token", side_effect=ProviderAuthError("Access was revoked"))
+
+    await tasks.sync_calendar_account.__wrapped__(str(account.id))  # type: ignore[attr-defined]
+
+    assert commits == ["commit", "commit", "publish"]
+    await session.refresh(account)
+    assert account.sync_error == "Access was revoked. Reconnect the account."
+    assert google.channels == {}
+
+  @pytest.mark.asyncio
   async def test_busy_account_neither_publishes_nor_renews(
     self, save_fixture: SaveFixture, google: FakeGoogleCalendar, redis: Redis, worker: None, commits: list[str]
   ) -> None:
@@ -494,6 +510,73 @@ class TestChangeStream:
     assert (await redis.pubsub_numsub(push.changes_channel(user_id)))[0][1] == 1
     await stream.aclose()
     assert (await redis.pubsub_numsub(push.changes_channel(user_id)))[0][1] == 0
+
+  @pytest.mark.asyncio
+  async def test_ends_after_its_lifetime_and_frees_its_slot(self, redis: Redis) -> None:
+    user_id = uuid4()
+    slot = await push.claim_stream_slot(redis, user_id)
+
+    events = [event async for event in push.change_events(redis, user_id, slot=slot, heartbeat_seconds=0.05, lifetime_seconds=0.2)]
+
+    assert events[0] == ": connected\n\n" and set(events[1:]) == {": ping\n\n"}
+    assert await redis.zcard(f"calendars:streams:{user_id}") == 0
+
+  @pytest.mark.asyncio
+  async def test_disconnect_frees_the_slot_and_subscription(self, redis: Redis) -> None:
+    user_id = uuid4()
+    slot = await push.claim_stream_slot(redis, user_id)
+    stream = push.change_events(redis, user_id, slot=slot)
+    connected = anyio.Event()
+
+    async def consume() -> None:
+      async for _ in stream:
+        connected.set()
+
+    # Starlette cancels the stream like this when the client goes away.
+    async with anyio.create_task_group() as task_group:
+      task_group.start_soon(consume)
+      await connected.wait()
+      task_group.cancel_scope.cancel()
+
+    assert await redis.zcard(f"calendars:streams:{user_id}") == 0
+    assert (await redis.pubsub_numsub(push.changes_channel(user_id)))[0][1] == 0
+
+  @pytest.mark.asyncio
+  async def test_caps_open_streams_per_user(self, redis: Redis) -> None:
+    user_id, other = uuid4(), uuid4()
+    try:
+      slots = [await push.claim_stream_slot(redis, user_id) for _ in range(push.MAX_STREAMS_PER_USER)]
+      with pytest.raises(push.TooManyStreamsError):
+        await push.claim_stream_slot(redis, user_id)
+      await push.claim_stream_slot(redis, other)
+
+      await redis.zrem(f"calendars:streams:{user_id}", slots[0])
+      await push.claim_stream_slot(redis, user_id)
+    finally:
+      await redis.delete(f"calendars:streams:{user_id}", f"calendars:streams:{other}")
+
+  @pytest.mark.asyncio
+  async def test_slots_of_streams_that_never_closed_lapse(self, redis: Redis) -> None:
+    user_id = uuid4()
+    key = f"calendars:streams:{user_id}"
+    lapsed = time.time() - push.STREAM_LIFETIME_SECONDS - push.STREAM_SLOT_GRACE_SECONDS - 1
+    try:
+      await redis.zadd(key, {f"dead-{i}": lapsed for i in range(push.MAX_STREAMS_PER_USER)})
+      await push.claim_stream_slot(redis, user_id)
+      assert await redis.zcard(key) == 1
+    finally:
+      await redis.delete(key)
+
+  @pytest.mark.asyncio
+  async def test_endpoint_refuses_streams_over_the_cap(self, client: AsyncClient, user: User, redis: Redis) -> None:
+    key = f"calendars:streams:{user.id}"
+    try:
+      await redis.zadd(key, {f"open-{i}": time.time() for i in range(push.MAX_STREAMS_PER_USER)})
+      resp = await client.get("/v1/calendars/changes")
+      assert resp.status_code == 429
+      assert await redis.zcard(key) == push.MAX_STREAMS_PER_USER
+    finally:
+      await redis.delete(key)
 
 
 class TestDisconnect:

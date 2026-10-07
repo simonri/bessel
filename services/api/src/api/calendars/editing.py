@@ -14,8 +14,10 @@ from uuid import UUID
 
 import httpx
 import structlog
+from redis.exceptions import RedisError
 
 from api.calendars import http as provider_http
+from api.calendars import push
 from api.calendars.edits import EditScope, EventChanges, Reply, TargetEvent, UnsupportedEditError
 from api.calendars.google import GoogleCalendarClient
 from api.calendars.google_edits import GoogleEventEditor
@@ -193,8 +195,9 @@ class CalendarEditService:
     time_zone: str,
     send_updates: bool,
   ) -> AsyncIterator[_Provider]:
-    """Holds the account lock around a provider write and the refresh after it,
-    and turns provider failures into API errors."""
+    """Holds the account lock around a provider write, the refresh after it and
+    its commit, then tells the user's open pages. Provider failures become API
+    errors."""
     provider_name = _PROVIDER_NAMES[account.provider]
     try:
       async with account_lock(redis, account.id, wait_seconds=LOCK_WAIT_SECONDS):
@@ -203,6 +206,9 @@ class CalendarEditService:
           events = CalendarEventRepository.from_session(session)
           for calendar in calendars:
             await events.replace_for_calendar(calendar, await provider.list_events(calendar.external_id))
+        # Committed under the lock, not at the end of the request: a sync
+        # waiting for it must not start before the refreshed rows are visible.
+        await session.commit()
     except AccountBusyError as e:
       raise ServiceUnavailableError(f"{provider_name} is still syncing, try again in a moment") from e
     except UnsupportedEditError as e:
@@ -230,6 +236,11 @@ class CalendarEditService:
     except ProviderError as e:
       log.exception("calendar_write_failed", account_id=str(account.id))
       raise ServiceUnavailableError(str(e) or f"{provider_name} couldn't save the change") from e
+    # The edit is saved by now; failing the request would make the client repeat it.
+    try:
+      await push.publish_change(redis, account.user_id)
+    except RedisError:
+      log.warning("calendar_edit_publish_failed", account_id=str(account.id), exc_info=True)
 
 
 calendar_edit_service = CalendarEditService()

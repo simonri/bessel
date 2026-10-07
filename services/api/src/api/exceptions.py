@@ -73,6 +73,13 @@ class ForbiddenError(BesselError):
     super().__init__(message, status_code)
 
 
+class TooManyRequestsError(BesselError):
+  """The caller is over a usage limit."""
+
+  def __init__(self, message: str = "Too many requests", status_code: int = 429) -> None:
+    super().__init__(message, status_code)
+
+
 class ServiceUnavailableError(BesselError):
   """External service is unavailable."""
 

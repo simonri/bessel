@@ -90,6 +90,8 @@ services:
   api:
     image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-simonri/bessel}-api:${TAG:-latest}
     restart: unless-stopped
+    # Longer than uvicorn's --timeout-graceful-shutdown, so lifespan shutdown runs.
+    stop_grace_period: 20s
     depends_on:
       metron-postgres:
         condition: service_healthy

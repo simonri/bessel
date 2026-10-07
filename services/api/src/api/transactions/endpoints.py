@@ -9,7 +9,7 @@ from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
 from api.exceptions import ResourceNotFound
 from api.models.transaction import Transaction
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.transactions.parsers.csv_parser import parse_csv
 from api.transactions.parsers.xlsx_parser import parse_xlsx
 from api.transactions.repository import BankProfileRepository, TransactionRepository
@@ -53,7 +53,7 @@ sorting_getter = SortingGetter(TransactionSortProperty, default_sorting=["-trans
   response_model=TransactionListResponse,
 )
 async def list_transactions(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[TransactionSortProperty]], Depends(sorting_getter)],
@@ -101,7 +101,7 @@ async def import_transactions(
   file: UploadFile,
   bank: Annotated[str, Query(description="Bank identifier, e.g. 'marginalen'.")],
   bank_account_id: Annotated[UUID, Query(description="Bank account to attach transactions to.")],
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> ImportResponse:
   """Import transactions from a bank export (CSV or XLSX).
@@ -148,7 +148,7 @@ async def import_transactions(
 )
 async def bulk_update_transactions(
   body: BulkUpdateRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> BulkUpdateResponse:
   """Update category for a list of transactions by ID."""
@@ -165,7 +165,7 @@ async def bulk_update_transactions(
 async def update_transaction(
   transaction_id: UUID,
   body: TransactionUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TransactionUpdateResponse:
   """Update a transaction."""
@@ -198,7 +198,7 @@ async def update_transaction(
 )
 async def categorize_by_description(
   body: BulkCategorizeRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> BulkCategorizeResponse:
   """Set category for all transactions matching the given description."""
@@ -214,7 +214,7 @@ async def categorize_by_description(
 )
 async def delete_transactions(
   body: BulkDeleteRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   """Delete transactions by IDs."""
@@ -230,7 +230,7 @@ async def delete_transactions(
   response_model=MonthlySpendingResponse,
 )
 async def spending_by_category(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   year: int = Query(description="Year to query."),
   month: int = Query(description="Month to query (1-12)."),
@@ -256,7 +256,7 @@ async def spending_by_category(
   response_model=MonthlyFlowResponse,
 )
 async def monthly_flow(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   months: int = Query(6, description="Number of months to look back (including current)."),
 ) -> MonthlyFlowResponse:

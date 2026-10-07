@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from api.agent_usage.repository import AgentUsageDailyRepository, AgentUsageStatusRepository
 from api.agent_usage.schemas import (
@@ -14,7 +14,7 @@ from api.agent_usage.schemas import (
 )
 from api.agent_usage.service import agent_usage_service
 from api.ingest_tokens.dependencies import IngestUserId
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/agent-usage", tags=["agent-usage"])
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/agent-usage", tags=["agent-usage"])
 )
 async def sync_agent_usage(
   body: AgentUsageSyncRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   user_id: IngestUserId,
 ) -> AgentUsageSyncResponse:
   if not body.daily and not body.rate_limits:
@@ -45,7 +45,7 @@ async def sync_agent_usage(
   response_model=AgentUsageStatusResponse,
 )
 async def get_agent_usage_status(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> AgentUsageStatusResponse:
   repo = AgentUsageStatusRepository.from_session(session)
@@ -59,7 +59,7 @@ async def get_agent_usage_status(
   response_model=AgentUsageDailyResponse,
 )
 async def get_agent_usage_daily(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_date: Annotated[date, Query(description="Start of range (inclusive).")],
   end_date: Annotated[date, Query(description="End of range (inclusive).")],

@@ -1,12 +1,11 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from api.common.utils import utc_now
 from api.devices.dependencies import CurrentDevice, OptionalCurrentDevice
 from api.models.project import Project
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.projects.repository import ProjectDeviceConfigRepository, ProjectRepository
 from api.projects.schemas import ProjectCreate, ProjectLocationUpdate, ProjectSchema, ProjectUpdate
 from api.projects.service import ResolvedProject, project_service
@@ -22,7 +21,7 @@ def _to_schema(resolved: ResolvedProject) -> ProjectSchema:
 
 @router.get("", summary="List Projects", response_model=list[ProjectSchema])
 async def list_projects(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   device: OptionalCurrentDevice,
 ) -> list[ProjectSchema]:
@@ -33,7 +32,7 @@ async def list_projects(
 @router.post("", summary="Create Project", response_model=ProjectSchema, status_code=201)
 async def create_project(
   body: ProjectCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   device: OptionalCurrentDevice,
 ) -> ProjectSchema:
@@ -55,7 +54,7 @@ async def create_project(
 async def update_project(
   project_id: UUID,
   body: ProjectUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   device: OptionalCurrentDevice,
 ) -> ProjectSchema:
@@ -71,7 +70,7 @@ async def update_project(
 async def set_project_location(
   project_id: UUID,
   body: ProjectLocationUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   device: CurrentDevice,
 ) -> ProjectSchema:
@@ -85,7 +84,7 @@ async def set_project_location(
 @router.delete("/{project_id}", summary="Delete Project", status_code=204)
 async def delete_project(
   project_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = ProjectRepository.from_session(session)

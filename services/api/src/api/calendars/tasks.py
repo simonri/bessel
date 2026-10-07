@@ -11,6 +11,7 @@ from api.calendars.repository import CalendarAccountRepository, CalendarEventRep
 from api.calendars.service import SYNC_ACCOUNT_ACTOR, calendar_service
 from api.logging import Logger
 from api.models.calendar_account import CalendarProvider
+from api.redis import Redis
 from api.worker import AsyncSessionMaker, CronTrigger, RedisMiddleware, TaskPriority, actor, enqueue_job
 
 log: Logger = structlog.get_logger()
@@ -25,7 +26,7 @@ async def sync_calendar_account(account_id: str) -> None:
   redis = RedisMiddleware.get()
   try:
     async with account_lock(redis, account_id):
-      user_id = await _sync(UUID(account_id))
+      user_id = await _sync(redis, UUID(account_id))
   except AccountBusyError:
     log.info("calendar_sync_skipped_busy", account_id=account_id)
     return
@@ -44,7 +45,7 @@ async def sync_calendar_account(account_id: str) -> None:
     log.warning("calendar_people_refresh_failed", account_id=account_id, exc_info=True)
 
 
-async def _sync(account_id: UUID) -> UUID | None:
+async def _sync(redis: Redis, account_id: UUID) -> UUID | None:
   """Mirrors the account; returns its user once the result is committed."""
   async with AsyncSessionMaker() as session:
     account = await CalendarAccountRepository.from_session(session).get_by_id(account_id)
@@ -57,11 +58,11 @@ async def _sync(account_id: UUID) -> UUID | None:
   try:
     snapshot = await calendar_service.fetch_snapshot(provider, email, credentials)
   except ProviderAuthError as e:
-    await _record_error(account_id, f"{e}. Reconnect the account.")
+    await _record_error(redis, account_id, f"{e}. Reconnect the account.")
     return None
   except Exception:
     log.exception("calendar_sync_failed", account_id=str(account_id))
-    await _record_error(account_id, "Sync failed, retrying shortly.")
+    await _record_error(redis, account_id, "Sync failed, retrying shortly.")
     return None
 
   async with AsyncSessionMaker() as session:
@@ -79,11 +80,16 @@ async def _sync(account_id: UUID) -> UUID | None:
   return user_id
 
 
-async def _record_error(account_id: UUID, message: str) -> None:
+async def _record_error(redis: Redis, account_id: UUID, message: str) -> None:
+  """Saves the error on the account, then tells open pages so they show it
+  instead of waiting for a sync that already ended."""
   async with AsyncSessionMaker() as session:
     account = await CalendarAccountRepository.from_session(session).get_by_id(account_id)
-    if account is not None:
-      account.sync_error = message
+    if account is None:
+      return
+    account.sync_error = message
+    user_id = account.user_id
+  await push.publish_change(redis, user_id)
 
 
 @actor(actor_name=push.PUSH_SYNC_ACTOR, priority=TaskPriority.HIGH, max_retries=0)

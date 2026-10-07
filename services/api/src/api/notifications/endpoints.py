@@ -1,13 +1,12 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from api.exceptions import ResourceNotFound
 from api.models.notification import Notification
 from api.notifications.repository import NotificationRepository
 from api.notifications.schemas import NotificationCreate, NotificationResponse, NotificationsListResponse
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
   response_model=NotificationsListResponse,
 )
 async def list_notifications(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> NotificationsListResponse:
   repo = NotificationRepository.from_session(session)
@@ -39,7 +38,7 @@ async def list_notifications(
 )
 async def create_notification(
   body: NotificationCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> NotificationResponse:
   repo = NotificationRepository.from_session(session)
@@ -55,7 +54,7 @@ async def create_notification(
 )
 async def mark_notification_read(
   notification_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> NotificationResponse:
   repo = NotificationRepository.from_session(session)
@@ -71,7 +70,7 @@ async def mark_notification_read(
   response_model=dict,
 )
 async def mark_all_notifications_read(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> dict:
   repo = NotificationRepository.from_session(session)

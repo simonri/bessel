@@ -7,7 +7,7 @@ import httpx
 import pytest
 import pytest_asyncio
 from api.app import app as api_app
-from api.calendars import editing
+from api.calendars import editing, push
 from api.calendars import http as provider_http
 from api.calendars.google import GoogleCalendarClient
 from api.calendars.icloud import ICloudCalendarClient
@@ -27,6 +27,7 @@ from api.tests.fixtures.database import SaveFixture
 from api.worker._enqueue import JobQueueManager
 from cryptography.fernet import Fernet
 from httpx import AsyncClient
+from pytest_mock import MockerFixture
 from sqlalchemy import select
 
 TZ = "Europe/Stockholm"
@@ -414,6 +415,43 @@ class TestLocking:
 
     assert resp.status_code == 503
     assert await redis.get(f"calendars:sync:{account.id}") is None
+
+  @pytest.mark.asyncio
+  async def test_commits_under_the_lock_then_tells_other_pages(
+    self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis, session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    account = await seed.account()
+    calendar = await seed.calendar(account, PRIMARY)
+    lock_key = f"calendars:sync:{account.id}"
+    order: list[str] = []
+    real_commit = session.commit
+
+    async def commit() -> None:
+      order.append("commit locked" if await redis.get(lock_key) else "commit unlocked")
+      await real_commit()
+
+    async def publish(_: Redis, user_id: UUID) -> None:
+      order.append("publish locked" if await redis.get(lock_key) else "publish")
+      assert user_id == seed.user_id
+
+    monkeypatch.setattr(session, "commit", commit)
+    monkeypatch.setattr(push, "publish_change", publish)
+
+    resp = await client.post(f"/v1/calendars/{calendar.id}/events", json=body(title="x", timing=timed("2026-10-07T17:00", "2026-10-07T18:00")))
+
+    assert resp.status_code == 201, resp.text
+    assert order == ["commit locked", "publish"]
+
+  @pytest.mark.asyncio
+  async def test_failed_write_tells_no_one(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis, mocker: MockerFixture) -> None:
+    calendar = await seed.calendar(await seed.account(), PRIMARY)
+    google.failures[("POST", "")] = (500, {"error": {"code": 500}})
+    publish = mocker.patch.object(push, "publish_change")
+
+    resp = await client.post(f"/v1/calendars/{calendar.id}/events", json=body(title="x", timing=timed("2026-10-07T17:00", "2026-10-07T18:00")))
+
+    assert resp.status_code == 503
+    publish.assert_not_called()
 
 
 INVITE_ICS = """BEGIN:VCALENDAR

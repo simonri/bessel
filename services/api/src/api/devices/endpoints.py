@@ -1,11 +1,10 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from api.devices.repository import DeviceRepository
 from api.devices.schemas import DeviceSchema, DeviceUpdate
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 
 @router.get("", summary="List Devices", response_model=list[DeviceSchema])
 async def list_devices(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> list[DeviceSchema]:
   repo = DeviceRepository.from_session(session)
@@ -25,7 +24,7 @@ async def list_devices(
 async def update_device(
   device_id: UUID,
   body: DeviceUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> DeviceSchema:
   repo = DeviceRepository.from_session(session)
@@ -37,7 +36,7 @@ async def update_device(
 @router.delete("/{device_id}", summary="Delete Device", status_code=204)
 async def delete_device(
   device_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = DeviceRepository.from_session(session)

@@ -1,7 +1,7 @@
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from api.activity.repository import ActivityRepository
 from api.activity.schemas import (
@@ -17,7 +17,7 @@ from api.activity.schemas import (
 from api.activity.service import ActivityService
 from api.exceptions import ValidationError
 from api.ingest_tokens.dependencies import IngestUserId
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/activity", tags=["activity"])
@@ -31,7 +31,7 @@ router = APIRouter(prefix="/activity", tags=["activity"])
 )
 async def ingest_activity_batch(
   body: ActivityBatchRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   user_id: IngestUserId,
 ) -> ActivityBatchResponse:
   if not body.events:
@@ -63,7 +63,7 @@ async def ingest_activity_batch(
   response_model=ActivitySourcesResponse,
 )
 async def list_activity_sources(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> ActivitySourcesResponse:
   repo = ActivityRepository.from_session(session)
@@ -77,7 +77,7 @@ async def list_activity_sources(
   response_model=ActivitySummaryResponse,
 )
 async def get_activity_summary(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of time window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of time window (Unix epoch seconds, exclusive).")],
@@ -92,7 +92,7 @@ async def get_activity_summary(
   response_model=ActivityDailyResponse,
 )
 async def get_daily_activity(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
@@ -132,7 +132,7 @@ async def get_daily_activity(
   response_model=ActivityIntradayResponse,
 )
 async def get_intraday_activity(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],
