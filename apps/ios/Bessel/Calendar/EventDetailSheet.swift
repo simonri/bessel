@@ -30,6 +30,7 @@ struct EventDetailSheet: View {
             .toolbar { toolbar }
         }
         .presentationDetents([.medium, .large])
+        .presentationBackground(Theme.background)
         .presentationCornerRadius(28)
         .presentationDragIndicator(.hidden)
     }
@@ -38,68 +39,75 @@ struct EventDetailSheet: View {
 
     private func content(_ event: CalendarEvent) -> some View {
         let calendar = store.calendar(event.calendarId)
+        let tint = event.colorId.map(EventColors.color(for:)) ?? calendar?.swiftColor ?? .gray
         return ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(alignment: .top, spacing: 12) {
-                    Circle()
-                        .fill(event.colorId.map(EventColors.color(for:)) ?? calendar?.swiftColor ?? .gray)
-                        .frame(width: 14, height: 14)
-                        .padding(.top, 7)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(event.displayTitle)
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(Theme.foreground)
-                        Text(Self.when(event))
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Capsule()
+                        .fill(tint)
+                        .frame(width: 36, height: 5)
+                        .padding(.bottom, 4)
+                    Text(event.displayTitle)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Theme.foreground)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(Self.when(event))
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.mutedForeground)
+                    if event.recurring {
+                        Label(Self.repeatLabel(event), systemImage: "repeat")
                             .font(.subheadline)
                             .foregroundStyle(Theme.mutedForeground)
-                        if event.recurring {
-                            Label(Self.repeatLabel(event), systemImage: "repeat")
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.mutedForeground)
-                        }
                     }
+                }
+
+                if let link = event.conferenceUrl, let url = URL(string: link) {
+                    Button {
+                        openURL(url)
+                    } label: {
+                        Label("Join video call", systemImage: "video.fill")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(Theme.primary, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 if store.canReply(event) {
                     rsvpBar(event)
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
+                card {
                     if let calendar {
-                        detailRow("calendar", calendar.name, tint: calendar.swiftColor)
+                        infoRow(icon: "circle.fill", iconTint: calendar.swiftColor, iconSize: 10, title: calendar.name)
                     }
                     if let location = event.location, !location.isEmpty {
-                        detailRow("mappin.and.ellipse", location)
+                        Self.divider
+                        infoRow(icon: "mappin.and.ellipse", title: location)
                     }
-                    if let link = event.conferenceUrl, let url = URL(string: link) {
-                        Button {
-                            openURL(url)
-                        } label: {
-                            Label("Join video call", systemImage: "video.fill")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 14)
-                                .frame(height: 38)
-                                .background(Theme.primary, in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    if !event.busy {
-                        detailRow("sun.max", "Shows as free")
+                    Self.divider
+                    infoRow(icon: event.busy ? "moon.zzz" : "sun.max", title: event.busy ? "Busy" : "Free")
+                    if event.attendees.isEmpty, let creator = event.creatorName ?? event.creatorEmail {
+                        Self.divider
+                        infoRow(icon: "person", title: "Created by \(creator)")
                     }
                 }
 
                 if let description = event.description, !description.isEmpty {
-                    Text(description)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.foreground)
-                        .textSelection(.enabled)
+                    card {
+                        Text(description)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.foreground)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(16)
+                    }
                 }
 
                 if !event.attendees.isEmpty {
                     guests(event)
-                } else if let creator = event.creatorName ?? event.creatorEmail {
-                    detailRow("person", "Created by \(creator)")
                 }
 
                 if let reason = store.readOnlyReason(event), !store.canReply(event) {
@@ -108,7 +116,10 @@ struct EventDetailSheet: View {
                         .foregroundStyle(Theme.faintForeground)
                 }
             }
-            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.top, 4)
+            .padding(.bottom, 24)
         }
         .confirmationDialog(deleteTitle(event), isPresented: $confirmingDelete, titleVisibility: .visible) {
             deleteButtons(event)
@@ -131,17 +142,30 @@ struct EventDetailSheet: View {
         }
     }
 
-    private func detailRow(_ systemImage: String, _ text: String, tint: Color = Theme.mutedForeground) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15))
-                .foregroundStyle(tint)
+    private func card(@ViewBuilder _ content: () -> some View) -> some View {
+        VStack(spacing: 0, content: content)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private static var divider: some View {
+        Theme.border.frame(height: 0.5).padding(.leading, 50)
+    }
+
+    private func infoRow(icon: String, iconTint: Color = Theme.mutedForeground, iconSize: CGFloat = 16, title: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: iconSize))
+                .foregroundStyle(iconTint)
                 .frame(width: 22)
-            Text(text)
+            Text(title)
                 .font(.subheadline)
                 .foregroundStyle(Theme.foreground)
                 .textSelection(.enabled)
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 48)
     }
 
     private func rsvpBar(_ event: CalendarEvent) -> some View {
@@ -161,7 +185,7 @@ struct EventDetailSheet: View {
             }
         }
         .padding(12)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func reply(_ event: CalendarEvent, scope: EditScope) {
@@ -172,11 +196,14 @@ struct EventDetailSheet: View {
 
     private func guests(_ event: CalendarEvent) -> some View {
         let sorted = event.attendees.sorted { $0.isOrganizer && !$1.isOrganizer }
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 8) {
             Text("\(sorted.count) \(sorted.count == 1 ? "guest" : "guests")")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.mutedForeground)
-            ForEach(sorted, id: \.email) { guest in
+                .padding(.leading, 4)
+            card {
+            ForEach(Array(sorted.enumerated()), id: \.element.email) { index, guest in
+                if index > 0 { Self.divider }
                 HStack(spacing: 10) {
                     Text(String((guest.name ?? guest.email).prefix(1)).uppercased())
                         .font(.caption.weight(.semibold))
@@ -196,6 +223,9 @@ struct EventDetailSheet: View {
                     Image(systemName: Self.responseIcon(guest.response))
                         .foregroundStyle(guest.response == "accepted" ? Theme.positive : guest.response == "declined" ? Theme.destructive : Theme.faintForeground)
                 }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 52)
+            }
             }
         }
     }

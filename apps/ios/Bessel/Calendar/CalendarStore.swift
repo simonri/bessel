@@ -5,10 +5,10 @@ import SwiftUI
 @MainActor
 @Observable
 final class CalendarStore {
-    /// How many days the grid shows side by side.
-    static let dayCount = 3
+    /// A week, Monday first like the desktop.
+    static let dayCount = 7
 
-    private(set) var firstDay = Calendar.current.startOfDay(for: .now)
+    private(set) var firstDay = CalendarStore.weekStart(of: .now)
     private(set) var accounts: [CalendarAccount] = []
     private(set) var events: [CalendarEvent] = []
     private(set) var hasLoaded = false
@@ -86,14 +86,39 @@ final class CalendarStore {
 
     // MARK: - Navigation
 
-    func step(_ days: Int) async {
-        firstDay = Calendar.current.date(byAdding: .day, value: days, to: firstDay)!
+    func step(weeks: Int) async {
+        firstDay = Calendar.current.date(byAdding: .day, value: 7 * weeks, to: firstDay)!
         await loadEvents()
     }
 
     func goToToday() async {
-        firstDay = Calendar.current.startOfDay(for: .now)
+        await show(.now)
+    }
+
+    /// Shows the week a date falls in.
+    func show(_ date: Date) async {
+        let start = Self.weekStart(of: date)
+        guard start != firstDay else { return }
+        firstDay = start
         await loadEvents()
+    }
+
+    static func weekStart(of date: Date) -> Date {
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2
+        return calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
+    }
+
+    /// A day's events: all-day first, then by start time.
+    func events(on day: Date) -> [CalendarEvent] {
+        let dayStart = Calendar.current.startOfDay(for: day)
+        let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
+        return visibleEvents
+            .filter { $0.start < dayEnd && $0.end > dayStart }
+            .sorted { lhs, rhs in
+                if lhs.allDay != rhs.allDay { return lhs.allDay }
+                return lhs.start < rhs.start
+            }
     }
 
     var isShowingToday: Bool {
@@ -161,27 +186,6 @@ final class CalendarStore {
             events[index] = updated
         }
         await loadEvents()
-    }
-
-    /// Moves or resizes in place right away, then saves; puts it back on failure.
-    func retime(_ event: CalendarEvent, to timing: EventTiming, scope: EditScope, notifyGuests: Bool) async {
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            var moved = events[index]
-            if timing.allDay {
-                moved.startDate = DateParsing.dateOnly.string(from: timing.start)
-                moved.endDate = DateParsing.dateOnly.string(from: timing.end)
-            } else {
-                moved.startAt = timing.start
-                moved.endAt = timing.end
-            }
-            events[index] = moved
-        }
-        do {
-            try await update(event, fields: ["timing": timing.json(timeZone: timeZone)], scope: scope, notifyGuests: notifyGuests)
-        } catch {
-            report(error)
-            await loadEvents()
-        }
     }
 
     func setColor(_ event: CalendarEvent, colorID: String?) async {
