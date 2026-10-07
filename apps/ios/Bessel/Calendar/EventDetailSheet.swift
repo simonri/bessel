@@ -39,14 +39,9 @@ struct EventDetailSheet: View {
 
     private func content(_ event: CalendarEvent) -> some View {
         let calendar = store.calendar(event.calendarId)
-        let tint = event.colorId.map(EventColors.color(for:)) ?? calendar?.swiftColor ?? .gray
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Capsule()
-                        .fill(tint)
-                        .frame(width: 36, height: 5)
-                        .padding(.bottom, 4)
                     Text(event.displayTitle)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Theme.foreground)

@@ -83,15 +83,15 @@ struct TasksView: View {
             .sheet(item: $editingTask) { task in
                 TaskFormView(store: store, task: task)
             }
-            .confirmationDialog(
+            .alert(
                 "Delete this task?",
                 isPresented: Binding(get: { confirmingDelete != nil }, set: { if !$0 { confirmingDelete = nil } }),
-                titleVisibility: .visible,
                 presenting: confirmingDelete
             ) { task in
                 Button("Delete", role: .destructive) {
                     store.delete(task, toasts: toasts)
                 }
+                Button("Cancel", role: .cancel) {}
             } message: { task in
                 Text(task.title)
             }

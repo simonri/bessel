@@ -24,22 +24,20 @@ final class CalendarStore {
     private static let defaultCalendarKey = "calendar.defaultCalendar"
 
     private struct Snapshot: Codable {
-        let firstDay: Date
         let accounts: [CalendarAccount]
         let events: [CalendarEvent]
     }
 
-    private static let cacheKey = "calendar.v1"
+    private static let cacheKey = "calendar.v2"
 
     init(services: AppServices) {
         client = services.client
         cache = services.cache
         if let snapshot = cache.load(Snapshot.self, key: Self.cacheKey) {
             accounts = snapshot.accounts
-            // Last time's events only help when it's still the same week.
-            if Calendar.current.isDate(snapshot.firstDay, inSameDayAs: firstDay) {
-                events = snapshot.events
-            }
+            // Days are matched by date, so last time's events only show where
+            // they still overlap this week.
+            events = snapshot.events
             hasLoaded = true
         }
     }
@@ -166,15 +164,16 @@ final class CalendarStore {
         await loadEvents()
     }
 
-    /// One day either side of what's shown, so time-zone edges are covered.
-    /// Only the newest request lands, so flicking through weeks never ends on
-    /// a week you've already left.
+    /// The shown week plus the weeks either side, so swiping to the next or
+    /// previous week shows its events at once while they're refreshed; and a
+    /// day more at each end for time-zone edges. Only the newest request lands,
+    /// so flicking through weeks never ends on a week you've already left.
     func loadEvents() async {
         let ticket = loads.begin()
         let week = firstDay
         let calendar = Calendar.current
-        let start = calendar.date(byAdding: .day, value: -1, to: week)!
-        let end = calendar.date(byAdding: .day, value: 1, to: lastDayEnd)!
+        let start = calendar.date(byAdding: .day, value: -(Self.dayCount + 1), to: week)!
+        let end = calendar.date(byAdding: .day, value: Self.dayCount + 1, to: lastDayEnd)!
         do {
             let response: CalendarEventListResponse = try await client.get("/v1/calendars/events", query: [
                 URLQueryItem(name: "start_ts", value: String(Int(start.timeIntervalSince1970))),
@@ -184,7 +183,7 @@ final class CalendarStore {
             events = response.events
             loadError = nil
             loads.finish(ticket)
-            cache.save(Snapshot(firstDay: week, accounts: accounts, events: response.events), as: Self.cacheKey)
+            cache.save(Snapshot(accounts: accounts, events: response.events), as: Self.cacheKey)
         } catch {
             guard loads.isCurrent(ticket), !error.isCancellation else { return }
             loadError = error.userMessage
