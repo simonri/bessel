@@ -34,8 +34,12 @@ final class APIClient {
         _ = try await sendRaw(method: "PATCH", path: path, query: [], body: try encodeBody(body))
     }
 
-    func deleteNoContent(_ path: String) async throws {
-        _ = try await sendRaw(method: "DELETE", path: path, query: [], body: nil)
+    func put<T: Decodable>(_ path: String, body: some Encodable) async throws -> T {
+        try await send(method: "PUT", path: path, query: [], body: try encodeBody(body))
+    }
+
+    func deleteNoContent(_ path: String, query: [URLQueryItem] = []) async throws {
+        _ = try await sendRaw(method: "DELETE", path: path, query: query, body: nil)
     }
 
     private func encodeBody(_ body: (some Encodable)?) throws -> Data? {

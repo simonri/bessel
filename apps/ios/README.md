@@ -1,9 +1,10 @@
 # Bessel iOS
 
 Native SwiftUI app (iOS 17+), light and dark. Signs in with the same Auth0 +
-Google OAuth the web/desktop apps use. Tabs: Tasks, Health (Apple Health sleep
-and workouts), Recipes, Places and Golf cart; your profile opens from the avatar
-in each tab's navigation bar.
+Google OAuth the web/desktop apps use. Tabs: Tasks, Calendar (a 3-day view of
+the calendars connected on the desktop, with full editing), Health (Apple Health
+sleep and workouts), Recipes and Places; your profile opens from the avatar in
+each tab's navigation bar. The Golf cart screen is off the tab bar for now.
 
 ### Simulator against a local API
 
@@ -17,7 +18,7 @@ SIMCTL_CHILD_BESSEL_API_BASE_URL=http://127.0.0.1:8200 \
   xcrun simctl launch booted com.simonri.bessel.dev
 ```
 
-`BESSEL_TAB` (`tasks`, `health`, `recipes`, `places`, `golfCart`) picks the
+`BESSEL_TAB` (`tasks`, `calendar`, `health`, `recipes`, `places`) picks the
 starting tab. None of this is compiled into Release builds.
 
 The Xcode project is generated — `Bessel.xcodeproj` is gitignored. Source of truth

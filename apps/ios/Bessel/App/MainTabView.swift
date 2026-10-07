@@ -2,30 +2,30 @@ import SwiftUI
 
 enum AppTab: String, CaseIterable, Identifiable {
     case tasks
+    case calendar
     case health
     case recipes
     case places
-    case golfCart
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .tasks: "Tasks"
+        case .calendar: "Calendar"
         case .health: "Health"
         case .recipes: "Recipes"
         case .places: "Places"
-        case .golfCart: "Golf cart"
         }
     }
 
     var icon: String {
         switch self {
         case .tasks: "checkmark.circle"
+        case .calendar: "calendar"
         case .health: "heart"
         case .recipes: "fork.knife"
         case .places: "mappin.and.ellipse"
-        case .golfCart: "bolt.car"
         }
     }
 }
@@ -42,6 +42,10 @@ struct MainTabView: View {
                 .tabItem { Label(AppTab.tasks.title, systemImage: AppTab.tasks.icon) }
                 .tag(AppTab.tasks)
                 .floatingTabBar()
+            CalendarView(auth: auth)
+                .tabItem { Label(AppTab.calendar.title, systemImage: AppTab.calendar.icon) }
+                .tag(AppTab.calendar)
+                .floatingTabBar()
             HealthView(auth: auth, isActive: selection == .health)
                 .tabItem { Label(AppTab.health.title, systemImage: AppTab.health.icon) }
                 .tag(AppTab.health)
@@ -53,10 +57,6 @@ struct MainTabView: View {
             PlacesView(auth: auth)
                 .tabItem { Label(AppTab.places.title, systemImage: AppTab.places.icon) }
                 .tag(AppTab.places)
-                .floatingTabBar()
-            GolfCartView(auth: auth, isActive: selection == .golfCart)
-                .tabItem { Label(AppTab.golfCart.title, systemImage: AppTab.golfCart.icon) }
-                .tag(AppTab.golfCart)
                 .floatingTabBar()
         }
         .environment(toasts)
