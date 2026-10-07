@@ -130,16 +130,13 @@ final class CalendarStore {
         return calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
     }
 
-    /// A day's events: all-day first, then by start time.
+    /// A day's events in `CalendarEvent.displayOrder`.
     func events(on day: Date) -> [CalendarEvent] {
         let dayStart = Calendar.current.startOfDay(for: day)
         let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
         return visibleEvents
             .filter { $0.start < dayEnd && $0.end > dayStart }
-            .sorted { lhs, rhs in
-                if lhs.allDay != rhs.allDay { return lhs.allDay }
-                return lhs.start < rhs.start
-            }
+            .sorted(by: CalendarEvent.displayOrder)
     }
 
     var isShowingToday: Bool {

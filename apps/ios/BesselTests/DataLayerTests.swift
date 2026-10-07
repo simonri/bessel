@@ -21,6 +21,34 @@ final class LenientDecodingTests: XCTestCase {
     }
 }
 
+final class CalendarEventOrderTests: XCTestCase {
+    private func allDay(_ title: String, from start: String, to end: String, id: String = UUID().uuidString) throws -> CalendarEvent {
+        let json = """
+        {"id":"\(id)","calendar_id":"\(UUID().uuidString)","title":"\(title)","all_day":true,
+         "start_date":"\(start)","end_date":"\(end)","attendees":[],"busy":false,"recurring":false,"editable":true}
+        """
+        return try JSONDecoder.api.decode(CalendarEvent.self, from: Data(json.utf8))
+    }
+
+    func testTheSameEventsAlwaysComeOutInTheSameOrder() throws {
+        let trip = try allDay("Trip", from: "2026-10-08", to: "2026-10-11")
+        let birthday = try allDay("Birthday", from: "2026-10-08", to: "2026-10-09")
+        let anniversary = try allDay("Anniversary", from: "2026-10-08", to: "2026-10-09")
+        let expected = [trip.id, anniversary.id, birthday.id]
+
+        for events in [[birthday, anniversary, trip], [trip, birthday, anniversary], [anniversary, trip, birthday]] {
+            XCTAssertEqual(events.sorted(by: CalendarEvent.displayOrder).map(\.id), expected)
+        }
+    }
+
+    func testSameTitlesFallBackToID() throws {
+        let first = try allDay("Holiday", from: "2026-10-08", to: "2026-10-09", id: "00000000-0000-0000-0000-000000000001")
+        let second = try allDay("Holiday", from: "2026-10-08", to: "2026-10-09", id: "00000000-0000-0000-0000-000000000002")
+
+        XCTAssertEqual([second, first].sorted(by: CalendarEvent.displayOrder).map(\.id), [first.id, second.id])
+    }
+}
+
 final class UserFacingErrorTests: XCTestCase {
     func testUsesTheServersSentence() {
         let error = APIError(statusCode: 400, detail: #"{"detail":"This calendar is read-only."}"#)

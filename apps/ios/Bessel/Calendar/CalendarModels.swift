@@ -89,6 +89,21 @@ struct CalendarEvent: Codable, Identifiable, Hashable {
     var hasGuests: Bool { !attendees.isEmpty }
     var isUnansweredInvite: Bool { myResponse == "needs_action" }
 
+    /// How events sharing a day are listed: all-day first, then by start, longer
+    /// ones (multi-day trips) above shorter, then by title. The id settles the
+    /// rest, so the order never depends on how the server happened to send them;
+    /// otherwise events starting together could swap places between loads.
+    static func displayOrder(_ lhs: CalendarEvent, _ rhs: CalendarEvent) -> Bool {
+        if lhs.allDay != rhs.allDay { return lhs.allDay }
+        if lhs.start != rhs.start { return lhs.start < rhs.start }
+        if lhs.end != rhs.end { return lhs.end > rhs.end }
+        switch lhs.displayTitle.localizedStandardCompare(rhs.displayTitle) {
+        case .orderedAscending: return true
+        case .orderedDescending: return false
+        case .orderedSame: return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
     /// You're a guest (not the organizer), so you can answer the invitation.
     var canReply: Bool {
         guard let me = attendees.first(where: \.isSelf) else { return myResponse != nil }

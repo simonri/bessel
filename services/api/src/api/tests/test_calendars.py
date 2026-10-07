@@ -495,6 +495,28 @@ class TestSyncAndEvents:
     assert (events["Holiday"]["start_date"], events["Holiday"]["end_date"]) == ("2026-10-08", "2026-10-09")
 
   @pytest.mark.asyncio
+  async def test_events_starting_together_keep_one_order(self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture) -> None:
+    account_id = await _account(save_fixture, await _current_user_id(client, session))
+
+    def all_day(external_id: str, title: str, end: date) -> ProviderEvent:
+      return ProviderEvent(external_id=external_id, title=title, location=None, all_day=True, start_date=date(2026, 10, 8), end_date=end)
+
+    await _apply(
+      session,
+      account_id,
+      AccountSnapshot(
+        calendars=[ProviderCalendar("c", "Cal", "#ff0000")],
+        events={
+          "c": [all_day("b", "Birthday", date(2026, 10, 9)), all_day("a", "Anniversary", date(2026, 10, 9)), all_day("trip", "Trip", date(2026, 10, 11))]
+        },
+      ),
+    )
+
+    resp = await client.get("/v1/calendars/events", params={"start_ts": int(WEEK_START.timestamp()), "end_ts": int(WEEK_END.timestamp())})
+
+    assert [e["title"] for e in resp.json()["events"]] == ["Trip", "Anniversary", "Birthday"]
+
+  @pytest.mark.asyncio
   @pytest.mark.parametrize("span", [0, 63 * 86400])
   async def test_event_window_validated(self, client: AsyncClient, span: int) -> None:
     start = int(WEEK_START.timestamp())

@@ -261,7 +261,16 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
           and_(CalendarEvent.all_day.is_(True), CalendarEvent.start_date < end_day, CalendarEvent.end_date > start_day),
         ),
       )
-      .order_by(CalendarEvent.start_at, CalendarEvent.start_date)
+      # A total order: events starting together (all-day ones on the same day
+      # above all) would otherwise come back in whatever order the plan gives.
+      .order_by(
+        CalendarEvent.start_at,
+        CalendarEvent.start_date,
+        CalendarEvent.end_at.desc(),
+        CalendarEvent.end_date.desc(),
+        CalendarEvent.title,
+        CalendarEvent.id,
+      )
     )
     return await self.get_all(statement)
 
