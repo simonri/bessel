@@ -1,10 +1,10 @@
 import crypto from "crypto";
-import { app, BrowserWindow } from "electron";
+import { app } from "electron";
 import fs from "fs";
 import http from "http";
 import os from "os";
 import path from "path";
-import { ipcHandle } from "./ipc.js";
+import { getMainWindow, ipcHandle } from "./ipc.js";
 
 // The bessel-axi CLI (packages/axi) runs as a plain Node process outside
 // Electron — it has no access to the renderer's Auth0 session. Rather than
@@ -72,7 +72,10 @@ interface PendingTokenRequest {
   resolve: (token: string | null) => void;
 }
 
-export function registerCliBrokerHandlers(userDataDir: string): void {
+export function registerCliBrokerHandlers(
+  userDataDir: string,
+  log: (line: string) => void,
+): void {
   const secret = loadOrCreateBrokerSecret(userDataDir);
   const pending = new Map<string, PendingTokenRequest>();
 
@@ -102,7 +105,7 @@ export function registerCliBrokerHandlers(userDataDir: string): void {
         return;
       }
 
-      const win = BrowserWindow.getAllWindows()[0];
+      const win = getMainWindow();
       if (!win) {
         sendJson(res, 401, {
           error: "not_authenticated",
@@ -145,6 +148,14 @@ export function registerCliBrokerHandlers(userDataDir: string): void {
     res.writeHead(404).end();
   });
 
+  // The port is fixed (packages/axi dials it directly), so another process —
+  // or a second copy of this build variant — may already hold it. That only
+  // costs bessel-axi its token source; it must never take the app down.
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    log(
+      `cli broker unavailable on 127.0.0.1:${CLI_BROKER_PORT}: ${err.code ?? err.message}`,
+    );
+  });
   server.listen(CLI_BROKER_PORT, "127.0.0.1");
 }
 

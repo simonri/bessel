@@ -27,6 +27,7 @@ import { OutlinePanel } from "./outline-panel";
 import { QuickSwitcher as VaultSearchDialog } from "./quick-switcher";
 import { TabsBar } from "./tabs-bar";
 import { VaultHeader } from "./vault-header";
+import type { VaultRenameResult } from "./vault-types";
 
 export interface VaultWorkspaceProps {
   root: string;
@@ -36,6 +37,26 @@ export interface VaultWorkspaceProps {
 
 function errorMessage(e: unknown, fallback: string): string {
   return e instanceof Error ? e.message : fallback;
+}
+
+function noteList(rels: readonly string[]): string {
+  const names = rels.slice(0, 3).map((rel) => `"${basenameOf(rel)}"`);
+  const rest = rels.length - names.length;
+  return rest > 0 ? `${names.join(", ")} and ${rest} more` : names.join(", ");
+}
+
+/** Tells the user about notes whose links to a renamed entry are now stale. */
+function reportRenameResult(result: VaultRenameResult): void {
+  const failed = result.failedFiles ?? [];
+  const skipped = result.skippedFiles ?? [];
+  if (failed.length > 0)
+    toast.error(`Couldn't update links in ${noteList(failed)}`);
+  if (skipped.length > 0)
+    toast.warning(
+      `Links in ${noteList(skipped)} weren't updated - ${
+        skipped.length === 1 ? "it was" : "they were"
+      } being edited`,
+    );
 }
 
 /** Where an unresolved `[[target]]` should be created: `target` itself when
@@ -180,27 +201,46 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
     [activeRel, files, createNote, openNote],
   );
 
+  // Saves the open note first so the rename (and the link rewrite in other
+  // notes) sees its latest content; a note still dirty after that is skipped
+  // by the rewrite rather than overwritten under the editor.
+  const renamingRef = useRef(false);
+  const rename = useCallback(
+    async (from: string, to: string, onRenamed: () => void) => {
+      if (renamingRef.current) return;
+      renamingRef.current = true;
+      try {
+        await noteViewRef.current?.flush();
+        const skip =
+          activeRel && noteViewRef.current?.hasUnsavedChanges()
+            ? [activeRel]
+            : undefined;
+        const result = await renameEntry.mutateAsync({ from, to, skip });
+        onRenamed();
+        reportRenameResult(result);
+      } catch (e) {
+        toast.error(errorMessage(e, "Rename failed"));
+      } finally {
+        renamingRef.current = false;
+      }
+    },
+    [activeRel, renameEntry],
+  );
+
   const handleRename = useCallback(
     (newBasename: string) => {
-      // Guards the (very narrow) window where a rename lands while a tab
-      // switch's flush() is still in flight and `activeRel` is stale.
-      if (!activeRel || renameEntry.isPending) return;
+      if (!activeRel) return;
       const folder = parentOf(activeRel);
       const to = folder ? `${folder}/${newBasename}.md` : `${newBasename}.md`;
       const from = activeRel;
-      renameEntry.mutate(
-        { from, to },
-        {
-          onSuccess: () =>
-            updateUiState((prev) => ({
-              tabs: prev.tabs.map((t) => (t === from ? to : t)),
-              activeTab: prev.activeTab === from ? to : prev.activeTab,
-            })),
-          onError: (e) => toast.error(errorMessage(e, "Rename failed")),
-        },
+      void rename(from, to, () =>
+        updateUiState((prev) => ({
+          tabs: prev.tabs.map((t) => (t === from ? to : t)),
+          activeTab: prev.activeTab === from ? to : prev.activeTab,
+        })),
       );
     },
-    [activeRel, renameEntry, updateUiState],
+    [activeRel, rename, updateUiState],
   );
 
   const handleTreeRename = useCallback(
@@ -214,29 +254,22 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
         : folder
           ? `${folder}/${newName}.md`
           : `${newName}.md`;
-      renameEntry.mutate(
-        { from: rel, to },
-        {
-          onSuccess: () =>
-            updateUiState((prev) => {
-              const remap = (t: string) =>
-                t === rel
-                  ? to
-                  : t.startsWith(`${rel}/`)
-                    ? to + t.slice(rel.length)
-                    : t;
-              return {
-                tabs: prev.tabs.map(remap),
-                activeTab: prev.activeTab
-                  ? remap(prev.activeTab)
-                  : prev.activeTab,
-              };
-            }),
-          onError: (e) => toast.error(errorMessage(e, "Rename failed")),
-        },
+      void rename(rel, to, () =>
+        updateUiState((prev) => {
+          const remap = (t: string) =>
+            t === rel
+              ? to
+              : t.startsWith(`${rel}/`)
+                ? to + t.slice(rel.length)
+                : t;
+          return {
+            tabs: prev.tabs.map(remap),
+            activeTab: prev.activeTab ? remap(prev.activeTab) : prev.activeTab,
+          };
+        }),
       );
     },
-    [entries, renameEntry, updateUiState],
+    [entries, rename, updateUiState],
   );
 
   const handleCreateNote = useCallback(

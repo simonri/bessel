@@ -2,15 +2,13 @@ import { app, BrowserWindow, ipcMain } from "electron";
 
 // The Vite dev server is only trusted in development: in a packaged build,
 // whatever happens to listen on localhost:3001 must never get IPC access.
+// Mirrored in preload.ts, which can't import this module (sandboxed preload).
 export const TRUSTED_ORIGINS = new Set([
   "app://localhost",
   ...(app.isPackaged ? [] : ["http://localhost:3001"]),
 ]);
 
-function isTrustedSender(
-  event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent,
-): boolean {
-  const url = event.senderFrame?.url;
+export function isTrustedUrl(url: string | undefined): boolean {
   if (!url) return false;
   try {
     const parsed = new URL(url);
@@ -20,6 +18,21 @@ function isTrustedSender(
   } catch {
     return false;
   }
+}
+
+function isTrustedSender(
+  event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent,
+): boolean {
+  return isTrustedUrl(event.senderFrame?.url);
+}
+
+let reportListenerError = (channel: string, err: unknown): void =>
+  console.error(`IPC listener "${channel}" threw`, err);
+
+export function setIpcErrorReporter(
+  reporter: (channel: string, err: unknown) => void,
+): void {
+  reportListenerError = reporter;
 }
 
 export function ipcHandle(
@@ -33,18 +46,39 @@ export function ipcHandle(
   });
 }
 
+// Fire-and-forget listeners have no caller to reject to: a throw here would
+// otherwise surface as an uncaughtException, which exits the app.
 export function ipcOn(
   channel: string,
   listener: (event: Electron.IpcMainEvent, ...args: any[]) => void,
 ): void {
   ipcMain.on(channel, (event, ...args) => {
     if (!isTrustedSender(event)) return;
-    listener(event, ...args);
+    try {
+      listener(event, ...args);
+    } catch (err) {
+      reportListenerError(channel, err);
+    }
   });
+}
+
+let mainWindow: BrowserWindow | null = null;
+
+export function setMainWindow(win: BrowserWindow): void {
+  mainWindow = win;
+  win.on("closed", () => {
+    if (mainWindow === win) mainWindow = null;
+  });
+}
+
+/** The app's own window, never a popup opened from a browser widget. */
+export function getMainWindow(): BrowserWindow | null {
+  return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
 }
 
 export function broadcast(channel: string, ...args: unknown[]): void {
   for (const win of BrowserWindow.getAllWindows()) {
-    if (!win.isDestroyed()) win.webContents.send(channel, ...args);
+    if (win.isDestroyed() || !isTrustedUrl(win.webContents.getURL())) continue;
+    win.webContents.send(channel, ...args);
   }
 }

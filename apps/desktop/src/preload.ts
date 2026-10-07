@@ -13,9 +13,20 @@ import type {
   VaultIndex,
   VaultInfo,
   VaultReadResult,
+  VaultRenameOptions,
+  VaultRenameResult,
   VaultSearchHit,
   VaultWriteResult,
 } from "./vault-types.js";
+
+// Mirrors TRUSTED_ORIGINS in ipc.ts, which a sandboxed preload can't import.
+// Main still rejects the dev origin in packaged builds; this only keeps the
+// bridge off pages that should never see it (e.g. a login provider's page).
+const BRIDGE_ORIGINS = new Set(["app://localhost", "http://localhost:3001"]);
+
+function isTrustedLocation(): boolean {
+  return BRIDGE_ORIGINS.has(`${location.protocol}//${location.host}`);
+}
 
 interface SpotifyStatus {
   running: boolean;
@@ -40,7 +51,7 @@ function subscribe<Args extends unknown[]>(
   return () => ipcRenderer.removeListener(channel, listener);
 }
 
-contextBridge.exposeInMainWorld("electron", {
+const bridge = {
   platform: process.platform,
   close: () => ipcRenderer.send("close-window"),
   auth: {
@@ -61,7 +72,8 @@ contextBridge.exposeInMainWorld("electron", {
     getInfo: (): Promise<{ key: string; name: string }> =>
       ipcRenderer.invoke("device:get-info"),
   },
-  selectFolder: () => ipcRenderer.invoke("dialog:select-folder"),
+  selectFolder: (purpose?: "vault"): Promise<string | null> =>
+    ipcRenderer.invoke("dialog:select-folder", purpose),
   sshListDir: (
     host: string,
     dirPath: string,
@@ -96,22 +108,29 @@ contextBridge.exposeInMainWorld("electron", {
       cols: number,
       rows: number,
       config: { command: string; args: string[]; cwd?: string },
-    ) => ipcRenderer.invoke("terminal:spawn", sessionId, cols, rows, config),
+    ): Promise<number | undefined> =>
+      ipcRenderer.invoke("terminal:spawn", sessionId, cols, rows, config),
     sendInput: (sessionId: string, data: string) =>
       ipcRenderer.send("terminal:input", sessionId, data),
     resize: (sessionId: string, cols: number, rows: number) =>
       ipcRenderer.send("terminal:resize", sessionId, cols, rows),
     kill: (sessionId: string) => ipcRenderer.send("terminal:kill", sessionId),
-    onData: (sessionId: string, callback: (data: string) => void) =>
-      subscribe<[string, string]>(
+    onData: (
+      sessionId: string,
+      callback: (data: string, generation?: number) => void,
+    ) =>
+      subscribe<[string, string, number | undefined]>(
         "terminal:data",
-        (_sid, data) => callback(data),
+        (_sid, data, generation) => callback(data, generation),
         (sid) => sid === sessionId,
       ),
-    onExit: (sessionId: string, callback: (code: number) => void) =>
-      subscribe<[string, number]>(
+    onExit: (
+      sessionId: string,
+      callback: (code: number, generation?: number) => void,
+    ) =>
+      subscribe<[string, number, number | undefined]>(
         "terminal:exit",
-        (_sid, code) => callback(code),
+        (_sid, code, generation) => callback(code, generation),
         (sid) => sid === sessionId,
       ),
   },
@@ -227,8 +246,9 @@ contextBridge.exposeInMainWorld("electron", {
       root: string,
       from: string,
       to: string,
-    ): Promise<{ updatedFiles: number }> =>
-      ipcRenderer.invoke("vault:rename", root, from, to),
+      options?: VaultRenameOptions,
+    ): Promise<VaultRenameResult> =>
+      ipcRenderer.invoke("vault:rename", root, from, to, options),
     trash: (root: string, rel: string): Promise<void> =>
       ipcRenderer.invoke("vault:trash", root, rel),
     reveal: (root: string, rel: string): Promise<void> =>
@@ -258,4 +278,6 @@ contextBridge.exposeInMainWorld("electron", {
     provideData: (requestId: string, payload: unknown): Promise<void> =>
       ipcRenderer.invoke("local-data-server:provide-data", requestId, payload),
   },
-});
+};
+
+if (isTrustedLocation()) contextBridge.exposeInMainWorld("electron", bridge);
