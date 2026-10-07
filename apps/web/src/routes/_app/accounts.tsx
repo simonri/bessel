@@ -3,6 +3,8 @@ import {
   deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
+  listTradesV1InvestmentsTradesGetQueryKey,
+  listTransactionsV1TransactionsGetQueryKey,
 } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
@@ -16,11 +18,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
 import { IconButton, PageToolbar, PeriodNav } from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
+import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
 import { formatMoney } from "@/lib/money";
 
@@ -66,13 +70,23 @@ function Accounts() {
       setDeleteTarget(null);
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previous) {
         for (const [key, val] of context.previous)
           queryClient.setQueryData(key, val);
       }
+      toast.error(errorDetail(error, "Couldn't delete the account"));
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      // Deleting an account deletes its transactions and trades with it.
+      void queryClient.invalidateQueries({
+        queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: listTradesV1InvestmentsTradesGetQueryKey({ client }),
+      });
+    },
   });
 
   // Stable identity so react-table doesn't rebuild its column model per render.

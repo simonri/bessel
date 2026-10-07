@@ -2,11 +2,13 @@ import {
   type AppState,
   Auth0Provider,
   type LogoutOptions,
+  type GetTokenSilentlyOptions,
   type RedirectLoginOptions,
   useAuth0,
 } from "@auth0/auth0-react";
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
+import { isSessionEndedError, setAccessTokenRefresher } from "@/lib/auth-token";
 import { client } from "@/lib/client";
 import { killAllTerminalSessions } from "@/lib/terminal-sessions";
 import { clearUserStorage, shouldForceLoginPrompt } from "@/lib/user-storage";
@@ -18,18 +20,26 @@ function AuthInterceptor() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const id = client.interceptors.request.use(async (request) => {
+    const getToken = async (options?: GetTokenSilentlyOptions) => {
       try {
-        const token = await getAccessTokenSilently();
-        request.headers.set("Authorization", `Bearer ${token}`);
-      } catch {
-        logout({ logoutParams: { returnTo: window.location.origin } });
+        return await getAccessTokenSilently(options);
+      } catch (error) {
+        if (isSessionEndedError(error)) {
+          logout({ logoutParams: { returnTo: window.location.origin } });
+        }
+        throw error;
       }
+    };
+
+    const id = client.interceptors.request.use(async (request) => {
+      request.headers.set("Authorization", `Bearer ${await getToken()}`);
       return request;
     });
+    setAccessTokenRefresher(() => getToken({ cacheMode: "off" }));
 
     return () => {
       client.interceptors.request.eject(id);
+      setAccessTokenRefresher(null);
     };
   }, [isAuthenticated, getAccessTokenSilently, logout]);
 

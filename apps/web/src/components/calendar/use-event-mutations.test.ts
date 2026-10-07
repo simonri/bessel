@@ -1,9 +1,13 @@
 import type { CalendarEventSchema } from "@bessel/client";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
+import { toApiError } from "@/lib/api-error";
 import {
   applyOptimistic,
   applyReply,
   eventFieldsBody,
+  restoreEvent,
+  shouldRetryCreate,
 } from "./use-event-mutations";
 
 const TZ = "Asia/Tokyo";
@@ -150,5 +154,45 @@ describe("applyReply", () => {
       "declined",
     ]);
     expect(invite.my_response).toBe("needs_action");
+  });
+});
+
+describe("restoreEvent", () => {
+  const eventsKey = [{ _id: "listCalendarEventsV1CalendarsEventsGet" }];
+
+  it("puts back only the failed event, where it was", () => {
+    const queryClient = new QueryClient();
+    const other: CalendarEventSchema = { ...row, id: "e2", title: "Lunch" };
+    queryClient.setQueryData(eventsKey, { events: [row, other] });
+    const snapshot = [[eventsKey, { event: row, index: 0 }]] as Parameters<
+      typeof restoreEvent
+    >[2];
+
+    // e1 was deleted optimistically; e2 was then renamed by another write.
+    queryClient.setQueryData(eventsKey, {
+      events: [{ ...other, title: "Late lunch" }],
+    });
+    restoreEvent(queryClient, "e1", snapshot);
+
+    expect(queryClient.getQueryData(eventsKey)).toEqual({
+      events: [row, { ...other, title: "Late lunch" }],
+    });
+  });
+});
+
+describe("shouldRetryCreate", () => {
+  it("retries a create only when its response may have been lost", () => {
+    expect(shouldRetryCreate(0, toApiError(new TypeError()))).toBe(true);
+    expect(shouldRetryCreate(2, toApiError(new TypeError()))).toBe(false);
+    expect(
+      shouldRetryCreate(0, toApiError({}, new Response(null, { status: 500 }))),
+    ).toBe(false);
+  });
+
+  it("retries while the first request with the same key is still running", () => {
+    const conflict = (error: string) =>
+      toApiError({ error }, new Response(null, { status: 409 }));
+    expect(shouldRetryCreate(0, conflict("IdempotencyError"))).toBe(true);
+    expect(shouldRetryCreate(0, conflict("Conflict"))).toBe(false);
   });
 });

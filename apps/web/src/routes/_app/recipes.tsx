@@ -52,7 +52,12 @@ import { RecipeTidyBanner } from "@/components/recipes/recipe-tidy-banner";
 import { IconButton } from "@/components/ui-kit";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
+import { mutationFamily } from "@/lib/optimistic";
 import { cn } from "@/lib/utils";
+
+// Saves, type changes and undos go out one at a time, in order, so an older
+// write can't land after a newer one.
+const recipeWrites = mutationFamily("recipes");
 
 export const Route = createFileRoute("/_app/recipes")({
   component: Recipes,
@@ -196,6 +201,11 @@ function Recipes() {
   const [importOpen, setImportOpen] = useState(false);
   const [tidyingId, setTidyingId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSave = useRef<{
+    id: string;
+    title: string;
+    body: RecipeBody;
+  } | null>(null);
   const queryClient = useQueryClient();
 
   const queryKey = listRecipesV1RecipesGetQueryKey({ client });
@@ -238,6 +248,7 @@ function Recipes() {
 
   const updateMutation = useMutation({
     ...updateRecipeV1RecipesRecipeIdPatchMutation({ client }),
+    ...recipeWrites,
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
     onError: () => toast.error("Failed to save recipe"),
   });
@@ -256,6 +267,7 @@ function Recipes() {
   // unmounts, so a tidy finishing while you're elsewhere is still saved.
   const restoreMutation = useMutation({
     ...updateRecipeV1RecipesRecipeIdPatchMutation({ client }),
+    ...recipeWrites,
     onSuccess: (restored) => {
       void queryClient.invalidateQueries({ queryKey });
       if (selectedIdRef.current === restored.id) setDraft(draftFrom(restored));
@@ -301,15 +313,27 @@ function Recipes() {
     },
   });
 
+  /** Sends the debounced save now. Resolves with the saved recipe, or null
+   *  when no save was waiting; failures are reported by updateMutation. */
+  const flushSave = (): Promise<RecipeSchema | null> => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    const save = pendingSave.current;
+    pendingSave.current = null;
+    if (!save) return Promise.resolve(null);
+    return updateMutation.mutateAsync({
+      client,
+      path: { recipe_id: save.id },
+      body: { title: save.title, body: cleanRecipeBody(save.body) },
+    });
+  };
+
   // Debounced auto-save
   const scheduleSave = (id: string, title: string, body: RecipeBody) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    pendingSave.current = { id, title, body };
     saveTimer.current = setTimeout(() => {
-      updateMutation.mutate({
-        client,
-        path: { recipe_id: id },
-        body: { title, body: cleanRecipeBody(body) },
-      });
+      flushSave().catch(() => {});
     }, 1000);
   };
 
@@ -369,16 +393,36 @@ function Recipes() {
 
   // Structures a recipe that is still plain markdown. The old text stays one
   // tap away: restoring `content` alone puts the recipe back exactly as it was.
-  const tidyRecipe = (recipe: RecipeSchema) => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    tidyTarget.current = recipe;
+  // Tidies the recipe as stored after every edit made so far, not the list's
+  // possibly older copy: a waiting save is sent first, and otherwise an empty
+  // update queues behind any save still in flight and returns the result.
+  const tidyRecipe = async (recipe: RecipeSchema) => {
     setTidyingId(recipe.id);
+    let source = recipe;
+    try {
+      const saved = await flushSave();
+      if (saved?.id === recipe.id) {
+        source = saved;
+      } else if (
+        queryClient.isMutating({ mutationKey: recipeWrites.mutationKey }) > 0
+      ) {
+        source = await updateMutation.mutateAsync({
+          client,
+          path: { recipe_id: recipe.id },
+          body: {},
+        });
+      }
+    } catch {
+      setTidyingId(null);
+      return;
+    }
+    tidyTarget.current = source;
     tidyMutation.mutate({
       client,
       body: {
-        text: recipe.title
-          ? `# ${recipe.title}\n\n${recipe.content}`
-          : recipe.content,
+        text: source.title
+          ? `# ${source.title}\n\n${source.content}`
+          : source.content,
       },
     });
   };
@@ -562,7 +606,7 @@ function Recipes() {
                 <RecipeTidyBanner
                   pending={tidyingId === selected.id}
                   disabled={tidyingId !== null}
-                  onTidy={() => tidyRecipe(selected)}
+                  onTidy={() => void tidyRecipe(selected)}
                 />
               )}
               <div

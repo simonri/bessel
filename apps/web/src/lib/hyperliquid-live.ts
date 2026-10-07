@@ -12,6 +12,9 @@ import {
 const WS_URL = "wss://api.hyperliquid.xyz/ws";
 // The server drops connections that go a minute without a message.
 const PING_MS = 30_000;
+// Pings are answered, so this long without any message means the connection
+// is dead even if the socket hasn't noticed.
+export const STALE_MS = 2 * PING_MS;
 const RETRY_MIN_MS = 1_000;
 const RETRY_MAX_MS = 30_000;
 // Only while the socket is down.
@@ -93,9 +96,31 @@ export function useHyperliquidPerp(user: string) {
       socket = ws;
       socketRef.current = ws;
       subscribedRef.current = new Set();
+      let staleTimer: ReturnType<typeof setTimeout> | undefined;
+      let ended = false;
+
+      const end = () => {
+        if (ended) return;
+        ended = true;
+        clearInterval(pingTimer);
+        clearTimeout(staleTimer);
+        if (socketRef.current === ws) socketRef.current = null;
+        if (closed) return;
+        setStatus("offline");
+        retryTimer = setTimeout(connect, retryMs);
+        retryMs = Math.min(retryMs * 2, RETRY_MAX_MS);
+      };
+      const watchLiveness = () => {
+        clearTimeout(staleTimer);
+        staleTimer = setTimeout(() => {
+          // A dead connection's close can take long to arrive; don't wait.
+          ws.close();
+          end();
+        }, STALE_MS);
+      };
 
       ws.onopen = () => {
-        retryMs = RETRY_MIN_MS;
+        watchLiveness();
         setStatus("live");
         ws.send(message("subscribe", { type: "clearinghouseState", user }));
         for (const coin of coinKeyRef.current.split(",").filter(Boolean)) {
@@ -108,7 +133,22 @@ export function useHyperliquidPerp(user: string) {
         );
       };
       ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data as string) as Message;
+        if (ended) return;
+        watchLiveness();
+        let msg: Message;
+        try {
+          msg = JSON.parse(event.data as string) as Message;
+        } catch {
+          return;
+        }
+        if (
+          msg.channel === "clearinghouseState" ||
+          msg.channel === "activeAssetCtx"
+        ) {
+          // Only data proves the connection works; a socket that opens and
+          // then drops keeps backing off.
+          retryMs = RETRY_MIN_MS;
+        }
         if (msg.channel === "clearinghouseState") {
           if (msg.data.user.toLowerCase() !== user) return;
           queryClient.setQueryData(
@@ -120,14 +160,7 @@ export function useHyperliquidPerp(user: string) {
           flushTimer ??= setTimeout(flushMarks, MARK_FLUSH_MS);
         }
       };
-      ws.onclose = () => {
-        clearInterval(pingTimer);
-        if (socketRef.current === ws) socketRef.current = null;
-        if (closed) return;
-        setStatus("offline");
-        retryTimer = setTimeout(connect, retryMs);
-        retryMs = Math.min(retryMs * 2, RETRY_MAX_MS);
-      };
+      ws.onclose = end;
       // An error is always followed by close, which retries.
       ws.onerror = () => ws.close();
     };

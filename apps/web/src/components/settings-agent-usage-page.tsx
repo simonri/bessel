@@ -44,11 +44,16 @@ export function AgentUsagePage() {
         }
       } catch {}
     };
-    poll();
-    const id = setInterval(poll, 3000);
+    // Chained rather than an interval, so a slow status call can't stack up.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const loop = async () => {
+      await poll();
+      if (alive) timer = setTimeout(loop, 3000);
+    };
+    void loop();
     return () => {
       alive = false;
-      clearInterval(id);
+      clearTimeout(timer);
     };
   }, []);
 
@@ -121,8 +126,8 @@ export function AgentUsagePage() {
 
       {status.needsConfig && (
         <p className="text-12 text-amber-300/80">
-          This machine isn't connected to your account yet. Reinstall to
-          connect it.
+          This machine isn't connected to your account yet. Reinstall to connect
+          it.
         </p>
       )}
 

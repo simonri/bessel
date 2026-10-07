@@ -1,13 +1,13 @@
 import {
   type CalendarEventListResponse,
   type CalendarEventSchema,
-  createCalendarEventV1CalendarsCalendarIdEventsPostMutation,
-  deleteCalendarEventV1CalendarsEventsEventIdDeleteMutation,
+  createCalendarEventV1CalendarsCalendarIdEventsPost,
+  deleteCalendarEventV1CalendarsEventsEventIdDelete,
   type EditScope,
   type EventUpdate,
   type RecurrenceSchema,
-  respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation,
-  updateCalendarEventV1CalendarsEventsEventIdPatchMutation,
+  respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
+  updateCalendarEventV1CalendarsEventsEventIdPatch,
 } from "@bessel/client";
 import {
   type QueryClient,
@@ -16,13 +16,15 @@ import {
 } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { errorDetail } from "@/lib/api-error";
-import { client } from "@/lib/client";
+import { errorDetail, errorStatus } from "@/lib/api-error";
+import { client, IDEMPOTENCY_HEADER } from "@/lib/client";
+import { settleWhenIdle } from "@/lib/optimistic";
 import { fromWallClock } from "./calendar-timezone";
 import type { CalendarEvent, Reply } from "./calendar-types";
 import { type EventDraftTiming, timingPayload } from "./event-payload";
 import {
   accountsQueryKey,
+  EVENT_WRITES,
   invalidateEvents,
   isEventsQuery,
   toCalendarEvent,
@@ -72,19 +74,46 @@ export function eventFieldsBody(
   return body;
 }
 
-type EventCaches = [
+/** Where one event sat in each cached events list before an optimistic
+ *  change, so a failure can put back just that event. */
+type EventSnapshot = [
   readonly unknown[],
-  CalendarEventListResponse | undefined,
+  { event: CalendarEventSchema; index: number } | undefined,
 ][];
 
-function snapshotEvents(queryClient: QueryClient): EventCaches {
-  return queryClient.getQueriesData<CalendarEventListResponse>({
-    predicate: (query) => isEventsQuery(query.queryKey),
-  });
+function snapshotEvent(
+  queryClient: QueryClient,
+  eventId: string,
+): EventSnapshot {
+  return queryClient
+    .getQueriesData<CalendarEventListResponse>({
+      predicate: (query) => isEventsQuery(query.queryKey),
+    })
+    .map(([key, data]) => {
+      const index = data?.events.findIndex((e) => e.id === eventId) ?? -1;
+      return [
+        key,
+        data && index >= 0 ? { event: data.events[index], index } : undefined,
+      ];
+    });
 }
 
-function restoreEvents(queryClient: QueryClient, caches: EventCaches) {
-  for (const [key, data] of caches) queryClient.setQueryData(key, data);
+/** Puts back the event as `snapshot` saw it, leaving other events (and their
+ *  own in-flight optimistic changes) as they are. */
+export function restoreEvent(
+  queryClient: QueryClient,
+  eventId: string,
+  snapshot: EventSnapshot | undefined,
+) {
+  for (const [key, before] of snapshot ?? []) {
+    if (!before) continue;
+    queryClient.setQueryData<CalendarEventListResponse>(key, (data) => {
+      if (!data) return data;
+      const events = data.events.filter((e) => e.id !== eventId);
+      events.splice(Math.min(before.index, events.length), 0, before.event);
+      return { ...data, events };
+    });
+  }
 }
 
 function updateCachedEvents(
@@ -93,8 +122,23 @@ function updateCachedEvents(
 ) {
   queryClient.setQueriesData<CalendarEventListResponse>(
     { predicate: (query) => isEventsQuery(query.queryKey) },
-    (data) => data && { events: update(data.events) },
+    (data) => data && { ...data, events: update(data.events) },
   );
+}
+
+/** Applies an optimistic change to one event, after stopping in-flight
+ *  fetches that would overwrite it. */
+async function beginOptimistic(
+  queryClient: QueryClient,
+  eventId: string,
+  update: (events: CalendarEventSchema[]) => CalendarEventSchema[],
+) {
+  await queryClient.cancelQueries({
+    predicate: (query) => isEventsQuery(query.queryKey),
+  });
+  const snapshot = snapshotEvent(queryClient, eventId);
+  updateCachedEvents(queryClient, update);
+  return { snapshot };
 }
 
 /** The cached API row with `changes` applied, for instant feedback. */
@@ -144,42 +188,169 @@ export function applyReply(
   };
 }
 
+interface ReplyVariables {
+  event: CalendarEvent;
+  answer: Reply;
+  scope: EditScope;
+}
+
+interface CreateVariables {
+  calendarId: string;
+  changes: EventChangesInput;
+  notifyGuests: boolean;
+  /** Lets the API recognise a retried request instead of creating a second event. */
+  idempotencyKey: string;
+}
+
+interface UpdateVariables {
+  event: CalendarEvent;
+  changes: EventChangesInput;
+  options: WriteOptions;
+}
+
+interface DeleteVariables {
+  event: CalendarEvent;
+  options: WriteOptions;
+}
+
+const MAX_CREATE_RETRIES = 2;
+
+/** A create whose response was lost may have been applied; retrying it with
+ *  the same Idempotency-Key is safe, and replays the first response once that
+ *  request finishes. Retrying one the API rejected is not useful. */
+export function shouldRetryCreate(failureCount: number, error: unknown) {
+  const status = errorStatus(error);
+  const stillProcessing =
+    status === 409 &&
+    (error as { error?: unknown }).error === "IdempotencyError";
+  return (
+    (status === undefined || stillProcessing) &&
+    failureCount < MAX_CREATE_RETRIES
+  );
+}
+
 export function useEventMutations(timeZone: string) {
   const queryClient = useQueryClient();
 
-  const settle = () => {
-    invalidateEvents(queryClient);
-    // A rejected write can change what the account may do (e.g. reconnect needed).
-    void queryClient.invalidateQueries({ queryKey: accountsQueryKey() });
-  };
+  const settle = () =>
+    settleWhenIdle(queryClient, EVENT_WRITES.mutationKey, () => {
+      invalidateEvents(queryClient);
+      // A rejected write can change what the account may do (e.g. reconnect needed).
+      void queryClient.invalidateQueries({ queryKey: accountsQueryKey() });
+    });
 
   const create = useMutation({
-    ...createCalendarEventV1CalendarsCalendarIdEventsPostMutation({ client }),
+    ...EVENT_WRITES,
+    mutationFn: async ({
+      calendarId,
+      changes,
+      notifyGuests,
+      idempotencyKey,
+    }: CreateVariables) => {
+      const { data } = await createCalendarEventV1CalendarsCalendarIdEventsPost(
+        {
+          client,
+          path: { calendar_id: calendarId },
+          body: {
+            ...eventFieldsBody(changes, timeZone),
+            timing: timingPayload(changes.timing as EventDraftTiming, timeZone),
+            time_zone: timeZone,
+            notify_guests: notifyGuests,
+          },
+          headers: { [IDEMPOTENCY_HEADER]: idempotencyKey },
+          throwOnError: true,
+        },
+      );
+      return data;
+    },
+    retry: shouldRetryCreate,
     onError: (error) =>
       toast.error(errorDetail(error, "Couldn't create the event")),
     onSettled: settle,
   });
 
   const update = useMutation({
-    ...updateCalendarEventV1CalendarsEventsEventIdPatchMutation({ client }),
-    onError: (error) =>
-      toast.error(errorDetail(error, "Couldn't save the event")),
+    ...EVENT_WRITES,
+    mutationFn: async ({
+      event,
+      changes,
+      options: { scope = "this", calendarId, notifyGuests = true },
+    }: UpdateVariables) => {
+      const { data } = await updateCalendarEventV1CalendarsEventsEventIdPatch({
+        client,
+        path: { event_id: event.id },
+        body: {
+          ...eventFieldsBody(changes, timeZone),
+          scope,
+          calendar_id: calendarId ?? null,
+          time_zone: timeZone,
+          notify_guests: notifyGuests,
+        },
+        throwOnError: true,
+      });
+      return data;
+    },
+    // Only the occurrence being edited is updated in place; wider scopes
+    // reshape the series, which the refetch brings in.
+    onMutate: ({ event, changes, options }) =>
+      beginOptimistic(queryClient, event.id, (events) =>
+        events.map((e) =>
+          e.id === event.id
+            ? applyOptimistic(e, changes, timeZone, options.calendarId)
+            : e,
+        ),
+      ),
+    onError: (error, { event }, context) => {
+      restoreEvent(queryClient, event.id, context?.snapshot);
+      toast.error(errorDetail(error, "Couldn't save the event"));
+    },
     onSettled: settle,
   });
 
   const reply = useMutation({
-    ...respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation({
-      client,
-    }),
-    onError: (error) =>
-      toast.error(errorDetail(error, "Couldn't send your answer")),
+    ...EVENT_WRITES,
+    mutationFn: async ({ event, answer, scope }: ReplyVariables) => {
+      const { data } =
+        await respondToCalendarEventV1CalendarsEventsEventIdResponsePut({
+          client,
+          path: { event_id: event.id },
+          body: { response: answer, scope },
+          throwOnError: true,
+        });
+      return data;
+    },
+    onMutate: ({ event, answer }) =>
+      beginOptimistic(queryClient, event.id, (events) =>
+        events.map((e) => (e.id === event.id ? applyReply(e, answer) : e)),
+      ),
+    onError: (error, { event }, context) => {
+      restoreEvent(queryClient, event.id, context?.snapshot);
+      toast.error(errorDetail(error, "Couldn't send your answer"));
+    },
     onSettled: settle,
   });
 
   const remove = useMutation({
-    ...deleteCalendarEventV1CalendarsEventsEventIdDeleteMutation({ client }),
-    onError: (error) =>
-      toast.error(errorDetail(error, "Couldn't delete the event")),
+    ...EVENT_WRITES,
+    mutationFn: async ({
+      event,
+      options: { scope = "this", notifyGuests = true },
+    }: DeleteVariables) => {
+      await deleteCalendarEventV1CalendarsEventsEventIdDelete({
+        client,
+        path: { event_id: event.id },
+        query: { scope, time_zone: timeZone, notify_guests: notifyGuests },
+        throwOnError: true,
+      });
+    },
+    onMutate: ({ event }) =>
+      beginOptimistic(queryClient, event.id, (events) =>
+        events.filter((e) => e.id !== event.id),
+      ),
+    onError: (error, { event }, context) => {
+      restoreEvent(queryClient, event.id, context?.snapshot);
+      toast.error(errorDetail(error, "Couldn't delete the event"));
+    },
     onSettled: settle,
   });
 
@@ -192,22 +363,7 @@ export function useEventMutations(timeZone: string) {
       answer: Reply,
       scope: EditScope = "this",
     ): Promise<void> {
-      const caches = snapshotEvents(queryClient);
-      await queryClient.cancelQueries({
-        predicate: (query) => isEventsQuery(query.queryKey),
-      });
-      updateCachedEvents(queryClient, (events) =>
-        events.map((e) => (e.id === event.id ? applyReply(e, answer) : e)),
-      );
-      try {
-        await reply.mutateAsync({
-          path: { event_id: event.id },
-          body: { response: answer, scope },
-        });
-      } catch (error) {
-        restoreEvents(queryClient, caches);
-        throw error;
-      }
+      await reply.mutateAsync({ event, answer, scope });
     },
 
     async createEvent(
@@ -216,13 +372,10 @@ export function useEventMutations(timeZone: string) {
       { notifyGuests = true }: WriteOptions = {},
     ): Promise<CalendarEvent | null> {
       const result = await create.mutateAsync({
-        path: { calendar_id: calendarId },
-        body: {
-          ...eventFieldsBody(changes, timeZone),
-          timing: timingPayload(changes.timing as EventDraftTiming, timeZone),
-          time_zone: timeZone,
-          notify_guests: notifyGuests,
-        },
+        calendarId,
+        changes,
+        notifyGuests,
+        idempotencyKey: crypto.randomUUID(),
       });
       return result.event ? toCalendarEvent(result.event) : null;
     },
@@ -230,59 +383,17 @@ export function useEventMutations(timeZone: string) {
     async updateEvent(
       event: CalendarEvent,
       changes: EventChangesInput,
-      { scope = "this", calendarId, notifyGuests = true }: WriteOptions = {},
+      options: WriteOptions = {},
     ): Promise<CalendarEvent | null> {
-      const caches = snapshotEvents(queryClient);
-      await queryClient.cancelQueries({
-        predicate: (query) => isEventsQuery(query.queryKey),
-      });
-      // Only the occurrence being edited is updated in place; wider scopes
-      // reshape the series, which the refetch brings in.
-      updateCachedEvents(queryClient, (events) =>
-        events.map((e) =>
-          e.id === event.id
-            ? applyOptimistic(e, changes, timeZone, calendarId)
-            : e,
-        ),
-      );
-      try {
-        const result = await update.mutateAsync({
-          path: { event_id: event.id },
-          body: {
-            ...eventFieldsBody(changes, timeZone),
-            scope,
-            calendar_id: calendarId ?? null,
-            time_zone: timeZone,
-            notify_guests: notifyGuests,
-          },
-        });
-        return result.event ? toCalendarEvent(result.event) : null;
-      } catch (error) {
-        restoreEvents(queryClient, caches);
-        throw error;
-      }
+      const result = await update.mutateAsync({ event, changes, options });
+      return result.event ? toCalendarEvent(result.event) : null;
     },
 
     async deleteEvent(
       event: CalendarEvent,
-      { scope = "this", notifyGuests = true }: WriteOptions = {},
+      options: WriteOptions = {},
     ): Promise<void> {
-      const caches = snapshotEvents(queryClient);
-      await queryClient.cancelQueries({
-        predicate: (query) => isEventsQuery(query.queryKey),
-      });
-      updateCachedEvents(queryClient, (events) =>
-        events.filter((e) => e.id !== event.id),
-      );
-      try {
-        await remove.mutateAsync({
-          path: { event_id: event.id },
-          query: { scope, time_zone: timeZone, notify_guests: notifyGuests },
-        });
-      } catch (error) {
-        restoreEvents(queryClient, caches);
-        throw error;
-      }
+      await remove.mutateAsync({ event, options });
     },
   };
 }

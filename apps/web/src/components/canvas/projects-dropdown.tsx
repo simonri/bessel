@@ -14,7 +14,10 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useProjects } from "@/hooks/use-projects";
+import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
+import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
 import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
@@ -176,26 +179,39 @@ export function ProjectsDropdown() {
 
   const { data: projects = [] } = useProjects();
 
+  const taskCache = useTaskCacheHelpers();
   const invalidate = () =>
     queryClient.invalidateQueries({
       queryKey: listProjectsV1ProjectsGetQueryKey({ client }),
     });
+  // Tasks name their project, so a rename or delete changes them too.
+  const invalidateWithTasks = () => {
+    void invalidate();
+    taskCache.invalidateAll();
+  };
 
   const createMutation = useMutation({
     ...createProjectV1ProjectsPostMutation(),
     onSuccess: invalidate,
+    onError: (error) =>
+      toast.error(errorDetail(error, "Couldn't add the project")),
   });
+  // saveEdit reports these two together.
   const updateMutation = useMutation({
     ...updateProjectV1ProjectsProjectIdPatchMutation(),
-    onSuccess: invalidate,
+    meta: { errorToast: false },
+    onSettled: invalidateWithTasks,
   });
   const locationMutation = useMutation({
     ...setProjectLocationV1ProjectsProjectIdLocationPutMutation(),
-    onSuccess: invalidate,
+    meta: { errorToast: false },
+    onSettled: invalidate,
   });
   const deleteMutation = useMutation({
     ...deleteProjectV1ProjectsProjectIdDeleteMutation(),
-    onSuccess: invalidate,
+    onSuccess: invalidateWithTasks,
+    onError: (error) =>
+      toast.error(errorDetail(error, "Couldn't delete the project")),
   });
 
   const reset = () => {
@@ -235,21 +251,26 @@ export function ProjectsDropdown() {
   const saveEdit = async () => {
     if (!editingId || !editName.trim() || !editPath.trim()) return;
     const id = editingId;
-    await Promise.all([
-      updateMutation.mutateAsync({
-        client,
-        path: { project_id: id },
-        body: { name: editName.trim() },
-      }),
-      locationMutation.mutateAsync({
-        client,
-        path: { project_id: id },
-        body: {
-          path: editPath.trim(),
-          ssh_host: editSshHost.trim() || null,
-        },
-      }),
-    ]);
+    try {
+      await Promise.all([
+        updateMutation.mutateAsync({
+          client,
+          path: { project_id: id },
+          body: { name: editName.trim() },
+        }),
+        locationMutation.mutateAsync({
+          client,
+          path: { project_id: id },
+          body: {
+            path: editPath.trim(),
+            ssh_host: editSshHost.trim() || null,
+          },
+        }),
+      ]);
+    } catch (error) {
+      toast.error(errorDetail(error, "Couldn't save the project"));
+      return;
+    }
     setEditingId(null);
   };
 
@@ -372,7 +393,12 @@ export function ProjectsDropdown() {
                     </button>
                     <button
                       onClick={saveEdit}
-                      disabled={!editName.trim() || !editPath.trim()}
+                      disabled={
+                        !editName.trim() ||
+                        !editPath.trim() ||
+                        updateMutation.isPending ||
+                        locationMutation.isPending
+                      }
                       className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
                     >
                       Save

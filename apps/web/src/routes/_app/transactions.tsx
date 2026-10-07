@@ -4,6 +4,7 @@ import {
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
   deleteTransactionsV1TransactionsDeleteMutation,
   listBankAccountsV1BankAccountsGetOptions,
+  listBankAccountsV1BankAccountsGetQueryKey,
   listCategoriesV1CategoriesGetOptions,
   listTransactionsV1TransactionsGetOptions,
   listTransactionsV1TransactionsGetQueryKey,
@@ -65,7 +66,13 @@ import {
 } from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
+import { apiDate } from "@/lib/local-day";
 import { formatAmount } from "@/lib/money";
+import {
+  mutationFamily,
+  restoreItemFields,
+  settleWhenIdle,
+} from "@/lib/optimistic";
 
 // ─── Route + URL search params ────────────────────────────────────────────────
 
@@ -100,6 +107,8 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
     month: asInt(raw.month),
   };
 }
+
+const transactionWrites = mutationFamily("transactions");
 
 export const Route = createFileRoute("/_app/transactions")({
   validateSearch: (raw) => parseFilters(raw),
@@ -190,6 +199,8 @@ function Transactions() {
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayStr = `${year}-${mm}-01`;
   const lastDayStr = `${year}-${mm}-${String(daysInMonth).padStart(2, "0")}`;
+  const dateFrom = useMemo(() => apiDate(firstDayStr), [firstDayStr]);
+  const dateTo = useMemo(() => apiDate(lastDayStr), [lastDayStr]);
   const isCurrentMonth =
     year === now.getFullYear() && month === now.getMonth() + 1;
 
@@ -239,8 +250,8 @@ function Transactions() {
         direction: filters.direction,
         is_business: filters.is_business,
         search: filters.search,
-        date_from: firstDayStr as unknown as Date,
-        date_to: lastDayStr as unknown as Date,
+        date_from: dateFrom,
+        date_to: dateTo,
       },
     }),
     placeholderData: keepPreviousData,
@@ -272,12 +283,23 @@ function Transactions() {
   }, [accountsData]);
 
   const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
+  const bankAccountsKey = listBankAccountsV1BankAccountsGetQueryKey({ client });
 
+  const settle = () =>
+    settleWhenIdle(queryClient, transactionWrites.mutationKey, () => {
+      void queryClient.invalidateQueries({ queryKey });
+    });
+  const snapshot = async () => {
+    await queryClient.cancelQueries({ queryKey });
+    return queryClient.getQueriesData({ queryKey });
+  };
+
+  // A failed delete brings its rows back with the refetch in settle().
   const deleteMutation = useMutation({
     ...deleteTransactionsV1TransactionsDeleteMutation({ client }),
+    ...transactionWrites,
     onMutate: async ({ body }) => {
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueriesData({ queryKey });
       const idsToDelete = new Set(body.ids);
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
@@ -291,23 +313,20 @@ function Transactions() {
         };
       });
       setRowSelection({});
-      return { previous };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, val] of context.previous)
-          queryClient.setQueryData(key, val);
-      }
-      toast.error("Failed to delete transactions");
+    onError: () => toast.error("Failed to delete transactions"),
+    onSettled: () => {
+      settle();
+      // Account balances are derived from their transactions.
+      void queryClient.invalidateQueries({ queryKey: bankAccountsKey });
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
   });
 
   const bulkUpdateMutation = useMutation({
     ...bulkUpdateTransactionsV1TransactionsBulkPatchMutation({ client }),
+    ...transactionWrites,
     onMutate: async ({ body }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueriesData({ queryKey });
+      const previous = await snapshot();
       const idSet = new Set(body.ids);
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
@@ -319,56 +338,61 @@ function Transactions() {
         };
       });
       setRowSelection({});
-      return { previous };
+      return { previous, ids: idSet };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, val] of context.previous)
-          queryClient.setQueryData(key, val);
-      }
+      restoreItemFields<TransactionSchema>(
+        queryClient,
+        context?.previous,
+        context?.ids ?? new Set(),
+        ["category_id"],
+      );
       toast.error("Failed to categorize transactions");
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
+    onSettled: settle,
   });
 
   const bulkCategorizeMutation = useMutation({
     ...categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation(
       { client },
     ),
+    ...transactionWrites,
     onMutate: async ({ body }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueriesData({ queryKey });
+      const previous = await snapshot();
+      const ids = new Set<string>();
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
         return {
           ...old,
-          items: old.items.map((t: any) =>
-            t.description === body.description
-              ? { ...t, category_id: body.category_id }
-              : t,
-          ),
+          items: old.items.map((t: any) => {
+            if (t.description !== body.description) return t;
+            ids.add(t.id);
+            return { ...t, category_id: body.category_id };
+          }),
         };
       });
-      return { previous };
+      return { previous, ids };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, val] of context.previous)
-          queryClient.setQueryData(key, val);
-      }
+      restoreItemFields<TransactionSchema>(
+        queryClient,
+        context?.previous,
+        context?.ids ?? new Set(),
+        ["category_id"],
+      );
       toast.error("Failed to categorize transactions");
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey });
+      settle();
       setBulkSuggestion(null);
     },
   });
 
   const toggleBusinessMutation = useMutation({
     ...updateTransactionV1TransactionsTransactionIdPatchMutation({ client }),
+    ...transactionWrites,
     onMutate: async ({ path, body }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueriesData({ queryKey });
+      const previous = await snapshot();
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
         return {
@@ -382,14 +406,16 @@ function Transactions() {
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, val] of context.previous)
-          queryClient.setQueryData(key, val);
-      }
+    onError: (_err, { path }, context) => {
+      restoreItemFields<TransactionSchema>(
+        queryClient,
+        context?.previous,
+        new Set([path.transaction_id]),
+        ["is_business"],
+      );
       toast.error("Failed to update transaction");
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
+    onSettled: settle,
   });
 
   const handleToggleBusiness = useCallback(

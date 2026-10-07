@@ -65,6 +65,9 @@ interface SelectedFile {
   conflicted?: boolean;
 }
 
+const FETCH_INTERVAL_MS = 5 * 60_000;
+const FETCH_ON_SHOW_THROTTLE_MS = 60_000;
+
 function fileKey(file: GitFileEntry, staged: boolean): string {
   return `${staged ? "s" : "u"}:${file.path}`;
 }
@@ -352,16 +355,6 @@ export function GitStatus() {
       invalidateLog();
     },
   });
-  const fetchRef = useRef(fetchMutation.mutate);
-  fetchRef.current = fetchMutation.mutate;
-  const selectedPath = selectedProject?.path;
-  useEffect(() => {
-    if (!visible || !selectedPath) return;
-    fetchRef.current();
-    const id = setInterval(() => fetchRef.current(), 5 * 60_000);
-    return () => clearInterval(id);
-  }, [visible, selectedPath]);
-
   const pullMutation = useMutation({
     mutationFn: () => window.electron!.git.pull(selectedProject!.path),
     onSuccess: (result) => {
@@ -377,6 +370,38 @@ export function GitStatus() {
       invalidateStatus();
     },
   });
+
+  // A background fetch racing a pull or push would contend for the same refs,
+  // and toggling the widget's visibility shouldn't refetch every time.
+  const lastFetch = useRef<{ path: string; at: number } | null>(null);
+  const backgroundFetchRef = useRef<(path: string) => void>(() => {});
+  backgroundFetchRef.current = (path) => {
+    if (
+      fetchMutation.isPending ||
+      pullMutation.isPending ||
+      pushMutation.isPending
+    ) {
+      return;
+    }
+    lastFetch.current = { path, at: Date.now() };
+    fetchMutation.mutate();
+  };
+  const selectedPath = selectedProject?.path;
+  useEffect(() => {
+    if (!visible || !selectedPath) return;
+    const last = lastFetch.current;
+    if (
+      last?.path !== selectedPath ||
+      Date.now() - last.at >= FETCH_ON_SHOW_THROTTLE_MS
+    ) {
+      backgroundFetchRef.current(selectedPath);
+    }
+    const id = setInterval(
+      () => backgroundFetchRef.current(selectedPath),
+      FETCH_INTERVAL_MS,
+    );
+    return () => clearInterval(id);
+  }, [visible, selectedPath]);
 
   const mergeAbortMutation = useMutation({
     mutationFn: () => window.electron!.git.mergeAbort(selectedProject!.path),
