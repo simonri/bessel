@@ -63,6 +63,71 @@ class TestTaskNotFound:
     assert resp.status_code == 404
 
 
+class TestTaskUndoComplete:
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_reopens_and_removes_the_spawned_occurrence(self, client: AsyncClient) -> None:
+    routine = (
+      await client.post("/v1/tasks", json={"title": "Water plants", "is_recurring": True, "rrule_frequency": "weekly", "due_date": "2026-10-07"})
+    ).json()
+    completed = (await client.post(f"/v1/tasks/{routine['id']}/complete")).json()
+    next_id = completed["next_task"]["id"]
+
+    resp = await client.post(f"/v1/tasks/{routine['id']}/undo-complete")
+
+    assert resp.status_code == 200
+    assert (resp.json()["status"], resp.json()["completed_at"]) == ("todo", None)
+    assert (await client.get(f"/v1/tasks/{next_id}")).status_code == 404
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_undoing_twice_leaves_later_occurrences_alone(self, client: AsyncClient) -> None:
+    routine = (
+      await client.post("/v1/tasks", json={"title": "Water plants", "is_recurring": True, "rrule_frequency": "daily", "due_date": "2026-10-07"})
+    ).json()
+    await client.post(f"/v1/tasks/{routine['id']}/complete")
+    await client.post(f"/v1/tasks/{routine['id']}/undo-complete")
+    respawned = (await client.post(f"/v1/tasks/{routine['id']}/complete")).json()["next_task"]
+    await client.post(f"/v1/tasks/{routine['id']}/reopen")
+
+    resp = await client.post(f"/v1/tasks/{routine['id']}/undo-complete")
+
+    assert resp.status_code == 200
+    assert (await client.get(f"/v1/tasks/{respawned['id']}")).status_code == 200
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_keeps_an_occurrence_already_done(self, client: AsyncClient) -> None:
+    routine = (await client.post("/v1/tasks", json={"title": "Stretch", "is_recurring": True, "rrule_frequency": "daily", "due_date": "2026-10-07"})).json()
+    next_task = (await client.post(f"/v1/tasks/{routine['id']}/complete")).json()["next_task"]
+    await client.post(f"/v1/tasks/{next_task['id']}/complete")
+
+    await client.post(f"/v1/tasks/{routine['id']}/undo-complete")
+
+    assert (await client.get(f"/v1/tasks/{next_task['id']}")).json()["status"] == "done"
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_works_for_one_off_tasks(self, client: AsyncClient) -> None:
+    task = (await client.post("/v1/tasks", json={"title": "Call mum"})).json()
+    await client.post(f"/v1/tasks/{task['id']}/complete")
+
+    resp = await client.post(f"/v1/tasks/{task['id']}/undo-complete")
+
+    assert resp.json()["status"] == "todo"
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_other_users_task_is_not_found(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    task = (await client.post("/v1/tasks", json={"title": "Mine"})).json()
+    await client.post(f"/v1/tasks/{task['id']}/complete")
+
+    resp = await other_client.post(f"/v1/tasks/{task['id']}/undo-complete")
+
+    assert resp.status_code == 404
+    assert (await client.get(f"/v1/tasks/{task['id']}")).json()["status"] == "done"
+
+
 A_PNG_BYTES = bytes.fromhex(
   "89504e470d0a1a0a0000000d494844520000000100000001080600000" + "01f15c4890000000a49444154789c6360000002000100ffff03000006000557bfabd40000000049454e44ae426082"
 )

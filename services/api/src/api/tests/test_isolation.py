@@ -119,6 +119,7 @@ AUDITED: set[str] = {
   "GET /v1/tasks/{task_id}/attachments/{attachment_id}/file",
   "POST /v1/tasks/{task_id}/complete",
   "POST /v1/tasks/{task_id}/reopen",
+  "POST /v1/tasks/{task_id}/undo-complete",
   "GET /v1/timeline",
   "DELETE /v1/transactions",
   "GET /v1/transactions",
@@ -140,6 +141,7 @@ EXEMPT: dict[str, str] = {
   "GET /v1/investments/crypto/price/{coin_id}": "Public price data, no user data",
   "GET /v1/places/search": "External Google Places lookup, no stored data",
   "POST /v1/recipes/import": "Structures the posted text with an LLM; reads and stores nothing",
+  "POST /v1/client-diagnostics": "Logs the caller's own crash reports; reads and stores nothing",
   "POST /v1/calendars/google/authorize": "Starts the caller's own connection flow",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
   "GET /v1/klarna/transactions": "Proxies the caller's own Klarna credentials; reads no Bessel data",
@@ -196,6 +198,7 @@ class TestTasks:
     assert (await other_client.patch(f"/v1/tasks/{task['id']}", json={"title": "pwned"})).status_code == 404
     assert (await other_client.post(f"/v1/tasks/{task['id']}/complete")).status_code == 404
     assert (await other_client.post(f"/v1/tasks/{task['id']}/reopen")).status_code == 404
+    assert (await other_client.post(f"/v1/tasks/{task['id']}/undo-complete")).status_code == 404
     await other_client.patch("/v1/tasks/reorder", json=[{"id": task["id"], "position": 99.0, "status": "done"}])
     assert (await other_client.delete(f"/v1/tasks/{task['id']}")).status_code == 404
 

@@ -55,6 +55,7 @@ import {
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
   setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
+  undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
   updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
   updateCounterV1CountersCounterIdPatchResponseTransformer,
@@ -331,6 +332,9 @@ import type {
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses,
   UndoResetV1CountersCounterIdResetsResetIdDeleteData,
   UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
@@ -370,6 +374,9 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
+  UploadClientDiagnosticsV1ClientDiagnosticsPostData,
+  UploadClientDiagnosticsV1ClientDiagnosticsPostErrors,
+  UploadClientDiagnosticsV1ClientDiagnosticsPostResponses,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
@@ -1191,6 +1198,34 @@ export const updateDeviceV1DevicesDeviceIdPatch = <
     responseTransformer: updateDeviceV1DevicesDeviceIdPatchResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/devices/{device_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Upload Client Diagnostics
+ *
+ * Crash and hang reports from the apps, logged so they can be found next to
+ * the server's own logs for the same build.
+ */
+export const uploadClientDiagnosticsV1ClientDiagnosticsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UploadClientDiagnosticsV1ClientDiagnosticsPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    UploadClientDiagnosticsV1ClientDiagnosticsPostResponses,
+    UploadClientDiagnosticsV1ClientDiagnosticsPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/client-diagnostics",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -2379,6 +2414,32 @@ export const reopenTaskV1TasksTaskIdReopenPost = <
     responseTransformer: reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/reopen",
+    ...options,
+  });
+
+/**
+ * Undo Complete Task
+ *
+ * Reopen a task and remove the next occurrence completing it spawned, in one
+ * transaction, so an Undo can't leave a routine both reopened and repeated.
+ */
+export const undoCompleteTaskV1TasksTaskIdUndoCompletePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses,
+    UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/{task_id}/undo-complete",
     ...options,
   });
 

@@ -1478,6 +1478,43 @@ export const CategorySpendingSchema = {
   title: "CategorySpending",
 } as const;
 
+export const ClientDiagnosticsUploadSchema = {
+  properties: {
+    platform: {
+      type: "string",
+      maxLength: 16,
+      title: "Platform",
+      description: "Client platform, e.g. ios.",
+    },
+    version: {
+      type: "string",
+      maxLength: 32,
+      title: "Version",
+      description: "App version.",
+    },
+    build: {
+      type: "string",
+      maxLength: 32,
+      title: "Build",
+      description: "App build number.",
+    },
+    payloads: {
+      items: {
+        additionalProperties: true,
+        type: "object",
+      },
+      type: "array",
+      maxItems: 10,
+      title: "Payloads",
+      description:
+        "Crash, hang and other diagnostic reports as the OS produced them (MetricKit on iOS).",
+    },
+  },
+  type: "object",
+  required: ["platform", "version", "build", "payloads"],
+  title: "ClientDiagnosticsUpload",
+} as const;
+
 export const CounterCreateSchema = {
   properties: {
     name: {

@@ -349,6 +349,34 @@ async def reopen_task(
   return TaskSchema.model_validate(task)
 
 
+@router.post(
+  "/{task_id}/undo-complete",
+  summary="Undo Complete Task",
+  response_model=TaskSchema,
+)
+async def undo_complete_task(
+  task_id: UUID,
+  session: Annotated[AsyncSession, Depends(get_db_session)],
+  current_user: CurrentDBUser,
+) -> TaskSchema:
+  """Reopen a task and remove the next occurrence completing it spawned, in one
+  transaction, so an Undo can't leave a routine both reopened and repeated."""
+  repo = TaskRepository.from_session(session)
+  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  # Idempotency: undoing twice must not delete an occurrence spawned later.
+  if task.status != "done":
+    return TaskSchema.model_validate(task)
+
+  for occurrence in await repo.list_open_occurrences_spawned_by(task):
+    attachment_ids = [attachment.id for attachment in occurrence.attachments]
+    await repo.delete(occurrence)
+    for attachment_id in attachment_ids:
+      await delete_attachment_file(attachment_id)
+
+  await repo.update(task, update_dict={"status": "todo", "completed_at": None})
+  return TaskSchema.model_validate(task)
+
+
 @router.get(
   "/areas",
   summary="List Areas",

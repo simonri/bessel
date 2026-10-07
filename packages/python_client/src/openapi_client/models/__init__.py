@@ -47,6 +47,8 @@ from .calendar_update import CalendarUpdate
 from .category_list_response import CategoryListResponse
 from .category_schema import CategorySchema
 from .category_spending import CategorySpending
+from .client_diagnostics_upload import ClientDiagnosticsUpload
+from .client_diagnostics_upload_payloads_item import ClientDiagnosticsUploadPayloadsItem
 from .counter_create import CounterCreate
 from .counter_reset_schema import CounterResetSchema
 from .counter_schema import CounterSchema
@@ -229,6 +231,8 @@ __all__ = (
   "CategoryListResponse",
   "CategorySchema",
   "CategorySpending",
+  "ClientDiagnosticsUpload",
+  "ClientDiagnosticsUploadPayloadsItem",
   "CounterCreate",
   "CounterResetSchema",
   "CounterSchema",

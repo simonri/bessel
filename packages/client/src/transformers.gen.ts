@@ -48,6 +48,7 @@ import type {
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
   SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
   UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
   UpdateCounterV1CountersCounterIdPatchResponse,
@@ -843,6 +844,14 @@ export const reopenTaskV1TasksTaskIdReopenPostResponseTransformer = async (
   data = taskSchemaSchemaResponseTransformer(data);
   return data;
 };
+
+export const undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse> => {
+    data = taskSchemaSchemaResponseTransformer(data);
+    return data;
+  };
 
 const transactionSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

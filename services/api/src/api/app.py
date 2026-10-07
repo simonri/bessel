@@ -16,11 +16,12 @@ from api.common.db.postgres import AsyncEngine, AsyncSessionMaker, Engine, creat
 from api.cors import CORSConfig, CORSMatcherMiddleware
 from api.exception_handlers import add_exception_handlers
 from api.health import router as health_router
+from api.idempotency import IdempotencyMiddleware
 from api.logging import Logger
 from api.logging import configure as configure_logging
 from api.mcp.server import build_routes as build_mcp_routes
 from api.mcp.server import build_server as build_mcp_server
-from api.middlewares import FlushEnqueuedWorkerJobsMiddleware
+from api.middlewares import FlushEnqueuedWorkerJobsMiddleware, MinimumClientVersionMiddleware, RequestContextMiddleware
 from api.openapi import OPENAPI_PARAMETERS, set_openapi_generator
 from api.postgres import AsyncSessionMiddleware, create_async_engine, create_sync_engine
 from api.redis import Redis, create_redis
@@ -102,12 +103,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 def create_app() -> FastAPI:
   app = FastAPI(lifespan=lifespan, **OPENAPI_PARAMETERS)
 
+  # Starlette runs the last-added middleware first.
   if not settings.is_testing():
+    # Innermost: it stores a response only once the endpoint has committed, and
+    # never sees requests the rate limiter turned away.
+    app.add_middleware(IdempotencyMiddleware)
     app.add_middleware(rate_limit.get_middleware)
     app.add_middleware(FlushEnqueuedWorkerJobsMiddleware)
     app.add_middleware(AsyncSessionMiddleware)
 
+  app.add_middleware(MinimumClientVersionMiddleware)
   configure_cors(app)
+  app.add_middleware(RequestContextMiddleware)
   add_exception_handlers(app)
 
   app.include_router(health_router)

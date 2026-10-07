@@ -1065,6 +1065,38 @@ export type CategorySpending = {
 };
 
 /**
+ * ClientDiagnosticsUpload
+ */
+export type ClientDiagnosticsUpload = {
+  /**
+   * Platform
+   *
+   * Client platform, e.g. ios.
+   */
+  platform: string;
+  /**
+   * Version
+   *
+   * App version.
+   */
+  version: string;
+  /**
+   * Build
+   *
+   * App build number.
+   */
+  build: string;
+  /**
+   * Payloads
+   *
+   * Crash, hang and other diagnostic reports as the OS produced them (MetricKit on iOS).
+   */
+  payloads: Array<{
+    [key: string]: unknown;
+  }>;
+};
+
+/**
  * CounterCreate
  */
 export type CounterCreate = {
@@ -5580,6 +5612,30 @@ export type UpdateDeviceV1DevicesDeviceIdPatchResponses = {
 export type UpdateDeviceV1DevicesDeviceIdPatchResponse =
   UpdateDeviceV1DevicesDeviceIdPatchResponses[keyof UpdateDeviceV1DevicesDeviceIdPatchResponses];
 
+export type UploadClientDiagnosticsV1ClientDiagnosticsPostData = {
+  body: ClientDiagnosticsUpload;
+  path?: never;
+  query?: never;
+  url: "/v1/client-diagnostics";
+};
+
+export type UploadClientDiagnosticsV1ClientDiagnosticsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UploadClientDiagnosticsV1ClientDiagnosticsPostError =
+  UploadClientDiagnosticsV1ClientDiagnosticsPostErrors[keyof UploadClientDiagnosticsV1ClientDiagnosticsPostErrors];
+
+export type UploadClientDiagnosticsV1ClientDiagnosticsPostResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown;
+};
+
 export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData = {
   body: HealthKitWorkoutSyncRequest;
   path?: never;
@@ -7455,6 +7511,38 @@ export type ReopenTaskV1TasksTaskIdReopenPostResponses = {
 
 export type ReopenTaskV1TasksTaskIdReopenPostResponse =
   ReopenTaskV1TasksTaskIdReopenPostResponses[keyof ReopenTaskV1TasksTaskIdReopenPostResponses];
+
+export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostData = {
+  body?: never;
+  path: {
+    /**
+     * Task Id
+     */
+    task_id: string;
+  };
+  query?: never;
+  url: "/v1/tasks/{task_id}/undo-complete";
+};
+
+export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostError =
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors[keyof UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors];
+
+export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: TaskSchema;
+};
+
+export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse =
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses[keyof UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses];
 
 export type ListAreasV1TasksAreasGetData = {
   body?: never;

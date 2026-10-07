@@ -103,6 +103,7 @@ import {
   syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
+  undoCompleteTaskV1TasksTaskIdUndoCompletePost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCalendarEventV1CalendarsEventsEventIdPatch,
@@ -116,6 +117,7 @@ import {
   updateTaskV1TasksTaskIdPatch,
   updateTradeV1InvestmentsTradesTradeIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
+  uploadClientDiagnosticsV1ClientDiagnosticsPost,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPost,
 } from "../sdk.gen.js";
 import type {
@@ -378,6 +380,9 @@ import type {
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
   UndoResetV1CountersCounterIdResetsResetIdDeleteData,
   UndoResetV1CountersCounterIdResetsResetIdDeleteError,
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
@@ -417,6 +422,8 @@ import type {
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
+  UploadClientDiagnosticsV1ClientDiagnosticsPostData,
+  UploadClientDiagnosticsV1ClientDiagnosticsPostError,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
@@ -1675,6 +1682,38 @@ export const updateDeviceV1DevicesDeviceIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateDeviceV1DevicesDeviceIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Upload Client Diagnostics
+ *
+ * Crash and hang reports from the apps, logged so they can be found next to
+ * the server's own logs for the same build.
+ */
+export const uploadClientDiagnosticsV1ClientDiagnosticsPostMutation = (
+  options?: Partial<
+    Options<UploadClientDiagnosticsV1ClientDiagnosticsPostData>
+  >,
+): UseMutationOptions<
+  unknown,
+  UploadClientDiagnosticsV1ClientDiagnosticsPostError,
+  Options<UploadClientDiagnosticsV1ClientDiagnosticsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    UploadClientDiagnosticsV1ClientDiagnosticsPostError,
+    Options<UploadClientDiagnosticsV1ClientDiagnosticsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await uploadClientDiagnosticsV1ClientDiagnosticsPost({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3673,6 +3712,36 @@ export const reopenTaskV1TasksTaskIdReopenPostMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await reopenTaskV1TasksTaskIdReopenPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Undo Complete Task
+ *
+ * Reopen a task and remove the next occurrence completing it spawned, in one
+ * transaction, so an Undo can't leave a routine both reopened and repeated.
+ */
+export const undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation = (
+  options?: Partial<Options<UndoCompleteTaskV1TasksTaskIdUndoCompletePostData>>,
+): UseMutationOptions<
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
+  UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
+  Options<UndoCompleteTaskV1TasksTaskIdUndoCompletePostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
+    UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
+    Options<UndoCompleteTaskV1TasksTaskIdUndoCompletePostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await undoCompleteTaskV1TasksTaskIdUndoCompletePost({
         ...options,
         ...fnOptions,
         throwOnError: true,

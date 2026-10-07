@@ -61,6 +61,7 @@ _PRODUCTION_RULES: dict[str, Sequence[Rule]] = {
   r"^/v1/klarna": [Rule(group=RateLimitGroup.default, minute=10, zone="imports")],
   # Each import is a paid LLM call.
   r"^/v1/recipes/import$": [Rule(group=RateLimitGroup.default, minute=5, hour=30, zone="recipe-import")],
+  r"^/v1/client-diagnostics$": [Rule(group=RateLimitGroup.default, minute=10, zone="diagnostics")],
   r"^/v1/ingest-tokens": [Rule(group=RateLimitGroup.default, minute=10, zone="ingest-tokens")],
   r"^/v1/calendars/(google/authorize|icloud|accounts/[^/]+/sync)": [Rule(group=RateLimitGroup.default, minute=10, zone="calendar-connect")],
   # Claude's connector traffic all arrives from Anthropic's egress range, so this

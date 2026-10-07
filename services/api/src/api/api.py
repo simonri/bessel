@@ -8,6 +8,7 @@ from api.calendars.endpoints import router as calendars_router
 from api.categories.endpoints import router as categories_router
 from api.counters.endpoints import router as counters_router
 from api.devices.endpoints import router as devices_router
+from api.diagnostics.endpoints import router as diagnostics_router
 from api.healthkit.endpoints import router as healthkit_router
 from api.ingest_tokens.endpoints import router as ingest_tokens_router
 from api.investments.endpoints import router as investments_router
@@ -32,6 +33,7 @@ router.include_router(calendars_router)
 router.include_router(categories_router)
 router.include_router(counters_router)
 router.include_router(devices_router)
+router.include_router(diagnostics_router)
 router.include_router(healthkit_router)
 router.include_router(ingest_tokens_router)
 router.include_router(investments_router)

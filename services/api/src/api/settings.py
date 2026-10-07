@@ -104,6 +104,11 @@ class Settings(BaseSettings):
   # redeploys.
   TASK_ATTACHMENTS_DIR: str = Field(default="./data/task_attachments")
 
+  # Oldest iOS build (CFBundleVersion) still served; older ones get 426 and an
+  # update screen. 0 serves every build. Clients that don't send a build, like
+  # the web app, are never turned away.
+  IOS_MIN_BUILD: int = 0
+
   model_config = SettingsConfigDict(env_prefix="bessel_", env_file_encoding="utf-8", case_sensitive=False, env_file=env_file, extra="allow")
 
   def get_postgres_dsn(self, driver: Literal["asyncpg", "psycopg2"]) -> str:

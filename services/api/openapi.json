@@ -1933,6 +1933,51 @@
         }
       }
     },
+    "/v1/client-diagnostics": {
+      "post": {
+        "tags": [
+          "diagnostics"
+        ],
+        "summary": "Upload Client Diagnostics",
+        "description": "Crash and hang reports from the apps, logged so they can be found next to\nthe server's own logs for the same build.",
+        "operationId": "upload_client_diagnostics_v1_client_diagnostics_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientDiagnosticsUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/healthkit/workouts/sync": {
       "post": {
         "tags": [
@@ -5082,6 +5127,55 @@
         }
       }
     },
+    "/v1/tasks/{task_id}/undo-complete": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Undo Complete Task",
+        "description": "Reopen a task and remove the next occurrence completing it spawned, in one\ntransaction, so an Undo can't leave a routine both reopened and repeated.",
+        "operationId": "undo_complete_task_v1_tasks__task_id__undo_complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tasks/areas": {
       "get": {
         "tags": [
@@ -7525,6 +7619,46 @@
           "total"
         ],
         "title": "CategorySpending"
+      },
+      "ClientDiagnosticsUpload": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Platform",
+            "description": "Client platform, e.g. ios."
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Version",
+            "description": "App version."
+          },
+          "build": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Build",
+            "description": "App build number."
+          },
+          "payloads": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Payloads",
+            "description": "Crash, hang and other diagnostic reports as the OS produced them (MetricKit on iOS)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "platform",
+          "version",
+          "build",
+          "payloads"
+        ],
+        "title": "ClientDiagnosticsUpload"
       },
       "CounterCreate": {
         "properties": {

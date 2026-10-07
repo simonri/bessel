@@ -53,6 +53,12 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
   async def list_by_ids_for_user(self, task_ids: Sequence[UUID], user_id: UUID) -> Sequence[Task]:
     return await self.get_all(self.get_base_statement().where(Task.id.in_(task_ids)).where(Task.user_id == user_id))
 
+  async def list_open_occurrences_spawned_by(self, task: Task) -> Sequence[Task]:
+    """The still-open next occurrences that completing `task` created."""
+    return await self.get_all(
+      self.get_base_statement().where(Task.parent_task_id == task.id).where(Task.user_id == task.user_id).where(Task.status.in_(["todo", "in_progress"]))
+    )
+
   async def detach_from_project(self, project_id: UUID, user_id: UUID) -> None:
     await self.session.execute(update(Task).where(Task.project_id == project_id).where(Task.user_id == user_id).values(project_id=None))
 
