@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  attachTerminal,
+  killAllTerminalSessions,
+  terminalSessionId,
+} from "@/lib/terminal-sessions";
 import {
   useWindowManager,
   type WindowEntry,
@@ -636,5 +641,180 @@ describe("closeWhenEmpty sessions", () => {
     const { result } = setup();
     act(() => result.current.closeWindow(result.current.allWindows[0].id));
     expect(result.current.workspaces.map((ws) => ws.id)).toEqual(["only"]);
+  });
+});
+
+describe("terminal PTYs", () => {
+  const SHELL = { command: "default-shell", args: [] };
+  let terminal: Record<string, ReturnType<typeof vi.fn>>;
+
+  beforeEach(() => {
+    terminal = {
+      spawn: vi.fn(async () => {}),
+      kill: vi.fn(),
+      resize: vi.fn(),
+      sendInput: vi.fn(),
+      onData: vi.fn(() => () => {}),
+      onExit: vi.fn(() => () => {}),
+    };
+    (window as { electron?: unknown }).electron = { terminal };
+  });
+
+  afterEach(() => {
+    killAllTerminalSessions();
+    delete (window as { electron?: unknown }).electron;
+  });
+
+  function openTerminal(result: ReturnType<typeof setup>["result"]) {
+    act(() => result.current.openWindow("terminal"));
+    const win = result.current.windows[0];
+    const sessionId = terminalSessionId(win.id, SHELL);
+    attachTerminal(sessionId, win.id, { cols: 80, rows: 24 }, SHELL, {
+      onData: () => {},
+      onExit: () => {},
+    }).detach();
+    return { win, sessionId };
+  }
+
+  it("survives moving its window to another workspace", () => {
+    const { result } = setup();
+    const { win } = openTerminal(result);
+    act(() => result.current.addWorkspace());
+
+    act(() =>
+      result.current.moveWindowToWorkspace(win.id, result.current.activeWorkspaceId),
+    );
+
+    expect(result.current.allWindows.find((w) => w.id === win.id)?.workspaceId).toBe(
+      result.current.activeWorkspaceId,
+    );
+    expect(terminal.kill).not.toHaveBeenCalled();
+  });
+
+  it("is killed once its window is closed", () => {
+    const { result } = setup();
+    const { win, sessionId } = openTerminal(result);
+
+    act(() => result.current.closeWindow(win.id));
+
+    expect(terminal.kill).toHaveBeenCalledWith(sessionId);
+  });
+
+  it("is killed along with its workspace", () => {
+    const { result } = setup();
+    act(() => result.current.addWorkspace());
+    const { sessionId } = openTerminal(result);
+
+    act(() => result.current.removeWorkspace(result.current.activeWorkspaceId));
+
+    expect(terminal.kill).toHaveBeenCalledWith(sessionId);
+  });
+});
+
+describe("corrupt storage", () => {
+  it("skips only the malformed workspaces and backs up the original", () => {
+    const raw = JSON.stringify({
+      workspaces: [
+        null,
+        { id: "bad", windows: { not: "an array" } },
+        { windows: [] },
+        { id: "good", windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }] },
+      ],
+      activeWorkspaceId: "good",
+    });
+    window.localStorage.setItem("bessel:workspaces", raw);
+
+    const { result } = setup();
+
+    expect(result.current.workspaces.map((ws) => ws.id)).toEqual(["good"]);
+    expect(result.current.windows.map((w) => w.module)).toEqual(["tasks"]);
+    expect(window.localStorage.getItem("bessel:workspaces.bak")).toBe(raw);
+  });
+
+  it("backs up an unreadable blob before falling back to an empty canvas", () => {
+    window.localStorage.setItem("bessel:workspaces", "{not json");
+
+    const { result } = setup();
+
+    expect(result.current.workspaces).toHaveLength(1);
+    expect(result.current.allWindows).toHaveLength(0);
+    expect(window.localStorage.getItem("bessel:workspaces.bak")).toBe("{not json");
+  });
+
+  it("drops non-string window data values", () => {
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({
+        workspaces: [
+          {
+            id: "ws",
+            windows: [
+              { module: "tasks", x: 0, y: 0, w: 4, h: 4, data: { url: "a", n: 1 } },
+            ],
+          },
+        ],
+        activeWorkspaceId: "ws",
+      }),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.windows[0].data).toEqual({ url: "a" });
+  });
+
+  it("keeps any registered widget, not just a hand-maintained subset", () => {
+    window.localStorage.setItem(
+      "bessel:workspaces",
+      JSON.stringify({
+        workspaces: [
+          {
+            id: "ws",
+            windows: [
+              { module: "calendar", x: 0, y: 0, w: 4, h: 4 },
+              { module: "removed-widget", x: 4, y: 0, w: 4, h: 4 },
+            ],
+          },
+        ],
+        activeWorkspaceId: "ws",
+      }),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.windows.map((w) => w.module)).toEqual(["calendar"]);
+  });
+});
+
+describe("persistence format", () => {
+  it("stores a version alongside the workspaces", async () => {
+    const { result } = setup();
+    act(() => result.current.openWindow("tasks"));
+
+    await vi.waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem("bessel:workspaces")!);
+      expect(stored.version).toBe(2);
+      expect(stored.workspaces[0].windows).toHaveLength(1);
+    });
+  });
+
+  it("adopts another tab's canvas instead of overwriting it", () => {
+    const { result } = setup();
+    const other = JSON.stringify({
+      version: 2,
+      workspaces: [
+        { id: "theirs", windows: [{ module: "accounts", x: 0, y: 0, w: 4, h: 4 }] },
+      ],
+      activeWorkspaceId: "theirs",
+    });
+    window.localStorage.setItem("bessel:workspaces", other);
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "bessel:workspaces", newValue: other }),
+      );
+    });
+
+    expect(result.current.activeWorkspaceId).toBe("theirs");
+    expect(result.current.windows.map((w) => w.module)).toEqual(["accounts"]);
   });
 });

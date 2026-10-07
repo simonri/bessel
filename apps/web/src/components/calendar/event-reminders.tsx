@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
+import { userStorage } from "@/lib/user-storage";
 import type { CalendarEvent, TimedCalendarEvent } from "./calendar-types";
 import { toCalendarEvent } from "./use-calendar-data";
 
@@ -51,13 +52,13 @@ export function reminderBody(event: TimedCalendarEvent, now: Date): string {
     Math.round((event.start.getTime() - now.getTime()) / 60_000),
   );
   const when = `${format(event.start, "HH:mm")}–${format(event.end, "HH:mm")}`;
-  const where = event.details.location ? ` · ${event.details.location}` : "";
-  return `In ${minutes} min · ${when}${where}`;
+  const where = event.details.location ? ` - ${event.details.location}` : "";
+  return `In ${minutes} min - ${when}${where}`;
 }
 
 function readSent(now: number): Map<string, number> {
   try {
-    const stored = JSON.parse(localStorage.getItem(SENT_KEY) ?? "{}");
+    const stored = JSON.parse(userStorage.getItem(SENT_KEY) ?? "{}");
     return new Map(
       Object.entries(stored as Record<string, number>).filter(
         ([, at]) => typeof at === "number" && now - at < SENT_TTL_MS,
@@ -69,11 +70,9 @@ function readSent(now: number): Map<string, number> {
 }
 
 function writeSent(sent: Map<string, number>) {
-  try {
-    localStorage.setItem(SENT_KEY, JSON.stringify(Object.fromEntries(sent)));
-  } catch {
-    // Not remembered across reloads; the notification tag still dedupes.
-  }
+  // On failure it's not remembered across reloads; the notification tag
+  // still dedupes.
+  userStorage.setItem(SENT_KEY, JSON.stringify(Object.fromEntries(sent)));
 }
 
 export function notificationsSupported(): boolean {

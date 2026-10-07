@@ -10,13 +10,14 @@ import { WindowManager } from "@/components/canvas/window-manager";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
 import { client } from "@/lib/client";
+import { activateUserStorage } from "@/lib/user-storage";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
 function AppLayout() {
-  const { isLoading, isAuthenticated } = useAuth0();
+  const { isLoading, isAuthenticated, user } = useAuth0();
   const navigate = useNavigate();
 
   const { isLoading: isUserLoading } = useQuery({
@@ -30,7 +31,7 @@ function AppLayout() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  if (isLoading || isUserLoading || !isAuthenticated) {
+  if (isLoading || isUserLoading || !isAuthenticated || !user?.sub) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Spinner className="size-6 text-white" />
@@ -38,8 +39,12 @@ function AppLayout() {
     );
   }
 
+  // Synchronously, before any provider below reads its persisted state in a
+  // useState initializer. Idempotent; keyed so a different user remounts.
+  activateUserStorage(user.sub);
+
   return (
-    <SettingsProvider>
+    <SettingsProvider key={user.sub}>
       <EventReminders />
       <WindowManager>
         <WorkspaceTemplatesProvider>

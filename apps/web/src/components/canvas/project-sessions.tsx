@@ -51,6 +51,7 @@ import {
 import { useProjectMutations } from "@/hooks/use-project-mutations";
 import { useProjects } from "@/hooks/use-projects";
 import { client } from "@/lib/client";
+import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 import { NewProjectPopover } from "./new-project-popover";
 import type { ProjectWithPath } from "./project-picker-menu";
@@ -72,7 +73,7 @@ const NO_PROJECT_LABEL = "No project";
 function loadCollapsed(): Set<string> {
   try {
     const parsed: unknown = JSON.parse(
-      localStorage.getItem(COLLAPSED_KEY) ?? "[]",
+      userStorage.getItem(COLLAPSED_KEY) ?? "[]",
     );
     if (Array.isArray(parsed))
       return new Set(parsed.filter((v): v is string => typeof v === "string"));
@@ -86,9 +87,7 @@ function useCollapsedProjects() {
     setCollapsed((prev) => {
       const next = new Set(prev);
       if (!next.delete(id)) next.add(id);
-      try {
-        localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]));
-      } catch {}
+      userStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]));
       return next;
     });
   }, []);

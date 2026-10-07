@@ -16,6 +16,7 @@ import {
   WALLPAPER_COLORS,
 } from "@/hooks/use-settings";
 import { isDesktop } from "@/lib/environment";
+import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 
 // Forward+reverse baked into one clip — browser loops it natively.
@@ -77,11 +78,8 @@ function Wallpaper() {
 const ACTIVE_PAGE_KEY = "bessel:activePage";
 
 function loadActivePage(): PageKey {
-  try {
-    const stored = localStorage.getItem(ACTIVE_PAGE_KEY);
-    if (isPageKey(stored)) return stored;
-  } catch {}
-  return "canvas";
+  const stored = userStorage.getItem(ACTIVE_PAGE_KEY);
+  return isPageKey(stored) ? stored : "canvas";
 }
 
 // Framed exactly like a canvas widget (title bar included) so a module reads
@@ -162,9 +160,7 @@ export function AppShell() {
   const showCanvas = useCallback(() => selectPage("canvas"), [selectPage]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(ACTIVE_PAGE_KEY, activePage);
-    } catch {}
+    userStorage.setItem(ACTIVE_PAGE_KEY, activePage);
   }, [activePage]);
 
   useEffect(() => {

@@ -11,6 +11,11 @@ import {
   useWindowStatus,
   useWindowTitle,
 } from "@/components/canvas/window-manager";
+import {
+  attachTerminal,
+  killTerminalSession,
+  terminalSessionId,
+} from "@/lib/terminal-sessions";
 
 interface ContextMenu {
   x: number;
@@ -80,8 +85,16 @@ export function TerminalWidget({
 }: TerminalWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
-  const sessionId = useRef(crypto.randomUUID()).current;
+  const entry = useWindowEntry();
   const spawnConfig = useRef({ command, args, cwd, commands });
+  // Derived from the window, so a remount (its window moving to another
+  // workspace) reattaches to the running PTY instead of starting a new one.
+  const windowId = useRef(entry?.id ?? null).current;
+  const sessionId = useRef(
+    windowId === null
+      ? crypto.randomUUID()
+      : terminalSessionId(windowId, { command, args, cwd }),
+  ).current;
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const savedSelectionRef = useRef("");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -110,7 +123,6 @@ export function TerminalWidget({
     setWindowStatusRef.current = setWindowStatus;
   });
 
-  const entry = useWindowEntry();
   const { closeWindow, updateWindowData } = useWindowActions();
   const closeWindowRef = useRef(closeWindow);
   useEffect(() => {
@@ -271,7 +283,6 @@ export function TerminalWidget({
     };
     el.addEventListener("contextmenu", handleContextMenu, { capture: true });
 
-    let hasStarted = false;
     const lastOutputAt = { current: Date.now() };
     const sleep = (ms: number) =>
       new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -298,20 +309,50 @@ export function TerminalWidget({
       cwd: cmdCwd,
       commands: queuedCommands,
     } = spawnConfig.current;
-    window.electron.terminal
-      .spawn(sessionId, terminal.cols, terminal.rows, {
-        command: cmd,
-        args: cmdArgs,
-        cwd: cmdCwd,
-      })
-      .then(() => {
-        if (queuedCommands.length > 0) void runQueuedCommands(queuedCommands);
-      })
-      .catch((err: unknown) => {
+
+    // Only auto-close on a clean exit once the shell has actually produced output —
+    // i.e. it really started and was later exited, not a spawn that died before a
+    // prompt ever appeared (which should surface as an error, not a silent close).
+    const handleExit = (code: number) => {
+      if (code === 0 && session.started()) {
+        if (entry) closeWindowRef.current(entry.id);
+      } else if (code !== 0) {
         terminal.writeln(
-          `\r\n\x1b[31mFailed to start terminal: ${err}\x1b[0m\r\n`,
+          `\r\n\x1b[31m[Process exited with code ${code}]\x1b[0m`,
         );
-      });
+      }
+    };
+
+    const session = attachTerminal(
+      sessionId,
+      windowId,
+      { cols: terminal.cols, rows: terminal.rows },
+      { command: cmd, args: cmdArgs, cwd: cmdCwd },
+      {
+        onData: (data) => {
+          terminal.write(data);
+          lastOutputAt.current = Date.now();
+        },
+        onExit: handleExit,
+      },
+    );
+
+    if (session.spawned) {
+      session.ready
+        .then(() => {
+          if (queuedCommands.length > 0) void runQueuedCommands(queuedCommands);
+        })
+        .catch((err: unknown) => {
+          terminal.writeln(
+            `\r\n\x1b[31mFailed to start terminal: ${err}\x1b[0m\r\n`,
+          );
+        });
+    } else {
+      if (session.replay) terminal.write(session.replay);
+      // The PTY still has the previous view's size.
+      window.electron.terminal.resize(sessionId, terminal.cols, terminal.rows);
+      if (session.exitCode !== null) handleExit(session.exitCode);
+    }
 
     const disposeInput = terminal.onData((data) => {
       window.electron!.terminal.sendInput(sessionId, data);
@@ -328,25 +369,6 @@ export function TerminalWidget({
       }
       if (ignoreTitle) return;
       setWindowTitleRef.current?.(title || null);
-    });
-
-    const unsubData = window.electron.terminal.onData(sessionId, (data) => {
-      terminal.write(data);
-      lastOutputAt.current = Date.now();
-      hasStarted = true;
-    });
-
-    // Only auto-close on a clean exit once the shell has actually produced output —
-    // i.e. it really started and was later exited, not a spawn that died before a
-    // prompt ever appeared (which should surface as an error, not a silent close).
-    const unsubExit = window.electron.terminal.onExit(sessionId, (code) => {
-      if (code === 0 && hasStarted) {
-        if (entry) closeWindowRef.current(entry.id);
-      } else if (code !== 0) {
-        terminal.writeln(
-          `\r\n\x1b[31m[Process exited with code ${code}]\x1b[0m`,
-        );
-      }
     });
 
     // Debounced (not throttled): resizing the container mid-drag fires this
@@ -376,8 +398,7 @@ export function TerminalWidget({
       if (detectAgentStatus) setWindowStatusRef.current?.(null);
       disposeInput.dispose();
       disposeTitleChange.dispose();
-      unsubData();
-      unsubExit();
+      session.detach();
       resizeObserver.disconnect();
       el.removeEventListener("mousedown", handleMouseDown, { capture: true });
       el.removeEventListener("contextmenu", handleContextMenu, {
@@ -385,7 +406,9 @@ export function TerminalWidget({
       });
       terminal.dispose();
       terminalRef.current = null;
-      window.electron?.terminal.kill(sessionId);
+      // A canvas window's PTY outlives this view; it's killed once the
+      // window leaves the canvas (see pruneTerminalSessions).
+      if (windowId === null) killTerminalSession(sessionId);
     };
     // mount/unmount only — command/args/cwd/commands and the flags are
     // captured here or in spawnConfig ref

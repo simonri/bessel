@@ -38,6 +38,7 @@ import { useEndClaudeSession } from "@/components/claude-sessions/use-end-sessio
 import { CLAUDE_SESSION_KEY } from "@/components/claude-sessions/use-open-claude-session";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
+import { isNotFoundError } from "@/lib/api-error";
 import { client } from "@/lib/client";
 import { isDoneStatus } from "@/lib/task-format";
 import { cn } from "@/lib/utils";
@@ -175,13 +176,16 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
   const attachedTaskId = entry.data?.attachedTaskId || null;
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: task, isError: taskMissing } = useQuery({
+  const { data: task, error } = useQuery({
     ...getTaskV1TasksTaskIdGetOptions({
       client,
       path: { task_id: attachedTaskId ?? "" },
     }),
     enabled: attachedTaskId != null,
   });
+  // Only a definitive not-found detaches the task; network/auth/5xx failures
+  // are transient and must not wipe the persisted attachment.
+  const taskMissing = isNotFoundError(error);
 
   useEffect(() => {
     if (!attachedTaskId) return;
