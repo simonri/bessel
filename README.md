@@ -14,6 +14,35 @@ Bessel is a personal life dashboard that aggregates data across all domains of y
 
 See [CLAUDE.md](CLAUDE.md) for architecture overview and development commands.
 
+## Connect Claude (MCP)
+
+Bessel runs a remote MCP server, so Claude can read your Bessel data: calendar, transactions, recipes, tasks, sleep, workouts, computer activity and investments. It's read-only; Claude can't change anything.
+
+**Server URL:** `https://api.getbessel.com/mcp`
+
+### Claude (web, desktop and mobile)
+
+1. In [claude.ai](https://claude.ai), go to **Settings → Connectors → Add custom connector**.
+2. Name it `Bessel`, paste the server URL, and click **Add**. Leave the advanced settings empty.
+3. Click **Connect** and sign in with your Bessel account.
+4. In a chat, turn on the Bessel connector and ask something like "What's on my calendar this week?"
+
+Once it's added, the connector also works in the Claude desktop and mobile apps.
+
+### Claude Code
+
+```bash
+claude mcp add --transport http bessel https://api.getbessel.com/mcp
+```
+
+Then run `/mcp` in Claude Code, choose **bessel**, and sign in.
+
+### Local development
+
+The local API serves the same endpoint at `http://localhost:8100/mcp`. Claude's web and desktop apps can't reach `localhost`, so test with Claude Code (`claude mcp add --transport http bessel-local http://localhost:8100/mcp`) or [MCP Inspector](https://github.com/modelcontextprotocol/inspector) (`npx @modelcontextprotocol/inspector`).
+
+Sign-in goes through Auth0. For it to work, the tenant needs an API whose identifier exactly matches each MCP URL. It also needs Dynamic Client Registration and the Resource Parameter Compatibility Profile turned on, and the login connection promoted to domain level. The tools live in `services/api/src/api/mcp/`.
+
 ## Desktop app (macOS)
 
 The macOS build isn't code-signed or notarized, so Gatekeeper will refuse to
