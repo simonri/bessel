@@ -135,7 +135,10 @@ export function attachTerminal(
       unsubData();
       unsubExit();
     };
-    created.ready = terminal.spawn(sessionId, size.cols, size.rows, config);
+    // Ids are per window and spawn config, so the PTY generation isn't needed.
+    created.ready = terminal
+      .spawn(sessionId, size.cols, size.rows, config)
+      .then(() => undefined);
     created.ready.catch(() => dispose(sessionId, false));
     sessions.set(sessionId, created);
     session = created;
