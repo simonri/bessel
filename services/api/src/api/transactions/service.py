@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from api.common.db.postgres import AsyncSession
@@ -5,6 +6,8 @@ from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.transactions.parsers.base import ParsedTransaction
 from api.transactions.repository import TransactionRepository
+from api.transactions.schemas import MonthlyFlow
+from dateutil.relativedelta import relativedelta
 
 
 class TransactionService:
@@ -63,6 +66,23 @@ class TransactionService:
     skipped = len(parsed) - created
 
     return created, skipped
+
+  async def monthly_flow(self, repo: TransactionRepository, user_id: UUID, *, months: int, today: date) -> list[MonthlyFlow]:
+    """Income and expenses per month for the last `months` months (including the current one), oldest first."""
+    start = today.replace(day=1) - relativedelta(months=months - 1)
+    rows = await repo.monthly_flow_totals(user_id=user_id, start=start)
+
+    buckets: dict[tuple[int, int], dict[str, int]] = {}
+    for row in rows:
+      bucket = buckets.setdefault((int(row.yr), int(row.mo)), {"income": 0, "expenses": 0})
+      bucket["income" if row.direction == "credit" else "expenses"] = row.total
+
+    items: list[MonthlyFlow] = []
+    cursor = start
+    while cursor <= today:
+      items.append(MonthlyFlow(year=cursor.year, month=cursor.month, **buckets.get((cursor.year, cursor.month), {"income": 0, "expenses": 0})))
+      cursor += relativedelta(months=1)
+    return items
 
 
 transaction_service: TransactionService = TransactionService()

@@ -47,6 +47,7 @@ dependencies = [
   "recurring-ical-events>=3.8.2",
   "icalendar>=7.3.0",
   "cryptography>=46.0.4",
+  "mcp>=2.3.0,<3",
 ]
 
 [dependency-groups]

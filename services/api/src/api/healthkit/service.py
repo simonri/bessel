@@ -3,7 +3,7 @@ from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
-from api.healthkit.schemas import HealthKitSleepSyncRequest, HealthKitWorkoutSyncRequest
+from api.healthkit.schemas import HealthKitSleepSyncRequest, HealthKitWorkoutSyncRequest, SleepDailyEntry, SleepStageSummary, SleepSummaryResponse
 
 
 class HealthKitWorkoutService:
@@ -163,6 +163,51 @@ class HealthKitSleepService:
       episodes.append((cur_start, cur_end))
       result[wake_date] = max(episodes, key=lambda e: e[1] - e[0])
     return result
+
+  async def nightly_totals(
+    self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int, tz: ZoneInfo | None, tz_offset_mins: int
+  ) -> list[SleepDailyEntry]:
+    """Time asleep per night, keyed by local wake date, with the main episode's onset and wake time."""
+    segments = await self.get_segments(repo, user_id, start_ts, end_ts)
+
+    nightly: dict[str, int] = {}
+    for seg in segments:
+      if seg.stage_name not in ASLEEP_STAGES:
+        continue
+      for wake_date, secs in self.split_by_local_night(seg, tz, tz_offset_mins):
+        nightly[wake_date] = nightly.get(wake_date, 0) + secs
+
+    episodes = self.nightly_episodes(segments, tz, tz_offset_mins)
+    return sorted(
+      [
+        SleepDailyEntry(
+          date=k,
+          asleep_secs=v,
+          sleep_onset=local_iso(episodes[k][0], tz, tz_offset_mins) if k in episodes else None,
+          wake_time=local_iso(episodes[k][1], tz, tz_offset_mins) if k in episodes else None,
+        )
+        for k, v in nightly.items()
+      ],
+      key=lambda x: x.date,
+    )
+
+  async def stage_summary(self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int) -> SleepSummaryResponse:
+    segments = await self.get_segments(repo, user_id, start_ts, end_ts)
+
+    totals: dict[str, int] = {}
+    total_asleep = 0
+    total_span = 0
+    for seg in segments:
+      totals[seg.stage_name] = totals.get(seg.stage_name, 0) + seg.duration
+      total_span += seg.duration
+      if seg.stage_name in ASLEEP_STAGES:
+        total_asleep += seg.duration
+
+    stages = sorted(
+      [SleepStageSummary(stage=k, secs=v, percentage=v / total_span * 100 if total_span > 0 else 0.0) for k, v in totals.items()],
+      key=lambda x: -x.secs,
+    )
+    return SleepSummaryResponse(total_asleep_secs=total_asleep, stages=stages)
 
 
 healthkit_sleep_service = HealthKitSleepService()

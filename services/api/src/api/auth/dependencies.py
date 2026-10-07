@@ -1,5 +1,5 @@
 import time
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 import structlog
@@ -59,7 +59,11 @@ def _find_key(jwks: dict | None, kid: str | None) -> dict | None:
   return None
 
 
-async def _get_signing_key(token: str) -> dict:
+class InvalidTokenError(Exception):
+  """The bearer token is malformed, expired, or not issued for the expected audience."""
+
+
+async def _get_signing_key(token: str) -> dict | None:
   unverified_header = jwt.get_unverified_header(token)
   kid = unverified_header.get("kid")
 
@@ -68,42 +72,44 @@ async def _get_signing_key(token: str) -> dict:
     # Unknown kid usually means Auth0 rotated its signing keys; refresh once
     # before rejecting, otherwise every login fails until the cache TTL expires.
     key = _find_key(await JWKSClient.get_jwks(force_refresh=True), kid)
-  if key is not None:
-    return key
+  return key
 
-  raise HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Unable to find appropriate signing key",
-    headers={"WWW-Authenticate": "Bearer"},
-  )
+
+async def decode_access_token(token: str, *, audience: str) -> dict[str, Any]:
+  """Verify an Auth0 access token's signature, issuer, expiry and audience, and return its claims."""
+  try:
+    signing_key = await _get_signing_key(token)
+    if signing_key is None:
+      raise InvalidTokenError("Unable to find appropriate signing key")
+    return jwt.decode(
+      token,
+      signing_key,
+      algorithms=settings.AUTH0_ALGORITHMS,
+      audience=audience,
+      issuer=f"https://{settings.AUTH0_DOMAIN}/",
+    )
+  except JWTError as e:
+    raise InvalidTokenError(str(e)) from e
 
 
 async def verify_token(
   credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> UserInfo:
-  token = credentials.credentials
   try:
-    signing_key = await _get_signing_key(token)
-    payload = jwt.decode(
-      token,
-      signing_key,
-      algorithms=settings.AUTH0_ALGORITHMS,
-      audience=settings.AUTH0_AUDIENCE,
-      issuer=f"https://{settings.AUTH0_DOMAIN}/",
-    )
-    return UserInfo(
-      sub=payload["sub"],
-      email=payload.get("email"),
-      name=payload.get("name"),
-      picture=payload.get("picture"),
-    )
-  except JWTError as e:
+    payload = await decode_access_token(credentials.credentials, audience=settings.AUTH0_AUDIENCE)
+  except InvalidTokenError as e:
     log.warning("JWT verification failed", error=str(e))
     raise HTTPException(
       status_code=status.HTTP_401_UNAUTHORIZED,
       detail="Invalid or expired token",
       headers={"WWW-Authenticate": "Bearer"},
     ) from None
+  return UserInfo(
+    sub=payload["sub"],
+    email=payload.get("email"),
+    name=payload.get("name"),
+    picture=payload.get("picture"),
+  )
 
 
 CurrentUser = Annotated[UserInfo, Depends(verify_token)]

@@ -80,6 +80,10 @@ class Settings(BaseSettings):
   AUTH0_AUDIENCE: str = ""
   AUTH0_ALGORITHMS: list[str] = ["RS256"]
 
+  # MCP server. Public URL of the /mcp endpoint exactly as users enter it in
+  # Claude; it is also the identifier of the Auth0 API that MCP tokens target.
+  MCP_RESOURCE_URL: str = "http://localhost:8100/mcp"
+
   # Google Places
   GOOGLE_PLACES_API_KEY: str = ""
 

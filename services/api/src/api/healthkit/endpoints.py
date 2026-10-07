@@ -15,12 +15,10 @@ from api.healthkit.schemas import (
   HealthKitWorkoutSchema,
   HealthKitWorkoutSyncRequest,
   HealthKitWorkoutSyncResponse,
-  SleepDailyEntry,
   SleepDailyResponse,
-  SleepStageSummary,
   SleepSummaryResponse,
 )
-from api.healthkit.service import ASLEEP_STAGES, healthkit_sleep_service, healthkit_workout_service, local_iso
+from api.healthkit.service import healthkit_sleep_service, healthkit_workout_service
 from api.postgres import AsyncSession, get_db_session
 from api.users.dependencies import CurrentDBUser
 
@@ -128,31 +126,8 @@ async def get_daily_sleep(
     int, Query(description="Fallback UTC offset in minutes when tz_name is not provided (e.g. 120 for UTC+2). Does not handle DST.")
   ] = 0,
 ) -> SleepDailyResponse:
-  tz = _parse_tz(tz_name)
   repo = HealthKitSleepSampleRepository.from_session(session)
-  segments = await healthkit_sleep_service.get_segments(repo, current_user.id, start_ts, end_ts)
-
-  nightly: dict[str, int] = {}
-  for seg in segments:
-    if seg.stage_name not in ASLEEP_STAGES:
-      continue
-    for wake_date, secs in healthkit_sleep_service.split_by_local_night(seg, tz, tz_offset_mins):
-      nightly[wake_date] = nightly.get(wake_date, 0) + secs
-
-  episodes = healthkit_sleep_service.nightly_episodes(segments, tz, tz_offset_mins)
-
-  nights = sorted(
-    [
-      SleepDailyEntry(
-        date=k,
-        asleep_secs=v,
-        sleep_onset=local_iso(episodes[k][0], tz, tz_offset_mins) if k in episodes else None,
-        wake_time=local_iso(episodes[k][1], tz, tz_offset_mins) if k in episodes else None,
-      )
-      for k, v in nightly.items()
-    ],
-    key=lambda x: x.date,
-  )
+  nights = await healthkit_sleep_service.nightly_totals(repo, current_user.id, start_ts, end_ts, _parse_tz(tz_name), tz_offset_mins)
   return SleepDailyResponse(nights=nights)
 
 
@@ -167,29 +142,4 @@ async def get_sleep_summary(
   start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],
 ) -> SleepSummaryResponse:
-  repo = HealthKitSleepSampleRepository.from_session(session)
-  segments = await healthkit_sleep_service.get_segments(repo, current_user.id, start_ts, end_ts)
-
-  totals: dict[str, int] = {}
-  total_asleep = 0
-  total_span = 0
-
-  for seg in segments:
-    totals[seg.stage_name] = totals.get(seg.stage_name, 0) + seg.duration
-    total_span += seg.duration
-    if seg.stage_name in ASLEEP_STAGES:
-      total_asleep += seg.duration
-
-  stages = sorted(
-    [
-      SleepStageSummary(
-        stage=k,
-        secs=v,
-        percentage=v / total_span * 100 if total_span > 0 else 0.0,
-      )
-      for k, v in totals.items()
-    ],
-    key=lambda x: -x.secs,
-  )
-
-  return SleepSummaryResponse(total_asleep_secs=total_asleep, stages=stages)
+  return await healthkit_sleep_service.stage_summary(HealthKitSleepSampleRepository.from_session(session), current_user.id, start_ts, end_ts)
