@@ -87,6 +87,7 @@ struct TaskFormView: View {
             }
             .scrollContentBackground(.hidden)
             .scrollDismissesKeyboard(.interactively)
+            .dismissKeyboardOnOutsideTap()
             .listSectionSpacing(16)
             .background(Theme.background)
             .navigationTitle("Edit task")

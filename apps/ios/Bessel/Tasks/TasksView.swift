@@ -125,13 +125,6 @@ struct TasksView: View {
 
     @ViewBuilder
     private var todayContent: some View {
-        let progress = store.progress
-        if progress.total > 0 {
-            Section {
-                ProgressCard(done: progress.done, total: progress.total)
-            }
-        }
-
         if !store.routines.isEmpty {
             Section {
             } header: {
@@ -319,53 +312,6 @@ struct TasksView: View {
     }
 }
 
-/// Today's progress as a ring and a friendly line.
-private struct ProgressCard: View {
-    let done: Int
-    let total: Int
-
-    private var fraction: Double { total == 0 ? 0 : min(1, Double(done) / Double(total)) }
-    private var isComplete: Bool { total > 0 && done >= total }
-
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .stroke(Theme.fill, lineWidth: 5)
-                Circle()
-                    .trim(from: 0, to: fraction)
-                    .stroke(Theme.primary, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.6), value: fraction)
-                if isComplete {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.primary)
-                }
-            }
-            .frame(width: 40, height: 40)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(isComplete ? "All done for today ✨" : "\(done) of \(total) done today")
-                    .font(.headline)
-                    .foregroundStyle(Theme.foreground)
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.mutedForeground)
-            }
-        }
-        .padding(.vertical, 6)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var subtitle: String {
-        if isComplete { return "Go enjoy the rest of your day." }
-        let remaining = total - done
-        if done == 0 { return "\(Greeting.now()). Let's start small." }
-        return remaining == 1 ? "Just one more to go." : "\(remaining) more to go, you're doing great."
-    }
-}
-
 /// A repeating task as a small capsule you can tick off in place.
 private struct RoutineChip: View {
     let task: TaskItem
@@ -420,6 +366,15 @@ private struct TaskComposer: View {
     var isFocused: FocusState<Bool>.Binding
 
     @State private var isSaving = false
+    /// The project picked from the chip; a "#project" in the text wins over it.
+    @State private var chosenProject: String?
+
+    init(store: TasksStore, text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
+        self.store = store
+        _text = text
+        self.isFocused = isFocused
+        _chosenProject = State(initialValue: store.projectFilter)
+    }
 
     private var parsed: QuickTask {
         QuickTask.parse(text, projects: store.projects)
@@ -428,8 +383,10 @@ private struct TaskComposer: View {
     var body: some View {
         Composer(placeholder: "Task name", text: $text, isFocused: isFocused, isSending: isSaving, onSubmit: submit) {
             let tokens = parsed.tokens
+            if parsed.project == nil {
+                projectMenu
+            }
             if tokens.isEmpty {
-                Chip(text: store.projectFilter ?? "No project", hue: PastelHue.forName(store.projectFilter ?? ""), systemImage: "number", isSelected: store.projectFilter != nil)
                 Chip(text: "Try \"fri\" or \"!\"", hue: 32, systemImage: "calendar", isSelected: false)
             }
             ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
@@ -445,6 +402,21 @@ private struct TaskComposer: View {
         }
     }
 
+    private var projectMenu: some View {
+        Menu {
+            Picker("Project", selection: $chosenProject) {
+                Text("No project").tag(String?.none)
+                ForEach(store.projects, id: \.self) { project in
+                    Text(project).tag(Optional(project))
+                }
+            }
+        } label: {
+            Chip(text: chosenProject ?? "No project", hue: PastelHue.forName(chosenProject ?? ""), systemImage: "number", isSelected: chosenProject != nil)
+        }
+        .menuOrder(.fixed)
+        .accessibilityLabel("Project")
+    }
+
     private func submit() {
         let task = parsed
         guard !task.title.isEmpty, !isSaving else { return }
@@ -455,7 +427,7 @@ private struct TaskComposer: View {
             status: .todo,
             priority: task.priority,
             dueDate: task.dueDate,
-            project: task.project ?? store.projectFilter,
+            project: task.project ?? chosenProject,
             area: nil
         )
         Task {
@@ -463,6 +435,7 @@ private struct TaskComposer: View {
             do {
                 try await store.create(draft)
                 text = ""
+                isFocused.wrappedValue = false
             } catch {
                 store.errorMessage = error.localizedDescription
             }
