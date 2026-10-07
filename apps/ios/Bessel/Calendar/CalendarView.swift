@@ -13,14 +13,15 @@ enum EventEditorTarget: Identifiable {
     }
 }
 
-/// The week as eight cells, two across: Monday to Sunday with their events
-/// stacked, and a month to jump around in.
+/// The week as eight cells filling the screen, two across and edge to edge:
+/// Monday to Sunday with their events, and a month to jump around in.
 struct CalendarView: View {
     let auth: AuthSession
 
     @State private var store: CalendarStore
     @State private var detailEvent: CalendarEvent?
     @State private var editorTarget: EventEditorTarget?
+    @State private var dayList: Date?
     @State private var showingCalendars = false
     @Environment(\.scenePhase) private var scenePhase
 
@@ -31,30 +32,15 @@ struct CalendarView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    header
-                    LazyVGrid(
-                        columns: [GridItem(.flexible(), spacing: 10, alignment: .top), GridItem(.flexible(), spacing: 10, alignment: .top)],
-                        spacing: 10
-                    ) {
-                        ForEach(store.days, id: \.self) { day in
-                            DayCell(
-                                store: store,
-                                day: day,
-                                onCreate: { create(on: day) },
-                                onOpen: { detailEvent = $0 }
-                            )
-                        }
-                        MonthCell(store: store)
-                    }
+            VStack(alignment: .leading, spacing: 12) {
+                header
+                GeometryReader { geometry in
+                    weekGrid(cellHeight: geometry.size.height / 4)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, Theme.pageTop)
-                .padding(.bottom, 90)
             }
-            .refreshable { await store.load() }
-            .simultaneousGesture(swipeWeeks)
+            .padding(.horizontal, 16)
+            .padding(.top, Theme.pageTop)
+            .padding(.bottom, 8)
             .background(Theme.background)
             .overlay {
                 if !store.hasLoaded { ProgressView() }
@@ -76,6 +62,12 @@ struct CalendarView: View {
             }
             .sheet(item: $editorTarget) { target in
                 EventEditorView(store: store, target: target)
+            }
+            .sheet(item: dayListBinding) { day in
+                DayEventsSheet(store: store, day: day.date) { event in
+                    dayList = nil
+                    detailEvent = event
+                }
             }
             .sheet(isPresented: $showingCalendars) {
                 CalendarsSheet(store: store)
@@ -142,12 +134,52 @@ struct CalendarView: View {
         return thisYear ? "\(start) – \(end)" : "\(start) – \(end), \(last.formatted(.dateTime.year()))"
     }
 
+    // MARK: - Grid
+
+    /// Four rows of two, sharing hairlines instead of gaps.
+    private func weekGrid(cellHeight: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            ForEach(0..<4, id: \.self) { row in
+                if row > 0 {
+                    Theme.border.frame(height: 0.5)
+                }
+                HStack(spacing: 0) {
+                    cell(row * 2, height: cellHeight)
+                    Theme.border.frame(width: 0.5)
+                    cell(row * 2 + 1, height: cellHeight)
+                }
+                .frame(height: cellHeight - (row > 0 ? 0.5 : 0))
+            }
+        }
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .contentShape(Rectangle())
+        .gesture(swipeWeeks)
+    }
+
+    @ViewBuilder
+    private func cell(_ index: Int, height: CGFloat) -> some View {
+        if index < store.days.count {
+            let day = store.days[index]
+            DayCell(
+                store: store,
+                day: day,
+                height: height,
+                onCreate: { create(on: day) },
+                onOpen: { detailEvent = $0 },
+                onShowAll: { dayList = day }
+            )
+        } else {
+            MonthCell(store: store, height: height)
+        }
+    }
+
     /// Swipe sideways to change week.
     private var swipeWeeks: some Gesture {
-        DragGesture(minimumDistance: 40)
+        DragGesture(minimumDistance: 30)
             .onEnded { value in
                 let dx = value.translation.width
-                guard abs(dx) > 80, abs(dx) > abs(value.translation.height) * 2 else { return }
+                guard abs(dx) > 60, abs(dx) > abs(value.translation.height) * 1.5 else { return }
                 Task { await store.step(weeks: dx < 0 ? 1 : -1) }
             }
     }
@@ -169,6 +201,15 @@ struct CalendarView: View {
         editorTarget = .new(EventTiming(allDay: false, start: start, end: start.addingTimeInterval(3600)))
     }
 
+    private struct ShownDay: Identifiable {
+        let date: Date
+        var id: Date { date }
+    }
+
+    private var dayListBinding: Binding<ShownDay?> {
+        Binding(get: { dayList.map(ShownDay.init) }, set: { dayList = $0?.date })
+    }
+
     private var errorBinding: Binding<Bool> {
         Binding(get: { store.errorMessage != nil }, set: { if !$0 { store.errorMessage = nil } })
     }
@@ -176,32 +217,42 @@ struct CalendarView: View {
 
 // MARK: - Day
 
-/// One day: its name and date, then its events stacked; tap the empty part to add one.
+/// One day: name and date, then as many events as fit at a fixed height, with
+/// "+N more" when they don't. Tap the empty part to add one.
 private struct DayCell: View {
     let store: CalendarStore
     let day: Date
+    let height: CGFloat
     let onCreate: () -> Void
     let onOpen: (CalendarEvent) -> Void
+    let onShowAll: () -> Void
+
+    private let padding: CGFloat = 8
+    private let headerHeight: CGFloat = 24
+    private let spacing: CGFloat = 3
 
     var body: some View {
         let isToday = Calendar.current.isDateInToday(day)
         let isPast = day < Calendar.current.startOfDay(for: .now)
         let events = store.events(on: day)
+        let fits = max(Int((height - padding * 2 - headerHeight) / (EventLine.height + spacing)), 1)
+        let shown = events.count > fits ? Array(events.prefix(fits - 1)) : events
 
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(day.formatted(.dateTime.weekday(.wide)))
-                    .font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: spacing) {
+            HStack(alignment: .center) {
+                Text(day.formatted(.dateTime.weekday(.abbreviated)))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(isToday ? Theme.primary : (isPast ? Theme.faintForeground : Theme.foreground))
-                Spacer(minLength: 4)
+                Spacer(minLength: 2)
                 Text(day.formatted(.dateTime.day()))
-                    .font(.subheadline.weight(.semibold))
+                    .font(.footnote.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(isToday ? .white : (isPast ? Theme.faintForeground : Theme.mutedForeground))
-                    .frame(minWidth: 26, minHeight: 26)
+                    .frame(minWidth: 22, minHeight: 22)
                     .background(isToday ? Theme.primary : .clear, in: Circle())
             }
-            ForEach(events) { event in
+            .frame(height: headerHeight)
+            ForEach(shown) { event in
                 Button {
                     onOpen(event)
                 } label: {
@@ -209,24 +260,31 @@ private struct DayCell: View {
                 }
                 .buttonStyle(.plain)
             }
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 150, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay {
-            if isToday {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(Theme.primary.opacity(0.5), lineWidth: 1.5)
+            if shown.count < events.count {
+                Button(action: onShowAll) {
+                    Text("+\(events.count - shown.count) more")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.mutedForeground)
+                        .frame(maxWidth: .infinity, minHeight: EventLine.height, alignment: .leading)
+                        .padding(.leading, 4)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
-        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(padding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(isToday ? Theme.primarySoft : .clear)
+        .contentShape(Rectangle())
         .onTapGesture(perform: onCreate)
         .accessibilityAction(named: "Add event", onCreate)
     }
 }
 
-/// An event in a day cell: its colour, title and time.
+/// An event as one fixed-height line: colour, time and title.
 private struct EventLine: View {
+    static let height: CGFloat = 20
+
     let event: CalendarEvent
     let day: Date
     let store: CalendarStore
@@ -234,65 +292,90 @@ private struct EventLine: View {
     var body: some View {
         let calendarColor = store.calendar(event.calendarId)?.swiftColor ?? .gray
         let fill = event.colorId.map(EventColors.color(for:)) ?? calendarColor
-        let isPast = event.end <= .now
 
-        HStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 1.5)
+        HStack(spacing: 4) {
+            RoundedRectangle(cornerRadius: 1)
                 .fill(calendarColor)
-                .frame(width: 3)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(event.displayTitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.foreground)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                Text(timeLabel)
-                    .font(.caption2)
+                .frame(width: 2.5, height: 12)
+            if let time = timeLabel {
+                Text(time)
+                    .font(.system(size: 10, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(Theme.mutedForeground)
-                    .lineLimit(1)
             }
+            Text(event.displayTitle)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.foreground)
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 5)
-        .padding(.leading, 5)
-        .padding(.trailing, 4)
-        .background(fill.opacity(event.isUnansweredInvite ? 0.06 : 0.16), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .lineLimit(1)
+        .padding(.horizontal, 4)
+        .frame(height: Self.height)
+        .background(fill.opacity(event.isUnansweredInvite ? 0.06 : 0.16), in: RoundedRectangle(cornerRadius: 5, style: .continuous))
         .overlay {
             if event.isUnansweredInvite {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
                     .strokeBorder(fill, style: StrokeStyle(lineWidth: 1, dash: [3, 2]))
             }
         }
-        .opacity(isPast ? 0.55 : 1)
+        .opacity(event.end <= .now ? 0.55 : 1)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
-    /// "09:00–10:00", "All day", "from 22:00", "until 01:00".
-    private var timeLabel: String {
-        if event.allDay { return "All day" }
-        let calendar = Calendar.current
-        let dayStart = calendar.startOfDay(for: day)
-        let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
-        let startsToday = event.start >= dayStart
-        let endsToday = event.end <= dayEnd
-        let start = event.start.formatted(date: .omitted, time: .shortened)
-        let end = event.end.formatted(date: .omitted, time: .shortened)
-        switch (startsToday, endsToday) {
-        case (true, true): return "\(start)–\(end)"
-        case (true, false): return "from \(start)"
-        case (false, true): return "until \(end)"
-        case (false, false): return "All day"
+    /// Start time for timed events that start this day; nil for all-day or continuing ones.
+    private var timeLabel: String? {
+        guard !event.allDay, event.start >= Calendar.current.startOfDay(for: day) else { return nil }
+        return event.start.formatted(date: .omitted, time: .shortened)
+    }
+}
+
+/// Every event of one day, for when they don't all fit in its cell.
+private struct DayEventsSheet: View {
+    let store: CalendarStore
+    let day: Date
+    let onOpen: (CalendarEvent) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 6) {
+                    ForEach(store.events(on: day)) { event in
+                        Button {
+                            onOpen(event)
+                        } label: {
+                            EventLine(event: event, day: day, store: store)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(16)
+            }
+            .background(Theme.background)
+            .navigationTitle(day.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
+        .presentationDetents([.medium, .large])
+        .presentationBackground(Theme.background)
+        .presentationCornerRadius(28)
+        .presentationDragIndicator(.hidden)
     }
 }
 
 // MARK: - Month
 
-/// The eighth cell: the month around the shown week; tap a day to jump to its week.
+/// The eighth cell: the month around the shown week, sized to fit; tap a day
+/// to jump to its week.
 private struct MonthCell: View {
     let store: CalendarStore
+    let height: CGFloat
 
     /// The month most of the shown week falls in (the week's Thursday).
     private var month: Date {
@@ -300,57 +383,63 @@ private struct MonthCell: View {
     }
 
     /// Every week that touches the month, Monday first.
-    private var gridDays: [Date] {
+    private var weeks: [[Date]] {
         let calendar = Calendar.current
         guard let interval = calendar.dateInterval(of: .month, for: month) else { return [] }
-        var days: [Date] = []
+        var weeks: [[Date]] = []
         var week = CalendarStore.weekStart(of: interval.start)
         while week < interval.end {
-            days += (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: week) }
+            weeks.append((0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: week) })
             week = calendar.date(byAdding: .day, value: 7, to: week)!
         }
-        return days
+        return weeks
     }
 
     var body: some View {
         let calendar = Calendar.current
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
-        let shownWeek = store.firstDay
+        let weeks = weeks
+        // Title and weekday letters, then the weeks share what's left.
+        let rowHeight = max((height - 16 - 20 - 14) / CGFloat(max(weeks.count, 1)), 14)
 
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(month.formatted(.dateTime.month(.wide)))
-                .font(.subheadline.weight(.semibold))
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(Theme.foreground)
-            LazyVGrid(columns: columns, spacing: 2) {
+                .frame(height: 20)
+            HStack(spacing: 0) {
                 ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { _, letter in
                     Text(letter)
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(Theme.faintForeground)
-                }
-                ForEach(gridDays, id: \.self) { day in
-                    let inMonth = calendar.isDate(day, equalTo: month, toGranularity: .month)
-                    let inShownWeek = CalendarStore.weekStart(of: day) == shownWeek
-                    let isToday = calendar.isDateInToday(day)
-                    Button {
-                        Task { await store.show(day) }
-                    } label: {
-                        Text(day.formatted(.dateTime.day()))
-                            .font(.system(size: 11, weight: isToday ? .bold : .medium))
-                            .monospacedDigit()
-                            .foregroundStyle(isToday ? .white : (inMonth ? Theme.foreground : Theme.faintForeground))
-                            .frame(width: 20, height: 20)
-                            .background(isToday ? Theme.primary : .clear, in: Circle())
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 1)
-                            .background(inShownWeek ? Theme.primarySoft : .clear)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(day.formatted(date: .complete, time: .omitted))
+                        .frame(maxWidth: .infinity)
                 }
             }
+            .frame(height: 14)
+            ForEach(weeks, id: \.first) { week in
+                let isShown = week.first == store.firstDay
+                HStack(spacing: 0) {
+                    ForEach(week, id: \.self) { day in
+                        let inMonth = calendar.isDate(day, equalTo: month, toGranularity: .month)
+                        let isToday = calendar.isDateInToday(day)
+                        Text(day.formatted(.dateTime.day()))
+                            .font(.system(size: 10, weight: isToday ? .bold : .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(isToday ? .white : (inMonth ? Theme.foreground : Theme.faintForeground))
+                            .frame(width: min(rowHeight, 18), height: min(rowHeight, 18))
+                            .background(isToday ? Theme.primary : .clear, in: Circle())
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(height: rowHeight)
+                .background(isShown ? Theme.primarySoft : .clear, in: Capsule())
+                .contentShape(Rectangle())
+                .onTapGesture { Task { await store.show(week[0]) } }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Week of \(week[0].formatted(.dateTime.month(.wide).day()))")
+                .accessibilityAddTraits(.isButton)
+            }
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 150, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
