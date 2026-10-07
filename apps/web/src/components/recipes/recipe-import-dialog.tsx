@@ -61,6 +61,8 @@ export function RecipeImportDialog({
   const [text, setText] = useState("");
   const structure = useMutation({
     ...structureRecipeTextV1RecipesImportPostMutation({ client }),
+    // Shown inline below the text instead.
+    meta: { errorToast: false },
     onSuccess: (result) => {
       setText("");
       onImported(result);

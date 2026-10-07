@@ -1,7 +1,7 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { client } from "@/lib/client";
-import { accountsQueryKey, invalidateEvents } from "./use-calendar-data";
+import { accountsQueryKey, refreshEvents } from "./use-calendar-data";
 
 const CHANGES_URL = "/v1/calendars/changes";
 const RECONNECT_MIN_MS = 1_000;
@@ -59,6 +59,65 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
+/** Follows the server's change stream until stopped, reconnecting with
+ *  backoff, and refreshes calendar data on every (re)connect, since changes
+ *  may have landed while no stream was open, and on every change. */
+function streamChanges(queryClient: QueryClient): () => void {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const refresh = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      refreshEvents(queryClient);
+      void queryClient.invalidateQueries({ queryKey: accountsQueryKey() });
+    }, COALESCE_MS);
+  };
+
+  void (async () => {
+    let failures = 0;
+    while (!controller.signal.aborted) {
+      try {
+        const { response } = await client.get({
+          url: CHANGES_URL,
+          parseAs: "stream",
+          signal: controller.signal,
+        });
+        if (response?.ok && response.body) {
+          failures = 0;
+          refresh();
+          for await (const name of readServerEvents(response.body)) {
+            if (name === "changed") refresh();
+          }
+        }
+      } catch {
+        // Dropped connection or network error; reconnect below.
+      }
+      if (controller.signal.aborted) return;
+      await wait(reconnectDelay(failures++), controller.signal);
+    }
+  })();
+
+  return () => {
+    controller.abort();
+    clearTimeout(timer);
+  };
+}
+
+// One stream for the whole app, however many calendars are mounted.
+let subscribers = 0;
+let stopStream: (() => void) | null = null;
+
+function subscribe(queryClient: QueryClient): () => void {
+  subscribers += 1;
+  stopStream ??= streamChanges(queryClient);
+  return () => {
+    subscribers -= 1;
+    if (subscribers > 0) return;
+    stopStream?.();
+    stopStream = null;
+  };
+}
+
 /** Refetches calendar data as soon as the server finishes a sync, e.g. after
  *  an event was added in Google Calendar or Notion. */
 export function useCalendarChanges(enabled: boolean) {
@@ -66,46 +125,6 @@ export function useCalendarChanges(enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) return;
-    const controller = new AbortController();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const refresh = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        invalidateEvents(queryClient);
-        void queryClient.invalidateQueries({ queryKey: accountsQueryKey() });
-      }, COALESCE_MS);
-    };
-
-    void (async () => {
-      let failures = 0;
-      let connectedBefore = false;
-      while (!controller.signal.aborted) {
-        try {
-          const { response } = await client.get({
-            url: CHANGES_URL,
-            parseAs: "stream",
-            signal: controller.signal,
-          });
-          if (response?.ok && response.body) {
-            failures = 0;
-            // Changes may have landed while disconnected.
-            if (connectedBefore) refresh();
-            connectedBefore = true;
-            for await (const name of readServerEvents(response.body)) {
-              if (name === "changed") refresh();
-            }
-          }
-        } catch {
-          // Dropped connection or network error; reconnect below.
-        }
-        if (controller.signal.aborted) return;
-        await wait(reconnectDelay(failures++), controller.signal);
-      }
-    })();
-
-    return () => {
-      controller.abort();
-      clearTimeout(timer);
-    };
+    return subscribe(queryClient);
   }, [enabled, queryClient]);
 }

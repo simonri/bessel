@@ -4,6 +4,7 @@ import {
   getHoldingsV1InvestmentsHoldingsGetOptions,
   listSecuritiesV1InvestmentsSecuritiesGetOptions,
   listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
+  listTradesV1InvestmentsTradesGetQueryKey,
 } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import {
@@ -55,6 +56,10 @@ export function SecuritiesTab() {
       void queryClient.invalidateQueries({
         queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client })
           .queryKey,
+      });
+      // Its trades are deleted with it.
+      void queryClient.invalidateQueries({
+        queryKey: listTradesV1InvestmentsTradesGetQueryKey({ client }),
       });
       toast.success("Security deleted");
       setDeleteTarget(null);

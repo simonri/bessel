@@ -17,9 +17,10 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import { mutationFamily } from "@/lib/optimistic";
 import type {
   CalendarAccount,
   CalendarEvent,
@@ -49,6 +50,21 @@ const EVENTS_REFRESH_MS = 5 * 60_000;
 // Module-level so connect/sync actions can extend the window the accounts query
 // polls in; the query's refetchInterval re-reads it after every fetch.
 let pollUntil = 0;
+// When an account was first seen still waiting on its first sync.
+let firstPendingAt: number | null = null;
+
+/** How often to poll accounts: while one has been waiting on its first sync
+ *  since `pendingSince` (for at most a window, in case the job died without
+ *  recording an error), or until `connectPollUntil` after a connect or sync. */
+export function accountsPollInterval(
+  pendingSince: number | null,
+  connectPollUntil: number,
+  now: number,
+): number | false {
+  const awaitingFirstSync =
+    pendingSince !== null && now - pendingSince < CONNECT_POLL_WINDOW_MS;
+  return awaitingFirstSync || now < connectPollUntil ? CONNECT_POLL_MS : false;
+}
 
 function startConnectPolling(queryClient: QueryClient) {
   pollUntil = Date.now() + CONNECT_POLL_WINDOW_MS;
@@ -70,6 +86,21 @@ export function invalidateEvents(queryClient: QueryClient) {
   void queryClient.invalidateQueries({
     predicate: (query) => isEventsQuery(query.queryKey),
   });
+}
+
+/** Every event write shares these, so background refreshes can hold off
+ *  while one is in flight; see useEventMutations. */
+export const EVENT_WRITES = mutationFamily("calendar-events");
+
+export function eventWritesInFlight(queryClient: QueryClient): boolean {
+  return queryClient.isMutating({ mutationKey: EVENT_WRITES.mutationKey }) > 0;
+}
+
+/** A background refresh of events. Skipped while an event write is in flight:
+ *  the fetch could return the server's state before the write and overwrite
+ *  its optimistic change, and the write refetches once it settles anyway. */
+export function refreshEvents(queryClient: QueryClient) {
+  if (!eventWritesInFlight(queryClient)) invalidateEvents(queryClient);
 }
 
 export const accountsQueryKey = () =>
@@ -157,10 +188,13 @@ export function useCalendarData(range: {
   const { data: accountsData } = useQuery({
     ...listCalendarAccountsV1CalendarsAccountsGetOptions({ client }),
     refetchInterval: (query) => {
-      const pending = query.state.data?.accounts.some(
-        (a) => a.last_synced_at === null && a.sync_error === null,
-      );
-      return pending || Date.now() < pollUntil ? CONNECT_POLL_MS : false;
+      const pending =
+        query.state.data?.accounts.some(
+          (a) => a.last_synced_at === null && a.sync_error === null,
+        ) ?? false;
+      const now = Date.now();
+      firstPendingAt = pending ? (firstPendingAt ?? now) : null;
+      return accountsPollInterval(firstPendingAt, pollUntil, now);
     },
     refetchOnWindowFocus: true,
   });
@@ -174,8 +208,11 @@ export function useCalendarData(range: {
     }),
     enabled: (accountsData?.accounts.length ?? 0) > 0,
     placeholderData: keepPreviousData,
-    refetchInterval: EVENTS_REFRESH_MS,
-    refetchOnWindowFocus: true,
+    // Re-read after every cache update, so an optimistic write pauses these
+    // and the refetch that settles it resumes them.
+    refetchInterval: () =>
+      eventWritesInFlight(queryClient) ? false : EVENTS_REFRESH_MS,
+    refetchOnWindowFocus: () => !eventWritesInFlight(queryClient),
   });
 
   // A finished sync shows up as a newer last_synced_at; pull fresh events then.
@@ -185,11 +222,31 @@ export function useCalendarData(range: {
       (a) => a.last_synced_at?.getTime() ?? 0,
     ),
   );
+  // The first value seen is what the events query just loaded with.
+  const seenSync = useRef<number | null>(null);
   useEffect(() => {
-    if (!latestSync) return;
-    invalidateEvents(queryClient);
+    if (!accountsData) return;
+    const previous = seenSync.current;
+    seenSync.current = latestSync;
+    if (previous === null || latestSync <= previous) return;
+    refreshEvents(queryClient);
     pollUntil = 0;
-  }, [latestSync, queryClient]);
+  }, [accountsData, latestSync, queryClient]);
+
+  // A sync that failed records an error instead of a newer last_synced_at.
+  const syncErrors = (accountsData?.accounts ?? [])
+    .filter((a) => a.sync_error)
+    .map((a) => `${a.id}:${a.sync_error}`)
+    .join("|");
+  const seenErrors = useRef<string | null>(null);
+  useEffect(() => {
+    if (!accountsData) return;
+    const previous = seenErrors.current;
+    seenErrors.current = syncErrors;
+    if (previous !== null && syncErrors !== previous && syncErrors) {
+      pollUntil = 0;
+    }
+  }, [accountsData, syncErrors]);
 
   const { accounts, calendars } = toAccounts(accountsData);
   const events = (eventsData?.events ?? []).flatMap((e) => {
@@ -233,11 +290,14 @@ export function useCalendarActions(): CalendarActions {
     onSettled: invalidateAccounts,
   });
 
-  const authorizeGoogle = useMutation(
-    authorizeGoogleV1CalendarsGoogleAuthorizePostMutation({ client }),
-  );
+  // Both report failures where they're called.
+  const authorizeGoogle = useMutation({
+    ...authorizeGoogleV1CalendarsGoogleAuthorizePostMutation({ client }),
+    meta: { errorToast: false },
+  });
   const connectICloud = useMutation({
     ...connectIcloudV1CalendarsIcloudPostMutation({ client }),
+    meta: { errorToast: false },
     onSuccess: () => {
       startConnectPolling(queryClient);
     },

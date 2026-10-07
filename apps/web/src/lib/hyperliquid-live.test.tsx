@@ -4,7 +4,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { atMark, type Position } from "./hyperliquid";
-import { useHyperliquidPerp } from "./hyperliquid-live";
+import { STALE_MS, useHyperliquidPerp } from "./hyperliquid-live";
 
 const USER = "0x31ca8395cf837de08b24da3f660e77761dfb974b";
 
@@ -198,6 +198,66 @@ describe("useHyperliquidPerp", () => {
       { type: "clearinghouseState", user: USER },
       { type: "activeAssetCtx", coin: "BTC" },
     ]);
+  });
+
+  it("keeps backing off while sockets open but never deliver data", async () => {
+    const { result } = render();
+    await waitFor(() => expect(result.current.perp).toBeDefined());
+    vi.useFakeTimers();
+    act(() => FakeSocket.instances[0].open());
+    act(() => FakeSocket.instances[0].close());
+
+    act(() => vi.advanceTimersByTime(1_000));
+    act(() => FakeSocket.instances[1].open());
+    act(() => FakeSocket.instances[1].close());
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(FakeSocket.instances).toHaveLength(2);
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(FakeSocket.instances).toHaveLength(3);
+
+    // Data resets the backoff.
+    act(() => FakeSocket.instances[2].open());
+    act(() =>
+      FakeSocket.instances[2].push("clearinghouseState", {
+        user: USER,
+        clearinghouseState: rawState([]),
+      }),
+    );
+    act(() => FakeSocket.instances[2].close());
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(FakeSocket.instances).toHaveLength(4);
+  });
+
+  it("reconnects when a connection goes quiet", async () => {
+    const { result } = render();
+    await waitFor(() => expect(result.current.perp).toBeDefined());
+    vi.useFakeTimers();
+    const socket = FakeSocket.instances[0];
+    // Closing a dead socket doesn't report back; liveness can't wait for it.
+    socket.close = () => {
+      socket.readyState = 3;
+    };
+    act(() => socket.open());
+
+    act(() => vi.advanceTimersByTime(STALE_MS - 1));
+    expect(result.current.status).toBe("live");
+    act(() => vi.advanceTimersByTime(1));
+    expect(socket.readyState).toBe(3);
+    expect(result.current.status).toBe("offline");
+
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(FakeSocket.instances).toHaveLength(2);
+  });
+
+  it("skips messages that aren't JSON", async () => {
+    const { result } = render();
+    await waitFor(() => expect(result.current.perp).toBeDefined());
+    const socket = FakeSocket.instances[0];
+    act(() => socket.open());
+    expect(() =>
+      act(() => socket.onmessage?.({ data: "not json" })),
+    ).not.toThrow();
+    expect(result.current.status).toBe("live");
   });
 
   it("closes the socket on unmount", async () => {

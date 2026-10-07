@@ -33,6 +33,7 @@ export function NotificationBell() {
       markNotificationReadV1NotificationsNotificationIdReadPost({
         client,
         path: { notification_id: id },
+        throwOnError: true,
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({
@@ -42,7 +43,10 @@ export function NotificationBell() {
 
   const markAllRead = useMutation({
     mutationFn: () =>
-      markAllNotificationsReadV1NotificationsReadAllPost({ client }),
+      markAllNotificationsReadV1NotificationsReadAllPost({
+        client,
+        throwOnError: true,
+      }),
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: listNotificationsV1NotificationsGetQueryKey({ client }),

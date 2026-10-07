@@ -36,7 +36,11 @@ import {
   DescriptionWithAttachments,
   removeMarker,
 } from "@/components/task-attachments";
-import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
+import {
+  STATUS_FIELDS,
+  taskMutationOptions,
+  useTaskCacheHelpers,
+} from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
 import {
   buildTaskPrompt,
@@ -302,8 +306,9 @@ export function TaskDetailDialogController({
 
   const completeMutation = useMutation({
     ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       cache.patchTask(path.task_id, (t) => ({
         ...t,
         status: "done",
@@ -312,17 +317,18 @@ export function TaskDetailDialogController({
       onOpenChange(false);
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path }, context) => {
+      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
       toast.error("Action failed");
     },
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
   });
 
   const reopenMutation = useMutation({
     ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       cache.patchTask(path.task_id, (t) => ({
         ...t,
         status: "todo",
@@ -330,41 +336,44 @@ export function TaskDetailDialogController({
       }));
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path }, context) => {
+      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
       toast.error("Action failed");
     },
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
   });
 
   const updateMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path, body }) => {
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       cache.patchTask(path.task_id, (t) => ({ ...t, ...body }) as TaskSchema);
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path, body }, context) => {
+      cache.restoreFields(
+        path.task_id,
+        context?.previous,
+        Object.keys(body) as (keyof TaskSchema)[],
+      );
       toast.error("Action failed");
     },
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
   });
 
+  // A failed delete brings the task back with the refetch in settle().
   const deleteMutation = useMutation({
     ...deleteTaskV1TasksTaskIdDeleteMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndSnapshot();
+      await cache.cancel();
       cache.removeTask(path.task_id);
       setConfirmDelete(false);
       onOpenChange(false);
-      return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
-      toast.error("Action failed");
-    },
-    onSettled: () => cache.invalidateAll(),
+    onError: () => toast.error("Action failed"),
+    onSettled: () => cache.settle(),
   });
 
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<
@@ -374,9 +383,10 @@ export function TaskDetailDialogController({
     ...deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation({
       client,
     }),
+    ...taskMutationOptions,
     onMutate: async ({ path }) => {
       setDeletingAttachmentId(path.attachment_id);
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       cache.patchTask(path.task_id, (t) => ({
         ...t,
         attachments: (t.attachments ?? []).filter(
@@ -385,13 +395,13 @@ export function TaskDetailDialogController({
       }));
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path }, context) => {
+      cache.restoreFields(path.task_id, context?.previous, ["attachments"]);
       toast.error("Failed to remove attachment");
     },
     onSettled: () => {
       setDeletingAttachmentId(null);
-      cache.invalidateAll();
+      cache.settle();
     },
   });
 

@@ -1,4 +1,4 @@
-import type { CategorySchema } from "@bessel/client";
+import type { CategorySchema, TransactionSchema } from "@bessel/client";
 import {
   listTransactionsV1TransactionsGetQueryKey,
   updateTransactionV1TransactionsTransactionIdPatchMutation,
@@ -16,6 +16,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import {
+  mutationFamily,
+  restoreItemFields,
+  settleWhenIdle,
+} from "@/lib/optimistic";
+
+const transactionWrites = mutationFamily("transactions");
 
 export interface BulkSuggestion {
   description: string;
@@ -92,6 +99,7 @@ export function CategoryCell({
 
   const mutation = useMutation({
     ...updateTransactionV1TransactionsTransactionIdPatchMutation({ client }),
+    ...transactionWrites,
     onMutate: async ({ body }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
@@ -125,17 +133,19 @@ export function CategoryCell({
         });
       }
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, data] of context.previous) {
-          queryClient.setQueryData(key, data);
-        }
-      }
+    onError: (_err, { path }, context) => {
+      restoreItemFields<TransactionSchema>(
+        queryClient,
+        context?.previous,
+        new Set([path.transaction_id]),
+        ["category_id"],
+      );
       toast.error("Failed to update category");
     },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey });
-    },
+    onSettled: () =>
+      settleWhenIdle(queryClient, transactionWrites.mutationKey, () => {
+        void queryClient.invalidateQueries({ queryKey });
+      }),
   });
 
   const currentCategory = categories.find((c) => c.id === categoryId);
