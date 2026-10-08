@@ -112,6 +112,7 @@ import {
   updateCalendarV1CalendarsCalendarIdPatch,
   updateCounterV1CountersCounterIdPatch,
   updateDeviceV1DevicesDeviceIdPatch,
+  updateMeV1AuthMePatch,
   updatePlaceV1PlacesPlaceIdPatch,
   updateProjectV1ProjectsProjectIdPatch,
   updateRecipeV1RecipesRecipeIdPatch,
@@ -409,6 +410,9 @@ import type {
   UpdateDeviceV1DevicesDeviceIdPatchData,
   UpdateDeviceV1DevicesDeviceIdPatchError,
   UpdateDeviceV1DevicesDeviceIdPatchResponse,
+  UpdateMeV1AuthMePatchData,
+  UpdateMeV1AuthMePatchError,
+  UpdateMeV1AuthMePatchResponse,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchError,
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
@@ -532,6 +536,33 @@ export const getMeV1AuthMeGetOptions = (
     },
     queryKey: getMeV1AuthMeGetQueryKey(options),
   });
+
+/**
+ * Update Current User
+ */
+export const updateMeV1AuthMePatchMutation = (
+  options?: Partial<Options<UpdateMeV1AuthMePatchData>>,
+): UseMutationOptions<
+  UpdateMeV1AuthMePatchResponse,
+  UpdateMeV1AuthMePatchError,
+  Options<UpdateMeV1AuthMePatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateMeV1AuthMePatchResponse,
+    UpdateMeV1AuthMePatchError,
+    Options<UpdateMeV1AuthMePatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateMeV1AuthMePatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Ingest Activity Events

@@ -16,7 +16,7 @@ See [CLAUDE.md](CLAUDE.md) for architecture overview and development commands.
 
 ## Connect Claude (MCP)
 
-Bessel runs a remote MCP server, so Claude can read your Bessel data: calendar, recipes, tasks, sleep, workouts and computer activity. It's read-only; Claude can't change anything.
+Bessel runs a remote MCP server, so Claude can work with your Bessel data. It can plan your day from your tasks and calendar, find free time, add, update and complete tasks, search and save recipes, and read your sleep, workouts and computer activity. It can't delete anything, and it has no access to money or investments. In Claude's prompt menu, **Plan my day** and **Weekly review** start those conversations.
 
 **Server URL:** `https://api.getbessel.com/mcp`
 

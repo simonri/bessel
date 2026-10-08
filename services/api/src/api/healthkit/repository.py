@@ -77,10 +77,13 @@ class HealthKitWorkoutRepository(RepositoryBase[HealthKitWorkout], RepositoryIDM
     result = await self.session.execute(statement)
     return result.rowcount
 
-  def get_list_statement(self, user_id: UUID) -> Select[tuple[HealthKitWorkout]]:
-    return (
-      self.get_base_statement().where(HealthKitWorkout.user_id == user_id, HealthKitWorkout.deleted_at.is_(None)).order_by(HealthKitWorkout.start_date.desc())
-    )
+  def get_list_statement(self, user_id: UUID, *, since: datetime | None = None, until: datetime | None = None) -> Select[tuple[HealthKitWorkout]]:
+    statement = self.get_base_statement().where(HealthKitWorkout.user_id == user_id, HealthKitWorkout.deleted_at.is_(None))
+    if since is not None:
+      statement = statement.where(HealthKitWorkout.start_date >= since)
+    if until is not None:
+      statement = statement.where(HealthKitWorkout.start_date < until)
+    return statement.order_by(HealthKitWorkout.start_date.desc())
 
   async def list_started_between(self, user_id: UUID, start: datetime, end: datetime) -> Sequence[HealthKitWorkout]:
     """Workouts that started in [start, end), oldest first."""

@@ -8,17 +8,14 @@ from fastapi import APIRouter, Depends, Query, Response, UploadFile
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import detect_image_type, read_upload
-from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound, ValidationError
-from api.models.project import Project
 from api.models.task import Task
 from api.models.task_attachment import TaskAttachment
 from api.postgres import AsyncSession, DBSession
-from api.projects.repository import ProjectRepository
 from api.tasks.attachment_storage import delete_attachment_file, read_attachment_file, save_attachment_file
-from api.tasks.recurrence import compute_next_due_date
 from api.tasks.repository import TaskAttachmentRepository, TaskRepository
 from api.tasks.schemas import TaskAttachmentSchema, TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
+from api.tasks.service import task_service
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -48,16 +45,6 @@ class TaskSortProperty(StrEnum):
 
 
 sorting_getter = SortingGetter(TaskSortProperty, default_sorting=["-created_at"])
-
-
-async def _resolve_project(session: AsyncSession, name: str | None, user_id: UUID) -> Project | None:
-  if name is None:
-    return None
-  repo = ProjectRepository.from_session(session)
-  project = await repo.get_by_name(name, user_id=user_id)
-  if project is None:
-    project = await repo.create(Project(name=name, user_id=user_id), flush=True)
-  return project
 
 
 @router.get(
@@ -111,21 +98,7 @@ async def create_task(
   session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
-  repo = TaskRepository.from_session(session)
-  task_data = body.model_dump()
-  project = await _resolve_project(session, task_data.pop("project", None), current_user.id)
-  task_data["project_id"] = project.id if project else None
-  task_data["user_id"] = current_user.id
-  if task_data.get("position") is None:
-    max_pos = await repo.get_max_position(current_user.id)
-    task_data["position"] = (max_pos or 0) + 1000
-  task = Task(**task_data)
-  task.project_obj = project
-  # A freshly constructed (never queried) object's relationships are
-  # "unloaded" rather than known-empty — reading .attachments below would
-  # otherwise trigger a synchronous lazy-load, which errors under asyncio.
-  task.attachments = []
-  await repo.create(task, flush=True)
+  task = await task_service.create(session, current_user.id, body)
   return TaskSchema.model_validate(task)
 
 
@@ -164,17 +137,8 @@ async def update_task(
   session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskSchema:
-  repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
-
-  update_dict = body.model_dump(exclude_unset=True)
-  if "project" in update_dict:
-    project = await _resolve_project(session, update_dict.pop("project"), current_user.id)
-    update_dict["project_id"] = project.id if project else None
-    task.project_obj = project
-  if update_dict:
-    await repo.update(task, update_dict=update_dict)
-
+  task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  await task_service.update(session, task, body.model_dump(exclude_unset=True))
   return TaskSchema.model_validate(task)
 
 
@@ -284,52 +248,11 @@ async def complete_task(
   session: DBSession,
   current_user: CurrentDBUser,
 ) -> TaskCompleteResponse:
-  repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
-
-  # Idempotency: a duplicate complete (double click, client retry) must not
-  # re-stamp completed_at or spawn another recurring instance.
-  if task.status == "done":
-    return TaskCompleteResponse(completed_task=TaskSchema.model_validate(task), next_task=None)
-
-  await repo.update(task, update_dict={"status": "done", "completed_at": utc_now()})
-
-  next_task_schema = None
-  if task.is_recurring and task.rrule_frequency:
-    next_due = compute_next_due_date(
-      current_due=task.due_date,
-      frequency=task.rrule_frequency,
-      interval=task.rrule_interval or 1,
-      day_of_week=task.rrule_day_of_week,
-      day_of_month=task.rrule_day_of_month,
-    )
-    max_pos = await repo.get_max_position(current_user.id)
-    next_task = Task(
-      title=task.title,
-      description=task.description,
-      status="todo",
-      priority=task.priority,
-      due_date=next_due,
-      project_id=task.project_id,
-      area=task.area,
-      tags=task.tags,
-      position=(max_pos or 0) + 1000,
-      is_recurring=True,
-      rrule_frequency=task.rrule_frequency,
-      rrule_interval=task.rrule_interval,
-      rrule_day_of_week=task.rrule_day_of_week,
-      rrule_day_of_month=task.rrule_day_of_month,
-      parent_task_id=task.id,
-      user_id=current_user.id,
-    )
-    next_task.project_obj = task.project_obj
-    next_task.attachments = []
-    await repo.create(next_task, flush=True)
-    next_task_schema = TaskSchema.model_validate(next_task)
-
+  task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  next_task = await task_service.complete(session, task)
   return TaskCompleteResponse(
     completed_task=TaskSchema.model_validate(task),
-    next_task=next_task_schema,
+    next_task=TaskSchema.model_validate(next_task) if next_task else None,
   )
 
 
@@ -361,19 +284,8 @@ async def undo_complete_task(
 ) -> TaskSchema:
   """Reopen a task and remove the next occurrence completing it spawned, in one
   transaction, so an Undo can't leave a routine both reopened and repeated."""
-  repo = TaskRepository.from_session(session)
-  task = await repo.get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
-  # Idempotency: undoing twice must not delete an occurrence spawned later.
-  if task.status != "done":
-    return TaskSchema.model_validate(task)
-
-  for occurrence in await repo.list_open_occurrences_spawned_by(task):
-    attachment_ids = [attachment.id for attachment in occurrence.attachments]
-    await repo.delete(occurrence)
-    for attachment_id in attachment_ids:
-      await delete_attachment_file(attachment_id)
-
-  await repo.update(task, update_dict={"status": "todo", "completed_at": None})
+  task = await TaskRepository.from_session(session).get_owned_or_404(task_id, current_user.id, not_found_message="Task not found")
+  await task_service.undo_complete(session, task)
   return TaskSchema.model_validate(task)
 
 

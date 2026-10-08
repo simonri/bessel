@@ -112,6 +112,7 @@ from .mark_all_notifications_read_v1_notifications_read_all_post_response_mark_a
   MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost,
 )
 from .me_response import MeResponse
+from .me_update import MeUpdate
 from .monthly_flow import MonthlyFlow
 from .monthly_flow_response import MonthlyFlowResponse
 from .monthly_spending_response import MonthlySpendingResponse
@@ -300,6 +301,7 @@ __all__ = (
   "LocationVisit",
   "MarkAllNotificationsReadV1NotificationsReadAllPostResponseMarkAllNotificationsReadV1NotificationsReadAllPost",
   "MeResponse",
+  "MeUpdate",
   "MonthlyFlow",
   "MonthlyFlowResponse",
   "MonthlySpendingResponse",

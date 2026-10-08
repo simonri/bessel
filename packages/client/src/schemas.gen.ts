@@ -3971,10 +3971,35 @@ export const MeResponseSchema = {
       ],
       title: "Email",
     },
+    timezone: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Timezone",
+    },
   },
   type: "object",
   required: ["id"],
   title: "MeResponse",
+} as const;
+
+export const MeUpdateSchema = {
+  properties: {
+    timezone: {
+      type: "string",
+      maxLength: 64,
+      title: "Timezone",
+      description: "IANA timezone name, e.g. 'Europe/Stockholm'.",
+    },
+  },
+  type: "object",
+  required: ["timezone"],
+  title: "MeUpdate",
 } as const;
 
 export const MonthlyFlowSchema = {

@@ -47,3 +47,9 @@ class ProjectDeviceConfigRepository(RepositoryBase[ProjectDeviceConfig], Reposit
     if existing:
       return await self.update(existing, update_dict={"path": path, "ssh_host": ssh_host}, flush=True)
     return await self.create(ProjectDeviceConfig(project_id=project_id, device_id=device_id, path=path, ssh_host=ssh_host), flush=True)
+
+  async def list_for_projects(self, project_ids: Sequence[UUID]) -> Sequence[ProjectDeviceConfig]:
+    """Every device's config for these projects."""
+    if not project_ids:
+      return []
+    return await self.get_all(self.get_base_statement().where(ProjectDeviceConfig.project_id.in_(project_ids)))

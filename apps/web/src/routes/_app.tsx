@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { EventReminders } from "@/components/calendar/event-reminders";
 import { WindowManager } from "@/components/canvas/window-manager";
+import { useReportTimezone } from "@/hooks/use-report-timezone";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
 import { client } from "@/lib/client";
@@ -20,10 +21,11 @@ function AppLayout() {
   const { isLoading, isAuthenticated, user } = useAuth0();
   const navigate = useNavigate();
 
-  const { isLoading: isUserLoading } = useQuery({
+  const { data: me, isLoading: isUserLoading } = useQuery({
     ...getMeV1AuthMeGetOptions({ client }),
     enabled: isAuthenticated,
   });
+  useReportTimezone(me ? (me.timezone ?? null) : undefined);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
