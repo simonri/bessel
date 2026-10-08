@@ -14,7 +14,7 @@ describe("tasksSentence", () => {
         doneToday: 3,
       }),
     ).toBe(
-      "1 in progress, 2 to review, 2 due today, 1 overdue - 3 tasks done today.",
+      "1 in progress, 2 to review, 2 due today, 1 from earlier - 3 tasks done today.",
     );
   });
 

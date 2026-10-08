@@ -89,10 +89,12 @@ export function NotificationBell() {
               <span
                 aria-hidden
                 className={cn(
-                  "absolute top-1 right-1 size-2 rounded-full bg-primary-400",
+                  "absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary-500 px-1 text-9 font-semibold tabular-nums leading-none text-white",
                   TOPBAR_BADGE_RING,
                 )}
-              />
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
             )}
           </button>
         </TopbarTooltip>

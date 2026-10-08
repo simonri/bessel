@@ -26,7 +26,7 @@ export interface TaskCounts {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-/** "2 due today, 1 overdue - 3 done today", or something kinder when clear. */
+/** "2 due today, 1 from earlier - 3 done today", or something kinder when clear. */
 export function tasksSentence({
   doing,
   inReview,
@@ -38,7 +38,7 @@ export function tasksSentence({
     doing > 0 ? `${doing} in progress` : null,
     inReview > 0 ? `${inReview} to review` : null,
     dueToday > 0 ? `${dueToday} due today` : null,
-    overdue > 0 ? `${overdue} overdue` : null,
+    overdue > 0 ? `${overdue} from earlier` : null,
   ].filter(Boolean);
   const done = doneToday > 0 ? `${plural(doneToday, "task")} done today` : null;
   if (ahead.length === 0)
@@ -101,14 +101,7 @@ export function TasksPage() {
           value={counts.dueToday + counts.doing}
           hint={counts.doing > 0 ? `${counts.doing} in progress` : undefined}
         />
-        <StatTile
-          label="Overdue"
-          value={
-            <span className={counts.overdue > 0 ? "text-rose-300" : undefined}>
-              {counts.overdue}
-            </span>
-          }
-        />
+        <StatTile label="From earlier" value={counts.overdue} />
         <StatTile
           label="Done today"
           value={progress.doneToday}

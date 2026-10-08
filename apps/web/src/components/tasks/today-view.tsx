@@ -1,16 +1,10 @@
 import type { TaskSchema } from "@bessel/client";
-import { cn } from "@/lib/utils";
 import { TaskRow } from "./task-row";
 import { groupTasksByWhen, type WhenGroup } from "./today-groups";
 
 function GroupHeader({ group }: { group: WhenGroup }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1.5 px-2.5 pb-1 text-11 font-semibold",
-        group.key === "overdue" ? "text-rose-300/80" : "text-white/45",
-      )}
-    >
+    <div className="flex items-center gap-1.5 px-2.5 pb-1 text-11 font-semibold text-white/45">
       {group.key === "doing" && (
         <span
           aria-hidden

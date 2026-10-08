@@ -7,7 +7,7 @@ const CHIP =
   "inline-flex h-5 items-center gap-1 rounded-full px-2 text-11 font-medium";
 
 const DUE_TONE: Record<DueTone, string> = {
-  overdue: "bg-rose-500/15 text-rose-300",
+  overdue: "bg-white/[0.08] text-white/75",
   today: "bg-primary-500/15 text-primary-300",
   upcoming: "bg-white/[0.06] text-white/55",
 };

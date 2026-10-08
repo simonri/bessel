@@ -125,11 +125,15 @@ export function describeDue(
   if (!value) return null;
   const days = daysUntilDue(value, now);
   if (days < 0) {
-    const late = -days;
-    return {
-      label: late === 1 ? "1 day late" : `${late} days late`,
-      tone: "overdue",
-    };
+    // Said plainly, without counting up how late it is.
+    const date = parseDueDate(value);
+    const label =
+      days === -1
+        ? "Yesterday"
+        : days > -7
+          ? `Since ${format(date, "EEE")}`
+          : `Since ${format(date, "MMM d")}`;
+    return { label, tone: "overdue" };
   }
   if (days === 0) return { label: "Today", tone: "today" };
   if (days === 1) return { label: "Tomorrow", tone: "upcoming" };

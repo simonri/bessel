@@ -75,7 +75,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   investments: fromModule("investments"),
   obsidian: fromModule("obsidian", true),
   sessions: {
-    title: "Sessions",
+    title: "Agents",
     icon: Bot,
     component: lazy(() =>
       import("@/components/claude-sessions/sessions-page").then((m) => ({

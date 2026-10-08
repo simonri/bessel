@@ -203,7 +203,7 @@ function TasksBlock({ now }: { now: Date }) {
             onComplete={actions.complete}
           />
           <TaskList
-            label="Due today"
+            label="To do today"
             tasks={due}
             onSelect={select}
             onComplete={actions.complete}

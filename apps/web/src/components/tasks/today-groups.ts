@@ -19,7 +19,7 @@ export interface WhenGroup {
 const GROUPS: { key: WhenKey; label: string }[] = [
   { key: "doing", label: "Doing" },
   { key: "review", label: "In review" },
-  { key: "overdue", label: "Overdue" },
+  { key: "overdue", label: "From earlier" },
   { key: "today", label: "Today" },
   { key: "week", label: "This week" },
   { key: "later", label: "Later" },

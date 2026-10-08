@@ -76,7 +76,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     noPadding: true,
   },
   travel: {
-    title: "Travel",
+    title: "Saved places",
     icon: MapPin,
     component: lazy(() =>
       import("@/routes/_app/travel").then((m) => ({
@@ -86,7 +86,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ...COMPACT_SIZE,
   },
   activity: {
-    title: "Activity",
+    title: "Screen time",
     icon: Activity,
     component: lazy(() =>
       import("@/routes/_app/activity").then((m) => ({
@@ -116,7 +116,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ...COMPACT_SIZE,
   },
   hyperliquid: {
-    title: "Hyperliquid",
+    title: "Trading",
     icon: ChartCandlestick,
     component: lazy(() =>
       import("@/routes/_app/hyperliquid").then((m) => ({
@@ -126,7 +126,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ...SESSION_SIZE,
   },
   googleTimeline: {
-    title: "Google Timeline",
+    title: "Location history",
     icon: Route,
     component: lazy(() =>
       import("@/routes/_app/google-timeline").then((m) => ({
@@ -224,7 +224,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     noPadding: true,
   },
   obsidian: {
-    title: "Obsidian",
+    title: "Notes",
     icon: ObsidianIcon,
     component: lazy(() =>
       import("@/components/obsidian/obsidian-page").then((m) => ({
