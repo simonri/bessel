@@ -13,6 +13,7 @@ import {
   ProjectChip,
   RecurrenceChip,
 } from "./task-chips";
+import { SelectBox, useTaskSelection } from "./task-selection";
 import { useDelayedComplete } from "./use-delayed-complete";
 
 export function TaskMeta({ task }: { task: TaskSchema }) {
@@ -47,17 +48,25 @@ export function TaskRow({
   const done = isDoneStatus(task.status);
   const { phase, complete } = useDelayedComplete(onComplete);
   const checked = done || phase !== "idle";
+  const selection = useTaskSelection();
+  const selecting = selection !== null && !done;
+  const picked = selecting && selection.selected.has(task.id);
+  const activate = selecting ? () => selection.toggle(task.id) : onSelect;
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: a row holding its own checkbox button can't itself be a <button>
     <div
       role="button"
       tabIndex={0}
-      onClick={onSelect}
+      aria-pressed={selecting ? picked : undefined}
+      onClick={activate}
       onKeyDown={(e) => {
-        if (e.key === "Enter") onSelect();
+        if (e.key === "Enter" || (selecting && e.key === " ")) {
+          e.preventDefault();
+          activate();
+        }
       }}
-      draggable={draggableToClaude}
+      draggable={draggableToClaude && !selecting}
       onDragStart={
         draggableToClaude
           ? (e) => {
@@ -73,9 +82,12 @@ export function TaskRow({
       className={cn(
         "group flex cursor-pointer items-start gap-3 rounded-xl px-2.5 py-2 outline-none transition-[background-color,opacity,transform] duration-200 ease-out hover:bg-white/[0.05] focus-visible:bg-white/[0.06]",
         phase === "leaving" && "pointer-events-none -translate-x-1 opacity-0",
+        picked && "bg-primary-500/[0.08] hover:bg-primary-500/[0.12]",
       )}
     >
-      {done && onReopen ? (
+      {selecting ? (
+        <SelectBox checked={picked} className="mt-px" />
+      ) : done && onReopen ? (
         <button
           type="button"
           aria-label="Reopen"

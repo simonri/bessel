@@ -153,6 +153,8 @@ const bridge = {
       ipcRenderer.invoke("claudeSessions:end", key),
     rename: (key: string, name: string): Promise<ClaudeSessionView> =>
       ipcRenderer.invoke("claudeSessions:rename", key, name),
+    send: (key: string, text: string): Promise<void> =>
+      ipcRenderer.invoke("claudeSessions:send", key, text),
     remove: (key: string): Promise<void> =>
       ipcRenderer.invoke("claudeSessions:remove", key),
     adopt: (bgId: string, projectId?: string): Promise<ClaudeSessionView> =>

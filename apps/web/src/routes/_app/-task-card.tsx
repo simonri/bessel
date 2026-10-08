@@ -3,6 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CompleteCheck } from "@/components/tasks/complete-check";
 import { TaskMeta } from "@/components/tasks/task-row";
+import { SelectBox, useTaskSelection } from "@/components/tasks/task-selection";
 import { useDelayedComplete } from "@/components/tasks/use-delayed-complete";
 import { cn } from "@/lib/utils";
 
@@ -45,30 +46,41 @@ export function TaskCard({
     isDragging,
   } = useSortable({ id: task.id, data: { task } });
   const { phase, complete } = useDelayedComplete(onComplete);
+  const selection = useTaskSelection();
+  const picked = selection?.selected.has(task.id) ?? false;
 
   return (
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: dnd-kit's attributes make this a role="button"
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
-      {...listeners}
-      onClick={onSelect}
+      // No dragging while picking tasks: a press is a toggle.
+      {...(selection ? {} : listeners)}
+      aria-pressed={selection ? picked : undefined}
+      onClick={selection ? () => selection.toggle(task.id) : onSelect}
       className={cn(
         CARD,
         "cursor-grab last:mb-3 active:cursor-grabbing pointer-fine:hover:bg-white/[0.07] pointer-fine:hover:ring-white/10",
         isDragging && "opacity-30",
+        selection && "cursor-pointer active:cursor-pointer",
+        picked && "bg-primary-500/[0.1] ring-primary-400/40",
         phase === "leaving" && "pointer-events-none scale-[0.98] opacity-0",
       )}
     >
       <CardBody
         task={task}
         check={
-          <CompleteCheck
-            checked={phase !== "idle"}
-            onToggle={complete}
-            label={`Complete ${task.title}`}
-            className="mt-px"
-          />
+          selection ? (
+            <SelectBox checked={picked} className="mt-px" />
+          ) : (
+            <CompleteCheck
+              checked={phase !== "idle"}
+              onToggle={complete}
+              label={`Complete ${task.title}`}
+              className="mt-px"
+            />
+          )
         }
       />
     </div>

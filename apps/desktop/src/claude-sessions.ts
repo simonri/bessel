@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { app, BrowserWindow, dialog, Notification } from "electron";
+import * as pty from "node-pty";
 import {
   agentStatus,
   appendTail,
@@ -49,6 +50,13 @@ const CONVERSATION_LIMIT = 25;
 // Only the tail matters (the latest Remote Control URL), and a long-running
 // session's log can be large.
 const LOGS_TAIL_CHARS = 256 * 1024;
+// Sending a message attaches invisibly, waits for the screen to settle,
+// pastes, submits and detaches (detaching leaves the session running).
+const SEND_SETTLE_MS = 800;
+const SEND_ATTACH_TIMEOUT_MS = 15_000;
+const SEND_SUBMIT_DELAY_MS = 400;
+const SEND_DETACH_DELAY_MS = 1_500;
+const MAX_MESSAGE_LENGTH = 100_000;
 
 interface StoreFile {
   sessions: StoredClaudeSession[];
@@ -287,6 +295,70 @@ class ClaudeSessionManager {
       this.publish();
     }
     return this.view(session);
+  }
+
+  /**
+   * Sends `text` to a session as one message, as if typed into it. Only a
+   * session that's idle (or a fresh one waiting for its first message) takes
+   * it, so nothing in progress is interrupted.
+   */
+  async send(key: string, text: string): Promise<void> {
+    const session = this.require(key);
+    if (!text.trim() || text.length > MAX_MESSAGE_LENGTH)
+      throw new Error("Nothing to send, or too much at once");
+    const status = this.status(session);
+    if (status !== "idle" && status !== "waiting")
+      throw new Error(`${session.name} isn't free right now`);
+
+    const term = pty.spawn("claude", ["attach", session.bgId], {
+      name: "xterm-256color",
+      cols: 120,
+      rows: 40,
+      cwd: session.cwd,
+      env: (await this.deps.childEnv()) as Record<string, string>,
+    });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        let quiet: ReturnType<typeof setTimeout> | null = null;
+        const giveUp = setTimeout(() => {
+          sub.dispose();
+          exit.dispose();
+          reject(new Error(`Couldn't reach ${session.name}`));
+        }, SEND_ATTACH_TIMEOUT_MS);
+        const ready = () => {
+          clearTimeout(giveUp);
+          sub.dispose();
+          exit.dispose();
+          resolve();
+        };
+        // Ready once it has drawn its screen and gone quiet.
+        const sub = term.onData(() => {
+          if (quiet) clearTimeout(quiet);
+          quiet = setTimeout(ready, SEND_SETTLE_MS);
+        });
+        const exit = term.onExit(() => {
+          clearTimeout(giveUp);
+          if (quiet) clearTimeout(quiet);
+          reject(
+            new Error(`${session.name} closed before the message was sent`),
+          );
+        });
+      });
+      // Bracketed paste keeps line breaks inside the one message; escape
+      // characters are dropped so the text can't end the paste early.
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping escapes is the point
+      const pasted = text.replace(/\x1b/g, "");
+      term.write(`\x1b[200~${pasted}\x1b[201~`);
+      await new Promise((resolve) => setTimeout(resolve, SEND_SUBMIT_DELAY_MS));
+      term.write("\r");
+      await new Promise((resolve) => setTimeout(resolve, SEND_DETACH_DELAY_MS));
+    } finally {
+      term.kill();
+    }
+    this.deps.log(
+      `claude session sent message key=${session.key} chars=${text.length}`,
+    );
+    await this.refresh();
   }
 
   remove(key: string): void {
@@ -746,6 +818,9 @@ export function registerClaudeSessionHandlers(deps: ClaudeSessionDeps): void {
   );
   ipcHandle("claudeSessions:rename", (_, key: string, name: string) =>
     requireManager().rename(key, String(name ?? "")),
+  );
+  ipcHandle("claudeSessions:send", (_, key: string, text: string) =>
+    requireManager().send(key, String(text ?? "")),
   );
   ipcHandle("claudeSessions:remove", (_, key: string) =>
     requireManager().remove(key),

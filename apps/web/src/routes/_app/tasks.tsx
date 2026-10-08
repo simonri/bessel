@@ -37,8 +37,14 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Folder } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Folder,
+  ListChecks,
+  Send,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
@@ -49,7 +55,9 @@ import {
 } from "@/components/tasks/progress-ring";
 import { QuickAddTask } from "@/components/tasks/quick-add";
 import { RoutinesStrip } from "@/components/tasks/routines-strip";
+import { SendToClaudeDialog } from "@/components/tasks/send-to-claude";
 import { TaskRow } from "@/components/tasks/task-row";
+import { TaskSelectionProvider } from "@/components/tasks/task-selection";
 import { TodayView } from "@/components/tasks/today-view";
 import {
   taskMutationOptions,
@@ -467,6 +475,59 @@ function Tasks() {
   };
 
   const allTasks = data?.items ?? [];
+
+  // Picking tasks to hand to Claude: only open tasks, on the desktop app.
+  const canSelect = isDesktop && showsOpenTasks;
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+  const [sendOpen, setSendOpen] = useState(false);
+  const stopSelecting = useCallback(() => {
+    setSelecting(false);
+    setPicked(new Set());
+  }, []);
+  const togglePicked = useCallback((taskId: string) => {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  }, []);
+  const selection = useMemo(
+    () => ({
+      active: selecting && canSelect,
+      selected: picked,
+      toggle: togglePicked,
+    }),
+    [selecting, canSelect, picked, togglePicked],
+  );
+  const pickedTasks = allTasks.filter((t) => picked.has(t.id));
+  // Leaving the open views ends selecting; tasks that finished drop out.
+  useEffect(() => {
+    if (!canSelect) stopSelecting();
+  }, [canSelect, stopSelecting]);
+
+  useEffect(() => {
+    if (!selection.active) return;
+    const onKey = (e: KeyboardEvent) => {
+      const typing = (e.target as HTMLElement | null)?.closest(
+        "input, textarea, [contenteditable=true]",
+      );
+      if (e.key === "Escape" && !sendOpen) stopSelecting();
+      else if (e.key === "a" && (e.metaKey || e.ctrlKey) && !typing) {
+        e.preventDefault();
+        setPicked(
+          new Set(
+            allTasks
+              .filter((t) => t.status !== "done" && t.status !== "cancelled")
+              .map((t) => t.id),
+          ),
+        );
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selection.active, sendOpen, allTasks, stopSelecting]);
   const allTasksRef = useRef(allTasks);
   allTasksRef.current = allTasks;
 
@@ -522,246 +583,307 @@ function Tasks() {
   })();
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      {/* Header: views, project filter, today's progress, quick add */}
-      <div className="flex shrink-0 flex-col gap-3 px-3 pt-3 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="flex shrink-0 items-center rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
-            {VIEW_TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                aria-pressed={viewTab === tab.value}
-                className={cn(
-                  "h-6 rounded-full px-3 text-xs font-medium transition-[background-color,color] duration-150",
-                  viewTab === tab.value
-                    ? "bg-white/[0.12] text-white/90 shadow-sm"
-                    : "text-white/45 hover:text-white/75",
-                )}
-                onClick={() => {
-                  setViewTab(tab.value);
-                  // "All" should mean every task, not whatever project was
-                  // last selected while on another view — otherwise a
-                  // leftover project filter silently hides tasks from it.
-                  if (tab.value === "all") setProjectFilter(null);
-                  setPage(1);
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          {projects.length > 0 && (
-            <div
-              ref={projectFilterAreaRef}
-              className="relative flex flex-1 min-w-0 items-center justify-end overflow-hidden pb-px"
-            >
-              <div
-                ref={projectPillsMeasureRef}
-                className="pointer-events-none invisible absolute right-0 flex items-center gap-1"
-                aria-hidden="true"
-              >
-                <ProjectFilterButton
-                  active={projectFilter === null}
-                  onClick={() => {}}
-                >
-                  All
-                </ProjectFilterButton>
-                {projects.map((p) => (
-                  <ProjectFilterButton
-                    key={p.id}
-                    active={false}
-                    onClick={() => {}}
-                  >
-                    {p.name}
-                  </ProjectFilterButton>
-                ))}
-              </div>
-              {projectFilterCollapsed ? (
-                <Select
-                  value={projectFilter ?? ALL_PROJECTS_VALUE}
-                  onValueChange={(value) => {
-                    setProjectFilter(
-                      value === ALL_PROJECTS_VALUE ? null : value,
-                    );
+    <TaskSelectionProvider value={selection}>
+      <div className="flex h-full flex-col overflow-hidden">
+        {/* Header: views, project filter, today's progress, quick add */}
+        <div className="flex shrink-0 flex-col gap-3 px-3 pt-3 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex shrink-0 items-center rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
+              {VIEW_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  aria-pressed={viewTab === tab.value}
+                  className={cn(
+                    "h-6 rounded-full px-3 text-xs font-medium transition-[background-color,color] duration-150",
+                    viewTab === tab.value
+                      ? "bg-white/[0.12] text-white/90 shadow-sm"
+                      : "text-white/45 hover:text-white/75",
+                  )}
+                  onClick={() => {
+                    setViewTab(tab.value);
+                    // "All" should mean every task, not whatever project was
+                    // last selected while on another view — otherwise a
+                    // leftover project filter silently hides tasks from it.
+                    if (tab.value === "all") setProjectFilter(null);
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger
-                    size="xs"
-                    className="w-auto max-w-32 shrink-0 gap-1 border-0 bg-transparent font-medium text-white/60 shadow-none transition-colors hover:bg-white/[0.06] hover:text-white/80 dark:bg-transparent dark:hover:bg-white/[0.06]"
-                  >
-                    <Folder className="size-3" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL_PROJECTS_VALUE}>All</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.name}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="flex items-center gap-1">
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {projects.length > 0 && (
+              <div
+                ref={projectFilterAreaRef}
+                className="relative flex flex-1 min-w-0 items-center justify-end overflow-hidden pb-px"
+              >
+                <div
+                  ref={projectPillsMeasureRef}
+                  className="pointer-events-none invisible absolute right-0 flex items-center gap-1"
+                  aria-hidden="true"
+                >
                   <ProjectFilterButton
                     active={projectFilter === null}
-                    onClick={() => {
-                      setProjectFilter(null);
-                      setPage(1);
-                    }}
+                    onClick={() => {}}
                   >
                     All
                   </ProjectFilterButton>
                   {projects.map((p) => (
                     <ProjectFilterButton
                       key={p.id}
-                      project={p.name}
-                      active={projectFilter === p.name}
-                      onClick={() => {
-                        setProjectFilter(p.name);
-                        setPage(1);
-                      }}
+                      active={false}
+                      onClick={() => {}}
                     >
                       {p.name}
                     </ProjectFilterButton>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
-          {showsOpenTasks && (
-            <ProgressRing done={progress.doneToday} total={progress.total} />
+                {projectFilterCollapsed ? (
+                  <Select
+                    value={projectFilter ?? ALL_PROJECTS_VALUE}
+                    onValueChange={(value) => {
+                      setProjectFilter(
+                        value === ALL_PROJECTS_VALUE ? null : value,
+                      );
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger
+                      size="xs"
+                      className="w-auto max-w-32 shrink-0 gap-1 border-0 bg-transparent font-medium text-white/60 shadow-none transition-colors hover:bg-white/[0.06] hover:text-white/80 dark:bg-transparent dark:hover:bg-white/[0.06]"
+                    >
+                      <Folder className="size-3" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_PROJECTS_VALUE}>All</SelectItem>
+                      {projects.map((p) => (
+                        <SelectItem key={p.id} value={p.name}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <ProjectFilterButton
+                      active={projectFilter === null}
+                      onClick={() => {
+                        setProjectFilter(null);
+                        setPage(1);
+                      }}
+                    >
+                      All
+                    </ProjectFilterButton>
+                    {projects.map((p) => (
+                      <ProjectFilterButton
+                        key={p.id}
+                        project={p.name}
+                        active={projectFilter === p.name}
+                        onClick={() => {
+                          setProjectFilter(p.name);
+                          setPage(1);
+                        }}
+                      >
+                        {p.name}
+                      </ProjectFilterButton>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {showsOpenTasks && (
+              <ProgressRing done={progress.doneToday} total={progress.total} />
+            )}
+            {canSelect && (
+              <button
+                type="button"
+                onClick={() =>
+                  selecting ? stopSelecting() : setSelecting(true)
+                }
+                aria-pressed={selecting}
+                title="Pick tasks to send to Claude"
+                className={cn(
+                  "flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors duration-150",
+                  selecting
+                    ? "bg-primary-500/15 text-primary-200"
+                    : "text-white/50 hover:bg-white/[0.06] hover:text-white/80",
+                )}
+              >
+                <ListChecks className="size-3.5" />
+                {selecting ? "Done" : "Select"}
+              </button>
+            )}
+          </div>
+          {viewTab !== "done" && (
+            <QuickAddTask defaultProject={projectFilter} />
           )}
         </div>
-        {viewTab !== "done" && <QuickAddTask defaultProject={projectFilter} />}
-      </div>
 
-      {/* Content */}
-      <div className="flex min-h-0 flex-1 flex-col px-3">
-        {isLoading ? (
-          <div className="flex flex-1 flex-col gap-2 pt-1">
-            {[0, 1, 2, 3].map((row) => (
-              <Skeleton key={row} className="h-11 w-full rounded-xl" />
-            ))}
-          </div>
-        ) : viewTab === "today" ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <RoutinesStrip
-              tasks={repeatingTasks}
-              onSelectTask={handleSelectTask}
-              onCompleteTask={handleCompleteTask}
-            />
-            <TodayView
-              tasks={allTasks}
-              onSelectTask={handleSelectTask}
-              onCompleteTask={handleCompleteTask}
-              draggableToClaude={isDesktop}
-            />
-          </div>
-        ) : viewTab === "board" && boardTasks ? (
-          allTasks.length === 0 ? (
-            <FirstTaskHint />
-          ) : (
+        {/* Content */}
+        <div className="flex min-h-0 flex-1 flex-col px-3">
+          {isLoading ? (
+            <div className="flex flex-1 flex-col gap-2 pt-1">
+              {[0, 1, 2, 3].map((row) => (
+                <Skeleton key={row} className="h-11 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : viewTab === "today" ? (
             <div className="flex min-h-0 flex-1 flex-col gap-3">
               <RoutinesStrip
                 tasks={repeatingTasks}
                 onSelectTask={handleSelectTask}
                 onCompleteTask={handleCompleteTask}
               />
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-                onDragCancel={() => {
-                  window.dispatchEvent(new CustomEvent("bessel:task-drag-end"));
-                  setActiveTask(null);
-                  setLocalOrder(null);
-                }}
-              >
-                <div className="flex gap-4 flex-1 min-h-0">
-                  {BOARD_COLUMNS.map((col) => (
-                    <BoardColumn
-                      key={col}
-                      status={col}
-                      tasks={(liveBoardTasks ?? boardTasks)[col]}
-                      onSelectTask={handleSelectTask}
-                      onCompleteTask={handleCompleteTask}
-                    />
-                  ))}
-                </div>
-                {typeof document !== "undefined" &&
-                  createPortal(
-                    <DragOverlay dropAnimation={dropAnimationConfig}>
-                      {activeTask ? <DragCard task={activeTask} /> : null}
-                    </DragOverlay>,
-                    document.body,
-                  )}
-              </DndContext>
+              <TodayView
+                tasks={allTasks}
+                onSelectTask={handleSelectTask}
+                onCompleteTask={handleCompleteTask}
+                draggableToClaude={isDesktop}
+              />
             </div>
-          )
-        ) : (
-          /* Done / All list view */
-          <div className="min-h-0 flex-1 overflow-y-auto pb-3">
-            {viewTab === "done" && (
-              <DoneSummary count={progress.doneThisWeek} />
-            )}
-            <div className="mt-2 flex flex-col gap-0.5">
-              {allTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  onSelect={() => handleSelectTask(task)}
-                  onComplete={() => handleCompleteTask(task)}
-                  onReopen={() => handleReopenTask(task)}
-                  draggableToClaude={isDesktop}
+          ) : viewTab === "board" && boardTasks ? (
+            allTasks.length === 0 ? (
+              <FirstTaskHint />
+            ) : (
+              <div className="flex min-h-0 flex-1 flex-col gap-3">
+                <RoutinesStrip
+                  tasks={repeatingTasks}
+                  onSelectTask={handleSelectTask}
+                  onCompleteTask={handleCompleteTask}
                 />
-              ))}
-              {allTasks.length === 0 && (
-                <p className="py-8 text-center text-xs text-white/40">
-                  {viewTab === "done"
-                    ? "Finished tasks land here."
-                    : "No tasks yet - add one above."}
-                </p>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onDragCancel={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("bessel:task-drag-end"),
+                    );
+                    setActiveTask(null);
+                    setLocalOrder(null);
+                  }}
+                >
+                  <div className="flex gap-4 flex-1 min-h-0">
+                    {BOARD_COLUMNS.map((col) => (
+                      <BoardColumn
+                        key={col}
+                        status={col}
+                        tasks={(liveBoardTasks ?? boardTasks)[col]}
+                        onSelectTask={handleSelectTask}
+                        onCompleteTask={handleCompleteTask}
+                      />
+                    ))}
+                  </div>
+                  {typeof document !== "undefined" &&
+                    createPortal(
+                      <DragOverlay dropAnimation={dropAnimationConfig}>
+                        {activeTask ? <DragCard task={activeTask} /> : null}
+                      </DragOverlay>,
+                      document.body,
+                    )}
+                </DndContext>
+              </div>
+            )
+          ) : (
+            /* Done / All list view */
+            <div className="min-h-0 flex-1 overflow-y-auto pb-3">
+              {viewTab === "done" && (
+                <DoneSummary count={progress.doneThisWeek} />
+              )}
+              <div className="mt-2 flex flex-col gap-0.5">
+                {allTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onSelect={() => handleSelectTask(task)}
+                    onComplete={() => handleCompleteTask(task)}
+                    onReopen={() => handleReopenTask(task)}
+                    draggableToClaude={isDesktop}
+                  />
+                ))}
+                {allTasks.length === 0 && (
+                  <p className="py-8 text-center text-xs text-white/40">
+                    {viewTab === "done"
+                      ? "Finished tasks land here."
+                      : "No tasks yet - add one above."}
+                  </p>
+                )}
+              </div>
+              {maxPage > 1 && (
+                <div className="flex items-center justify-end gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </Button>
+                  <span className="text-muted-foreground text-sm tabular-nums">
+                    {page} / {maxPage}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
+                    disabled={page >= maxPage}
+                  >
+                    Next
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
               )}
             </div>
-            {maxPage > 1 && (
-              <div className="flex items-center justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                >
-                  <ChevronLeft className="size-4" />
-                  Previous
-                </Button>
-                <span className="text-muted-foreground text-sm tabular-nums">
-                  {page} / {maxPage}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                  disabled={page >= maxPage}
-                >
-                  Next
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
+          )}
+        </div>
+
+        {selection.active && (
+          <div className="flex shrink-0 items-center gap-3 border-t border-white/[0.06] bg-white/[0.02] px-3 py-2">
+            <span className="min-w-0 flex-1 truncate text-13 text-white/70">
+              {picked.size === 0
+                ? "Click tasks to pick them. Ctrl+A picks all, Esc stops."
+                : `${picked.size} ${picked.size === 1 ? "task" : "tasks"} picked`}
+            </span>
+            {picked.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setPicked(new Set())}
+                className="shrink-0 rounded-md px-2 py-1 text-12 text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white/80"
+              >
+                Clear
+              </button>
             )}
+            <button
+              type="button"
+              disabled={pickedTasks.length === 0}
+              onClick={() => setSendOpen(true)}
+              className="flex h-7 shrink-0 items-center gap-1.5 rounded-lg bg-primary-500 px-3 text-12 font-medium text-white transition-colors duration-150 hover:bg-primary-400 disabled:opacity-40"
+            >
+              <Send className="size-3.5" />
+              Send to Claude…
+            </button>
           </div>
         )}
-      </div>
+        {canSelect && (
+          <SendToClaudeDialog
+            open={sendOpen}
+            onOpenChange={setSendOpen}
+            tasks={pickedTasks}
+            onSent={stopSelecting}
+          />
+        )}
 
-      {/* Task detail dialog */}
-      <TaskDetailDialogController
-        taskId={selectedTaskId}
-        onOpenChange={(open) => !open && setSelectedTaskId(null)}
-      />
-    </div>
+        {/* Task detail dialog */}
+        <TaskDetailDialogController
+          taskId={selectedTaskId}
+          onOpenChange={(open) => !open && setSelectedTaskId(null)}
+        />
+      </div>
+    </TaskSelectionProvider>
   );
 }

@@ -156,6 +156,8 @@ declare global {
         resume: (key: string) => Promise<ClaudeSessionView>;
         end: (key: string) => Promise<void>;
         rename: (key: string, name: string) => Promise<ClaudeSessionView>;
+        /** Types `text` into an idle session as one message. */
+        send: (key: string, text: string) => Promise<void>;
         remove: (key: string) => Promise<void>;
         adopt: (bgId: string, projectId?: string) => Promise<ClaudeSessionView>;
         remoteUrl: (key: string) => Promise<string | null>;
