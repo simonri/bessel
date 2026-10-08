@@ -1,13 +1,10 @@
 import type { TaskSchema } from "@bessel/client";
 import {
-  completeTaskV1TasksTaskIdCompletePostMutation,
   listProjectsV1ProjectsGetOptions,
   listTasksV1TasksGetOptions,
   listTasksV1TasksGetQueryKey,
-  reopenTaskV1TasksTaskIdReopenPostMutation,
   reorderTasksV1TasksReorderPatchMutation,
   TaskStatus,
-  undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
@@ -55,10 +52,10 @@ import { RoutinesStrip } from "@/components/tasks/routines-strip";
 import { TaskRow } from "@/components/tasks/task-row";
 import { TodayView } from "@/components/tasks/today-view";
 import {
-  STATUS_FIELDS,
   taskMutationOptions,
   useTaskCacheHelpers,
 } from "@/hooks/use-task-cache";
+import { useTaskStatusActions } from "@/hooks/use-task-status-actions";
 import { client } from "@/lib/client";
 import { isDesktop } from "@/lib/environment";
 import { buildTaskPrompt, isRepeatingTask } from "@/lib/task-format";
@@ -211,64 +208,7 @@ function Tasks() {
   const queryKey = listTasksV1TasksGetQueryKey({ client });
   const cache = useTaskCacheHelpers();
 
-  const completeMutation = useMutation({
-    ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
-    ...taskMutationOptions,
-    onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndGet(path.task_id);
-      cache.patchTask(path.task_id, (t) => ({
-        ...t,
-        status: "done",
-        completed_at: new Date(),
-      }));
-      return { previous };
-    },
-    onError: (_err, { path }, context) => {
-      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
-      toast.error("Action failed");
-    },
-    onSettled: () => cache.settle(),
-  });
-
-  const reopenMutation = useMutation({
-    ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
-    ...taskMutationOptions,
-    onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndGet(path.task_id);
-      cache.patchTask(path.task_id, (t) => ({
-        ...t,
-        status: "todo",
-        completed_at: null,
-      }));
-      return { previous };
-    },
-    onError: (_err, { path }, context) => {
-      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
-      toast.error("Action failed");
-    },
-    onSettled: () => cache.settle(),
-  });
-
-  // Unlike reopen, also removes the next occurrence completing a repeating
-  // task spawned.
-  const undoCompleteMutation = useMutation({
-    ...undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation({ client }),
-    ...taskMutationOptions,
-    onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndGet(path.task_id);
-      cache.patchTask(path.task_id, (t) => ({
-        ...t,
-        status: "todo",
-        completed_at: null,
-      }));
-      return { previous };
-    },
-    onError: (_err, { path }, context) => {
-      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
-      toast.error("Couldn't undo");
-    },
-    onSettled: () => cache.settle(),
-  });
+  const statusActions = useTaskStatusActions();
 
   // Kept as a bespoke inline patch (rather than cache.patchTask) because a
   // position change needs the whole column re-sorted, not just one item swapped.
@@ -337,28 +277,8 @@ function Tasks() {
     setSelectedTaskId(task.id);
   };
 
-  const handleReopenTask = (task: TaskSchema) => {
-    reopenMutation.mutate({ client, path: { task_id: task.id } });
-  };
-
-  const handleCompleteTask = (task: TaskSchema) => {
-    completeMutation.mutate(
-      { client, path: { task_id: task.id } },
-      {
-        onSuccess: () =>
-          toast(`“${task.title}” done`, {
-            action: {
-              label: "Undo",
-              onClick: () =>
-                undoCompleteMutation.mutate({
-                  client,
-                  path: { task_id: task.id },
-                }),
-            },
-          }),
-      },
-    );
-  };
+  const handleReopenTask = statusActions.reopen;
+  const handleCompleteTask = statusActions.complete;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

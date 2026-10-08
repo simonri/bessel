@@ -1,4 +1,4 @@
-import { Bot, CheckSquare, LayoutGrid } from "lucide-react";
+import { Bot, CheckSquare, LayoutGrid, Sun } from "lucide-react";
 import { lazy } from "react";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
 import type { ModuleKey } from "@/components/canvas/window-manager";
@@ -9,6 +9,7 @@ import { isDesktop } from "@/lib/environment";
 // (terminal PTYs, agent sessions), so switching pages hides/shows rather than
 // unmounts — the same trick the canvas uses for inactive workspaces.
 export type PageKey =
+  | "today"
   | "canvas"
   | "travel"
   | "timeline"
@@ -42,6 +43,15 @@ function fromModule(key: ModuleKey, noPadding?: boolean): PageConfig {
 }
 
 export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
+  today: {
+    title: "Today",
+    icon: Sun,
+    component: lazy(() =>
+      import("@/components/today/today-page").then((m) => ({
+        default: m.TodayPage,
+      })),
+    ),
+  },
   canvas: { title: "Canvas", icon: LayoutGrid },
   travel: fromModule("travel", true),
   timeline: fromModule("timeline"),
@@ -77,6 +87,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
 
 /** Shown as top-level sidebar items. */
 export const PRIMARY_PAGES: PageKey[] = [
+  "today",
   "canvas",
   "travel",
   "calendar",

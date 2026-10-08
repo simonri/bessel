@@ -2,6 +2,15 @@ import type { SleepDailyEntry } from "@bessel/client";
 
 const HOUR = 3600;
 
+// Nights are bucketed noon-to-noon (matches the backend's wake-date
+// attribution), so the window for a selected date runs from noon the day
+// before to noon on the date itself.
+export function localNightBounds(d: Date): [number, number] {
+  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12);
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, 12);
+  return [Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000)];
+}
+
 /** A warm one-liner for how long a night was. */
 export function nightMood(asleepSecs: number): string {
   if (asleepSecs >= 7.5 * HOUR) return "a cosy night ✨";

@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/canvas/command-palette";
 import { ClaudeSessionsBridge } from "@/components/claude-sessions/claude-sessions-bridge";
 import { ShowCanvasContext } from "@/components/claude-sessions/show-canvas-context";
 import { NewSessionPage } from "@/components/new-session-page";
+import { OpenPageContext } from "@/components/open-page-context";
 import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import {
@@ -48,7 +49,7 @@ const ACTIVE_PAGE_KEY = "bessel:activePage";
 
 function loadActivePage(): PageKey {
   const stored = userStorage.getItem(ACTIVE_PAGE_KEY);
-  return isPageKey(stored) ? stored : "canvas";
+  return isPageKey(stored) ? stored : "today";
 }
 
 // Framed exactly like a canvas widget (title bar included) so a module reads
@@ -145,54 +146,58 @@ export function AppShell() {
   }, []);
 
   return (
-    <ShowCanvasContext.Provider value={showCanvas}>
-      <div className="fixed inset-0">
-        <Wallpaper />
-        {isDesktop && <ClaudeSessionsBridge />}
-        {isDesktop && <AgentUsageReporter />}
+    <OpenPageContext.Provider value={selectPage}>
+      <ShowCanvasContext.Provider value={showCanvas}>
+        <div className="fixed inset-0">
+          <Wallpaper />
+          {isDesktop && <ClaudeSessionsBridge />}
+          {isDesktop && <AgentUsageReporter />}
 
-        <div className="relative flex h-full flex-col">
-          <CanvasTopBar />
-          <div className="flex min-h-0 flex-1">
-            <AppSidebar
-              activePage={newSession ? null : activePage}
-              onSelectPage={selectPage}
-              onNewSession={openNewSession}
-            />
-            <main className="relative min-w-0 flex-1">
-              <div
-                className="h-full"
-                style={{
-                  display:
-                    activePage === "canvas" && !newSession ? undefined : "none",
-                }}
-              >
-                <CanvasPage />
-              </div>
-              {newSession ? (
-                <PageFrame icon={SquarePlus} title="New session">
-                  <NewSessionPage
-                    key={newSession.projectId ?? ""}
-                    projectId={newSession.projectId}
-                    onCancel={closeNewSession}
-                    onCreated={showCanvas}
-                  />
-                </PageFrame>
-              ) : (
-                activePage !== "canvas" && (
-                  <ContentPage key={activePage} page={activePage} />
-                )
-              )}
-            </main>
+          <div className="relative flex h-full flex-col">
+            <CanvasTopBar />
+            <div className="flex min-h-0 flex-1">
+              <AppSidebar
+                activePage={newSession ? null : activePage}
+                onSelectPage={selectPage}
+                onNewSession={openNewSession}
+              />
+              <main className="relative min-w-0 flex-1">
+                <div
+                  className="h-full"
+                  style={{
+                    display:
+                      activePage === "canvas" && !newSession
+                        ? undefined
+                        : "none",
+                  }}
+                >
+                  <CanvasPage />
+                </div>
+                {newSession ? (
+                  <PageFrame icon={SquarePlus} title="New session">
+                    <NewSessionPage
+                      key={newSession.projectId ?? ""}
+                      projectId={newSession.projectId}
+                      onCancel={closeNewSession}
+                      onCreated={showCanvas}
+                    />
+                  </PageFrame>
+                ) : (
+                  activePage !== "canvas" && (
+                    <ContentPage key={activePage} page={activePage} />
+                  )
+                )}
+              </main>
+            </div>
           </div>
-        </div>
 
-        <CommandPalette
-          open={paletteOpen}
-          onClose={closePalette}
-          onNavigate={selectPage}
-        />
-      </div>
-    </ShowCanvasContext.Provider>
+          <CommandPalette
+            open={paletteOpen}
+            onClose={closePalette}
+            onNavigate={selectPage}
+          />
+        </div>
+      </ShowCanvasContext.Provider>
+    </OpenPageContext.Provider>
   );
 }

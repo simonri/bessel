@@ -15,6 +15,7 @@ import { RhythmChart } from "@/components/sleep/rhythm-chart";
 import { SleepCards } from "@/components/sleep/sleep-cards";
 import {
   consistencyLabel,
+  localNightBounds,
   nightMood,
   rhythmStats,
 } from "@/components/sleep/sleep-summary";
@@ -34,15 +35,6 @@ export const Route = createFileRoute("/_app/sleep")({
 const RHYTHM_NIGHTS = 14;
 const SKELETON_ROWS = ["awake", "rem", "core", "deep"];
 const CARD = "rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]";
-
-// Nights are bucketed noon-to-noon (matches the backend's wake-date
-// attribution), so the window for a selected date runs from noon the day
-// before to noon on the date itself.
-function localNightBounds(d: Date): [number, number] {
-  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12);
-  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, 12);
-  return [Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000)];
-}
 
 function SleepPage() {
   const today = new Date();
