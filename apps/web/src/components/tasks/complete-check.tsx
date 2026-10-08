@@ -1,10 +1,8 @@
 import { cn } from "@/lib/utils";
 
-const SPARKLE_ANGLES = [0, 60, 120, 180, 240, 300];
-
 /**
  * The round check in front of a task. While `checked` it fills with the
- * accent colour, draws a tick and throws a few sparkles — the small reward
+ * accent colour, draws a tick — the small reward
  * for finishing something.
  */
 export function CompleteCheck({
@@ -36,27 +34,17 @@ export function CompleteCheck({
       )}
     >
       {checked ? (
-        <>
-          <svg viewBox="0 0 16 16" className="size-3 text-white" aria-hidden>
-            <path
-              d="M3.5 8.5l3 3 6-7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="animate-check-draw"
-            />
-          </svg>
-          {SPARKLE_ANGLES.map((angle) => (
-            <span
-              key={angle}
-              aria-hidden
-              className="animate-sparkle pointer-events-none absolute size-1 rounded-full bg-primary-300"
-              style={{ "--angle": `${angle}deg` } as React.CSSProperties}
-            />
-          ))}
-        </>
+        <svg viewBox="0 0 16 16" className="size-3 text-white" aria-hidden>
+          <path
+            d="M3.5 8.5l3 3 6-7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="animate-check-draw"
+          />
+        </svg>
       ) : (
         <svg
           viewBox="0 0 16 16"

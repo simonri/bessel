@@ -89,7 +89,7 @@ export function NotificationBell() {
               <span
                 aria-hidden
                 className={cn(
-                  "absolute top-1 right-1 size-2 rounded-full bg-primary-400 animate-in zoom-in-50 duration-300",
+                  "absolute top-1 right-1 size-2 rounded-full bg-primary-400",
                   TOPBAR_BADGE_RING,
                 )}
               />

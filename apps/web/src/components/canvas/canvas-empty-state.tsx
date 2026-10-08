@@ -41,7 +41,7 @@ export function CanvasEmptyState() {
         aria-label="Empty session"
         className={cn(
           glassSurface({ weight: "medium" }),
-          "pointer-events-auto flex max-w-2xl flex-col items-center gap-4 rounded-2xl border border-white/10 px-8 py-7 text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300",
+          "pointer-events-auto flex max-w-2xl flex-col items-center gap-4 rounded-2xl border border-white/10 px-8 py-7 text-center shadow-2xl",
         )}
       >
         <div className="flex flex-col gap-1">

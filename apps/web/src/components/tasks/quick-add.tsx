@@ -24,7 +24,7 @@ function TokenChip({ token }: { token: QuickToken }) {
   return (
     <span
       className={cn(
-        "flex h-5 shrink-0 items-center gap-1 rounded-full px-1.5 text-11 font-medium animate-in fade-in zoom-in-95 duration-150",
+        "flex h-5 shrink-0 items-center gap-1 rounded-full px-1.5 text-11 font-medium",
         CHIP[token.kind],
         token.kind === "priority" &&
           token.label === "Urgent" &&

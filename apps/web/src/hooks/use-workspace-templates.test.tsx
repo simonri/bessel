@@ -12,15 +12,24 @@ function memoryStorage(): Storage {
   const data = new Map<string, string>();
   return {
     getItem: (key) => data.get(key) ?? null,
-    setItem: (key, value) => { data.set(key, String(value)); },
-    removeItem: (key) => { data.delete(key); },
+    setItem: (key, value) => {
+      data.set(key, String(value));
+    },
+    removeItem: (key) => {
+      data.delete(key);
+    },
     clear: () => data.clear(),
     key: (index) => Array.from(data.keys())[index] ?? null,
-    get length() { return data.size; },
+    get length() {
+      return data.size;
+    },
   };
 }
 
-Object.defineProperty(window, "localStorage", { value: memoryStorage(), configurable: true });
+Object.defineProperty(window, "localStorage", {
+  value: memoryStorage(),
+  configurable: true,
+});
 
 function setup() {
   return renderHook(() => useWorkspaceTemplates(), {

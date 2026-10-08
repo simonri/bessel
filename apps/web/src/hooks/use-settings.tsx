@@ -16,7 +16,7 @@ export interface ActivityMapping {
 }
 
 export type WallpaperColorKey = "zinc" | "neutral" | "stone" | "umber";
-export type WallpaperKey = "image" | "video" | WallpaperColorKey;
+export type WallpaperKey = "image" | WallpaperColorKey;
 export const THEME_KEYS = ["orange", "green", "rose", "lilac", "sky"] as const;
 export type ThemeKey = (typeof THEME_KEYS)[number];
 
@@ -33,6 +33,13 @@ export const WALLPAPER_COLORS: Record<WallpaperColorKey, string> = {
   stone: "oklch(14.7% 0.004 49.25)",
   umber: "oklch(14.7% 0.004 49.3)",
 };
+
+function isWallpaperKey(value: unknown): value is WallpaperKey {
+  return (
+    value === "image" ||
+    (typeof value === "string" && value in WALLPAPER_COLORS)
+  );
+}
 
 export function isWallpaperColor(key: WallpaperKey): key is WallpaperColorKey {
   return key in WALLPAPER_COLORS;
@@ -61,7 +68,7 @@ const LEGACY_KEY = "metron:settings";
 const DEFAULT_SETTINGS: Settings = {
   cryptoPairs: "BTCUSDT",
   activityMappings: [],
-  wallpaper: "video",
+  wallpaper: "image",
   theme: "orange",
   gridGap: 4,
   obsidianVaultPath: null,
@@ -75,6 +82,9 @@ function withDefaults(stored: Partial<Settings>): Settings {
   const settings = { ...DEFAULT_SETTINGS, ...stored };
   // A theme that was removed (or a hand-edited value) would leave no accent.
   if (!isThemeKey(settings.theme)) settings.theme = DEFAULT_SETTINGS.theme;
+  // Moving wallpapers are gone; anyone who had one gets the still image.
+  if (!isWallpaperKey(settings.wallpaper))
+    settings.wallpaper = DEFAULT_SETTINGS.wallpaper;
   return settings;
 }
 

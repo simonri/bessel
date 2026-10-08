@@ -1,6 +1,6 @@
 import { Spinner } from "@bessel/ui/components/spinner";
 import { SquarePlus } from "lucide-react";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { AgentUsageReporter } from "@/components/agent-usage-reporter";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CanvasPage } from "@/components/canvas/canvas-page";
@@ -20,36 +20,6 @@ import { isDesktop } from "@/lib/environment";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 
-// Forward+reverse baked into one clip — browser loops it natively.
-function VideoWallpaper() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Pause while the window is hidden/minimized — otherwise the loop decodes
-  // full-screen video on the GPU for the app's entire (always-running) life.
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const sync = () => {
-      if (document.hidden) video.pause();
-      else video.play().catch(() => {});
-    };
-    sync();
-    document.addEventListener("visibilitychange", sync);
-    return () => document.removeEventListener("visibilitychange", sync);
-  }, []);
-
-  return (
-    <video
-      ref={videoRef}
-      src="/wallpaper-forest-loop.mp4"
-      muted
-      playsInline
-      loop
-      className="absolute inset-0 h-full w-full object-cover"
-    />
-  );
-}
-
 function Wallpaper() {
   const { settings } = useSettings();
   return (
@@ -59,8 +29,6 @@ function Wallpaper() {
           className="absolute inset-0"
           style={{ backgroundColor: WALLPAPER_COLORS[settings.wallpaper] }}
         />
-      ) : settings.wallpaper === "video" ? (
-        <VideoWallpaper />
       ) : (
         <img
           src="/image.png"
@@ -97,7 +65,7 @@ function PageFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-full p-2 animate-in fade-in duration-200 ease-out">
+    <div className="h-full p-2">
       <div className={WINDOW_FRAME}>
         <WindowTitleBar icon={icon} title={title} />
         <div

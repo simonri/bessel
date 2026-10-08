@@ -285,7 +285,7 @@ export function CanvasPage() {
     <div className="flex h-full flex-col">
       <div
         ref={containerRef}
-        className="relative min-h-0 flex-1 overflow-hidden px-2 py-2 animate-in fade-in duration-300 ease-out"
+        className="relative min-h-0 flex-1 overflow-hidden px-2 py-2"
       >
         {mounted &&
           workspaces.map((ws) => (

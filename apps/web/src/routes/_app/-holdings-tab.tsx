@@ -223,7 +223,7 @@ export function HoldingsTab() {
   const maxValue = allocationData[0]?.value ?? 0;
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-150">
+    <div className="space-y-5">
       {summary && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
           <StatTile
