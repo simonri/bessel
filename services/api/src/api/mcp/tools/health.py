@@ -47,13 +47,13 @@ async def get_sleep(ctx: Context, start: Day = "today", end: Day = "today", time
     today = today_in(tz)
     start_day, end_day = parse_day(start, today), parse_day(end, today)
     local_window(start_day, end_day, tz, max_days=MAX_SLEEP_DAYS)
-    # Nights run noon to noon (see healthkit_sleep_service), so the nights that
-    # end on start_day..end_day span exactly these two local noons.
+    # A night belongs to the day it ended on; these two local noons select
+    # the nights ending on start_day..end_day (see healthkit_sleep_service).
     start_ts = int(datetime.combine(start_day - timedelta(days=1), time(12), tzinfo=tz).timestamp())
     end_ts = int(datetime.combine(end_day, time(12), tzinfo=tz).timestamp())
     repo = HealthKitSleepSampleRepository.from_session(session)
     nights = await healthkit_sleep_service.nightly_totals(repo, user.id, start_ts, end_ts, tz, 0)
-    summary = await healthkit_sleep_service.stage_summary(repo, user.id, start_ts, end_ts)
+    summary = await healthkit_sleep_service.stage_summary(repo, user.id, start_ts, end_ts, tz)
   return Sleep(nights=nights, total_asleep_secs=summary.total_asleep_secs, stages=summary.stages)
 
 

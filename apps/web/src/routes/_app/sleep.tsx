@@ -55,7 +55,7 @@ function SleepPage() {
   const { data: summary, isLoading } = useQuery({
     ...getSleepSummaryV1HealthkitSleepSummaryGetOptions({
       client,
-      query: { start_ts: startTs, end_ts: endTs },
+      query: { start_ts: startTs, end_ts: endTs, tz_name: tzName },
     }),
     placeholderData: keepPreviousData,
   });

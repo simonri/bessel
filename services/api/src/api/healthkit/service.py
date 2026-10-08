@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import UTC, date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -52,11 +52,11 @@ healthkit_workout_service = HealthKitWorkoutService()
 ASLEEP_STAGES = frozenset({"asleepUnspecified", "asleepCore", "asleepDeep", "asleepREM"})
 EXCLUDED_STAGES = frozenset({"inBed"})
 
-# Segments separated by less than this count as one continuous sleep episode —
-# a brief nighttime waking (bathroom, rolling over) shouldn't read as a fresh
-# bedtime. Only affects onset/wake-time reporting; duration totals are
-# unaffected (they sum every asleep segment regardless of gaps).
+# Sleep separated by less than this is one sleep: a brief waking (bathroom,
+# rolling over) shouldn't start a new one.
 EPISODE_MERGE_GAP_SECS = 90 * 60
+# A sleep that ends from this hour on is the start of the coming night.
+EVENING_HOUR = 18
 
 
 class SleepSegment:
@@ -72,24 +72,35 @@ class SleepSegment:
     return self.end_ts - self.start_ts
 
 
-def _local_night_bounds(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> tuple[str, int]:
-  """Return (wake_date, boundary_ts) for the sleep-night window containing `ts`.
+class SleepEpisode:
+  """One continuous sleep, from one source, and the local day it ended on."""
 
-  Nights are bucketed noon-to-noon rather than midnight-to-midnight, so a
-  session that starts before local midnight and ends after it lands in a
-  single bucket, and that bucket carries the wake date rather than the bed
-  date.
-  """
-  if tz is not None:
-    local = datetime.fromtimestamp(ts, tz=tz)
-    noon = datetime(local.year, local.month, local.day, 12, tzinfo=tz)
-    boundary = noon if local < noon else noon + timedelta(days=1)
-    return boundary.date().isoformat(), int(boundary.timestamp())
+  __slots__ = ("segments", "start_ts", "end_ts", "wake_date")
 
-  shifted = datetime.fromtimestamp(ts + tz_offset_mins * 60, tz=UTC)
-  noon_shifted = datetime(shifted.year, shifted.month, shifted.day, 12, tzinfo=UTC)
-  boundary_shifted = noon_shifted if shifted < noon_shifted else noon_shifted + timedelta(days=1)
-  return boundary_shifted.date().isoformat(), int(boundary_shifted.timestamp()) - tz_offset_mins * 60
+  def __init__(self, segments: list[SleepSegment], wake_date: str) -> None:
+    asleep = [s for s in segments if s.stage_name in ASLEEP_STAGES]
+    self.segments = segments
+    self.start_ts = min(s.start_ts for s in asleep)
+    self.end_ts = max(s.end_ts for s in asleep)
+    self.wake_date = wake_date
+
+  @property
+  def asleep_secs(self) -> int:
+    return sum(s.duration for s in self.segments if s.stage_name in ASLEEP_STAGES)
+
+
+def _wake_date(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> str:
+  """The day a sleep ending at `ts` counts towards: the local day it ended on,
+  or the next one if it ended in the evening, as the start of the coming night."""
+  zone = tz or timezone(timedelta(minutes=tz_offset_mins))
+  ended = datetime.fromtimestamp(ts, tz=zone)
+  day = ended.date() + timedelta(days=1) if ended.hour >= EVENING_HOUR else ended.date()
+  return day.isoformat()
+
+
+def _local_noon(day: str, tz: ZoneInfo | None, tz_offset_mins: int) -> int:
+  zone = tz or timezone(timedelta(minutes=tz_offset_mins))
+  return int(datetime.combine(date.fromisoformat(day), time(12), tzinfo=zone).timestamp())
 
 
 def local_iso(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> str:
@@ -104,30 +115,57 @@ def local_iso(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> str:
 STAGED_STAGES = frozenset({"asleepCore", "asleepDeep", "asleepREM"})
 
 
-def primary_source_samples(samples: Sequence[HealthKitSleepSample], tz: ZoneInfo | None, tz_offset_mins: int) -> list[HealthKitSleepSample]:
-  """Keeps one source per night, like Apple Health does.
+def _clusters(samples: Sequence[HealthKitSleepSample]) -> list[list[HealthKitSleepSample]]:
+  """Samples from every source grouped into continuous sleeps, in time order."""
+  clusters: list[list[HealthKitSleepSample]] = []
+  cluster_end: datetime | None = None
+  for sample in sorted(samples, key=lambda s: s.start_date):
+    if cluster_end is None or (sample.start_date - cluster_end).total_seconds() > EPISODE_MERGE_GAP_SECS:
+      clusters.append([])
+      cluster_end = sample.end_date
+    clusters[-1].append(sample)
+    cluster_end = max(cluster_end, sample.end_date)
+  return clusters
+
+
+def _primary_source(cluster: list[HealthKitSleepSample]) -> list[HealthKitSleepSample]:
+  """One source per sleep, like Apple Health does.
 
   An iPhone and a Watch, or a Watch and a sleep app, often record the same
   night; adding them up would count it twice. The source with the most deep,
   core and REM detail wins (usually the Watch), then the one with the most
   time asleep.
   """
-  by_night: dict[str, dict[str, list[HealthKitSleepSample]]] = {}
+  by_source: dict[str, list[HealthKitSleepSample]] = {}
+  for sample in cluster:
+    by_source.setdefault(sample.source_bundle_id, []).append(sample)
+
+  def seconds(source_samples: list[HealthKitSleepSample], stages: frozenset[str]) -> float:
+    return sum((s.end_date - s.start_date).total_seconds() for s in source_samples if s.sleep_value_name in stages)
+
+  best = max(by_source, key=lambda source: (seconds(by_source[source], STAGED_STAGES), seconds(by_source[source], ASLEEP_STAGES)))
+  return by_source[best]
+
+
+def primary_source_samples(samples: Sequence[HealthKitSleepSample]) -> list[HealthKitSleepSample]:
+  """Every sleep's samples from its one counted source, in time order."""
+  return sorted((sample for cluster in _clusters(samples) for sample in _primary_source(cluster)), key=lambda s: s.start_date)
+
+
+def _segments(samples: Sequence[HealthKitSleepSample], start_ts: int | None = None, end_ts: int | None = None) -> list[SleepSegment]:
+  segments: list[SleepSegment] = []
   for sample in samples:
-    wake_date, _ = _local_night_bounds(int(sample.start_date.timestamp()), tz, tz_offset_mins)
-    by_night.setdefault(wake_date, {}).setdefault(sample.source_bundle_id, []).append(sample)
-
-  def rank(source_samples: Sequence[HealthKitSleepSample]) -> tuple[float, float]:
-    def seconds(stages: frozenset[str]) -> float:
-      return sum((s.end_date - s.start_date).total_seconds() for s in source_samples if s.sleep_value_name in stages)
-
-    return seconds(STAGED_STAGES), seconds(ASLEEP_STAGES)
-
-  kept: list[HealthKitSleepSample] = []
-  for sources in by_night.values():
-    best = max(sources, key=lambda source: rank(sources[source]))
-    kept += sources[best]
-  return sorted(kept, key=lambda s: s.start_date)
+    if sample.sleep_value_name in EXCLUDED_STAGES:
+      continue
+    seg_start = int(sample.start_date.timestamp())
+    seg_end = int(sample.end_date.timestamp())
+    if start_ts is not None:
+      seg_start = max(seg_start, start_ts)
+    if end_ts is not None:
+      seg_end = min(seg_end, end_ts)
+    if seg_end > seg_start:
+      segments.append(SleepSegment(seg_start, seg_end, sample.sleep_value_name))
+  return segments
 
 
 class HealthKitSleepService:
@@ -146,112 +184,70 @@ class HealthKitSleepService:
     deleted = await repo.soft_delete_by_healthkit_uuids(user_id, request.deleted_uuids)
     return synced, deleted
 
-  async def get_segments(
-    self,
-    repo: HealthKitSleepSampleRepository,
-    user_id: UUID,
-    start_ts: int,
-    end_ts: int,
-    tz: ZoneInfo | None = None,
-    tz_offset_mins: int = 0,
-  ) -> list[SleepSegment]:
-    """Sleep segments within [start_ts, end_ts), clipped to the window, each
-    night taken from one source only (see `primary_source_samples`)."""
-    samples = primary_source_samples(await repo.get_samples_in_range(user_id, start_ts, end_ts), tz, tz_offset_mins)
-    segments: list[SleepSegment] = []
-    for sample in samples:
-      if sample.sleep_value_name in EXCLUDED_STAGES:
-        continue
-      seg_start = max(int(sample.start_date.timestamp()), start_ts)
-      seg_end = min(int(sample.end_date.timestamp()), end_ts)
-      if seg_end > seg_start:
-        segments.append(SleepSegment(seg_start, seg_end, sample.sleep_value_name))
-    return segments
+  async def get_segments(self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int) -> list[SleepSegment]:
+    """Sleep within [start_ts, end_ts) as it happened, clipped to the window,
+    each sleep from its one counted source. For drawing a day as a timeline."""
+    samples = await repo.get_samples_in_range(user_id, start_ts - EPISODE_MERGE_GAP_SECS, end_ts + EPISODE_MERGE_GAP_SECS)
+    return _segments(primary_source_samples(samples), start_ts, end_ts)
 
-  def split_by_local_night(self, segment: SleepSegment, tz: ZoneInfo | None, tz_offset_mins: int) -> list[tuple[str, int]]:
-    """Split a segment into (wake_date, seconds) pairs at local-noon boundaries."""
-    out: list[tuple[str, int]] = []
-    cur = segment.start_ts
-    while cur < segment.end_ts:
-      wake_date, boundary_ts = _local_night_bounds(cur, tz, tz_offset_mins)
-      boundary = min(boundary_ts, segment.end_ts)
-      out.append((wake_date, boundary - cur))
-      cur = boundary
-    return out
+  async def get_nights(
+    self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int, tz: ZoneInfo | None, tz_offset_mins: int
+  ) -> dict[str, list[SleepEpisode]]:
+    """Sleeps by the local day they ended on, for the days whose noon falls in
+    (start_ts, end_ts]: a window from noon to noon covers the night ending on
+    the second day, as callers have always asked for it.
 
-  def nightly_episodes(self, segments: list[SleepSegment], tz: ZoneInfo | None, tz_offset_mins: int) -> dict[str, tuple[int, int]]:
-    """For each wake-date, the (start_ts, end_ts) of that night's longest
-    unbroken sleep episode — for reporting an actual bedtime/wake-up time.
-
-    Unlike split_by_local_night (used for duration totals), segments are
-    bucketed by their own start time, not fragmented at the noon boundary: a
-    sample that starts at 23:00 and ends at 07:00 is one segment with one
-    real start time, and splitting it would make the wake-date bucket's
-    "start" land exactly on a noon boundary rather than an actual bedtime. A
-    segment that starts before a nap-friendly local noon and one that starts
-    after both land in whichever single night their own start time belongs
-    to, which is correct for every ordinary (non-24h-spanning) sleep sample.
+    A sleep is never split. Sleeping in past noon stays with that night, a nap
+    counts towards the day it was taken on, and sleep that ends in the evening
+    towards the night ahead.
     """
-    by_night: dict[str, list[SleepSegment]] = {}
-    for seg in segments:
-      if seg.stage_name not in ASLEEP_STAGES:
+    # Wide enough to take in whole sleeps that end on these days.
+    samples = await repo.get_samples_in_range(user_id, start_ts - 36 * 3600, end_ts + 12 * 3600)
+    nights: dict[str, list[SleepEpisode]] = {}
+    for cluster in _clusters(samples):
+      segments = _segments(_primary_source(cluster))
+      if not any(s.stage_name in ASLEEP_STAGES for s in segments):
         continue
-      wake_date, _ = _local_night_bounds(seg.start_ts, tz, tz_offset_mins)
-      by_night.setdefault(wake_date, []).append(seg)
-
-    result: dict[str, tuple[int, int]] = {}
-    for wake_date, night_segments in by_night.items():
-      night_segments.sort(key=lambda s: s.start_ts)
-      episodes: list[tuple[int, int]] = []
-      cur_start, cur_end = night_segments[0].start_ts, night_segments[0].end_ts
-      for seg in night_segments[1:]:
-        if seg.start_ts - cur_end <= EPISODE_MERGE_GAP_SECS:
-          cur_end = max(cur_end, seg.end_ts)
-        else:
-          episodes.append((cur_start, cur_end))
-          cur_start, cur_end = seg.start_ts, seg.end_ts
-      episodes.append((cur_start, cur_end))
-      result[wake_date] = max(episodes, key=lambda e: e[1] - e[0])
-    return result
+      asleep_end = max(s.end_ts for s in segments if s.stage_name in ASLEEP_STAGES)
+      wake_date = _wake_date(asleep_end, tz, tz_offset_mins)
+      if start_ts < _local_noon(wake_date, tz, tz_offset_mins) <= end_ts:
+        nights.setdefault(wake_date, []).append(SleepEpisode(segments, wake_date))
+    return nights
 
   async def nightly_totals(
     self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int, tz: ZoneInfo | None, tz_offset_mins: int
   ) -> list[SleepDailyEntry]:
-    """Time asleep per night, keyed by local wake date, with the main episode's onset and wake time."""
-    segments = await self.get_segments(repo, user_id, start_ts, end_ts, tz, tz_offset_mins)
-
-    nightly: dict[str, int] = {}
-    for seg in segments:
-      if seg.stage_name not in ASLEEP_STAGES:
-        continue
-      for wake_date, secs in self.split_by_local_night(seg, tz, tz_offset_mins):
-        nightly[wake_date] = nightly.get(wake_date, 0) + secs
-
-    episodes = self.nightly_episodes(segments, tz, tz_offset_mins)
-    return sorted(
-      [
+    """Time asleep per day, keyed by the local day each sleep ended on, with the
+    longest sleep's onset and wake time."""
+    nights = await self.get_nights(repo, user_id, start_ts, end_ts, tz, tz_offset_mins)
+    entries = []
+    for wake_date, episodes in nights.items():
+      main = max(episodes, key=lambda e: e.end_ts - e.start_ts)
+      entries.append(
         SleepDailyEntry(
-          date=k,
-          asleep_secs=v,
-          sleep_onset=local_iso(episodes[k][0], tz, tz_offset_mins) if k in episodes else None,
-          wake_time=local_iso(episodes[k][1], tz, tz_offset_mins) if k in episodes else None,
+          date=wake_date,
+          asleep_secs=sum(e.asleep_secs for e in episodes),
+          sleep_onset=local_iso(main.start_ts, tz, tz_offset_mins),
+          wake_time=local_iso(main.end_ts, tz, tz_offset_mins),
         )
-        for k, v in nightly.items()
-      ],
-      key=lambda x: x.date,
-    )
+      )
+    return sorted(entries, key=lambda x: x.date)
 
-  async def stage_summary(self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int) -> SleepSummaryResponse:
-    segments = await self.get_segments(repo, user_id, start_ts, end_ts)
+  async def stage_summary(
+    self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int, tz: ZoneInfo | None = None, tz_offset_mins: int = 0
+  ) -> SleepSummaryResponse:
+    nights = await self.get_nights(repo, user_id, start_ts, end_ts, tz, tz_offset_mins)
 
     totals: dict[str, int] = {}
     total_asleep = 0
     total_span = 0
-    for seg in segments:
-      totals[seg.stage_name] = totals.get(seg.stage_name, 0) + seg.duration
-      total_span += seg.duration
-      if seg.stage_name in ASLEEP_STAGES:
-        total_asleep += seg.duration
+    for episodes in nights.values():
+      for episode in episodes:
+        for seg in episode.segments:
+          totals[seg.stage_name] = totals.get(seg.stage_name, 0) + seg.duration
+          total_span += seg.duration
+          if seg.stage_name in ASLEEP_STAGES:
+            total_asleep += seg.duration
 
     stages = sorted(
       [SleepStageSummary(stage=k, secs=v, percentage=v / total_span * 100 if total_span > 0 else 0.0) for k, v in totals.items()],
@@ -371,7 +367,10 @@ class HealthSummaryService:
       return None, None, usual_onset
 
     stages: dict[str, int] = {}
-    segments = await healthkit_sleep_service.get_segments(repo, user_id, _local_noon_ts(day - timedelta(days=1), tz), _local_noon_ts(day, tz), tz)
+    episodes = (await healthkit_sleep_service.get_nights(repo, user_id, _local_noon_ts(day - timedelta(days=1), tz), _local_noon_ts(day, tz), tz, 0)).get(
+      day.isoformat(), []
+    )
+    segments = sorted((segment for episode in episodes for segment in episode.segments), key=lambda segment: segment.start_ts)
     for segment in segments:
       stages[segment.stage_name] = stages.get(segment.stage_name, 0) + segment.duration
     deep, core, rem = stages.get("asleepDeep", 0), stages.get("asleepCore", 0), stages.get("asleepREM", 0)

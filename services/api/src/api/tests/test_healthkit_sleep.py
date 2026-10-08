@@ -179,20 +179,34 @@ class TestDailySleep:
     assert nights == {"2026-07-02": 8 * 3600}
 
   @pytest.mark.asyncio
-  async def test_segment_straddling_noon_boundary_splits(self, client: AsyncClient) -> None:
-    # An 11:30 -> 12:30 segment straddles the noon cutoff itself: 30 min belongs
-    # to the night ending at noon on the 1st, 30 min to the one ending on the 2nd.
-    start = datetime(2026, 7, 1, 11, 30, tzinfo=UTC)
-    end = datetime(2026, 7, 1, 12, 30, tzinfo=UTC)
+  async def test_sleeping_in_past_noon_stays_with_the_night(self, client: AsyncClient) -> None:
+    # Asleep 01:00 -> 13:30 on the 2nd: one night, all of it on the 2nd, not
+    # split at noon with the rest pushed onto the 3rd.
+    start = datetime(2026, 7, 2, 1, 0, tzinfo=UTC)
+    end = datetime(2026, 7, 2, 13, 30, tzinfo=UTC)
     await _sync(client, [_sample_at(start, end)])
 
     resp = await client.get(
       "/v1/healthkit/sleep/daily",
-      params={"start_ts": NOON - 86400, "end_ts": NOON + 86400, "tz_name": "UTC"},
+      params={"start_ts": NOON - 86400, "end_ts": NOON + 2 * 86400, "tz_name": "UTC"},
     )
     assert resp.status_code == 200
     nights = {n["date"]: n["asleep_secs"] for n in resp.json()["nights"]}
-    assert nights == {"2026-07-01": 1800, "2026-07-02": 1800}
+    assert nights == {"2026-07-02": 12.5 * 3600}
+
+  @pytest.mark.asyncio
+  async def test_an_afternoon_nap_counts_towards_its_own_day(self, client: AsyncClient) -> None:
+    night_start = datetime(2026, 7, 1, 23, 0, tzinfo=UTC)
+    nap_start = datetime(2026, 7, 2, 15, 0, tzinfo=UTC)
+    await _sync(client, [_sample_at(night_start, night_start + timedelta(hours=8)), _sample_at(nap_start, nap_start + timedelta(minutes=40))])
+
+    resp = await client.get(
+      "/v1/healthkit/sleep/daily",
+      params={"start_ts": NOON - 86400, "end_ts": NOON + 2 * 86400, "tz_name": "UTC"},
+    )
+    night = resp.json()["nights"][0]
+    assert (night["date"], night["asleep_secs"]) == ("2026-07-02", 8 * 3600 + 40 * 60)
+    assert night["wake_time"] == (night_start + timedelta(hours=8)).isoformat()
 
   @pytest.mark.asyncio
   async def test_awake_and_in_bed_excluded_from_totals(self, client: AsyncClient) -> None:
@@ -266,9 +280,9 @@ class TestDailySleep:
 
   @pytest.mark.asyncio
   async def test_long_gap_splits_into_separate_episodes_longest_wins(self, client: AsyncClient) -> None:
-    # A short early-evening nap followed, after a multi-hour gap, by the real
-    # night's sleep — the real (longer) episode should win, not the nap.
-    nap_start = datetime(2026, 7, 1, 18, 0, tzinfo=UTC)
+    # A short nap in the small hours followed, after a multi-hour gap, by the
+    # real night's sleep: the real (longer) sleep gives the bedtime, not the nap.
+    nap_start = datetime(2026, 7, 1, 21, 30, tzinfo=UTC)
     real_start = datetime(2026, 7, 2, 0, 0, tzinfo=UTC)
     real_end = datetime(2026, 7, 2, 7, 0, tzinfo=UTC)
     await _sync(

@@ -128,8 +128,8 @@ def _parse_tz(tz_name: str | None) -> ZoneInfo | None:
 async def get_daily_sleep(
   session: DBSession,
   current_user: CurrentDBUser,
-  start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds, inclusive).")],
-  end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds, exclusive).")],
+  start_ts: Annotated[int, Query(description="Start of range (Unix epoch seconds). Nights are returned for the days whose local noon is after this.")],
+  end_ts: Annotated[int, Query(description="End of range (Unix epoch seconds). Nights are returned for the days whose local noon is at or before this.")],
   tz_name: Annotated[
     str | None, Query(description="IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over tz_offset_mins; handles DST correctly.")
   ] = None,
@@ -150,10 +150,13 @@ async def get_daily_sleep(
 async def get_sleep_summary(
   session: DBSession,
   current_user: CurrentDBUser,
-  start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
-  end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],
+  start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds). Covers the nights ending on days whose local noon is after this.")],
+  end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds). Covers the nights ending on days whose local noon is at or before this.")],
+  tz_name: Annotated[str | None, Query(description="IANA timezone name, for which day a sleep ended on. Defaults to UTC.")] = None,
 ) -> SleepSummaryResponse:
-  return await healthkit_sleep_service.stage_summary(HealthKitSleepSampleRepository.from_session(session), current_user.id, start_ts, end_ts)
+  return await healthkit_sleep_service.stage_summary(
+    HealthKitSleepSampleRepository.from_session(session), current_user.id, start_ts, end_ts, _parse_tz(tz_name)
+  )
 
 
 @router.post(

@@ -81,8 +81,10 @@ def sync_detailed(
   """Get Nightly Sleep Totals
 
   Args:
-      start_ts (int): Start of range (Unix epoch seconds, inclusive).
-      end_ts (int): End of range (Unix epoch seconds, exclusive).
+      start_ts (int): Start of range (Unix epoch seconds). Nights are returned for the days
+          whose local noon is after this.
+      end_ts (int): End of range (Unix epoch seconds). Nights are returned for the days whose
+          local noon is at or before this.
       tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
           tz_offset_mins; handles DST correctly.
       tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
@@ -121,8 +123,10 @@ def sync(
   """Get Nightly Sleep Totals
 
   Args:
-      start_ts (int): Start of range (Unix epoch seconds, inclusive).
-      end_ts (int): End of range (Unix epoch seconds, exclusive).
+      start_ts (int): Start of range (Unix epoch seconds). Nights are returned for the days
+          whose local noon is after this.
+      end_ts (int): End of range (Unix epoch seconds). Nights are returned for the days whose
+          local noon is at or before this.
       tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
           tz_offset_mins; handles DST correctly.
       tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
@@ -156,8 +160,10 @@ async def asyncio_detailed(
   """Get Nightly Sleep Totals
 
   Args:
-      start_ts (int): Start of range (Unix epoch seconds, inclusive).
-      end_ts (int): End of range (Unix epoch seconds, exclusive).
+      start_ts (int): Start of range (Unix epoch seconds). Nights are returned for the days
+          whose local noon is after this.
+      end_ts (int): End of range (Unix epoch seconds). Nights are returned for the days whose
+          local noon is at or before this.
       tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
           tz_offset_mins; handles DST correctly.
       tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided
@@ -194,8 +200,10 @@ async def asyncio(
   """Get Nightly Sleep Totals
 
   Args:
-      start_ts (int): Start of range (Unix epoch seconds, inclusive).
-      end_ts (int): End of range (Unix epoch seconds, exclusive).
+      start_ts (int): Start of range (Unix epoch seconds). Nights are returned for the days
+          whose local noon is after this.
+      end_ts (int): End of range (Unix epoch seconds). Nights are returned for the days whose
+          local noon is at or before this.
       tz_name (None | str | Unset): IANA timezone name (e.g. 'Europe/Stockholm'). Preferred over
           tz_offset_mins; handles DST correctly.
       tz_offset_mins (int | Unset): Fallback UTC offset in minutes when tz_name is not provided

@@ -6121,13 +6121,13 @@ export type GetDailySleepV1HealthkitSleepDailyGetData = {
     /**
      * Start Ts
      *
-     * Start of range (Unix epoch seconds, inclusive).
+     * Start of range (Unix epoch seconds). Nights are returned for the days whose local noon is after this.
      */
     start_ts: number;
     /**
      * End Ts
      *
-     * End of range (Unix epoch seconds, exclusive).
+     * End of range (Unix epoch seconds). Nights are returned for the days whose local noon is at or before this.
      */
     end_ts: number;
     /**
@@ -6173,15 +6173,21 @@ export type GetSleepSummaryV1HealthkitSleepSummaryGetData = {
     /**
      * Start Ts
      *
-     * Start of window (Unix epoch seconds, inclusive).
+     * Start of window (Unix epoch seconds). Covers the nights ending on days whose local noon is after this.
      */
     start_ts: number;
     /**
      * End Ts
      *
-     * End of window (Unix epoch seconds, exclusive).
+     * End of window (Unix epoch seconds). Covers the nights ending on days whose local noon is at or before this.
      */
     end_ts: number;
+    /**
+     * Tz Name
+     *
+     * IANA timezone name, for which day a sleep ended on. Defaults to UTC.
+     */
+    tz_name?: string | null;
   };
   url: "/v1/healthkit/sleep/summary";
 };

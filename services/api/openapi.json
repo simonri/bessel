@@ -2297,10 +2297,10 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "description": "Start of range (Unix epoch seconds, inclusive).",
+              "description": "Start of range (Unix epoch seconds). Nights are returned for the days whose local noon is after this.",
               "title": "Start Ts"
             },
-            "description": "Start of range (Unix epoch seconds, inclusive)."
+            "description": "Start of range (Unix epoch seconds). Nights are returned for the days whose local noon is after this."
           },
           {
             "name": "end_ts",
@@ -2308,10 +2308,10 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "description": "End of range (Unix epoch seconds, exclusive).",
+              "description": "End of range (Unix epoch seconds). Nights are returned for the days whose local noon is at or before this.",
               "title": "End Ts"
             },
-            "description": "End of range (Unix epoch seconds, exclusive)."
+            "description": "End of range (Unix epoch seconds). Nights are returned for the days whose local noon is at or before this."
           },
           {
             "name": "tz_name",
@@ -2387,10 +2387,10 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "description": "Start of window (Unix epoch seconds, inclusive).",
+              "description": "Start of window (Unix epoch seconds). Covers the nights ending on days whose local noon is after this.",
               "title": "Start Ts"
             },
-            "description": "Start of window (Unix epoch seconds, inclusive)."
+            "description": "Start of window (Unix epoch seconds). Covers the nights ending on days whose local noon is after this."
           },
           {
             "name": "end_ts",
@@ -2398,10 +2398,28 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "description": "End of window (Unix epoch seconds, exclusive).",
+              "description": "End of window (Unix epoch seconds). Covers the nights ending on days whose local noon is at or before this.",
               "title": "End Ts"
             },
-            "description": "End of window (Unix epoch seconds, exclusive)."
+            "description": "End of window (Unix epoch seconds). Covers the nights ending on days whose local noon is at or before this."
+          },
+          {
+            "name": "tz_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IANA timezone name, for which day a sleep ended on. Defaults to UTC.",
+              "title": "Tz Name"
+            },
+            "description": "IANA timezone name, for which day a sleep ended on. Defaults to UTC."
           }
         ],
         "responses": {
