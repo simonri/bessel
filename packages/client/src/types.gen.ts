@@ -1354,6 +1354,36 @@ export type EventCreate = {
 };
 
 /**
+ * EventHit
+ */
+export type EventHit = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * All Day
+   */
+  all_day: boolean;
+  /**
+   * Start At
+   *
+   * Start of a timed event.
+   */
+  start_at: Date | null;
+  /**
+   * Start Date
+   *
+   * First day of an all-day event.
+   */
+  start_date: Date | null;
+};
+
+/**
  * EventReplyUpdate
  */
 export type EventReplyUpdate = {
@@ -2888,6 +2918,24 @@ export type PlaceCreate = {
 };
 
 /**
+ * PlaceHit
+ */
+export type PlaceHit = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Address
+   */
+  address: string | null;
+};
+
+/**
  * PlaceListResponse
  */
 export type PlaceListResponse = {
@@ -3259,6 +3307,20 @@ export type RecipeCreate = {
 };
 
 /**
+ * RecipeHit
+ */
+export type RecipeHit = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+};
+
+/**
  * RecipeImportRequest
  */
 export type RecipeImportRequest = {
@@ -3510,6 +3572,28 @@ export const RruleFrequency = {
  */
 export type RruleFrequency =
   (typeof RruleFrequency)[keyof typeof RruleFrequency];
+
+/**
+ * SearchResponse
+ */
+export type SearchResponse = {
+  /**
+   * Tasks
+   */
+  tasks: Array<TaskHit>;
+  /**
+   * Recipes
+   */
+  recipes: Array<RecipeHit>;
+  /**
+   * Events
+   */
+  events: Array<EventHit>;
+  /**
+   * Places
+   */
+  places: Array<PlaceHit>;
+};
 
 /**
  * SecurityCreate
@@ -3945,6 +4029,21 @@ export type TaskCreate = {
    * Rrule Day Of Month
    */
   rrule_day_of_month?: number | null;
+};
+
+/**
+ * TaskHit
+ */
+export type TaskHit = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  status: TaskStatus;
 };
 
 /**
@@ -7073,6 +7172,38 @@ export type DeletePlaceV1PlacesPlaceIdDeleteResponses = {
 export type DeletePlaceV1PlacesPlaceIdDeleteResponse =
   DeletePlaceV1PlacesPlaceIdDeleteResponses[keyof DeletePlaceV1PlacesPlaceIdDeleteResponses];
 
+export type GetPlaceV1PlacesPlaceIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Place Id
+     */
+    place_id: string;
+  };
+  query?: never;
+  url: "/v1/places/{place_id}";
+};
+
+export type GetPlaceV1PlacesPlaceIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetPlaceV1PlacesPlaceIdGetError =
+  GetPlaceV1PlacesPlaceIdGetErrors[keyof GetPlaceV1PlacesPlaceIdGetErrors];
+
+export type GetPlaceV1PlacesPlaceIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: PlaceSchema;
+};
+
+export type GetPlaceV1PlacesPlaceIdGetResponse =
+  GetPlaceV1PlacesPlaceIdGetResponses[keyof GetPlaceV1PlacesPlaceIdGetResponses];
+
 export type UpdatePlaceV1PlacesPlaceIdPatchData = {
   body: PlaceUpdate;
   path: {
@@ -7498,6 +7629,46 @@ export type UpdateRecipeV1RecipesRecipeIdPatchResponses = {
 
 export type UpdateRecipeV1RecipesRecipeIdPatchResponse =
   UpdateRecipeV1RecipesRecipeIdPatchResponses[keyof UpdateRecipeV1RecipesRecipeIdPatchResponses];
+
+export type SearchV1SearchGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Q
+     *
+     * Text to look for in titles, notes and names.
+     */
+    q: string;
+    /**
+     * Limit
+     *
+     * Most results per kind.
+     */
+    limit?: number;
+  };
+  url: "/v1/search";
+};
+
+export type SearchV1SearchGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SearchV1SearchGetError =
+  SearchV1SearchGetErrors[keyof SearchV1SearchGetErrors];
+
+export type SearchV1SearchGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: SearchResponse;
+};
+
+export type SearchV1SearchGetResponse =
+  SearchV1SearchGetResponses[keyof SearchV1SearchGetResponses];
 
 export type ListTasksV1TasksGetData = {
   body?: never;

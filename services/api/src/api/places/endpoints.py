@@ -185,6 +185,20 @@ async def create_place(
   return PlaceSchema.model_validate(place)
 
 
+@router.get(
+  "/{place_id}",
+  summary="Get Place",
+  response_model=PlaceSchema,
+)
+async def get_place(
+  place_id: UUID,
+  session: DBSession,
+  current_user: CurrentDBUser,
+) -> PlaceSchema:
+  place = await PlaceRepository.from_session(session).get_owned_or_404(place_id, current_user.id, not_found_message="Place not found")
+  return PlaceSchema.model_validate(place)
+
+
 @router.patch(
   "/{place_id}",
   summary="Update Place",

@@ -276,6 +276,23 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
       statement = statement.where(Calendar.hidden.is_(False))
     return await self.get_all(statement)
 
+  async def search(self, user_id: UUID, query: str, *, limit: int) -> Sequence[CalendarEvent]:
+    """Events on visible calendars whose title contains `query`, closest to now first."""
+    starts = func.coalesce(CalendarEvent.start_at, func.cast(CalendarEvent.start_date, CalendarEvent.start_at.type))
+    statement = (
+      self.get_base_statement()
+      .join(Calendar, CalendarEvent.calendar_id == Calendar.id)
+      .join(CalendarAccount, Calendar.account_id == CalendarAccount.id)
+      .where(
+        CalendarAccount.user_id == user_id,
+        Calendar.hidden.is_(False),
+        CalendarEvent.title.icontains(query, autoescape=True),
+      )
+      .order_by(func.abs(func.extract("epoch", starts - utc_now())), CalendarEvent.id)
+      .limit(limit)
+    )
+    return await self.get_all(statement)
+
   async def emails_for_account(self, account: CalendarAccount) -> set[str]:
     """Every guest and organizer address on the account's synced events, lowercased."""
     on_account = select(Calendar.id).where(Calendar.account_id == account.id).scalar_subquery()

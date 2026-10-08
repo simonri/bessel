@@ -22,6 +22,7 @@ import type {
   GetHealthSummaryV1HealthkitSummaryGetResponse,
   GetLocationHistoryDayV1LocationHistoryDayGetResponse,
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
+  GetPlaceV1PlacesPlaceIdGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
   GetTaskV1TasksTaskIdGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
@@ -48,6 +49,7 @@ import type {
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
+  SearchV1SearchGetResponse,
   SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
@@ -701,6 +703,13 @@ export const createPlaceV1PlacesPostResponseTransformer = async (
   return data;
 };
 
+export const getPlaceV1PlacesPlaceIdGetResponseTransformer = async (
+  data: any,
+): Promise<GetPlaceV1PlacesPlaceIdGetResponse> => {
+  data = placeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
 export const updatePlaceV1PlacesPlaceIdPatchResponseTransformer = async (
   data: any,
 ): Promise<UpdatePlaceV1PlacesPlaceIdPatchResponse> => {
@@ -785,6 +794,30 @@ export const updateRecipeV1RecipesRecipeIdPatchResponseTransformer = async (
   data: any,
 ): Promise<UpdateRecipeV1RecipesRecipeIdPatchResponse> => {
   data = recipeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const eventHitSchemaResponseTransformer = (data: any) => {
+  if (data.start_at) {
+    data.start_at = new Date(data.start_at);
+  }
+  if (data.start_date) {
+    data.start_date = new Date(data.start_date);
+  }
+  return data;
+};
+
+const searchResponseSchemaResponseTransformer = (data: any) => {
+  data.events = data.events.map((item: any) =>
+    eventHitSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const searchV1SearchGetResponseTransformer = async (
+  data: any,
+): Promise<SearchV1SearchGetResponse> => {
+  data = searchResponseSchemaResponseTransformer(data);
   return data;
 };
 

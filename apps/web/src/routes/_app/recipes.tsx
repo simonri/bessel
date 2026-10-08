@@ -53,6 +53,7 @@ import { IconButton } from "@/components/ui-kit";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
 import { mutationFamily } from "@/lib/optimistic";
+import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { cn } from "@/lib/utils";
 
 // Saves, type changes and undos go out one at a time, in order, so an older
@@ -226,6 +227,15 @@ function Recipes() {
   );
 
   const selected = recipes.find((r) => r.id === selectedId) ?? null;
+
+  // Opened from search: show that recipe to read.
+  const target = usePageTarget("recipes");
+  useEffect(() => {
+    if (!target) return;
+    setSelectedId(target.id);
+    setMode("preview");
+    clearPageTarget();
+  }, [target]);
 
   // Load the draft when a recipe opens — not on every save: the server
   // returns the cleaned body, which would wipe rows still being filled in.

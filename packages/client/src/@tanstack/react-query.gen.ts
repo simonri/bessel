@@ -56,6 +56,7 @@ import {
   getLocationHistoryDayV1LocationHistoryDayGet,
   getLocationHistorySummaryV1LocationHistorySummaryGet,
   getMeV1AuthMeGet,
+  getPlaceV1PlacesPlaceIdGet,
   getRecipeV1RecipesRecipeIdGet,
   getSleepSummaryV1HealthkitSleepSummaryGet,
   getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
@@ -96,6 +97,7 @@ import {
   respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
   revokeIngestTokenV1IngestTokensTokenIdDelete,
   searchGooglePlacesV1PlacesSearchGet,
+  searchV1SearchGet,
   setProjectLocationV1ProjectsProjectIdLocationPut,
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
   structureRecipeTextV1RecipesImportPost,
@@ -256,6 +258,9 @@ import type {
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponse,
+  GetPlaceV1PlacesPlaceIdGetData,
+  GetPlaceV1PlacesPlaceIdGetError,
+  GetPlaceV1PlacesPlaceIdGetResponse,
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetError,
   GetRecipeV1RecipesRecipeIdGetResponse,
@@ -363,6 +368,9 @@ import type {
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetError,
   SearchGooglePlacesV1PlacesSearchGetResponse,
+  SearchV1SearchGetData,
+  SearchV1SearchGetError,
+  SearchV1SearchGetResponse,
   SetProjectLocationV1ProjectsProjectIdLocationPutData,
   SetProjectLocationV1ProjectsProjectIdLocationPutError,
   SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
@@ -3068,6 +3076,34 @@ export const deletePlaceV1PlacesPlaceIdDeleteMutation = (
   return mutationOptions;
 };
 
+export const getPlaceV1PlacesPlaceIdGetQueryKey = (
+  options: Options<GetPlaceV1PlacesPlaceIdGetData>,
+) => createQueryKey("getPlaceV1PlacesPlaceIdGet", options);
+
+/**
+ * Get Place
+ */
+export const getPlaceV1PlacesPlaceIdGetOptions = (
+  options: Options<GetPlaceV1PlacesPlaceIdGetData>,
+) =>
+  queryOptions<
+    GetPlaceV1PlacesPlaceIdGetResponse,
+    GetPlaceV1PlacesPlaceIdGetError,
+    GetPlaceV1PlacesPlaceIdGetResponse,
+    ReturnType<typeof getPlaceV1PlacesPlaceIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPlaceV1PlacesPlaceIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPlaceV1PlacesPlaceIdGetQueryKey(options),
+  });
+
 /**
  * Update Place
  */
@@ -3448,6 +3484,36 @@ export const updateRecipeV1RecipesRecipeIdPatchMutation = (
   };
   return mutationOptions;
 };
+
+export const searchV1SearchGetQueryKey = (
+  options: Options<SearchV1SearchGetData>,
+) => createQueryKey("searchV1SearchGet", options);
+
+/**
+ * Search
+ *
+ * Tasks, recipes, calendar events and saved places matching `q`, for the command palette.
+ */
+export const searchV1SearchGetOptions = (
+  options: Options<SearchV1SearchGetData>,
+) =>
+  queryOptions<
+    SearchV1SearchGetResponse,
+    SearchV1SearchGetError,
+    SearchV1SearchGetResponse,
+    ReturnType<typeof searchV1SearchGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchV1SearchGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchV1SearchGetQueryKey(options),
+  });
 
 export const listTasksV1TasksGetQueryKey = (
   options?: Options<ListTasksV1TasksGetData>,

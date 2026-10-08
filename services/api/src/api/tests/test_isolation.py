@@ -98,6 +98,7 @@ AUDITED: set[str] = {
   "GET /v1/places",
   "POST /v1/places",
   "DELETE /v1/places/{place_id}",
+  "GET /v1/places/{place_id}",
   "PATCH /v1/places/{place_id}",
   "GET /v1/projects",
   "POST /v1/projects",
@@ -109,6 +110,7 @@ AUDITED: set[str] = {
   "DELETE /v1/recipes/{recipe_id}",
   "GET /v1/recipes/{recipe_id}",
   "PATCH /v1/recipes/{recipe_id}",
+  "GET /v1/search",
   "GET /v1/tasks",
   "POST /v1/tasks",
   "PATCH /v1/tasks/reorder",
@@ -246,10 +248,12 @@ class TestPlaces:
     place = await _create(client, "/v1/places", {"name": "A's cafe", "latitude": 59.9, "longitude": 10.7})
 
     assert (await other_client.get("/v1/places")).json()["items"] == []
+    assert (await other_client.get(f"/v1/places/{place['id']}")).status_code == 404
     assert (await other_client.patch(f"/v1/places/{place['id']}", json={"name": "pwned"})).status_code == 404
     assert (await other_client.delete(f"/v1/places/{place['id']}")).status_code == 404
 
     assert [p["name"] for p in (await client.get("/v1/places")).json()["items"]] == ["A's cafe"]
+    assert (await client.get(f"/v1/places/{place['id']}")).json()["name"] == "A's cafe"
 
 
 class TestLocationHistory:

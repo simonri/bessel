@@ -75,6 +75,11 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
       self.get_base_statement().where(Task.parent_task_id == task.id).where(Task.user_id == task.user_id).where(Task.status.in_(OPEN_TASK_STATUSES))
     )
 
+  async def search(self, user_id: UUID, query: str, *, limit: int) -> Sequence[Task]:
+    """Tasks whose title or notes contain `query`, open ones first, newest first."""
+    statement = self.get_filtered_statement(user_id, search=query).order_by(Task.status.in_(OPEN_TASK_STATUSES).desc(), Task.created_at.desc()).limit(limit)
+    return await self.get_all(statement)
+
   async def detach_from_project(self, project_id: UUID, user_id: UUID) -> None:
     await self.session.execute(update(Task).where(Task.project_id == project_id).where(Task.user_id == user_id).values(project_id=None))
 

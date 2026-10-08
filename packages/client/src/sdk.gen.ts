@@ -29,6 +29,7 @@ import {
   getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
   getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
   getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
+  getPlaceV1PlacesPlaceIdGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
   getTaskV1TasksTaskIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
@@ -55,6 +56,7 @@ import {
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
+  searchV1SearchGetResponseTransformer,
   setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
   undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
   updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
@@ -204,6 +206,9 @@ import type {
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponses,
+  GetPlaceV1PlacesPlaceIdGetData,
+  GetPlaceV1PlacesPlaceIdGetErrors,
+  GetPlaceV1PlacesPlaceIdGetResponses,
   GetRecipeV1RecipesRecipeIdGetData,
   GetRecipeV1RecipesRecipeIdGetErrors,
   GetRecipeV1RecipesRecipeIdGetResponses,
@@ -313,6 +318,9 @@ import type {
   SearchGooglePlacesV1PlacesSearchGetData,
   SearchGooglePlacesV1PlacesSearchGetErrors,
   SearchGooglePlacesV1PlacesSearchGetResponses,
+  SearchV1SearchGetData,
+  SearchV1SearchGetErrors,
+  SearchV1SearchGetResponses,
   SetProjectLocationV1ProjectsProjectIdLocationPutData,
   SetProjectLocationV1ProjectsProjectIdLocationPutErrors,
   SetProjectLocationV1ProjectsProjectIdLocationPutResponses,
@@ -2014,6 +2022,25 @@ export const deletePlaceV1PlacesPlaceIdDelete = <
   });
 
 /**
+ * Get Place
+ */
+export const getPlaceV1PlacesPlaceIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetPlaceV1PlacesPlaceIdGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetPlaceV1PlacesPlaceIdGetResponses,
+    GetPlaceV1PlacesPlaceIdGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getPlaceV1PlacesPlaceIdGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/places/{place_id}",
+    ...options,
+  });
+
+/**
  * Update Place
  */
 export const updatePlaceV1PlacesPlaceIdPatch = <
@@ -2265,6 +2292,25 @@ export const updateRecipeV1RecipesRecipeIdPatch = <
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Search
+ *
+ * Tasks, recipes, calendar events and saved places matching `q`, for the command palette.
+ */
+export const searchV1SearchGet = <ThrowOnError extends boolean = false>(
+  options: Options<SearchV1SearchGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    SearchV1SearchGetResponses,
+    SearchV1SearchGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchV1SearchGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/search",
+    ...options,
   });
 
 /**

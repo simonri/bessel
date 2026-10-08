@@ -1,6 +1,7 @@
 import type { PlaceSchema, PlaceStatus } from "@bessel/client";
 import {
   deletePlaceV1PlacesPlaceIdDeleteMutation,
+  getPlaceV1PlacesPlaceIdGetOptions,
   listPlacesV1PlacesGetOptions,
   listPlacesV1PlacesGetQueryKey,
   updatePlaceV1PlacesPlaceIdPatchMutation,
@@ -31,7 +32,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { lazy, type ReactNode, Suspense, useState } from "react";
+import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
 
 import { AddPlaceDialog } from "@/components/add-place-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
@@ -57,6 +58,7 @@ import {
   restoreItemFields,
   settleWhenIdle,
 } from "@/lib/optimistic";
+import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { cn } from "@/lib/utils";
 import { PlaceCard, StatusBadge } from "./-place-card";
 import { RatingStars } from "./-rating-stars";
@@ -241,6 +243,21 @@ function Travel() {
   };
 
   const places = placesData?.items ?? [];
+
+  // Opened from search: the place may be on another page of the list.
+  const target = usePageTarget("travel");
+  const { data: targetPlace } = useQuery({
+    ...getPlaceV1PlacesPlaceIdGetOptions({
+      client,
+      path: { place_id: target?.id ?? "" },
+    }),
+    enabled: !!target,
+  });
+  useEffect(() => {
+    if (!target || targetPlace?.id !== target.id) return;
+    setSelectedPlace(targetPlace);
+    clearPageTarget();
+  }, [target, targetPlace]);
   const totalCount = placesData?.pagination.total_count ?? 0;
   const maxPage = placesData?.pagination.max_page ?? 1;
 

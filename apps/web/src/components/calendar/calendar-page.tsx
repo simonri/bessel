@@ -18,6 +18,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { IconButton, SoftButton } from "@/components/ui-kit";
+import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { userStorage } from "@/lib/user-storage";
 import { headerMonth, visibleDays } from "./calendar-dates";
 import { CalendarSidebar } from "./calendar-sidebar";
@@ -207,6 +208,22 @@ export function CalendarView({
     );
     setPendingMove(null);
   }
+
+  // Opened from search: go to the event's day, then select it once that
+  // range's events are in.
+  const target = usePageTarget("calendar");
+  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!target) return;
+    if (target.at) setDate(toWallClock(new Date(target.at), timeZone));
+    setPendingEventId(target.id);
+    clearPageTarget();
+  }, [target, setDate, timeZone]);
+  useEffect(() => {
+    if (!pendingEventId || !events.some((e) => e.id === pendingEventId)) return;
+    setSelection({ kind: "event", eventId: pendingEventId });
+    setPendingEventId(null);
+  }, [pendingEventId, events]);
 
   const accountById = new Map(accounts.map((a) => [a.id, a]));
   const calendarById = new Map(calendars.map((c) => [c.id, c]));

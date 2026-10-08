@@ -11,6 +11,8 @@ import { ShowCanvasContext } from "@/components/claude-sessions/show-canvas-cont
 import { NewSessionPage } from "@/components/new-session-page";
 import { OpenPageContext } from "@/components/open-page-context";
 import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
+import { ShortcutsDialog } from "@/components/shortcuts-dialog";
+import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import {
   isWallpaperColor,
@@ -46,6 +48,17 @@ function Wallpaper() {
 }
 
 const ACTIVE_PAGE_KEY = "bessel:activePage";
+
+/** A key typed into a field or terminal is text, not a shortcut. */
+function isTyping(e: KeyboardEvent): boolean {
+  const el = e.target as HTMLElement | null;
+  return (
+    !!el &&
+    (el.isContentEditable ||
+      ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) ||
+      !!el.closest(".xterm"))
+  );
+}
 
 function loadActivePage(): PageKey {
   const stored = userStorage.getItem(ACTIVE_PAGE_KEY);
@@ -117,6 +130,9 @@ export function AppShell() {
     projectId: string | null;
   } | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const closeNewSession = useCallback(() => setNewSession(null), []);
   const selectPage = useCallback((page: PageKey) => {
@@ -138,6 +154,9 @@ export function AppShell() {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setPaletteOpen((prev) => !prev);
+      } else if (e.key === "?" && !e.metaKey && !e.ctrlKey && !isTyping(e)) {
+        e.preventDefault();
+        setShortcutsOpen(true);
       }
     };
     window.addEventListener("keydown", handler, { capture: true });
@@ -195,6 +214,16 @@ export function AppShell() {
             open={paletteOpen}
             onClose={closePalette}
             onNavigate={selectPage}
+            onOpenTask={setOpenTaskId}
+            onShowShortcuts={showShortcuts}
+          />
+          <ShortcutsDialog
+            open={shortcutsOpen}
+            onOpenChange={setShortcutsOpen}
+          />
+          <TaskDetailDialogController
+            taskId={openTaskId}
+            onOpenChange={(open) => !open && setOpenTaskId(null)}
           />
         </div>
       </ShowCanvasContext.Provider>

@@ -18,6 +18,7 @@ from api.notifications.endpoints import router as notifications_router
 from api.places.endpoints import router as places_router
 from api.projects.endpoints import router as projects_router
 from api.recipes.endpoints import router as recipes_router
+from api.search.endpoints import router as search_router
 from api.tasks.endpoints import router as tasks_router
 from api.timeline.endpoints import router as timeline_router
 from api.transactions.endpoints import router as transactions_router
@@ -42,6 +43,7 @@ router.include_router(notifications_router)
 router.include_router(places_router)
 router.include_router(projects_router)
 router.include_router(recipes_router)
+router.include_router(search_router)
 router.include_router(tasks_router)
 router.include_router(timeline_router)
 router.include_router(transactions_router)

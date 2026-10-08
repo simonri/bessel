@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useWindowActions } from "@/components/canvas/window-manager";
 import { useSettings } from "@/hooks/use-settings";
+import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { BacklinksPanel } from "./backlinks-panel";
 import { FileTree } from "./file-tree";
 import {
@@ -147,6 +148,16 @@ export function VaultWorkspace({ root, onSwitchVault }: VaultWorkspaceProps) {
     },
     [updateUiState],
   );
+
+  // Opened from search: show that note at the matching line.
+  const target = usePageTarget("obsidian");
+  useEffect(() => {
+    if (!target) return;
+    void openNote(target.id, {
+      line: target.at !== undefined ? Number(target.at) : undefined,
+    });
+    clearPageTarget();
+  }, [target, openNote]);
 
   const closeTab = useCallback(
     async (rel: string) => {

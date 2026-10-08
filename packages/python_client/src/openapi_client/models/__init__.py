@@ -59,6 +59,7 @@ from .device_update import DeviceUpdate
 from .edit_scope import EditScope
 from .energy_day_summary import EnergyDaySummary
 from .event_create import EventCreate
+from .event_hit import EventHit
 from .event_reply_update import EventReplyUpdate
 from .event_reply_update_response import EventReplyUpdateResponse
 from .event_time_input import EventTimeInput
@@ -123,6 +124,7 @@ from .notification_response import NotificationResponse
 from .notifications_list_response import NotificationsListResponse
 from .pagination import Pagination
 from .place_create import PlaceCreate
+from .place_hit import PlaceHit
 from .place_list_response import PlaceListResponse
 from .place_schema import PlaceSchema
 from .place_sort_property import PlaceSortProperty
@@ -136,6 +138,7 @@ from .recipe_body import RecipeBody
 from .recipe_callout import RecipeCallout
 from .recipe_callout_kind import RecipeCalloutKind
 from .recipe_create import RecipeCreate
+from .recipe_hit import RecipeHit
 from .recipe_import_request import RecipeImportRequest
 from .recipe_import_result import RecipeImportResult
 from .recipe_ingredient import RecipeIngredient
@@ -151,6 +154,7 @@ from .recurrence_schema import RecurrenceSchema
 from .recurrence_schema_by_weekday_item import RecurrenceSchemaByWeekdayItem
 from .recurrence_schema_frequency import RecurrenceSchemaFrequency
 from .rrule_frequency import RruleFrequency
+from .search_response import SearchResponse
 from .security_create import SecurityCreate
 from .security_list_response import SecurityListResponse
 from .security_price_create import SecurityPriceCreate
@@ -167,6 +171,7 @@ from .sleep_summary_response import SleepSummaryResponse
 from .task_attachment_schema import TaskAttachmentSchema
 from .task_complete_response import TaskCompleteResponse
 from .task_create import TaskCreate
+from .task_hit import TaskHit
 from .task_list_response import TaskListResponse
 from .task_reorder_item import TaskReorderItem
 from .task_schema import TaskSchema
@@ -253,6 +258,7 @@ __all__ = (
   "EditScope",
   "EnergyDaySummary",
   "EventCreate",
+  "EventHit",
   "EventReplyUpdate",
   "EventReplyUpdateResponse",
   "EventTimeInput",
@@ -313,6 +319,7 @@ __all__ = (
   "NotificationsListResponse",
   "Pagination",
   "PlaceCreate",
+  "PlaceHit",
   "PlaceListResponse",
   "PlaceSchema",
   "PlaceSortProperty",
@@ -326,6 +333,7 @@ __all__ = (
   "RecipeCallout",
   "RecipeCalloutKind",
   "RecipeCreate",
+  "RecipeHit",
   "RecipeImportRequest",
   "RecipeImportResult",
   "RecipeIngredient",
@@ -341,6 +349,7 @@ __all__ = (
   "RecurrenceSchemaByWeekdayItem",
   "RecurrenceSchemaFrequency",
   "RruleFrequency",
+  "SearchResponse",
   "SecurityCreate",
   "SecurityListResponse",
   "SecurityPriceCreate",
@@ -357,6 +366,7 @@ __all__ = (
   "TaskAttachmentSchema",
   "TaskCompleteResponse",
   "TaskCreate",
+  "TaskHit",
   "TaskListResponse",
   "TaskReorderItem",
   "TaskSchema",

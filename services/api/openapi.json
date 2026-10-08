@@ -3803,6 +3803,52 @@
       }
     },
     "/v1/places/{place_id}": {
+      "get": {
+        "tags": [
+          "places"
+        ],
+        "summary": "Get Place",
+        "operationId": "get_place_v1_places__place_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "place_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Place Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "tags": [
           "places"
@@ -4596,6 +4642,72 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search",
+        "description": "Tasks, recipes, calendar events and saved places matching `q`, for the command palette.",
+        "operationId": "search_v1_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 100,
+              "description": "Text to look for in titles, notes and names.",
+              "title": "Q"
+            },
+            "description": "Text to look for in titles, notes and names."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "description": "Most results per kind.",
+              "default": 5,
+              "title": "Limit"
+            },
+            "description": "Most results per kind."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -8241,6 +8353,58 @@
         ],
         "title": "EventCreate"
       },
+      "EventHit": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "all_day": {
+            "type": "boolean",
+            "title": "All Day"
+          },
+          "start_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start At",
+            "description": "Start of a timed event."
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date",
+            "description": "First day of an all-day event."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "all_day",
+          "start_at",
+          "start_date"
+        ],
+        "title": "EventHit"
+      },
       "EventReplyUpdate": {
         "properties": {
           "response": {
@@ -10856,6 +11020,37 @@
         ],
         "title": "PlaceCreate"
       },
+      "PlaceHit": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "address"
+        ],
+        "title": "PlaceHit"
+      },
       "PlaceListResponse": {
         "properties": {
           "items": {
@@ -11574,6 +11769,25 @@
         ],
         "title": "RecipeCreate"
       },
+      "RecipeHit": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "RecipeHit"
+      },
       "RecipeImportRequest": {
         "properties": {
           "text": {
@@ -11983,6 +12197,46 @@
           "yearly"
         ],
         "title": "RruleFrequency"
+      },
+      "SearchResponse": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskHit"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "recipes": {
+            "items": {
+              "$ref": "#/components/schemas/RecipeHit"
+            },
+            "type": "array",
+            "title": "Recipes"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventHit"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "places": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceHit"
+            },
+            "type": "array",
+            "title": "Places"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tasks",
+          "recipes",
+          "events",
+          "places"
+        ],
+        "title": "SearchResponse"
       },
       "SecurityCreate": {
         "properties": {
@@ -12740,6 +12994,29 @@
           "title"
         ],
         "title": "TaskCreate"
+      },
+      "TaskHit": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
+        "title": "TaskHit"
       },
       "TaskListResponse": {
         "properties": {

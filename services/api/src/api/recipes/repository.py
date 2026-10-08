@@ -32,3 +32,7 @@ class RecipeRepository(RepositoryBase[Recipe], RepositoryIDMixin[Recipe, UUID]):
     """The user's oldest recipe with this title, ignoring case."""
     statement = self.get_base_statement().where(Recipe.user_id == user_id, func.lower(Recipe.title) == func.lower(title)).order_by(Recipe.created_at).limit(1)
     return await self.get_one_or_none(statement)
+
+  async def search(self, user_id: UUID, query: str, *, limit: int) -> Sequence[Recipe]:
+    statement = self.get_filtered_statement(user_id, search=query).where(Recipe.deleted_at.is_(None)).order_by(Recipe.title).limit(limit)
+    return await self.get_all(statement)

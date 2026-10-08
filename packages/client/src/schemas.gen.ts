@@ -1938,6 +1938,53 @@ export const EventCreateSchema = {
   title: "EventCreate",
 } as const;
 
+export const EventHitSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    all_day: {
+      type: "boolean",
+      title: "All Day",
+    },
+    start_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start At",
+      description: "Start of a timed event.",
+    },
+    start_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Date",
+      description: "First day of an all-day event.",
+    },
+  },
+  type: "object",
+  required: ["id", "title", "all_day", "start_at", "start_date"],
+  title: "EventHit",
+} as const;
+
 export const EventReplyUpdateSchema = {
   properties: {
     response: {
@@ -4511,6 +4558,34 @@ export const PlaceCreateSchema = {
   title: "PlaceCreate",
 } as const;
 
+export const PlaceHitSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    address: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Address",
+    },
+  },
+  type: "object",
+  required: ["id", "name", "address"],
+  title: "PlaceHit",
+} as const;
+
 export const PlaceListResponseSchema = {
   properties: {
     items: {
@@ -5221,6 +5296,23 @@ export const RecipeCreateSchema = {
   title: "RecipeCreate",
 } as const;
 
+export const RecipeHitSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+  },
+  type: "object",
+  required: ["id", "title"],
+  title: "RecipeHit",
+} as const;
+
 export const RecipeImportRequestSchema = {
   properties: {
     text: {
@@ -5608,6 +5700,42 @@ export const RruleFrequencySchema = {
   type: "string",
   enum: ["daily", "weekly", "monthly", "yearly"],
   title: "RruleFrequency",
+} as const;
+
+export const SearchResponseSchema = {
+  properties: {
+    tasks: {
+      items: {
+        $ref: "#/components/schemas/TaskHit",
+      },
+      type: "array",
+      title: "Tasks",
+    },
+    recipes: {
+      items: {
+        $ref: "#/components/schemas/RecipeHit",
+      },
+      type: "array",
+      title: "Recipes",
+    },
+    events: {
+      items: {
+        $ref: "#/components/schemas/EventHit",
+      },
+      type: "array",
+      title: "Events",
+    },
+    places: {
+      items: {
+        $ref: "#/components/schemas/PlaceHit",
+      },
+      type: "array",
+      title: "Places",
+    },
+  },
+  type: "object",
+  required: ["tasks", "recipes", "events", "places"],
+  title: "SearchResponse",
 } as const;
 
 export const SecurityCreateSchema = {
@@ -6354,6 +6482,26 @@ export const TaskCreateSchema = {
   type: "object",
   required: ["title"],
   title: "TaskCreate",
+} as const;
+
+export const TaskHitSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    status: {
+      $ref: "#/components/schemas/TaskStatus",
+    },
+  },
+  type: "object",
+  required: ["id", "title", "status"],
+  title: "TaskHit",
 } as const;
 
 export const TaskListResponseSchema = {
