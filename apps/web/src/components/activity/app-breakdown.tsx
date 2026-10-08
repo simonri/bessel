@@ -47,7 +47,7 @@ export function AppBreakdown({
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
                 <div
-                  className="h-full rounded-full transition-[width] duration-500 ease-out"
+                  className="h-full transition-[width] duration-500 ease-out"
                   style={{
                     width: `${(app.active_secs / max) * 100}%`,
                     backgroundColor: pastel(hue, 0.85),

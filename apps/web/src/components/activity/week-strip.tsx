@@ -43,7 +43,7 @@ export function WeekStrip({
           >
             <div
               className={cn(
-                "w-full max-w-7 rounded-full transition-[background-color,height] duration-300 ease-out",
+                "w-full max-w-7 transition-[background-color,height] duration-300 ease-out",
                 d.isSelected
                   ? "bg-primary-400"
                   : "bg-white/[0.12] group-hover:bg-white/25",
