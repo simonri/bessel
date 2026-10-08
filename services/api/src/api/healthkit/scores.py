@@ -20,6 +20,8 @@ BEDTIME_STREAK_WINDOW_MINUTES = 45
 # The waking day used to judge "so far" for today.
 WAKING_DAY_START_HOUR = 7
 WAKING_DAY_HOURS = 15
+# Before about 10:00 there's too little of the day to say anything about pace.
+EARLY_DAY_FRACTION = 0.2
 
 LEARNING_LABEL = "Getting to know you"
 
@@ -55,7 +57,7 @@ def usual_time_of_day(minutes: Sequence[float]) -> float | None:
 def waking_day_fraction(now_local: datetime) -> float:
   """How much of today's waking day has passed, so this morning isn't held to a whole day's usual."""
   elapsed_hours = (minutes_of_day(now_local) / 60) - WAKING_DAY_START_HOUR
-  return clamp(elapsed_hours / WAKING_DAY_HOURS, 0.1, 1.0)
+  return clamp(elapsed_hours / WAKING_DAY_HOURS, 0.0, 1.0)
 
 
 def format_duration(secs: float) -> str:
@@ -125,22 +127,30 @@ def move_result(
   has_any_metrics: bool,
   day_fraction: float,
 ) -> MoveResult:
-  """Movement against the usual for this much of the day: active energy when the
-  phone or watch records it, else steps, else workouts alone."""
+  """Movement against a usual day: active energy when the phone or watch records
+  it, else steps, else workouts alone.
+
+  Like activity rings, the score fills up through the day towards a usual full
+  day. Only the word looks at the pace, comparing with the usual for this time
+  of day, and only once the day is properly underway."""
   ratio: float | None = None
   if active_energy_kcal is not None and usual_active_energy_kcal:
-    ratio = active_energy_kcal / (usual_active_energy_kcal * day_fraction)
+    ratio = active_energy_kcal / usual_active_energy_kcal
   elif steps is not None and usual_steps:
-    ratio = steps / (usual_steps * day_fraction)
+    ratio = steps / usual_steps
   elif not has_any_metrics:
-    ratio = workout_minutes / (DAILY_WORKOUT_GOAL_MINUTES * day_fraction)
+    ratio = workout_minutes / DAILY_WORKOUT_GOAL_MINUTES
 
   if ratio is None:
     return MoveResult(None, LEARNING_LABEL)
 
   score = round(clamp(ratio * 80, 0, 100))
   if day_fraction < 1:
-    label = "Ahead of usual" if ratio >= 1 else "On track" if ratio >= 0.6 else "Warming up"
+    if day_fraction < EARLY_DAY_FRACTION:
+      label = "Just starting"
+    else:
+      pace = ratio / day_fraction
+      label = "Ahead of usual" if pace >= 1 else "On track" if pace >= 0.6 else "Warming up"
   else:
     label = "Very active" if ratio >= 1.1 else "Active" if ratio >= 0.8 else "Steady" if ratio >= 0.5 else "Easy day"
   return MoveResult(score, label)
@@ -237,7 +247,7 @@ def insight(facts: DayFacts) -> str:
   if facts.energy_label == "Charged":
     return "You're well recovered. A great day to push a little ⚡️"
   if facts.asleep_secs is None:
-    return "No sleep recorded last night. Wear your watch to bed to see how you rest 🌙"
+    return "No sleep recorded for last night yet 🌙"
   return "A steady day so far. Small things count too 🌸"
 
 

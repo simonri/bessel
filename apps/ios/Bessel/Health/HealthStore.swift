@@ -4,9 +4,16 @@ import Observation
 @MainActor
 @Observable
 final class HealthStore {
-    private(set) var workouts: [HealthKitWorkoutItem] = []
-    private(set) var nights: [SleepNight] = []
-    private(set) var lastNightSegments: [SleepSegment] = []
+    /// The day shown, at local midnight. Its sleep is the night that ended that morning.
+    private(set) var day = Calendar.current.startOfDay(for: .now)
+    private(set) var summary: HealthSummary?
+    private(set) var recentWorkouts: [HealthKitWorkoutItem] = []
+    private(set) var allWorkouts: [HealthKitWorkoutItem] = []
+    private(set) var hasLoadedAllWorkouts = false
+    /// The shown night's stages, for the sleep detail.
+    private(set) var nightSegments: [SleepSegment] = []
+    /// Up to two weeks of nights ending on the shown day, oldest first.
+    private(set) var recentNights: [SleepNight] = []
     private(set) var hasLoaded = false
     private(set) var isSyncing = false
     private(set) var lastSyncedAt: Date?
@@ -19,21 +26,23 @@ final class HealthStore {
     private let cache: ResponseCache?
     private let healthKit = HealthKitService()
     @ObservationIgnored private var loads = LoadGeneration()
+    @ObservationIgnored private var detailLoads = LoadGeneration()
 
     private struct Snapshot: Codable {
-        let workouts: [HealthKitWorkoutItem]
-        let nights: [SleepDailyEntry]
-        let samples: [HealthKitSleepSampleItem]
+        let summary: HealthSummary
+        let recentWorkouts: [HealthKitWorkoutItem]
     }
 
-    private static let cacheKey = "health.v1"
+    private static let cacheKey = "health.v2"
 
     init(client: APIClient, cache: ResponseCache?) {
         self.client = client
         self.cache = cache
         lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
-        if let snapshot = cache?.load(Snapshot.self, key: Self.cacheKey) {
-            apply(snapshot)
+        // Last time's page only helps if it was today's.
+        if let snapshot = cache?.load(Snapshot.self, key: Self.cacheKey), snapshot.summary.date == Self.dateString(day) {
+            summary = snapshot.summary
+            recentWorkouts = snapshot.recentWorkouts
             hasLoaded = true
         }
     }
@@ -41,65 +50,125 @@ final class HealthStore {
     /// Health was connected once on this device; from then on sync runs quietly.
     var isConnected: Bool { lastSyncedAt != nil }
 
-    var lastNight: SleepNight? { nights.last }
+    var isToday: Bool { Calendar.current.isDateInToday(day) }
 
-    /// Average time asleep over the nights before last night.
-    var usualAsleep: TimeInterval? {
-        let earlier = nights.dropLast().suffix(13)
-        guard earlier.count >= 3 else { return nil }
-        return earlier.map(\.asleep).reduce(0, +) / Double(earlier.count)
+    var latestWorkout: HealthKitWorkoutItem? { recentWorkouts.first }
+
+    // MARK: - Days
+
+    func step(_ days: Int) async {
+        let target = Calendar.current.date(byAdding: .day, value: days, to: day)!
+        await show(target)
     }
 
-    var workoutsThisWeek: [HealthKitWorkoutItem] {
-        let weekAgo = Date.now.addingTimeInterval(-7 * 86_400)
-        return workouts.filter { $0.startDate >= weekAgo }
+    func show(_ date: Date) async {
+        let target = Calendar.current.startOfDay(for: date)
+        guard target <= Calendar.current.startOfDay(for: .now), target != day else { return }
+        day = target
+        summary = nil
+        nightSegments = []
+        recentNights = []
+        await load()
     }
+
+    // MARK: - Loading
 
     func loadIfStale() async {
+        // Opened on a new day while still showing the old "today": move along.
+        if summary?.isToday == true, !isToday {
+            await show(.now)
+            return
+        }
         guard loads.isStale(maxAge: AppServices.freshFor) else { return }
         await load()
     }
 
     func load() async {
         let ticket = loads.begin()
+        let shownDay = day
         defer { hasLoaded = true }
-        let now = Int(Date.now.timeIntervalSince1970)
         do {
+            async let summaryTask: HealthSummary = client.get("/v1/healthkit/summary", query: [
+                URLQueryItem(name: "date", value: Self.dateString(shownDay)),
+                URLQueryItem(name: "tz_name", value: TimeZone.current.identifier),
+            ])
             async let workoutsTask: WorkoutListResponse = client.get(
                 "/v1/healthkit/workouts",
-                query: [URLQueryItem(name: "limit", value: "50")]
+                query: [URLQueryItem(name: "limit", value: "20")]
             )
-            async let sleepTask: SleepDailyResponse = client.get(
-                "/v1/healthkit/sleep/daily",
-                query: [
-                    URLQueryItem(name: "start_ts", value: String(now - 15 * 86_400)),
-                    URLQueryItem(name: "end_ts", value: String(now)),
-                    URLQueryItem(name: "tz_name", value: TimeZone.current.identifier),
-                ]
-            )
-            async let samplesTask: SleepSampleListResponse = client.get(
-                "/v1/healthkit/sleep",
-                query: [URLQueryItem(name: "limit", value: "150")]
-            )
-            let snapshot = try await Snapshot(workouts: workoutsTask.items, nights: sleepTask.nights, samples: samplesTask.items)
+            let (summary, workouts) = try await (summaryTask, workoutsTask)
             guard loads.isCurrent(ticket) else { return }
-            apply(snapshot)
+            self.summary = summary
+            recentWorkouts = workouts.items
             loadError = nil
             loads.finish(ticket)
-            cache?.save(snapshot, as: Self.cacheKey)
+            if summary.isToday {
+                cache?.save(Snapshot(summary: summary, recentWorkouts: workouts.items), as: Self.cacheKey)
+            }
         } catch {
             guard loads.isCurrent(ticket), !error.isCancellation else { return }
             loadError = error.userMessage
         }
     }
 
-    private func apply(_ snapshot: Snapshot) {
-        workouts = snapshot.workouts
-        nights = snapshot.nights.compactMap(SleepNight.init)
-        lastNightSegments = segments(for: nights.last, from: snapshot.samples)
+    /// The shown night's stages and the nights before it.
+    func loadSleepDetail() async {
+        let ticket = detailLoads.begin()
+        let calendar = Calendar.current
+        let noon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: day)!
+        let nightStart = calendar.date(byAdding: .day, value: -1, to: noon)!
+        let twoWeeksBefore = calendar.date(byAdding: .day, value: -14, to: nightStart)!
+        do {
+            async let samplesTask: SleepSampleListResponse = client.get("/v1/healthkit/sleep", query: [
+                URLQueryItem(name: "start_ts", value: String(Int(nightStart.timeIntervalSince1970))),
+                URLQueryItem(name: "end_ts", value: String(Int(noon.timeIntervalSince1970))),
+                URLQueryItem(name: "limit", value: String(APIClient.pageSize)),
+            ])
+            async let nightsTask: SleepDailyResponse = client.get("/v1/healthkit/sleep/daily", query: [
+                URLQueryItem(name: "start_ts", value: String(Int(twoWeeksBefore.timeIntervalSince1970))),
+                URLQueryItem(name: "end_ts", value: String(Int(noon.timeIntervalSince1970))),
+                URLQueryItem(name: "tz_name", value: TimeZone.current.identifier),
+            ])
+            let (samples, nights) = try await (samplesTask, nightsTask)
+            guard detailLoads.isCurrent(ticket) else { return }
+            recentNights = nights.nights.compactMap(SleepNight.init)
+            nightSegments = Self.segments(samples.items, from: summary?.sleep?.onset, to: summary?.sleep?.wake)
+        } catch {
+            guard detailLoads.isCurrent(ticket), !error.isCancellation else { return }
+            loadError = error.userMessage
+        }
     }
 
-    /// Asks for Health access (iOS shows the prompt once) and uploads what changed.
+    func loadAllWorkouts() async {
+        do {
+            allWorkouts = try await client.getAllPages("/v1/healthkit/workouts", maxPages: 10)
+            hasLoadedAllWorkouts = true
+        } catch {
+            guard !error.isCancellation else { return }
+            loadError = error.userMessage
+        }
+    }
+
+    private static func segments(_ samples: [HealthKitSleepSampleItem], from onset: Date?, to wake: Date?) -> [SleepSegment] {
+        guard let onset, let wake else { return [] }
+        return samples
+            .compactMap { sample -> SleepSegment? in
+                guard let stage = SleepStage(rawValue: sample.sleepValueName) else { return nil }
+                let start = max(sample.startDate, onset)
+                let end = min(sample.endDate, wake)
+                guard end > start else { return nil }
+                return SleepSegment(stage: stage, start: start, end: end)
+            }
+            .sorted { $0.start < $1.start }
+    }
+
+    private static func dateString(_ day: Date) -> String {
+        DateParsing.dateOnly.string(from: day)
+    }
+
+    // MARK: - Syncing
+
+    /// Asks for Health access (iOS shows the prompt once per new kind of data) and uploads what changed.
     func connect() async {
         await sync(showErrors: true)
     }
@@ -118,9 +187,8 @@ final class HealthStore {
         do {
             try await syncWorkouts()
             try await syncSleep()
-            WorkoutSyncAnchor.lastSyncedAt = .now
-            SleepSyncAnchor.lastSyncedAt = .now
-            lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
+            await syncDailyMetrics()
+            markSynced()
             return true
         } catch {
             return false
@@ -143,13 +211,18 @@ final class HealthStore {
             try await healthKit.requestAuthorization()
             try await syncWorkouts()
             try await syncSleep()
-            WorkoutSyncAnchor.lastSyncedAt = .now
-            SleepSyncAnchor.lastSyncedAt = .now
-            lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
+            await syncDailyMetrics()
+            markSynced()
             await load()
         } catch {
             if showErrors { report(error) }
         }
+    }
+
+    private func markSynced() {
+        WorkoutSyncAnchor.lastSyncedAt = .now
+        SleepSyncAnchor.lastSyncedAt = .now
+        lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
     }
 
     private func syncWorkouts() async throws {
@@ -180,18 +253,20 @@ final class HealthStore {
         }
     }
 
-    /// Stage segments inside last night's main sleep episode, in time order.
-    private func segments(for night: SleepNight?, from samples: [HealthKitSleepSampleItem]) -> [SleepSegment] {
-        guard let night, let onset = night.onset, let wake = night.wake else { return [] }
-        return samples
-            .compactMap { sample -> SleepSegment? in
-                guard let stage = SleepStage(rawValue: sample.sleepValueName) else { return nil }
-                let start = max(sample.startDate, onset)
-                let end = min(sample.endDate, wake)
-                guard end > start else { return nil }
-                return SleepSegment(stage: stage, start: start, end: end)
+    /// Steps, energy and heart totals for the days since the last sync. Kept
+    /// apart from the rest: if it fails, workouts and sleep still count as synced
+    /// and these days are simply sent again next time.
+    private func syncDailyMetrics() async {
+        let window = DailyMetricsSyncState.nextWindow()
+        do {
+            let days = try await healthKit.dailyMetrics(in: window)
+            if !days.isEmpty {
+                let _: DailyMetricsSyncResponse = try await client.post("/v1/healthkit/daily-metrics/sync", body: DailyMetricsSyncRequest(days: days))
             }
-            .sorted { $0.start < $1.start }
+            DailyMetricsSyncState.lastDay = Calendar.current.startOfDay(for: .now)
+        } catch {
+            // Sent again from the same starting day next time.
+        }
     }
 
     private func report(_ error: Error) {

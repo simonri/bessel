@@ -59,6 +59,31 @@ struct HealthKitWorkoutUpload: Encodable {
     }
 }
 
+struct HealthKitDailyMetricUpload: Encodable, Equatable {
+    let date: String
+    let steps: Int?
+    let activeEnergyKcal: Double?
+    let exerciseMinutes: Double?
+    let restingHeartRate: Double?
+    let hrvMs: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case date, steps
+        case activeEnergyKcal = "active_energy_kcal"
+        case exerciseMinutes = "exercise_minutes"
+        case restingHeartRate = "resting_heart_rate"
+        case hrvMs = "hrv_ms"
+    }
+}
+
+struct DailyMetricsSyncRequest: Encodable {
+    let days: [HealthKitDailyMetricUpload]
+}
+
+struct DailyMetricsSyncResponse: Decodable {
+    let synced: Int
+}
+
 struct WorkoutSyncRequest: Encodable {
     let workouts: [HealthKitWorkoutUpload]
     let deletedUuids: [UUID]

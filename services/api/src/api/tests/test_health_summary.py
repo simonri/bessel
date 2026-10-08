@@ -90,6 +90,13 @@ class TestScores:
     assert partial.label in ("On track", "Ahead of usual")
     assert whole.label == "Easy day"
 
+  def test_says_nothing_about_pace_before_the_day_gets_going(self) -> None:
+    night = scores.waking_day_fraction(datetime(2026, 9, 20, 2, 0))
+    result = scores.move_result(20, 500, None, None, 0, has_any_metrics=True, day_fraction=night)
+
+    assert result.label == "Just starting"
+    assert result.score == 3
+
   def test_move_waits_for_a_usual(self) -> None:
     assert scores.move_result(300, None, 5000, None, 0, has_any_metrics=True, day_fraction=1.0) == scores.MoveResult(None, scores.LEARNING_LABEL)
 

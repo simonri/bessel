@@ -1,11 +1,21 @@
 import SwiftUI
 
+/// Where a tap on the Health page leads.
+enum HealthDestination: Hashable {
+    case ring(HealthRing)
+    case workouts
+}
+
+/// One glance at the day: sleep, movement and energy as rings against your
+/// usual, a sentence about what that means, then last night, the week and the
+/// day's timeline. Everything follows the day picked at the top.
 struct HealthView: View {
     let auth: AuthSession
     let isActive: Bool
 
     @State private var store: HealthStore
     @State private var timeline: DayTimeline
+    @State private var path: [HealthDestination] = []
 
     init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
@@ -15,31 +25,40 @@ struct HealthView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    TimelineCard(timeline: timeline)
-                    if !store.isConnected {
+                    if store.isConnected {
+                        DayPager(day: store.day, isToday: store.isToday) { offset in
+                            Task { await store.step(offset) }
+                        }
+                        RingsCard(summary: store.summary, hasLoaded: store.hasLoaded) { ring in
+                            path.append(.ring(ring))
+                        }
+                        .gesture(swipeDays)
+                        if let sleep = store.summary?.sleep {
+                            NavigationLink(value: HealthDestination.ring(.sleep)) {
+                                LastNightCard(sleep: sleep, day: store.day)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        if let summary = store.summary, !summary.week.isEmpty {
+                            WeekCard(summary: summary, latestWorkout: store.latestWorkout) {
+                                path.append(.workouts)
+                            }
+                        }
+                    } else {
                         ConnectHealthCard(isSyncing: store.isSyncing) {
                             Task { await store.connect() }
                         }
                     }
-                    if store.hasLoaded {
-                        if let night = store.lastNight {
-                            LastNightCard(night: night, usual: store.usualAsleep, segments: store.lastNightSegments)
-                            WeekCard(nights: Array(store.nights.suffix(7)))
-                        }
-                        WorkoutsSection(workouts: store.workouts, thisWeek: store.workoutsThisWeek)
-                        if store.nights.isEmpty && store.workouts.isEmpty && store.isConnected {
-                            EmptyState(emoji: "🌙", title: "Nothing here yet", detail: "Your sleep and workouts from Apple Health will show up here.")
-                                .padding(.vertical, 40)
-                        }
-                    }
+                    TimelineCard(timeline: timeline)
                     syncFooter
                 }
                 .padding(.top, Theme.pageTop)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
+                .animation(.snappy, value: store.summary)
             }
             .refreshable {
                 await store.syncIfNeeded()
@@ -47,13 +66,18 @@ struct HealthView: View {
                 await timeline.load()
             }
             .background(Theme.background)
-            .overlay {
-                if !store.hasLoaded { ProgressView() }
-            }
             .navigationTitle("Health")
             .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 ProfileToolbarItem(auth: auth)
+            }
+            .navigationDestination(for: HealthDestination.self) { destination in
+                switch destination {
+                case .ring(.sleep): SleepDetailView(store: store)
+                case .ring(.move): MoveDetailView(store: store) { path.append(.workouts) }
+                case .ring(.energy): EnergyDetailView(store: store)
+                case .workouts: AllWorkoutsView(store: store)
+                }
             }
             .alert("Something went wrong", isPresented: errorBinding) {
                 Button("OK", role: .cancel) {}
@@ -66,7 +90,21 @@ struct HealthView: View {
                 await timeline.loadIfStale()
             }
             .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
+            .onChange(of: store.day) { _, day in
+                Task { await timeline.show(day) }
+            }
+            .haptic(.selection, trigger: store.day)
         }
+    }
+
+    /// Sideways on the rings to go a day back or forward.
+    private var swipeDays: some Gesture {
+        DragGesture(minimumDistance: 30)
+            .onEnded { value in
+                let dx = value.translation.width
+                guard abs(dx) > 60, abs(dx) > abs(value.translation.height) * 1.5 else { return }
+                Task { await store.step(dx < 0 ? 1 : -1) }
+            }
     }
 
     @ViewBuilder
@@ -95,220 +133,239 @@ struct HealthView: View {
     }
 }
 
-// MARK: - Connect
+// MARK: - Day pager
 
-private struct ConnectHealthCard: View {
-    let isSyncing: Bool
-    let onConnect: () -> Void
+private struct DayPager: View {
+    let day: Date
+    let isToday: Bool
+    let onStep: (Int) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Theme.pastel(0))
-                    .frame(width: 44, height: 44)
-                    .background(Theme.pastelWash(0, strength: 1.4), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Connect Apple Health")
-                        .font(.headline)
-                        .foregroundStyle(Theme.foreground)
-                    Text("See your sleep and workouts here. They sync quietly whenever you open Bessel.")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.mutedForeground)
-                }
-            }
-            Button(action: onConnect) {
-                ZStack {
-                    Text("Connect").opacity(isSyncing ? 0 : 1)
-                    if isSyncing { ProgressView().tint(.white) }
-                }
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(Theme.primary, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .disabled(isSyncing)
+        HStack(spacing: 8) {
+            Text(HealthFormat.dayTitle(day))
+                .font(.headline)
+                .foregroundStyle(Theme.foreground)
+                .contentTransition(.numericText())
+            Spacer()
+            pagerButton("chevron.left", label: "Previous day") { onStep(-1) }
+            pagerButton("chevron.right", label: "Next day") { onStep(1) }
+                .disabled(isToday)
+                .opacity(isToday ? 0.35 : 1)
         }
-        .card(padding: 18)
+        .animation(.snappy, value: day)
+    }
+
+    private func pagerButton(_ systemImage: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.foreground)
+                .frame(width: 34, height: 34)
+                .background(Theme.fill, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+}
+
+// MARK: - Rings
+
+private struct RingsCard: View {
+    let summary: HealthSummary?
+    let hasLoaded: Bool
+    let onOpen: (HealthRing) -> Void
+
+    private var rings: [HealthRing] {
+        // No heart data at all means no Apple Watch: two rings, not an empty third.
+        summary?.energy == nil ? [.sleep, .move] : [.sleep, .move, .energy]
+    }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            HStack(alignment: .top, spacing: 8) {
+                ForEach(rings) { ring in
+                    Button { onOpen(ring) } label: {
+                        RingTile(ring: ring, score: score(ring), label: label(ring))
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            Text(summary?.insight ?? " ")
+                .font(.body.weight(.medium))
+                .foregroundStyle(Theme.foreground)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
+                .redacted(reason: summary == nil && !hasLoaded ? .placeholder : [])
+        }
+        .padding(.vertical, 22)
+        .padding(.horizontal, 14)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+    }
+
+    private func score(_ ring: HealthRing) -> Int? {
+        switch ring {
+        case .sleep: summary?.sleep?.score
+        case .move: summary?.move?.score
+        case .energy: summary?.energy?.score
+        }
+    }
+
+    private func label(_ ring: HealthRing) -> String {
+        guard let summary else { return " " }
+        return switch ring {
+        case .sleep: summary.sleep?.label ?? "Not recorded"
+        case .move: summary.move?.label ?? "Not recorded"
+        case .energy: summary.energy?.label ?? "Not recorded"
+        }
+    }
+}
+
+private struct RingTile: View {
+    let ring: HealthRing
+    let score: Int?
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ScoreRing(ring: ring, score: score, size: 82, lineWidth: 10)
+            VStack(spacing: 1) {
+                Text(ring.title)
+                    .font(.caption)
+                    .foregroundStyle(Theme.mutedForeground)
+                Text(label)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(score == nil ? Theme.mutedForeground : Theme.foreground)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(ring.title): \(label)")
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// A soft ring filled to the score; empty while there's nothing to score yet.
+struct ScoreRing: View {
+    let ring: HealthRing
+    let score: Int?
+    var size: CGFloat
+    var lineWidth: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Theme.pastelWash(ring.hue, strength: 1.4), lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: CGFloat(score ?? 0) / 100)
+                .stroke(Theme.pastelSolid(ring.hue), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Image(systemName: ring.icon)
+                .font(.system(size: size * 0.24, weight: .semibold))
+                .foregroundStyle(Theme.pastel(ring.hue))
+        }
+        .frame(width: size, height: size)
+        .animation(.smooth(duration: 0.6), value: score)
     }
 }
 
 // MARK: - Last night
 
 private struct LastNightCard: View {
-    let night: SleepNight
-    let usual: TimeInterval?
-    let segments: [SleepSegment]
+    let sleep: HealthSummary.Sleep
+    let day: Date
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.mutedForeground)
-                Text(Self.duration(night.asleep))
-                    .font(.system(size: 40, weight: .semibold))
+                    .font(.headline)
+                    .foregroundStyle(Theme.foreground)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.faintForeground)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(HealthFormat.duration(TimeInterval(sleep.asleepSecs)))
+                    .font(.system(size: 34, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.foreground)
-                Text(mood)
+                Text(subtitle)
                     .font(.subheadline)
+                    .monospacedDigit()
                     .foregroundStyle(Theme.mutedForeground)
             }
-
-            if let onset = night.onset, let wake = night.wake {
-                HStack(spacing: 0) {
-                    timeStat("Fell asleep", onset, systemImage: "moon.stars.fill", hue: 280)
-                    timeStat("Woke up", wake, systemImage: "sun.max.fill", hue: 55)
-                }
-            }
-
-            if !segments.isEmpty, let onset = night.onset, let wake = night.wake {
-                NightChart(segments: segments, start: onset, end: wake)
-                StageBreakdown(segments: segments)
+            if sleep.hasStages {
+                StageBar(sleep: sleep)
             }
         }
         .card(padding: 18)
+        .contentShape(Rectangle())
     }
 
     private var title: String {
-        guard !Calendar.current.isDateInToday(night.wakeDate),
-              let bedEvening = Calendar.current.date(byAdding: .day, value: -1, to: night.wakeDate)
+        guard !Calendar.current.isDateInToday(day),
+              let evening = Calendar.current.date(byAdding: .day, value: -1, to: day)
         else { return "Last night" }
-        return "\(bedEvening.formatted(.dateTime.weekday(.wide))) night"
+        return "\(evening.formatted(.dateTime.weekday(.wide))) night"
     }
 
-    private var mood: String {
-        let hours = night.asleep / 3600
-        let feeling = if hours >= 7.5 { "A cosy night ✨" }
-            else if hours >= 6.5 { "A solid night" }
-            else if hours >= 5 { "A bit short, be gentle with yourself today" }
-            else { "A short night, maybe an early one tonight? 🌙" }
-        guard let usual else { return feeling }
-        let diff = Int(((night.asleep - usual) / 60).rounded())
-        if abs(diff) < 10 { return "\(feeling) · about your usual" }
-        let text = abs(diff) >= 60 ? "\(abs(diff) / 60)h \(abs(diff) % 60)m" : "\(abs(diff))m"
-        return "\(feeling) · \(diff > 0 ? "+" : "-")\(text) vs usual"
-    }
-
-    private func timeStat(_ label: String, _ date: Date, systemImage: String, hue: Double) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.system(size: 14))
-                .foregroundStyle(Theme.pastel(hue))
-                .frame(width: 34, height: 34)
-                .background(Theme.pastelWash(hue, strength: 1.3), in: Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Text(label)
-                    .font(.caption)
-                    .foregroundStyle(Theme.mutedForeground)
-                Text(date.formatted(date: .omitted, time: .shortened))
-                    .font(.subheadline.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(Theme.foreground)
-            }
+    /// "23:10 to 07:05 · 25m more than usual"
+    private var subtitle: String {
+        var parts: [String] = []
+        if let onset = sleep.onset, let wake = sleep.wake {
+            parts.append("\(HealthFormat.clock(onset)) to \(HealthFormat.clock(wake))")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    static func duration(_ seconds: TimeInterval) -> String {
-        let minutes = Int((seconds / 60).rounded())
-        return minutes < 60 ? "\(minutes)m" : "\(minutes / 60)h \(minutes % 60)m"
+        if let usual = sleep.usualAsleepSecs {
+            let diff = sleep.asleepSecs - usual
+            parts.append(abs(diff) < 10 * 60 ? "about your usual" : "\(HealthFormat.duration(TimeInterval(abs(diff)))) \(diff > 0 ? "more" : "less") than usual")
+        }
+        return parts.joined(separator: " · ")
     }
 }
 
-/// The night as stage blocks on four rows, awake on top and deep at the bottom.
-private struct NightChart: View {
-    let segments: [SleepSegment]
-    let start: Date
-    let end: Date
+/// The night's stages as one bar: square blocks in a rounded track, with a key.
+struct StageBar: View {
+    let sleep: HealthSummary.Sleep
 
-    private let rowHeight: CGFloat = 14
-    private let rowGap: CGFloat = 6
-
-    /// Only the stages that happened get a row, still awake-to-deep top down.
-    private var levels: [Int] {
-        Set(segments.map(\.stage.level)).sorted()
-    }
-
-    private func y(_ level: Int) -> CGFloat {
-        CGFloat(levels.firstIndex(of: level) ?? 0) * (rowHeight + rowGap)
+    private var parts: [(stage: SleepStage, seconds: Int)] {
+        [(.asleepDeep, sleep.deepSecs), (.asleepCore, sleep.coreSecs), (.asleepREM, sleep.remSecs), (.awake, sleep.awakeSecs)]
+            .filter { $0.seconds > 0 }
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        let total = max(parts.map(\.seconds).reduce(0, +), 1)
+        VStack(alignment: .leading, spacing: 10) {
             GeometryReader { geometry in
-                let span = max(end.timeIntervalSince(start), 1)
-                ZStack(alignment: .topLeading) {
-                    // Rounded track per stage; its blocks are square, clipped to the track.
-                    ForEach(levels, id: \.self) { level in
-                        ZStack(alignment: .leading) {
-                            Theme.fill
-                            ForEach(segments.filter { $0.stage.level == level }) { segment in
-                                Rectangle()
-                                    .fill(segment.stage.color)
-                                    .frame(width: max(segment.duration / span * geometry.size.width, 2))
-                                    .offset(x: segment.start.timeIntervalSince(start) / span * geometry.size.width)
-                            }
-                        }
-                        .frame(width: geometry.size.width, height: rowHeight)
-                        .clipShape(Capsule())
-                        .offset(y: y(level))
+                HStack(spacing: 2) {
+                    ForEach(parts, id: \.stage) { part in
+                        Rectangle()
+                            .fill(part.stage.color)
+                            .frame(width: max((geometry.size.width - CGFloat(parts.count - 1) * 2) * CGFloat(part.seconds) / CGFloat(total), 2))
                     }
                 }
             }
-            .frame(height: CGFloat(levels.count) * rowHeight + CGFloat(max(levels.count - 1, 0)) * rowGap)
+            .frame(height: 12)
+            .clipShape(Capsule())
             .accessibilityHidden(true)
 
-            HStack {
-                Text(start.formatted(date: .omitted, time: .shortened))
-                Spacer()
-                Text(end.formatted(date: .omitted, time: .shortened))
-            }
-            .font(.caption2)
-            .monospacedDigit()
-            .foregroundStyle(Theme.faintForeground)
-        }
-    }
-}
-
-private struct StageBreakdown: View {
-    let segments: [SleepSegment]
-
-    private var totals: [(stage: SleepStage, seconds: TimeInterval)] {
-        let grouped = Dictionary(grouping: segments) { segment -> SleepStage in
-            segment.stage == .asleepUnspecified ? .asleepCore : segment.stage
-        }
-        let order: [SleepStage] = [.asleepDeep, .asleepCore, .asleepREM, .awake]
-        return order.compactMap { stage in
-            guard let items = grouped[stage] else { return nil }
-            return (stage, items.map(\.duration).reduce(0, +))
-        }
-    }
-
-    var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], spacing: 12) {
-            ForEach(totals, id: \.stage) { item in
-                HStack(alignment: .top, spacing: 8) {
-                    Circle()
-                        .fill(item.stage.color)
-                        .frame(width: 8, height: 8)
-                        .padding(.top, 5)
-                    VStack(alignment: .leading, spacing: 1) {
-                        HStack(spacing: 4) {
-                            Text(item.stage.label)
-                                .foregroundStyle(Theme.foreground)
-                            Text(LastNightCard.duration(item.seconds))
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.mutedForeground)
-                        }
-                        .font(.subheadline.weight(.medium))
-                        Text(item.stage.hint)
-                            .font(.caption)
-                            .foregroundStyle(Theme.faintForeground)
+            LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], spacing: 6) {
+                ForEach(parts, id: \.stage) { part in
+                    HStack(spacing: 6) {
+                        Circle().fill(part.stage.color).frame(width: 7, height: 7)
+                        Text(part.stage.label)
+                            .foregroundStyle(Theme.mutedForeground)
+                        Text(HealthFormat.duration(TimeInterval(part.seconds)))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.foreground)
                     }
+                    .font(.footnote)
+                    .lineLimit(1)
                 }
             }
         }
@@ -318,179 +375,133 @@ private struct StageBreakdown: View {
 // MARK: - Week
 
 private struct WeekCard: View {
-    let nights: [SleepNight]
+    let summary: HealthSummary
+    let latestWorkout: HealthKitWorkoutItem?
+    let onShowWorkouts: () -> Void
 
-    private let maxHours = 10.0
+    private var workoutDays: [HealthSummary.WeekDay] { summary.week.filter { $0.workoutMinutes > 0 } }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
                 Text("This week")
                     .font(.headline)
                     .foregroundStyle(Theme.foreground)
                 Spacer()
-                if let average {
-                    Text("\(LastNightCard.duration(average)) a night")
-                        .font(.subheadline)
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.mutedForeground)
-                }
+                Text(weekLine)
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.mutedForeground)
             }
-            HStack(alignment: .bottom, spacing: 10) {
-                ForEach(nights) { night in
-                    let isLast = night == nights.last
-                    VStack(spacing: 6) {
-                        Capsule()
-                            .fill(isLast ? SleepStage.asleepREM.color : SleepStage.asleepREM.color.opacity(0.4))
-                            .frame(height: max(8, 96 * min(night.asleep / 3600, maxHours) / maxHours))
-                        Text(night.wakeDate.formatted(.dateTime.weekday(.narrow)))
-                            .font(.caption2.weight(isLast ? .bold : .regular))
-                            .foregroundStyle(isLast ? Theme.foreground : Theme.faintForeground)
+
+            MoveWeekBars(week: summary.week, height: 72)
+
+            if let latestWorkout {
+                Button(action: onShowWorkouts) {
+                    HStack(spacing: 0) {
+                        WorkoutRow(workout: latestWorkout, caption: "Latest")
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.faintForeground)
                     }
-                    .frame(maxWidth: .infinity)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(night.wakeDate.formatted(.dateTime.weekday(.wide))): \(LastNightCard.duration(night.asleep))")
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .padding(.horizontal, -12)
             }
-            .frame(height: 120, alignment: .bottom)
         }
         .card(padding: 18)
     }
 
-    private var average: TimeInterval? {
-        guard !nights.isEmpty else { return nil }
-        return nights.map(\.asleep).reduce(0, +) / Double(nights.count)
+    private var weekLine: String {
+        let minutes = summary.week.map(\.workoutMinutes).reduce(0, +)
+        guard !workoutDays.isEmpty else { return "No workouts yet" }
+        let count = workoutDays.count
+        return "\(count) workout \(count == 1 ? "day" : "days") · \(HealthFormat.duration(minutes * 60))"
     }
 }
 
-// MARK: - Workouts
+/// A week of movement: one rounded bar a day, the shown day brightest, a dot under days with a workout.
+struct MoveWeekBars: View {
+    let week: [HealthSummary.WeekDay]
+    let height: CGFloat
 
-private struct WorkoutsSection: View {
-    let workouts: [HealthKitWorkoutItem]
-    let thisWeek: [HealthKitWorkoutItem]
+    private let barWidth: CGFloat = 12
 
     var body: some View {
-        if !workouts.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Workouts")
-                        .font(.headline)
-                        .foregroundStyle(Theme.foreground)
-                    Spacer()
-                    Text(weekSummary)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.mutedForeground)
-                }
-                .padding(.top, 8)
-                .padding(.horizontal, 4)
-
-                VStack(spacing: 0) {
-                    ForEach(workouts.prefix(20)) { workout in
-                        WorkoutRow(workout: workout)
-                        if workout.id != workouts.prefix(20).last?.id {
-                            Divider().overlay(Theme.border).padding(.leading, 64)
-                        }
+        HStack(alignment: .bottom, spacing: 10) {
+            ForEach(week) { day in
+                let isLast = day.id == week.last?.id
+                VStack(spacing: 6) {
+                    // A slim rounded track, filled up to the day's movement.
+                    ZStack(alignment: .bottom) {
+                        Capsule()
+                            .fill(Theme.pastelWash(HealthRing.move.hue, strength: 1.4))
+                        Capsule()
+                            .fill(Theme.pastelSolid(HealthRing.move.hue).opacity(isLast ? 1 : 0.6))
+                            .frame(height: max(barWidth, height * CGFloat(day.moveScore ?? 0) / 100))
+                            .opacity(day.moveScore == nil ? 0 : 1)
                     }
+                    .frame(width: barWidth, height: height)
+                    Circle()
+                        .fill(day.workoutMinutes > 0 ? Theme.pastelSolid(HealthRing.move.hue) : .clear)
+                        .frame(width: 5, height: 5)
+                    Text(day.day?.formatted(.dateTime.weekday(.narrow)) ?? "")
+                        .font(.caption2.weight(isLast ? .bold : .regular))
+                        .foregroundStyle(isLast ? Theme.foreground : Theme.faintForeground)
                 }
-                .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibility(day))
             }
         }
     }
 
-    private var weekSummary: String {
-        guard !thisWeek.isEmpty else { return "None this week yet" }
-        let minutes = Int(thisWeek.map(\.duration).reduce(0, +) / 60)
-        let time = minutes >= 60 ? "\(minutes / 60)h \(minutes % 60)m" : "\(minutes)m"
-        return "\(thisWeek.count) this week · \(time)"
+    private func accessibility(_ day: HealthSummary.WeekDay) -> String {
+        let name = day.day?.formatted(.dateTime.weekday(.wide)) ?? day.date
+        let workout = day.workoutMinutes > 0 ? ", worked out \(HealthFormat.duration(day.workoutMinutes * 60))" : ""
+        return "\(name): movement \(day.moveScore.map(String.init) ?? "not recorded")\(workout)"
     }
 }
 
-private struct WorkoutRow: View {
-    let workout: HealthKitWorkoutItem
+// MARK: - Connect
+
+private struct ConnectHealthCard: View {
+    let isSyncing: Bool
+    let onConnect: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: workout.icon)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Theme.pastel(workout.hue))
-                .frame(width: 40, height: 40)
-                .background(Theme.pastelWash(workout.hue, strength: 1.3), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(workout.activityLabel)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.foreground)
-                Text(metaItems.joined(separator: " · "))
-                    .font(.caption)
-                    .foregroundStyle(Theme.mutedForeground)
+        VStack(spacing: 18) {
+            HStack(spacing: -14) {
+                ForEach(HealthRing.allCases) { ring in
+                    ScoreRing(ring: ring, score: 70, size: 64, lineWidth: 8)
+                        .background(Theme.card, in: Circle())
+                }
             }
-            Spacer()
-            Text(workout.startDate.formatted(.relative(presentation: .named)))
-                .font(.caption)
-                .foregroundStyle(Theme.faintForeground)
+            VStack(spacing: 6) {
+                Text("See how you're really doing")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Theme.foreground)
+                Text("Connect Apple Health for a daily look at your sleep, movement and energy, compared with your own usual.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.mutedForeground)
+                    .multilineTextAlignment(.center)
+            }
+            Button(action: onConnect) {
+                ZStack {
+                    Text("Connect Apple Health").opacity(isSyncing ? 0 : 1)
+                    if isSyncing { ProgressView().tint(.white) }
+                }
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(Theme.primary, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(isSyncing)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var metaItems: [String] {
-        var items = [Duration.seconds(Int(workout.duration)).formatted(.units(allowed: [.hours, .minutes], width: .narrow))]
-        if let meters = workout.totalDistance, meters > 0 {
-            items.append(String(format: "%.1f km", meters / 1000))
-        }
-        if let kcal = workout.totalEnergyBurned, kcal > 0 {
-            items.append("\(Int(kcal.rounded())) kcal")
-        }
-        return items
-    }
-}
-
-private extension HealthKitWorkoutItem {
-    var activityLabel: String {
-        workoutActivityTypeName
-            .split(separator: "_")
-            .joined(separator: " ")
-            .capitalized
-    }
-
-    /// Cardio warm, strength and studio cool, outdoors green.
-    var hue: Double {
-        switch workoutActivityTypeName {
-        case "running", "high_intensity_interval_training", "cross_training", "mixed_cardio", "dance", "social_dance": 20
-        case "yoga", "mind_and_body", "pilates", "flexibility", "cooldown", "preparation_and_recovery": 305
-        case "traditional_strength_training", "functional_strength_training", "core_training": 270
-        case "walking", "hiking", "cycling", "hand_cycling": 150
-        case "swimming", "rowing", "paddle_sports", "water_sports": 235
-        default: 45
-        }
-    }
-
-    var icon: String {
-        switch workoutActivityTypeName {
-        case "running": "figure.run"
-        case "walking": "figure.walk"
-        case "hiking": "figure.hiking"
-        case "cycling", "hand_cycling": "figure.outdoor.cycle"
-        case "swimming": "figure.pool.swim"
-        case "traditional_strength_training", "functional_strength_training": "figure.strengthtraining.traditional"
-        case "core_training": "figure.core.training"
-        case "high_intensity_interval_training", "cross_training", "mixed_cardio": "figure.highintensity.intervaltraining"
-        case "yoga", "mind_and_body": "figure.yoga"
-        case "pilates": "figure.pilates"
-        case "rowing": "figure.rower"
-        case "elliptical": "figure.elliptical"
-        case "stair_climbing", "stairs", "step_training": "figure.stair.stepper"
-        case "tennis", "squash", "racquetball", "badminton", "pickleball", "table_tennis": "figure.tennis"
-        case "soccer": "figure.indoor.soccer"
-        case "basketball": "figure.basketball"
-        case "golf": "figure.golf"
-        case "downhill_skiing", "cross_country_skiing", "snow_sports": "figure.skiing.downhill"
-        case "snowboarding": "figure.snowboarding"
-        case "dance", "social_dance": "figure.dance"
-        case "boxing", "kickboxing", "martial_arts": "figure.boxing"
-        case "climbing": "figure.climbing"
-        case "cooldown", "flexibility", "preparation_and_recovery": "figure.cooldown"
-        default: "figure.mixed.cardio"
-        }
+        .padding(22)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
     }
 }

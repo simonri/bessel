@@ -131,6 +131,7 @@ final class AuthSession {
         // signing in must start from scratch or its history would never upload.
         WorkoutSyncAnchor.clear()
         SleepSyncAnchor.clear()
+        DailyMetricsSyncState.clear()
         ResponseCache.removeAll()
         DeleteOutbox.clear()
         state = .signedOut
