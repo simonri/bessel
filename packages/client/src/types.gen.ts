@@ -1263,6 +1263,38 @@ export const EditScope = {
 export type EditScope = (typeof EditScope)[keyof typeof EditScope];
 
 /**
+ * EnergyDaySummary
+ */
+export type EnergyDaySummary = {
+  /**
+   * Score
+   *
+   * Null while still learning the usual (fewer than 5 earlier days).
+   */
+  score: number | null;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Resting Heart Rate
+   */
+  resting_heart_rate: number | null;
+  /**
+   * Usual Resting Heart Rate
+   */
+  usual_resting_heart_rate: number | null;
+  /**
+   * Hrv Ms
+   */
+  hrv_ms: number | null;
+  /**
+   * Usual Hrv Ms
+   */
+  usual_hrv_ms: number | null;
+};
+
+/**
  * EventCreate
  */
 export type EventCreate = {
@@ -1577,6 +1609,69 @@ export type HttpValidationError = {
    * Detail
    */
   detail?: Array<ValidationError>;
+};
+
+/**
+ * HealthKitDailyMetricUpload
+ *
+ * One local day of totals and averages, computed on the device by HealthKit's
+ * statistics queries so overlapping iPhone and Watch samples count once.
+ */
+export type HealthKitDailyMetricUpload = {
+  /**
+   * Date
+   *
+   * Local calendar date the values belong to.
+   */
+  date: Date;
+  /**
+   * Steps
+   */
+  steps?: number | null;
+  /**
+   * Active Energy Kcal
+   */
+  active_energy_kcal?: number | null;
+  /**
+   * Exercise Minutes
+   */
+  exercise_minutes?: number | null;
+  /**
+   * Resting Heart Rate
+   *
+   * Beats per minute.
+   */
+  resting_heart_rate?: number | null;
+  /**
+   * Hrv Ms
+   *
+   * Heart rate variability (SDNN), milliseconds.
+   */
+  hrv_ms?: number | null;
+};
+
+/**
+ * HealthKitDailyMetricsSyncRequest
+ */
+export type HealthKitDailyMetricsSyncRequest = {
+  /**
+   * Days
+   *
+   * Each day's values replace what was stored for it.
+   */
+  days: Array<HealthKitDailyMetricUpload>;
+};
+
+/**
+ * HealthKitDailyMetricsSyncResponse
+ */
+export type HealthKitDailyMetricsSyncResponse = {
+  /**
+   * Synced
+   *
+   * Number of days inserted or updated.
+   */
+  synced: number;
 };
 
 /**
@@ -1959,6 +2054,72 @@ export type HealthKitWorkoutUpload = {
   statistics?: {
     [key: string]: unknown;
   } | null;
+};
+
+/**
+ * HealthSummaryResponse
+ */
+export type HealthSummaryResponse = {
+  /**
+   * Date
+   */
+  date: Date;
+  /**
+   * Is Today
+   */
+  is_today: boolean;
+  /**
+   * The night that ended on this date; null if none was recorded.
+   */
+  sleep: SleepDaySummary | null;
+  /**
+   * Null when there's no activity data at all yet.
+   */
+  move: MoveDaySummary | null;
+  /**
+   * Null when no heart data has been recorded (no Apple Watch).
+   */
+  energy: EnergyDaySummary | null;
+  /**
+   * Insight
+   *
+   * One friendly sentence about the day.
+   */
+  insight: string;
+  /**
+   * Bedtime Streak
+   *
+   * Nights in a row, ending this date, that began within 45 minutes of the usual bedtime.
+   */
+  bedtime_streak: number;
+  /**
+   * Week
+   *
+   * The seven days ending on this date, oldest first.
+   */
+  week: Array<HealthWeekDay>;
+};
+
+/**
+ * HealthWeekDay
+ */
+export type HealthWeekDay = {
+  /**
+   * Date
+   */
+  date: Date;
+  /**
+   * Asleep Secs
+   */
+  asleep_secs: number | null;
+  /**
+   * Move Score
+   */
+  move_score: number | null;
+  /**
+   * Workout Minutes
+   */
+  workout_minutes: number;
 };
 
 /**
@@ -2483,6 +2644,56 @@ export type MonthlySpendingResponse = {
    * Spending per category, sorted descending by total.
    */
   items: Array<CategorySpending>;
+};
+
+/**
+ * MoveDaySummary
+ */
+export type MoveDaySummary = {
+  /**
+   * Score
+   *
+   * Null until there's a usual to compare against.
+   */
+  score: number | null;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Is Partial Day
+   *
+   * True for today: compared against the usual for this time of day.
+   */
+  is_partial_day: boolean;
+  /**
+   * Steps
+   */
+  steps: number | null;
+  /**
+   * Usual Steps
+   */
+  usual_steps: number | null;
+  /**
+   * Active Energy Kcal
+   */
+  active_energy_kcal: number | null;
+  /**
+   * Usual Active Energy Kcal
+   */
+  usual_active_energy_kcal: number | null;
+  /**
+   * Exercise Minutes
+   */
+  exercise_minutes: number | null;
+  /**
+   * Workout Count
+   */
+  workout_count: number;
+  /**
+   * Workout Minutes
+   */
+  workout_minutes: number;
 };
 
 /**
@@ -3491,6 +3702,58 @@ export type SleepDailyResponse = {
    * Nights
    */
   nights: Array<SleepDailyEntry>;
+};
+
+/**
+ * SleepDaySummary
+ */
+export type SleepDaySummary = {
+  /**
+   * Score
+   */
+  score: number;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Asleep Secs
+   */
+  asleep_secs: number;
+  /**
+   * Usual Asleep Secs
+   *
+   * Average over up to 14 earlier nights; null with fewer than 3.
+   */
+  usual_asleep_secs: number | null;
+  /**
+   * Sleep Onset
+   *
+   * Local time (ISO 8601 with offset) the main sleep began.
+   */
+  sleep_onset: string | null;
+  /**
+   * Wake Time
+   *
+   * Local time (ISO 8601 with offset) the main sleep ended.
+   */
+  wake_time: string | null;
+  /**
+   * Deep Secs
+   */
+  deep_secs: number;
+  /**
+   * Core Secs
+   */
+  core_secs: number;
+  /**
+   * Rem Secs
+   */
+  rem_secs: number;
+  /**
+   * Awake Secs
+   */
+  awake_secs: number;
 };
 
 /**
@@ -5735,6 +5998,18 @@ export type ListHealthkitSleepV1HealthkitSleepGetData = {
   path?: never;
   query?: {
     /**
+     * Start Ts
+     *
+     * Only samples ending after this (Unix epoch seconds).
+     */
+    start_ts?: number | null;
+    /**
+     * End Ts
+     *
+     * Only samples starting before this (Unix epoch seconds).
+     */
+    end_ts?: number | null;
+    /**
      * Page
      *
      * Page number, defaults to 1.
@@ -5861,6 +6136,74 @@ export type GetSleepSummaryV1HealthkitSleepSummaryGetResponses = {
 
 export type GetSleepSummaryV1HealthkitSleepSummaryGetResponse =
   GetSleepSummaryV1HealthkitSleepSummaryGetResponses[keyof GetSleepSummaryV1HealthkitSleepSummaryGetResponses];
+
+export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData = {
+  body: HealthKitDailyMetricsSyncRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/healthkit/daily-metrics/sync";
+};
+
+export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError =
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors[keyof SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors];
+
+export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: HealthKitDailyMetricsSyncResponse;
+  };
+
+export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse =
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses[keyof SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses];
+
+export type GetHealthSummaryV1HealthkitSummaryGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Date
+     *
+     * Local date to summarize. Its sleep is the night that ended that morning.
+     */
+    date: Date;
+    /**
+     * Tz Name
+     *
+     * IANA timezone name, e.g. 'Europe/Stockholm'.
+     */
+    tz_name: string;
+  };
+  url: "/v1/healthkit/summary";
+};
+
+export type GetHealthSummaryV1HealthkitSummaryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetHealthSummaryV1HealthkitSummaryGetError =
+  GetHealthSummaryV1HealthkitSummaryGetErrors[keyof GetHealthSummaryV1HealthkitSummaryGetErrors];
+
+export type GetHealthSummaryV1HealthkitSummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: HealthSummaryResponse;
+};
+
+export type GetHealthSummaryV1HealthkitSummaryGetResponse =
+  GetHealthSummaryV1HealthkitSummaryGetResponses[keyof GetHealthSummaryV1HealthkitSummaryGetResponses];
 
 export type ListIngestTokensV1IngestTokensGetData = {
   body?: never;

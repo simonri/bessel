@@ -26,6 +26,7 @@ import {
   createTradeV1InvestmentsTradesPostResponseTransformer,
   getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+  getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
   getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
   getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
@@ -185,6 +186,9 @@ import type {
   GetDailySleepV1HealthkitSleepDailyGetData,
   GetDailySleepV1HealthkitSleepDailyGetErrors,
   GetDailySleepV1HealthkitSleepDailyGetResponses,
+  GetHealthSummaryV1HealthkitSummaryGetData,
+  GetHealthSummaryV1HealthkitSummaryGetErrors,
+  GetHealthSummaryV1HealthkitSummaryGetResponses,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponses,
   GetIntradayActivityV1ActivityIntradayGetData,
@@ -326,6 +330,9 @@ import type {
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors,
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses,
   SyncHealthkitSleepV1HealthkitSleepSyncPostData,
   SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
   SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
@@ -1359,6 +1366,51 @@ export const getSleepSummaryV1HealthkitSleepSummaryGet = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/healthkit/sleep/summary",
+    ...options,
+  });
+
+/**
+ * Sync HealthKit Daily Metrics
+ */
+export const syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).post<
+    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses,
+    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/daily-metrics/sync",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Health Day Summary
+ */
+export const getHealthSummaryV1HealthkitSummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetHealthSummaryV1HealthkitSummaryGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetHealthSummaryV1HealthkitSummaryGetResponses,
+    GetHealthSummaryV1HealthkitSummaryGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/healthkit/summary",
     ...options,
   });
 

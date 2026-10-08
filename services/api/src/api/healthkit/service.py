@@ -1,9 +1,24 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
-from api.healthkit.schemas import HealthKitSleepSyncRequest, HealthKitWorkoutSyncRequest, SleepDailyEntry, SleepStageSummary, SleepSummaryResponse
+from api.healthkit import scores
+from api.healthkit.repository import HealthKitDailyMetricRepository, HealthKitSleepSampleRepository, HealthKitWorkoutRepository
+from api.healthkit.schemas import (
+  EnergyDaySummary,
+  HealthKitDailyMetricsSyncRequest,
+  HealthKitSleepSyncRequest,
+  HealthKitWorkoutSyncRequest,
+  HealthSummaryResponse,
+  HealthWeekDay,
+  MoveDaySummary,
+  SleepDailyEntry,
+  SleepDaySummary,
+  SleepStageSummary,
+  SleepSummaryResponse,
+)
+from api.models.healthkit_daily_metric import HealthKitDailyMetric
+from api.models.healthkit_workout import HealthKitWorkout
 
 
 class HealthKitWorkoutService:
@@ -211,3 +226,195 @@ class HealthKitSleepService:
 
 
 healthkit_sleep_service = HealthKitSleepService()
+
+
+class HealthKitDailyMetricService:
+  async def sync(self, repo: HealthKitDailyMetricRepository, user_id: UUID, request: HealthKitDailyMetricsSyncRequest) -> int:
+    deduped = {day.date: day for day in request.days}
+    return await repo.upsert_batch([{"user_id": user_id, **day.model_dump()} for day in deduped.values()])
+
+
+healthkit_daily_metric_service = HealthKitDailyMetricService()
+
+# How far back the usuals look.
+BASELINE_DAYS = 30
+SLEEP_BASELINE_NIGHTS = 14
+WEEK_DAYS = 7
+
+
+def _local_noon_ts(day: date, tz: ZoneInfo) -> int:
+  return int(datetime(day.year, day.month, day.day, 12, tzinfo=tz).timestamp())
+
+
+def _local_midnight(day: date, tz: ZoneInfo) -> datetime:
+  return datetime(day.year, day.month, day.day, tzinfo=tz)
+
+
+def _onset_minutes(entry: SleepDailyEntry | None) -> float | None:
+  if entry is None or entry.sleep_onset is None:
+    return None
+  return scores.minutes_of_day(datetime.fromisoformat(entry.sleep_onset))
+
+
+class HealthSummaryService:
+  """Builds one day's Health page: sleep, movement and energy against the person's
+  own usual, the week around it and a sentence about it."""
+
+  async def build(
+    self,
+    sleep_repo: HealthKitSleepSampleRepository,
+    workout_repo: HealthKitWorkoutRepository,
+    metric_repo: HealthKitDailyMetricRepository,
+    user_id: UUID,
+    day: date,
+    tz: ZoneInfo,
+    now: datetime,
+  ) -> HealthSummaryResponse:
+    is_today = day == now.astimezone(tz).date()
+    week = [day - timedelta(days=offset) for offset in range(WEEK_DAYS - 1, -1, -1)]
+    history_start = week[0] - timedelta(days=BASELINE_DAYS)
+
+    nights = {
+      date.fromisoformat(entry.date): entry
+      for entry in await healthkit_sleep_service.nightly_totals(
+        sleep_repo, user_id, _local_noon_ts(history_start - timedelta(days=1), tz), _local_noon_ts(day, tz), tz, 0
+      )
+    }
+    metrics = {metric.date: metric for metric in await metric_repo.list_between(user_id, history_start, day)}
+    workouts_by_day: dict[date, list[HealthKitWorkout]] = {}
+    for workout in await workout_repo.list_started_between(user_id, _local_midnight(week[0], tz), _local_midnight(day + timedelta(days=1), tz)):
+      workouts_by_day.setdefault(workout.start_date.astimezone(tz).date(), []).append(workout)
+
+    sleep, sleep_score, usual_onset = await self._sleep(sleep_repo, user_id, day, tz, nights)
+    move_by_day = {
+      d: self._move(
+        d, metrics, workouts_by_day.get(d, []), scores.waking_day_fraction(now.astimezone(tz)) if d == day and is_today else 1.0, is_today and d == day
+      )
+      for d in week
+    }
+    energy = self._energy(day, metrics, sleep_score)
+    streak = scores.bedtime_streak([_onset_minutes(nights.get(day - timedelta(days=offset))) for offset in range(SLEEP_BASELINE_NIGHTS)], usual_onset)
+
+    move = move_by_day[day]
+    todays_workouts = workouts_by_day.get(day, [])
+    facts = scores.DayFacts(
+      is_today=is_today,
+      asleep_secs=sleep.asleep_secs if sleep else None,
+      usual_asleep_secs=sleep.usual_asleep_secs if sleep else None,
+      energy_label=energy.label if energy and energy.score is not None else None,
+      move_label=move.label if move else None,
+      workout_count=len(todays_workouts),
+      workout_minutes=sum(w.duration for w in todays_workouts) / 60,
+      bedtime_streak=streak,
+    )
+    return HealthSummaryResponse(
+      date=day,
+      is_today=is_today,
+      sleep=sleep,
+      move=move,
+      energy=energy,
+      insight=scores.insight(facts),
+      bedtime_streak=streak,
+      week=[
+        HealthWeekDay(
+          date=d,
+          asleep_secs=nights[d].asleep_secs if d in nights else None,
+          move_score=day_move.score if (day_move := move_by_day[d]) else None,
+          workout_minutes=sum(w.duration for w in workouts_by_day.get(d, [])) / 60,
+        )
+        for d in week
+      ],
+    )
+
+  async def _sleep(
+    self, repo: HealthKitSleepSampleRepository, user_id: UUID, day: date, tz: ZoneInfo, nights: dict[date, SleepDailyEntry]
+  ) -> tuple[SleepDaySummary | None, int | None, float | None]:
+    earlier = [nights[d] for offset in range(1, SLEEP_BASELINE_NIGHTS + 1) if (d := day - timedelta(days=offset)) in nights]
+    usual_onset = scores.usual_time_of_day([m for entry in earlier if (m := _onset_minutes(entry)) is not None])
+    night = nights.get(day)
+    if night is None:
+      return None, None, usual_onset
+
+    stages: dict[str, int] = {}
+    for segment in await healthkit_sleep_service.get_segments(repo, user_id, _local_noon_ts(day - timedelta(days=1), tz), _local_noon_ts(day, tz)):
+      stages[segment.stage_name] = stages.get(segment.stage_name, 0) + segment.duration
+    deep, core, rem = stages.get("asleepDeep", 0), stages.get("asleepCore", 0), stages.get("asleepREM", 0)
+
+    usual_asleep = round(sum(e.asleep_secs for e in earlier) / len(earlier)) if len(earlier) >= scores.MIN_SLEEP_BASELINE_NIGHTS else None
+    score = scores.sleep_score(night.asleep_secs, deep, rem, core, _onset_minutes(night), usual_onset)
+    summary = SleepDaySummary(
+      score=score,
+      label=scores.sleep_label(score, night.asleep_secs),
+      asleep_secs=night.asleep_secs,
+      usual_asleep_secs=usual_asleep,
+      sleep_onset=night.sleep_onset,
+      wake_time=night.wake_time,
+      deep_secs=deep,
+      core_secs=core,
+      rem_secs=rem,
+      awake_secs=stages.get("awake", 0),
+    )
+    return summary, score, usual_onset
+
+  def _move(
+    self, day: date, metrics: dict[date, HealthKitDailyMetric], workouts: list[HealthKitWorkout], day_fraction: float, is_partial: bool
+  ) -> MoveDaySummary | None:
+    earlier = [metrics[d] for offset in range(1, BASELINE_DAYS + 1) if (d := day - timedelta(days=offset)) in metrics]
+    energies = [m.active_energy_kcal for m in earlier if m.active_energy_kcal is not None]
+    step_counts = [float(m.steps) for m in earlier if m.steps is not None]
+    usual_energy = scores.mean(energies) if len(energies) >= scores.MIN_BASELINE_DAYS else None
+    usual_steps = scores.mean(step_counts) if len(step_counts) >= scores.MIN_BASELINE_DAYS else None
+
+    today = metrics.get(day)
+    workout_minutes = sum(w.duration for w in workouts) / 60
+    if today is None and not earlier and not workouts:
+      return None
+
+    result = scores.move_result(
+      active_energy_kcal=today.active_energy_kcal if today else None,
+      usual_active_energy_kcal=usual_energy,
+      steps=today.steps if today else None,
+      usual_steps=usual_steps,
+      workout_minutes=workout_minutes,
+      has_any_metrics=bool(earlier) or today is not None,
+      day_fraction=day_fraction,
+    )
+    return MoveDaySummary(
+      score=result.score,
+      label=result.label,
+      is_partial_day=is_partial,
+      steps=today.steps if today else None,
+      usual_steps=round(usual_steps) if usual_steps is not None else None,
+      active_energy_kcal=today.active_energy_kcal if today else None,
+      usual_active_energy_kcal=usual_energy,
+      exercise_minutes=today.exercise_minutes if today else None,
+      workout_count=len(workouts),
+      workout_minutes=workout_minutes,
+    )
+
+  def _energy(self, day: date, metrics: dict[date, HealthKitDailyMetric], sleep_score: int | None) -> EnergyDaySummary | None:
+    earlier = [metrics[d] for offset in range(1, BASELINE_DAYS + 1) if (d := day - timedelta(days=offset)) in metrics]
+    today = metrics.get(day)
+    hrvs = [m.hrv_ms for m in earlier if m.hrv_ms is not None]
+    resting = [m.resting_heart_rate for m in earlier if m.resting_heart_rate is not None]
+    has_today = today is not None and (today.hrv_ms is not None or today.resting_heart_rate is not None)
+    if not hrvs and not resting and not has_today:
+      # No heart data at all: no Apple Watch, so no Energy ring.
+      return None
+
+    usual_hrv = scores.mean(hrvs) if len(hrvs) >= scores.MIN_BASELINE_DAYS else None
+    usual_resting = scores.mean(resting) if len(resting) >= scores.MIN_BASELINE_DAYS else None
+    hrv = today.hrv_ms if today else None
+    resting_rate = today.resting_heart_rate if today else None
+    score = scores.energy_score(hrv, usual_hrv, resting_rate, usual_resting, sleep_score)
+    return EnergyDaySummary(
+      score=score,
+      label=scores.energy_label(score),
+      resting_heart_rate=resting_rate,
+      usual_resting_heart_rate=usual_resting,
+      hrv_ms=hrv,
+      usual_hrv_ms=usual_hrv,
+    )
+
+
+health_summary_service = HealthSummaryService()

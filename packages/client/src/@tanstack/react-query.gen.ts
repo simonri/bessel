@@ -49,6 +49,7 @@ import {
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
   getDailyActivityV1ActivityDailyGet,
   getDailySleepV1HealthkitSleepDailyGet,
+  getHealthSummaryV1HealthkitSummaryGet,
   getHoldingsV1InvestmentsHoldingsGet,
   getIntradayActivityV1ActivityIntradayGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
@@ -101,6 +102,7 @@ import {
   structureRecipeTextV1RecipesImportPost,
   syncAgentUsageV1AgentUsageSyncPost,
   syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost,
+  syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoCompleteTaskV1TasksTaskIdUndoCompletePost,
@@ -236,6 +238,9 @@ import type {
   GetDailySleepV1HealthkitSleepDailyGetData,
   GetDailySleepV1HealthkitSleepDailyGetError,
   GetDailySleepV1HealthkitSleepDailyGetResponse,
+  GetHealthSummaryV1HealthkitSummaryGetData,
+  GetHealthSummaryV1HealthkitSummaryGetError,
+  GetHealthSummaryV1HealthkitSummaryGetResponse,
   GetHoldingsV1InvestmentsHoldingsGetData,
   GetHoldingsV1InvestmentsHoldingsGetResponse,
   GetIntradayActivityV1ActivityIntradayGetData,
@@ -374,6 +379,9 @@ import type {
   SyncAgentUsageV1AgentUsageSyncPostResponse,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError,
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError,
+  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse,
   SyncHealthkitSleepV1HealthkitSleepSyncPostData,
   SyncHealthkitSleepV1HealthkitSleepSyncPostError,
   SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
@@ -1991,6 +1999,65 @@ export const getSleepSummaryV1HealthkitSleepSummaryGetOptions = (
       return data;
     },
     queryKey: getSleepSummaryV1HealthkitSleepSummaryGetQueryKey(options),
+  });
+
+/**
+ * Sync HealthKit Daily Metrics
+ */
+export const syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostMutation =
+  (
+    options?: Partial<
+      Options<SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData>
+    >,
+  ): UseMutationOptions<
+    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse,
+    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError,
+    Options<SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse,
+      SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError,
+      Options<SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+export const getHealthSummaryV1HealthkitSummaryGetQueryKey = (
+  options: Options<GetHealthSummaryV1HealthkitSummaryGetData>,
+) => createQueryKey("getHealthSummaryV1HealthkitSummaryGet", options);
+
+/**
+ * Get Health Day Summary
+ */
+export const getHealthSummaryV1HealthkitSummaryGetOptions = (
+  options: Options<GetHealthSummaryV1HealthkitSummaryGetData>,
+) =>
+  queryOptions<
+    GetHealthSummaryV1HealthkitSummaryGetResponse,
+    GetHealthSummaryV1HealthkitSummaryGetError,
+    GetHealthSummaryV1HealthkitSummaryGetResponse,
+    ReturnType<typeof getHealthSummaryV1HealthkitSummaryGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getHealthSummaryV1HealthkitSummaryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getHealthSummaryV1HealthkitSummaryGetQueryKey(options),
   });
 
 export const listIngestTokensV1IngestTokensGetQueryKey = (

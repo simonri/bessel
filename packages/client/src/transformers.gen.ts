@@ -19,6 +19,7 @@ import type {
   CreateTradeV1InvestmentsTradesPostResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
+  GetHealthSummaryV1HealthkitSummaryGetResponse,
   GetLocationHistoryDayV1LocationHistoryDayGetResponse,
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
@@ -377,6 +378,26 @@ export const listHealthkitSleepV1HealthkitSleepGetResponseTransformer = async (
   data: any,
 ): Promise<ListHealthkitSleepV1HealthkitSleepGetResponse> => {
   data = healthKitSleepListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const healthWeekDaySchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  return data;
+};
+
+const healthSummaryResponseSchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  data.week = data.week.map((item: any) =>
+    healthWeekDaySchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getHealthSummaryV1HealthkitSummaryGetResponseTransformer = async (
+  data: any,
+): Promise<GetHealthSummaryV1HealthkitSummaryGetResponse> => {
+  data = healthSummaryResponseSchemaResponseTransformer(data);
   return data;
 };
 

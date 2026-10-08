@@ -72,6 +72,8 @@ AUDITED: set[str] = {
   "GET /v1/devices",
   "DELETE /v1/devices/{device_id}",
   "PATCH /v1/devices/{device_id}",
+  "POST /v1/healthkit/daily-metrics/sync",
+  "GET /v1/healthkit/summary",
   "GET /v1/healthkit/sleep",
   "GET /v1/healthkit/sleep/daily",
   "GET /v1/healthkit/sleep/summary",
@@ -509,6 +511,21 @@ class TestHealthKit:
     await other_client.post("/v1/healthkit/sleep/sync", json={"samples": [], "deleted_uuids": [sample["healthkit_uuid"]]})
     assert len((await client.get("/v1/healthkit/sleep")).json()["items"]) == 1
     assert len((await client.get("/v1/healthkit/workouts")).json()["items"]) == 1
+
+  @pytest.mark.asyncio
+  async def test_other_user_sees_no_daily_metrics_or_summary(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    night = datetime.fromtimestamp(DAY_START, tz=UTC) + timedelta(hours=1)
+    day = night.date().isoformat()
+    await client.post("/v1/healthkit/sleep/sync", json={"samples": [_sleep_sample(night, 120)], "deleted_uuids": []})
+    await client.post("/v1/healthkit/daily-metrics/sync", json={"days": [{"date": day, "steps": 9000, "hrv_ms": 60}]})
+
+    params = {"date": day, "tz_name": "UTC"}
+    other = (await other_client.get("/v1/healthkit/summary", params=params)).json()
+    assert (other["sleep"], other["move"], other["energy"]) == (None, None, None)
+
+    # B syncing the same date must not overwrite A's values.
+    await other_client.post("/v1/healthkit/daily-metrics/sync", json={"days": [{"date": day, "steps": 1}]})
+    assert (await client.get("/v1/healthkit/summary", params=params)).json()["move"]["steps"] == 9000
 
 
 def _events(*local_ids: int, app_class: str = "secret-app") -> list[dict[str, Any]]:

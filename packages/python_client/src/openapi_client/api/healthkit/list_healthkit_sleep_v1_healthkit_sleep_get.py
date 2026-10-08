@@ -12,11 +12,27 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
   *,
+  start_ts: int | None | Unset = UNSET,
+  end_ts: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> dict[str, Any]:
 
   params: dict[str, Any] = {}
+
+  json_start_ts: int | None | Unset
+  if isinstance(start_ts, Unset):
+    json_start_ts = UNSET
+  else:
+    json_start_ts = start_ts
+  params["start_ts"] = json_start_ts
+
+  json_end_ts: int | None | Unset
+  if isinstance(end_ts, Unset):
+    json_end_ts = UNSET
+  else:
+    json_end_ts = end_ts
+  params["end_ts"] = json_end_ts
 
   params["page"] = page
 
@@ -62,12 +78,16 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
   *,
   client: AuthenticatedClient,
+  start_ts: int | None | Unset = UNSET,
+  end_ts: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> Response[HTTPValidationError | HealthKitSleepListResponse]:
   """List HealthKit Sleep Samples
 
   Args:
+      start_ts (int | None | Unset): Only samples ending after this (Unix epoch seconds).
+      end_ts (int | None | Unset): Only samples starting before this (Unix epoch seconds).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
 
@@ -80,6 +100,8 @@ def sync_detailed(
   """
 
   kwargs = _get_kwargs(
+    start_ts=start_ts,
+    end_ts=end_ts,
     page=page,
     limit=limit,
   )
@@ -94,12 +116,16 @@ def sync_detailed(
 def sync(
   *,
   client: AuthenticatedClient,
+  start_ts: int | None | Unset = UNSET,
+  end_ts: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> HTTPValidationError | HealthKitSleepListResponse | None:
   """List HealthKit Sleep Samples
 
   Args:
+      start_ts (int | None | Unset): Only samples ending after this (Unix epoch seconds).
+      end_ts (int | None | Unset): Only samples starting before this (Unix epoch seconds).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
 
@@ -113,6 +139,8 @@ def sync(
 
   return sync_detailed(
     client=client,
+    start_ts=start_ts,
+    end_ts=end_ts,
     page=page,
     limit=limit,
   ).parsed
@@ -121,12 +149,16 @@ def sync(
 async def asyncio_detailed(
   *,
   client: AuthenticatedClient,
+  start_ts: int | None | Unset = UNSET,
+  end_ts: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> Response[HTTPValidationError | HealthKitSleepListResponse]:
   """List HealthKit Sleep Samples
 
   Args:
+      start_ts (int | None | Unset): Only samples ending after this (Unix epoch seconds).
+      end_ts (int | None | Unset): Only samples starting before this (Unix epoch seconds).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
 
@@ -139,6 +171,8 @@ async def asyncio_detailed(
   """
 
   kwargs = _get_kwargs(
+    start_ts=start_ts,
+    end_ts=end_ts,
     page=page,
     limit=limit,
   )
@@ -151,12 +185,16 @@ async def asyncio_detailed(
 async def asyncio(
   *,
   client: AuthenticatedClient,
+  start_ts: int | None | Unset = UNSET,
+  end_ts: int | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
 ) -> HTTPValidationError | HealthKitSleepListResponse | None:
   """List HealthKit Sleep Samples
 
   Args:
+      start_ts (int | None | Unset): Only samples ending after this (Unix epoch seconds).
+      end_ts (int | None | Unset): Only samples starting before this (Unix epoch seconds).
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
 
@@ -171,6 +209,8 @@ async def asyncio(
   return (
     await asyncio_detailed(
       client=client,
+      start_ts=start_ts,
+      end_ts=end_ts,
       page=page,
       limit=limit,
     )

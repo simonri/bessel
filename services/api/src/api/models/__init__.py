@@ -11,6 +11,7 @@ from .calendar_person import CalendarPerson
 from .category import Category
 from .counter import Counter, CounterReset
 from .device import Device
+from .healthkit_daily_metric import HealthKitDailyMetric
 from .healthkit_sleep_sample import HealthKitSleepSample
 from .healthkit_workout import HealthKitWorkout
 from .import_batch import ImportBatch
@@ -48,6 +49,7 @@ __all__ = [
   "Counter",
   "CounterReset",
   "Device",
+  "HealthKitDailyMetric",
   "HealthKitSleepSample",
   "HealthKitWorkout",
   "ImportBatch",

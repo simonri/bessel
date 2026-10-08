@@ -1736,6 +1736,84 @@ export const EditScopeSchema = {
   description: "Which occurrences of a repeating event a change applies to.",
 } as const;
 
+export const EnergyDaySummarySchema = {
+  properties: {
+    score: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 100,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Score",
+      description:
+        "Null while still learning the usual (fewer than 5 earlier days).",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+    },
+    resting_heart_rate: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Resting Heart Rate",
+    },
+    usual_resting_heart_rate: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Usual Resting Heart Rate",
+    },
+    hrv_ms: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Hrv Ms",
+    },
+    usual_hrv_ms: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Usual Hrv Ms",
+    },
+  },
+  type: "object",
+  required: [
+    "score",
+    "label",
+    "resting_heart_rate",
+    "usual_resting_heart_rate",
+    "hrv_ms",
+    "usual_hrv_ms",
+  ],
+  title: "EnergyDaySummary",
+} as const;
+
 export const EventCreateSchema = {
   properties: {
     title: {
@@ -2280,6 +2358,117 @@ export const HTTPValidationErrorSchema = {
   },
   type: "object",
   title: "HTTPValidationError",
+} as const;
+
+export const HealthKitDailyMetricUploadSchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+      description: "Local calendar date the values belong to.",
+    },
+    steps: {
+      anyOf: [
+        {
+          type: "integer",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Steps",
+    },
+    active_energy_kcal: {
+      anyOf: [
+        {
+          type: "number",
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Active Energy Kcal",
+    },
+    exercise_minutes: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 1440,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Exercise Minutes",
+    },
+    resting_heart_rate: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 250,
+          exclusiveMinimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Resting Heart Rate",
+      description: "Beats per minute.",
+    },
+    hrv_ms: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 500,
+          exclusiveMinimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Hrv Ms",
+      description: "Heart rate variability (SDNN), milliseconds.",
+    },
+  },
+  type: "object",
+  required: ["date"],
+  title: "HealthKitDailyMetricUpload",
+  description:
+    "One local day of totals and averages, computed on the device by HealthKit's\nstatistics queries so overlapping iPhone and Watch samples count once.",
+} as const;
+
+export const HealthKitDailyMetricsSyncRequestSchema = {
+  properties: {
+    days: {
+      items: {
+        $ref: "#/components/schemas/HealthKitDailyMetricUpload",
+      },
+      type: "array",
+      maxItems: 500,
+      title: "Days",
+      description: "Each day's values replace what was stored for it.",
+    },
+  },
+  type: "object",
+  required: ["days"],
+  title: "HealthKitDailyMetricsSyncRequest",
+} as const;
+
+export const HealthKitDailyMetricsSyncResponseSchema = {
+  properties: {
+    synced: {
+      type: "integer",
+      title: "Synced",
+      description: "Number of days inserted or updated.",
+    },
+  },
+  type: "object",
+  required: ["synced"],
+  title: "HealthKitDailyMetricsSyncResponse",
 } as const;
 
 export const HealthKitSleepListResponseSchema = {
@@ -2901,6 +3090,125 @@ export const HealthKitWorkoutUploadSchema = {
   ],
   title: "HealthKitWorkoutUpload",
   description: "One HKWorkout sample, mirrored field-by-field from HealthKit.",
+} as const;
+
+export const HealthSummaryResponseSchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    is_today: {
+      type: "boolean",
+      title: "Is Today",
+    },
+    sleep: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/SleepDaySummary",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "The night that ended on this date; null if none was recorded.",
+    },
+    move: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/MoveDaySummary",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null when there's no activity data at all yet.",
+    },
+    energy: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/EnergyDaySummary",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "Null when no heart data has been recorded (no Apple Watch).",
+    },
+    insight: {
+      type: "string",
+      title: "Insight",
+      description: "One friendly sentence about the day.",
+    },
+    bedtime_streak: {
+      type: "integer",
+      title: "Bedtime Streak",
+      description:
+        "Nights in a row, ending this date, that began within 45 minutes of the usual bedtime.",
+    },
+    week: {
+      items: {
+        $ref: "#/components/schemas/HealthWeekDay",
+      },
+      type: "array",
+      title: "Week",
+      description: "The seven days ending on this date, oldest first.",
+    },
+  },
+  type: "object",
+  required: [
+    "date",
+    "is_today",
+    "sleep",
+    "move",
+    "energy",
+    "insight",
+    "bedtime_streak",
+    "week",
+  ],
+  title: "HealthSummaryResponse",
+} as const;
+
+export const HealthWeekDaySchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    asleep_secs: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Asleep Secs",
+    },
+    move_score: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Move Score",
+    },
+    workout_minutes: {
+      type: "number",
+      title: "Workout Minutes",
+    },
+  },
+  type: "object",
+  required: ["date", "asleep_secs", "move_score", "workout_minutes"],
+  title: "HealthWeekDay",
 } as const;
 
 export const HoldingSchemaSchema = {
@@ -3733,6 +4041,112 @@ export const MonthlySpendingResponseSchema = {
   type: "object",
   required: ["year", "month", "items"],
   title: "MonthlySpendingResponse",
+} as const;
+
+export const MoveDaySummarySchema = {
+  properties: {
+    score: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 100,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Score",
+      description: "Null until there's a usual to compare against.",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+    },
+    is_partial_day: {
+      type: "boolean",
+      title: "Is Partial Day",
+      description:
+        "True for today: compared against the usual for this time of day.",
+    },
+    steps: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Steps",
+    },
+    usual_steps: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Usual Steps",
+    },
+    active_energy_kcal: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Active Energy Kcal",
+    },
+    usual_active_energy_kcal: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Usual Active Energy Kcal",
+    },
+    exercise_minutes: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Exercise Minutes",
+    },
+    workout_count: {
+      type: "integer",
+      title: "Workout Count",
+    },
+    workout_minutes: {
+      type: "number",
+      title: "Workout Minutes",
+    },
+  },
+  type: "object",
+  required: [
+    "score",
+    "label",
+    "is_partial_day",
+    "steps",
+    "usual_steps",
+    "active_energy_kcal",
+    "usual_active_energy_kcal",
+    "exercise_minutes",
+    "workout_count",
+    "workout_minutes",
+  ],
+  title: "MoveDaySummary",
 } as const;
 
 export const NotificationCreateSchema = {
@@ -5531,6 +5945,92 @@ export const SleepDailyResponseSchema = {
   type: "object",
   required: ["nights"],
   title: "SleepDailyResponse",
+} as const;
+
+export const SleepDaySummarySchema = {
+  properties: {
+    score: {
+      type: "integer",
+      maximum: 100,
+      minimum: 0,
+      title: "Score",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+    },
+    asleep_secs: {
+      type: "integer",
+      title: "Asleep Secs",
+    },
+    usual_asleep_secs: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Usual Asleep Secs",
+      description:
+        "Average over up to 14 earlier nights; null with fewer than 3.",
+    },
+    sleep_onset: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sleep Onset",
+      description: "Local time (ISO 8601 with offset) the main sleep began.",
+    },
+    wake_time: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wake Time",
+      description: "Local time (ISO 8601 with offset) the main sleep ended.",
+    },
+    deep_secs: {
+      type: "integer",
+      title: "Deep Secs",
+    },
+    core_secs: {
+      type: "integer",
+      title: "Core Secs",
+    },
+    rem_secs: {
+      type: "integer",
+      title: "Rem Secs",
+    },
+    awake_secs: {
+      type: "integer",
+      title: "Awake Secs",
+    },
+  },
+  type: "object",
+  required: [
+    "score",
+    "label",
+    "asleep_secs",
+    "usual_asleep_secs",
+    "sleep_onset",
+    "wake_time",
+    "deep_secs",
+    "core_secs",
+    "rem_secs",
+    "awake_secs",
+  ],
+  title: "SleepDaySummary",
 } as const;
 
 export const SleepStageSummarySchema = {

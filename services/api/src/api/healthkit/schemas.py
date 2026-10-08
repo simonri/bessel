@@ -1,3 +1,4 @@
+import datetime as dt
 from datetime import datetime
 from typing import Any
 
@@ -135,3 +136,76 @@ class SleepStageSummary(Schema):
 class SleepSummaryResponse(Schema):
   total_asleep_secs: int
   stages: list[SleepStageSummary]
+
+
+class HealthKitDailyMetricUpload(Schema):
+  """One local day of totals and averages, computed on the device by HealthKit's
+  statistics queries so overlapping iPhone and Watch samples count once."""
+
+  date: dt.date = Field(description="Local calendar date the values belong to.")
+  steps: int | None = Field(default=None, ge=0)
+  active_energy_kcal: float | None = Field(default=None, ge=0)
+  exercise_minutes: float | None = Field(default=None, ge=0, le=1440)
+  resting_heart_rate: float | None = Field(default=None, gt=0, le=250, description="Beats per minute.")
+  hrv_ms: float | None = Field(default=None, gt=0, le=500, description="Heart rate variability (SDNN), milliseconds.")
+
+
+class HealthKitDailyMetricsSyncRequest(Schema):
+  days: list[HealthKitDailyMetricUpload] = Field(max_length=MAX_SYNC_BATCH_SIZE, description="Each day's values replace what was stored for it.")
+
+
+class HealthKitDailyMetricsSyncResponse(Schema):
+  synced: int = Field(description="Number of days inserted or updated.")
+
+
+class SleepDaySummary(Schema):
+  score: int = Field(ge=0, le=100)
+  label: str
+  asleep_secs: int
+  usual_asleep_secs: int | None = Field(description="Average over up to 14 earlier nights; null with fewer than 3.")
+  sleep_onset: str | None = Field(description="Local time (ISO 8601 with offset) the main sleep began.")
+  wake_time: str | None = Field(description="Local time (ISO 8601 with offset) the main sleep ended.")
+  deep_secs: int
+  core_secs: int
+  rem_secs: int
+  awake_secs: int
+
+
+class MoveDaySummary(Schema):
+  score: int | None = Field(ge=0, le=100, description="Null until there's a usual to compare against.")
+  label: str
+  is_partial_day: bool = Field(description="True for today: compared against the usual for this time of day.")
+  steps: int | None
+  usual_steps: int | None
+  active_energy_kcal: float | None
+  usual_active_energy_kcal: float | None
+  exercise_minutes: float | None
+  workout_count: int
+  workout_minutes: float
+
+
+class EnergyDaySummary(Schema):
+  score: int | None = Field(ge=0, le=100, description="Null while still learning the usual (fewer than 5 earlier days).")
+  label: str
+  resting_heart_rate: float | None
+  usual_resting_heart_rate: float | None
+  hrv_ms: float | None
+  usual_hrv_ms: float | None
+
+
+class HealthWeekDay(Schema):
+  date: dt.date
+  asleep_secs: int | None
+  move_score: int | None
+  workout_minutes: float
+
+
+class HealthSummaryResponse(Schema):
+  date: dt.date
+  is_today: bool
+  sleep: SleepDaySummary | None = Field(description="The night that ended on this date; null if none was recorded.")
+  move: MoveDaySummary | None = Field(description="Null when there's no activity data at all yet.")
+  energy: EnergyDaySummary | None = Field(description="Null when no heart data has been recorded (no Apple Watch).")
+  insight: str = Field(description="One friendly sentence about the day.")
+  bedtime_streak: int = Field(description="Nights in a row, ending this date, that began within 45 minutes of the usual bedtime.")
+  week: list[HealthWeekDay] = Field(description="The seven days ending on this date, oldest first.")

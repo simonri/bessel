@@ -57,6 +57,7 @@ from .crypto_price_schema import CryptoPriceSchema
 from .device_schema import DeviceSchema
 from .device_update import DeviceUpdate
 from .edit_scope import EditScope
+from .energy_day_summary import EnergyDaySummary
 from .event_create import EventCreate
 from .event_reply_update import EventReplyUpdate
 from .event_reply_update_response import EventReplyUpdateResponse
@@ -71,6 +72,9 @@ from .google_authorize_response import GoogleAuthorizeResponse
 from .google_callback_request import GoogleCallbackRequest
 from .google_place_search_response import GooglePlaceSearchResponse
 from .google_place_search_result import GooglePlaceSearchResult
+from .health_kit_daily_metric_upload import HealthKitDailyMetricUpload
+from .health_kit_daily_metrics_sync_request import HealthKitDailyMetricsSyncRequest
+from .health_kit_daily_metrics_sync_response import HealthKitDailyMetricsSyncResponse
 from .health_kit_sleep_list_response import HealthKitSleepListResponse
 from .health_kit_sleep_sample_schema import HealthKitSleepSampleSchema
 from .health_kit_sleep_sample_schema_sample_metadata_type_0 import HealthKitSleepSampleSchemaSampleMetadataType0
@@ -87,6 +91,8 @@ from .health_kit_workout_sync_response import HealthKitWorkoutSyncResponse
 from .health_kit_workout_upload import HealthKitWorkoutUpload
 from .health_kit_workout_upload_statistics_type_0 import HealthKitWorkoutUploadStatisticsType0
 from .health_kit_workout_upload_workout_metadata_type_0 import HealthKitWorkoutUploadWorkoutMetadataType0
+from .health_summary_response import HealthSummaryResponse
+from .health_week_day import HealthWeekDay
 from .holding_schema import HoldingSchema
 from .holdings_response import HoldingsResponse
 from .http_validation_error import HTTPValidationError
@@ -109,6 +115,7 @@ from .me_response import MeResponse
 from .monthly_flow import MonthlyFlow
 from .monthly_flow_response import MonthlyFlowResponse
 from .monthly_spending_response import MonthlySpendingResponse
+from .move_day_summary import MoveDaySummary
 from .notification_create import NotificationCreate
 from .notification_create_kind import NotificationCreateKind
 from .notification_response import NotificationResponse
@@ -152,6 +159,7 @@ from .security_schema import SecuritySchema
 from .security_update import SecurityUpdate
 from .sleep_daily_entry import SleepDailyEntry
 from .sleep_daily_response import SleepDailyResponse
+from .sleep_day_summary import SleepDaySummary
 from .sleep_stage_summary import SleepStageSummary
 from .sleep_summary_response import SleepSummaryResponse
 from .task_attachment_schema import TaskAttachmentSchema
@@ -241,6 +249,7 @@ __all__ = (
   "DeviceSchema",
   "DeviceUpdate",
   "EditScope",
+  "EnergyDaySummary",
   "EventCreate",
   "EventReplyUpdate",
   "EventReplyUpdateResponse",
@@ -253,6 +262,9 @@ __all__ = (
   "GoogleCallbackRequest",
   "GooglePlaceSearchResponse",
   "GooglePlaceSearchResult",
+  "HealthKitDailyMetricsSyncRequest",
+  "HealthKitDailyMetricsSyncResponse",
+  "HealthKitDailyMetricUpload",
   "HealthKitSleepListResponse",
   "HealthKitSleepSampleSchema",
   "HealthKitSleepSampleSchemaSampleMetadataType0",
@@ -269,6 +281,8 @@ __all__ = (
   "HealthKitWorkoutUpload",
   "HealthKitWorkoutUploadStatisticsType0",
   "HealthKitWorkoutUploadWorkoutMetadataType0",
+  "HealthSummaryResponse",
+  "HealthWeekDay",
   "HoldingSchema",
   "HoldingsResponse",
   "HTTPValidationError",
@@ -289,6 +303,7 @@ __all__ = (
   "MonthlyFlow",
   "MonthlyFlowResponse",
   "MonthlySpendingResponse",
+  "MoveDaySummary",
   "NotificationCreate",
   "NotificationCreateKind",
   "NotificationResponse",
@@ -332,6 +347,7 @@ __all__ = (
   "SecurityUpdate",
   "SleepDailyEntry",
   "SleepDailyResponse",
+  "SleepDaySummary",
   "SleepStageSummary",
   "SleepSummaryResponse",
   "TaskAttachmentSchema",
