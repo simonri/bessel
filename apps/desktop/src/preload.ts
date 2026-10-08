@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { AgentUsageSnapshot } from "./agent-usage.js";
 import type {
   ClaudeConversation,
   ClaudeSessionsSnapshot,
@@ -174,13 +175,9 @@ const bridge = {
     setEnabled: (enabled: boolean) =>
       ipcRenderer.invoke("monitor:setEnabled", enabled),
   },
-  collector: {
-    status: () => ipcRenderer.invoke("collector:status"),
-    install: (ingestToken: string) =>
-      ipcRenderer.invoke("collector:install", ingestToken),
-    runNow: () => ipcRenderer.invoke("collector:runNow"),
-    setEnabled: (enabled: boolean) =>
-      ipcRenderer.invoke("collector:setEnabled", enabled),
+  agentUsage: {
+    collect: (): Promise<AgentUsageSnapshot> =>
+      ipcRenderer.invoke("agentUsage:collect"),
   },
   logs: {
     read: (): Promise<string> => ipcRenderer.invoke("logs:read"),

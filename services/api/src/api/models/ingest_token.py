@@ -8,7 +8,7 @@ from api.models.base import RecordModel
 
 
 class IngestToken(RecordModel):
-  """Credential a local daemon (activity monitor, agent usage collector) sends
+  """Credential a local daemon (the activity monitor) sends
   to push data for its owner. Only the SHA-256 of the token is stored."""
 
   __tablename__ = "ingest_tokens"

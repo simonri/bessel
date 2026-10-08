@@ -35,6 +35,10 @@ import {
   setMainWindow,
   TRUSTED_ORIGINS,
 } from "./ipc.js";
+import {
+  registerAgentUsageHandlers,
+  removeLegacyCollector,
+} from "./agent-usage.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -1537,6 +1541,8 @@ app.whenReady().then(() => {
   });
   registerPortsHandlers();
   registerVaultHandlers(appendLog);
+  registerAgentUsageHandlers();
+  void removeLegacyCollector(appendLog);
 
   ipcHandle("spotify:status", async () => getSpotifyStatus());
   ipcHandle("spotify:position", () => getSpotifyPositionMs());

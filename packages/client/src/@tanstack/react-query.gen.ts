@@ -702,6 +702,8 @@ export const getIntradayActivityV1ActivityIntradayGetOptions = (
 
 /**
  * Sync Agent Usage
+ *
+ * Uploaded by the desktop app, which reads Claude Code's usage on its machine.
  */
 export const syncAgentUsageV1AgentUsageSyncPostMutation = (
   options?: Partial<Options<SyncAgentUsageV1AgentUsageSyncPostData>>,

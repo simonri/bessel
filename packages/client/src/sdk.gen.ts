@@ -551,6 +551,8 @@ export const getIntradayActivityV1ActivityIntradayGet = <
 
 /**
  * Sync Agent Usage
+ *
+ * Uploaded by the desktop app, which reads Claude Code's usage on its machine.
  */
 export const syncAgentUsageV1AgentUsageSyncPost = <
   ThrowOnError extends boolean = false,
@@ -562,6 +564,7 @@ export const syncAgentUsageV1AgentUsageSyncPost = <
     SyncAgentUsageV1AgentUsageSyncPostErrors,
     ThrowOnError
   >({
+    security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/agent-usage/sync",
     ...options,
     headers: {

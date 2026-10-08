@@ -579,16 +579,14 @@ def _rate_limit(pct: float) -> dict[str, Any]:
 
 class TestAgentUsage:
   @pytest.mark.asyncio
-  async def test_other_user_sees_and_overwrites_nothing(
-    self, client: AsyncClient, other_client: AsyncClient, ingest_headers: dict[str, str], other_ingest_headers: dict[str, str]
-  ) -> None:
-    await client.post("/v1/agent-usage/sync", json={"daily": [_daily(100)], "rate_limits": [_rate_limit(42.0)]}, headers=ingest_headers)
+  async def test_other_user_sees_and_overwrites_nothing(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    await client.post("/v1/agent-usage/sync", json={"daily": [_daily(100)], "rate_limits": [_rate_limit(42.0)]})
     window = {"start_date": "2026-08-01", "end_date": "2026-08-31"}
 
     assert (await other_client.get("/v1/agent-usage/status")).json()["entries"] == []
     assert (await other_client.get("/v1/agent-usage/daily", params=window)).json()["entries"] == []
 
-    await other_client.post("/v1/agent-usage/sync", json={"daily": [_daily(999)], "rate_limits": [_rate_limit(99.0)]}, headers=other_ingest_headers)
+    await other_client.post("/v1/agent-usage/sync", json={"daily": [_daily(999)], "rate_limits": [_rate_limit(99.0)]})
     assert [e["input_tokens"] for e in (await client.get("/v1/agent-usage/daily", params=window)).json()["entries"]] == [100]
     assert [e["utilization_pct"] for e in (await client.get("/v1/agent-usage/status")).json()["entries"]] == [42.0]
     assert [e["input_tokens"] for e in (await other_client.get("/v1/agent-usage/daily", params=window)).json()["entries"]] == [999]
@@ -611,18 +609,18 @@ class TestIngestTokens:
 
   @pytest.mark.asyncio
   async def test_recreating_a_name_revokes_the_old_token(self, client: AsyncClient) -> None:
-    old = await _create(client, "/v1/ingest-tokens", {"name": "collector:laptop"})
-    new = await _create(client, "/v1/ingest-tokens", {"name": "collector:laptop"})
+    old = await _create(client, "/v1/ingest-tokens", {"name": "monitor:laptop"})
+    new = await _create(client, "/v1/ingest-tokens", {"name": "monitor:laptop"})
+    body = {"source": SOURCE, "events": []}
 
-    assert (await client.post("/v1/agent-usage/sync", json={}, headers={"X-Api-Key": old["token"]})).status_code == 401
-    assert (await client.post("/v1/agent-usage/sync", json={}, headers={"X-Api-Key": new["token"]})).status_code == 200
+    assert (await client.post("/v1/activity/batch", json=body, headers={"X-Api-Key": old["token"]})).status_code == 401
+    assert (await client.post("/v1/activity/batch", json=body, headers={"X-Api-Key": new["token"]})).status_code == 200
 
   @pytest.mark.asyncio
-  @pytest.mark.parametrize("path", ["/v1/activity/batch", "/v1/agent-usage/sync"])
-  async def test_invalid_or_missing_token_rejected(self, client: AsyncClient, path: str) -> None:
-    body = {"source": SOURCE, "events": []} if "activity" in path else {}
-    assert (await client.post(path, json=body, headers={"X-Api-Key": "bsl_not-a-real-token"})).status_code == 401
-    assert (await client.post(path, json=body)).status_code == 401
+  async def test_invalid_or_missing_token_rejected(self, client: AsyncClient) -> None:
+    body = {"source": SOURCE, "events": []}
+    assert (await client.post("/v1/activity/batch", json=body, headers={"X-Api-Key": "bsl_not-a-real-token"})).status_code == 401
+    assert (await client.post("/v1/activity/batch", json=body)).status_code == 401
 
 
 class TestCalendars:

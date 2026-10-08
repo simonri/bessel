@@ -7,7 +7,6 @@ import {
 } from "@bessel/ui/components/glass-dialog";
 import {
   Cpu,
-  Gauge,
   Info,
   Laptop,
   LayoutDashboard,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";
-import { AgentUsagePage } from "@/components/settings-agent-usage-page";
 import { AppearancePage } from "@/components/settings-appearance-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
@@ -25,25 +23,14 @@ import { MonitorPage } from "@/components/settings-monitor-page";
 import { cn } from "@/lib/utils";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
-// systemctl-based install/status only makes sense on Linux — unlike the
-// other desktop-only pages, gate this one specifically instead of on
-// isDesktop, so it doesn't show on mac/win builds where it can't work.
-const isLinuxDesktop = isDesktop && window.electron?.platform === "linux";
 
-type SidebarPage =
-  | "appearance"
-  | "dashboard"
-  | "devices"
-  | "monitor"
-  | "agent-usage"
-  | "about";
+type SidebarPage = "appearance" | "dashboard" | "devices" | "monitor" | "about";
 
 const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
   appearance: "Customize the look and feel of your dashboard.",
   dashboard: "Configure the top bar and widget display settings.",
   devices: "Manage the devices linked to your account.",
   monitor: "Manage the background activity tracker service.",
-  "agent-usage": "Manage the Claude Code usage tracking timer.",
   about: "Application version and update settings.",
 };
 
@@ -58,15 +45,6 @@ const NAV_ITEMS: {
     ? [
         { key: "devices" as const, label: "Devices", icon: Laptop },
         { key: "monitor" as const, label: "Monitor", icon: Cpu },
-        ...(isLinuxDesktop
-          ? [
-              {
-                key: "agent-usage" as const,
-                label: "Agent Usage",
-                icon: Gauge,
-              },
-            ]
-          : []),
         { key: "about" as const, label: "About", icon: Info },
       ]
     : []),
@@ -158,7 +136,6 @@ export function SettingsModal({
             {page === "dashboard" && <DashboardPage />}
             {page === "devices" && <DevicesPage />}
             {page === "monitor" && <MonitorPage />}
-            {page === "agent-usage" && <AgentUsagePage />}
             {page === "about" && <AboutPage />}
           </div>
         </div>

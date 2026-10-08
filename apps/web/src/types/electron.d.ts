@@ -181,19 +181,31 @@ declare global {
         stop: () => Promise<void>;
         setEnabled: (enabled: boolean) => Promise<void>;
       };
-      collector: {
-        status: () => Promise<{
-          installed: boolean;
-          active: boolean;
-          enabled: boolean;
-          failed: boolean;
-          state: string;
-          needsConfig: boolean;
-          envPath: string;
+      agentUsage: {
+        /** This machine's Claude Code usage, ready for /v1/agent-usage/sync. */
+        collect: () => Promise<{
+          daily: {
+            device: string;
+            agent: string;
+            /** Local day, YYYY-MM-DD. */
+            date: string;
+            models: {
+              model: string;
+              input_tokens: number;
+              output_tokens: number;
+              cache_read_tokens: number;
+              cache_creation_tokens: number;
+            }[];
+          }[];
+          rate_limits: {
+            device: string;
+            agent: string;
+            window_label: string;
+            utilization_pct: number;
+            resets_at: string | null;
+            tier: string | null;
+          }[];
         }>;
-        install: (ingestToken: string) => Promise<void>;
-        runNow: () => Promise<void>;
-        setEnabled: (enabled: boolean) => Promise<void>;
       };
       shell: {
         openExternal: (url: string) => Promise<void>;

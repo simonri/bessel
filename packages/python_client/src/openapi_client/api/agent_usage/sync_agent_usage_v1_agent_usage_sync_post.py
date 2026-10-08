@@ -8,17 +8,14 @@ from ...client import AuthenticatedClient, Client
 from ...models.agent_usage_sync_request import AgentUsageSyncRequest
 from ...models.agent_usage_sync_response import AgentUsageSyncResponse
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Response, Unset
+from ...types import Response
 
 
 def _get_kwargs(
   *,
   body: AgentUsageSyncRequest,
-  x_api_key: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
   headers: dict[str, Any] = {}
-  if not isinstance(x_api_key, Unset):
-    headers["x-api-key"] = x_api_key
 
   _kwargs: dict[str, Any] = {
     "method": "post",
@@ -61,14 +58,14 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: AgentUsageSyncRequest,
-  x_api_key: None | str | Unset = UNSET,
 ) -> Response[AgentUsageSyncResponse | HTTPValidationError]:
   """Sync Agent Usage
 
+   Uploaded by the desktop app, which reads Claude Code's usage on its machine.
+
   Args:
-      x_api_key (None | str | Unset):
       body (AgentUsageSyncRequest):
 
   Raises:
@@ -81,7 +78,6 @@ def sync_detailed(
 
   kwargs = _get_kwargs(
     body=body,
-    x_api_key=x_api_key,
   )
 
   response = client.get_httpx_client().request(
@@ -93,14 +89,14 @@ def sync_detailed(
 
 def sync(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: AgentUsageSyncRequest,
-  x_api_key: None | str | Unset = UNSET,
 ) -> AgentUsageSyncResponse | HTTPValidationError | None:
   """Sync Agent Usage
 
+   Uploaded by the desktop app, which reads Claude Code's usage on its machine.
+
   Args:
-      x_api_key (None | str | Unset):
       body (AgentUsageSyncRequest):
 
   Raises:
@@ -114,20 +110,19 @@ def sync(
   return sync_detailed(
     client=client,
     body=body,
-    x_api_key=x_api_key,
   ).parsed
 
 
 async def asyncio_detailed(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: AgentUsageSyncRequest,
-  x_api_key: None | str | Unset = UNSET,
 ) -> Response[AgentUsageSyncResponse | HTTPValidationError]:
   """Sync Agent Usage
 
+   Uploaded by the desktop app, which reads Claude Code's usage on its machine.
+
   Args:
-      x_api_key (None | str | Unset):
       body (AgentUsageSyncRequest):
 
   Raises:
@@ -140,7 +135,6 @@ async def asyncio_detailed(
 
   kwargs = _get_kwargs(
     body=body,
-    x_api_key=x_api_key,
   )
 
   response = await client.get_async_httpx_client().request(**kwargs)
@@ -150,14 +144,14 @@ async def asyncio_detailed(
 
 async def asyncio(
   *,
-  client: AuthenticatedClient | Client,
+  client: AuthenticatedClient,
   body: AgentUsageSyncRequest,
-  x_api_key: None | str | Unset = UNSET,
 ) -> AgentUsageSyncResponse | HTTPValidationError | None:
   """Sync Agent Usage
 
+   Uploaded by the desktop app, which reads Claude Code's usage on its machine.
+
   Args:
-      x_api_key (None | str | Unset):
       body (AgentUsageSyncRequest):
 
   Raises:
@@ -172,6 +166,5 @@ async def asyncio(
     await asyncio_detailed(
       client=client,
       body=body,
-      x_api_key=x_api_key,
     )
   ).parsed

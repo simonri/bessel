@@ -7,11 +7,6 @@ DEVICE = "test-laptop"
 AGENT = "claude-code"
 
 
-@pytest.fixture
-def api_key(ingest_headers: dict[str, str]) -> str:
-  return ingest_headers["X-Api-Key"]
-
-
 def _daily_upload(date: str, model: str = "claude-opus-4", input_tokens: int = 100, output_tokens: int = 50) -> dict[str, Any]:
   return {
     "device": DEVICE,
@@ -40,13 +35,10 @@ def _rate_limit_upload(window_label: str = "session_5h", utilization_pct: float 
   }
 
 
-async def _sync(
-  client: AsyncClient, api_key: str, *, daily: list[dict[str, Any]] | None = None, rate_limits: list[dict[str, Any]] | None = None
-) -> dict[str, Any]:
+async def _sync(client: AsyncClient, *, daily: list[dict[str, Any]] | None = None, rate_limits: list[dict[str, Any]] | None = None) -> dict[str, Any]:
   resp = await client.post(
     "/v1/agent-usage/sync",
     json={"daily": daily or [], "rate_limits": rate_limits or []},
-    headers={"X-Api-Key": api_key},
   )
   assert resp.status_code == 200
   return resp.json()
@@ -54,36 +46,13 @@ async def _sync(
 
 class TestSyncAgentUsage:
   @pytest.mark.asyncio
-  async def test_empty_request(self, client: AsyncClient, api_key: str) -> None:
-    data = await _sync(client, api_key)
+  async def test_empty_request(self, client: AsyncClient) -> None:
+    data = await _sync(client)
     assert data == {"daily_synced": 0, "status_synced": 0}
 
   @pytest.mark.asyncio
-  async def test_missing_api_key_rejected(self, client: AsyncClient, api_key: str) -> None:
-    resp = await client.post("/v1/agent-usage/sync", json={"daily": [], "rate_limits": []})
-    assert resp.status_code == 401
-
-  @pytest.mark.asyncio
-  async def test_wrong_api_key_rejected(self, client: AsyncClient, api_key: str) -> None:
-    resp = await client.post(
-      "/v1/agent-usage/sync",
-      json={"daily": [], "rate_limits": []},
-      headers={"X-Api-Key": "wrong-key"},
-    )
-    assert resp.status_code == 401
-
-  @pytest.mark.asyncio
-  async def test_empty_api_key_rejected(self, client: AsyncClient, api_key: str) -> None:
-    resp = await client.post(
-      "/v1/agent-usage/sync",
-      json={"daily": [], "rate_limits": []},
-      headers={"X-Api-Key": ""},
-    )
-    assert resp.status_code == 401
-
-  @pytest.mark.asyncio
-  async def test_insert_new_daily_rows(self, client: AsyncClient, api_key: str) -> None:
-    data = await _sync(client, api_key, daily=[_daily_upload("2026-08-15")])
+  async def test_insert_new_daily_rows(self, client: AsyncClient) -> None:
+    data = await _sync(client, daily=[_daily_upload("2026-08-15")])
     assert data["daily_synced"] == 1
 
     resp = await client.get("/v1/agent-usage/daily", params={"start_date": "2026-08-01", "end_date": "2026-08-31"})
@@ -92,9 +61,9 @@ class TestSyncAgentUsage:
     assert entries[0]["input_tokens"] == 100
 
   @pytest.mark.asyncio
-  async def test_resync_same_day_overwrites_not_sums(self, client: AsyncClient, api_key: str) -> None:
-    await _sync(client, api_key, daily=[_daily_upload("2026-08-15", input_tokens=100, output_tokens=50)])
-    data = await _sync(client, api_key, daily=[_daily_upload("2026-08-15", input_tokens=300, output_tokens=150)])
+  async def test_resync_same_day_overwrites_not_sums(self, client: AsyncClient) -> None:
+    await _sync(client, daily=[_daily_upload("2026-08-15", input_tokens=100, output_tokens=50)])
+    data = await _sync(client, daily=[_daily_upload("2026-08-15", input_tokens=300, output_tokens=150)])
     assert data["daily_synced"] == 1
 
     resp = await client.get("/v1/agent-usage/daily", params={"start_date": "2026-08-01", "end_date": "2026-08-31"})
@@ -104,10 +73,9 @@ class TestSyncAgentUsage:
     assert entries[0]["output_tokens"] == 150
 
   @pytest.mark.asyncio
-  async def test_in_request_duplicates_last_wins(self, client: AsyncClient, api_key: str) -> None:
+  async def test_in_request_duplicates_last_wins(self, client: AsyncClient) -> None:
     data = await _sync(
       client,
-      api_key,
       daily=[
         _daily_upload("2026-08-15", input_tokens=100),
         _daily_upload("2026-08-15", input_tokens=999),
@@ -121,8 +89,8 @@ class TestSyncAgentUsage:
     assert entries[0]["input_tokens"] == 999
 
   @pytest.mark.asyncio
-  async def test_insert_rate_limit_status(self, client: AsyncClient, api_key: str) -> None:
-    data = await _sync(client, api_key, rate_limits=[_rate_limit_upload(utilization_pct=42.0)])
+  async def test_insert_rate_limit_status(self, client: AsyncClient) -> None:
+    data = await _sync(client, rate_limits=[_rate_limit_upload(utilization_pct=42.0)])
     assert data["status_synced"] == 1
 
     resp = await client.get("/v1/agent-usage/status")
@@ -132,9 +100,9 @@ class TestSyncAgentUsage:
     assert entries[0]["tier"] == "Max 20x"
 
   @pytest.mark.asyncio
-  async def test_resync_status_overwrites(self, client: AsyncClient, api_key: str) -> None:
-    await _sync(client, api_key, rate_limits=[_rate_limit_upload(utilization_pct=10.0)])
-    await _sync(client, api_key, rate_limits=[_rate_limit_upload(utilization_pct=87.5)])
+  async def test_resync_status_overwrites(self, client: AsyncClient) -> None:
+    await _sync(client, rate_limits=[_rate_limit_upload(utilization_pct=10.0)])
+    await _sync(client, rate_limits=[_rate_limit_upload(utilization_pct=87.5)])
 
     resp = await client.get("/v1/agent-usage/status")
     entries = resp.json()["entries"]

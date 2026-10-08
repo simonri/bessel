@@ -4969,12 +4969,6 @@ export type GetIntradayActivityV1ActivityIntradayGetResponse =
 
 export type SyncAgentUsageV1AgentUsageSyncPostData = {
   body: AgentUsageSyncRequest;
-  headers?: {
-    /**
-     * X-Api-Key
-     */
-    "x-api-key"?: string | null;
-  };
   path?: never;
   query?: never;
   url: "/v1/agent-usage/sync";

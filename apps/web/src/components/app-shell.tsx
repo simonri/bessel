@@ -1,6 +1,7 @@
 import { Spinner } from "@bessel/ui/components/spinner";
 import { SquarePlus } from "lucide-react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { AgentUsageReporter } from "@/components/agent-usage-reporter";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CanvasPage } from "@/components/canvas/canvas-page";
 import { CanvasTopBar } from "@/components/canvas/canvas-topbar";
@@ -180,6 +181,7 @@ export function AppShell() {
       <div className="fixed inset-0">
         <Wallpaper />
         {isDesktop && <ClaudeSessionsBridge />}
+        {isDesktop && <AgentUsageReporter />}
 
         <div className="relative flex h-full flex-col">
           <CanvasTopBar />

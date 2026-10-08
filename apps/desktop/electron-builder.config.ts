@@ -9,7 +9,12 @@ const config: Configuration = {
   },
   afterSign: "scripts/afterSign.js",
   files: ["dist/**/*", "node_modules/**/*"],
-  asarUnpack: ["**/node_modules/node-pty/**"],
+  asarUnpack: [
+    "**/node_modules/node-pty/**",
+    // Loaded as a worker thread, which can't read from inside the asar.
+    "dist/agent-usage-worker.js",
+    "dist/agent-usage-core.js",
+  ],
   extraResources: [
     {
       from: "../web/dist/client",
@@ -18,10 +23,6 @@ const config: Configuration = {
     {
       from: "../../services/monitor",
       to: "monitor",
-    },
-    {
-      from: "../../tools/agent-usage-collector",
-      to: "agent-usage-collector",
     },
   ],
   publish: {

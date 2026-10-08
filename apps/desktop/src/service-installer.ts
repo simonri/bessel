@@ -8,9 +8,8 @@ import { ipcHandle } from "./ipc.js";
 
 const execFileAsync = promisify(execFile);
 
-// Bessel's backend runs on a VPS with no access to the user's machine, so
-// these two background jobs — the activity monitor and the agent usage
-// collector — run locally via systemd --user units. Both units are shipped
+// Bessel's backend runs on a VPS with no access to the user's machine, so the
+// activity monitor runs locally as a systemd --user unit. The unit is shipped
 // two ways: checked into the repo (for `make install` on a dev checkout) and
 // bundled as Electron extraResources (for a genuine downloaded app with no
 // repo present). Either way, systemd needs the actual script content at a
@@ -21,7 +20,6 @@ const execFileAsync = promisify(execFile);
 // location first, and the checked-in unit files' ExecStart= lines point here.
 const SYSTEMD_USER_DIR = path.join(os.homedir(), ".config", "systemd", "user");
 const PAYLOAD_ROOT = path.join(os.homedir(), ".local", "share", "bessel");
-const CONFIG_ROOT = path.join(os.homedir(), ".config", "bessel");
 const DEFAULT_API_BASE_URL = "https://api.getbessel.com";
 // The API used to be reachable only over Tailscale. Env files written back
 // then still point there, so installs repoint them at the public host.
@@ -32,7 +30,6 @@ const LEGACY_MONITOR_ENV = path.join(
   "metron",
   "monitor.env",
 );
-const COLLECTOR_ENV = path.join(CONFIG_ROOT, "agent-usage-collector.env");
 
 interface UnitStatusResult {
   installed: boolean;
@@ -198,23 +195,9 @@ function upsertEnvVars(filePath: string, vars: Record<string, string>): void {
   fs.chmodSync(filePath, 0o600);
 }
 
-function ensureCollectorEnvFile(): void {
-  if (fs.existsSync(COLLECTOR_ENV)) return;
-  const legacy = parseEnvFile(LEGACY_MONITOR_ENV);
-  upsertEnvVars(COLLECTOR_ENV, {
-    BESSEL_API_BASE_URL: legacy.METRON_API_URL ?? DEFAULT_API_BASE_URL,
-    DEVICE_NAME: os.hostname(),
-  });
-}
-
 export function registerServiceInstallerHandlers(): void {
   const monitorSrcDir = resolvePayloadSrcDir("monitor", "services/monitor");
   const monitorPayloadDir = path.join(PAYLOAD_ROOT, "monitor");
-  const collectorSrcDir = resolvePayloadSrcDir(
-    "agent-usage-collector",
-    "tools/agent-usage-collector",
-  );
-  const collectorPayloadDir = path.join(PAYLOAD_ROOT, "agent-usage-collector");
 
   // ─── monitor ────────────────────────────────────────────────────────────
   ipcHandle("monitor:status", async () => {
@@ -264,55 +247,4 @@ export function registerServiceInstallerHandlers(): void {
     ]);
   });
 
-  // ─── agent usage collector ──────────────────────────────────────────────
-  ipcHandle("collector:status", async () => {
-    const base = await queryUnitStatus("agent-usage-collector.timer");
-    return {
-      ...base,
-      needsConfig:
-        base.installed &&
-        !hasIngestToken(COLLECTOR_ENV, "BESSEL_INTERNAL_API_KEY"),
-      envPath: COLLECTOR_ENV,
-    };
-  });
-
-  ipcHandle("collector:install", async (_, ingestToken: unknown) => {
-    assertIngestToken(ingestToken);
-    assertUvAvailable();
-    copyFiles(collectorSrcDir, collectorPayloadDir, ["collect_agent_usage.py"]);
-    ensureCollectorEnvFile();
-    upsertEnvVars(COLLECTOR_ENV, { BESSEL_INTERNAL_API_KEY: ingestToken });
-    replaceRetiredApiBaseUrl(COLLECTOR_ENV, "BESSEL_API_BASE_URL");
-    copyFiles(collectorSrcDir, SYSTEMD_USER_DIR, [
-      "agent-usage-collector.service",
-      "agent-usage-collector.timer",
-    ]);
-    await execFileAsync("systemctl", ["--user", "daemon-reload"]);
-    await execFileAsync("systemctl", [
-      "--user",
-      "enable",
-      "agent-usage-collector.timer",
-    ]);
-    await execFileAsync("systemctl", [
-      "--user",
-      "restart",
-      "agent-usage-collector.timer",
-    ]);
-  });
-
-  ipcHandle("collector:runNow", async () => {
-    await execFileAsync("systemctl", [
-      "--user",
-      "start",
-      "agent-usage-collector.service",
-    ]);
-  });
-
-  ipcHandle("collector:setEnabled", async (_, enabled: boolean) => {
-    await execFileAsync("systemctl", [
-      "--user",
-      enabled ? "enable" : "disable",
-      "agent-usage-collector.timer",
-    ]);
-  });
 }

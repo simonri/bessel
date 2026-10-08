@@ -1,7 +1,0 @@
-[Unit]
-Description=Push Claude Code usage stats to Bessel
-
-[Service]
-Type=oneshot
-EnvironmentFile=-%h/.config/bessel/agent-usage-collector.env
-ExecStart=%h/.local/bin/uv run %h/.local/share/bessel/agent-usage-collector/collect_agent_usage.py

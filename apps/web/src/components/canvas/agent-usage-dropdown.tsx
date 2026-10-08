@@ -175,8 +175,8 @@ export function AgentUsageDropdown() {
             </div>
           ) : !hasAnyData ? (
             <p className="text-xs text-white/50">
-              No agent usage data yet - install the collector from Settings,
-              Agent usage on a machine running Claude Code.
+              No usage yet. Open the Bessel desktop app on a computer where you
+              use Claude Code.
             </p>
           ) : (
             <div className="space-y-5">
@@ -219,7 +219,7 @@ export function AgentUsageDropdown() {
                     <p className="text-11 text-amber-300/75">
                       Last updated{" "}
                       {formatDistanceToNowStrict(new Date(lastObserved))} ago.
-                      Check the collector in Settings, Agent usage.
+                      It updates while the Bessel desktop app is open.
                     </p>
                   )}
                 </div>

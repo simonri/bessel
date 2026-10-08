@@ -448,34 +448,17 @@
           "agent-usage"
         ],
         "summary": "Sync Agent Usage",
+        "description": "Uploaded by the desktop app, which reads Claude Code's usage on its machine.",
         "operationId": "sync_agent_usage_v1_agent_usage_sync_post",
-        "parameters": [
-          {
-            "name": "x-api-key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Api-Key"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AgentUsageSyncRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -498,7 +481,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/agent-usage/status": {

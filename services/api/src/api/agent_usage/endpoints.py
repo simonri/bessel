@@ -13,7 +13,6 @@ from api.agent_usage.schemas import (
   AgentUsageSyncResponse,
 )
 from api.agent_usage.service import agent_usage_service
-from api.ingest_tokens.dependencies import IngestUserId
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
@@ -28,14 +27,15 @@ router = APIRouter(prefix="/agent-usage", tags=["agent-usage"])
 async def sync_agent_usage(
   body: AgentUsageSyncRequest,
   session: DBSession,
-  user_id: IngestUserId,
+  current_user: CurrentDBUser,
 ) -> AgentUsageSyncResponse:
+  """Uploaded by the desktop app, which reads Claude Code's usage on its machine."""
   if not body.daily and not body.rate_limits:
     return AgentUsageSyncResponse(daily_synced=0, status_synced=0)
 
   daily_repo = AgentUsageDailyRepository.from_session(session)
   status_repo = AgentUsageStatusRepository.from_session(session)
-  daily_synced, status_synced = await agent_usage_service.sync(user_id, daily_repo, status_repo, body)
+  daily_synced, status_synced = await agent_usage_service.sync(current_user.id, daily_repo, status_repo, body)
   return AgentUsageSyncResponse(daily_synced=daily_synced, status_synced=status_synced)
 
 
