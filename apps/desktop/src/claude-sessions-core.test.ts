@@ -12,6 +12,7 @@ import {
   parseRemoteUrl,
   pruneEnded,
   reconcile,
+  sessionStatus,
   transcriptTitle,
 } from "./claude-sessions-core.js";
 import type {
@@ -290,5 +291,41 @@ describe("appendTail", () => {
   it("keeps the most recent output within the cap", () => {
     expect(appendTail("abc", "def", 10)).toBe("abcdef");
     expect(appendTail("abc", "def", 4)).toBe("cdef");
+  });
+});
+
+describe("sessionStatus", () => {
+  const checkedNow = { checked: true, pending: false };
+
+  it("is unknown, shown as starting, until Claude's sessions have been checked", () => {
+    expect(
+      sessionStatus(stored(), undefined, { checked: false, pending: false }),
+    ).toBe("starting");
+    expect(
+      sessionStatus(stored(), agent(), { checked: false, pending: false }),
+    ).toBe("starting");
+  });
+
+  it("follows Claude once checked, and waits on a session being woken", () => {
+    expect(sessionStatus(stored(), agent(), checkedNow)).toBe("idle");
+    expect(sessionStatus(stored(), agent({ pid: null }), checkedNow)).toBe(
+      "stopped",
+    );
+    expect(sessionStatus(stored(), undefined, checkedNow)).toBe("missing");
+    expect(
+      sessionStatus(stored(), agent({ pid: null }), {
+        checked: true,
+        pending: true,
+      }),
+    ).toBe("starting");
+  });
+
+  it("keeps an ended session ended", () => {
+    expect(
+      sessionStatus(stored({ endedAt: 5 }), agent(), {
+        checked: false,
+        pending: true,
+      }),
+    ).toBe("ended");
   });
 });

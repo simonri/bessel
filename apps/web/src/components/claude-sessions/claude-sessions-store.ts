@@ -80,6 +80,11 @@ export function isUntrustedWorkspaceError(error: unknown): boolean {
   );
 }
 
+/** Up and attachable: Claude reports it running. */
+export function isRunning(status: ClaudeSessionStatus): boolean {
+  return status === "working" || status === "waiting" || status === "idle";
+}
+
 export function isLive(status: ClaudeSessionStatus): boolean {
   return (
     status === "working" ||

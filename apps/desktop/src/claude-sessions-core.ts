@@ -101,6 +101,23 @@ export function isRunning(status: ClaudeSessionStatus): boolean {
   return status === "working" || status === "waiting" || status === "idle";
 }
 
+/**
+ * A stored session's status as the UI should see it. Until Bessel has looked
+ * at Claude's sessions once since launch, nothing is known yet: a session
+ * left running then isn't "missing", it just hasn't been checked.
+ */
+export function sessionStatus(
+  session: StoredClaudeSession,
+  agent: ClaudeAgentEntry | undefined,
+  { checked, pending }: { checked: boolean; pending: boolean },
+): ClaudeSessionStatus {
+  if (session.endedAt !== undefined) return "ended";
+  if (!checked) return "starting";
+  const status = agentStatus(agent);
+  if (!isRunning(status) && pending) return "starting";
+  return status;
+}
+
 export type ReconcileAction =
   | { kind: "respawn"; key: string }
   | { kind: "resume"; key: string }

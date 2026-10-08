@@ -8,6 +8,7 @@ import {
 } from "@/components/canvas/window-manager";
 import {
   claudeSessionsApi,
+  isRunning,
   isUntrustedWorkspaceError,
   toAgentStatus,
   useClaudeSession,
@@ -216,11 +217,21 @@ function BackgroundClaude() {
     );
   }
 
-  if (session.status === "ended") {
+  // Claude is still bringing it up (just created, or woken after a restart):
+  // attaching now would race that, or hit an id about to be replaced.
+  if (session.status === "starting")
+    return <Starting label="Starting Claude…" />;
+
+  if (!isRunning(session.status)) {
+    const ended = session.status === "ended";
     return (
       <Panel
-        title="This session has ended"
-        detail="Resume it to pick up the conversation where it left off."
+        title={ended ? "This session has ended" : "This session isn't running"}
+        detail={
+          ended
+            ? "Resume it to pick up the conversation where it left off."
+            : "It stopped, for example when the computer restarted. Resume it to pick up where it left off."
+        }
       >
         <button
           type="button"

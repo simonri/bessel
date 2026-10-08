@@ -15,6 +15,7 @@ import {
   parseRemoteUrl,
   pruneEnded,
   reconcile,
+  sessionStatus,
   transcriptExists,
 } from "./claude-sessions-core.js";
 import {
@@ -89,6 +90,9 @@ class ClaudeSessionManager {
   private agents: ClaudeAgentEntry[] = [];
   private available = true;
   private startupReconciled = false;
+  // Whether `claude agents` has been asked at all since launch; before that
+  // every session's state is unknown.
+  private checked = false;
   private readonly pending = new Map<string, number>();
   private wasRunning = new Set<string>();
   private readonly lastStatus = new Map<string, ClaudeSessionStatus>();
@@ -357,6 +361,7 @@ class ClaudeSessionManager {
       if (this.available)
         this.deps.log(`claude agents failed: ${(err as Error).message}`);
       this.available = false;
+      this.checked = true;
       this.publish();
       return;
     }
@@ -403,6 +408,10 @@ class ClaudeSessionManager {
         ),
       );
     }
+
+    // Only now: during the startup revives above, sessions not reached yet
+    // would otherwise read as stopped for a moment.
+    this.checked = true;
 
     let changed = false;
     for (const session of this.store.sessions) {
@@ -633,10 +642,10 @@ class ClaudeSessionManager {
   }
 
   private status(session: StoredClaudeSession): ClaudeSessionStatus {
-    if (session.endedAt !== undefined) return "ended";
-    const status = agentStatus(this.agentFor(session));
-    if (!isRunning(status) && this.pending.has(session.key)) return "starting";
-    return status;
+    return sessionStatus(session, this.agentFor(session), {
+      checked: this.checked,
+      pending: this.pending.has(session.key),
+    });
   }
 
   private view(session: StoredClaudeSession): ClaudeSessionView {
