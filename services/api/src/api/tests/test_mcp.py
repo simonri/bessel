@@ -164,6 +164,7 @@ ISOLATION_TESTED = {
   "get_calendar_events",
   "search_recipes",
   "get_recipe",
+  "add_recipe",
   "get_sleep",
   "list_workouts",
   "get_computer_activity",

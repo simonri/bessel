@@ -16,9 +16,10 @@ from api.users.service import user_service
 async def user_session(ctx: Context) -> AsyncIterator[tuple[AsyncSession, User]]:
   """The request's database session and the Bessel user the bearer token belongs to.
 
-  Tools only read, so the one write is the user row created on first login.
-  It's committed whenever the tool ran to an answer, including a client error
-  like "not found"; only unexpected failures roll back. Client errors are
+  Changes are committed whenever the tool ran to an answer; write tools check
+  their input before changing anything, so a client error like "not found"
+  commits nothing but the user row created on first login. Only unexpected
+  failures roll back. Client errors are
   re-raised as `ToolError` so their message reaches the model, while anything
   else stays opaque.
   """
