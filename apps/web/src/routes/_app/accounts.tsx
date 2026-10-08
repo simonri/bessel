@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
-import { IconButton, PageToolbar, PeriodNav } from "@/components/ui-kit";
+import { IconButton, PageHeader, PeriodNav } from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
@@ -168,17 +168,18 @@ function Accounts() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageToolbar
-        description={
-          totalCount > 0 && (
-            <span className="tabular-nums">
-              {totalCount} account{totalCount !== 1 ? "s" : ""}
-            </span>
-          )
+      <PageHeader
+        title="Accounts"
+        summary={
+          isLoading
+            ? null
+            : totalCount > 0
+              ? `${totalCount} account${totalCount !== 1 ? "s" : ""}.`
+              : "No accounts yet. Add one to start tracking balances."
         }
       >
         <CreateAccountDialog />
-      </PageToolbar>
+      </PageHeader>
 
       {isLoading ? (
         <div className="space-y-2">

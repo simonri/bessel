@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import type { MapSelection } from "@/components/location-day-map";
 import {
   EmptyState,
-  PageToolbar,
+  PageHeader,
   PeriodNav,
   SoftButton,
   StatTile,
@@ -67,6 +67,22 @@ const LocationDayMap = lazy(() =>
 
 const DAY_QUERY_ID = "getLocationHistoryDayV1LocationHistoryDayGet";
 
+/** "4 places and 3 trips, 12.4 km in all." */
+function daySentence(stats: {
+  places: number;
+  trips: number;
+  distance: number;
+}): string {
+  const plural = (n: number, word: string) =>
+    `${n} ${word}${n === 1 ? "" : "s"}`;
+  if (stats.places === 0 && stats.trips === 0)
+    return "Nothing recorded this day.";
+  const km =
+    stats.distance >= 100
+      ? `, ${(stats.distance / 1000).toFixed(1)} km in all`
+      : "";
+  return `${plural(stats.places, "place")} and ${plural(stats.trips, "trip")}${km}.`;
+}
 function importSummary(result: LocationImportSchema): string {
   const changes = [
     result.added && `${result.added.toLocaleString()} added`,
@@ -249,12 +265,13 @@ function TimelineDay({
   return (
     <div className="@container flex min-h-0 flex-1 flex-col gap-4">
       {importInput}
-      <PageToolbar
-        description={
+      <PageHeader
+        title={formatDay(day)}
+        summary={`${daySentence(stats)}${
           lastImport
-            ? `Imported ${formatDistanceToNow(lastImport.created_at, { addSuffix: true })} · ${days.length.toLocaleString()} days, ${formatDay(days[0], "medium")} – ${formatDay(latest ?? day, "medium")}`
-            : "Your Google Maps Timeline."
-        }
+            ? ` Imported ${formatDistanceToNow(lastImport.created_at, { addSuffix: true })}, covering ${formatDay(days[0], "medium")} to ${formatDay(latest ?? day, "medium")}.`
+            : ""
+        }`}
       >
         {importButton}
         {latest && day !== latest && (
@@ -276,7 +293,7 @@ function TimelineDay({
           prevDisabled={!prev}
           nextDisabled={!next}
         />
-      </PageToolbar>
+      </PageHeader>
 
       <div className="grid grid-cols-2 gap-2 @lg:grid-cols-4">
         <StatTile label="Places" value={stats.places} />

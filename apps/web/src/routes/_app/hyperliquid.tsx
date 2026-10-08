@@ -29,6 +29,7 @@ import { SpotList } from "@/components/hyperliquid/spot-list";
 import { StatCard } from "@/components/hyperliquid/stat-card";
 import {
   IconButton,
+  PageHeader,
   PrimaryButton,
   SectionLabel,
   TextInput,
@@ -214,17 +215,16 @@ function HyperliquidAccount({
 
   return (
     <div className="@container flex flex-col gap-4">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-lg font-semibold tracking-tight text-white/90">
-            {failed ? "Hyperliquid is taking a break" : pnlHeadline(pnl, range)}
-          </h1>
-          <p className="mt-0.5 text-xs text-white/50">
-            {failed
-              ? "Couldn't reach Hyperliquid. Retrying every minute."
-              : positionsSummary(perp, unrealized)}
-          </p>
-        </div>
+      <PageHeader
+        title={
+          failed ? "Hyperliquid is taking a break" : pnlHeadline(pnl, range)
+        }
+        summary={
+          failed
+            ? "Couldn't reach Hyperliquid. Retrying every minute."
+            : positionsSummary(perp, unrealized)
+        }
+      >
         <div className="flex flex-wrap items-center gap-2">
           <AccountPicker
             accounts={accounts}
@@ -236,7 +236,7 @@ function HyperliquidAccount({
             <LogOut />
           </IconButton>
         </div>
-      </header>
+      </PageHeader>
 
       {failed && (
         <div className="flex flex-col items-center gap-1 rounded-2xl bg-white/[0.03] px-4 py-10 text-center ring-1 ring-white/[0.06]">

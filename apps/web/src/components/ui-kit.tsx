@@ -94,6 +94,43 @@ export function SectionLabel({
   );
 }
 
+/**
+ * The top of every page: what it shows, one sentence on what's in it right
+ * now, and the page's controls (date stepper, filters) always on the right.
+ */
+export function PageHeader({
+  title,
+  summary,
+  children,
+  className,
+}: {
+  title: ReactNode;
+  /** One plain sentence; reserves its line while loading. */
+  summary?: ReactNode;
+  /** Controls, right-aligned. */
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <header
+      className={cn(
+        "flex flex-wrap items-start justify-between gap-3",
+        className,
+      )}
+    >
+      <div className="min-w-0">
+        <h2 className="text-lg font-semibold tracking-tight text-white/90">
+          {title}
+        </h2>
+        <p className="mt-0.5 text-13 text-white/50">{summary || "\u00a0"}</p>
+      </div>
+      {children && (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      )}
+    </header>
+  );
+}
+
 /** Compact header row at the top of a page body: context on the left, controls on the right. */
 export function PageToolbar({
   description,

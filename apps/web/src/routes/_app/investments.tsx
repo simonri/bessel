@@ -5,6 +5,7 @@ import {
   TabsTrigger,
 } from "@bessel/ui/components/tabs";
 import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "@/components/ui-kit";
 import { HoldingsTab } from "./-holdings-tab";
 import { SecuritiesTab } from "./-securities-tab";
 import { TradesTab } from "./-trades-tab";
@@ -19,6 +20,10 @@ const TRIGGER_CLASS =
 function Investments() {
   return (
     <Tabs defaultValue="holdings" className="flex flex-col gap-4">
+      <PageHeader
+        title="Investments"
+        summary="What you hold, the trades behind it, and the securities you track."
+      />
       <TabsList className="h-8 rounded-lg border border-white/[0.07] bg-white/[0.04] p-0.5 group-data-[orientation=horizontal]/tabs:h-8">
         <TabsTrigger value="holdings" className={TRIGGER_CLASS}>
           Holdings

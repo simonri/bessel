@@ -21,7 +21,7 @@ import {
 } from "@/components/sleep/sleep-summary";
 import { StageBreakdown } from "@/components/sleep/stage-breakdown";
 import { DayNav } from "@/components/timeline/day-nav";
-import { SectionLabel } from "@/components/ui-kit";
+import { PageHeader, SectionLabel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { fmtDur } from "./-activity-utils";
 import { dayParam } from "./-google-timeline-utils";
@@ -130,13 +130,10 @@ function SleepPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight text-white/90">
-            {isCurrentDay ? "Last night" : format(date, "EEEE d MMMM")}
-          </h1>
-          <p className="mt-1 text-13 text-white/55">{sentence}</p>
-        </div>
+      <PageHeader
+        title={isCurrentDay ? "Last night" : format(date, "EEEE d MMMM")}
+        summary={sentence}
+      >
         <DayNav
           label={isCurrentDay ? "Last night" : format(date, "EEE d MMM")}
           onPrev={() => setDate((d) => subDays(d, 1))}
@@ -144,7 +141,7 @@ function SleepPage() {
           nextDisabled={isCurrentDay}
           onToday={isCurrentDay ? undefined : () => setDate(today)}
         />
-      </header>
+      </PageHeader>
 
       {daySummary && <DayRings summary={daySummary} />}
 

@@ -2,7 +2,7 @@ import { listTasksV1TasksGetOptions, TaskStatus } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
-import { StatTile } from "@/components/ui-kit";
+import { PageHeader, StatTile } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { isRepeatingTask } from "@/lib/task-format";
 import { useTaskProgress } from "./progress-ring";
@@ -81,14 +81,10 @@ export function TasksPage() {
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-5">
-      <header className="min-w-0">
-        <h2 className="text-lg font-semibold tracking-tight text-white/90">
-          Your tasks
-        </h2>
-        <p className="mt-0.5 text-xs text-white/50">
-          {total === null ? " " : tasksSentence(counts)}
-        </p>
-      </header>
+      <PageHeader
+        title="Your tasks"
+        summary={total === null ? null : tasksSentence(counts)}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile

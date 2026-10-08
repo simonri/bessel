@@ -18,7 +18,7 @@ import type { PageKey } from "@/components/pages";
 import { localNightBounds } from "@/components/sleep/sleep-summary";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { TaskRow } from "@/components/tasks/task-row";
-import { SoftButton } from "@/components/ui-kit";
+import { PageHeader, SoftButton } from "@/components/ui-kit";
 import { useTaskStatusActions } from "@/hooks/use-task-status-actions";
 import { client } from "@/lib/client";
 import {
@@ -270,14 +270,7 @@ export function TodayPage() {
   const now = useMinuteClock();
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-      <header>
-        <h2 className="text-lg font-semibold tracking-tight text-white/90">
-          Today
-        </h2>
-        <p className="mt-0.5 text-xs text-white/50">
-          {format(now, "EEEE d MMMM")}
-        </p>
-      </header>
+      <PageHeader title="Today" summary={format(now, "EEEE d MMMM")} />
       <NextUp now={now} />
       <TasksBlock now={now} />
       <div className="grid gap-4 sm:grid-cols-2">

@@ -25,7 +25,7 @@ import {
 } from "@/components/timeline/day-summary";
 import { MomentsList } from "@/components/timeline/moments-list";
 import { SummaryCards } from "@/components/timeline/summary-cards";
-import { SectionLabel } from "@/components/ui-kit";
+import { PageHeader, SectionLabel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { fmtDur, localDayBounds } from "./-activity-utils";
 import { dayParam } from "./-google-timeline-utils";
@@ -106,17 +106,14 @@ function TimelinePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-white/90">
-            {isToday ? "Your day so far" : `How ${format(date, "EEEE")} went`}
-          </h2>
-          <p className="mt-0.5 text-xs text-white/50">
-            {timeline
-              ? (sentence ?? "Nothing recorded for this day yet.")
-              : "\u00a0"}
-          </p>
-        </div>
+      <PageHeader
+        title={isToday ? "Your day so far" : `How ${format(date, "EEEE")} went`}
+        summary={
+          timeline
+            ? (sentence ?? "Nothing recorded for this day yet.")
+            : "\u00a0"
+        }
+      >
         <div className="flex flex-wrap items-center gap-2">
           {sources.length > 1 && (
             <Select
@@ -146,7 +143,7 @@ function TimelinePage() {
             onToday={isToday ? undefined : () => setDate(today)}
           />
         </div>
-      </header>
+      </PageHeader>
 
       <SummaryCards
         lanes={lanes}

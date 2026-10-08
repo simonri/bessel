@@ -34,6 +34,7 @@ import { DayRhythm } from "@/components/activity/day-rhythm";
 import { WeekStrip } from "@/components/activity/week-strip";
 import { DayNav } from "@/components/timeline/day-nav";
 import { DayRibbon } from "@/components/timeline/day-ribbon";
+import { PageHeader } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
 import { localDayBounds } from "./-activity-utils";
@@ -151,21 +152,18 @@ function ActivityPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-white/90">
-            {isCurrentDay
-              ? "Your screen time"
-              : `How ${format(date, "EEEE")} went`}
-          </h2>
-          <p className="mt-0.5 text-xs text-white/50">
-            {sources.length === 0 && sourcesData
-              ? "See where your hours go, one day at a time."
-              : summary
-                ? sentence
-                : "\u00a0"}
-          </p>
-        </div>
+      <PageHeader
+        title={
+          isCurrentDay ? "Your screen time" : `How ${format(date, "EEEE")} went`
+        }
+        summary={
+          sources.length === 0 && sourcesData
+            ? "See where your hours go, one day at a time."
+            : summary
+              ? sentence
+              : "\u00a0"
+        }
+      >
         {sources.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {sources.length > 1 && (
@@ -197,7 +195,7 @@ function ActivityPage() {
             />
           </div>
         )}
-      </header>
+      </PageHeader>
 
       {!sourcesData ? (
         <div className="flex flex-col gap-3">

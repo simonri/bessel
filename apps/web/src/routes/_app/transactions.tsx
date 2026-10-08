@@ -60,7 +60,7 @@ import {
 import {
   EmptyState,
   IconButton,
-  PageToolbar,
+  PageHeader,
   PeriodNav,
   SoftButton,
 } from "@/components/ui-kit";
@@ -576,11 +576,12 @@ function Transactions() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageToolbar
-        description={
+      <PageHeader
+        title={monthLabel}
+        summary={
           isLoading
-            ? "Loading…"
-            : `${totalCount} transaction${totalCount !== 1 ? "s" : ""}`
+            ? null
+            : `${totalCount} transaction${totalCount !== 1 ? "s" : ""} this month.`
         }
       >
         <PeriodNav
@@ -590,7 +591,7 @@ function Transactions() {
           nextDisabled={isCurrentMonth}
         />
         <ImportDialog />
-      </PageToolbar>
+      </PageHeader>
 
       <TransactionFiltersBar
         filters={filters}
