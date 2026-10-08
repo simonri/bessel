@@ -126,14 +126,17 @@ class TestTokenVerifier:
 
 class TestTools:
   @pytest.mark.asyncio
-  async def test_every_tool_is_read_only(self, connect: ConnectFixture) -> None:
+  async def test_no_tool_deletes_and_reads_are_marked_read_only(self, connect: ConnectFixture) -> None:
     async with connect() as client:
       tools = (await client.list_tools()).tools
     assert len(tools) == len(TOOLS)
+    writes = {"add_tasks", "update_tasks", "complete_tasks", "undo_complete_tasks", "start_task"}
     for tool in tools:
       assert tool.annotations is not None
-      assert tool.annotations.read_only_hint is True, tool.name
       assert tool.annotations.destructive_hint is False, tool.name
+      assert not any(word in tool.name for word in ("delete", "remove", "trash")), tool.name
+      if tool.name not in writes and not tool.name.startswith("add_"):
+        assert tool.annotations.read_only_hint is True, tool.name
 
   @pytest.mark.asyncio
   async def test_exposes_no_money_or_investment_data(self, connect: ConnectFixture) -> None:
@@ -149,11 +152,18 @@ class TestTools:
 
 # Tools whose tests above check that a second user sees none of the first user's data.
 ISOLATION_TESTED = {
+  "get_task_overview",
+  "find_tasks",
+  "find_completed_tasks",
+  "get_task",
+  "add_tasks",
+  "update_tasks",
+  "complete_tasks",
+  "undo_complete_tasks",
+  "start_task",
   "get_calendar_events",
   "search_recipes",
   "get_recipe",
-  "search_tasks",
-  "get_task",
   "get_sleep",
   "list_workouts",
   "get_computer_activity",

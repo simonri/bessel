@@ -7,6 +7,7 @@ from pydantic import AnyHttpUrl
 from starlette.routing import Route
 
 from api.mcp.auth import Auth0TokenVerifier
+from api.mcp.prompts import PROMPTS
 from api.mcp.tools import TOOLS
 from api.settings import Environment, settings
 
@@ -37,6 +38,8 @@ def build_server() -> MCPServer:
   )
   for tool in TOOLS:
     server.add_tool(tool.fn, title=tool.title, annotations=tool.annotations)
+  for prompt in PROMPTS:
+    server.prompt(name=prompt.name, title=prompt.title, description=prompt.description)(prompt.fn)
   return server
 
 
