@@ -1,5 +1,6 @@
 import {
   getDailySleepV1HealthkitSleepDailyGetOptions,
+  getHealthSummaryV1HealthkitSummaryGetOptions,
   getSleepSummaryV1HealthkitSleepSummaryGetOptions,
   getTimelineV1TimelineGetOptions,
 } from "@bessel/client";
@@ -8,6 +9,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { addDays, format, isSameDay, subDays } from "date-fns";
 import { useMemo, useState } from "react";
+import { DayRings } from "@/components/health/day-rings";
 import { NightChart } from "@/components/sleep/night-chart";
 import { RhythmChart } from "@/components/sleep/rhythm-chart";
 import { SleepCards } from "@/components/sleep/sleep-cards";
@@ -21,6 +23,7 @@ import { DayNav } from "@/components/timeline/day-nav";
 import { SectionLabel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { fmtDur } from "./-activity-utils";
+import { dayParam } from "./-google-timeline-utils";
 import { STAGE_META, STAGE_ORDER } from "./-sleep-utils";
 import { YearGrid, yearGridRange } from "./-year-grid";
 
@@ -63,6 +66,16 @@ function SleepPage() {
     ...getTimelineV1TimelineGetOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs },
+    }),
+    placeholderData: keepPreviousData,
+  });
+
+  // The night picked is the one that ended on `date`, which is also the day
+  // the summary scores.
+  const { data: daySummary } = useQuery({
+    ...getHealthSummaryV1HealthkitSummaryGetOptions({
+      client,
+      query: { date: dayParam(dateKey), tz_name: tzName },
     }),
     placeholderData: keepPreviousData,
   });
@@ -140,6 +153,8 @@ function SleepPage() {
           onToday={isCurrentDay ? undefined : () => setDate(today)}
         />
       </header>
+
+      {daySummary && <DayRings summary={daySummary} />}
 
       <SleepCards
         asleepSecs={night?.total_asleep_secs ?? null}
