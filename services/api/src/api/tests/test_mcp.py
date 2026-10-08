@@ -162,6 +162,7 @@ ISOLATION_TESTED = {
   "undo_complete_tasks",
   "start_task",
   "get_calendar_events",
+  "find_free_time",
   "search_recipes",
   "get_recipe",
   "add_recipe",
