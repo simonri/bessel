@@ -34,6 +34,8 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+from wayland_idle import InputIdle, WaylandError
+
 # ─── config ──────────────────────────────────────────────────────────────────
 POLL_SECONDS = 2
 IDLE_THRESHOLD_SECS = 60
@@ -43,12 +45,14 @@ IDLE_THRESHOLD_SECS = 60
 # time when the tracker wasn't running.
 HEARTBEAT_SECS = 300
 
-# On Hyprland/Sway the tracker runs its own swayidle, which writes the epoch
-# second inactivity began to this file and removes it on input. An external
-# hypridle listener writing the same file also works.
+# On Hyprland/Sway the tracker asks the compositor for input-only idle
+# notifications (see wayland_idle.py). Where that isn't offered it runs its own
+# swayidle, which writes the epoch second inactivity began to this file and
+# removes it on input. swayidle honours idle inhibitors, so there a playing
+# video keeps the user active.
 IDLE_FILE = Path("/tmp/activity-tracker-idle")
 LOCK_CHECK_SECS = 10
-SWAYIDLE_RESTART_SECS = 30
+IDLE_RESTART_SECS = 30
 STATUS_CHECK_SECS = 30
 
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "activity-tracker"
@@ -185,19 +189,27 @@ def _screen_locked():
 class WaylandIdle:
     """Idle signal on Hyprland/Sway that doesn't depend on the desktop shell.
 
-    Runs its own swayidle (ext-idle-notify-v1) writing IDLE_FILE, restarts it
-    if it dies, and treats a locked screen as idle straight away.
+    Prefers the compositor's input-only idle notifications, which ignore idle
+    inhibitors (videos, wake locks). Falls back to its own swayidle writing
+    IDLE_FILE. Either is restarted if it dies, and a locked screen counts as
+    idle straight away.
     """
 
     def __init__(self):
+        self._input_idle = None
         self._proc = None
         self._restart_at = 0.0
         self._locked = False
         self._lock_checked_at = float("-inf")
 
     def start(self):
+        try:
+            self._input_idle = InputIdle.connect(IDLE_THRESHOLD_SECS)
+            return
+        except (OSError, WaylandError) as err:
+            print(f"metron-monitor  input-only idle unavailable ({err}); using swayidle", file=sys.stderr, flush=True)
         if shutil.which("swayidle") is None:
-            self._restart_at = time.monotonic() + SWAYIDLE_RESTART_SECS
+            self._restart_at = time.monotonic() + IDLE_RESTART_SECS
             return
         IDLE_FILE.unlink(missing_ok=True)
         # Backdate by the threshold: swayidle only fires after it has elapsed.
@@ -209,6 +221,9 @@ class WaylandIdle:
         )
 
     def stop(self):
+        if self._input_idle is not None:
+            self._input_idle.close()
+            self._input_idle = None
         if self._proc is not None and self._proc.poll() is None:
             self._proc.terminate()
             try:
@@ -219,17 +234,24 @@ class WaylandIdle:
         IDLE_FILE.unlink(missing_ok=True)
 
     def _supervise(self):
+        if self._input_idle is not None and not self._input_idle.alive:
+            # The compositor went away (restart, logout); reconnect shortly.
+            self._input_idle = None
+            self._restart_at = time.monotonic() + IDLE_RESTART_SECS
+            print("metron-monitor  lost the compositor's idle notifications; reconnecting shortly", file=sys.stderr, flush=True)
         if self._proc is not None and self._proc.poll() is not None:
             # A file left behind by a dead swayidle would report idle forever.
             IDLE_FILE.unlink(missing_ok=True)
             self._proc = None
-            self._restart_at = time.monotonic() + SWAYIDLE_RESTART_SECS
+            self._restart_at = time.monotonic() + IDLE_RESTART_SECS
             print("metron-monitor  swayidle exited; restarting shortly", file=sys.stderr, flush=True)
-        if self._proc is None and time.monotonic() >= self._restart_at:
+        if self._input_idle is None and self._proc is None and time.monotonic() >= self._restart_at:
             self.start()
 
     @property
     def source(self):
+        if self._input_idle is not None and self._input_idle.alive:
+            return "Wayland input"
         if self._proc is not None and self._proc.poll() is None:
             return "swayidle"
         if _run(["pidof", "hypridle"]) is not None:
@@ -246,6 +268,8 @@ class WaylandIdle:
 
     def is_idle(self):
         self._supervise()
+        if self._input_idle is not None and self._input_idle.idle:
+            return True
         try:
             since = int(IDLE_FILE.read_text().strip())
             if time.time() - since >= IDLE_THRESHOLD_SECS:

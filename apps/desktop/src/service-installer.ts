@@ -234,7 +234,11 @@ export function registerServiceInstallerHandlers(): void {
     assertIngestToken(ingestToken);
     assertUvAvailable();
     upsertEnvVars(LEGACY_MONITOR_ENV, { METRON_INTERNAL_API_KEY: ingestToken });
-    copyFiles(monitorSrcDir, monitorPayloadDir, ["main.py", "pyproject.toml"]);
+    copyFiles(monitorSrcDir, monitorPayloadDir, [
+      "main.py",
+      "wayland_idle.py",
+      "pyproject.toml",
+    ]);
     copyFiles(monitorSrcDir, SYSTEMD_USER_DIR, ["metron-monitor.service"]);
     replaceRetiredApiBaseUrl(LEGACY_MONITOR_ENV, "METRON_API_URL");
     await execFileAsync("systemctl", ["--user", "daemon-reload"]);
