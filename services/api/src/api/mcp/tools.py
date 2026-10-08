@@ -18,23 +18,16 @@ from api.activity.repository import ActivityRepository
 from api.activity.service import ActivityService
 from api.calendars.repository import CalendarEventRepository, CalendarPersonRepository
 from api.calendars.service import calendar_service
-from api.categories.repository import CategoryRepository
 from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
 from api.healthkit.service import healthkit_sleep_service
-from api.investments.repository import TradeRepository
-from api.investments.service import investment_service
 from api.mcp import schemas
 from api.mcp.context import user_session
-from api.models.category import Category
 from api.models.recipe import Recipe
 from api.models.task import Task
-from api.models.transaction import Transaction, TransactionDirection
 from api.recipes.repository import RecipeRepository
 from api.recipes.schemas import RecipeSchema
 from api.tasks.repository import TaskRepository
 from api.tasks.schemas import TaskStatus
-from api.transactions.repository import TransactionRepository
-from api.transactions.service import transaction_service
 
 MAX_CALENDAR_DAYS = 62
 MAX_SLEEP_DAYS = 92
@@ -100,81 +93,6 @@ async def get_calendar_events(ctx: Context, start_date: StartDate, end_date: End
     )
   result.sort(key=lambda e: e.start if isinstance(e.start, datetime) else datetime.combine(e.start, time.min, tzinfo=ZoneInfo(timezone)))
   return schemas.CalendarEvents(events=result)
-
-
-async def search_transactions(
-  ctx: Context,
-  date_from: Annotated[date | None, Field(description="Earliest transaction date (inclusive), YYYY-MM-DD.")] = None,
-  date_to: Annotated[date | None, Field(description="Latest transaction date (inclusive), YYYY-MM-DD.")] = None,
-  search: Annotated[str | None, Field(description="Case-insensitive text to look for in the description, e.g. a merchant name.")] = None,
-  category: Annotated[str | None, Field(description="Exact category name (case-insensitive). See list_transaction_categories.")] = None,
-  direction: Annotated[TransactionDirection | None, Field(description="debit for money out, credit for money in.")] = None,
-  limit: Annotated[int, Field(ge=1, le=200, description="Maximum number of transactions to return.")] = 50,
-) -> schemas.Transactions:
-  """Bank transactions, newest first, optionally filtered by date, text, category and direction."""
-  async with user_session(ctx) as (session, user):
-    categories = await CategoryRepository.from_session(session).list_for_user(user.id, order_by=Category.name)
-    category_ids: list[UUID] | None = None
-    if category is not None:
-      category_ids = [c.id for c in categories if c.name.casefold() == category.casefold()]
-      if not category_ids:
-        raise ToolError(f"No category named {category!r}. Call list_transaction_categories for the available names.")
-
-    repo = TransactionRepository.from_session(session)
-    statement = repo.get_filtered_statement(
-      user.id, category_ids=category_ids, direction=direction, search=search, date_from=date_from, date_to=date_to
-    ).order_by(Transaction.transaction_date.desc(), Transaction.id)
-    rows, total_count = await repo.paginate(statement, limit=limit, page=1)
-
-  category_names = {c.id: c.name for c in categories}
-  return schemas.Transactions(
-    total_count=total_count,
-    transactions=[
-      schemas.Transaction(
-        id=t.id,
-        date=t.transaction_date,
-        amount=t.amount,
-        currency=t.currency,
-        direction=t.direction,
-        description=t.description,
-        category=category_names.get(t.category_id) if t.category_id else None,
-        is_business=t.is_business,
-      )
-      for t in rows
-    ],
-  )
-
-
-async def get_spending_by_category(
-  ctx: Context,
-  year: Annotated[int, Field(ge=2000, le=2100)],
-  month: Annotated[int, Field(ge=1, le=12)],
-) -> schemas.MonthlySpending:
-  """Total spending (debits) per category for one calendar month."""
-  async with user_session(ctx) as (session, user):
-    rows = await TransactionRepository.from_session(session).spending_by_category(user_id=user.id, year=year, month=month)
-  return schemas.MonthlySpending(
-    year=year,
-    month=month,
-    categories=[schemas.CategorySpending(category=row.name, total=row.total) for row in rows],
-  )
-
-
-async def get_monthly_cash_flow(
-  ctx: Context,
-  months: Annotated[int, Field(ge=1, le=36, description="How many months to include, counting the current one.")] = 6,
-) -> schemas.CashFlow:
-  """Total income (credits) and expenses (debits) per month, up to and including the current month."""
-  async with user_session(ctx) as (session, user):
-    items = await transaction_service.monthly_flow(TransactionRepository.from_session(session), user.id, months=months, today=date.today())
-  return schemas.CashFlow(months=items)
-
-
-async def list_transaction_categories(ctx: Context) -> schemas.Categories:
-  """The user's transaction categories."""
-  async with user_session(ctx) as (session, user):
-    categories = await CategoryRepository.from_session(session).list_for_user(user.id, order_by=Category.name)
-  return schemas.Categories(categories=[schemas.Category(id=c.id, name=c.name, parent_id=c.parent_id, excluded=c.excluded) for c in categories])
 
 
 async def search_recipes(
@@ -306,22 +224,8 @@ async def get_computer_activity(
   return schemas.ComputerActivity.model_validate(summary.model_dump())
 
 
-async def get_investment_holdings(ctx: Context) -> schemas.Holdings:
-  """Current investment positions, valued at each security's latest recorded price.
-
-  Quantities are in micro-units (x1,000,000); money is in minor units (cents) of the security's currency.
-  """
-  async with user_session(ctx) as (session, user):
-    holdings = await investment_service.holdings(TradeRepository.from_session(session), user.id)
-  return schemas.Holdings(holdings=holdings)
-
-
 TOOLS = [
   (get_calendar_events, "Calendar events"),
-  (search_transactions, "Search transactions"),
-  (get_spending_by_category, "Spending by category"),
-  (get_monthly_cash_flow, "Monthly cash flow"),
-  (list_transaction_categories, "Transaction categories"),
   (search_recipes, "Search recipes"),
   (get_recipe, "Get recipe"),
   (search_tasks, "Search tasks"),
@@ -329,5 +233,4 @@ TOOLS = [
   (get_sleep, "Sleep"),
   (list_workouts, "Workouts"),
   (get_computer_activity, "Computer activity"),
-  (get_investment_holdings, "Investment holdings"),
 ]

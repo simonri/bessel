@@ -12,11 +12,11 @@ from api.mcp.tools import TOOLS
 from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
-Read-only access to the user's Bessel life dashboard: calendar, bank transactions, \
-recipes, tasks, sleep, workouts, computer activity and investments.
+Read-only access to the user's Bessel life dashboard: calendar, recipes, tasks, \
+sleep, workouts and computer activity.
 
-Money is in minor units (cents) of the given currency. Tools that take dates also \
-take an IANA timezone; pass the user's own timezone. Durations are in seconds.\
+Tools that take dates also take an IANA timezone; pass the user's own timezone. \
+Durations are in seconds.\
 """
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
