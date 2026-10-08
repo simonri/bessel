@@ -10,11 +10,8 @@ from api.activity.schemas import ActivitySummaryResponse
 from api.calendars.providers import AttendeeResponse
 from api.common.schemas import Schema
 from api.healthkit.schemas import SleepDailyEntry, SleepStageSummary
-from api.investments.schemas import HoldingSchema
 from api.models.recipe import RecipeType
-from api.models.transaction import TransactionDirection
 from api.tasks.schemas import TaskStatus
-from api.transactions.schemas import MonthlyFlow
 
 
 class CalendarAttendee(Schema):
@@ -41,48 +38,6 @@ class CalendarEvent(Schema):
 
 class CalendarEvents(Schema):
   events: list[CalendarEvent] = Field(description="Sorted by start.")
-
-
-class Transaction(Schema):
-  id: UUID
-  date: date
-  amount: int = Field(description="Minor units (cents), always positive; see `direction`.")
-  currency: str
-  direction: TransactionDirection = Field(description="debit is money out, credit is money in.")
-  description: str | None
-  category: str | None = Field(description="Category name, or null if uncategorized.")
-  is_business: bool
-
-
-class Transactions(Schema):
-  total_count: int = Field(description="Matching transactions, including any beyond `limit`.")
-  transactions: list[Transaction] = Field(description="Newest first.")
-
-
-class CategorySpending(Schema):
-  category: str
-  total: int = Field(description="Debits in minor units (cents).")
-
-
-class MonthlySpending(Schema):
-  year: int
-  month: int
-  categories: list[CategorySpending] = Field(description="Largest first. Uncategorized spending is not included.")
-
-
-class CashFlow(Schema):
-  months: list[MonthlyFlow] = Field(description="Oldest first. Amounts in minor units (cents).")
-
-
-class Category(Schema):
-  id: UUID
-  name: str
-  parent_id: UUID | None
-  excluded: bool = Field(description="Excluded from spending reports.")
-
-
-class Categories(Schema):
-  categories: list[Category]
 
 
 class RecipeSummary(Schema):
@@ -138,7 +93,3 @@ class Workouts(Schema):
 
 class ComputerActivity(ActivitySummaryResponse):
   pass
-
-
-class Holdings(Schema):
-  holdings: list[HoldingSchema]

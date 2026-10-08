@@ -8,26 +8,19 @@ from uuid import uuid4
 import httpx
 import httpx2
 import pytest
-import pytest_asyncio
 from api.app import app as bessel_app
 from api.auth.dependencies import JWKSClient
 from api.mcp.auth import Auth0TokenVerifier
 from api.mcp.server import build_routes, build_server
 from api.mcp.tools import TOOLS
 from api.models.activity_event import ActivityEvent
-from api.models.bank_account import BankAccount
 from api.models.calendar import Calendar
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
-from api.models.category import Category
 from api.models.healthkit_sleep_sample import HealthKitSleepSample
 from api.models.healthkit_workout import HealthKitWorkout
 from api.models.recipe import Recipe
-from api.models.security import AssetType, Security
-from api.models.security_price import SecurityPrice
 from api.models.task import Task
-from api.models.trade import Trade, TradeType
-from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.postgres import AsyncSession
 from api.settings import settings
@@ -225,11 +218,17 @@ class TestTools:
   async def test_every_tool_is_read_only(self, connect: ConnectFixture) -> None:
     async with connect() as client:
       tools = (await client.list_tools()).tools
-    assert len(tools) >= 10
+    assert len(tools) == len(TOOLS)
     for tool in tools:
       assert tool.annotations is not None
       assert tool.annotations.read_only_hint is True, tool.name
       assert tool.annotations.destructive_hint is False, tool.name
+
+  @pytest.mark.asyncio
+  async def test_exposes_no_money_or_investment_data(self, connect: ConnectFixture) -> None:
+    async with connect() as client:
+      names = {tool.name for tool in (await client.list_tools()).tools}
+    assert not {n for n in names if any(word in n for word in ("transaction", "spending", "cash", "invest", "holding"))}
 
   @pytest.mark.asyncio
   async def test_first_call_creates_the_user(self, connect: ConnectFixture, session: AsyncSession) -> None:
@@ -279,81 +278,6 @@ class TestTasks:
 
     assert (await _call(connect, "search_tasks", token="token-b"))["tasks"] == []
     assert await _call_error(connect, "get_task", {"task_id": str(task.id)}, token="token-b") == "Task not found."
-
-
-@pytest_asyncio.fixture
-async def groceries(save_owned: SaveFixture, user: User) -> list[Transaction]:
-  account = BankAccount(name="Checking", currency="SEK", subtype="checking")
-  await save_owned(account)
-  category = Category(name="Groceries", slug="groceries", color="#22c55e")
-  await save_owned(category)
-  transactions = [
-    Transaction(
-      amount=amount,
-      currency="SEK",
-      transaction_date=day,
-      direction=TransactionDirection.debit,
-      dedup_hash=uuid4().hex,
-      description=description,
-      bank_account_id=account.id,
-      category_id=category.id,
-    )
-    for amount, day, description in [(12_300, date(2026, 9, 3), "ICA Maxi"), (4_500, date(2026, 9, 20), "Coop")]
-  ]
-  for tx in transactions:
-    await save_owned(tx)
-  salary = Transaction(
-    amount=3_000_000,
-    currency="SEK",
-    transaction_date=date(2026, 9, 25),
-    direction=TransactionDirection.credit,
-    dedup_hash=uuid4().hex,
-    description="Salary",
-    bank_account_id=account.id,
-  )
-  await save_owned(salary)
-  return [*transactions, salary]
-
-
-class TestTransactions:
-  @pytest.mark.asyncio
-  async def test_search_names_categories_newest_first(self, connect: ConnectFixture, groceries: list[Transaction]) -> None:
-    result = await _call(connect, "search_transactions", {"category": "groceries"})
-    assert result["total_count"] == 2
-    assert [(t["description"], t["category"], t["amount"]) for t in result["transactions"]] == [("Coop", "Groceries", 4_500), ("ICA Maxi", "Groceries", 12_300)]
-
-    salary = await _call(connect, "search_transactions", {"direction": "credit"})
-    assert [(t["description"], t["category"]) for t in salary["transactions"]] == [("Salary", None)]
-
-  @pytest.mark.asyncio
-  async def test_limit_reports_total(self, connect: ConnectFixture, groceries: list[Transaction]) -> None:
-    result = await _call(connect, "search_transactions", {"limit": 1, "date_from": "2026-09-01", "date_to": "2026-09-30"})
-    assert result["total_count"] == 3
-    assert len(result["transactions"]) == 1
-
-  @pytest.mark.asyncio
-  async def test_unknown_category_is_a_tool_error(self, connect: ConnectFixture, groceries: list[Transaction]) -> None:
-    assert "list_transaction_categories" in await _call_error(connect, "search_transactions", {"category": "Yachts"})
-
-  @pytest.mark.asyncio
-  async def test_spending_and_cash_flow(self, connect: ConnectFixture, groceries: list[Transaction], mocker: MockerFixture) -> None:
-    spending = await _call(connect, "get_spending_by_category", {"year": 2026, "month": 9})
-    assert spending["categories"] == [{"category": "Groceries", "total": 16_800}]
-
-    mocker.patch("api.mcp.tools.date", wraps=date, today=lambda: date(2026, 10, 5))
-    flow = await _call(connect, "get_monthly_cash_flow", {"months": 2})
-    assert flow["months"] == [
-      {"year": 2026, "month": 9, "income": 3_000_000, "expenses": 16_800},
-      {"year": 2026, "month": 10, "income": 0, "expenses": 0},
-    ]
-
-  @pytest.mark.asyncio
-  async def test_other_user_sees_nothing(self, connect: ConnectFixture, groceries: list[Transaction]) -> None:
-    assert (await _call(connect, "search_transactions", token="token-b"))["transactions"] == []
-    assert (await _call(connect, "list_transaction_categories", token="token-b"))["categories"] == []
-    assert (await _call(connect, "get_spending_by_category", {"year": 2026, "month": 9}, token="token-b"))["categories"] == []
-    flow = await _call(connect, "get_monthly_cash_flow", {"months": 36}, token="token-b")
-    assert all(m["income"] == 0 and m["expenses"] == 0 for m in flow["months"])
 
 
 class TestCalendar:
@@ -460,38 +384,9 @@ class TestComputerActivity:
     assert await _call_error(connect, "get_computer_activity", args) == "No computer activity has been recorded."
 
 
-class TestInvestments:
-  @pytest.mark.asyncio
-  async def test_holdings_are_valued_at_latest_price(self, connect: ConnectFixture, save_owned: SaveFixture, save_fixture: SaveFixture) -> None:
-    account = BankAccount(name="ISK", currency="SEK", subtype="investment")
-    await save_owned(account)
-    fund = Security(name="Global Index", ticker="GLOB", asset_type=AssetType.mutual_fund, currency="SEK")
-    await save_fixture(fund)
-    await save_owned(
-      Trade(
-        security_id=fund.id,
-        bank_account_id=account.id,
-        trade_type=TradeType.buy,
-        trade_date=date(2026, 1, 2),
-        quantity=10_000_000,
-        price_per_unit=10_000,
-        currency="SEK",
-      )
-    )
-    await save_fixture(SecurityPrice(security_id=fund.id, price_date=date(2026, 10, 1), price_per_unit=12_000, currency="SEK"))
-
-    [holding] = (await _call(connect, "get_investment_holdings"))["holdings"]
-    assert (holding["security_name"], holding["quantity"], holding["cost_basis"], holding["current_value"]) == ("Global Index", 10_000_000, 100_000, 120_000)
-    assert (await _call(connect, "get_investment_holdings", token="token-b"))["holdings"] == []
-
-
 # Tools whose tests above check that a second user sees none of the first user's data.
 ISOLATION_TESTED = {
   "get_calendar_events",
-  "search_transactions",
-  "get_spending_by_category",
-  "get_monthly_cash_flow",
-  "list_transaction_categories",
   "search_recipes",
   "get_recipe",
   "search_tasks",
@@ -499,7 +394,6 @@ ISOLATION_TESTED = {
   "get_sleep",
   "list_workouts",
   "get_computer_activity",
-  "get_investment_holdings",
 }
 
 
