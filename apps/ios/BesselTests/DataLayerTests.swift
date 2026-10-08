@@ -49,6 +49,36 @@ final class CalendarEventOrderTests: XCTestCase {
     }
 }
 
+final class HealthSyncTests: XCTestCase {
+    override func tearDown() {
+        DailyMetricsSyncState.clear()
+        super.tearDown()
+    }
+
+    func testFirstSyncReachesBackAMonthAndLaterOnesResendRecentDays() {
+        let calendar = Calendar.current
+        let now = calendar.date(from: DateComponents(year: 2026, month: 10, day: 8, hour: 14))!
+        let today = calendar.startOfDay(for: now)
+
+        DailyMetricsSyncState.clear()
+        XCTAssertEqual(DailyMetricsSyncState.nextWindow(now: now).start, calendar.date(byAdding: .day, value: -35, to: today))
+
+        DailyMetricsSyncState.lastDay = calendar.date(byAdding: .day, value: -1, to: today)
+        let window = DailyMetricsSyncState.nextWindow(now: now)
+        XCTAssertEqual(window.start, calendar.date(byAdding: .day, value: -3, to: today))
+        XCTAssertEqual(window.end, calendar.date(byAdding: .day, value: 1, to: today))
+    }
+
+    func testSummaryDecodesWithoutAWatch() throws {
+        let json = #"{"date":"2026-10-08","is_today":true,"sleep":null,"move":{"score":null,"label":"Getting to know you","is_partial_day":true,"steps":4000,"usual_steps":null,"active_energy_kcal":null,"usual_active_energy_kcal":null,"exercise_minutes":null,"workout_count":0,"workout_minutes":0},"energy":null,"insight":"Hi","bedtime_streak":0,"week":[]}"#
+        let summary = try JSONDecoder.api.decode(HealthSummary.self, from: Data(json.utf8))
+
+        XCTAssertNil(summary.energy)
+        XCTAssertEqual(summary.move?.steps, 4000)
+        XCTAssertFalse(summary.isEmpty)
+    }
+}
+
 final class UserFacingErrorTests: XCTestCase {
     func testUsesTheServersSentence() {
         let error = APIError(statusCode: 400, detail: #"{"detail":"This calendar is read-only."}"#)

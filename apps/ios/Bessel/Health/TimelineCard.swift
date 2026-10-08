@@ -49,36 +49,15 @@ struct TimelineCard: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(timeline.isToday ? "Your day so far" : "How \(timeline.day.formatted(.dateTime.weekday(.wide))) went")
-                    .font(.headline)
-                    .foregroundStyle(Theme.foreground)
-                Text(timeline.hasLoaded ? (timeline.sentence ?? "Nothing recorded for this day yet.") : " ")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.mutedForeground)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-            HStack(spacing: 4) {
-                dayButton("chevron.left", label: "Previous day") { Task { await timeline.step(-1) } }
-                dayButton("chevron.right", label: "Next day") { Task { await timeline.step(1) } }
-                    .disabled(timeline.isToday)
-                    .opacity(timeline.isToday ? 0.35 : 1)
-            }
-        }
-    }
-
-    private func dayButton(_ systemImage: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .semibold))
+        VStack(alignment: .leading, spacing: 3) {
+            Text(timeline.isToday ? "Your day so far" : "How \(timeline.day.formatted(.dateTime.weekday(.wide))) went")
+                .font(.headline)
                 .foregroundStyle(Theme.foreground)
-                .frame(width: 32, height: 32)
-                .background(Theme.fill, in: Circle())
+            Text(timeline.hasLoaded ? (timeline.sentence ?? "Nothing recorded for this day yet.") : " ")
+                .font(.subheadline)
+                .foregroundStyle(Theme.mutedForeground)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 
     // MARK: - Ribbon

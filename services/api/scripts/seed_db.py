@@ -20,6 +20,7 @@ from api.models import (
   ActivityEvent,
   BankAccount,
   Category,
+  HealthKitDailyMetric,
   HealthKitSleepSample,
   HealthKitWorkout,
   Place,
@@ -249,6 +250,29 @@ SEED_RECIPES: list[tuple[str, str, dict]] = [
 ]
 
 
+def seed_daily_metrics(today: date, days: int) -> list[HealthKitDailyMetric]:
+  """Steps, energy and heart values with weekday rhythm and a little noise, so
+  the Health rings have a believable usual to compare against."""
+  rng = random.Random(20261008)
+  metrics: list[HealthKitDailyMetric] = []
+  for days_ago in range(days):
+    day = today - timedelta(days=days_ago)
+    active = rng.uniform(1.0, 1.3) if day.weekday() in (1, 3, 5) else rng.uniform(0.75, 1.0)
+    # Today so far, as if it were early afternoon.
+    so_far = 0.55 if days_ago == 0 else 1.0
+    metrics.append(
+      HealthKitDailyMetric(
+        date=day,
+        steps=round(8200 * active * so_far * rng.uniform(0.9, 1.1)),
+        active_energy_kcal=round(420 * active * so_far * rng.uniform(0.9, 1.1), 1),
+        exercise_minutes=round(28 * active * so_far * rng.uniform(0.7, 1.3), 1),
+        resting_heart_rate=round(rng.gauss(57, 1.5), 1),
+        hrv_ms=round(rng.gauss(52, 5) + (6 if days_ago == 0 else 0), 1),
+      )
+    )
+  return metrics
+
+
 async def seed() -> None:
   dsn = settings.get_postgres_dsn("asyncpg")
   engine = create_async_engine(dsn)
@@ -282,6 +306,7 @@ async def seed() -> None:
       "categories",
       "healthkit_workouts",
       "healthkit_sleep_samples",
+      "healthkit_daily_metrics",
       "recipes",
     ]:
       await session.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
@@ -1180,6 +1205,11 @@ async def seed() -> None:
       session.add(sample)
     await session.flush()
     print(f"Seeded {len(sleep_samples)} HealthKit sleep samples over the last {SLEEP_NIGHTS} nights.")
+
+    # ── 13b. HealthKit daily metrics ──────────────────────────────────────
+    session.add_all(seed_daily_metrics(date.today(), days=60))
+    await session.flush()
+    print("Seeded 60 days of HealthKit daily metrics.")
 
     # ── 14. Recipes ───────────────────────────────────────────────────────
     recipes = []

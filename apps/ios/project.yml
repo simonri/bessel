@@ -36,7 +36,7 @@ targets:
         CFBundleDisplayName: $(BESSEL_APP_NAME)
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSHealthShareUsageDescription: Bessel reads your workouts and sleep from Health to sync them to your account.
+        NSHealthShareUsageDescription: Bessel reads your workouts, sleep, steps, active energy and heart rate from Health to show how you're doing each day and sync it to your account.
         NSBluetoothAlwaysUsageDescription: Bessel connects to the golf cart's battery monitor over Bluetooth to show live battery status.
         UILaunchScreen:
           UIColorName: LaunchBackground

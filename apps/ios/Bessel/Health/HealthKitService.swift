@@ -15,19 +15,77 @@ struct SleepBatch {
 
 /// Reads workouts and sleep analysis from the HealthKit store via anchored
 /// queries, so each call returns only what changed since the given anchor
-/// (adds and deletes).
+/// (adds and deletes), and daily activity and heart totals per local day.
 final class HealthKitService {
     static var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
     private let store = HKHealthStore()
 
-    /// No-op once granted; read status is intentionally not queryable, so this
-    /// runs before every sync and the query simply returns what is permitted.
+    private static let readTypes: Set<HKObjectType> = [
+        HKObjectType.workoutType(),
+        HKCategoryType(.sleepAnalysis),
+        HKQuantityType(.stepCount),
+        HKQuantityType(.activeEnergyBurned),
+        HKQuantityType(.appleExerciseTime),
+        HKQuantityType(.restingHeartRate),
+        HKQuantityType(.heartRateVariabilitySDNN),
+    ]
+
+    /// Shows the permission sheet for any type not asked about yet, so people
+    /// who connected before see it once more for the new ones. Read status is
+    /// intentionally not queryable: a denied type just returns no data.
     func requestAuthorization() async throws {
-        try await store.requestAuthorization(
-            toShare: [],
-            read: [HKObjectType.workoutType(), HKCategoryType(.sleepAnalysis)]
+        try await store.requestAuthorization(toShare: [], read: Self.readTypes)
+    }
+
+    /// One entry per local day in `days`, from HealthKit's statistics queries,
+    /// which count a step recorded by both the iPhone and the Watch once.
+    func dailyMetrics(in days: DateInterval) async throws -> [HealthKitDailyMetricUpload] {
+        async let steps = dailyValues(.stepCount, .cumulativeSum, unit: .count(), in: days)
+        async let energy = dailyValues(.activeEnergyBurned, .cumulativeSum, unit: .kilocalorie(), in: days)
+        async let exercise = dailyValues(.appleExerciseTime, .cumulativeSum, unit: .minute(), in: days)
+        async let resting = dailyValues(.restingHeartRate, .discreteAverage, unit: .count().unitDivided(by: .minute()), in: days)
+        async let hrv = dailyValues(.heartRateVariabilitySDNN, .discreteAverage, unit: .secondUnit(with: .milli), in: days)
+        let (stepsByDay, energyByDay, exerciseByDay, restingByDay, hrvByDay) = try await (steps, energy, exercise, resting, hrv)
+
+        let dates = Set(stepsByDay.keys).union(energyByDay.keys).union(exerciseByDay.keys).union(restingByDay.keys).union(hrvByDay.keys)
+        return dates.sorted().map { day in
+            HealthKitDailyMetricUpload(
+                date: DateParsing.dateOnly.string(from: day),
+                steps: stepsByDay[day].map { Int($0.rounded()) },
+                activeEnergyKcal: energyByDay[day],
+                exerciseMinutes: exerciseByDay[day],
+                restingHeartRate: restingByDay[day],
+                hrvMs: hrvByDay[day]
+            )
+        }
+    }
+
+    private func dailyValues(
+        _ identifier: HKQuantityTypeIdentifier,
+        _ options: HKStatisticsOptions,
+        unit: HKUnit,
+        in days: DateInterval
+    ) async throws -> [Date: Double] {
+        let calendar = Calendar.current
+        let descriptor = HKStatisticsCollectionQueryDescriptor(
+            predicate: .quantitySample(
+                type: HKQuantityType(identifier),
+                predicate: HKQuery.predicateForSamples(withStart: days.start, end: days.end)
+            ),
+            options: options,
+            anchorDate: calendar.startOfDay(for: days.start),
+            intervalComponents: DateComponents(day: 1)
         )
+        let collection = try await descriptor.result(for: store)
+        var values: [Date: Double] = [:]
+        collection.enumerateStatistics(from: days.start, to: days.end) { statistics, _ in
+            let quantity = options.contains(.cumulativeSum) ? statistics.sumQuantity() : statistics.averageQuantity()
+            if let quantity {
+                values[calendar.startOfDay(for: statistics.startDate)] = quantity.doubleValue(for: unit)
+            }
+        }
+        return values
     }
 
     func fetchNextBatch(anchor: HKQueryAnchor?, limit: Int) async throws -> WorkoutBatch {
@@ -231,6 +289,32 @@ enum SleepSyncAnchor {
     static func clear() {
         UserDefaults.standard.removeObject(forKey: anchorKey)
         UserDefaults.standard.removeObject(forKey: lastSyncedAtKey)
+    }
+}
+
+/// The last day whose activity and heart totals reached the server. Each sync
+/// sends the days since, plus a couple before it, since late Watch data can
+/// still change yesterday.
+enum DailyMetricsSyncState {
+    private static let lastDayKey = "healthkit.dailyMetricsLastDay"
+    static let backfillDays = 35
+    static let overlapDays = 2
+
+    static var lastDay: Date? {
+        get { UserDefaults.standard.object(forKey: lastDayKey) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: lastDayKey) }
+    }
+
+    /// From a few days before the last sync (or a month back the first time) to the end of today.
+    static func nextWindow(now: Date = .now, calendar: Calendar = .current) -> DateInterval {
+        let today = calendar.startOfDay(for: now)
+        let start = lastDay.map { calendar.date(byAdding: .day, value: -overlapDays, to: $0)! }
+            ?? calendar.date(byAdding: .day, value: -backfillDays, to: today)!
+        return DateInterval(start: min(start, today), end: calendar.date(byAdding: .day, value: 1, to: today)!)
+    }
+
+    static func clear() {
+        UserDefaults.standard.removeObject(forKey: lastDayKey)
     }
 }
 

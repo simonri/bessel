@@ -109,9 +109,10 @@ final class DayTimeline {
     var dayEnd: Date { Calendar.current.date(byAdding: .day, value: 1, to: day)! }
     var isEmpty: Bool { lanes.allSatisfy(\.blocks.isEmpty) }
 
-    func step(_ days: Int) async {
-        let target = Calendar.current.date(byAdding: .day, value: days, to: day)!
-        guard target <= Calendar.current.startOfDay(for: .now) else { return }
+    /// Follows the day picked on the Health page.
+    func show(_ date: Date) async {
+        let target = Calendar.current.startOfDay(for: date)
+        guard target != day else { return }
         day = target
         await load()
     }
