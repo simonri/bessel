@@ -52,6 +52,11 @@ import {
   TextInput,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import {
+  mutationFamily,
+  restoreItemFields,
+  settleWhenIdle,
+} from "@/lib/optimistic";
 import { cn } from "@/lib/utils";
 import { PlaceCard, StatusBadge } from "./-place-card";
 import { RatingStars } from "./-rating-stars";
@@ -60,6 +65,8 @@ import {
   getCategoryIcon,
   getGoogleMapsUrl,
 } from "./-travel-utils";
+
+const placeWrites = mutationFamily("places");
 
 export const Route = createFileRoute("/_app/travel")({
   component: Travel,
@@ -156,11 +163,17 @@ function Travel() {
 
   const queryKey = listPlacesV1PlacesGetQueryKey({ client });
 
+  const settle = () =>
+    settleWhenIdle(queryClient, placeWrites.mutationKey, () => {
+      void queryClient.invalidateQueries({ queryKey });
+    });
+
+  // A failed delete brings the place back with the refetch in settle().
   const deleteMutation = useMutation({
     ...deletePlaceV1PlacesPlaceIdDeleteMutation({ client }),
+    ...placeWrites,
     onMutate: async ({ path }) => {
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueriesData({ queryKey });
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
         return {
@@ -176,20 +189,14 @@ function Travel() {
         setSelectedPlace(null);
       }
       setDeleteTarget(null);
-      return { previous };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, data] of context.previous)
-          queryClient.setQueryData(key, data);
-      }
-      toast.error("Failed to delete place");
-    },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
+    onError: () => toast.error("Failed to delete place"),
+    onSettled: settle,
   });
 
   const markVisitedMutation = useMutation({
     ...updatePlaceV1PlacesPlaceIdPatchMutation({ client }),
+    ...placeWrites,
     onMutate: async ({ path, body }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });
@@ -204,14 +211,16 @@ function Travel() {
       });
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        for (const [key, data] of context.previous)
-          queryClient.setQueryData(key, data);
-      }
+    onError: (_err, { path, body }, context) => {
+      restoreItemFields<PlaceSchema>(
+        queryClient,
+        context?.previous,
+        new Set([path.place_id]),
+        Object.keys(body) as (keyof PlaceSchema)[],
+      );
       toast.error("Failed to update place");
     },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey }),
+    onSettled: settle,
   });
 
   const handleQuickMarkVisited = (place: PlaceSchema) => {

@@ -7,6 +7,7 @@ import {
   reopenTaskV1TasksTaskIdReopenPostMutation,
   reorderTasksV1TasksReorderPatchMutation,
   TaskStatus,
+  undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation,
   updateTaskV1TasksTaskIdPatchMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
@@ -53,7 +54,11 @@ import { QuickAddTask } from "@/components/tasks/quick-add";
 import { RoutinesStrip } from "@/components/tasks/routines-strip";
 import { TaskRow } from "@/components/tasks/task-row";
 import { TodayView } from "@/components/tasks/today-view";
-import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
+import {
+  STATUS_FIELDS,
+  taskMutationOptions,
+  useTaskCacheHelpers,
+} from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
 import { isDesktop } from "@/lib/environment";
 import { buildTaskPrompt, isRepeatingTask } from "@/lib/task-format";
@@ -154,6 +159,17 @@ function Tasks() {
   );
   const projects = projectsData ?? [];
 
+  // A renamed or deleted project leaves nothing to filter by.
+  useEffect(() => {
+    if (
+      projectFilter &&
+      projectsData &&
+      !projectsData.some((p) => p.name === projectFilter)
+    ) {
+      setProjectFilter(null);
+    }
+  }, [projectFilter, projectsData]);
+
   // Collapse the project pills into a dropdown once the widget is too narrow to
   // fit them. The pills are always measured off-screen (invisible + absolute, so
   // they don't affect layout) even while collapsed, so re-expanding the widget is
@@ -194,8 +210,9 @@ function Tasks() {
 
   const completeMutation = useMutation({
     ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       cache.patchTask(path.task_id, (t) => ({
         ...t,
         status: "done",
@@ -203,17 +220,18 @@ function Tasks() {
       }));
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path }, context) => {
+      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
       toast.error("Action failed");
     },
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
   });
 
   const reopenMutation = useMutation({
     ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path }) => {
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       cache.patchTask(path.task_id, (t) => ({
         ...t,
         status: "todo",
@@ -221,19 +239,41 @@ function Tasks() {
       }));
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path }, context) => {
+      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
       toast.error("Action failed");
     },
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
+  });
+
+  // Unlike reopen, also removes the next occurrence completing a repeating
+  // task spawned.
+  const undoCompleteMutation = useMutation({
+    ...undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation({ client }),
+    ...taskMutationOptions,
+    onMutate: async ({ path }) => {
+      const previous = await cache.cancelAndGet(path.task_id);
+      cache.patchTask(path.task_id, (t) => ({
+        ...t,
+        status: "todo",
+        completed_at: null,
+      }));
+      return { previous };
+    },
+    onError: (_err, { path }, context) => {
+      cache.restoreFields(path.task_id, context?.previous, STATUS_FIELDS);
+      toast.error("Couldn't undo");
+    },
+    onSettled: () => cache.settle(),
   });
 
   // Kept as a bespoke inline patch (rather than cache.patchTask) because a
   // position change needs the whole column re-sorted, not just one item swapped.
   const updateMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ path, body }) => {
-      const previous = await cache.cancelAndSnapshot();
+      const previous = await cache.cancelAndGet(path.task_id);
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
         const updatedItems = old.items.map((t: any) =>
@@ -249,17 +289,24 @@ function Tasks() {
       if (body.position != null) setLocalOrder(null);
       return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
+    onError: (_err, { path, body }, context) => {
+      cache.restoreFields(
+        path.task_id,
+        context?.previous,
+        Object.keys(body) as (keyof TaskSchema)[],
+      );
       toast.error("Action failed");
     },
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
   });
 
+  // Touches many tasks at once; a failure is put right by the refetch in
+  // settle() rather than by restoring a snapshot over other in-flight edits.
   const reorderMutation = useMutation({
     ...reorderTasksV1TasksReorderPatchMutation({ client }),
+    ...taskMutationOptions,
     onMutate: async ({ body }) => {
-      const previous = await cache.cancelAndSnapshot();
+      await cache.cancel();
       const itemsById = new Map(body.map((item) => [item.id, item]));
       queryClient.setQueriesData({ queryKey }, (old: any) => {
         if (!old?.items) return old;
@@ -278,13 +325,9 @@ function Tasks() {
         return { ...old, items: updatedItems };
       });
       setLocalOrder(null);
-      return { previous };
     },
-    onError: (_err, _vars, context) => {
-      cache.rollback(context?.previous);
-      toast.error("Action failed");
-    },
-    onSettled: () => cache.invalidateAll(),
+    onError: () => toast.error("Action failed"),
+    onSettled: () => cache.settle(),
   });
 
   const handleSelectTask = (task: TaskSchema) => {
@@ -301,7 +344,14 @@ function Tasks() {
       {
         onSuccess: () =>
           toast(`“${task.title}” done`, {
-            action: { label: "Undo", onClick: () => handleReopenTask(task) },
+            action: {
+              label: "Undo",
+              onClick: () =>
+                undoCompleteMutation.mutate({
+                  client,
+                  path: { task_id: task.id },
+                }),
+            },
           }),
       },
     );

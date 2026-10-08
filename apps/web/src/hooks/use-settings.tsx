@@ -5,8 +5,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { userStorage } from "@/lib/user-storage";
 
 export interface ActivityMapping {
   from: string;
@@ -75,14 +77,14 @@ function withDefaults(stored: Partial<Settings>): Settings {
 
 function loadSettings(): Settings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = userStorage.getItem(STORAGE_KEY);
     if (raw) return withDefaults(JSON.parse(raw) as Partial<Settings>);
   } catch {}
 
   // Falls back to the pre-rebrand key name — see window-manager.tsx's
   // identical LEGACY_KEY handling for the same "metron:" -> "bessel:" rename.
   try {
-    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    const legacyRaw = userStorage.getItem(LEGACY_KEY);
     if (legacyRaw)
       return withDefaults(JSON.parse(legacyRaw) as Partial<Settings>);
   } catch {}
@@ -104,12 +106,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = settings.theme;
   }, [settings.theme]);
 
+  const loadedRef = useRef(settings);
+  useEffect(() => {
+    if (settings === loadedRef.current) return;
+    userStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
+
   const update = useCallback((patch: Partial<Settings>) => {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    setSettings((prev) => ({ ...prev, ...patch }));
   }, []);
 
   // Memoized so parent re-renders (auth/query state in AppLayout) don't mint a

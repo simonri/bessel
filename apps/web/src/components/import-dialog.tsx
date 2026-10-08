@@ -1,7 +1,10 @@
-import { useState, useRef } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { Upload } from "lucide-react";
+import {
+  importKlarnaTransactionsV1KlarnaImportPostMutation,
+  importTransactionsV1TransactionsImportPostMutation,
+  listBankAccountsV1BankAccountsGetOptions,
+  listBankAccountsV1BankAccountsGetQueryKey,
+  listTransactionsV1TransactionsGetQueryKey,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -21,12 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import {
-  importTransactionsV1TransactionsImportPostMutation,
-  importKlarnaTransactionsV1KlarnaImportPostMutation,
-  listTransactionsV1TransactionsGetQueryKey,
-  listBankAccountsV1BankAccountsGetOptions,
-} from "@bessel/client";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -37,20 +38,36 @@ const FILE_BANKS = [
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{
+    created: number;
+    skipped: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: accountsData } = useQuery(
-    listBankAccountsV1BankAccountsGetOptions({ client, query: { limit: 100, sorting: ["name"] } }),
+    listBankAccountsV1BankAccountsGetOptions({
+      client,
+      query: { limit: 100, sorting: ["name"] },
+    }),
   );
   const accounts = accountsData?.items ?? [];
+
+  const invalidateImported = () => {
+    void queryClient.invalidateQueries({
+      queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
+    });
+    // Account balances are derived from their transactions.
+    void queryClient.invalidateQueries({
+      queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
+    });
+  };
 
   const fileMutation = useMutation({
     ...importTransactionsV1TransactionsImportPostMutation({ client }),
     onSuccess: (data) => {
       setResult(data);
-      void queryClient.invalidateQueries({ queryKey: listTransactionsV1TransactionsGetQueryKey({ client }) });
+      invalidateImported();
       toast.success(`${data.created} transactions imported`);
     },
     onError: () => toast.error("Import failed"),
@@ -60,7 +77,7 @@ export function ImportDialog() {
     ...importKlarnaTransactionsV1KlarnaImportPostMutation({ client }),
     onSuccess: (data) => {
       setResult(data);
-      void queryClient.invalidateQueries({ queryKey: listTransactionsV1TransactionsGetQueryKey({ client }) });
+      invalidateImported();
       toast.success(`${data.created} transactions imported`);
     },
     onError: () => toast.error("Klarna import failed"),
@@ -112,7 +129,10 @@ export function ImportDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? setOpen(true) : handleClose())}
+    >
       <DialogTrigger asChild>
         <Button>
           <Upload className="size-4" />
@@ -122,11 +142,16 @@ export function ImportDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Import Transactions</DialogTitle>
-          <DialogDescription>Import from a bank export file or your Klarna account.</DialogDescription>
+          <DialogDescription>
+            Import from a bank export file or your Klarna account.
+          </DialogDescription>
         </DialogHeader>
 
         <form
-          onSubmit={(e) => { e.preventDefault(); void form.handleSubmit(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void form.handleSubmit();
+          }}
           className="space-y-4"
         >
           {/* Source */}
@@ -134,7 +159,9 @@ export function ImportDialog() {
             name="source"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="source">Source <span className="text-destructive">*</span></Label>
+                <Label htmlFor="source">
+                  Source <span className="text-destructive">*</span>
+                </Label>
                 <Select
                   value={field.state.value}
                   onValueChange={(v) => {
@@ -150,7 +177,9 @@ export function ImportDialog() {
                   </SelectTrigger>
                   <SelectContent>
                     {FILE_BANKS.map((b) => (
-                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                      <SelectItem key={b.value} value={b.value}>
+                        {b.label}
+                      </SelectItem>
                     ))}
                     <SelectItem value="klarna">Klarna</SelectItem>
                   </SelectContent>
@@ -164,8 +193,13 @@ export function ImportDialog() {
             name="bankAccountId"
             children={(field) => (
               <div className="space-y-2">
-                <Label htmlFor="bank-account">Account <span className="text-destructive">*</span></Label>
-                <Select value={field.state.value} onValueChange={field.handleChange}>
+                <Label htmlFor="bank-account">
+                  Account <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={field.state.value}
+                  onValueChange={field.handleChange}
+                >
                   <SelectTrigger id="bank-account" className="w-full">
                     <SelectValue placeholder="Select an account" />
                   </SelectTrigger>
@@ -192,13 +226,17 @@ export function ImportDialog() {
                     const bank = FILE_BANKS.find((b) => b.value === source);
                     return (
                       <div className="space-y-2">
-                        <Label htmlFor="import-file">File <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="import-file">
+                          File <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                           id="import-file"
                           ref={fileInputRef}
                           type="file"
                           accept={bank?.accept ?? ".csv,.xlsx"}
-                          onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
+                          onChange={(e) =>
+                            field.handleChange(e.target.files?.[0] ?? null)
+                          }
                         />
                       </div>
                     );
@@ -219,7 +257,8 @@ export function ImportDialog() {
                     children={(field) => (
                       <div className="space-y-1.5">
                         <Label htmlFor="klarna-token">
-                          Authorization header <span className="text-destructive">*</span>
+                          Authorization header{" "}
+                          <span className="text-destructive">*</span>
                         </Label>
                         <textarea
                           id="klarna-token"
@@ -258,8 +297,14 @@ export function ImportDialog() {
 
           {result && (
             <div className="text-sm rounded-md border p-3 space-y-0.5">
-              <p><span className="font-medium">{result.created}</span> transactions imported</p>
-              <p><span className="font-medium">{result.skipped}</span> duplicates skipped</p>
+              <p>
+                <span className="font-medium">{result.created}</span>{" "}
+                transactions imported
+              </p>
+              <p>
+                <span className="font-medium">{result.skipped}</span> duplicates
+                skipped
+              </p>
             </div>
           )}
 

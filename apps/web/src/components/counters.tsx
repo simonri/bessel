@@ -70,6 +70,7 @@ export function Counters() {
 
   const selected = counters.find((c) => c.id === selectedId) ?? null;
 
+  const creatingRef = useRef(false);
   const createMutation = useMutation({
     ...createCounterV1CountersPostMutation({ client }),
     onSuccess: (counter) => {
@@ -139,12 +140,23 @@ export function Counters() {
   });
 
   const handleAddSubmit = () => {
+    // Enter submits, then the input's blur submits again before a re-render
+    // could show the mutation as pending.
+    if (creatingRef.current) return;
     const name = addingName?.trim();
     if (!name) {
       setAddingName(null);
       return;
     }
-    createMutation.mutate({ client, body: { name } });
+    creatingRef.current = true;
+    createMutation.mutate(
+      { client, body: { name } },
+      {
+        onSettled: () => {
+          creatingRef.current = false;
+        },
+      },
+    );
   };
 
   return (

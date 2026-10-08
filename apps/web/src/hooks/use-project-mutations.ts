@@ -13,12 +13,15 @@ export function useProjectMutations() {
       queryKey: listProjectsV1ProjectsGetQueryKey({ client }),
     });
 
+  // Callers report failures per call, naming the project.
   const createProject = useMutation({
     ...createProjectV1ProjectsPostMutation(),
+    meta: { errorToast: false },
     onSuccess: invalidate,
   });
   const setLocation = useMutation({
     ...setProjectLocationV1ProjectsProjectIdLocationPutMutation(),
+    meta: { errorToast: false },
     onSuccess: invalidate,
   });
 

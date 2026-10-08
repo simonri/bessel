@@ -12,6 +12,7 @@ const PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties";
 const DBUS_SERVICE = "org.freedesktop.DBus";
 const DBUS_PATH = "/org/freedesktop/DBus";
 const SPOTIFY_WATCHDOG_MS = 5000;
+const RECONNECT_MAX_MS = 60_000;
 
 export interface SpotifyStatus {
   running: boolean;
@@ -33,6 +34,9 @@ let properties: ClientInterface | null = null;
 let connectedService: string | null = null;
 let watchdogTimer: ReturnType<typeof setInterval> | null = null;
 let connecting = false;
+let reconnectDelayMs = SPOTIFY_WATCHDOG_MS;
+let reconnectAt = 0;
+let refreshSeq = 0;
 
 function variantValue<T>(value: Variant<T> | undefined): T | undefined {
   return value?.value;
@@ -68,11 +72,16 @@ function setStatus(next: SpotifyStatus): void {
 
 async function refreshStatus(): Promise<void> {
   if (!properties) return;
+  // PropertiesChanged can fire in bursts; only the newest read may land, or
+  // an older GetAll resolving late would roll the status back.
+  const seq = ++refreshSeq;
+  const source = properties;
   try {
-    const all = (await properties.GetAll(PLAYER_INTERFACE)) as Properties;
-    setStatus(projectStatus(all));
+    const all = (await source.GetAll(PLAYER_INTERFACE)) as Properties;
+    if (seq === refreshSeq && properties === source)
+      setStatus(projectStatus(all));
   } catch {
-    disconnectPlayer();
+    if (seq === refreshSeq && properties === source) disconnectPlayer();
   }
 }
 
@@ -88,9 +97,10 @@ function disconnectPlayer(): void {
   if (status.running) setStatus({ running: false });
 }
 
-async function listSpotifyService(): Promise<string | null> {
-  if (!bus) return null;
-  const object = await bus.getProxyObject(DBUS_SERVICE, DBUS_PATH);
+async function listSpotifyService(
+  activeBus: MessageBus,
+): Promise<string | null> {
+  const object = await activeBus.getProxyObject(DBUS_SERVICE, DBUS_PATH);
   const dbusInterface = object.getInterface(DBUS_SERVICE);
   const names = (await dbusInterface.ListNames()) as string[];
   return (
@@ -101,11 +111,56 @@ async function listSpotifyService(): Promise<string | null> {
   );
 }
 
+function connectBus(): void {
+  try {
+    const next = dbus.sessionBus();
+    bus = next;
+    next.on("error", () => handleBusError(next));
+  } catch {
+    bus = null;
+    scheduleReconnect();
+  }
+}
+
+// A MessageBus that errored (session bus restarted, socket closed) never
+// recovers on its own: drop it and let the watchdog connect a fresh one.
+function handleBusError(failed: MessageBus): void {
+  if (bus !== failed) return;
+  disconnectPlayer();
+  bus = null;
+  try {
+    failed.disconnect();
+  } catch {
+    // already gone
+  }
+  scheduleReconnect();
+}
+
+function scheduleReconnect(): void {
+  reconnectAt = Date.now() + reconnectDelayMs;
+  reconnectDelayMs = Math.min(reconnectDelayMs * 2, RECONNECT_MAX_MS);
+}
+
 async function watchdogTick(): Promise<void> {
-  if (!bus || connecting) return;
+  if (connecting) return;
+  if (!bus) {
+    if (Date.now() < reconnectAt) return;
+    connectBus();
+    if (!bus) return;
+  }
+  const activeBus: MessageBus = bus;
   connecting = true;
   try {
-    const service = await listSpotifyService();
+    let service: string | null;
+    try {
+      service = await listSpotifyService(activeBus);
+    } catch {
+      // The bus itself can't answer: same recovery as an "error" event.
+      handleBusError(activeBus);
+      return;
+    }
+    if (bus !== activeBus) return;
+    reconnectDelayMs = SPOTIFY_WATCHDOG_MS;
     if (!service) {
       disconnectPlayer();
       return;
@@ -113,7 +168,8 @@ async function watchdogTick(): Promise<void> {
     if (service === connectedService && player && properties) return;
 
     disconnectPlayer();
-    const object = await bus.getProxyObject(service, MPRIS_PATH);
+    const object = await activeBus.getProxyObject(service, MPRIS_PATH);
+    if (bus !== activeBus) return;
     player = object.getInterface(PLAYER_INTERFACE);
     properties = object.getInterface(PROPERTIES_INTERFACE);
     connectedService = service;
@@ -158,15 +214,11 @@ export async function spotifyNext(): Promise<void> {
 export function startSpotifyWatcher(): void {
   // MPRIS is a Linux desktop standard. Other platforms keep the integration
   // unavailable instead of attempting to connect to a nonexistent session bus.
-  if (process.platform !== "linux" || bus) return;
-  try {
-    bus = dbus.sessionBus();
-    bus.on("error", disconnectPlayer);
-    void watchdogTick();
-    watchdogTimer = setInterval(watchdogTick, SPOTIFY_WATCHDOG_MS);
-  } catch {
-    bus = null;
-  }
+  if (process.platform !== "linux" || watchdogTimer) return;
+  reconnectDelayMs = SPOTIFY_WATCHDOG_MS;
+  reconnectAt = 0;
+  void watchdogTick();
+  watchdogTimer = setInterval(watchdogTick, SPOTIFY_WATCHDOG_MS);
 }
 
 export function stopSpotifyWatcher(): void {

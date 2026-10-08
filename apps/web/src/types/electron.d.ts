@@ -11,6 +11,8 @@ import type {
   VaultIndex,
   VaultInfo,
   VaultReadResult,
+  VaultRenameOptions,
+  VaultRenameResult,
   VaultSearchHit,
   VaultWriteResult,
 } from "../components/obsidian/vault-types";
@@ -58,7 +60,8 @@ declare global {
       device: {
         getInfo: () => Promise<{ key: string; name: string }>;
       };
-      selectFolder: () => Promise<string | null>;
+      /** Only a `"vault"` pick grants the folder vault access. */
+      selectFolder: (purpose?: "vault") => Promise<string | null>;
       sshListDir: (
         host: string,
         dirPath: string,
@@ -128,17 +131,18 @@ declare global {
           cols: number,
           rows: number,
           config: { command: string; args: string[]; cwd?: string },
-        ) => Promise<void>;
+        ) => Promise<number | undefined>;
         sendInput: (sessionId: string, data: string) => void;
         resize: (sessionId: string, cols: number, rows: number) => void;
         kill: (sessionId: string) => void;
+        /** `generation` is the value `spawn` resolved with for that PTY. */
         onData: (
           sessionId: string,
-          callback: (data: string) => void,
+          callback: (data: string, generation?: number) => void,
         ) => () => void;
         onExit: (
           sessionId: string,
-          callback: (code: number) => void,
+          callback: (code: number, generation?: number) => void,
         ) => () => void;
       };
       claudeSessions: {
@@ -252,12 +256,14 @@ declare global {
           content?: string,
         ) => Promise<{ rel: string }>;
         mkdir: (root: string, rel: string) => Promise<void>;
-        /** Renames a file/dir and rewrites `[[wikilinks]]` pointing at it. */
+        /** Renames a file/dir and rewrites `[[wikilinks]]` pointing at it.
+         *  Rejects when `to` already exists. */
         rename: (
           root: string,
           from: string,
           to: string,
-        ) => Promise<{ updatedFiles: number }>;
+          options?: VaultRenameOptions,
+        ) => Promise<VaultRenameResult>;
         trash: (root: string, rel: string) => Promise<void>;
         reveal: (root: string, rel: string) => Promise<void>;
         copyImage: (root: string, rel: string) => Promise<void>;

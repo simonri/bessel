@@ -132,6 +132,7 @@ export function ObsidianPage() {
 
   return (
     <VaultWorkspace
+      key={settings.obsidianVaultPath}
       root={settings.obsidianVaultPath}
       onSwitchVault={handleSwitchVault}
     />

@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import Request
+from fastapi import Depends, Request
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from api.common.db.postgres import AsyncEngine, AsyncSession, AsyncSessionMaker, Engine
@@ -67,9 +67,17 @@ async def get_db_session(request: Request) -> AsyncGenerator[AsyncSession]:
     await session.commit()
 
 
+# Function scope commits before the response is sent, so a client that refetches
+# after a 2xx sees its write, and a failed commit becomes a 500 instead of a lost
+# write behind a 2xx. Every route must take the session through this alias: mixing
+# scopes gives a route two session dependencies, one of which commits too late.
+DBSession = Annotated[AsyncSession, Depends(get_db_session, scope="function")]
+
+
 __all__ = [
   "AsyncEngine",
   "AsyncSession",
+  "DBSession",
   "create_async_engine",
   "create_sync_engine",
   "get_db_session",

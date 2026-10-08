@@ -8,7 +8,7 @@ import {
   reconnectDelay,
   useCalendarChanges,
 } from "./use-calendar-changes";
-import { isEventsQuery } from "./use-calendar-data";
+import { EVENT_WRITES, isEventsQuery } from "./use-calendar-data";
 
 const get = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/client", () => ({
@@ -69,8 +69,12 @@ describe("reconnectDelay", () => {
 });
 
 describe("useCalendarChanges", () => {
-  function setup(enabled = true) {
-    const queryClient = new QueryClient();
+  const mounted: { unmount: () => void }[] = [];
+  afterEach(() => {
+    for (const hook of mounted.splice(0)) hook.unmount();
+  });
+
+  function setup(enabled = true, queryClient = new QueryClient()) {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -79,16 +83,17 @@ describe("useCalendarChanges", () => {
       wrapper,
       initialProps: { on: enabled },
     });
+    mounted.push(hook);
     const eventInvalidations = () =>
       invalidate.mock.calls.filter(([filters]) =>
         filters?.predicate?.({
           queryKey: [{ _id: "listCalendarEventsV1CalendarsEventsGet" }],
         } as never),
       ).length;
-    return { hook, invalidate, eventInvalidations };
+    return { hook, invalidate, eventInvalidations, queryClient };
   }
 
-  it("refetches once for a burst of changes", async () => {
+  it("refreshes on connect, then once for a burst of changes", async () => {
     const stream = controllableStream([": connected\n\n"]);
     get.mockResolvedValueOnce(streamResponse(stream.body));
     const { invalidate, eventInvalidations } = setup();
@@ -98,11 +103,13 @@ describe("useCalendarChanges", () => {
       url: "/v1/calendars/changes",
       parseAs: "stream",
     });
+    await waitFor(() => expect(eventInvalidations()).toBe(1));
+
     stream.push("event: changed\ndata: {}\n\n");
     stream.push("event: changed\ndata: {}\n\n");
 
-    await waitFor(() => expect(eventInvalidations()).toBe(1));
-    expect(invalidate).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(eventInvalidations()).toBe(2));
+    expect(invalidate).toHaveBeenCalledTimes(4);
     expect(
       isEventsQuery([{ _id: "listCalendarEventsV1CalendarsEventsGet" }]),
     ).toBe(true);
@@ -115,15 +122,53 @@ describe("useCalendarChanges", () => {
       .mockResolvedValueOnce(streamResponse(first.body))
       .mockResolvedValueOnce(streamResponse(second.body));
     const { eventInvalidations } = setup();
-    await waitFor(() => expect(get).toHaveBeenCalledTimes(1));
-    expect(eventInvalidations()).toBe(0);
+    await waitFor(() => expect(eventInvalidations()).toBe(1));
 
     first.close();
 
     await waitFor(() => expect(get).toHaveBeenCalledTimes(2), {
       timeout: 2_500,
     });
-    await waitFor(() => expect(eventInvalidations()).toBe(1));
+    await waitFor(() => expect(eventInvalidations()).toBe(2));
+  });
+
+  it("holds off refreshing events while an event write is in flight", async () => {
+    const queryClient = new QueryClient();
+    let finishWrite!: () => void;
+    void queryClient
+      .getMutationCache()
+      .build(queryClient, {
+        ...EVENT_WRITES,
+        mutationFn: () =>
+          new Promise<void>((resolve) => {
+            finishWrite = resolve;
+          }),
+      })
+      .execute(undefined);
+    get.mockResolvedValueOnce(
+      streamResponse(controllableStream([": connected\n\n"]).body),
+    );
+    const { invalidate, eventInvalidations } = setup(true, queryClient);
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(1));
+    expect(eventInvalidations()).toBe(0);
+    finishWrite();
+  });
+
+  it("shares one stream between every mounted calendar", async () => {
+    get.mockResolvedValueOnce(
+      streamResponse(controllableStream([": connected\n\n"]).body),
+    );
+    const first = setup();
+    const second = setup();
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(1));
+    const signal = get.mock.calls[0][0].signal as AbortSignal;
+
+    first.hook.unmount();
+    expect(signal.aborted).toBe(false);
+    second.hook.unmount();
+    expect(signal.aborted).toBe(true);
+    expect(get).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing until enabled and aborts on unmount", async () => {

@@ -4,11 +4,11 @@ from api.bank_accounts.repository import BankAccountRepository
 from api.exceptions import ValidationError
 from api.klarna.schemas import KlarnaImportRequest
 from api.klarna.service import fetch_klarna_items, map_to_parsed
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.transactions.schemas import ImportResponse
 from api.transactions.service import transaction_service
 from api.users.dependencies import CurrentDBUser
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Header
 
 router = APIRouter(prefix="/klarna", tags=["klarna"])
 
@@ -34,7 +34,7 @@ async def get_klarna_transactions(
 @router.post("/import", response_model=ImportResponse)
 async def import_klarna_transactions(
   body: KlarnaImportRequest,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> ImportResponse:
   """

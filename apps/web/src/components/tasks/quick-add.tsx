@@ -7,7 +7,7 @@ import { Calendar, Flag, Hash, Maximize2, Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TaskFormDialog } from "@/components/create-task-dialog";
-import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
+import { TASK_MUTATION_KEY, useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
 import { parseQuickTask, type QuickToken } from "@/lib/task-quick-parse";
 import { cn } from "@/lib/utils";
@@ -66,8 +66,9 @@ export function QuickAddTask({
 
   const create = useMutation({
     ...createTaskV1TasksPostMutation({ client }),
+    mutationKey: TASK_MUTATION_KEY,
     onError: () => toast.error("Couldn't add the task"),
-    onSettled: () => cache.invalidateAll(),
+    onSettled: () => cache.settle(),
   });
 
   const submit = () => {

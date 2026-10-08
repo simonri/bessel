@@ -94,6 +94,13 @@ function RemoteClaude({ sshHost, path }: { sshHost: string; path: string }) {
       taskDropZone
       commands={commands}
       detectAgentStatus
+      // The args switch from --session-id to --resume once the id is saved;
+      // it's still the same process, so a remount must reattach to it.
+      sessionKey={JSON.stringify([
+        sshHost,
+        path,
+        existingSessionId ?? freshSessionId,
+      ])}
     />
   );
 }

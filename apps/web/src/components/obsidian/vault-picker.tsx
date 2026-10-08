@@ -123,7 +123,7 @@ export function VaultPicker({
   const recents = recentVaults.filter((p) => p !== defaultPath?.path);
 
   const chooseFolder = async () => {
-    const selected = await window.electron?.selectFolder();
+    const selected = await window.electron?.selectFolder("vault");
     if (selected) onOpen(selected);
   };
 

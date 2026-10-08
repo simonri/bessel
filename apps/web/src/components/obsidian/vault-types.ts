@@ -66,6 +66,20 @@ export interface VaultWriteResult {
   mtimeMs: number;
 }
 
+export interface VaultRenameOptions {
+  /** Notes with unsaved edits in the renderer: their links aren't rewritten. */
+  skip?: string[];
+}
+
+export interface VaultRenameResult {
+  /** Notes whose `[[links]]` to the renamed entry were rewritten. */
+  updatedFiles: number;
+  /** Notes left untouched because they were in `skip` or changed mid-rewrite. */
+  skippedFiles?: string[];
+  /** Notes whose links couldn't be rewritten. */
+  failedFiles?: string[];
+}
+
 export interface VaultLink {
   /** Raw target as written, e.g. "Journal/2026-01-11" or "Fiske". */
   target: string;

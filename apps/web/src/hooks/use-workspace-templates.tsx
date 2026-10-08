@@ -3,11 +3,17 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
+import {
+  isModuleKey,
+  MODULE_REGISTRY,
+} from "@/components/canvas/module-registry";
 import type { ModuleKey, WindowSpec } from "@/components/canvas/window-manager";
+import { userStorage } from "@/lib/user-storage";
 import { encodeCommands } from "@/lib/widget-commands";
 
 export interface TemplateWidget {
@@ -29,23 +35,21 @@ export interface WorkspaceTemplate {
 const STORAGE_KEY = "bessel:workspace-templates";
 const LEGACY_KEY = "metron:workspace-templates";
 
-function isModuleKey(value: unknown): value is ModuleKey {
-  return typeof value === "string" && Object.hasOwn(MODULE_REGISTRY, value);
-}
-
 function sanitizeTemplates(value: unknown): WorkspaceTemplate[] | null {
   if (!Array.isArray(value)) return null;
-  return value.map((template) => ({
-    ...template,
-    widgets: Array.isArray(template?.widgets)
-      ? template.widgets.filter(
-          (widget: unknown): widget is TemplateWidget =>
-            !!widget &&
-            typeof widget === "object" &&
-            isModuleKey((widget as { module?: unknown }).module),
-        )
-      : [],
-  }));
+  return value
+    .filter((template) => !!template && typeof template === "object")
+    .map((template) => ({
+      ...template,
+      widgets: Array.isArray(template?.widgets)
+        ? template.widgets.filter(
+            (widget: unknown): widget is TemplateWidget =>
+              !!widget &&
+              typeof widget === "object" &&
+              isModuleKey((widget as { module?: unknown }).module),
+          )
+        : [],
+    }));
 }
 
 function newId() {
@@ -57,7 +61,7 @@ function newId() {
 
 function loadTemplates(): WorkspaceTemplate[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = userStorage.getItem(STORAGE_KEY);
     if (raw) {
       const templates = sanitizeTemplates(JSON.parse(raw));
       if (templates) return templates;
@@ -67,7 +71,7 @@ function loadTemplates(): WorkspaceTemplate[] {
   // Falls back to the pre-rebrand key name — see window-manager.tsx's
   // identical LEGACY_KEY handling for the same "metron:" -> "bessel:" rename.
   try {
-    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    const legacyRaw = userStorage.getItem(LEGACY_KEY);
     if (legacyRaw) {
       const templates = sanitizeTemplates(JSON.parse(legacyRaw));
       if (templates) return templates;
@@ -120,37 +124,26 @@ export function WorkspaceTemplatesProvider({
   const [templates, setTemplates] =
     useState<WorkspaceTemplate[]>(loadTemplates);
 
+  const loadedRef = useRef(templates);
+  useEffect(() => {
+    if (templates === loadedRef.current) return;
+    userStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+  }, [templates]);
+
   // Functional updates keep the callbacks stable, so a template mutation only
   // re-renders consumers via the templates array — not by churning callback
   // identity everywhere the context is read.
-  const persist = useCallback(
-    (updater: (prev: WorkspaceTemplate[]) => WorkspaceTemplate[]) => {
-      setTemplates((prev) => {
-        const next = updater(prev);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-    },
-    [],
-  );
+  const upsertTemplate = useCallback((template: WorkspaceTemplate) => {
+    setTemplates((prev) =>
+      prev.some((t) => t.id === template.id)
+        ? prev.map((t) => (t.id === template.id ? template : t))
+        : [...prev, template],
+    );
+  }, []);
 
-  const upsertTemplate = useCallback(
-    (template: WorkspaceTemplate) => {
-      persist((prev) =>
-        prev.some((t) => t.id === template.id)
-          ? prev.map((t) => (t.id === template.id ? template : t))
-          : [...prev, template],
-      );
-    },
-    [persist],
-  );
-
-  const deleteTemplate = useCallback(
-    (id: string) => {
-      persist((prev) => prev.filter((t) => t.id !== id));
-    },
-    [persist],
-  );
+  const deleteTemplate = useCallback((id: string) => {
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const value = useMemo(
     () => ({ templates, upsertTemplate, deleteTemplate }),

@@ -3,19 +3,26 @@ import path from "node:path";
 import chokidar, { type FSWatcher } from "chokidar";
 import { app, clipboard, nativeImage, protocol, shell } from "electron";
 import { broadcast, ipcHandle } from "./ipc.js";
+import { KeyedMutex } from "./keyed-mutex.js";
 import {
-  autoSuffixName,
   buildFileMeta,
   kindForRel,
   MAX_WRITE_BYTES,
   pathHasIgnoredSegment,
   resolveInside,
   resolveInsideReal,
-  rewriteLinksInContent,
-  shouldIgnoreName,
-  tempFileName,
   truncateAroundMatch,
 } from "./vault-core.js";
+import {
+  assertNotRoot,
+  assertRenameTargetFree,
+  atomicWrite,
+  createExclusive,
+  listIndexableRels,
+  listMarkdownEntries,
+  rewriteLinksAfterRename,
+  walkVaultEntries,
+} from "./vault-fs.js";
 import { VaultRootRegistry } from "./vault-roots.js";
 import type {
   DailyNotesConfig,
@@ -27,12 +34,29 @@ import type {
   VaultIndex,
   VaultInfo,
   VaultReadResult,
+  VaultRenameOptions,
+  VaultRenameResult,
   VaultSearchHit,
   VaultWriteResult,
 } from "./vault-types.js";
 import { VAULT_CONFLICT_ERROR } from "./vault-types.js";
 
 let registry: VaultRootRegistry | null = null;
+let log: (line: string) => void = () => {};
+
+// Structural changes (create, rename, trash) serialize per vault so a name
+// can't be claimed twice between "is it free?" and "take it"; content writes
+// serialize per file so a stat → mtime check → write can't interleave.
+const rootLocks = new KeyedMutex();
+const pathLocks = new KeyedMutex();
+
+function withRootLock<T>(root: string, task: () => Promise<T>): Promise<T> {
+  return rootLocks.run(path.resolve(root), task);
+}
+
+function withPathLock<T>(abs: string, task: () => Promise<T>): Promise<T> {
+  return pathLocks.run(abs, task);
+}
 
 function vaultRoots(): VaultRootRegistry {
   registry ??= new VaultRootRegistry(
@@ -56,9 +80,46 @@ function vaultHandle(
     ...args: any[]
   ) => unknown,
 ): void {
-  ipcHandle(channel, (event, root: unknown, ...args: any[]) =>
-    listener(event, vaultRoots().assertApproved(root), ...args),
-  );
+  ipcHandle(channel, (event, root: unknown, ...args: any[]) => {
+    const result = listener(event, vaultRoots().assertApproved(root), ...args);
+    if (MUTATING_CHANNELS.has(channel) && result instanceof Promise)
+      trackWrite(result);
+    return result;
+  });
+}
+
+// A note saved from the renderer's pagehide handler arrives just as the
+// window closes; quitting must not cut that write off halfway.
+const MUTATING_CHANNELS = new Set([
+  "vault:write",
+  "vault:write-binary",
+  "vault:create",
+  "vault:mkdir",
+  "vault:rename",
+  "vault:trash",
+]);
+const pendingWrites = new Set<Promise<unknown>>();
+
+function trackWrite(task: Promise<unknown>): void {
+  pendingWrites.add(task);
+  const done = () => pendingWrites.delete(task);
+  task.then(done, done);
+}
+
+export function hasPendingVaultWrites(): boolean {
+  return pendingWrites.size > 0;
+}
+
+/** Resolves once the vault writes received so far settle, or after `timeoutMs`. */
+export async function settleVaultWrites(timeoutMs: number): Promise<void> {
+  let timer: NodeJS.Timeout | undefined;
+  await Promise.race([
+    Promise.allSettled([...pendingWrites]),
+    new Promise((resolve) => {
+      timer = setTimeout(resolve, timeoutMs);
+    }),
+  ]);
+  clearTimeout(timer);
 }
 
 async function pathExists(target: string): Promise<boolean> {
@@ -82,70 +143,6 @@ async function readJsonSafe(
   }
 }
 
-async function atomicWrite(
-  abs: string,
-  data: string | Uint8Array,
-): Promise<void> {
-  const dir = path.dirname(abs);
-  const tmp = path.join(dir, tempFileName(path.basename(abs)));
-  try {
-    if (typeof data === "string")
-      await fs.promises.writeFile(tmp, data, "utf8");
-    else await fs.promises.writeFile(tmp, data);
-    await fs.promises.rename(tmp, abs);
-  } catch (err) {
-    await fs.promises.unlink(tmp).catch(() => {});
-    throw err;
-  }
-}
-
-// ─── directory walking ──────────────────────────────────────────────────────
-async function walkVaultEntries(root: string): Promise<VaultEntry[]> {
-  const entries: VaultEntry[] = [];
-
-  async function walk(dirAbs: string, dirRel: string): Promise<void> {
-    let dirents: fs.Dirent[];
-    try {
-      dirents = await fs.promises.readdir(dirAbs, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const dirent of dirents) {
-      if (shouldIgnoreName(dirent.name)) continue;
-      const rel = dirRel ? `${dirRel}/${dirent.name}` : dirent.name;
-      const abs = path.join(dirAbs, dirent.name);
-      if (dirent.isDirectory()) {
-        const stat = await fs.promises.stat(abs).catch(() => null);
-        entries.push({
-          rel,
-          kind: "dir",
-          mtimeMs: stat?.mtimeMs ?? 0,
-          size: stat?.size ?? 0,
-        });
-        await walk(abs, rel);
-      } else if (dirent.isFile()) {
-        const stat = await fs.promises.stat(abs).catch(() => null);
-        if (!stat) continue;
-        entries.push({
-          rel,
-          kind: kindForRel(rel),
-          mtimeMs: stat.mtimeMs,
-          size: stat.size,
-        });
-      }
-    }
-  }
-
-  await walk(root, "");
-  entries.sort((a, b) => a.rel.localeCompare(b.rel));
-  return entries;
-}
-
-async function listMarkdownRels(root: string): Promise<string[]> {
-  const entries = await walkVaultEntries(root);
-  return entries.filter((e) => e.kind === "md").map((e) => e.rel);
-}
-
 // ─── watcher (ref-counted per root, 150ms coalesce) ────────────────────────
 // chokidar rather than fs.watch({recursive}): Node's recursive watcher on
 // Linux attaches inotify watches per inode, so a file replaced by an atomic
@@ -154,11 +151,16 @@ async function listMarkdownRels(root: string): Promise<string[]> {
 interface WatchState {
   watcher: FSWatcher;
   refCount: number;
+  /** Root spellings renderers subscribed with ("/a" vs "/a/"); events echo each. */
+  aliases: Set<string>;
   pending: Map<string, VaultChangeKind>;
   timer: NodeJS.Timeout | null;
 }
 
+/** Keyed by the resolved root. */
 const watches = new Map<string, WatchState>();
+/** Refs each renderer holds, released when it reloads or goes away. */
+const senderWatches = new Map<number, Map<string, number>>();
 
 function mergeChangeKind(
   prev: VaultChangeKind | undefined,
@@ -170,7 +172,7 @@ function mergeChangeKind(
   return next;
 }
 
-function flushPending(root: string, state: WatchState): void {
+function flushPending(state: WatchState): void {
   state.timer = null;
   if (state.pending.size === 0) return;
   const changes: VaultChange[] = Array.from(state.pending, ([rel, kind]) => ({
@@ -178,8 +180,10 @@ function flushPending(root: string, state: WatchState): void {
     kind,
   }));
   state.pending.clear();
-  const event: VaultChangedEvent = { root, changes };
-  broadcast("vault:changed", event);
+  for (const alias of state.aliases) {
+    const event: VaultChangedEvent = { root: alias, changes };
+    broadcast("vault:changed", event);
+  }
 }
 
 function recordChange(
@@ -193,20 +197,20 @@ function recordChange(
   const merged = mergeChangeKind(state.pending.get(rel), kind);
   if (merged === null) state.pending.delete(rel);
   else state.pending.set(rel, merged);
-  if (!state.timer)
-    state.timer = setTimeout(() => flushPending(root, state), 150);
+  state.timer ??= setTimeout(() => flushPending(state), 150);
 }
 
-function watchRoot(root: string): void {
-  const existing = watches.get(root);
+function acquireWatch(key: string, alias: string): void {
+  const existing = watches.get(key);
   if (existing) {
     existing.refCount++;
+    existing.aliases.add(alias);
     return;
   }
-  const watcher = chokidar.watch(root, {
+  const watcher = chokidar.watch(key, {
     ignoreInitial: true,
     ignored: (abs) => {
-      const rel = path.relative(root, abs);
+      const rel = path.relative(key, abs);
       return rel !== "" && pathHasIgnoredSegment(rel.split(path.sep).join("/"));
     },
     // Folds a tmp+rename write into one "change" instead of unlink+add.
@@ -215,27 +219,72 @@ function watchRoot(root: string): void {
   const state: WatchState = {
     watcher,
     refCount: 1,
+    aliases: new Set([alias]),
     pending: new Map(),
     timer: null,
   };
   watcher
-    .on("add", (abs) => recordChange(root, state, abs, "create"))
-    .on("addDir", (abs) => recordChange(root, state, abs, "create"))
-    .on("change", (abs) => recordChange(root, state, abs, "modify"))
-    .on("unlink", (abs) => recordChange(root, state, abs, "delete"))
-    .on("unlinkDir", (abs) => recordChange(root, state, abs, "delete"))
-    .on("error", () => {});
-  watches.set(root, state);
+    .on("add", (abs) => recordChange(key, state, abs, "create"))
+    .on("addDir", (abs) => recordChange(key, state, abs, "create"))
+    .on("change", (abs) => recordChange(key, state, abs, "modify"))
+    .on("unlink", (abs) => recordChange(key, state, abs, "delete"))
+    .on("unlinkDir", (abs) => recordChange(key, state, abs, "delete"))
+    .on("error", (err) => log(`vault watcher error root=${key}: ${err}`));
+  watches.set(key, state);
 }
 
-function unwatchRoot(root: string): void {
-  const state = watches.get(root);
+function releaseWatch(key: string, count = 1): void {
+  const state = watches.get(key);
   if (!state) return;
-  state.refCount--;
+  state.refCount -= count;
   if (state.refCount > 0) return;
   if (state.timer) clearTimeout(state.timer);
   void state.watcher.close();
-  watches.delete(root);
+  watches.delete(key);
+}
+
+function releaseSender(senderId: number): void {
+  const held = senderWatches.get(senderId);
+  if (!held) return;
+  senderWatches.delete(senderId);
+  for (const [key, count] of held) releaseWatch(key, count);
+}
+
+// A reload or crash never runs the page's unwatch cleanup, so without this
+// every reload would leak one watcher per open vault.
+const trackedSenders = new WeakSet<Electron.WebContents>();
+function trackSender(sender: Electron.WebContents): void {
+  if (trackedSenders.has(sender)) return;
+  trackedSenders.add(sender);
+  const id = sender.id;
+  sender.once("destroyed", () => releaseSender(id));
+  sender.on("render-process-gone", () => releaseSender(id));
+  // Committed cross-document navigations only (reloads included): a
+  // navigation the will-navigate guard cancels leaves the page, and its
+  // watches, alive.
+  sender.on("did-navigate", () => releaseSender(id));
+}
+
+function watchRoot(sender: Electron.WebContents, root: string): void {
+  const key = path.resolve(root);
+  trackSender(sender);
+  let held = senderWatches.get(sender.id);
+  if (!held) {
+    held = new Map();
+    senderWatches.set(sender.id, held);
+  }
+  held.set(key, (held.get(key) ?? 0) + 1);
+  acquireWatch(key, root);
+}
+
+function unwatchRoot(sender: Electron.WebContents, root: string): void {
+  const key = path.resolve(root);
+  const held = senderWatches.get(sender.id);
+  const count = held?.get(key) ?? 0;
+  if (!held || count === 0) return;
+  if (count === 1) held.delete(key);
+  else held.set(key, count - 1);
+  releaseWatch(key);
 }
 
 // ─── protocol ("vault://asset/?root=<enc>&path=<enc>") ─────────────────────
@@ -262,7 +311,9 @@ export function registerVaultProtocol(
 }
 
 // ─── IPC handlers ───────────────────────────────────────────────────────────
-export function registerVaultHandlers(): void {
+export function registerVaultHandlers(logLine: (line: string) => void): void {
+  log = logLine;
+
   ipcHandle("vault:default-path", async (): Promise<VaultDefaultPath> => {
     const defaultPath = path.join(app.getPath("home"), "Obsidian Vault");
     const stat = await fs.promises.stat(defaultPath).catch(() => null);
@@ -307,7 +358,7 @@ export function registerVaultHandlers(): void {
         : "";
     const attachmentFolder = rawAttachment === "/" ? "" : rawAttachment;
 
-    const noteCount = (await listMarkdownRels(root)).length;
+    const noteCount = (await listMarkdownEntries(root)).length;
 
     return {
       name,
@@ -327,10 +378,10 @@ export function registerVaultHandlers(): void {
     "vault:read",
     async (_, root: string, rel: string): Promise<VaultReadResult> => {
       const abs = await resolveInsideReal(root, rel);
-      const [content, stat] = await Promise.all([
-        fs.promises.readFile(abs, "utf8"),
-        fs.promises.stat(abs),
-      ]);
+      const stat = await fs.promises.stat(abs);
+      if (stat.size > MAX_WRITE_BYTES)
+        throw new Error("File exceeds the 10MB limit for opening notes");
+      const content = await fs.promises.readFile(abs, "utf8");
       return { content, mtimeMs: stat.mtimeMs };
     },
   );
@@ -348,14 +399,17 @@ export function registerVaultHandlers(): void {
         throw new Error("File exceeds the 10MB write limit");
 
       const abs = await resolveInsideReal(root, rel);
-      if (expectedMtimeMs !== null) {
-        const stat = await fs.promises.stat(abs).catch(() => null);
-        if (stat?.mtimeMs !== expectedMtimeMs)
-          throw new Error(VAULT_CONFLICT_ERROR);
-      }
-      await atomicWrite(abs, content);
-      const stat = await fs.promises.stat(abs);
-      return { mtimeMs: stat.mtimeMs };
+      assertNotRoot(root, abs);
+      return withPathLock(abs, async () => {
+        if (expectedMtimeMs !== null) {
+          const stat = await fs.promises.stat(abs).catch(() => null);
+          if (stat?.mtimeMs !== expectedMtimeMs)
+            throw new Error(VAULT_CONFLICT_ERROR);
+        }
+        await atomicWrite(abs, content);
+        const stat = await fs.promises.stat(abs);
+        return { mtimeMs: stat.mtimeMs };
+      });
     },
   );
 
@@ -367,12 +421,12 @@ export function registerVaultHandlers(): void {
       rel: string,
       data: Uint8Array,
     ): Promise<{ rel: string }> => {
-      const finalRel = autoSuffixName(rel, (candidate) =>
-        fs.existsSync(resolveInside(root, candidate)),
+      if (!(data instanceof Uint8Array)) throw new Error("Invalid file data");
+      if (data.byteLength > MAX_WRITE_BYTES)
+        throw new Error("File exceeds the 10MB write limit");
+      const finalRel = await withRootLock(root, () =>
+        createExclusive(root, rel, data),
       );
-      const abs = await resolveInsideReal(root, finalRel);
-      await fs.promises.mkdir(path.dirname(abs), { recursive: true });
-      await atomicWrite(abs, data);
       return { rel: finalRel };
     },
   );
@@ -385,12 +439,12 @@ export function registerVaultHandlers(): void {
       rel: string,
       content: string,
     ): Promise<{ rel: string }> => {
-      const finalRel = autoSuffixName(rel, (candidate) =>
-        fs.existsSync(resolveInside(root, candidate)),
+      if (typeof content !== "string") throw new Error("Invalid note content");
+      if (Buffer.byteLength(content, "utf8") > MAX_WRITE_BYTES)
+        throw new Error("File exceeds the 10MB write limit");
+      const finalRel = await withRootLock(root, () =>
+        createExclusive(root, rel, content),
       );
-      const abs = await resolveInsideReal(root, finalRel);
-      await fs.promises.mkdir(path.dirname(abs), { recursive: true });
-      await atomicWrite(abs, content);
       return { rel: finalRel };
     },
   );
@@ -410,41 +464,43 @@ export function registerVaultHandlers(): void {
       root: string,
       from: string,
       to: string,
-    ): Promise<{ updatedFiles: number }> => {
-      const fromAbs = await resolveInsideReal(root, from);
-      const toAbs = await resolveInsideReal(root, to);
-      await fs.promises.mkdir(path.dirname(toAbs), { recursive: true });
-      await fs.promises.rename(fromAbs, toAbs);
+      options?: VaultRenameOptions,
+    ): Promise<VaultRenameResult> => {
+      const skip = new Set(
+        Array.isArray(options?.skip)
+          ? options.skip.filter((rel): rel is string => typeof rel === "string")
+          : [],
+      );
+      // The renamed note's own unsaved buffer now lives under its new name.
+      if (skip.has(from)) skip.add(to);
+      return withRootLock(root, async () => {
+        const fromAbs = await resolveInsideReal(root, from);
+        const toAbs = await resolveInsideReal(root, to);
+        assertNotRoot(root, fromAbs);
+        assertNotRoot(root, toAbs);
+        if (fromAbs === toAbs) return { updatedFiles: 0 };
+        await assertRenameTargetFree(fromAbs, toAbs, to);
+        await fs.promises.mkdir(path.dirname(toAbs), { recursive: true });
+        // Waits out a save in flight, so it can't recreate the old path.
+        await withPathLock(fromAbs, () => fs.promises.rename(fromAbs, toAbs));
 
-      let updatedFiles = 0;
-      if (from.toLowerCase().endsWith(".md")) {
-        const mdRels = await listMarkdownRels(root);
-        for (const rel of mdRels) {
-          const abs = resolveInside(root, rel);
-          const content = await fs.promises
-            .readFile(abs, "utf8")
-            .catch(() => null);
-          if (content === null) continue;
-          const { content: newContent, changed } = rewriteLinksInContent(
-            content,
-            from,
-            to,
-          );
-          if (changed) {
-            await atomicWrite(abs, newContent);
-            updatedFiles++;
-          }
-        }
-      }
-      return { updatedFiles };
+        if (!from.toLowerCase().endsWith(".md")) return { updatedFiles: 0 };
+        return rewriteLinksAfterRename(root, from, to, skip, {
+          lock: withPathLock,
+          log,
+        });
+      });
     },
   );
 
   vaultHandle(
     "vault:trash",
     async (_, root: string, rel: string): Promise<void> => {
-      const abs = await resolveInsideReal(root, rel);
-      await shell.trashItem(abs);
+      await withRootLock(root, async () => {
+        const abs = await resolveInsideReal(root, rel);
+        assertNotRoot(root, abs);
+        await shell.trashItem(abs);
+      });
     },
   );
 
@@ -468,16 +524,16 @@ export function registerVaultHandlers(): void {
     },
   );
 
-  vaultHandle("vault:watch", async (_, root: string): Promise<void> => {
-    watchRoot(root);
+  vaultHandle("vault:watch", async (event, root: string): Promise<void> => {
+    watchRoot(event.sender, root);
   });
 
-  vaultHandle("vault:unwatch", async (_, root: string): Promise<void> => {
-    unwatchRoot(root);
+  vaultHandle("vault:unwatch", async (event, root: string): Promise<void> => {
+    unwatchRoot(event.sender, root);
   });
 
   vaultHandle("vault:index", async (_, root: string): Promise<VaultIndex> => {
-    const rels = await listMarkdownRels(root);
+    const rels = await listIndexableRels(root);
     const files: VaultIndex["files"] = {};
     for (const rel of rels) {
       const abs = resolveInside(root, rel);
@@ -495,7 +551,7 @@ export function registerVaultHandlers(): void {
       if (!trimmed) return [];
       const needle = trimmed.toLowerCase();
       const hits: VaultSearchHit[] = [];
-      const rels = await listMarkdownRels(root);
+      const rels = await listIndexableRels(root);
       for (const rel of rels) {
         if (hits.length >= 500) break;
         const abs = resolveInside(root, rel);

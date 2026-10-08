@@ -2,7 +2,6 @@ import type { TaskSchema } from "@bessel/client";
 import {
   createTaskV1TasksPostMutation,
   listProjectsV1ProjectsGetOptions,
-  listTasksV1TasksGetQueryKey,
   updateTaskV1TasksTaskIdPatchMutation,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation,
 } from "@bessel/client";
@@ -31,7 +30,7 @@ import {
 } from "@bessel/ui/components/select";
 import { Textarea } from "@bessel/ui/components/textarea";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -43,7 +42,10 @@ import {
   removeMarker,
   replaceMarkerId,
 } from "@/components/task-attachments";
+import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
+
+const ATTACHMENT_UPLOAD_KEY = ["task-attachment-upload"];
 
 const PRIORITIES = [
   { value: "0", label: "None" },
@@ -168,8 +170,7 @@ export function TaskFormDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const isEditing = !!task;
-  const queryClient = useQueryClient();
-  const queryKey = listTasksV1TasksGetQueryKey({ client });
+  const cache = useTaskCacheHelpers();
 
   const { data: projectsData = [] } = useQuery({
     ...listProjectsV1ProjectsGetOptions({ client }),
@@ -195,15 +196,24 @@ export function TaskFormDialog({
 
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
+  // Both report failures per call, where they know which file or task it was.
+  // Several uploads can run at once (one per pasted image), so each call
+  // handles its own result through its promise; per-call callbacks would
+  // only fire for the latest one.
   const uploadAttachmentMutation = useMutation({
     ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
+    mutationKey: ATTACHMENT_UPLOAD_KEY,
+    meta: { errorToast: false },
   });
+  const uploadsInFlight = useIsMutating({ mutationKey: ATTACHMENT_UPLOAD_KEY });
   // Fires silently in the background right after a paste-triggered upload
   // resolves, to persist the description's marker swap (pending -> real id)
   // immediately — distinct from `updateMutation` below, which is the
   // user-facing Save action and closes the dialog on success.
   const patchDescriptionMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    meta: { errorToast: false },
+    onSettled: () => cache.invalidateAll(),
   });
 
   // Inserts `marker` into the description at the textarea's current cursor
@@ -243,30 +253,33 @@ export function TaskFormDialog({
       insertPos += marker.length;
 
       if (isEditing) {
-        uploadAttachmentMutation.mutate(
-          { client, path: { task_id: task.id }, body: { file } },
-          {
-            onSuccess: (attachment) => {
+        uploadAttachmentMutation
+          .mutateAsync({ client, path: { task_id: task.id }, body: { file } })
+          .then(
+            (attachment) => {
               const updated = replaceMarkerId(
                 form.state.values.description,
                 tempId,
                 attachment.id,
               );
               form.setFieldValue("description", updated);
-              patchDescriptionMutation.mutate({
-                client,
-                path: { task_id: task.id },
-                body: { description: updated },
-              });
+              patchDescriptionMutation
+                .mutateAsync({
+                  client,
+                  path: { task_id: task.id },
+                  body: { description: updated },
+                })
+                .catch(() =>
+                  toast.error(`Couldn't save the reference to ${file.name}`),
+                );
             },
-            onError: () => {
+            () => {
               toast.error(`Failed to attach ${file.name}`);
               form.setFieldValue("description", (prev) =>
                 removeMarker(prev, tempId, file.name),
               );
             },
-          },
-        );
+          );
       } else {
         setPendingFiles((prev) => [
           ...prev,
@@ -295,7 +308,7 @@ export function TaskFormDialog({
             area: value.area || null,
             is_recurring: isRecurring,
             rrule_frequency: isRecurring ? freq : null,
-            rrule_interval: isRecurring ? 1 : null,
+            rrule_interval: isRecurring ? (task.rrule_interval ?? 1) : null,
             rrule_day_of_week:
               value.frequency === "weekly" && value.rruleDayOfWeek
                 ? Number(value.rruleDayOfWeek)
@@ -371,7 +384,7 @@ export function TaskFormDialog({
           toast.error("Failed to save attachment references");
         }
       }
-      void queryClient.invalidateQueries({ queryKey });
+      cache.invalidateAll();
       toast.success("Task created");
       form.reset();
       onOpenChange(false);
@@ -382,7 +395,7 @@ export function TaskFormDialog({
   const updateMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
+      cache.invalidateAll();
       toast.success("Task updated");
       form.reset();
       onOpenChange(false);
@@ -391,6 +404,8 @@ export function TaskFormDialog({
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  // A save sent mid-upload would store the description's `pending:` marker.
+  const isUploading = isEditing && uploadsInFlight > 0;
 
   const handleClose = () => {
     form.reset();
@@ -646,7 +661,10 @@ export function TaskFormDialog({
             <form.Subscribe
               selector={(state) => [state.values.title] as const}
               children={([title]) => (
-                <Button type="submit" disabled={isPending || !title.trim()}>
+                <Button
+                  type="submit"
+                  disabled={isPending || isUploading || !title.trim()}
+                >
                   {isPending
                     ? isEditing
                       ? "Saving…"

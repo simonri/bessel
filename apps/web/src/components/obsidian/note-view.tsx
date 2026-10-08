@@ -34,6 +34,8 @@ export interface NoteViewHandle {
   focus: () => void;
   /** Writes any pending edits now (tab switch, vault switch, page unmount). */
   flush: () => Promise<void>;
+  /** The buffer has edits that aren't on disk yet. */
+  hasUnsavedChanges: () => boolean;
 }
 
 export interface NoteViewProps {
@@ -58,6 +60,16 @@ const TASK_LINE_RE = /^(\s*(?:[-*+]|\d+[.)])\s\[)([ xX])(\].*)$/;
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+interface SaveSnapshot {
+  rel: string;
+  content: string;
+}
+
+interface DiskState {
+  content: string;
+  mtimeMs: number | null;
 }
 
 export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
@@ -89,7 +101,13 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
     const dirtyRef = useRef(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const runningSaveRef = useRef<Promise<void> | null>(null);
-    const queuedRef = useRef(false);
+    // Follow-up saves requested while one is in flight, latest content per
+    // note: a tab switch mid-save must still write the outgoing note's edits.
+    const queuedRef = useRef(new Map<string, string>());
+    // Last known on-disk state of notes switched away from while a save run
+    // was in progress, so their queued saves compare against the right mtime.
+    const outgoingRef = useRef(new Map<string, DiskState>());
+    const inFlightRelRef = useRef<string | null>(null);
 
     const [buffer, setBuffer] = useState("");
     const [dirty, setDirty] = useState(false);
@@ -98,6 +116,16 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
 
     const adopt = useCallback(
       (newRel: string, content: string, mtimeMs: number) => {
+        const previousRel = relRef.current;
+        if (
+          runningSaveRef.current &&
+          previousRel !== null &&
+          previousRel !== newRel
+        )
+          outgoingRef.current.set(previousRel, {
+            content: lastSavedRef.current,
+            mtimeMs: loadedMtimeRef.current,
+          });
         relRef.current = newRel;
         bufferRef.current = content;
         lastSavedRef.current = content;
@@ -137,52 +165,80 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
       }
     }, [rel, noteQuery.data, adopt]);
 
-    const doSave = useCallback(async () => {
-      const content = bufferRef.current;
-      const saveRel = relRef.current;
-      if (saveRel === null || content === lastSavedRef.current) return;
-      setSaving(true);
-      try {
-        const result = await saveNote.mutateAsync({
-          rel: saveRel,
-          content,
-          expectedMtimeMs: loadedMtimeRef.current,
-        });
-        lastSavedRef.current = content;
-        loadedMtimeRef.current = result.mtimeMs;
-        setConflict(false);
-        if (bufferRef.current === content && relRef.current === saveRel) {
-          dirtyRef.current = false;
-          setDirty(false);
+    const doSave = useCallback(
+      async ({ rel: saveRel, content }: SaveSnapshot) => {
+        const known: DiskState | undefined =
+          relRef.current === saveRel
+            ? { content: lastSavedRef.current, mtimeMs: loadedMtimeRef.current }
+            : outgoingRef.current.get(saveRel);
+        if (!known || content === known.content) return;
+        setSaving(true);
+        inFlightRelRef.current = saveRel;
+        try {
+          const result = await saveNote.mutateAsync({
+            rel: saveRel,
+            content,
+            expectedMtimeMs: known.mtimeMs,
+          });
+          if (relRef.current !== saveRel) {
+            outgoingRef.current.set(saveRel, {
+              content,
+              mtimeMs: result.mtimeMs,
+            });
+            return;
+          }
+          lastSavedRef.current = content;
+          loadedMtimeRef.current = result.mtimeMs;
+          setConflict(false);
+          if (bufferRef.current === content) {
+            dirtyRef.current = false;
+            setDirty(false);
+          }
+        } catch (err) {
+          const message = errorMessage(err);
+          if (!message.includes(VAULT_CONFLICT_ERROR)) {
+            toast.error(message);
+          } else if (relRef.current === saveRel) {
+            setConflict(true);
+          } else {
+            toast.error(
+              `Couldn't save "${basenameOf(saveRel)}" - it changed on disk`,
+            );
+          }
+        } finally {
+          inFlightRelRef.current = null;
+          setSaving(false);
         }
-      } catch (err) {
-        const message = errorMessage(err);
-        if (message.includes(VAULT_CONFLICT_ERROR)) {
-          setConflict(true);
-        } else {
-          toast.error(message);
-        }
-      } finally {
-        setSaving(false);
-      }
-    }, [saveNote]);
+      },
+      [saveNote],
+    );
 
     // Serializes saves: a save already in flight is awaited by callers instead
-    // of started twice, and one more change that arrives mid-save is folded
-    // into a single follow-up save rather than firing per keystroke.
+    // of started twice, and changes that arrive mid-save are folded into one
+    // follow-up save per note rather than firing per keystroke. Each request
+    // captures which note it's for, since the view may switch notes mid-save.
     const runSave = useCallback((): Promise<void> => {
+      const rel = relRef.current;
+      if (rel === null) return runningSaveRef.current ?? Promise.resolve();
       if (runningSaveRef.current) {
-        queuedRef.current = true;
+        queuedRef.current.delete(rel);
+        queuedRef.current.set(rel, bufferRef.current);
         return runningSaveRef.current;
       }
+      const first: SaveSnapshot = { rel, content: bufferRef.current };
       const promise = (async () => {
-        await doSave();
-        while (queuedRef.current) {
-          queuedRef.current = false;
-          await doSave();
+        await doSave(first);
+        for (const [queuedRel, queuedContent] of queuedRef.current) {
+          queuedRef.current.delete(queuedRel);
+          await doSave({
+            rel: queuedRel,
+            content:
+              relRef.current === queuedRel ? bufferRef.current : queuedContent,
+          });
         }
       })().finally(() => {
         runningSaveRef.current = null;
+        outgoingRef.current.clear();
       });
       runningSaveRef.current = promise;
       return promise;
@@ -219,6 +275,27 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
       window.addEventListener("blur", onBlur);
       return () => window.removeEventListener("blur", onBlur);
     }, []);
+
+    // Closing or reloading the window never runs React cleanups, and the
+    // async save path can't reach IPC before the page is gone — send the
+    // write synchronously from pagehide instead (best effort). Not
+    // beforeunload: that also fires for navigations main then cancels.
+    useEffect(() => {
+      function onPageHide() {
+        const saveRel = relRef.current;
+        const content = bufferRef.current;
+        if (saveRel === null || content === lastSavedRef.current) return;
+        const api = window.electron?.vault;
+        if (!api) return;
+        // A save of this note still in flight moves the mtime; main applies
+        // writes to a file in order, so this one lands after it.
+        const expectedMtimeMs =
+          inFlightRelRef.current === saveRel ? null : loadedMtimeRef.current;
+        void api.write(root, saveRel, content, expectedMtimeMs).catch(() => {});
+      }
+      window.addEventListener("pagehide", onPageHide);
+      return () => window.removeEventListener("pagehide", onPageHide);
+    }, [root]);
 
     const handleChange = useCallback(
       (value: string) => {
@@ -428,6 +505,7 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
           if (mode !== "reading") editorRef.current?.focus();
         },
         flush,
+        hasUnsavedChanges: () => bufferRef.current !== lastSavedRef.current,
       }),
       [mode, index, rel, flush],
     );

@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from api.activity.repository import ActivityRepository
 from api.exceptions import ValidationError
 from api.healthkit.repository import HealthKitSleepSampleRepository
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.timeline.schemas import TimelineResponse
 from api.timeline.service import timeline_service
 from api.users.dependencies import CurrentDBUser
@@ -21,7 +21,7 @@ MAX_WINDOW_SECS = 7 * 86400
   response_model=TimelineResponse,
 )
 async def get_timeline(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   start_ts: Annotated[int, Query(description="Start of window (Unix epoch seconds, inclusive).")],
   end_ts: Annotated[int, Query(description="End of window (Unix epoch seconds, exclusive).")],

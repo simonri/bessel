@@ -1,14 +1,13 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from api.common.utils import utc_now
 from api.counters.repository import CounterRepository, CounterResetRepository, CounterResetStats
 from api.counters.schemas import CounterCreate, CounterResetSchema, CounterSchema, CounterUpdate
 from api.exceptions import ResourceNotFound
 from api.models.counter import Counter, CounterReset
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 router = APIRouter(prefix="/counters", tags=["counters"])
@@ -29,7 +28,7 @@ def _to_schema(counter: Counter, stats: CounterResetStats) -> CounterSchema:
 
 @router.get("", summary="List Counters", response_model=list[CounterSchema])
 async def list_counters(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> list[CounterSchema]:
   counters = await CounterRepository.from_session(session).list_for_user(current_user.id)
@@ -42,7 +41,7 @@ async def list_counters(
 
 @router.post("", summary="Create Counter", response_model=CounterSchema, status_code=201)
 async def create_counter(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   body: CounterCreate,
 ) -> CounterSchema:
@@ -53,7 +52,7 @@ async def create_counter(
 
 @router.patch("/{counter_id}", summary="Update Counter", response_model=CounterSchema)
 async def update_counter(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   counter_id: UUID,
   body: CounterUpdate,
@@ -68,7 +67,7 @@ async def update_counter(
 
 @router.delete("/{counter_id}", summary="Delete Counter", status_code=204)
 async def delete_counter(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   counter_id: UUID,
 ) -> None:
@@ -84,7 +83,7 @@ async def delete_counter(
   status_code=201,
 )
 async def create_reset(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   counter_id: UUID,
 ) -> CounterResetSchema:
@@ -100,7 +99,7 @@ async def create_reset(
   response_model=list[CounterResetSchema],
 )
 async def list_resets(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   counter_id: UUID,
 ) -> list[CounterResetSchema]:
@@ -115,7 +114,7 @@ async def list_resets(
   status_code=204,
 )
 async def undo_reset(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   counter_id: UUID,
   reset_id: UUID,

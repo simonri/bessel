@@ -13,11 +13,13 @@ import {
   formatDistanceToNowStrict,
   intervalToDuration,
   isPast,
+  parseISO,
   subDays,
 } from "date-fns";
 import { Gauge } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { client } from "@/lib/client";
+import { apiDate, localIsoDay, useLocalDay } from "@/lib/local-day";
 import { cn } from "@/lib/utils";
 import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
@@ -87,15 +89,19 @@ export function AgentUsageDropdown() {
     refetchInterval: 60_000,
   });
 
-  // Stable for the component's lifetime: recomputing these on every render
-  // would change the query key each time (Date objects, not primitives) and
-  // cause TanStack Query to treat every render as a new query.
-  const [today] = useState(() => new Date());
-  const startDate = subDays(today, HISTORY_DAYS - 1);
+  const todayStr = useLocalDay();
+  const today = useMemo(() => parseISO(todayStr), [todayStr]);
+  const range = useMemo(
+    () => ({
+      start_date: apiDate(localIsoDay(subDays(today, HISTORY_DAYS - 1))),
+      end_date: apiDate(todayStr),
+    }),
+    [today, todayStr],
+  );
   const { data: daily, isLoading: dailyLoading } = useQuery({
     ...getAgentUsageDailyV1AgentUsageDailyGetOptions({
       client,
-      query: { start_date: startDate, end_date: today },
+      query: range,
     }),
     refetchInterval: 60_000,
   });
@@ -112,14 +118,13 @@ export function AgentUsageDropdown() {
   }
 
   const days = Array.from({ length: HISTORY_DAYS }, (_, i) => {
-    const d = format(subDays(today, HISTORY_DAYS - 1 - i), "yyyy-MM-dd");
+    const d = localIsoDay(subDays(today, HISTORY_DAYS - 1 - i));
     const perModel = totalsByDate.get(d) ?? {};
     const total = Object.values(perModel).reduce((a, b) => a + b, 0);
     return { date: d, perModel, total };
   });
   const maxTotal = Math.max(...days.map((d) => d.total), 1);
 
-  const todayStr = format(today, "yyyy-MM-dd");
   const todayEntries = entries.filter((e) => e.date === todayStr);
   const todayTotal = todayEntries.reduce((sum, e) => sum + entryTotal(e), 0);
 
@@ -267,7 +272,7 @@ export function AgentUsageDropdown() {
                         {hoveredDate === d.date && (
                           <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-10 text-white/80">
                             <span className="text-white/50">
-                              {format(new Date(d.date), "MMM d")} -{" "}
+                              {format(parseISO(d.date), "MMM d")} -{" "}
                             </span>
                             {d.total > 0
                               ? `${fmtTokens(d.total)} tokens`

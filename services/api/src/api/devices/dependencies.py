@@ -5,13 +5,13 @@ from fastapi import Depends, Header
 from api.devices.service import device_service
 from api.exceptions import ValidationError
 from api.models.device import Device
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
 
 async def get_optional_current_device(
   current_user: CurrentDBUser,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   # Optional (rather than a required Header()) so the OpenAPI spec — and the
   # generated TS client's request options — don't force every caller of e.g.
   # GET /projects to pass headers explicitly. The Electron client's request

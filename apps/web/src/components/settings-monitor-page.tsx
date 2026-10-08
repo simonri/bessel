@@ -47,11 +47,16 @@ export function MonitorPage() {
         }
       } catch {}
     };
-    poll();
-    const id = setInterval(poll, 3000);
+    // Chained rather than an interval, so a slow status call can't stack up.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const loop = async () => {
+      await poll();
+      if (alive) timer = setTimeout(loop, 3000);
+    };
+    void loop();
     return () => {
       alive = false;
-      clearInterval(id);
+      clearTimeout(timer);
     };
   }, []);
 

@@ -1,16 +1,14 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 
 router = APIRouter()
 
 
 @router.get("/healthz")
-async def healthz(session: Annotated[AsyncSession, Depends(get_db_session)]):
+async def healthz(session: DBSession):
   try:
     await session.execute(text("SELECT 1"))
   except SQLAlchemyError as e:

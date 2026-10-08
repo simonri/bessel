@@ -1,12 +1,17 @@
 import {
   type AppState,
   Auth0Provider,
+  type LogoutOptions,
+  type GetTokenSilentlyOptions,
   type RedirectLoginOptions,
   useAuth0,
 } from "@auth0/auth0-react";
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
+import { isSessionEndedError, setAccessTokenRefresher } from "@/lib/auth-token";
 import { client } from "@/lib/client";
+import { killAllTerminalSessions } from "@/lib/terminal-sessions";
+import { clearUserStorage, shouldForceLoginPrompt } from "@/lib/user-storage";
 import { LocalDataServerBridge } from "./local-data-server-bridge";
 
 function AuthInterceptor() {
@@ -15,18 +20,26 @@ function AuthInterceptor() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const id = client.interceptors.request.use(async (request) => {
+    const getToken = async (options?: GetTokenSilentlyOptions) => {
       try {
-        const token = await getAccessTokenSilently();
-        request.headers.set("Authorization", `Bearer ${token}`);
-      } catch {
-        logout({ logoutParams: { returnTo: window.location.origin } });
+        return await getAccessTokenSilently(options);
+      } catch (error) {
+        if (isSessionEndedError(error)) {
+          logout({ logoutParams: { returnTo: window.location.origin } });
+        }
+        throw error;
       }
+    };
+
+    const id = client.interceptors.request.use(async (request) => {
+      request.headers.set("Authorization", `Bearer ${await getToken()}`);
       return request;
     });
+    setAccessTokenRefresher(() => getToken({ cacheMode: "off" }));
 
     return () => {
       client.interceptors.request.eject(id);
+      setAccessTokenRefresher(null);
     };
   }, [isAuthenticated, getAccessTokenSilently, logout]);
 
@@ -93,7 +106,13 @@ function CliTokenBridge() {
 class ElectronAuthCache {
   async get<T>(key: string): Promise<T | undefined> {
     const value = await window.electron!.auth.get(key);
-    return value !== null ? (JSON.parse(value) as T) : undefined;
+    if (value === null) return undefined;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      // A corrupt entry is a cache miss; the SDK re-authenticates.
+      return undefined;
+    }
   }
 
   async set<T>(key: string, entry: T): Promise<void> {
@@ -146,15 +165,32 @@ const redirectUri = isElectron
 export async function startLogin(
   loginWithRedirect: (options?: RedirectLoginOptions) => Promise<void>,
 ): Promise<void> {
+  // After an explicit logout, show the login screen instead of letting the
+  // identity provider's still-live session silently sign the same user in.
+  const prompt = shouldForceLoginPrompt() ? { prompt: "login" as const } : {};
   if (!isElectron) {
-    await loginWithRedirect();
+    await loginWithRedirect({ authorizationParams: prompt });
     return;
   }
   const port = await window.electron!.auth.startLogin();
   await loginWithRedirect({
     openUrl: (url: string) => void window.electron!.shell.openExternal(url),
-    authorizationParams: { redirect_uri: `http://127.0.0.1:${port}/callback` },
+    authorizationParams: {
+      ...prompt,
+      redirect_uri: `http://127.0.0.1:${port}/callback`,
+    },
   });
+}
+
+/**
+ * Explicit, user-initiated logout: ends this device's terminals and wipes the
+ * user's local data before handing off to Auth0. Not for involuntary
+ * sign-outs (an expired session), which should keep the user's canvas.
+ */
+export function logOut(logout: (options?: LogoutOptions) => Promise<void>) {
+  killAllTerminalSessions();
+  clearUserStorage();
+  void logout({ logoutParams: { returnTo: window.location.origin } });
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

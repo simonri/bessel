@@ -27,7 +27,7 @@ from api.investments.service import investment_service
 from api.models.security import Security
 from api.models.security_price import SecurityPrice
 from api.models.trade import Trade
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
 
@@ -42,7 +42,7 @@ router = APIRouter(prefix="/investments", tags=["investments"])
 
 @router.get("/securities", summary="List Securities", response_model=SecurityListResponse)
 async def list_securities(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> SecurityListResponse:
@@ -59,7 +59,7 @@ async def list_securities(
 @router.post("/securities", summary="Create Security", response_model=SecuritySchema, status_code=201)
 async def create_security(
   body: SecurityCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> SecuritySchema:
   repo = SecurityRepository.from_session(session)
@@ -72,7 +72,7 @@ async def create_security(
 async def update_security(
   security_id: UUID,
   body: SecurityUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> SecuritySchema:
   repo = SecurityRepository.from_session(session)
@@ -88,7 +88,7 @@ async def update_security(
 @router.delete("/securities/{security_id}", summary="Delete Security", status_code=204)
 async def delete_security(
   security_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = SecurityRepository.from_session(session)
@@ -108,7 +108,7 @@ async def delete_security(
 
 @router.get("/trades", summary="List Trades", response_model=TradeListResponse)
 async def list_trades(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   security_id: Annotated[UUID | None, Query()] = None,
@@ -131,7 +131,7 @@ async def list_trades(
 @router.post("/trades", summary="Create Trade", response_model=TradeSchema, status_code=201)
 async def create_trade(
   body: TradeCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TradeSchema:
   sec_repo = SecurityRepository.from_session(session)
@@ -148,7 +148,7 @@ async def create_trade(
 async def update_trade(
   trade_id: UUID,
   body: TradeUpdate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> TradeSchema:
   repo = TradeRepository.from_session(session)
@@ -162,7 +162,7 @@ async def update_trade(
 @router.delete("/trades/{trade_id}", summary="Delete Trade", status_code=204)
 async def delete_trade(
   trade_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
   repo = TradeRepository.from_session(session)
@@ -176,7 +176,7 @@ async def delete_trade(
 @router.get("/securities/{security_id}/prices", summary="List Security Prices", response_model=SecurityPriceListResponse)
 async def list_security_prices(
   security_id: UUID,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
 ) -> SecurityPriceListResponse:
@@ -199,7 +199,7 @@ async def list_security_prices(
 async def create_security_price(
   security_id: UUID,
   body: SecurityPriceCreate,
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> SecurityPriceSchema:
   sec_repo = SecurityRepository.from_session(session)
@@ -216,7 +216,7 @@ async def create_security_price(
 
 @router.get("/holdings", summary="Get Holdings", response_model=HoldingsResponse)
 async def get_holdings(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
 ) -> HoldingsResponse:
   return HoldingsResponse(items=await investment_service.holdings(TradeRepository.from_session(session), current_user.id))

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.models.recipe import Recipe
-from api.postgres import AsyncSession, get_db_session
+from api.postgres import DBSession
 from api.recipes.body import RecipeBody, render_markdown
 from api.recipes.importer import import_recipe
 from api.recipes.repository import RecipeRepository
@@ -35,7 +35,7 @@ def _content_fields(content: str, body: RecipeBody | None) -> dict[str, Any]:
 
 @router.get("", summary="List Recipes", response_model=RecipeListResponse)
 async def list_recipes(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   pagination: PaginationParamsQuery,
   sorting: Annotated[list[Sorting[RecipeSortProperty]], Depends(sorting_getter)],
@@ -55,7 +55,7 @@ async def list_recipes(
 
 @router.post("", summary="Create Recipe", response_model=RecipeSchema, status_code=201)
 async def create_recipe(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   body: RecipeCreate,
 ) -> RecipeSchema:
@@ -80,7 +80,7 @@ async def structure_recipe_text(_current_user: CurrentDBUser, body: RecipeImport
 
 @router.get("/{recipe_id}", summary="Get Recipe", response_model=RecipeSchema)
 async def get_recipe(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   recipe_id: UUID,
 ) -> RecipeSchema:
@@ -91,7 +91,7 @@ async def get_recipe(
 
 @router.patch("/{recipe_id}", summary="Update Recipe", response_model=RecipeSchema)
 async def update_recipe(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   recipe_id: UUID,
   body: RecipeUpdate,
@@ -111,7 +111,7 @@ async def update_recipe(
 
 @router.delete("/{recipe_id}", summary="Delete Recipe", status_code=204)
 async def delete_recipe(
-  session: Annotated[AsyncSession, Depends(get_db_session)],
+  session: DBSession,
   current_user: CurrentDBUser,
   recipe_id: UUID,
 ) -> None:

@@ -12,7 +12,11 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useWindowVisible } from "@/components/canvas/window-manager";
+import {
+  useWindowActions,
+  useWindowEntry,
+  useWindowVisible,
+} from "@/components/canvas/window-manager";
 import { WidgetErrorBoundary } from "@/components/widget-error-boundary";
 import { client } from "@/lib/client";
 import { CommitItem } from "./-commit-item";
@@ -61,6 +65,9 @@ interface SelectedFile {
   conflicted?: boolean;
 }
 
+const FETCH_INTERVAL_MS = 5 * 60_000;
+const FETCH_ON_SHOW_THROTTLE_MS = 60_000;
+
 function fileKey(file: GitFileEntry, staged: boolean): string {
   return `${staged ? "s" : "u"}:${file.path}`;
 }
@@ -96,8 +103,19 @@ export function GitStatus() {
   );
   const unconfiguredCount = localProjects.length - projects.length;
 
-  const [selectedProject, setSelectedProject] =
-    useState<ProjectWithPath | null>(null);
+  // The choice lives in the window's data (persisted with the canvas) as an
+  // id, so a renamed/moved/deleted project is picked up from the fresh list
+  // rather than a stale copy. As a plain page there's no window to keep it.
+  const entry = useWindowEntry();
+  const { updateWindowData } = useWindowActions();
+  const [pageProjectId, setPageProjectId] = useState<string | null>(null);
+  const chosenProjectId = entry ? entry.data?.projectId : pageProjectId;
+  const selectedProject: ProjectWithPath | null =
+    projects.find((p) => p.id === chosenProjectId) ?? projects[0] ?? null;
+  const selectProject = (projectId: string) => {
+    if (entry) updateWindowData(entry.id, { projectId });
+    else setPageProjectId(projectId);
+  };
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [anchorKey, setAnchorKey] = useState<string | null>(null);
@@ -151,11 +169,13 @@ export function GitStatus() {
     window.addEventListener("mouseup", onUp);
   };
 
+  const selectedProjectPath = selectedProject?.path;
   useEffect(() => {
-    if (!selectedProject && projects.length > 0) {
-      setSelectedProject(projects[0] ?? null);
-    }
-  }, [projects, selectedProject]);
+    setSelectedFile(null);
+    setSelectedKeys(new Set());
+    setAnchorKey(null);
+    setError(null);
+  }, [selectedProjectPath]);
 
   // Runs on mousedown (not click), like a native file explorer — selection
   // responds on press, and a press that turns into a drag doesn't matter here
@@ -335,16 +355,6 @@ export function GitStatus() {
       invalidateLog();
     },
   });
-  const fetchRef = useRef(fetchMutation.mutate);
-  fetchRef.current = fetchMutation.mutate;
-  const selectedPath = selectedProject?.path;
-  useEffect(() => {
-    if (!visible || !selectedPath) return;
-    fetchRef.current();
-    const id = setInterval(() => fetchRef.current(), 5 * 60_000);
-    return () => clearInterval(id);
-  }, [visible, selectedPath]);
-
   const pullMutation = useMutation({
     mutationFn: () => window.electron!.git.pull(selectedProject!.path),
     onSuccess: (result) => {
@@ -360,6 +370,38 @@ export function GitStatus() {
       invalidateStatus();
     },
   });
+
+  // A background fetch racing a pull or push would contend for the same refs,
+  // and toggling the widget's visibility shouldn't refetch every time.
+  const lastFetch = useRef<{ path: string; at: number } | null>(null);
+  const backgroundFetchRef = useRef<(path: string) => void>(() => {});
+  backgroundFetchRef.current = (path) => {
+    if (
+      fetchMutation.isPending ||
+      pullMutation.isPending ||
+      pushMutation.isPending
+    ) {
+      return;
+    }
+    lastFetch.current = { path, at: Date.now() };
+    fetchMutation.mutate();
+  };
+  const selectedPath = selectedProject?.path;
+  useEffect(() => {
+    if (!visible || !selectedPath) return;
+    const last = lastFetch.current;
+    if (
+      last?.path !== selectedPath ||
+      Date.now() - last.at >= FETCH_ON_SHOW_THROTTLE_MS
+    ) {
+      backgroundFetchRef.current(selectedPath);
+    }
+    const id = setInterval(
+      () => backgroundFetchRef.current(selectedPath),
+      FETCH_INTERVAL_MS,
+    );
+    return () => clearInterval(id);
+  }, [visible, selectedPath]);
 
   const mergeAbortMutation = useMutation({
     mutationFn: () => window.electron!.git.mergeAbort(selectedProject!.path),
@@ -466,14 +508,7 @@ export function GitStatus() {
       <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.06] px-3 py-1.5">
         <select
           value={selectedProject?.id ?? ""}
-          onChange={(e) => {
-            const p = projects.find((p) => p.id === e.target.value) ?? null;
-            setSelectedProject(p);
-            setSelectedFile(null);
-            setSelectedKeys(new Set());
-            setAnchorKey(null);
-            setError(null);
-          }}
+          onChange={(e) => selectProject(e.target.value)}
           className="min-w-0 flex-1 cursor-pointer truncate bg-transparent text-xs text-white/65 outline-none"
         >
           {projects.map((p) => (

@@ -17,6 +17,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { IconButton, SoftButton } from "@/components/ui-kit";
+import { userStorage } from "@/lib/user-storage";
 import { headerMonth, visibleDays } from "./calendar-dates";
 import { CalendarSidebar } from "./calendar-sidebar";
 import { toWallClock, useCalendarTimeZone } from "./calendar-timezone";
@@ -115,19 +116,11 @@ export function CalendarPage() {
 const DEFAULT_CALENDAR_KEY = "bessel:calendar-default";
 
 function rememberedCalendarId(): string | null {
-  try {
-    return localStorage.getItem(DEFAULT_CALENDAR_KEY);
-  } catch {
-    return null;
-  }
+  return userStorage.getItem(DEFAULT_CALENDAR_KEY);
 }
 
 function rememberCalendarId(id: string) {
-  try {
-    localStorage.setItem(DEFAULT_CALENDAR_KEY, id);
-  } catch {
-    // Storage unavailable; the default just isn't remembered.
-  }
+  userStorage.setItem(DEFAULT_CALENDAR_KEY, id);
 }
 
 /** Where a new event goes: the last calendar used, else a primary one. */

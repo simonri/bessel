@@ -9,12 +9,14 @@
 
 import hmac
 import secrets
+import time
 from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
+import anyio
 import httpx
 import structlog
 
@@ -46,6 +48,11 @@ BUSY_RETRY_DELAY_MS = 3_000
 MAX_BUSY_RETRIES = 20
 PENDING_TTL_SECONDS = 300
 HEARTBEAT_SECONDS = 20
+# Each open change stream holds a Redis connection, so a user gets a few. They
+# end after an hour, and the client reconnects with a freshly checked sign-in.
+MAX_STREAMS_PER_USER = 5
+STREAM_LIFETIME_SECONDS = 3600
+STREAM_SLOT_GRACE_SECONDS = 60
 
 type SessionMaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
@@ -70,18 +77,64 @@ async def publish_change(redis: Redis, user_id: UUID) -> None:
   await redis.publish(changes_channel(user_id), "sync")
 
 
-async def change_events(redis: Redis, user_id: UUID, *, heartbeat_seconds: float = HEARTBEAT_SECONDS) -> AsyncIterator[str]:
+class TooManyStreamsError(Exception):
+  """The user already has `MAX_STREAMS_PER_USER` change streams open."""
+
+
+def _streams_key(user_id: UUID) -> str:
+  return f"calendars:streams:{user_id}"
+
+
+async def claim_stream_slot(redis: Redis, user_id: UUID) -> str:
+  """Reserves one of the user's change streams; each holds a Redis connection.
+
+  Slots are released when their stream ends. One whose stream never started or
+  whose process died lapses once the stream would have ended anyway.
+  """
+  key, slot, now = _streams_key(user_id), uuid4().hex, time.time()
+  async with redis.pipeline(transaction=True) as pipe:
+    pipe.zremrangebyscore(key, "-inf", now - STREAM_LIFETIME_SECONDS - STREAM_SLOT_GRACE_SECONDS)
+    pipe.zadd(key, {slot: now})
+    pipe.zcard(key)
+    pipe.expire(key, STREAM_LIFETIME_SECONDS + STREAM_SLOT_GRACE_SECONDS)
+    _, _, open_streams, _ = await pipe.execute()
+  if open_streams > MAX_STREAMS_PER_USER:
+    await redis.zrem(key, slot)
+    raise TooManyStreamsError(str(user_id))
+  return slot
+
+
+async def change_events(
+  redis: Redis,
+  user_id: UUID,
+  *,
+  slot: str | None = None,
+  heartbeat_seconds: float = HEARTBEAT_SECONDS,
+  lifetime_seconds: float = STREAM_LIFETIME_SECONDS,
+) -> AsyncIterator[str]:
   """Server-sent events for one user: `changed` after each sync, and a comment
-  every `heartbeat_seconds` so proxies don't close an idle stream."""
+  every `heartbeat_seconds` so proxies don't close an idle stream.
+
+  Ends after `lifetime_seconds` so clients reconnect, which re-checks their
+  sign-in, and releases `slot` (from `claim_stream_slot`) when done.
+  """
+  deadline = time.monotonic() + lifetime_seconds
   pubsub = redis.pubsub()
-  await pubsub.subscribe(changes_channel(user_id))
   try:
+    await pubsub.subscribe(changes_channel(user_id))
     yield ": connected\n\n"
-    while True:
-      message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=heartbeat_seconds)
-      yield "event: changed\ndata: {}\n\n" if message else ": ping\n\n"
+    while (remaining := deadline - time.monotonic()) > 0:
+      message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=min(heartbeat_seconds, remaining))
+      if message:
+        yield "event: changed\ndata: {}\n\n"
+      elif time.monotonic() < deadline:
+        yield ": ping\n\n"
   finally:
-    await pubsub.aclose()
+    # Shielded: a client disconnect cancels the stream, and cleanup must survive it.
+    with anyio.CancelScope(shield=True):
+      await pubsub.aclose()
+      if slot is not None:
+        await redis.zrem(_streams_key(user_id), slot)
 
 
 def _pending_key(calendar_id: UUID | str) -> str:
