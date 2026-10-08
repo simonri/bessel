@@ -245,7 +245,7 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
     target = _as_utc(near)
     return min(rows, key=lambda row: abs((_as_utc(row.start_at or row.start_date) - target).total_seconds()))
 
-  async def list_in_range(self, user_id: UUID, start: datetime, end: datetime) -> Sequence[CalendarEvent]:
+  async def list_in_range(self, user_id: UUID, start: datetime, end: datetime, *, visible_only: bool = False) -> Sequence[CalendarEvent]:
     # All-day spans are calendar dates with no zone; pad a day each side and
     # let the client place them in its own local days.
     start_day = (start - timedelta(days=1)).date()
@@ -272,6 +272,8 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
         CalendarEvent.id,
       )
     )
+    if visible_only:
+      statement = statement.where(Calendar.hidden.is_(False))
     return await self.get_all(statement)
 
   async def emails_for_account(self, account: CalendarAccount) -> set[str]:
