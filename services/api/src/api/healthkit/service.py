@@ -292,7 +292,7 @@ class HealthSummaryService:
       )
       for d in week
     }
-    energy = self._energy(day, metrics, sleep_score)
+    energy = self._energy(day, metrics, sleep_score, is_today)
     streak = scores.bedtime_streak([_onset_minutes(nights.get(day - timedelta(days=offset))) for offset in range(SLEEP_BASELINE_NIGHTS)], usual_onset)
 
     move = move_by_day[day]
@@ -392,7 +392,7 @@ class HealthSummaryService:
       workout_minutes=workout_minutes,
     )
 
-  def _energy(self, day: date, metrics: dict[date, HealthKitDailyMetric], sleep_score: int | None) -> EnergyDaySummary | None:
+  def _energy(self, day: date, metrics: dict[date, HealthKitDailyMetric], sleep_score: int | None, is_today: bool) -> EnergyDaySummary | None:
     earlier = [metrics[d] for offset in range(1, BASELINE_DAYS + 1) if (d := day - timedelta(days=offset)) in metrics]
     today = metrics.get(day)
     hrvs = [m.hrv_ms for m in earlier if m.hrv_ms is not None]
@@ -409,7 +409,7 @@ class HealthSummaryService:
     score = scores.energy_score(hrv, usual_hrv, resting_rate, usual_resting, sleep_score)
     return EnergyDaySummary(
       score=score,
-      label=scores.energy_label(score),
+      label=scores.energy_label(score, has_usual=usual_hrv is not None or usual_resting is not None, is_today=is_today),
       resting_heart_rate=resting_rate,
       usual_resting_heart_rate=usual_resting,
       hrv_ms=hrv,

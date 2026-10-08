@@ -168,7 +168,7 @@ struct EnergyDetailView: View {
     var body: some View {
         DetailPage(title: "Energy") {
             if let energy = store.summary?.energy {
-                DetailHeader(ring: .energy, score: energy.score, label: energy.label, caption: energy.score == nil ? "Bessel needs about five days of Apple Watch data to learn your usual." : "How rested your body looks today")
+                DetailHeader(ring: .energy, score: energy.score, label: energy.label, caption: energyCaption(energy))
 
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                     StatTile(
@@ -190,6 +190,14 @@ struct EnergyDetailView: View {
             }
         }
     }
+}
+
+private func energyCaption(_ energy: HealthSummary.Energy) -> String {
+    if energy.score != nil { return "How rested your body looks today" }
+    if energy.usualHrvMs == nil && energy.usualRestingHeartRate == nil {
+        return "Bessel needs about five days of Apple Watch data to learn your usual."
+    }
+    return "Your watch hasn't sent a reading for this day."
 }
 
 // MARK: - All workouts

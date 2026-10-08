@@ -190,6 +190,16 @@ class TestSummary:
     assert summary["sleep"] is None
 
   @pytest.mark.asyncio
+  async def test_a_day_without_a_reading_is_not_learning(self, client: AsyncClient) -> None:
+    days = [_metric(DAY - timedelta(days=offset), steps=8000, active_energy_kcal=400, resting_heart_rate=56, hrv_ms=55) for offset in range(1, 11)]
+    await client.post("/v1/healthkit/daily-metrics/sync", json={"days": days})
+
+    summary = await _summary(client)
+
+    assert (summary["move"]["label"], summary["energy"]["label"]) == ("Not recorded", "Not recorded")
+    assert summary["move"]["usual_steps"] == 8000
+
+  @pytest.mark.asyncio
   async def test_an_empty_day(self, client: AsyncClient) -> None:
     summary = await _summary(client)
     assert (summary["sleep"], summary["move"], summary["energy"]) == (None, None, None)

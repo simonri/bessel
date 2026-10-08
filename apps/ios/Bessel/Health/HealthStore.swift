@@ -260,10 +260,11 @@ final class HealthStore {
         let window = DailyMetricsSyncState.nextWindow()
         do {
             let days = try await healthKit.dailyMetrics(in: window)
-            if !days.isEmpty {
-                let _: DailyMetricsSyncResponse = try await client.post("/v1/healthkit/daily-metrics/sync", body: DailyMetricsSyncRequest(days: days))
-            }
-            DailyMetricsSyncState.lastDay = Calendar.current.startOfDay(for: .now)
+            // Nothing back usually means access wasn't granted yet. Keep the
+            // window where it is, so the month's history goes up once it is.
+            guard !days.isEmpty else { return }
+            let _: DailyMetricsSyncResponse = try await client.post("/v1/healthkit/daily-metrics/sync", body: DailyMetricsSyncRequest(days: days))
+            DailyMetricsSyncState.markSynced(through: .now)
         } catch {
             // Sent again from the same starting day next time.
         }

@@ -313,6 +313,10 @@ enum DailyMetricsSyncState {
         return DateInterval(start: min(start, today), end: calendar.date(byAdding: .day, value: 1, to: today)!)
     }
 
+    static func markSynced(through now: Date, calendar: Calendar = .current) {
+        lastDay = calendar.startOfDay(for: now)
+    }
+
     static func clear() {
         UserDefaults.standard.removeObject(forKey: lastDayKey)
     }

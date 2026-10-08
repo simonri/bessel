@@ -142,6 +142,9 @@ def move_result(
     ratio = workout_minutes / DAILY_WORKOUT_GOAL_MINUTES
 
   if ratio is None:
+    if usual_active_energy_kcal or usual_steps:
+      # The usual is known; this day just hasn't got a reading.
+      return MoveResult(None, missing_label(is_today=day_fraction < 1))
     return MoveResult(None, LEARNING_LABEL)
 
   score = round(clamp(ratio * 80, 0, 100))
@@ -183,9 +186,13 @@ def energy_score(
   return round(clamp(score, 1, 100))
 
 
-def energy_label(score: int | None) -> str:
+def missing_label(*, is_today: bool) -> str:
+  return "No reading yet" if is_today else "Not recorded"
+
+
+def energy_label(score: int | None, *, has_usual: bool = False, is_today: bool = False) -> str:
   if score is None:
-    return LEARNING_LABEL
+    return missing_label(is_today=is_today) if has_usual else LEARNING_LABEL
   if score >= 80:
     return "Charged"
   if score >= 60:
