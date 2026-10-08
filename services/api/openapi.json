@@ -54,6 +54,50 @@
             "HTTPBearer": []
           }
         ]
+      },
+      "patch": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Update Current User",
+        "operationId": "update_me_v1_auth_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/activity/batch": {
@@ -10294,6 +10338,17 @@
               }
             ],
             "title": "Email"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
           }
         },
         "type": "object",
@@ -10301,6 +10356,21 @@
           "id"
         ],
         "title": "MeResponse"
+      },
+      "MeUpdate": {
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Timezone",
+            "description": "IANA timezone name, e.g. 'Europe/Stockholm'."
+          }
+        },
+        "type": "object",
+        "required": [
+          "timezone"
+        ],
+        "title": "MeUpdate"
       },
       "MonthlyFlow": {
         "properties": {

@@ -360,6 +360,9 @@ import type {
   UpdateDeviceV1DevicesDeviceIdPatchData,
   UpdateDeviceV1DevicesDeviceIdPatchErrors,
   UpdateDeviceV1DevicesDeviceIdPatchResponses,
+  UpdateMeV1AuthMePatchData,
+  UpdateMeV1AuthMePatchErrors,
+  UpdateMeV1AuthMePatchResponses,
   UpdatePlaceV1PlacesPlaceIdPatchData,
   UpdatePlaceV1PlacesPlaceIdPatchErrors,
   UpdatePlaceV1PlacesPlaceIdPatchResponses,
@@ -433,6 +436,26 @@ export const getMeV1AuthMeGet = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/auth/me",
     ...options,
+  });
+
+/**
+ * Update Current User
+ */
+export const updateMeV1AuthMePatch = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateMeV1AuthMePatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateMeV1AuthMePatchResponses,
+    UpdateMeV1AuthMePatchErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/auth/me",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

@@ -2586,6 +2586,22 @@ export type MeResponse = {
    * Email
    */
   email?: string | null;
+  /**
+   * Timezone
+   */
+  timezone?: string | null;
+};
+
+/**
+ * MeUpdate
+ */
+export type MeUpdate = {
+  /**
+   * Timezone
+   *
+   * IANA timezone name, e.g. 'Europe/Stockholm'.
+   */
+  timezone: string;
 };
 
 /**
@@ -4705,6 +4721,33 @@ export type GetMeV1AuthMeGetResponses = {
 
 export type GetMeV1AuthMeGetResponse =
   GetMeV1AuthMeGetResponses[keyof GetMeV1AuthMeGetResponses];
+
+export type UpdateMeV1AuthMePatchData = {
+  body: MeUpdate;
+  path?: never;
+  query?: never;
+  url: "/v1/auth/me";
+};
+
+export type UpdateMeV1AuthMePatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateMeV1AuthMePatchError =
+  UpdateMeV1AuthMePatchErrors[keyof UpdateMeV1AuthMePatchErrors];
+
+export type UpdateMeV1AuthMePatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: MeResponse;
+};
+
+export type UpdateMeV1AuthMePatchResponse =
+  UpdateMeV1AuthMePatchResponses[keyof UpdateMeV1AuthMePatchResponses];
 
 export type IngestActivityBatchV1ActivityBatchPostData = {
   body: ActivityBatchRequest;

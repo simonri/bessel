@@ -18,10 +18,12 @@ class MeResponse:
   Attributes:
       id (UUID):
       email (None | str | Unset):
+      timezone (None | str | Unset):
   """
 
   id: UUID
   email: None | str | Unset = UNSET
+  timezone: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -33,6 +35,12 @@ class MeResponse:
     else:
       email = self.email
 
+    timezone: None | str | Unset
+    if isinstance(self.timezone, Unset):
+      timezone = UNSET
+    else:
+      timezone = self.timezone
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -42,6 +50,8 @@ class MeResponse:
     )
     if email is not UNSET:
       field_dict["email"] = email
+    if timezone is not UNSET:
+      field_dict["timezone"] = timezone
 
     return field_dict
 
@@ -59,9 +69,19 @@ class MeResponse:
 
     email = _parse_email(d.pop("email", UNSET))
 
+    def _parse_timezone(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    timezone = _parse_timezone(d.pop("timezone", UNSET))
+
     me_response = cls(
       id=id,
       email=email,
+      timezone=timezone,
     )
 
     me_response.additional_properties = d
