@@ -53,7 +53,9 @@ export function BoardColumn({
             <div className="rounded-xl bg-white/[0.02] p-6 text-center text-11 text-white/35">
               {status === "in_progress"
                 ? "Drag a task here when you start it"
-                : "Nothing here"}
+                : status === "in_review"
+                  ? "Finished work to check lands here"
+                  : "Nothing here"}
             </div>
           )}
         </div>

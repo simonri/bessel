@@ -3,6 +3,7 @@ import { daysUntilDue, isRepeatingTask } from "@/lib/task-format";
 
 export type WhenKey =
   | "doing"
+  | "review"
   | "overdue"
   | "today"
   | "week"
@@ -17,6 +18,7 @@ export interface WhenGroup {
 
 const GROUPS: { key: WhenKey; label: string }[] = [
   { key: "doing", label: "Doing" },
+  { key: "review", label: "In review" },
   { key: "overdue", label: "Overdue" },
   { key: "today", label: "Today" },
   { key: "week", label: "This week" },
@@ -26,11 +28,14 @@ const GROUPS: { key: WhenKey; label: string }[] = [
 
 function isOpen(task: TaskSchema): boolean {
   const status = task.status ?? "todo";
-  return status === "todo" || status === "in_progress";
+  return (
+    status === "todo" || status === "in_progress" || status === "in_review"
+  );
 }
 
 function whenOf(task: TaskSchema, now: Date): WhenKey {
   if (task.status === "in_progress") return "doing";
+  if (task.status === "in_review") return "review";
   if (!task.due_date) return "someday";
   const days = daysUntilDue(task.due_date, now);
   if (days < 0) return "overdue";

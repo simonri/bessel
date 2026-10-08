@@ -108,7 +108,7 @@ export function TaskDetailDialog({
           {/* Status */}
           <span className="text-muted-foreground text-xs">Status</span>
           <div className="flex gap-1">
-            {(["todo", "in_progress"] as const).map((s) => {
+            {(["todo", "in_progress", "in_review"] as const).map((s) => {
               const sc = STATUS_CONFIG[s];
               const Icon = sc.icon;
               return (

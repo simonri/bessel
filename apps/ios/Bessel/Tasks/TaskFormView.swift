@@ -34,6 +34,7 @@ struct TaskFormView: View {
                     HStack(spacing: 8) {
                         statusPill("To do", .todo)
                         statusPill("Doing", .inProgress)
+                        statusPill("Review", .inReview)
                         statusPill("Done", .done)
                     }
                 }

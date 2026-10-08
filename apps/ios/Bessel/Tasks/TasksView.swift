@@ -216,13 +216,14 @@ struct TasksView: View {
 
     @ViewBuilder
     private var boardContent: some View {
-        if store.boardTodo.isEmpty && store.boardDoing.isEmpty {
+        if store.boardTodo.isEmpty && store.boardDoing.isEmpty && store.boardReview.isEmpty {
             Section {
                 EmptyState(emoji: "🫧", title: "Nothing on the board", detail: "Add a task below to get started.")
                     .padding(.vertical, 40)
                     .listRowBackground(Color.clear)
             }
         }
+        boardSection("In review", tasks: store.boardReview, status: .inReview)
         boardSection("Doing", tasks: store.boardDoing, status: .inProgress)
         boardSection("To do", tasks: store.boardTodo, status: .todo)
     }

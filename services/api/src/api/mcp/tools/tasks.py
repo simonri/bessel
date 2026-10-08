@@ -23,7 +23,7 @@ from api.models.user import User
 from api.postgres import AsyncSession
 from api.projects.repository import ProjectDeviceConfigRepository, ProjectRepository
 from api.tasks.repository import TaskRepository
-from api.tasks.schemas import RruleFrequency, TaskCreate, TaskStatus
+from api.tasks.schemas import OPEN_TASK_STATUSES, RruleFrequency, TaskCreate, TaskStatus
 from api.tasks.service import task_service
 
 MAX_BATCH = 50
@@ -31,7 +31,9 @@ MAX_OVERVIEW_GROUP = 30
 MAX_COMPLETED_DAYS = 366
 # A repeated add of the same open task this soon after the first is a retry, not a new task.
 DUPLICATE_WINDOW = timedelta(minutes=10)
-OPEN_STATUSES = ("todo", "in_progress")
+OPEN_STATUSES = OPEN_TASK_STATUSES
+# What start_task may pick up next; in-review work waits for the user.
+WORKABLE_STATUSES = ("todo", "in_progress")
 
 Priority = Literal["none", "low", "medium", "high", "urgent"]
 PRIORITIES: tuple[Priority, ...] = ("none", "low", "medium", "high", "urgent")
@@ -75,6 +77,7 @@ class ProjectSummary(Schema):
 class OverviewCounts(Schema):
   open: int
   in_progress: int
+  in_review: int
   overdue: int
   due_today: int
   next_6_days: int
@@ -86,6 +89,7 @@ class TaskOverview(Schema):
   today: date
   timezone: str
   in_progress: list[Task]
+  in_review: list[Task] = Field(description="Finished work waiting for the user to check it.")
   overdue: list[Task] = Field(description="Most overdue first.")
   due_today: list[Task]
   next_6_days: list[Task] = Field(description="Due tomorrow through 6 days from now, soonest first.")
@@ -153,7 +157,9 @@ class TaskChange(Schema):
   priority: Priority | None = None
   project: str | None = Field(default=None, description="An existing project name, or 'none' to remove the task from its project.")
   tags: list[str] | None = Field(default=None, description="Replaces the tags.")
-  status: Literal["todo", "in_progress", "cancelled"] | None = Field(default=None, description="Use complete_tasks to mark tasks done.")
+  status: Literal["todo", "in_progress", "in_review", "cancelled"] | None = Field(
+    default=None, description="'in_review' when the work is finished and the user should check it. Use complete_tasks to mark tasks done."
+  )
   repeat: Repeat | None = None
   stop_repeating: bool = Field(default=False, description="Turns a routine into a one-off task.")
 
@@ -279,7 +285,7 @@ async def get_task_overview(ctx: Context, timezone: TimezoneParam = None) -> Tas
     open_counts = await repo.open_counts_by_project(user.id)
     tags = await repo.list_tags(user.id)
 
-    in_progress, overdue, due_today, soon, routines = [], [], [], [], []
+    in_progress, in_review, overdue, due_today, soon, routines = [], [], [], [], [], []
     counts = Counter[str]()
     for task in open_tasks:
       if task.is_recurring:
@@ -287,6 +293,10 @@ async def get_task_overview(ctx: Context, timezone: TimezoneParam = None) -> Tas
           routines.append(task)
         continue
       counts["open"] += 1
+      if task.status == "in_review":
+        counts["in_review"] += 1
+        in_review.append(task)
+        continue
       if task.status == "in_progress":
         counts["in_progress"] += 1
         in_progress.append(task)
@@ -312,6 +322,7 @@ async def get_task_overview(ctx: Context, timezone: TimezoneParam = None) -> Tas
       today=today,
       timezone=tz.key,
       in_progress=shown(in_progress),
+      in_review=shown(in_review),
       overdue=shown(overdue),
       due_today=shown(due_today),
       next_6_days=shown(soon),
@@ -330,7 +341,7 @@ async def find_tasks(
   search: Annotated[str | None, Field(description="Case-insensitive text in the title or notes.")] = None,
   project: Annotated[str | None, Field(description="Project name, loosely matched.")] = None,
   tag: str | None = None,
-  status: Literal["open", "todo", "in_progress", "done", "cancelled", "any"] = "open",
+  status: Literal["open", "todo", "in_progress", "in_review", "done", "cancelled", "any"] = "open",
   due: Annotated[
     Literal["overdue", "today", "tomorrow", "this_week", "next_7_days", "no_date"] | None,
     Field(description="'this_week' is Monday to Sunday of the current week."),
@@ -605,7 +616,8 @@ def _brief(task: TaskModel, paths: list[str]) -> str:
     parts.append(f"Attached images (view them in Bessel): {', '.join(a.filename for a in task.attachments)}")
   if paths:
     parts.append(f"Project folder: {', '.join(paths)}")
-  parts.append(f"Task id: {task.id}. Note progress with update_tasks(append_note=...) and call complete_tasks when it's done.")
+  parts.append(f"Task id: {task.id}. Note progress with update_tasks(append_note=...).")
+  parts.append("When it's done, call complete_tasks, or update_tasks(status='in_review') if the user should check it first.")
   return "\n\n".join(parts)
 
 
@@ -644,7 +656,7 @@ async def start_task(
           raise _unknown_project(project, projects)
       else:
         raise ToolError("Pass task_id, project or project_path.")
-      statement = repo.get_filtered_statement(user.id, statuses=OPEN_STATUSES, project_id=chosen.id, is_recurring=False).order_by(
+      statement = repo.get_filtered_statement(user.id, statuses=WORKABLE_STATUSES, project_id=chosen.id, is_recurring=False).order_by(
         (TaskModel.status == "in_progress").desc(), nulls_last(TaskModel.due_date.asc()), TaskModel.priority.desc(), TaskModel.position
       )
       picked = await repo.get_one_or_none(statement.limit(1))

@@ -13,9 +13,9 @@ final class LenientDecodingTests: XCTestCase {
     }
 
     func testUnknownEnumValuesDecodeAsUnknown() throws {
-        let statuses = try JSONDecoder.api.decode([TaskStatus].self, from: Data(#"["todo","archived"]"#.utf8))
+        let statuses = try JSONDecoder.api.decode([TaskStatus].self, from: Data(#"["todo","in_review","archived"]"#.utf8))
 
-        XCTAssertEqual(statuses, [.todo, .unknown])
+        XCTAssertEqual(statuses, [.todo, .inReview, .unknown])
         XCTAssertFalse(TaskStatus.allCases.contains(.unknown))
         XCTAssertEqual(try JSONDecoder.api.decode(RecipeType.self, from: Data(#""side""#.utf8)), .other)
     }

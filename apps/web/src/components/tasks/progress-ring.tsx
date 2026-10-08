@@ -106,6 +106,7 @@ export function useTaskProgress(openTasks: TaskSchema[]) {
     (t) =>
       !isRepeatingTask(t) &&
       (t.status === "in_progress" ||
+        t.status === "in_review" ||
         ((t.status ?? "todo") === "todo" && isDueTodayOrEarlier(t, now))),
   ).length;
   return { doneToday, doneThisWeek, total: doneToday + inPlay };

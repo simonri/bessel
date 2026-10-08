@@ -83,7 +83,13 @@ const VIEW_TABS: { label: string; value: ViewTab }[] = [
 // Radix Select doesn't allow an empty-string item value, so "All" (projectFilter === null) needs a sentinel.
 const ALL_PROJECTS_VALUE = "__all__";
 
-const BOARD_COLUMNS = ["todo", "in_progress"] as const;
+const BOARD_COLUMNS = ["todo", "in_progress", "in_review"] as const;
+type BoardColumnKey = (typeof BOARD_COLUMNS)[number];
+type BoardOrder = Record<BoardColumnKey, string[]>;
+
+function columnOf(order: BoardOrder, taskId: string): BoardColumnKey {
+  return BOARD_COLUMNS.find((c) => order[c].includes(taskId)) ?? "todo";
+}
 
 const dropAnimationConfig: DropAnimation = {
   duration: 200,
@@ -115,10 +121,7 @@ function Tasks() {
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
-  const [localOrder, setLocalOrder] = useState<{
-    todo: string[];
-    in_progress: string[];
-  } | null>(null);
+  const [localOrder, setLocalOrder] = useState<BoardOrder | null>(null);
   const [page, setPage] = useState(1);
   const limit = 100;
   const queryClient = useQueryClient();
@@ -137,7 +140,7 @@ function Tasks() {
       window.removeEventListener("pointermove", track, { capture: true });
   }, []);
 
-  // Today and Board only ever render todo/in_progress tasks — filtering
+  // Today and Board only ever render open tasks — filtering
   // server-side keeps the result set small so the (done-heavy) pagination
   // limit never truncates it.
   const showsOpenTasks = viewTab === "today" || viewTab === "board";
@@ -145,7 +148,7 @@ function Tasks() {
     viewTab === "done"
       ? [TaskStatus.DONE]
       : showsOpenTasks
-        ? [TaskStatus.TODO, TaskStatus.IN_PROGRESS]
+        ? [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW]
         : undefined;
   const sortingValue =
     viewTab === "done"
@@ -368,6 +371,7 @@ function Tasks() {
       setLocalOrder({
         todo: boardTasks.todo.map((t) => t.id),
         in_progress: boardTasks.in_progress.map((t) => t.id),
+        in_review: boardTasks.in_review.map((t) => t.id),
       });
     }
     window.dispatchEvent(new CustomEvent("bessel:task-drag-start"));
@@ -382,13 +386,10 @@ function Tasks() {
     if (activeId === overId) return;
 
     const overIsColumn = (BOARD_COLUMNS as readonly string[]).includes(overId);
-    const activeInTodo = localOrder.todo.includes(activeId);
-    const activeColumn = activeInTodo ? "todo" : "in_progress";
+    const activeColumn = columnOf(localOrder, activeId);
     const overColumn = overIsColumn
-      ? (overId as "todo" | "in_progress")
-      : localOrder.todo.includes(overId)
-        ? "todo"
-        : "in_progress";
+      ? (overId as BoardColumnKey)
+      : columnOf(localOrder, overId);
 
     if (activeColumn === overColumn) {
       // Same-column reorder: keep localOrder in sync so liveBoardTasks reflects the drag
@@ -461,15 +462,13 @@ function Tasks() {
 
     const taskId = String(active.id);
     const overId = String(over.id);
-    const newStatus = localOrder.todo.includes(taskId) ? "todo" : "in_progress";
-    const originalStatus = activeTask.status as "todo" | "in_progress";
+    const newStatus = columnOf(localOrder, taskId);
+    const originalStatus = activeTask.status as BoardColumnKey;
     const overIsColumn = (BOARD_COLUMNS as readonly string[]).includes(overId);
 
     // Destination column's tasks in server position order, excluding the dragged task.
     // We use the server order (boardTasks) as the position reference to compute midpoints.
-    const destServerIds = (
-      newStatus === "todo" ? boardTasks!.todo : boardTasks!.in_progress
-    )
+    const destServerIds = boardTasks![newStatus]
       .filter((t) => t.id !== taskId)
       .map((t) => t.id);
 
@@ -538,7 +537,7 @@ function Tasks() {
       }
     }
 
-    const body: { position: number; status?: "todo" | "in_progress" } = {
+    const body: { position: number; status?: BoardColumnKey } = {
       position: newPosition,
     };
     if (originalStatus !== newStatus) body.status = newStatus;
@@ -586,19 +585,19 @@ function Tasks() {
             (t) => (t.status ?? "todo") === "todo" && !isRepeatingTask(t),
           ),
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
+          in_review: allTasks.filter((t) => t.status === "in_review"),
         }
       : null;
 
   const liveBoardTasks = (() => {
     if (!localOrder || !boardTasks) return boardTasks;
     const taskMap = new Map(allTasks.map((t) => [t.id, t]));
+    const tasksIn = (ids: string[]) =>
+      ids.map((id) => taskMap.get(id)).filter((t): t is TaskSchema => !!t);
     return {
-      todo: localOrder.todo
-        .map((id) => taskMap.get(id))
-        .filter((t): t is TaskSchema => !!t),
-      in_progress: localOrder.in_progress
-        .map((id) => taskMap.get(id))
-        .filter((t): t is TaskSchema => !!t),
+      todo: tasksIn(localOrder.todo),
+      in_progress: tasksIn(localOrder.in_progress),
+      in_review: tasksIn(localOrder.in_review),
     };
   })();
 

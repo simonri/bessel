@@ -6616,7 +6616,7 @@ export const TaskSortPropertySchema = {
 
 export const TaskStatusSchema = {
   type: "string",
-  enum: ["todo", "in_progress", "done", "cancelled"],
+  enum: ["todo", "in_progress", "in_review", "done", "cancelled"],
   title: "TaskStatus",
 } as const;
 

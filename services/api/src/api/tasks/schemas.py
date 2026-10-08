@@ -11,8 +11,14 @@ from api.common.schemas import IDSchema, Schema, TimestampedSchema
 class TaskStatus(StrEnum):
   todo = "todo"
   in_progress = "in_progress"
+  # Work finished (often by an agent) that waits for the user to check it.
+  in_review = "in_review"
   done = "done"
   cancelled = "cancelled"
+
+
+# Still waiting on someone: shown on boards and counted as open work.
+OPEN_TASK_STATUSES = (TaskStatus.todo, TaskStatus.in_progress, TaskStatus.in_review)
 
 
 class TaskPriority(int):

@@ -70,7 +70,7 @@ class TestOverview:
     assert [t["title"] for t in overview["due_today"]] == ["Call the dentist"]
     assert [(t["title"], t["priority"]) for t in overview["next_6_days"]] == [("Fix sync bug", "urgent")]
     assert [(t["title"], t["repeats"]) for t in overview["routines_due"]] == [("Water plants", "every week")]
-    assert overview["counts"] == {"open": 6, "in_progress": 1, "overdue": 1, "due_today": 1, "next_6_days": 1, "later": 1, "no_due_date": 1}
+    assert overview["counts"] == {"open": 6, "in_progress": 1, "in_review": 0, "overdue": 1, "due_today": 1, "next_6_days": 1, "later": 1, "no_due_date": 1}
     assert overview["projects"] == [{"name": "Bessel", "open_tasks": 2}]
     assert overview["tags"] == ["errand"]
 
@@ -215,6 +215,20 @@ class TestUpdateTasks:
     assert "No task with id" in error
     assert (await mcp_call(connect, "get_task", {"task_id": str(task.id)}))["title"] == "A's task"
 
+  @pytest.mark.asyncio
+  async def test_hands_finished_work_over_for_review(self, connect: ConnectFixture, stockholm_user: User, bessel: Project, make_task: MakeTask) -> None:
+    task = await make_task("Fix sync bug", status="in_progress", project=bessel)
+    result = await mcp_call(connect, "update_tasks", {"changes": [{"task_id": str(task.id), "status": "in_review", "append_note": "Fixed in abc123"}]})
+    assert result["tasks"][0]["status"] == "in_review"
+
+    overview = await mcp_call(connect, "get_task_overview")
+    assert [t["title"] for t in overview["in_review"]] == ["Fix sync bug"]
+    assert overview["in_progress"] == []
+    assert overview["counts"]["in_review"] == 1
+    assert overview["counts"]["open"] == 1
+    found = await mcp_call(connect, "find_tasks", {"project": "Bessel", "status": "in_review"})
+    assert [t["title"] for t in found["tasks"]] == ["Fix sync bug"]
+
 
 class TestCompleteTasks:
   @pytest.mark.asyncio
@@ -266,6 +280,16 @@ class TestStartTask:
 
     resumed = await mcp_call(connect, "start_task", {"project": "Bessel"})
     assert resumed["task"]["id"] == str(soon.id)
+
+  @pytest.mark.asyncio
+  async def test_leaves_work_in_review_alone(self, connect: ConnectFixture, stockholm_user: User, bessel: Project, make_task: MakeTask) -> None:
+    today = _today()
+    await make_task("Awaiting review", status="in_review", due_date=today, project=bessel)
+    next_up = await make_task("Next up", due_date=today + timedelta(days=3), project=bessel)
+
+    started = await mcp_call(connect, "start_task", {"project": "Bessel"})
+    assert started["task"]["id"] == str(next_up.id)
+    assert "in_review" in started["brief"]
 
   @pytest.mark.asyncio
   async def test_explains_when_nothing_matches(self, connect: ConnectFixture, stockholm_user: User, bessel: Project) -> None:

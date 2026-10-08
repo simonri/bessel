@@ -3,12 +3,14 @@ import Foundation
 enum TaskStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
     case todo
     case inProgress = "in_progress"
+    /// Finished work (often an agent's) waiting for the user to check it.
+    case inReview = "in_review"
     case done
     case cancelled
     /// A status added on the server after this build; such tasks aren't listed.
     case unknown
 
-    static let allCases: [TaskStatus] = [.todo, .inProgress, .done, .cancelled]
+    static let allCases: [TaskStatus] = [.todo, .inProgress, .inReview, .done, .cancelled]
 
     var id: String { rawValue }
 
@@ -16,6 +18,7 @@ enum TaskStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
         switch self {
         case .todo: "To Do"
         case .inProgress: "In Progress"
+        case .inReview: "In Review"
         case .done: "Done"
         case .cancelled: "Cancelled"
         case .unknown: "Other"

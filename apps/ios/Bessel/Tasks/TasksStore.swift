@@ -16,7 +16,7 @@ final class TasksStore {
     /// Open tasks grouped by when they matter, mirroring the web Today view.
     struct WhenGroup: Identifiable {
         enum Key: String {
-            case doing, overdue, today, week, later, someday
+            case doing, review, overdue, today, week, later, someday
         }
 
         let key: Key
@@ -26,6 +26,7 @@ final class TasksStore {
         var title: String {
             switch key {
             case .doing: "Doing"
+            case .review: "In review"
             case .overdue: "Overdue"
             case .today: "Today"
             case .week: "This week"
@@ -99,6 +100,7 @@ final class TasksStore {
 
     var boardTodo: [TaskItem] { oneOffs.filter { $0.status == .todo } }
     var boardDoing: [TaskItem] { oneOffs.filter { $0.status == .inProgress } }
+    var boardReview: [TaskItem] { oneOffs.filter { $0.status == .inReview } }
     var visibleDone: [TaskItem] { done.filter(matchesFilter) }
 
     func whenGroups(now: Date = .now) -> [WhenGroup] {
@@ -107,7 +109,7 @@ final class TasksStore {
             buckets[when(task, now: now), default: []].append(task)
         }
         buckets[.overdue]?.sort { ($0.dueDate ?? .distantPast) < ($1.dueDate ?? .distantPast) }
-        let order: [WhenGroup.Key] = [.doing, .overdue, .today, .week, .later, .someday]
+        let order: [WhenGroup.Key] = [.doing, .review, .overdue, .today, .week, .later, .someday]
         return order.compactMap { key in
             guard let tasks = buckets[key], !tasks.isEmpty else { return nil }
             return WhenGroup(key: key, tasks: tasks)
@@ -116,6 +118,7 @@ final class TasksStore {
 
     private func when(_ task: TaskItem, now: Date) -> WhenGroup.Key {
         if task.status == .inProgress { return .doing }
+        if task.status == .inReview { return .review }
         guard let due = task.dueDate else { return .someday }
         let days = TaskItem.daysUntil(due, now: now)
         if days < 0 { return .overdue }
@@ -130,7 +133,7 @@ final class TasksStore {
         let doneToday = done.filter { $0.completedAt.map(Calendar.current.isDateInToday) ?? false }.count
         let thisWeek = done.filter { ($0.completedAt.map { now.timeIntervalSince($0) } ?? .infinity) < 7 * 86_400 }.count
         let inPlay = open.filter { task in
-            !task.isRecurring && (task.status == .inProgress
+            !task.isRecurring && (task.status == .inProgress || task.status == .inReview
                 || (task.dueDate.map { TaskItem.daysUntil($0, now: now) <= 0 } ?? false))
         }.count
         return (doneToday, doneToday + inPlay, thisWeek)
@@ -150,6 +153,7 @@ final class TasksStore {
             async let openTask: [TaskItem] = client.getAllPages("/v1/tasks", query: [
                 URLQueryItem(name: "status", value: "todo"),
                 URLQueryItem(name: "status", value: "in_progress"),
+                URLQueryItem(name: "status", value: "in_review"),
                 URLQueryItem(name: "sorting", value: "position"),
             ])
             async let doneTask: TaskListResponse = client.get("/v1/tasks", query: doneQuery(page: 1))
@@ -303,7 +307,11 @@ final class TasksStore {
     /// Reorders within one board column and renormalizes that column's positions
     /// to (index + 1) * 1000, the same renormalization the web board uses.
     func move(in status: TaskStatus, from source: IndexSet, to destination: Int) async {
-        var column = status == .todo ? boardTodo : boardDoing
+        var column = switch status {
+        case .todo: boardTodo
+        case .inReview: boardReview
+        default: boardDoing
+        }
         column.move(fromOffsets: source, toOffset: destination)
         let reordered = column.enumerated().map { index, task in
             var task = task
@@ -332,7 +340,7 @@ final class TasksStore {
         open.removeAll { $0.id == task.id }
         done.removeAll { $0.id == task.id }
         switch task.status {
-        case .todo, .inProgress:
+        case .todo, .inProgress, .inReview:
             open.append(task)
             open.sort { $0.position < $1.position }
         case .done:

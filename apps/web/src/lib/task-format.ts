@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  Eye,
   XCircle,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ export const STATUS_CONFIG: Record<
 > = {
   todo: { label: "To do", icon: Circle, color: "text-white/35" },
   in_progress: { label: "Doing", icon: Clock, color: "text-sky-300" },
+  in_review: { label: "In review", icon: Eye, color: "text-amber-300" },
   scheduled: {
     label: "Scheduled",
     icon: CalendarClock,

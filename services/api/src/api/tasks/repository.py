@@ -8,6 +8,7 @@ from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.project import Project
 from api.models.task import Task
 from api.models.task_attachment import TaskAttachment
+from api.tasks.schemas import OPEN_TASK_STATUSES
 
 
 class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
@@ -71,7 +72,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
   async def list_open_occurrences_spawned_by(self, task: Task) -> Sequence[Task]:
     """The still-open next occurrences that completing `task` created."""
     return await self.get_all(
-      self.get_base_statement().where(Task.parent_task_id == task.id).where(Task.user_id == task.user_id).where(Task.status.in_(["todo", "in_progress"]))
+      self.get_base_statement().where(Task.parent_task_id == task.id).where(Task.user_id == task.user_id).where(Task.status.in_(OPEN_TASK_STATUSES))
     )
 
   async def detach_from_project(self, project_id: UUID, user_id: UUID) -> None:
@@ -80,7 +81,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
   async def open_counts_by_project(self, user_id: UUID) -> dict[UUID | None, int]:
     """Open (todo or in progress) tasks per project id; `None` counts tasks without a project."""
     result = await self.session.execute(
-      select(Task.project_id, func.count()).where(Task.user_id == user_id, Task.status.in_(("todo", "in_progress"))).group_by(Task.project_id)
+      select(Task.project_id, func.count()).where(Task.user_id == user_id, Task.status.in_(OPEN_TASK_STATUSES)).group_by(Task.project_id)
     )
     return dict(result.all())
 
@@ -97,7 +98,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
       Task.user_id == user_id,
       func.lower(Task.title) == title.lower(),
       Task.project_id.is_(None) if project_id is None else Task.project_id == project_id,
-      Task.status.in_(("todo", "in_progress")),
+      Task.status.in_(OPEN_TASK_STATUSES),
       Task.created_at >= since,
     )
     return await self.get_one_or_none(statement.limit(1))

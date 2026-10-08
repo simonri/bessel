@@ -18,6 +18,7 @@ const TasksBoard = lazy(() =>
 
 export interface TaskCounts {
   doing: number;
+  inReview: number;
   overdue: number;
   dueToday: number;
   doneToday: number;
@@ -28,12 +29,14 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 /** "2 due today, 1 overdue - 3 done today", or something kinder when clear. */
 export function tasksSentence({
   doing,
+  inReview,
   overdue,
   dueToday,
   doneToday,
 }: TaskCounts): string {
   const ahead = [
     doing > 0 ? `${doing} in progress` : null,
+    inReview > 0 ? `${inReview} to review` : null,
     dueToday > 0 ? `${dueToday} due today` : null,
     overdue > 0 ? `${overdue} overdue` : null,
   ].filter(Boolean);
@@ -50,7 +53,7 @@ function useOpenTasks() {
       query: {
         page: 1,
         limit: 100,
-        status: [TaskStatus.TODO, TaskStatus.IN_PROGRESS],
+        status: [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW],
         sorting: ["position" as "-created_at"],
       },
     }),
@@ -69,6 +72,7 @@ export function TasksPage() {
     groups.find((g) => g.key === key)?.tasks.length ?? 0;
   const counts: TaskCounts = {
     doing: count("doing"),
+    inReview: count("review"),
     overdue: count("overdue"),
     dueToday: count("today"),
     doneToday: progress.doneToday,
