@@ -55,8 +55,6 @@ const PRIORITIES = [
   { value: "4", label: "Urgent" },
 ];
 
-const AREAS = ["Company", "Personal", "Travel"];
-
 const FREQUENCIES = [
   { value: "none", label: "No recurrence" },
   { value: "daily", label: "Daily" },
@@ -134,7 +132,6 @@ function taskToFormValues(task?: TaskSchema) {
       dueDate: "",
       priority: "0",
       project: "",
-      area: "",
       frequency: "none",
       rruleDayOfWeek: "",
       rruleDayOfMonth: "",
@@ -151,7 +148,6 @@ function taskToFormValues(task?: TaskSchema) {
     dueDate: d ? format(d, "yyyy-MM-dd") : "",
     priority: String(task.priority ?? 0),
     project: task.project ?? "",
-    area: task.area ?? "",
     frequency: task.is_recurring ? (task.rrule_frequency ?? "none") : "none",
     rruleDayOfWeek:
       task.rrule_day_of_week != null ? String(task.rrule_day_of_week) : "",
@@ -305,7 +301,6 @@ export function TaskFormDialog({
             due_date: value.dueDate ? new Date(value.dueDate) : null,
             priority: Number(value.priority),
             project: value.project.trim() || null,
-            area: value.area || null,
             is_recurring: isRecurring,
             rrule_frequency: isRecurring ? freq : null,
             rrule_interval: isRecurring ? (task.rrule_interval ?? 1) : null,
@@ -328,7 +323,6 @@ export function TaskFormDialog({
             due_date: value.dueDate ? new Date(value.dueDate) : undefined,
             priority: Number(value.priority),
             project: value.project.trim() || undefined,
-            area: value.area || undefined,
             is_recurring: isRecurring,
             rrule_frequency: isRecurring ? freq : undefined,
             rrule_interval: isRecurring ? 1 : undefined,
@@ -514,47 +508,19 @@ export function TaskFormDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <form.Field
-              name="project"
-              children={(field) => (
-                <div className="space-y-2">
-                  <Label>Project</Label>
-                  <ProjectInput
-                    value={field.state.value}
-                    onChange={field.handleChange}
-                    projects={projects}
-                  />
-                </div>
-              )}
-            />
-            <form.Field
-              name="area"
-              children={(field) => (
-                <div className="space-y-2">
-                  <Label>Area</Label>
-                  <Select
-                    value={field.state.value || "none"}
-                    onValueChange={(v) =>
-                      field.handleChange(v === "none" ? "" : v)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select area" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {AREAS.map((a) => (
-                        <SelectItem key={a} value={a}>
-                          {a}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            />
-          </div>
+          <form.Field
+            name="project"
+            children={(field) => (
+              <div className="space-y-2">
+                <Label>Project</Label>
+                <ProjectInput
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  projects={projects}
+                />
+              </div>
+            )}
+          />
 
           <form.Field
             name="frequency"

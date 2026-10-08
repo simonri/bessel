@@ -41,7 +41,6 @@ final class TasksStore {
     private(set) var open: [TaskItem] = []
     private(set) var done: [TaskItem] = []
     private(set) var projects: [String] = []
-    private(set) var areas: [String] = []
     private(set) var hasLoaded = false
     /// A change that didn't go through; shown as an alert.
     var errorMessage: String?
@@ -64,7 +63,6 @@ final class TasksStore {
         let done: [TaskItem]
         let doneMaxPage: Int
         let projects: [String]
-        let areas: [String]
     }
 
     private static let cacheKey = "tasks.v1"
@@ -79,7 +77,6 @@ final class TasksStore {
             done = snapshot.done.filter { !pending.contains($0.id) }
             doneMaxPage = snapshot.doneMaxPage
             projects = snapshot.projects
-            areas = snapshot.areas
             hasLoaded = true
         }
     }
@@ -157,8 +154,7 @@ final class TasksStore {
             ])
             async let doneTask: TaskListResponse = client.get("/v1/tasks", query: doneQuery(page: 1))
             async let projectsTask: [Project] = client.get("/v1/projects")
-            async let areasTask: [String] = client.get("/v1/tasks/areas")
-            let (openItems, doneResponse, projectList, areaList) = try await (openTask, doneTask, projectsTask, areasTask)
+            let (openItems, doneResponse, projectList) = try await (openTask, doneTask, projectsTask)
             guard loads.isCurrent(ticket) else { return }
 
             let pending = outbox.pendingIDs
@@ -168,10 +164,9 @@ final class TasksStore {
             doneMaxPage = doneResponse.pagination.maxPage
             doneEpoch += 1
             projects = projectList.map(\.name).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-            areas = areaList
             loadError = nil
             loads.finish(ticket)
-            cache.save(Snapshot(open: openItems, done: doneResponse.items, doneMaxPage: doneMaxPage, projects: projects, areas: areas), as: Self.cacheKey)
+            cache.save(Snapshot(open: openItems, done: doneResponse.items, doneMaxPage: doneMaxPage, projects: projects), as: Self.cacheKey)
         } catch {
             guard loads.isCurrent(ticket), !error.isCancellation else { return }
             loadError = error.userMessage

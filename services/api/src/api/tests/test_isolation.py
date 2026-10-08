@@ -111,7 +111,6 @@ AUDITED: set[str] = {
   "PATCH /v1/recipes/{recipe_id}",
   "GET /v1/tasks",
   "POST /v1/tasks",
-  "GET /v1/tasks/areas",
   "PATCH /v1/tasks/reorder",
   "DELETE /v1/tasks/{task_id}",
   "GET /v1/tasks/{task_id}",
@@ -193,10 +192,9 @@ class TestTasks:
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_read_or_change_tasks(self, client: AsyncClient, other_client: AsyncClient) -> None:
-    task = await _create(client, "/v1/tasks", {"title": "A's secret task", "area": "A-area", "position": 1.0})
+    task = await _create(client, "/v1/tasks", {"title": "A's secret task", "position": 1.0})
 
     assert (await other_client.get("/v1/tasks")).json()["items"] == []
-    assert "A-area" not in (await other_client.get("/v1/tasks/areas")).json()
     assert (await other_client.get(f"/v1/tasks/{task['id']}")).status_code == 404
     assert (await other_client.patch(f"/v1/tasks/{task['id']}", json={"title": "pwned"})).status_code == 404
     assert (await other_client.post(f"/v1/tasks/{task['id']}/complete")).status_code == 404

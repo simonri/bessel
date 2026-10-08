@@ -4695,24 +4695,6 @@
             "description": "Filter by project."
           },
           {
-            "name": "area",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by area.",
-              "title": "Area"
-            },
-            "description": "Filter by area."
-          },
-          {
             "name": "is_recurring",
             "in": "query",
             "required": false,
@@ -5379,36 +5361,6 @@
             }
           }
         }
-      }
-    },
-    "/v1/tasks/areas": {
-      "get": {
-        "tags": [
-          "tasks"
-        ],
-        "summary": "List Areas",
-        "operationId": "list_areas_v1_tasks_areas_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array",
-                  "title": "Response List Areas V1 Tasks Areas Get"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
       }
     },
     "/v1/timeline": {
@@ -12716,18 +12668,6 @@
             ],
             "title": "Project"
           },
-          "area": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area"
-          },
           "tags": {
             "anyOf": [
               {
@@ -12955,18 +12895,6 @@
             "title": "Project",
             "description": "Project name."
           },
-          "area": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area",
-            "description": "Area (e.g. Company, Personal, Travel)."
-          },
           "tags": {
             "anyOf": [
               {
@@ -13171,18 +13099,6 @@
               }
             ],
             "title": "Project"
-          },
-          "area": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area"
           },
           "tags": {
             "anyOf": [

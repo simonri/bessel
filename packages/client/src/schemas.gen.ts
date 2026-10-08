@@ -6272,18 +6272,6 @@ export const TaskCreateSchema = {
       ],
       title: "Project",
     },
-    area: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 100,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Area",
-    },
     tags: {
       anyOf: [
         {
@@ -6506,18 +6494,6 @@ export const TaskSchemaSchema = {
       title: "Project",
       description: "Project name.",
     },
-    area: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Area",
-      description: "Area (e.g. Company, Personal, Travel).",
-    },
     tags: {
       anyOf: [
         {
@@ -6715,18 +6691,6 @@ export const TaskUpdateSchema = {
         },
       ],
       title: "Project",
-    },
-    area: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 100,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Area",
     },
     tags: {
       anyOf: [

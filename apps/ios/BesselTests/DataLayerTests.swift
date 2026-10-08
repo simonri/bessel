@@ -178,7 +178,7 @@ final class ResponseCacheTests: XCTestCase {
         let json = #"""
         {"id":"3F2504E0-4F89-11D3-9A0C-0305E82C3301","created_at":"2026-10-01T08:30:00.123456","modified_at":null,
          "title":"Water plants","description":null,"status":"todo","priority":2,"due_date":"2026-10-07","completed_at":null,
-         "project":"Home","area":null,"tags":null,"position":1000,"is_recurring":true,"rrule_frequency":"weekly",
+         "project":"Home","tags":null,"position":1000,"is_recurring":true,"rrule_frequency":"weekly",
          "rrule_interval":1,"rrule_day_of_week":null,"rrule_day_of_month":null,"parent_task_id":null}
         """#
         let task = try JSONDecoder.api.decode(TaskItem.self, from: Data(json.utf8))

@@ -22,7 +22,6 @@ import {
   Copy,
   Flag,
   Folder,
-  Layers,
   Pencil,
   Repeat,
   RotateCcw,
@@ -194,17 +193,6 @@ export function TaskDetailDialog({
               <div className="flex items-center gap-1.5 text-sm">
                 <Folder className="size-3.5 text-muted-foreground" />
                 {task.project}
-              </div>
-            </>
-          )}
-
-          {/* Area */}
-          {task.area && (
-            <>
-              <span className="text-muted-foreground text-xs">Area</span>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Layers className="size-3.5" />
-                {task.area}
               </div>
             </>
           )}

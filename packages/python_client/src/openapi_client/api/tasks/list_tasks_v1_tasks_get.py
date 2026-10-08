@@ -17,7 +17,6 @@ def _get_kwargs(
   status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
-  area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
   completed_after: int | None | Unset = UNSET,
   completed_before: int | None | Unset = UNSET,
@@ -54,13 +53,6 @@ def _get_kwargs(
   else:
     json_project = project
   params["project"] = json_project
-
-  json_area: None | str | Unset
-  if isinstance(area, Unset):
-    json_area = UNSET
-  else:
-    json_area = area
-  params["area"] = json_area
 
   json_is_recurring: bool | None | Unset
   if isinstance(is_recurring, Unset):
@@ -143,7 +135,6 @@ def sync_detailed(
   status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
-  area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
   completed_after: int | None | Unset = UNSET,
   completed_before: int | None | Unset = UNSET,
@@ -157,7 +148,6 @@ def sync_detailed(
       status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
-      area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
       completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
           (inclusive).
@@ -181,7 +171,6 @@ def sync_detailed(
     status=status,
     priority=priority,
     project=project,
-    area=area,
     is_recurring=is_recurring,
     completed_after=completed_after,
     completed_before=completed_before,
@@ -203,7 +192,6 @@ def sync(
   status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
-  area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
   completed_after: int | None | Unset = UNSET,
   completed_before: int | None | Unset = UNSET,
@@ -217,7 +205,6 @@ def sync(
       status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
-      area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
       completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
           (inclusive).
@@ -242,7 +229,6 @@ def sync(
     status=status,
     priority=priority,
     project=project,
-    area=area,
     is_recurring=is_recurring,
     completed_after=completed_after,
     completed_before=completed_before,
@@ -258,7 +244,6 @@ async def asyncio_detailed(
   status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
-  area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
   completed_after: int | None | Unset = UNSET,
   completed_before: int | None | Unset = UNSET,
@@ -272,7 +257,6 @@ async def asyncio_detailed(
       status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
-      area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
       completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
           (inclusive).
@@ -296,7 +280,6 @@ async def asyncio_detailed(
     status=status,
     priority=priority,
     project=project,
-    area=area,
     is_recurring=is_recurring,
     completed_after=completed_after,
     completed_before=completed_before,
@@ -316,7 +299,6 @@ async def asyncio(
   status: list[TaskStatus] | None | Unset = UNSET,
   priority: int | None | Unset = UNSET,
   project: None | str | Unset = UNSET,
-  area: None | str | Unset = UNSET,
   is_recurring: bool | None | Unset = UNSET,
   completed_after: int | None | Unset = UNSET,
   completed_before: int | None | Unset = UNSET,
@@ -330,7 +312,6 @@ async def asyncio(
       status (list[TaskStatus] | None | Unset): Filter by status. Repeat to filter by multiple.
       priority (int | None | Unset): Filter by priority.
       project (None | str | Unset): Filter by project.
-      area (None | str | Unset): Filter by area.
       is_recurring (bool | None | Unset): Filter by recurring.
       completed_after (int | None | Unset): Filter tasks completed after this Unix timestamp
           (inclusive).
@@ -356,7 +337,6 @@ async def asyncio(
       status=status,
       priority=priority,
       project=project,
-      area=area,
       is_recurring=is_recurring,
       completed_after=completed_after,
       completed_before=completed_before,

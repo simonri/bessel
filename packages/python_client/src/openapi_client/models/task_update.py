@@ -24,7 +24,6 @@ class TaskUpdate:
       priority (int | None | Unset):
       due_date (datetime.date | None | Unset):
       project (None | str | Unset):
-      area (None | str | Unset):
       tags (list[str] | None | Unset):
       position (float | None | Unset):
       is_recurring (bool | None | Unset):
@@ -40,7 +39,6 @@ class TaskUpdate:
   priority: int | None | Unset = UNSET
   due_date: datetime.date | None | Unset = UNSET
   project: None | str | Unset = UNSET
-  area: None | str | Unset = UNSET
   tags: list[str] | None | Unset = UNSET
   position: float | None | Unset = UNSET
   is_recurring: bool | None | Unset = UNSET
@@ -90,12 +88,6 @@ class TaskUpdate:
       project = UNSET
     else:
       project = self.project
-
-    area: None | str | Unset
-    if isinstance(self.area, Unset):
-      area = UNSET
-    else:
-      area = self.area
 
     tags: list[str] | None | Unset
     if isinstance(self.tags, Unset):
@@ -159,8 +151,6 @@ class TaskUpdate:
       field_dict["due_date"] = due_date
     if project is not UNSET:
       field_dict["project"] = project
-    if area is not UNSET:
-      field_dict["area"] = area
     if tags is not UNSET:
       field_dict["tags"] = tags
     if position is not UNSET:
@@ -252,15 +242,6 @@ class TaskUpdate:
 
     project = _parse_project(d.pop("project", UNSET))
 
-    def _parse_area(data: object) -> None | str | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(None | str | Unset, data)
-
-    area = _parse_area(d.pop("area", UNSET))
-
     def _parse_tags(data: object) -> list[str] | None | Unset:
       if data is None:
         return data
@@ -347,7 +328,6 @@ class TaskUpdate:
       priority=priority,
       due_date=due_date,
       project=project,
-      area=area,
       tags=tags,
       position=position,
       is_recurring=is_recurring,

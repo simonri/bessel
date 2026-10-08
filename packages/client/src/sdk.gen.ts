@@ -238,8 +238,6 @@ import type {
   IngestActivityBatchV1ActivityBatchPostResponses,
   ListActivitySourcesV1ActivitySourcesGetData,
   ListActivitySourcesV1ActivitySourcesGetResponses,
-  ListAreasV1TasksAreasGetData,
-  ListAreasV1TasksAreasGetResponses,
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetErrors,
   ListBankAccountsV1BankAccountsGetResponses,
@@ -2515,22 +2513,6 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePost = <
       undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/undo-complete",
-    ...options,
-  });
-
-/**
- * List Areas
- */
-export const listAreasV1TasksAreasGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListAreasV1TasksAreasGetData, ThrowOnError>,
-) =>
-  (options?.client ?? client).get<
-    ListAreasV1TasksAreasGetResponses,
-    unknown,
-    ThrowOnError
-  >({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/tasks/areas",
     ...options,
   });
 

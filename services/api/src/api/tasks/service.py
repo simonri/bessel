@@ -77,7 +77,6 @@ class TaskService:
       priority=task.priority,
       due_date=next_due,
       project_id=task.project_id,
-      area=task.area,
       tags=task.tags,
       position=(max_pos or 0) + 1000,
       is_recurring=True,

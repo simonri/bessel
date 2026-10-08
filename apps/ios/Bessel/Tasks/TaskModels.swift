@@ -34,7 +34,6 @@ struct TaskItem: Codable, Identifiable, Hashable {
     var dueDate: Date?
     var completedAt: Date?
     var project: String?
-    var area: String?
     var tags: [String]?
     var position: Double
     var isRecurring: Bool
@@ -52,10 +51,9 @@ struct TaskCreate: Encodable {
     var priority: Int
     var dueDate: Date?
     var project: String?
-    var area: String?
 
     enum CodingKeys: String, CodingKey {
-        case title, description, status, priority, project, area
+        case title, description, status, priority, project
         case dueDate = "due_date"
     }
 }
@@ -69,10 +67,9 @@ struct TaskUpdate: Encodable {
     var priority: Int
     var dueDate: Date?
     var project: String?
-    var area: String?
 
     enum CodingKeys: String, CodingKey {
-        case title, description, status, priority, project, area
+        case title, description, status, priority, project
         case dueDate = "due_date"
     }
 
@@ -84,8 +81,7 @@ struct TaskUpdate: Encodable {
             status: status,
             priority: task.priority,
             dueDate: task.dueDate,
-            project: task.project,
-            area: task.area
+            project: task.project
         )
     }
 
@@ -97,7 +93,6 @@ struct TaskUpdate: Encodable {
         try container.encode(description, forKey: .description)
         try container.encode(dueDate, forKey: .dueDate)
         try container.encode(project, forKey: .project)
-        try container.encode(area, forKey: .area)
     }
 }
 

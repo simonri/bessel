@@ -33,7 +33,6 @@ class TaskSchema:
       due_date (datetime.date | None | Unset): Due date.
       completed_at (datetime.datetime | None | Unset): Completion timestamp.
       project (None | str | Unset): Project name.
-      area (None | str | Unset): Area (e.g. Company, Personal, Travel).
       tags (list[str] | None | Unset): User-defined tags.
       position (float | Unset): Position for ordering within a status column. Default: 0.0.
       is_recurring (bool | Unset): Whether this task recurs. Default: False.
@@ -55,7 +54,6 @@ class TaskSchema:
   due_date: datetime.date | None | Unset = UNSET
   completed_at: datetime.datetime | None | Unset = UNSET
   project: None | str | Unset = UNSET
-  area: None | str | Unset = UNSET
   tags: list[str] | None | Unset = UNSET
   position: float | Unset = 0.0
   is_recurring: bool | Unset = False
@@ -113,12 +111,6 @@ class TaskSchema:
       project = UNSET
     else:
       project = self.project
-
-    area: None | str | Unset
-    if isinstance(self.area, Unset):
-      area = UNSET
-    else:
-      area = self.area
 
     tags: list[str] | None | Unset
     if isinstance(self.tags, Unset):
@@ -196,8 +188,6 @@ class TaskSchema:
       field_dict["completed_at"] = completed_at
     if project is not UNSET:
       field_dict["project"] = project
-    if area is not UNSET:
-      field_dict["area"] = area
     if tags is not UNSET:
       field_dict["tags"] = tags
     if position is not UNSET:
@@ -306,15 +296,6 @@ class TaskSchema:
 
     project = _parse_project(d.pop("project", UNSET))
 
-    def _parse_area(data: object) -> None | str | Unset:
-      if data is None:
-        return data
-      if isinstance(data, Unset):
-        return data
-      return cast(None | str | Unset, data)
-
-    area = _parse_area(d.pop("area", UNSET))
-
     def _parse_tags(data: object) -> list[str] | None | Unset:
       if data is None:
         return data
@@ -417,7 +398,6 @@ class TaskSchema:
       due_date=due_date,
       completed_at=completed_at,
       project=project,
-      area=area,
       tags=tags,
       position=position,
       is_recurring=is_recurring,

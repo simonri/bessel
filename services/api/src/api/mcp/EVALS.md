@@ -10,7 +10,7 @@ Real requests the Bessel MCP server should handle well. Run them against a test 
 | 4 | Do I have a task about the passport? | `find_tasks(search="passport", status="any")` | Finds it whether open or done |
 | 5 | Remind me to renew my passport next friday, high priority | `add_tasks` | Due date is next Friday in the user's timezone, no timezone question |
 | 6 | Turn these meeting notes into tasks: … | `get_task_overview` (for project names), then one `add_tasks` call | One batch, existing project names, sensible due dates only where the notes give one |
-| 7 | Push all my overdue personal tasks to Saturday | `find_tasks(due="overdue", area="Personal")`, one `update_tasks` | Asks before changing; one batched update |
+| 7 | Push all my overdue Bessel tasks to Saturday | `find_tasks(due="overdue", project="Bessel")`, one `update_tasks` | Asks before changing; one batched update |
 | 8 | I paid rent and did the laundry | `find_tasks(search=…)`, `complete_tasks` | Completes both; mentions the next occurrence of any routine |
 | 9 | Oops, I didn't finish the laundry | `undo_complete_tasks` | Reopens it without leaving a duplicate routine |
 | 10 | What did I get done this week? | `find_completed_tasks` | Grouped by project, with counts |

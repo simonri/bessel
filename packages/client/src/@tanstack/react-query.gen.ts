@@ -68,7 +68,6 @@ import {
   importTransactionsV1TransactionsImportPost,
   ingestActivityBatchV1ActivityBatchPost,
   listActivitySourcesV1ActivitySourcesGet,
-  listAreasV1TasksAreasGet,
   listBankAccountsV1BankAccountsGet,
   listCalendarAccountsV1CalendarsAccountsGet,
   listCalendarEventsV1CalendarsEventsGet,
@@ -289,8 +288,6 @@ import type {
   IngestActivityBatchV1ActivityBatchPostResponse,
   ListActivitySourcesV1ActivitySourcesGetData,
   ListActivitySourcesV1ActivitySourcesGetResponse,
-  ListAreasV1TasksAreasGetData,
-  ListAreasV1TasksAreasGetResponse,
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetError,
   ListBankAccountsV1BankAccountsGetResponse,
@@ -3849,34 +3846,6 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation = (
   };
   return mutationOptions;
 };
-
-export const listAreasV1TasksAreasGetQueryKey = (
-  options?: Options<ListAreasV1TasksAreasGetData>,
-) => createQueryKey("listAreasV1TasksAreasGet", options);
-
-/**
- * List Areas
- */
-export const listAreasV1TasksAreasGetOptions = (
-  options?: Options<ListAreasV1TasksAreasGetData>,
-) =>
-  queryOptions<
-    ListAreasV1TasksAreasGetResponse,
-    DefaultError,
-    ListAreasV1TasksAreasGetResponse,
-    ReturnType<typeof listAreasV1TasksAreasGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listAreasV1TasksAreasGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listAreasV1TasksAreasGetQueryKey(options),
-  });
 
 export const getTimelineV1TimelineGetQueryKey = (
   options: Options<GetTimelineV1TimelineGetData>,

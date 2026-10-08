@@ -475,8 +475,7 @@ private struct TaskComposer: View {
             status: .todo,
             priority: task.priority,
             dueDate: task.dueDate,
-            project: task.project ?? chosenProject,
-            area: nil
+            project: task.project ?? chosenProject
         )
         Task {
             defer { isSaving = false }

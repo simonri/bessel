@@ -57,7 +57,7 @@ struct TaskRow: View {
     }
 
     private var hasMeta: Bool {
-        task.dueDate != nil || task.completedAt != nil || task.project != nil || task.recurrenceLabel != nil || task.area != nil
+        task.dueDate != nil || task.completedAt != nil || task.project != nil || task.recurrenceLabel != nil
     }
 
     private var meta: some View {
@@ -80,10 +80,6 @@ struct TaskRow: View {
             }
             if let project = task.project {
                 Chip(text: project, hue: PastelHue.forName(project))
-            } else if let area = task.area {
-                Text(area)
-                    .font(.caption)
-                    .foregroundStyle(Theme.faintForeground)
             }
         }
         .lineLimit(1)

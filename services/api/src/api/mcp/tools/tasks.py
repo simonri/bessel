@@ -54,7 +54,6 @@ class Task(Schema):
   due: date | None
   due_label: str | None = Field(description="The due day relative to today, e.g. 'today', 'overdue by 2 days', 'in 3 days (Sat)'.")
   project: str | None
-  area: str | None
   tags: list[str] | None
   repeats: str | None = Field(description="How a routine repeats, e.g. 'every 2 weeks on Mon'; null for one-off tasks.")
   notes: str | None = Field(default=None, description="Only in detailed responses.")
@@ -93,7 +92,6 @@ class TaskOverview(Schema):
   routines_due: list[Task] = Field(description="Repeating tasks due today or earlier.")
   counts: OverviewCounts = Field(description="Open one-off tasks per group; lists above are capped at 30.")
   projects: list[ProjectSummary] = Field(description="Every project with its open task count, most open first.")
-  areas: list[str]
   tags: list[str]
 
 
@@ -141,7 +139,6 @@ class NewTask(Schema):
   priority: Priority = "none"
   project: str | None = Field(default=None, description="An existing project name (loosely matched). See get_task_overview for the list.")
   new_project: bool = Field(default=False, description="Create `project` if it doesn't exist yet. Only when the user asked for a new project.")
-  area: str | None = Field(default=None, max_length=100)
   tags: list[str] | None = None
   status: Literal["todo", "in_progress"] = "todo"
   repeat: Repeat | None = Field(default=None, description="Makes the task a routine that comes back after each completion.")
@@ -155,7 +152,6 @@ class TaskChange(Schema):
   due: str | None = Field(default=None, description="A day (same formats as elsewhere), or 'none' to clear it.")
   priority: Priority | None = None
   project: str | None = Field(default=None, description="An existing project name, or 'none' to remove the task from its project.")
-  area: str | None = Field(default=None, description="An area, or 'none' to clear it.")
   tags: list[str] | None = Field(default=None, description="Replaces the tags.")
   status: Literal["todo", "in_progress", "cancelled"] | None = Field(default=None, description="Use complete_tasks to mark tasks done.")
   repeat: Repeat | None = None
@@ -202,7 +198,6 @@ def to_task(task: TaskModel, today: date, *, detailed: bool = False) -> Task:
     due=task.due_date,
     due_label=_due_label(task.due_date, today) if task.status in OPEN_STATUSES else None,
     project=task.project_obj.name if task.project_obj else None,
-    area=task.area,
     tags=task.tags or None,
     repeats=_repeats(task),
     notes=task.description if detailed else None,
@@ -269,7 +264,7 @@ def _dated_note(existing: str | None, note: str, today: date) -> str:
 
 async def get_task_overview(ctx: Context, timezone: TimezoneParam = None) -> TaskOverview:
   """What's on the user's plate: tasks in progress, overdue, due today and over the next 6 days, routines due,
-  plus every project, area and tag (the names other task tools accept).
+  plus every project and tag (the names other task tools accept).
 
   Call it first for "what should I focus on today?", a morning plan, "what's overdue?", or before adding tasks
   so you know the existing projects.
@@ -282,7 +277,6 @@ async def get_task_overview(ctx: Context, timezone: TimezoneParam = None) -> Tas
     )
     projects = await ProjectRepository.from_session(session).list_for_user(user.id)
     open_counts = await repo.open_counts_by_project(user.id)
-    areas = await repo.list_areas_by_usage(user.id)
     tags = await repo.list_tags(user.id)
 
     in_progress, overdue, due_today, soon, routines = [], [], [], [], []
@@ -327,7 +321,6 @@ async def get_task_overview(ctx: Context, timezone: TimezoneParam = None) -> Tas
         (ProjectSummary(name=p.name, open_tasks=open_counts.get(p.id, 0)) for p in projects),
         key=lambda p: (-p.open_tasks, p.name.casefold()),
       ),
-      areas=areas,
       tags=tags,
     )
 
@@ -336,7 +329,6 @@ async def find_tasks(
   ctx: Context,
   search: Annotated[str | None, Field(description="Case-insensitive text in the title or notes.")] = None,
   project: Annotated[str | None, Field(description="Project name, loosely matched.")] = None,
-  area: Annotated[str | None, Field(description="Exact area, e.g. 'Personal'.")] = None,
   tag: str | None = None,
   status: Literal["open", "todo", "in_progress", "done", "cancelled", "any"] = "open",
   due: Annotated[
@@ -390,7 +382,6 @@ async def find_tasks(
       statuses=statuses,
       search=search,
       project_id=project_id,
-      area=area,
       tag=tag,
       min_priority=PRIORITIES.index(min_priority) if min_priority else None,
       due_from=start,
@@ -489,7 +480,6 @@ async def add_tasks(ctx: Context, tasks: Annotated[list[NewTask], Field(min_leng
         priority=PRIORITIES.index(item.priority),
         due_date=due_date,
         project=project_name,
-        area=item.area,
         tags=item.tags,
         **(_repeat_fields(item.repeat) if item.repeat else {}),
       )
@@ -531,8 +521,6 @@ async def update_tasks(ctx: Context, changes: Annotated[list[TaskChange], Field(
           if matched is None:
             raise _unknown_project(change.project, projects)
           fields["project"] = matched.name
-      if change.area is not None:
-        fields["area"] = None if change.area.strip().lower() == "none" else change.area.strip()
       if change.tags is not None:
         fields["tags"] = change.tags
       if change.status is not None:

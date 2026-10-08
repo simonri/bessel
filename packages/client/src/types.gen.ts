@@ -3921,10 +3921,6 @@ export type TaskCreate = {
    */
   project?: string | null;
   /**
-   * Area
-   */
-  area?: string | null;
-  /**
    * Tags
    */
   tags?: Array<string> | null;
@@ -4039,12 +4035,6 @@ export type TaskSchema = {
    * Project name.
    */
   project?: string | null;
-  /**
-   * Area
-   *
-   * Area (e.g. Company, Personal, Travel).
-   */
-  area?: string | null;
   /**
    * Tags
    *
@@ -4163,10 +4153,6 @@ export type TaskUpdate = {
    * Project
    */
   project?: string | null;
-  /**
-   * Area
-   */
-  area?: string | null;
   /**
    * Tags
    */
@@ -7541,12 +7527,6 @@ export type ListTasksV1TasksGetData = {
      */
     project?: string | null;
     /**
-     * Area
-     *
-     * Filter by area.
-     */
-    area?: string | null;
-    /**
      * Is Recurring
      *
      * Filter by recurring.
@@ -7961,25 +7941,6 @@ export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses = {
 
 export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse =
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses[keyof UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses];
-
-export type ListAreasV1TasksAreasGetData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/v1/tasks/areas";
-};
-
-export type ListAreasV1TasksAreasGetResponses = {
-  /**
-   * Response List Areas V1 Tasks Areas Get
-   *
-   * Successful Response
-   */
-  200: Array<string>;
-};
-
-export type ListAreasV1TasksAreasGetResponse =
-  ListAreasV1TasksAreasGetResponses[keyof ListAreasV1TasksAreasGetResponses];
 
 export type GetTimelineV1TimelineGetData = {
   body?: never;

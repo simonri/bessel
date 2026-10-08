@@ -43,7 +43,6 @@ class TaskSchema(IDSchema, TimestampedSchema):
   completed_at: datetime | None = Field(default=None, description="Completion timestamp.")
 
   project: str | None = Field(default=None, description="Project name.")
-  area: str | None = Field(default=None, description="Area (e.g. Company, Personal, Travel).")
   tags: list[str] | None = Field(default=None, description="User-defined tags.")
   position: float = Field(default=0, description="Position for ordering within a status column.")
 
@@ -67,7 +66,6 @@ class TaskCreate(Schema):
   due_date: date | None = Field(default=None)
 
   project: str | None = Field(default=None, max_length=100)
-  area: str | None = Field(default=None, max_length=100)
   tags: list[str] | None = Field(default=None)
   position: float | None = Field(default=None)
 
@@ -87,7 +85,6 @@ class TaskUpdate(Schema):
   due_date: date | None = Field(default=None)
 
   project: str | None = Field(default=None, max_length=100)
-  area: str | None = Field(default=None, max_length=100)
   tags: list[str] | None = Field(default=None)
   position: float | None = Field(default=None)
 

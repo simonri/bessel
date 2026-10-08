@@ -13,7 +13,6 @@ struct TaskFormView: View {
     @State private var priority = 0
     @State private var dueDate: Date?
     @State private var project = ""
-    @State private var area = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var showingDatePicker = false
@@ -39,6 +38,13 @@ struct TaskFormView: View {
                     }
                 }
 
+                Section {
+                    suggestingField("Project", text: $project, suggestions: store.projects)
+                } header: {
+                    SectionHeading(title: "Project")
+                }
+                .listRowBackground(Theme.card)
+
                 pickerSection("When") {
                     dueChips
                 } rows: {
@@ -58,14 +64,6 @@ struct TaskFormView: View {
                         priorityPill("Urgent", 4)
                     }
                 }
-
-                Section {
-                    suggestingField("Project", text: $project, suggestions: store.projects)
-                    suggestingField("Area", text: $area, suggestions: store.areas)
-                } header: {
-                    SectionHeading(title: "Organise")
-                }
-                .listRowBackground(Theme.card)
 
                 if let errorMessage {
                     Section {
@@ -245,7 +243,6 @@ struct TaskFormView: View {
         priority = task.priority
         dueDate = task.dueDate
         project = task.project ?? ""
-        area = task.area ?? ""
         showingDatePicker = isCustomDate
     }
 
@@ -260,8 +257,7 @@ struct TaskFormView: View {
             status: status,
             priority: priority,
             dueDate: dueDate,
-            project: trimmed(project),
-            area: trimmed(area)
+            project: trimmed(project)
         )
         isSaving = true
         errorMessage = nil

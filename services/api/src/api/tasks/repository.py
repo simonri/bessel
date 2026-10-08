@@ -21,7 +21,6 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
     priority: int | None = None,
     project: str | None = None,
     project_id: UUID | None = None,
-    area: str | None = None,
     tag: str | None = None,
     min_priority: int | None = None,
     due_from: date | None = None,
@@ -42,8 +41,6 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
       statement = statement.where(Task.project_id.in_(project_ids))
     if project_id is not None:
       statement = statement.where(Task.project_id == project_id)
-    if area is not None:
-      statement = statement.where(Task.area == area)
     if tag is not None:
       statement = statement.where(Task.tags.any(tag))
     if min_priority is not None:
@@ -79,12 +76,6 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
 
   async def detach_from_project(self, project_id: UUID, user_id: UUID) -> None:
     await self.session.execute(update(Task).where(Task.project_id == project_id).where(Task.user_id == user_id).values(project_id=None))
-
-  async def list_areas_by_usage(self, user_id: UUID) -> list[str]:
-    result = await self.session.execute(
-      select(Task.area).where(Task.area.is_not(None)).where(Task.user_id == user_id).group_by(Task.area).order_by(func.count().desc())
-    )
-    return [row[0] for row in result.all()]
 
   async def open_counts_by_project(self, user_id: UUID) -> dict[UUID | None, int]:
     """Open (todo or in progress) tasks per project id; `None` counts tasks without a project."""

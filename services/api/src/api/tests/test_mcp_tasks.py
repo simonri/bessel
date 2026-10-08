@@ -54,7 +54,7 @@ class TestOverview:
   async def test_groups_open_work_like_the_today_view(self, connect: ConnectFixture, stockholm_user: User, bessel: Project, make_task: MakeTask) -> None:
     today = _today()
     await make_task("Write release notes", status="in_progress", project=bessel)
-    await make_task("Renew passport", due_date=today - timedelta(days=3), area="Personal", tags=["errand"])
+    await make_task("Renew passport", due_date=today - timedelta(days=3), tags=["errand"])
     await make_task("Call the dentist", due_date=today)
     await make_task("Fix sync bug", due_date=today + timedelta(days=2), priority=4, project=bessel)
     await make_task("Plan trip", due_date=today + timedelta(days=30))
@@ -72,7 +72,6 @@ class TestOverview:
     assert [(t["title"], t["repeats"]) for t in overview["routines_due"]] == [("Water plants", "every week")]
     assert overview["counts"] == {"open": 6, "in_progress": 1, "overdue": 1, "due_today": 1, "next_6_days": 1, "later": 1, "no_due_date": 1}
     assert overview["projects"] == [{"name": "Bessel", "open_tasks": 2}]
-    assert overview["areas"] == ["Personal"]
     assert overview["tags"] == ["errand"]
 
   @pytest.mark.asyncio

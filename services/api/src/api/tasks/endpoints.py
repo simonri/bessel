@@ -60,7 +60,6 @@ async def list_tasks(
   status: Annotated[list[TaskStatus] | None, Query(description="Filter by status. Repeat to filter by multiple.")] = None,
   priority: int | None = Query(default=None, ge=0, le=4, description="Filter by priority."),
   project: str | None = Query(default=None, description="Filter by project."),
-  area: str | None = Query(default=None, description="Filter by area."),
   is_recurring: bool | None = Query(default=None, description="Filter by recurring."),
   completed_after: int | None = Query(default=None, description="Filter tasks completed after this Unix timestamp (inclusive)."),
   completed_before: int | None = Query(default=None, description="Filter tasks completed before this Unix timestamp (exclusive)."),
@@ -71,7 +70,6 @@ async def list_tasks(
     statuses=status,
     priority=priority,
     project=project,
-    area=area,
     is_recurring=is_recurring,
     completed_after=datetime.fromtimestamp(completed_after, tz=UTC) if completed_after is not None else None,
     completed_before=datetime.fromtimestamp(completed_before, tz=UTC) if completed_before is not None else None,
@@ -289,21 +287,13 @@ async def undo_complete_task(
   return TaskSchema.model_validate(task)
 
 
-@router.get(
-  "/areas",
-  summary="List Areas",
-  response_model=list[str],
-)
-async def list_areas(
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> list[str]:
-  repo = TaskRepository.from_session(session)
-  return await repo.list_areas_by_usage(current_user.id)
+# Areas were removed. iOS builds from before still load them alongside tasks,
+# and without this "/areas" would reach get_task and fail the whole load.
+@router.get("/areas", include_in_schema=False)
+async def list_areas() -> list[str]:
+  return []
 
 
-# Registered after /areas — FastAPI matches routes in definition order, and
-# this would otherwise capture (and 422) "/areas" as a task_id.
 @router.get(
   "/{task_id}",
   summary="Get Task",

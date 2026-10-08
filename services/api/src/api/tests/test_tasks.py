@@ -63,6 +63,20 @@ class TestTaskNotFound:
     assert resp.status_code == 404
 
 
+class TestRemovedAreas:
+  @pytest.mark.asyncio
+  async def test_old_clients_still_get_an_empty_list(self, client: AsyncClient) -> None:
+    response = await client.get("/v1/tasks/areas")
+    assert response.status_code == 200
+    assert response.json() == []
+
+  @pytest.mark.asyncio
+  async def test_an_area_sent_by_an_old_client_is_ignored(self, client: AsyncClient) -> None:
+    response = await client.post("/v1/tasks", json={"title": "Pack", "area": "Travel", "position": 1.0})
+    assert response.status_code == 201
+    assert "area" not in response.json()
+
+
 class TestTaskUndoComplete:
   @pytest.mark.asyncio
   @pytest.mark.keep_session_state
