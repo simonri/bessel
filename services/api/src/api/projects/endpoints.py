@@ -59,7 +59,7 @@ async def update_project(
   device: OptionalCurrentDevice,
 ) -> ProjectSchema:
   repo = ProjectRepository.from_session(session)
-  project = await repo.get_owned_or_404(project_id, current_user.id, check_not_deleted=True, not_found_message="Project not found.")
+  project = await repo.get_owned_or_404(project_id, current_user.id, not_found_message="Project not found.")
   update_dict = body.model_dump(exclude_unset=True)
   if update_dict:
     await repo.update(project, update_dict=update_dict, flush=True)
@@ -74,9 +74,7 @@ async def set_project_location(
   current_user: CurrentDBUser,
   device: CurrentDevice,
 ) -> ProjectSchema:
-  project = await ProjectRepository.from_session(session).get_owned_or_404(
-    project_id, current_user.id, check_not_deleted=True, not_found_message="Project not found."
-  )
+  project = await ProjectRepository.from_session(session).get_owned_or_404(project_id, current_user.id, not_found_message="Project not found.")
   config = await project_service.set_location(session, project, device.id, body.path, body.ssh_host)
   return _to_schema(ResolvedProject(project, config.path, config.ssh_host))
 
@@ -88,6 +86,6 @@ async def delete_project(
   current_user: CurrentDBUser,
 ) -> None:
   repo = ProjectRepository.from_session(session)
-  project = await repo.get_owned_or_404(project_id, current_user.id, check_not_deleted=True, not_found_message="Project not found.")
+  project = await repo.get_owned_or_404(project_id, current_user.id, not_found_message="Project not found.")
   await TaskRepository.from_session(session).detach_from_project(project_id, current_user.id)
   await repo.update(project, update_dict={"deleted_at": utc_now()})

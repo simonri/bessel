@@ -143,12 +143,10 @@ class RepositoryIDMixin[MODEL_ID: ModelIDProtocol, ID_TYPE]:
     entity_id: UUID,
     user_id: UUID,
     *,
-    check_not_deleted: bool = False,
     not_found_message: str = "Not found",
   ) -> MODEL_OWNED:
-    statement = self.get_base_statement().where(self.model.id == entity_id).where(self.model.user_id == user_id)
-    if check_not_deleted:
-      statement = statement.where(self.model.deleted_at.is_(None))
+    """The user's live record; soft-deleted ones 404 like the lists that hide them."""
+    statement = self.get_base_statement().where(self.model.id == entity_id).where(self.model.user_id == user_id).where(self.model.deleted_at.is_(None))
     item = await self.get_one_or_none(statement)
     if item is None:
       raise ResourceNotFound(not_found_message)

@@ -39,5 +39,5 @@ async def revoke_ingest_token(
   current_user: CurrentDBUser,
 ) -> None:
   repo = IngestTokenRepository.from_session(session)
-  token = await repo.get_owned_or_404(token_id, current_user.id, check_not_deleted=True, not_found_message="Token not found")
+  token = await repo.get_owned_or_404(token_id, current_user.id, not_found_message="Token not found")
   await repo.update(token, update_dict={"deleted_at": utc_now()}, flush=True)

@@ -2,7 +2,11 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from api.common.utils import utc_now
+from api.models.task import Task
+from api.models.user import User
 from api.settings import settings
+from api.tests.fixtures.database import SaveFixture
 from httpx import AsyncClient
 
 
@@ -75,6 +79,17 @@ class TestRemovedAreas:
     response = await client.post("/v1/tasks", json={"title": "Pack", "area": "Travel", "position": 1.0})
     assert response.status_code == 201
     assert "area" not in response.json()
+
+
+class TestSoftDeleted:
+  @pytest.mark.asyncio
+  async def test_a_soft_deleted_record_is_gone_by_id_too(self, client: AsyncClient, user: User, save_fixture: SaveFixture) -> None:
+    task = Task(title="Old idea", user_id=user.id, status="todo", position=1.0, deleted_at=utc_now())
+    await save_fixture(task)
+
+    assert (await client.get(f"/v1/tasks/{task.id}")).status_code == 404
+    assert (await client.patch(f"/v1/tasks/{task.id}", json={"title": "Back?"})).status_code == 404
+    assert (await client.delete(f"/v1/tasks/{task.id}")).status_code == 404
 
 
 class TestTaskUndoComplete:
