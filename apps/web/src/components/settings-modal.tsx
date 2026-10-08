@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   Palette,
   Settings,
-  Sparkles,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -23,7 +22,6 @@ import { AppearancePage } from "@/components/settings-appearance-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
 import { MonitorPage } from "@/components/settings-monitor-page";
-import { MyAiPage } from "@/components/settings-my-ai-page";
 import { cn } from "@/lib/utils";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
@@ -38,7 +36,6 @@ type SidebarPage =
   | "devices"
   | "monitor"
   | "agent-usage"
-  | "my-ai"
   | "about";
 
 const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
@@ -47,7 +44,6 @@ const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
   devices: "Manage the devices linked to your account.",
   monitor: "Manage the background activity tracker service.",
   "agent-usage": "Manage the Claude Code usage tracking timer.",
-  "my-ai": "Personal context folder for AI assistants like Claude Code.",
   about: "Application version and update settings.",
 };
 
@@ -71,7 +67,6 @@ const NAV_ITEMS: {
               },
             ]
           : []),
-        { key: "my-ai" as const, label: "My AI", icon: Sparkles },
         { key: "about" as const, label: "About", icon: Info },
       ]
     : []),
@@ -164,7 +159,6 @@ export function SettingsModal({
             {page === "devices" && <DevicesPage />}
             {page === "monitor" && <MonitorPage />}
             {page === "agent-usage" && <AgentUsagePage />}
-            {page === "my-ai" && <MyAiPage />}
             {page === "about" && <AboutPage />}
           </div>
         </div>

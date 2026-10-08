@@ -16,10 +16,6 @@ const config: Configuration = {
       to: "web/dist/client",
     },
     {
-      from: "../../packages/axi/dist",
-      to: "axi",
-    },
-    {
       from: "../../services/monitor",
       to: "monitor",
     },

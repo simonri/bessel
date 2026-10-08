@@ -177,26 +177,6 @@ const bridge = {
     read: (): Promise<string> => ipcRenderer.invoke("logs:read"),
     reveal: (): Promise<void> => ipcRenderer.invoke("logs:reveal"),
   },
-  myAi: {
-    status: (): Promise<{ path: string; exists: boolean }> =>
-      ipcRenderer.invoke("my-ai:status"),
-    create: (): Promise<string> => ipcRenderer.invoke("my-ai:create"),
-    reveal: (): Promise<void> => ipcRenderer.invoke("my-ai:reveal"),
-  },
-  cli: {
-    onTokenRequested: (callback: (requestId: string) => void) =>
-      subscribe<[string]>("cli:token-requested", callback),
-    provideToken: (requestId: string, token: string | null): Promise<void> =>
-      ipcRenderer.invoke("cli:provide-token", requestId, token),
-    status: (): Promise<{
-      installed: boolean;
-      shimPath: string;
-      onPath: boolean;
-      supported: boolean;
-    }> => ipcRenderer.invoke("axi-cli:status"),
-    install: (): Promise<{ shimPath: string; onPath: boolean }> =>
-      ipcRenderer.invoke("axi-cli:install"),
-  },
   spotify: {
     getStatus: (): Promise<SpotifyStatus> =>
       ipcRenderer.invoke("spotify:status"),
@@ -265,18 +245,6 @@ const bridge = {
       ipcRenderer.invoke("vault:index", root),
     search: (root: string, query: string): Promise<VaultSearchHit[]> =>
       ipcRenderer.invoke("vault:search", root, query),
-  },
-  localDataServer: {
-    getUrl: (): Promise<string | null> =>
-      ipcRenderer.invoke("local-data-server:get-url"),
-    getDiscoveryPath: (): Promise<string> =>
-      ipcRenderer.invoke("local-data-server:get-discovery-path"),
-    onDataRequested: (
-      callback: (requestId: string, windowDays: number) => void,
-    ) =>
-      subscribe<[string, number]>("local-data-server:data-requested", callback),
-    provideData: (requestId: string, payload: unknown): Promise<void> =>
-      ipcRenderer.invoke("local-data-server:provide-data", requestId, payload),
   },
 };
 

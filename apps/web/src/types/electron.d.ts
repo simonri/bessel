@@ -195,25 +195,6 @@ declare global {
         read: () => Promise<string>;
         reveal: () => Promise<void>;
       };
-      myAi: {
-        status: () => Promise<{ path: string; exists: boolean }>;
-        create: () => Promise<string>;
-        reveal: () => Promise<void>;
-      };
-      cli: {
-        onTokenRequested: (callback: (requestId: string) => void) => () => void;
-        provideToken: (
-          requestId: string,
-          token: string | null,
-        ) => Promise<void>;
-        status: () => Promise<{
-          installed: boolean;
-          shimPath: string;
-          onPath: boolean;
-          supported: boolean;
-        }>;
-        install: () => Promise<{ shimPath: string; onPath: boolean }>;
-      };
       spotify: {
         getStatus: () => Promise<ElectronSpotifyStatus>;
         playPause: () => Promise<void>;
@@ -272,14 +253,6 @@ declare global {
         onChanged: (callback: (event: VaultChangedEvent) => void) => () => void;
         index: (root: string) => Promise<VaultIndex>;
         search: (root: string, query: string) => Promise<VaultSearchHit[]>;
-      };
-      localDataServer: {
-        getUrl: () => Promise<string | null>;
-        getDiscoveryPath: () => Promise<string>;
-        onDataRequested: (
-          callback: (requestId: string, windowDays: number) => void,
-        ) => () => void;
-        provideData: (requestId: string, payload: unknown) => Promise<void>;
       };
     };
   }

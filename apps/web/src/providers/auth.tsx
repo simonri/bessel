@@ -1,8 +1,8 @@
 import {
   type AppState,
   Auth0Provider,
-  type LogoutOptions,
   type GetTokenSilentlyOptions,
+  type LogoutOptions,
   type RedirectLoginOptions,
   useAuth0,
 } from "@auth0/auth0-react";
@@ -12,7 +12,6 @@ import { isSessionEndedError, setAccessTokenRefresher } from "@/lib/auth-token";
 import { client } from "@/lib/client";
 import { killAllTerminalSessions } from "@/lib/terminal-sessions";
 import { clearUserStorage, shouldForceLoginPrompt } from "@/lib/user-storage";
-import { LocalDataServerBridge } from "./local-data-server-bridge";
 
 function AuthInterceptor() {
   const { isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
@@ -71,30 +70,6 @@ function ElectronAuthCallback() {
         });
     });
   }, [handleRedirectCallback, navigate]);
-
-  return null;
-}
-
-// The bessel-axi CLI (packages/axi) runs outside Electron and has no session
-// of its own — it asks main.ts's local broker (apps/desktop/src/cli-broker.ts)
-// for a token, which relays the request here since the actual Auth0 SDK state
-// only exists in the renderer. Mirrors ElectronAuthCallback's IPC-event ->
-// SDK-call -> reply-over-IPC shape.
-function CliTokenBridge() {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
-
-  useEffect(() => {
-    if (!isElectron) return;
-    return window.electron!.cli.onTokenRequested((requestId) => {
-      if (!isAuthenticated) {
-        void window.electron!.cli.provideToken(requestId, null);
-        return;
-      }
-      getAccessTokenSilently()
-        .then((token) => window.electron!.cli.provideToken(requestId, token))
-        .catch(() => window.electron!.cli.provideToken(requestId, null));
-    });
-  }, [isAuthenticated, getAccessTokenSilently]);
 
   return null;
 }
@@ -221,8 +196,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       <AuthInterceptor />
       <ElectronAuthCallback />
-      <CliTokenBridge />
-      <LocalDataServerBridge />
       {children}
     </Auth0Provider>
   );
