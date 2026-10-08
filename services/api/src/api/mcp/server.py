@@ -3,7 +3,6 @@ from urllib.parse import urlsplit
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
-from mcp.types import ToolAnnotations
 from pydantic import AnyHttpUrl
 from starlette.routing import Route
 
@@ -12,14 +11,13 @@ from api.mcp.tools import TOOLS
 from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
-Read-only access to the user's Bessel life dashboard: calendar, recipes, tasks, \
-sleep, workouts and computer activity.
+The user's Bessel life dashboard: tasks, calendar, recipes, sleep, workouts and \
+computer activity. Tasks and recipes can be created and updated; nothing can be deleted.
 
-Tools that take dates also take an IANA timezone; pass the user's own timezone. \
-Durations are in seconds.\
+Days can be written as YYYY-MM-DD or relative ("today", "fri", "next week"), and \
+default to the user's own timezone. Durations are in seconds. Start a planning or \
+review conversation with get_task_overview.\
 """
-
-READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 
 
 def build_server() -> MCPServer:
@@ -37,8 +35,8 @@ def build_server() -> MCPServer:
       validate_token_resource=True,
     ),
   )
-  for fn, title in TOOLS:
-    server.add_tool(fn, title=title, annotations=READ_ONLY)
+  for tool in TOOLS:
+    server.add_tool(tool.fn, title=tool.title, annotations=tool.annotations)
   return server
 
 

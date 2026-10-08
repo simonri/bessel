@@ -9,3 +9,5 @@ class User(RecordModel):
 
   auth0_sub: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
   email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+  # IANA name reported by the user's own apps; lets agents work in local days.
+  timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)
