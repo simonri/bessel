@@ -46,12 +46,12 @@ export function NightChart({ segments }: { segments: TimelineSegment[] }) {
             <span className="w-12 shrink-0 text-11 font-medium text-white/45">
               {meta.label}
             </span>
-            <div className="relative h-6 flex-1 rounded-full bg-white/[0.03]">
+            <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-white/[0.03]">
               {blocks.map((b) => (
                 <span
                   key={`${b.start_ts}-${b.label}`}
                   title={`${meta.label} - ${format(new Date(b.start_ts * 1000), "h:mma").toLowerCase()} for ${fmtDur(b.end_ts - b.start_ts)}`}
-                  className="absolute inset-y-1 min-w-1 rounded-full transition-opacity duration-150 hover:opacity-80"
+                  className="absolute inset-y-1 min-w-1 transition-opacity duration-150 hover:opacity-80"
                   style={{
                     left: `${pct(b.start_ts)}%`,
                     width: `${pct(b.end_ts) - pct(b.start_ts)}%`,

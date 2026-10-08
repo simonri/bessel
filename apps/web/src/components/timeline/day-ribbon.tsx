@@ -224,7 +224,7 @@ function LaneRow({
       <div className={cn("relative", hoveredHere && "z-20")}>
         <div
           data-lane-bar
-          className="relative h-8 w-full overflow-hidden rounded-sm bg-white/[0.04] ring-1 ring-white/[0.05]"
+          className="relative h-8 w-full overflow-hidden rounded-full bg-white/[0.04] ring-1 ring-white/[0.05]"
         >
           <div
             aria-hidden
