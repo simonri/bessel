@@ -4,12 +4,7 @@ import {
 } from "@bessel/client";
 import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
 import { useQuery } from "@tanstack/react-query";
-import {
-  format,
-  formatDistanceToNowStrict,
-  parseISO,
-  subDays,
-} from "date-fns";
+import { format, formatDistanceToNowStrict, parseISO, subDays } from "date-fns";
 import { Gauge } from "lucide-react";
 import { useMemo, useState } from "react";
 import { client } from "@/lib/client";
@@ -21,6 +16,14 @@ import {
   planLabel,
   resetLabel,
 } from "./agent-usage-limits";
+import {
+  FAMILY_COLOR,
+  FAMILY_LABEL,
+  FAMILY_ORDER,
+  type ModelFamily,
+  modelFamily,
+  modelLabel,
+} from "./agent-usage-models";
 import { TopbarPanel, TopbarPanelHeader } from "./topbar-panel";
 import { TOPBAR_BADGE_RING, TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
@@ -30,10 +33,6 @@ const STALE_MS = 30 * 60 * 1000;
 const WARN_THRESHOLD_PCT = 85;
 const USAGE_SETTINGS_URL = "https://claude.ai/settings/usage";
 const LIMIT_COLOR = "#3987e5";
-
-// Dark-mode categorical steps from the dataviz skill's validated default
-// palette (slots 1-4: blue, orange, aqua, yellow) — fixed order, never cycled.
-const MODEL_COLORS = ["#3987e5", "#d95926", "#199e70", "#c98500"];
 
 // Status palette from the same reference — mode-invariant.
 function severityColor(pct: number): string {
@@ -98,24 +97,37 @@ export function AgentUsageDropdown() {
   );
   const stale = limits.length > 0 && Date.now() - lastObserved > STALE_MS;
 
-  const models = Array.from(new Set(entries.map((e) => e.model))).sort();
-  const totalsByDate = new Map<string, Record<string, number>>();
+  // Charted by family: every version and dated snapshot as its own series
+  // made the legend run off the panel and recycled the colours.
+  const totalsByDate = new Map<string, Partial<Record<ModelFamily, number>>>();
   for (const e of entries) {
-    const perModel = totalsByDate.get(e.date) ?? {};
-    perModel[e.model] = (perModel[e.model] ?? 0) + entryTotal(e);
-    totalsByDate.set(e.date, perModel);
+    const perFamily = totalsByDate.get(e.date) ?? {};
+    const family = modelFamily(e.model);
+    perFamily[family] = (perFamily[family] ?? 0) + entryTotal(e);
+    totalsByDate.set(e.date, perFamily);
   }
+  const families = FAMILY_ORDER.filter((f) =>
+    entries.some((e) => modelFamily(e.model) === f),
+  );
 
   const days = Array.from({ length: HISTORY_DAYS }, (_, i) => {
     const d = localIsoDay(subDays(today, HISTORY_DAYS - 1 - i));
-    const perModel = totalsByDate.get(d) ?? {};
-    const total = Object.values(perModel).reduce((a, b) => a + b, 0);
-    return { date: d, perModel, total };
+    const perFamily = totalsByDate.get(d) ?? {};
+    const total = Object.values(perFamily).reduce((a, b) => a + b, 0);
+    return { date: d, perFamily, total };
   });
   const maxTotal = Math.max(...days.map((d) => d.total), 1);
 
-  const todayEntries = entries.filter((e) => e.date === todayStr);
-  const todayTotal = todayEntries.reduce((sum, e) => sum + entryTotal(e), 0);
+  // Each device reports its own rows; today's list is per model.
+  const todayByModel = new Map<string, number>();
+  for (const e of entries)
+    if (e.date === todayStr)
+      todayByModel.set(
+        e.model,
+        (todayByModel.get(e.model) ?? 0) + entryTotal(e),
+      );
+  const todayModels = [...todayByModel].sort((a, b) => b[1] - a[1]);
+  const todayTotal = todayModels.reduce((sum, [, n]) => sum + n, 0);
 
   const loading = (statusLoading || dailyLoading) && !status && !daily;
   const hasAnyData = statusEntries.length > 0 || entries.length > 0;
@@ -215,25 +227,22 @@ export function AgentUsageDropdown() {
 
               {entries.length > 0 && (
                 <div className="space-y-2 border-t border-white/[0.06] pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/50">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="text-13 text-white/55">
                       Last {HISTORY_DAYS} days
                     </span>
-                    {models.length > 1 && (
-                      <div className="flex items-center gap-3">
-                        {models.map((m, i) => (
+                    {families.length > 1 && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {families.map((f) => (
                           <span
-                            key={m}
-                            className="flex items-center gap-1 text-11 text-white/50"
+                            key={f}
+                            className="flex items-center gap-1.5 text-12 text-white/50"
                           >
                             <span
-                              className="inline-block h-2 w-2 rounded-full"
-                              style={{
-                                background:
-                                  MODEL_COLORS[i % MODEL_COLORS.length],
-                              }}
+                              className="size-2 rounded-full"
+                              style={{ background: FAMILY_COLOR[f] }}
                             />
-                            {m}
+                            {FAMILY_LABEL[f]}
                           </span>
                         ))}
                       </div>
@@ -259,17 +268,16 @@ export function AgentUsageDropdown() {
                               : "No usage"}
                           </div>
                         )}
-                        {models.map((m, i) => {
-                          const v = d.perModel[m] ?? 0;
+                        {families.map((f) => {
+                          const v = d.perFamily[f] ?? 0;
                           if (v === 0) return null;
                           return (
                             <div
-                              key={m}
-                              className="w-full rounded-t-sm"
+                              key={f}
+                              className="w-full"
                               style={{
                                 height: `${(v / maxTotal) * 100}%`,
-                                background:
-                                  MODEL_COLORS[i % MODEL_COLORS.length],
+                                background: FAMILY_COLOR[f],
                               }}
                             />
                           );
@@ -280,22 +288,28 @@ export function AgentUsageDropdown() {
                 </div>
               )}
 
-              {todayEntries.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-sm text-white/50">
-                    <span className="text-base font-medium text-white/80">
+              {todayModels.length > 0 && (
+                <div className="space-y-1.5 border-t border-white/[0.06] pt-4">
+                  <p className="text-13 text-white/55">
+                    <span className="text-base font-medium tabular-nums text-white/85">
                       {fmtTokens(todayTotal)}
                     </span>{" "}
                     tokens today
                   </p>
-                  {todayEntries.map((e) => (
+                  {todayModels.map(([model, tokens]) => (
                     <div
-                      key={e.model}
-                      className="flex items-center justify-between text-xs text-white/60"
+                      key={model}
+                      className="flex items-center gap-2 text-13 text-white/70"
                     >
-                      <span className="font-mono">{e.model}</span>
-                      <span className="tabular-nums">
-                        {fmtTokens(entryTotal(e))}
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ background: FAMILY_COLOR[modelFamily(model)] }}
+                      />
+                      <span className="min-w-0 flex-1 truncate" title={model}>
+                        {modelLabel(model)}
+                      </span>
+                      <span className="tabular-nums text-white/45">
+                        {fmtTokens(tokens)}
                       </span>
                     </div>
                   ))}
