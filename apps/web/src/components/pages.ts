@@ -1,4 +1,4 @@
-import { Bot, LayoutGrid } from "lucide-react";
+import { Bot, CheckSquare, LayoutGrid } from "lucide-react";
 import { lazy } from "react";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
 import type { ModuleKey } from "@/components/canvas/window-manager";
@@ -15,6 +15,7 @@ export type PageKey =
   | "googleTimeline"
   | "hyperliquid"
   | "calendar"
+  | "tasks"
   | "activity"
   | "sleep"
   | "recipes"
@@ -47,6 +48,15 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   googleTimeline: fromModule("googleTimeline"),
   hyperliquid: fromModule("hyperliquid"),
   calendar: fromModule("calendar", true),
+  tasks: {
+    title: "Tasks",
+    icon: CheckSquare,
+    component: lazy(() =>
+      import("@/components/tasks/tasks-page").then((m) => ({
+        default: m.TasksPage,
+      })),
+    ),
+  },
   activity: fromModule("activity"),
   sleep: fromModule("sleep"),
   recipes: fromModule("recipes"),
@@ -70,6 +80,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "canvas",
   "travel",
   "calendar",
+  "tasks",
   "timeline",
   "googleTimeline",
   "activity",
