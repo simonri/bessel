@@ -24,10 +24,6 @@ import {
   stopClaudeSessions,
 } from "./claude-sessions.js";
 import { isSessionId } from "./claude-sessions-core.js";
-import {
-  registerAxiCliInstallHandlers,
-  registerCliBrokerHandlers,
-} from "./cli-broker.js";
 import { contentSecurityPolicyFor, withContentSecurityPolicy } from "./csp.js";
 import { SENTRY_DSN } from "./env.js";
 import {
@@ -39,8 +35,6 @@ import {
   setMainWindow,
   TRUSTED_ORIGINS,
 } from "./ipc.js";
-import { registerLocalDataServerHandlers } from "./local-data-server.js";
-import { registerMyAiHandlers } from "./my-ai.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -1479,12 +1473,8 @@ app.whenReady().then(() => {
       win.focus();
     },
   });
-  registerMyAiHandlers(USER_DATA_DIR);
-  registerCliBrokerHandlers(USER_DATA_DIR, appendLog);
-  registerAxiCliInstallHandlers();
   registerPortsHandlers();
   registerVaultHandlers(appendLog);
-  registerLocalDataServerHandlers(USER_DATA_DIR, appendLog);
 
   ipcHandle("spotify:status", async () => getSpotifyStatus());
   ipcHandle("spotify:position", () => getSpotifyPositionMs());

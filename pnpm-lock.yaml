@@ -439,34 +439,6 @@ importers:
         specifier: ^4.90.1
         version: 4.90.1
 
-  packages/axi:
-    dependencies:
-      axi-sdk-js:
-        specifier: ^0.1.8
-        version: 0.1.8
-    devDependencies:
-      '@bessel/client':
-        specifier: workspace:*
-        version: link:../client
-      '@bessel/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.20.0
-      esbuild:
-        specifier: ^0.28.1
-        version: 0.28.1
-      tsx:
-        specifier: ^4.0.0
-        version: 4.23.0
-      typescript:
-        specifier: ^5.8.3
-        version: 5.9.3
-      vitest:
-        specifier: npm:@voidzero-dev/vite-plus-test@0.1.13
-        version: '@voidzero-dev/vite-plus-test@0.1.13(@opentelemetry/api@1.9.1)(@types/node@22.20.0)(esbuild@0.28.1)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(terser@5.46.1)(tsx@4.23.0)(typescript@5.9.3)(vite@7.3.1(@types/node@22.20.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.23.0)(yaml@2.8.3))(yaml@2.8.3)'
-
   packages/client:
     dependencies:
       '@tanstack/react-query':
@@ -4549,10 +4521,6 @@ packages:
 
   aws4@1.13.2:
     resolution: {integrity: sha512-lHe62zvbTB5eEABUVi/AwVh0ZKY9rMMDhmm+eeyuuUQbQ3+J+fONVQOZyj+DdrvD4BY33uYniyRJ4UJIaSKAfw==}
-
-  axi-sdk-js@0.1.8:
-    resolution: {integrity: sha512-N8Qd/9sVBpG8QRVSw0lLevdFuaBfjHHPdcbcj8DCuxr68sA1/c5KCnGEDqO7lI3kt52/bgymCZajmpTqz/rLOw==}
-    engines: {node: '>=20'}
 
   axios@1.18.1:
     resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
@@ -11893,10 +11861,6 @@ snapshots:
   at-least-node@1.0.0: {}
 
   aws4@1.13.2: {}
-
-  axi-sdk-js@0.1.8:
-    dependencies:
-      '@toon-format/toon': 2.3.0
 
   axios@1.18.1:
     dependencies:

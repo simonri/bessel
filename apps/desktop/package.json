@@ -8,7 +8,7 @@
   "scripts": {
     "predev": "tsc",
     "dev": "concurrently -k -n WEB,ELECTRON,TS -c cyan,yellow,blue \"pnpm --filter=@bessel/web dev\" \"wait-on http://localhost:3001 && env -u ELECTRON_RUN_AS_NODE electron . --no-sandbox --no-zygote --disable-dev-shm-usage\" \"tsc -w --preserveWatchOutput\"",
-    "compile": "tsc && pnpm --filter=@bessel/web build && pnpm --filter=bessel-axi build",
+    "compile": "tsc && pnpm --filter=@bessel/web build",
     "build": "pnpm run compile && electron-builder --config electron-builder.config.ts",
     "build:dir": "pnpm run compile && electron-builder --dir --config electron-builder.config.ts",
     "test": "vp test run",
