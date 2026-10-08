@@ -331,7 +331,7 @@ export function BarRow({
       <div className="relative h-1.5 min-w-8 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
         <div
           className={cn(
-            "absolute inset-y-0 left-0 rounded-full",
+            "absolute inset-y-0 left-0",
             !color && "bg-primary-500",
           )}
           style={{
