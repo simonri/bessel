@@ -3,6 +3,11 @@ import {
   getAgentUsageStatusV1AgentUsageStatusGetOptions,
 } from "@bessel/client";
 import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@bessel/ui/components/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNowStrict, parseISO, subDays } from "date-fns";
 import { Gauge } from "lucide-react";
@@ -117,7 +122,6 @@ export function AgentUsageDropdown() {
     return { date: d, perFamily, total };
   });
   const maxTotal = Math.max(...days.map((d) => d.total), 1);
-  const hoveredDay = days.find((d) => d.date === hoveredDate) ?? null;
 
   // Each device reports its own rows; today's list is per model.
   const todayByModel = new Map<string, number>();
@@ -229,19 +233,8 @@ export function AgentUsageDropdown() {
               {entries.length > 0 && (
                 <div className="space-y-2 border-t border-white/[0.06] pt-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="text-13 tabular-nums text-white/55">
-                      {hoveredDay ? (
-                        <>
-                          {format(parseISO(hoveredDay.date), "MMM d")} -{" "}
-                          <span className="text-white/85">
-                            {hoveredDay.total > 0
-                              ? `${fmtTokens(hoveredDay.total)} tokens`
-                              : "No usage"}
-                          </span>
-                        </>
-                      ) : (
-                        `Last ${HISTORY_DAYS} days`
-                      )}
+                    <span className="text-13 text-white/55">
+                      Last {HISTORY_DAYS} days
                     </span>
                     {families.length > 1 && (
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -262,32 +255,51 @@ export function AgentUsageDropdown() {
                   </div>
                   <div className="flex h-24 items-end gap-0.5">
                     {days.map((d) => (
-                      <div
-                        key={d.date}
-                        className={cn(
-                          "flex h-full flex-1 flex-col justify-end gap-0.5 transition-opacity",
-                          hoveredDate && hoveredDate !== d.date && "opacity-40",
-                        )}
-                        onMouseEnter={() => setHoveredDate(d.date)}
-                        onMouseLeave={() =>
-                          setHoveredDate((cur) => (cur === d.date ? null : cur))
-                        }
-                      >
-                        {families.map((f) => {
-                          const v = d.perFamily[f] ?? 0;
-                          if (v === 0) return null;
-                          return (
-                            <div
-                              key={f}
-                              className="w-full"
-                              style={{
-                                height: `${(v / maxTotal) * 100}%`,
-                                background: FAMILY_COLOR[f],
-                              }}
-                            />
-                          );
-                        })}
-                      </div>
+                      <Tooltip key={d.date} delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "flex h-full flex-1 flex-col justify-end gap-0.5 transition-opacity",
+                              hoveredDate &&
+                                hoveredDate !== d.date &&
+                                "opacity-40",
+                            )}
+                            onMouseEnter={() => setHoveredDate(d.date)}
+                            onMouseLeave={() =>
+                              setHoveredDate((cur) =>
+                                cur === d.date ? null : cur,
+                              )
+                            }
+                          >
+                            {families.map((f) => {
+                              const v = d.perFamily[f] ?? 0;
+                              if (v === 0) return null;
+                              return (
+                                <div
+                                  key={f}
+                                  className="w-full"
+                                  style={{
+                                    height: `${(v / maxTotal) * 100}%`,
+                                    background: FAMILY_COLOR[f],
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          sideOffset={6}
+                          className="rounded-lg border border-white/10 bg-popover px-2.5 py-1 text-xs font-medium text-white/85 shadow-xl [&>span]:hidden"
+                        >
+                          <span className="text-white/50">
+                            {format(parseISO(d.date), "MMM d")} -{" "}
+                          </span>
+                          {d.total > 0
+                            ? `${fmtTokens(d.total)} tokens`
+                            : "No usage"}
+                        </TooltipContent>
+                      </Tooltip>
                     ))}
                   </div>
                 </div>
