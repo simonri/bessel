@@ -45,6 +45,11 @@ struct TaskRow: View {
             }
         }
         .padding(.vertical, 4)
+        // The row outlives a complete-then-undo (same task, same identity),
+        // so the optimistic tick has to follow the task back to open.
+        .onChange(of: task.status) { _, status in
+            if status != .done { isTicked = false }
+        }
     }
 
     private func tick() {
