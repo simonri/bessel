@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
+
+if TYPE_CHECKING:
+  from ..models.sleep_stage_segment import SleepStageSegment
+
 
 T = TypeVar("T", bound="SleepDaySummary")
 
@@ -23,6 +27,8 @@ class SleepDaySummary:
       core_secs (int):
       rem_secs (int):
       awake_secs (int):
+      segments (list[SleepStageSegment]): The night's stages in time order, from the one source the night is counted
+          from.
   """
 
   score: int
@@ -35,6 +41,7 @@ class SleepDaySummary:
   core_secs: int
   rem_secs: int
   awake_secs: int
+  segments: list[SleepStageSegment]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -61,6 +68,11 @@ class SleepDaySummary:
 
     awake_secs = self.awake_secs
 
+    segments = []
+    for segments_item_data in self.segments:
+      segments_item = segments_item_data.to_dict()
+      segments.append(segments_item)
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -75,6 +87,7 @@ class SleepDaySummary:
         "core_secs": core_secs,
         "rem_secs": rem_secs,
         "awake_secs": awake_secs,
+        "segments": segments,
       }
     )
 
@@ -82,6 +95,8 @@ class SleepDaySummary:
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.sleep_stage_segment import SleepStageSegment
+
     d = dict(src_dict)
     score = d.pop("score")
 
@@ -118,6 +133,13 @@ class SleepDaySummary:
 
     awake_secs = d.pop("awake_secs")
 
+    segments = []
+    _segments = d.pop("segments")
+    for segments_item_data in _segments:
+      segments_item = SleepStageSegment.from_dict(segments_item_data)
+
+      segments.append(segments_item)
+
     sleep_day_summary = cls(
       score=score,
       label=label,
@@ -129,6 +151,7 @@ class SleepDaySummary:
       core_secs=core_secs,
       rem_secs=rem_secs,
       awake_secs=awake_secs,
+      segments=segments,
     )
 
     sleep_day_summary.additional_properties = d

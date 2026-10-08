@@ -23,6 +23,14 @@ struct HealthSummary: Codable, Equatable {
         let coreSecs: Int
         let remSecs: Int
         let awakeSecs: Int
+        /// The night's stages in order, from the one source the night is counted from.
+        @Lossy var segments: [Segment]
+
+        struct Segment: Codable, Equatable {
+            let stage: String
+            let start: Date
+            let end: Date
+        }
 
         var onset: Date? { sleepOnset.flatMap(DateParsing.parse) }
         var wake: Date? { wakeTime.flatMap(DateParsing.parse) }

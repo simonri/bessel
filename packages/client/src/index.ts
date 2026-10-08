@@ -842,6 +842,7 @@ export {
   type SleepDailyEntry,
   type SleepDailyResponse,
   type SleepDaySummary,
+  type SleepStageSegment,
   type SleepStageSummary,
   type SleepSummaryResponse,
   type SpendingByCategoryV1TransactionsSpendingByCategoryGetData,

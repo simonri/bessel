@@ -161,6 +161,7 @@ from .security_update import SecurityUpdate
 from .sleep_daily_entry import SleepDailyEntry
 from .sleep_daily_response import SleepDailyResponse
 from .sleep_day_summary import SleepDaySummary
+from .sleep_stage_segment import SleepStageSegment
 from .sleep_stage_summary import SleepStageSummary
 from .sleep_summary_response import SleepSummaryResponse
 from .task_attachment_schema import TaskAttachmentSchema
@@ -350,6 +351,7 @@ __all__ = (
   "SleepDailyEntry",
   "SleepDailyResponse",
   "SleepDaySummary",
+  "SleepStageSegment",
   "SleepStageSummary",
   "SleepSummaryResponse",
   "TaskAttachmentSchema",

@@ -158,6 +158,12 @@ class HealthKitDailyMetricsSyncResponse(Schema):
   synced: int = Field(description="Number of days inserted or updated.")
 
 
+class SleepStageSegment(Schema):
+  stage: str = Field(description="HKCategoryValueSleepAnalysis name, e.g. 'asleepDeep'.")
+  start: datetime
+  end: datetime
+
+
 class SleepDaySummary(Schema):
   score: int = Field(ge=0, le=100)
   label: str
@@ -169,6 +175,7 @@ class SleepDaySummary(Schema):
   core_secs: int
   rem_secs: int
   awake_secs: int
+  segments: list[SleepStageSegment] = Field(description="The night's stages in time order, from the one source the night is counted from.")
 
 
 class MoveDaySummary(Schema):

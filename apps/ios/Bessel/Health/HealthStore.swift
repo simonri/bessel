@@ -10,8 +10,6 @@ final class HealthStore {
     private(set) var recentWorkouts: [HealthKitWorkoutItem] = []
     private(set) var allWorkouts: [HealthKitWorkoutItem] = []
     private(set) var hasLoadedAllWorkouts = false
-    /// The shown night's stages, for the sleep detail.
-    private(set) var nightSegments: [SleepSegment] = []
     /// Up to two weeks of nights ending on the shown day, oldest first.
     private(set) var recentNights: [SleepNight] = []
     private(set) var hasLoaded = false
@@ -33,7 +31,7 @@ final class HealthStore {
         let recentWorkouts: [HealthKitWorkoutItem]
     }
 
-    private static let cacheKey = "health.v2"
+    private static let cacheKey = "health.v3"
 
     init(client: APIClient, cache: ResponseCache?) {
         self.client = client
@@ -54,6 +52,17 @@ final class HealthStore {
 
     var latestWorkout: HealthKitWorkoutItem? { recentWorkouts.first }
 
+    /// The shown night's stages within its main sleep, for the sleep detail.
+    var nightSegments: [SleepSegment] {
+        guard let sleep = summary?.sleep, let onset = sleep.onset, let wake = sleep.wake else { return [] }
+        return sleep.segments.compactMap { segment in
+            let start = max(segment.start, onset)
+            let end = min(segment.end, wake)
+            guard end > start, let stage = SleepStage(rawValue: segment.stage) else { return nil }
+            return SleepSegment(stage: stage, start: start, end: end)
+        }
+    }
+
     // MARK: - Days
 
     func step(_ days: Int) async {
@@ -66,7 +75,6 @@ final class HealthStore {
         guard target <= Calendar.current.startOfDay(for: .now), target != day else { return }
         day = target
         summary = nil
-        nightSegments = []
         recentNights = []
         await load()
     }
@@ -111,28 +119,20 @@ final class HealthStore {
         }
     }
 
-    /// The shown night's stages and the nights before it.
+    /// The two weeks of nights up to the shown one.
     func loadSleepDetail() async {
         let ticket = detailLoads.begin()
         let calendar = Calendar.current
         let noon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: day)!
-        let nightStart = calendar.date(byAdding: .day, value: -1, to: noon)!
-        let twoWeeksBefore = calendar.date(byAdding: .day, value: -14, to: nightStart)!
+        let twoWeeksBefore = calendar.date(byAdding: .day, value: -15, to: noon)!
         do {
-            async let samplesTask: SleepSampleListResponse = client.get("/v1/healthkit/sleep", query: [
-                URLQueryItem(name: "start_ts", value: String(Int(nightStart.timeIntervalSince1970))),
-                URLQueryItem(name: "end_ts", value: String(Int(noon.timeIntervalSince1970))),
-                URLQueryItem(name: "limit", value: String(APIClient.pageSize)),
-            ])
-            async let nightsTask: SleepDailyResponse = client.get("/v1/healthkit/sleep/daily", query: [
+            let nights: SleepDailyResponse = try await client.get("/v1/healthkit/sleep/daily", query: [
                 URLQueryItem(name: "start_ts", value: String(Int(twoWeeksBefore.timeIntervalSince1970))),
                 URLQueryItem(name: "end_ts", value: String(Int(noon.timeIntervalSince1970))),
                 URLQueryItem(name: "tz_name", value: TimeZone.current.identifier),
             ])
-            let (samples, nights) = try await (samplesTask, nightsTask)
             guard detailLoads.isCurrent(ticket) else { return }
             recentNights = nights.nights.compactMap(SleepNight.init)
-            nightSegments = Self.segments(samples.items, from: summary?.sleep?.onset, to: summary?.sleep?.wake)
         } catch {
             guard detailLoads.isCurrent(ticket), !error.isCancellation else { return }
             loadError = error.userMessage
@@ -149,19 +149,6 @@ final class HealthStore {
         }
     }
 
-    private static func segments(_ samples: [HealthKitSleepSampleItem], from onset: Date?, to wake: Date?) -> [SleepSegment] {
-        guard let onset, let wake else { return [] }
-        return samples
-            .compactMap { sample -> SleepSegment? in
-                guard let stage = SleepStage(rawValue: sample.sleepValueName) else { return nil }
-                let start = max(sample.startDate, onset)
-                let end = min(sample.endDate, wake)
-                guard end > start else { return nil }
-                return SleepSegment(stage: stage, start: start, end: end)
-            }
-            .sorted { $0.start < $1.start }
-    }
-
     private static func dateString(_ day: Date) -> String {
         DateParsing.dateOnly.string(from: day)
     }
@@ -170,6 +157,26 @@ final class HealthStore {
 
     /// Asks for Health access (iOS shows the prompt once per new kind of data) and uploads what changed.
     func connect() async {
+        await sync(showErrors: true)
+    }
+
+    /// Pull to refresh: whatever changed in Health goes up now, then the page reloads.
+    func syncNow() async {
+        guard isConnected else {
+            await load()
+            return
+        }
+        await sync(showErrors: false)
+    }
+
+    /// Sends everything in Health again, from the beginning. For when the page
+    /// doesn't match Apple Health, say after data on the server was lost: the
+    /// usual sync only sends what changed since last time. Sending twice is
+    /// harmless, the server keeps one copy of each sample.
+    func syncEverythingAgain() async {
+        WorkoutSyncAnchor.resetCursor()
+        SleepSyncAnchor.resetCursor()
+        DailyMetricsSyncState.clear()
         await sync(showErrors: true)
     }
 

@@ -61,8 +61,7 @@ struct HealthView: View {
                 .animation(.snappy, value: store.summary)
             }
             .refreshable {
-                await store.syncIfNeeded()
-                await store.load()
+                await store.syncNow()
                 await timeline.load()
             }
             .background(Theme.background)
@@ -118,10 +117,16 @@ struct HealthView: View {
             .foregroundStyle(Theme.faintForeground)
             .frame(maxWidth: .infinity)
         } else if let lastSyncedAt = store.lastSyncedAt {
-            Text("Synced with Apple Health \(lastSyncedAt.formatted(.relative(presentation: .named)))")
-                .font(.caption)
-                .foregroundStyle(Theme.faintForeground)
-                .frame(maxWidth: .infinity)
+            VStack(spacing: 6) {
+                Text("Synced with Apple Health \(lastSyncedAt.formatted(.relative(presentation: .named)))")
+                    .foregroundStyle(Theme.faintForeground)
+                Button("Doesn't match Apple Health? Sync everything again") {
+                    Task { await store.syncEverythingAgain() }
+                }
+                .foregroundStyle(Theme.mutedForeground)
+            }
+            .font(.caption)
+            .frame(maxWidth: .infinity)
         }
     }
 

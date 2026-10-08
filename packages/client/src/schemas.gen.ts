@@ -6041,6 +6041,15 @@ export const SleepDaySummarySchema = {
       type: "integer",
       title: "Awake Secs",
     },
+    segments: {
+      items: {
+        $ref: "#/components/schemas/SleepStageSegment",
+      },
+      type: "array",
+      title: "Segments",
+      description:
+        "The night's stages in time order, from the one source the night is counted from.",
+    },
   },
   type: "object",
   required: [
@@ -6054,8 +6063,32 @@ export const SleepDaySummarySchema = {
     "core_secs",
     "rem_secs",
     "awake_secs",
+    "segments",
   ],
   title: "SleepDaySummary",
+} as const;
+
+export const SleepStageSegmentSchema = {
+  properties: {
+    stage: {
+      type: "string",
+      title: "Stage",
+      description: "HKCategoryValueSleepAnalysis name, e.g. 'asleepDeep'.",
+    },
+    start: {
+      type: "string",
+      format: "date-time",
+      title: "Start",
+    },
+    end: {
+      type: "string",
+      format: "date-time",
+      title: "End",
+    },
+  },
+  type: "object",
+  required: ["stage", "start", "end"],
+  title: "SleepStageSegment",
 } as const;
 
 export const SleepStageSummarySchema = {

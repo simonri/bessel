@@ -381,6 +381,19 @@ export const listHealthkitSleepV1HealthkitSleepGetResponseTransformer = async (
   return data;
 };
 
+const sleepStageSegmentSchemaResponseTransformer = (data: any) => {
+  data.start = new Date(data.start);
+  data.end = new Date(data.end);
+  return data;
+};
+
+const sleepDaySummarySchemaResponseTransformer = (data: any) => {
+  data.segments = data.segments.map((item: any) =>
+    sleepStageSegmentSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
 const healthWeekDaySchemaResponseTransformer = (data: any) => {
   data.date = new Date(data.date);
   return data;
@@ -388,6 +401,9 @@ const healthWeekDaySchemaResponseTransformer = (data: any) => {
 
 const healthSummaryResponseSchemaResponseTransformer = (data: any) => {
   data.date = new Date(data.date);
+  if (data.sleep) {
+    data.sleep = sleepDaySummarySchemaResponseTransformer(data.sleep);
+  }
   data.week = data.week.map((item: any) =>
     healthWeekDaySchemaResponseTransformer(item),
   );

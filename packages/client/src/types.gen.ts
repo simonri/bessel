@@ -3770,6 +3770,32 @@ export type SleepDaySummary = {
    * Awake Secs
    */
   awake_secs: number;
+  /**
+   * Segments
+   *
+   * The night's stages in time order, from the one source the night is counted from.
+   */
+  segments: Array<SleepStageSegment>;
+};
+
+/**
+ * SleepStageSegment
+ */
+export type SleepStageSegment = {
+  /**
+   * Stage
+   *
+   * HKCategoryValueSleepAnalysis name, e.g. 'asleepDeep'.
+   */
+  stage: string;
+  /**
+   * Start
+   */
+  start: Date;
+  /**
+   * End
+   */
+  end: Date;
 };
 
 /**

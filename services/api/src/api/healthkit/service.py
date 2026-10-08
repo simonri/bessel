@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta, timezone
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -14,10 +15,12 @@ from api.healthkit.schemas import (
   MoveDaySummary,
   SleepDailyEntry,
   SleepDaySummary,
+  SleepStageSegment,
   SleepStageSummary,
   SleepSummaryResponse,
 )
 from api.models.healthkit_daily_metric import HealthKitDailyMetric
+from api.models.healthkit_sleep_sample import HealthKitSleepSample
 from api.models.healthkit_workout import HealthKitWorkout
 
 
@@ -98,6 +101,35 @@ def local_iso(ts: int, tz: ZoneInfo | None, tz_offset_mins: int) -> str:
   return datetime.fromtimestamp(ts, tz=timezone(timedelta(minutes=tz_offset_mins))).isoformat()
 
 
+STAGED_STAGES = frozenset({"asleepCore", "asleepDeep", "asleepREM"})
+
+
+def primary_source_samples(samples: Sequence[HealthKitSleepSample], tz: ZoneInfo | None, tz_offset_mins: int) -> list[HealthKitSleepSample]:
+  """Keeps one source per night, like Apple Health does.
+
+  An iPhone and a Watch, or a Watch and a sleep app, often record the same
+  night; adding them up would count it twice. The source with the most deep,
+  core and REM detail wins (usually the Watch), then the one with the most
+  time asleep.
+  """
+  by_night: dict[str, dict[str, list[HealthKitSleepSample]]] = {}
+  for sample in samples:
+    wake_date, _ = _local_night_bounds(int(sample.start_date.timestamp()), tz, tz_offset_mins)
+    by_night.setdefault(wake_date, {}).setdefault(sample.source_bundle_id, []).append(sample)
+
+  def rank(source_samples: Sequence[HealthKitSleepSample]) -> tuple[float, float]:
+    def seconds(stages: frozenset[str]) -> float:
+      return sum((s.end_date - s.start_date).total_seconds() for s in source_samples if s.sleep_value_name in stages)
+
+    return seconds(STAGED_STAGES), seconds(ASLEEP_STAGES)
+
+  kept: list[HealthKitSleepSample] = []
+  for sources in by_night.values():
+    best = max(sources, key=lambda source: rank(sources[source]))
+    kept += sources[best]
+  return sorted(kept, key=lambda s: s.start_date)
+
+
 class HealthKitSleepService:
   async def sync(
     self,
@@ -114,15 +146,18 @@ class HealthKitSleepService:
     deleted = await repo.soft_delete_by_healthkit_uuids(user_id, request.deleted_uuids)
     return synced, deleted
 
-  async def get_segments(self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int) -> list[SleepSegment]:
-    """Sleep segments within [start_ts, end_ts), clipped to the window.
-
-    If multiple sources report overlapping samples for the same night (e.g.
-    iPhone and Watch both logging sleep), seconds are summed without
-    priority/dedup resolution — Apple's own Health app does real precedence
-    handling here; that's out of scope for now.
-    """
-    samples = await repo.get_samples_in_range(user_id, start_ts, end_ts)
+  async def get_segments(
+    self,
+    repo: HealthKitSleepSampleRepository,
+    user_id: UUID,
+    start_ts: int,
+    end_ts: int,
+    tz: ZoneInfo | None = None,
+    tz_offset_mins: int = 0,
+  ) -> list[SleepSegment]:
+    """Sleep segments within [start_ts, end_ts), clipped to the window, each
+    night taken from one source only (see `primary_source_samples`)."""
+    samples = primary_source_samples(await repo.get_samples_in_range(user_id, start_ts, end_ts), tz, tz_offset_mins)
     segments: list[SleepSegment] = []
     for sample in samples:
       if sample.sleep_value_name in EXCLUDED_STAGES:
@@ -183,7 +218,7 @@ class HealthKitSleepService:
     self, repo: HealthKitSleepSampleRepository, user_id: UUID, start_ts: int, end_ts: int, tz: ZoneInfo | None, tz_offset_mins: int
   ) -> list[SleepDailyEntry]:
     """Time asleep per night, keyed by local wake date, with the main episode's onset and wake time."""
-    segments = await self.get_segments(repo, user_id, start_ts, end_ts)
+    segments = await self.get_segments(repo, user_id, start_ts, end_ts, tz, tz_offset_mins)
 
     nightly: dict[str, int] = {}
     for seg in segments:
@@ -336,7 +371,8 @@ class HealthSummaryService:
       return None, None, usual_onset
 
     stages: dict[str, int] = {}
-    for segment in await healthkit_sleep_service.get_segments(repo, user_id, _local_noon_ts(day - timedelta(days=1), tz), _local_noon_ts(day, tz)):
+    segments = await healthkit_sleep_service.get_segments(repo, user_id, _local_noon_ts(day - timedelta(days=1), tz), _local_noon_ts(day, tz), tz)
+    for segment in segments:
       stages[segment.stage_name] = stages.get(segment.stage_name, 0) + segment.duration
     deep, core, rem = stages.get("asleepDeep", 0), stages.get("asleepCore", 0), stages.get("asleepREM", 0)
 
@@ -353,6 +389,14 @@ class HealthSummaryService:
       core_secs=core,
       rem_secs=rem,
       awake_secs=stages.get("awake", 0),
+      segments=[
+        SleepStageSegment(
+          stage=segment.stage_name,
+          start=datetime.fromtimestamp(segment.start_ts, tz=UTC),
+          end=datetime.fromtimestamp(segment.end_ts, tz=UTC),
+        )
+        for segment in segments
+      ],
     )
     return summary, score, usual_onset
 

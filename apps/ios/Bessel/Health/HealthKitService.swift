@@ -259,6 +259,11 @@ enum WorkoutSyncAnchor {
         set { UserDefaults.standard.set(newValue, forKey: lastSyncedAtKey) }
     }
 
+    /// Starts the next sync from the beginning, still counting as connected.
+    static func resetCursor() {
+        UserDefaults.standard.removeObject(forKey: anchorKey)
+    }
+
     static func clear() {
         UserDefaults.standard.removeObject(forKey: anchorKey)
         UserDefaults.standard.removeObject(forKey: lastSyncedAtKey)
@@ -284,6 +289,10 @@ enum SleepSyncAnchor {
     static var lastSyncedAt: Date? {
         get { UserDefaults.standard.object(forKey: lastSyncedAtKey) as? Date }
         set { UserDefaults.standard.set(newValue, forKey: lastSyncedAtKey) }
+    }
+
+    static func resetCursor() {
+        UserDefaults.standard.removeObject(forKey: anchorKey)
     }
 
     static func clear() {

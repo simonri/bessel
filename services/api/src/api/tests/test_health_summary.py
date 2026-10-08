@@ -180,6 +180,25 @@ class TestSummary:
     assert summary["insight"] == "You slept 7h 30m and worked out for 32m."
 
   @pytest.mark.asyncio
+  async def test_a_night_recorded_by_two_sources_counts_once(self, client: AsyncClient) -> None:
+    watch = [{**sample, "source_bundle_id": "com.apple.health.watch"} for sample in _night(DAY)]
+    phone_start = _local(DAY - timedelta(days=1), 22, 30)
+    phone = {**_sleep_sample(phone_start, phone_start + timedelta(hours=8.5), "asleepUnspecified"), "source_bundle_id": "com.apple.health.iphone"}
+    await client.post("/v1/healthkit/sleep/sync", json={"samples": [*watch, phone]})
+
+    sleep = (await _summary(client))["sleep"]
+    nights = (
+      await client.get(
+        "/v1/healthkit/sleep/daily",
+        params={"start_ts": int(_local(DAY - timedelta(days=1), 12).timestamp()), "end_ts": int(_local(DAY, 12).timestamp()), "tz_name": "Europe/Stockholm"},
+      )
+    ).json()["nights"]
+
+    assert sleep["asleep_secs"] == 7.5 * 3600
+    assert [segment["stage"] for segment in sleep["segments"]] == ["asleepDeep", "asleepCore", "asleepREM"]
+    assert nights[0]["asleep_secs"] == 7.5 * 3600
+
+  @pytest.mark.asyncio
   async def test_without_a_watch_there_is_no_energy(self, client: AsyncClient) -> None:
     await client.post("/v1/healthkit/daily-metrics/sync", json={"days": [_metric(DAY, steps=6000)]})
 
