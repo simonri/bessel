@@ -2010,6 +2010,296 @@
         ]
       }
     },
+    "/v1/gym/exercises": {
+      "get": {
+        "tags": [
+          "gym"
+        ],
+        "summary": "List Gym Exercises",
+        "operationId": "list_gym_exercises_v1_gym_exercises_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GymExerciseListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/gym/exercises/{exercise_id}": {
+      "put": {
+        "tags": [
+          "gym"
+        ],
+        "summary": "Create or Rename Gym Exercise",
+        "description": "The id is chosen by the app, so creating twice is the same as creating once.",
+        "operationId": "upsert_gym_exercise_v1_gym_exercises__exercise_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exercise_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Exercise Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GymExerciseUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GymExerciseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "gym"
+        ],
+        "summary": "Delete Gym Exercise",
+        "operationId": "delete_gym_exercise_v1_gym_exercises__exercise_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exercise_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Exercise Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/gym/exercises/{exercise_id}/sets": {
+      "get": {
+        "tags": [
+          "gym"
+        ],
+        "summary": "List Gym Top Sets",
+        "operationId": "list_gym_top_sets_v1_gym_exercises__exercise_id__sets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exercise_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Exercise Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GymTopSetListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/gym/exercises/{exercise_id}/sets/{performed_on}": {
+      "put": {
+        "tags": [
+          "gym"
+        ],
+        "summary": "Set Gym Top Set",
+        "description": "The day's top set for the exercise, replacing one already logged. The day\nis the app's local date, so a set sent late still lands on the day it was lifted.",
+        "operationId": "put_gym_top_set_v1_gym_exercises__exercise_id__sets__performed_on__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exercise_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Exercise Id"
+            }
+          },
+          {
+            "name": "performed_on",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Performed On"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GymTopSetUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GymTopSetSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "gym"
+        ],
+        "summary": "Delete Gym Top Set",
+        "operationId": "delete_gym_top_set_v1_gym_exercises__exercise_id__sets__performed_on__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exercise_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Exercise Id"
+            }
+          },
+          {
+            "name": "performed_on",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Performed On"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/healthkit/workouts/sync": {
       "post": {
         "tags": [
@@ -8827,6 +9117,175 @@
           "longitude"
         ],
         "title": "GooglePlaceSearchResult"
+      },
+      "GymExerciseListResponse": {
+        "properties": {
+          "exercises": {
+            "items": {
+              "$ref": "#/components/schemas/GymExerciseSummary"
+            },
+            "type": "array",
+            "title": "Exercises",
+            "description": "Most recently trained first; new exercises count from when they were added."
+          }
+        },
+        "type": "object",
+        "required": [
+          "exercises"
+        ],
+        "title": "GymExerciseListResponse"
+      },
+      "GymExerciseSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "title": "GymExerciseSchema"
+      },
+      "GymExerciseSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_set": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GymTopSetSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most recent top set."
+          },
+          "best_set": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GymTopSetSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The heaviest top set ever; the most recent if tied."
+          },
+          "recent_sets": {
+            "items": {
+              "$ref": "#/components/schemas/GymTopSetSchema"
+            },
+            "type": "array",
+            "title": "Recent Sets",
+            "description": "Up to the last 10 top sets, oldest first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "last_set",
+          "best_set",
+          "recent_sets"
+        ],
+        "title": "GymExerciseSummary"
+      },
+      "GymExerciseUpsert": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "What the exercise is called, e.g. 'Bench press'."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "GymExerciseUpsert"
+      },
+      "GymTopSetListResponse": {
+        "properties": {
+          "sets": {
+            "items": {
+              "$ref": "#/components/schemas/GymTopSetSchema"
+            },
+            "type": "array",
+            "title": "Sets",
+            "description": "Every top set of the exercise, oldest first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "sets"
+        ],
+        "title": "GymTopSetListResponse"
+      },
+      "GymTopSetSchema": {
+        "properties": {
+          "performed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Performed On",
+            "description": "The local day it was lifted."
+          },
+          "weight_kg": {
+            "type": "number",
+            "title": "Weight Kg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "performed_on",
+          "weight_kg"
+        ],
+        "title": "GymTopSetSchema"
+      },
+      "GymTopSetUpsert": {
+        "properties": {
+          "weight_kg": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Weight Kg",
+            "description": "The top set's weight in kilograms. 0 for bodyweight."
+          }
+        },
+        "type": "object",
+        "required": [
+          "weight_kg"
+        ],
+        "title": "GymTopSetUpsert"
       },
       "HTTPValidationError": {
         "properties": {

@@ -1632,6 +1632,120 @@ export type GooglePlaceSearchResult = {
 };
 
 /**
+ * GymExerciseListResponse
+ */
+export type GymExerciseListResponse = {
+  /**
+   * Exercises
+   *
+   * Most recently trained first; new exercises count from when they were added.
+   */
+  exercises: Array<GymExerciseSummary>;
+};
+
+/**
+ * GymExerciseSchema
+ */
+export type GymExerciseSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Created At
+   */
+  created_at: Date;
+};
+
+/**
+ * GymExerciseSummary
+ */
+export type GymExerciseSummary = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Created At
+   */
+  created_at: Date;
+  /**
+   * The most recent top set.
+   */
+  last_set: GymTopSetSchema | null;
+  /**
+   * The heaviest top set ever; the most recent if tied.
+   */
+  best_set: GymTopSetSchema | null;
+  /**
+   * Recent Sets
+   *
+   * Up to the last 10 top sets, oldest first.
+   */
+  recent_sets: Array<GymTopSetSchema>;
+};
+
+/**
+ * GymExerciseUpsert
+ */
+export type GymExerciseUpsert = {
+  /**
+   * Name
+   *
+   * What the exercise is called, e.g. 'Bench press'.
+   */
+  name: string;
+};
+
+/**
+ * GymTopSetListResponse
+ */
+export type GymTopSetListResponse = {
+  /**
+   * Sets
+   *
+   * Every top set of the exercise, oldest first.
+   */
+  sets: Array<GymTopSetSchema>;
+};
+
+/**
+ * GymTopSetSchema
+ */
+export type GymTopSetSchema = {
+  /**
+   * Performed On
+   *
+   * The local day it was lifted.
+   */
+  performed_on: Date;
+  /**
+   * Weight Kg
+   */
+  weight_kg: number;
+};
+
+/**
+ * GymTopSetUpsert
+ */
+export type GymTopSetUpsert = {
+  /**
+   * Weight Kg
+   *
+   * The top set's weight in kilograms. 0 for bodyweight.
+   */
+  weight_kg: number;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -6051,6 +6165,193 @@ export type UploadClientDiagnosticsV1ClientDiagnosticsPostResponses = {
    */
   202: unknown;
 };
+
+export type ListGymExercisesV1GymExercisesGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/gym/exercises";
+};
+
+export type ListGymExercisesV1GymExercisesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: GymExerciseListResponse;
+};
+
+export type ListGymExercisesV1GymExercisesGetResponse =
+  ListGymExercisesV1GymExercisesGetResponses[keyof ListGymExercisesV1GymExercisesGetResponses];
+
+export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+  };
+  query?: never;
+  url: "/v1/gym/exercises/{exercise_id}";
+};
+
+export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteError =
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors[keyof DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors];
+
+export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse =
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses[keyof DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses];
+
+export type UpsertGymExerciseV1GymExercisesExerciseIdPutData = {
+  body: GymExerciseUpsert;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+  };
+  query?: never;
+  url: "/v1/gym/exercises/{exercise_id}";
+};
+
+export type UpsertGymExerciseV1GymExercisesExerciseIdPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpsertGymExerciseV1GymExercisesExerciseIdPutError =
+  UpsertGymExerciseV1GymExercisesExerciseIdPutErrors[keyof UpsertGymExerciseV1GymExercisesExerciseIdPutErrors];
+
+export type UpsertGymExerciseV1GymExercisesExerciseIdPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: GymExerciseSchema;
+};
+
+export type UpsertGymExerciseV1GymExercisesExerciseIdPutResponse =
+  UpsertGymExerciseV1GymExercisesExerciseIdPutResponses[keyof UpsertGymExerciseV1GymExercisesExerciseIdPutResponses];
+
+export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetData = {
+  body?: never;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+  };
+  query?: never;
+  url: "/v1/gym/exercises/{exercise_id}/sets";
+};
+
+export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetError =
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors[keyof ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors];
+
+export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: GymTopSetListResponse;
+};
+
+export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse =
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses[keyof ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses];
+
+export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+    /**
+     * Performed On
+     */
+    performed_on: Date;
+  };
+  query?: never;
+  url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}";
+};
+
+export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError =
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors[keyof DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors];
+
+export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void;
+  };
+
+export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse =
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses[keyof DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses];
+
+export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData = {
+  body: GymTopSetUpsert;
+  path: {
+    /**
+     * Exercise Id
+     */
+    exercise_id: string;
+    /**
+     * Performed On
+     */
+    performed_on: Date;
+  };
+  query?: never;
+  url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}";
+};
+
+export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError =
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors[keyof PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors];
+
+export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses = {
+  /**
+   * Successful Response
+   */
+  200: GymTopSetSchema;
+};
+
+export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse =
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses[keyof PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses];
 
 export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData = {
   body: HealthKitWorkoutSyncRequest;

@@ -74,6 +74,12 @@ AUDITED: set[str] = {
   "PATCH /v1/devices/{device_id}",
   "POST /v1/healthkit/daily-metrics/sync",
   "GET /v1/healthkit/summary",
+  "GET /v1/gym/exercises",
+  "PUT /v1/gym/exercises/{exercise_id}",
+  "DELETE /v1/gym/exercises/{exercise_id}",
+  "GET /v1/gym/exercises/{exercise_id}/sets",
+  "PUT /v1/gym/exercises/{exercise_id}/sets/{performed_on}",
+  "DELETE /v1/gym/exercises/{exercise_id}/sets/{performed_on}",
   "GET /v1/healthkit/sleep",
   "GET /v1/healthkit/sleep/daily",
   "GET /v1/healthkit/sleep/summary",
@@ -493,6 +499,27 @@ def _workout(start: datetime) -> dict[str, Any]:
     "workout_metadata": None,
     "statistics": None,
   }
+
+
+class TestGym:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_take_over_or_change_exercises(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    exercise_id = str(uuid4())
+    assert (await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Bench press"})).status_code == 200
+    assert (await client.put(f"/v1/gym/exercises/{exercise_id}/sets/2026-10-08", json={"weight_kg": 60})).status_code == 200
+
+    assert (await other_client.get("/v1/gym/exercises")).json()["exercises"] == []
+    # The app picks ids, so another user sending A's id must not create, rename or take it.
+    assert (await other_client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Mine now"})).status_code == 404
+    assert (await other_client.get(f"/v1/gym/exercises/{exercise_id}/sets")).status_code == 404
+    assert (await other_client.put(f"/v1/gym/exercises/{exercise_id}/sets/2026-10-08", json={"weight_kg": 999})).status_code == 404
+    assert (await other_client.delete(f"/v1/gym/exercises/{exercise_id}/sets/2026-10-08")).status_code == 404
+    assert (await other_client.delete(f"/v1/gym/exercises/{exercise_id}")).status_code == 404
+    # The same name is fine for someone else.
+    assert (await other_client.put(f"/v1/gym/exercises/{uuid4()}", json={"name": "Bench press"})).status_code == 200
+
+    [mine] = (await client.get("/v1/gym/exercises")).json()["exercises"]
+    assert (mine["name"], mine["last_set"]) == ("Bench press", {"performed_on": "2026-10-08", "weight_kg": 60})
 
 
 class TestHealthKit:

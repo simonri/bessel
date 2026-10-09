@@ -11,6 +11,7 @@ from .calendar_person import CalendarPerson
 from .category import Category
 from .counter import Counter, CounterReset
 from .device import Device
+from .gym import GymExercise, GymTopSet
 from .healthkit_daily_metric import HealthKitDailyMetric
 from .healthkit_sleep_sample import HealthKitSleepSample
 from .healthkit_workout import HealthKitWorkout
@@ -48,6 +49,8 @@ __all__ = [
   "Counter",
   "CounterReset",
   "Device",
+  "GymExercise",
+  "GymTopSet",
   "HealthKitDailyMetric",
   "HealthKitSleepSample",
   "HealthKitWorkout",

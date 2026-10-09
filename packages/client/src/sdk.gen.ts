@@ -40,6 +40,8 @@ import {
   listCategoriesV1CategoriesGetResponseTransformer,
   listCountersV1CountersGetResponseTransformer,
   listDevicesV1DevicesGetResponseTransformer,
+  listGymExercisesV1GymExercisesGetResponseTransformer,
+  listGymTopSetsV1GymExercisesExerciseIdSetsGetResponseTransformer,
   listHealthkitSleepV1HealthkitSleepGetResponseTransformer,
   listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
   listIngestTokensV1IngestTokensGetResponseTransformer,
@@ -54,6 +56,7 @@ import {
   listTradesV1InvestmentsTradesGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
+  putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
   searchV1SearchGetResponseTransformer,
@@ -71,6 +74,7 @@ import {
   updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
+  upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
 } from "./transformers.gen.js";
 import type {
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
@@ -141,6 +145,12 @@ import type {
   DeleteDeviceV1DevicesDeviceIdDeleteData,
   DeleteDeviceV1DevicesDeviceIdDeleteErrors,
   DeleteDeviceV1DevicesDeviceIdDeleteResponses,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteData,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses,
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData,
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors,
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteErrors,
   DeletePlaceV1PlacesPlaceIdDeleteResponses,
@@ -258,6 +268,11 @@ import type {
   ListCountersV1CountersGetResponses,
   ListDevicesV1DevicesGetData,
   ListDevicesV1DevicesGetResponses,
+  ListGymExercisesV1GymExercisesGetData,
+  ListGymExercisesV1GymExercisesGetResponses,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetData,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses,
   ListHealthkitSleepV1HealthkitSleepGetData,
   ListHealthkitSleepV1HealthkitSleepGetErrors,
   ListHealthkitSleepV1HealthkitSleepGetResponses,
@@ -303,6 +318,9 @@ import type {
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostErrors,
   ReopenTaskV1TasksTaskIdReopenPostResponses,
@@ -396,6 +414,9 @@ import type {
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutData,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutErrors,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutResponses,
 } from "./types.gen.js";
 
 export type Options<
@@ -1265,6 +1286,149 @@ export const uploadClientDiagnosticsV1ClientDiagnosticsPost = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/client-diagnostics",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Gym Exercises
+ */
+export const listGymExercisesV1GymExercisesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListGymExercisesV1GymExercisesGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListGymExercisesV1GymExercisesGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listGymExercisesV1GymExercisesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/gym/exercises",
+    ...options,
+  });
+
+/**
+ * Delete Gym Exercise
+ */
+export const deleteGymExerciseV1GymExercisesExerciseIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteGymExerciseV1GymExercisesExerciseIdDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses,
+    DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/gym/exercises/{exercise_id}",
+    ...options,
+  });
+
+/**
+ * Create or Rename Gym Exercise
+ *
+ * The id is chosen by the app, so creating twice is the same as creating once.
+ */
+export const upsertGymExerciseV1GymExercisesExerciseIdPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpsertGymExerciseV1GymExercisesExerciseIdPutData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).put<
+    UpsertGymExerciseV1GymExercisesExerciseIdPutResponses,
+    UpsertGymExerciseV1GymExercisesExerciseIdPutErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/gym/exercises/{exercise_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Gym Top Sets
+ */
+export const listGymTopSetsV1GymExercisesExerciseIdSetsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ListGymTopSetsV1GymExercisesExerciseIdSetsGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses,
+    ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listGymTopSetsV1GymExercisesExerciseIdSetsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/gym/exercises/{exercise_id}/sets",
+    ...options,
+  });
+
+/**
+ * Delete Gym Top Set
+ */
+export const deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).delete<
+    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses,
+    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}",
+    ...options,
+  });
+
+/**
+ * Set Gym Top Set
+ *
+ * The day's top set for the exercise, replacing one already logged. The day
+ * is the app's local date, so a set sent late still lands on the day it was lifted.
+ */
+export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).put<
+    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
+    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}",
     ...options,
     headers: {
       "Content-Type": "application/json",

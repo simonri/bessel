@@ -33,6 +33,8 @@ import {
   deleteCalendarEventV1CalendarsEventsEventIdDelete,
   deleteCounterV1CountersCounterIdDelete,
   deleteDeviceV1DevicesDeviceIdDelete,
+  deleteGymExerciseV1GymExercisesExerciseIdDelete,
+  deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete,
   deletePlaceV1PlacesPlaceIdDelete,
   deleteProjectV1ProjectsProjectIdDelete,
   deleteRecipeV1RecipesRecipeIdDelete,
@@ -75,6 +77,8 @@ import {
   listCategoriesV1CategoriesGet,
   listCountersV1CountersGet,
   listDevicesV1DevicesGet,
+  listGymExercisesV1GymExercisesGet,
+  listGymTopSetsV1GymExercisesExerciseIdSetsGet,
   listHealthkitSleepV1HealthkitSleepGet,
   listHealthkitWorkoutsV1HealthkitWorkoutsGet,
   listIngestTokensV1IngestTokensGet,
@@ -92,6 +96,7 @@ import {
   markNotificationReadV1NotificationsNotificationIdReadPost,
   monthlyFlowV1TransactionsMonthlyFlowGet,
   type Options,
+  putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut,
   reopenTaskV1TasksTaskIdReopenPost,
   reorderTasksV1TasksReorderPatch,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
@@ -123,6 +128,7 @@ import {
   updateTransactionV1TransactionsTransactionIdPatch,
   uploadClientDiagnosticsV1ClientDiagnosticsPost,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPost,
+  upsertGymExerciseV1GymExercisesExerciseIdPut,
 } from "../sdk.gen.js";
 import type {
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
@@ -193,6 +199,12 @@ import type {
   DeleteDeviceV1DevicesDeviceIdDeleteData,
   DeleteDeviceV1DevicesDeviceIdDeleteError,
   DeleteDeviceV1DevicesDeviceIdDeleteResponse,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteData,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteError,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse,
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData,
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError,
+  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse,
   DeletePlaceV1PlacesPlaceIdDeleteData,
   DeletePlaceV1PlacesPlaceIdDeleteError,
   DeletePlaceV1PlacesPlaceIdDeleteResponse,
@@ -308,6 +320,11 @@ import type {
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetData,
   ListDevicesV1DevicesGetResponse,
+  ListGymExercisesV1GymExercisesGetData,
+  ListGymExercisesV1GymExercisesGetResponse,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetData,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetError,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
   ListHealthkitSleepV1HealthkitSleepGetData,
   ListHealthkitSleepV1HealthkitSleepGetError,
   ListHealthkitSleepV1HealthkitSleepGetResponse,
@@ -353,6 +370,9 @@ import type {
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetError,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostError,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
@@ -444,6 +464,9 @@ import type {
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutData,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutError,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
 } from "../types.gen.js";
 
 export type QueryKey<TOptions extends Options> = [
@@ -1764,6 +1787,184 @@ export const uploadClientDiagnosticsV1ClientDiagnosticsPostMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listGymExercisesV1GymExercisesGetQueryKey = (
+  options?: Options<ListGymExercisesV1GymExercisesGetData>,
+) => createQueryKey("listGymExercisesV1GymExercisesGet", options);
+
+/**
+ * List Gym Exercises
+ */
+export const listGymExercisesV1GymExercisesGetOptions = (
+  options?: Options<ListGymExercisesV1GymExercisesGetData>,
+) =>
+  queryOptions<
+    ListGymExercisesV1GymExercisesGetResponse,
+    DefaultError,
+    ListGymExercisesV1GymExercisesGetResponse,
+    ReturnType<typeof listGymExercisesV1GymExercisesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listGymExercisesV1GymExercisesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listGymExercisesV1GymExercisesGetQueryKey(options),
+  });
+
+/**
+ * Delete Gym Exercise
+ */
+export const deleteGymExerciseV1GymExercisesExerciseIdDeleteMutation = (
+  options?: Partial<
+    Options<DeleteGymExerciseV1GymExercisesExerciseIdDeleteData>
+  >,
+): UseMutationOptions<
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse,
+  DeleteGymExerciseV1GymExercisesExerciseIdDeleteError,
+  Options<DeleteGymExerciseV1GymExercisesExerciseIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse,
+    DeleteGymExerciseV1GymExercisesExerciseIdDeleteError,
+    Options<DeleteGymExerciseV1GymExercisesExerciseIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteGymExerciseV1GymExercisesExerciseIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Create or Rename Gym Exercise
+ *
+ * The id is chosen by the app, so creating twice is the same as creating once.
+ */
+export const upsertGymExerciseV1GymExercisesExerciseIdPutMutation = (
+  options?: Partial<Options<UpsertGymExerciseV1GymExercisesExerciseIdPutData>>,
+): UseMutationOptions<
+  UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutError,
+  Options<UpsertGymExerciseV1GymExercisesExerciseIdPutData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
+    UpsertGymExerciseV1GymExercisesExerciseIdPutError,
+    Options<UpsertGymExerciseV1GymExercisesExerciseIdPutData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await upsertGymExerciseV1GymExercisesExerciseIdPut({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listGymTopSetsV1GymExercisesExerciseIdSetsGetQueryKey = (
+  options: Options<ListGymTopSetsV1GymExercisesExerciseIdSetsGetData>,
+) => createQueryKey("listGymTopSetsV1GymExercisesExerciseIdSetsGet", options);
+
+/**
+ * List Gym Top Sets
+ */
+export const listGymTopSetsV1GymExercisesExerciseIdSetsGetOptions = (
+  options: Options<ListGymTopSetsV1GymExercisesExerciseIdSetsGetData>,
+) =>
+  queryOptions<
+    ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
+    ListGymTopSetsV1GymExercisesExerciseIdSetsGetError,
+    ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
+    ReturnType<typeof listGymTopSetsV1GymExercisesExerciseIdSetsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listGymTopSetsV1GymExercisesExerciseIdSetsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listGymTopSetsV1GymExercisesExerciseIdSetsGetQueryKey(options),
+  });
+
+/**
+ * Delete Gym Top Set
+ */
+export const deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteMutation =
+  (
+    options?: Partial<
+      Options<DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData>
+    >,
+  ): UseMutationOptions<
+    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse,
+    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError,
+    Options<DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse,
+      DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError,
+      Options<DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+/**
+ * Set Gym Top Set
+ *
+ * The day's top set for the exercise, replacing one already logged. The day
+ * is the app's local date, so a set sent late still lands on the day it was lifted.
+ */
+export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutMutation = (
+  options?: Partial<
+    Options<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData>
+  >,
+): UseMutationOptions<
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
+  Options<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
+    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
+    Options<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

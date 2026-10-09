@@ -73,6 +73,13 @@ from .google_authorize_response import GoogleAuthorizeResponse
 from .google_callback_request import GoogleCallbackRequest
 from .google_place_search_response import GooglePlaceSearchResponse
 from .google_place_search_result import GooglePlaceSearchResult
+from .gym_exercise_list_response import GymExerciseListResponse
+from .gym_exercise_schema import GymExerciseSchema
+from .gym_exercise_summary import GymExerciseSummary
+from .gym_exercise_upsert import GymExerciseUpsert
+from .gym_top_set_list_response import GymTopSetListResponse
+from .gym_top_set_schema import GymTopSetSchema
+from .gym_top_set_upsert import GymTopSetUpsert
 from .health_kit_daily_metric_upload import HealthKitDailyMetricUpload
 from .health_kit_daily_metrics_sync_request import HealthKitDailyMetricsSyncRequest
 from .health_kit_daily_metrics_sync_response import HealthKitDailyMetricsSyncResponse
@@ -270,6 +277,13 @@ __all__ = (
   "GoogleCallbackRequest",
   "GooglePlaceSearchResponse",
   "GooglePlaceSearchResult",
+  "GymExerciseListResponse",
+  "GymExerciseSchema",
+  "GymExerciseSummary",
+  "GymExerciseUpsert",
+  "GymTopSetListResponse",
+  "GymTopSetSchema",
+  "GymTopSetUpsert",
   "HealthKitDailyMetricsSyncRequest",
   "HealthKitDailyMetricsSyncResponse",
   "HealthKitDailyMetricUpload",

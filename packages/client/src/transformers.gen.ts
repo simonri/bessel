@@ -33,6 +33,8 @@ import type {
   ListCategoriesV1CategoriesGetResponse,
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetResponse,
+  ListGymExercisesV1GymExercisesGetResponse,
+  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
   ListHealthkitSleepV1HealthkitSleepGetResponse,
   ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
   ListIngestTokensV1IngestTokensGetResponse,
@@ -47,6 +49,7 @@ import type {
   ListTradesV1InvestmentsTradesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
+  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
   SearchV1SearchGetResponse,
@@ -64,6 +67,7 @@ import type {
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
+  UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
 } from "./types.gen.js";
 
 const agentUsageStatusEntrySchemaResponseTransformer = (data: any) => {
@@ -333,6 +337,75 @@ export const updateDeviceV1DevicesDeviceIdPatchResponseTransformer = async (
   data = deviceSchemaSchemaResponseTransformer(data);
   return data;
 };
+
+const gymTopSetSchemaSchemaResponseTransformer = (data: any) => {
+  data.performed_on = new Date(data.performed_on);
+  return data;
+};
+
+const gymExerciseSummarySchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.last_set) {
+    data.last_set = gymTopSetSchemaSchemaResponseTransformer(data.last_set);
+  }
+  if (data.best_set) {
+    data.best_set = gymTopSetSchemaSchemaResponseTransformer(data.best_set);
+  }
+  data.recent_sets = data.recent_sets.map((item: any) =>
+    gymTopSetSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const gymExerciseListResponseSchemaResponseTransformer = (data: any) => {
+  data.exercises = data.exercises.map((item: any) =>
+    gymExerciseSummarySchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listGymExercisesV1GymExercisesGetResponseTransformer = async (
+  data: any,
+): Promise<ListGymExercisesV1GymExercisesGetResponse> => {
+  data = gymExerciseListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const gymExerciseSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  return data;
+};
+
+export const upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpsertGymExerciseV1GymExercisesExerciseIdPutResponse> => {
+    data = gymExerciseSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const gymTopSetListResponseSchemaResponseTransformer = (data: any) => {
+  data.sets = data.sets.map((item: any) =>
+    gymTopSetSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listGymTopSetsV1GymExercisesExerciseIdSetsGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse> => {
+    data = gymTopSetListResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer =
+  async (
+    data: any,
+  ): Promise<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse> => {
+    data = gymTopSetSchemaSchemaResponseTransformer(data);
+    return data;
+  };
 
 const healthKitWorkoutSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

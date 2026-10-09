@@ -2393,6 +2393,161 @@ export const GooglePlaceSearchResultSchema = {
   title: "GooglePlaceSearchResult",
 } as const;
 
+export const GymExerciseListResponseSchema = {
+  properties: {
+    exercises: {
+      items: {
+        $ref: "#/components/schemas/GymExerciseSummary",
+      },
+      type: "array",
+      title: "Exercises",
+      description:
+        "Most recently trained first; new exercises count from when they were added.",
+    },
+  },
+  type: "object",
+  required: ["exercises"],
+  title: "GymExerciseListResponse",
+} as const;
+
+export const GymExerciseSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+    },
+  },
+  type: "object",
+  required: ["id", "name", "created_at"],
+  title: "GymExerciseSchema",
+} as const;
+
+export const GymExerciseSummarySchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+    },
+    last_set: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/GymTopSetSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "The most recent top set.",
+    },
+    best_set: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/GymTopSetSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "The heaviest top set ever; the most recent if tied.",
+    },
+    recent_sets: {
+      items: {
+        $ref: "#/components/schemas/GymTopSetSchema",
+      },
+      type: "array",
+      title: "Recent Sets",
+      description: "Up to the last 10 top sets, oldest first.",
+    },
+  },
+  type: "object",
+  required: ["id", "name", "created_at", "last_set", "best_set", "recent_sets"],
+  title: "GymExerciseSummary",
+} as const;
+
+export const GymExerciseUpsertSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      minLength: 1,
+      title: "Name",
+      description: "What the exercise is called, e.g. 'Bench press'.",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "GymExerciseUpsert",
+} as const;
+
+export const GymTopSetListResponseSchema = {
+  properties: {
+    sets: {
+      items: {
+        $ref: "#/components/schemas/GymTopSetSchema",
+      },
+      type: "array",
+      title: "Sets",
+      description: "Every top set of the exercise, oldest first.",
+    },
+  },
+  type: "object",
+  required: ["sets"],
+  title: "GymTopSetListResponse",
+} as const;
+
+export const GymTopSetSchemaSchema = {
+  properties: {
+    performed_on: {
+      type: "string",
+      format: "date",
+      title: "Performed On",
+      description: "The local day it was lifted.",
+    },
+    weight_kg: {
+      type: "number",
+      title: "Weight Kg",
+    },
+  },
+  type: "object",
+  required: ["performed_on", "weight_kg"],
+  title: "GymTopSetSchema",
+} as const;
+
+export const GymTopSetUpsertSchema = {
+  properties: {
+    weight_kg: {
+      type: "number",
+      maximum: 1000,
+      minimum: 0,
+      title: "Weight Kg",
+      description: "The top set's weight in kilograms. 0 for bodyweight.",
+    },
+  },
+  type: "object",
+  required: ["weight_kg"],
+  title: "GymTopSetUpsert",
+} as const;
+
 export const HTTPValidationErrorSchema = {
   properties: {
     detail: {
