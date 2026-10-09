@@ -7,10 +7,13 @@ final class AppServices {
     let client: APIClient
     let outbox: DeleteOutbox
     let cache: ResponseCache
+    /// The signed-in account, which scopes what's kept on disk.
+    let account: String
     private let diagnostics: DiagnosticsReporter
 
     init(auth: AuthSession) {
         let account = auth.accountID ?? "default"
+        self.account = account
         client = APIClient(auth: auth)
         outbox = DeleteOutbox(client: client, account: account)
         cache = ResponseCache(account: account)

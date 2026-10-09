@@ -134,6 +134,7 @@ final class AuthSession {
         DailyMetricsSyncState.clear()
         ResponseCache.removeAll()
         DeleteOutbox.clear()
+        GymOutbox.clear()
         state = .signedOut
     }
 

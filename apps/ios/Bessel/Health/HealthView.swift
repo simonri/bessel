@@ -1,5 +1,17 @@
 import SwiftUI
 
+/// The two halves of the Health tab.
+enum HealthSection: String {
+    case health, gym
+
+    var title: String {
+        switch self {
+        case .health: "Health"
+        case .gym: "Gym"
+        }
+    }
+}
+
 /// Where a tap on the Health page leads.
 enum HealthDestination: Hashable {
     case ring(HealthRing)
@@ -15,19 +27,74 @@ struct HealthView: View {
 
     @State private var store: HealthStore
     @State private var timeline: DayTimeline
+    @State private var gym: GymStore
     @State private var path: [HealthDestination] = []
+    /// Remembered, so in the gym the tab opens straight on Gym.
+    @AppStorage("health.section") private var section: HealthSection = .health
 
     init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
         self.isActive = isActive
         _store = State(initialValue: HealthStore(client: services.client, cache: services.cache))
         _timeline = State(initialValue: DayTimeline(client: services.client))
+        _gym = State(initialValue: GymStore(services: services))
     }
 
     var body: some View {
         NavigationStack(path: $path) {
+            Group {
+                switch section {
+                case .health: healthPage
+                case .gym: GymPage(store: gym) { sectionPicker }
+                }
+            }
+            .navigationTitle(section.title)
+            .toolbarTitleDisplayMode(.inlineLarge)
+            .toolbar {
+                ProfileToolbarItem(auth: auth)
+            }
+            .navigationDestination(for: HealthDestination.self) { destination in
+                switch destination {
+                case .ring(.sleep): SleepDetailView(store: store)
+                case .ring(.move): MoveDetailView(store: store) { path.append(.workouts) }
+                case .ring(.energy): EnergyDetailView(store: store)
+                case .workouts: AllWorkoutsView(store: store)
+                }
+            }
+            // Health syncing (and its permission prompt) waits while Gym is up.
+            .refreshWhileVisible(isActive && section == .health) {
+                await store.syncIfNeeded()
+                await store.loadIfStale()
+                await timeline.loadIfStale()
+            }
+            .refreshWhileVisible(isActive && section == .gym) {
+                await gym.loadIfStale()
+            }
+            .loadErrorToast($store.loadError, isActive: isActive && section == .health) { await store.load() }
+            .loadErrorToast($gym.loadError, isActive: isActive && section == .gym) { await gym.load() }
+            .onChange(of: store.day) { _, day in
+                Task { await timeline.show(day) }
+            }
+            .haptic(.selection, trigger: store.day)
+            .haptic(.selection, trigger: section)
+        }
+    }
+
+    private var sectionPicker: some View {
+        HStack(spacing: 8) {
+            FilterPill(title: HealthSection.health.title, isSelected: section == .health) {
+                withAnimation(.snappy) { section = .health }
+            }
+            FilterPill(title: HealthSection.gym.title, isSelected: section == .gym) {
+                withAnimation(.snappy) { section = .gym }
+            }
+        }
+    }
+
+    private var healthPage: some View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    sectionPicker
                     if store.isConnected {
                         DayPager(day: store.day, isToday: store.isToday) { offset in
                             Task { await store.step(offset) }
@@ -65,35 +132,11 @@ struct HealthView: View {
                 await timeline.load()
             }
             .background(Theme.background)
-            .navigationTitle("Health")
-            .toolbarTitleDisplayMode(.inlineLarge)
-            .toolbar {
-                ProfileToolbarItem(auth: auth)
-            }
-            .navigationDestination(for: HealthDestination.self) { destination in
-                switch destination {
-                case .ring(.sleep): SleepDetailView(store: store)
-                case .ring(.move): MoveDetailView(store: store) { path.append(.workouts) }
-                case .ring(.energy): EnergyDetailView(store: store)
-                case .workouts: AllWorkoutsView(store: store)
-                }
-            }
             .alert("Something went wrong", isPresented: errorBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(store.errorMessage ?? "")
             }
-            .refreshWhileVisible(isActive) {
-                await store.syncIfNeeded()
-                await store.loadIfStale()
-                await timeline.loadIfStale()
-            }
-            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
-            .onChange(of: store.day) { _, day in
-                Task { await timeline.show(day) }
-            }
-            .haptic(.selection, trigger: store.day)
-        }
     }
 
     /// Sideways on the rings to go a day back or forward.
