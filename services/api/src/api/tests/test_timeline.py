@@ -56,8 +56,38 @@ class TestTimeline:
     data = await _timeline(client)
     assert data["source"] is None
     assert data["tracked_secs"] == 0
-    assert [lane["key"] for lane in data["lanes"]] == ["sleep", "pc"]
+    assert [lane["key"] for lane in data["lanes"]] == ["sleep", "workouts", "pc"]
     assert all(lane["segments"] == [] and lane["total_secs"] == 0 for lane in data["lanes"])
+
+  @pytest.mark.asyncio
+  async def test_workouts_show_as_their_activity(self, client: AsyncClient) -> None:
+    def workout(start_ts: int, end_ts: int, name: str) -> dict[str, Any]:
+      return {
+        "healthkit_uuid": str(uuid4()),
+        "workout_activity_type": 37,
+        "workout_activity_type_name": name,
+        "start_date": datetime.fromtimestamp(start_ts, tz=UTC).isoformat(),
+        "end_date": datetime.fromtimestamp(end_ts, tz=UTC).isoformat(),
+        "duration": end_ts - start_ts,
+        "source_name": "Apple Watch",
+        "source_bundle_id": "com.apple.health",
+      }
+
+    resp = await client.post(
+      "/v1/healthkit/workouts/sync",
+      json={"workouts": [workout(_ts(7), _ts(7, 40), "running"), workout(DAY_END - 1800, DAY_END + 1800, "yoga")]},
+    )
+    assert resp.status_code == 200
+
+    data = await _timeline(client)
+    workouts = _lane(data, "workouts")
+
+    assert workouts["segments"] == [
+      {"start_ts": _ts(7), "end_ts": _ts(7, 40), "label": "running"},
+      {"start_ts": DAY_END - 1800, "end_ts": DAY_END, "label": "yoga"},
+    ]
+    assert workouts["total_secs"] == 70 * 60
+    assert data["tracked_secs"] == 70 * 60
 
   @pytest.mark.asyncio
   async def test_sleep_spanning_window_start_is_clipped(self, client: AsyncClient) -> None:

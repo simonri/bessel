@@ -4302,7 +4302,11 @@ export type TimelineLane = {
 /**
  * TimelineLaneKey
  */
-export const TimelineLaneKey = { SLEEP: "sleep", PC: "pc" } as const;
+export const TimelineLaneKey = {
+  SLEEP: "sleep",
+  WORKOUTS: "workouts",
+  PC: "pc",
+} as const;
 
 /**
  * TimelineLaneKey
@@ -4359,7 +4363,7 @@ export type TimelineSegment = {
   /**
    * Label
    *
-   * What filled this span: the sleep stage for the sleep lane, the app class for the PC lane.
+   * What filled this span: the sleep stage for the sleep lane, the activity (e.g. 'running') for the workouts lane, the app class for the PC lane.
    */
   label: string;
 };

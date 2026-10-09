@@ -16,6 +16,7 @@ struct TimelineResponse: Decodable {
     struct Segment: Decodable {
         let startTs: Int
         let endTs: Int
+        let label: String?
     }
 }
 
@@ -34,7 +35,7 @@ struct LocationDayResponse: Decodable {
 /// One lane of the day ribbon, mirroring apps/web components/timeline/day-summary.ts.
 struct RibbonLane: Identifiable {
     enum Key: String {
-        case sleep, pc, places
+        case sleep, workouts, pc, places
     }
 
     struct Block: Identifiable, Equatable {
@@ -56,6 +57,7 @@ struct RibbonLane: Identifiable {
     var title: String {
         switch key {
         case .sleep: "Sleep"
+        case .workouts: "Workouts"
         case .pc: "Screen time"
         case .places: "Places"
         }
@@ -64,6 +66,7 @@ struct RibbonLane: Identifiable {
     var hue: Double {
         switch key {
         case .sleep: 295
+        case .workouts: 20
         case .pc: 235
         case .places: 165
         }
@@ -72,6 +75,7 @@ struct RibbonLane: Identifiable {
     var icon: String {
         switch key {
         case .sleep: "moon.fill"
+        case .workouts: "figure.run"
         case .pc: "desktopcomputer"
         case .places: "mappin"
         }
@@ -160,6 +164,7 @@ final class DayTimeline {
             lanes.first { $0.key == key && !$0.blocks.isEmpty }
         }
         if let sleep = lane(.sleep) { parts.append("slept \(Self.duration(TimeInterval(sleep.totalSecs)))") }
+        if let workouts = lane(.workouts) { parts.append("worked out for \(Self.duration(TimeInterval(workouts.totalSecs)))") }
         if let screen = lane(.pc) { parts.append("spent \(Self.duration(TimeInterval(screen.totalSecs))) at the computer") }
         if let places = lane(.places) {
             let count = Set(places.blocks.map(\.name)).count
@@ -171,6 +176,8 @@ final class DayTimeline {
 
     private static func activityLane(_ lane: TimelineResponse.Lane) -> RibbonLane? {
         guard let key = RibbonLane.Key(rawValue: lane.key), key != .places else { return nil }
+        // Most days have no workout; no empty row for them.
+        if key == .workouts { return lane.segments.isEmpty ? nil : workoutLane(lane) }
         var sessions: [(start: Int, end: Int)] = []
         for segment in lane.segments.sorted(by: { $0.startTs < $1.startTs }) {
             if let last = sessions.last, TimeInterval(segment.startTs - last.end) <= mergeGap {
@@ -189,6 +196,20 @@ final class DayTimeline {
             )
         }
         return RibbonLane(key: key, totalSecs: lane.totalSecs, blocks: blocks)
+    }
+
+    /// Each workout its own block, named by what it was.
+    private static func workoutLane(_ lane: TimelineResponse.Lane) -> RibbonLane {
+        let hue = RibbonLane(key: .workouts, totalSecs: 0, blocks: []).hue
+        let blocks = lane.segments.map { segment in
+            RibbonLane.Block(
+                start: Date(timeIntervalSince1970: TimeInterval(segment.startTs)),
+                end: Date(timeIntervalSince1970: TimeInterval(segment.endTs)),
+                name: HealthKitWorkoutItem.activityLabel(segment.label ?? ""),
+                hue: hue
+            )
+        }
+        return RibbonLane(key: .workouts, totalSecs: lane.totalSecs, blocks: blocks)
     }
 
     private func placesLane(_ visits: [LocationDayResponse.Visit]) -> RibbonLane {

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { MapPin, Monitor, Moon } from "lucide-react";
+import { Dumbbell, MapPin, Monitor, Moon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { fmtDur } from "@/routes/_app/-activity-utils";
@@ -15,6 +15,7 @@ const LABEL_MIN_PCT = 9;
 
 const LANE_ICONS: Record<RibbonLaneKey, typeof Moon> = {
   sleep: Moon,
+  workouts: Dumbbell,
   pc: Monitor,
   places: MapPin,
 };

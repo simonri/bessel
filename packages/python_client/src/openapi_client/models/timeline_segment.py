@@ -15,7 +15,8 @@ class TimelineSegment:
   Attributes:
       start_ts (int): Segment start (Unix epoch seconds), clipped to the window.
       end_ts (int): Segment end (Unix epoch seconds, exclusive), clipped to the window.
-      label (str): What filled this span: the sleep stage for the sleep lane, the app class for the PC lane.
+      label (str): What filled this span: the sleep stage for the sleep lane, the activity (e.g. 'running') for the
+          workouts lane, the app class for the PC lane.
   """
 
   start_ts: int

@@ -118,6 +118,34 @@ describe("daySentence", () => {
   });
 });
 
+describe("workouts", () => {
+  it("shows each workout by name, in the story and the sentence", () => {
+    const workouts: TimelineLane = {
+      key: "workouts",
+      total_secs: 40 * 60,
+      segments: [
+        {
+          start_ts: at(7),
+          end_ts: at(7, 40),
+          label: "traditional_strength_training",
+        },
+      ],
+    };
+    const lanes = [activityLane(workouts)];
+
+    expect(lanes[0].blocks[0].name).toBe("Traditional strength training");
+    expect(dayMoments(lanes, DAY, DAY + 86400, dur)).toEqual([
+      {
+        ts: at(7),
+        kind: "workout",
+        text: "Traditional strength training",
+        detail: "40m",
+      },
+    ]);
+    expect(daySentence(lanes, dur)).toBe("You worked out for 40m.");
+  });
+});
+
 it("nightOf picks the longest sleep", () => {
   const sleep = activityLane(
     lane("sleep", [

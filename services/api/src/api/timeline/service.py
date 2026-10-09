@@ -1,8 +1,9 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from api.activity.repository import ActivityRepository
 from api.activity.service import ActivityService
-from api.healthkit.repository import HealthKitSleepSampleRepository
+from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
 from api.healthkit.service import ASLEEP_STAGES, healthkit_sleep_service
 from api.timeline.schemas import TimelineLane, TimelineLaneKey, TimelineResponse, TimelineSegment
 
@@ -41,6 +42,7 @@ class TimelineService:
     self,
     activity_repo: ActivityRepository,
     sleep_repo: HealthKitSleepSampleRepository,
+    workout_repo: HealthKitWorkoutRepository,
     user_id: UUID,
     start_ts: int,
     end_ts: int,
@@ -52,6 +54,17 @@ class TimelineService:
       key=TimelineLaneKey.sleep,
       total_secs=_total_secs(asleep),
       segments=_merge_contiguous([TimelineSegment(start_ts=s.start_ts, end_ts=s.end_ts, label=s.stage_name) for s in sleep_segments]),
+    )
+
+    window_start, window_end = datetime.fromtimestamp(start_ts, tz=UTC), datetime.fromtimestamp(end_ts, tz=UTC)
+    workouts = [
+      (max(int(w.start_date.timestamp()), start_ts), min(int(w.end_date.timestamp()), end_ts), w.workout_activity_type_name)
+      for w in await workout_repo.list_overlapping(user_id, window_start, window_end)
+    ]
+    workout_lane = TimelineLane(
+      key=TimelineLaneKey.workouts,
+      total_secs=_total_secs([(start, end) for start, end, _ in workouts]),
+      segments=[TimelineSegment(start_ts=start, end_ts=end, label=name) for start, end, name in workouts if end > start],
     )
 
     if source is None:
@@ -70,8 +83,8 @@ class TimelineService:
       start_ts=start_ts,
       end_ts=end_ts,
       source=source,
-      tracked_secs=_total_secs(asleep + active),
-      lanes=[sleep_lane, pc_lane],
+      tracked_secs=_total_secs(asleep + active + [(start, end) for start, end, _ in workouts]),
+      lanes=[sleep_lane, workout_lane, pc_lane],
     )
 
 

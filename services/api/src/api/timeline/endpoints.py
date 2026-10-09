@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query
 
 from api.activity.repository import ActivityRepository
 from api.exceptions import ValidationError
-from api.healthkit.repository import HealthKitSleepSampleRepository
+from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
 from api.postgres import DBSession
 from api.timeline.schemas import TimelineResponse
 from api.timeline.service import timeline_service
@@ -33,6 +33,7 @@ async def get_timeline(
   return await timeline_service.get_timeline(
     ActivityRepository.from_session(session),
     HealthKitSleepSampleRepository.from_session(session),
+    HealthKitWorkoutRepository.from_session(session),
     current_user.id,
     start_ts,
     end_ts,

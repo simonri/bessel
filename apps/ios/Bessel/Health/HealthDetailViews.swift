@@ -519,8 +519,11 @@ struct WorkoutRow: View {
 }
 
 extension HealthKitWorkoutItem {
-    var activityLabel: String {
-        let words = workoutActivityTypeName.split(separator: "_").joined(separator: " ")
+    var activityLabel: String { Self.activityLabel(workoutActivityTypeName) }
+
+    /// "traditional_strength_training" as "Traditional strength training".
+    static func activityLabel(_ typeName: String) -> String {
+        let words = typeName.split(separator: "_").joined(separator: " ")
         return words.prefix(1).uppercased() + words.dropFirst()
     }
 

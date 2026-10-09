@@ -26,6 +26,7 @@ export interface RibbonLane {
 export const LANE_META: Record<RibbonLaneKey, { title: string; hue: number }> =
   {
     sleep: { title: "Sleep", hue: 295 },
+    workouts: { title: "Workouts", hue: 20 },
     pc: { title: "Screen time", hue: 235 },
     places: { title: "Places", hue: 165 },
   };
@@ -49,8 +50,28 @@ export function mergeSessions(
   return sessions;
 }
 
+/** "traditional_strength_training" as "Traditional strength training". */
+export function workoutName(activityType: string): string {
+  const words = activityType.split("_").join(" ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function activityLane(lane: TimelineLane): RibbonLane {
   const { title, hue } = LANE_META[lane.key];
+  if (lane.key === "workouts") {
+    // Each workout its own block, named by what it was.
+    return {
+      key: lane.key,
+      title,
+      totalSecs: lane.total_secs,
+      blocks: lane.segments.map((s) => ({
+        startTs: s.start_ts,
+        endTs: s.end_ts,
+        name: workoutName(s.label),
+        hue,
+      })),
+    };
+  }
   return {
     key: lane.key,
     title,
@@ -96,7 +117,7 @@ export function placesLane(
 
 export interface Moment {
   ts: number;
-  kind: "sleep" | "wake" | "screen" | "place";
+  kind: "sleep" | "wake" | "workout" | "screen" | "place";
   text: string;
   /** Extra context, e.g. how long it lasted. */
   detail?: string;
@@ -127,6 +148,13 @@ export function dayMoments(
             text: "Woke up",
             detail: `after ${length}`,
           });
+      } else if (lane.key === "workouts") {
+        moments.push({
+          ts: b.startTs,
+          kind: "workout",
+          text: b.name,
+          detail: length,
+        });
       } else if (lane.key === "pc") {
         moments.push({
           ts: b.startTs,
@@ -178,9 +206,12 @@ export function daySentence(
   const lane = (key: RibbonLane["key"]) =>
     lanes.find((l) => l.key === key && l.blocks.length > 0);
   const sleep = lane("sleep");
+  const workouts = lane("workouts");
   const screen = lane("pc");
   const places = lane("places");
   if (sleep) parts.push(`slept ${formatDuration(sleep.totalSecs)}`);
+  if (workouts)
+    parts.push(`worked out for ${formatDuration(workouts.totalSecs)}`);
   if (screen)
     parts.push(`spent ${formatDuration(screen.totalSecs)} at the computer`);
   if (places) {

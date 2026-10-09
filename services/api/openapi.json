@@ -13485,6 +13485,7 @@
         "type": "string",
         "enum": [
           "sleep",
+          "workouts",
           "pc"
         ],
         "title": "TimelineLaneKey"
@@ -13549,7 +13550,7 @@
           "label": {
             "type": "string",
             "title": "Label",
-            "description": "What filled this span: the sleep stage for the sleep lane, the app class for the PC lane."
+            "description": "What filled this span: the sleep stage for the sleep lane, the activity (e.g. 'running') for the workouts lane, the app class for the PC lane."
           }
         },
         "type": "object",

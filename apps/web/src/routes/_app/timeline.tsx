@@ -84,7 +84,10 @@ function TimelinePage() {
   });
 
   const lanes = useMemo(() => {
-    const activity = timeline?.lanes.map(activityLane) ?? [];
+    // Most days have no workout; no empty row for them.
+    const activity = (timeline?.lanes ?? [])
+      .filter((l) => l.key !== "workouts" || l.segments.length > 0)
+      .map(activityLane);
     // A visit spanning midnight comes back for both dates.
     const visits = new Map(
       [...(locationDay?.visits ?? []), ...(nextLocationDay?.visits ?? [])].map(

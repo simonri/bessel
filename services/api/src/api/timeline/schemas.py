@@ -7,13 +7,16 @@ from api.common.schemas import Schema
 
 class TimelineLaneKey(StrEnum):
   sleep = "sleep"
+  workouts = "workouts"
   pc = "pc"
 
 
 class TimelineSegment(Schema):
   start_ts: int = Field(description="Segment start (Unix epoch seconds), clipped to the window.")
   end_ts: int = Field(description="Segment end (Unix epoch seconds, exclusive), clipped to the window.")
-  label: str = Field(description="What filled this span: the sleep stage for the sleep lane, the app class for the PC lane.")
+  label: str = Field(
+    description="What filled this span: the sleep stage for the sleep lane, the activity (e.g. 'running') for the workouts lane, the app class for the PC lane."
+  )
 
 
 class TimelineLane(Schema):

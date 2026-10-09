@@ -1,11 +1,12 @@
 import { format } from "date-fns";
-import { LogIn, MapPin, Monitor, Moon, Sun } from "lucide-react";
+import { Dumbbell, LogIn, MapPin, Monitor, Moon, Sun } from "lucide-react";
 import { pastel } from "./day-ribbon";
 import { LANE_META, type Moment } from "./day-summary";
 
 const KIND: Record<Moment["kind"], { icon: typeof Moon; hue: number }> = {
   sleep: { icon: Moon, hue: LANE_META.sleep.hue },
   wake: { icon: Sun, hue: 75 },
+  workout: { icon: Dumbbell, hue: LANE_META.workouts.hue },
   screen: { icon: Monitor, hue: LANE_META.pc.hue },
   place: { icon: MapPin, hue: LANE_META.places.hue },
 };

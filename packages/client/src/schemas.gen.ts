@@ -6957,7 +6957,7 @@ export const TimelineLaneSchema = {
 
 export const TimelineLaneKeySchema = {
   type: "string",
-  enum: ["sleep", "pc"],
+  enum: ["sleep", "workouts", "pc"],
   title: "TimelineLaneKey",
 } as const;
 
@@ -7019,7 +7019,7 @@ export const TimelineSegmentSchema = {
       type: "string",
       title: "Label",
       description:
-        "What filled this span: the sleep stage for the sleep lane, the app class for the PC lane.",
+        "What filled this span: the sleep stage for the sleep lane, the activity (e.g. 'running') for the workouts lane, the app class for the PC lane.",
     },
   },
   type: "object",

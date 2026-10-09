@@ -85,6 +85,20 @@ class HealthKitWorkoutRepository(RepositoryBase[HealthKitWorkout], RepositoryIDM
       statement = statement.where(HealthKitWorkout.start_date < until)
     return statement.order_by(HealthKitWorkout.start_date.desc())
 
+  async def list_overlapping(self, user_id: UUID, start: datetime, end: datetime) -> Sequence[HealthKitWorkout]:
+    """Workouts that were going on at some point in [start, end), oldest first."""
+    statement = (
+      self.get_base_statement()
+      .where(
+        HealthKitWorkout.user_id == user_id,
+        HealthKitWorkout.deleted_at.is_(None),
+        HealthKitWorkout.start_date < end,
+        HealthKitWorkout.end_date > start,
+      )
+      .order_by(HealthKitWorkout.start_date)
+    )
+    return await self.get_all(statement)
+
   async def list_started_between(self, user_id: UUID, start: datetime, end: datetime) -> Sequence[HealthKitWorkout]:
     """Workouts that started in [start, end), oldest first."""
     statement = (
