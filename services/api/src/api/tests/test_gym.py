@@ -75,6 +75,39 @@ class TestExercises:
     assert names == ["Pull ups", "Bench press", "Squat"]
 
 
+class TestMuscles:
+  @pytest.mark.asyncio
+  async def test_an_exercise_can_work_several_muscles(self, client: AsyncClient) -> None:
+    exercise_id = str(uuid4())
+    resp = await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Bench press", "muscles": ["triceps", "chest", "chest"]})
+
+    assert resp.json()["muscles"] == ["chest", "triceps"]
+    assert (await _list(client))[0]["muscles"] == ["chest", "triceps"]
+
+  @pytest.mark.asyncio
+  async def test_renaming_without_muscles_keeps_them(self, client: AsyncClient) -> None:
+    exercise_id = str(uuid4())
+    await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Bench", "muscles": ["chest"]})
+    await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Bench press"})
+
+    [exercise] = await _list(client)
+    assert (exercise["name"], exercise["muscles"]) == ("Bench press", ["chest"])
+
+  @pytest.mark.asyncio
+  async def test_muscles_can_be_cleared_and_must_be_known(self, client: AsyncClient) -> None:
+    exercise_id = str(uuid4())
+    await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Plank", "muscles": ["core"]})
+    await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Plank", "muscles": []})
+
+    assert (await _list(client))[0]["muscles"] == []
+    assert (await client.put(f"/v1/gym/exercises/{exercise_id}", json={"name": "Plank", "muscles": ["wings"]})).status_code == 422
+
+  @pytest.mark.asyncio
+  async def test_new_exercises_start_without_muscles(self, client: AsyncClient) -> None:
+    await _exercise(client, "Squat")
+    assert (await _list(client))[0]["muscles"] == []
+
+
 class TestTopSets:
   @pytest.mark.asyncio
   async def test_one_top_set_a_day_replaced_on_resend(self, client: AsyncClient) -> None:

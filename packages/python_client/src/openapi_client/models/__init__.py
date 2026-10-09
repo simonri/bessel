@@ -77,6 +77,7 @@ from .gym_exercise_list_response import GymExerciseListResponse
 from .gym_exercise_schema import GymExerciseSchema
 from .gym_exercise_summary import GymExerciseSummary
 from .gym_exercise_upsert import GymExerciseUpsert
+from .gym_muscle import GymMuscle
 from .gym_top_set_list_response import GymTopSetListResponse
 from .gym_top_set_schema import GymTopSetSchema
 from .gym_top_set_upsert import GymTopSetUpsert
@@ -281,6 +282,7 @@ __all__ = (
   "GymExerciseSchema",
   "GymExerciseSummary",
   "GymExerciseUpsert",
+  "GymMuscle",
   "GymTopSetListResponse",
   "GymTopSetSchema",
   "GymTopSetUpsert",

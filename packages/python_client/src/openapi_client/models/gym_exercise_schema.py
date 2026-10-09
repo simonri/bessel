@@ -8,6 +8,8 @@ from uuid import UUID
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.gym_muscle import GymMuscle
+
 T = TypeVar("T", bound="GymExerciseSchema")
 
 
@@ -17,11 +19,13 @@ class GymExerciseSchema:
   Attributes:
       id (UUID):
       name (str):
+      muscles (list[GymMuscle]): Muscle groups it works, in a fixed order (chest first, calves last).
       created_at (datetime.datetime):
   """
 
   id: UUID
   name: str
+  muscles: list[GymMuscle]
   created_at: datetime.datetime
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -29,6 +33,11 @@ class GymExerciseSchema:
     id = str(self.id)
 
     name = self.name
+
+    muscles = []
+    for muscles_item_data in self.muscles:
+      muscles_item = muscles_item_data.value
+      muscles.append(muscles_item)
 
     created_at = self.created_at.isoformat()
 
@@ -38,6 +47,7 @@ class GymExerciseSchema:
       {
         "id": id,
         "name": name,
+        "muscles": muscles,
         "created_at": created_at,
       }
     )
@@ -51,11 +61,19 @@ class GymExerciseSchema:
 
     name = d.pop("name")
 
+    muscles = []
+    _muscles = d.pop("muscles")
+    for muscles_item_data in _muscles:
+      muscles_item = GymMuscle(muscles_item_data)
+
+      muscles.append(muscles_item)
+
     created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
     gym_exercise_schema = cls(
       id=id,
       name=name,
+      muscles=muscles,
       created_at=created_at,
     )
 

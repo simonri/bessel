@@ -69,8 +69,8 @@ final class GymOutbox {
 
     private func perform(_ change: GymChange) async throws {
         switch change {
-        case let .saveExercise(id, name):
-            let _: GymExerciseResponse = try await client.put("/v1/gym/exercises/\(id)", body: GymExerciseUpsert(name: name))
+        case let .saveExercise(id, name, muscles):
+            let _: GymExerciseResponse = try await client.put("/v1/gym/exercises/\(id)", body: GymExerciseUpsert(name: name, muscles: muscles))
         case let .deleteExercise(id):
             try await client.deleteNoContent("/v1/gym/exercises/\(id)")
         case let .saveSet(exerciseID, day, weightKg):

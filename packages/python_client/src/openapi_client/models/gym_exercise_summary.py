@@ -8,6 +8,8 @@ from uuid import UUID
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.gym_muscle import GymMuscle
+
 if TYPE_CHECKING:
   from ..models.gym_top_set_schema import GymTopSetSchema
 
@@ -21,6 +23,7 @@ class GymExerciseSummary:
   Attributes:
       id (UUID):
       name (str):
+      muscles (list[GymMuscle]): Muscle groups it works, in a fixed order (chest first, calves last).
       created_at (datetime.datetime):
       last_set (GymTopSetSchema | None): The most recent top set.
       best_set (GymTopSetSchema | None): The heaviest top set ever; the most recent if tied.
@@ -29,6 +32,7 @@ class GymExerciseSummary:
 
   id: UUID
   name: str
+  muscles: list[GymMuscle]
   created_at: datetime.datetime
   last_set: GymTopSetSchema | None
   best_set: GymTopSetSchema | None
@@ -41,6 +45,11 @@ class GymExerciseSummary:
     id = str(self.id)
 
     name = self.name
+
+    muscles = []
+    for muscles_item_data in self.muscles:
+      muscles_item = muscles_item_data.value
+      muscles.append(muscles_item)
 
     created_at = self.created_at.isoformat()
 
@@ -67,6 +76,7 @@ class GymExerciseSummary:
       {
         "id": id,
         "name": name,
+        "muscles": muscles,
         "created_at": created_at,
         "last_set": last_set,
         "best_set": best_set,
@@ -84,6 +94,13 @@ class GymExerciseSummary:
     id = UUID(d.pop("id"))
 
     name = d.pop("name")
+
+    muscles = []
+    _muscles = d.pop("muscles")
+    for muscles_item_data in _muscles:
+      muscles_item = GymMuscle(muscles_item_data)
+
+      muscles.append(muscles_item)
 
     created_at = datetime.datetime.fromisoformat(d.pop("created_at"))
 
@@ -127,6 +144,7 @@ class GymExerciseSummary:
     gym_exercise_summary = cls(
       id=id,
       name=name,
+      muscles=muscles,
       created_at=created_at,
       last_set=last_set,
       best_set=best_set,

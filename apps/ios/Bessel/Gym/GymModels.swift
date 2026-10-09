@@ -1,5 +1,26 @@
 import Foundation
 
+/// A muscle group an exercise works; one exercise can work several.
+enum GymMuscle: String, Codable, CaseIterable, Identifiable, LenientEnum {
+    case chest, back, shoulders, biceps, triceps, forearms, core, glutes, quads, hamstrings, calves
+    /// One added on the server after this build; not offered or shown.
+    case unknown
+
+    static let allCases: [GymMuscle] = [.chest, .back, .shoulders, .biceps, .triceps, .forearms, .core, .glutes, .quads, .hamstrings, .calves]
+
+    var id: String { rawValue }
+
+    var label: String {
+        rawValue.prefix(1).uppercased() + rawValue.dropFirst()
+    }
+
+    /// Each once, in the usual order, so the same choice always reads the same.
+    static func ordered(_ muscles: some Sequence<GymMuscle>) -> [GymMuscle] {
+        let chosen = Set(muscles)
+        return allCases.filter(chosen.contains)
+    }
+}
+
 /// The heaviest set of an exercise on one day. Only the weight: no reps.
 struct GymSet: Codable, Equatable, Hashable {
     /// The local day, "yyyy-MM-dd".
@@ -12,6 +33,7 @@ struct GymSet: Codable, Equatable, Hashable {
 struct GymExercise: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
+    var muscles: [GymMuscle]
     let createdAt: Date
     var lastSet: GymSet?
     var bestSet: GymSet?
@@ -20,6 +42,12 @@ struct GymExercise: Codable, Identifiable, Equatable {
 
     func set(on day: String) -> GymSet? {
         recentSets.first { $0.performedOn == day }
+    }
+
+    /// "Chest · Triceps"
+    var musclesLabel: String? {
+        let known = muscles.filter { $0 != .unknown }
+        return known.isEmpty ? nil : known.map(\.label).joined(separator: " · ")
     }
 
     /// When it was last trained, or added; the list puts the latest first.
@@ -38,6 +66,8 @@ struct GymSetListResponse: Decodable {
 
 struct GymExerciseUpsert: Encodable {
     let name: String
+    /// Left out, the server keeps what the exercise has.
+    let muscles: [GymMuscle]?
 }
 
 struct GymSetUpsert: Encodable {
@@ -51,7 +81,8 @@ struct GymSetUpsert: Encodable {
 /// A change made on the phone, waiting to reach the server. Each is safe to
 /// send twice, so a change that may or may not have arrived is simply resent.
 enum GymChange: Codable, Equatable {
-    case saveExercise(id: UUID, name: String)
+    /// `muscles` nil keeps the exercise's own, as with a plain rename.
+    case saveExercise(id: UUID, name: String, muscles: [GymMuscle]?)
     case deleteExercise(id: UUID)
     case saveSet(exerciseID: UUID, day: String, weightKg: Double)
     case deleteSet(exerciseID: UUID, day: String)
@@ -60,11 +91,12 @@ enum GymChange: Codable, Equatable {
     /// while it's still on its way, so it never seems to come undone.
     func apply(to exercises: inout [GymExercise], now: Date = .now) {
         switch self {
-        case let .saveExercise(id, name):
+        case let .saveExercise(id, name, muscles):
             if let index = exercises.firstIndex(where: { $0.id == id }) {
                 exercises[index].name = name
+                if let muscles { exercises[index].muscles = muscles }
             } else {
-                exercises.append(GymExercise(id: id, name: name, createdAt: now, lastSet: nil, bestSet: nil, recentSets: []))
+                exercises.append(GymExercise(id: id, name: name, muscles: muscles ?? [], createdAt: now, lastSet: nil, bestSet: nil, recentSets: []))
             }
         case let .deleteExercise(id):
             exercises.removeAll { $0.id == id }
@@ -99,7 +131,7 @@ enum GymChange: Codable, Equatable {
 
     var exerciseID: UUID {
         switch self {
-        case let .saveExercise(id, _), let .deleteExercise(id): id
+        case let .saveExercise(id, _, _), let .deleteExercise(id): id
         case let .saveSet(id, _, _), let .deleteSet(id, _): id
         }
     }

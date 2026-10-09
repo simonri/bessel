@@ -19,7 +19,7 @@ final class GymStore {
     @ObservationIgnored private var loads = LoadGeneration()
     /// What the server last said, before the waiting changes go on top.
     @ObservationIgnored private var server: [GymExercise] = []
-    private static let cacheKey = "gym.v1"
+    private static let cacheKey = "gym.v2"
 
     convenience init(services: AppServices) {
         self.init(client: services.client, cache: services.cache, outbox: GymOutbox(client: services.client, account: services.account))
@@ -101,9 +101,26 @@ final class GymStore {
 
     // MARK: - Changes
 
+    /// Narrowed to a muscle group, then to what's typed: part of a name, or a
+    /// muscle like "chest".
+    func exercises(matching search: String, muscle: GymMuscle?) -> [GymExercise] {
+        let search = search.trimmingCharacters(in: .whitespaces)
+        return exercises.filter { exercise in
+            if let muscle, !exercise.muscles.contains(muscle) { return false }
+            guard !search.isEmpty else { return true }
+            return exercise.name.localizedCaseInsensitiveContains(search)
+                || exercise.muscles.contains { $0.label.localizedCaseInsensitiveContains(search) }
+        }
+    }
+
+    /// Muscles any exercise works, in the usual order: the filters worth showing.
+    var musclesInUse: [GymMuscle] {
+        GymMuscle.ordered(exercises.flatMap(\.muscles))
+    }
+
     /// Adds an exercise and returns it, or nil if the name is empty or taken.
     @discardableResult
-    func addExercise(named name: String) -> GymExercise? {
+    func addExercise(named name: String, muscles: Set<GymMuscle> = []) -> GymExercise? {
         let name = Self.tidy(name)
         guard !name.isEmpty else { return nil }
         guard !isNameTaken(name) else {
@@ -111,7 +128,7 @@ final class GymStore {
             return nil
         }
         let id = UUID()
-        make(.saveExercise(id: id, name: name))
+        make(.saveExercise(id: id, name: name, muscles: GymMuscle.ordered(muscles)))
         return exercise(id)
     }
 
@@ -122,7 +139,15 @@ final class GymStore {
             errorMessage = "You already have an exercise called \(name)."
             return
         }
-        make(.saveExercise(id: exercise.id, name: name))
+        make(.saveExercise(id: exercise.id, name: name, muscles: nil))
+    }
+
+    /// Turns one muscle group on or off for an exercise.
+    func toggle(_ muscle: GymMuscle, for exercise: GymExercise) {
+        guard let current = self.exercise(exercise.id) else { return }
+        var muscles = Set(current.muscles)
+        if muscles.contains(muscle) { muscles.remove(muscle) } else { muscles.insert(muscle) }
+        make(.saveExercise(id: current.id, name: current.name, muscles: GymMuscle.ordered(muscles)))
     }
 
     func delete(_ exercise: GymExercise) {

@@ -9,6 +9,8 @@ struct GymPage<Header: View>: View {
 
     @State private var logging: GymExercise?
     @State private var search = ""
+    @State private var muscleFilter: GymMuscle?
+    @State private var draftMuscles: Set<GymMuscle> = []
     @State private var composing = false
     @State private var draft = ""
     @State private var confirmingDelete: GymExercise?
@@ -16,12 +18,8 @@ struct GymPage<Header: View>: View {
     @State private var newName = ""
     @FocusState private var composerFocused: Bool
 
-    /// From this many exercises on, a search field helps find one.
-    private static var searchFrom: Int { 7 }
-
     private var filtered: [GymExercise] {
-        guard !search.isEmpty else { return store.exercises }
-        return store.exercises.filter { $0.name.localizedCaseInsensitiveContains(search) }
+        store.exercises(matching: search, muscle: muscleFilter)
     }
 
     var body: some View {
@@ -35,6 +33,14 @@ struct GymPage<Header: View>: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
                 .listRowBackground(Color.clear)
+            }
+            if store.hasLoaded && !store.exercises.isEmpty && filtered.isEmpty {
+                Text("No exercises match.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.mutedForeground)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                    .listRowBackground(Color.clear)
             }
             ForEach(filtered) { exercise in
                 Button { logging = exercise } label: {
@@ -62,8 +68,9 @@ struct GymPage<Header: View>: View {
         .stickyHeader {
             VStack(alignment: .leading, spacing: 12) {
                 header
-                if store.exercises.count >= Self.searchFrom {
-                    searchField
+                searchField
+                if !store.musclesInUse.isEmpty {
+                    muscleFilters
                 }
             }
         }
@@ -95,7 +102,11 @@ struct GymPage<Header: View>: View {
         .safeAreaInset(edge: .bottom) {
             if composing {
                 Composer(placeholder: "Exercise name", text: $draft, isFocused: $composerFocused, onSubmit: addExercise) {
-                    EmptyView()
+                    ForEach(GymMuscle.allCases) { muscle in
+                        MuscleChip(muscle: muscle, isOn: draftMuscles.contains(muscle)) {
+                            if draftMuscles.contains(muscle) { draftMuscles.remove(muscle) } else { draftMuscles.insert(muscle) }
+                        }
+                    }
                 }
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
@@ -138,11 +149,31 @@ struct GymPage<Header: View>: View {
     }
 
     private func addExercise() {
-        guard let exercise = store.addExercise(named: draft) else { return }
+        // A new exercise shows even if the current filter wouldn't include it.
+        muscleFilter = nil
+        guard let exercise = store.addExercise(named: draft, muscles: draftMuscles) else { return }
         draft = ""
+        draftMuscles = []
         composerFocused = false
         withAnimation(.snappy) { composing = false }
         logging = exercise
+    }
+
+    /// One muscle group at a time, only those some exercise works.
+    private var muscleFilters: some View {
+        ChipRow(spacing: 6) {
+            FilterPill(title: "All", isSelected: muscleFilter == nil) {
+                withAnimation(.snappy) { muscleFilter = nil }
+            }
+            ForEach(store.musclesInUse) { muscle in
+                FilterPill(title: muscle.label, isSelected: muscleFilter == muscle) {
+                    withAnimation(.snappy) { muscleFilter = muscleFilter == muscle ? nil : muscle }
+                }
+            }
+        }
+        .onChange(of: store.musclesInUse) { _, inUse in
+            if let muscleFilter, !inUse.contains(muscleFilter) { self.muscleFilter = nil }
+        }
     }
 
     /// In the page rather than `.searchable`, like Recipes.
@@ -150,7 +181,7 @@ struct GymPage<Header: View>: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.mutedForeground)
-            TextField("Search exercises", text: $search)
+            TextField("Search exercises or muscles", text: $search)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
             if !search.isEmpty {
@@ -191,6 +222,11 @@ private struct GymExerciseRow: View {
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(Theme.mutedForeground)
+                if let muscles = exercise.musclesLabel {
+                    Text(muscles)
+                        .font(.caption)
+                        .foregroundStyle(Theme.faintForeground)
+                }
             }
             Spacer(minLength: 8)
             if exercise.recentSets.count > 1 {
@@ -250,6 +286,32 @@ enum GymTheme {
     static let hue: Double = 25
 }
 
+/// A muscle group to turn on or off, with a check when it's on.
+private struct MuscleChip: View {
+    let muscle: GymMuscle
+    let isOn: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if isOn {
+                    Image(systemName: "checkmark")
+                        .font(.caption2.weight(.bold))
+                }
+                Text(muscle.label)
+            }
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(isOn ? Theme.pastel(GymTheme.hue) : Theme.mutedForeground)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(isOn ? Theme.pastelWash(GymTheme.hue, strength: 1.4) : Theme.fill, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
 // MARK: - Logging
 
 /// Today's top set in a couple of taps: the last weight is already there,
@@ -259,7 +321,7 @@ struct LogTopSetSheet: View {
     let exerciseID: UUID
 
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("gym.step") private var step = 2.5
+    @AppStorage("gym.step") private var step = 1.0
     @State private var weight: Double = 0
     @State private var weightText = ""
     @State private var history: [GymSet] = []
@@ -280,6 +342,7 @@ struct LogTopSetSheet: View {
                         context(exercise)
                         weightPicker
                         saveButton(exercise)
+                        muscles(exercise)
                         ProgressCard(sets: history, best: exercise.bestSet)
                         HistoryCard(sets: history) { set in
                             store.deleteSet(of: exercise, on: set.performedOn)
@@ -333,6 +396,23 @@ struct LogTopSetSheet: View {
             parts.append("Last \(GymFormat.weight(last.weightKg)) \(when == "Today" ? "today" : "on \(when)")")
         }
         return parts.isEmpty ? "Your heaviest set today" : parts.joined(separator: " · ")
+    }
+
+    /// Which muscle groups it works; tap to turn one on or off.
+    private func muscles(_ exercise: GymExercise) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Muscles")
+                .font(.headline)
+                .foregroundStyle(Theme.foreground)
+                .padding(.leading, 4)
+            ChipRow(spacing: 6) {
+                ForEach(GymMuscle.allCases) { muscle in
+                    MuscleChip(muscle: muscle, isOn: exercise.muscles.contains(muscle)) {
+                        store.toggle(muscle, for: exercise)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: Weight

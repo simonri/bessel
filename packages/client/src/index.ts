@@ -647,6 +647,7 @@ export {
   type GymExerciseSchema,
   type GymExerciseSummary,
   type GymExerciseUpsert,
+  GymMuscle,
   type GymTopSetListResponse,
   type GymTopSetSchema,
   type GymTopSetUpsert,

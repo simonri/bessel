@@ -1656,6 +1656,12 @@ export type GymExerciseSchema = {
    */
   name: string;
   /**
+   * Muscles
+   *
+   * Muscle groups it works, in a fixed order (chest first, calves last).
+   */
+  muscles: Array<GymMuscle>;
+  /**
    * Created At
    */
   created_at: Date;
@@ -1673,6 +1679,12 @@ export type GymExerciseSummary = {
    * Name
    */
   name: string;
+  /**
+   * Muscles
+   *
+   * Muscle groups it works, in a fixed order (chest first, calves last).
+   */
+  muscles: Array<GymMuscle>;
   /**
    * Created At
    */
@@ -1703,7 +1715,35 @@ export type GymExerciseUpsert = {
    * What the exercise is called, e.g. 'Bench press'.
    */
   name: string;
+  /**
+   * Muscles
+   *
+   * Muscle groups it works. Left out, an existing exercise keeps its own.
+   */
+  muscles?: Array<GymMuscle> | null;
 };
+
+/**
+ * GymMuscle
+ */
+export const GymMuscle = {
+  CHEST: "chest",
+  BACK: "back",
+  SHOULDERS: "shoulders",
+  BICEPS: "biceps",
+  TRICEPS: "triceps",
+  FOREARMS: "forearms",
+  CORE: "core",
+  GLUTES: "glutes",
+  QUADS: "quads",
+  HAMSTRINGS: "hamstrings",
+  CALVES: "calves",
+} as const;
+
+/**
+ * GymMuscle
+ */
+export type GymMuscle = (typeof GymMuscle)[keyof typeof GymMuscle];
 
 /**
  * GymTopSetListResponse

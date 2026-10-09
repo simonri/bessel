@@ -5,7 +5,7 @@ final class GymChangeTests: XCTestCase {
     private let bench = UUID()
 
     private func exercise(sets: [GymSet] = [], best: GymSet? = nil) -> GymExercise {
-        GymExercise(id: bench, name: "Bench press", createdAt: .distantPast, lastSet: sets.last, bestSet: best ?? sets.max { $0.weightKg < $1.weightKg }, recentSets: sets)
+        GymExercise(id: bench, name: "Bench press", muscles: [], createdAt: .distantPast, lastSet: sets.last, bestSet: best ?? sets.max { $0.weightKg < $1.weightKg }, recentSets: sets)
     }
 
     func testLoggingADayReplacesThatDayAndMovesTheBest() {
@@ -41,9 +41,10 @@ final class GymChangeTests: XCTestCase {
         var list: [GymExercise] = []
         let squat = UUID()
 
-        GymChange.saveExercise(id: squat, name: "Squat").apply(to: &list)
-        GymChange.saveExercise(id: squat, name: "Back squat").apply(to: &list)
+        GymChange.saveExercise(id: squat, name: "Squat", muscles: [.quads, .glutes]).apply(to: &list)
+        GymChange.saveExercise(id: squat, name: "Back squat", muscles: nil).apply(to: &list)
         XCTAssertEqual(list.map(\.name), ["Back squat"])
+        XCTAssertEqual(list.first?.muscles, [.quads, .glutes], "A rename keeps the muscles")
 
         GymChange.deleteExercise(id: squat).apply(to: &list)
         XCTAssertTrue(list.isEmpty)
@@ -116,6 +117,35 @@ final class GymStoreTests: XCTestCase {
         XCTAssertFalse(store.logTopSet(squat, weightKg: 65, on: "2026-10-08"), "Correcting today's set isn't a second best")
     }
 
+    func testMusclesToggleAndFilter() {
+        let store = makeStore()
+        MockURLProtocol.responder = { _ in throw URLError(.notConnectedToInternet) }
+        let bench = store.addExercise(named: "Bench press", muscles: [.triceps, .chest])!
+        store.addExercise(named: "Squat")
+
+        XCTAssertEqual(bench.muscles, [.chest, .triceps])
+        store.toggle(.shoulders, for: bench)
+        store.toggle(.triceps, for: bench)
+
+        XCTAssertEqual(store.exercise(bench.id)?.muscles, [.chest, .shoulders])
+        XCTAssertEqual(store.musclesInUse, [.chest, .shoulders])
+        XCTAssertEqual(store.exercise(bench.id)?.musclesLabel, "Chest · Shoulders")
+    }
+
+    func testSearchByNameOrMuscleWithinAFilter() {
+        let store = makeStore()
+        MockURLProtocol.responder = { _ in throw URLError(.notConnectedToInternet) }
+        store.addExercise(named: "Bench press", muscles: [.chest, .triceps])
+        store.addExercise(named: "Incline press", muscles: [.chest, .shoulders])
+        store.addExercise(named: "Squat", muscles: [.quads])
+
+        XCTAssertEqual(Set(store.exercises(matching: "press", muscle: nil).map(\.name)), ["Bench press", "Incline press"])
+        XCTAssertEqual(Set(store.exercises(matching: "chest", muscle: nil).map(\.name)), ["Bench press", "Incline press"])
+        XCTAssertEqual(store.exercises(matching: "", muscle: .triceps).map(\.name), ["Bench press"])
+        XCTAssertEqual(store.exercises(matching: "incline ", muscle: .chest).map(\.name), ["Incline press"])
+        XCTAssertTrue(store.exercises(matching: "squat", muscle: .chest).isEmpty)
+    }
+
     func testNamesAreUniqueIgnoringCase() {
         let store = makeStore()
         MockURLProtocol.responder = { _ in throw URLError(.notConnectedToInternet) }
@@ -137,7 +167,7 @@ final class GymOutboxTests: XCTestCase {
     func testSendsInOrderAndReportsWhatArrived() async {
         let outbox = GymOutbox(client: makeTestClient(), account: "alice", fileURL: temporaryURL("gym.json"))
         let id = UUID()
-        outbox.enqueue(.saveExercise(id: id, name: "Squat"))
+        outbox.enqueue(.saveExercise(id: id, name: "Squat", muscles: nil))
         outbox.enqueue(.saveSet(exerciseID: id, day: "2026-10-08", weightKg: 80))
         MockURLProtocol.responder = { request in
             let body = request.url!.path.hasSuffix("2026-10-08") ? #"{"performed_on":"2026-10-08","weight_kg":80}"# : #"{"id":"\#(id)"}"#
@@ -157,7 +187,7 @@ final class GymOutboxTests: XCTestCase {
         let file = temporaryURL("gym.json")
         let outbox = GymOutbox(client: makeTestClient(), account: "alice", fileURL: file)
         let id = UUID()
-        outbox.enqueue(.saveExercise(id: id, name: "Squat"))
+        outbox.enqueue(.saveExercise(id: id, name: "Squat", muscles: nil))
         outbox.enqueue(.saveSet(exerciseID: id, day: "2026-10-08", weightKg: 80))
         MockURLProtocol.responder = { _ in throw URLError(.notConnectedToInternet) }
 

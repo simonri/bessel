@@ -1,4 +1,5 @@
 import datetime as dt
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import Field, field_validator
@@ -8,8 +9,25 @@ from api.common.schemas import Schema
 MAX_WEIGHT_KG = 1000
 
 
+class GymMuscle(StrEnum):
+  chest = "chest"
+  back = "back"
+  shoulders = "shoulders"
+  biceps = "biceps"
+  triceps = "triceps"
+  forearms = "forearms"
+  core = "core"
+  glutes = "glutes"
+  quads = "quads"
+  hamstrings = "hamstrings"
+  calves = "calves"
+
+
 class GymExerciseUpsert(Schema):
   name: str = Field(min_length=1, max_length=100, description="What the exercise is called, e.g. 'Bench press'.")
+  muscles: list[GymMuscle] | None = Field(
+    default=None, max_length=len(GymMuscle), description="Muscle groups it works. Left out, an existing exercise keeps its own."
+  )
 
   @field_validator("name")
   @classmethod
@@ -23,6 +41,7 @@ class GymExerciseUpsert(Schema):
 class GymExerciseSchema(Schema):
   id: UUID
   name: str
+  muscles: list[GymMuscle] = Field(description="Muscle groups it works, in a fixed order (chest first, calves last).")
   created_at: dt.datetime
 
 

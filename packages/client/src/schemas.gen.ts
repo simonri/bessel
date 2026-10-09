@@ -2421,6 +2421,15 @@ export const GymExerciseSchemaSchema = {
       type: "string",
       title: "Name",
     },
+    muscles: {
+      items: {
+        $ref: "#/components/schemas/GymMuscle",
+      },
+      type: "array",
+      title: "Muscles",
+      description:
+        "Muscle groups it works, in a fixed order (chest first, calves last).",
+    },
     created_at: {
       type: "string",
       format: "date-time",
@@ -2428,7 +2437,7 @@ export const GymExerciseSchemaSchema = {
     },
   },
   type: "object",
-  required: ["id", "name", "created_at"],
+  required: ["id", "name", "muscles", "created_at"],
   title: "GymExerciseSchema",
 } as const;
 
@@ -2442,6 +2451,15 @@ export const GymExerciseSummarySchema = {
     name: {
       type: "string",
       title: "Name",
+    },
+    muscles: {
+      items: {
+        $ref: "#/components/schemas/GymMuscle",
+      },
+      type: "array",
+      title: "Muscles",
+      description:
+        "Muscle groups it works, in a fixed order (chest first, calves last).",
     },
     created_at: {
       type: "string",
@@ -2480,7 +2498,15 @@ export const GymExerciseSummarySchema = {
     },
   },
   type: "object",
-  required: ["id", "name", "created_at", "last_set", "best_set", "recent_sets"],
+  required: [
+    "id",
+    "name",
+    "muscles",
+    "created_at",
+    "last_set",
+    "best_set",
+    "recent_sets",
+  ],
   title: "GymExerciseSummary",
 } as const;
 
@@ -2493,10 +2519,45 @@ export const GymExerciseUpsertSchema = {
       title: "Name",
       description: "What the exercise is called, e.g. 'Bench press'.",
     },
+    muscles: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/GymMuscle",
+          },
+          type: "array",
+          maxItems: 11,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Muscles",
+      description:
+        "Muscle groups it works. Left out, an existing exercise keeps its own.",
+    },
   },
   type: "object",
   required: ["name"],
   title: "GymExerciseUpsert",
+} as const;
+
+export const GymMuscleSchema = {
+  type: "string",
+  enum: [
+    "chest",
+    "back",
+    "shoulders",
+    "biceps",
+    "triceps",
+    "forearms",
+    "core",
+    "glutes",
+    "quads",
+    "hamstrings",
+    "calves",
+  ],
+  title: "GymMuscle",
 } as const;
 
 export const GymTopSetListResponseSchema = {

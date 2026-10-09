@@ -3,8 +3,14 @@ from uuid import UUID
 
 from api.exceptions import ConflictError, ResourceNotFound
 from api.gym.repository import GymExerciseRepository, GymTopSetRepository
-from api.gym.schemas import GymExerciseSummary, GymExerciseUpsert, GymTopSetSchema
+from api.gym.schemas import GymExerciseSummary, GymExerciseUpsert, GymMuscle, GymTopSetSchema
 from api.models.gym import GymExercise, GymTopSet
+
+
+def _ordered(muscles: list[GymMuscle]) -> list[str]:
+  """Each muscle once, in GymMuscle's order, so the same choice always reads the same."""
+  chosen = set(muscles)
+  return [muscle.value for muscle in GymMuscle if muscle in chosen]
 
 
 def _set_schema(top_set: GymTopSet) -> GymTopSetSchema:
@@ -22,6 +28,7 @@ class GymService:
       GymExerciseSummary(
         id=exercise.id,
         name=exercise.name,
+        muscles=[GymMuscle(muscle) for muscle in exercise.muscles],
         created_at=exercise.created_at,
         last_set=recent[exercise.id][-1] if exercise.id in recent else None,
         best_set=best.get(exercise.id),
@@ -50,12 +57,18 @@ class GymService:
     if clash is not None and clash.id != exercise_id:
       raise ConflictError(f"You already have an exercise called {clash.name}.")
 
+    muscles = _ordered(body.muscles) if body.muscles is not None else None
     if existing is None:
-      exercise = GymExercise(id=exercise_id, user_id=user_id, name=body.name)
+      exercise = GymExercise(id=exercise_id, user_id=user_id, name=body.name, muscles=muscles or [])
       await repo.create(exercise, flush=True)
       return exercise
+    changes: dict[str, object] = {}
     if existing.name != body.name:
-      await repo.update(existing, update_dict={"name": body.name}, flush=True)
+      changes["name"] = body.name
+    if muscles is not None and muscles != existing.muscles:
+      changes["muscles"] = muscles
+    if changes:
+      await repo.update(existing, update_dict=changes, flush=True)
     return existing
 
   async def delete_exercise(self, repo: GymExerciseRepository, exercise_id: UUID, user_id: UUID) -> None:

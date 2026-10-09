@@ -9146,6 +9146,14 @@
             "type": "string",
             "title": "Name"
           },
+          "muscles": {
+            "items": {
+              "$ref": "#/components/schemas/GymMuscle"
+            },
+            "type": "array",
+            "title": "Muscles",
+            "description": "Muscle groups it works, in a fixed order (chest first, calves last)."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -9156,6 +9164,7 @@
         "required": [
           "id",
           "name",
+          "muscles",
           "created_at"
         ],
         "title": "GymExerciseSchema"
@@ -9170,6 +9179,14 @@
           "name": {
             "type": "string",
             "title": "Name"
+          },
+          "muscles": {
+            "items": {
+              "$ref": "#/components/schemas/GymMuscle"
+            },
+            "type": "array",
+            "title": "Muscles",
+            "description": "Muscle groups it works, in a fixed order (chest first, calves last)."
           },
           "created_at": {
             "type": "string",
@@ -9211,6 +9228,7 @@
         "required": [
           "id",
           "name",
+          "muscles",
           "created_at",
           "last_set",
           "best_set",
@@ -9226,6 +9244,22 @@
             "minLength": 1,
             "title": "Name",
             "description": "What the exercise is called, e.g. 'Bench press'."
+          },
+          "muscles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GymMuscle"
+                },
+                "type": "array",
+                "maxItems": 11
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Muscles",
+            "description": "Muscle groups it works. Left out, an existing exercise keeps its own."
           }
         },
         "type": "object",
@@ -9233,6 +9267,23 @@
           "name"
         ],
         "title": "GymExerciseUpsert"
+      },
+      "GymMuscle": {
+        "type": "string",
+        "enum": [
+          "chest",
+          "back",
+          "shoulders",
+          "biceps",
+          "triceps",
+          "forearms",
+          "core",
+          "glutes",
+          "quads",
+          "hamstrings",
+          "calves"
+        ],
+        "title": "GymMuscle"
       },
       "GymTopSetListResponse": {
         "properties": {
