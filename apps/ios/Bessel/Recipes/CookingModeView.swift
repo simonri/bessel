@@ -147,13 +147,16 @@ struct CookingModeView: View {
                 }
                 .scrollIndicators(.visible)
             }
-            .padding(16)
+            .padding([.top, .horizontal], 16)
             .frame(maxHeight: 280)
             .background {
                 UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24, style: .continuous)
                     .fill(Theme.card)
                     .ignoresSafeArea(edges: .bottom)
             }
+            // The list runs to the bottom edge; the scroll view keeps its last
+            // row clear of the home indicator on its own.
+            .ignoresSafeArea(.container, edges: .bottom)
         }
     }
 }
