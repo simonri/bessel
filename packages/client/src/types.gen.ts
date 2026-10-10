@@ -4435,6 +4435,226 @@ export type TaskUpdate = {
 };
 
 /**
+ * TimeEntryCreate
+ */
+export type TimeEntryCreate = {
+  /**
+   * Time Project Id
+   */
+  time_project_id: string;
+  /**
+   * Start Ts
+   */
+  start_ts: Date;
+  /**
+   * End Ts
+   */
+  end_ts: Date;
+  /**
+   * Note
+   */
+  note?: string | null;
+};
+
+/**
+ * TimeEntrySchema
+ */
+export type TimeEntrySchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Time Project Id
+   */
+  time_project_id: string;
+  /**
+   * Start Ts
+   */
+  start_ts: Date;
+  /**
+   * End Ts
+   */
+  end_ts: Date;
+  /**
+   * Note
+   */
+  note: string | null;
+};
+
+/**
+ * TimeEntryUpdate
+ */
+export type TimeEntryUpdate = {
+  /**
+   * Time Project Id
+   */
+  time_project_id?: string | null;
+  /**
+   * Start Ts
+   */
+  start_ts?: Date | null;
+  /**
+   * End Ts
+   */
+  end_ts?: Date | null;
+  /**
+   * Note
+   */
+  note?: string | null;
+};
+
+/**
+ * TimeMonthTotal
+ */
+export type TimeMonthTotal = {
+  /**
+   * Time Project Id
+   */
+  time_project_id: string;
+  /**
+   * Month
+   */
+  month: number;
+  /**
+   * Seconds
+   */
+  seconds: number;
+};
+
+/**
+ * TimeProjectCreate
+ */
+export type TimeProjectCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Client
+   */
+  client?: string | null;
+  /**
+   * Color
+   */
+  color: string;
+  /**
+   * Hourly Rate
+   */
+  hourly_rate?: number | null;
+  /**
+   * Currency
+   */
+  currency?: string | null;
+};
+
+/**
+ * TimeProjectSchema
+ */
+export type TimeProjectSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Client
+   */
+  client: string | null;
+  /**
+   * Color
+   */
+  color: string;
+  /**
+   * Hourly Rate
+   */
+  hourly_rate: number | null;
+  /**
+   * Currency
+   */
+  currency: string | null;
+  /**
+   * Archived At
+   */
+  archived_at: Date | null;
+};
+
+/**
+ * TimeProjectUpdate
+ */
+export type TimeProjectUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Client
+   */
+  client?: string | null;
+  /**
+   * Color
+   */
+  color?: string | null;
+  /**
+   * Hourly Rate
+   */
+  hourly_rate?: number | null;
+  /**
+   * Currency
+   */
+  currency?: string | null;
+  /**
+   * Archived
+   */
+  archived?: boolean | null;
+};
+
+/**
+ * TimeSummarySchema
+ */
+export type TimeSummarySchema = {
+  /**
+   * Year
+   */
+  year: number;
+  /**
+   * Totals
+   */
+  totals: Array<TimeMonthTotal>;
+};
+
+/**
  * TimelineLane
  */
 export type TimelineLane = {
@@ -8452,6 +8672,255 @@ export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses = {
 
 export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse =
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses[keyof UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses];
+
+export type ListTimeProjectsV1TimeProjectsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/time/projects";
+};
+
+export type ListTimeProjectsV1TimeProjectsGetResponses = {
+  /**
+   * Response List Time Projects V1 Time Projects Get
+   *
+   * Successful Response
+   */
+  200: Array<TimeProjectSchema>;
+};
+
+export type ListTimeProjectsV1TimeProjectsGetResponse =
+  ListTimeProjectsV1TimeProjectsGetResponses[keyof ListTimeProjectsV1TimeProjectsGetResponses];
+
+export type CreateTimeProjectV1TimeProjectsPostData = {
+  body: TimeProjectCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/time/projects";
+};
+
+export type CreateTimeProjectV1TimeProjectsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateTimeProjectV1TimeProjectsPostError =
+  CreateTimeProjectV1TimeProjectsPostErrors[keyof CreateTimeProjectV1TimeProjectsPostErrors];
+
+export type CreateTimeProjectV1TimeProjectsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: TimeProjectSchema;
+};
+
+export type CreateTimeProjectV1TimeProjectsPostResponse =
+  CreateTimeProjectV1TimeProjectsPostResponses[keyof CreateTimeProjectV1TimeProjectsPostResponses];
+
+export type UpdateTimeProjectV1TimeProjectsProjectIdPatchData = {
+  body: TimeProjectUpdate;
+  path: {
+    /**
+     * Project Id
+     */
+    project_id: string;
+  };
+  query?: never;
+  url: "/v1/time/projects/{project_id}";
+};
+
+export type UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTimeProjectV1TimeProjectsProjectIdPatchError =
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors[keyof UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors];
+
+export type UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: TimeProjectSchema;
+};
+
+export type UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse =
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses[keyof UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses];
+
+export type ListTimeEntriesV1TimeEntriesGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Start
+     *
+     * Entries ending after this instant.
+     */
+    start: Date;
+    /**
+     * End
+     *
+     * Entries starting before this instant. At most two months after start.
+     */
+    end: Date;
+  };
+  url: "/v1/time/entries";
+};
+
+export type ListTimeEntriesV1TimeEntriesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListTimeEntriesV1TimeEntriesGetError =
+  ListTimeEntriesV1TimeEntriesGetErrors[keyof ListTimeEntriesV1TimeEntriesGetErrors];
+
+export type ListTimeEntriesV1TimeEntriesGetResponses = {
+  /**
+   * Response List Time Entries V1 Time Entries Get
+   *
+   * Successful Response
+   */
+  200: Array<TimeEntrySchema>;
+};
+
+export type ListTimeEntriesV1TimeEntriesGetResponse =
+  ListTimeEntriesV1TimeEntriesGetResponses[keyof ListTimeEntriesV1TimeEntriesGetResponses];
+
+export type CreateTimeEntryV1TimeEntriesPostData = {
+  body: TimeEntryCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/time/entries";
+};
+
+export type CreateTimeEntryV1TimeEntriesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateTimeEntryV1TimeEntriesPostError =
+  CreateTimeEntryV1TimeEntriesPostErrors[keyof CreateTimeEntryV1TimeEntriesPostErrors];
+
+export type CreateTimeEntryV1TimeEntriesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: TimeEntrySchema;
+};
+
+export type CreateTimeEntryV1TimeEntriesPostResponse =
+  CreateTimeEntryV1TimeEntriesPostResponses[keyof CreateTimeEntryV1TimeEntriesPostResponses];
+
+export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Entry Id
+     */
+    entry_id: string;
+  };
+  query?: never;
+  url: "/v1/time/entries/{entry_id}";
+};
+
+export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteError =
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors[keyof DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors];
+
+export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse =
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses[keyof DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses];
+
+export type UpdateTimeEntryV1TimeEntriesEntryIdPatchData = {
+  body: TimeEntryUpdate;
+  path: {
+    /**
+     * Entry Id
+     */
+    entry_id: string;
+  };
+  query?: never;
+  url: "/v1/time/entries/{entry_id}";
+};
+
+export type UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateTimeEntryV1TimeEntriesEntryIdPatchError =
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors[keyof UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors];
+
+export type UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: TimeEntrySchema;
+};
+
+export type UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse =
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses[keyof UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses];
+
+export type GetTimeSummaryV1TimeSummaryGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Year
+     */
+    year: number;
+    /**
+     * Tz Name
+     *
+     * IANA timezone the months are counted in.
+     */
+    tz_name: string;
+  };
+  url: "/v1/time/summary";
+};
+
+export type GetTimeSummaryV1TimeSummaryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTimeSummaryV1TimeSummaryGetError =
+  GetTimeSummaryV1TimeSummaryGetErrors[keyof GetTimeSummaryV1TimeSummaryGetErrors];
+
+export type GetTimeSummaryV1TimeSummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TimeSummarySchema;
+};
+
+export type GetTimeSummaryV1TimeSummaryGetResponse =
+  GetTimeSummaryV1TimeSummaryGetResponses[keyof GetTimeSummaryV1TimeSummaryGetResponses];
 
 export type GetTimelineV1TimelineGetData = {
   body?: never;

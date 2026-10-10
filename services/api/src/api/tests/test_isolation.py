@@ -69,6 +69,14 @@ AUDITED: set[str] = {
   "GET /v1/counters/{counter_id}/resets",
   "POST /v1/counters/{counter_id}/resets",
   "DELETE /v1/counters/{counter_id}/resets/{reset_id}",
+  "GET /v1/time/projects",
+  "POST /v1/time/projects",
+  "PATCH /v1/time/projects/{project_id}",
+  "GET /v1/time/entries",
+  "POST /v1/time/entries",
+  "PATCH /v1/time/entries/{entry_id}",
+  "DELETE /v1/time/entries/{entry_id}",
+  "GET /v1/time/summary",
   "GET /v1/devices",
   "DELETE /v1/devices/{device_id}",
   "PATCH /v1/devices/{device_id}",
@@ -319,6 +327,32 @@ class TestCounters:
 
     assert [c["name"] for c in (await client.get("/v1/counters")).json()] == ["A counter"]
     assert len((await client.get(f"/v1/counters/{counter['id']}/resets")).json()) == 1
+
+
+class TestTimeTracking:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_or_use_time_tracking(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    project = await _create(client, "/v1/time/projects", {"name": "Audit", "color": "#4a9ee0"})
+    span = {"start_ts": "2026-10-06T07:00:00Z", "end_ts": "2026-10-06T08:00:00Z"}
+    entry = await _create(client, "/v1/time/entries", {"time_project_id": project["id"], **span})
+    week = {"start": "2026-10-05T00:00:00Z", "end": "2026-10-12T00:00:00Z"}
+    summary = {"year": 2026, "tz_name": "UTC"}
+
+    assert (await other_client.get("/v1/time/projects")).json() == []
+    assert (await other_client.patch(f"/v1/time/projects/{project['id']}", json={"name": "pwned"})).status_code == 404
+    assert (await other_client.post("/v1/time/entries", json={"time_project_id": project["id"], **span})).status_code == 404
+    assert (await other_client.get("/v1/time/entries", params=week)).json() == []
+    assert (await other_client.patch(f"/v1/time/entries/{entry['id']}", json={"note": "pwned"})).status_code == 404
+    assert (await other_client.delete(f"/v1/time/entries/{entry['id']}")).status_code == 404
+    assert (await other_client.get("/v1/time/summary", params=summary)).json()["totals"] == []
+
+    own = await other_client.post("/v1/time/projects", json={"name": "Mine", "color": "#33b679"})
+    assert own.status_code == 201
+    stolen = await other_client.patch(f"/v1/time/entries/{entry['id']}", json={"time_project_id": own.json()["id"]})
+    assert stolen.status_code == 404
+
+    assert [e["note"] for e in (await client.get("/v1/time/entries", params=week)).json()] == [None]
+    assert (await client.get("/v1/time/summary", params=summary)).json()["totals"][0]["seconds"] == 3600
 
 
 class TestNotifications:

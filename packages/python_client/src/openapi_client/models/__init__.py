@@ -186,6 +186,14 @@ from .task_schema import TaskSchema
 from .task_sort_property import TaskSortProperty
 from .task_status import TaskStatus
 from .task_update import TaskUpdate
+from .time_entry_create import TimeEntryCreate
+from .time_entry_schema import TimeEntrySchema
+from .time_entry_update import TimeEntryUpdate
+from .time_month_total import TimeMonthTotal
+from .time_project_create import TimeProjectCreate
+from .time_project_schema import TimeProjectSchema
+from .time_project_update import TimeProjectUpdate
+from .time_summary_schema import TimeSummarySchema
 from .timeline_lane import TimelineLane
 from .timeline_lane_key import TimelineLaneKey
 from .timeline_response import TimelineResponse
@@ -389,10 +397,18 @@ __all__ = (
   "TaskSortProperty",
   "TaskStatus",
   "TaskUpdate",
+  "TimeEntryCreate",
+  "TimeEntrySchema",
+  "TimeEntryUpdate",
   "TimelineLane",
   "TimelineLaneKey",
   "TimelineResponse",
   "TimelineSegment",
+  "TimeMonthTotal",
+  "TimeProjectCreate",
+  "TimeProjectSchema",
+  "TimeProjectUpdate",
+  "TimeSummarySchema",
   "TradeCreate",
   "TradeListResponse",
   "TradeSchema",

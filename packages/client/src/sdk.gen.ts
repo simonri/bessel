@@ -23,6 +23,8 @@ import {
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
   createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
+  createTimeEntryV1TimeEntriesPostResponseTransformer,
+  createTimeProjectV1TimeProjectsPostResponseTransformer,
   createTradeV1InvestmentsTradesPostResponseTransformer,
   getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
@@ -53,6 +55,8 @@ import {
   listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
+  listTimeEntriesV1TimeEntriesGetResponseTransformer,
+  listTimeProjectsV1TimeProjectsGetResponseTransformer,
   listTradesV1InvestmentsTradesGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
@@ -71,6 +75,8 @@ import {
   updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
+  updateTimeEntryV1TimeEntriesEntryIdPatchResponseTransformer,
+  updateTimeProjectV1TimeProjectsProjectIdPatchResponseTransformer,
   updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
@@ -130,6 +136,12 @@ import type {
   CreateTaskV1TasksPostData,
   CreateTaskV1TasksPostErrors,
   CreateTaskV1TasksPostResponses,
+  CreateTimeEntryV1TimeEntriesPostData,
+  CreateTimeEntryV1TimeEntriesPostErrors,
+  CreateTimeEntryV1TimeEntriesPostResponses,
+  CreateTimeProjectV1TimeProjectsPostData,
+  CreateTimeProjectV1TimeProjectsPostErrors,
+  CreateTimeProjectV1TimeProjectsPostResponses,
   CreateTradeV1InvestmentsTradesPostData,
   CreateTradeV1InvestmentsTradesPostErrors,
   CreateTradeV1InvestmentsTradesPostResponses,
@@ -169,6 +181,9 @@ import type {
   DeleteTaskV1TasksTaskIdDeleteData,
   DeleteTaskV1TasksTaskIdDeleteErrors,
   DeleteTaskV1TasksTaskIdDeleteResponses,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteData,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses,
   DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
   DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
   DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
@@ -234,6 +249,9 @@ import type {
   GetTimelineV1TimelineGetData,
   GetTimelineV1TimelineGetErrors,
   GetTimelineV1TimelineGetResponses,
+  GetTimeSummaryV1TimeSummaryGetData,
+  GetTimeSummaryV1TimeSummaryGetErrors,
+  GetTimeSummaryV1TimeSummaryGetResponses,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetErrors,
   GetWeatherForecastV1WeatherGetResponses,
@@ -304,6 +322,11 @@ import type {
   ListTasksV1TasksGetData,
   ListTasksV1TasksGetErrors,
   ListTasksV1TasksGetResponses,
+  ListTimeEntriesV1TimeEntriesGetData,
+  ListTimeEntriesV1TimeEntriesGetErrors,
+  ListTimeEntriesV1TimeEntriesGetResponses,
+  ListTimeProjectsV1TimeProjectsGetData,
+  ListTimeProjectsV1TimeProjectsGetResponses,
   ListTradesV1InvestmentsTradesGetData,
   ListTradesV1InvestmentsTradesGetErrors,
   ListTradesV1InvestmentsTradesGetResponses,
@@ -402,6 +425,12 @@ import type {
   UpdateTaskV1TasksTaskIdPatchData,
   UpdateTaskV1TasksTaskIdPatchErrors,
   UpdateTaskV1TasksTaskIdPatchResponses,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchData,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses,
   UpdateTradeV1InvestmentsTradesTradeIdPatchData,
   UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
@@ -2726,6 +2755,177 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePost = <
       undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/undo-complete",
+    ...options,
+  });
+
+/**
+ * List Time Projects
+ */
+export const listTimeProjectsV1TimeProjectsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListTimeProjectsV1TimeProjectsGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    ListTimeProjectsV1TimeProjectsGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listTimeProjectsV1TimeProjectsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/projects",
+    ...options,
+  });
+
+/**
+ * Create Time Project
+ */
+export const createTimeProjectV1TimeProjectsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateTimeProjectV1TimeProjectsPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateTimeProjectV1TimeProjectsPostResponses,
+    CreateTimeProjectV1TimeProjectsPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createTimeProjectV1TimeProjectsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/projects",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Update Time Project
+ */
+export const updateTimeProjectV1TimeProjectsProjectIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).patch<
+    UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses,
+    UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateTimeProjectV1TimeProjectsProjectIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/projects/{project_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Time Entries
+ */
+export const listTimeEntriesV1TimeEntriesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ListTimeEntriesV1TimeEntriesGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    ListTimeEntriesV1TimeEntriesGetResponses,
+    ListTimeEntriesV1TimeEntriesGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTimeEntriesV1TimeEntriesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/entries",
+    ...options,
+  });
+
+/**
+ * Create Time Entry
+ */
+export const createTimeEntryV1TimeEntriesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateTimeEntryV1TimeEntriesPostData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    CreateTimeEntryV1TimeEntriesPostResponses,
+    CreateTimeEntryV1TimeEntriesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createTimeEntryV1TimeEntriesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/entries",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Time Entry
+ */
+export const deleteTimeEntryV1TimeEntriesEntryIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<
+    DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses,
+    DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/entries/{entry_id}",
+    ...options,
+  });
+
+/**
+ * Update Time Entry
+ */
+export const updateTimeEntryV1TimeEntriesEntryIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<
+    UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses,
+    UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      updateTimeEntryV1TimeEntriesEntryIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/entries/{entry_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get Monthly Time Totals
+ */
+export const getTimeSummaryV1TimeSummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetTimeSummaryV1TimeSummaryGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetTimeSummaryV1TimeSummaryGetResponses,
+    GetTimeSummaryV1TimeSummaryGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/time/summary",
     ...options,
   });
 

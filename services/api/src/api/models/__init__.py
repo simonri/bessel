@@ -29,6 +29,7 @@ from .security import Security
 from .security_price import SecurityPrice
 from .task import Task
 from .task_attachment import TaskAttachment
+from .time_tracking import TimeEntry, TimeProject
 from .trade import Trade
 from .transaction import Transaction
 from .user import User
@@ -69,6 +70,8 @@ __all__ = [
   "SecurityPrice",
   "Task",
   "TaskAttachment",
+  "TimeEntry",
+  "TimeProject",
   "Trade",
   "Transaction",
   "WeatherCache",

@@ -7145,6 +7145,437 @@ export const TaskUpdateSchema = {
   title: "TaskUpdate",
 } as const;
 
+export const TimeEntryCreateSchema = {
+  properties: {
+    time_project_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Time Project Id",
+    },
+    start_ts: {
+      type: "string",
+      format: "date-time",
+      title: "Start Ts",
+    },
+    end_ts: {
+      type: "string",
+      format: "date-time",
+      title: "End Ts",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+    },
+  },
+  type: "object",
+  required: ["time_project_id", "start_ts", "end_ts"],
+  title: "TimeEntryCreate",
+} as const;
+
+export const TimeEntrySchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    time_project_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Time Project Id",
+    },
+    start_ts: {
+      type: "string",
+      format: "date-time",
+      title: "Start Ts",
+    },
+    end_ts: {
+      type: "string",
+      format: "date-time",
+      title: "End Ts",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "time_project_id",
+    "start_ts",
+    "end_ts",
+    "note",
+  ],
+  title: "TimeEntrySchema",
+} as const;
+
+export const TimeEntryUpdateSchema = {
+  properties: {
+    time_project_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Project Id",
+    },
+    start_ts: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Ts",
+    },
+    end_ts: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Ts",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+    },
+  },
+  type: "object",
+  title: "TimeEntryUpdate",
+} as const;
+
+export const TimeMonthTotalSchema = {
+  properties: {
+    time_project_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Time Project Id",
+    },
+    month: {
+      type: "integer",
+      maximum: 12,
+      minimum: 1,
+      title: "Month",
+    },
+    seconds: {
+      type: "integer",
+      title: "Seconds",
+    },
+  },
+  type: "object",
+  required: ["time_project_id", "month", "seconds"],
+  title: "TimeMonthTotal",
+} as const;
+
+export const TimeProjectCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 200,
+      minLength: 1,
+      title: "Name",
+    },
+    client: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Client",
+    },
+    color: {
+      type: "string",
+      pattern: "^#[0-9a-fA-F]{6}$",
+      title: "Color",
+    },
+    hourly_rate: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 1000000,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Hourly Rate",
+    },
+    currency: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^[A-Z]{3}$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Currency",
+    },
+  },
+  type: "object",
+  required: ["name", "color"],
+  title: "TimeProjectCreate",
+} as const;
+
+export const TimeProjectSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    client: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Client",
+    },
+    color: {
+      type: "string",
+      title: "Color",
+    },
+    hourly_rate: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Hourly Rate",
+    },
+    currency: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Currency",
+    },
+    archived_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Archived At",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "name",
+    "client",
+    "color",
+    "hourly_rate",
+    "currency",
+    "archived_at",
+  ],
+  title: "TimeProjectSchema",
+} as const;
+
+export const TimeProjectUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    client: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Client",
+    },
+    color: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^#[0-9a-fA-F]{6}$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color",
+    },
+    hourly_rate: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 1000000,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Hourly Rate",
+    },
+    currency: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^[A-Z]{3}$",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Currency",
+    },
+    archived: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Archived",
+    },
+  },
+  type: "object",
+  title: "TimeProjectUpdate",
+} as const;
+
+export const TimeSummarySchemaSchema = {
+  properties: {
+    year: {
+      type: "integer",
+      title: "Year",
+    },
+    totals: {
+      items: {
+        $ref: "#/components/schemas/TimeMonthTotal",
+      },
+      type: "array",
+      title: "Totals",
+    },
+  },
+  type: "object",
+  required: ["year", "totals"],
+  title: "TimeSummarySchema",
+} as const;
+
 export const TimelineLaneSchema = {
   properties: {
     key: {

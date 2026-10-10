@@ -16,6 +16,8 @@ import type {
   CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
   CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
+  CreateTimeEntryV1TimeEntriesPostResponse,
+  CreateTimeProjectV1TimeProjectsPostResponse,
   CreateTradeV1InvestmentsTradesPostResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -46,6 +48,8 @@ import type {
   ListSecuritiesV1InvestmentsSecuritiesGetResponse,
   ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
+  ListTimeEntriesV1TimeEntriesGetResponse,
+  ListTimeProjectsV1TimeProjectsGetResponse,
   ListTradesV1InvestmentsTradesGetResponse,
   ListTransactionsV1TransactionsGetResponse,
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
@@ -64,6 +68,8 @@ import type {
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
   UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
@@ -993,6 +999,75 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer =
     data: any,
   ): Promise<UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse> => {
     data = taskSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const timeProjectSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.archived_at) {
+    data.archived_at = new Date(data.archived_at);
+  }
+  return data;
+};
+
+export const listTimeProjectsV1TimeProjectsGetResponseTransformer = async (
+  data: any,
+): Promise<ListTimeProjectsV1TimeProjectsGetResponse> => {
+  data = data.map((item: any) =>
+    timeProjectSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const createTimeProjectV1TimeProjectsPostResponseTransformer = async (
+  data: any,
+): Promise<CreateTimeProjectV1TimeProjectsPostResponse> => {
+  data = timeProjectSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateTimeProjectV1TimeProjectsProjectIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse> => {
+    data = timeProjectSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const timeEntrySchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.start_ts = new Date(data.start_ts);
+  data.end_ts = new Date(data.end_ts);
+  return data;
+};
+
+export const listTimeEntriesV1TimeEntriesGetResponseTransformer = async (
+  data: any,
+): Promise<ListTimeEntriesV1TimeEntriesGetResponse> => {
+  data = data.map((item: any) =>
+    timeEntrySchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const createTimeEntryV1TimeEntriesPostResponseTransformer = async (
+  data: any,
+): Promise<CreateTimeEntryV1TimeEntriesPostResponse> => {
+  data = timeEntrySchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateTimeEntryV1TimeEntriesEntryIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse> => {
+    data = timeEntrySchemaSchemaResponseTransformer(data);
     return data;
   };
 

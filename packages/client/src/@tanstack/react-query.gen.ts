@@ -28,6 +28,8 @@ import {
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
   createSecurityV1InvestmentsSecuritiesPost,
   createTaskV1TasksPost,
+  createTimeEntryV1TimeEntriesPost,
+  createTimeProjectV1TimeProjectsPost,
   createTradeV1InvestmentsTradesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCalendarEventV1CalendarsEventsEventIdDelete,
@@ -41,6 +43,7 @@ import {
   deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
   deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete,
   deleteTaskV1TasksTaskIdDelete,
+  deleteTimeEntryV1TimeEntriesEntryIdDelete,
   deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
@@ -64,6 +67,7 @@ import {
   getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
   getTaskV1TasksTaskIdGet,
   getTimelineV1TimelineGet,
+  getTimeSummaryV1TimeSummaryGet,
   getWeatherForecastV1WeatherGet,
   healthzHealthzGet,
   importKlarnaTransactionsV1KlarnaImportPost,
@@ -90,6 +94,8 @@ import {
   listSecuritiesV1InvestmentsSecuritiesGet,
   listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet,
   listTasksV1TasksGet,
+  listTimeEntriesV1TimeEntriesGet,
+  listTimeProjectsV1TimeProjectsGet,
   listTradesV1InvestmentsTradesGet,
   listTransactionsV1TransactionsGet,
   markAllNotificationsReadV1NotificationsReadAllPost,
@@ -124,6 +130,8 @@ import {
   updateRecipeV1RecipesRecipeIdPatch,
   updateSecurityV1InvestmentsSecuritiesSecurityIdPatch,
   updateTaskV1TasksTaskIdPatch,
+  updateTimeEntryV1TimeEntriesEntryIdPatch,
+  updateTimeProjectV1TimeProjectsProjectIdPatch,
   updateTradeV1InvestmentsTradesTradeIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
   uploadClientDiagnosticsV1ClientDiagnosticsPost,
@@ -184,6 +192,12 @@ import type {
   CreateTaskV1TasksPostData,
   CreateTaskV1TasksPostError,
   CreateTaskV1TasksPostResponse,
+  CreateTimeEntryV1TimeEntriesPostData,
+  CreateTimeEntryV1TimeEntriesPostError,
+  CreateTimeEntryV1TimeEntriesPostResponse,
+  CreateTimeProjectV1TimeProjectsPostData,
+  CreateTimeProjectV1TimeProjectsPostError,
+  CreateTimeProjectV1TimeProjectsPostResponse,
   CreateTradeV1InvestmentsTradesPostData,
   CreateTradeV1InvestmentsTradesPostError,
   CreateTradeV1InvestmentsTradesPostResponse,
@@ -223,6 +237,9 @@ import type {
   DeleteTaskV1TasksTaskIdDeleteData,
   DeleteTaskV1TasksTaskIdDeleteError,
   DeleteTaskV1TasksTaskIdDeleteResponse,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteData,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
   DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
   DeleteTradeV1InvestmentsTradesTradeIdDeleteError,
   DeleteTradeV1InvestmentsTradesTradeIdDeleteResponse,
@@ -287,6 +304,9 @@ import type {
   GetTimelineV1TimelineGetData,
   GetTimelineV1TimelineGetError,
   GetTimelineV1TimelineGetResponse,
+  GetTimeSummaryV1TimeSummaryGetData,
+  GetTimeSummaryV1TimeSummaryGetError,
+  GetTimeSummaryV1TimeSummaryGetResponse,
   GetWeatherForecastV1WeatherGetData,
   GetWeatherForecastV1WeatherGetError,
   GetWeatherForecastV1WeatherGetResponse,
@@ -356,6 +376,11 @@ import type {
   ListTasksV1TasksGetData,
   ListTasksV1TasksGetError,
   ListTasksV1TasksGetResponse,
+  ListTimeEntriesV1TimeEntriesGetData,
+  ListTimeEntriesV1TimeEntriesGetError,
+  ListTimeEntriesV1TimeEntriesGetResponse,
+  ListTimeProjectsV1TimeProjectsGetData,
+  ListTimeProjectsV1TimeProjectsGetResponse,
   ListTradesV1InvestmentsTradesGetData,
   ListTradesV1InvestmentsTradesGetError,
   ListTradesV1InvestmentsTradesGetResponse,
@@ -453,6 +478,12 @@ import type {
   UpdateTaskV1TasksTaskIdPatchData,
   UpdateTaskV1TasksTaskIdPatchError,
   UpdateTaskV1TasksTaskIdPatchResponse,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchData,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchError,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
   UpdateTradeV1InvestmentsTradesTradeIdPatchData,
   UpdateTradeV1InvestmentsTradesTradeIdPatchError,
   UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
@@ -4115,6 +4146,275 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation = (
   };
   return mutationOptions;
 };
+
+export const listTimeProjectsV1TimeProjectsGetQueryKey = (
+  options?: Options<ListTimeProjectsV1TimeProjectsGetData>,
+) => createQueryKey("listTimeProjectsV1TimeProjectsGet", options);
+
+/**
+ * List Time Projects
+ */
+export const listTimeProjectsV1TimeProjectsGetOptions = (
+  options?: Options<ListTimeProjectsV1TimeProjectsGetData>,
+) =>
+  queryOptions<
+    ListTimeProjectsV1TimeProjectsGetResponse,
+    DefaultError,
+    ListTimeProjectsV1TimeProjectsGetResponse,
+    ReturnType<typeof listTimeProjectsV1TimeProjectsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTimeProjectsV1TimeProjectsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTimeProjectsV1TimeProjectsGetQueryKey(options),
+  });
+
+/**
+ * Create Time Project
+ */
+export const createTimeProjectV1TimeProjectsPostMutation = (
+  options?: Partial<Options<CreateTimeProjectV1TimeProjectsPostData>>,
+): UseMutationOptions<
+  CreateTimeProjectV1TimeProjectsPostResponse,
+  CreateTimeProjectV1TimeProjectsPostError,
+  Options<CreateTimeProjectV1TimeProjectsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateTimeProjectV1TimeProjectsPostResponse,
+    CreateTimeProjectV1TimeProjectsPostError,
+    Options<CreateTimeProjectV1TimeProjectsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createTimeProjectV1TimeProjectsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Time Project
+ */
+export const updateTimeProjectV1TimeProjectsProjectIdPatchMutation = (
+  options?: Partial<Options<UpdateTimeProjectV1TimeProjectsProjectIdPatchData>>,
+): UseMutationOptions<
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
+  UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
+  Options<UpdateTimeProjectV1TimeProjectsProjectIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
+    UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
+    Options<UpdateTimeProjectV1TimeProjectsProjectIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateTimeProjectV1TimeProjectsProjectIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listTimeEntriesV1TimeEntriesGetQueryKey = (
+  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
+) => createQueryKey("listTimeEntriesV1TimeEntriesGet", options);
+
+/**
+ * List Time Entries
+ */
+export const listTimeEntriesV1TimeEntriesGetOptions = (
+  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
+) =>
+  queryOptions<
+    ListTimeEntriesV1TimeEntriesGetResponse,
+    ListTimeEntriesV1TimeEntriesGetError,
+    ListTimeEntriesV1TimeEntriesGetResponse,
+    ReturnType<typeof listTimeEntriesV1TimeEntriesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTimeEntriesV1TimeEntriesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTimeEntriesV1TimeEntriesGetQueryKey(options),
+  });
+
+export const listTimeEntriesV1TimeEntriesGetInfiniteQueryKey = (
+  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
+): QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>> =>
+  createQueryKey("listTimeEntriesV1TimeEntriesGet", options, true);
+
+/**
+ * List Time Entries
+ */
+export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
+  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
+) =>
+  infiniteQueryOptions<
+    ListTimeEntriesV1TimeEntriesGetResponse,
+    ListTimeEntriesV1TimeEntriesGetError,
+    InfiniteData<ListTimeEntriesV1TimeEntriesGetResponse>,
+    QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>>,
+    | Date
+    | Pick<
+        QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listTimeEntriesV1TimeEntriesGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listTimeEntriesV1TimeEntriesGetInfiniteQueryKey(options),
+    },
+  );
+
+/**
+ * Create Time Entry
+ */
+export const createTimeEntryV1TimeEntriesPostMutation = (
+  options?: Partial<Options<CreateTimeEntryV1TimeEntriesPostData>>,
+): UseMutationOptions<
+  CreateTimeEntryV1TimeEntriesPostResponse,
+  CreateTimeEntryV1TimeEntriesPostError,
+  Options<CreateTimeEntryV1TimeEntriesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateTimeEntryV1TimeEntriesPostResponse,
+    CreateTimeEntryV1TimeEntriesPostError,
+    Options<CreateTimeEntryV1TimeEntriesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createTimeEntryV1TimeEntriesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Time Entry
+ */
+export const deleteTimeEntryV1TimeEntriesEntryIdDeleteMutation = (
+  options?: Partial<Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData>>,
+): UseMutationOptions<
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
+  DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
+  Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
+    DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
+    Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteTimeEntryV1TimeEntriesEntryIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Time Entry
+ */
+export const updateTimeEntryV1TimeEntriesEntryIdPatchMutation = (
+  options?: Partial<Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData>>,
+): UseMutationOptions<
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
+  UpdateTimeEntryV1TimeEntriesEntryIdPatchError,
+  Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
+    UpdateTimeEntryV1TimeEntriesEntryIdPatchError,
+    Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateTimeEntryV1TimeEntriesEntryIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getTimeSummaryV1TimeSummaryGetQueryKey = (
+  options: Options<GetTimeSummaryV1TimeSummaryGetData>,
+) => createQueryKey("getTimeSummaryV1TimeSummaryGet", options);
+
+/**
+ * Get Monthly Time Totals
+ */
+export const getTimeSummaryV1TimeSummaryGetOptions = (
+  options: Options<GetTimeSummaryV1TimeSummaryGetData>,
+) =>
+  queryOptions<
+    GetTimeSummaryV1TimeSummaryGetResponse,
+    GetTimeSummaryV1TimeSummaryGetError,
+    GetTimeSummaryV1TimeSummaryGetResponse,
+    ReturnType<typeof getTimeSummaryV1TimeSummaryGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTimeSummaryV1TimeSummaryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTimeSummaryV1TimeSummaryGetQueryKey(options),
+  });
 
 export const getTimelineV1TimelineGetQueryKey = (
   options: Options<GetTimelineV1TimelineGetData>,
