@@ -91,5 +91,27 @@ export interface AllDayCalendarEvent extends CalendarEventBase {
 
 export type CalendarEvent = TimedCalendarEvent | AllDayCalendarEvent;
 
+/** What the week grid needs to draw an event; calendar events are one kind. */
+interface GridEventBase {
+  id: string;
+  calendarId: string;
+  title: string;
+  details: Pick<CalendarEventDetails, "colorId" | "myResponse">;
+}
+
+export interface TimedGridEvent extends GridEventBase {
+  allDay: false;
+  start: Date;
+  end: Date;
+}
+
+export interface AllDayGridEvent extends GridEventBase {
+  allDay: true;
+  startDate: string;
+  endDate: string;
+}
+
+export type GridEvent = TimedGridEvent | AllDayGridEvent;
+
 /** "centered" shows the selected day with three days either side. */
 export type CalendarViewMode = "week" | "centered" | "day";

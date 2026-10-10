@@ -77,18 +77,24 @@ export interface CalendarNavigation {
 const VIEW_KEY = "bessel:calendar-view";
 const VIEW_MODES: readonly CalendarViewMode[] = ["week", "centered", "day"];
 
-function rememberedView(): CalendarViewMode {
-  const stored = userStorage.getItem(VIEW_KEY);
+function rememberedView(storageKey: string): CalendarViewMode {
+  const stored = userStorage.getItem(storageKey);
   return VIEW_MODES.find((mode) => mode === stored) ?? "week";
 }
 
-export function useCalendarNavigation(timeZone: string): CalendarNavigation {
+export function useCalendarNavigation(
+  timeZone: string,
+  storageKey = VIEW_KEY,
+): CalendarNavigation {
   const [date, setDate] = useState(() => toWallClock(new Date(), timeZone));
-  const [view, setViewState] = useState(rememberedView);
-  const setView = useCallback((next: CalendarViewMode) => {
-    setViewState(next);
-    userStorage.setItem(VIEW_KEY, next);
-  }, []);
+  const [view, setViewState] = useState(() => rememberedView(storageKey));
+  const setView = useCallback(
+    (next: CalendarViewMode) => {
+      setViewState(next);
+      userStorage.setItem(storageKey, next);
+    },
+    [storageKey],
+  );
   return { date, view, days: visibleDays(date, view), setDate, setView };
 }
 

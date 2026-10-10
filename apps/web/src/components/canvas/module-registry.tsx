@@ -13,6 +13,7 @@ import {
   Moon,
   Route,
   SquareTerminal,
+  Timer,
   TrendingUp,
 } from "lucide-react";
 import { lazy } from "react";
@@ -141,6 +142,17 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/components/calendar/calendar-page").then((m) => ({
         default: m.CalendarPage,
+      })),
+    ),
+    ...SESSION_SIZE,
+    noPadding: true,
+  },
+  time: {
+    title: "Time",
+    icon: Timer,
+    component: lazy(() =>
+      import("@/components/time-tracking/time-page").then((m) => ({
+        default: m.TimePage,
       })),
     ),
     ...SESSION_SIZE,

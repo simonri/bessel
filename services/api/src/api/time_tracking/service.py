@@ -36,7 +36,7 @@ def month_totals(entries: Sequence[TimeEntry], year: int, tz: ZoneInfo) -> list[
 
 class TimeTrackingService:
   async def update_project(self, session: AsyncSession, project: TimeProject, body: TimeProjectUpdate) -> TimeProject:
-    changes: dict[str, Any] = body.model_dump(exclude_unset=True, exclude={"archived"})
+    changes = _without_nulls(body.model_dump(exclude_unset=True, exclude={"archived"}), {"name", "color"})
     if body.archived is not None:
       changes["archived_at"] = (project.archived_at or utc_now()) if body.archived else None
     return await TimeProjectRepository.from_session(session).update(project, update_dict=changes, flush=True)
@@ -48,7 +48,7 @@ class TimeTrackingService:
     return await TimeEntryRepository.from_session(session).create(entry, flush=True)
 
   async def update_entry(self, session: AsyncSession, entry: TimeEntry, body: TimeEntryUpdate) -> TimeEntry:
-    changes: dict[str, Any] = body.model_dump(exclude_unset=True)
+    changes = _without_nulls(body.model_dump(exclude_unset=True), {"time_project_id", "start_ts", "end_ts"})
     if body.time_project_id is not None:
       await self._owned_project(session, body.time_project_id, entry.user_id)
     _check_span(changes.get("start_ts", entry.start_ts), changes.get("end_ts", entry.end_ts))
@@ -67,6 +67,10 @@ class TimeTrackingService:
 
   async def _owned_project(self, session: AsyncSession, project_id: UUID, user_id: UUID) -> TimeProject:
     return await TimeProjectRepository.from_session(session).get_owned_or_404(project_id, user_id, not_found_message="Project not found.")
+
+
+def _without_nulls(changes: dict[str, Any], required: set[str]) -> dict[str, Any]:
+  return {k: v for k, v in changes.items() if v is not None or k not in required}
 
 
 def _check_span(start: datetime, end: datetime) -> None:

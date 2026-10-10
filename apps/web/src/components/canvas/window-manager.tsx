@@ -33,6 +33,7 @@ export type ModuleKey =
   | "googleTimeline"
   | "hyperliquid"
   | "calendar"
+  | "time"
   | "recipes"
   | "claudeCode"
   | "codex"

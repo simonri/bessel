@@ -19,9 +19,9 @@ import {
 } from "./calendar-layout";
 import { toWallClock } from "./calendar-timezone";
 import type {
-  AllDayCalendarEvent,
-  CalendarEvent,
-  TimedCalendarEvent,
+  AllDayGridEvent,
+  GridEvent,
+  TimedGridEvent,
 } from "./calendar-types";
 import { eventColor } from "./event-colors";
 import type { EventDraftTiming } from "./event-payload";
@@ -73,7 +73,7 @@ function useNow(): Date {
   return now;
 }
 
-export function timingOf(event: CalendarEvent): EventDraftTiming {
+export function timingOf(event: GridEvent): EventDraftTiming {
   return event.allDay
     ? {
         allDay: true,
@@ -83,24 +83,24 @@ export function timingOf(event: CalendarEvent): EventDraftTiming {
     : { allDay: false, start: event.start, end: event.end };
 }
 
-export function withTiming(
-  event: CalendarEvent,
+export function withTiming<E extends GridEvent>(
+  event: E,
   timing: EventDraftTiming,
-): CalendarEvent {
+): E {
   if (timing.allDay) {
     return {
       ...event,
       allDay: true,
       startDate: format(timing.start, "yyyy-MM-dd"),
       endDate: format(timing.end, "yyyy-MM-dd"),
-    } as AllDayCalendarEvent;
+    };
   }
   return {
     ...event,
     allDay: false,
     start: timing.start,
     end: timing.end,
-  } as TimedCalendarEvent;
+  };
 }
 
 function point(e: { clientX: number; clientY: number }, el: HTMLElement) {
@@ -126,7 +126,7 @@ function onEventChip(target: EventTarget): boolean {
   );
 }
 
-export function TimeGrid({
+export function TimeGrid<E extends GridEvent>({
   days,
   events,
   colorOf,
@@ -141,19 +141,17 @@ export function TimeGrid({
   onSelectedAnchor,
   onCreate,
   onMove,
+  showAllDay = true,
 }: {
   days: Date[];
   /** Timed events already converted to wall-clock time in `timeZone`. */
-  events: CalendarEvent[];
+  events: E[];
   colorOf: (calendarId: string) => string;
   selectedEventId: string | null;
   /** Events the user may drag and resize. */
   editableIds: ReadonlySet<string>;
   /** The right-click menu for an event (given its chip), if it has one. */
-  renderMenu?: (
-    event: CalendarEvent,
-    chip: () => HTMLElement | null,
-  ) => ReactNode;
+  renderMenu?: (event: E, chip: () => HTMLElement | null) => ReactNode;
   canCreate: boolean;
   timeZone: string;
   onTimeZoneChange: (timeZone: string) => void;
@@ -167,6 +165,8 @@ export function TimeGrid({
     timing: EventDraftTiming,
     anchor: HTMLElement | null,
   ) => void;
+  /** The all-day strip; off where only timed entries exist. */
+  showAllDay?: boolean;
 }) {
   const now = toWallClock(useNow(), timeZone);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -236,7 +236,7 @@ export function TimeGrid({
     interaction.kind !== "create-all-day"
       ? interaction.eventId
       : null;
-  const shown = events.map((event) =>
+  const shown: GridEvent[] = events.map((event) =>
     preview && event.id === draggedId ? withTiming(event, preview) : event,
   );
   if (
@@ -258,7 +258,7 @@ export function TimeGrid({
           id: DRAFT_ID,
           calendarId: "",
           title: "",
-          details: {} as CalendarEvent["details"],
+          details: { colorId: null, myResponse: null },
           allDay: false,
           start: timing.start,
           end: timing.end,
@@ -270,7 +270,7 @@ export function TimeGrid({
 
   const startEventDrag = (
     e: ReactPointerEvent,
-    event: CalendarEvent,
+    event: GridEvent,
     kind: "move" | "resize-start" | "resize-end",
     container: HTMLElement | null,
   ) => {
@@ -355,16 +355,20 @@ export function TimeGrid({
     }
   };
 
-  const draftOr = (event: CalendarEvent, color: string) =>
+  const draftOr = (event: GridEvent, color: string) =>
     event.id === DRAFT_ID ? undefined : color;
-  const chipColor = (event: CalendarEvent) =>
+  const chipColor = (event: GridEvent) =>
     eventColor(event.details.colorId) ?? colorOf(event.calendarId);
 
-  const chipProps = (event: CalendarEvent) => ({
+  const chipProps = (event: GridEvent) => ({
     menu:
       event.id === DRAFT_ID
         ? undefined
-        : renderMenu?.(event, () => chipRefs.current.get(event.id) ?? null),
+        : // Everything but the draft is one of the caller's own events.
+          renderMenu?.(
+            event as E,
+            () => chipRefs.current.get(event.id) ?? null,
+          ),
     selected: event.id === selectedEventId,
     draft: event.id === DRAFT_ID,
     dragging: event.id === draggedId && preview !== null,
@@ -380,9 +384,9 @@ export function TimeGrid({
     },
   });
 
-  const timed = shown.filter((e): e is TimedCalendarEvent => !e.allDay);
+  const timed = shown.filter((e): e is TimedGridEvent => !e.allDay);
   const allDay = layoutAllDayEvents(
-    shown.filter((e): e is AllDayCalendarEvent => e.allDay),
+    shown.filter((e): e is AllDayGridEvent => e.allDay),
     days[0],
     days.length,
   );
@@ -427,62 +431,72 @@ export function TimeGrid({
           );
         })}
 
-        <div className="flex items-start justify-end border-y border-white/[0.06] pt-1.5 pr-2 text-10 text-white/35">
-          All-day
-        </div>
-        <div
-          ref={allDayRef}
-          className="relative touch-none border-y border-white/[0.06]"
-          style={{
-            gridColumn: `2 / span ${days.length}`,
-            height: allDayRows * ALL_DAY_ROW_HEIGHT + 6,
-          }}
-          onPointerDownCapture={(e) => {
-            pressedEmpty.current = !fromPortal(e) && !onEventChip(e.target);
-          }}
-          onPointerDown={(e) => {
-            if (!canCreate || e.button !== 0 || !pressedEmpty.current) return;
-            e.currentTarget.setPointerCapture(e.pointerId);
-            const p = point(e, e.currentTarget);
-            const index = dayIndexAt(p.x, p.width, days.length);
-            setInteraction({ kind: "create-all-day", from: index, to: index });
-          }}
-          onDoubleClick={(e) => {
-            if (!canCreate || !pressedEmpty.current || fromPortal(e)) return;
-            const p = point(e, e.currentTarget);
-            const index = dayIndexAt(p.x, p.width, days.length);
-            onCreate(allDayRange(days, index, index));
-          }}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={() => setInteraction(null)}
-        >
-          <DayDividers days={days} />
-          {allDay.map(({ event, startCol, span, row }) => (
-            <div
-              key={event.id}
-              className="absolute px-0.5"
-              style={{
-                left: `${(startCol / days.length) * 100}%`,
-                width: `${(span / days.length) * 100}%`,
-                top: 3 + row * ALL_DAY_ROW_HEIGHT,
-                height: ALL_DAY_ROW_HEIGHT - 2,
-              }}
-            >
-              <EventChip
-                title={event.title}
-                color={chipColor(event)}
-                accent={draftOr(event, colorOf(event.calendarId))}
-                past={event.endDate <= todayIso}
-                onDragStart={(e) =>
-                  startEventDrag(e, event, "move", allDayRef.current)
-                }
-                className="h-full items-center"
-                {...chipProps(event)}
-              />
+        {showAllDay && (
+          <>
+            <div className="flex items-start justify-end border-y border-white/[0.06] pt-1.5 pr-2 text-10 text-white/35">
+              All-day
             </div>
-          ))}
-        </div>
+            <div
+              ref={allDayRef}
+              className="relative touch-none border-y border-white/[0.06]"
+              style={{
+                gridColumn: `2 / span ${days.length}`,
+                height: allDayRows * ALL_DAY_ROW_HEIGHT + 6,
+              }}
+              onPointerDownCapture={(e) => {
+                pressedEmpty.current = !fromPortal(e) && !onEventChip(e.target);
+              }}
+              onPointerDown={(e) => {
+                if (!canCreate || e.button !== 0 || !pressedEmpty.current)
+                  return;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                const p = point(e, e.currentTarget);
+                const index = dayIndexAt(p.x, p.width, days.length);
+                setInteraction({
+                  kind: "create-all-day",
+                  from: index,
+                  to: index,
+                });
+              }}
+              onDoubleClick={(e) => {
+                if (!canCreate || !pressedEmpty.current || fromPortal(e))
+                  return;
+                const p = point(e, e.currentTarget);
+                const index = dayIndexAt(p.x, p.width, days.length);
+                onCreate(allDayRange(days, index, index));
+              }}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={() => setInteraction(null)}
+            >
+              <DayDividers days={days} />
+              {allDay.map(({ event, startCol, span, row }) => (
+                <div
+                  key={event.id}
+                  className="absolute px-0.5"
+                  style={{
+                    left: `${(startCol / days.length) * 100}%`,
+                    width: `${(span / days.length) * 100}%`,
+                    top: 3 + row * ALL_DAY_ROW_HEIGHT,
+                    height: ALL_DAY_ROW_HEIGHT - 2,
+                  }}
+                >
+                  <EventChip
+                    title={event.title}
+                    color={chipColor(event)}
+                    accent={draftOr(event, colorOf(event.calendarId))}
+                    past={event.endDate <= todayIso}
+                    onDragStart={(e) =>
+                      startEventDrag(e, event, "move", allDayRef.current)
+                    }
+                    className="h-full items-center"
+                    {...chipProps(event)}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div

@@ -16,6 +16,7 @@ export type PageKey =
   | "googleTimeline"
   | "hyperliquid"
   | "calendar"
+  | "time"
   | "tasks"
   | "activity"
   | "sleep"
@@ -58,6 +59,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   googleTimeline: fromModule("googleTimeline"),
   hyperliquid: fromModule("hyperliquid"),
   calendar: fromModule("calendar", true),
+  time: fromModule("time", true),
   tasks: {
     title: "Tasks",
     icon: CheckSquare,
@@ -92,6 +94,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "travel",
   "calendar",
   "tasks",
+  "time",
   "timeline",
   "googleTimeline",
   "activity",

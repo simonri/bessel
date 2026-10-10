@@ -1,11 +1,11 @@
 import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
-import type { AllDayCalendarEvent, TimedCalendarEvent } from "./calendar-types";
+import type { AllDayGridEvent, TimedGridEvent } from "./calendar-types";
 
 export const HOUR_HEIGHT = 48;
 export const MIN_EVENT_HEIGHT = 20;
 
 export interface PositionedEvent {
-  event: TimedCalendarEvent;
+  event: TimedGridEvent;
   top: number;
   height: number;
   /** Column index and count within the event's overlap cluster. */
@@ -26,7 +26,7 @@ function minutesIntoDay(d: Date): number {
  * events stay aligned with the 24 hour rows on DST transition days.
  */
 export function layoutDayEvents(
-  events: TimedCalendarEvent[],
+  events: TimedGridEvent[],
   day: Date,
 ): PositionedEvent[] {
   const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
@@ -84,7 +84,7 @@ export function layoutDayEvents(
 }
 
 export interface PlacedAllDayEvent {
-  event: AllDayCalendarEvent;
+  event: AllDayGridEvent;
   /** Visible day index the chip starts at, and how many visible days it spans. */
   startCol: number;
   span: number;
@@ -93,7 +93,7 @@ export interface PlacedAllDayEvent {
 
 /** Clips all-day events to the visible days and stacks overlapping ones into rows. */
 export function layoutAllDayEvents(
-  events: AllDayCalendarEvent[],
+  events: AllDayGridEvent[],
   firstDay: Date,
   dayCount: number,
 ): PlacedAllDayEvent[] {
