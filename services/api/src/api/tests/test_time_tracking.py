@@ -43,6 +43,14 @@ class TestTimeProjects:
     assert restored["archived_at"] is None
 
   @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_null_name_leaves_the_name(self, client: AsyncClient) -> None:
+    project = await _project(client)
+    resp = await client.patch(f"/v1/time/projects/{project['id']}", json={"name": None, "client": None})
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Audit"
+
+  @pytest.mark.asyncio
   async def test_rejects_bad_color(self, client: AsyncClient) -> None:
     resp = await client.post("/v1/time/projects", json={"name": "X", "color": "blue"})
     assert resp.status_code == 422
