@@ -48,9 +48,7 @@ export function MonthTable({
       <table className="w-full min-w-[760px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
-            <th className="sticky left-0 z-10 bg-[color-mix(in_oklab,var(--background)_96%,white)] px-4 py-2.5 text-left font-medium">
-              Project
-            </th>
+            <th className="px-4 py-2.5 text-left font-medium">Project</th>
             {MONTHS.map((m) => (
               <th key={m} className={cn("px-1 py-1.5 font-medium", column(m))}>
                 <button
@@ -75,7 +73,7 @@ export function MonthTable({
               <tr key={project.id} className="border-t border-white/[0.05]">
                 <th
                   scope="row"
-                  className="sticky left-0 z-10 max-w-48 bg-[color-mix(in_oklab,var(--background)_96%,white)] px-4 py-2 text-left font-normal"
+                  className="max-w-48 px-4 py-2 text-left font-normal"
                 >
                   <span className="flex items-center gap-2">
                     <span
@@ -108,7 +106,12 @@ export function MonthTable({
                   </td>
                 ))}
                 <td className="px-4 py-2 text-right">
-                  <span className="font-medium text-white/90">
+                  <span
+                    className={cn(
+                      "font-medium",
+                      total > 0 ? "text-white/90" : "text-white/30",
+                    )}
+                  >
                     {formatHours(total)}
                   </span>
                   {amount !== null && total > 0 && (
@@ -123,10 +126,7 @@ export function MonthTable({
         </tbody>
         <tfoot>
           <tr className="border-t border-white/[0.1] text-white/60">
-            <th
-              scope="row"
-              className="sticky left-0 z-10 bg-[color-mix(in_oklab,var(--background)_96%,white)] px-4 py-2.5 text-left font-medium"
-            >
+            <th scope="row" className="px-4 py-2.5 text-left font-medium">
               Total
             </th>
             {MONTHS.map((m) => (

@@ -225,7 +225,7 @@ function CalendarTime({
     gridEvents.push({
       id: DRAFT_ID,
       calendarId: defaultProjectId ?? "",
-      title: "",
+      title: projectById.get(defaultProjectId ?? "")?.name ?? "New entry",
       details: { colorId: null, myResponse: null },
       allDay: false,
       start: selection.start,
