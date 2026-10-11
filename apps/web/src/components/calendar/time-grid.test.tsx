@@ -446,3 +446,43 @@ describe("TimeGrid", () => {
     expect(onSelectDay).toHaveBeenCalledWith(days[1]);
   });
 });
+
+describe("TimeGrid backgrounds", () => {
+  it("shades a night across midnight in both day columns", () => {
+    render(
+      <TimeGrid
+        days={days}
+        events={[event]}
+        colorOf={() => "#4986e7"}
+        selectedEventId={null}
+        editableIds={new Set()}
+        canCreate
+        showAllDay={false}
+        backgrounds={[
+          {
+            id: "night",
+            start: new Date(2026, 9, 6, 23),
+            end: new Date(2026, 9, 7, 7),
+            label: "Sleep 7.5 h",
+          },
+        ]}
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={() => {}}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={() => {}}
+        onMove={() => {}}
+      />,
+    );
+    const bands = document.querySelectorAll<HTMLElement>(
+      "[data-grid-background]",
+    );
+    expect([...bands].map((b) => [b.style.top, b.style.height])).toEqual([
+      ["1104px", "48px"],
+      ["0px", "336px"],
+    ]);
+    expect(screen.getAllByText("Sleep 7.5 h")).toHaveLength(2);
+    expect(screen.queryByText("All-day")).toBeNull();
+  });
+});

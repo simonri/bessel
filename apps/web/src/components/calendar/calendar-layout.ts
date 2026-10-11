@@ -83,6 +83,38 @@ export function layoutDayEvents(
   return positioned;
 }
 
+/** A shaded span behind the events, such as a night's sleep. */
+export interface GridBackground {
+  id: string;
+  /** Wall-clock times, like the events. */
+  start: Date;
+  end: Date;
+  label?: string;
+}
+
+/** One day column's backgrounds, clipped to the day. */
+export function layoutDayBackgrounds(
+  backgrounds: GridBackground[],
+  day: Date,
+): { background: GridBackground; top: number; height: number }[] {
+  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  const dayEnd = addDays(dayStart, 1);
+  return backgrounds
+    .filter((b) => b.start < dayEnd && b.end > dayStart)
+    .map((background) => {
+      const startMin =
+        background.start <= dayStart ? 0 : minutesIntoDay(background.start);
+      const endMin =
+        background.end >= dayEnd ? 24 * 60 : minutesIntoDay(background.end);
+      return {
+        background,
+        top: (startMin / 60) * HOUR_HEIGHT,
+        height: (Math.max(endMin - startMin, 0) / 60) * HOUR_HEIGHT,
+      };
+    })
+    .filter((b) => b.height > 0);
+}
+
 export interface PlacedAllDayEvent {
   event: AllDayGridEvent;
   /** Visible day index the chip starts at, and how many visible days it spans. */

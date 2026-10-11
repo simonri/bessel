@@ -2,6 +2,8 @@ import {
   createTimeEntryV1TimeEntriesPost,
   createTimeProjectV1TimeProjectsPost,
   deleteTimeEntryV1TimeEntriesEntryIdDelete,
+  getDailySleepV1HealthkitSleepDailyGetOptions,
+  getTimelineV1TimelineGetOptions,
   getTimeSummaryV1TimeSummaryGetOptions,
   getTimeSummaryV1TimeSummaryGetQueryKey,
   listTimeEntriesV1TimeEntriesGetOptions,
@@ -22,8 +24,56 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import { type SleepBand, sleepBands } from "./sleep-overlay";
+
+const SLEEP_LOOKBACK_SECS = 60 * 86_400;
+// The timeline serves at most a week at a time.
+const MAX_SLEEP_WINDOW_SECS = 7 * 86_400;
+
+/** Whether any sleep has come in lately, so the overlay is worth offering. */
+export function useHasRecentSleep(timeZone: string): boolean {
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
+  const { data } = useQuery(
+    getDailySleepV1HealthkitSleepDailyGetOptions({
+      client,
+      query: {
+        start_ts: now - SLEEP_LOOKBACK_SECS,
+        end_ts: now,
+        tz_name: timeZone,
+      },
+    }),
+  );
+  return data?.nights.some((n) => n.asleep_secs > 0) ?? false;
+}
+
+/** Sleeps overlapping a range, as whole nights. */
+export function useSleepBands(
+  start: Date,
+  end: Date,
+  enabled: boolean,
+): SleepBand[] {
+  const startTs = Math.floor(start.getTime() / 1000);
+  const endTs = Math.min(
+    Math.ceil(end.getTime() / 1000),
+    startTs + MAX_SLEEP_WINDOW_SECS,
+  );
+  const { data } = useQuery({
+    ...getTimelineV1TimelineGetOptions({
+      client,
+      query: { start_ts: startTs, end_ts: endTs },
+    }),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+  return useMemo(
+    () =>
+      sleepBands(data?.lanes.find((l) => l.key === "sleep")?.segments ?? []),
+    [data],
+  );
+}
 
 export function useTimeProjects(): TimeProjectSchema[] | undefined {
   return useQuery(listTimeProjectsV1TimeProjectsGetOptions({ client })).data;

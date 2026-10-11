@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@bessel/ui/components/select";
 import { addDays, format, isSameDay, isSameMonth } from "date-fns";
-import { Check, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Moon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { IconButton, PeriodNav, SoftButton } from "@/components/ui-kit";
@@ -43,6 +43,8 @@ import {
 } from "./time-format";
 import {
   type TimeWrites,
+  useHasRecentSleep,
+  useSleepBands,
   useTimeEntries,
   useTimeProjects,
   useTimeSummary,
@@ -54,6 +56,7 @@ type TimeView = "calendar" | "months";
 const PAGE_VIEW_KEY = "bessel:time-view";
 const GRID_VIEW_KEY = "bessel:time-calendar-view";
 const LAST_PROJECT_KEY = "bessel:time-last-project";
+const SHOW_SLEEP_KEY = "bessel:time-show-sleep";
 const FALLBACK_COLOR = "#6b7280";
 
 function rememberedPageView(): TimeView {
@@ -201,6 +204,21 @@ function CalendarTime({
 
   const rangeStart = fromWallClock(days[0], timeZone);
   const rangeEnd = fromWallClock(addDays(days[days.length - 1], 1), timeZone);
+
+  const hasSleep = useHasRecentSleep(timeZone);
+  const [showSleep, setShowSleep] = useState(
+    () => userStorage.getItem(SHOW_SLEEP_KEY) !== "false",
+  );
+  const sleepShown = hasSleep && showSleep;
+  const sleep = useSleepBands(rangeStart, rangeEnd, sleepShown);
+  const sleepBackgrounds = sleepShown
+    ? sleep.map((band) => ({
+        id: `sleep-${band.start}`,
+        start: toWallClock(new Date(band.start * 1000), timeZone),
+        end: toWallClock(new Date(band.end * 1000), timeZone),
+        label: `Sleep ${formatHours(band.asleepSecs)}`,
+      }))
+    : [];
   const shownEntries = entries.filter(
     (e) => e.start_ts < rangeEnd && e.end_ts > rangeStart,
   );
@@ -395,6 +413,23 @@ function CalendarTime({
         <span className="mr-auto text-13 font-medium text-white/80">
           {headerMonth(days, today)}
         </span>
+        {hasSleep && (
+          <SoftButton
+            aria-pressed={showSleep}
+            title={showSleep ? "Hide sleep" : "Show sleep"}
+            onClick={() => {
+              setShowSleep(!showSleep);
+              userStorage.setItem(SHOW_SLEEP_KEY, String(!showSleep));
+            }}
+            className={cn(
+              showSleep &&
+                "bg-indigo-400/15 text-indigo-200 hover:bg-indigo-400/20",
+            )}
+          >
+            <Moon />
+            Sleep
+          </SoftButton>
+        )}
         <Select
           value={view}
           onValueChange={(v) => setView(v as CalendarViewMode)}
@@ -469,6 +504,7 @@ function CalendarTime({
         renderMenu={renderMenu}
         canCreate
         showAllDay={false}
+        backgrounds={sleepBackgrounds}
         timeZone={timeZone}
         onTimeZoneChange={onTimeZoneChange}
         onSelectDay={(day) => {

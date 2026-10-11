@@ -13,8 +13,10 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import {
+  type GridBackground,
   HOUR_HEIGHT,
   layoutAllDayEvents,
+  layoutDayBackgrounds,
   layoutDayEvents,
 } from "./calendar-layout";
 import { toWallClock } from "./calendar-timezone";
@@ -142,6 +144,7 @@ export function TimeGrid<E extends GridEvent>({
   onCreate,
   onMove,
   showAllDay = true,
+  backgrounds = [],
 }: {
   days: Date[];
   /** Timed events already converted to wall-clock time in `timeZone`. */
@@ -167,6 +170,8 @@ export function TimeGrid<E extends GridEvent>({
   ) => void;
   /** The all-day strip; off where only timed entries exist. */
   showAllDay?: boolean;
+  /** Shaded spans drawn behind the events. */
+  backgrounds?: GridBackground[];
 }) {
   const now = toWallClock(useNow(), timeZone);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -586,6 +591,22 @@ export function TimeGrid<E extends GridEvent>({
                 width: `${(1 / days.length) * 100}%`,
               }}
             >
+              {layoutDayBackgrounds(backgrounds, day).map(
+                ({ background, top, height }) => (
+                  <div
+                    key={background.id}
+                    data-grid-background
+                    className="absolute inset-x-0 overflow-hidden bg-indigo-400/[0.09] bg-[repeating-linear-gradient(135deg,transparent_0_6px,rgb(165_180_252/0.05)_6px_12px)]"
+                    style={{ top, height }}
+                  >
+                    {background.label && height >= 18 && (
+                      <span className="absolute top-0.5 right-1 text-10 text-indigo-200/55">
+                        {background.label}
+                      </span>
+                    )}
+                  </div>
+                ),
+              )}
               {layoutDayEvents(timed, day).map(
                 ({ event, top, height, column, columns }) => (
                   <div
