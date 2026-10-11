@@ -1,7 +1,7 @@
 """add time tracking
 
 Revision ID: 7942aba17cc8
-Revises: e4a8c1f2d9b7
+Revises: 6c702792fd1b
 Create Date: 2026-10-11 01:35:02.522069
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '7942aba17cc8'
-down_revision: str | Sequence[str] | None = 'e4a8c1f2d9b7'
+down_revision: str | Sequence[str] | None = '6c702792fd1b'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
