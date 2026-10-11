@@ -7,7 +7,11 @@ const config: Configuration = {
   directories: {
     output: "release",
   },
+  afterPack: "scripts/afterPack.js",
   afterSign: "scripts/afterSign.js",
+  // node-pty is Node-API, so its prebuilt and install-time binaries already
+  // load in Electron; rebuilding only recompiled it (~2 min on Windows).
+  npmRebuild: false,
   files: ["dist/**/*", "node_modules/**/*"],
   asarUnpack: [
     "**/node_modules/node-pty/**",

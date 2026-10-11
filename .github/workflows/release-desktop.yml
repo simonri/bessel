@@ -1,16 +1,61 @@
 name: Release Desktop
 
+# A v* tag builds all three platforms side by side into a draft release, which
+# is published once every build has uploaded, so the updater never sees a
+# half-finished release. Run it by hand for a dry run that publishes nothing.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+env:
+  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
 jobs:
-  build-linux:
-    name: Build Linux AppImage
+  draft:
+    name: Create draft release
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    steps:
+      - name: Create draft
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "${GITHUB_REF_NAME#v}" --notes ""
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: draft
+    if: ${{ !cancelled() && needs.draft.result != 'failure' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: Linux AppImage
+            os: ubuntu-latest
+            target: --linux
+            app: release/linux-unpacked/bessel
+            resources: release/linux-unpacked/resources
+            artifacts: release/Bessel-linux-x86_64.AppImage release/latest-linux.yml
+          - name: Mac DMG (arm64)
+            os: macos-latest
+            target: --mac
+            app: release/mac-arm64/Bessel.app/Contents/MacOS/Bessel
+            resources: release/mac-arm64/Bessel.app/Contents/Resources
+            artifacts: release/Bessel-mac-arm64.dmg release/Bessel-mac-arm64.dmg.blockmap release/latest-mac.yml
+          - name: Windows Installer (x64)
+            os: windows-latest
+            target: --win
+            app: release/win-unpacked/bessel.exe
+            resources: release/win-unpacked/resources
+            artifacts: release/Bessel-win-x64.exe release/Bessel-win-x64.exe.blockmap release/latest.yml
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/desktop
 
     steps:
       - uses: actions/checkout@v4
@@ -18,12 +63,13 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools
 
       - name: Compile
-        run: pnpm --filter=@bessel/desktop run compile
+        run: pnpm run compile
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
@@ -31,58 +77,29 @@ jobs:
           VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
           VITE_FRONTEND_URL: app://localhost
 
-      - name: Build & publish
-        run: pnpm --filter=@bessel/desktop exec electron-builder --linux --publish always --config electron-builder.config.ts
+      - name: Package
+        run: pnpm exec electron-builder ${{ matrix.target }} --publish never --config electron-builder.config.ts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-mac:
-    name: Build Mac DMG (arm64)
-    needs: build-linux
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-pnpm
-
-      - name: Compile
-        run: pnpm --filter=@bessel/desktop run compile
-        env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
-          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
-          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
-          VITE_FRONTEND_URL: app://localhost
-
-      - name: Build & publish
-        run: pnpm --filter=@bessel/desktop exec electron-builder --mac --publish always --config electron-builder.config.ts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_LINK: ""
           CSC_KEY_PASSWORD: ""
 
-  build-windows:
-    name: Build Windows Installer (x64)
-    needs: build-mac
-    runs-on: windows-latest
+      - name: Check node-pty in the packaged app
+        run: ELECTRON_RUN_AS_NODE=1 "${{ matrix.app }}" scripts/smoke-pty.cjs "${{ matrix.resources }}"
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-pnpm
-
-      - name: Compile
-        run: pnpm --filter=@bessel/desktop run compile
+      - name: Upload to the draft release
+        if: env.IS_RELEASE == 'true'
+        run: gh release upload "$GITHUB_REF_NAME" ${{ matrix.artifacts }} --repo "$GITHUB_REPOSITORY" --clobber
         env:
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-          VITE_AUTH0_DOMAIN: ${{ secrets.VITE_AUTH0_DOMAIN }}
-          VITE_AUTH0_CLIENT_ID: ${{ secrets.VITE_AUTH0_CLIENT_ID }}
-          VITE_AUTH0_AUDIENCE: ${{ secrets.VITE_AUTH0_AUDIENCE }}
-          VITE_FRONTEND_URL: app://localhost
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & publish
-        run: pnpm --filter=@bessel/desktop exec electron-builder --win --publish always --config electron-builder.config.ts
+  publish:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
