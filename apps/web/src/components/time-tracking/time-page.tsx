@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import { addDays, format, isSameDay, isSameMonth } from "date-fns";
+import { addDays, addHours, format, isSameDay, isSameMonth } from "date-fns";
 import { Check, ChevronLeft, ChevronRight, Moon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -58,6 +58,12 @@ const GRID_VIEW_KEY = "bessel:time-calendar-view";
 const LAST_PROJECT_KEY = "bessel:time-last-project";
 const SHOW_SLEEP_KEY = "bessel:time-show-sleep";
 const FALLBACK_COLOR = "#6b7280";
+/** A day here runs 4 am to 4 am, so late nights count to the day before. */
+const DAY_START_HOUR = 4;
+
+function workDay(timeZone: string): Date {
+  return addHours(toWallClock(new Date(), timeZone), -DAY_START_HOUR);
+}
 
 function rememberedPageView(): TimeView {
   return userStorage.getItem(PAGE_VIEW_KEY) === "months"
@@ -67,7 +73,7 @@ function rememberedPageView(): TimeView {
 
 export function TimePage() {
   const [timeZone, setTimeZone] = useCalendarTimeZone();
-  const nav = useCalendarNavigation(timeZone, GRID_VIEW_KEY);
+  const nav = useCalendarNavigation(timeZone, GRID_VIEW_KEY, DAY_START_HOUR);
   const [page, setPageState] = useState(rememberedPageView);
   const [year, setYear] = useState(() => new Date().getFullYear());
   const projects = useTimeProjects() ?? [];
@@ -178,7 +184,7 @@ function CalendarTime({
   writes: TimeWrites;
   switcher: React.ReactNode;
 }) {
-  const today = toWallClock(new Date(), timeZone);
+  const today = workDay(timeZone);
   const { data: entries = [] } = useTimeEntries(
     addDays(days[0], -1),
     addDays(days[days.length - 1], 2),
@@ -202,8 +208,11 @@ function CalendarTime({
     setSelection(null);
   }
 
-  const rangeStart = fromWallClock(days[0], timeZone);
-  const rangeEnd = fromWallClock(addDays(days[days.length - 1], 1), timeZone);
+  const rangeStart = fromWallClock(addHours(days[0], DAY_START_HOUR), timeZone);
+  const rangeEnd = fromWallClock(
+    addHours(addDays(days[days.length - 1], 1), DAY_START_HOUR),
+    timeZone,
+  );
 
   const hasSleep = useHasRecentSleep(timeZone);
   const [showSleep, setShowSleep] = useState(
@@ -447,7 +456,7 @@ function CalendarTime({
             <SelectItem value="day">Day</SelectItem>
           </SelectContent>
         </Select>
-        <SoftButton onClick={() => setDate(toWallClock(new Date(), timeZone))}>
+        <SoftButton onClick={() => setDate(workDay(timeZone))}>
           Today
         </SoftButton>
         <div className="flex">
@@ -504,6 +513,7 @@ function CalendarTime({
         renderMenu={renderMenu}
         canCreate
         showAllDay={false}
+        dayStartHour={DAY_START_HOUR}
         backgrounds={sleepBackgrounds}
         timeZone={timeZone}
         onTimeZoneChange={onTimeZoneChange}

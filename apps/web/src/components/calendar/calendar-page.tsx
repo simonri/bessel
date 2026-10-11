@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import { addDays, isSameDay } from "date-fns";
+import { addDays, addHours, isSameDay } from "date-fns";
 import { ChevronLeft, ChevronRight, PanelLeft } from "lucide-react";
 import {
   type RefObject,
@@ -85,8 +85,11 @@ function rememberedView(storageKey: string): CalendarViewMode {
 export function useCalendarNavigation(
   timeZone: string,
   storageKey = VIEW_KEY,
+  dayStartHour = 0,
 ): CalendarNavigation {
-  const [date, setDate] = useState(() => toWallClock(new Date(), timeZone));
+  const [date, setDate] = useState(() =>
+    addHours(toWallClock(new Date(), timeZone), -dayStartHour),
+  );
   const [view, setViewState] = useState(() => rememberedView(storageKey));
   const setView = useCallback(
     (next: CalendarViewMode) => {

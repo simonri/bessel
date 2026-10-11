@@ -486,3 +486,66 @@ describe("TimeGrid backgrounds", () => {
     expect(screen.queryByText("All-day")).toBeNull();
   });
 });
+
+describe("TimeGrid dayStartHour", () => {
+  function renderShifted() {
+    const onCreate = vi.fn();
+    const onMove = vi.fn();
+    const lateNight: CalendarEvent = {
+      ...event,
+      id: "late",
+      title: "Late fix",
+      start: new Date(2026, 9, 6, 1),
+      end: new Date(2026, 9, 6, 2),
+    };
+    render(
+      <TimeGrid
+        days={days}
+        events={[lateNight]}
+        colorOf={() => "#4986e7"}
+        selectedEventId={null}
+        editableIds={new Set(["late"])}
+        canCreate
+        showAllDay={false}
+        dayStartHour={4}
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={() => {}}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={onCreate}
+        onMove={onMove}
+      />,
+    );
+    return { onCreate, chip: screen.getByRole("button", { name: /Late fix/ }) };
+  }
+
+  it("puts 1 am at the bottom of the day before, labelled with real times", () => {
+    const { chip } = renderShifted();
+    const slot = chip.parentElement as HTMLElement;
+    expect(slot.style.top).toBe(`${21 * 48}px`);
+    expect(chip.textContent).toContain("1:00");
+    expect(screen.getByText("5 AM")).toBeTruthy();
+    expect(screen.queryByText("1 AM")).not.toBeNull();
+  });
+
+  it("creates at real times from a press near the top", () => {
+    const { onCreate, chip } = renderShifted();
+    const grid = chip.closest(".touch-none") as HTMLElement;
+    for (let i = 0; i < 2; i++) {
+      fireEvent.pointerDown(grid, {
+        button: 0,
+        pointerId: 1,
+        clientX: 10,
+        clientY: 20,
+      });
+      fireEvent.pointerUp(grid, { pointerId: 1, clientX: 10, clientY: 20 });
+    }
+    fireEvent.doubleClick(grid, { clientX: 10, clientY: 20 });
+    expect(onCreate).toHaveBeenCalledWith({
+      allDay: false,
+      start: new Date(2026, 9, 5, 4, 15),
+      end: new Date(2026, 9, 5, 5, 15),
+    });
+  });
+});

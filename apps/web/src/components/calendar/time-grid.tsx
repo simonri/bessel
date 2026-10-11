@@ -2,7 +2,7 @@ import {
   ContextMenu,
   ContextMenuTrigger,
 } from "@bessel/ui/components/context-menu";
-import { format, isSameDay, parseISO } from "date-fns";
+import { addHours, format, isSameDay, parseISO } from "date-fns";
 import {
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
@@ -145,6 +145,7 @@ export function TimeGrid<E extends GridEvent>({
   onMove,
   showAllDay = true,
   backgrounds = [],
+  dayStartHour = 0,
 }: {
   days: Date[];
   /** Timed events already converted to wall-clock time in `timeZone`. */
@@ -172,8 +173,37 @@ export function TimeGrid<E extends GridEvent>({
   showAllDay?: boolean;
   /** Shaded spans drawn behind the events. */
   backgrounds?: GridBackground[];
+  /** The hour each day column starts at; 4 runs columns from 4 am to 4 am. */
+  dayStartHour?: number;
 }) {
-  const now = toWallClock(useNow(), timeZone);
+  // Columns run from `dayStartHour`; the grid lays out shifted times so that
+  // hour sits at the top, and shifts back whatever it reports.
+  const toGrid = (date: Date) => addHours(date, -dayStartHour);
+  const fromGrid = (timing: EventDraftTiming): EventDraftTiming =>
+    timing.allDay || dayStartHour === 0
+      ? timing
+      : {
+          ...timing,
+          start: addHours(timing.start, dayStartHour),
+          end: addHours(timing.end, dayStartHour),
+        };
+  const realNow = toWallClock(useNow(), timeZone);
+  const now = toGrid(realNow);
+  const originals = new Map(events.map((e) => [e.id, e]));
+  const gridEvents: GridEvent[] =
+    dayStartHour === 0
+      ? events
+      : events.map((e) =>
+          e.allDay ? e : { ...e, start: toGrid(e.start), end: toGrid(e.end) },
+        );
+  const gridBackgrounds =
+    dayStartHour === 0
+      ? backgrounds
+      : backgrounds.map((b) => ({
+          ...b,
+          start: toGrid(b.start),
+          end: toGrid(b.end),
+        }));
   const scrollRef = useRef<HTMLDivElement>(null);
   const columnsRef = useRef<HTMLDivElement>(null);
   const allDayRef = useRef<HTMLDivElement>(null);
@@ -190,10 +220,10 @@ export function TimeGrid<E extends GridEvent>({
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const current = toWallClock(new Date(), timeZone);
+    const current = addHours(toWallClock(new Date(), timeZone), -dayStartHour);
     const minutes = current.getHours() * 60 + current.getMinutes() - 90;
     el.scrollTop = Math.max(0, (minutes / 60) * HOUR_HEIGHT);
-  }, [timeZone]);
+  }, [timeZone, dayStartHour]);
 
   // Bring a newly selected chip into view (e.g. a draft from "New" at a time
   // that's scrolled away); visible chips don't move.
@@ -241,7 +271,7 @@ export function TimeGrid<E extends GridEvent>({
     interaction.kind !== "create-all-day"
       ? interaction.eventId
       : null;
-  const shown: GridEvent[] = events.map((event) =>
+  const shown: GridEvent[] = gridEvents.map((event) =>
     preview && event.id === draggedId ? withTiming(event, preview) : event,
   );
   if (
@@ -335,7 +365,9 @@ export function TimeGrid<E extends GridEvent>({
       if (current.from === current.to) return;
       onCreate(
         current.kind === "create"
-          ? createRange(days[current.dayIndex], current.from, current.to)
+          ? fromGrid(
+              createRange(days[current.dayIndex], current.from, current.to),
+            )
           : allDayRange(days, current.from, current.to),
       );
     } else {
@@ -353,7 +385,7 @@ export function TimeGrid<E extends GridEvent>({
       if (timing && !sameTiming(timing, current.timing)) {
         onMove(
           current.eventId,
-          timing,
+          fromGrid(timing),
           chipRefs.current.get(current.eventId) ?? null,
         );
       }
@@ -371,7 +403,7 @@ export function TimeGrid<E extends GridEvent>({
         ? undefined
         : // Everything but the draft is one of the caller's own events.
           renderMenu?.(
-            event as E,
+            originals.get(event.id) as E,
             () => chipRefs.current.get(event.id) ?? null,
           ),
     selected: event.id === selectedEventId,
@@ -516,7 +548,7 @@ export function TimeGrid<E extends GridEvent>({
               className="absolute right-2 -translate-y-1/2 text-10 tabular-nums text-white/35"
               style={{ top: h * HOUR_HEIGHT }}
             >
-              {format(new Date(2000, 0, 1, h), "h a")}
+              {format(new Date(2000, 0, 1, (h + dayStartHour) % 24), "h a")}
             </span>
           ))}
           {todayIndex !== -1 && (
@@ -524,7 +556,7 @@ export function TimeGrid<E extends GridEvent>({
               className="absolute right-1 z-10 -translate-y-1/2 rounded-[4px] bg-red-500 px-1 py-px text-10 font-medium tabular-nums text-white"
               style={{ top: nowTop }}
             >
-              {format(now, "h:mma")}
+              {format(realNow, "h:mma")}
             </span>
           )}
         </div>
@@ -556,10 +588,12 @@ export function TimeGrid<E extends GridEvent>({
             const p = point(e, e.currentTarget);
             const minutes = minutesAt(p.y);
             onCreate(
-              createRange(
-                days[dayIndexAt(p.x, p.width, days.length)],
-                minutes,
-                minutes,
+              fromGrid(
+                createRange(
+                  days[dayIndexAt(p.x, p.width, days.length)],
+                  minutes,
+                  minutes,
+                ),
               ),
             );
           }}
@@ -591,7 +625,7 @@ export function TimeGrid<E extends GridEvent>({
                 width: `${(1 / days.length) * 100}%`,
               }}
             >
-              {layoutDayBackgrounds(backgrounds, day).map(
+              {layoutDayBackgrounds(gridBackgrounds, day).map(
                 ({ background, top, height }) => (
                   <div
                     key={background.id}
@@ -624,8 +658,8 @@ export function TimeGrid<E extends GridEvent>({
                       past={event.end <= now && event.id !== DRAFT_ID}
                       subtitle={
                         height < COMPACT_EVENT_HEIGHT
-                          ? format(event.start, "h:mm")
-                          : `${format(event.start, "h:mm")}–${format(event.end, "h:mm a")}`
+                          ? format(addHours(event.start, dayStartHour), "h:mm")
+                          : `${format(addHours(event.start, dayStartHour), "h:mm")}–${format(addHours(event.end, dayStartHour), "h:mm a")}`
                       }
                       color={chipColor(event)}
                       accent={draftOr(event, colorOf(event.calendarId))}
