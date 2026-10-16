@@ -64,7 +64,7 @@ describe("directory", () => {
     );
   });
 
-  it("suggests by name or email prefix, most frequent first", () => {
+  it("suggests by name or email prefix, leaving out people already invited", () => {
     expect(suggestPeople(directory, "gordon", []).map((p) => p.email)).toEqual([
       "Dan@oh.xyz",
     ]);
@@ -73,5 +73,27 @@ describe("directory", () => {
     ]);
     expect(suggestPeople(directory, "dan", ["dan@oh.xyz"])).toEqual([]);
     expect(suggestPeople(directory, " ", [])).toEqual([]);
+  });
+
+  it("orders matches by how many events they share, then by address", () => {
+    const people = buildDirectory([
+      event([
+        ["alex@x.com", null],
+        ["amy@x.com", null],
+        ["ann@x.com", null],
+        ["abe@x.com", null],
+      ]),
+      event([
+        ["amy@x.com", null],
+        ["ann@x.com", null],
+      ]),
+      event([["ann@x.com", null]]),
+    ]);
+    expect(suggestPeople(people, "a", []).map((p) => p.email)).toEqual([
+      "ann@x.com",
+      "amy@x.com",
+      "abe@x.com",
+      "alex@x.com",
+    ]);
   });
 });

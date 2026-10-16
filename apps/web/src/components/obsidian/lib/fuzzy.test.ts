@@ -37,8 +37,14 @@ describe("fuzzyScore", () => {
   });
 
   it("rewards consecutive matched characters over scattered ones", () => {
-    const consecutive = fuzzyScore("jour", "Journal Entry")!;
-    const scattered = fuzzyScore("jrnl", "Journal Entry")!;
+    const consecutive = fuzzyScore("jnl", "jnal")!;
+    const scattered = fuzzyScore("jnl", "janl")!;
     expect(consecutive).toBeGreaterThan(scattered);
+  });
+
+  it("penalises wider gaps between matched characters", () => {
+    const narrow = fuzzyScore("jnl", "jnal")!;
+    const wide = fuzzyScore("jnl", "jnaaal")!;
+    expect(narrow).toBeGreaterThan(wide);
   });
 });

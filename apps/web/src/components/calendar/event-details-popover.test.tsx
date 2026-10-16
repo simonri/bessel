@@ -193,6 +193,28 @@ describe("EventPopover", () => {
     expect(onDelete).toHaveBeenCalledWith(undefined, false);
   });
 
+  it("emails guests about a deletion by default", () => {
+    const onDelete = vi.fn();
+    const withGuests = event("a", "First");
+    withGuests.details.attendees = [
+      {
+        email: "al@x.com",
+        name: null,
+        response: "accepted",
+        isSelf: false,
+        isOrganizer: false,
+        photoUrl: null,
+      },
+    ];
+    render(popover(withGuests, { onDelete }));
+
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(onDelete).toHaveBeenCalledWith(undefined, true);
+  });
+
   it("lets the user choose not to email guests about a deletion", () => {
     const onDelete = vi.fn();
     const withGuests = event("a", "First");

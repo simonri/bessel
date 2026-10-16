@@ -54,14 +54,30 @@ function renderSwitcher(
 
 describe("QuickSwitcher — files mode", () => {
   it("lists notes ranked by basename and opens the selected one", () => {
-    const { onSelect, onOpenChange } = renderSwitcher();
+    const { onSelect, onOpenChange } = renderSwitcher({
+      files: [
+        "Pastries/Croissant.md",
+        "Archive/Old pasta notes.md",
+        "Recipes/Pasta.md",
+      ],
+    });
 
-    expect(screen.getByText("Note")).toBeTruthy();
-    expect(screen.getByText("Pasta")).toBeTruthy();
+    fireEvent.change(screen.getByPlaceholderText("Jump to note…"), {
+      target: { value: "pasta" },
+    });
+    const notes = screen
+      .getAllByRole("option")
+      .map((o) => o.textContent)
+      .filter((text) => !text?.includes("Create note"));
+    expect(notes).toEqual([
+      "PastaRecipes",
+      "Old pasta notesArchive",
+      "CroissantPastries",
+    ]);
 
-    fireEvent.click(screen.getByText("Note"));
+    fireEvent.click(screen.getByText("Pasta"));
 
-    expect(onSelect).toHaveBeenCalledWith("Note.md");
+    expect(onSelect).toHaveBeenCalledWith("Recipes/Pasta.md");
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 

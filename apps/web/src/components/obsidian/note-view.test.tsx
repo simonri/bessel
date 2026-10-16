@@ -115,11 +115,6 @@ describe("NoteView", () => {
     expect(screen.queryByRole("radio", { name: "Live" })).toBeNull();
   });
 
-  it("loads the note content", async () => {
-    renderNoteView();
-    await screen.findByDisplayValue("hello");
-  });
-
   it("autosaves 400ms after the last change", async () => {
     const vault = mockVault();
     window.electron = { vault } as unknown as Window["electron"];

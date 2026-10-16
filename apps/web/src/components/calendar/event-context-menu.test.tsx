@@ -101,6 +101,41 @@ describe("DeletePrompt", () => {
     expect(onConfirm).toHaveBeenCalledWith("this", false);
   });
 
+  it("emails guests by default when deleting", () => {
+    const onConfirm = vi.fn();
+    render(
+      <DeletePrompt
+        anchor={anchor()}
+        recurring={false}
+        hasGuests
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(
+      (screen.getByLabelText(/Email guests/) as HTMLInputElement).checked,
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(onConfirm).toHaveBeenCalledWith("this", true);
+  });
+
+  it("emails guests by default when deleting occurrences of a repeating event", () => {
+    const onConfirm = vi.fn();
+    render(
+      <DeletePrompt
+        anchor={anchor()}
+        recurring
+        hasGuests
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "This and following events" }),
+    );
+    expect(onConfirm).toHaveBeenCalledWith("following", true);
+  });
+
   it("asks which occurrences of a repeating event", () => {
     const onConfirm = vi.fn();
     render(

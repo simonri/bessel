@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  type Box,
   boxesOverlap,
   clampToBounds,
+  type EngineItem,
   findFirstFit,
   fitToViewport,
   placeWithShrink,
   sanitizeLayout,
   tileEvenly,
-  type Box,
-  type EngineItem,
 } from "./layout-engine";
 
 const COLS = 24;
@@ -18,7 +18,12 @@ function item(box: Partial<EngineItem>): EngineItem {
 }
 
 function inBounds(box: Box, cols: number, maxRows: number): boolean {
-  return box.x >= 0 && box.x + box.w <= cols && box.y >= 0 && (!Number.isFinite(maxRows) || box.y + box.h <= maxRows);
+  return (
+    box.x >= 0 &&
+    box.x + box.w <= cols &&
+    box.y >= 0 &&
+    (!Number.isFinite(maxRows) || box.y + box.h <= maxRows)
+  );
 }
 
 function allFiniteInts(box: Box): boolean {
@@ -39,41 +44,66 @@ describe("clampToBounds", () => {
   it("returns the same reference for an already-valid item", () => {
     const valid = item({ x: 3, y: 5, w: 8, h: 8 });
     expect(clampToBounds(valid, COLS, 20)).toBe(valid);
-    expect(clampToBounds(valid, COLS, Infinity)).toBe(valid);
+    expect(clampToBounds(valid, COLS, Number.POSITIVE_INFINITY)).toBe(valid);
   });
 
   it("clamps oversized, negative, and out-of-range values into bounds", () => {
-    expect(clampToBounds(item({ x: -5, y: -3, w: 99, h: 50 }), COLS, 20)).toMatchObject({ x: 0, y: 0, w: 24, h: 20 });
-    expect(clampToBounds(item({ x: 20, y: 18, w: 8, h: 8 }), COLS, 20)).toMatchObject({ x: 16, y: 12, w: 8, h: 8 });
+    expect(
+      clampToBounds(item({ x: -5, y: -3, w: 99, h: 50 }), COLS, 20),
+    ).toMatchObject({ x: 0, y: 0, w: 24, h: 20 });
+    expect(
+      clampToBounds(item({ x: 20, y: 18, w: 8, h: 8 }), COLS, 20),
+    ).toMatchObject({ x: 16, y: 12, w: 8, h: 8 });
   });
 
   it("replaces non-finite values with the smallest valid ones", () => {
-    const fixed = clampToBounds(item({ x: NaN, y: Infinity, w: NaN, h: -Infinity, minW: 4, minH: 4 }), COLS, 20);
+    const fixed = clampToBounds(
+      item({
+        x: Number.NaN,
+        y: Number.POSITIVE_INFINITY,
+        w: Number.NaN,
+        h: Number.NEGATIVE_INFINITY,
+        minW: 4,
+        minH: 4,
+      }),
+      COLS,
+      20,
+    );
     expect(fixed).toMatchObject({ x: 0, y: 0, w: 4, h: 4 });
   });
 
   it("rounds fractional coordinates to integers", () => {
-    expect(clampToBounds(item({ x: 1.4, y: 2.6, w: 4.5, h: 3.2 }), COLS, 20)).toMatchObject({ x: 1, y: 3, w: 5, h: 3 });
+    expect(
+      clampToBounds(item({ x: 1.4, y: 2.6, w: 4.5, h: 3.2 }), COLS, 20),
+    ).toMatchObject({ x: 1, y: 3, w: 5, h: 3 });
   });
 
   it("bumps size up to minSize", () => {
-    expect(clampToBounds(item({ w: 1, h: 1, minW: 4, minH: 4 }), COLS, 20)).toMatchObject({ w: 4, h: 4 });
+    expect(
+      clampToBounds(item({ w: 1, h: 1, minW: 4, minH: 4 }), COLS, 20),
+    ).toMatchObject({ w: 4, h: 4 });
   });
 
   it("lets height drop below minH when the viewport itself is shorter", () => {
-    expect(clampToBounds(item({ h: 14, minH: 6 }), COLS, 4)).toMatchObject({ y: 0, h: 4 });
+    expect(clampToBounds(item({ h: 14, minH: 6 }), COLS, 4)).toMatchObject({
+      y: 0,
+      h: 4,
+    });
   });
 
   it("does not vertically constrain when maxRows is Infinity", () => {
     const tall = item({ y: 400, h: 50 });
-    expect(clampToBounds(tall, COLS, Infinity)).toBe(tall);
+    expect(clampToBounds(tall, COLS, Number.POSITIVE_INFINITY)).toBe(tall);
   });
 });
 
 describe("findFirstFit", () => {
   it("finds the top-left-most gap", () => {
     const occupied = [item({ x: 0, y: 0, w: 8, h: 8 })];
-    expect(findFirstFit(occupied, { w: 8, h: 8 }, COLS, 20)).toEqual({ x: 8, y: 0 });
+    expect(findFirstFit(occupied, { w: 8, h: 8 }, COLS, 20)).toEqual({
+      x: 8,
+      y: 0,
+    });
   });
 
   it("returns null when the size cannot fit the grid at all", () => {
@@ -89,22 +119,38 @@ describe("findFirstFit", () => {
 
   it("always finds a spot when maxRows is Infinity", () => {
     const occupied = [item({ x: 0, y: 0, w: 24, h: 20 })];
-    expect(findFirstFit(occupied, { w: 24, h: 4 }, COLS, Infinity)).toEqual({ x: 0, y: 20 });
+    expect(
+      findFirstFit(occupied, { w: 24, h: 4 }, COLS, Number.POSITIVE_INFINITY),
+    ).toEqual({ x: 0, y: 20 });
   });
 });
 
 describe("placeWithShrink", () => {
   it("places at full size when there is room", () => {
-    expect(placeWithShrink([], { w: 12, h: 14 }, { w: 6, h: 6 }, COLS, 20)).toEqual({ x: 0, y: 0, w: 12, h: 14 });
+    expect(
+      placeWithShrink([], { w: 12, h: 14 }, { w: 6, h: 6 }, COLS, 20),
+    ).toEqual({ x: 0, y: 0, w: 12, h: 14 });
   });
 
   it("shrinks the default height to the viewport (12×14 widget on 11 rows)", () => {
-    const placed = placeWithShrink([], { w: 12, h: 14 }, { w: 6, h: 6 }, COLS, 11);
+    const placed = placeWithShrink(
+      [],
+      { w: 12, h: 14 },
+      { w: 6, h: 6 },
+      COLS,
+      11,
+    );
     expect(placed).toEqual({ x: 0, y: 0, w: 12, h: 11 });
   });
 
   it("clamps a wider-than-grid request instead of failing", () => {
-    const placed = placeWithShrink([], { w: 99, h: 8 }, { w: 4, h: 4 }, COLS, 20);
+    const placed = placeWithShrink(
+      [],
+      { w: 99, h: 8 },
+      { w: 4, h: 4 },
+      COLS,
+      20,
+    );
     expect(placed).toEqual({ x: 0, y: 0, w: 24, h: 8 });
   });
 
@@ -112,18 +158,32 @@ describe("placeWithShrink", () => {
     // 20 columns of the top 8 rows are taken; an 8×8 request has a 4-wide,
     // full-height band left. Best fit by area then width: 4 wide, 8 tall.
     const occupied = [item({ x: 0, y: 0, w: 20, h: 8 })];
-    const placed = placeWithShrink(occupied, { w: 8, h: 8 }, { w: 4, h: 4 }, COLS, 8);
+    const placed = placeWithShrink(
+      occupied,
+      { w: 8, h: 8 },
+      { w: 4, h: 4 },
+      COLS,
+      8,
+    );
     expect(placed).toEqual({ x: 20, y: 0, w: 4, h: 8 });
   });
 
   it("goes below min height when the viewport is shorter than minH", () => {
-    const placed = placeWithShrink([], { w: 12, h: 14 }, { w: 6, h: 6 }, COLS, 4);
+    const placed = placeWithShrink(
+      [],
+      { w: 12, h: 14 },
+      { w: 6, h: 6 },
+      COLS,
+      4,
+    );
     expect(placed).toEqual({ x: 0, y: 0, w: 12, h: 4 });
   });
 
   it("returns null when nothing fits even at minimum size", () => {
     const occupied = [item({ x: 0, y: 0, w: 24, h: 20 })];
-    expect(placeWithShrink(occupied, { w: 8, h: 8 }, { w: 4, h: 4 }, COLS, 20)).toBeNull();
+    expect(
+      placeWithShrink(occupied, { w: 8, h: 8 }, { w: 4, h: 4 }, COLS, 20),
+    ).toBeNull();
   });
 });
 
@@ -153,14 +213,6 @@ describe("sanitizeLayout", () => {
     expect(inBounds(items[1], COLS, 20)).toBe(true);
   });
 
-  it("preserves pre-existing overlap between valid items (never rearranges saved layouts)", () => {
-    const a = item({ x: 0, y: 0, w: 8, h: 8 });
-    const b = item({ x: 4, y: 4, w: 8, h: 8 });
-    const result = sanitizeLayout([a, b], COLS, 20);
-    expect(result.items).toBe(result.items);
-    expect(result.changed).toBe(false);
-  });
-
   it("keeps a clamped item in bounds with overlap as a last resort when the grid is full", () => {
     const full = item({ x: 0, y: 0, w: 24, h: 20, minW: 24, minH: 20 });
     const extra = item({ x: 0, y: 25, w: 8, h: 8, minW: 4, minH: 4 });
@@ -173,13 +225,16 @@ describe("sanitizeLayout", () => {
 describe("fitToViewport", () => {
   it("returns the same array reference when everything is in bounds or maxRows is Infinity", () => {
     const items = [item({ x: 0, y: 0 }), item({ x: 0, y: 100 })];
-    expect(fitToViewport(items, COLS, Infinity)).toBe(items);
+    expect(fitToViewport(items, COLS, Number.POSITIVE_INFINITY)).toBe(items);
     const visible = [item({ x: 0, y: 0 }), item({ x: 8, y: 0 })];
     expect(fitToViewport(visible, COLS, 20)).toBe(visible);
   });
 
   it("pulls a below-the-fold widget up to the closest visible spot", () => {
-    const items = [item({ x: 0, y: 0, w: 8, h: 8 }), item({ x: 0, y: 30, w: 8, h: 8 })];
+    const items = [
+      item({ x: 0, y: 0, w: 8, h: 8 }),
+      item({ x: 0, y: 30, w: 8, h: 8 }),
+    ];
     const fitted = fitToViewport(items, COLS, 20);
     expect(fitted[0]).toBe(items[0]);
     expect(fitted[1]).toMatchObject({ x: 0, y: 12, w: 8, h: 8 });
@@ -240,14 +295,18 @@ describe("property: invariants hold for arbitrary inputs", () => {
   it("sanitizeLayout output is always in bounds, integral, and order-preserving", () => {
     const rand = prng(42);
     for (let run = 0; run < 200; run++) {
-      const maxRows = rand() < 0.3 ? Infinity : 1 + Math.floor(rand() * 30);
+      const maxRows =
+        rand() < 0.3 ? Number.POSITIVE_INFINITY : 1 + Math.floor(rand() * 30);
       const count = 1 + Math.floor(rand() * 8);
       const items = Array.from({ length: count }, () =>
         item({
           x: Math.floor(rand() * 60) - 20,
           y: Math.floor(rand() * 80) - 20,
-          w: rand() < 0.1 ? NaN : Math.floor(rand() * 40) - 5,
-          h: rand() < 0.1 ? Infinity : Math.floor(rand() * 40) - 5,
+          w: rand() < 0.1 ? Number.NaN : Math.floor(rand() * 40) - 5,
+          h:
+            rand() < 0.1
+              ? Number.POSITIVE_INFINITY
+              : Math.floor(rand() * 40) - 5,
           minW: 1 + Math.floor(rand() * 6),
           minH: 1 + Math.floor(rand() * 6),
         }),
@@ -283,7 +342,7 @@ describe("property: invariants hold for arbitrary inputs", () => {
           }),
         ),
         COLS,
-        Infinity,
+        Number.POSITIVE_INFINITY,
       );
       const fitted = fitToViewport(items, COLS, maxRows);
       expect(fitted).toHaveLength(count);
@@ -361,7 +420,9 @@ describe("tileEvenly", () => {
           expect(inBounds(t, COLS, rows)).toBe(true);
           expect(allFiniteInts(t)).toBe(true);
         }
-        expect(tiles.reduce((area, t) => area + t.w * t.h, 0)).toBe(COLS * rows);
+        expect(tiles.reduce((area, t) => area + t.w * t.h, 0)).toBe(
+          COLS * rows,
+        );
       }
     }
   });

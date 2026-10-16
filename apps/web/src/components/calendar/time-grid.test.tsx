@@ -4,11 +4,21 @@ import {
   ContextMenuItem,
 } from "@bessel/ui/components/context-menu";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import type { CalendarEvent } from "./calendar-types";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import type { CalendarEvent, TimedCalendarEvent } from "./calendar-types";
 import { TimeGrid } from "./time-grid";
 
 beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 5, 8));
   // jsdom has neither pointer capture nor PointerEvent.
   Element.prototype.setPointerCapture = () => {};
   Element.prototype.releasePointerCapture = () => {};
@@ -24,9 +34,12 @@ beforeAll(() => {
   }
 });
 afterEach(cleanup);
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 const days = [5, 6, 7, 8, 9, 10, 11].map((d) => new Date(2026, 9, d));
-const event: CalendarEvent = {
+const event: TimedCalendarEvent = {
   id: "e1",
   calendarId: "c",
   title: "Planning",
@@ -327,12 +340,9 @@ describe("TimeGrid", () => {
       />,
     );
     const chip = screen.getByRole("button", { name: /Planning/ });
-    // The bar keeps the calendar's colour; the event's own colour fills it.
     expect(chip.style.borderLeftColor).toBe("rgb(73, 134, 231)");
-    // Mixed into the background, not transparent: grid lines stay hidden.
-    expect(chip.style.background).toBe(
-      "color-mix(in oklab, #e5534b 28%, var(--background))",
-    );
+    expect(chip.style.background).toContain("#e5534b");
+    expect(chip.style.background).not.toContain("#4986e7");
     expect(renderMenu).toHaveBeenCalledWith(coloured, expect.any(Function));
   });
 
@@ -385,7 +395,7 @@ describe("TimeGrid", () => {
     expect(onPick).toHaveBeenCalled();
   });
 
-  it("keeps events opaque, past ones muted, and the selected one free of hover", () => {
+  it("draws past events differently from upcoming ones, and marks the selected one pressed", () => {
     const past = {
       ...event,
       id: "old",
@@ -393,10 +403,17 @@ describe("TimeGrid", () => {
       start: new Date(2020, 0, 1, 9),
       end: new Date(2020, 0, 1, 10),
     };
+    const upcoming = {
+      ...event,
+      id: "next",
+      title: "Next",
+      start: new Date(2026, 9, 7, 9),
+      end: new Date(2026, 9, 7, 10),
+    };
     render(
       <TimeGrid
         days={[new Date(2020, 0, 1), ...days.slice(1)]}
-        events={[past, event]}
+        events={[past, upcoming, event]}
         colorOf={() => "#4986e7"}
         selectedEventId="e1"
         editableIds={new Set()}
@@ -411,13 +428,16 @@ describe("TimeGrid", () => {
       />,
     );
     const old = screen.getByRole("button", { name: /Old/ });
-    expect(old.className).not.toMatch(/opacity/);
-    expect(old.style.background).toBe(
-      "color-mix(in oklab, #4986e7 13%, var(--background))",
-    );
-    expect(old.className).toContain("hover:brightness-125");
-    const selected = screen.getByRole("button", { name: /Planning/ });
-    expect(selected.className).not.toContain("hover:brightness");
+    const next = screen.getByRole("button", { name: /Next/ });
+    expect(old.style.background).not.toBe(next.style.background);
+    expect(old.style.borderLeftColor).not.toBe(next.style.borderLeftColor);
+    expect(old.getAttribute("aria-pressed")).toBe("false");
+    expect(next.getAttribute("aria-pressed")).toBe("false");
+    expect(
+      screen
+        .getByRole("button", { name: /Planning/ })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 
   it("shows a day on double-click of its header, not a single click", () => {

@@ -45,7 +45,9 @@ describe("NoteReader — task checkboxes", () => {
     expect(onToggleTask).toHaveBeenCalledWith(2, false);
   });
 
-  it("does not toggle when onToggleTask is not provided", () => {
+  it("leaves a task unchecked, without errors, when onToggleTask is not provided", () => {
+    const errors = vi.fn((e: ErrorEvent) => e.preventDefault());
+    window.addEventListener("error", errors);
     const { container } = render(
       createElement(NoteReader, {
         content: "- [ ] one",
@@ -55,9 +57,14 @@ describe("NoteReader — task checkboxes", () => {
         onOpenLink: () => {},
       }),
     );
-    const box = container.querySelector('input[type="checkbox"]');
-    expect(box).not.toBeNull();
-    expect(() => fireEvent.click(box as Element)).not.toThrow();
+    const box = container.querySelector(
+      'input[type="checkbox"]',
+    ) as HTMLInputElement;
+    fireEvent.click(box);
+    window.removeEventListener("error", errors);
+
+    expect(box.checked).toBe(false);
+    expect(errors).not.toHaveBeenCalled();
   });
 });
 

@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   cleanup,
@@ -6,7 +8,6 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ClaudeSessionsSnapshot,
@@ -134,6 +135,25 @@ function mount(props: Partial<Parameters<typeof ProjectSessions>[0]> = {}) {
   return { manager: () => captured!, onOpenCanvas, onNewSession };
 }
 
+const GROUPS = [...PROJECTS.map((p) => p.name), "No project"];
+
+/** Rows are nested by order: after their group's header, before the next one. */
+function expectInGroup(group: string, row: string) {
+  const rowEl = screen.getByText(row);
+  const header = screen.getByText(group);
+  const next = GROUPS.slice(GROUPS.indexOf(group) + 1)
+    .map((name) => screen.queryByText(name))
+    .find((el) => el !== null);
+  expect(
+    header.compareDocumentPosition(rowEl) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  if (next) {
+    expect(
+      rowEl.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  }
+}
+
 describe("ProjectSessions", () => {
   it("nests sessions under their project and files the rest under No project", () => {
     seed(
@@ -155,10 +175,9 @@ describe("ProjectSessions", () => {
     mount();
 
     for (const p of PROJECTS) expect(screen.getByText(p.name)).toBeTruthy();
-    expect(screen.getByText("Refactor")).toBeTruthy();
-    expect(screen.getByText("No project")).toBeTruthy();
-    expect(screen.getByText("Orphaned")).toBeTruthy();
-    expect(screen.getByText("Scratch")).toBeTruthy();
+    expectInGroup("metron", "Refactor");
+    expectInGroup("No project", "Orphaned");
+    expectInGroup("No project", "Scratch");
     // The project's badge sums windows across its sessions; the session's own
     // badge shows its count.
     expect(screen.getAllByText("2")).toHaveLength(2);
@@ -377,12 +396,11 @@ describe("ProjectSessions", () => {
         }),
       );
 
-      expect(screen.getByText("Fix calendar")).toBeTruthy();
+      expectInGroup("metron", "Fix calendar");
       expect(screen.queryByText("Open in a window")).toBeNull();
       expect(screen.queryByText("Finished long ago")).toBeNull();
       // Unknown directory, no project.
-      expect(screen.getByText("No project")).toBeTruthy();
-      expect(screen.getByText("Scratch")).toBeTruthy();
+      expectInGroup("No project", "Scratch");
     });
 
     it("opens a background session in a new canvas session", () => {

@@ -39,9 +39,9 @@ describe("SessionName", () => {
     const input = screen.getByRole("textbox", { name: "Session name" });
     fireEvent.change(input, { target: { value: "  Fix login " } });
     fireEvent.keyDown(input, { key: "Enter" });
-    fireEvent.blur(input);
 
-    expect(rename).toHaveBeenCalledWith("k1", "Fix login");
+    expect(rename).toHaveBeenCalledExactlyOnceWith("k1", "Fix login");
+    expect(screen.queryByRole("textbox", { name: "Session name" })).toBeNull();
     await vi.waitFor(() =>
       expect(onRenamed).toHaveBeenCalledWith("Fix login 2", "metron"),
     );
@@ -64,5 +64,12 @@ describe("SessionName", () => {
     fireEvent.doubleClick(screen.getByText("metron"));
     fireEvent.blur(screen.getByRole("textbox", { name: "Session name" }));
     expect(rename).not.toHaveBeenCalled();
+
+    fireEvent.doubleClick(screen.getByText("metron"));
+    const input = screen.getByRole("textbox", { name: "Session name" });
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.blur(input);
+    expect(rename).not.toHaveBeenCalled();
+    expect(screen.getByText("metron")).toBeTruthy();
   });
 });

@@ -57,6 +57,13 @@ describe("avatars", () => {
     expect(avatarColor("Dan@Oh.xyz")).toBe(avatarColor("dan@oh.xyz"));
   });
 
+  it("give different people different colours", () => {
+    const colours = new Set(
+      guests.map((g) => g.email).map((email) => avatarColor(email)),
+    );
+    expect(colours.size).toBeGreaterThan(1);
+  });
+
   it("show the contact's photo, falling back to the initial if it fails", () => {
     const { container } = render(
       <Avatar
@@ -170,6 +177,7 @@ describe("ParticipantEditor", () => {
       attendees: [
         guest("andrey@oh.xyz", "accepted", { name: "Andrey Grushevskiy" }),
         guest("dan@oh.xyz", "accepted"),
+        guest("anna@oh.xyz", "accepted"),
       ],
       creatorEmail: null,
       creatorName: null,
@@ -196,12 +204,26 @@ describe("ParticipantEditor", () => {
     expect(onChange).toHaveBeenCalledWith(["andrey@oh.xyz"]);
   });
 
-  it("moves through suggestions with the arrow keys", () => {
+  it("moves through suggestions with the arrow keys, wrapping at the ends", () => {
     const { onChange, input } = setup();
     fireEvent.change(input, { target: { value: "a" } });
+    const selected = () =>
+      screen
+        .getAllByRole("option")
+        .filter((o) => o.getAttribute("aria-selected") === "true")
+        .map((o) => o.textContent);
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+    expect(selected()).toEqual(["AAndrey Grushevskiyandrey@oh.xyz"]);
+
     fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(selected()).toEqual(["Aanna@oh.xyz"]);
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(selected()).toEqual(["AAndrey Grushevskiyandrey@oh.xyz"]);
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    expect(selected()).toEqual(["Aanna@oh.xyz"]);
+
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(["anna@oh.xyz"]);
   });
 
   it("adds a typed address nobody has used yet, and rejects junk", () => {
