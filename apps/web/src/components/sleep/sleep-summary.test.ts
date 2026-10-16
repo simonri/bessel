@@ -31,10 +31,19 @@ describe("sleep summary", () => {
     expect(formatEveningClock(790)).toBe("7:10am");
   });
 
-  it("describes a night warmly", () => {
-    expect(nightMood(8 * 3600)).toBe("a cosy night ✨");
-    expect(nightMood(7 * 3600)).toBe("a solid night");
-    expect(nightMood(4 * 3600)).toContain("short night");
+  it("describes a night warmly, by how long it was", () => {
+    const cosy = "a cosy night ✨";
+    const solid = "a solid night";
+    const bitShort = "a bit short - be gentle with yourself today";
+    const short = "a short night - maybe an early one tonight? 🌙";
+    const hours = (h: number) => h * 3600;
+
+    expect(nightMood(hours(7.5))).toBe(cosy);
+    expect(nightMood(hours(7.5) - 1)).toBe(solid);
+    expect(nightMood(hours(6.5))).toBe(solid);
+    expect(nightMood(hours(6.5) - 1)).toBe(bitShort);
+    expect(nightMood(hours(5))).toBe(bitShort);
+    expect(nightMood(hours(5) - 1)).toBe(short);
   });
 
   it("averages the rhythm and how steady bedtimes are", () => {

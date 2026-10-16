@@ -114,8 +114,17 @@ describe("EntryPopover", () => {
     expect(onSave).toHaveBeenCalledWith("c", "");
   });
 
-  it("offers delete only for a saved entry", () => {
+  it("offers no delete for a draft and labels its submit Log time", () => {
+    setup();
+    expect(screen.queryByRole("button", { name: "Delete entry" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Log time" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
+  });
+
+  it("offers delete for a saved entry and labels its submit Save", () => {
     const { onDelete } = setup({ ...draft, entryId: "e1" });
+    expect(screen.getByRole("button", { name: "Save" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Log time" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Delete entry" }));
     expect(onDelete).toHaveBeenCalled();
   });

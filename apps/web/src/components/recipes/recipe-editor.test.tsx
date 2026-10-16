@@ -109,10 +109,21 @@ describe("RecipeEditor ingredients", () => {
     expect((amount as HTMLInputElement).value).toBe("½");
   });
 
-  it("adds a group", () => {
-    render(<Harness initial={withItems("a")} />);
+  it("adds a new empty group after the existing ones", () => {
+    const first = { ...withItems("a").ingredient_groups![0], title: "Sås" };
+    render(
+      <Harness
+        initial={{ ...emptyRecipeBody(), ingredient_groups: [first] }}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Add group" }));
-    expect(latest.ingredient_groups).toHaveLength(2);
+    expect(latest.ingredient_groups).toEqual([
+      first,
+      {
+        title: null,
+        items: [{ amount: null, unit: null, name: "", note: null }],
+      },
+    ]);
   });
 });
 

@@ -20,7 +20,32 @@ describe("describeDue", () => {
   });
 
   it("names today and the days ahead", () => {
-    expect(describeDue(new Date(2026, 9, 8), NOW)?.label).toBe("Today");
-    expect(describeDue(new Date(2026, 9, 9), NOW)?.label).toBe("Tomorrow");
+    expect(describeDue(new Date(2026, 9, 8), NOW)).toEqual({
+      label: "Today",
+      tone: "today",
+    });
+    expect(describeDue(new Date(2026, 9, 9), NOW)).toEqual({
+      label: "Tomorrow",
+      tone: "upcoming",
+    });
+    expect(describeDue(new Date(2026, 9, 10), NOW)).toEqual({
+      label: "Sat",
+      tone: "upcoming",
+    });
+    expect(describeDue(new Date(2026, 9, 14), NOW)).toEqual({
+      label: "Wed",
+      tone: "upcoming",
+    });
+  });
+
+  it("dates a task a week or more ahead", () => {
+    expect(describeDue(new Date(2026, 9, 15), NOW)).toEqual({
+      label: "Oct 15",
+      tone: "upcoming",
+    });
+    expect(describeDue(new Date(2026, 10, 3), NOW)).toEqual({
+      label: "Nov 3",
+      tone: "upcoming",
+    });
   });
 });

@@ -111,15 +111,16 @@ describe("attach / detach", () => {
     expect(attachTerminal(id, "w1", SIZE, SHELL, view()).exitCode).toBe(2);
   });
 
-  it("keeps the replay buffer bounded", () => {
+  it("keeps the replay buffer bounded by dropping the oldest output", () => {
     const id = terminalSessionId("w1", SHELL);
     attachTerminal(id, "w1", SIZE, SHELL, view()).detach();
-    const chunk = "x".repeat(64 * 1024);
-    for (let i = 0; i < 20; i++) fake.emit(id, chunk);
+    const chunks = Array.from({ length: 20 }, (_, i) =>
+      String.fromCharCode(65 + i).repeat(64 * 1024),
+    );
+    for (const chunk of chunks) fake.emit(id, chunk);
 
     const { replay } = attachTerminal(id, "w1", SIZE, SHELL, view());
-    expect(replay.length).toBeLessThanOrEqual(512 * 1024);
-    expect(replay.length).toBeGreaterThan(0);
+    expect(replay).toBe(chunks.slice(12).join(""));
   });
 
   it("replaces a window's previous PTY when it attaches with a new config", () => {

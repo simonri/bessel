@@ -80,6 +80,15 @@ describe("overlappingIds", () => {
     ]);
     expect([...ids].sort()).toEqual(["a", "b"]);
   });
+
+  it("catches an entry that overlaps a long one after a short one ends", () => {
+    const ids = overlappingIds([
+      entry("long", "2026-10-06T08:00:00Z", "2026-10-06T12:00:00Z"),
+      entry("short", "2026-10-06T09:00:00Z", "2026-10-06T10:00:00Z"),
+      entry("late", "2026-10-06T11:00:00Z", "2026-10-06T13:00:00Z"),
+    ]);
+    expect([...ids].sort()).toEqual(["late", "long", "short"]);
+  });
 });
 
 describe("monthRows and monthText", () => {

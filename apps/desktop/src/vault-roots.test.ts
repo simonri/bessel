@@ -23,8 +23,10 @@ describe("VaultRootRegistry", () => {
 
   it("rejects relative and non-string roots", () => {
     const reg = new VaultRootRegistry(file);
-    expect(() => reg.assertApproved("relative/path")).toThrow();
-    expect(() => reg.assertApproved(42)).toThrow();
+    reg.approve(plain);
+    const relative = path.relative(process.cwd(), plain);
+    expect(() => reg.assertApproved(relative)).toThrow(/absolute path/);
+    expect(() => reg.assertApproved(42)).toThrow(/absolute path/);
   });
 
   it("only allows approved roots once the list exists", () => {

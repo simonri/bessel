@@ -47,7 +47,6 @@ afterEach(cleanup);
 describe("QuickAddTask", () => {
   it("shows recognised parts as chips and creates the task on Enter", async () => {
     const input = mount();
-    await waitFor(() => expect(api.create).not.toHaveBeenCalled());
 
     fireEvent.change(input, {
       target: { value: "Essay draft tomorrow #uni !" },
@@ -55,6 +54,8 @@ describe("QuickAddTask", () => {
     await screen.findByText("Uni");
     expect(screen.getByText("Tomorrow")).toBeTruthy();
     expect(screen.getByText("High")).toBeTruthy();
+    fireEvent.keyDown(input, { key: "a" });
+    expect(api.create).not.toHaveBeenCalled();
 
     fireEvent.keyDown(input, { key: "Enter" });
 
