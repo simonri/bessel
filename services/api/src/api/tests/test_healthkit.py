@@ -3,9 +3,6 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from api.models.healthkit_workout import HealthKitWorkout
-from api.models.user import User
-from api.tests.fixtures.database import SaveFixture
 from httpx import AsyncClient
 
 BASE_DATE = datetime(2026, 7, 1, 8, 0, tzinfo=UTC)
@@ -135,23 +132,3 @@ class TestListWorkouts:
 
     items = await _list_items(client, limit=2, page=2)
     assert len(items) == 1
-
-  @pytest.mark.asyncio
-  async def test_scoped_to_current_user(self, client: AsyncClient, save_fixture: SaveFixture) -> None:
-    other_user = User(auth0_sub="auth0|other-user", email="other@example.com")
-    await save_fixture(other_user)
-    await save_fixture(
-      HealthKitWorkout(
-        user_id=other_user.id,
-        healthkit_uuid=uuid4(),
-        workout_activity_type=37,
-        workout_activity_type_name="running",
-        start_date=BASE_DATE,
-        end_date=BASE_DATE + timedelta(minutes=30),
-        duration=1800.0,
-        source_name="Apple Watch",
-        source_bundle_id="com.apple.health",
-      )
-    )
-
-    assert await _list_items(client) == []

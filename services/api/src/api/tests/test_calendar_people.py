@@ -294,7 +294,11 @@ class TestEventsShowPeople:
   async def test_lookup_spans_all_my_accounts(self, session: AsyncSession, save_fixture: SaveFixture) -> None:
     user = User(auth0_sub=f"auth0|{uuid4()}", email="me@example.com")
     await save_fixture(user)
-    google_account, _ = await _account(save_fixture, user=user)
-    await save_fixture(CalendarPerson(account_id=google_account.id, email="dan@oh.xyz", name="Dan Gordon"))
-    found = await CalendarPersonRepository.from_session(session).lookup_for_user(user.id, {"dan@oh.xyz", "x@y.com"})
-    assert {e: p.name for e, p in found.items()} == {"dan@oh.xyz": "Dan Gordon"}
+    work, _ = await _account(save_fixture, user=user)
+    personal, _ = await _account(save_fixture, user=user)
+    await save_fixture(CalendarPerson(account_id=work.id, email="dan@oh.xyz", name="Dan Gordon"))
+    await save_fixture(CalendarPerson(account_id=personal.id, email="andrey@oh.xyz", name="Andrey Grushevskiy"))
+
+    found = await CalendarPersonRepository.from_session(session).lookup_for_user(user.id, {"dan@oh.xyz", "andrey@oh.xyz", "x@y.com"})
+
+    assert {e: p.name for e, p in found.items()} == {"dan@oh.xyz": "Dan Gordon", "andrey@oh.xyz": "Andrey Grushevskiy"}

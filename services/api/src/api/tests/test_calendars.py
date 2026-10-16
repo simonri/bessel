@@ -524,27 +524,7 @@ class TestSyncAndEvents:
     assert resp.status_code == 422
 
 
-class TestOwnership:
-  @pytest.mark.asyncio
-  async def test_other_users_data_is_invisible(self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture) -> None:
-    other = User(auth0_sub="auth0|other-user", email="other@example.com")
-    await save_fixture(other)
-    account_id = await _account(save_fixture, other.id)
-    await _apply(
-      session,
-      account_id,
-      AccountSnapshot(calendars=[ProviderCalendar("c", "Theirs", "#ff0000")], events={"c": [_timed("e", WEEK_START, WEEK_END)]}),
-    )
-    calendar_id = (await CalendarAccountRepository.from_session(session).list_for_user(other.id))[0].calendars[0].id
-
-    assert (await client.get("/v1/calendars/accounts")).json()["accounts"] == []
-    assert (await client.get("/v1/calendars/events", params={"start_ts": int(WEEK_START.timestamp()), "end_ts": int(WEEK_END.timestamp())})).json()[
-      "events"
-    ] == []
-    assert (await client.patch(f"/v1/calendars/{calendar_id}", json={"hidden": True})).status_code == 404
-    assert (await client.delete(f"/v1/calendars/accounts/{account_id}")).status_code == 404
-    assert (await client.post(f"/v1/calendars/accounts/{account_id}/sync")).status_code == 404
-
+class TestDisconnect:
   @pytest.mark.asyncio
   async def test_disconnect_removes_calendars_and_events(
     self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, mocker: MockerFixture

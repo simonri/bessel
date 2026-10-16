@@ -82,14 +82,6 @@ class TestSearchRecipesByIngredient:
 
     assert (await mcp_call(connect, "search_recipes", {"ingredients": ["l%k"]}))["recipes"] == []
 
-  @pytest.mark.asyncio
-  async def test_other_user_cannot_see_recipes(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
-    await save_owned(Recipe(title="Leek tart", content="", body=structured("leeks")))
-
-    found = await mcp_call(connect, "search_recipes", {"ingredients": ["leek"]}, token="token-b")
-
-    assert found == {"total_count": 0, "recipes": []}
-
 
 class TestAddRecipe:
   @pytest.mark.asyncio

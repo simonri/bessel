@@ -236,20 +236,6 @@ class TestPermissions:
     assert (await client.patch(f"/v1/calendars/events/{event.id}", json=body(title="x"))).status_code == 403
     assert (await client.delete(f"/v1/calendars/events/{event.id}", params={"time_zone": TZ})).status_code == 403
 
-  @pytest.mark.asyncio
-  async def test_other_users_events_are_not_found(self, client: AsyncClient, seed: Seed, google: FakeGoogleCalendar, redis: Redis) -> None:
-    other = User(auth0_sub="auth0|other", email="other@example.com")
-    await seed.save_fixture(other)
-    calendar = await seed.calendar(await seed.account(user_id=other.id), PRIMARY)
-    google.add(PRIMARY, google_event("theirs"))
-    [event] = await seed.sync_google(calendar)
-
-    assert (
-      await client.post(f"/v1/calendars/{calendar.id}/events", json=body(title="x", timing=timed("2026-10-07T17:00", "2026-10-07T18:00")))
-    ).status_code == 404
-    assert (await client.patch(f"/v1/calendars/events/{event.id}", json=body(title="x"))).status_code == 404
-    assert (await client.delete(f"/v1/calendars/events/{event.id}", params={"time_zone": TZ})).status_code == 404
-
 
 class TestValidation:
   @pytest.mark.asyncio

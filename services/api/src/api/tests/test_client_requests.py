@@ -179,12 +179,16 @@ class TestIdempotency:
 
 class TestClientDiagnostics:
   @pytest.mark.asyncio
-  async def test_accepts_reports(self, client: AsyncClient) -> None:
-    response = await client.post(
-      "/v1/client-diagnostics",
-      json={"platform": "ios", "version": "1.0", "build": "42", "payloads": [{"crashDiagnostics": [{"diagnosticMetaData": {}}]}]},
-    )
+  async def test_logs_each_report(self, client: AsyncClient, caplog: pytest.LogCaptureFixture) -> None:
+    payload = {"crashDiagnostics": [{"diagnosticMetaData": {}}]}
+    response = await client.post("/v1/client-diagnostics", json={"platform": "ios", "version": "1.0", "build": "42", "payloads": [payload]})
+
     assert response.status_code == 202
+    [report] = [r.msg for r in caplog.records if isinstance(r.msg, dict) and r.msg.get("event") == "Client diagnostic report"]
+    assert report["level"] == "warning"
+    assert report["client"] == "ios/1.0+42"
+    assert report["kinds"] == ["crashDiagnostics"]
+    assert json.loads(report["payload"]) == payload
 
   @pytest.mark.asyncio
   async def test_limits_the_number_of_reports(self, client: AsyncClient) -> None:

@@ -14,6 +14,7 @@ from api.calendars.providers import (
   ProviderError,
   ProviderForbiddenError,
   ProviderNotFoundError,
+  ProviderRejectedError,
   ProviderScopeError,
   ProviderUnavailableError,
 )
@@ -180,7 +181,7 @@ class TestErrors:
       (google_error(429, "rateLimitExceeded"), ProviderUnavailableError),
       ((503, {"error": {"code": 503}}), ProviderUnavailableError),
       ((410, {"error": {"code": 410}}), ProviderNotFoundError),
-      (google_error(400, "invalid", "The specified time range is empty."), ProviderError),
+      (google_error(400, "invalid", "The specified time range is empty."), ProviderRejectedError),
     ],
   )
   async def test_patch_failures_are_typed(
@@ -188,8 +189,9 @@ class TestErrors:
   ) -> None:
     google.add(CAL, {"id": "e1"})
     google.failures[("PATCH", "e1")] = failure
-    with pytest.raises(error):
+    with pytest.raises(ProviderError) as raised:
       await editor.update(TargetEvent(CAL, "e1", at(7, 9), at(7, 10)), changes(title="x"), EditScope.this)
+    assert raised.type is error
 
   @pytest.mark.asyncio
   async def test_stale_etag_is_a_conflict(self, google: FakeGoogleCalendar, editor: GoogleEventEditor) -> None:
@@ -201,7 +203,7 @@ class TestErrors:
   async def test_bad_request_message_is_kept(self, google: FakeGoogleCalendar, editor: GoogleEventEditor) -> None:
     google.add(CAL, {"id": "e1"})
     google.failures[("PATCH", "e1")] = google_error(400, "invalid", "The specified time range is empty.")
-    with pytest.raises(ProviderError, match="time range is empty"):
+    with pytest.raises(ProviderRejectedError, match="time range is empty"):
       await editor.update(TargetEvent(CAL, "e1", at(7, 9), at(7, 10)), changes(title="x"), EditScope.this)
 
 

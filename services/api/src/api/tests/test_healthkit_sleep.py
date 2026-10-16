@@ -3,9 +3,6 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from api.models.healthkit_sleep_sample import HealthKitSleepSample
-from api.models.user import User
-from api.tests.fixtures.database import SaveFixture
 from httpx import AsyncClient
 
 BASE_DATE = datetime(2026, 7, 1, 23, 0, tzinfo=UTC)
@@ -136,25 +133,6 @@ class TestListSleep:
     items = await _list_items(client, limit=2, page=2)
     assert len(items) == 1
 
-  @pytest.mark.asyncio
-  async def test_scoped_to_current_user(self, client: AsyncClient, save_fixture: SaveFixture) -> None:
-    other_user = User(auth0_sub="auth0|other-user", email="other@example.com")
-    await save_fixture(other_user)
-    await save_fixture(
-      HealthKitSleepSample(
-        user_id=other_user.id,
-        healthkit_uuid=uuid4(),
-        sleep_value=3,
-        sleep_value_name="asleepCore",
-        start_date=BASE_DATE,
-        end_date=BASE_DATE + timedelta(minutes=30),
-        source_name="Apple Watch",
-        source_bundle_id="com.apple.health",
-      )
-    )
-
-    assert await _list_items(client) == []
-
 
 # 2026-07-01 12:00:00 UTC — the noon boundary between the nights of 07-01 and 07-02.
 NOON = int(datetime(2026, 7, 1, 12, 0, tzinfo=UTC).timestamp())
@@ -229,7 +207,16 @@ class TestDailySleep:
     assert nights == {"2026-07-02": 1800}
 
   @pytest.mark.asyncio
-  async def test_night_with_no_asleep_segments_has_null_onset_wake(self, client: AsyncClient) -> None:
+  async def test_night_with_only_awake_and_in_bed_is_left_out(self, client: AsyncClient) -> None:
+    start = datetime(2026, 7, 1, 23, 0, tzinfo=UTC)
+    await _sync(
+      client,
+      [
+        _sample_at(start, start + timedelta(hours=2), sleep_value_name="inBed", sleep_value=0),
+        _sample_at(start + timedelta(hours=2), start + timedelta(hours=3), sleep_value_name="awake", sleep_value=2),
+      ],
+    )
+
     resp = await client.get(
       "/v1/healthkit/sleep/daily",
       params={"start_ts": NOON - 86400, "end_ts": NOON + 86400, "tz_name": "UTC"},

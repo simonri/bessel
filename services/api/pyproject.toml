@@ -81,6 +81,9 @@ build-backend = "uv_build"
 [tool.uv.sources]
 common = { workspace = true }
 
+[tool.pytest.ini_options]
+markers = ["keep_session_state: don't expunge the test session before each client request"]
+
 [tool.coverage.run]
 source = ["src"]
 omit = ["*/tests/*", "*/migrations/*"]

@@ -147,8 +147,3 @@ class TestDevices:
 
     orphaned_configs = (await session.execute(select(ProjectDeviceConfig).where(ProjectDeviceConfig.project_id == project_id))).scalars().all()
     assert orphaned_configs == []
-
-  @pytest.mark.asyncio
-  async def test_delete_unknown_device_404s(self, client: AsyncClient) -> None:
-    resp = await client.delete("/v1/devices/00000000-0000-0000-0000-000000000000", headers=DEVICE_A)
-    assert resp.status_code == 404

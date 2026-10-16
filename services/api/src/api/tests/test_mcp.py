@@ -65,6 +65,13 @@ class TestTransport:
       resp = await client.post("/mcp", headers={"Authorization": "Bearer nope"}, json={})
     assert resp.status_code == 401
 
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize("connect", ["auto", "legacy"], indirect=True)
+  async def test_lists_and_calls_tools_over_both_protocols(self, connect: ConnectFixture) -> None:
+    async with connect() as client:
+      assert len((await client.list_tools()).tools) == len(TOOLS)
+    assert (await mcp_call(connect, "search_recipes"))["recipes"] == []
+
 
 @pytest.fixture
 def signing_key(mocker: MockerFixture) -> rsa.RSAPrivateKey:

@@ -350,10 +350,16 @@ class TestPushSync:
   ) -> None:
     calendar = _calendar("work")
     await _google_account(save_fixture, await _user(save_fixture), calendar)
+    start = utc_now()
+    await save_fixture(
+      CalendarEvent(calendar_id=calendar.id, external_id="e1", title="Standup", all_day=False, start_at=start, end_at=start + timedelta(minutes=15))
+    )
     mocker.patch.object(GoogleCalendarClient, "refresh_access_token", side_effect=ProviderAuthError("revoked"))
 
     await tasks.sync_calendar_from_push.__wrapped__(str(calendar.id))  # type: ignore[attr-defined]
 
+    titles = (await session.execute(select(CalendarEvent.title).where(CalendarEvent.calendar_id == calendar.id))).scalars().all()
+    assert titles == ["Standup"]
     assert "publish" not in commits
 
   @pytest.mark.asyncio

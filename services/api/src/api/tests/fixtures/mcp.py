@@ -60,15 +60,17 @@ def serve(session: AsyncSession, mocker: MockerFixture) -> ServeFixture:
   return _serve
 
 
-@pytest.fixture(params=["auto", "legacy"])
+@pytest.fixture
 def connect(serve: ServeFixture, request: pytest.FixtureRequest) -> ConnectFixture:
-  """Connects an SDK client, once per protocol path: the current per-request one and the legacy initialize handshake."""
+  """Connects an SDK client over the current per-request protocol. Parametrize it
+  indirectly with "legacy" to use the initialize handshake instead."""
+  mode = getattr(request, "param", "auto")
 
   @asynccontextmanager
   async def _connect(token: str = "token-a") -> AsyncIterator[Client]:
     async with serve() as app:
       http_client = httpx2.AsyncClient(transport=httpx2.ASGITransport(app=app), headers={"Authorization": f"Bearer {token}"})
-      async with Client(streamable_http_client(MCP_URL, http_client=http_client), mode=request.param) as client:
+      async with Client(streamable_http_client(MCP_URL, http_client=http_client), mode=mode) as client:
         yield client
 
   return _connect

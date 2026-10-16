@@ -1,14 +1,32 @@
+import importlib
+from pathlib import Path
+
+import api
 import pytest
+from fastapi.routing import APIRoute
 from httpx import AsyncClient
 
 
+def _endpoint_module_routes() -> dict[str, list[APIRoute]]:
+  routes: dict[str, list[APIRoute]] = {}
+  for path in Path(api.__file__).parent.glob("*/endpoints.py"):
+    endpoints = importlib.import_module(f"api.{path.parent.name}.endpoints")
+    routes[path.parent.name] = [r for r in endpoints.router.routes if isinstance(r, APIRoute) and r.include_in_schema]
+  return routes
+
+
 @pytest.mark.asyncio
-async def test_openapi(client: AsyncClient) -> None:
+async def test_openapi_schema_documents_every_endpoint_module(client: AsyncClient) -> None:
   response = await client.get("/openapi.json")
   assert response.status_code == 200
+  documented = {(path, method.upper()) for path, operations in response.json()["paths"].items() for method in operations}
 
-  schema = response.json()
-  assert "HTTPValidationError" in schema["components"]["schemas"]
+  modules = _endpoint_module_routes()
+  assert len(modules) >= 20
+  for name, routes in modules.items():
+    expected = {(f"/v1{route.path}", method) for route in routes for method in route.methods}
+    assert expected, name
+    assert expected <= documented, f"{name} endpoints missing from the schema: {sorted(expected - documented)}"
 
 
 @pytest.mark.asyncio
