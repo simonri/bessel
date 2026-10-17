@@ -1,4 +1,4 @@
-import { Network, ScrollText, Settings, X } from "lucide-react";
+import { Menu, Network, ScrollText, Settings, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AgentUsageDropdown } from "@/components/canvas/agent-usage-dropdown";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
@@ -8,6 +8,7 @@ import { ProjectsDropdown } from "@/components/canvas/projects-dropdown";
 import { SpotifyWidget } from "@/components/canvas/spotify-widget";
 import { TimeSinceDropdown } from "@/components/canvas/time-since-dropdown";
 import { LogsDialog } from "@/components/logs-dialog";
+import { NAV_ID } from "@/components/mobile-nav-drawer";
 import { PortsDialog } from "@/components/ports-dialog";
 import { SettingsModal } from "@/components/settings-modal";
 import { useSettings } from "@/hooks/use-settings";
@@ -23,7 +24,12 @@ import { TopbarTooltip } from "./topbar-tooltip";
 // clear the "Bessel" title.
 const MAC_TRAFFIC_LIGHT_INSET = "pl-20";
 
-export const CanvasTopBar = memo(function CanvasTopBar() {
+export const CanvasTopBar = memo(function CanvasTopBar({
+  nav,
+}: {
+  /** On small screens, the sidebar's open state and toggle for the menu button. */
+  nav?: { open: boolean; toggle: () => void };
+}) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [portsOpen, setPortsOpen] = useState(false);
@@ -57,6 +63,18 @@ export const CanvasTopBar = memo(function CanvasTopBar() {
     >
       <div className="flex min-w-0 flex-1 basis-0 items-center gap-4">
         <div className="flex shrink-0 items-center gap-2">
+          {nav && (
+            <button
+              type="button"
+              aria-label={nav.open ? "Close menu" : "Open menu"}
+              aria-expanded={nav.open}
+              aria-controls={NAV_ID}
+              onClick={nav.toggle}
+              className={cn(TOPBAR_ICON_BUTTON, "-ml-2")}
+            >
+              <Menu className="size-4" />
+            </button>
+          )}
           <BesselMark />
           <span className="text-[15px] font-medium tracking-tight text-white/90 max-md:hidden">
             Bessel

@@ -1,6 +1,6 @@
 import { Spinner } from "@bessel/ui/components/spinner";
 import { SquarePlus } from "lucide-react";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { AgentUsageReporter } from "@/components/agent-usage-reporter";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CanvasPage } from "@/components/canvas/canvas-page";
@@ -8,12 +8,14 @@ import { CanvasTopBar } from "@/components/canvas/canvas-topbar";
 import { CommandPalette } from "@/components/canvas/command-palette";
 import { ClaudeSessionsBridge } from "@/components/claude-sessions/claude-sessions-bridge";
 import { ShowCanvasContext } from "@/components/claude-sessions/show-canvas-context";
+import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { NewSessionPage } from "@/components/new-session-page";
 import { OpenPageContext } from "@/components/open-page-context";
 import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   isWallpaperColor,
   useSettings,
@@ -149,6 +151,33 @@ export function AppShell() {
     userStorage.setItem(ACTIVE_PAGE_KEY, activePage);
   }, [activePage]);
 
+  // On small screens the sidebar is a menu over the page, closed by default.
+  const isMobile = useIsMobile();
+  const [navOpen, setNavOpen] = useState(false);
+  const closeNav = useCallback(() => setNavOpen(false), []);
+  const toggleNav = useCallback(() => setNavOpen((open) => !open), []);
+  const selectFromNav = useCallback(
+    (page: PageKey) => {
+      selectPage(page);
+      setNavOpen(false);
+    },
+    [selectPage],
+  );
+  const newSessionFromNav = useCallback(
+    (projectId: string | null) => {
+      openNewSession(projectId);
+      setNavOpen(false);
+    },
+    [openNewSession],
+  );
+  const topBarNav = useMemo(
+    () => (isMobile ? { open: navOpen, toggle: toggleNav } : undefined),
+    [isMobile, navOpen, toggleNav],
+  );
+  useEffect(() => {
+    if (!isMobile) setNavOpen(false);
+  }, [isMobile]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -173,13 +202,24 @@ export function AppShell() {
           {isDesktop && <AgentUsageReporter />}
 
           <div className="relative flex h-full flex-col">
-            <CanvasTopBar />
-            <div className="flex min-h-0 flex-1">
-              <AppSidebar
-                activePage={newSession ? null : activePage}
-                onSelectPage={selectPage}
-                onNewSession={openNewSession}
-              />
+            <CanvasTopBar nav={topBarNav} />
+            <div className="relative flex min-h-0 flex-1">
+              {!isMobile ? (
+                <AppSidebar
+                  activePage={newSession ? null : activePage}
+                  onSelectPage={selectPage}
+                  onNewSession={openNewSession}
+                />
+              ) : (
+                <MobileNavDrawer open={navOpen} onClose={closeNav}>
+                  <AppSidebar
+                    overlay
+                    activePage={newSession ? null : activePage}
+                    onSelectPage={selectFromNav}
+                    onNewSession={newSessionFromNav}
+                  />
+                </MobileNavDrawer>
+              )}
               <main className="relative min-w-0 flex-1">
                 <div
                   className="h-full"

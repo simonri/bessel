@@ -253,12 +253,15 @@ export const AppSidebar = memo(function AppSidebar({
   activePage,
   onSelectPage,
   onNewSession,
+  overlay = false,
 }: {
   /** Null while a transient view (the New session form) covers the page area. */
   activePage: PageKey | null;
   onSelectPage: (page: PageKey) => void;
   /** Opens the "New session" page, preselecting `projectId` when given. */
   onNewSession: (projectId: string | null) => void;
+  /** Drawn over the page on small screens: capped width, not resizable. */
+  overlay?: boolean;
 }) {
   const [width, setWidth] = useState(loadSidebarWidth);
   const openCanvas = useCallback(() => onSelectPage("canvas"), [onSelectPage]);
@@ -291,7 +294,13 @@ export const AppSidebar = memo(function AppSidebar({
     // Not itself scrollable — overflow-y-auto on this element would force
     // overflow-x non-visible too and clip the resize handle poking out past
     // the right edge, so the scrolling nav content lives in an inner div.
-    <aside style={{ width }} className="relative flex shrink-0">
+    <aside
+      style={{ width }}
+      className={cn(
+        "relative flex shrink-0",
+        overlay && "h-full max-w-[85vw] shadow-2xl",
+      )}
+    >
       <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto border-r border-white/10 bg-chrome px-2 py-3">
         <nav aria-label="Pages">
           <div className="flex flex-col gap-0.5">
@@ -330,7 +339,7 @@ export const AppSidebar = memo(function AppSidebar({
           />
         </nav>
       </div>
-      <SidebarResizeHandle width={width} onResize={setWidth} />
+      {!overlay && <SidebarResizeHandle width={width} onResize={setWidth} />}
     </aside>
   );
 });
