@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type ClimatePoint,
   countryClimates,
+  formatSeaDistance,
   formatTemp,
   tempColor,
 } from "./climate-scale";
@@ -20,6 +21,8 @@ const point = (
   x: 0,
   y: 0,
   temps: [january, 0, 0, 0, 0, 0, july, 0, 0, 0, 0, 0],
+  seaKm: 0,
+  seaTemps: Array<number>(12).fill(0),
 });
 
 describe("tempColor", () => {
@@ -54,5 +57,13 @@ describe("formatTemp", () => {
   it("rounds and writes a real minus sign", () => {
     expect(formatTemp(-3.4)).toBe("−3 °C");
     expect(formatTemp(26.6)).toBe("27 °C");
+  });
+});
+
+describe("formatSeaDistance", () => {
+  it("calls anything within the data's accuracy on the coast", () => {
+    expect(formatSeaDistance(5)).toBe("On the coast");
+    expect(formatSeaDistance(10)).toBe("10 km");
+    expect(formatSeaDistance(2292)).toBe("2,292 km");
   });
 });

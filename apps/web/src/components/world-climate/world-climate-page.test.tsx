@@ -20,6 +20,9 @@ const countryRows = () =>
     .map((cell) => cell.textContent)
     .filter(Boolean);
 
+const cityRows = () =>
+  screen.getAllByRole("rowheader").map((cell) => cell.textContent ?? "");
+
 describe("WorldClimatePage", () => {
   it("opens on the current month and recolours the map for another month", () => {
     render(<WorldClimatePage />);
@@ -65,5 +68,32 @@ describe("WorldClimatePage", () => {
       target: { value: "stockholm" },
     });
     expect(countryRows()).toEqual(["Sweden"]);
+  });
+
+  it("lists cities with their sea's temperature and distance for the month", () => {
+    render(<WorldClimatePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Cities" }));
+    fireEvent.change(screen.getByLabelText("Find a country or city"), {
+      target: { value: "stockholm" },
+    });
+    const row = screen.getByRole("rowheader", { name: /Stockholm/ })
+      .parentElement as HTMLElement;
+    expect(row.textContent).toContain("−3\u00a0°C");
+    expect(row.textContent).toContain("3\u00a0°C");
+    expect(row.textContent).toContain("On the coast");
+
+    fireEvent.click(screen.getByRole("button", { name: "July" }));
+    expect(row.textContent).toContain("16\u00a0°C");
+  });
+
+  it("sorts cities by distance to the sea, nearest first, then flips", () => {
+    render(<WorldClimatePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Cities" }));
+    fireEvent.click(screen.getByRole("button", { name: "To the sea" }));
+    const nearest = cityRows();
+    expect(nearest.at(-1)).toMatch(/Dund-Us/);
+
+    fireEvent.click(screen.getByRole("button", { name: "To the sea" }));
+    expect(cityRows()[0]).toMatch(/Dund-Us/);
   });
 });

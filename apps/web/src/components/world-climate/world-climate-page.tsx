@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader, SectionLabel } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
+import { CityTable } from "./city-table";
 import data from "./climate-data.json";
 import {
   type ClimatePoint,
@@ -164,9 +165,44 @@ function CountryTable({ month, query }: { month: number; query: string }) {
   );
 }
 
+const points = data.points as ClimatePoint[];
+
+type TableView = "countries" | "cities";
+
+function TableSwitch({
+  view,
+  onChange,
+}: {
+  view: TableView;
+  onChange: (view: TableView) => void;
+}) {
+  return (
+    <fieldset className="m-0 flex h-7 items-center rounded-lg border-0 bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
+      <legend className="sr-only">Show</legend>
+      {(["countries", "cities"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={view === v}
+          onClick={() => onChange(v)}
+          className={cn(
+            "h-full rounded-md px-2.5 text-12 font-medium transition-colors duration-150",
+            view === v
+              ? "bg-white/[0.1] text-white/90"
+              : "text-white/50 hover:text-white/80",
+          )}
+        >
+          {v === "countries" ? "Countries" : "Cities"}
+        </button>
+      ))}
+    </fieldset>
+  );
+}
+
 export function WorldClimatePage() {
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<TableView>("countries");
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -187,7 +223,7 @@ export function WorldClimatePage() {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
       <PageHeader
-        title="World temperatures"
+        title="World"
         summary={`${MONTHS[month]} on average - warmest ${warmest.country} (${formatTemp(warmest.temps[month])}), coldest ${coldest.country} (${formatTemp(coldest.temps[month])})`}
       />
 
@@ -202,30 +238,40 @@ export function WorldClimatePage() {
         />
         <Legend />
         <p className="text-11 text-white/35">
-          25-year monthly averages (2001-2025) from NASA POWER, at each
-          country's capital and, for big countries, its major cities. Use ← → to
-          change month.
+          Air: 25-year monthly averages (2001-2025) from NASA POWER, at each
+          country's capital and, for big countries, its major cities. Sea: the
+          nearest ocean's surface temperature (NOAA, 1991-2020 averages). Use ←
+          → to change month.
         </p>
       </section>
 
       <section>
         <SectionLabel
           action={
-            <label className="flex h-7 items-center gap-1.5 rounded-lg bg-white/[0.04] px-2 ring-1 ring-white/[0.06] focus-within:ring-primary-400/40">
-              <Search className="size-3.5 text-white/35" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Find a country or city"
-                aria-label="Find a country or city"
-                className="w-28 min-w-0 bg-transparent text-12 sm:w-44 text-white/85 outline-none placeholder:text-white/30"
-              />
-            </label>
+            <div className="flex items-center gap-2">
+              <TableSwitch view={view} onChange={setView} />
+              <label className="flex h-7 items-center gap-1.5 rounded-lg bg-white/[0.04] px-2 ring-1 ring-white/[0.06] focus-within:ring-primary-400/40">
+                <Search className="size-3.5 text-white/35" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Find a country or city"
+                  aria-label="Find a country or city"
+                  className="w-28 min-w-0 bg-transparent text-12 sm:w-44 text-white/85 outline-none placeholder:text-white/30"
+                />
+              </label>
+            </div>
           }
         >
-          Every country, warmest first in {MONTHS[month]}
+          {view === "countries"
+            ? `Every country, warmest first in ${MONTHS[month]}`
+            : `Every city in ${MONTHS[month]}`}
         </SectionLabel>
-        <CountryTable month={month} query={query} />
+        {view === "countries" ? (
+          <CountryTable month={month} query={query} />
+        ) : (
+          <CityTable points={points} month={month} query={query} />
+        )}
       </section>
     </div>
   );

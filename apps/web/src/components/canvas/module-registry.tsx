@@ -160,7 +160,7 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     noPadding: true,
   },
   climate: {
-    title: "World temperatures",
+    title: "World",
     icon: Thermometer,
     component: lazy(() =>
       import("@/components/world-climate/world-climate-page").then((m) => ({

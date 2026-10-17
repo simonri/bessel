@@ -10,6 +10,15 @@ export interface ClimatePoint {
   y: number;
   /** Average °C for January..December. */
   temps: number[];
+  /** Kilometres to the nearest ocean coast. */
+  seaKm: number;
+  /** That sea's average surface °C for January..December. */
+  seaTemps: number[];
+}
+
+/** Unique per place: names repeat, even within a country. */
+export function placeKey(point: ClimatePoint): string {
+  return `${point.lat},${point.lon}`;
 }
 
 /** A country outline as an SVG path on the projected map. */
@@ -74,6 +83,15 @@ export function scaleGradient(): string {
       `${hex} ${((t - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)) * 100}%`,
   );
   return `linear-gradient(to right, ${stops.join(", ")})`;
+}
+
+/** The coastline data is only accurate to a few km, so close means on the coast. */
+const ON_THE_COAST_KM = 10;
+
+export function formatSeaDistance(km: number): string {
+  return km < ON_THE_COAST_KM
+    ? "On the coast"
+    : `${km.toLocaleString("en-US")} km`;
 }
 
 export function formatTemp(celsius: number): string {

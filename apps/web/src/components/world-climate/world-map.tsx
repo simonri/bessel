@@ -1,17 +1,21 @@
 import { useMemo, useRef, useState } from "react";
 import {
   type CountryClimate,
+  formatSeaDistance,
   formatTemp,
   type MapShape,
+  placeKey,
   tempColor,
 } from "./climate-scale";
 
 const NO_DATA = "rgba(255, 255, 255, 0.06)";
-const TOOLTIP_WIDTH = 200;
+const TOOLTIP_WIDTH = 236;
 
 interface Hover {
   x: number;
+  /** Distance from the top, or from the bottom when the card opens upwards. */
   y: number;
+  above: boolean;
   country: string;
 }
 
@@ -44,9 +48,13 @@ export function WorldMap({
   const track = (country: string) => (e: React.PointerEvent) => {
     const box = wrapRef.current?.getBoundingClientRect();
     if (!box) return;
+    const pointerY = e.clientY - box.top;
+    // In the lower half the card opens upwards so a long city list fits.
+    const above = pointerY > box.height / 2;
     setHover({
       x: Math.min(e.clientX - box.left + 14, box.width - TOOLTIP_WIDTH),
-      y: e.clientY - box.top + 14,
+      y: above ? box.height - pointerY + 14 : pointerY + 14,
+      above,
       country,
     });
   };
@@ -80,7 +88,7 @@ export function WorldMap({
         })}
         {places.map((place) => (
           <circle
-            key={`${place.country}-${place.name}`}
+            key={placeKey(place)}
             cx={place.x}
             cy={place.y}
             r={place.capital ? 2.6 : 2}
@@ -96,7 +104,11 @@ export function WorldMap({
         <div
           role="tooltip"
           className="pointer-events-none absolute z-10 rounded-lg border border-white/10 bg-popover px-3 py-2 text-12 shadow-xl"
-          style={{ left: hover.x, top: hover.y, width: TOOLTIP_WIDTH }}
+          style={{
+            left: hover.x,
+            width: TOOLTIP_WIDTH,
+            ...(hover.above ? { bottom: hover.y } : { top: hover.y }),
+          }}
         >
           <p className="flex items-baseline justify-between gap-3 font-medium text-white/90">
             <span className="truncate">{hovered.country}</span>
@@ -104,13 +116,21 @@ export function WorldMap({
               {formatTemp(hovered.temps[month])}
             </span>
           </p>
-          {hoveredPlaces.length > 1 && (
-            <ul className="mt-1 space-y-0.5 text-white/60">
+          {hoveredPlaces.length > 0 && (
+            <ul className="mt-1.5 space-y-0.5 text-white/60">
               {hoveredPlaces.map((p) => (
-                <li key={p.name} className="flex justify-between gap-3">
+                <li
+                  key={placeKey(p)}
+                  className="flex items-baseline justify-between gap-3"
+                  title={`Sea ${formatSeaDistance(p.seaKm).toLowerCase()}`}
+                >
                   <span className="truncate">{p.name}</span>
                   <span className="shrink-0 tabular-nums">
                     {formatTemp(p.temps[month])}
+                    <span className="text-11 text-sky-200/60">
+                      {" "}
+                      sea {formatTemp(p.seaTemps[month])}
+                    </span>
                   </span>
                 </li>
               ))}
