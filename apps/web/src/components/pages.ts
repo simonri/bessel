@@ -17,6 +17,7 @@ export type PageKey =
   | "hyperliquid"
   | "calendar"
   | "time"
+  | "climate"
   | "tasks"
   | "activity"
   | "sleep"
@@ -60,6 +61,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   hyperliquid: fromModule("hyperliquid"),
   calendar: fromModule("calendar", true),
   time: fromModule("time", true),
+  climate: fromModule("climate"),
   tasks: {
     title: "Tasks",
     icon: CheckSquare,
@@ -101,6 +103,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "hyperliquid",
   "sleep",
   "recipes",
+  "climate",
   ...(isDesktop ? (["obsidian"] as PageKey[]) : []),
 ];
 

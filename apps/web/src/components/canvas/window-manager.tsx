@@ -34,6 +34,7 @@ export type ModuleKey =
   | "hyperliquid"
   | "calendar"
   | "time"
+  | "climate"
   | "recipes"
   | "claudeCode"
   | "codex"

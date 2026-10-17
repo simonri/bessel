@@ -13,6 +13,7 @@ import {
   Moon,
   Route,
   SquareTerminal,
+  Thermometer,
   Timer,
   TrendingUp,
 } from "lucide-react";
@@ -157,6 +158,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     ),
     ...SESSION_SIZE,
     noPadding: true,
+  },
+  climate: {
+    title: "World temperatures",
+    icon: Thermometer,
+    component: lazy(() =>
+      import("@/components/world-climate/world-climate-page").then((m) => ({
+        default: m.WorldClimatePage,
+      })),
+    ),
+    ...SESSION_SIZE,
   },
   recipes: {
     title: "Recipes",
