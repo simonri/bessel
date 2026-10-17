@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import {
   type CountryClimate,
+  type CountryFacts,
+  formatSalary,
   formatSeaDistance,
   formatTemp,
   type MapShape,
@@ -24,12 +26,14 @@ export function WorldMap({
   shapes,
   view,
   climates,
+  countries,
   month,
 }: {
   /** Country outlines, already projected into `view`'s coordinates. */
   shapes: MapShape[];
   view: { width: number; height: number; top: number };
   climates: CountryClimate[];
+  countries: Record<string, CountryFacts>;
   month: number;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -44,6 +48,7 @@ export function WorldMap({
   );
   const hovered = hover ? byCountry.get(hover.country) : undefined;
   const hoveredPlaces = hovered?.places.filter((p) => p.name) ?? [];
+  const hoveredFacts = hover ? countries[hover.country] : undefined;
 
   const track = (country: string) => (e: React.PointerEvent) => {
     const box = wrapRef.current?.getBoundingClientRect();
@@ -116,6 +121,13 @@ export function WorldMap({
               {formatTemp(hovered.temps[month])}
             </span>
           </p>
+          {hoveredFacts && (
+            <p className="mt-0.5 text-11 text-white/45">
+              {formatSalary(hoveredFacts.salary)} a month
+              {hoveredFacts.tapWater &&
+                ` - tap water ${hoveredFacts.tapWater === "safe" ? "safe" : "not safe"}`}
+            </p>
+          )}
           {hoveredPlaces.length > 0 && (
             <ul className="mt-1.5 space-y-0.5 text-white/60">
               {hoveredPlaces.map((p) => (

@@ -130,7 +130,12 @@ const NUDGES = [0.05, 0.15, 0.3].flatMap((d) => [
   [d, -d],
   [-d, d],
 ]);
+// Border cities the simplified outlines put on the wrong side.
+const PLACE_COUNTRY = { Shenzhen: "China" };
+
 function countryOf(place) {
+  const fixed = PLACE_COUNTRY[place.name];
+  if (fixed) return countries.find((c) => c.properties.name === fixed);
   for (const [dLon, dLat] of [[0, 0], ...NUDGES]) {
     const hit = countries.find((c) =>
       geoContains(c, [place.lon + dLon, place.lat + dLat]),

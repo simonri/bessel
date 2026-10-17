@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type ClimatePoint,
   countryClimates,
+  formatSalary,
   formatSeaDistance,
   formatTemp,
   tempColor,
@@ -23,6 +24,7 @@ const point = (
   temps: [january, 0, 0, 0, 0, 0, july, 0, 0, 0, 0, 0],
   seaKm: 0,
   seaTemps: Array<number>(12).fill(0),
+  airbnb: { status: "allowed" },
 });
 
 describe("tempColor", () => {
@@ -65,5 +67,17 @@ describe("formatSeaDistance", () => {
     expect(formatSeaDistance(5)).toBe("On the coast");
     expect(formatSeaDistance(10)).toBe("10 km");
     expect(formatSeaDistance(2292)).toBe("2,292 km");
+  });
+});
+
+describe("formatSalary", () => {
+  it("marks estimates and says when there's no data", () => {
+    expect(formatSalary({ usd: 2752, basis: "survey", year: 2025 })).toBe(
+      "$2,752",
+    );
+    expect(formatSalary({ usd: 152, basis: "estimate", year: 2025 })).toBe(
+      "≈ $152",
+    );
+    expect(formatSalary(null)).toBe("No data");
   });
 });

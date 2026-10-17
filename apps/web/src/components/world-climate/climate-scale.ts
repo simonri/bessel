@@ -14,6 +14,42 @@ export interface ClimatePoint {
   seaKm: number;
   /** That sea's average surface °C for January..December. */
   seaTemps: number[];
+  airbnb: AirbnbRule;
+}
+
+export interface AirbnbRule {
+  status: "allowed" | "restricted" | "banned" | "unavailable";
+  /** Why, for anything but allowed. */
+  note?: string;
+}
+
+/** Facts that come per country, shown for each of its cities. */
+export interface CountryFacts {
+  /** Median monthly salary after tax, in USD. */
+  salary: {
+    usd: number;
+    /** A national survey median, or estimated from gross earnings. */
+    basis: "survey" | "estimate";
+    year: number;
+  } | null;
+  /** CDC traveller guidance on drinking the tap water. */
+  tapWater: "safe" | "unsafe" | null;
+}
+
+export const AIRBNB_LABEL: Record<AirbnbRule["status"], string> = {
+  allowed: "Allowed",
+  restricted: "Restricted",
+  banned: "Banned",
+  unavailable: "Not available",
+};
+
+export const TAP_WATER_LABEL = { safe: "Safe", unsafe: "Not safe" } as const;
+
+/** "$2,752", or "≈ $152" when estimated from gross earnings. */
+export function formatSalary(salary: CountryFacts["salary"]): string {
+  if (!salary) return "No data";
+  const amount = `$${salary.usd.toLocaleString("en-US")}`;
+  return salary.basis === "estimate" ? `≈ ${amount}` : amount;
 }
 
 /** Unique per place: names repeat, even within a country. */

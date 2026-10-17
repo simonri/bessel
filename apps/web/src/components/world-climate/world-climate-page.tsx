@@ -6,6 +6,7 @@ import { CityTable } from "./city-table";
 import data from "./climate-data.json";
 import {
   type ClimatePoint,
+  type CountryFacts,
   countryClimates,
   formatTemp,
   type MapShape,
@@ -166,6 +167,7 @@ function CountryTable({ month, query }: { month: number; query: string }) {
 }
 
 const points = data.points as ClimatePoint[];
+const countries = data.countries as Record<string, CountryFacts>;
 
 type TableView = "countries" | "cities";
 
@@ -234,6 +236,7 @@ export function WorldClimatePage() {
           shapes={data.shapes as MapShape[]}
           view={data}
           climates={climates}
+          countries={countries}
           month={month}
         />
         <Legend />
@@ -270,8 +273,20 @@ export function WorldClimatePage() {
         {view === "countries" ? (
           <CountryTable month={month} query={query} />
         ) : (
-          <CityTable points={points} month={month} query={query} />
+          <CityTable
+            points={points}
+            countries={countries}
+            month={month}
+            query={query}
+          />
         )}
+        <p className="mt-2 text-11 text-white/35">
+          Salary: the country's median monthly pay after tax, in USD, from
+          WhereNext's national surveys, or ≈ estimated from ILO median gross
+          earnings. Tap water: CDC traveller advice for the country. Airbnb:
+          whether it operates there and city rules on short stays (October
+          2026).
+        </p>
       </section>
     </div>
   );

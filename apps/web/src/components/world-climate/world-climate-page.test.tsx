@@ -96,4 +96,46 @@ describe("WorldClimatePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "To the sea" }));
     expect(cityRows()[0]).toMatch(/Dund-Us/);
   });
+
+  it("shows each city's country salary, tap water and Airbnb rules", () => {
+    render(<WorldClimatePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Cities" }));
+    const row = (city: RegExp) =>
+      screen.getByRole("rowheader", { name: city })
+        .parentElement as HTMLElement;
+    const search = screen.getByLabelText("Find a country or city");
+
+    fireEvent.change(search, { target: { value: "stockholm" } });
+    expect(row(/Stockholm/).textContent).toContain("$2,752");
+    expect(row(/Stockholm/).textContent).toContain("Safe");
+    expect(row(/Stockholm/).textContent).toContain("Allowed");
+
+    fireEvent.change(search, { target: { value: "barcelona" } });
+    expect(row(/Barcelona/).textContent).toContain("Restricted");
+
+    fireEvent.change(search, { target: { value: "moscow" } });
+    expect(row(/Moscow/).textContent).toContain("No data");
+    expect(row(/Moscow/).textContent).toContain("Not available");
+
+    fireEvent.change(search, { target: { value: "new delhi" } });
+    expect(row(/New Delhi/).textContent).toContain("≈ $152");
+    expect(row(/New Delhi/).textContent).toContain("Not safe");
+  });
+
+  it("sorts cities by salary, highest first, with no-data cities last both ways", () => {
+    render(<WorldClimatePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Cities" }));
+    const rowTexts = () =>
+      screen
+        .getAllByRole("rowheader")
+        .map((cell) => cell.parentElement?.textContent ?? "");
+
+    fireEvent.click(screen.getByRole("button", { name: "Salary" }));
+    expect(rowTexts()[0]).toMatch(/^Bern/);
+    expect(rowTexts().at(-1)).toContain("No data");
+
+    fireEvent.click(screen.getByRole("button", { name: "Salary" }));
+    expect(rowTexts()[0]).not.toContain("No data");
+    expect(rowTexts().at(-1)).toContain("No data");
+  });
 });
