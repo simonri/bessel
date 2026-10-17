@@ -44,6 +44,42 @@ export interface CountryFacts {
   } | null;
   /** CDC traveller guidance on drinking the tap water. */
   tapWater: "safe" | "unsafe" | null;
+  /** WHO's estimated malaria cases per 1,000 people a year; 0 where there's none. */
+  malaria: number | null;
+  /** UNDP Human Development Index, 0-1. */
+  hdi: number | null;
+}
+
+export const NO_FACTS: CountryFacts = {
+  salary: null,
+  tapWater: null,
+  malaria: null,
+  hdi: null,
+};
+
+export type MalariaRisk = "none" | "low" | "moderate" | "high";
+
+/** Under 1 case per 1,000 is mostly remote areas; 50+ means most places. */
+export function malariaRisk(casesPer1000: number): MalariaRisk {
+  if (casesPer1000 === 0) return "none";
+  if (casesPer1000 < 1) return "low";
+  if (casesPer1000 < 50) return "moderate";
+  return "high";
+}
+
+export const MALARIA_LABEL: Record<MalariaRisk, string> = {
+  none: "None",
+  low: "Low",
+  moderate: "Moderate",
+  high: "High",
+};
+
+/** UNDP's tiers. */
+export function hdiTier(hdi: number): "Very high" | "High" | "Medium" | "Low" {
+  if (hdi >= 0.8) return "Very high";
+  if (hdi >= 0.7) return "High";
+  if (hdi >= 0.55) return "Medium";
+  return "Low";
 }
 
 export const AIRBNB_LABEL: Record<AirbnbRule["status"], string> = {

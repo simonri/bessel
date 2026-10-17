@@ -5,7 +5,9 @@ import {
   formatSalary,
   formatSeaDistance,
   formatTemp,
+  MALARIA_LABEL,
   type MapShape,
+  malariaRisk,
   placeKey,
   tempColor,
 } from "./climate-scale";
@@ -152,6 +154,11 @@ export function WorldMap({
               {formatSalary(hoveredFacts.salary)} a month
               {hoveredFacts.tapWater &&
                 ` - tap water ${hoveredFacts.tapWater === "safe" ? "safe" : "not safe"}`}
+              {hoveredFacts.hdi !== null &&
+                ` - HDI ${hoveredFacts.hdi.toFixed(2)}`}
+              {hoveredFacts.malaria !== null &&
+                hoveredFacts.malaria > 0 &&
+                ` - ${MALARIA_LABEL[malariaRisk(hoveredFacts.malaria)].toLowerCase()} malaria risk`}
             </p>
           )}
           {hoveredPlaces.length > 0 && (

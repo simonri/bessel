@@ -9,6 +9,11 @@ import {
   formatSalary,
   formatSeaDistance,
   formatTemp,
+  hdiTier,
+  MALARIA_LABEL,
+  type MalariaRisk,
+  malariaRisk,
+  NO_FACTS,
   placeKey,
   TAP_WATER_LABEL,
   tempColor,
@@ -28,6 +33,8 @@ type SortKey =
   | "distance"
   | "salary"
   | "water"
+  | "hdi"
+  | "malaria"
   | "airbnb";
 
 const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
@@ -43,6 +50,8 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "density", label: "Density", numeric: true },
   { key: "salary", label: "Salary", numeric: true },
   { key: "water", label: "Tap water", numeric: false },
+  { key: "hdi", label: "HDI", numeric: true },
+  { key: "malaria", label: "Malaria", numeric: false },
   { key: "airbnb", label: "Airbnb", numeric: false },
 ];
 
@@ -51,6 +60,7 @@ const ASCENDING_FIRST = new Set<SortKey>([
   "city",
   "distance",
   "water",
+  "malaria",
   "airbnb",
   "rain",
   "humidity",
@@ -71,7 +81,12 @@ const AIRBNB_TONE: Record<AirbnbRule["status"], string> = {
   unavailable: "text-white/40",
 };
 
-const NO_FACTS: CountryFacts = { salary: null, tapWater: null };
+const MALARIA_TONE: Record<MalariaRisk, string> = {
+  none: "text-white/60",
+  low: "text-white/60",
+  moderate: "text-amber-300",
+  high: "text-rose-300",
+};
 
 function sortValue(
   point: ClimatePoint,
@@ -103,6 +118,10 @@ function sortValue(
       return facts.salary?.usd ?? null;
     case "water":
       return facts.tapWater === null ? null : facts.tapWater === "safe" ? 0 : 1;
+    case "hdi":
+      return facts.hdi;
+    case "malaria":
+      return facts.malaria;
     case "airbnb":
       return AIRBNB_ORDER.indexOf(point.airbnb.status);
     default:
@@ -190,7 +209,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[1320px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[1480px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -308,6 +327,32 @@ export function CityTable({
                   )}
                 >
                   {facts.tapWater ? TAP_WATER_LABEL[facts.tapWater] : "No data"}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    facts.hdi === null ? "text-white/30" : "text-white/70",
+                  )}
+                  title={facts.hdi === null ? undefined : hdiTier(facts.hdi)}
+                >
+                  {facts.hdi === null ? "No data" : facts.hdi.toFixed(3)}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5",
+                    facts.malaria === null
+                      ? "text-white/30"
+                      : MALARIA_TONE[malariaRisk(facts.malaria)],
+                  )}
+                  title={
+                    facts.malaria
+                      ? `${facts.malaria} cases per 1,000 people a year in ${p.country}`
+                      : undefined
+                  }
+                >
+                  {facts.malaria === null
+                    ? "No data"
+                    : MALARIA_LABEL[malariaRisk(facts.malaria)]}
                 </td>
                 <td
                   className={cn("px-4 py-1.5", AIRBNB_TONE[p.airbnb.status])}

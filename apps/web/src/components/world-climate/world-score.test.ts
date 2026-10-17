@@ -36,6 +36,8 @@ function city(over: Partial<ClimatePoint> = {}): ClimatePoint {
 const cheapCountry: CountryFacts = {
   salary: { usd: 300, basis: "survey", year: 2025 },
   tapWater: "unsafe",
+  malaria: 0,
+  hdi: 0.7,
 };
 
 describe("temperatureScore", () => {
@@ -118,6 +120,27 @@ describe("scoreCity", () => {
     expect([summer.weather, summer.sea]).toEqual([1, 1]);
   });
 
+  it("takes points off for malaria, more the higher the risk", () => {
+    const withMalaria = (casesPer1000: number | null) =>
+      scoreCity(city(), { ...cheapCountry, malaria: casesPer1000 }, 0);
+    expect(withMalaria(0).total).toBe(100);
+    expect(withMalaria(null).total).toBe(100);
+    expect(withMalaria(0.5).total).toBe(97);
+    expect(withMalaria(20).total).toBe(88);
+    expect(withMalaria(280).total).toBe(70);
+    expect(withMalaria(280).malaria).toBe(30);
+  });
+
+  it("never goes below 0", () => {
+    const awful = city({ temps: month(0), seaKm: 900, rainMm: month(400) });
+    const facts: CountryFacts = {
+      ...cheapCountry,
+      salary: { usd: 9000, basis: "survey", year: 2025 },
+      malaria: 300,
+    };
+    expect(scoreCity(awful, facts, 0).total).toBe(0);
+  });
+
   it("colours scores from the first to the last stop, clamped", () => {
     expect(scoreColor(0)).toBe("rgb(68, 1, 84)");
     expect(scoreColor(100)).toBe("rgb(253, 231, 37)");
@@ -126,10 +149,14 @@ describe("scoreCity", () => {
     expect(scoreColor(140)).toBe(scoreColor(100));
   });
 
-  it("explains itself part by part", () => {
+  it("explains itself part by part, with malaria only when it counts", () => {
     const score = scoreCity(city({ seaKm: 105 }), cheapCountry, 0);
     expect(describeScore(score)).toBe(
       "Weather 50/50, Sea 15/30, Cheap 10/10, Airbnb 10/10",
+    );
+    const malarial = scoreCity(city(), { ...cheapCountry, malaria: 20 }, 0);
+    expect(describeScore(malarial)).toBe(
+      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12",
     );
   });
 });

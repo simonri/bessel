@@ -11,6 +11,7 @@ import {
   formatTemp,
   type MapShape,
   MONTHS,
+  NO_FACTS,
   placeKey,
   SCALE_MAX,
   SCALE_MIN,
@@ -225,8 +226,6 @@ function Toggle<T extends string>({
   );
 }
 
-const NO_FACTS: CountryFacts = { salary: null, tapWater: null };
-
 /** Every place's score for `month`, and each country's average. */
 function useScores(month: number) {
   return useMemo(() => {
@@ -383,16 +382,19 @@ export function WorldClimatePage() {
         <p className="mt-2 text-11 text-white/35">
           Salary: the country's median monthly pay after tax, in USD, from
           WhereNext's national surveys, or ≈ estimated from ILO median gross
-          earnings. Tap water: CDC traveller advice for the country. Airbnb:
-          whether it operates there and city rules on short stays (October
-          2026). Rain, humidity and cloud: NASA POWER monthly averages.
-          Population: metro area (Natural Earth); density: the city proper
-          (Wikidata), approximate.
+          earnings. Tap water: CDC traveller advice for the country. HDI: UNDP
+          Human Development Index 2023 (health, education and income). Malaria:
+          WHO's estimated cases per 1,000 people a year (2024), for the whole
+          country - cities are often far below it. Airbnb: whether it operates
+          there and city rules on short stays (October 2026). Rain, humidity and
+          cloud: NASA POWER monthly averages. Population: metro area (Natural
+          Earth); density: the city proper (Wikidata), approximate.
         </p>
         <p className="mt-1 text-11 text-white/35">
           Score (0-100, for the chosen month): weather 50 (28-38 °C is best,
           less with rain), sea 30 (26 °C+ within 10 km is best), cheapness 10
-          (lower pay is cheaper) and Airbnb 10 (allowed, half if restricted).
+          (lower pay is cheaper) and Airbnb 10 (allowed, half if restricted),
+          minus 3, 12 or 30 for low, moderate or high malaria risk.
         </p>
       </section>
     </div>

@@ -97,7 +97,7 @@ describe("WorldClimatePage", () => {
     expect(cityRows()[0]).toMatch(/Dund-Us/);
   });
 
-  it("shows each city's country salary, tap water and Airbnb rules", () => {
+  it("shows each city's country salary, tap water, HDI, malaria and Airbnb rules", () => {
     render(<WorldClimatePage />);
     fireEvent.click(screen.getByRole("button", { name: "Cities" }));
     const row = (city: RegExp) =>
@@ -109,6 +109,12 @@ describe("WorldClimatePage", () => {
     expect(row(/Stockholm/).textContent).toContain("$2,752");
     expect(row(/Stockholm/).textContent).toContain("Safe");
     expect(row(/Stockholm/).textContent).toContain("Allowed");
+    expect(row(/Stockholm/).textContent).toContain("0.959");
+    expect(row(/Stockholm/).textContent).toContain("None");
+
+    fireEvent.change(search, { target: { value: "lomé" } });
+    expect(row(/Lomé/).textContent).toContain("0.571");
+    expect(row(/Lomé/).textContent).toContain("High");
 
     fireEvent.change(search, { target: { value: "barcelona" } });
     expect(row(/Barcelona/).textContent).toContain("Restricted");
@@ -154,7 +160,7 @@ describe("WorldClimatePage", () => {
       .getAllByRole("rowheader")[0]
       .parentElement?.querySelector("[title]") as HTMLElement;
     expect(best.title).toMatch(
-      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10$/,
+      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10(, Malaria -\d+)?$/,
     );
 
     expect(screen.getByText(/Best for you in January/).textContent).toContain(

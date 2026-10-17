@@ -1,9 +1,14 @@
-import type { ClimatePoint, CountryFacts } from "./climate-scale";
+import {
+  type ClimatePoint,
+  type CountryFacts,
+  type MalariaRisk,
+  malariaRisk,
+} from "./climate-scale";
 
 /**
  * How much each part counts. Simon's preferences: hot weather first, then a
  * warm sea close by; cheap places and Airbnb are small pluses. Tap water and
- * city size don't count.
+ * city size don't count. Malaria is taken off the total afterwards.
  */
 export const SCORE_WEIGHTS = {
   weather: 0.5,
@@ -19,7 +24,17 @@ export interface CityScore {
   total: number;
   /** Each part from 0 (worst) to 1 (best), before weighting. */
   parts: Record<ScorePart, number>;
+  /** Points taken off for malaria. */
+  malaria: number;
 }
+
+/** Points off the 0-100 score: a high risk sinks even a perfect beach. */
+export const MALARIA_PENALTY: Record<MalariaRisk, number> = {
+  none: 0,
+  low: 3,
+  moderate: 12,
+  high: 30,
+};
 
 const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
 
@@ -72,7 +87,13 @@ export function scoreCity(
     (sum, part) => sum + SCORE_WEIGHTS[part] * parts[part],
     0,
   );
-  return { total: Math.round(total * 100), parts };
+  const malaria =
+    facts.malaria === null ? 0 : MALARIA_PENALTY[malariaRisk(facts.malaria)];
+  return {
+    total: Math.max(Math.round(total * 100) - malaria, 0),
+    parts,
+    malaria,
+  };
 }
 
 export const SCORE_PART_LABEL: Record<ScorePart, string> = {
@@ -82,14 +103,14 @@ export const SCORE_PART_LABEL: Record<ScorePart, string> = {
   airbnb: "Airbnb",
 };
 
-/** "Weather 45/50, Sea 24/30, Cheap 8/10, Airbnb 10/10". */
+/** "Weather 45/50, Sea 24/30, Cheap 8/10, Airbnb 10/10, Malaria -12". */
 export function describeScore(score: CityScore): string {
-  return (Object.keys(SCORE_WEIGHTS) as ScorePart[])
-    .map((part) => {
-      const max = SCORE_WEIGHTS[part] * 100;
-      return `${SCORE_PART_LABEL[part]} ${Math.round(score.parts[part] * max)}/${max}`;
-    })
-    .join(", ");
+  const parts = (Object.keys(SCORE_WEIGHTS) as ScorePart[]).map((part) => {
+    const max = SCORE_WEIGHTS[part] * 100;
+    return `${SCORE_PART_LABEL[part]} ${Math.round(score.parts[part] * max)}/${max}`;
+  });
+  if (score.malaria > 0) parts.push(`Malaria -${score.malaria}`);
+  return parts.join(", ");
 }
 
 // Viridis: perceptually even and readable with colour blindness.
