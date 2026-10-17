@@ -11,7 +11,15 @@ function cellBackground(color: string, level: number): string {
   return `color-mix(in oklab, ${color} ${GRID_MIX[level]}%, transparent)`;
 }
 
-const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
+const DAY_LABELS = [
+  { key: "sun", label: "" },
+  { key: "mon", label: "Mon" },
+  { key: "tue", label: "" },
+  { key: "wed", label: "Wed" },
+  { key: "thu", label: "" },
+  { key: "fri", label: "Fri" },
+  { key: "sat", label: "" },
+];
 
 export type YearGridDay = { d: Date; dateStr: string; secs: number } | null;
 
@@ -166,12 +174,12 @@ export function YearGrid<T>({
       <div className="flex gap-1.5">
         {/* Day-of-week labels — flex-1 rows track the grid rows automatically */}
         <div className="flex shrink-0 select-none flex-col gap-[2px] pt-[18px] @lg:gap-[3px]">
-          {DAY_LABELS.map((l, i) => (
+          {DAY_LABELS.map(({ key, label }) => (
             <div
-              key={i}
+              key={key}
               className="flex flex-1 items-center justify-end pr-0.5 text-9 leading-none text-white/35"
             >
-              {l}
+              {label}
             </div>
           ))}
         </div>
@@ -202,13 +210,14 @@ export function YearGrid<T>({
               week.map((day, di) =>
                 day === null ? (
                   <div
+                    // biome-ignore lint/suspicious/noArrayIndexKey: an empty padding cell is only its place in the grid
                     key={`${wi}-${di}`}
                     className="aspect-square"
                     style={{ gridColumn: wi + 1, gridRow: di + 1 }}
                   />
                 ) : (
                   <YearGridCell
-                    key={`${wi}-${di}`}
+                    key={day.dateStr}
                     day={day}
                     col={wi + 1}
                     row={di + 1}

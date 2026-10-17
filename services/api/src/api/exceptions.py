@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal, LiteralString, cast
 
 from pydantic import BaseModel, Field, create_model
 from pydantic_core import ErrorDetails, InitErrorDetails, PydanticCustomError
@@ -27,7 +27,7 @@ class BesselError(Exception):
     if cls._schema is not None:
       return cls._schema
 
-    error_literal = Literal[cls.__name__]  # type: ignore
+    error_literal: Any = Literal[cls.__name__]  # type: ignore
 
     model = create_model(
       cls.__name__,
@@ -104,7 +104,7 @@ class BesselRequestValidationError(BesselError):
     for error in self._errors:
       pydantic_errors.append(
         {
-          "type": PydanticCustomError(error["type"], error["msg"]),
+          "type": PydanticCustomError(cast(LiteralString, error["type"]), cast(LiteralString, error["msg"])),
           "loc": error["loc"],
           "input": error["input"],
         }

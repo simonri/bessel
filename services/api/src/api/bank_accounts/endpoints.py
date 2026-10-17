@@ -18,7 +18,7 @@ router = APIRouter(prefix="/bank-accounts", tags=["bank-accounts"])
 
 class BankAccountSortProperty(StrEnum):
   created_at = "created_at"
-  name = "name"
+  name_ = "name"
 
 
 sorting_getter = SortingGetter(BankAccountSortProperty, default_sorting=["name"])

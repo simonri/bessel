@@ -73,7 +73,7 @@ router = APIRouter(prefix="/places", tags=["places"])
 
 class PlaceSortProperty(StrEnum):
   created_at = "created_at"
-  name = "name"
+  name_ = "name"
   rating = "rating"
   visited_at = "visited_at"
 

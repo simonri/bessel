@@ -1,4 +1,4 @@
-from datetime import date
+import datetime as dt
 from uuid import UUID
 
 from sqlalchemy import BigInteger, Date, ForeignKey, String, UniqueConstraint, Uuid
@@ -14,7 +14,7 @@ class AgentUsageDaily(RecordModel):
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
   device: Mapped[str] = mapped_column(String(100), nullable=False)
   agent: Mapped[str] = mapped_column(String(50), nullable=False)
-  date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+  date: Mapped[dt.date] = mapped_column(Date, nullable=False, index=True)
   model: Mapped[str] = mapped_column(String(100), nullable=False)
   input_tokens: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
   output_tokens: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)

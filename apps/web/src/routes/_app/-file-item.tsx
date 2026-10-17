@@ -58,6 +58,7 @@ export function FileItem({
 
       {onDiscard && (
         <button
+          type="button"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
@@ -71,6 +72,7 @@ export function FileItem({
       )}
 
       <button
+        type="button"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
@@ -128,6 +130,7 @@ export function SectionHeader({
       >
         {onStageAll && (
           <button
+            type="button"
             onClick={onStageAll}
             title="Stage all"
             className="flex size-4 items-center justify-center rounded text-white/30 hover:text-white/70"
@@ -137,6 +140,7 @@ export function SectionHeader({
         )}
         {onUnstageAll && (
           <button
+            type="button"
             onClick={onUnstageAll}
             title="Unstage all"
             className="flex size-4 items-center justify-center rounded text-white/30 hover:text-white/70"
@@ -146,6 +150,7 @@ export function SectionHeader({
         )}
         {onDiscardAll && (
           <button
+            type="button"
             onClick={onDiscardAll}
             title="Discard all changes"
             className="flex size-4 items-center justify-center rounded text-white/30 hover:text-red-400/70"

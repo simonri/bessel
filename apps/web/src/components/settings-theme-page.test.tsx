@@ -44,8 +44,9 @@ describe("accent themes", () => {
 
     expect(document.documentElement.dataset.theme).toBe("lilac");
     expect(
-      screen.getByRole("radio", { name: "Lilac" }).getAttribute("aria-checked"),
-    ).toBe("true");
+      (screen.getByRole("radio", { name: "Lilac" }) as HTMLInputElement)
+        .checked,
+    ).toBe(true);
     expect(
       JSON.parse(window.localStorage.getItem("bessel:settings")!).theme,
     ).toBe("lilac");
@@ -60,7 +61,8 @@ describe("accent themes", () => {
 
     expect(document.documentElement.dataset.theme).toBe("orange");
     expect(
-      screen.getByRole("radio", { name: "Peach" }).getAttribute("aria-checked"),
-    ).toBe("true");
+      (screen.getByRole("radio", { name: "Peach" }) as HTMLInputElement)
+        .checked,
+    ).toBe(true);
   });
 });

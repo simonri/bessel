@@ -271,6 +271,11 @@ export function EmptyState({
   );
 }
 
+/** Stable keys for a row of loading placeholders, which have no identity of their own. */
+export function placeholderKeys(count: number): string[] {
+  return Array.from({ length: count }, (_, i) => `placeholder-${i}`);
+}
+
 /** Previous / label / next stepper for date ranges. */
 export function PeriodNav({
   label,

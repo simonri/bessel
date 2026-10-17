@@ -120,10 +120,18 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.62 calc(0.17 * var(--accent-chroma)) var(--accent-hue));
   --primary-foreground: oklch(0.985 0 0);
-  --primary-300: oklch(0.86 calc(0.12 * var(--accent-chroma)) var(--accent-hue));
-  --primary-400: oklch(0.77 calc(0.16 * var(--accent-chroma)) var(--accent-hue));
-  --primary-500: oklch(0.62 calc(0.17 * var(--accent-chroma)) var(--accent-hue));
-  --primary-900: oklch(0.26 calc(0.09 * var(--accent-chroma)) var(--accent-hue));
+  --primary-300: oklch(
+    0.86 calc(0.12 * var(--accent-chroma)) var(--accent-hue)
+  );
+  --primary-400: oklch(
+    0.77 calc(0.16 * var(--accent-chroma)) var(--accent-hue)
+  );
+  --primary-500: oklch(
+    0.62 calc(0.17 * var(--accent-chroma)) var(--accent-hue)
+  );
+  --primary-900: oklch(
+    0.26 calc(0.09 * var(--accent-chroma)) var(--accent-hue)
+  );
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -162,10 +170,16 @@
   /* Interactive — hue-driven */
   --primary: oklch(0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue));
   --primary-foreground: oklch(0.985 0 0);
-  --primary-300: oklch(0.84 calc(0.13 * var(--accent-chroma)) var(--accent-hue));
-  --primary-400: oklch(0.78 calc(0.17 * var(--accent-chroma)) var(--accent-hue));
+  --primary-300: oklch(
+    0.84 calc(0.13 * var(--accent-chroma)) var(--accent-hue)
+  );
+  --primary-400: oklch(
+    0.78 calc(0.17 * var(--accent-chroma)) var(--accent-hue)
+  );
   --primary-500: oklch(0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue));
-  --primary-900: oklch(0.28 calc(0.09 * var(--accent-chroma)) var(--accent-hue));
+  --primary-900: oklch(
+    0.28 calc(0.09 * var(--accent-chroma)) var(--accent-hue)
+  );
   /* Subtle backgrounds */
   --secondary: oklch(0.235 0 0);
   --secondary-foreground: oklch(0.96 0 0);
@@ -188,7 +202,9 @@
   /* Sidebar — distinct darker panel */
   --sidebar: oklch(0.095 0 0);
   --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-primary: oklch(0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue));
+  --sidebar-primary: oklch(
+    0.7 calc(0.18 * var(--accent-chroma)) var(--accent-hue)
+  );
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.22 0 0);
   --sidebar-accent-foreground: oklch(0.96 0 0);
@@ -263,6 +279,7 @@
    and color changes that still carry meaning. Applies globally so Radix's
    animate-in/out classes, react-grid-layout's canvas transitions, and
    dnd-kit's inline transition styles are all covered from one place. */
+/* biome-ignore-start lint/complexity/noImportantStyles: these accessibility overrides must beat every utility and inline style */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -304,3 +321,4 @@
     border-color: oklch(1 0 0 / 55%) !important;
   }
 }
+/* biome-ignore-end lint/complexity/noImportantStyles: see above */

@@ -14,7 +14,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -22,10 +21,16 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EditAccountDialog } from "@/components/edit-account-dialog";
-import { IconButton, PageHeader, PeriodNav } from "@/components/ui-kit";
+import {
+  IconButton,
+  PageHeader,
+  PeriodNav,
+  placeholderKeys,
+} from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
+import type { DataColumnDef } from "@/lib/data-table";
 import { formatMoney } from "@/lib/money";
 
 export const Route = createFileRoute("/_app/accounts")({
@@ -90,7 +95,7 @@ function Accounts() {
   });
 
   // Stable identity so react-table doesn't rebuild its column model per render.
-  const columns: ColumnDef<BankAccountSchema>[] = useMemo(
+  const columns: DataColumnDef<BankAccountSchema>[] = useMemo(
     () => [
       {
         accessorKey: "name",
@@ -183,9 +188,9 @@ function Accounts() {
 
       {isLoading ? (
         <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {placeholderKeys(6).map((key) => (
             <Skeleton
-              key={i}
+              key={key}
               className="h-10 w-full rounded-lg bg-white/[0.06]"
             />
           ))}

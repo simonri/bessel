@@ -74,7 +74,7 @@ async def search_recipes(
     repo = RecipeRepository.from_session(session)
     statement = repo.get_filtered_statement(user.id, search=search, ingredients=wanted).order_by(func.lower(Recipe.title), Recipe.id)
     rows, total_count = await repo.paginate(statement, limit=limit, page=1)
-  return Recipes(total_count=total_count, recipes=[RecipeSummary(id=r.id, title=r.title, recipe_type=r.recipe_type) for r in rows])
+  return Recipes(total_count=total_count, recipes=[RecipeSummary(id=r.id, title=r.title, recipe_type=RecipeType(r.recipe_type)) for r in rows])
 
 
 async def get_recipe(ctx: Context, recipe_id: UUID) -> RecipeSchema:

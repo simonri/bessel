@@ -1,18 +1,28 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "files": {
     "includes": [
       "**",
       "!**/dist",
-      "!**/dist",
-      "!**/node_modules",
+      "!apps/desktop/release",
       "!**/node_modules",
       "!**/.turbo",
       "!**/.next",
-      "!**/.next",
       "!packages/email/.react-email",
-      "!**/*.gen.ts"
+      "!**/*.gen.ts",
+      "!**/.venv",
+      "!**/htmlcov",
+      "!apps/ios/**/*.xcassets",
+      "!services/api/openapi.json",
+      "!packages/client/src",
+      "!packages/python_client"
     ],
     "maxSize": 2097152
   },
@@ -20,11 +30,17 @@
     "includes": ["**", "!**/.wrangler", "!**/node_modules"],
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "a11y": {
         "noSvgWithoutTitle": "off",
         "useKeyWithClickEvents": "off",
-        "noStaticElementInteractions": "off"
+        "noStaticElementInteractions": "off",
+        "noLabelWithoutControl": {
+          "level": "error",
+          "options": {
+            "inputComponents": ["Checkbox"]
+          }
+        }
       },
       "performance": {
         "noImgElement": "off"
@@ -61,5 +77,22 @@
     "parser": {
       "tailwindDirectives": true
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/ui/src/components/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "off",
+            "noDocumentCookie": "off"
+          }
+        }
+      }
+    }
+  ]
 }

@@ -6,15 +6,19 @@ import {
 } from "@bessel/ui/components/table";
 import { cn } from "@bessel/ui/lib/utils";
 import {
-  type ColumnDef,
   flexRender,
-  getCoreRowModel,
   type OnChangeFn,
+  type RowData,
   type RowSelectionState,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import { useMemo, useRef, useState } from "react";
 import { DataTableHeader } from "@/components/data-table-header";
+import {
+  type DataColumnDef,
+  type DataTableInstance,
+  dataTableFeatures,
+} from "@/lib/data-table";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,8 +44,8 @@ function buildRenderedItems<TData>(
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 
-interface VirtualDataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface VirtualDataTableProps<TData extends RowData> {
+  columns: DataColumnDef<TData>[];
   data: TData[];
   getRowId?: (row: TData) => string;
   rowSelection?: RowSelectionState;
@@ -62,7 +66,7 @@ interface VirtualDataTableProps<TData, TValue> {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function VirtualDataTable<TData, TValue>({
+export function VirtualDataTable<TData extends RowData>({
   columns,
   data,
   getRowId,
@@ -71,12 +75,12 @@ export function VirtualDataTable<TData, TValue>({
   emptyMessage = "No results.",
   onRowLongPress,
   getGroupLabel,
-}: VirtualDataTableProps<TData, TValue>) {
-  const table = useReactTable({
+}: VirtualDataTableProps<TData>) {
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     getRowId,
-    getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange,
     state: {
       ...(rowSelection !== undefined && { rowSelection }),
@@ -107,10 +111,10 @@ export function VirtualDataTable<TData, TValue>({
               </TableCell>
             </TableRow>
           ) : (
-            renderedItems.map((item, i) => {
+            renderedItems.map((item) => {
               if (item._kind === "group-header") {
                 return (
-                  <tr key={`group-${i}`}>
+                  <tr key={`group-${item.label}`}>
                     <td
                       colSpan={columns.length}
                       className="border-b border-white/[0.05] bg-white/[0.015] px-3 pt-3 pb-1.5 text-11 font-semibold tracking-wide text-white/40"
@@ -144,13 +148,11 @@ export function VirtualDataTable<TData, TValue>({
 
 // ─── Long-press row ───────────────────────────────────────────────────────────
 
-function LongPressRow<TData>({
+function LongPressRow<TData extends RowData>({
   row,
   onLongPress,
 }: {
-  row: ReturnType<
-    ReturnType<typeof useReactTable<TData>>["getRowModel"]
-  >["rows"][number];
+  row: ReturnType<DataTableInstance<TData>["getRowModel"]>["rows"][number];
   onLongPress?: () => void;
 }) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -181,7 +183,7 @@ function LongPressRow<TData>({
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchEnd}
     >
-      {row.getVisibleCells().map((cell) => (
+      {row.getAllCells().map((cell) => (
         <TableCell key={cell.id} className="px-3 py-2">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>

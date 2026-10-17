@@ -428,9 +428,8 @@ export function TaskFormDialog({
           }}
           className="space-y-4"
         >
-          <form.Field
-            name="title"
-            children={(field) => (
+          <form.Field name="title">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="task-title">
                   Title <span className="text-destructive">*</span>
@@ -446,11 +445,10 @@ export function TaskFormDialog({
                 />
               </div>
             )}
-          />
+          </form.Field>
 
-          <form.Field
-            name="description"
-            children={(field) => (
+          <form.Field name="description">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="task-description">Description</Label>
                 <Textarea
@@ -466,12 +464,11 @@ export function TaskFormDialog({
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <form.Field
-              name="dueDate"
-              children={(field) => (
+            <form.Field name="dueDate">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="task-due">Due date</Label>
                   <Input
@@ -482,10 +479,9 @@ export function TaskFormDialog({
                   />
                 </div>
               )}
-            />
-            <form.Field
-              name="priority"
-              children={(field) => (
+            </form.Field>
+            <form.Field name="priority">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Priority</Label>
                   <Select
@@ -505,12 +501,11 @@ export function TaskFormDialog({
                   </Select>
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
-          <form.Field
-            name="project"
-            children={(field) => (
+          <form.Field name="project">
+            {(field) => (
               <div className="space-y-2">
                 <Label>Project</Label>
                 <ProjectInput
@@ -520,11 +515,10 @@ export function TaskFormDialog({
                 />
               </div>
             )}
-          />
+          </form.Field>
 
-          <form.Field
-            name="frequency"
-            children={(field) => (
+          <form.Field name="frequency">
+            {(field) => (
               <div className="space-y-2">
                 <Label>Recurrence</Label>
                 <Select
@@ -544,16 +538,16 @@ export function TaskFormDialog({
                 </Select>
               </div>
             )}
-          />
+          </form.Field>
 
           <form.Subscribe
             selector={(state) => [state.values.frequency] as const}
-            children={([frequency]) => (
+          >
+            {([frequency]) => (
               <>
                 {frequency === "weekly" && (
-                  <form.Field
-                    name="rruleDayOfWeek"
-                    children={(field) => (
+                  <form.Field name="rruleDayOfWeek">
+                    {(field) => (
                       <div className="space-y-2">
                         <Label>Day of week</Label>
                         <Select
@@ -586,13 +580,12 @@ export function TaskFormDialog({
                         </Select>
                       </div>
                     )}
-                  />
+                  </form.Field>
                 )}
 
                 {frequency === "monthly" && (
-                  <form.Field
-                    name="rruleDayOfMonth"
-                    children={(field) => (
+                  <form.Field name="rruleDayOfMonth">
+                    {(field) => (
                       <div className="space-y-2">
                         <Label htmlFor="task-dom">Day of month</Label>
                         <Input
@@ -607,11 +600,11 @@ export function TaskFormDialog({
                         />
                       </div>
                     )}
-                  />
+                  </form.Field>
                 )}
               </>
             )}
-          />
+          </form.Subscribe>
 
           {(createMutation.isError || updateMutation.isError) && (
             <p className="text-sm text-destructive">
@@ -624,9 +617,8 @@ export function TaskFormDialog({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <form.Subscribe
-              selector={(state) => [state.values.title] as const}
-              children={([title]) => (
+            <form.Subscribe selector={(state) => [state.values.title] as const}>
+              {([title]) => (
                 <Button
                   type="submit"
                   disabled={isPending || isUploading || !title.trim()}
@@ -640,7 +632,7 @@ export function TaskFormDialog({
                       : "Create Task"}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -140,7 +140,7 @@ def expand_events(
     recurring_uids = {str(c.get("UID")) for c in calendar.walk("VEVENT") if any(c.get(prop) is not None for prop in ("RRULE", "RDATE", "RECURRENCE-ID"))}
     rules = {str(c.get("UID")): _ical_text(c["RRULE"]) for c in calendar.walk("VEVENT") if c.get("RRULE") is not None and c.get("RECURRENCE-ID") is None}
     for component in recurring_ical_events.of(calendar).between(start, end):
-      if component.name != "VEVENT":
+      if not isinstance(component, IEvent):
         continue
       uid = str(component.get("UID"))
       event = _occurrence(component, uid in recurring_uids, resource, owner_addresses)

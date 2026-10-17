@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
@@ -77,7 +78,7 @@ class GymTopSetRepository(RepositoryBase[GymTopSet], RepositoryIDMixin[GymTopSet
     statement = (
       self.get_base_statement()
       .where(GymTopSet.user_id == user_id)
-      .distinct(GymTopSet.exercise_id)
+      .ext(distinct_on(GymTopSet.exercise_id))
       .order_by(GymTopSet.exercise_id, GymTopSet.weight_kg.desc(), GymTopSet.performed_on.desc())
     )
     return await self.get_all(statement)

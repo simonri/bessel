@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
 import { X } from "lucide-react";
+import { useRef, useState } from "react";
 
 const PRESET_TAGS = [
   "lunch",
@@ -48,7 +48,11 @@ export function Tag({ tag, onRemove }: { tag: string; onRemove?: () => void }) {
     >
       {tag}
       {onRemove && (
-        <button type="button" onClick={onRemove} className="hover:opacity-70 -mr-0.5">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="hover:opacity-70 -mr-0.5"
+        >
           <X className="size-3" />
         </button>
       )}
@@ -103,7 +107,8 @@ export function TagInput({ tags, onChange }: TagInputProps) {
   };
 
   const filteredSuggestions = PRESET_TAGS.filter(
-    (s) => !tags.includes(s) && (input ? s.includes(input.toLowerCase()) : true),
+    (s) =>
+      !tags.includes(s) && (input ? s.includes(input.toLowerCase()) : true),
   );
 
   return (
@@ -143,7 +148,9 @@ export function TagInput({ tags, onChange }: TagInputProps) {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addTag(suggestion)}
               >
-                <span className={`size-2 rounded-full ${getTagColor(suggestion).split(" ")[0]}`} />
+                <span
+                  className={`size-2 rounded-full ${getTagColor(suggestion).split(" ")[0]}`}
+                />
                 {suggestion}
               </button>
             ))}

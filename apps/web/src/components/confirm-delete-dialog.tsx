@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@bessel/ui/components/alert-dialog";
+import type { ReactNode } from "react";
 
 export function ConfirmDeleteDialog({
   open,

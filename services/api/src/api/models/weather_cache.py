@@ -1,4 +1,4 @@
-from datetime import date
+import datetime as dt
 
 from sqlalchemy import Date, Float, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
@@ -10,7 +10,7 @@ class WeatherCache(RecordModel):
   __tablename__ = "weather_cache"
   __table_args__ = (UniqueConstraint("date", "lat", "lon"),)
 
-  date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+  date: Mapped[dt.date] = mapped_column(Date, nullable=False, index=True)
   lat: Mapped[float] = mapped_column(Float, nullable=False)
   lon: Mapped[float] = mapped_column(Float, nullable=False)
   temperature_max: Mapped[float] = mapped_column(Float, nullable=False)

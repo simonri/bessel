@@ -31,7 +31,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
     completed_after: datetime | None = None,
     completed_before: datetime | None = None,
     search: str | None = None,
-  ) -> Select[tuple[Task]]:
+  ) -> Select[Task]:
     statement = self.get_base_statement().where(Task.user_id == user_id)
     if statuses is not None:
       statement = statement.where(Task.status.in_(statuses))
@@ -43,7 +43,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
     if project_id is not None:
       statement = statement.where(Task.project_id == project_id)
     if tag is not None:
-      statement = statement.where(Task.tags.any(tag))
+      statement = statement.where(Task.tags.any_() == tag)
     if min_priority is not None:
       statement = statement.where(Task.priority >= min_priority)
     if due_from is not None:

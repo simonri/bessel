@@ -1,5 +1,5 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { captureException } from "@/lib/sentry";
 
 interface Props {

@@ -5,17 +5,17 @@ import {
   TableRow,
 } from "@bessel/ui/components/table";
 import {
-  type ColumnDef,
   flexRender,
-  getCoreRowModel,
   type OnChangeFn,
+  type RowData,
   type RowSelectionState,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table";
 import { DataTableHeader } from "@/components/data-table-header";
+import { type DataColumnDef, dataTableFeatures } from "@/lib/data-table";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface DataTableProps<TData extends RowData> {
+  columns: DataColumnDef<TData>[];
   data: TData[];
   getRowId?: (row: TData) => string;
   rowSelection?: RowSelectionState;
@@ -24,7 +24,7 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: string;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   getRowId,
@@ -32,12 +32,12 @@ export function DataTable<TData, TValue>({
   onRowSelectionChange,
   activeRowId,
   emptyMessage = "No results.",
-}: DataTableProps<TData, TValue>) {
-  const table = useReactTable({
+}: DataTableProps<TData>) {
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     getRowId,
-    getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange,
     state: {
       ...(rowSelection !== undefined && { rowSelection }),
@@ -61,7 +61,7 @@ export function DataTable<TData, TValue>({
                       : undefined
                 }
               >
-                {row.getVisibleCells().map((cell) => (
+                {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

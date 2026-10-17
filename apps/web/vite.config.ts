@@ -7,6 +7,21 @@ import viteTsConfigPaths from "vite-tsconfig-paths";
 const config = defineConfig({
   build: {
     ssr: false,
+    rolldownOptions: {
+      output: {
+        // React and the login library load on every page and rarely change;
+        // in their own chunks they stay cached across app releases.
+        codeSplitting: {
+          groups: [
+            {
+              name: "react",
+              test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+            },
+            { name: "auth0", test: /node_modules[\\/]@auth0[\\/]/ },
+          ],
+        },
+      },
+    },
   },
   plugins: [
     viteTsConfigPaths({

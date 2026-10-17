@@ -9,31 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as OauthGoogleCalendarRouteImport } from './routes/oauth/google-calendar'
-import { Route as AppTravelRouteImport } from './routes/_app/travel'
-import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
-import { Route as AppTimelineRouteImport } from './routes/_app/timeline'
-import { Route as AppTasksRouteImport } from './routes/_app/tasks'
-import { Route as AppSleepRouteImport } from './routes/_app/sleep'
-import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
-import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
-import { Route as AppHyperliquidRouteImport } from './routes/_app/hyperliquid'
-import { Route as AppGoogleTimelineRouteImport } from './routes/_app/google-timeline'
-import { Route as AppCountersRouteImport } from './routes/_app/counters'
-import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
-import { Route as AppActivityRouteImport } from './routes/_app/activity'
 import { Route as AppAccountsRouteImport } from './routes/_app/accounts'
+import { Route as AppActivityRouteImport } from './routes/_app/activity'
+import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
+import { Route as AppCountersRouteImport } from './routes/_app/counters'
+import { Route as AppGoogleTimelineRouteImport } from './routes/_app/google-timeline'
+import { Route as AppHyperliquidRouteImport } from './routes/_app/hyperliquid'
+import { Route as AppInvestmentsRouteImport } from './routes/_app/investments'
+import { Route as AppRecipesRouteImport } from './routes/_app/recipes'
+import { Route as AppSleepRouteImport } from './routes/_app/sleep'
+import { Route as AppTasksRouteImport } from './routes/_app/tasks'
+import { Route as AppTimelineRouteImport } from './routes/_app/timeline'
+import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
+import { Route as AppTravelRouteImport } from './routes/_app/travel'
+import { Route as OauthGoogleCalendarRouteImport } from './routes/oauth/google-calendar'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -41,64 +41,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const OauthGoogleCalendarRoute = OauthGoogleCalendarRouteImport.update({
-  id: '/oauth/google-calendar',
-  path: '/oauth/google-calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppTravelRoute = AppTravelRouteImport.update({
-  id: '/travel',
-  path: '/travel',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTransactionsRoute = AppTransactionsRouteImport.update({
-  id: '/transactions',
-  path: '/transactions',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTimelineRoute = AppTimelineRouteImport.update({
-  id: '/timeline',
-  path: '/timeline',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTasksRoute = AppTasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSleepRoute = AppSleepRouteImport.update({
-  id: '/sleep',
-  path: '/sleep',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRecipesRoute = AppRecipesRouteImport.update({
-  id: '/recipes',
-  path: '/recipes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
-  id: '/investments',
-  path: '/investments',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHyperliquidRoute = AppHyperliquidRouteImport.update({
-  id: '/hyperliquid',
-  path: '/hyperliquid',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGoogleTimelineRoute = AppGoogleTimelineRouteImport.update({
-  id: '/google-timeline',
-  path: '/google-timeline',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCountersRoute = AppCountersRouteImport.update({
-  id: '/counters',
-  path: '/counters',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCalendarRoute = AppCalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
+const AppAccountsRoute = AppAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppActivityRoute = AppActivityRouteImport.update({
@@ -106,10 +51,65 @@ const AppActivityRoute = AppActivityRouteImport.update({
   path: '/activity',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAccountsRoute = AppAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AppRoute,
+} as any)
+const AppCountersRoute = AppCountersRouteImport.update({
+  id: '/counters',
+  path: '/counters',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGoogleTimelineRoute = AppGoogleTimelineRouteImport.update({
+  id: '/google-timeline',
+  path: '/google-timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHyperliquidRoute = AppHyperliquidRouteImport.update({
+  id: '/hyperliquid',
+  path: '/hyperliquid',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInvestmentsRoute = AppInvestmentsRouteImport.update({
+  id: '/investments',
+  path: '/investments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecipesRoute = AppRecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSleepRoute = AppSleepRouteImport.update({
+  id: '/sleep',
+  path: '/sleep',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksRoute = AppTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineRoute = AppTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTransactionsRoute = AppTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTravelRoute = AppTravelRouteImport.update({
+  id: '/travel',
+  path: '/travel',
+  getParentRoute: () => AppRoute,
+} as any)
+const OauthGoogleCalendarRoute = OauthGoogleCalendarRouteImport.update({
+  id: '/oauth/google-calendar',
+  path: '/oauth/google-calendar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -234,18 +234,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -255,88 +255,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/oauth/google-calendar': {
-      id: '/oauth/google-calendar'
-      path: '/oauth/google-calendar'
-      fullPath: '/oauth/google-calendar'
-      preLoaderRoute: typeof OauthGoogleCalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/travel': {
-      id: '/_app/travel'
-      path: '/travel'
-      fullPath: '/travel'
-      preLoaderRoute: typeof AppTravelRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/transactions': {
-      id: '/_app/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof AppTransactionsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/timeline': {
-      id: '/_app/timeline'
-      path: '/timeline'
-      fullPath: '/timeline'
-      preLoaderRoute: typeof AppTimelineRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/tasks': {
-      id: '/_app/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AppTasksRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sleep': {
-      id: '/_app/sleep'
-      path: '/sleep'
-      fullPath: '/sleep'
-      preLoaderRoute: typeof AppSleepRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/recipes': {
-      id: '/_app/recipes'
-      path: '/recipes'
-      fullPath: '/recipes'
-      preLoaderRoute: typeof AppRecipesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/investments': {
-      id: '/_app/investments'
-      path: '/investments'
-      fullPath: '/investments'
-      preLoaderRoute: typeof AppInvestmentsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/hyperliquid': {
-      id: '/_app/hyperliquid'
-      path: '/hyperliquid'
-      fullPath: '/hyperliquid'
-      preLoaderRoute: typeof AppHyperliquidRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/google-timeline': {
-      id: '/_app/google-timeline'
-      path: '/google-timeline'
-      fullPath: '/google-timeline'
-      preLoaderRoute: typeof AppGoogleTimelineRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/counters': {
-      id: '/_app/counters'
-      path: '/counters'
-      fullPath: '/counters'
-      preLoaderRoute: typeof AppCountersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/calendar': {
-      id: '/_app/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof AppCalendarRouteImport
+    '/_app/accounts': {
+      id: '/_app/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AppAccountsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/activity': {
@@ -346,12 +269,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/accounts': {
-      id: '/_app/accounts'
-      path: '/accounts'
-      fullPath: '/accounts'
-      preLoaderRoute: typeof AppAccountsRouteImport
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/counters': {
+      id: '/_app/counters'
+      path: '/counters'
+      fullPath: '/counters'
+      preLoaderRoute: typeof AppCountersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/google-timeline': {
+      id: '/_app/google-timeline'
+      path: '/google-timeline'
+      fullPath: '/google-timeline'
+      preLoaderRoute: typeof AppGoogleTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hyperliquid': {
+      id: '/_app/hyperliquid'
+      path: '/hyperliquid'
+      fullPath: '/hyperliquid'
+      preLoaderRoute: typeof AppHyperliquidRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/investments': {
+      id: '/_app/investments'
+      path: '/investments'
+      fullPath: '/investments'
+      preLoaderRoute: typeof AppInvestmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/recipes': {
+      id: '/_app/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof AppRecipesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sleep': {
+      id: '/_app/sleep'
+      path: '/sleep'
+      fullPath: '/sleep'
+      preLoaderRoute: typeof AppSleepRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks': {
+      id: '/_app/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AppTasksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/timeline': {
+      id: '/_app/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/transactions': {
+      id: '/_app/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AppTransactionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/travel': {
+      id: '/_app/travel'
+      path: '/travel'
+      fullPath: '/travel'
+      preLoaderRoute: typeof AppTravelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/oauth/google-calendar': {
+      id: '/oauth/google-calendar'
+      path: '/oauth/google-calendar'
+      fullPath: '/oauth/google-calendar'
+      preLoaderRoute: typeof OauthGoogleCalendarRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

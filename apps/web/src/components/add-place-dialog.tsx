@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { Plus, Search, MapPin, Loader2 } from "lucide-react";
-import { TagInput } from "@/components/tag-input";
-import { CategorySelect } from "@/components/category-select";
+import type { GooglePlaceSearchResult } from "@bessel/client";
+import {
+  createPlaceV1PlacesPostMutation,
+  listPlacesV1PlacesGetQueryKey,
+  searchGooglePlacesV1PlacesSearchGetOptions,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -15,15 +15,15 @@ import {
   DialogTrigger,
 } from "@bessel/ui/components/dialog";
 import { Input } from "@bessel/ui/components/input";
-import { PrimaryButton } from "@/components/ui-kit";
 import { Label } from "@bessel/ui/components/label";
-import {
-  createPlaceV1PlacesPostMutation,
-  listPlacesV1PlacesGetQueryKey,
-  searchGooglePlacesV1PlacesSearchGetOptions,
-} from "@bessel/client";
-import type { GooglePlaceSearchResult } from "@bessel/client";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, MapPin, Plus, Search } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { CategorySelect } from "@/components/category-select";
+import { TagInput } from "@/components/tag-input";
+import { PrimaryButton } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 
 export function AddPlaceDialog() {
@@ -103,7 +103,10 @@ export function AddPlaceDialog() {
   const handleSelectPlace = (result: GooglePlaceSearchResult) => {
     form.setFieldValue("name", result.name);
     form.setFieldValue("address", result.address);
-    form.setFieldValue("country", ((result as Record<string, unknown>).country as string) ?? "");
+    form.setFieldValue(
+      "country",
+      ((result as Record<string, unknown>).country as string) ?? "",
+    );
     form.setFieldValue("latitude", result.latitude);
     form.setFieldValue("longitude", result.longitude);
     form.setFieldValue("googlePlaceId", result.place_id);
@@ -126,7 +129,10 @@ export function AddPlaceDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? setOpen(true) : handleClose())}
+    >
       <DialogTrigger asChild>
         <PrimaryButton size="sm">
           <Plus />
@@ -135,7 +141,9 @@ export function AddPlaceDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{step === "search" ? "Search for a Place" : "Add Place"}</DialogTitle>
+          <DialogTitle>
+            {step === "search" ? "Search for a Place" : "Add Place"}
+          </DialogTitle>
           <DialogDescription>
             {step === "search"
               ? "Search Google Places or add manually."
@@ -155,7 +163,11 @@ export function AddPlaceDialog() {
                 placeholder="Search restaurants, cafes, landmarks..."
                 className="flex-1"
               />
-              <Button type="submit" size="icon" disabled={searchQuery.length < 2}>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={searchQuery.length < 2}
+              >
                 {isSearching ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
@@ -177,7 +189,9 @@ export function AddPlaceDialog() {
                       <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-1.5 min-w-0">
-                          <span className="font-medium text-sm truncate">{result.name}</span>
+                          <span className="font-medium text-sm truncate">
+                            {result.name}
+                          </span>
                           {result.category && (
                             <span className="text-muted-foreground text-10 bg-muted rounded px-1.5 py-0.5 capitalize shrink-0 whitespace-nowrap">
                               {result.category.replace(/_/g, " ")}
@@ -195,11 +209,18 @@ export function AddPlaceDialog() {
             )}
 
             {searchEnabled && searchResults?.results?.length === 0 && (
-              <p className="text-muted-foreground text-center text-sm py-4">No results found.</p>
+              <p className="text-muted-foreground text-center text-sm py-4">
+                No results found.
+              </p>
             )}
 
             <div className="border-t pt-3">
-              <Button variant="outline" size="sm" onClick={handleManualEntry} className="w-full">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualEntry}
+                className="w-full"
+              >
                 Add manually instead
               </Button>
             </div>
@@ -212,9 +233,8 @@ export function AddPlaceDialog() {
             }}
             className="space-y-4"
           >
-            <form.Field
-              name="name"
-              children={(field) => (
+            <form.Field name="name">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="place-name">Name</Label>
                   <Input
@@ -227,11 +247,10 @@ export function AddPlaceDialog() {
                   />
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="address"
-              children={(field) => (
+            <form.Field name="address">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="place-address">Address</Label>
                   <Input
@@ -243,12 +262,11 @@ export function AddPlaceDialog() {
                   />
                 </div>
               )}
-            />
+            </form.Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <form.Field
-                name="country"
-                children={(field) => (
+              <form.Field name="country">
+                {(field) => (
                   <div className="space-y-2">
                     <Label htmlFor="place-country">Country</Label>
                     <Input
@@ -260,32 +278,35 @@ export function AddPlaceDialog() {
                     />
                   </div>
                 )}
-              />
-              <form.Field
-                name="category"
-                children={(field) => (
+              </form.Field>
+              <form.Field name="category">
+                {(field) => (
                   <div className="space-y-2">
                     <Label>Category</Label>
-                    <CategorySelect value={field.state.value} onChange={field.handleChange} />
+                    <CategorySelect
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                    />
                   </div>
                 )}
-              />
+              </form.Field>
             </div>
 
-            <form.Field
-              name="tags"
-              children={(field) => (
+            <form.Field name="tags">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Tags</Label>
-                  <TagInput tags={field.state.value} onChange={field.handleChange} />
+                  <TagInput
+                    tags={field.state.value}
+                    onChange={field.handleChange}
+                  />
                 </div>
               )}
-            />
+            </form.Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <form.Field
-                name="latitude"
-                children={(field) => (
+              <form.Field name="latitude">
+                {(field) => (
                   <div className="space-y-2">
                     <Label htmlFor="place-lat">Latitude</Label>
                     <Input
@@ -293,15 +314,16 @@ export function AddPlaceDialog() {
                       type="number"
                       step="any"
                       value={field.state.value}
-                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                      onChange={(e) =>
+                        field.handleChange(Number(e.target.value))
+                      }
                       required
                     />
                   </div>
                 )}
-              />
-              <form.Field
-                name="longitude"
-                children={(field) => (
+              </form.Field>
+              <form.Field name="longitude">
+                {(field) => (
                   <div className="space-y-2">
                     <Label htmlFor="place-lng">Longitude</Label>
                     <Input
@@ -309,18 +331,19 @@ export function AddPlaceDialog() {
                       type="number"
                       step="any"
                       value={field.state.value}
-                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                      onChange={(e) =>
+                        field.handleChange(Number(e.target.value))
+                      }
                       required
                     />
                   </div>
                 )}
-              />
+              </form.Field>
             </div>
 
             {/* Status selector */}
-            <form.Field
-              name="status"
-              children={(field) => (
+            <form.Field name="status">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <div className="flex gap-2">
@@ -345,7 +368,10 @@ export function AddPlaceDialog() {
                       onClick={() => {
                         field.handleChange("visited");
                         if (!form.getFieldValue("visitedAt")) {
-                          form.setFieldValue("visitedAt", new Date().toISOString().split("T")[0]);
+                          form.setFieldValue(
+                            "visitedAt",
+                            new Date().toISOString().split("T")[0],
+                          );
                         }
                       }}
                     >
@@ -354,17 +380,17 @@ export function AddPlaceDialog() {
                   </div>
                 </div>
               )}
-            />
+            </form.Field>
 
             {/* Show rating, date, review when visited */}
             <form.Subscribe
               selector={(state) => [state.values.status] as const}
-              children={([status]) =>
+            >
+              {([status]) =>
                 status === "visited" ? (
                   <>
-                    <form.Field
-                      name="visitedAt"
-                      children={(field) => (
+                    <form.Field name="visitedAt">
+                      {(field) => (
                         <div className="space-y-2">
                           <Label htmlFor="place-visited-at">Date visited</Label>
                           <Input
@@ -375,11 +401,10 @@ export function AddPlaceDialog() {
                           />
                         </div>
                       )}
-                    />
+                    </form.Field>
 
-                    <form.Field
-                      name="rating"
-                      children={(field) => (
+                    <form.Field name="rating">
+                      {(field) => (
                         <div className="space-y-2">
                           <Label>Rating</Label>
                           <div className="flex gap-1">
@@ -393,7 +418,9 @@ export function AddPlaceDialog() {
                                     : "text-muted-foreground/30 hover:text-yellow-500/50"
                                 }`}
                                 onClick={() =>
-                                  field.handleChange(field.state.value === star ? null : star)
+                                  field.handleChange(
+                                    field.state.value === star ? null : star,
+                                  )
                                 }
                               >
                                 {"\u2605"}
@@ -402,11 +429,10 @@ export function AddPlaceDialog() {
                           </div>
                         </div>
                       )}
-                    />
+                    </form.Field>
 
-                    <form.Field
-                      name="review"
-                      children={(field) => (
+                    <form.Field name="review">
+                      {(field) => (
                         <div className="space-y-2">
                           <Label htmlFor="place-review">Notes / Review</Label>
                           <textarea
@@ -418,28 +444,35 @@ export function AddPlaceDialog() {
                           />
                         </div>
                       )}
-                    />
+                    </form.Field>
                   </>
                 ) : null
               }
-            />
+            </form.Subscribe>
 
             {mutation.isError && (
-              <p className="text-destructive text-sm">Failed to add place. Please try again.</p>
+              <p className="text-destructive text-sm">
+                Failed to add place. Please try again.
+              </p>
             )}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setStep("search")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep("search")}
+              >
                 Back
               </Button>
               <form.Subscribe
                 selector={(state) => [state.values.name] as const}
-                children={([name]) => (
+              >
+                {([name]) => (
                   <Button type="submit" disabled={mutation.isPending || !name}>
                     {mutation.isPending ? "Saving..." : "Save Place"}
                   </Button>
                 )}
-              />
+              </form.Subscribe>
             </DialogFooter>
           </form>
         )}

@@ -39,7 +39,7 @@ class TaskSortProperty(StrEnum):
   created_at = "created_at"
   due_date = "due_date"
   priority = "priority"
-  title = "title"
+  title_ = "title"
   completed_at = "completed_at"
   position = "position"
 

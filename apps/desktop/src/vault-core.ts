@@ -2,9 +2,9 @@
 // from vault.ts so they're importable (and unit-testable) without pulling in
 // "electron", which isn't resolvable outside a running Electron process.
 
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import type {
   VaultEntryKind,
   VaultFileMeta,

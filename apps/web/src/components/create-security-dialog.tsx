@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { Plus } from "lucide-react";
+import {
+  type AssetType,
+  createSecurityV1InvestmentsSecuritiesPostMutation,
+  listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -22,11 +23,10 @@ import {
   SelectValue,
 } from "@bessel/ui/components/select";
 import { Textarea } from "@bessel/ui/components/textarea";
-import {
-  createSecurityV1InvestmentsSecuritiesPostMutation,
-  listSecuritiesV1InvestmentsSecuritiesGetQueryKey,
-} from "@bessel/client";
-import { AssetType } from "@bessel/client";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 import { ASSET_TYPE_LABELS } from "@/lib/security-constants";
@@ -79,7 +79,10 @@ export function CreateSecurityDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? setOpen(true) : handleClose())}
+    >
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
@@ -94,7 +97,9 @@ export function CreateSecurityDialog() {
       >
         <DialogHeader>
           <DialogTitle>Add Security</DialogTitle>
-          <DialogDescription>Add an investable asset to your catalog.</DialogDescription>
+          <DialogDescription>
+            Add an investable asset to your catalog.
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -104,9 +109,8 @@ export function CreateSecurityDialog() {
           }}
           className="space-y-4"
         >
-          <form.Field
-            name="name"
-            children={(field) => (
+          <form.Field name="name">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="sec-name">
                   Name <span className="text-destructive">*</span>
@@ -121,11 +125,10 @@ export function CreateSecurityDialog() {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
-          <form.Field
-            name="ticker"
-            children={(field) => (
+          <form.Field name="ticker">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="sec-ticker">Ticker (optional)</Label>
                 <Input
@@ -137,33 +140,36 @@ export function CreateSecurityDialog() {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <form.Field
-              name="asset_type"
-              children={(field) => (
+            <form.Field name="asset_type">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Asset Type</Label>
-                  <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) => field.handleChange(v)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
+                      {Object.entries(ASSET_TYPE_LABELS).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="currency"
-              children={(field) => (
+            <form.Field name="currency">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="sec-currency">
                     Currency <span className="text-destructive">*</span>
@@ -171,19 +177,20 @@ export function CreateSecurityDialog() {
                   <Input
                     id="sec-currency"
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      field.handleChange(e.target.value.toUpperCase())
+                    }
                     placeholder="SEK"
                     maxLength={3}
                     required
                   />
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
-          <form.Field
-            name="notes"
-            children={(field) => (
+          <form.Field name="notes">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="sec-notes">Notes (optional)</Label>
                 <Textarea
@@ -195,24 +202,28 @@ export function CreateSecurityDialog() {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">Failed to create security. Please try again.</p>
+            <p className="text-destructive text-sm">
+              Failed to create security. Please try again.
+            </p>
           )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <form.Subscribe
-              selector={(state) => [state.values.name] as const}
-              children={([name]) => (
-                <Button type="submit" disabled={mutation.isPending || !name.trim()}>
+            <form.Subscribe selector={(state) => [state.values.name] as const}>
+              {([name]) => (
+                <Button
+                  type="submit"
+                  disabled={mutation.isPending || !name.trim()}
+                >
                   {mutation.isPending ? "Creating..." : "Create"}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

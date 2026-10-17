@@ -338,6 +338,7 @@ def series_timing(
     return start, start + (timing.end - timing.start)
   first_day = parent_start.astimezone(ZoneInfo(zone)).date() if isinstance(parent_start, datetime) else parent_start
   start = first_day + timedelta(days=days)
+  assert not isinstance(timing.end, datetime)
   return start, start + (timing.end - timing.start)
 
 

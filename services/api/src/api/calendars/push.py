@@ -10,7 +10,7 @@
 import hmac
 import secrets
 import time
-from collections.abc import AsyncIterator, Callable, Mapping, Sequence
+from collections.abc import AsyncGenerator, Callable, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -111,7 +111,7 @@ async def change_events(
   slot: str | None = None,
   heartbeat_seconds: float = HEARTBEAT_SECONDS,
   lifetime_seconds: float = STREAM_LIFETIME_SECONDS,
-) -> AsyncIterator[str]:
+) -> AsyncGenerator[str]:
   """Server-sent events for one user: `changed` after each sync, and a comment
   every `heartbeat_seconds` so proxies don't close an idle stream.
 

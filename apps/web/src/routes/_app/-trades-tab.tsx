@@ -12,7 +12,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Trash2, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -25,8 +24,10 @@ import {
   IconButton,
   PageToolbar,
   PeriodNav,
+  placeholderKeys,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import type { DataColumnDef } from "@/lib/data-table";
 import { formatAmount, formatQuantity } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +64,7 @@ export function TradesTab() {
   });
 
   // Stable identity so react-table doesn't rebuild its column model per render.
-  const columns: ColumnDef<TradeSchema>[] = useMemo(
+  const columns: DataColumnDef<TradeSchema>[] = useMemo(
     () => [
       {
         accessorKey: "trade_date",
@@ -173,9 +174,9 @@ export function TradesTab() {
 
       {isLoading ? (
         <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {placeholderKeys(6).map((key) => (
             <Skeleton
-              key={i}
+              key={key}
               className="h-10 w-full rounded-lg bg-white/[0.06]"
             />
           ))}

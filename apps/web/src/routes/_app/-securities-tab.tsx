@@ -13,7 +13,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash2, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,10 +24,12 @@ import {
   EmptyState,
   IconButton,
   PeriodNav,
+  placeholderKeys,
   TextInput,
 } from "@/components/ui-kit";
 import { UpdatePriceDialog } from "@/components/update-price-dialog";
 import { client } from "@/lib/client";
+import type { DataColumnDef } from "@/lib/data-table";
 
 export function SecuritiesTab() {
   const [page, setPage] = useState(1);
@@ -70,7 +71,7 @@ export function SecuritiesTab() {
   });
 
   // Stable identity so react-table doesn't rebuild its column model per render.
-  const columns: ColumnDef<SecuritySchema>[] = useMemo(
+  const columns: DataColumnDef<SecuritySchema>[] = useMemo(
     () => [
       {
         accessorKey: "name",
@@ -139,7 +140,7 @@ export function SecuritiesTab() {
     ? allSecurities.filter(
         (s) =>
           s.name.toLowerCase().includes(search.toLowerCase()) ||
-          (s.ticker && s.ticker.toLowerCase().includes(search.toLowerCase())),
+          s.ticker?.toLowerCase().includes(search.toLowerCase()),
       )
     : allSecurities;
 
@@ -160,9 +161,9 @@ export function SecuritiesTab() {
 
       {isLoading ? (
         <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {placeholderKeys(6).map((key) => (
             <Skeleton
-              key={i}
+              key={key}
               className="h-10 w-full rounded-lg bg-white/[0.06]"
             />
           ))}

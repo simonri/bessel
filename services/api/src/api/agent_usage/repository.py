@@ -27,8 +27,7 @@ class AgentUsageDailyRepository(RepositoryBase[AgentUsageDaily]):
         "cache_creation_tokens": statement.excluded.cache_creation_tokens,
       },
     )
-    result = await self.session.execute(statement)
-    return result.rowcount or 0
+    return await self.execute_for_rowcount(statement) or 0
 
   async def get_entries(self, user_id: UUID, start_date: date, end_date: date) -> Sequence[AgentUsageDaily]:
     statement = (
@@ -58,8 +57,7 @@ class AgentUsageStatusRepository(RepositoryBase[AgentUsageStatus]):
         "observed_at": statement.excluded.observed_at,
       },
     )
-    result = await self.session.execute(statement)
-    return result.rowcount or 0
+    return await self.execute_for_rowcount(statement) or 0
 
   async def get_latest(self, user_id: UUID) -> Sequence[AgentUsageStatus]:
     statement = (

@@ -923,8 +923,8 @@ export const listBankAccountsV1BankAccountsGetInfiniteQueryKey = (
  */
 export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
   options?: Options<ListBankAccountsV1BankAccountsGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListBankAccountsV1BankAccountsGetResponse,
     ListBankAccountsV1BankAccountsGetError,
     InfiniteData<ListBankAccountsV1BankAccountsGetResponse>,
@@ -962,6 +962,8 @@ export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
       queryKey: listBankAccountsV1BankAccountsGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Bank Account
@@ -1477,8 +1479,8 @@ export const listCategoriesV1CategoriesGetInfiniteQueryKey = (
  */
 export const listCategoriesV1CategoriesGetInfiniteOptions = (
   options?: Options<ListCategoriesV1CategoriesGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListCategoriesV1CategoriesGetResponse,
     ListCategoriesV1CategoriesGetError,
     InfiniteData<ListCategoriesV1CategoriesGetResponse>,
@@ -1516,6 +1518,8 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
       queryKey: listCategoriesV1CategoriesGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 export const listCountersV1CountersGetQueryKey = (
   options?: Options<ListCountersV1CountersGetData>,
@@ -2069,8 +2073,8 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey = (
  */
 export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
   options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
     ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
     InfiniteData<ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse>,
@@ -2109,6 +2113,8 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
         listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Sync HealthKit Sleep Samples
@@ -2175,8 +2181,8 @@ export const listHealthkitSleepV1HealthkitSleepGetInfiniteQueryKey = (
  */
 export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
   options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListHealthkitSleepV1HealthkitSleepGetResponse,
     ListHealthkitSleepV1HealthkitSleepGetError,
     InfiniteData<ListHealthkitSleepV1HealthkitSleepGetResponse>,
@@ -2214,6 +2220,8 @@ export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
       queryKey: listHealthkitSleepV1HealthkitSleepGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 export const getDailySleepV1HealthkitSleepDailyGetQueryKey = (
   options: Options<GetDailySleepV1HealthkitSleepDailyGetData>,
@@ -2450,8 +2458,8 @@ export const listSecuritiesV1InvestmentsSecuritiesGetInfiniteQueryKey = (
  */
 export const listSecuritiesV1InvestmentsSecuritiesGetInfiniteOptions = (
   options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListSecuritiesV1InvestmentsSecuritiesGetResponse,
     ListSecuritiesV1InvestmentsSecuritiesGetError,
     InfiniteData<ListSecuritiesV1InvestmentsSecuritiesGetResponse>,
@@ -2490,6 +2498,8 @@ export const listSecuritiesV1InvestmentsSecuritiesGetInfiniteOptions = (
         listSecuritiesV1InvestmentsSecuritiesGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Security
@@ -2616,8 +2626,8 @@ export const listTradesV1InvestmentsTradesGetInfiniteQueryKey = (
  */
 export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
   options?: Options<ListTradesV1InvestmentsTradesGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListTradesV1InvestmentsTradesGetResponse,
     ListTradesV1InvestmentsTradesGetError,
     InfiniteData<ListTradesV1InvestmentsTradesGetResponse>,
@@ -2655,6 +2665,8 @@ export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
       queryKey: listTradesV1InvestmentsTradesGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Trade
@@ -2795,8 +2807,8 @@ export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfinit
 export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteOptions =
   (
     options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) =>
-    infiniteQueryOptions<
+  ) => {
+    const opts = infiniteQueryOptions<
       ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
       ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
       InfiniteData<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse>,
@@ -2844,6 +2856,8 @@ export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfinit
           ),
       },
     );
+    return opts as Omit<typeof opts, "initialData">;
+  };
 
 /**
  * Add Security Price
@@ -3186,8 +3200,8 @@ export const listPlacesV1PlacesGetInfiniteQueryKey = (
  */
 export const listPlacesV1PlacesGetInfiniteOptions = (
   options?: Options<ListPlacesV1PlacesGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListPlacesV1PlacesGetResponse,
     ListPlacesV1PlacesGetError,
     InfiniteData<ListPlacesV1PlacesGetResponse>,
@@ -3225,6 +3239,8 @@ export const listPlacesV1PlacesGetInfiniteOptions = (
       queryKey: listPlacesV1PlacesGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Place
@@ -3539,8 +3555,8 @@ export const listRecipesV1RecipesGetInfiniteQueryKey = (
  */
 export const listRecipesV1RecipesGetInfiniteOptions = (
   options?: Options<ListRecipesV1RecipesGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListRecipesV1RecipesGetResponse,
     ListRecipesV1RecipesGetError,
     InfiniteData<ListRecipesV1RecipesGetResponse>,
@@ -3578,6 +3594,8 @@ export const listRecipesV1RecipesGetInfiniteOptions = (
       queryKey: listRecipesV1RecipesGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Recipe
@@ -3785,8 +3803,8 @@ export const listTasksV1TasksGetInfiniteQueryKey = (
  */
 export const listTasksV1TasksGetInfiniteOptions = (
   options?: Options<ListTasksV1TasksGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListTasksV1TasksGetResponse,
     ListTasksV1TasksGetError,
     InfiniteData<ListTasksV1TasksGetResponse>,
@@ -3824,6 +3842,8 @@ export const listTasksV1TasksGetInfiniteOptions = (
       queryKey: listTasksV1TasksGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Task
@@ -4267,8 +4287,8 @@ export const listTimeEntriesV1TimeEntriesGetInfiniteQueryKey = (
  */
 export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
   options: Options<ListTimeEntriesV1TimeEntriesGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListTimeEntriesV1TimeEntriesGetResponse,
     ListTimeEntriesV1TimeEntriesGetError,
     InfiniteData<ListTimeEntriesV1TimeEntriesGetResponse>,
@@ -4306,6 +4326,8 @@ export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
       queryKey: listTimeEntriesV1TimeEntriesGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Create Time Entry
@@ -4515,8 +4537,8 @@ export const listTransactionsV1TransactionsGetInfiniteQueryKey = (
  */
 export const listTransactionsV1TransactionsGetInfiniteOptions = (
   options?: Options<ListTransactionsV1TransactionsGetData>,
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListTransactionsV1TransactionsGetResponse,
     ListTransactionsV1TransactionsGetError,
     InfiniteData<ListTransactionsV1TransactionsGetResponse>,
@@ -4554,6 +4576,8 @@ export const listTransactionsV1TransactionsGetInfiniteOptions = (
       queryKey: listTransactionsV1TransactionsGetInfiniteQueryKey(options),
     },
   );
+  return opts as Omit<typeof opts, "initialData">;
+};
 
 /**
  * Import Transactions

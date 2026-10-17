@@ -1,6 +1,6 @@
-import { execFile } from "child_process";
-import fs from "fs";
-import { promisify } from "util";
+import { execFile } from "node:child_process";
+import fs from "node:fs";
+import { promisify } from "node:util";
 import { ipcHandle } from "./ipc.js";
 
 const execFileAsync = promisify(execFile);
@@ -82,8 +82,12 @@ const USER_ENTRY_RE = /\("([^"]+)",pid=(\d+),fd=\d+\)/g;
 async function listLinux(): Promise<PortEntry[]> {
   const { stdout } = await execFileAsync("ss", ["-H", "-tlnp"]);
 
-  const rows: { port: number; address: string; pid: number; processName: string }[] =
-    [];
+  const rows: {
+    port: number;
+    address: string;
+    pid: number;
+    processName: string;
+  }[] = [];
   for (const line of stdout.split("\n")) {
     if (!line.trim()) continue;
     const match = line.match(SS_LINE_RE);
@@ -135,9 +139,7 @@ export function registerPortsHandlers(): void {
   // process this user owns (systemd --user, the app itself, ...).
   ipcHandle("ports:kill", async (_, pid: unknown) => {
     if (typeof pid !== "number" || !lastKnownPids.has(pid)) {
-      throw new Error(
-        `PID ${pid} is not a currently listed listening process`,
-      );
+      throw new Error(`PID ${pid} is not a currently listed listening process`);
     }
     try {
       process.kill(pid, "SIGTERM");

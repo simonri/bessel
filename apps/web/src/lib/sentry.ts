@@ -11,6 +11,9 @@ export async function initSentry() {
   sentry.init();
 }
 
-export function captureException(error: unknown, extra?: Record<string, unknown>) {
+export function captureException(
+  error: unknown,
+  extra?: Record<string, unknown>,
+) {
   sentry?.captureException(error, extra ? { extra } : undefined);
 }

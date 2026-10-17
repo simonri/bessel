@@ -1,11 +1,16 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Toaster } from "sonner";
 import { TooltipProvider } from "@bessel/ui/components/tooltip";
-import { ReactQueryProvider } from "@/providers/react-query";
-import { AuthProvider } from "@/providers/auth";
-import { DeviceInterceptor } from "@/providers/device";
+import {
+  createRootRoute,
+  HeadContent,
+  Outlet,
+  Scripts,
+} from "@tanstack/react-router";
+import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { initSentry } from "@/lib/sentry";
+import { AuthProvider } from "@/providers/auth";
+import { DeviceInterceptor } from "@/providers/device";
+import { ReactQueryProvider } from "@/providers/react-query";
 
 import appCss from "../styles.css?url";
 

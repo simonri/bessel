@@ -9,11 +9,11 @@
   "pythonPlatform": "Linux",
   "venvPath": ".",
   "venv": ".venv",
-  "stubPath": "./.venv/lib/python3.12/site-packages",
   "executionEnvironments": [
     {
       "root": ".",
-      "pythonVersion": "3.12"
+      "pythonVersion": "3.12",
+      "extraPaths": ["services/api/src"]
     }
   ]
 }

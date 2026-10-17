@@ -356,7 +356,7 @@ function CounterDetailDialog({
             <span>
               <span className="text-white/60">Last: </span>
               {counter.last_reset_at
-                ? formatTimeSince(counter.last_reset_at) + " ago"
+                ? `${formatTimeSince(counter.last_reset_at)} ago`
                 : "Never"}
             </span>
             <span>

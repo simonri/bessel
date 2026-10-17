@@ -19,7 +19,7 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 class RecipeSortProperty(StrEnum):
   created_at = "created_at"
-  title = "title"
+  title_ = "title"
   modified_at = "modified_at"
 
 
@@ -38,7 +38,7 @@ async def list_recipes(
   statement = apply_sorting(repo.get_filtered_statement(current_user.id, search=search), Recipe, sorting)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
-  return RecipeListResponse.from_paginated_results(items, total_count, pagination)
+  return RecipeListResponse.from_paginated_results([RecipeSchema.model_validate(item) for item in items], total_count, pagination)
 
 
 @router.post("", summary="Create Recipe", response_model=RecipeSchema, status_code=201)

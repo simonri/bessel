@@ -1,6 +1,11 @@
 import { execFile } from "node:child_process";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import http from "node:http";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 import * as Sentry from "@sentry/electron/main";
-import crypto from "crypto";
 import {
   app,
   BrowserWindow,
@@ -12,12 +17,11 @@ import {
   shell,
 } from "electron";
 import { autoUpdater } from "electron-updater";
-import fs from "fs";
-import http from "http";
 import * as pty from "node-pty";
-import os from "os";
-import path from "path";
-import { promisify } from "util";
+import {
+  registerAgentUsageHandlers,
+  removeLegacyCollector,
+} from "./agent-usage.js";
 import {
   confirmCloseWithClaudeSessions,
   registerClaudeSessionHandlers,
@@ -35,10 +39,6 @@ import {
   setMainWindow,
   TRUSTED_ORIGINS,
 } from "./ipc.js";
-import {
-  registerAgentUsageHandlers,
-  removeLegacyCollector,
-} from "./agent-usage.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -173,7 +173,7 @@ if (app.isPackaged && SENTRY_DSN) {
 }
 
 function shQuote(s: string): string {
-  return "'" + s.replace(/'/g, "'\\''") + "'";
+  return `'${s.replace(/'/g, "'\\''")}'`;
 }
 
 // Build a `cd` argument that stays safe under the remote shell while still
@@ -222,7 +222,7 @@ async function sshRun(host: string, remoteCommand: string) {
 
 function remoteCdArg(p: string): string {
   if (p === "~") return "~";
-  if (p.startsWith("~/")) return "~/" + shQuote(p.slice(2));
+  if (p.startsWith("~/")) return `~/${shQuote(p.slice(2))}`;
   return shQuote(p);
 }
 
@@ -1246,8 +1246,8 @@ app.whenReady().then(() => {
     const branch = (
       await gitRun(["rev-parse", "--abbrev-ref", "HEAD"], repoPath)
     ).trim();
-    let ahead = 0,
-      behind = 0;
+    let ahead = 0;
+    let behind = 0;
     try {
       const counts = (
         await gitRun(
@@ -1563,7 +1563,7 @@ app.whenReady().then(() => {
       if (pathname && pathname !== "/" && path.extname(pathname)) {
         const resolved = path.resolve(
           WEB_DIR,
-          "." + decodeURIComponent(pathname),
+          `.${decodeURIComponent(pathname)}`,
         );
         if (resolved.startsWith(WEB_DIR + path.sep)) target = resolved;
       }

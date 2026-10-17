@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { Pencil } from "lucide-react";
-import { TagInput } from "@/components/tag-input";
-import { CategorySelect } from "@/components/category-select";
+import type { PlaceSchema } from "@bessel/client";
+import {
+  listPlacesV1PlacesGetQueryKey,
+  updatePlaceV1PlacesPlaceIdPatchMutation,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -15,14 +14,15 @@ import {
   DialogTrigger,
 } from "@bessel/ui/components/dialog";
 import { Input } from "@bessel/ui/components/input";
-import { IconButton } from "@/components/ui-kit";
 import { Label } from "@bessel/ui/components/label";
-import type { PlaceSchema } from "@bessel/client";
-import {
-  updatePlaceV1PlacesPlaceIdPatchMutation,
-  listPlacesV1PlacesGetQueryKey,
-} from "@bessel/client";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { CategorySelect } from "@/components/category-select";
+import { TagInput } from "@/components/tag-input";
+import { IconButton } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 
 function getInitialVisitedAt(place: Record<string, unknown>): string {
@@ -57,9 +57,9 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
       name: place.name,
       address: place.address ?? "",
       country: (placeAny.country as string) ?? "",
-      status: ((placeAny.status as string) === "visited" ? "visited" : "want_to_go") as
-        | "want_to_go"
-        | "visited",
+      status: ((placeAny.status as string) === "visited"
+        ? "visited"
+        : "want_to_go") as "want_to_go" | "visited",
       rating: place.rating ?? (null as number | null),
       visitedAt: getInitialVisitedAt(placeAny),
       review: place.review ?? "",
@@ -90,7 +90,8 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
       name: place.name,
       address: place.address ?? "",
       country: (placeAny.country as string) ?? "",
-      status: (placeAny.status as string) === "visited" ? "visited" : "want_to_go",
+      status:
+        (placeAny.status as string) === "visited" ? "visited" : "want_to_go",
       rating: place.rating ?? null,
       visitedAt: getInitialVisitedAt(placeAny),
       review: place.review ?? "",
@@ -101,7 +102,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}
+    >
       <DialogTrigger asChild>
         <IconButton title="Edit">
           <Pencil />
@@ -110,7 +114,9 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Place</DialogTitle>
-          <DialogDescription>Update your notes for this place.</DialogDescription>
+          <DialogDescription>
+            Update your notes for this place.
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -120,9 +126,8 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
           }}
           className="space-y-4"
         >
-          <form.Field
-            name="name"
-            children={(field) => (
+          <form.Field name="name">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="edit-place-name">Name</Label>
                 <Input
@@ -134,11 +139,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
-          <form.Field
-            name="address"
-            children={(field) => (
+          <form.Field name="address">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="edit-place-address">Address</Label>
                 <Input
@@ -149,12 +153,11 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <form.Field
-              name="country"
-              children={(field) => (
+            <form.Field name="country">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="edit-place-country">Country</Label>
                   <Input
@@ -165,10 +168,9 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                   />
                 </div>
               )}
-            />
-            <form.Field
-              name="category"
-              children={(field) => (
+            </form.Field>
+            <form.Field name="category">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <CategorySelect
@@ -177,23 +179,24 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                   />
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
-          <form.Field
-            name="tags"
-            children={(field) => (
+          <form.Field name="tags">
+            {(field) => (
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <TagInput tags={field.state.value} onChange={field.handleChange} />
+                <TagInput
+                  tags={field.state.value}
+                  onChange={field.handleChange}
+                />
               </div>
             )}
-          />
+          </form.Field>
 
           {/* Status selector */}
-          <form.Field
-            name="status"
-            children={(field) => (
+          <form.Field name="status">
+            {(field) => (
               <div className="space-y-2">
                 <Label>Status</Label>
                 <div className="flex gap-2">
@@ -218,7 +221,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                     onClick={() => {
                       field.handleChange("visited");
                       if (!form.getFieldValue("visitedAt")) {
-                        form.setFieldValue("visitedAt", new Date().toISOString().split("T")[0]);
+                        form.setFieldValue(
+                          "visitedAt",
+                          new Date().toISOString().split("T")[0],
+                        );
                       }
                     }}
                   >
@@ -227,17 +233,17 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 </div>
               </div>
             )}
-          />
+          </form.Field>
 
-          <form.Subscribe
-            selector={(state) => [state.values.status] as const}
-            children={([status]) =>
+          <form.Subscribe selector={(state) => [state.values.status] as const}>
+            {([status]) =>
               status === "visited" ? (
-                <form.Field
-                  name="visitedAt"
-                  children={(field) => (
+                <form.Field name="visitedAt">
+                  {(field) => (
                     <div className="space-y-2">
-                      <Label htmlFor="edit-place-visited-at">Date visited</Label>
+                      <Label htmlFor="edit-place-visited-at">
+                        Date visited
+                      </Label>
                       <Input
                         id="edit-place-visited-at"
                         type="date"
@@ -246,14 +252,13 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                       />
                     </div>
                   )}
-                />
+                </form.Field>
               ) : null
             }
-          />
+          </form.Subscribe>
 
-          <form.Field
-            name="rating"
-            children={(field) => (
+          <form.Field name="rating">
+            {(field) => (
               <div className="space-y-2">
                 <Label>Rating</Label>
                 <div className="flex gap-1">
@@ -266,7 +271,11 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                           ? "text-yellow-500"
                           : "text-muted-foreground/30 hover:text-yellow-500/50"
                       }`}
-                      onClick={() => field.handleChange(field.state.value === star ? null : star)}
+                      onClick={() =>
+                        field.handleChange(
+                          field.state.value === star ? null : star,
+                        )
+                      }
                     >
                       {"\u2605"}
                     </button>
@@ -274,11 +283,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 </div>
               </div>
             )}
-          />
+          </form.Field>
 
-          <form.Field
-            name="review"
-            children={(field) => (
+          <form.Field name="review">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="edit-place-review">Notes / Review</Label>
                 <textarea
@@ -290,24 +298,29 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">Failed to update place. Please try again.</p>
+            <p className="text-destructive text-sm">
+              Failed to update place. Please try again.
+            </p>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
-            <form.Subscribe
-              selector={(state) => [state.values.name] as const}
-              children={([name]) => (
+            <form.Subscribe selector={(state) => [state.values.name] as const}>
+              {([name]) => (
                 <Button type="submit" disabled={mutation.isPending || !name}>
                   {mutation.isPending ? "Saving..." : "Save"}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

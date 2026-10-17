@@ -1,8 +1,11 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { Plus } from "lucide-react";
-import { format } from "date-fns";
+import type { TradeType } from "@bessel/client";
+import {
+  createTradeV1InvestmentsTradesPostMutation,
+  getHoldingsV1InvestmentsHoldingsGetOptions,
+  listBankAccountsV1BankAccountsGetOptions,
+  listSecuritiesV1InvestmentsSecuritiesGetOptions,
+  listTradesV1InvestmentsTradesGetQueryKey,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -22,14 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import {
-  createTradeV1InvestmentsTradesPostMutation,
-  listTradesV1InvestmentsTradesGetQueryKey,
-  listSecuritiesV1InvestmentsSecuritiesGetOptions,
-  listBankAccountsV1BankAccountsGetOptions,
-  getHoldingsV1InvestmentsHoldingsGetOptions,
-} from "@bessel/client";
-import type { TradeType } from "@bessel/client";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Plus } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -38,12 +38,18 @@ export function CreateTradeDialog() {
   const queryClient = useQueryClient();
 
   const { data: securitiesData } = useQuery({
-    ...listSecuritiesV1InvestmentsSecuritiesGetOptions({ client, query: { limit: 100 } }),
+    ...listSecuritiesV1InvestmentsSecuritiesGetOptions({
+      client,
+      query: { limit: 100 },
+    }),
     enabled: open,
   });
 
   const { data: accountsData } = useQuery({
-    ...listBankAccountsV1BankAccountsGetOptions({ client, query: { limit: 100 } }),
+    ...listBankAccountsV1BankAccountsGetOptions({
+      client,
+      query: { limit: 100 },
+    }),
     enabled: open,
   });
 
@@ -54,7 +60,8 @@ export function CreateTradeDialog() {
         queryKey: listTradesV1InvestmentsTradesGetQueryKey({ client }),
       });
       void queryClient.invalidateQueries({
-        queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client }).queryKey,
+        queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client })
+          .queryKey,
       });
       toast.success("Trade recorded");
       handleClose();
@@ -75,8 +82,12 @@ export function CreateTradeDialog() {
       currency: "SEK",
     },
     onSubmit: ({ value }) => {
-      const quantityMicro = Math.round(parseFloat(value.quantity) * 1_000_000);
-      const priceCents = Math.round(parseFloat(value.price_per_unit) * 100);
+      const quantityMicro = Math.round(
+        Number.parseFloat(value.quantity) * 1_000_000,
+      );
+      const priceCents = Math.round(
+        Number.parseFloat(value.price_per_unit) * 100,
+      );
       mutation.mutate({
         client,
         body: {
@@ -110,7 +121,10 @@ export function CreateTradeDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? setOpen(true) : handleClose())}
+    >
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
@@ -131,14 +145,16 @@ export function CreateTradeDialog() {
           className="space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
-            <form.Field
-              name="security_id"
-              children={(field) => (
+            <form.Field name="security_id">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>
                     Security <span className="text-destructive">*</span>
                   </Label>
-                  <Select value={field.state.value} onValueChange={handleSecurityChange}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={handleSecurityChange}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
@@ -153,16 +169,18 @@ export function CreateTradeDialog() {
                   </Select>
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="bank_account_id"
-              children={(field) => (
+            <form.Field name="bank_account_id">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>
                     Account <span className="text-destructive">*</span>
                   </Label>
-                  <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) => field.handleChange(v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
@@ -176,16 +194,18 @@ export function CreateTradeDialog() {
                   </Select>
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <form.Field
-              name="trade_type"
-              children={(field) => (
+            <form.Field name="trade_type">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) => field.handleChange(v)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -196,11 +216,10 @@ export function CreateTradeDialog() {
                   </Select>
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="trade_date"
-              children={(field) => (
+            <form.Field name="trade_date">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="trade-date">Date</Label>
                   <Input
@@ -212,13 +231,12 @@ export function CreateTradeDialog() {
                   />
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           <div className="grid grid-cols-[1fr_1fr_5rem] gap-4">
-            <form.Field
-              name="quantity"
-              children={(field) => (
+            <form.Field name="quantity">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="trade-qty">
                     Quantity <span className="text-destructive">*</span>
@@ -235,11 +253,10 @@ export function CreateTradeDialog() {
                   />
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="price_per_unit"
-              children={(field) => (
+            <form.Field name="price_per_unit">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="trade-price">
                     Price per unit <span className="text-destructive">*</span>
@@ -256,27 +273,30 @@ export function CreateTradeDialog() {
                   />
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="currency"
-              children={(field) => (
+            <form.Field name="currency">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="trade-ccy">CCY</Label>
                   <Input
                     id="trade-ccy"
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      field.handleChange(e.target.value.toUpperCase())
+                    }
                     maxLength={3}
                     required
                   />
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">Failed to record trade. Please try again.</p>
+            <p className="text-destructive text-sm">
+              Failed to record trade. Please try again.
+            </p>
           )}
 
           <DialogFooter>
@@ -292,15 +312,18 @@ export function CreateTradeDialog() {
                   state.values.price_per_unit,
                 ] as const
               }
-              children={([secId, accId, qty, price]) => (
+            >
+              {([secId, accId, qty, price]) => (
                 <Button
                   type="submit"
-                  disabled={mutation.isPending || !secId || !accId || !qty || !price}
+                  disabled={
+                    mutation.isPending || !secId || !accId || !qty || !price
+                  }
                 >
                   {mutation.isPending ? "Saving..." : "Save"}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

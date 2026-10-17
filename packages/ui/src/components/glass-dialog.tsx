@@ -1,20 +1,25 @@
 "use client";
 
-import * as React from "react";
+import { cn } from "@bessel/ui/lib/utils";
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
+import type * as React from "react";
 
-import { cn } from "@bessel/ui/lib/utils";
-
-function GlassDialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
+function GlassDialog({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="glass-dialog" {...props} />;
 }
 
-function GlassDialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+function GlassDialogPortal({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
   return <DialogPrimitive.Portal data-slot="glass-dialog-portal" {...props} />;
 }
 
-function GlassDialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.Close>) {
+function GlassDialogClose({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="glass-dialog-close" {...props} />;
 }
 

@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from pathlib import Path
 from uuid import uuid4
 
@@ -146,7 +147,7 @@ A_PNG_BYTES = bytes.fromhex(
 
 class TestTaskAttachments:
   @pytest.fixture(autouse=True)
-  def _isolated_attachments_dir(self, tmp_path: Path) -> None:
+  def _isolated_attachments_dir(self, tmp_path: Path) -> Iterator[None]:
     original = settings.TASK_ATTACHMENTS_DIR
     settings.TASK_ATTACHMENTS_DIR = str(tmp_path)
     yield

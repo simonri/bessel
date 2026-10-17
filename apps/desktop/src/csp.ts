@@ -1,5 +1,5 @@
-import crypto from "crypto";
-import fs from "fs";
+import crypto from "node:crypto";
+import fs from "node:fs";
 
 // Content-Security-Policy for the packaged renderer (app://localhost). The
 // renderer can spawn terminals through IPC, so script-src is what turns any

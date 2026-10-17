@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import chokidar, { type FSWatcher } from "chokidar";
-import { app, clipboard, nativeImage, protocol, shell } from "electron";
+import {
+  app,
+  ClipboardItem,
+  clipboard,
+  nativeImage,
+  protocol,
+  shell,
+} from "electron";
 import { broadcast, ipcHandle } from "./ipc.js";
 import { KeyedMutex } from "./keyed-mutex.js";
 import {
@@ -520,7 +527,10 @@ export function registerVaultHandlers(logLine: (line: string) => void): void {
       const abs = await resolveInsideReal(root, rel);
       const image = nativeImage.createFromPath(abs);
       if (image.isEmpty()) throw new Error("This image couldn't be decoded");
-      clipboard.writeImage(image);
+      const png = new Blob([new Uint8Array(image.toPNG())], {
+        type: "image/png",
+      });
+      await clipboard.write([new ClipboardItem({ "image/png": png })]);
     },
   );
 

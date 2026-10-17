@@ -28,7 +28,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     date_from: date | None = None,
     date_to: date | None = None,
     is_business: bool | None = None,
-  ) -> Select[tuple[Transaction]]:
+  ) -> Select[Transaction]:
     statement = self.get_base_statement().where(Transaction.user_id == user_id)
     if bank_account_ids:
       statement = statement.where(Transaction.bank_account_id.in_(bank_account_ids))
@@ -59,8 +59,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
 
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
-    result = await self.session.execute(stmt)
-    return result.rowcount
+    return await self.execute_for_rowcount(stmt)
 
   async def count_same_description_with_other_category(
     self,
@@ -92,13 +91,11 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
 
   async def set_category_for_ids(self, *, user_id: UUID, ids: Sequence[UUID], category_id: UUID | None) -> int:
     statement = update(Transaction).where(Transaction.id.in_(ids), Transaction.user_id == user_id).values(category_id=category_id)
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
   async def set_category_for_description(self, *, user_id: UUID, description: str, category_id: UUID | None) -> int:
     statement = update(Transaction).where(Transaction.description == description, Transaction.user_id == user_id).values(category_id=category_id)
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
   async def delete_for_bank_account(self, bank_account_id: UUID) -> None:
     await self.session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id))
@@ -125,8 +122,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
 
   async def delete_by_ids(self, *, user_id: UUID, ids: Sequence[UUID]) -> int:
     statement = delete(Transaction).where(Transaction.id.in_(ids), Transaction.user_id == user_id)
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
   async def spending_by_category(self, *, user_id: UUID, year: int, month: int) -> Sequence[Row]:
     statement = (

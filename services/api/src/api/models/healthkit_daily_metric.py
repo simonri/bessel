@@ -1,4 +1,4 @@
-from datetime import date
+import datetime as dt
 from uuid import UUID
 
 from sqlalchemy import Date, Float, ForeignKey, Integer, UniqueConstraint, Uuid
@@ -17,7 +17,7 @@ class HealthKitDailyMetric(RecordModel):
   __tablename__ = "healthkit_daily_metrics"
 
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
-  date: Mapped[date] = mapped_column(Date, nullable=False)
+  date: Mapped[dt.date] = mapped_column(Date, nullable=False)
   steps: Mapped[int | None] = mapped_column(Integer, nullable=True)
   active_energy_kcal: Mapped[float | None] = mapped_column(Float, nullable=True)
   exercise_minutes: Mapped[float | None] = mapped_column(Float, nullable=True)

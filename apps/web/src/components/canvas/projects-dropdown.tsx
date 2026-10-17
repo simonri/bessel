@@ -28,6 +28,11 @@ import {
 import { TOPBAR_ICON_BUTTON } from "./topbar-styles";
 import { TopbarTooltip } from "./topbar-tooltip";
 
+// Stable, so React calls it once when the rename field appears, not on every render.
+function focusOnMount(input: HTMLInputElement | null) {
+  input?.focus();
+}
+
 function basename(p: string): string {
   return p.split("/").filter(Boolean).pop() ?? p;
 }
@@ -324,7 +329,7 @@ export function ProjectsDropdown() {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="Name"
-                      autoFocus
+                      ref={focusOnMount}
                       className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                     />
                     <p className="text-11 text-white/30">

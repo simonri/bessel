@@ -142,9 +142,9 @@ function capitalize(s: string): string {
 
 function applyCallout(node: Blockquote): void {
   const first = node.children[0] as Paragraph | undefined;
-  if (!first || first.type !== "paragraph") return;
+  if (first?.type !== "paragraph") return;
   const firstChild = first.children[0] as Text | undefined;
-  if (!firstChild || firstChild.type !== "text") return;
+  if (firstChild?.type !== "text") return;
   const match = CALLOUT_RE.exec(firstChild.value);
   if (!match) return;
   const [full, type, , titleRaw] = match;

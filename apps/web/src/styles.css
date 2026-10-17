@@ -1,7 +1,8 @@
 @import "../../../packages/ui/src/styles/globals.css";
 @source "../../../packages/ui/src";
 
-html, body {
+html,
+body {
   overflow: hidden;
 }
 
@@ -30,9 +31,15 @@ html, body {
 }
 
 @keyframes workspace-flash {
-  0% { box-shadow: 0 0 0 0 oklch(0.7 0.15 260 / 70%); }
-  70% { box-shadow: 0 0 0 8px oklch(0.7 0.15 260 / 0%); }
-  100% { box-shadow: 0 0 0 0 oklch(0.7 0.15 260 / 0%); }
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.7 0.15 260 / 70%);
+  }
+  70% {
+    box-shadow: 0 0 0 8px oklch(0.7 0.15 260 / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.7 0.15 260 / 0%);
+  }
 }
 
 .animate-workspace-flash {
@@ -41,8 +48,13 @@ html, body {
 
 /* Now-playing equalizer: three bars bouncing out of phase. */
 @keyframes equalizer {
-  0%, 100% { transform: scaleY(0.35); }
-  50% { transform: scaleY(1); }
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
 
 .animate-equalizer {
@@ -59,8 +71,12 @@ html, body {
 
 /* Task completion: the check draws in. */
 @keyframes check-draw {
-  from { stroke-dashoffset: 16; }
-  to { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .animate-check-draw {

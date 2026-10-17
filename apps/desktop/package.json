@@ -17,19 +17,19 @@
     "release:major": "node scripts/release.mjs major"
   },
   "dependencies": {
-    "@sentry/electron": "^7.15.0",
-    "chokidar": "^4.0.3",
+    "@sentry/electron": "^8.2.0",
+    "chokidar": "^5.0.0",
     "dbus-next": "^0.10.2",
     "electron-updater": "^6.8.9",
-    "node-pty": "^1.0.0"
+    "node-pty": "^1.1.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "concurrently": "^9.1.2",
-    "electron": "^36.0.0",
-    "electron-builder": "^26.0.12",
-    "typescript": "^5.8.3",
-    "vitest": "catalog:",
-    "wait-on": "^8.0.3"
+    "@types/node": "^26.6.5",
+    "concurrently": "^10.0.6",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
+    "typescript": "^7.0.2",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.13",
+    "wait-on": "^9.5.1"
   }
 }

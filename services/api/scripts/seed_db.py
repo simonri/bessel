@@ -38,8 +38,7 @@ from api.models.transaction import TransactionDirection
 from api.recipes.body import RecipeBody, render_markdown
 from api.settings import settings
 from sqlalchemy import event, text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 TODAY = date.today()
 NOW = datetime.now(UTC)
@@ -276,7 +275,7 @@ def seed_daily_metrics(today: date, days: int) -> list[HealthKitDailyMetric]:
 async def seed() -> None:
   dsn = settings.get_postgres_dsn("asyncpg")
   engine = create_async_engine(dsn)
-  async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore[call-overload]
+  async_session = async_sessionmaker(engine, expire_on_commit=False)
 
   async with async_session() as session:
     owner = (await session.execute(text("SELECT id, email FROM users WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1"))).first()

@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 // node-pty 1.1.0 publishes its prebuilt macOS spawn-helper without the
 // executable bit, so every terminal fails with "posix_spawnp failed" unless

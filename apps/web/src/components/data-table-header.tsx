@@ -1,13 +1,13 @@
 import { TableHead, TableHeader, TableRow } from "@bessel/ui/components/table";
-import type { Table as TanstackTable } from "@tanstack/react-table";
-import { flexRender } from "@tanstack/react-table";
+import { flexRender, type RowData } from "@tanstack/react-table";
+import type { DataTableInstance } from "@/lib/data-table";
 
-interface DataTableHeaderProps<TData> {
-  table: TanstackTable<TData>;
+interface DataTableHeaderProps<TData extends RowData> {
+  table: DataTableInstance<TData>;
   className?: string;
 }
 
-export function DataTableHeader<TData>({
+export function DataTableHeader<TData extends RowData>({
   table,
   className,
 }: DataTableHeaderProps<TData>) {

@@ -1,8 +1,7 @@
-import * as React from "react";
+import { cn } from "@bessel/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot } from "radix-ui";
-
-import { cn } from "@bessel/ui/lib/utils";
+import type * as React from "react";
 
 const buttonVariants = cva(
   [
@@ -32,11 +31,13 @@ const buttonVariants = cva(
         ghost:
           "bg-transparent text-white/55 hover:text-white/85 hover:bg-white/[0.06]",
         link: "bg-transparent text-white/55 hover:text-white/85",
-        destructive: "bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-500/25 hover:bg-red-500/25 hover:text-red-200",
+        destructive:
+          "bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-500/25 hover:bg-red-500/25 hover:text-red-200",
         contrast: "bg-foreground text-background hover:bg-foreground/90",
       },
       size: {
-        default: "h-8 px-3.5 font-medium text-13 [&_svg:not([class*='size-'])]:size-4",
+        default:
+          "h-8 px-3.5 font-medium text-13 [&_svg:not([class*='size-'])]:size-4",
         lg: "h-10 px-4 font-medium text-base [&_svg:not([class*='size-'])]:size-4",
         sm: "h-7 px-2.5 font-medium text-12 [&_svg:not([class*='size-'])]:size-3.5",
         xs: "h-6 px-2 font-medium text-xs [&_svg:not([class*='size-'])]:size-3",
@@ -96,7 +97,8 @@ const buttonVariants = cva(
       {
         variant: "secondary",
         colorVariant: "success",
-        className: "bg-green-500/15 text-green-600 hover:bg-green-500/25 dark:text-green-400",
+        className:
+          "bg-green-500/15 text-green-600 hover:bg-green-500/25 dark:text-green-400",
       },
     ],
     defaultVariants: {
@@ -134,7 +136,14 @@ function Button({
       aria-disabled={disabled}
       disabled={disabled}
       className={cn(
-        buttonVariants({ align, variant, size, colorVariant, shape, className }),
+        buttonVariants({
+          align,
+          variant,
+          size,
+          colorVariant,
+          shape,
+          className,
+        }),
       )}
       {...props}
     />

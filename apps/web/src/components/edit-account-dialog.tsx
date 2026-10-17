@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { Pencil } from "lucide-react";
+import type { BankAccountSchema } from "@bessel/client";
+import {
+  listBankAccountsV1BankAccountsGetQueryKey,
+  updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -21,14 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import type { BankAccountSchema } from "@bessel/client";
-import {
-  updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
-  listBankAccountsV1BankAccountsGetQueryKey,
-} from "@bessel/client";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { client } from "@/lib/client";
 import { ACCOUNT_SUBTYPES } from "@/lib/account-constants";
+import { client } from "@/lib/client";
 
 export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   const [open, setOpen] = useState(false);
@@ -46,7 +46,9 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
         if (!old?.items) return old;
         return {
           ...old,
-          items: old.items.map((a: any) => (a.id === path.bank_account_id ? { ...a, ...body } : a)),
+          items: old.items.map((a: any) =>
+            a.id === path.bank_account_id ? { ...a, ...body } : a,
+          ),
         };
       });
       setOpen(false);
@@ -80,7 +82,8 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           name: value.name,
           currency: value.currency,
           subtype: value.subtype,
-          base_balance: Math.round(parseFloat(value.baseBalance) * 100) || 0,
+          base_balance:
+            Math.round(Number.parseFloat(value.baseBalance) * 100) || 0,
         },
       });
     },
@@ -97,7 +100,10 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (v ? handleOpen() : setOpen(false))}
+    >
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" title="Edit">
           <Pencil className="size-4" />
@@ -111,7 +117,9 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
       >
         <DialogHeader>
           <DialogTitle>Edit Bank Account</DialogTitle>
-          <DialogDescription>Update the details for {account.name}.</DialogDescription>
+          <DialogDescription>
+            Update the details for {account.name}.
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -121,9 +129,8 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           }}
           className="space-y-4"
         >
-          <form.Field
-            name="name"
-            children={(field) => (
+          <form.Field name="name">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Name</Label>
                 <Input
@@ -135,15 +142,17 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <form.Field
-              name="subtype"
-              children={(field) => (
+            <form.Field name="subtype">
+              {(field) => (
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(v) => field.handleChange(v)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -157,28 +166,28 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
                   </Select>
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="currency"
-              children={(field) => (
+            <form.Field name="currency">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="edit-currency">Currency</Label>
                   <Input
                     id="edit-currency"
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      field.handleChange(e.target.value.toUpperCase())
+                    }
                     maxLength={3}
                     required
                   />
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
-          <form.Field
-            name="baseBalance"
-            children={(field) => (
+          <form.Field name="baseBalance">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="edit-base-balance">Starting Balance</Label>
                 <Input
@@ -191,24 +200,32 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
                 />
               </div>
             )}
-          />
+          </form.Field>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">Failed to update account. Please try again.</p>
+            <p className="text-destructive text-sm">
+              Failed to update account. Please try again.
+            </p>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
-            <form.Subscribe
-              selector={(state) => [state.values.name] as const}
-              children={([name]) => (
-                <Button type="submit" disabled={mutation.isPending || !name.trim()}>
+            <form.Subscribe selector={(state) => [state.values.name] as const}>
+              {([name]) => (
+                <Button
+                  type="submit"
+                  disabled={mutation.isPending || !name.trim()}
+                >
                   {mutation.isPending ? "Saving..." : "Save"}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

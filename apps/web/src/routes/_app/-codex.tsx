@@ -3,7 +3,7 @@ import { TerminalWidget } from "@/components/terminal-widget";
 import { decodeCommands } from "@/lib/widget-commands";
 
 function sshQuote(p: string): string {
-  return "'" + p.replace(/'/g, "'\\''") + "'";
+  return `'${p.replace(/'/g, "'\\''")}'`;
 }
 
 export function Codex() {
@@ -16,7 +16,11 @@ export function Codex() {
     return (
       <TerminalWidget
         command="ssh"
-        args={["-t", sshHost, `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc 'codex --dangerously-bypass-approvals-and-sandbox'`]}
+        args={[
+          "-t",
+          sshHost,
+          `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc 'codex --dangerously-bypass-approvals-and-sandbox'`,
+        ]}
         taskDropZone
         commands={commands}
       />

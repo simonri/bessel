@@ -1,11 +1,11 @@
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Protocol, Self
+from typing import Any, Protocol, Self, cast
 from uuid import UUID
 
 from api.common.db.postgres import AsyncReadSession, AsyncSession
 from api.exceptions import ResourceNotFound
-from sqlalchemy import ColumnExpressionArgument, Select, func, over, select
+from sqlalchemy import ColumnExpressionArgument, CursorResult, Executable, Select, func, over, select
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.base import ExecutableOption
@@ -16,15 +16,15 @@ type Options = Sequence[ExecutableOption]
 class RepositoryProtocol[M](Protocol):
   model: type[M]
 
-  async def get_one(self, statement: Select[tuple[M]]) -> M: ...
+  async def get_one(self, statement: Select[M]) -> M: ...
 
-  async def get_one_or_none(self, statement: Select[tuple[M]]) -> M | None: ...
+  async def get_one_or_none(self, statement: Select[M]) -> M | None: ...
 
-  async def get_all(self, statement: Select[tuple[M]]) -> Sequence[M]: ...
+  async def get_all(self, statement: Select[M]) -> Sequence[M]: ...
 
-  async def paginate(self, statement: Select[tuple[M]], *, limit: int, page: int) -> tuple[list[M], int]: ...
+  async def paginate(self, statement: Select[M], *, limit: int, page: int) -> tuple[list[M], int]: ...
 
-  def get_base_statement(self) -> Select[tuple[M]]: ...
+  def get_base_statement(self) -> Select[M]: ...
 
   async def create(self, item: M, *, flush: bool = False) -> M: ...
 
@@ -43,35 +43,39 @@ class RepositoryBase[M]:
   def __init__(self, session: AsyncSession | AsyncReadSession) -> None:
     self.session = session
 
-  async def get_one(self, statement: Select[tuple[M]]) -> M:
+  async def get_one(self, statement: Select[M]) -> M:
     result = await self.session.execute(statement)
     return result.unique().scalar_one()
 
-  async def get_one_or_none(self, statement: Select[tuple[M]]) -> M | None:
+  async def get_one_or_none(self, statement: Select[M]) -> M | None:
     result = await self.session.execute(statement)
     return result.unique().scalar_one_or_none()
 
-  async def get_all(self, statement: Select[tuple[M]]) -> Sequence[M]:
+  async def get_all(self, statement: Select[M]) -> Sequence[M]:
     result = await self.session.execute(statement)
     return result.scalars().unique().all()
+
+  async def execute_for_rowcount(self, statement: Executable) -> int:
+    result = cast(CursorResult[Any], await self.session.execute(statement))
+    return result.rowcount
 
   @classmethod
   def from_session(cls, session: AsyncSession | AsyncReadSession) -> Self:
     return cls(session)
 
-  def get_base_statement(self) -> Select[tuple[M]]:
+  def get_base_statement(self) -> Select[M]:
     return select(self.model)
 
-  async def paginate(self, statement: Select[tuple[M]], *, limit: int, page: int) -> tuple[list[M], int]:
+  async def paginate(self, statement: Select[M], *, limit: int, page: int) -> tuple[list[M], int]:
     offset = (page - 1) * limit
-    paginated_statement: Select[tuple[M, int]] = statement.add_columns(over(func.count())).limit(limit).offset(offset)
+    paginated_statement: Select[M, int] = statement.add_columns(over(func.count())).limit(limit).offset(offset)
 
     results = await self.session.execute(paginated_statement)
 
     items: list[M] = []
     count = 0
     for result in results.unique().all():
-      item, count = result._tuple()
+      item, count = result
       items.append(item)
 
     return items, count
@@ -120,7 +124,7 @@ class ModelIDProtocol[ID_TYPE](Protocol):
 
 
 class ModelUserProtocol(Protocol):
-  user_id: Mapped[UUID | None]
+  user_id: Mapped[UUID]
   deleted_at: Mapped[datetime | None]
 
 

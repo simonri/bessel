@@ -8,21 +8,31 @@ import {
 } from "@/components/ui-kit";
 import { type ActivityMapping, useSettings } from "@/hooks/use-settings";
 
+// Rows carry an id for React only; settings store plain mappings.
+interface MappingRow extends ActivityMapping {
+  id: string;
+}
+
+const newRow = (mapping: ActivityMapping): MappingRow => ({
+  ...mapping,
+  id: crypto.randomUUID(),
+});
+
 export function ActivityPage() {
   const { settings, update } = useSettings();
-  const [mappings, setMappings] = useState<ActivityMapping[]>(
-    settings.activityMappings,
+  const [mappings, setMappings] = useState(() =>
+    settings.activityMappings.map(newRow),
   );
 
-  const save = (next: ActivityMapping[]) => {
+  const save = (next: MappingRow[]) => {
     setMappings(next);
-    update({ activityMappings: next });
+    update({ activityMappings: next.map(({ from, to }) => ({ from, to })) });
   };
 
-  const add = () => save([...mappings, { from: "", to: "" }]);
-  const remove = (i: number) => save(mappings.filter((_, idx) => idx !== i));
-  const change = (i: number, field: keyof ActivityMapping, value: string) =>
-    save(mappings.map((m, idx) => (idx === i ? { ...m, [field]: value } : m)));
+  const add = () => save([...mappings, newRow({ from: "", to: "" })]);
+  const remove = (id: string) => save(mappings.filter((m) => m.id !== id));
+  const change = (id: string, field: keyof ActivityMapping, value: string) =>
+    save(mappings.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
 
   return (
     <div>
@@ -36,23 +46,23 @@ export function ActivityPage() {
           </div>
         )}
 
-        {mappings.map((m, i) => (
-          <div key={i} className="flex min-w-0 items-center gap-2">
+        {mappings.map((m) => (
+          <div key={m.id} className="flex min-w-0 items-center gap-2">
             <TextInput
               value={m.from}
-              onChange={(e) => change(i, "from", e.target.value)}
+              onChange={(e) => change(m.id, "from", e.target.value)}
               placeholder="com.google.Chrome"
               className="flex-1"
             />
             <TextInput
               value={m.to}
-              onChange={(e) => change(i, "to", e.target.value)}
+              onChange={(e) => change(m.id, "to", e.target.value)}
               placeholder="Chrome"
               className="flex-1"
             />
             <IconButton
               destructive
-              onClick={() => remove(i)}
+              onClick={() => remove(m.id)}
               title="Remove mapping"
             >
               <X />

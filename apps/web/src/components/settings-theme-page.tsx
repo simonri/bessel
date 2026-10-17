@@ -29,25 +29,30 @@ export function ThemePage() {
   return (
     <div>
       <SectionLabel>Accent color</SectionLabel>
-      <div role="radiogroup" aria-label="Accent color" className="flex gap-4">
+      <fieldset className="m-0 flex min-w-0 gap-4 border-0 p-0">
+        <legend className="sr-only">Accent color</legend>
         {THEME_OPTIONS.map(({ key, label, hue, chroma }) => {
           const isSelected = selected === key;
           const color = swatchColor(hue, chroma);
           return (
-            <button
+            <label
               key={key}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              onClick={() => update({ theme: key })}
-              className="group flex w-12 flex-col items-center gap-1.5 outline-none"
+              className="group flex w-12 cursor-pointer flex-col items-center gap-1.5"
             >
+              <input
+                type="radio"
+                name="accent-color"
+                value={key}
+                checked={isSelected}
+                onChange={() => update({ theme: key })}
+                className="sr-only"
+              />
               <span
                 className={cn(
                   "size-8 rounded-full ring-2 ring-offset-2 ring-offset-panel transition-[box-shadow,transform] duration-150 ease-out group-hover:scale-105 group-active:scale-95",
                   isSelected
                     ? "ring-(--swatch)"
-                    : "ring-transparent group-focus-visible:ring-white/40",
+                    : "ring-transparent group-has-[:focus-visible]:ring-white/40",
                 )}
                 style={
                   {
@@ -66,10 +71,10 @@ export function ThemePage() {
               >
                 {label}
               </span>
-            </button>
+            </label>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 }

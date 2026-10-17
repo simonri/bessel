@@ -19,15 +19,24 @@ function memoryStorage(): Storage {
   const data = new Map<string, string>();
   return {
     getItem: (key) => data.get(key) ?? null,
-    setItem: (key, value) => { data.set(key, String(value)); },
-    removeItem: (key) => { data.delete(key); },
+    setItem: (key, value) => {
+      data.set(key, String(value));
+    },
+    removeItem: (key) => {
+      data.delete(key);
+    },
     clear: () => data.clear(),
     key: (index) => Array.from(data.keys())[index] ?? null,
-    get length() { return data.size; },
+    get length() {
+      return data.size;
+    },
   };
 }
 
-Object.defineProperty(window, "localStorage", { value: memoryStorage(), configurable: true });
+Object.defineProperty(window, "localStorage", {
+  value: memoryStorage(),
+  configurable: true,
+});
 
 function setup() {
   return renderHook(() => useWindowManager(), { wrapper: WindowManager });
@@ -38,7 +47,9 @@ beforeEach(() => {
 });
 
 function overlaps(a: WindowEntry, b: WindowEntry): boolean {
-  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  return (
+    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+  );
 }
 
 function hasNoOverlaps(windows: WindowEntry[]): boolean {
@@ -60,15 +71,21 @@ describe("moveWindowToWorkspace", () => {
 
     act(() => result.current.addWorkspace());
     const targetWorkspaceId = result.current.activeWorkspaceId;
-    act(() => result.current.switchWorkspace(
-      result.current.workspaces.find((ws) => ws.id !== targetWorkspaceId)!.id,
-    ));
+    act(() =>
+      result.current.switchWorkspace(
+        result.current.workspaces.find((ws) => ws.id !== targetWorkspaceId)!.id,
+      ),
+    );
     const sourceWorkspaceId = result.current.activeWorkspaceId;
 
-    act(() => result.current.moveWindowToWorkspace(original.id, targetWorkspaceId));
+    act(() =>
+      result.current.moveWindowToWorkspace(original.id, targetWorkspaceId),
+    );
 
     // Gone from the source workspace's active list.
-    expect(result.current.windows.some((w) => w.id === original.id)).toBe(false);
+    expect(result.current.windows.some((w) => w.id === original.id)).toBe(
+      false,
+    );
 
     // Still present exactly once in the flat list, same id and data, new workspace.
     const moved = result.current.allWindows.find((w) => w.id === original.id);
@@ -80,7 +97,9 @@ describe("moveWindowToWorkspace", () => {
     // Size is preserved across the move, only position is re-placed.
     expect(moved!.w).toBe(original.w);
     expect(moved!.h).toBe(original.h);
-    expect(result.current.allWindows.filter((w) => w.id === original.id)).toHaveLength(1);
+    expect(
+      result.current.allWindows.filter((w) => w.id === original.id),
+    ).toHaveLength(1);
 
     // Switching to the target workspace surfaces it as active.
     act(() => result.current.switchWorkspace(targetWorkspaceId));
@@ -88,7 +107,9 @@ describe("moveWindowToWorkspace", () => {
 
     // Switching back to the source workspace confirms it's really gone from there.
     act(() => result.current.switchWorkspace(sourceWorkspaceId));
-    expect(result.current.windows.some((w) => w.id === original.id)).toBe(false);
+    expect(result.current.windows.some((w) => w.id === original.id)).toBe(
+      false,
+    );
   });
 
   it("is a no-op when the target workspace no longer exists", () => {
@@ -96,11 +117,13 @@ describe("moveWindowToWorkspace", () => {
     act(() => result.current.openWindow("tasks"));
     const original = result.current.allWindows[0];
 
-    act(() => result.current.moveWindowToWorkspace(original.id, "does-not-exist"));
-
-    expect(result.current.allWindows.find((w) => w.id === original.id)?.workspaceId).toBe(
-      original.workspaceId,
+    act(() =>
+      result.current.moveWindowToWorkspace(original.id, "does-not-exist"),
     );
+
+    expect(
+      result.current.allWindows.find((w) => w.id === original.id)?.workspaceId,
+    ).toBe(original.workspaceId);
   });
 
   it("removing a workspace only drops that workspace's windows", () => {
@@ -115,11 +138,17 @@ describe("moveWindowToWorkspace", () => {
 
     act(() => result.current.removeWorkspace(doomedWorkspaceId));
 
-    expect(result.current.workspaces.some((ws) => ws.id === doomedWorkspaceId)).toBe(false);
-    expect(result.current.allWindows.some((w) => w.workspaceId === doomedWorkspaceId)).toBe(false);
-    expect(result.current.allWindows.find((w) => w.id === keep.id)?.workspaceId).toBe(
-      sourceWorkspaceId,
-    );
+    expect(
+      result.current.workspaces.some((ws) => ws.id === doomedWorkspaceId),
+    ).toBe(false);
+    expect(
+      result.current.allWindows.some(
+        (w) => w.workspaceId === doomedWorkspaceId,
+      ),
+    ).toBe(false);
+    expect(
+      result.current.allWindows.find((w) => w.id === keep.id)?.workspaceId,
+    ).toBe(sourceWorkspaceId);
   });
 });
 
@@ -131,7 +160,10 @@ describe("applyTemplate", () => {
     act(() =>
       result.current.applyTemplate(
         [
-          { module: "terminal", data: { commands: JSON.stringify(["echo one"]) } },
+          {
+            module: "terminal",
+            data: { commands: JSON.stringify(["echo one"]) },
+          },
           { module: "terminal" },
           { module: "claudeCode" },
         ],
@@ -142,10 +174,16 @@ describe("applyTemplate", () => {
     expect(result.current.workspaces).toHaveLength(2);
     expect(result.current.activeWorkspaceId).not.toBe(originalWorkspaceId);
     expect(result.current.windows).toHaveLength(3);
-    expect(result.current.windows.map((w) => w.module)).toEqual(["terminal", "terminal", "claudeCode"]);
+    expect(result.current.windows.map((w) => w.module)).toEqual([
+      "terminal",
+      "terminal",
+      "claudeCode",
+    ]);
     // Widgets don't overlap within the new workspace.
     expect(hasNoOverlaps(result.current.windows)).toBe(true);
-    expect(result.current.windows[0].data).toEqual({ commands: JSON.stringify(["echo one"]) });
+    expect(result.current.windows[0].data).toEqual({
+      commands: JSON.stringify(["echo one"]),
+    });
 
     // The original workspace is untouched.
     act(() => result.current.switchWorkspace(originalWorkspaceId));
@@ -157,12 +195,22 @@ describe("applyTemplate", () => {
     act(() => result.current.openWindow("tasks"));
     const existing = result.current.windows[0];
 
-    act(() => result.current.applyTemplate([{ module: "terminal" }, { module: "terminal" }], "current"));
+    act(() =>
+      result.current.applyTemplate(
+        [{ module: "terminal" }, { module: "terminal" }],
+        "current",
+      ),
+    );
 
     expect(result.current.workspaces).toHaveLength(1);
     expect(result.current.windows).toHaveLength(3);
     const stillThere = result.current.windows.find((w) => w.id === existing.id);
-    expect(stillThere).toMatchObject({ x: existing.x, y: existing.y, w: existing.w, h: existing.h });
+    expect(stillThere).toMatchObject({
+      x: existing.x,
+      y: existing.y,
+      w: existing.w,
+      h: existing.h,
+    });
     expect(hasNoOverlaps(result.current.windows)).toBe(true);
   });
 });
@@ -179,19 +227,39 @@ describe("alignWorkspace", () => {
     act(() =>
       result.current.updateLayout(workspaceId, [
         { i: first.id, x: first.x, y: first.y, w: first.w, h: first.h },
-        { i: second.id, x: second.x, y: second.y + 20, w: second.w, h: second.h },
+        {
+          i: second.id,
+          x: second.x,
+          y: second.y + 20,
+          w: second.w,
+          h: second.h,
+        },
       ]),
     );
-    expect(result.current.windows.find((w) => w.id === second.id)?.y).toBe(second.y + 20);
+    expect(result.current.windows.find((w) => w.id === second.id)?.y).toBe(
+      second.y + 20,
+    );
 
     act(() => result.current.alignWorkspace());
     const aligned = result.current.windows;
     expect(hasNoOverlaps(aligned)).toBe(true);
-    expect(aligned.find((w) => w.id === second.id)!.y).toBeLessThan(second.y + 20);
-    expect(aligned.find((w) => w.id === first.id)).toMatchObject({ w: first.w, h: first.h });
-    expect(aligned.find((w) => w.id === second.id)).toMatchObject({ w: second.w, h: second.h });
+    expect(aligned.find((w) => w.id === second.id)!.y).toBeLessThan(
+      second.y + 20,
+    );
+    expect(aligned.find((w) => w.id === first.id)).toMatchObject({
+      w: first.w,
+      h: first.h,
+    });
+    expect(aligned.find((w) => w.id === second.id)).toMatchObject({
+      w: second.w,
+      h: second.h,
+    });
 
-    const positionsAfterFirstAlign = aligned.map((w) => ({ id: w.id, x: w.x, y: w.y }));
+    const positionsAfterFirstAlign = aligned.map((w) => ({
+      id: w.id,
+      x: w.x,
+      y: w.y,
+    }));
     act(() => result.current.alignWorkspace());
     const positionsAfterSecondAlign = result.current.windows;
     for (const p of positionsAfterFirstAlign) {
@@ -208,7 +276,9 @@ describe("viewport-aware placement", () => {
     act(() => result.current.setViewportRows(11));
 
     let opened = false;
-    act(() => { opened = result.current.openWindow("gitStatus"); });
+    act(() => {
+      opened = result.current.openWindow("gitStatus");
+    });
 
     expect(opened).toBe(true);
     const win = result.current.windows[0];
@@ -228,7 +298,9 @@ describe("viewport-aware placement", () => {
     expect(result.current.windows).toHaveLength(3);
 
     let opened = true;
-    act(() => { opened = result.current.toggleWindow("recipes"); });
+    act(() => {
+      opened = result.current.toggleWindow("recipes");
+    });
 
     expect(opened).toBe(false);
     expect(result.current.windows).toHaveLength(3);
@@ -242,7 +314,11 @@ describe("viewport-aware placement", () => {
     let outcome = { opened: 0, skipped: 0 };
     act(() => {
       outcome = result.current.applyTemplate(
-        [{ module: "terminal" }, { module: "terminal" }, { module: "terminal" }],
+        [
+          { module: "terminal" },
+          { module: "terminal" },
+          { module: "terminal" },
+        ],
         "new",
       );
     });
@@ -273,12 +349,17 @@ describe("viewport-aware placement", () => {
     act(() => result.current.toggleWindow("transactions"));
 
     let moved = true;
-    act(() => { moved = result.current.moveWindowToWorkspace(moving.id, targetWorkspaceId); });
+    act(() => {
+      moved = result.current.moveWindowToWorkspace(
+        moving.id,
+        targetWorkspaceId,
+      );
+    });
 
     expect(moved).toBe(false);
-    expect(result.current.allWindows.find((w) => w.id === moving.id)?.workspaceId).toBe(
-      sourceWorkspaceId,
-    );
+    expect(
+      result.current.allWindows.find((w) => w.id === moving.id)?.workspaceId,
+    ).toBe(sourceWorkspaceId);
   });
 });
 
@@ -313,8 +394,13 @@ describe("layout sanitization", () => {
     }
     expect(hasNoOverlaps(result.current.windows)).toBe(true);
     // The valid window was not touched by the cleanup.
-    expect(result.current.windows.find((w) => w.module === "tasks")).toMatchObject({
-      x: 0, y: 0, w: 8, h: 8,
+    expect(
+      result.current.windows.find((w) => w.module === "tasks"),
+    ).toMatchObject({
+      x: 0,
+      y: 0,
+      w: 8,
+      h: 8,
     });
   });
 
@@ -326,7 +412,9 @@ describe("layout sanitization", () => {
     const workspaceId = result.current.activeWorkspaceId;
 
     act(() =>
-      result.current.updateLayout(workspaceId, [{ i: win.id, x: 0, y: 30, w: 8, h: 8 }]),
+      result.current.updateLayout(workspaceId, [
+        { i: win.id, x: 0, y: 30, w: 8, h: 8 },
+      ]),
     );
 
     const updated = result.current.windows[0];
@@ -398,7 +486,10 @@ describe("migration from the legacy slot-based layout", () => {
       "bessel:workspaces",
       JSON.stringify({
         workspaces: [
-          { id: "ws-1", windows: [{ module: "tasks", x: 3, y: 5, w: 8, h: 8 }] },
+          {
+            id: "ws-1",
+            windows: [{ module: "tasks", x: 3, y: 5, w: 8, h: 8 }],
+          },
         ],
         activeWorkspaceId: "ws-1",
       }),
@@ -437,21 +528,32 @@ describe("workspace names", () => {
         workspaces: [
           { id: "empty", windows: [] },
           { id: "named", name: "Ideas", windows: [] },
-          { id: "used", windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }] },
+          {
+            id: "used",
+            windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }],
+          },
         ],
         activeWorkspaceId: "empty",
       }),
     );
     const { result, unmount } = setup();
-    expect(result.current.workspaces.map((ws) => ws.id)).toEqual(["named", "used"]);
+    expect(result.current.workspaces.map((ws) => ws.id)).toEqual([
+      "named",
+      "used",
+    ]);
     expect(result.current.activeWorkspaceId).toBe("used");
     act(() => unmount());
 
     window.localStorage.setItem(
       "bessel:workspaces",
-      JSON.stringify({ workspaces: [{ id: "only", windows: [] }], activeWorkspaceId: "only" }),
+      JSON.stringify({
+        workspaces: [{ id: "only", windows: [] }],
+        activeWorkspaceId: "only",
+      }),
     );
-    expect(setup().result.current.workspaces.map((ws) => ws.id)).toEqual(["only"]);
+    expect(setup().result.current.workspaces.map((ws) => ws.id)).toEqual([
+      "only",
+    ]);
   });
 
   it("clears the name back to the default when renamed to blank", () => {
@@ -513,14 +615,19 @@ describe("createSession", () => {
     ]);
     expect(result.current.windows[0].data).toEqual({ projectPath: "/p" });
     // The previous canvas is untouched.
-    expect(result.current.allWindows.every((w) => w.workspaceId === id)).toBe(true);
+    expect(result.current.allWindows.every((w) => w.workspaceId === id)).toBe(
+      true,
+    );
   });
 
   it("persists the project across reloads and keeps it through a rename", () => {
     const { result, unmount } = setup();
     let id = "";
     act(() => {
-      id = result.current.createSession({ projectId: "proj-9", specs: [{ module: "tasks" }] });
+      id = result.current.createSession({
+        projectId: "proj-9",
+        specs: [{ module: "tasks" }],
+      });
     });
     act(() => result.current.renameWorkspace(id, "Named"));
     expect(result.current.workspaces.find((ws) => ws.id === id)).toEqual({
@@ -531,7 +638,9 @@ describe("createSession", () => {
 
     act(() => unmount());
     const reloaded = setup();
-    expect(reloaded.result.current.workspaces.find((ws) => ws.id === id)).toEqual({
+    expect(
+      reloaded.result.current.workspaces.find((ws) => ws.id === id),
+    ).toEqual({
       id,
       name: "Named",
       projectId: "proj-9",
@@ -553,7 +662,11 @@ describe("setWorkspaceProject", () => {
     act(() => result.current.renameWorkspace(id, "Home"));
 
     act(() => result.current.setWorkspaceProject(id, "proj-a"));
-    expect(result.current.workspaces[0]).toEqual({ id, name: "Home", projectId: "proj-a" });
+    expect(result.current.workspaces[0]).toEqual({
+      id,
+      name: "Home",
+      projectId: "proj-a",
+    });
 
     act(() => result.current.setWorkspaceProject(id, "proj-b"));
     expect(result.current.workspaces[0].projectId).toBe("proj-b");
@@ -682,12 +795,15 @@ describe("terminal PTYs", () => {
     act(() => result.current.addWorkspace());
 
     act(() =>
-      result.current.moveWindowToWorkspace(win.id, result.current.activeWorkspaceId),
+      result.current.moveWindowToWorkspace(
+        win.id,
+        result.current.activeWorkspaceId,
+      ),
     );
 
-    expect(result.current.allWindows.find((w) => w.id === win.id)?.workspaceId).toBe(
-      result.current.activeWorkspaceId,
-    );
+    expect(
+      result.current.allWindows.find((w) => w.id === win.id)?.workspaceId,
+    ).toBe(result.current.activeWorkspaceId);
     expect(terminal.kill).not.toHaveBeenCalled();
   });
 
@@ -738,7 +854,9 @@ describe("corrupt storage", () => {
 
     expect(result.current.workspaces).toHaveLength(1);
     expect(result.current.allWindows).toHaveLength(0);
-    expect(window.localStorage.getItem("bessel:workspaces.bak")).toBe("{not json");
+    expect(window.localStorage.getItem("bessel:workspaces.bak")).toBe(
+      "{not json",
+    );
   });
 
   it("drops non-string window data values", () => {
@@ -749,7 +867,14 @@ describe("corrupt storage", () => {
           {
             id: "ws",
             windows: [
-              { module: "tasks", x: 0, y: 0, w: 4, h: 4, data: { url: "a", n: 1 } },
+              {
+                module: "tasks",
+                x: 0,
+                y: 0,
+                w: 4,
+                h: 4,
+                data: { url: "a", n: 1 },
+              },
             ],
           },
         ],
@@ -791,7 +916,9 @@ describe("persistence format", () => {
     act(() => result.current.openWindow("tasks"));
 
     await vi.waitFor(() => {
-      const stored = JSON.parse(window.localStorage.getItem("bessel:workspaces")!);
+      const stored = JSON.parse(
+        window.localStorage.getItem("bessel:workspaces")!,
+      );
       expect(stored.version).toBe(2);
       expect(stored.workspaces[0].windows).toHaveLength(1);
     });
@@ -802,7 +929,10 @@ describe("persistence format", () => {
     const other = JSON.stringify({
       version: 2,
       workspaces: [
-        { id: "theirs", windows: [{ module: "accounts", x: 0, y: 0, w: 4, h: 4 }] },
+        {
+          id: "theirs",
+          windows: [{ module: "accounts", x: 0, y: 0, w: 4, h: 4 }],
+        },
       ],
       activeWorkspaceId: "theirs",
     });
@@ -810,7 +940,10 @@ describe("persistence format", () => {
 
     act(() => {
       window.dispatchEvent(
-        new StorageEvent("storage", { key: "bessel:workspaces", newValue: other }),
+        new StorageEvent("storage", {
+          key: "bessel:workspaces",
+          newValue: other,
+        }),
       );
     });
 

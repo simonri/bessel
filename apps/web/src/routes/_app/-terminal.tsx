@@ -3,7 +3,7 @@ import { TerminalWidget } from "@/components/terminal-widget";
 import { decodeCommands } from "@/lib/widget-commands";
 
 function sshQuote(p: string): string {
-  return "'" + p.replace(/'/g, "'\\''") + "'";
+  return `'${p.replace(/'/g, "'\\''")}'`;
 }
 
 export function TerminalPage() {
@@ -22,5 +22,12 @@ export function TerminalPage() {
     );
   }
 
-  return <TerminalWidget command="default-shell" args={[]} cwd={path} commands={commands} />;
+  return (
+    <TerminalWidget
+      command="default-shell"
+      args={[]}
+      cwd={path}
+      commands={commands}
+    />
+  );
 }

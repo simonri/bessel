@@ -155,9 +155,8 @@ export function ImportDialog() {
           className="space-y-4"
         >
           {/* Source */}
-          <form.Field
-            name="source"
-            children={(field) => (
+          <form.Field name="source">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="source">
                   Source <span className="text-destructive">*</span>
@@ -186,12 +185,11 @@ export function ImportDialog() {
                 </Select>
               </div>
             )}
-          />
+          </form.Field>
 
           {/* Account */}
-          <form.Field
-            name="bankAccountId"
-            children={(field) => (
+          <form.Field name="bankAccountId">
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor="bank-account">
                   Account <span className="text-destructive">*</span>
@@ -213,16 +211,14 @@ export function ImportDialog() {
                 </Select>
               </div>
             )}
-          />
+          </form.Field>
 
           {/* File — shown for file-based banks */}
-          <form.Subscribe
-            selector={(s) => s.values.source}
-            children={(source) =>
+          <form.Subscribe selector={(s) => s.values.source}>
+            {(source) =>
               source && source !== "klarna" ? (
-                <form.Field
-                  name="file"
-                  children={(field) => {
+                <form.Field name="file">
+                  {(field) => {
                     const bank = FILE_BANKS.find((b) => b.value === source);
                     return (
                       <div className="space-y-2">
@@ -241,20 +237,18 @@ export function ImportDialog() {
                       </div>
                     );
                   }}
-                />
+                </form.Field>
               ) : null
             }
-          />
+          </form.Subscribe>
 
           {/* Klarna credentials — shown only when Klarna is selected */}
-          <form.Subscribe
-            selector={(s) => s.values.source}
-            children={(source) =>
+          <form.Subscribe selector={(s) => s.values.source}>
+            {(source) =>
               source === "klarna" ? (
                 <div className="space-y-3">
-                  <form.Field
-                    name="klarnaToken"
-                    children={(field) => (
+                  <form.Field name="klarnaToken">
+                    {(field) => (
                       <div className="space-y-1.5">
                         <Label htmlFor="klarna-token">
                           Authorization header{" "}
@@ -270,10 +264,9 @@ export function ImportDialog() {
                         />
                       </div>
                     )}
-                  />
-                  <form.Field
-                    name="klarnaCookie"
-                    children={(field) => (
+                  </form.Field>
+                  <form.Field name="klarnaCookie">
+                    {(field) => (
                       <div className="space-y-1.5">
                         <Label htmlFor="klarna-cookie">Cookie header</Label>
                         <textarea
@@ -286,14 +279,14 @@ export function ImportDialog() {
                         />
                       </div>
                     )}
-                  />
+                  </form.Field>
                   <p className="text-xs text-muted-foreground">
                     Devtools → Network → any Klarna request → Headers tab
                   </p>
                 </div>
               ) : null
             }
-          />
+          </form.Subscribe>
 
           {result && (
             <div className="text-sm rounded-md border p-3 space-y-0.5">
@@ -313,9 +306,8 @@ export function ImportDialog() {
               {result ? "Done" : "Cancel"}
             </Button>
             {!result && (
-              <form.Subscribe
-                selector={(s) => s.values}
-                children={(values) => {
+              <form.Subscribe selector={(s) => s.values}>
+                {(values) => {
                   const isKlarna = values.source === "klarna";
                   const ready = isKlarna
                     ? !!(values.klarnaToken.trim() && values.bankAccountId)
@@ -326,7 +318,7 @@ export function ImportDialog() {
                     </Button>
                   );
                 }}
-              />
+              </form.Subscribe>
             )}
           </DialogFooter>
         </form>

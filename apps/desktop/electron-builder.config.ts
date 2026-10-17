@@ -35,6 +35,7 @@ const config: Configuration = {
     repo: "bessel",
     releaseType: "release",
   },
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder fills in these placeholders itself
   artifactName: "${productName}-${os}-${arch}.${ext}",
   linux: {
     target: ["AppImage"],

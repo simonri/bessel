@@ -13,7 +13,7 @@ _INGREDIENT_NAMES_PATH = "$.ingredient_groups[*].items[*].name"
 class RecipeRepository(RepositoryBase[Recipe], RepositoryIDMixin[Recipe, UUID]):
   model = Recipe
 
-  def get_filtered_statement(self, user_id: UUID, *, search: str | None = None, ingredients: Sequence[str] = ()) -> Select[tuple[Recipe]]:
+  def get_filtered_statement(self, user_id: UUID, *, search: str | None = None, ingredients: Sequence[str] = ()) -> Select[Recipe]:
     """Every ingredient must match an ingredient name of a structured recipe, or the content of a markdown-only one."""
     statement = self.get_base_statement().where(Recipe.user_id == user_id)
     if search:

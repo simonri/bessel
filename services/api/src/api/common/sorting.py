@@ -11,7 +11,7 @@ from api.exceptions import BesselRequestValidationError
 type Sorting[PE] = tuple[PE, bool]
 
 
-def apply_sorting[M, PE: StrEnum](statement: Select[tuple[M]], model: type[M], sorting: list[Sorting[PE]]) -> Select[tuple[M]]:
+def apply_sorting[M, PE: StrEnum](statement: Select[M], model: type[M], sorting: list[Sorting[PE]]) -> Select[M]:
   for prop, desc in sorting:
     column = getattr(model, prop.value)
     statement = statement.order_by(column.desc() if desc else column.asc())

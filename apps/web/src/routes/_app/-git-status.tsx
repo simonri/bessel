@@ -538,6 +538,7 @@ export function GitStatus() {
         )}
 
         <button
+          type="button"
           onClick={() => fetchMutation.mutate()}
           disabled={fetchMutation.isPending || statusQuery.isFetching || isBusy}
           title="Fetch from remote"
@@ -558,6 +559,7 @@ export function GitStatus() {
               : "Merge in progress — commit to finish it"}
           </span>
           <button
+            type="button"
             onClick={abortMergeWithConfirm}
             disabled={mergeAbortMutation.isPending}
             className="shrink-0 rounded border border-amber-400/30 px-1.5 py-0.5 text-10 text-amber-200/80 transition-colors hover:bg-amber-400/15 disabled:opacity-40"
@@ -605,6 +607,7 @@ export function GitStatus() {
             />
             <div className="flex gap-1">
               <button
+                type="button"
                 onClick={() => commitMutation.mutate(commitMessage)}
                 disabled={!canCommit}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/[0.08] py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/[0.12] hover:text-white disabled:cursor-default disabled:opacity-25"
@@ -617,6 +620,7 @@ export function GitStatus() {
                     : "Commit"}
               </button>
               <button
+                type="button"
                 onClick={() => pullMutation.mutate()}
                 disabled={!canPull}
                 title={
@@ -633,6 +637,7 @@ export function GitStatus() {
                 )}
               </button>
               <button
+                type="button"
                 onClick={() => pushMutation.mutate()}
                 disabled={!canPush}
                 title={`Push ${status?.ahead ?? 0} commit${(status?.ahead ?? 0) === 1 ? "" : "s"} to remote`}

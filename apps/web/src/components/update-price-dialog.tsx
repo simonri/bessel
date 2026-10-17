@@ -1,8 +1,3 @@
-import { useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { DollarSign } from "lucide-react";
-import { format } from "date-fns";
 import type { SecuritySchema } from "@bessel/client";
 import {
   createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation,
@@ -19,6 +14,11 @@ import {
 } from "@bessel/ui/components/dialog";
 import { Input } from "@bessel/ui/components/input";
 import { Label } from "@bessel/ui/components/label";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { DollarSign } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
 
@@ -28,10 +28,13 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation({ client }),
+    ...createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation({
+      client,
+    }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client }).queryKey,
+        queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client })
+          .queryKey,
       });
       toast.success("Price updated");
       handleClose();
@@ -47,7 +50,9 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
       price_per_unit: "",
     },
     onSubmit: ({ value }) => {
-      const priceCents = Math.round(parseFloat(value.price_per_unit) * 100);
+      const priceCents = Math.round(
+        Number.parseFloat(value.price_per_unit) * 100,
+      );
       mutation.mutate({
         client,
         path: { security_id: security.id },
@@ -97,7 +102,8 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
           <DialogTitle>Update Price</DialogTitle>
           <DialogDescription>
             {security.name}
-            {security.ticker ? ` (${security.ticker})` : ""} — {security.currency}
+            {security.ticker ? ` (${security.ticker})` : ""} —{" "}
+            {security.currency}
           </DialogDescription>
         </DialogHeader>
 
@@ -109,9 +115,8 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
           className="space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
-            <form.Field
-              name="price_per_unit"
-              children={(field) => (
+            <form.Field name="price_per_unit">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="price-val">Price ({security.currency})</Label>
                   <Input
@@ -127,11 +132,10 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
                   />
                 </div>
               )}
-            />
+            </form.Field>
 
-            <form.Field
-              name="price_date"
-              children={(field) => (
+            <form.Field name="price_date">
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor="price-date">Date</Label>
                   <Input
@@ -143,7 +147,7 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
                   />
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           {mutation.isError && (
@@ -158,12 +162,13 @@ export function UpdatePriceDialog({ security }: { security: SecuritySchema }) {
             </Button>
             <form.Subscribe
               selector={(state) => [state.values.price_per_unit] as const}
-              children={([price]) => (
+            >
+              {([price]) => (
                 <Button type="submit" disabled={mutation.isPending || !price}>
                   {mutation.isPending ? "Saving..." : "Save"}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

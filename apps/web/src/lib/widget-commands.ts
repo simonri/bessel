@@ -10,7 +10,9 @@ export function decodeCommands(raw?: string): string[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((c): c is string => typeof c === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((c): c is string => typeof c === "string")
+      : [];
   } catch {
     return [];
   }

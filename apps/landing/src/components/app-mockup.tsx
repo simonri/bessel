@@ -14,7 +14,9 @@ function MiniWindow({
       className={`flex flex-col overflow-hidden rounded-lg border border-white/[0.07] bg-[#16171c]/90 ${className ?? ""}`}
     >
       <div className="flex items-center justify-between border-b border-white/[0.05] px-3 py-1.5">
-        <span className="text-[10px] font-medium tracking-wide text-white/45">{title}</span>
+        <span className="text-[10px] font-medium tracking-wide text-white/45">
+          {title}
+        </span>
         <span className="size-1.5 rounded-full bg-white/10" />
       </div>
       <div className="min-h-0 flex-1 px-3 py-2.5">{children}</div>
@@ -26,10 +28,18 @@ function NetWorthWidget() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-baseline gap-2">
-        <span className="text-lg font-medium tracking-tight text-white/90">$128,410</span>
-        <span className="text-[10px] font-medium text-emerald-400/90">+2.4%</span>
+        <span className="text-lg font-medium tracking-tight text-white/90">
+          $128,410
+        </span>
+        <span className="text-[10px] font-medium text-emerald-400/90">
+          +2.4%
+        </span>
       </div>
-      <svg viewBox="0 0 200 56" preserveAspectRatio="none" className="mt-2 w-full flex-1">
+      <svg
+        viewBox="0 0 200 56"
+        preserveAspectRatio="none"
+        className="mt-2 w-full flex-1"
+      >
         <defs>
           <linearGradient id="nw-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#f97316" stopOpacity="0.25" />
@@ -53,10 +63,25 @@ function NetWorthWidget() {
 }
 
 const TRANSACTIONS = [
-  { name: "Blue Bottle", category: "Coffee", amount: "−$6.40", positive: false },
-  { name: "ICA Kvantum", category: "Groceries", amount: "−$54.20", positive: false },
+  {
+    name: "Blue Bottle",
+    category: "Coffee",
+    amount: "−$6.40",
+    positive: false,
+  },
+  {
+    name: "ICA Kvantum",
+    category: "Groceries",
+    amount: "−$54.20",
+    positive: false,
+  },
   { name: "Salary", category: "Income", amount: "+$4,850", positive: true },
-  { name: "Vanguard", category: "Transfer", amount: "−$500.00", positive: false },
+  {
+    name: "Vanguard",
+    category: "Transfer",
+    amount: "−$500.00",
+    positive: false,
+  },
 ];
 
 function TransactionsWidget() {
@@ -67,8 +92,12 @@ function TransactionsWidget() {
           <span className="flex size-4 items-center justify-center rounded-full bg-white/[0.07] text-[7px] font-semibold text-white/60">
             {tx.name[0]}
           </span>
-          <span className="flex-1 truncate text-[10px] text-white/70">{tx.name}</span>
-          <span className="hidden text-[9px] text-white/30 lg:block">{tx.category}</span>
+          <span className="flex-1 truncate text-[10px] text-white/70">
+            {tx.name}
+          </span>
+          <span className="hidden text-[9px] text-white/30 lg:block">
+            {tx.category}
+          </span>
           <span
             className={`text-[10px] tabular-nums ${tx.positive ? "text-emerald-400/90" : "text-white/60"}`}
           >
@@ -87,7 +116,9 @@ function TerminalWidget() {
       <span className="text-white/70">
         <span className="text-[#f97316]">❯</span> uv run task api
       </span>
-      <span className="text-white/40">INFO Uvicorn running on 127.0.0.1:8100</span>
+      <span className="text-white/40">
+        INFO Uvicorn running on 127.0.0.1:8100
+      </span>
       <span className="text-white/70">
         <span className="text-[#f97316]">❯</span>
         <span className="ml-1 inline-block h-3 w-[7px] translate-y-0.5 animate-pulse bg-[#f97316]" />
@@ -112,7 +143,10 @@ function GitWidget() {
         <span className="text-red-400/80">−4</span>
       </div>
       {GIT_FILES.map((file) => (
-        <div key={file.path} className="flex items-center gap-2 font-mono text-[9.5px]">
+        <div
+          key={file.path}
+          className="flex items-center gap-2 font-mono text-[9.5px]"
+        >
           <span className={file.color}>{file.status}</span>
           <span className="truncate text-white/50">{file.path}</span>
         </div>
@@ -165,11 +199,14 @@ function ActivityWidget() {
         const alpha = cellAlpha(i);
         return (
           <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: a fixed decorative grid; each cell is its position
             key={i}
             className="aspect-square rounded-[2px]"
             style={{
               backgroundColor:
-                alpha === 0 ? "rgba(255,255,255,0.04)" : `rgba(249,115,22,${(0.15 + alpha * 0.6).toFixed(2)})`,
+                alpha === 0
+                  ? "rgba(255,255,255,0.04)"
+                  : `rgba(249,115,22,${(0.15 + alpha * 0.6).toFixed(2)})`,
             }}
           />
         );
@@ -205,26 +242,46 @@ export function AppMockup({ className }: { className?: string }) {
                 </span>
               ))}
             </div>
-            <span className="text-[10px] tabular-nums text-white/40">21:47</span>
+            <span className="text-[10px] tabular-nums text-white/40">
+              21:47
+            </span>
           </div>
 
           <div className="grid grid-cols-12 gap-2 p-2 sm:gap-2.5 sm:p-3">
-            <MiniWindow title="Net worth" className="col-span-7 h-36 sm:col-span-5">
+            <MiniWindow
+              title="Net worth"
+              className="col-span-7 h-36 sm:col-span-5"
+            >
               <NetWorthWidget />
             </MiniWindow>
-            <MiniWindow title="Terminal" className="col-span-5 h-36 sm:col-span-4">
+            <MiniWindow
+              title="Terminal"
+              className="col-span-5 h-36 sm:col-span-4"
+            >
               <TerminalWidget />
             </MiniWindow>
-            <MiniWindow title="Tasks" className="col-span-6 h-36 max-sm:hidden sm:col-span-3">
+            <MiniWindow
+              title="Tasks"
+              className="col-span-6 h-36 max-sm:hidden sm:col-span-3"
+            >
               <TasksWidget />
             </MiniWindow>
-            <MiniWindow title="Transactions" className="col-span-7 h-32 sm:col-span-4">
+            <MiniWindow
+              title="Transactions"
+              className="col-span-7 h-32 sm:col-span-4"
+            >
               <TransactionsWidget />
             </MiniWindow>
-            <MiniWindow title="bessel.git" className="col-span-5 h-32 sm:col-span-4">
+            <MiniWindow
+              title="bessel.git"
+              className="col-span-5 h-32 sm:col-span-4"
+            >
               <GitWidget />
             </MiniWindow>
-            <MiniWindow title="Activity" className="col-span-12 h-32 max-sm:hidden sm:col-span-4">
+            <MiniWindow
+              title="Activity"
+              className="col-span-12 h-32 max-sm:hidden sm:col-span-4"
+            >
               <ActivityWidget />
             </MiniWindow>
           </div>

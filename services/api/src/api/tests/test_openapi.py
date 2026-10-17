@@ -24,7 +24,7 @@ async def test_openapi_schema_documents_every_endpoint_module(client: AsyncClien
   modules = _endpoint_module_routes()
   assert len(modules) >= 20
   for name, routes in modules.items():
-    expected = {(f"/v1{route.path}", method) for route in routes for method in route.methods}
+    expected = {(f"/v1{route.path}", method) for route in routes for method in route.methods or ()}
     assert expected, name
     assert expected <= documented, f"{name} endpoints missing from the schema: {sorted(expected - documented)}"
 

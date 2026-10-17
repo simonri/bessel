@@ -59,8 +59,7 @@ class HealthKitWorkoutRepository(RepositoryBase[HealthKitWorkout], RepositoryIDM
         "deleted_at": None,
       },
     )
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
   async def soft_delete_by_healthkit_uuids(self, user_id: UUID, healthkit_uuids: list[UUID]) -> int:
     if not healthkit_uuids:
@@ -74,10 +73,9 @@ class HealthKitWorkoutRepository(RepositoryBase[HealthKitWorkout], RepositoryIDM
       )
       .values(deleted_at=utc_now(), modified_at=utc_now())
     )
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
-  def get_list_statement(self, user_id: UUID, *, since: datetime | None = None, until: datetime | None = None) -> Select[tuple[HealthKitWorkout]]:
+  def get_list_statement(self, user_id: UUID, *, since: datetime | None = None, until: datetime | None = None) -> Select[HealthKitWorkout]:
     statement = self.get_base_statement().where(HealthKitWorkout.user_id == user_id, HealthKitWorkout.deleted_at.is_(None))
     if since is not None:
       statement = statement.where(HealthKitWorkout.start_date >= since)
@@ -130,8 +128,7 @@ class HealthKitDailyMetricRepository(RepositoryBase[HealthKitDailyMetric], Repos
         "deleted_at": None,
       },
     )
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
   async def list_between(self, user_id: UUID, start: date, end: date) -> Sequence[HealthKitDailyMetric]:
     """Days in [start, end], oldest first."""
@@ -164,8 +161,7 @@ class HealthKitSleepSampleRepository(RepositoryBase[HealthKitSleepSample], Repos
         "deleted_at": None,
       },
     )
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
   async def soft_delete_by_healthkit_uuids(self, user_id: UUID, healthkit_uuids: list[UUID]) -> int:
     if not healthkit_uuids:
@@ -179,10 +175,9 @@ class HealthKitSleepSampleRepository(RepositoryBase[HealthKitSleepSample], Repos
       )
       .values(deleted_at=utc_now(), modified_at=utc_now())
     )
-    result = await self.session.execute(statement)
-    return result.rowcount
+    return await self.execute_for_rowcount(statement)
 
-  def get_list_statement(self, user_id: UUID, start: datetime | None = None, end: datetime | None = None) -> Select[tuple[HealthKitSleepSample]]:
+  def get_list_statement(self, user_id: UUID, start: datetime | None = None, end: datetime | None = None) -> Select[HealthKitSleepSample]:
     """Newest first; with `start`/`end`, only samples overlapping that window."""
     statement = self.get_base_statement().where(HealthKitSleepSample.user_id == user_id, HealthKitSleepSample.deleted_at.is_(None))
     if start is not None:

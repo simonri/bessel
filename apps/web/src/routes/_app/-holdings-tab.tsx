@@ -2,7 +2,6 @@ import type { HoldingSchema } from "@bessel/client";
 import { getHoldingsV1InvestmentsHoldingsGetOptions } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
 import { TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { CreateSecurityDialog } from "@/components/create-security-dialog";
@@ -12,10 +11,12 @@ import {
   BarRow,
   EmptyState,
   Panel,
+  placeholderKeys,
   SectionLabel,
   StatTile,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import type { DataColumnDef } from "@/lib/data-table";
 import { formatAmount, formatQuantity } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ function gainClass(value: number) {
 
 // Module scope: captures nothing, so there's no reason to rebuild the column
 // model (and every cell closure) per render.
-const columns: ColumnDef<HoldingSchema>[] = [
+const columns: DataColumnDef<HoldingSchema>[] = [
   {
     accessorKey: "security_name",
     header: "Security",
@@ -184,17 +185,17 @@ export function HoldingsTab() {
     return (
       <div className="space-y-5">
         <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
+          {placeholderKeys(3).map((key) => (
             <Skeleton
-              key={i}
+              key={key}
               className="h-[4.25rem] rounded-xl bg-white/[0.06]"
             />
           ))}
         </div>
         <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {placeholderKeys(6).map((key) => (
             <Skeleton
-              key={i}
+              key={key}
               className="h-10 w-full rounded-lg bg-white/[0.06]"
             />
           ))}

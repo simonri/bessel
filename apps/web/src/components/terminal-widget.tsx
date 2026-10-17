@@ -529,6 +529,7 @@ export function TerminalWidget({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <button
+              type="button"
               onClick={handleCopy}
               disabled={!contextMenu.hasSelection}
               className="flex w-full items-center px-4 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-default"
@@ -536,6 +537,7 @@ export function TerminalWidget({
               Copy
             </button>
             <button
+              type="button"
               onClick={handlePaste}
               className="flex w-full items-center px-4 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
             >

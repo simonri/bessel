@@ -3,7 +3,7 @@
 from collections import Counter
 from collections.abc import Sequence
 from datetime import date, datetime, timedelta
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypedDict
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -213,7 +213,17 @@ def to_task(task: TaskModel, today: date, *, detailed: bool = False) -> Task:
   )
 
 
-def _repeat_fields(repeat: Repeat) -> dict[str, object]:
+class _RepeatFields(TypedDict, total=False):
+  is_recurring: bool
+  rrule_frequency: RruleFrequency
+  rrule_interval: int
+  rrule_day_of_week: int | None
+  rrule_day_of_month: int | None
+
+
+def _repeat_fields(repeat: Repeat | None) -> _RepeatFields:
+  if repeat is None:
+    return {}
   frequency = {"day": RruleFrequency.daily, "week": RruleFrequency.weekly, "month": RruleFrequency.monthly, "year": RruleFrequency.yearly}[repeat.every]
   return {
     "is_recurring": True,
@@ -492,7 +502,7 @@ async def add_tasks(ctx: Context, tasks: Annotated[list[NewTask], Field(min_leng
         due_date=due_date,
         project=project_name,
         tags=item.tags,
-        **(_repeat_fields(item.repeat) if item.repeat else {}),
+        **_repeat_fields(item.repeat),
       )
       created.append(to_task(await task_service.create(session, user.id, body), today))
     return AddedTasks(created=created, already_existed=existed)

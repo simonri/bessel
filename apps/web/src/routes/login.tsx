@@ -36,6 +36,7 @@ function LoginPage() {
           <p className="text-sm text-white/70">Authentication error</p>
           <p className="text-xs text-white/50">{error.message}</p>
           <button
+            type="button"
             onClick={() => void startLogin(loginWithRedirect)}
             className="text-xs text-white/60 underline"
           >

@@ -1,5 +1,5 @@
-const { execFileSync } = require("child_process");
-const path = require("path");
+const { execFileSync } = require("node:child_process");
+const path = require("node:path");
 
 // The mac build is intentionally unsigned (build.mac.identity is null — no
 // Developer ID certificate) and electron-builder's own signing step is a
@@ -13,6 +13,11 @@ const path = require("path");
 // needing a paid Apple Developer account.
 module.exports = async function afterSign(context) {
   if (context.electronPlatformName !== "darwin") return;
-  const appPath = path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
-  execFileSync("codesign", ["--force", "--deep", "--sign", "-", appPath], { stdio: "inherit" });
+  const appPath = path.join(
+    context.appOutDir,
+    `${context.packager.appInfo.productFilename}.app`,
+  );
+  execFileSync("codesign", ["--force", "--deep", "--sign", "-", appPath], {
+    stdio: "inherit",
+  });
 };

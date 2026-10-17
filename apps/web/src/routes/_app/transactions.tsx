@@ -40,7 +40,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import type { RowSelectionState } from "@tanstack/react-table";
 import { format, isToday, isYesterday } from "date-fns";
 import {
   ArrowLeftRight,
@@ -62,10 +62,12 @@ import {
   IconButton,
   PageHeader,
   PeriodNav,
+  placeholderKeys,
   SoftButton,
 } from "@/components/ui-kit";
 import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
+import type { DataColumnDef } from "@/lib/data-table";
 import { apiDate } from "@/lib/local-day";
 import { formatAmount } from "@/lib/money";
 import {
@@ -90,7 +92,7 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
         : typeof v === "number"
           ? v
           : Number.NaN;
-    return isNaN(n) ? undefined : n;
+    return Number.isNaN(n) ? undefined : n;
   };
   return {
     bank_account_id: asArr(raw.bank_account_id),
@@ -132,7 +134,7 @@ function getDateGroupLabel(
   const prevStr = prev ? toLocalDateStr(prev.transaction_date) : null;
   if (dateStr === prevStr) return null;
 
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(`${dateStr}T00:00:00`);
   if (isToday(d)) return "Today";
   if (isYesterday(d)) return "Yesterday";
   return format(d, "EEE, MMM d");
@@ -455,7 +457,7 @@ function Transactions() {
   // Stable columns identity — a fresh array (with fresh cell closures) every
   // render forces react-table to rebuild its column model per keystroke in
   // the filters and re-render every cell.
-  const columns: ColumnDef<TransactionSchema>[] = useMemo(
+  const columns: DataColumnDef<TransactionSchema>[] = useMemo(
     () => [
       {
         id: "select",
@@ -603,9 +605,9 @@ function Transactions() {
       {/* Table */}
       {isLoading ? (
         <div className="space-y-1.5">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {placeholderKeys(8).map((key) => (
             <Skeleton
-              key={i}
+              key={key}
               className="h-10 w-full rounded-lg bg-white/[0.06]"
             />
           ))}
