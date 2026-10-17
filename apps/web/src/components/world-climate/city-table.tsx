@@ -13,9 +13,16 @@ import {
   TAP_WATER_LABEL,
   tempColor,
 } from "./climate-scale";
+import { type CityScore, describeScore, scoreColor } from "./world-score";
 
 type SortKey =
   | "city"
+  | "score"
+  | "rain"
+  | "humidity"
+  | "cloud"
+  | "population"
+  | "density"
   | "air"
   | "sea"
   | "distance"
@@ -25,9 +32,15 @@ type SortKey =
 
 const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "city", label: "City", numeric: false },
+  { key: "score", label: "Score", numeric: true },
   { key: "air", label: "Air", numeric: true },
   { key: "sea", label: "Sea", numeric: true },
+  { key: "rain", label: "Rain", numeric: true },
+  { key: "humidity", label: "Humidity", numeric: true },
+  { key: "cloud", label: "Cloud", numeric: true },
   { key: "distance", label: "To the sea", numeric: true },
+  { key: "population", label: "Population", numeric: true },
+  { key: "density", label: "Density", numeric: true },
   { key: "salary", label: "Salary", numeric: true },
   { key: "water", label: "Tap water", numeric: false },
   { key: "airbnb", label: "Airbnb", numeric: false },
@@ -39,6 +52,9 @@ const ASCENDING_FIRST = new Set<SortKey>([
   "distance",
   "water",
   "airbnb",
+  "rain",
+  "humidity",
+  "cloud",
 ]);
 
 const AIRBNB_ORDER: AirbnbRule["status"][] = [
@@ -60,10 +76,23 @@ const NO_FACTS: CountryFacts = { salary: null, tapWater: null };
 function sortValue(
   point: ClimatePoint,
   facts: CountryFacts,
+  score: CityScore | undefined,
   key: SortKey,
   month: number,
 ): string | number | null {
   switch (key) {
+    case "score":
+      return score?.total ?? null;
+    case "rain":
+      return point.rainMm[month];
+    case "humidity":
+      return point.humidity[month];
+    case "cloud":
+      return point.cloud[month];
+    case "population":
+      return point.population ?? null;
+    case "density":
+      return point.densityKm2 ?? null;
     case "air":
       return point.temps[month];
     case "sea":
@@ -79,6 +108,12 @@ function sortValue(
     default:
       return point.name ?? "";
   }
+}
+
+/** "1.3M", "540k", "30k". */
+function formatPopulation(people: number): string {
+  if (people >= 1_000_000) return `${(people / 1_000_000).toFixed(1)}M`;
+  return `${Math.round(people / 1000)}k`;
 }
 
 function TempChip({ celsius }: { celsius: number }) {
@@ -97,16 +132,19 @@ function TempChip({ celsius }: { celsius: number }) {
 export function CityTable({
   points,
   countries,
+  scores,
   month,
   query,
 }: {
   points: ClimatePoint[];
   countries: Record<string, CountryFacts>;
+  /** Each place's score for `month`, by placeKey. */
+  scores: Map<string, CityScore>;
   month: number;
   query: string;
 }) {
   const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({
-    key: "air",
+    key: "score",
     descending: true,
   });
 
@@ -114,7 +152,13 @@ export function CityTable({
     const q = query.trim().toLowerCase();
     const direction = sort.descending ? -1 : 1;
     const value = (p: ClimatePoint) =>
-      sortValue(p, countries[p.country] ?? NO_FACTS, sort.key, month);
+      sortValue(
+        p,
+        countries[p.country] ?? NO_FACTS,
+        scores.get(placeKey(p)),
+        sort.key,
+        month,
+      );
     return points
       .filter(
         (p) =>
@@ -135,7 +179,7 @@ export function CityTable({
             : x - (y as number))
         );
       });
-  }, [points, countries, month, query, sort]);
+  }, [points, countries, scores, month, query, sort]);
 
   const sortBy = (key: SortKey) =>
     setSort((current) =>
@@ -146,7 +190,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[880px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[1320px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -186,6 +230,7 @@ export function CityTable({
         <tbody>
           {rows.map((p) => {
             const facts = countries[p.country] ?? NO_FACTS;
+            const score = scores.get(placeKey(p));
             return (
               <tr key={placeKey(p)} className="border-t border-white/[0.05]">
                 <th scope="row" className="px-4 py-1.5 text-left font-normal">
@@ -193,13 +238,51 @@ export function CityTable({
                   <span className="text-white/40"> - {p.country}</span>
                 </th>
                 <td className="px-4 py-1 text-right">
+                  {score && (
+                    <span
+                      title={describeScore(score)}
+                      className="inline-flex h-6 min-w-9 items-center justify-center rounded-[4px] px-1.5 text-11 font-semibold text-black/80"
+                      style={{ background: scoreColor(score.total) }}
+                    >
+                      {score.total}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-1 text-right">
                   <TempChip celsius={p.temps[month]} />
                 </td>
                 <td className="px-4 py-1 text-right">
                   <TempChip celsius={p.seaTemps[month]} />
                 </td>
                 <td className="px-4 py-1.5 text-right text-white/70">
+                  {p.rainMm[month]} mm
+                </td>
+                <td className="px-4 py-1.5 text-right text-white/70">
+                  {p.humidity[month]}%
+                </td>
+                <td className="px-4 py-1.5 text-right text-white/70">
+                  {p.cloud[month]}%
+                </td>
+                <td className="px-4 py-1.5 text-right text-white/70">
                   {formatSeaDistance(p.seaKm)}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    p.population ? "text-white/70" : "text-white/30",
+                  )}
+                >
+                  {p.population ? formatPopulation(p.population) : "No data"}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    p.densityKm2 ? "text-white/70" : "text-white/30",
+                  )}
+                >
+                  {p.densityKm2
+                    ? `${p.densityKm2.toLocaleString("en-US")}/km²`
+                    : "No data"}
                 </td>
                 <td
                   className={cn(

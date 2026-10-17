@@ -138,4 +138,46 @@ describe("WorldClimatePage", () => {
     expect(rowTexts()[0]).not.toContain("No data");
     expect(rowTexts().at(-1)).toContain("No data");
   });
+
+  it("ranks cities by score for the month, best first, and explains each score", () => {
+    render(<WorldClimatePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Cities" }));
+    const scoreCells = () =>
+      screen
+        .getAllByRole("rowheader")
+        .map((cell) => Number(cell.parentElement?.children[1]?.textContent));
+    const january = scoreCells();
+    expect(january[0]).toBeGreaterThanOrEqual(january[1]);
+    expect(january[0]).toBeGreaterThan(january.at(-1) ?? 0);
+
+    const best = screen
+      .getAllByRole("rowheader")[0]
+      .parentElement?.querySelector("[title]") as HTMLElement;
+    expect(best.title).toMatch(
+      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10$/,
+    );
+
+    expect(screen.getByText(/Best for you in January/).textContent).toContain(
+      screen.getAllByRole("rowheader")[0].textContent?.split(" - ")[0] ?? "",
+    );
+  });
+
+  it("colours the map by score when asked", () => {
+    render(<WorldClimatePage />);
+    const brazil = () =>
+      document
+        .querySelector('path[data-country="Brazil"]')
+        ?.getAttribute("fill");
+    const byTemperature = brazil();
+    fireEvent.click(screen.getByRole("button", { name: "Score" }));
+    expect(
+      screen
+        .getByRole("button", { name: "Score" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(brazil()).not.toBe(byTemperature);
+    expect(
+      screen.getByRole("img", { name: "World map of city scores" }),
+    ).toBeTruthy();
+  });
 });

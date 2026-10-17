@@ -25,6 +25,9 @@ const point = (
   seaKm: 0,
   seaTemps: Array<number>(12).fill(0),
   airbnb: { status: "allowed" },
+  humidity: Array<number>(12).fill(0),
+  rainMm: Array<number>(12).fill(0),
+  cloud: Array<number>(12).fill(0),
 });
 
 describe("tempColor", () => {

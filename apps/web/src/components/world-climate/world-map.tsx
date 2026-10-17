@@ -9,6 +9,7 @@ import {
   placeKey,
   tempColor,
 } from "./climate-scale";
+import { scoreColor } from "./world-score";
 
 const NO_DATA = "rgba(255, 255, 255, 0.06)";
 const TOOLTIP_WIDTH = 236;
@@ -21,13 +22,17 @@ interface Hover {
   country: string;
 }
 
-/** The world coloured by each country's average temperature in `month`. */
+export type MapMode = "temperature" | "score";
+
+/** The world coloured by each country's average temperature or score in `month`. */
 export function WorldMap({
   shapes,
   view,
   climates,
   countries,
   month,
+  mode,
+  scores,
 }: {
   /** Country outlines, already projected into `view`'s coordinates. */
   shapes: MapShape[];
@@ -35,6 +40,9 @@ export function WorldMap({
   climates: CountryClimate[];
   countries: Record<string, CountryFacts>;
   month: number;
+  mode: MapMode;
+  /** Each place's score for `month`, by placeKey, and each country's average. */
+  scores: { byPlace: Map<string, number>; byCountry: Map<string, number> };
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<Hover | null>(null);
@@ -64,6 +72,14 @@ export function WorldMap({
     });
   };
 
+  const countryFill = (name: string, climate?: CountryClimate) => {
+    if (!climate) return NO_DATA;
+    if (mode === "temperature") return tempColor(climate.temps[month]);
+    const score = scores.byCountry.get(name);
+    return score === undefined ? NO_DATA : scoreColor(score);
+  };
+  const countryScore = hover ? scores.byCountry.get(hover.country) : undefined;
+
   return (
     <div
       ref={wrapRef}
@@ -74,7 +90,11 @@ export function WorldMap({
         viewBox={`0 ${view.top} ${view.width} ${view.height}`}
         className="block h-auto w-full"
         role="img"
-        aria-label="World map of average temperatures"
+        aria-label={
+          mode === "score"
+            ? "World map of city scores"
+            : "World map of average temperatures"
+        }
       >
         {shapes.map(({ name, d }) => {
           const climate = byCountry.get(name);
@@ -83,7 +103,7 @@ export function WorldMap({
               key={name}
               d={d}
               data-country={name}
-              fill={climate ? tempColor(climate.temps[month]) : NO_DATA}
+              fill={countryFill(name, climate)}
               stroke="rgba(0, 0, 0, 0.35)"
               strokeWidth={0.5}
               className="transition-[fill] duration-300 hover:brightness-110"
@@ -97,7 +117,11 @@ export function WorldMap({
             cx={place.x}
             cy={place.y}
             r={place.capital ? 2.6 : 2}
-            fill={tempColor(place.temps[month])}
+            fill={
+              mode === "score"
+                ? scoreColor(scores.byPlace.get(placeKey(place)) ?? 0)
+                : tempColor(place.temps[month])
+            }
             stroke="rgba(0, 0, 0, 0.6)"
             strokeWidth={0.75}
             onPointerMove={track(place.country)}
@@ -118,7 +142,9 @@ export function WorldMap({
           <p className="flex items-baseline justify-between gap-3 font-medium text-white/90">
             <span className="truncate">{hovered.country}</span>
             <span className="shrink-0 tabular-nums">
-              {formatTemp(hovered.temps[month])}
+              {mode === "score" && countryScore !== undefined
+                ? `Score ${Math.round(countryScore)}`
+                : formatTemp(hovered.temps[month])}
             </span>
           </p>
           {hoveredFacts && (
@@ -138,6 +164,11 @@ export function WorldMap({
                 >
                   <span className="truncate">{p.name}</span>
                   <span className="shrink-0 tabular-nums">
+                    {mode === "score" && (
+                      <span className="text-white/85">
+                        {scores.byPlace.get(placeKey(p))}{" "}
+                      </span>
+                    )}
                     {formatTemp(p.temps[month])}
                     <span className="text-11 text-sky-200/60">
                       {" "}

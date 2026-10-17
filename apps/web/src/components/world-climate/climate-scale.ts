@@ -15,6 +15,16 @@ export interface ClimatePoint {
   /** That sea's average surface °C for January..December. */
   seaTemps: number[];
   airbnb: AirbnbRule;
+  /** Average relative humidity per month, %. */
+  humidity: number[];
+  /** Total rain per month, mm. */
+  rainMm: number[];
+  /** Average cloud cover per month, %. */
+  cloud: number[];
+  /** Metro population, where known. */
+  population?: number;
+  /** People per km² in the city proper, where known. */
+  densityKm2?: number;
 }
 
 export interface AirbnbRule {

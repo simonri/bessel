@@ -11,12 +11,14 @@ import {
   formatTemp,
   type MapShape,
   MONTHS,
+  placeKey,
   SCALE_MAX,
   SCALE_MIN,
   scaleGradient,
   tempColor,
 } from "./climate-scale";
-import { WorldMap } from "./world-map";
+import { type MapMode, WorldMap } from "./world-map";
+import { type CityScore, scoreCity, scoreGradient } from "./world-score";
 
 const climates = countryClimates(data.points as ClimatePoint[]);
 // Uninhabited spots (a reef, a glacier) only have a centre point; the headline
@@ -54,7 +56,8 @@ function MonthPicker({
   );
 }
 
-function Legend() {
+function Legend({ mode }: { mode: MapMode }) {
+  if (mode === "score") return <ScoreLegend />;
   // The in-between ticks only fit once there's room for them.
   const ticks = [
     { t: -30 },
@@ -86,6 +89,23 @@ function Legend() {
             {formatTemp(t)}
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ScoreLegend() {
+  return (
+    <div className="flex flex-col gap-1">
+      <div
+        aria-hidden
+        className="h-2 w-full rounded-full"
+        style={{ background: scoreGradient() }}
+      />
+      <div className="flex justify-between text-11 tabular-nums text-white/45">
+        <span>0</span>
+        <span>50</span>
+        <span>100</span>
       </div>
     </div>
   );
@@ -171,40 +191,77 @@ const countries = data.countries as Record<string, CountryFacts>;
 
 type TableView = "countries" | "cities";
 
-function TableSwitch({
-  view,
+function Toggle<T extends string>({
+  legend,
+  options,
+  value,
   onChange,
 }: {
-  view: TableView;
-  onChange: (view: TableView) => void;
+  legend: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
 }) {
   return (
     <fieldset className="m-0 flex h-7 items-center rounded-lg border-0 bg-white/[0.04] p-0.5 ring-1 ring-white/[0.06]">
-      <legend className="sr-only">Show</legend>
-      {(["countries", "cities"] as const).map((v) => (
+      <legend className="sr-only">{legend}</legend>
+      {options.map((option) => (
         <button
-          key={v}
+          key={option.value}
           type="button"
-          aria-pressed={view === v}
-          onClick={() => onChange(v)}
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
           className={cn(
             "h-full rounded-md px-2.5 text-12 font-medium transition-colors duration-150",
-            view === v
+            value === option.value
               ? "bg-white/[0.1] text-white/90"
               : "text-white/50 hover:text-white/80",
           )}
         >
-          {v === "countries" ? "Countries" : "Cities"}
+          {option.label}
         </button>
       ))}
     </fieldset>
   );
 }
 
+const NO_FACTS: CountryFacts = { salary: null, tapWater: null };
+
+/** Every place's score for `month`, and each country's average. */
+function useScores(month: number) {
+  return useMemo(() => {
+    const byPoint = new Map<string, CityScore>();
+    const byPlace = new Map<string, number>();
+    const totals = new Map<string, number[]>();
+    for (const point of points) {
+      const score = scoreCity(
+        point,
+        countries[point.country] ?? NO_FACTS,
+        month,
+      );
+      byPoint.set(placeKey(point), score);
+      byPlace.set(placeKey(point), score.total);
+      totals.set(point.country, [
+        ...(totals.get(point.country) ?? []),
+        score.total,
+      ]);
+    }
+    const byCountry = new Map(
+      [...totals].map(([country, list]) => [
+        country,
+        list.reduce((a, b) => a + b, 0) / list.length,
+      ]),
+    );
+    return { byPoint, byPlace, byCountry };
+  }, [month]);
+}
+
 export function WorldClimatePage() {
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [query, setQuery] = useState("");
   const [view, setView] = useState<TableView>("countries");
+  const [mapMode, setMapMode] = useState<MapMode>("temperature");
+  const scores = useScores(month);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -221,6 +278,14 @@ export function WorldClimatePage() {
   const ranked = [...inhabited].sort((a, b) => b.temps[month] - a.temps[month]);
   const warmest = ranked[0];
   const coldest = ranked[ranked.length - 1];
+  const best = points
+    .filter((p) => p.name)
+    .sort(
+      (a, b) =>
+        (scores.byPlace.get(placeKey(b)) ?? 0) -
+        (scores.byPlace.get(placeKey(a)) ?? 0),
+    )
+    .slice(0, 3);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
@@ -231,15 +296,41 @@ export function WorldClimatePage() {
 
       <MonthPicker month={month} onChange={setMonth} />
 
+      <p className="-mt-2 text-13 text-white/60">
+        Best for you in {MONTHS[month]}:{" "}
+        {best.map((p, i) => (
+          <span key={placeKey(p)}>
+            {i > 0 && ", "}
+            <span className="text-white/85">{p.name}</span>{" "}
+            <span className="tabular-nums text-white/45">
+              {scores.byPlace.get(placeKey(p))}
+            </span>
+          </span>
+        ))}
+      </p>
+
       <section className="flex flex-col gap-3">
+        <div className="flex justify-end">
+          <Toggle
+            legend="Colour the map by"
+            options={[
+              { value: "temperature", label: "Temperature" },
+              { value: "score", label: "Score" },
+            ]}
+            value={mapMode}
+            onChange={setMapMode}
+          />
+        </div>
         <WorldMap
           shapes={data.shapes as MapShape[]}
           view={data}
           climates={climates}
           countries={countries}
           month={month}
+          mode={mapMode}
+          scores={scores}
         />
-        <Legend />
+        <Legend mode={mapMode} />
         <p className="text-11 text-white/35">
           Air: 25-year monthly averages (2001-2025) from NASA POWER, at each
           country's capital and, for big countries, its major cities. Sea: the
@@ -252,7 +343,15 @@ export function WorldClimatePage() {
         <SectionLabel
           action={
             <div className="flex items-center gap-2">
-              <TableSwitch view={view} onChange={setView} />
+              <Toggle
+                legend="Show"
+                options={[
+                  { value: "countries", label: "Countries" },
+                  { value: "cities", label: "Cities" },
+                ]}
+                value={view}
+                onChange={setView}
+              />
               <label className="flex h-7 items-center gap-1.5 rounded-lg bg-white/[0.04] px-2 ring-1 ring-white/[0.06] focus-within:ring-primary-400/40">
                 <Search className="size-3.5 text-white/35" />
                 <input
@@ -276,6 +375,7 @@ export function WorldClimatePage() {
           <CityTable
             points={points}
             countries={countries}
+            scores={scores.byPoint}
             month={month}
             query={query}
           />
@@ -285,7 +385,14 @@ export function WorldClimatePage() {
           WhereNext's national surveys, or ≈ estimated from ILO median gross
           earnings. Tap water: CDC traveller advice for the country. Airbnb:
           whether it operates there and city rules on short stays (October
-          2026).
+          2026). Rain, humidity and cloud: NASA POWER monthly averages.
+          Population: metro area (Natural Earth); density: the city proper
+          (Wikidata), approximate.
+        </p>
+        <p className="mt-1 text-11 text-white/35">
+          Score (0-100, for the chosen month): weather 50 (28-38 °C is best,
+          less with rain), sea 30 (26 °C+ within 10 km is best), cheapness 10
+          (lower pay is cheaper) and Airbnb 10 (allowed, half if restricted).
         </p>
       </section>
     </div>
