@@ -5,6 +5,7 @@ import {
   cheapScore,
   describeScore,
   hdiPenalty,
+  homicidePenalty,
   rainScore,
   scoreCity,
   scoreColor,
@@ -39,6 +40,8 @@ const cheapCountry: CountryFacts = {
   tapWater: "unsafe",
   malaria: 0,
   hdi: 0.7,
+  advisory: 1,
+  homicides: 1,
 };
 
 describe("temperatureScore", () => {
@@ -145,6 +148,25 @@ describe("scoreCity", () => {
     expect(scoreCity(city(), both, 0).total).toBe(60);
   });
 
+  it("takes points off for travel advisories and homicides", () => {
+    const withSafety = (
+      advisory: CountryFacts["advisory"],
+      homicides: number | null,
+    ) => scoreCity(city(), { ...cheapCountry, advisory, homicides }, 0);
+    expect(withSafety(1, 2).total).toBe(100);
+    expect(withSafety(null, null).total).toBe(100);
+    expect(withSafety(2, 2).total).toBe(97);
+    expect(withSafety(3, 2).total).toBe(80);
+    expect(withSafety(4, 2).total).toBe(50);
+    expect(withSafety(1, 21).total).toBe(92);
+    expect(withSafety(3, 60).penalties.safety).toBe(35);
+
+    expect(homicidePenalty(2)).toBe(0);
+    expect(homicidePenalty(21)).toBe(8);
+    expect(homicidePenalty(40)).toBe(15);
+    expect(homicidePenalty(90)).toBe(15);
+  });
+
   it("never goes below 0", () => {
     const awful = city({ temps: month(0), seaKm: 900, rainMm: month(400) });
     const facts: CountryFacts = {
@@ -170,11 +192,11 @@ describe("scoreCity", () => {
     );
     const malarial = scoreCity(
       city(),
-      { ...cheapCountry, malaria: 20, hdi: 0.575 },
+      { ...cheapCountry, malaria: 20, hdi: 0.575, advisory: 2 },
       0,
     );
     expect(describeScore(malarial)).toBe(
-      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12, HDI -10",
+      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12, HDI -10, Safety -3",
     );
   });
 });

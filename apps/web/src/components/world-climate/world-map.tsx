@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import {
+  ADVISORY_LABEL,
   type CountryClimate,
   type CountryFacts,
   formatSalary,
@@ -159,6 +160,9 @@ export function WorldMap({
               {hoveredFacts.malaria !== null &&
                 hoveredFacts.malaria > 0 &&
                 ` - ${MALARIA_LABEL[malariaRisk(hoveredFacts.malaria)].toLowerCase()} malaria risk`}
+              {hoveredFacts.advisory !== null &&
+                hoveredFacts.advisory > 1 &&
+                ` - ${ADVISORY_LABEL[hoveredFacts.advisory].toLowerCase()}`}
             </p>
           )}
           {hoveredPlaces.length > 0 && (

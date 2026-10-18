@@ -385,17 +385,23 @@ export function WorldClimatePage() {
           earnings. Tap water: CDC traveller advice for the country. HDI: UNDP
           Human Development Index 2023 (health, education and income). Malaria:
           WHO's estimated cases per 1,000 people a year (2024), for the whole
-          country - cities are often far below it. Airbnb: whether it operates
-          there and city rules on short stays (October 2026). Rain, humidity and
-          cloud: NASA POWER monthly averages. Population: metro area (Natural
-          Earth); density: the city proper (Wikidata), approximate.
+          country - cities are often far below it. Advisory: the US State
+          Department travel advisory for the whole country, October 2026 (the US
+          and its territories count as level 1; regional warnings, like some
+          Mexican states, aren't shown). Homicides: per 100,000 people a year
+          (UNODC, latest year). Airbnb: whether it operates there and city rules
+          on short stays (October 2026). Rain, humidity and cloud: NASA POWER
+          monthly averages. Population: metro area (Natural Earth); density: the
+          city proper (Wikidata), approximate.
         </p>
         <p className="mt-1 text-11 text-white/35">
           Score (0-100, for the chosen month): weather 50 (28-38 °C is best,
           less with rain), sea 30 (26 °C+ within 10 km is best), cheapness 10
           (lower pay is cheaper) and Airbnb 10 (allowed, half if restricted),
-          minus 3, 12 or 30 for low, moderate or high malaria risk, and up to 20
-          for an HDI below 0.7 (all 20 at 0.45).
+          minus 3, 12 or 30 for low, moderate or high malaria risk, up to 20 for
+          an HDI below 0.7 (all 20 at 0.45), and for safety 3, 20 or 50 for
+          advisory level 2, 3 or 4 plus up to 15 for homicides (from 2 per
+          100,000, all 15 at 40).
         </p>
       </section>
     </div>

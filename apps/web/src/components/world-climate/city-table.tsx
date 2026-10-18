@@ -2,6 +2,8 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
+  ADVISORY_LABEL,
+  type AdvisoryLevel,
   AIRBNB_LABEL,
   type AirbnbRule,
   type ClimatePoint,
@@ -35,6 +37,8 @@ type SortKey =
   | "water"
   | "hdi"
   | "malaria"
+  | "advisory"
+  | "homicides"
   | "airbnb";
 
 const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
@@ -52,6 +56,8 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "water", label: "Tap water", numeric: false },
   { key: "hdi", label: "HDI", numeric: true },
   { key: "malaria", label: "Malaria", numeric: false },
+  { key: "advisory", label: "Advisory", numeric: false },
+  { key: "homicides", label: "Homicides", numeric: true },
   { key: "airbnb", label: "Airbnb", numeric: false },
 ];
 
@@ -61,6 +67,8 @@ const ASCENDING_FIRST = new Set<SortKey>([
   "distance",
   "water",
   "malaria",
+  "advisory",
+  "homicides",
   "airbnb",
   "rain",
   "humidity",
@@ -79,6 +87,13 @@ const AIRBNB_TONE: Record<AirbnbRule["status"], string> = {
   restricted: "text-amber-300",
   banned: "text-rose-300",
   unavailable: "text-white/40",
+};
+
+const ADVISORY_TONE: Record<AdvisoryLevel, string> = {
+  1: "text-white/60",
+  2: "text-white/60",
+  3: "text-amber-300",
+  4: "text-rose-300",
 };
 
 const MALARIA_TONE: Record<MalariaRisk, string> = {
@@ -122,6 +137,10 @@ function sortValue(
       return facts.hdi;
     case "malaria":
       return facts.malaria;
+    case "advisory":
+      return facts.advisory;
+    case "homicides":
+      return facts.homicides;
     case "airbnb":
       return AIRBNB_ORDER.indexOf(point.airbnb.status);
     default:
@@ -209,7 +228,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[1480px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[1640px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -353,6 +372,38 @@ export function CityTable({
                   {facts.malaria === null
                     ? "No data"
                     : MALARIA_LABEL[malariaRisk(facts.malaria)]}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5",
+                    facts.advisory === null
+                      ? "text-white/30"
+                      : ADVISORY_TONE[facts.advisory],
+                  )}
+                  title={
+                    facts.advisory === null
+                      ? undefined
+                      : ADVISORY_LABEL[facts.advisory]
+                  }
+                >
+                  {facts.advisory === null
+                    ? "No data"
+                    : `Level ${facts.advisory}`}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    facts.homicides === null
+                      ? "text-white/30"
+                      : "text-white/70",
+                  )}
+                  title={
+                    facts.homicides === null
+                      ? undefined
+                      : `Per 100,000 people a year in ${p.country}`
+                  }
+                >
+                  {facts.homicides === null ? "No data" : facts.homicides}
                 </td>
                 <td
                   className={cn("px-4 py-1.5", AIRBNB_TONE[p.airbnb.status])}

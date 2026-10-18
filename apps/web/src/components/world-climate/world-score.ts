@@ -1,4 +1,5 @@
 import {
+  type AdvisoryLevel,
   type ClimatePoint,
   type CountryFacts,
   type MalariaRisk,
@@ -8,8 +9,8 @@ import {
 /**
  * How much each part counts. Simon's preferences: hot weather first, then a
  * warm sea close by; cheap places and Airbnb are small pluses. Tap water and
- * city size don't count. Malaria and low development are taken off the
- * total afterwards.
+ * city size don't count. Malaria, low development and danger are taken off
+ * the total afterwards.
  */
 export const SCORE_WEIGHTS = {
   weather: 0.5,
@@ -29,7 +30,7 @@ export interface CityScore {
   penalties: Record<Penalty, number>;
 }
 
-export type Penalty = "malaria" | "hdi";
+export type Penalty = "malaria" | "hdi" | "safety";
 
 /** Points off the 0-100 score: a high risk sinks even a perfect beach. */
 export const MALARIA_PENALTY: Record<MalariaRisk, number> = {
@@ -40,6 +41,25 @@ export const MALARIA_PENALTY: Record<MalariaRisk, number> = {
 };
 
 const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
+
+/** Most of Europe is level 2 for terrorism, so that's only a nudge. */
+export const ADVISORY_PENALTY: Record<AdvisoryLevel, number> = {
+  1: 0,
+  2: 3,
+  3: 20,
+  4: 50,
+};
+
+/** Nothing off from 2 homicides per 100,000 a year; the full 15 at 40 and up. */
+export function homicidePenalty(per100k: number | null): number {
+  if (per100k === null) return 0;
+  return Math.round(15 * clamp01((per100k - 2) / 38));
+}
+
+export function safetyPenalty(facts: CountryFacts): number {
+  const advisory = facts.advisory ? ADVISORY_PENALTY[facts.advisory] : 0;
+  return advisory + homicidePenalty(facts.homicides);
+}
 
 /** Nothing off from an HDI of 0.7; the full 20 points at 0.45 and below. */
 export function hdiPenalty(hdi: number | null): number {
@@ -100,12 +120,11 @@ export function scoreCity(
     malaria:
       facts.malaria === null ? 0 : MALARIA_PENALTY[malariaRisk(facts.malaria)],
     hdi: hdiPenalty(facts.hdi),
+    safety: safetyPenalty(facts),
   };
+  const deducted = penalties.malaria + penalties.hdi + penalties.safety;
   return {
-    total: Math.max(
-      Math.round(total * 100) - penalties.malaria - penalties.hdi,
-      0,
-    ),
+    total: Math.max(Math.round(total * 100) - deducted, 0),
     parts,
     penalties,
   };
@@ -121,6 +140,7 @@ export const SCORE_PART_LABEL: Record<ScorePart, string> = {
 const PENALTY_LABEL: Record<Penalty, string> = {
   malaria: "Malaria",
   hdi: "HDI",
+  safety: "Safety",
 };
 
 /** "Weather 45/50, Sea 24/30, Cheap 8/10, Airbnb 10/10, Malaria -12". */

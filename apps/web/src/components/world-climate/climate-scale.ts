@@ -48,13 +48,28 @@ export interface CountryFacts {
   malaria: number | null;
   /** UNDP Human Development Index, 0-1. */
   hdi: number | null;
+  /** US State Department travel advisory: 1 normal precautions, 4 do not travel. */
+  advisory: AdvisoryLevel | null;
+  /** Intentional homicides per 100,000 people a year (UNODC). */
+  homicides: number | null;
 }
+
+export type AdvisoryLevel = 1 | 2 | 3 | 4;
+
+export const ADVISORY_LABEL: Record<AdvisoryLevel, string> = {
+  1: "Normal precautions",
+  2: "Increased caution",
+  3: "Reconsider travel",
+  4: "Do not travel",
+};
 
 export const NO_FACTS: CountryFacts = {
   salary: null,
   tapWater: null,
   malaria: null,
   hdi: null,
+  advisory: null,
+  homicides: null,
 };
 
 export type MalariaRisk = "none" | "low" | "moderate" | "high";
