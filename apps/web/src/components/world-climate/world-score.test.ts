@@ -4,6 +4,7 @@ import {
   airbnbScore,
   cheapScore,
   describeScore,
+  hdiPenalty,
   rainScore,
   scoreCity,
   scoreColor,
@@ -128,7 +129,20 @@ describe("scoreCity", () => {
     expect(withMalaria(0.5).total).toBe(97);
     expect(withMalaria(20).total).toBe(88);
     expect(withMalaria(280).total).toBe(70);
-    expect(withMalaria(280).malaria).toBe(30);
+    expect(withMalaria(280).penalties.malaria).toBe(30);
+  });
+
+  it("takes up to 20 points off below an HDI of 0.7", () => {
+    expect(hdiPenalty(0.95)).toBe(0);
+    expect(hdiPenalty(0.7)).toBe(0);
+    expect(hdiPenalty(0.575)).toBe(10);
+    expect(hdiPenalty(0.45)).toBe(20);
+    expect(hdiPenalty(0.3)).toBe(20);
+    expect(hdiPenalty(null)).toBe(0);
+    const poor = scoreCity(city(), { ...cheapCountry, hdi: 0.575 }, 0);
+    expect(poor.total).toBe(90);
+    const both = { ...cheapCountry, hdi: 0.575, malaria: 280 };
+    expect(scoreCity(city(), both, 0).total).toBe(60);
   });
 
   it("never goes below 0", () => {
@@ -149,14 +163,18 @@ describe("scoreCity", () => {
     expect(scoreColor(140)).toBe(scoreColor(100));
   });
 
-  it("explains itself part by part, with malaria only when it counts", () => {
+  it("explains itself part by part, with penalties only when they count", () => {
     const score = scoreCity(city({ seaKm: 105 }), cheapCountry, 0);
     expect(describeScore(score)).toBe(
       "Weather 50/50, Sea 15/30, Cheap 10/10, Airbnb 10/10",
     );
-    const malarial = scoreCity(city(), { ...cheapCountry, malaria: 20 }, 0);
+    const malarial = scoreCity(
+      city(),
+      { ...cheapCountry, malaria: 20, hdi: 0.575 },
+      0,
+    );
     expect(describeScore(malarial)).toBe(
-      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12",
+      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12, HDI -10",
     );
   });
 });

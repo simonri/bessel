@@ -394,7 +394,8 @@ export function WorldClimatePage() {
           Score (0-100, for the chosen month): weather 50 (28-38 °C is best,
           less with rain), sea 30 (26 °C+ within 10 km is best), cheapness 10
           (lower pay is cheaper) and Airbnb 10 (allowed, half if restricted),
-          minus 3, 12 or 30 for low, moderate or high malaria risk.
+          minus 3, 12 or 30 for low, moderate or high malaria risk, and up to 20
+          for an HDI below 0.7 (all 20 at 0.45).
         </p>
       </section>
     </div>

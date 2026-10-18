@@ -160,7 +160,7 @@ describe("WorldClimatePage", () => {
       .getAllByRole("rowheader")[0]
       .parentElement?.querySelector("[title]") as HTMLElement;
     expect(best.title).toMatch(
-      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10(, Malaria -\d+)?$/,
+      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10(, Malaria -\d+)?(, HDI -\d+)?$/,
     );
 
     expect(screen.getByText(/Best for you in January/).textContent).toContain(

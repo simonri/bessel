@@ -8,7 +8,8 @@ import {
 /**
  * How much each part counts. Simon's preferences: hot weather first, then a
  * warm sea close by; cheap places and Airbnb are small pluses. Tap water and
- * city size don't count. Malaria is taken off the total afterwards.
+ * city size don't count. Malaria and low development are taken off the
+ * total afterwards.
  */
 export const SCORE_WEIGHTS = {
   weather: 0.5,
@@ -24,9 +25,11 @@ export interface CityScore {
   total: number;
   /** Each part from 0 (worst) to 1 (best), before weighting. */
   parts: Record<ScorePart, number>;
-  /** Points taken off for malaria. */
-  malaria: number;
+  /** Points taken off the total. */
+  penalties: Record<Penalty, number>;
 }
+
+export type Penalty = "malaria" | "hdi";
 
 /** Points off the 0-100 score: a high risk sinks even a perfect beach. */
 export const MALARIA_PENALTY: Record<MalariaRisk, number> = {
@@ -37,6 +40,12 @@ export const MALARIA_PENALTY: Record<MalariaRisk, number> = {
 };
 
 const clamp01 = (x: number) => Math.min(Math.max(x, 0), 1);
+
+/** Nothing off from an HDI of 0.7; the full 20 points at 0.45 and below. */
+export function hdiPenalty(hdi: number | null): number {
+  if (hdi === null) return 0;
+  return Math.round(20 * clamp01((0.7 - hdi) / 0.25));
+}
 
 /** Full marks from 28 to 38 °C; nothing at 10 °C or below, or 45 °C or above. */
 export function temperatureScore(celsius: number): number {
@@ -87,12 +96,18 @@ export function scoreCity(
     (sum, part) => sum + SCORE_WEIGHTS[part] * parts[part],
     0,
   );
-  const malaria =
-    facts.malaria === null ? 0 : MALARIA_PENALTY[malariaRisk(facts.malaria)];
+  const penalties: Record<Penalty, number> = {
+    malaria:
+      facts.malaria === null ? 0 : MALARIA_PENALTY[malariaRisk(facts.malaria)],
+    hdi: hdiPenalty(facts.hdi),
+  };
   return {
-    total: Math.max(Math.round(total * 100) - malaria, 0),
+    total: Math.max(
+      Math.round(total * 100) - penalties.malaria - penalties.hdi,
+      0,
+    ),
     parts,
-    malaria,
+    penalties,
   };
 }
 
@@ -103,13 +118,21 @@ export const SCORE_PART_LABEL: Record<ScorePart, string> = {
   airbnb: "Airbnb",
 };
 
+const PENALTY_LABEL: Record<Penalty, string> = {
+  malaria: "Malaria",
+  hdi: "HDI",
+};
+
 /** "Weather 45/50, Sea 24/30, Cheap 8/10, Airbnb 10/10, Malaria -12". */
 export function describeScore(score: CityScore): string {
   const parts = (Object.keys(SCORE_WEIGHTS) as ScorePart[]).map((part) => {
     const max = SCORE_WEIGHTS[part] * 100;
     return `${SCORE_PART_LABEL[part]} ${Math.round(score.parts[part] * max)}/${max}`;
   });
-  if (score.malaria > 0) parts.push(`Malaria -${score.malaria}`);
+  for (const penalty of Object.keys(PENALTY_LABEL) as Penalty[]) {
+    const points = score.penalties[penalty];
+    if (points > 0) parts.push(`${PENALTY_LABEL[penalty]} -${points}`);
+  }
   return parts.join(", ");
 }
 
