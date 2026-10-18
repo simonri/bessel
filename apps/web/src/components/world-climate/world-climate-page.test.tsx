@@ -97,7 +97,7 @@ describe("WorldClimatePage", () => {
     expect(cityRows()[0]).toMatch(/Dund-Us/);
   });
 
-  it("shows each city's country salary, tap water, HDI, malaria, safety, visa and Airbnb rules", () => {
+  it("shows each city's country salary, tap water, HDI, malaria, safety, visa, rent, internet and Airbnb rules", () => {
     render(<WorldClimatePage />);
     fireEvent.click(screen.getByRole("button", { name: "Cities" }));
     const row = (city: RegExp) =>
@@ -111,6 +111,8 @@ describe("WorldClimatePage", () => {
     expect(row(/Stockholm/).textContent).toContain("Allowed");
     expect(row(/Stockholm/).textContent).toContain("0.959");
     expect(row(/Stockholm/).textContent).toContain("None");
+    expect(row(/Stockholm/).textContent).toContain("$2,730");
+    expect(row(/Stockholm/).textContent).toContain("303 Mbit/s");
 
     fireEvent.change(search, { target: { value: "lomé" } });
     expect(row(/Lomé/).textContent).toContain("0.571");
@@ -120,6 +122,7 @@ describe("WorldClimatePage", () => {
 
     fireEvent.change(search, { target: { value: "ho chi minh" } });
     expect(row(/Ho Chi Minh/).textContent).toContain("Visa free");
+    expect(row(/Ho Chi Minh/).textContent).toContain("≈ $1,110");
 
     fireEvent.change(search, { target: { value: "port louis" } });
     expect(row(/Port Louis/).textContent).toContain("Level 2");
@@ -172,7 +175,7 @@ describe("WorldClimatePage", () => {
       .getAllByRole("rowheader")[0]
       .parentElement?.querySelector("[title]") as HTMLElement;
     expect(best.title).toMatch(
-      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10(, Malaria -\d+)?(, HDI -\d+)?(, Safety -\d+)?(, Visa free \+5)?$/,
+      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10(, [A-Za-z ]+ [+-]\d+)*$/,
     );
 
     expect(screen.getByText(/Best for you in January/).textContent).toContain(

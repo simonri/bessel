@@ -6,10 +6,13 @@ import {
   describeScore,
   hdiPenalty,
   homicidePenalty,
+  internetPenalty,
   rainScore,
+  rentScore,
   scoreCity,
   scoreColor,
   seaScore,
+  stormPenalty,
   temperatureScore,
 } from "./world-score";
 
@@ -31,6 +34,9 @@ function city(over: Partial<ClimatePoint> = {}): ClimatePoint {
     humidity: month(70),
     rainMm: month(10),
     cloud: month(30),
+    storms: month(0),
+    internet: null,
+    rent: null,
     ...over,
   };
 }
@@ -183,6 +189,46 @@ describe("scoreCity", () => {
       0,
     );
     expect(perfect.total).toBe(100);
+  });
+
+  it("takes up to 15 off for internet too slow for video calls", () => {
+    const net = (downMbps: number, upMbps: number) => ({
+      downMbps,
+      upMbps,
+      latencyMs: 20,
+      kind: "fixed" as const,
+    });
+    expect(internetPenalty(null)).toBe(0);
+    expect(internetPenalty(net(300, 200))).toBe(0);
+    expect(internetPenalty(net(50, 12.5))).toBe(0);
+    expect(internetPenalty(net(27.5, 100))).toBe(8);
+    expect(internetPenalty(net(300, 6.875))).toBe(8);
+    expect(internetPenalty(net(5, 5))).toBe(15);
+    expect(internetPenalty(net(1, 1))).toBe(15);
+    const slow = scoreCity(city({ internet: net(5, 1) }), cheapCountry, 0);
+    expect(slow.total).toBe(85);
+  });
+
+  it("takes up to 20 off in storm season, for the chosen month", () => {
+    expect(stormPenalty(0)).toBe(0);
+    expect(stormPenalty(0.25)).toBe(10);
+    expect(stormPenalty(0.5)).toBe(20);
+    expect(stormPenalty(0.9)).toBe(20);
+    const september = month(0).map((v, i) => (i === 8 ? 0.25 : v));
+    const stormy = city({ storms: september });
+    expect(scoreCity(stormy, cheapCountry, 0).total).toBe(100);
+    expect(scoreCity(stormy, cheapCountry, 8).total).toBe(90);
+    expect(scoreCity(stormy, cheapCountry, 8).adjustments.storms).toBe(-10);
+  });
+
+  it("prices cheapness by rent where known, else by salary", () => {
+    expect(rentScore(800)).toBe(1);
+    expect(rentScore(2400)).toBe(0.5);
+    expect(rentScore(4000)).toBe(0);
+    expect(rentScore(9000)).toBe(0);
+    const pricey = city({ rent: { usd: 2400, basis: "estimate" } });
+    expect(scoreCity(pricey, cheapCountry, 0).parts.cheap).toBe(0.5);
+    expect(scoreCity(city(), cheapCountry, 0).parts.cheap).toBe(1);
   });
 
   it("never goes below 0", () => {

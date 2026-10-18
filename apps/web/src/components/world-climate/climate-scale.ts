@@ -25,6 +25,25 @@ export interface ClimatePoint {
   population?: number;
   /** People per km² in the city proper, where known. */
   densityKm2?: number;
+  /** Share of years with a tropical storm within 150 km, per month (0-1). */
+  storms: number[];
+  /** Average fixed broadband, or mobile where fixed has too few tests. */
+  internet: Internet | null;
+  /** A month in an entire Airbnb home, in USD. */
+  rent: Rent | null;
+}
+
+export interface Internet {
+  downMbps: number;
+  upMbps: number;
+  latencyMs: number;
+  kind: "fixed" | "mobile";
+}
+
+export interface Rent {
+  usd: number;
+  /** Measured from local monthly listings, or estimated from the country's price level. */
+  basis: "airbnb" | "estimate";
 }
 
 export interface AirbnbRule {
@@ -124,6 +143,13 @@ export function formatSalary(salary: CountryFacts["salary"]): string {
   if (!salary) return "No data";
   const amount = `$${salary.usd.toLocaleString("en-US")}`;
   return salary.basis === "estimate" ? `≈ ${amount}` : amount;
+}
+
+/** "$1,060", or "≈ $1,110" when estimated from the price level. */
+export function formatRent(rent: Rent | null): string {
+  if (!rent) return "No data";
+  const amount = `$${rent.usd.toLocaleString("en-US")}`;
+  return rent.basis === "estimate" ? `≈ ${amount}` : amount;
 }
 
 /** Unique per place: names repeat, even within a country. */

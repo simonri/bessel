@@ -8,6 +8,7 @@ import {
   type AirbnbRule,
   type ClimatePoint,
   type CountryFacts,
+  formatRent,
   formatSalary,
   formatSeaDistance,
   formatTemp,
@@ -36,6 +37,9 @@ type SortKey =
   | "sea"
   | "distance"
   | "salary"
+  | "rent"
+  | "internet"
+  | "storms"
   | "water"
   | "hdi"
   | "malaria"
@@ -52,10 +56,13 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "rain", label: "Rain", numeric: true },
   { key: "humidity", label: "Humidity", numeric: true },
   { key: "cloud", label: "Cloud", numeric: true },
+  { key: "storms", label: "Storms", numeric: true },
   { key: "distance", label: "To the sea", numeric: true },
   { key: "population", label: "Population", numeric: true },
   { key: "density", label: "Density", numeric: true },
   { key: "salary", label: "Salary", numeric: true },
+  { key: "rent", label: "Rent", numeric: true },
+  { key: "internet", label: "Internet", numeric: true },
   { key: "water", label: "Tap water", numeric: false },
   { key: "hdi", label: "HDI", numeric: true },
   { key: "malaria", label: "Malaria", numeric: false },
@@ -78,6 +85,8 @@ const ASCENDING_FIRST = new Set<SortKey>([
   "rain",
   "humidity",
   "cloud",
+  "storms",
+  "rent",
 ]);
 
 const AIRBNB_ORDER: AirbnbRule["status"][] = [
@@ -144,6 +153,12 @@ function sortValue(
       return point.seaTemps[month];
     case "distance":
       return point.seaKm;
+    case "storms":
+      return point.storms[month];
+    case "rent":
+      return point.rent?.usd ?? null;
+    case "internet":
+      return point.internet?.downMbps ?? null;
     case "salary":
       return facts.salary?.usd ?? null;
     case "water":
@@ -245,7 +260,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[1760px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[2080px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -318,6 +333,19 @@ export function CityTable({
                 <td className="px-4 py-1.5 text-right text-white/70">
                   {p.cloud[month]}%
                 </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    p.storms[month] >= 0.2
+                      ? "text-amber-300"
+                      : p.storms[month] > 0
+                        ? "text-white/70"
+                        : "text-white/30",
+                  )}
+                  title="Share of years with a tropical storm within 150 km this month"
+                >
+                  {Math.round(p.storms[month] * 100)}%
+                </td>
                 <td className="px-4 py-1.5 text-right text-white/70">
                   {formatSeaDistance(p.seaKm)}
                 </td>
@@ -351,6 +379,39 @@ export function CityTable({
                   }
                 >
                   {formatSalary(facts.salary)}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    p.rent ? "text-white/80" : "text-white/30",
+                  )}
+                  title={
+                    p.rent?.basis === "estimate"
+                      ? "Estimated from the country's price level"
+                      : p.rent
+                        ? "Median Airbnb home for stays of a month or more"
+                        : undefined
+                  }
+                >
+                  {formatRent(p.rent)}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    !p.internet
+                      ? "text-white/30"
+                      : Math.min(p.internet.downMbps, p.internet.upMbps * 4) <
+                          50
+                        ? "text-amber-300"
+                        : "text-white/70",
+                  )}
+                  title={
+                    p.internet
+                      ? `${p.internet.upMbps} Mbit/s up, ${p.internet.latencyMs} ms (${p.internet.kind})`
+                      : undefined
+                  }
+                >
+                  {p.internet ? `${p.internet.downMbps} Mbit/s` : "No data"}
                 </td>
                 <td
                   className={cn(

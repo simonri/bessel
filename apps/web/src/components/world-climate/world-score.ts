@@ -2,6 +2,7 @@ import {
   type AdvisoryLevel,
   type ClimatePoint,
   type CountryFacts,
+  type Internet,
   type MalariaRisk,
   malariaRisk,
 } from "./climate-scale";
@@ -10,7 +11,8 @@ import {
  * How much each part counts. Simon's preferences: hot weather first, then a
  * warm sea close by; cheap places and Airbnb are small pluses. Tap water and
  * city size don't count. Malaria, low development and danger are taken off
- * the total afterwards, and visa-free entry adds a little.
+ * the total afterwards, as are slow internet and storm season; visa-free
+ * entry adds a little. Cheapness uses rent where known, else salary.
  */
 export const SCORE_WEIGHTS = {
   weather: 0.5,
@@ -30,7 +32,13 @@ export interface CityScore {
   adjustments: Record<Adjustment, number>;
 }
 
-export type Adjustment = "malaria" | "hdi" | "safety" | "visa";
+export type Adjustment =
+  | "malaria"
+  | "hdi"
+  | "safety"
+  | "internet"
+  | "storms"
+  | "visa";
 
 export const VISA_FREE_BONUS = 5;
 
@@ -63,6 +71,21 @@ export function safetyPenalty(facts: CountryFacts): number {
   return advisory + homicidePenalty(facts.homicides);
 }
 
+/**
+ * Video calls need both ways, so upload counts four times over: nothing off
+ * from 50 Mbit/s, the full 15 at 5 or below. Unknown counts as fine.
+ */
+export function internetPenalty(internet: Internet | null): number {
+  if (!internet) return 0;
+  const usable = Math.min(internet.downMbps, internet.upMbps * 4);
+  return Math.round(15 * clamp01((50 - usable) / 45));
+}
+
+/** A storm in half the years (or more) for this month takes the full 20 off. */
+export function stormPenalty(share: number): number {
+  return Math.round(20 * clamp01(share / 0.5));
+}
+
 /** Nothing off from an HDI of 0.7; the full 20 points at 0.45 and below. */
 export function hdiPenalty(hdi: number | null): number {
   if (hdi === null) return 0;
@@ -88,6 +111,11 @@ export function seaScore(seaCelsius: number, km: number): number {
   return warm * close;
 }
 
+/** $800 a month or less is full marks, $4,000+ nothing. */
+export function rentScore(usd: number): number {
+  return clamp01(1 - (usd - 800) / 3200);
+}
+
 /** Lower pay means cheaper living: $300 a month or less is full marks, $4,000+ nothing. */
 export function cheapScore(salary: CountryFacts["salary"]): number {
   if (!salary) return 0.5;
@@ -111,7 +139,7 @@ export function scoreCity(
       0.75 * temperatureScore(point.temps[month]) +
       0.25 * rainScore(point.rainMm[month]),
     sea: seaScore(point.seaTemps[month], point.seaKm),
-    cheap: cheapScore(facts.salary),
+    cheap: point.rent ? rentScore(point.rent.usd) : cheapScore(facts.salary),
     airbnb: airbnbScore(point.airbnb.status),
   };
   const total = (Object.keys(SCORE_WEIGHTS) as ScorePart[]).reduce(
@@ -123,6 +151,8 @@ export function scoreCity(
       facts.malaria === null ? 0 : -MALARIA_PENALTY[malariaRisk(facts.malaria)],
     hdi: -hdiPenalty(facts.hdi),
     safety: -safetyPenalty(facts),
+    internet: -internetPenalty(point.internet),
+    storms: -stormPenalty(point.storms[month]),
     visa: facts.visa?.entry === "free" ? VISA_FREE_BONUS : 0,
   };
   const adjusted = (Object.values(adjustments) as number[]).reduce(
@@ -147,6 +177,8 @@ const ADJUSTMENT_LABEL: Record<Adjustment, string> = {
   malaria: "Malaria",
   hdi: "HDI",
   safety: "Safety",
+  internet: "Internet",
+  storms: "Storms",
   visa: "Visa free",
 };
 

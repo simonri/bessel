@@ -392,18 +392,26 @@ export function WorldClimatePage() {
           (UNODC, latest year). Visa: what a Swedish passport needs (Passport
           Index dataset, with China's 2025 waiver and the UK's ETA added).
           Airbnb: whether it operates there and city rules on short stays
-          (October 2026). Rain, humidity and cloud: NASA POWER monthly averages.
-          Population: metro area (Natural Earth); density: the city proper
-          (Wikidata), approximate.
+          (October 2026). Rent: a month in the median entire Airbnb home that
+          takes only stays of 28+ nights (Inside Airbnb, September 2026), or ≈
+          estimated from the country's price level (World Bank). Internet:
+          average fixed broadband within 10 km (Speedtest by Ookla, Q3 2026, CC
+          BY-NC-SA). Storms: share of years 1991-2025 with a tropical storm
+          within 150 km in that month (NOAA IBTrACS). Rain, humidity and cloud:
+          NASA POWER monthly averages. Population: metro area (Natural Earth);
+          density: the city proper (Wikidata), approximate.
         </p>
         <p className="mt-1 text-11 text-white/35">
           Score (0-100, for the chosen month): weather 50 (28-38 °C is best,
           less with rain), sea 30 (26 °C+ within 10 km is best), cheapness 10
-          (lower pay is cheaper) and Airbnb 10 (allowed, half if restricted),
-          minus 3, 12 or 30 for low, moderate or high malaria risk, up to 20 for
-          an HDI below 0.7 (all 20 at 0.45), and for safety 3, 20 or 50 for
-          advisory level 2, 3 or 4 plus up to 15 for homicides (from 2 per
-          100,000, all 15 at 40). Visa-free entry for a Swedish passport adds 5.
+          (by rent, $800 or less is best, else by pay) and Airbnb 10 (allowed,
+          half if restricted), minus 3, 12 or 30 for low, moderate or high
+          malaria risk, up to 20 for an HDI below 0.7 (all 20 at 0.45), and for
+          safety 3, 20 or 50 for advisory level 2, 3 or 4 plus up to 15 for
+          homicides (from 2 per 100,000, all 15 at 40). Up to 15 off for
+          internet under 50 Mbit/s down or 12.5 up, and up to 20 for storm
+          season (a storm in half the years). Visa-free entry for a Swedish
+          passport adds 5.
         </p>
       </section>
     </div>

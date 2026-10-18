@@ -28,6 +28,9 @@ const point = (
   humidity: Array<number>(12).fill(0),
   rainMm: Array<number>(12).fill(0),
   cloud: Array<number>(12).fill(0),
+  storms: Array<number>(12).fill(0),
+  internet: null,
+  rent: null,
 });
 
 describe("tempColor", () => {
