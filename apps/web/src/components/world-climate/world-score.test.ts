@@ -42,6 +42,7 @@ const cheapCountry: CountryFacts = {
   hdi: 0.7,
   advisory: 1,
   homicides: 1,
+  visa: null,
 };
 
 describe("temperatureScore", () => {
@@ -132,7 +133,7 @@ describe("scoreCity", () => {
     expect(withMalaria(0.5).total).toBe(97);
     expect(withMalaria(20).total).toBe(88);
     expect(withMalaria(280).total).toBe(70);
-    expect(withMalaria(280).penalties.malaria).toBe(30);
+    expect(withMalaria(280).adjustments.malaria).toBe(-30);
   });
 
   it("takes up to 20 points off below an HDI of 0.7", () => {
@@ -159,12 +160,29 @@ describe("scoreCity", () => {
     expect(withSafety(3, 2).total).toBe(80);
     expect(withSafety(4, 2).total).toBe(50);
     expect(withSafety(1, 21).total).toBe(92);
-    expect(withSafety(3, 60).penalties.safety).toBe(35);
+    expect(withSafety(3, 60).adjustments.safety).toBe(-35);
 
     expect(homicidePenalty(2)).toBe(0);
     expect(homicidePenalty(21)).toBe(8);
     expect(homicidePenalty(40)).toBe(15);
     expect(homicidePenalty(90)).toBe(15);
+  });
+
+  it("adds 5 for visa-free entry, but never above 100", () => {
+    const withVisa = (visa: CountryFacts["visa"]) =>
+      scoreCity(city({ seaKm: 105 }), { ...cheapCountry, visa }, 0);
+    expect(withVisa(null).total).toBe(85);
+    expect(withVisa({ entry: "free", days: 45 }).total).toBe(90);
+    expect(withVisa({ entry: "free", days: 45 }).adjustments.visa).toBe(5);
+    expect(withVisa({ entry: "arrival" }).total).toBe(85);
+    expect(withVisa({ entry: "eta" }).total).toBe(85);
+    expect(withVisa({ entry: "required" }).total).toBe(85);
+    const perfect = scoreCity(
+      city(),
+      { ...cheapCountry, visa: { entry: "free" } },
+      0,
+    );
+    expect(perfect.total).toBe(100);
   });
 
   it("never goes below 0", () => {
@@ -185,18 +203,24 @@ describe("scoreCity", () => {
     expect(scoreColor(140)).toBe(scoreColor(100));
   });
 
-  it("explains itself part by part, with penalties only when they count", () => {
+  it("explains itself part by part, with adjustments only when they count", () => {
     const score = scoreCity(city({ seaKm: 105 }), cheapCountry, 0);
     expect(describeScore(score)).toBe(
       "Weather 50/50, Sea 15/30, Cheap 10/10, Airbnb 10/10",
     );
     const malarial = scoreCity(
       city(),
-      { ...cheapCountry, malaria: 20, hdi: 0.575, advisory: 2 },
+      {
+        ...cheapCountry,
+        malaria: 20,
+        hdi: 0.575,
+        advisory: 2,
+        visa: { entry: "free" },
+      },
       0,
     );
     expect(describeScore(malarial)).toBe(
-      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12, HDI -10, Safety -3",
+      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12, HDI -10, Safety -3, Visa free +5",
     );
   });
 });

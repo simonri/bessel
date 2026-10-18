@@ -2,7 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["pycountry>=24.6"]
 # ///
-"""Adds malaria, the Human Development Index and safety to each country in src/components/world-climate/climate-data.json.
+"""Adds malaria, the Human Development Index, safety and visa rules to each country in src/components/world-climate/climate-data.json.
 
 Run after build-world-facts.py, which rebuilds the country list.
 - Malaria: WHO's estimated malaria cases (GHO MALARIA_EST_CASES) per 1,000 people (World Bank SP.POP.TOTL),
@@ -11,14 +11,17 @@ Run after build-world-facts.py, which rebuilds the country list.
 - Advisory: the US State Department travel advisory level (1-4), matched by the country name in each title.
   The US and its territories have none, so they count as level 1.
 - Homicides: intentional homicides per 100,000 people (World Bank VC.IHR.PSRC.P5, from UNODC), latest year.
+- Visa: what a Swedish passport needs, from the Passport Index dataset (github.com/ilyankou/passport-index-dataset,
+  MIT), plus overrides for changes it hasn't caught up with and for territories it leaves out.
 
   curl -L -o /tmp/malaria.json "https://ghoapi.azureedge.net/api/MALARIA_EST_CASES"
   curl -L -o /tmp/population.json "https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL?format=json&per_page=20000&date=2024"
   curl -L -o /tmp/hdi.csv "https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Composite_indices_complete_time_series.csv"
   curl -L -o /tmp/advisories.json "https://cadataapi.state.gov/api/TravelAdvisories"
   curl -L -o /tmp/homicides.json "https://api.worldbank.org/v2/country/all/indicator/VC.IHR.PSRC.P5?format=json&per_page=20000&date=2014:2024"
+  curl -L -o /tmp/passports.csv "https://raw.githubusercontent.com/ilyankou/passport-index-dataset/master/passport-index-tidy-iso3.csv"
   uv run scripts/build-world-livability.py /tmp/malaria.json /tmp/population.json /tmp/hdi.csv /tmp/advisories.json \\
-    /tmp/homicides.json node_modules/world-atlas/countries-50m.json
+    /tmp/homicides.json /tmp/passports.csv node_modules/world-atlas/countries-50m.json
 """
 
 import csv
@@ -55,6 +58,22 @@ ADVISORY_ALIASES = {
   "The Gambia": ["GMB"],
   "Russia": ["RUS"],
 }
+
+PASSPORT = "SWE"
+VISA_ENTRY = {"visa free": "free", "visa on arrival": "arrival", "e-visa": "evisa", "eta": "eta", "visa required": "required"}
+# China's unilateral visa waiver for Swedes (from 10 November 2025) and the UK's ETA for EU citizens (April 2025).
+VISA_OVERRIDES = {"CHN": {"entry": "free", "days": 30}, "GBR": {"entry": "eta"}}
+# For territories the dataset leaves out: EU citizens need no visa in British, Dutch, French and Danish ones.
+VISA_TERRITORIES = {
+  **dict.fromkeys(
+    ["AIA", "BMU", "VGB", "CYM", "FLK", "GIB", "MSR", "PCN", "SHN", "TCA", "IOT", "SGS", "GGY", "JEY", "IMN"],
+    {"entry": "free"},
+  ),
+  **dict.fromkeys(["ABW", "CUW", "SXM", "BES"], {"entry": "free"}),
+  **dict.fromkeys(["GLP", "MTQ", "BLM", "MAF", "PYF", "NCL", "WLF", "SPM", "ATF", "REU", "MYT", "GUF"], {"entry": "free"}),
+  **dict.fromkeys(["GRL", "FRO", "ALA"], {"entry": "free"}),
+}
+US_TERRITORIES = ["PRI", "GUM", "VIR", "ASM", "MNP", "UMI"]
 
 ALIASES = {
   "Bolivia": "BOL",
@@ -136,12 +155,29 @@ def homicides_per_100k(homicides_path: str) -> dict[str, float]:
   return {code: round(value, 1) for code, (_, value) in latest.items()}
 
 
+def visas(passports_path: str) -> dict[str, dict]:
+  out: dict[str, dict] = {}
+  with open(passports_path, encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+      if row["Passport"] != PASSPORT:
+        continue
+      requirement = row["Requirement"]
+      if requirement == "-1":
+        out[row["Destination"]] = {"entry": "free"}
+      elif requirement.isdigit():
+        out[row["Destination"]] = {"entry": "free", "days": int(requirement)}
+      else:
+        out[row["Destination"]] = {"entry": VISA_ENTRY[requirement]}
+  return VISA_TERRITORIES | dict.fromkeys(US_TERRITORIES, out["USA"]) | out | VISA_OVERRIDES
+
+
 def main(
   cases_path: str,
   population_path: str,
   hdi_path: str,
   advisories_path: str,
   homicides_path: str,
+  passports_path: str,
   atlas_path: str,
 ) -> None:
   codes = atlas_codes(atlas_path)
@@ -149,6 +185,7 @@ def main(
   development = hdi(hdi_path)
   advisories = advisory_levels(advisories_path)
   homicides = homicides_per_100k(homicides_path)
+  visa = visas(passports_path)
 
   data = json.loads(DATA.read_text())
   for name, facts in data["countries"].items():
@@ -157,14 +194,16 @@ def main(
     facts["hdi"] = development.get(code) if code else None
     facts["advisory"] = advisories.get(code) if code else None
     facts["homicides"] = homicides.get(code) if code else None
+    facts["visa"] = visa.get(code) if code else None
 
   DATA.write_text(json.dumps(data, separators=(",", ":"), ensure_ascii=False) + "\n")
   countries = data["countries"].values()
   print(f"{len(countries)} countries: malaria in {sum(1 for c in countries if c['malaria'])}, HDI for {sum(1 for c in countries if c['hdi'] is not None)}")
   print(f"Advisory for {sum(1 for c in countries if c['advisory'])}, homicides for {sum(1 for c in countries if c['homicides'] is not None)}")
   print("No code:", sorted(n for n in data["countries"] if n not in codes))
+  print("No visa:", sorted(n for n, c in data["countries"].items() if c["visa"] is None))
   print("No advisory:", sorted(n for n, c in data["countries"].items() if c["advisory"] is None))
 
 
 if __name__ == "__main__":
-  main(*sys.argv[1:7])
+  main(*sys.argv[1:8])

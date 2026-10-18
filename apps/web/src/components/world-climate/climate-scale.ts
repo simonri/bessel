@@ -52,7 +52,19 @@ export interface CountryFacts {
   advisory: AdvisoryLevel | null;
   /** Intentional homicides per 100,000 people a year (UNODC). */
   homicides: number | null;
+  /** What a Swedish passport needs to get in, and for how many days if visa free. */
+  visa: { entry: VisaEntry; days?: number } | null;
 }
+
+export type VisaEntry = "free" | "arrival" | "evisa" | "eta" | "required";
+
+export const VISA_LABEL: Record<VisaEntry, string> = {
+  free: "Visa free",
+  arrival: "On arrival",
+  evisa: "e-Visa",
+  eta: "ETA",
+  required: "Visa needed",
+};
 
 export type AdvisoryLevel = 1 | 2 | 3 | 4;
 
@@ -70,6 +82,7 @@ export const NO_FACTS: CountryFacts = {
   hdi: null,
   advisory: null,
   homicides: null,
+  visa: null,
 };
 
 export type MalariaRisk = "none" | "low" | "moderate" | "high";

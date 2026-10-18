@@ -163,6 +163,8 @@ export function WorldMap({
               {hoveredFacts.advisory !== null &&
                 hoveredFacts.advisory > 1 &&
                 ` - ${ADVISORY_LABEL[hoveredFacts.advisory].toLowerCase()}`}
+              {hoveredFacts.visa?.entry === "free" &&
+                ` - visa free${hoveredFacts.visa.days ? ` for ${hoveredFacts.visa.days} days` : ""}`}
             </p>
           )}
           {hoveredPlaces.length > 0 && (

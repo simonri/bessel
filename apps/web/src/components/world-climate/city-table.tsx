@@ -19,6 +19,8 @@ import {
   placeKey,
   TAP_WATER_LABEL,
   tempColor,
+  VISA_LABEL,
+  type VisaEntry,
 } from "./climate-scale";
 import { type CityScore, describeScore, scoreColor } from "./world-score";
 
@@ -39,6 +41,7 @@ type SortKey =
   | "malaria"
   | "advisory"
   | "homicides"
+  | "visa"
   | "airbnb";
 
 const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
@@ -58,6 +61,7 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "malaria", label: "Malaria", numeric: false },
   { key: "advisory", label: "Advisory", numeric: false },
   { key: "homicides", label: "Homicides", numeric: true },
+  { key: "visa", label: "Visa", numeric: false },
   { key: "airbnb", label: "Airbnb", numeric: false },
 ];
 
@@ -69,6 +73,7 @@ const ASCENDING_FIRST = new Set<SortKey>([
   "malaria",
   "advisory",
   "homicides",
+  "visa",
   "airbnb",
   "rain",
   "humidity",
@@ -94,6 +99,16 @@ const ADVISORY_TONE: Record<AdvisoryLevel, string> = {
   2: "text-white/60",
   3: "text-amber-300",
   4: "text-rose-300",
+};
+
+const VISA_ORDER: VisaEntry[] = ["free", "arrival", "eta", "evisa", "required"];
+
+const VISA_TONE: Record<VisaEntry, string> = {
+  free: "text-emerald-300",
+  arrival: "text-white/60",
+  eta: "text-white/60",
+  evisa: "text-white/60",
+  required: "text-amber-300",
 };
 
 const MALARIA_TONE: Record<MalariaRisk, string> = {
@@ -141,6 +156,8 @@ function sortValue(
       return facts.advisory;
     case "homicides":
       return facts.homicides;
+    case "visa":
+      return facts.visa ? VISA_ORDER.indexOf(facts.visa.entry) : null;
     case "airbnb":
       return AIRBNB_ORDER.indexOf(point.airbnb.status);
     default:
@@ -228,7 +245,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[1640px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[1760px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -404,6 +421,19 @@ export function CityTable({
                   }
                 >
                   {facts.homicides === null ? "No data" : facts.homicides}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5",
+                    facts.visa ? VISA_TONE[facts.visa.entry] : "text-white/30",
+                  )}
+                  title={
+                    facts.visa?.days
+                      ? `Up to ${facts.visa.days} days with a Swedish passport`
+                      : undefined
+                  }
+                >
+                  {facts.visa ? VISA_LABEL[facts.visa.entry] : "No data"}
                 </td>
                 <td
                   className={cn("px-4 py-1.5", AIRBNB_TONE[p.airbnb.status])}
