@@ -80,6 +80,23 @@ AIRBNB_CITY = {
   ("THA", "Chiang Mai"): ("restricted", "Stays under 30 days need a hotel licence"),
   ("JPN", "Tokyo"): ("restricted", "Registered hosts only, at most 180 nights a year"),
   ("JPN", "Ōsaka"): ("restricted", "Registered hosts only, at most 180 nights a year"),
+  ("THA", "Phuket"): ("restricted", "Stays under 30 days need a hotel licence"),
+  ("THA", "Ko Samui"): ("restricted", "Stays under 30 days need a hotel licence"),
+  ("THA", "Ko Pha Ngan"): ("restricted", "Stays under 30 days need a hotel licence"),
+  ("THA", "Krabi"): ("restricted", "Stays under 30 days need a hotel licence"),
+  ("THA", "Hua Hin"): ("restricted", "Stays under 30 days need a hotel licence"),
+  ("THA", "Pattaya"): ("restricted", "Stays under 30 days need a hotel licence"),
+  ("JPN", "Naha (Okinawa)"): ("restricted", "Registered hosts only, at most 180 nights a year"),
+  ("JPN", "Kyoto"): ("restricted", "Registered hosts only; homes in residential areas only mid-January to mid-March"),
+  ("JPN", "Fukuoka"): ("restricted", "Registered hosts only, at most 180 nights a year"),
+  ("ESP", "Palma (Mallorca)"): ("restricted", "Holiday lets banned in flats"),
+  ("ESP", "Ibiza"): ("restricted", "Holiday lets banned in flats"),
+  ("ESP", "Valencia"): ("restricted", "No new tourist flat licences in the centre"),
+  ("ESP", "Málaga"): ("restricted", "No new tourist flat licences in most central areas"),
+  ("USA", "Honolulu"): ("restricted", "Stays under 90 days only in resort zones"),
+  ("USA", "Lahaina (Maui)"): ("restricted", "Short stays in apartment districts being phased out"),
+  ("USA", "New York"): ("banned", "Whole homes can't be let for under 30 days"),
+  ("USA", "San Francisco"): ("restricted", "Registered hosts only, whole homes at most 90 nights a year"),
 }
 
 ALIASES = {

@@ -3,9 +3,11 @@
 //
 // Places are Natural Earth's populated places (capitals first, then the
 // biggest cities, spread out), assigned to the country shape that contains
-// them; a country with no listed city gets its centre. Temperatures are NASA
-// POWER's 25-year monthly climatology (MERRA-2, 2001-2025) at each point, and
-// are reused from the previous build for places that haven't moved.
+// them; a country with no listed city gets its centre. Travel destinations
+// from world-destinations.json are added on top. Temperatures are NASA
+// POWER's 25-year monthly climatology (MERRA-2, 2001-2025) at each point.
+// Places that haven't moved keep everything the later build scripts added,
+// so those only need to fetch data for new places.
 //
 // The map is projected here (Equal Earth) so the app ships plain SVG paths
 // and needs no geo libraries. Those live outside the repo:
@@ -38,6 +40,8 @@ const PLACES_URL =
 const POWER_URL =
   "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M&community=RE&format=JSON";
 const EARTH_RADIUS_KM = 6371;
+/** A destination this close to a city already picked is the same place. */
+const SAME_PLACE_KM = 10;
 const MAP_WIDTH = 1000;
 const MONTHS = [
   "JAN",
@@ -177,10 +181,39 @@ for (const country of countries) {
   }
 }
 
-const previous = existsSync(OUT)
-  ? JSON.parse(readFileSync(OUT, "utf8")).points
-  : [];
-const known = new Map(previous.map((p) => [`${p.lat},${p.lon}`, p.temps]));
+const destinations = JSON.parse(
+  readFileSync(new URL("world-destinations.json", import.meta.url), "utf8"),
+);
+for (const destination of destinations) {
+  const near = points.find(
+    (p) =>
+      p.name &&
+      geoDistance([p.lon, p.lat], [destination.lon, destination.lat]) *
+        EARTH_RADIUS_KM <
+        SAME_PLACE_KM,
+  );
+  if (near) {
+    console.log(`${destination.name} is already in as ${near.name}`);
+    continue;
+  }
+  const country = countryOf(destination);
+  if (!country) throw new Error(`No country holds ${destination.name}`);
+  points.push({
+    country: country.properties.name,
+    name: destination.region
+      ? `${destination.name} (${destination.region})`
+      : destination.name,
+    capital: false,
+    lat: round3(destination.lat),
+    lon: round3(destination.lon),
+  });
+}
+
+const before = existsSync(OUT) ? JSON.parse(readFileSync(OUT, "utf8")) : {};
+const previous = new Map(
+  (before.points ?? []).map((p) => [`${p.lat},${p.lon}`, p]),
+);
+const known = new Map([...previous].map(([key, p]) => [key, p.temps]));
 const missing = points.filter((p) => !known.has(`${p.lat},${p.lon}`));
 console.log(
   `${countries.length} countries, ${points.length} places, ${missing.length} to fetch`,
@@ -224,12 +257,14 @@ writeFileSync(
     points: points.map((p) => {
       const [x, y] = projection([p.lon, p.lat]);
       return {
+        ...previous.get(`${p.lat},${p.lon}`),
         ...p,
         x: Math.round(x * 10) / 10,
         y: Math.round(y * 10) / 10,
         temps: known.get(`${p.lat},${p.lon}`),
       };
     }),
+    ...(before.countries && { countries: before.countries }),
   })}\n`,
 );
 console.log(`wrote ${shapes.length} shapes and ${points.length} places`);

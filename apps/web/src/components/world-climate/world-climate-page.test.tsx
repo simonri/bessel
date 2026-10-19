@@ -129,7 +129,7 @@ describe("WorldClimatePage", () => {
     expect(row(/Port Louis/).textContent).toContain("2.3");
 
     fireEvent.change(search, { target: { value: "san juan" } });
-    expect(row(/San Juan/).textContent).toContain("Level 1");
+    expect(row(/^San Juan(?! del)/).textContent).toContain("Level 1");
 
     fireEvent.change(search, { target: { value: "barcelona" } });
     expect(row(/Barcelona/).textContent).toContain("Restricted");
@@ -141,6 +141,23 @@ describe("WorldClimatePage", () => {
     fireEvent.change(search, { target: { value: "new delhi" } });
     expect(row(/New Delhi/).textContent).toContain("≈ $152");
     expect(row(/New Delhi/).textContent).toContain("Not safe");
+  });
+
+  it("lists travel destinations, not just the biggest cities", () => {
+    render(<WorldClimatePage />);
+    fireEvent.click(screen.getByRole("button", { name: "Cities" }));
+    const search = screen.getByLabelText("Find a country or city");
+    const names = () =>
+      screen.getAllByRole("rowheader").map((cell) => cell.textContent);
+
+    fireEvent.change(search, { target: { value: "bali" } });
+    expect(names()).toEqual([
+      expect.stringMatching(/^Canggu \(Bali\) - Indonesia/),
+      expect.stringMatching(/^Ubud \(Bali\) - Indonesia/),
+    ]);
+
+    fireEvent.change(search, { target: { value: "phuket" } });
+    expect(names()).toEqual([expect.stringMatching(/^Phuket - Thailand/)]);
   });
 
   it("sorts cities by salary, highest first, with no-data cities last both ways", () => {
