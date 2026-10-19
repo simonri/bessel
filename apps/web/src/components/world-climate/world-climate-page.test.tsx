@@ -159,7 +159,7 @@ describe("WorldClimatePage", () => {
     fireEvent.change(search, { target: { value: "phuket" } });
     expect(names()).toEqual([expect.stringMatching(/^Phuket - Thailand/)]);
     const phuket = screen.getAllByRole("rowheader")[0].parentElement;
-    expect(phuket?.textContent).toContain("39.9M");
+    expect(phuket?.textContent).toContain("$64.4B a year");
   });
 
   it("sorts cities by salary, highest first, with no-data cities last both ways", () => {

@@ -80,8 +80,12 @@ export interface CountryFacts {
   advisory: AdvisoryLevel | null;
   /** Intentional homicides per 100,000 people a year (UNODC). */
   homicides: number | null;
-  /** International tourist arrivals a year, before COVID. */
-  arrivals: number | null;
+  /** What international visitors spend a year, before COVID. */
+  tourism: {
+    usd: number;
+    /** Reported spending, or estimated from arrivals. */
+    basis: "receipts" | "estimate";
+  } | null;
   /** What a Swedish passport needs to get in, and for how many days if visa free. */
   visa: { entry: VisaEntry; days?: number } | null;
 }
@@ -112,7 +116,7 @@ export const NO_FACTS: CountryFacts = {
   hdi: null,
   advisory: null,
   homicides: null,
-  arrivals: null,
+  tourism: null,
   visa: null,
 };
 
@@ -162,6 +166,16 @@ export function formatRent(rent: Rent | null): string {
   if (!rent) return "No data";
   const amount = `$${rent.usd.toLocaleString("en-US")}`;
   return rent.basis === "estimate" ? `≈ ${amount}` : amount;
+}
+
+/** "$64.4B a year", "$190M a year", "≈ $2.1B a year" when estimated from arrivals. */
+export function formatTourism(tourism: CountryFacts["tourism"]): string {
+  if (!tourism) return "No data";
+  const amount =
+    tourism.usd >= 1e9
+      ? `$${(tourism.usd / 1e9).toFixed(1)}B`
+      : `$${Math.round(tourism.usd / 1e6)}M`;
+  return `${tourism.basis === "estimate" ? "≈ " : ""}${amount} a year`;
 }
 
 /** Unique per place: names repeat, even within a country. */

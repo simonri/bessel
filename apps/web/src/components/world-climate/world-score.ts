@@ -125,10 +125,15 @@ export function beachFactor(beaches: number | null): number {
   return 0.3 + 0.7 * clamp01(beaches / 5);
 }
 
-/** 200,000 tourists a year or fewer is nothing, 20 million+ full marks, on a log scale. */
-export function tourismScore(arrivals: number | null): number {
-  if (arrivals === null) return 0.5;
-  return clamp01(Math.log10(Math.max(arrivals, 1) / 200_000) / 2);
+/** Tourists spending $100 million a year or less is nothing, $30 billion+ full marks, on a log scale. */
+export function tourismScore(tourism: CountryFacts["tourism"]): number {
+  if (!tourism) return 0.5;
+  return clamp01(Math.log10(Math.max(tourism.usd, 1) / 1e8) / Math.log10(300));
+}
+
+/** No cloud to 40% is full marks, 90%+ nothing. */
+export function sunScore(cloudPercent: number): number {
+  return clamp01(1 - (cloudPercent - 40) / 50);
 }
 
 /** $1,500 a month or less is full marks, $3,000+ nothing. */
@@ -171,15 +176,16 @@ export function scoreCity(
 ): CityScore {
   const parts: Record<ScorePart, number> = {
     weather:
-      0.75 * temperatureScore(point.temps[month]) +
-      0.25 * rainScore(point.rainMm[month]),
+      0.6 * temperatureScore(point.temps[month]) +
+      0.3 * rainScore(point.rainMm[month]) +
+      0.1 * sunScore(point.cloud[month]),
     sea:
       seaScore(point.seaTemps[month], point.seaKm) * beachFactor(point.beaches),
     tropical: tropicalScore(point.lat),
     cheap: point.rent ? rentScore(point.rent.usd) : cheapScore(facts.salary),
     airbnb: airbnbScore(point.airbnb.status),
     scene: sceneScore(point.scene),
-    tourism: tourismScore(facts.arrivals),
+    tourism: tourismScore(facts.tourism),
   };
   const total = (Object.keys(SCORE_WEIGHTS) as ScorePart[]).reduce(
     (sum, part) => sum + SCORE_WEIGHTS[part] * parts[part],

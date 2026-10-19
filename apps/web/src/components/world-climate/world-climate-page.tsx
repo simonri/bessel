@@ -402,19 +402,21 @@ export function WorldClimatePage() {
           density: the city proper (Wikidata), approximate.
         </p>
         <p className="mt-1 text-11 text-white/35">
-          Score (0-100, for the chosen month): weather 40 (28-38 °C is best,
-          less with rain), sea 20 (26 °C+ within 10 km is best, down to 30% with
-          no beaches within 15 km), tropics 10 (within 23.5° of the equator,
-          fading out by 30°), cheapness 10 (by rent, $1,500 or less is best and
-          $3,000+ nothing, else by pay), Airbnb 5 (allowed, half if restricted),
-          scene 10 (cafés and coworking within 5 km, from OpenStreetMap) and
-          tourism 5 (200,000 to 20 million tourists a year to the country, World
-          Bank 2017-2019), minus 3, 12 or 30 for low, moderate or high malaria
-          risk, up to 20 for an HDI below 0.7 (all 20 at 0.45), and for safety
-          3, 20 or 50 for advisory level 2, 3 or 4 plus up to 15 for homicides
-          (from 2 per 100,000, all 15 at 40). Up to 15 off for internet under 50
-          Mbit/s down or 12.5 up, and up to 20 for storm season (a storm in half
-          the years). Visa-free entry for a Swedish passport adds 5.
+          Score (0-100, for the chosen month): weather 40 (60% warmth with 28-38
+          °C best, 30% rain with 30 mm or less best, 10% sun with 40% cloud or
+          less best), sea 20 (26 °C+ within 10 km is best, down to 30% with no
+          beaches within 15 km), tropics 10 (within 23.5° of the equator, fading
+          out by 30°), cheapness 10 (by rent, $1,500 or less is best and $3,000+
+          nothing, else by pay), Airbnb 5 (allowed, half if restricted), scene
+          10 (cafés and coworking within 5 km, from OpenStreetMap) and tourism 5
+          (what tourists spend in the country a year, $100 million to $30
+          billion, World Bank 2014-2019), minus 3, 12 or 30 for low, moderate or
+          high malaria risk, up to 20 for an HDI below 0.7 (all 20 at 0.45), and
+          for safety 3, 20 or 50 for advisory level 2, 3 or 4 plus up to 15 for
+          homicides (from 2 per 100,000, all 15 at 40). Up to 15 off for
+          internet under 50 Mbit/s down or 12.5 up, and up to 20 for storm
+          season (a storm in half the years). Visa-free entry for a Swedish
+          passport adds 5.
         </p>
       </section>
     </div>

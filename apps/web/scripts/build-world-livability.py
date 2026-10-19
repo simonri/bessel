@@ -11,8 +11,9 @@ Run after build-world-facts.py, which rebuilds the country list.
 - Advisory: the US State Department travel advisory level (1-4), matched by the country name in each title.
   The US and its territories have none, so they count as level 1.
 - Homicides: intentional homicides per 100,000 people (World Bank VC.IHR.PSRC.P5, from UNODC), latest year.
-- Arrivals: international tourist arrivals a year (World Bank ST.INT.ARVL, from UN Tourism), the most in
-  2017-2019; the series stops at 2020, and 2020 was COVID.
+- Tourism: what international visitors spend a year, in USD (World Bank ST.INT.RCPT.CD, from UN Tourism), the
+  most in 2014-2019; the series stops at 2020, and 2020 was COVID. Spending, unlike arrivals, isn't inflated by
+  day trips over a land border. Where it's missing, arrivals (ST.INT.ARVL) times the median spend per arrival.
 - Visa: what a Swedish passport needs, from the Passport Index dataset (github.com/ilyankou/passport-index-dataset,
   MIT), plus overrides for changes it hasn't caught up with and for territories it leaves out.
 
@@ -21,15 +22,17 @@ Run after build-world-facts.py, which rebuilds the country list.
   curl -L -o /tmp/hdi.csv "https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Composite_indices_complete_time_series.csv"
   curl -L -o /tmp/advisories.json "https://cadataapi.state.gov/api/TravelAdvisories"
   curl -L -o /tmp/homicides.json "https://api.worldbank.org/v2/country/all/indicator/VC.IHR.PSRC.P5?format=json&per_page=20000&date=2014:2024"
-  curl -L -o /tmp/arrivals.json "https://api.worldbank.org/v2/country/all/indicator/ST.INT.ARVL?format=json&per_page=20000&date=2017:2019"
+  curl -L -o /tmp/receipts.json "https://api.worldbank.org/v2/country/all/indicator/ST.INT.RCPT.CD?format=json&per_page=20000&date=2014:2019"
+  curl -L -o /tmp/arrivals.json "https://api.worldbank.org/v2/country/all/indicator/ST.INT.ARVL?format=json&per_page=20000&date=2014:2019"
   curl -L -o /tmp/passports.csv "https://raw.githubusercontent.com/ilyankou/passport-index-dataset/master/passport-index-tidy-iso3.csv"
   uv run scripts/build-world-livability.py /tmp/malaria.json /tmp/population.json /tmp/hdi.csv /tmp/advisories.json \\
-    /tmp/homicides.json /tmp/arrivals.json /tmp/passports.csv node_modules/world-atlas/countries-50m.json
+    /tmp/homicides.json /tmp/receipts.json /tmp/arrivals.json /tmp/passports.csv node_modules/world-atlas/countries-50m.json
 """
 
 import csv
 import json
 import re
+import statistics
 import sys
 from pathlib import Path
 
@@ -158,13 +161,20 @@ def homicides_per_100k(homicides_path: str) -> dict[str, float]:
   return {code: round(value, 1) for code, (_, value) in latest.items()}
 
 
-def tourist_arrivals(arrivals_path: str) -> dict[str, int]:
-  most: dict[str, int] = {}
-  for row in json.loads(Path(arrivals_path).read_text())[1]:
+def most_before_covid(path: str) -> dict[str, float]:
+  most: dict[str, float] = {}
+  for row in json.loads(Path(path).read_text())[1]:
     code = row["countryiso3code"]
-    if row["value"] is not None and code and "2017" <= row["date"] <= "2019":
-      most[code] = max(most.get(code, 0), round(row["value"]))
+    if row["value"] is not None and code and row["date"] <= "2019":
+      most[code] = max(most.get(code, 0.0), row["value"])
   return most
+
+
+def tourism_spending(receipts_path: str, arrivals_path: str) -> dict[str, dict]:
+  receipts, arrivals = most_before_covid(receipts_path), most_before_covid(arrivals_path)
+  per_arrival = statistics.median(receipts[c] / arrivals[c] for c in receipts.keys() & arrivals.keys() if arrivals[c])
+  estimated = {c: {"usd": int(round(n * per_arrival, -6)), "basis": "estimate"} for c, n in arrivals.items()}
+  return estimated | {c: {"usd": int(round(usd, -6)), "basis": "receipts"} for c, usd in receipts.items()}
 
 
 def visas(passports_path: str) -> dict[str, dict]:
@@ -189,6 +199,7 @@ def main(
   hdi_path: str,
   advisories_path: str,
   homicides_path: str,
+  receipts_path: str,
   arrivals_path: str,
   passports_path: str,
   atlas_path: str,
@@ -198,7 +209,7 @@ def main(
   development = hdi(hdi_path)
   advisories = advisory_levels(advisories_path)
   homicides = homicides_per_100k(homicides_path)
-  arrivals = tourist_arrivals(arrivals_path)
+  tourism = tourism_spending(receipts_path, arrivals_path)
   visa = visas(passports_path)
 
   data = json.loads(DATA.read_text())
@@ -208,7 +219,8 @@ def main(
     facts["hdi"] = development.get(code) if code else None
     facts["advisory"] = advisories.get(code) if code else None
     facts["homicides"] = homicides.get(code) if code else None
-    facts["arrivals"] = arrivals.get(code) if code else None
+    facts.pop("arrivals", None)
+    facts["tourism"] = tourism.get(code) if code else None
     facts["visa"] = visa.get(code) if code else None
 
   DATA.write_text(json.dumps(data, separators=(",", ":"), ensure_ascii=False) + "\n")
@@ -221,4 +233,4 @@ def main(
 
 
 if __name__ == "__main__":
-  main(*sys.argv[1:9])
+  main(*sys.argv[1:10])

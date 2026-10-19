@@ -12,6 +12,7 @@ import {
   formatSalary,
   formatSeaDistance,
   formatTemp,
+  formatTourism,
   hdiTier,
   MALARIA_LABEL,
   type MalariaRisk,
@@ -68,7 +69,7 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "internet", label: "Internet", numeric: true },
   { key: "scene", label: "Cafés", numeric: true },
   { key: "beaches", label: "Beaches", numeric: true },
-  { key: "tourism", label: "Tourists", numeric: true },
+  { key: "tourism", label: "Tourism", numeric: true },
   { key: "water", label: "Tap water", numeric: false },
   { key: "hdi", label: "HDI", numeric: true },
   { key: "malaria", label: "Malaria", numeric: false },
@@ -170,7 +171,7 @@ function sortValue(
     case "beaches":
       return point.beaches;
     case "tourism":
-      return facts.arrivals;
+      return facts.tourism?.usd ?? null;
     case "salary":
       return facts.salary?.usd ?? null;
     case "water":
@@ -456,17 +457,15 @@ export function CityTable({
                 <td
                   className={cn(
                     "px-4 py-1.5 text-right",
-                    facts.arrivals === null ? "text-white/30" : "text-white/70",
+                    facts.tourism === null ? "text-white/30" : "text-white/70",
                   )}
                   title={
-                    facts.arrivals === null
-                      ? undefined
-                      : `International tourists a year to ${p.country}, 2017-2019`
+                    facts.tourism
+                      ? `What tourists spend in ${p.country} a year, before COVID${facts.tourism.basis === "estimate" ? " - estimated from arrivals" : ""}`
+                      : undefined
                   }
                 >
-                  {facts.arrivals === null
-                    ? "No data"
-                    : formatPopulation(facts.arrivals)}
+                  {formatTourism(facts.tourism)}
                 </td>
                 <td
                   className={cn(

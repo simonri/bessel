@@ -15,6 +15,7 @@ import {
   scoreColor,
   seaScore,
   stormPenalty,
+  sunScore,
   temperatureScore,
   tourismScore,
   tropicalScore,
@@ -54,7 +55,7 @@ const cheapCountry: CountryFacts = {
   hdi: 0.7,
   advisory: 1,
   homicides: 1,
-  arrivals: 40_000_000,
+  tourism: { usd: 60e9, basis: "receipts" },
   visa: null,
 };
 
@@ -109,14 +110,21 @@ describe("scoreCity", () => {
   });
 
   it("weights weather 40, sea 20, tropics 10, cheap 10, Airbnb 5, scene 10, tourism 5", () => {
-    const cold = city({ temps: month(10), rainMm: month(300) });
+    const cold = city({
+      temps: month(10),
+      rainMm: month(300),
+      cloud: month(90),
+    });
     expect(scoreCity(cold, cheapCountry, 0).total).toBe(60);
     const inland = city({ seaKm: 500 });
     expect(scoreCity(inland, cheapCountry, 0).total).toBe(80);
     expect(scoreCity(city({ lat: 45 }), cheapCountry, 0).total).toBe(90);
     const quiet = city({ scene: { cafes: 0, coworking: 0 } });
     expect(scoreCity(quiet, cheapCountry, 0).total).toBe(90);
-    const unvisited = { ...cheapCountry, arrivals: 200_000 };
+    const unvisited: CountryFacts = {
+      ...cheapCountry,
+      tourism: { usd: 1e8, basis: "receipts" },
+    };
     expect(scoreCity(city(), unvisited, 0).total).toBe(95);
     const rich: CountryFacts = {
       ...cheapCountry,
@@ -135,12 +143,15 @@ describe("scoreCity", () => {
     const seasonal = city({
       temps: july(30, 10),
       rainMm: july(10, 300),
+      cloud: july(30, 90),
       seaTemps: july(27, 14),
     });
     const winter = scoreCity(seasonal, cheapCountry, 0).parts;
     const summer = scoreCity(seasonal, cheapCountry, 6).parts;
-    expect([winter.weather, winter.sea]).toEqual([0, 0]);
-    expect([summer.weather, summer.sea]).toEqual([1, 1]);
+    expect(winter.weather).toBeCloseTo(0);
+    expect(winter.sea).toBe(0);
+    expect(summer.weather).toBeCloseTo(1);
+    expect(summer.sea).toBe(1);
   });
 
   it("takes points off for malaria, more the higher the risk", () => {
@@ -272,17 +283,34 @@ describe("scoreCity", () => {
     expect(muddy.total).toBe(86);
   });
 
-  it("rewards places lots of tourists visit, on a log scale", () => {
+  it("rewards places where tourists spend a lot, on a log scale", () => {
+    const spend = (usd: number) =>
+      tourismScore({ usd, basis: "receipts" as const });
     expect(tourismScore(null)).toBe(0.5);
-    expect(tourismScore(100_000)).toBe(0);
-    expect(tourismScore(200_000)).toBe(0);
-    expect(tourismScore(2_000_000)).toBe(0.5);
-    expect(tourismScore(20_000_000)).toBe(1);
-    expect(tourismScore(90_000_000)).toBe(1);
+    expect(spend(5e7)).toBe(0);
+    expect(spend(1e8)).toBe(0);
+    expect(spend(Math.sqrt(300) * 1e8)).toBeCloseTo(0.5);
+    expect(spend(3e10)).toBeCloseTo(1);
+    expect(spend(2e11)).toBe(1);
+  });
+
+  it("counts rain and cloud in the weather, not just warmth", () => {
+    expect(sunScore(40)).toBe(1);
+    expect(sunScore(65)).toBe(0.5);
+    expect(sunScore(90)).toBe(0);
+    const pouring = city({ rainMm: month(300), cloud: month(90) });
+    expect(scoreCity(pouring, cheapCountry, 0).parts.weather).toBe(0.6);
+    const grey = city({ cloud: month(90) });
+    expect(scoreCity(grey, cheapCountry, 0).parts.weather).toBeCloseTo(0.9);
   });
 
   it("never goes below 0", () => {
-    const awful = city({ temps: month(0), seaKm: 900, rainMm: month(400) });
+    const awful = city({
+      temps: month(0),
+      seaKm: 900,
+      rainMm: month(400),
+      cloud: month(100),
+    });
     const facts: CountryFacts = {
       ...cheapCountry,
       salary: { usd: 9000, basis: "survey", year: 2025 },
