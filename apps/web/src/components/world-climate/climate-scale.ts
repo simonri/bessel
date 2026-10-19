@@ -31,6 +31,13 @@ export interface ClimatePoint {
   internet: Internet | null;
   /** A month in an entire Airbnb home, in USD. */
   rent: Rent | null;
+  /** Cafés and coworking spaces within 5 km (OpenStreetMap). */
+  scene: Scene | null;
+}
+
+export interface Scene {
+  cafes: number;
+  coworking: number;
 }
 
 export interface Internet {

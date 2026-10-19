@@ -9,11 +9,13 @@ import {
   internetPenalty,
   rainScore,
   rentScore,
+  sceneScore,
   scoreCity,
   scoreColor,
   seaScore,
   stormPenalty,
   temperatureScore,
+  tropicalScore,
 } from "./world-score";
 
 const month = (value: number) => Array<number>(12).fill(value);
@@ -37,6 +39,7 @@ function city(over: Partial<ClimatePoint> = {}): ClimatePoint {
     storms: month(0),
     internet: null,
     rent: null,
+    scene: { cafes: 1000, coworking: 10 },
     ...over,
   };
 }
@@ -101,11 +104,14 @@ describe("scoreCity", () => {
     expect(scoreCity(city(), cheapCountry, 0).total).toBe(100);
   });
 
-  it("weights weather 50, sea 30, cheap 10, Airbnb 10", () => {
+  it("weights weather 45, sea 25, tropics 10, cheap 10, Airbnb 5, scene 5", () => {
     const cold = city({ temps: month(10), rainMm: month(300) });
-    expect(scoreCity(cold, cheapCountry, 0).total).toBe(50);
+    expect(scoreCity(cold, cheapCountry, 0).total).toBe(55);
     const inland = city({ seaKm: 500 });
-    expect(scoreCity(inland, cheapCountry, 0).total).toBe(70);
+    expect(scoreCity(inland, cheapCountry, 0).total).toBe(75);
+    expect(scoreCity(city({ lat: 45 }), cheapCountry, 0).total).toBe(90);
+    const quiet = city({ scene: { cafes: 0, coworking: 0 } });
+    expect(scoreCity(quiet, cheapCountry, 0).total).toBe(95);
     const rich: CountryFacts = {
       ...cheapCountry,
       salary: { usd: 5000, basis: "survey", year: 2025 },
@@ -114,7 +120,7 @@ describe("scoreCity", () => {
     expect(
       scoreCity(city({ airbnb: { status: "unavailable" } }), cheapCountry, 0)
         .total,
-    ).toBe(90);
+    ).toBe(95);
   });
 
   it("reads air, rain and sea for the chosen month", () => {
@@ -176,13 +182,13 @@ describe("scoreCity", () => {
 
   it("adds 5 for visa-free entry, but never above 100", () => {
     const withVisa = (visa: CountryFacts["visa"]) =>
-      scoreCity(city({ seaKm: 105 }), { ...cheapCountry, visa }, 0);
-    expect(withVisa(null).total).toBe(85);
-    expect(withVisa({ entry: "free", days: 45 }).total).toBe(90);
+      scoreCity(city({ seaKm: 162 }), { ...cheapCountry, visa }, 0);
+    expect(withVisa(null).total).toBe(80);
+    expect(withVisa({ entry: "free", days: 45 }).total).toBe(85);
     expect(withVisa({ entry: "free", days: 45 }).adjustments.visa).toBe(5);
-    expect(withVisa({ entry: "arrival" }).total).toBe(85);
-    expect(withVisa({ entry: "eta" }).total).toBe(85);
-    expect(withVisa({ entry: "required" }).total).toBe(85);
+    expect(withVisa({ entry: "arrival" }).total).toBe(80);
+    expect(withVisa({ entry: "eta" }).total).toBe(80);
+    expect(withVisa({ entry: "required" }).total).toBe(80);
     const perfect = scoreCity(
       city(),
       { ...cheapCountry, visa: { entry: "free" } },
@@ -223,12 +229,30 @@ describe("scoreCity", () => {
 
   it("prices cheapness by rent where known, else by salary", () => {
     expect(rentScore(800)).toBe(1);
-    expect(rentScore(2400)).toBe(0.5);
-    expect(rentScore(4000)).toBe(0);
+    expect(rentScore(1500)).toBe(1);
+    expect(rentScore(2250)).toBe(0.5);
+    expect(rentScore(3000)).toBe(0);
     expect(rentScore(9000)).toBe(0);
-    const pricey = city({ rent: { usd: 2400, basis: "estimate" } });
+    const pricey = city({ rent: { usd: 2250, basis: "estimate" } });
     expect(scoreCity(pricey, cheapCountry, 0).parts.cheap).toBe(0.5);
     expect(scoreCity(city(), cheapCountry, 0).parts.cheap).toBe(1);
+  });
+
+  it("favours the tropics, fading out by 30°", () => {
+    expect(tropicalScore(0)).toBe(1);
+    expect(tropicalScore(-23.5)).toBe(1);
+    expect(tropicalScore(26.75)).toBe(0.5);
+    expect(tropicalScore(-30)).toBe(0);
+    expect(tropicalScore(59)).toBe(0);
+  });
+
+  it("rewards cafés and coworking on a log scale, neutral when unknown", () => {
+    expect(sceneScore(null)).toBe(0.5);
+    expect(sceneScore({ cafes: 0, coworking: 0 })).toBe(0);
+    expect(sceneScore({ cafes: 10, coworking: 0 })).toBe(0);
+    expect(sceneScore({ cafes: 50, coworking: 5 })).toBe(0.5);
+    expect(sceneScore({ cafes: 1000, coworking: 0 })).toBe(1);
+    expect(sceneScore({ cafes: 5000, coworking: 50 })).toBe(1);
   });
 
   it("never goes below 0", () => {
@@ -250,9 +274,9 @@ describe("scoreCity", () => {
   });
 
   it("explains itself part by part, with adjustments only when they count", () => {
-    const score = scoreCity(city({ seaKm: 105 }), cheapCountry, 0);
+    const score = scoreCity(city({ seaKm: 162 }), cheapCountry, 0);
     expect(describeScore(score)).toBe(
-      "Weather 50/50, Sea 15/30, Cheap 10/10, Airbnb 10/10",
+      "Weather 45/45, Sea 5/25, Tropics 10/10, Cheap 10/10, Airbnb 5/5, Scene 5/5",
     );
     const malarial = scoreCity(
       city(),
@@ -266,7 +290,7 @@ describe("scoreCity", () => {
       0,
     );
     expect(describeScore(malarial)).toBe(
-      "Weather 50/50, Sea 30/30, Cheap 10/10, Airbnb 10/10, Malaria -12, HDI -10, Safety -3, Visa free +5",
+      "Weather 45/45, Sea 25/25, Tropics 10/10, Cheap 10/10, Airbnb 5/5, Scene 5/5, Malaria -12, HDI -10, Safety -3, Visa free +5",
     );
   });
 });

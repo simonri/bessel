@@ -146,18 +146,21 @@ describe("WorldClimatePage", () => {
   it("sorts cities by salary, highest first, with no-data cities last both ways", () => {
     render(<WorldClimatePage />);
     fireEvent.click(screen.getByRole("button", { name: "Cities" }));
-    const rowTexts = () =>
+    const salaryColumn = screen
+      .getAllByRole("columnheader")
+      .findIndex((cell) => cell.textContent?.startsWith("Salary"));
+    const salaries = () =>
       screen
         .getAllByRole("rowheader")
-        .map((cell) => cell.parentElement?.textContent ?? "");
+        .map((cell) => cell.parentElement?.children[salaryColumn]?.textContent);
 
     fireEvent.click(screen.getByRole("button", { name: "Salary" }));
-    expect(rowTexts()[0]).toMatch(/^Bern/);
-    expect(rowTexts().at(-1)).toContain("No data");
+    expect(screen.getAllByRole("rowheader")[0].textContent).toMatch(/^Bern/);
+    expect(salaries().at(-1)).toBe("No data");
 
     fireEvent.click(screen.getByRole("button", { name: "Salary" }));
-    expect(rowTexts()[0]).not.toContain("No data");
-    expect(rowTexts().at(-1)).toContain("No data");
+    expect(salaries()[0]).not.toBe("No data");
+    expect(salaries().at(-1)).toBe("No data");
   });
 
   it("ranks cities by score for the month, best first, and explains each score", () => {
@@ -175,7 +178,7 @@ describe("WorldClimatePage", () => {
       .getAllByRole("rowheader")[0]
       .parentElement?.querySelector("[title]") as HTMLElement;
     expect(best.title).toMatch(
-      /^Weather \d+\/50, Sea \d+\/30, Cheap \d+\/10, Airbnb \d+\/10(, [A-Za-z ]+ [+-]\d+)*$/,
+      /^Weather \d+\/45, Sea \d+\/25, Tropics \d+\/10, Cheap \d+\/10, Airbnb \d+\/5, Scene \d+\/5(, [A-Za-z ]+ [+-]\d+)*$/,
     );
 
     expect(screen.getByText(/Best for you in January/).textContent).toContain(

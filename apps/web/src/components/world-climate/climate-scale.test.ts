@@ -31,6 +31,7 @@ const point = (
   storms: Array<number>(12).fill(0),
   internet: null,
   rent: null,
+  scene: null,
 });
 
 describe("tempColor", () => {

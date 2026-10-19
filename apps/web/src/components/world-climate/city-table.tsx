@@ -39,6 +39,7 @@ type SortKey =
   | "salary"
   | "rent"
   | "internet"
+  | "scene"
   | "storms"
   | "water"
   | "hdi"
@@ -63,6 +64,7 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "salary", label: "Salary", numeric: true },
   { key: "rent", label: "Rent", numeric: true },
   { key: "internet", label: "Internet", numeric: true },
+  { key: "scene", label: "Cafés", numeric: true },
   { key: "water", label: "Tap water", numeric: false },
   { key: "hdi", label: "HDI", numeric: true },
   { key: "malaria", label: "Malaria", numeric: false },
@@ -159,6 +161,8 @@ function sortValue(
       return point.rent?.usd ?? null;
     case "internet":
       return point.internet?.downMbps ?? null;
+    case "scene":
+      return point.scene?.cafes ?? null;
     case "salary":
       return facts.salary?.usd ?? null;
     case "water":
@@ -260,7 +264,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[2080px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[2180px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -412,6 +416,19 @@ export function CityTable({
                   }
                 >
                   {p.internet ? `${p.internet.downMbps} Mbit/s` : "No data"}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    p.scene ? "text-white/70" : "text-white/30",
+                  )}
+                  title={
+                    p.scene
+                      ? `${p.scene.coworking} coworking spaces within 5 km`
+                      : undefined
+                  }
+                >
+                  {p.scene ? p.scene.cafes.toLocaleString("en-US") : "No data"}
                 </td>
                 <td
                   className={cn(
