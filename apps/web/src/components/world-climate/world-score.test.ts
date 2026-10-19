@@ -44,6 +44,7 @@ function city(over: Partial<ClimatePoint> = {}): ClimatePoint {
     rent: null,
     scene: { cafes: 1000, coworking: 10 },
     beaches: 10,
+    rides: { status: "yes", apps: ["Uber"] },
     ...over,
   };
 }
@@ -302,6 +303,16 @@ describe("scoreCity", () => {
     expect(scoreCity(pouring, cheapCountry, 0).parts.weather).toBe(0.6);
     const grey = city({ cloud: month(90) });
     expect(scoreCity(grey, cheapCountry, 0).parts.weather).toBeCloseTo(0.9);
+  });
+
+  it("takes points off where no app gets you a taxi", () => {
+    const withRides = (status: "yes" | "limited" | "no") =>
+      scoreCity(city({ rides: { status, apps: [] } }), cheapCountry, 0);
+    expect(withRides("yes").total).toBe(100);
+    expect(withRides("limited").total).toBe(95);
+    expect(withRides("no").total).toBe(88);
+    expect(withRides("no").adjustments.rides).toBe(-12);
+    expect(scoreCity(city({ rides: null }), cheapCountry, 0).total).toBe(100);
   });
 
   it("never goes below 0", () => {

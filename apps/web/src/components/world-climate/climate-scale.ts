@@ -35,7 +35,21 @@ export interface ClimatePoint {
   scene: Scene | null;
   /** Beaches within 15 km (OpenStreetMap). */
   beaches: number | null;
+  /** Whether a ride-hailing app (Uber, Grab, Bolt...) gets you a car. */
+  rides: Rides | null;
 }
+
+export interface Rides {
+  status: "yes" | "limited" | "no";
+  apps: string[];
+  note?: string;
+}
+
+export const RIDES_LABEL: Record<Rides["status"], string> = {
+  yes: "Yes",
+  limited: "Limited",
+  no: "None",
+};
 
 export interface Scene {
   cafes: number;

@@ -5,6 +5,7 @@ import {
   type Internet,
   type MalariaRisk,
   malariaRisk,
+  type Rides,
   type Scene,
 } from "./climate-scale";
 
@@ -43,6 +44,7 @@ export type Adjustment =
   | "safety"
   | "internet"
   | "storms"
+  | "rides"
   | "visa";
 
 export const VISA_FREE_BONUS = 5;
@@ -85,6 +87,13 @@ export function internetPenalty(internet: Internet | null): number {
   const usable = Math.min(internet.downMbps, internet.upMbps * 4);
   return Math.round(15 * clamp01((50 - usable) / 45));
 }
+
+/** Having to phone or hail a taxi costs 12; an app with few drivers or rules against it, 5. */
+export const RIDES_PENALTY: Record<Rides["status"], number> = {
+  yes: 0,
+  limited: 5,
+  no: 12,
+};
 
 /** A storm in half the years (or more) for this month takes the full 20 off. */
 export function stormPenalty(share: number): number {
@@ -198,6 +207,7 @@ export function scoreCity(
     safety: -safetyPenalty(facts),
     internet: -internetPenalty(point.internet),
     storms: -stormPenalty(point.storms[month]),
+    rides: point.rides ? -RIDES_PENALTY[point.rides.status] : 0,
     visa: facts.visa?.entry === "free" ? VISA_FREE_BONUS : 0,
   };
   const adjusted = (Object.values(adjustments) as number[]).reduce(
@@ -227,6 +237,7 @@ const ADJUSTMENT_LABEL: Record<Adjustment, string> = {
   safety: "Safety",
   internet: "Internet",
   storms: "Storms",
+  rides: "Taxi app",
   visa: "Visa free",
 };
 

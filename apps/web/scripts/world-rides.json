@@ -1,0 +1,1995 @@
+{
+  "checked": "2026-10",
+  "places": {
+    "-17.816,31.043": {
+      "status": "yes",
+      "apps": ["Bolt", "inDrive"]
+    },
+    "-20.17,28.58": {
+      "status": "yes",
+      "apps": ["inDrive"]
+    },
+    "-15.415,28.281": {
+      "status": "yes",
+      "apps": ["Yango", "Bolt", "inDrive"]
+    },
+    "-17.86,25.86": {
+      "status": "no",
+      "apps": [],
+      "note": "No app lists Livingstone"
+    },
+    "15.357,44.205": {
+      "status": "limited",
+      "apps": ["Smart Rahal", "Sahl Taxi"],
+      "note": "Small local apps"
+    },
+    "12.78,45.009": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride app"
+    },
+    "21.035,105.848": {
+      "status": "yes",
+      "apps": ["Grab", "Xanh SM", "Be"]
+    },
+    "10.782,106.693": {
+      "status": "yes",
+      "apps": ["Grab", "Xanh SM", "Be"]
+    },
+    "10.503,-66.919": {
+      "status": "yes",
+      "apps": ["Yummy Rides", "Ridery"]
+    },
+    "10.732,-71.662": {
+      "status": "yes",
+      "apps": ["Yummy Rides", "Ridery", "Yango"]
+    },
+    "-17.733,168.317": {
+      "status": "limited",
+      "apps": ["ReGor Express"],
+      "note": "Local app in early launch"
+    },
+    "41.314,69.293": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "39.78,64.43": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "-34.856,-56.173": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify"]
+    },
+    "6.917,158.15": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "13.47,144.75": {
+      "status": "yes",
+      "apps": ["Stroll"],
+      "note": "Local app; no Lyft"
+    },
+    "-14.277,-170.707": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "18.44,-66.13": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "38.901,-77.011": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "33.992,-118.182": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "41.832,-87.752": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "25.79,-80.226": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "32.822,-96.842": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "33.832,-84.402": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "47.572,-122.342": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "39.741,-104.986": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "-51.7,-57.85": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "19.28,-81.33": {
+      "status": "limited",
+      "apps": ["CI:GO", "Cabbie.today"],
+      "note": "Licensed-taxi apps plus grey-zone carpool app"
+    },
+    "32.294,-64.784": {
+      "status": "yes",
+      "apps": ["Hitch", "BTOA Connect"],
+      "note": "Taxi-dispatch apps, but well established"
+    },
+    "54.15,-4.48": {
+      "status": "limited",
+      "apps": ["One Island"],
+      "note": "Booking app for licensed local taxis, coverage unclear"
+    },
+    "51.502,-0.119": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "24.467,54.367": {
+      "status": "yes",
+      "apps": ["Uber", "Careem"]
+    },
+    "50.435,30.515": {
+      "status": "yes",
+      "apps": ["Uklon", "Bolt", "Uber"]
+    },
+    "50.002,36.248": {
+      "status": "yes",
+      "apps": ["Uklon", "Bolt", "Uber"]
+    },
+    "0.319,32.581": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "37.95,58.383": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; crackdown on private taxis"
+    },
+    "39.11,63.58": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "39.929,32.862": {
+      "status": "yes",
+      "apps": ["Uber", "BiTaksi"]
+    },
+    "38.438,27.15": {
+      "status": "yes",
+      "apps": ["Uber", "BiTaksi"]
+    },
+    "36.803,10.18": {
+      "status": "yes",
+      "apps": ["Yassir", "inDrive", "Heetch"]
+    },
+    "10.652,-61.517": {
+      "status": "limited",
+      "apps": ["Drop", "TT RideShare"],
+      "note": "Uber left 2018; local Drop app has booking timeouts"
+    },
+    "-21.139,-175.221": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "6.134,1.221": {
+      "status": "yes",
+      "apps": ["Gozem"]
+    },
+    "-8.559,125.579": {
+      "status": "no",
+      "apps": [],
+      "note": "Street taxis; local app unproven"
+    },
+    "13.752,100.515": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "18.8,98.98": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "-6.798,39.266": {
+      "status": "yes",
+      "apps": ["Bolt"]
+    },
+    "-2.52,32.93": {
+      "status": "yes",
+      "apps": ["Bolt"]
+    },
+    "38.56,68.774": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "25.036,121.568": {
+      "status": "yes",
+      "apps": ["Uber", "55688"]
+    },
+    "33.502,36.298": {
+      "status": "yes",
+      "apps": ["YallaGo"],
+      "note": "Needs a local number; cash"
+    },
+    "46.917,7.467": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "59.353,18.095": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "55.583,13.033": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "-26.317,31.133": {
+      "status": "no",
+      "apps": [],
+      "note": "WhatsApp and hotel taxis only"
+    },
+    "5.835,-55.167": {
+      "status": "no",
+      "apps": [],
+      "note": "Taxis booked by phone/WhatsApp; local apps dormant"
+    },
+    "9.537,31.656": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "7.7,27.99": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "15.59,32.532": {
+      "status": "no",
+      "apps": [],
+      "note": "War"
+    },
+    "19.616,37.216": {
+      "status": "limited",
+      "apps": ["Tirhal"],
+      "note": "Wartime status unverified"
+    },
+    "12.06,24.89": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "6.932,79.858": {
+      "status": "yes",
+      "apps": ["PickMe", "Uber"]
+    },
+    "40.402,-3.685": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify", "FreeNow", "Bolt"]
+    },
+    "41.385,2.181": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify", "FreeNow", "Bolt"]
+    },
+    "37.568,126.998": {
+      "status": "yes",
+      "apps": ["Kakao T", "Uber"]
+    },
+    "-33.918,18.433": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "-25.705,28.227": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "-29.12,26.23": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "2.069,45.365": {
+      "status": "limited",
+      "apps": ["Rikaab"],
+      "note": "Thin evidence"
+    },
+    "9.56,44.065": {
+      "status": "limited",
+      "apps": ["Dhaweye", "Ridy"],
+      "note": "Local apps"
+    },
+    "-9.438,159.95": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "48.15,17.117": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "46.055,14.515": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "1.295,103.854": {
+      "status": "yes",
+      "apps": ["Grab", "Gojek", "TADA"]
+    },
+    "8.472,-13.236": {
+      "status": "no",
+      "apps": [],
+      "note": "Startup apps (SaloneRide) with no sign of real use"
+    },
+    "-4.617,55.45": {
+      "status": "limited",
+      "apps": ["KOEK", "SeyTaxi"],
+      "note": "Licensed-taxi booking apps; no Uber or Bolt"
+    },
+    "44.821,20.466": {
+      "status": "yes",
+      "apps": ["Yandex Go", "CarGo"]
+    },
+    "14.718,-17.475": {
+      "status": "yes",
+      "apps": ["Yango", "Heetch", "Yassir"]
+    },
+    "24.643,46.771": {
+      "status": "yes",
+      "apps": ["Uber", "Careem", "Bolt", "Jeeny"]
+    },
+    "21.519,39.217": {
+      "status": "yes",
+      "apps": ["Uber", "Careem", "Bolt", "Jeeny"]
+    },
+    "28.384,36.555": {
+      "status": "yes",
+      "apps": ["Uber", "Careem", "Bolt", "Jeeny"]
+    },
+    "0.333,6.733": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "43.936,12.442": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; local taxis"
+    },
+    "-13.842,-171.739": {
+      "status": "no",
+      "apps": [],
+      "note": "Phone taxis only"
+    },
+    "13.148,-61.212": {
+      "status": "no",
+      "apps": [],
+      "note": "No working app found"
+    },
+    "14.002,-61": {
+      "status": "limited",
+      "apps": ["Uber"],
+      "note": "Uber Taxi launched Jan 2026; government says it is unauthorised"
+    },
+    "17.302,-62.717": {
+      "status": "limited",
+      "apps": ["DROP SKN"],
+      "note": "iPhone-only local app, little evidence of use"
+    },
+    "-1.952,30.059": {
+      "status": "yes",
+      "apps": ["Move", "YEGO"]
+    },
+    "55.754,37.614": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "55.032,82.958": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "56.852,60.598": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "47.237,39.711": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "43.13,131.91": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "52.32,104.245": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "54.7,20.497": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "61.26,73.425": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "44.435,26.098": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "25.287,51.533": {
+      "status": "yes",
+      "apps": ["Uber", "Careem"]
+    },
+    "38.725,-9.147": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "52.252,20.998": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "50.062,19.958": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "14.606,120.98": {
+      "status": "yes",
+      "apps": ["Grab", "inDrive"]
+    },
+    "-12.046,-77.052": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive", "DiDi", "Cabify"]
+    },
+    "-16.418,-71.532": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive", "DiDi", "Cabify"]
+    },
+    "-8.12,-79.02": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive", "DiDi", "Cabify"]
+    },
+    "-25.294,-57.643": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "inDrive"]
+    },
+    "-25.517,-54.616": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "-9.465,147.193": {
+      "status": "limited",
+      "apps": ["ODESH"],
+      "note": "Local app, about 200 trips a day"
+    },
+    "-6.733,146.99": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "8.97,-79.535": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive", "Cabify"]
+    },
+    "7.487,134.627": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "33.702,73.165": {
+      "status": "yes",
+      "apps": ["inDrive", "Yango", "Bykea"]
+    },
+    "24.872,66.988": {
+      "status": "yes",
+      "apps": ["inDrive", "Yango", "Bykea"]
+    },
+    "23.613,58.593": {
+      "status": "yes",
+      "apps": ["OTaxi", "Marhaba"],
+      "note": "All taxis must use licensed apps since 2025; no Uber or Careem"
+    },
+    "59.919,10.748": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "60.391,5.325": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "39.021,125.753": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "9.085,7.531": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "inDrive"]
+    },
+    "6.445,3.39": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "inDrive"]
+    },
+    "13.519,2.115": {
+      "status": "no",
+      "apps": [],
+      "note": "No confirmed app"
+    },
+    "13.492,7.096": {
+      "status": "no",
+      "apps": [],
+      "note": "Input lists this as Niamey, but the coordinates are near Maradi; no app"
+    },
+    "16.996,7.983": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "12.155,-86.27": {
+      "status": "yes",
+      "apps": ["inDrive", "Ray"]
+    },
+    "-41.3,174.783": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "52.352,4.915": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "12.53,-70.029": {
+      "status": "limited",
+      "apps": ["Aruba Taxi App"],
+      "note": "Taxi-dispatch app only; no Uber or Bolt"
+    },
+    "12.2,-69.02": {
+      "status": "limited",
+      "apps": ["24-7 Taxi Curaçao"],
+      "note": "Taxi-company apps only; no Uber"
+    },
+    "27.719,85.315": {
+      "status": "yes",
+      "apps": ["Pathao", "inDrive", "Uber"]
+    },
+    "-22.57,17.084": {
+      "status": "yes",
+      "apps": ["Yango", "LEFA", "inDrive"]
+    },
+    "-26.574,18.13": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "-25.953,32.587": {
+      "status": "yes",
+      "apps": ["Yango"]
+    },
+    "-19.82,34.87": {
+      "status": "yes",
+      "apps": ["Yango"]
+    },
+    "34.025,-6.836": {
+      "status": "yes",
+      "apps": ["inDrive", "Yango", "Uber"]
+    },
+    "34.69,-1.91": {
+      "status": "yes",
+      "apps": ["inDrive"]
+    },
+    "26.119,-9.653": {
+      "status": "no",
+      "apps": [],
+      "note": "Remote desert settlement; no app"
+    },
+    "42.466,19.266": {
+      "status": "limited",
+      "apps": ["TeslaGo", "MonteGO"],
+      "note": "Small local apps; no Uber or Bolt"
+    },
+    "47.919,106.915": {
+      "status": "yes",
+      "apps": ["UBCab"],
+      "note": "Needs a local number; cash"
+    },
+    "48.067,114.506": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "48.017,91.633": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "47.005,28.858": {
+      "status": "yes",
+      "apps": ["Bolt", "Yandex Go"]
+    },
+    "19.444,-99.133": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive"]
+    },
+    "25.672,-100.332": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive"]
+    },
+    "32.502,-117.082": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive"]
+    },
+    "-20.167,57.5": {
+      "status": "limited",
+      "apps": ["Yugo"],
+      "note": "Local app; slow, long waits outside towns"
+    },
+    "18.086,-15.975": {
+      "status": "limited",
+      "apps": ["Carim", "Coursy"],
+      "note": "New, very small local apps"
+    },
+    "20.517,-13.05": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "16.667,-9.617": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "35.9,14.515": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "12.652,-8.002": {
+      "status": "limited",
+      "apps": ["Heetch"],
+      "note": "Heetch lists Bamako; thin evidence"
+    },
+    "16.267,-0.05": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "14.45,-11.44": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "4.167,73.5": {
+      "status": "yes",
+      "apps": ["Male' Taxi Line", "Avas"],
+      "note": "Local taxi apps; hard to get a car when it rains"
+    },
+    "3.169,101.698": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "5.414,100.329": {
+      "status": "yes",
+      "apps": ["Grab"]
+    },
+    "-13.983,33.783": {
+      "status": "no",
+      "apps": [],
+      "note": "No major app; small local apps unproven"
+    },
+    "-18.915,47.515": {
+      "status": "limited",
+      "apps": ["Piqla"],
+      "note": "Young local app"
+    },
+    "-15.67,46.345": {
+      "status": "no",
+      "apps": [],
+      "note": "Taxis and bajaj"
+    },
+    "42,21.433": {
+      "status": "limited",
+      "apps": ["Wizi", "BeeRide"],
+      "note": "Licensed-taxi booking apps; no Uber or Bolt"
+    },
+    "49.612,6.13": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "54.683,25.317": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "47.134,9.517": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; phone taxis"
+    },
+    "32.893,13.18": {
+      "status": "limited",
+      "apps": ["ADEX", "Wasila"],
+      "note": "Small local apps"
+    },
+    "32.119,20.065": {
+      "status": "limited",
+      "apps": ["ADEX", "Wasila"],
+      "note": "Small local apps"
+    },
+    "27.033,14.433": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "6.315,-10.8": {
+      "status": "no",
+      "apps": [],
+      "note": "Local app Ormuta claims service; no sign of real use"
+    },
+    "-29.317,27.483": {
+      "status": "limited",
+      "apps": ["Mouvee"],
+      "note": "Tiny local fleets"
+    },
+    "33.874,35.508": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "56.95,24.1": {
+      "status": "yes",
+      "apps": ["Bolt", "Yandex Go"]
+    },
+    "17.967,102.6": {
+      "status": "yes",
+      "apps": ["LOCA", "inDrive"]
+    },
+    "42.875,74.583": {
+      "status": "yes",
+      "apps": ["Yandex Go", "inDrive"]
+    },
+    "29.372,47.976": {
+      "status": "yes",
+      "apps": ["Uber", "Careem"]
+    },
+    "42.667,21.166": {
+      "status": "limited",
+      "apps": ["ShoferiIM"],
+      "note": "Taxi-dispatch apps; no Uber or Bolt"
+    },
+    "-1.281,36.815": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "Little"]
+    },
+    "-4.038,39.688": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "Little"]
+    },
+    "51.181,71.428": {
+      "status": "yes",
+      "apps": ["Yandex Go", "inDrive"]
+    },
+    "43.327,76.913": {
+      "status": "yes",
+      "apps": ["Yandex Go", "inDrive"]
+    },
+    "42.32,69.595": {
+      "status": "yes",
+      "apps": ["Yandex Go", "inDrive"]
+    },
+    "49.99,82.615": {
+      "status": "yes",
+      "apps": ["Yandex Go", "inDrive"]
+    },
+    "50.28,57.17": {
+      "status": "yes",
+      "apps": ["Yandex Go", "inDrive"]
+    },
+    "31.952,35.931": {
+      "status": "yes",
+      "apps": ["Uber", "Careem"]
+    },
+    "35.687,139.749": {
+      "status": "yes",
+      "apps": ["GO", "Uber"]
+    },
+    "34.752,135.458": {
+      "status": "yes",
+      "apps": ["GO", "Uber"]
+    },
+    "17.977,-76.767": {
+      "status": "limited",
+      "apps": ["Uber", "inDrive"],
+      "note": "Works in practice, but government ban threats and vehicle seizures"
+    },
+    "41.898,12.481": {
+      "status": "yes",
+      "apps": ["Uber", "FreeNow", "itTaxi"]
+    },
+    "45.472,9.203": {
+      "status": "yes",
+      "apps": ["Uber", "FreeNow", "itTaxi"]
+    },
+    "32.082,34.768": {
+      "status": "yes",
+      "apps": ["Gett", "Yango"]
+    },
+    "31.778,35.207": {
+      "status": "yes",
+      "apps": ["Gett", "Yango"],
+      "note": "Israeli apps cover Jerusalem"
+    },
+    "53.335,-6.251": {
+      "status": "yes",
+      "apps": ["FreeNow", "Uber", "Bolt"]
+    },
+    "33.341,44.392": {
+      "status": "yes",
+      "apps": ["Baly", "Careem"]
+    },
+    "36.347,43.143": {
+      "status": "limited",
+      "apps": ["Careem"],
+      "note": "No recent confirmation of coverage"
+    },
+    "35.674,51.422": {
+      "status": "yes",
+      "apps": ["Snapp", "Tapsi"]
+    },
+    "36.272,59.568": {
+      "status": "yes",
+      "apps": ["Snapp", "Tapsi"]
+    },
+    "38.088,46.299": {
+      "status": "yes",
+      "apps": ["Snapp", "Tapsi"]
+    },
+    "-6.172,106.827": {
+      "status": "yes",
+      "apps": ["Grab", "Gojek", "Maxim"]
+    },
+    "-7.247,112.749": {
+      "status": "yes",
+      "apps": ["Grab", "Gojek", "Maxim"]
+    },
+    "3.582,98.648": {
+      "status": "yes",
+      "apps": ["Grab", "Gojek", "Maxim"]
+    },
+    "28.6,77.2": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "19.019,72.855": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "22.497,88.323": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "13.092,80.278": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "17.402,78.478": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "64.15,-21.95": {
+      "status": "yes",
+      "apps": ["Hopp", "Hreyfill"],
+      "note": "No Uber or Bolt; local Hopp app covers the capital and KEF"
+    },
+    "47.502,19.081": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "14.104,-87.219": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive"]
+    },
+    "18.543,-72.338": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; negotiated taxis and moto-taxis, poor security"
+    },
+    "6.802,-58.167": {
+      "status": "limited",
+      "apps": ["GuyWay", "RideGY"],
+      "note": "Several small local apps with capacity problems"
+    },
+    "11.865,-15.598": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "9.533,-13.682": {
+      "status": "limited",
+      "apps": ["WONSIGA"],
+      "note": "Small local EV fleet"
+    },
+    "14.623,-90.529": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive"]
+    },
+    "12.053,-61.742": {
+      "status": "limited",
+      "apps": ["Haylup", "Dash GND"],
+      "note": "Small local apps, thin supply"
+    },
+    "37.985,23.731": {
+      "status": "yes",
+      "apps": ["Uber", "FreeNow", "Bolt"]
+    },
+    "5.552,-0.219": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "Yango"]
+    },
+    "52.524,13.4": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "50.1,8.675": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "41.727,44.789": {
+      "status": "yes",
+      "apps": ["Bolt", "Yandex Go"]
+    },
+    "13.454,-16.592": {
+      "status": "limited",
+      "apps": ["Tok Tok"],
+      "note": "Small local apps, mostly tuk-tuks"
+    },
+    "0.385,9.458": {
+      "status": "yes",
+      "apps": ["Gozem"]
+    },
+    "48.869,2.331": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "43.74,7.407": {
+      "status": "no",
+      "apps": [],
+      "note": "Monaco forbids pickups by Uber-type apps; drop-off only"
+    },
+    "-17.533,-149.567": {
+      "status": "limited",
+      "apps": ["Tāpe'a Taxi"],
+      "note": "Taxi app only; no Uber or Bolt"
+    },
+    "-22.263,166.444": {
+      "status": "limited",
+      "apps": ["Zygo", "NG Cab"],
+      "note": "Small VTC apps"
+    },
+    "60.097,19.949": {
+      "status": "no",
+      "apps": [],
+      "note": "Phone taxis only"
+    },
+    "60.178,24.932": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "63.1,21.6": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "-18.133,178.442": {
+      "status": "limited",
+      "apps": ["Bula", "Fiji Cabs"],
+      "note": "Local apps booking licensed taxis; adoption unclear"
+    },
+    "9.035,38.698": {
+      "status": "yes",
+      "apps": ["Ride", "Feres", "Yango"]
+    },
+    "12.61,37.46": {
+      "status": "no",
+      "apps": [],
+      "note": "Apps are Addis-only"
+    },
+    "59.434,24.728": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "15.333,38.933": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "3.75,8.783": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "13.712,-89.205": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive"]
+    },
+    "30.052,31.248": {
+      "status": "yes",
+      "apps": ["Uber", "Careem", "inDrive"]
+    },
+    "25.7,32.65": {
+      "status": "limited",
+      "apps": ["Careem", "inDrive"],
+      "note": "No Uber; patchy"
+    },
+    "-0.213,-78.502": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive", "Cabify"]
+    },
+    "18.472,-69.902": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive"]
+    },
+    "15.301,-61.387": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; phone taxis"
+    },
+    "11.595,43.148": {
+      "status": "limited",
+      "apps": ["Sahaal Ride"],
+      "note": "Small local app"
+    },
+    "64.198,-51.733": {
+      "status": "no",
+      "apps": [],
+      "note": "Phone taxis only"
+    },
+    "72.709,-56.142": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "77.483,-69.332": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "55.681,12.562": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "50.085,14.464": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "35.167,33.367": {
+      "status": "limited",
+      "apps": ["Kibride", "KibCab"],
+      "note": "Small local apps; Bolt only in the south"
+    },
+    "23.134,-82.366": {
+      "status": "limited",
+      "apps": ["La Nave", "Bajanda"],
+      "note": "Apps exist but 2026 fuel crisis leaves few cars; cash only"
+    },
+    "45.8,16": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "5.322,-4.042": {
+      "status": "yes",
+      "apps": ["Yango", "Heetch", "inDrive"]
+    },
+    "7.69,-5.03": {
+      "status": "yes",
+      "apps": ["Yango"]
+    },
+    "9.937,-84.086": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive"]
+    },
+    "-4.328,15.313": {
+      "status": "yes",
+      "apps": ["Yango"],
+      "note": "Only app authorised after 2025 ban"
+    },
+    "-11.678,27.478": {
+      "status": "limited",
+      "apps": ["Yango"],
+      "note": "Yango present but thin"
+    },
+    "-6.148,23.598": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "-4.257,15.283": {
+      "status": "yes",
+      "apps": ["Yango", "Gozem"]
+    },
+    "-4.77,11.88": {
+      "status": "yes",
+      "apps": ["Yango"]
+    },
+    "-11.704,43.24": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "4.598,-74.085": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive", "Cabify"]
+    },
+    "10.962,-74.802": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive", "Cabify"]
+    },
+    "1.214,-77.281": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "39.931,116.386": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "31.218,121.435": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "23.147,113.323": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "30.582,114.268": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "29.567,106.593": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "45.752,126.648": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "43.807,87.573": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "36.058,103.79": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "22.203,113.545": {
+      "status": "yes",
+      "apps": ["Amap", "Uber"],
+      "note": "Taxi-hailing only (licensed taxis)"
+    },
+    "22.307,114.183": {
+      "status": "yes",
+      "apps": ["Uber", "HKTaxi"]
+    },
+    "-33.448,-70.669": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "Cabify"]
+    },
+    "-36.83,-73.05": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "Cabify"]
+    },
+    "12.115,15.047": {
+      "status": "no",
+      "apps": [],
+      "note": "No app found"
+    },
+    "13.84,20.83": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "8.55,16.09": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "4.367,18.558": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "5.4,26.5": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "14.917,-23.517": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; unmetered taxis"
+    },
+    "45.419,-75.702": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "49.275,-123.124": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "51.085,-114.082": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "49.883,-97.166": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "44.65,-63.6": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "47.585,-52.681": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "60.717,-135.05": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing in the territories"
+    },
+    "62.442,-114.397": {
+      "status": "no",
+      "apps": [],
+      "note": "City bylaw blocks ride-hailing"
+    },
+    "3.869,11.515": {
+      "status": "yes",
+      "apps": ["Yango", "Gozem"]
+    },
+    "9.3,13.39": {
+      "status": "no",
+      "apps": [],
+      "note": "Yango only in Douala, Yaoundé, Bafoussam"
+    },
+    "11.552,104.915": {
+      "status": "yes",
+      "apps": ["Grab", "PassApp", "Tada"]
+    },
+    "19.769,96.117": {
+      "status": "no",
+      "apps": [],
+      "note": "Grab only in Yangon"
+    },
+    "-3.376,29.36": {
+      "status": "no",
+      "apps": [],
+      "note": "Only an undated mention of a local app (Wasili)"
+    },
+    "12.372,-1.527": {
+      "status": "limited",
+      "apps": ["LetsGo"],
+      "note": "Small local app"
+    },
+    "42.685,23.315": {
+      "status": "yes",
+      "apps": ["Bolt"]
+    },
+    "4.883,114.933": {
+      "status": "yes",
+      "apps": ["Dart"]
+    },
+    "-15.781,-47.918": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-23.557,-46.627": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-30.048,-51.202": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-8.074,-34.918": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-3.748,-38.582": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-12.968,-38.482": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-1.448,-48.482": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-3.098,-60.002": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-24.646,25.912": {
+      "status": "yes",
+      "apps": ["Bolt", "inDrive", "Yango"]
+    },
+    "-21.17,27.5": {
+      "status": "no",
+      "apps": [],
+      "note": "Apps mostly Gaborone-only"
+    },
+    "43.85,18.383": {
+      "status": "limited",
+      "apps": ["Moj Taxi", "Vozzy"],
+      "note": "Taxi-dispatch apps; no Uber or Bolt"
+    },
+    "-16.496,-68.152": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive", "Yango"]
+    },
+    "-19.041,-65.26": {
+      "status": "yes",
+      "apps": ["inDrive"]
+    },
+    "-14.833,-64.9": {
+      "status": "no",
+      "apps": [],
+      "note": "No app found; mototaxis"
+    },
+    "27.473,89.639": {
+      "status": "limited",
+      "apps": ["DrukRide", "Lakhor"],
+      "note": "Local taxi-booking apps, little traveller use"
+    },
+    "6.402,2.518": {
+      "status": "yes",
+      "apps": ["Gozem", "Yango"]
+    },
+    "17.252,-88.767": {
+      "status": "no",
+      "apps": [],
+      "note": "Only a tiny e-taxi app in Belize City"
+    },
+    "50.835,4.331": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "53.902,27.565": {
+      "status": "yes",
+      "apps": ["Yandex Go"]
+    },
+    "13.102,-59.617": {
+      "status": "yes",
+      "apps": ["Uber", "PickUp"],
+      "note": "Uber books licensed taxis; not at the cruise port"
+    },
+    "23.725,90.407": {
+      "status": "yes",
+      "apps": ["Uber", "Pathao"]
+    },
+    "26.236,50.583": {
+      "status": "yes",
+      "apps": ["Uber", "Careem"]
+    },
+    "25.083,-77.35": {
+      "status": "limited",
+      "apps": ["Bahamas Ride"],
+      "note": "Licensed-taxi app; ministry calls ride-share illegal"
+    },
+    "40.397,49.86": {
+      "status": "yes",
+      "apps": ["Bolt", "Yandex Go"]
+    },
+    "48.202,16.365": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "-35.283,149.129": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-27.453,153.033": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-31.953,115.838": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-34.933,138.598": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-16.888,145.763": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-12.425,130.85": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-42.85,147.295": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-20.724,139.49": {
+      "status": "no",
+      "apps": [],
+      "note": "Uber Eats only; phone taxis"
+    },
+    "40.183,44.512": {
+      "status": "yes",
+      "apps": ["Yandex Go", "gg"]
+    },
+    "-34.601,-58.399": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "Cabify"]
+    },
+    "-31.398,-64.184": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "Cabify"]
+    },
+    "-32.881,-68.819": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "Cabify"]
+    },
+    "-26.814,-65.219": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "Cabify"]
+    },
+    "-27.358,-55.885": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "17.118,-61.85": {
+      "status": "limited",
+      "apps": ["Swyft Taxi"],
+      "note": "Small local taxi app launched 2025; no Uber"
+    },
+    "-8.836,13.232": {
+      "status": "yes",
+      "apps": ["Yango"]
+    },
+    "-12.748,15.758": {
+      "status": "no",
+      "apps": [],
+      "note": "No app evidence"
+    },
+    "-15.19,12.16": {
+      "status": "no",
+      "apps": [],
+      "note": "No app evidence"
+    },
+    "42.5,1.516": {
+      "status": "limited",
+      "apps": ["Uber"],
+      "note": "Uber launched Nov 2025 with 10-20 cars; taxi pushback"
+    },
+    "36.765,3.049": {
+      "status": "yes",
+      "apps": ["Yassir", "Heetch"]
+    },
+    "22.785,5.523": {
+      "status": "no",
+      "apps": [],
+      "note": "No app in the deep south"
+    },
+    "41.328,19.819": {
+      "status": "yes",
+      "apps": ["Patoko", "Speed Taxi"],
+      "note": "No Uber or Bolt; local apps"
+    },
+    "34.519,69.181": {
+      "status": "no",
+      "apps": [],
+      "note": "Old local apps (Buber) with no sign of current use"
+    },
+    "31.61,65.695": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "-8.648,115.138": {
+      "status": "limited",
+      "apps": ["Grab", "Gojek"],
+      "note": "No-pickup zones at Batu Bolong and Berawa; cancellations"
+    },
+    "-8.507,115.263": {
+      "status": "limited",
+      "apps": ["Grab", "Gojek"],
+      "note": "No-pickup zones in the centre; walk out to be picked up"
+    },
+    "-8.894,116.277": {
+      "status": "limited",
+      "apps": ["Grab", "Gojek", "Maxim"],
+      "note": "Drivers scarce in Kuta"
+    },
+    "-7.797,110.37": {
+      "status": "yes",
+      "apps": ["Grab", "Gojek", "Maxim"]
+    },
+    "7.89,98.398": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "9.512,100.014": {
+      "status": "limited",
+      "apps": ["Grab", "Bolt"],
+      "note": "No app pickups at airport, piers or some hotels (taxi groups)"
+    },
+    "9.733,100.019": {
+      "status": "no",
+      "apps": [],
+      "note": "Grab shows almost no drivers; songthaews or scooters"
+    },
+    "8.032,98.822": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "12.568,99.958": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "12.928,100.877": {
+      "status": "yes",
+      "apps": ["Grab", "Bolt"]
+    },
+    "16.054,108.202": {
+      "status": "yes",
+      "apps": ["Grab", "Xanh SM", "Be"]
+    },
+    "15.88,108.335": {
+      "status": "yes",
+      "apps": ["Grab", "Xanh SM", "Be"]
+    },
+    "12.238,109.197": {
+      "status": "yes",
+      "apps": ["Grab", "Xanh SM", "Be"]
+    },
+    "10.227,103.964": {
+      "status": "yes",
+      "apps": ["Grab", "Xanh SM", "Be"]
+    },
+    "10.316,123.885": {
+      "status": "yes",
+      "apps": ["Grab", "inDrive"]
+    },
+    "9.786,126.158": {
+      "status": "no",
+      "apps": [],
+      "note": "Tricycles and habal-habal only"
+    },
+    "11.196,119.408": {
+      "status": "no",
+      "apps": [],
+      "note": "Tricycles only"
+    },
+    "11.968,121.924": {
+      "status": "no",
+      "apps": [],
+      "note": "No private cars on the island; e-trikes hailed on the road"
+    },
+    "9.307,123.308": {
+      "status": "limited",
+      "apps": ["Maxim"],
+      "note": "Maxim tricycles only; no app cars"
+    },
+    "6.35,99.8": {
+      "status": "yes",
+      "apps": ["Grab"]
+    },
+    "5.98,116.073": {
+      "status": "yes",
+      "apps": ["Grab"]
+    },
+    "13.362,103.86": {
+      "status": "yes",
+      "apps": ["Grab", "PassApp", "Tada"]
+    },
+    "10.61,104.181": {
+      "status": "limited",
+      "apps": ["PassApp"],
+      "note": "Mostly tuk-tuks via PassApp; Grab weak"
+    },
+    "19.886,102.135": {
+      "status": "yes",
+      "apps": ["LOCA"],
+      "note": "Fewer cars than Vientiane"
+    },
+    "6.033,80.217": {
+      "status": "yes",
+      "apps": ["PickMe", "Uber"]
+    },
+    "5.972,80.429": {
+      "status": "limited",
+      "apps": ["PickMe", "Uber"],
+      "note": "Mostly tuk-tuks in small south-coast towns"
+    },
+    "7.291,80.634": {
+      "status": "yes",
+      "apps": ["PickMe", "Uber"]
+    },
+    "15.574,73.74": {
+      "status": "limited",
+      "apps": ["GoaMiles", "Goa Taxi App"],
+      "note": "Uber and Ola banned; state apps thin at night and on beaches"
+    },
+    "9.931,76.267": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "8.733,76.716": {
+      "status": "limited",
+      "apps": ["Uber", "Ola"],
+      "note": "Small town, mostly autos; few cars"
+    },
+    "12.972,77.594": {
+      "status": "yes",
+      "apps": ["Uber", "Ola", "Rapido"]
+    },
+    "28.209,83.986": {
+      "status": "yes",
+      "apps": ["Pathao", "inDrive", "Uber"]
+    },
+    "26.212,127.681": {
+      "status": "yes",
+      "apps": ["GO", "Uber"]
+    },
+    "35.012,135.768": {
+      "status": "yes",
+      "apps": ["GO", "Uber"]
+    },
+    "33.59,130.402": {
+      "status": "yes",
+      "apps": ["GO", "Uber"]
+    },
+    "35.18,129.076": {
+      "status": "yes",
+      "apps": ["Kakao T", "Uber"]
+    },
+    "33.5,126.531": {
+      "status": "yes",
+      "apps": ["Kakao T", "Uber"]
+    },
+    "18.253,109.512": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "22.543,114.058": {
+      "status": "yes",
+      "apps": ["DiDi"]
+    },
+    "-33.869,151.209": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-37.814,144.963": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-28.017,153.4": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-28.643,153.612": {
+      "status": "yes",
+      "apps": ["Uber"],
+      "note": "Supply drops at night"
+    },
+    "-36.848,174.763": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"]
+    },
+    "-17.776,177.436": {
+      "status": "limited",
+      "apps": ["Bula", "Fiji Cabs"],
+      "note": "Local apps booking licensed taxis; adoption unclear"
+    },
+    "-21.207,-159.775": {
+      "status": "no",
+      "apps": [],
+      "note": "Few phone taxis"
+    },
+    "-16.5,-151.741": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "21.307,-157.858": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "20.878,-156.683": {
+      "status": "limited",
+      "apps": ["Uber", "Lyft"],
+      "note": "Spotty, especially early and late"
+    },
+    "25.205,55.271": {
+      "status": "yes",
+      "apps": ["Uber", "Careem"]
+    },
+    "41.008,28.978": {
+      "status": "yes",
+      "apps": ["Uber", "BiTaksi"]
+    },
+    "36.897,30.713": {
+      "status": "yes",
+      "apps": ["Uber", "BiTaksi"],
+      "note": "Books yellow taxis"
+    },
+    "37.034,27.43": {
+      "status": "yes",
+      "apps": ["Uber", "BiTaksi"],
+      "note": "Books yellow taxis"
+    },
+    "28.501,34.513": {
+      "status": "no",
+      "apps": [],
+      "note": "No app"
+    },
+    "27.258,33.812": {
+      "status": "yes",
+      "apps": ["Uber", "Careem", "inDrive"]
+    },
+    "27.916,34.33": {
+      "status": "limited",
+      "apps": ["inDrive", "Careem"],
+      "note": "No Uber; few drivers, haggling"
+    },
+    "-6.165,39.199": {
+      "status": "yes",
+      "apps": ["Bolt"]
+    },
+    "-4.316,39.582": {
+      "status": "yes",
+      "apps": ["Bolt"]
+    },
+    "-29.858,31.022": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "31.63,-7.981": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "inDrive"]
+    },
+    "31.512,-9.77": {
+      "status": "no",
+      "apps": [],
+      "note": "Petits and grands taxis only"
+    },
+    "30.545,-9.709": {
+      "status": "limited",
+      "apps": ["inDrive", "Uber"],
+      "note": "Drivers come from Agadir"
+    },
+    "16.598,-22.905": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; unmetered taxis"
+    },
+    "-13.333,48.267": {
+      "status": "no",
+      "apps": [],
+      "note": "Taxis and tuk-tuks"
+    },
+    "28.058,-16.73": {
+      "status": "yes",
+      "apps": ["Uber"]
+    },
+    "28.124,-15.43": {
+      "status": "limited",
+      "apps": ["SIXT"],
+      "note": "No Uber or Cabify yet; taxi booking via SIXT and radio-taxi apps"
+    },
+    "28.73,-13.866": {
+      "status": "no",
+      "apps": [],
+      "note": "No ride-hailing app"
+    },
+    "32.65,-16.908": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "37.102,-8.673": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"]
+    },
+    "38.963,-9.418": {
+      "status": "yes",
+      "apps": ["Bolt", "Uber"],
+      "note": "Fewer drivers off-season"
+    },
+    "41.15,-8.611": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "39.47,-0.376": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify", "FreeNow", "Bolt"]
+    },
+    "36.721,-4.421": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify", "FreeNow", "Bolt"]
+    },
+    "39.57,2.65": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify"]
+    },
+    "38.907,1.421": {
+      "status": "yes",
+      "apps": ["Uber"],
+      "note": "Cars scarce in peak summer"
+    },
+    "43.71,7.262": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt", "FreeNow"]
+    },
+    "38.116,13.361": {
+      "status": "yes",
+      "apps": ["Uber", "FreeNow", "appTaxi"],
+      "note": "Books licensed taxis"
+    },
+    "43.508,16.44": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "42.65,18.094": {
+      "status": "yes",
+      "apps": ["Uber", "Bolt"]
+    },
+    "42.288,18.843": {
+      "status": "limited",
+      "apps": ["MonteGO"],
+      "note": "Mostly phone or rank taxis"
+    },
+    "35.513,24.018": {
+      "status": "limited",
+      "apps": ["Bolt", "FreeNow"],
+      "note": "Bolt and FreeNow drivers concentrated around Heraklion; no Uber on Crete"
+    },
+    "36.434,28.217": {
+      "status": "limited",
+      "apps": ["Uber"],
+      "note": "Uber Taxi in summer only; few licensed taxis"
+    },
+    "34.707,33.022": {
+      "status": "yes",
+      "apps": ["Bolt"]
+    },
+    "20.629,-87.073": {
+      "status": "limited",
+      "apps": ["Uber", "inDrive"],
+      "note": "Taxi-union attacks on Uber drivers"
+    },
+    "20.211,-87.465": {
+      "status": "limited",
+      "apps": ["Uber"],
+      "note": "Few drivers, taxi-union crackdown; often no car"
+    },
+    "21.161,-86.851": {
+      "status": "limited",
+      "apps": ["Uber", "inDrive", "DiDi"],
+      "note": "Legal but taxi-union blockades; no Uber airport pickups"
+    },
+    "15.862,-97.072": {
+      "status": "limited",
+      "apps": ["DiDi"],
+      "note": "DiDi books licensed taxis only"
+    },
+    "17.073,-96.726": {
+      "status": "limited",
+      "apps": ["DiDi", "Uber"],
+      "note": "State rules allow taxi-only service in the apps"
+    },
+    "20.653,-105.225": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi"],
+      "note": "Airport pickups across the pedestrian bridge"
+    },
+    "22.89,-109.916": {
+      "status": "limited",
+      "apps": ["Uber", "DiDi"],
+      "note": "Works in town; no airport pickups"
+    },
+    "6.244,-75.581": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive", "Cabify"]
+    },
+    "10.391,-75.479": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive", "Cabify"]
+    },
+    "11.241,-74.205": {
+      "status": "yes",
+      "apps": ["Uber", "DiDi", "inDrive", "Cabify"]
+    },
+    "10.299,-85.838": {
+      "status": "limited",
+      "apps": ["Uber"],
+      "note": "One or two drivers online; long trips declined"
+    },
+    "9.64,-85.169": {
+      "status": "no",
+      "apps": [],
+      "note": "No reliable app service"
+    },
+    "9.656,-82.754": {
+      "status": "no",
+      "apps": [],
+      "note": "No app drivers"
+    },
+    "9.34,-82.241": {
+      "status": "no",
+      "apps": [],
+      "note": "Island taxis and water taxis only"
+    },
+    "11.253,-85.871": {
+      "status": "no",
+      "apps": [],
+      "note": "Local taxis and shuttles"
+    },
+    "14.557,-90.733": {
+      "status": "yes",
+      "apps": ["Uber", "inDrive", "Yango"]
+    },
+    "16.32,-86.54": {
+      "status": "no",
+      "apps": [],
+      "note": "No app; zone-fare taxis"
+    },
+    "18.582,-68.405": {
+      "status": "limited",
+      "apps": ["Uber", "inDrive"],
+      "note": "Uber barred near the airport; taxi-union clashes at hotels"
+    },
+    "19.75,-70.414": {
+      "status": "limited",
+      "apps": ["Uber"],
+      "note": "Few drivers on the north coast"
+    },
+    "-22.907,-43.173": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-27.595,-48.548": {
+      "status": "yes",
+      "apps": ["Uber", "99"]
+    },
+    "-2.794,-40.512": {
+      "status": "no",
+      "apps": [],
+      "note": "Car-free village in a national park; buggy transfers"
+    },
+    "-1.828,-80.753": {
+      "status": "no",
+      "apps": [],
+      "note": "Apps only in big cities"
+    },
+    "-34.962,-54.952": {
+      "status": "yes",
+      "apps": ["Uber", "Cabify"],
+      "note": "Few cars and surge pricing in summer"
+    },
+    "40.713,-74.006": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "37.775,-122.419": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "32.716,-117.161": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "43.653,-79.383": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    },
+    "45.502,-73.567": {
+      "status": "yes",
+      "apps": ["Uber", "Lyft"]
+    }
+  }
+}

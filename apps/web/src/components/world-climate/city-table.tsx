@@ -19,6 +19,8 @@ import {
   malariaRisk,
   NO_FACTS,
   placeKey,
+  RIDES_LABEL,
+  type Rides,
   TAP_WATER_LABEL,
   tempColor,
   VISA_LABEL,
@@ -43,6 +45,7 @@ type SortKey =
   | "scene"
   | "beaches"
   | "tourism"
+  | "rides"
   | "storms"
   | "water"
   | "hdi"
@@ -70,6 +73,7 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "scene", label: "Cafés", numeric: true },
   { key: "beaches", label: "Beaches", numeric: true },
   { key: "tourism", label: "Tourism", numeric: true },
+  { key: "rides", label: "Taxi app", numeric: false },
   { key: "water", label: "Tap water", numeric: false },
   { key: "hdi", label: "HDI", numeric: true },
   { key: "malaria", label: "Malaria", numeric: false },
@@ -127,6 +131,14 @@ const VISA_TONE: Record<VisaEntry, string> = {
   required: "text-amber-300",
 };
 
+const RIDES_ORDER: Rides["status"][] = ["yes", "limited", "no"];
+
+const RIDES_TONE: Record<Rides["status"], string> = {
+  yes: "text-white/70",
+  limited: "text-amber-300",
+  no: "text-rose-300",
+};
+
 const MALARIA_TONE: Record<MalariaRisk, string> = {
   none: "text-white/60",
   low: "text-white/60",
@@ -172,6 +184,8 @@ function sortValue(
       return point.beaches;
     case "tourism":
       return facts.tourism?.usd ?? null;
+    case "rides":
+      return point.rides ? RIDES_ORDER.indexOf(point.rides.status) : null;
     case "salary":
       return facts.salary?.usd ?? null;
     case "water":
@@ -273,7 +287,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[2380px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[2520px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -466,6 +480,19 @@ export function CityTable({
                   }
                 >
                   {formatTourism(facts.tourism)}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5",
+                    p.rides ? RIDES_TONE[p.rides.status] : "text-white/30",
+                  )}
+                  title={p.rides?.note}
+                >
+                  {!p.rides
+                    ? "No data"
+                    : p.rides.apps.length > 0
+                      ? p.rides.apps.join(", ")
+                      : RIDES_LABEL[p.rides.status]}
                 </td>
                 <td
                   className={cn(

@@ -23,7 +23,8 @@ const countryRows = () =>
 const cityRows = () =>
   screen.getAllByRole("rowheader").map((cell) => cell.textContent ?? "");
 
-describe("WorldClimatePage", () => {
+// Rendering every city with all its columns is slow under a parallel run.
+describe("WorldClimatePage", { timeout: 20_000 }, () => {
   it("opens on the current month and recolours the map for another month", () => {
     render(<WorldClimatePage />);
     expect(
