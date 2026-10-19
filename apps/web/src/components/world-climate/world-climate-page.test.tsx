@@ -158,6 +158,8 @@ describe("WorldClimatePage", () => {
 
     fireEvent.change(search, { target: { value: "phuket" } });
     expect(names()).toEqual([expect.stringMatching(/^Phuket - Thailand/)]);
+    const phuket = screen.getAllByRole("rowheader")[0].parentElement;
+    expect(phuket?.textContent).toContain("39.9M");
   });
 
   it("sorts cities by salary, highest first, with no-data cities last both ways", () => {
@@ -195,7 +197,7 @@ describe("WorldClimatePage", () => {
       .getAllByRole("rowheader")[0]
       .parentElement?.querySelector("[title]") as HTMLElement;
     expect(best.title).toMatch(
-      /^Weather \d+\/45, Sea \d+\/25, Tropics \d+\/10, Cheap \d+\/10, Airbnb \d+\/5, Scene \d+\/5(, [A-Za-z ]+ [+-]\d+)*$/,
+      /^Weather \d+\/40, Sea \d+\/20, Tropics \d+\/10, Cheap \d+\/10, Airbnb \d+\/5, Scene \d+\/10, Tourism \d+\/5(, [A-Za-z ]+ [+-]\d+)*$/,
     );
 
     expect(screen.getByText(/Best for you in January/).textContent).toContain(

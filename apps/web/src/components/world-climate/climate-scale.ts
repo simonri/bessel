@@ -33,6 +33,8 @@ export interface ClimatePoint {
   rent: Rent | null;
   /** Cafés and coworking spaces within 5 km (OpenStreetMap). */
   scene: Scene | null;
+  /** Beaches within 15 km (OpenStreetMap). */
+  beaches: number | null;
 }
 
 export interface Scene {
@@ -78,6 +80,8 @@ export interface CountryFacts {
   advisory: AdvisoryLevel | null;
   /** Intentional homicides per 100,000 people a year (UNODC). */
   homicides: number | null;
+  /** International tourist arrivals a year, before COVID. */
+  arrivals: number | null;
   /** What a Swedish passport needs to get in, and for how many days if visa free. */
   visa: { entry: VisaEntry; days?: number } | null;
 }
@@ -108,6 +112,7 @@ export const NO_FACTS: CountryFacts = {
   hdi: null,
   advisory: null,
   homicides: null,
+  arrivals: null,
   visa: null,
 };
 

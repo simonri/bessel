@@ -32,6 +32,7 @@ const point = (
   internet: null,
   rent: null,
   scene: null,
+  beaches: null,
 });
 
 describe("tempColor", () => {

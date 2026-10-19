@@ -40,6 +40,8 @@ type SortKey =
   | "rent"
   | "internet"
   | "scene"
+  | "beaches"
+  | "tourism"
   | "storms"
   | "water"
   | "hdi"
@@ -65,6 +67,8 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "rent", label: "Rent", numeric: true },
   { key: "internet", label: "Internet", numeric: true },
   { key: "scene", label: "Cafés", numeric: true },
+  { key: "beaches", label: "Beaches", numeric: true },
+  { key: "tourism", label: "Tourists", numeric: true },
   { key: "water", label: "Tap water", numeric: false },
   { key: "hdi", label: "HDI", numeric: true },
   { key: "malaria", label: "Malaria", numeric: false },
@@ -163,6 +167,10 @@ function sortValue(
       return point.internet?.downMbps ?? null;
     case "scene":
       return point.scene?.cafes ?? null;
+    case "beaches":
+      return point.beaches;
+    case "tourism":
+      return facts.arrivals;
     case "salary":
       return facts.salary?.usd ?? null;
     case "water":
@@ -264,7 +272,7 @@ export function CityTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]">
-      <table className="w-full min-w-[2180px] border-collapse text-12 tabular-nums">
+      <table className="w-full min-w-[2380px] border-collapse text-12 tabular-nums">
         <thead>
           <tr className="text-white/45">
             {COLUMNS.map(({ key, label, numeric }) => {
@@ -429,6 +437,36 @@ export function CityTable({
                   }
                 >
                   {p.scene ? p.scene.cafes.toLocaleString("en-US") : "No data"}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    p.beaches === null
+                      ? "text-white/30"
+                      : p.beaches === 0
+                        ? "text-amber-300"
+                        : "text-white/70",
+                  )}
+                  title={
+                    p.beaches === null ? undefined : "Beaches within 15 km"
+                  }
+                >
+                  {p.beaches === null ? "No data" : p.beaches}
+                </td>
+                <td
+                  className={cn(
+                    "px-4 py-1.5 text-right",
+                    facts.arrivals === null ? "text-white/30" : "text-white/70",
+                  )}
+                  title={
+                    facts.arrivals === null
+                      ? undefined
+                      : `International tourists a year to ${p.country}, 2017-2019`
+                  }
+                >
+                  {facts.arrivals === null
+                    ? "No data"
+                    : formatPopulation(facts.arrivals)}
                 </td>
                 <td
                   className={cn(

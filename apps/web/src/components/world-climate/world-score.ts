@@ -10,19 +10,20 @@ import {
 
 /**
  * How much each part counts. Simon's preferences: hot weather first, then a
- * warm sea close by and the tropics; rent up to $1,500 is fine; Airbnb and a
- * café and coworking scene are small pluses. Tap water and city size don't
- * count. Malaria, low development and danger are taken off
+ * warm sea with beaches close by and the tropics; rent up to $1,500 is fine;
+ * a café and coworking scene counts, and Airbnb and lots of tourists are
+ * small pluses. Tap water and city size don't count. Malaria, low development and danger are taken off
  * the total afterwards, as are slow internet and storm season; visa-free
  * entry adds a little. Cheapness uses rent where known, else salary.
  */
 export const SCORE_WEIGHTS = {
-  weather: 0.45,
-  sea: 0.25,
+  weather: 0.4,
+  sea: 0.2,
   tropical: 0.1,
   cheap: 0.1,
   airbnb: 0.05,
-  scene: 0.05,
+  scene: 0.1,
+  tourism: 0.05,
 } as const;
 
 export type ScorePart = keyof typeof SCORE_WEIGHTS;
@@ -115,6 +116,21 @@ export function seaScore(seaCelsius: number, km: number): number {
   return warm * close;
 }
 
+/**
+ * A warm sea is worth less without beaches: a coast with none mapped keeps
+ * 30%, five or more keep it all. Unknown counts as fine.
+ */
+export function beachFactor(beaches: number | null): number {
+  if (beaches === null) return 1;
+  return 0.3 + 0.7 * clamp01(beaches / 5);
+}
+
+/** 200,000 tourists a year or fewer is nothing, 20 million+ full marks, on a log scale. */
+export function tourismScore(arrivals: number | null): number {
+  if (arrivals === null) return 0.5;
+  return clamp01(Math.log10(Math.max(arrivals, 1) / 200_000) / 2);
+}
+
 /** $1,500 a month or less is full marks, $3,000+ nothing. */
 export function rentScore(usd: number): number {
   return clamp01(1 - (usd - 1500) / 1500);
@@ -157,11 +173,13 @@ export function scoreCity(
     weather:
       0.75 * temperatureScore(point.temps[month]) +
       0.25 * rainScore(point.rainMm[month]),
-    sea: seaScore(point.seaTemps[month], point.seaKm),
+    sea:
+      seaScore(point.seaTemps[month], point.seaKm) * beachFactor(point.beaches),
     tropical: tropicalScore(point.lat),
     cheap: point.rent ? rentScore(point.rent.usd) : cheapScore(facts.salary),
     airbnb: airbnbScore(point.airbnb.status),
     scene: sceneScore(point.scene),
+    tourism: tourismScore(facts.arrivals),
   };
   const total = (Object.keys(SCORE_WEIGHTS) as ScorePart[]).reduce(
     (sum, part) => sum + SCORE_WEIGHTS[part] * parts[part],
@@ -194,6 +212,7 @@ export const SCORE_PART_LABEL: Record<ScorePart, string> = {
   cheap: "Cheap",
   airbnb: "Airbnb",
   scene: "Scene",
+  tourism: "Tourism",
 };
 
 const ADJUSTMENT_LABEL: Record<Adjustment, string> = {
@@ -205,7 +224,7 @@ const ADJUSTMENT_LABEL: Record<Adjustment, string> = {
   visa: "Visa free",
 };
 
-/** "Weather 40/45, Sea 20/25, Tropics 10/10, Cheap 8/10, Airbnb 5/5, Scene 3/5, Malaria -12". */
+/** "Weather 36/40, Sea 14/20, Tropics 10/10, Cheap 8/10, Airbnb 5/5, Scene 7/10, Tourism 4/5, Malaria -12". */
 export function describeScore(score: CityScore): string {
   const parts = (Object.keys(SCORE_WEIGHTS) as ScorePart[]).map((part) => {
     const max = SCORE_WEIGHTS[part] * 100;
