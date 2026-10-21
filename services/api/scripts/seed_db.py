@@ -26,14 +26,9 @@ from api.models import (
   Place,
   Project,
   Recipe,
-  Security,
-  SecurityPrice,
   Task,
-  Trade,
   Transaction,
 )
-from api.models.security import AssetType
-from api.models.trade import TradeType
 from api.models.transaction import TransactionDirection
 from api.recipes.body import RecipeBody, render_markdown
 from api.settings import settings
@@ -346,10 +341,10 @@ async def seed() -> None:
       base_balance=25_000_000,  # 250 000 NOK in øre
       subtype="savings",
     )
-    acc_invest = BankAccount(name="Nordnet", currency="NOK", base_balance=0, subtype="investment")
-    session.add_all([acc_checking, acc_savings, acc_invest])
+    # No investment accounts: those come from a real Avanza sync.
+    session.add_all([acc_checking, acc_savings])
     await session.flush()
-    print("Seeded 3 bank accounts.")
+    print("Seeded 2 bank accounts.")
 
     # ── 4. Transactions ───────────────────────────────────────────────────
     # All amounts in minor units (øre = NOK * 100)
@@ -482,70 +477,14 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(tx_list)} transactions.")
 
-    # ── 5. Securities ─────────────────────────────────────────────────────
-    sec_aapl = Security(name="Apple Inc.", ticker="AAPL", asset_type=AssetType.stock, currency="USD")
-    sec_voo = Security(name="Vanguard S&P 500 ETF", ticker="VOO", asset_type=AssetType.etf, currency="USD")
-    sec_btc = Security(name="Bitcoin", ticker="BTC", asset_type=AssetType.crypto, currency="USD")
-    sec_eqnr = Security(name="Equinor ASA", ticker="EQNR", asset_type=AssetType.stock, currency="NOK")
-    sec_sgsac = Security(name="Storebrand Global All Countries A", ticker="SGSAC", asset_type=AssetType.mutual_fund, currency="NOK")
-    session.add_all([sec_aapl, sec_voo, sec_btc, sec_eqnr, sec_sgsac])
-    await session.flush()
-    print("Seeded 5 securities.")
-
-    # ── 6. Security prices ────────────────────────────────────────────────
-    # Prices in minor units (cents for USD, øre for NOK)
-    for sec, price_points in [
-      (sec_aapl, [(90, 18500), (75, 18700), (60, 19100), (45, 18900), (30, 19300), (15, 19600), (0, 19850)]),
-      (sec_voo, [(90, 47800), (75, 48200), (60, 49100), (45, 48700), (30, 50100), (15, 51200), (0, 52300)]),
-      (sec_btc, [(90, 6_500_000), (75, 6_200_000), (60, 6_800_000), (45, 7_100_000), (30, 6_900_000), (15, 7_300_000), (0, 6_750_000)]),
-      (sec_eqnr, [(90, 27800), (75, 27200), (60, 28100), (45, 27900), (30, 28400), (15, 29100), (0, 28700)]),
-      (sec_sgsac, [(90, 34200), (75, 34800), (60, 35100), (45, 35600), (30, 36200), (15, 36800), (0, 37100)]),
-    ]:
-      for days_ago, price in price_points:
-        session.add(
-          SecurityPrice(
-            security_id=sec.id,
-            price_date=d(days_ago),
-            price_per_unit=price,
-            currency=sec.currency,
-          )
-        )
-    await session.flush()
-    print("Seeded security prices.")
-
-    # ── 7. Trades ─────────────────────────────────────────────────────────
-    # quantity in micro-units (shares * 1_000_000); price in minor units (cents/øre)
-    trades = [
-      (sec_aapl, TradeType.buy, d(85), 5_000_000, 18500, "USD"),
-      (sec_voo, TradeType.buy, d(70), 3_000_000, 47800, "USD"),
-      (sec_btc, TradeType.buy, d(55), 100_000, 6_500_000, "USD"),
-      (sec_eqnr, TradeType.buy, d(50), 50_000_000, 27200, "NOK"),
-      (sec_aapl, TradeType.sell, d(30), 2_000_000, 19300, "USD"),
-      (sec_sgsac, TradeType.buy, d(20), 10_000_000, 36200, "NOK"),
-    ]
-    for sec, trade_type, trade_date, quantity, price, currency in trades:
-      session.add(
-        Trade(
-          security_id=sec.id,
-          bank_account_id=acc_invest.id,
-          trade_type=trade_type,
-          trade_date=trade_date,
-          quantity=quantity,
-          price_per_unit=price,
-          currency=currency,
-        )
-      )
-    await session.flush()
-    print(f"Seeded {len(trades)} trades.")
-
-    # ── 8. Projects ───────────────────────────────────────────────────────
+    # ── 5. Projects ───────────────────────────────────────────────────────
     proj_bessel = Project(name="Bessel Dev")
     proj_work = Project(name="Work")
     session.add_all([proj_bessel, proj_work])
     await session.flush()
     print("Seeded 2 projects.")
 
-    # ── 9. Tasks ──────────────────────────────────────────────────────────
+    # ── 6. Tasks ──────────────────────────────────────────────────────────
     tasks = [
       Task(title="Add activity heatmap to Activity page", status="todo", priority=2, project_id=proj_bessel.id, area="Engineering", due_date=d(-7), position=0),
       Task(title="Implement budget tracking feature", status="todo", priority=1, project_id=proj_bessel.id, area="Engineering", position=1),
@@ -604,7 +543,7 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(tasks)} tasks.")
 
-    # ── 10. Places ────────────────────────────────────────────────────────
+    # ── 7. Places ────────────────────────────────────────────────────────
     places = [
       Place(
         name="Tim Wendelboe",
@@ -907,7 +846,7 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(places)} places.")
 
-    # ── 11. Activity events ───────────────────────────────────────────────
+    # ── 8. Activity events ───────────────────────────────────────────────
     # 30-day history with varied daily profiles.
     # Each day spec is (index, [(start_h, end_h, app_class), ...]), authored as
     # if index 0 were a Monday; specs are re-aligned to real weekdays below.
@@ -1079,7 +1018,7 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(all_activity)} activity events across {active_days} active days.")
 
-    # ── 12. HealthKit workouts ────────────────────────────────────────────
+    # ── 9. HealthKit workouts ────────────────────────────────────────────
     # Raw values match Apple's HKWorkoutActivityType enum.
     RUNNING = (37, "running")
     CYCLING = (13, "cycling")
@@ -1140,7 +1079,7 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(workouts)} HealthKit workouts.")
 
-    # ── 13. HealthKit sleep samples ───────────────────────────────────────
+    # ── 10. HealthKit sleep samples ───────────────────────────────────────
     # One night per day for the last ~6 months (a few skipped, as if the
     # watch wasn't worn), generated as a sequence of
     # stage segments (inBed buffer, repeating core/deep/REM cycles with
@@ -1205,12 +1144,12 @@ async def seed() -> None:
     await session.flush()
     print(f"Seeded {len(sleep_samples)} HealthKit sleep samples over the last {SLEEP_NIGHTS} nights.")
 
-    # ── 13b. HealthKit daily metrics ──────────────────────────────────────
+    # ── 10b. HealthKit daily metrics ──────────────────────────────────────
     session.add_all(seed_daily_metrics(date.today(), days=60))
     await session.flush()
     print("Seeded 60 days of HealthKit daily metrics.")
 
-    # ── 14. Recipes ───────────────────────────────────────────────────────
+    # ── 11. Recipes ───────────────────────────────────────────────────────
     recipes = []
     for title, recipe_type, body in SEED_RECIPES:
       parsed = RecipeBody.model_validate(body)
@@ -1223,10 +1162,8 @@ async def seed() -> None:
     await session.commit()
     print("\n✅ Database seeded successfully!")
     print(f"   Categories:    {len(cat_map)}")
-    print("   Bank accounts: 3")
+    print("   Bank accounts: 2")
     print(f"   Transactions:  {len(tx_list)}")
-    print("   Securities:    5  (35 price points)")
-    print(f"   Trades:        {len(trades)}")
     print(f"   Tasks:         {len(tasks)}")
     print(f"   Places:        {len(places)}")
     print(f"   Activity:      {len(all_activity)} events  ({active_days} active days)")
