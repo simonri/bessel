@@ -239,9 +239,11 @@ function AccountRow({
   onLink: (bankAccountId: string | null) => void;
 }) {
   const ending = account.iban ? `Ending ${account.iban.slice(-4)}` : null;
-  const importing = account.import_from
-    ? `importing from ${format(account.import_from, "d MMM yyyy")}`
-    : "not imported";
+  const importing = !account.shared
+    ? "left out of the latest approval, renew to include it"
+    : account.import_from
+      ? `importing from ${format(account.import_from, "d MMM yyyy")}`
+      : "not imported";
   return (
     <PanelRow
       className="pl-8"

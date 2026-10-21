@@ -82,6 +82,7 @@ def _direction(transaction: BookedTransaction) -> TransactionDirection:
 
 @dataclass(frozen=True, slots=True)
 class AccountToSync:
+  id: UUID
   bank_account_id: UUID
   uid: str
   identification_hash: str
@@ -133,6 +134,9 @@ class OpenBankingService:
     connection.sync_error = None
 
     known = {account.identification_hash: account for account in connection.accounts}
+    approved = {account.identification_hash for account in session.accounts}
+    for existing in known.values():
+      existing.shared = existing.identification_hash in approved
     for account in session.accounts:
       existing = known.get(account.identification_hash)
       if existing is None:
@@ -161,32 +165,44 @@ class OpenBankingService:
   async def link_account(self, session: AsyncSession, account: BankConnectionAccount, bank_account: BankAccount | None) -> None:
     """Points the bank account at a Bessel account; importing starts from that account's newest transaction."""
     if bank_account is None:
-      account.bank_account_id, account.import_from = None, None
+      account.bank_account_id, account.import_from, account.last_synced_at = None, None, None
       return
     if account.bank_account_id == bank_account.id:
       return
     newest = await TransactionRepository.from_session(session).newest_date_for_bank_account(bank_account.id)
     account.bank_account_id = bank_account.id
     account.import_from = newest or (utc_now() - FIRST_IMPORT).date()
+    # A new link reaches back to `import_from` again, not just a week.
+    account.last_synced_at = None
 
   def accounts_to_sync(self, connection: BankConnection) -> list[AccountToSync]:
-    overlap_from = (connection.last_synced_at - OVERLAP).date() if connection.last_synced_at else None
     return [
       AccountToSync(
+        id=account.id,
         bank_account_id=account.bank_account_id,
         uid=account.uid,
         identification_hash=account.identification_hash,
-        date_from=max(account.import_from, overlap_from) if overlap_from else account.import_from,
+        date_from=max(account.import_from, (account.last_synced_at - OVERLAP).date()) if account.last_synced_at else account.import_from,
         import_from=account.import_from,
       )
       for account in connection.accounts
-      if account.bank_account_id is not None and account.import_from is not None
+      if account.shared and account.bank_account_id is not None and account.import_from is not None
     ]
 
-  async def fetch(self, accounts: list[AccountToSync]) -> dict[UUID, list[BookedTransaction]]:
+  async def fetch(self, accounts: list[AccountToSync]) -> dict[UUID, list[BookedTransaction] | None]:
+    """Each account's booked transactions, or None where reading it failed; an ended approval fails them all."""
+    booked: dict[UUID, list[BookedTransaction] | None] = {}
     async with http.client() as http_client:
       client = _client(http_client)
-      return {account.bank_account_id: await client.booked_transactions(account.uid, date_from=account.date_from) for account in accounts}
+      for account in accounts:
+        try:
+          booked[account.id] = await client.booked_transactions(account.uid, date_from=account.date_from)
+        except SessionGoneError:
+          raise
+        except (EnableBankingError, httpx.HTTPError):
+          log.warning("enable_banking_account_read_failed", account_id=str(account.id), exc_info=True)
+          booked[account.id] = None
+    return booked
 
   async def import_booked(self, session: AsyncSession, user_id: UUID, account: AccountToSync, booked: list[BookedTransaction]) -> tuple[int, int]:
     """Imports what the bank booked, skipping transactions already imported by hand on the switchover day."""
@@ -243,20 +259,24 @@ class OpenBankingService:
     except SessionGoneError:
       await self._record_error(session_maker, connection_id, f"{BANK_NAME}'s approval has ended. Renew it with BankID.")
       return
-    except (EnableBankingError, httpx.HTTPError):
-      log.warning("enable_banking_sync_failed", connection_id=str(connection_id), exc_info=True)
-      await self._record_error(session_maker, connection_id, f"Couldn't reach {BANK_NAME}. Bessel tries again at the next sync.")
-      return
 
     async with session_maker() as session:
-      connection = await BankConnectionRepository.from_session(session).get_by_id(connection_id)
+      connection = await BankConnectionRepository.from_session(session).get_with_accounts(connection_id)
       if connection is None:
         return
+      stored = {account.id: account for account in connection.accounts}
       created = 0
       for account in accounts:
-        created += (await self.import_booked(session, user_id, account, booked[account.bank_account_id]))[0]
-      connection.last_synced_at, connection.sync_error = started, None
-    log.info("enable_banking_synced", connection_id=str(connection_id), created=created)
+        transactions = booked[account.id]
+        if transactions is None or account.id not in stored:
+          continue
+        created += (await self.import_booked(session, user_id, account, transactions))[0]
+        stored[account.id].last_synced_at = started
+      failed = sum(1 for transactions in booked.values() if transactions is None)
+      connection.sync_error = f"Couldn't reach {BANK_NAME}. Bessel tries again at the next sync." if failed else None
+      if failed < len(booked) or not booked:
+        connection.last_synced_at = started
+    log.info("enable_banking_synced", connection_id=str(connection_id), created=created, failed=failed)
 
   async def _record_error(self, session_maker: SessionMaker, connection_id: UUID, message: str) -> None:
     async with session_maker() as session:

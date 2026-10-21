@@ -61,6 +61,7 @@ const CONNECTION = {
       currency: "SEK",
       bank_account_id: null,
       import_from: null,
+      shared: true,
     },
   ],
 };
@@ -161,6 +162,26 @@ describe("ConnectedBanks", () => {
     fireEvent.change(select, { target: { value: "none" } });
     await waitFor(() => expect(api.link).toHaveBeenCalledTimes(2));
     expect(api.link.mock.calls[1][0].body).toEqual({ bank_account_id: null });
+  });
+
+  it("says when the latest approval left an account out", async () => {
+    api.list.mockResolvedValue({
+      available: true,
+      connections: [
+        {
+          ...CONNECTION,
+          accounts: [{ ...CONNECTION.accounts[0], shared: false }],
+        },
+      ],
+    });
+
+    mount();
+
+    expect(
+      await screen.findByText(
+        "Ending 1234 - left out of the latest approval, renew to include it",
+      ),
+    ).toBeTruthy();
   });
 
   it("syncs on request", async () => {

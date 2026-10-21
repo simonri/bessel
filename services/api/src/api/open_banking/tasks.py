@@ -18,7 +18,7 @@ async def sync_bank_connection(connection_id: str) -> None:
 
 # Twice a day: banks allow four unattended reads a day per account, and this
 # leaves room for "Sync now".
-@actor(cron_trigger=CronTrigger(hour="6,18", minute=0), priority=TaskPriority.LOW, max_retries=0)
+@actor(cron_trigger=CronTrigger(hour="6,18", minute=0, timezone="Europe/Stockholm"), priority=TaskPriority.LOW, max_retries=0)
 async def sync_all_bank_connections() -> None:
   async with AsyncSessionMaker() as session:
     repository = BankConnectionRepository.from_session(session)

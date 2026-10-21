@@ -13,6 +13,7 @@ class BankConnectionAccountSchema(Schema):
   currency: str
   bank_account_id: UUID | None = Field(description="The Bessel account its transactions go into; nothing is imported until one is chosen.")
   import_from: date | None = Field(description="The first day imported, so transactions imported by hand aren't repeated.")
+  shared: bool = Field(description="False when the latest bank approval didn't include this account.")
 
 
 class BankConnectionSchema(Schema):

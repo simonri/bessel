@@ -649,6 +649,12 @@ export type BankConnectionAccountSchema = {
    * The first day imported, so transactions imported by hand aren't repeated.
    */
   import_from: Date | null;
+  /**
+   * Shared
+   *
+   * False when the latest bank approval didn't include this account.
+   */
+  shared: boolean;
 };
 
 /**

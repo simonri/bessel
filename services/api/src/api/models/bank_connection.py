@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Date, ForeignKey, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import TIMESTAMP, Boolean, Date, ForeignKey, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
@@ -50,6 +50,10 @@ class BankConnectionAccount(RecordModel):
   # The first day imported: the day of the newest transaction already in the
   # Bessel account when it was linked, so hand-imported history isn't repeated.
   import_from: Mapped[date | None] = mapped_column(Date, nullable=True)
+  # When this account last imported; until then the import reaches back to `import_from`.
+  last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+  # False when the latest approval didn't include the account, so it can't be read.
+  shared: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
 
   connection: Mapped[BankConnection] = relationship(back_populates="accounts", lazy="raise")
 

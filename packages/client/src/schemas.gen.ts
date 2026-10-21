@@ -845,6 +845,12 @@ export const BankConnectionAccountSchemaSchema = {
       description:
         "The first day imported, so transactions imported by hand aren't repeated.",
     },
+    shared: {
+      type: "boolean",
+      title: "Shared",
+      description:
+        "False when the latest bank approval didn't include this account.",
+    },
   },
   type: "object",
   required: [
@@ -854,6 +860,7 @@ export const BankConnectionAccountSchemaSchema = {
     "currency",
     "bank_account_id",
     "import_from",
+    "shared",
   ],
   title: "BankConnectionAccountSchema",
 } as const;

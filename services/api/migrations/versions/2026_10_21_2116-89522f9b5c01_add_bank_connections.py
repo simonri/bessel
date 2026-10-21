@@ -1,8 +1,8 @@
 """add bank connections
 
-Revision ID: 0e9c64316e95
+Revision ID: 89522f9b5c01
 Revises: 7942aba17cc8
-Create Date: 2026-10-21 20:52:07.312170
+Create Date: 2026-10-21 21:16:31.982939
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '0e9c64316e95'
+revision: str = '89522f9b5c01'
 down_revision: str | Sequence[str] | None = '7942aba17cc8'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -52,6 +52,8 @@ def upgrade() -> None:
     sa.Column('currency', sa.String(length=3), nullable=False),
     sa.Column('bank_account_id', sa.Uuid(), nullable=True),
     sa.Column('import_from', sa.Date(), nullable=True),
+    sa.Column('last_synced_at', sa.TIMESTAMP(timezone=True), nullable=True),
+    sa.Column('shared', sa.Boolean(), server_default=sa.text('true'), nullable=False),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(timezone=True), nullable=False),
     sa.Column('modified_at', sa.TIMESTAMP(timezone=True), nullable=True),

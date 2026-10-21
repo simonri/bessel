@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -14,13 +15,14 @@ from api.models.bank_connection import BankConnection, BankConnectionAccount
 from api.models.notification import Notification
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
-from api.open_banking import http, service
+from api.open_banking import http, service, tasks
 from api.open_banking.repository import BankConnectionRepository
 from api.open_banking.service import SessionMaker, open_banking_service
 from api.postgres import AsyncSession
 from api.settings import settings
 from api.tests.enable_banking_fake import APP_ID, FakeEnableBanking, account, generate_key, transaction
 from api.tests.fixtures.database import SaveFixture
+from api.worker import scheduler_middleware
 from api.worker._enqueue import JobQueueManager
 from cryptography.fernet import Fernet
 from httpx import AsyncClient
@@ -370,7 +372,9 @@ class TestSync:
   ) -> None:
     bank_account = await _bank_account(save_fixture, user.id)
     connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 9, 1))
-    connection.last_synced_at = datetime(2026, 10, 20, 6, tzinfo=UTC)
+    stored = await BankConnectionRepository.from_session(session).get_with_accounts(connection.id)
+    assert stored is not None
+    stored.accounts[0].last_synced_at = datetime(2026, 10, 20, 6, tzinfo=UTC)
     bank.transactions["uid-1"] = []
 
     await open_banking_service.sync(session_maker, connection.id)
@@ -420,6 +424,101 @@ class TestSync:
     await open_banking_service.sync(session_maker, connection.id)
 
     assert [row[1] for row in await _transactions(session, bank_account)] == [9900, 9900, 9900]
+
+  @pytest.mark.asyncio
+  async def test_an_account_linked_after_another_synced_gets_its_whole_history(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    configured: None,
+    bank: FakeEnableBanking,
+    user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    checking, savings = await _bank_account(save_fixture, user.id), await _bank_account(save_fixture, user.id, "Sparkonto")
+    connection = await _connection(save_fixture, user.id, bank_account=checking, import_from=date(2026, 10, 1))
+    await save_fixture(BankConnectionAccount(connection_id=connection.id, identification_hash="hash-2", uid="uid-2", currency="SEK"))
+    bank.transactions["uid-1"] = []
+    bank.transactions["uid-2"] = [transaction("s1", date(2026, 3, 1), "1000.00", credit=True, text="Ränta")]
+    await open_banking_service.sync(session_maker, connection.id)
+
+    second = (await client.get("/v1/bank-connections")).json()["connections"][0]["accounts"][1]["id"]
+    await client.patch(f"/v1/bank-connections/accounts/{second}", json={"bank_account_id": str(savings.id)})
+    await open_banking_service.sync(session_maker, connection.id)
+
+    assert await _transactions(session, savings) == [(date(2026, 3, 1), 100000, TransactionDirection.credit, "Ränta")]
+
+  @pytest.mark.asyncio
+  async def test_relinking_reads_back_to_the_new_accounts_start(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    configured: None,
+    bank: FakeEnableBanking,
+    user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    first, other = await _bank_account(save_fixture, user.id), await _bank_account(save_fixture, user.id, "Other")
+    connection = await _connection(save_fixture, user.id, bank_account=first, import_from=TODAY)
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 5, 1), "-20.00")]
+    await open_banking_service.sync(session_maker, connection.id)
+
+    account_id = (await client.get("/v1/bank-connections")).json()["connections"][0]["accounts"][0]["id"]
+    await client.patch(f"/v1/bank-connections/accounts/{account_id}", json={"bank_account_id": str(other.id)})
+    await open_banking_service.sync(session_maker, connection.id)
+
+    assert bank.transaction_requests[-1]["date_from"] == (TODAY - timedelta(days=365)).isoformat()
+    assert len(await _transactions(session, other)) == 1
+
+  @pytest.mark.asyncio
+  async def test_one_account_failing_doesnt_stop_the_others(
+    self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
+  ) -> None:
+    checking, savings = await _bank_account(save_fixture, user.id), await _bank_account(save_fixture, user.id, "Sparkonto")
+    connection = await _connection(save_fixture, user.id, bank_account=checking, import_from=date(2026, 10, 1))
+    await save_fixture(
+      BankConnectionAccount(
+        connection_id=connection.id, identification_hash="hash-2", uid="uid-gone", currency="SEK", bank_account_id=savings.id, import_from=date(2026, 10, 1)
+      )
+    )
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "-20.00")]
+
+    await open_banking_service.sync(session_maker, connection.id)
+
+    assert len(await _transactions(session, checking)) == 1
+    stored = await BankConnectionRepository.from_session(session).get_with_accounts(connection.id)
+    assert stored is not None
+    assert [a.last_synced_at for a in stored.accounts] == [NOW, None]
+    assert stored.sync_error == "Couldn't reach Skandia. Bessel tries again at the next sync."
+    assert stored.last_synced_at == NOW
+
+  @pytest.mark.asyncio
+  async def test_accounts_left_out_of_a_renewal_are_no_longer_read(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    configured: None,
+    bank: FakeEnableBanking,
+    user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, uid="old-uid", bank_account=bank_account, import_from=TODAY)
+    bank.approvals["code-2"] = (VALID_UNTIL, [account("uid-2", "hash-2", name="Sparkonto")])
+
+    body = (await client.post("/v1/bank-connections/callback", json={"code": "code-2", "state": _state(user.id)})).json()
+    await open_banking_service.sync(session_maker, connection.id)
+
+    assert [(a["name"], a["shared"]) for a in body["accounts"]] == [("Allkonto", False), ("Sparkonto", True)]
+    assert bank.transaction_requests == []
+    stored = await BankConnectionRepository.from_session(session).get_by_id(connection.id)
+    assert stored is not None and stored.sync_error is None
 
   @pytest.mark.asyncio
   async def test_unlinked_accounts_are_not_read(
@@ -515,3 +614,16 @@ def test_private_key_can_be_read_from_a_file(monkeypatch: pytest.MonkeyPatch, tm
   key_file.write_text(PRIVATE_KEY)
   monkeypatch.setattr(settings, "ENABLE_BANKING_PRIVATE_KEY_PATH", str(key_file))
   assert settings.enable_banking_private_key() == PRIVATE_KEY
+
+
+def test_syncs_at_six_morning_and_evening_stockholm_time() -> None:
+  [trigger] = [t for send, t in scheduler_middleware.cron_triggers if send.__self__.actor_name == tasks.sync_all_bank_connections.__name__]
+  # Without a timezone the trigger runs in the machine's own; CI and production run in UTC.
+  assert str(trigger.timezone) == "Europe/Stockholm"
+  summer_midnight = datetime(2026, 7, 1, tzinfo=ZoneInfo("Europe/Stockholm"))
+  morning = trigger.get_next_fire_time(None, summer_midnight)
+  assert morning is not None
+  evening = trigger.get_next_fire_time(morning, morning + timedelta(minutes=1))
+  assert evening is not None
+  assert morning.astimezone(UTC) == datetime(2026, 7, 1, 4, tzinfo=UTC)
+  assert evening.astimezone(UTC) == datetime(2026, 7, 1, 16, tzinfo=UTC)

@@ -22,6 +22,7 @@ class BankConnectionAccountSchema:
       bank_account_id (None | UUID): The Bessel account its transactions go into; nothing is imported until one is
           chosen.
       import_from (datetime.date | None): The first day imported, so transactions imported by hand aren't repeated.
+      shared (bool): False when the latest bank approval didn't include this account.
   """
 
   id: UUID
@@ -30,6 +31,7 @@ class BankConnectionAccountSchema:
   currency: str
   bank_account_id: None | UUID
   import_from: datetime.date | None
+  shared: bool
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -55,6 +57,8 @@ class BankConnectionAccountSchema:
     else:
       import_from = self.import_from
 
+    shared = self.shared
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -65,6 +69,7 @@ class BankConnectionAccountSchema:
         "currency": currency,
         "bank_account_id": bank_account_id,
         "import_from": import_from,
+        "shared": shared,
       }
     )
 
@@ -121,6 +126,8 @@ class BankConnectionAccountSchema:
 
     import_from = _parse_import_from(d.pop("import_from"))
 
+    shared = d.pop("shared")
+
     bank_connection_account_schema = cls(
       id=id,
       name=name,
@@ -128,6 +135,7 @@ class BankConnectionAccountSchema:
       currency=currency,
       bank_account_id=bank_account_id,
       import_from=import_from,
+      shared=shared,
     )
 
     bank_connection_account_schema.additional_properties = d
