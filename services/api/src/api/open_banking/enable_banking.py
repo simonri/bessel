@@ -13,6 +13,8 @@ API_URL = "https://api.enablebanking.com"
 # Enable Banking rejects tokens that live longer than a day.
 TOKEN_TTL_SECONDS = 3600
 SESSION_GONE_ERRORS = {"EXPIRED_SESSION", "CLOSED_SESSION", "REVOKED_SESSION", "WRONG_SESSION_STATUS"}
+# Booked balances first: they cover exactly the booked transactions Bessel imports.
+BALANCE_TYPES = ("CLBD", "ITBD", "XPCD", "ITAV", "CLAV")
 
 
 class EnableBankingError(Exception):
@@ -130,13 +132,23 @@ class EnableBankingClient:
         return transactions
       params = {**params, "continuation_key": continuation}
 
+  async def balance(self, account_uid: str) -> Decimal | None:
+    """The account's booked balance as the bank reports it now, if it reports one."""
+    body = await self._request("GET", f"/accounts/{account_uid}/balances")
+    by_type = {b.get("balance_type"): b for b in body.get("balances", [])}
+    for balance_type in BALANCE_TYPES:
+      if balance_type in by_type:
+        return Decimal(by_type[balance_type]["balance_amount"]["amount"])
+    return None
+
 
 def _account(account: dict[str, Any]) -> BankAccount:
   identification = account.get("account_id") or {}
   return BankAccount(
     uid=account["uid"],
     identification_hash=account["identification_hash"],
-    name=account.get("name") or account.get("product"),
+    # `name` is the account holder; `details` is what the bank calls the account ("Sparkonto").
+    name=account.get("details") or account.get("product") or account.get("name"),
     iban=identification.get("iban"),
     currency=account.get("currency") or "SEK",
   )

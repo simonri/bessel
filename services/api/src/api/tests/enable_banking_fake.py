@@ -14,6 +14,7 @@ from jose import JWTError, jwt
 
 APP_ID = "test-app-id"
 _TRANSACTIONS = re.compile(r"^/accounts/(?P<uid>[^/]+)/transactions$")
+_BALANCES = re.compile(r"^/accounts/(?P<uid>[^/]+)/balances$")
 _SESSION = re.compile(r"^/sessions/(?P<session_id>[^/]+)$")
 
 
@@ -26,7 +27,12 @@ def generate_key() -> tuple[str, str]:
 
 
 def account(uid: str, identification_hash: str, *, iban: str = "SE4591500000000000001234", name: str = "Allkonto") -> dict[str, Any]:
-  return {"uid": uid, "identification_hash": identification_hash, "name": name, "account_id": {"iban": iban}, "currency": "SEK"}
+  # As Skandia sends it: `name` is the holder, `details` names the account.
+  return {"uid": uid, "identification_hash": identification_hash, "name": "Anna Andersson", "details": name, "account_id": {"iban": iban}, "currency": "SEK"}
+
+
+def balance(balance_type: str, amount: str) -> dict[str, Any]:
+  return {"name": balance_type, "balance_type": balance_type, "balance_amount": {"amount": amount, "currency": "SEK"}}
 
 
 def transaction(
@@ -55,6 +61,10 @@ class FakeEnableBanking:
   approvals: dict[str, tuple[str, list[dict[str, Any]]]] = field(default_factory=dict)
   # Account uid -> every transaction the bank has for it.
   transactions: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+  # Account uid -> the balances the bank reports for it; none when left out.
+  balances: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+  # Account uids whose balances the bank fails to return.
+  balance_errors: set[str] = field(default_factory=set)
   # Account uids whose session the bank considers expired.
   expired: set[str] = field(default_factory=set)
   page_size: int = 2
@@ -104,6 +114,10 @@ class FakeEnableBanking:
       return httpx.Response(200, json={"message": "OK"})
     if request.method == "GET" and (match := _TRANSACTIONS.match(path)):
       return self._transactions(match["uid"], dict(request.url.params))
+    if request.method == "GET" and (match := _BALANCES.match(path)):
+      if match["uid"] in self.balance_errors:
+        return httpx.Response(500, json={"error": "ASPSP_ERROR", "message": "Bank unavailable"})
+      return httpx.Response(200, json={"balances": self.balances.get(match["uid"], [])})
     return httpx.Response(404, json={"error": "NOT_FOUND", "message": path})
 
   def _transactions(self, uid: str, params: dict[str, str]) -> httpx.Response:

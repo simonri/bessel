@@ -20,7 +20,7 @@ from api.open_banking.repository import BankConnectionRepository
 from api.open_banking.service import SessionMaker, open_banking_service
 from api.postgres import AsyncSession
 from api.settings import settings
-from api.tests.enable_banking_fake import APP_ID, FakeEnableBanking, account, generate_key, transaction
+from api.tests.enable_banking_fake import APP_ID, FakeEnableBanking, account, balance, generate_key, transaction
 from api.tests.fixtures.database import SaveFixture
 from api.worker import scheduler_middleware
 from api.worker._enqueue import JobQueueManager
@@ -492,6 +492,50 @@ class TestSync:
 
     assert bank.transaction_requests[-1]["date_from"] == (TODAY - timedelta(days=365)).isoformat()
     assert len(await _transactions(session, other)) == 1
+
+  @pytest.mark.asyncio
+  async def test_the_balance_matches_the_bank_however_much_history_bessel_has(
+    self, client: AsyncClient, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    bank_account.base_balance = 100000
+    await save_fixture(bank_account)
+    await _hand_imported(save_fixture, bank_account, date(2026, 3, 1), 4000)
+    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 10, 1))
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "-125.50"), transaction("r2", date(2026, 10, 3), "300.00", credit=True)]
+    bank.balances["uid-1"] = [balance("ITAV", "400.00"), balance("CLBD", "523.61")]
+
+    await open_banking_service.sync(session_maker, connection.id)
+
+    [stored] = (await client.get("/v1/bank-accounts")).json()["items"]
+    assert stored["current_balance"] == 52361
+
+  @pytest.mark.asyncio
+  async def test_without_a_balance_from_the_bank_the_starting_balance_is_kept(
+    self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
+  ) -> None:
+    unreported, failing = await _bank_account(save_fixture, user.id), await _bank_account(save_fixture, user.id, "Sparkonto")
+    for bank_account in (unreported, failing):
+      bank_account.base_balance = 100000
+      await save_fixture(bank_account)
+    connection = await _connection(save_fixture, user.id, bank_account=unreported, import_from=date(2026, 10, 1))
+    await save_fixture(
+      BankConnectionAccount(
+        connection_id=connection.id, identification_hash="hash-2", uid="uid-2", currency="SEK", bank_account_id=failing.id, import_from=date(2026, 10, 1)
+      )
+    )
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "-20.00")]
+    bank.transactions["uid-2"] = [transaction("r1", date(2026, 10, 2), "-20.00")]
+    bank.balances["uid-1"] = [balance("PRCD", "1.00")]
+    bank.balance_errors.add("uid-2")
+
+    await open_banking_service.sync(session_maker, connection.id)
+
+    for bank_account in (unreported, failing):
+      await session.refresh(bank_account)
+      assert (bank_account.base_balance, len(await _transactions(session, bank_account))) == (100000, 1)
+    stored = await BankConnectionRepository.from_session(session).get_by_id(connection.id)
+    assert stored is not None and stored.sync_error is None
 
   @pytest.mark.asyncio
   async def test_one_account_failing_doesnt_stop_the_others(

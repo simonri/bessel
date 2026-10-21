@@ -11,6 +11,7 @@ from uuid import UUID
 import httpx
 import structlog
 
+from api.bank_accounts.repository import BankAccountRepository
 from api.common.encryption import InvalidToken, decrypt, encrypt
 from api.common.utils import utc_now
 from api.logging import Logger
@@ -80,6 +81,12 @@ def _minor_units(amount: Decimal) -> int:
 
 def _direction(transaction: BookedTransaction) -> TransactionDirection:
   return TransactionDirection.credit if transaction.credit else TransactionDirection.debit
+
+
+@dataclass(frozen=True, slots=True)
+class AccountRead:
+  booked: list[BookedTransaction]
+  balance: Decimal | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,20 +203,29 @@ class OpenBankingService:
       if account.shared and account.bank_account_id is not None and account.import_from is not None
     ]
 
-  async def fetch(self, accounts: list[AccountToSync]) -> dict[UUID, list[BookedTransaction] | None]:
-    """Each account's booked transactions, or None where reading it failed; an ended approval fails them all."""
-    booked: dict[UUID, list[BookedTransaction] | None] = {}
+  async def fetch(self, accounts: list[AccountToSync]) -> dict[UUID, AccountRead | None]:
+    """Each account's booked transactions and balance, or None where reading them failed; an ended approval fails them all."""
+    reads: dict[UUID, AccountRead | None] = {}
     async with http.client() as http_client:
       client = _client(http_client)
       for account in accounts:
         try:
-          booked[account.id] = await client.booked_transactions(account.uid, date_from=account.date_from)
+          booked = await client.booked_transactions(account.uid, date_from=account.date_from)
         except SessionGoneError:
           raise
         except (EnableBankingError, httpx.HTTPError):
           log.warning("enable_banking_account_read_failed", account_id=str(account.id), exc_info=True)
-          booked[account.id] = None
-    return booked
+          reads[account.id] = None
+          continue
+        try:
+          balance = await client.balance(account.uid)
+        except SessionGoneError:
+          raise
+        except (EnableBankingError, httpx.HTTPError):
+          log.warning("enable_banking_balance_read_failed", account_id=str(account.id), exc_info=True)
+          balance = None
+        reads[account.id] = AccountRead(booked=booked, balance=balance)
+    return reads
 
   async def import_booked(self, session: AsyncSession, user_id: UUID, account: AccountToSync, booked: list[BookedTransaction]) -> tuple[int, int]:
     """Imports what the bank booked, skipping transactions already imported by hand on the switchover day."""
@@ -249,6 +265,14 @@ class OpenBankingService:
       user_id=user_id,
     )
 
+  async def match_balance(self, session: AsyncSession, bank_account_id: UUID, balance: Decimal) -> None:
+    """Sets the starting balance so the account adds up to what the bank reports, whatever history Bessel holds."""
+    bank_account = await BankAccountRepository.from_session(session).get_by_id(bank_account_id)
+    if bank_account is None:
+      return
+    net = (await TransactionRepository.from_session(session).net_balances_by_account([bank_account_id])).get(bank_account_id, 0)
+    bank_account.base_balance = _minor_units(balance) - net
+
   async def sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
     """Imports new transactions for every linked account; failures are recorded on the connection."""
     async with session_maker() as session:
@@ -262,7 +286,7 @@ class OpenBankingService:
 
     started = utc_now()
     try:
-      booked = await self.fetch(accounts)
+      reads = await self.fetch(accounts)
     except SessionGoneError:
       await self._record_error(session_maker, connection_id, f"{bank_name()}'s approval has ended. Renew it with BankID.")
       return
@@ -274,14 +298,16 @@ class OpenBankingService:
       stored = {account.id: account for account in connection.accounts}
       created = 0
       for account in accounts:
-        transactions = booked[account.id]
-        if transactions is None or account.id not in stored:
+        read = reads[account.id]
+        if read is None or account.id not in stored:
           continue
-        created += (await self.import_booked(session, user_id, account, transactions))[0]
+        created += (await self.import_booked(session, user_id, account, read.booked))[0]
+        if read.balance is not None:
+          await self.match_balance(session, account.bank_account_id, read.balance)
         stored[account.id].last_synced_at = started
-      failed = sum(1 for transactions in booked.values() if transactions is None)
+      failed = sum(1 for read in reads.values() if read is None)
       connection.sync_error = f"Couldn't reach {bank_name()}. Bessel tries again at the next sync." if failed else None
-      if failed < len(booked) or not booked:
+      if failed < len(reads) or not reads:
         connection.last_synced_at = started
     log.info("enable_banking_synced", connection_id=str(connection_id), created=created, failed=failed)
 
