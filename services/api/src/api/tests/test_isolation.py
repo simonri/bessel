@@ -17,6 +17,7 @@ import pytest
 import pytest_asyncio
 from api.app import app
 from api.common.encryption import encrypt
+from api.models.bank_connection import BankConnection, BankConnectionAccount
 from api.models.calendar import Calendar
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
@@ -51,6 +52,11 @@ AUDITED: set[str] = {
   "DELETE /v1/bank-accounts/{bank_account_id}",
   "GET /v1/bank-accounts/{bank_account_id}",
   "PATCH /v1/bank-accounts/{bank_account_id}",
+  "GET /v1/bank-connections",
+  "POST /v1/bank-connections/callback",
+  "PATCH /v1/bank-connections/accounts/{account_id}",
+  "DELETE /v1/bank-connections/{connection_id}",
+  "POST /v1/bank-connections/{connection_id}/sync",
   "GET /v1/calendars/accounts",
   "DELETE /v1/calendars/accounts/{account_id}",
   "POST /v1/calendars/accounts/{account_id}/sync",
@@ -161,6 +167,7 @@ EXEMPT: dict[str, str] = {
   "POST /v1/recipes/import": "Structures the posted text with an LLM; reads and stores nothing",
   "POST /v1/client-diagnostics": "Logs the caller's own crash reports; reads and stores nothing",
   "POST /v1/calendars/google/authorize": "Starts the caller's own connection flow",
+  "POST /v1/bank-connections/authorize": "Starts the caller's own connection flow",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
   "GET /v1/klarna/transactions": "Proxies the caller's own Klarna credentials; reads no Bessel data",
   "GET /v1/investments/holdings": _SHARED_SECURITIES,
@@ -686,6 +693,37 @@ class TestIngestTokens:
     body = {"source": SOURCE, "events": []}
     assert (await client.post("/v1/activity/batch", json=body, headers={"X-Api-Key": "bsl_not-a-real-token"})).status_code == 401
     assert (await client.post("/v1/activity/batch", json=body)).status_code == 401
+
+
+class TestBankConnections:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_link_sync_or_finish_bank_connections(
+    self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User, session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    monkeypatch.setattr(settings, "CREDENTIALS_ENCRYPTION_KEY", Fernet.generate_key().decode())
+    connection = BankConnection(
+      user_id=user.id, bank_name="Skandia", bank_country="SE", encrypted_session_id=encrypt("session"), valid_until=datetime.now(UTC) + timedelta(days=90)
+    )
+    await save_fixture(connection)
+    bank_account = BankConnectionAccount(connection_id=connection.id, identification_hash="hash", uid="uid", currency="SEK")
+    await save_fixture(bank_account)
+    others_account = await _create(other_client, "/v1/bank-accounts", {"name": "B's account", "currency": "SEK", "subtype": "checking"})
+    other_id = (await session.execute(select(User.id).where(User.id != user.id))).scalar_one()
+    monkeypatch.setattr(settings, "ENABLE_BANKING_APP_ID", "app")
+    monkeypatch.setattr(settings, "ENABLE_BANKING_PRIVATE_KEY", "key")
+    monkeypatch.setattr(settings, "ENABLE_BANKING_USER_IDS", [user.id, other_id])
+
+    assert (await other_client.get("/v1/bank-connections")).json()["connections"] == []
+    assert (await other_client.patch(f"/v1/bank-connections/accounts/{bank_account.id}", json={"bank_account_id": others_account["id"]})).status_code == 404
+    assert (await other_client.post(f"/v1/bank-connections/{connection.id}/sync")).status_code == 404
+    assert (await other_client.delete(f"/v1/bank-connections/{connection.id}")).status_code == 404
+    a_state = encrypt(json.dumps({"user_id": str(user.id)}))
+    assert (await other_client.post("/v1/bank-connections/callback", json={"code": "code", "state": a_state})).status_code == 400
+    # Nor can A send its own bank's transactions into B's account.
+    assert (await client.patch(f"/v1/bank-connections/accounts/{bank_account.id}", json={"bank_account_id": others_account["id"]})).status_code == 404
+
+    [listed] = (await client.get("/v1/bank-connections")).json()["connections"]
+    assert listed["accounts"][0]["bank_account_id"] is None
 
 
 class TestCalendars:

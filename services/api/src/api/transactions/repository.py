@@ -97,6 +97,18 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     statement = update(Transaction).where(Transaction.description == description, Transaction.user_id == user_id).values(category_id=category_id)
     return await self.execute_for_rowcount(statement)
 
+  async def newest_date_for_bank_account(self, bank_account_id: UUID) -> date | None:
+    return (await self.session.execute(select(func.max(Transaction.transaction_date)).where(Transaction.bank_account_id == bank_account_id))).scalar_one()
+
+  async def amounts_on_date(self, bank_account_id: UUID, day: date, *, excluding_hash_prefix: str) -> list[tuple[int, TransactionDirection]]:
+    """(amount, direction) of the account's transactions on `day`, leaving out those whose dedup hash has the prefix."""
+    statement = select(Transaction.amount, Transaction.direction).where(
+      Transaction.bank_account_id == bank_account_id,
+      Transaction.transaction_date == day,
+      Transaction.dedup_hash.not_like(f"{excluding_hash_prefix}%"),
+    )
+    return [(row.amount, row.direction) for row in await self.session.execute(statement)]
+
   async def delete_for_bank_account(self, bank_account_id: UUID) -> None:
     await self.session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id))
 

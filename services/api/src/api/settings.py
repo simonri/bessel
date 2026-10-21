@@ -1,6 +1,8 @@
 import os
 from enum import StrEnum
+from pathlib import Path
 from typing import Literal
+from uuid import UUID
 
 from pydantic import Field, PostgresDsn, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -95,6 +97,17 @@ class Settings(BaseSettings):
   OPENROUTER_API_KEY: str = ""
   RECIPE_IMPORT_MODEL: str = "google/gemini-3.1-flash-lite"
 
+  # Enable Banking (open banking account data). The free, restricted mode only
+  # reaches accounts linked in the Enable Banking control panel, so only the
+  # users listed here may connect a bank.
+  ENABLE_BANKING_APP_ID: str = ""
+  # The application's RSA private key as PEM (literal "\n" allowed), or a path to it.
+  ENABLE_BANKING_PRIVATE_KEY: str = ""
+  ENABLE_BANKING_PRIVATE_KEY_PATH: str = ""
+  # Must match a redirect URL registered for the app; defaults to the web app's callback page.
+  ENABLE_BANKING_REDIRECT_URL: str = ""
+  ENABLE_BANKING_USER_IDS: list[UUID] = Field(default=[])
+
   # Worker
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000
@@ -135,6 +148,17 @@ class Settings(BaseSettings):
 
   def is_development(self) -> bool:
     return self.is_environment({Environment.development})
+
+  def enable_banking_private_key(self) -> str:
+    if self.ENABLE_BANKING_PRIVATE_KEY_PATH:
+      return Path(self.ENABLE_BANKING_PRIVATE_KEY_PATH).read_text()
+    return self.ENABLE_BANKING_PRIVATE_KEY.replace("\\n", "\n")
+
+  def enable_banking_redirect_url(self) -> str:
+    return self.ENABLE_BANKING_REDIRECT_URL or self.generate_frontend_url("bank-connections/callback")
+
+  def enable_banking_configured(self) -> bool:
+    return bool(self.ENABLE_BANKING_APP_ID and (self.ENABLE_BANKING_PRIVATE_KEY or self.ENABLE_BANKING_PRIVATE_KEY_PATH))
 
   def generate_frontend_url(self, path: str) -> str:
     return f"{self.FRONTEND_BASE_URL}/{path}"
