@@ -31,6 +31,7 @@ import {
 } from "@/components/ui-kit";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
+import { formatMoney } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 const NOT_IMPORTING = "none";
@@ -260,11 +261,20 @@ function AccountRow({
     : account.import_from
       ? `importing from ${format(account.import_from, "d MMM yyyy")}`
       : "not imported";
+  // Bessel's balance should match the bank's; a gap means a transaction was missed, doubled or is pending.
+  const drift =
+    account.balance_drift && account.bank_balance !== null
+      ? `${bankName} says ${formatMoney(account.bank_balance, account.currency)}, Bessel ${formatMoney(account.bank_balance - account.balance_drift, account.currency)}`
+      : null;
   return (
     <PanelRow
       className="pl-8"
       label={account.name ?? bankName}
-      description={ending ? `${ending} - ${importing}` : importing}
+      description={
+        <span className={cn(drift && "text-amber-300/90")}>
+          {[ending, importing, drift].filter(Boolean).join(" - ")}
+        </span>
+      }
     >
       <NativeSelect
         size="sm"

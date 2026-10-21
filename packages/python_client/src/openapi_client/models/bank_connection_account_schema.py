@@ -23,6 +23,9 @@ class BankConnectionAccountSchema:
           chosen.
       import_from (datetime.date | None): The first day imported, so transactions imported by hand aren't repeated.
       shared (bool): False when the latest bank approval didn't include this account.
+      bank_balance (int | None): The bank's balance at the last sync, in minor units.
+      balance_drift (int | None): The bank's balance minus Bessel's at the last sync; anything but 0 means a
+          transaction is missing, doubled or still pending.
   """
 
   id: UUID
@@ -32,6 +35,8 @@ class BankConnectionAccountSchema:
   bank_account_id: None | UUID
   import_from: datetime.date | None
   shared: bool
+  bank_balance: int | None
+  balance_drift: int | None
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -59,6 +64,12 @@ class BankConnectionAccountSchema:
 
     shared = self.shared
 
+    bank_balance: int | None
+    bank_balance = self.bank_balance
+
+    balance_drift: int | None
+    balance_drift = self.balance_drift
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -70,6 +81,8 @@ class BankConnectionAccountSchema:
         "bank_account_id": bank_account_id,
         "import_from": import_from,
         "shared": shared,
+        "bank_balance": bank_balance,
+        "balance_drift": balance_drift,
       }
     )
 
@@ -128,6 +141,20 @@ class BankConnectionAccountSchema:
 
     shared = d.pop("shared")
 
+    def _parse_bank_balance(data: object) -> int | None:
+      if data is None:
+        return data
+      return cast(int | None, data)
+
+    bank_balance = _parse_bank_balance(d.pop("bank_balance"))
+
+    def _parse_balance_drift(data: object) -> int | None:
+      if data is None:
+        return data
+      return cast(int | None, data)
+
+    balance_drift = _parse_balance_drift(d.pop("balance_drift"))
+
     bank_connection_account_schema = cls(
       id=id,
       name=name,
@@ -136,6 +163,8 @@ class BankConnectionAccountSchema:
       bank_account_id=bank_account_id,
       import_from=import_from,
       shared=shared,
+      bank_balance=bank_balance,
+      balance_drift=balance_drift,
     )
 
     bank_connection_account_schema.additional_properties = d

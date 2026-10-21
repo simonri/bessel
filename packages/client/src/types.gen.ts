@@ -780,6 +780,18 @@ export type BankConnectionAccountSchema = {
    * False when the latest bank approval didn't include this account.
    */
   shared: boolean;
+  /**
+   * Bank Balance
+   *
+   * The bank's balance at the last sync, in minor units.
+   */
+  bank_balance: number | null;
+  /**
+   * Balance Drift
+   *
+   * The bank's balance minus Bessel's at the last sync; anything but 0 means a transaction is missing, doubled or still pending.
+   */
+  balance_drift: number | null;
 };
 
 /**

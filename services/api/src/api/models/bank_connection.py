@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Boolean, Date, ForeignKey, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy import TIMESTAMP, Boolean, Date, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
@@ -54,6 +54,14 @@ class BankConnectionAccount(RecordModel):
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   # False when the latest approval didn't include the account, so it can't be read.
   shared: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+  # The bank's balance at the last sync, in minor units.
+  bank_balance: Mapped[int | None] = mapped_column(Integer, nullable=True)
+  # When the Bessel account's starting balance was set from the bank's. After that
+  # it stays put, so a missed or doubled transaction shows up as drift.
+  balance_anchored_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+  # The bank's balance minus Bessel's at the last sync; anything but 0 means they disagree.
+  balance_drift: Mapped[int | None] = mapped_column(Integer, nullable=True)
+  drift_notified_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
   connection: Mapped[BankConnection] = relationship(back_populates="accounts", lazy="raise")
 

@@ -62,6 +62,8 @@ const CONNECTION = {
       bank_account_id: null,
       import_from: null,
       shared: true,
+      bank_balance: null,
+      balance_drift: null,
     },
   ],
 };
@@ -239,6 +241,44 @@ describe("ConnectedBanks", () => {
     mount();
 
     expect(await screen.findByLabelText("Import Klarna into")).toBeTruthy();
+  });
+
+  it("warns when Bessel's balance doesn't match the bank's", async () => {
+    api.list.mockResolvedValue({
+      available: true,
+      banks: ["Skandia"],
+      connections: [
+        {
+          ...CONNECTION,
+          accounts: [
+            {
+              ...CONNECTION.accounts[0],
+              bank_account_id: "ba-1",
+              import_from: "2026-10-15",
+              bank_balance: 85000,
+              balance_drift: -5000,
+            },
+            {
+              ...CONNECTION.accounts[0],
+              id: "acc-2",
+              name: "Sparkonto",
+              bank_account_id: "ba-1",
+              import_from: "2026-10-15",
+              bank_balance: 85000,
+              balance_drift: 0,
+            },
+          ],
+        },
+      ],
+    });
+
+    mount();
+
+    const warning = await screen.findByText(
+      /Ending 1234 - importing from 15 Oct 2026 - Skandia says 850/,
+    );
+    expect(warning.textContent).toMatch(/Bessel 900/);
+    expect(screen.getAllByText(/Skandia says/)).toHaveLength(1);
   });
 
   it("syncs on request", async () => {

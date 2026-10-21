@@ -1064,6 +1064,31 @@ export const BankConnectionAccountSchemaSchema = {
       description:
         "False when the latest bank approval didn't include this account.",
     },
+    bank_balance: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Balance",
+      description: "The bank's balance at the last sync, in minor units.",
+    },
+    balance_drift: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Balance Drift",
+      description:
+        "The bank's balance minus Bessel's at the last sync; anything but 0 means a transaction is missing, doubled or still pending.",
+    },
   },
   type: "object",
   required: [
@@ -1074,6 +1099,8 @@ export const BankConnectionAccountSchemaSchema = {
     "bank_account_id",
     "import_from",
     "shared",
+    "bank_balance",
+    "balance_drift",
   ],
   title: "BankConnectionAccountSchema",
 } as const;

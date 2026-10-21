@@ -14,6 +14,10 @@ class BankConnectionAccountSchema(Schema):
   bank_account_id: UUID | None = Field(description="The Bessel account its transactions go into; nothing is imported until one is chosen.")
   import_from: date | None = Field(description="The first day imported, so transactions imported by hand aren't repeated.")
   shared: bool = Field(description="False when the latest bank approval didn't include this account.")
+  bank_balance: int | None = Field(description="The bank's balance at the last sync, in minor units.")
+  balance_drift: int | None = Field(
+    description="The bank's balance minus Bessel's at the last sync; anything but 0 means a transaction is missing, doubled or still pending."
+  )
 
 
 class BankConnectionSchema(Schema):

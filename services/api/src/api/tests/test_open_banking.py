@@ -592,6 +592,70 @@ class TestSync:
     assert _transaction(bare).description == ""
 
   @pytest.mark.asyncio
+  async def test_after_the_first_balance_a_missed_transaction_shows_as_drift_and_warns_once(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    configured: None,
+    bank: FakeEnableBanking,
+    user: User,
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 10, 1))
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "-100.00")]
+    bank.balances["uid-1"] = [balance("CLBD", "900.00")]
+
+    async def sync() -> tuple[int, int | None, int | None, int]:
+      await open_banking_service.sync(session_maker, connection.id)
+      [stored] = (await client.get("/v1/bank-accounts")).json()["items"]
+      [linked] = (await client.get("/v1/bank-connections")).json()["connections"][0]["accounts"]
+      warnings = (await session.execute(select(Notification).where(Notification.user_id == user.id))).scalars().all()
+      return stored["current_balance"], linked["bank_balance"], linked["balance_drift"], len(warnings)
+
+    assert await sync() == (90000, 90000, 0, 0)
+    # The bank booked a purchase Bessel never received.
+    bank.balances["uid-1"] = [balance("CLBD", "850.00")]
+    assert await sync() == (90000, 85000, -5000, 0)
+    assert await sync() == (90000, 85000, -5000, 1)
+    assert await sync() == (90000, 85000, -5000, 1)
+    bank.transactions["uid-1"].append(transaction("r2", date(2026, 10, 20), "-50.00"))
+    assert await sync() == (85000, 85000, 0, 1)
+
+    [warning] = (await session.execute(select(Notification).where(Notification.user_id == user.id))).scalars().all()
+    assert warning.title == "Skandia doesn't match Skandia"
+    assert warning.body == "Skandia says 850.00 SEK, Bessel 900.00 SEK. A transaction may be missing or doubled, or a card payment still pending."
+    stored = await BankConnectionRepository.from_session(session).get_with_accounts(connection.id)
+    assert stored is not None and stored.accounts[0].drift_notified_at is None
+
+  @pytest.mark.asyncio
+  async def test_relinking_sets_the_new_accounts_starting_balance_from_the_bank(
+    self,
+    client: AsyncClient,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    configured: None,
+    bank: FakeEnableBanking,
+    user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    first, other = await _bank_account(save_fixture, user.id), await _bank_account(save_fixture, user.id, "Other")
+    connection = await _connection(save_fixture, user.id, bank_account=first, import_from=date(2026, 10, 1))
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "-100.00")]
+    bank.balances["uid-1"] = [balance("CLBD", "900.00")]
+    await open_banking_service.sync(session_maker, connection.id)
+
+    account_id = (await client.get("/v1/bank-connections")).json()["connections"][0]["accounts"][0]["id"]
+    await client.patch(f"/v1/bank-connections/accounts/{account_id}", json={"bank_account_id": str(other.id)})
+    await open_banking_service.sync(session_maker, connection.id)
+
+    balances = {a["name"]: a["current_balance"] for a in (await client.get("/v1/bank-accounts")).json()["items"]}
+    assert balances["Other"] == 90000
+    [linked] = (await client.get("/v1/bank-connections")).json()["connections"][0]["accounts"]
+    assert linked["balance_drift"] == 0
+
+  @pytest.mark.asyncio
   async def test_without_a_balance_from_the_bank_the_starting_balance_is_kept(
     self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
   ) -> None:

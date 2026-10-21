@@ -90,6 +90,10 @@ def _description(transaction: BookedTransaction) -> str:
   return transaction.code.replace("_", " ").capitalize()
 
 
+def _money(minor: int, currency: str) -> str:
+  return f"{minor / 100:,.2f} {currency}"
+
+
 def _direction(transaction: BookedTransaction) -> TransactionDirection:
   return TransactionDirection.credit if transaction.credit else TransactionDirection.debit
 
@@ -200,6 +204,7 @@ class OpenBankingService:
     account.import_from = newest or (utc_now() - FIRST_IMPORT).date()
     # A new link reaches back to `import_from` again, not just a week.
     account.last_synced_at = None
+    account.bank_balance, account.balance_anchored_at, account.balance_drift, account.drift_notified_at = None, None, None, None
 
   def accounts_to_sync(self, connection: BankConnection) -> list[AccountToSync]:
     return [
@@ -279,13 +284,40 @@ class OpenBankingService:
       user_id=user_id,
     )
 
-  async def match_balance(self, session: AsyncSession, bank_account_id: UUID, balance: Decimal) -> None:
-    """Sets the starting balance so the account adds up to what the bank reports, whatever history Bessel holds."""
-    bank_account = await BankAccountRepository.from_session(session).get_by_id(bank_account_id)
+  async def reconcile(self, session: AsyncSession, bank_name: str, user_id: UUID, account: BankConnectionAccount, balance: Decimal, *, now: datetime) -> None:
+    """Compares the bank's balance with Bessel's, warning once when they keep disagreeing.
+
+    The first balance after linking sets the starting balance, so whatever history Bessel
+    holds adds up to the bank's. It stays put afterwards: a gap must show, not be absorbed.
+    """
+    if account.bank_account_id is None:
+      return
+    bank_account = await BankAccountRepository.from_session(session).get_by_id(account.bank_account_id)
     if bank_account is None:
       return
-    net = (await TransactionRepository.from_session(session).net_balances_by_account([bank_account_id])).get(bank_account_id, 0)
-    bank_account.base_balance = _minor_units(balance) - net
+    net = (await TransactionRepository.from_session(session).net_balances_by_account([bank_account.id])).get(bank_account.id, 0)
+    bank_minor = _minor_units(balance)
+    if account.balance_anchored_at is None:
+      bank_account.base_balance = bank_minor - net
+      account.balance_anchored_at = now
+    previous, drift = account.balance_drift, bank_minor - (bank_account.base_balance + net)
+    account.bank_balance, account.balance_drift = bank_minor, drift
+    if drift == 0:
+      account.drift_notified_at = None
+    # A transaction booked between reading the transactions and the balance drifts
+    # one sync; only drift that lasts is worth a warning.
+    elif previous and account.drift_notified_at is None:
+      bank_says, bessel_says = _money(bank_minor, bank_account.currency), _money(bank_minor - drift, bank_account.currency)
+      session.add(
+        Notification(
+          user_id=user_id,
+          title=f"{bank_account.name} doesn't match {bank_name}",
+          body=f"{bank_name} says {bank_says}, Bessel {bessel_says}. A transaction may be missing or doubled, or a card payment still pending.",
+          link="/accounts",
+          kind="warning",
+        )
+      )
+      account.drift_notified_at = now
 
   async def sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
     """Imports new transactions for every linked account; failures are recorded on the connection."""
@@ -317,7 +349,7 @@ class OpenBankingService:
           continue
         created += (await self.import_booked(session, user_id, bank_name, account, read.booked))[0]
         if read.balance is not None:
-          await self.match_balance(session, account.bank_account_id, read.balance)
+          await self.reconcile(session, bank_name, user_id, stored[account.id], read.balance, now=started)
         stored[account.id].last_synced_at = started
       failed = sum(1 for read in reads.values() if read is None)
       connection.sync_error = f"Couldn't reach {bank_name}. Bessel tries again at the next sync." if failed else None
