@@ -577,6 +577,206 @@ export const AssetTypeSchema = {
   title: "AssetType",
 } as const;
 
+export const AvanzaAccountSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    account_type: {
+      type: "string",
+      title: "Account Type",
+      description: "Avanza's account type, e.g. 'INVESTERINGSSPARKONTO'.",
+    },
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The Bessel account it imports into; nothing is imported until one is chosen.",
+    },
+    cash_balance: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Cash Balance",
+      description: "Cash in the account as Avanza reports it, in minor units.",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "name",
+    "account_type",
+    "bank_account_id",
+    "cash_balance",
+    "last_synced_at",
+  ],
+  title: "AvanzaAccountSchema",
+} as const;
+
+export const AvanzaAccountUpdateSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The Bessel account to import into, or null to stop importing.",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id"],
+  title: "AvanzaAccountUpdate",
+} as const;
+
+export const AvanzaConnectRequestSchema = {
+  properties: {
+    username: {
+      type: "string",
+      maxLength: 255,
+      minLength: 1,
+      title: "Username",
+    },
+    password: {
+      type: "string",
+      maxLength: 255,
+      minLength: 1,
+      title: "Password",
+    },
+    totp_secret: {
+      type: "string",
+      maxLength: 128,
+      minLength: 16,
+      title: "Totp Secret",
+      description:
+        "The secret Avanza shows when adding 'another app' for two-factor login.",
+    },
+  },
+  type: "object",
+  required: ["username", "password", "totp_secret"],
+  title: "AvanzaConnectRequest",
+} as const;
+
+export const AvanzaConnectionSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    username: {
+      type: "string",
+      title: "Username",
+    },
+    credentials_rejected: {
+      type: "boolean",
+      title: "Credentials Rejected",
+      description:
+        "Avanza rejected the login; syncing stops until new credentials are saved.",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+    sync_error: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync Error",
+    },
+    accounts: {
+      items: {
+        $ref: "#/components/schemas/AvanzaAccountSchema",
+      },
+      type: "array",
+      title: "Accounts",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "username",
+    "credentials_rejected",
+    "last_synced_at",
+    "sync_error",
+    "accounts",
+  ],
+  title: "AvanzaConnectionSchema",
+} as const;
+
+export const AvanzaStatusResponseSchema = {
+  properties: {
+    available: {
+      type: "boolean",
+      title: "Available",
+      description: "Whether this user can connect Avanza.",
+    },
+    connection: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/AvanzaConnectionSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["available", "connection"],
+  title: "AvanzaStatusResponse",
+} as const;
+
 export const BankAccountCreateSchema = {
   properties: {
     name: {

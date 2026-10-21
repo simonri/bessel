@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AvanzaSection } from "@/components/avanza/avanza-section";
 import { ConnectedBanks } from "@/components/bank-connections/connected-banks";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
@@ -218,6 +219,8 @@ function Accounts() {
       )}
 
       <ConnectedBanks />
+
+      <AvanzaSection />
 
       <ConfirmDeleteDialog
         size="sm"

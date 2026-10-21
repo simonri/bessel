@@ -17,6 +17,7 @@ import {
   completeBankConnectionV1BankConnectionsCallbackPost,
   completeGoogleConnectV1CalendarsGoogleCallbackPost,
   completeTaskV1TasksTaskIdCompletePost,
+  connectAvanzaV1AvanzaConnectPost,
   connectIcloudV1CalendarsIcloudPost,
   createBankAccountV1BankAccountsPost,
   createCalendarEventV1CalendarsCalendarIdEventsPost,
@@ -48,11 +49,13 @@ import {
   deleteTimeEntryV1TimeEntriesEntryIdDelete,
   deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
+  disconnectAvanzaV1AvanzaDelete,
   disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
   getActivitySummaryV1ActivitySummaryGet,
   getAgentUsageDailyV1AgentUsageDailyGet,
   getAgentUsageStatusV1AgentUsageStatusGet,
+  getAvanzaV1AvanzaGet,
   getBankAccountV1BankAccountsBankAccountIdGet,
   getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
   getDailyActivityV1ActivityDailyGet,
@@ -77,6 +80,7 @@ import {
   importLocationHistoryV1LocationHistoryImportPost,
   importTransactionsV1TransactionsImportPost,
   ingestActivityBatchV1ActivityBatchPost,
+  linkAvanzaAccountV1AvanzaAccountsAccountIdPatch,
   linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch,
   listActivitySourcesV1ActivitySourcesGet,
   listBankAccountsV1BankAccountsGet,
@@ -118,6 +122,7 @@ import {
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
   structureRecipeTextV1RecipesImportPost,
   syncAgentUsageV1AgentUsageSyncPost,
+  syncAvanzaV1AvanzaSyncPost,
   syncBankConnectionV1BankConnectionsConnectionIdSyncPost,
   syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost,
   syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost,
@@ -164,6 +169,9 @@ import type {
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostError,
   CompleteTaskV1TasksTaskIdCompletePostResponse,
+  ConnectAvanzaV1AvanzaConnectPostData,
+  ConnectAvanzaV1AvanzaConnectPostError,
+  ConnectAvanzaV1AvanzaConnectPostResponse,
   ConnectIcloudV1CalendarsIcloudPostData,
   ConnectIcloudV1CalendarsIcloudPostError,
   ConnectIcloudV1CalendarsIcloudPostResponse,
@@ -257,6 +265,8 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
+  DisconnectAvanzaV1AvanzaDeleteData,
+  DisconnectAvanzaV1AvanzaDeleteResponse,
   DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
   DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
   DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
@@ -271,6 +281,8 @@ import type {
   GetAgentUsageDailyV1AgentUsageDailyGetResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetData,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
+  GetAvanzaV1AvanzaGetData,
+  GetAvanzaV1AvanzaGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetError,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -337,6 +349,9 @@ import type {
   IngestActivityBatchV1ActivityBatchPostData,
   IngestActivityBatchV1ActivityBatchPostError,
   IngestActivityBatchV1ActivityBatchPostResponse,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
@@ -447,6 +462,7 @@ import type {
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostError,
   SyncAgentUsageV1AgentUsageSyncPostResponse,
+  SyncAvanzaV1AvanzaSyncPostData,
   SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
   SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
@@ -1099,6 +1115,148 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateBankAccountV1BankAccountsBankAccountIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Disconnect Avanza
+ *
+ * Deletes the stored login. Imported transactions, trades and positions stay.
+ */
+export const disconnectAvanzaV1AvanzaDeleteMutation = (
+  options?: Partial<Options<DisconnectAvanzaV1AvanzaDeleteData>>,
+): UseMutationOptions<
+  DisconnectAvanzaV1AvanzaDeleteResponse,
+  DefaultError,
+  Options<DisconnectAvanzaV1AvanzaDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DisconnectAvanzaV1AvanzaDeleteResponse,
+    DefaultError,
+    Options<DisconnectAvanzaV1AvanzaDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await disconnectAvanzaV1AvanzaDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getAvanzaV1AvanzaGetQueryKey = (
+  options?: Options<GetAvanzaV1AvanzaGetData>,
+) => createQueryKey("getAvanzaV1AvanzaGet", options);
+
+/**
+ * Get Avanza Connection
+ */
+export const getAvanzaV1AvanzaGetOptions = (
+  options?: Options<GetAvanzaV1AvanzaGetData>,
+) =>
+  queryOptions<
+    GetAvanzaV1AvanzaGetResponse,
+    DefaultError,
+    GetAvanzaV1AvanzaGetResponse,
+    ReturnType<typeof getAvanzaV1AvanzaGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAvanzaV1AvanzaGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAvanzaV1AvanzaGetQueryKey(options),
+  });
+
+/**
+ * Connect Avanza
+ *
+ * Checks the login with Avanza and stores it encrypted; also how new credentials are saved.
+ */
+export const connectAvanzaV1AvanzaConnectPostMutation = (
+  options?: Partial<Options<ConnectAvanzaV1AvanzaConnectPostData>>,
+): UseMutationOptions<
+  ConnectAvanzaV1AvanzaConnectPostResponse,
+  ConnectAvanzaV1AvanzaConnectPostError,
+  Options<ConnectAvanzaV1AvanzaConnectPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ConnectAvanzaV1AvanzaConnectPostResponse,
+    ConnectAvanzaV1AvanzaConnectPostError,
+    Options<ConnectAvanzaV1AvanzaConnectPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await connectAvanzaV1AvanzaConnectPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Link Avanza Account
+ */
+export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation = (
+  options?: Partial<
+    Options<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData>
+  >,
+): UseMutationOptions<
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
+  Options<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
+    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
+    Options<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await linkAvanzaAccountV1AvanzaAccountsAccountIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Sync Avanza
+ */
+export const syncAvanzaV1AvanzaSyncPostMutation = (
+  options?: Partial<Options<SyncAvanzaV1AvanzaSyncPostData>>,
+): UseMutationOptions<
+  unknown,
+  DefaultError,
+  Options<SyncAvanzaV1AvanzaSyncPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DefaultError,
+    Options<SyncAvanzaV1AvanzaSyncPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncAvanzaV1AvanzaSyncPost({
         ...options,
         ...fnOptions,
         throwOnError: true,

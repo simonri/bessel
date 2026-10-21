@@ -20,6 +20,11 @@ from .agent_usage_status_response import AgentUsageStatusResponse
 from .agent_usage_sync_request import AgentUsageSyncRequest
 from .agent_usage_sync_response import AgentUsageSyncResponse
 from .asset_type import AssetType
+from .avanza_account_schema import AvanzaAccountSchema
+from .avanza_account_update import AvanzaAccountUpdate
+from .avanza_connect_request import AvanzaConnectRequest
+from .avanza_connection_schema import AvanzaConnectionSchema
+from .avanza_status_response import AvanzaStatusResponse
 from .bank_account_create import BankAccountCreate
 from .bank_account_list_response import BankAccountListResponse
 from .bank_account_schema import BankAccountSchema
@@ -241,6 +246,11 @@ __all__ = (
   "AgentUsageSyncRequest",
   "AgentUsageSyncResponse",
   "AssetType",
+  "AvanzaAccountSchema",
+  "AvanzaAccountUpdate",
+  "AvanzaConnectionSchema",
+  "AvanzaConnectRequest",
+  "AvanzaStatusResponse",
   "BankAccountCreate",
   "BankAccountListResponse",
   "BankAccountSchema",

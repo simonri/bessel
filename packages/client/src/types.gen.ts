@@ -451,6 +451,119 @@ export const AssetType = {
 export type AssetType = (typeof AssetType)[keyof typeof AssetType];
 
 /**
+ * AvanzaAccountSchema
+ */
+export type AvanzaAccountSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Account Type
+   *
+   * Avanza's account type, e.g. 'INVESTERINGSSPARKONTO'.
+   */
+  account_type: string;
+  /**
+   * Bank Account Id
+   *
+   * The Bessel account it imports into; nothing is imported until one is chosen.
+   */
+  bank_account_id: string | null;
+  /**
+   * Cash Balance
+   *
+   * Cash in the account as Avanza reports it, in minor units.
+   */
+  cash_balance: number | null;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+};
+
+/**
+ * AvanzaAccountUpdate
+ */
+export type AvanzaAccountUpdate = {
+  /**
+   * Bank Account Id
+   *
+   * The Bessel account to import into, or null to stop importing.
+   */
+  bank_account_id: string | null;
+};
+
+/**
+ * AvanzaConnectRequest
+ */
+export type AvanzaConnectRequest = {
+  /**
+   * Username
+   */
+  username: string;
+  /**
+   * Password
+   */
+  password: string;
+  /**
+   * Totp Secret
+   *
+   * The secret Avanza shows when adding 'another app' for two-factor login.
+   */
+  totp_secret: string;
+};
+
+/**
+ * AvanzaConnectionSchema
+ */
+export type AvanzaConnectionSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Username
+   */
+  username: string;
+  /**
+   * Credentials Rejected
+   *
+   * Avanza rejected the login; syncing stops until new credentials are saved.
+   */
+  credentials_rejected: boolean;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+  /**
+   * Sync Error
+   */
+  sync_error: string | null;
+  /**
+   * Accounts
+   */
+  accounts: Array<AvanzaAccountSchema>;
+};
+
+/**
+ * AvanzaStatusResponse
+ */
+export type AvanzaStatusResponse = {
+  /**
+   * Available
+   *
+   * Whether this user can connect Avanza.
+   */
+  available: boolean;
+  connection: AvanzaConnectionSchema | null;
+};
+
+/**
  * BankAccountCreate
  */
 export type BankAccountCreate = {
@@ -5829,6 +5942,113 @@ export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses = {
 
 export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse =
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses];
+
+export type DisconnectAvanzaV1AvanzaDeleteData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/avanza";
+};
+
+export type DisconnectAvanzaV1AvanzaDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DisconnectAvanzaV1AvanzaDeleteResponse =
+  DisconnectAvanzaV1AvanzaDeleteResponses[keyof DisconnectAvanzaV1AvanzaDeleteResponses];
+
+export type GetAvanzaV1AvanzaGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/avanza";
+};
+
+export type GetAvanzaV1AvanzaGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AvanzaStatusResponse;
+};
+
+export type GetAvanzaV1AvanzaGetResponse =
+  GetAvanzaV1AvanzaGetResponses[keyof GetAvanzaV1AvanzaGetResponses];
+
+export type ConnectAvanzaV1AvanzaConnectPostData = {
+  body: AvanzaConnectRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/avanza/connect";
+};
+
+export type ConnectAvanzaV1AvanzaConnectPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ConnectAvanzaV1AvanzaConnectPostError =
+  ConnectAvanzaV1AvanzaConnectPostErrors[keyof ConnectAvanzaV1AvanzaConnectPostErrors];
+
+export type ConnectAvanzaV1AvanzaConnectPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: AvanzaConnectionSchema;
+};
+
+export type ConnectAvanzaV1AvanzaConnectPostResponse =
+  ConnectAvanzaV1AvanzaConnectPostResponses[keyof ConnectAvanzaV1AvanzaConnectPostResponses];
+
+export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData = {
+  body: AvanzaAccountUpdate;
+  path: {
+    /**
+     * Account Id
+     */
+    account_id: string;
+  };
+  query?: never;
+  url: "/v1/avanza/accounts/{account_id}";
+};
+
+export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError =
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors[keyof LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors];
+
+export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: AvanzaConnectionSchema;
+};
+
+export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse =
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses[keyof LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses];
+
+export type SyncAvanzaV1AvanzaSyncPostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/avanza/sync";
+};
+
+export type SyncAvanzaV1AvanzaSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown;
+};
 
 export type ListCalendarAccountsV1CalendarsAccountsGetData = {
   body?: never;

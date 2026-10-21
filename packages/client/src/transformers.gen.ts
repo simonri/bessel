@@ -4,6 +4,7 @@ import type {
   CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
   CompleteTaskV1TasksTaskIdCompletePostResponse,
+  ConnectAvanzaV1AvanzaConnectPostResponse,
   ConnectIcloudV1CalendarsIcloudPostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
@@ -21,6 +22,7 @@ import type {
   CreateTimeProjectV1TimeProjectsPostResponse,
   CreateTradeV1InvestmentsTradesPostResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
+  GetAvanzaV1AvanzaGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   GetHealthSummaryV1HealthkitSummaryGetResponse,
   GetLocationHistoryDayV1LocationHistoryDayGetResponse,
@@ -30,6 +32,7 @@ import type {
   GetTaskV1TasksTaskIdGetResponse,
   GetWeatherForecastV1WeatherGetResponse,
   ImportLocationHistoryV1LocationHistoryImportPostResponse,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListBankConnectionsV1BankConnectionsGetResponse,
@@ -144,6 +147,54 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransforme
     data: any,
   ): Promise<UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse> => {
     data = bankAccountSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const avanzaAccountSchemaSchemaResponseTransformer = (data: any) => {
+  if (data.last_synced_at) {
+    data.last_synced_at = new Date(data.last_synced_at);
+  }
+  return data;
+};
+
+const avanzaConnectionSchemaSchemaResponseTransformer = (data: any) => {
+  if (data.last_synced_at) {
+    data.last_synced_at = new Date(data.last_synced_at);
+  }
+  data.accounts = data.accounts.map((item: any) =>
+    avanzaAccountSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const avanzaStatusResponseSchemaResponseTransformer = (data: any) => {
+  if (data.connection) {
+    data.connection = avanzaConnectionSchemaSchemaResponseTransformer(
+      data.connection,
+    );
+  }
+  return data;
+};
+
+export const getAvanzaV1AvanzaGetResponseTransformer = async (
+  data: any,
+): Promise<GetAvanzaV1AvanzaGetResponse> => {
+  data = avanzaStatusResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const connectAvanzaV1AvanzaConnectPostResponseTransformer = async (
+  data: any,
+): Promise<ConnectAvanzaV1AvanzaConnectPostResponse> => {
+  data = avanzaConnectionSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse> => {
+    data = avanzaConnectionSchemaSchemaResponseTransformer(data);
     return data;
   };
 

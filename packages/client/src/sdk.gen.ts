@@ -13,6 +13,7 @@ import {
   completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
   completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
+  connectAvanzaV1AvanzaConnectPostResponseTransformer,
   connectIcloudV1CalendarsIcloudPostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
   createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
@@ -30,6 +31,7 @@ import {
   createTimeProjectV1TimeProjectsPostResponseTransformer,
   createTradeV1InvestmentsTradesPostResponseTransformer,
   getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
+  getAvanzaV1AvanzaGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
   getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
@@ -39,6 +41,7 @@ import {
   getTaskV1TasksTaskIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
   importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
+  linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer,
   linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listBankConnectionsV1BankConnectionsGetResponseTransformer,
@@ -107,6 +110,9 @@ import type {
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostErrors,
   CompleteTaskV1TasksTaskIdCompletePostResponses,
+  ConnectAvanzaV1AvanzaConnectPostData,
+  ConnectAvanzaV1AvanzaConnectPostErrors,
+  ConnectAvanzaV1AvanzaConnectPostResponses,
   ConnectIcloudV1CalendarsIcloudPostData,
   ConnectIcloudV1CalendarsIcloudPostErrors,
   ConnectIcloudV1CalendarsIcloudPostResponses,
@@ -200,6 +206,8 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
+  DisconnectAvanzaV1AvanzaDeleteData,
+  DisconnectAvanzaV1AvanzaDeleteResponses,
   DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
   DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
   DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
@@ -214,6 +222,8 @@ import type {
   GetAgentUsageDailyV1AgentUsageDailyGetResponses,
   GetAgentUsageStatusV1AgentUsageStatusGetData,
   GetAgentUsageStatusV1AgentUsageStatusGetResponses,
+  GetAvanzaV1AvanzaGetData,
+  GetAvanzaV1AvanzaGetResponses,
   GetBankAccountV1BankAccountsBankAccountIdGetData,
   GetBankAccountV1BankAccountsBankAccountIdGetErrors,
   GetBankAccountV1BankAccountsBankAccountIdGetResponses,
@@ -282,6 +292,9 @@ import type {
   IngestActivityBatchV1ActivityBatchPostData,
   IngestActivityBatchV1ActivityBatchPostErrors,
   IngestActivityBatchV1ActivityBatchPostResponses,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
@@ -392,6 +405,8 @@ import type {
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostErrors,
   SyncAgentUsageV1AgentUsageSyncPostResponses,
+  SyncAvanzaV1AvanzaSyncPostData,
+  SyncAvanzaV1AvanzaSyncPostResponses,
   SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
   SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
   SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
@@ -867,6 +882,125 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Disconnect Avanza
+ *
+ * Deletes the stored login. Imported transactions, trades and positions stay.
+ */
+export const disconnectAvanzaV1AvanzaDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<DisconnectAvanzaV1AvanzaDeleteData, ThrowOnError>,
+): RequestResult<
+  DisconnectAvanzaV1AvanzaDeleteResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).delete<
+    DisconnectAvanzaV1AvanzaDeleteResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/avanza",
+    ...options,
+  });
+
+/**
+ * Get Avanza Connection
+ */
+export const getAvanzaV1AvanzaGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetAvanzaV1AvanzaGetData, ThrowOnError>,
+): RequestResult<GetAvanzaV1AvanzaGetResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetAvanzaV1AvanzaGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: getAvanzaV1AvanzaGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/avanza",
+    ...options,
+  });
+
+/**
+ * Connect Avanza
+ *
+ * Checks the login with Avanza and stores it encrypted; also how new credentials are saved.
+ */
+export const connectAvanzaV1AvanzaConnectPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<ConnectAvanzaV1AvanzaConnectPostData, ThrowOnError>,
+): RequestResult<
+  ConnectAvanzaV1AvanzaConnectPostResponses,
+  ConnectAvanzaV1AvanzaConnectPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ConnectAvanzaV1AvanzaConnectPostResponses,
+    ConnectAvanzaV1AvanzaConnectPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer: connectAvanzaV1AvanzaConnectPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/avanza/connect",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Link Avanza Account
+ */
+export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
+    ThrowOnError
+  >,
+): RequestResult<
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses,
+  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses,
+    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/avanza/accounts/{account_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Sync Avanza
+ */
+export const syncAvanzaV1AvanzaSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<SyncAvanzaV1AvanzaSyncPostData, ThrowOnError>,
+): RequestResult<SyncAvanzaV1AvanzaSyncPostResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).post<
+    SyncAvanzaV1AvanzaSyncPostResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/avanza/sync",
+    ...options,
   });
 
 /**
