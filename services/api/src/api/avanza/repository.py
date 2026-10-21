@@ -68,7 +68,12 @@ class SecurityCatalogRepository(RepositoryBase[Security], RepositoryIDMixin[Secu
       .on_conflict_do_nothing(index_elements=["isin"], index_where=Security.isin.is_not(None))
     )
     await self.session.execute(statement)
-    return await self.get_one(select(Security).where(Security.isin == isin))
+    security = await self.get_one(select(Security).where(Security.isin == isin))
+    # Rows without an order book carry Avanza's short all-caps name ("MICROSTRATEGY INC");
+    # the display name from a later row ("Strategy A") replaces it.
+    if security.name.isupper() and not name.isupper():
+      security.name = name
+    return security
 
 
 class ImportedTradeRepository(RepositoryBase[Trade], RepositoryIDMixin[Trade, UUID]):

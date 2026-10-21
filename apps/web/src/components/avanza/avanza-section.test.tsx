@@ -184,6 +184,21 @@ describe("AvanzaSection", () => {
     expect(api.link.mock.calls[1][0].body).toEqual({ bank_account_id: null });
   });
 
+  it("says to choose an account while nothing is linked", async () => {
+    api.get.mockResolvedValue({
+      available: true,
+      connection: { ...CONNECTION, last_synced_at: new Date() },
+    });
+
+    mount();
+
+    expect(
+      await screen.findByText(
+        "simon - Choose a Bessel account below to start importing",
+      ),
+    ).toBeTruthy();
+  });
+
   it("can't sync while Avanza rejects the login", async () => {
     api.get.mockResolvedValue({
       available: true,

@@ -141,6 +141,8 @@ class AvanzaService:
 
   async def link_account(self, session: AsyncSession, account: AvanzaAccount, bank_account: BankAccount | None) -> None:
     """Points the Avanza account at a Bessel account; the next sync imports its whole history."""
+    if (bank_account.id if bank_account else None) == account.bank_account_id:
+      return
     if bank_account is not None and await AvanzaAccountRepository.from_session(session).is_linked_elsewhere(bank_account.id, account):
       raise AvanzaConflictError("That Bessel account already imports another Avanza account.")
     account.bank_account_id = bank_account.id if bank_account else None

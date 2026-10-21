@@ -130,9 +130,11 @@ export function AvanzaSection() {
 
   const status = connection?.sync_error
     ? connection.sync_error
-    : connection?.last_synced_at
-      ? `Synced ${formatDistanceToNow(connection.last_synced_at, { addSuffix: true })}`
-      : "Not synced yet";
+    : !connection?.accounts.some((a) => a.bank_account_id)
+      ? "Choose a Bessel account below to start importing"
+      : connection?.last_synced_at
+        ? `Synced ${formatDistanceToNow(connection.last_synced_at, { addSuffix: true })}`
+        : "Not synced yet";
 
   return (
     <section>

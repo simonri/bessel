@@ -9,7 +9,7 @@ import httpx
 import pytest
 from api.avanza import client as avanza_client
 from api.avanza import parsing, service
-from api.avanza.repository import AvanzaConnectionRepository
+from api.avanza.repository import AvanzaConnectionRepository, SecurityCatalogRepository
 from api.avanza.service import SessionMaker, avanza_service
 from api.common.encryption import decrypt, encrypt
 from api.models.avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot
@@ -208,6 +208,19 @@ class TestLink:
     assert stored is not None and stored.accounts[0].last_synced_at is None
     assert [job[:2] for job in job_queue_manager._enqueued_jobs] == [("sync_avanza_connection", (str(connection.id),))]
 
+  @pytest.mark.asyncio
+  async def test_choosing_the_same_account_again_keeps_the_sync_position(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, allowed: None, user: User, job_queue_manager: JobQueueManager
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, linked=bank_account, last_synced_at=NOW)
+    [account_id] = [a["id"] for a in (await client.get("/v1/avanza")).json()["connection"]["accounts"]]
+
+    assert (await client.patch(f"/v1/avanza/accounts/{account_id}", json={"bank_account_id": str(bank_account.id)})).status_code == 200
+
+    stored = await AvanzaConnectionRepository.from_session(session).get_with_accounts(connection.id)
+    assert stored is not None and stored.accounts[0].last_synced_at == NOW
+
 
 class TestSync:
   @pytest.mark.asyncio
@@ -326,6 +339,35 @@ class TestSync:
     assert too_soon.status_code == 429
     assert later.status_code == 202
     assert len(job_queue_manager._enqueued_jobs) == 1
+
+
+class TestSecurityNames:
+  @pytest.mark.asyncio
+  async def test_avanzas_short_all_caps_name_gives_way_to_the_display_name(
+    self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, avanza: FakeAvanza, user: User
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, linked=bank_account)
+    bare = {
+      **movement("b1", "111", "BUY", "2026-03-08", -100.0, volume=1.0, price=9.5, price_unit="USD"),
+      "orderbook": None,
+      "instrumentName": "MICROSTRATEGY INC",
+      "isin": MSTR["isin"],
+      "description": "",
+    }
+    avanza.movements = [bare, movement("b2", "111", "BUY", "2026-03-09", -100.0, inst=MSTR, volume=1.0, price=9.5, price_unit="USD")]
+
+    await avanza_service.sync(session_maker, connection.id)
+
+    assert (await session.execute(select(Security.name).where(Security.isin == MSTR["isin"]))).scalar_one() == "Strategy A"
+
+  @pytest.mark.asyncio
+  async def test_a_good_name_isnt_replaced_by_the_short_one(self, session: AsyncSession, save_fixture: SaveFixture) -> None:
+    repository = SecurityCatalogRepository.from_session(session)
+    await repository.get_or_create_by_isin(isin="SE0000000002", name="Volvo B", asset_type=AssetType.stock, currency="SEK")
+    await repository.get_or_create_by_isin(isin="SE0000000002", name="VOLVO B", asset_type=AssetType.stock, currency="SEK")
+    security = await repository.get_or_create_by_isin(isin="SE0000000002", name="Volvo, AB ser. B", asset_type=AssetType.stock, currency="SEK")
+    assert security.name == "Volvo B"
 
 
 class TestHoldings:
