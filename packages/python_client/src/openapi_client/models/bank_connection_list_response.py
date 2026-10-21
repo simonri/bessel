@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,19 +18,19 @@ class BankConnectionListResponse:
   """
   Attributes:
       available (bool): Whether this user can connect a bank.
-      bank_name (str): The bank a new connection goes to.
+      banks (list[str]): The banks this user can connect.
       connections (list[BankConnectionSchema]):
   """
 
   available: bool
-  bank_name: str
+  banks: list[str]
   connections: list[BankConnectionSchema]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     available = self.available
 
-    bank_name = self.bank_name
+    banks = self.banks
 
     connections = []
     for connections_item_data in self.connections:
@@ -42,7 +42,7 @@ class BankConnectionListResponse:
     field_dict.update(
       {
         "available": available,
-        "bank_name": bank_name,
+        "banks": banks,
         "connections": connections,
       }
     )
@@ -56,7 +56,7 @@ class BankConnectionListResponse:
     d = dict(src_dict)
     available = d.pop("available")
 
-    bank_name = d.pop("bank_name")
+    banks = cast(list[str], d.pop("banks"))
 
     connections = []
     _connections = d.pop("connections")
@@ -67,7 +67,7 @@ class BankConnectionListResponse:
 
     bank_connection_list_response = cls(
       available=available,
-      bank_name=bank_name,
+      banks=banks,
       connections=connections,
     )
 

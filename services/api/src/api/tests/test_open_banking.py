@@ -33,6 +33,7 @@ NOW = datetime(2026, 10, 21, 12, tzinfo=UTC)
 TODAY = NOW.date()
 PRIVATE_KEY, PUBLIC_KEY = generate_key()
 VALID_UNTIL = "2027-04-19T12:00:00+00:00"
+SKANDIA = {"bank_name": "Skandia"}
 
 
 @pytest.fixture(autouse=True)
@@ -43,7 +44,7 @@ def encryption_key(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture(autouse=True)
 def skandia(monkeypatch: pytest.MonkeyPatch) -> None:
   # A local .env may point at the sandbox's mock bank.
-  monkeypatch.setattr(settings, "ENABLE_BANKING_BANK_NAME", "Skandia")
+  monkeypatch.setattr(settings, "ENABLE_BANKING_BANKS", ["Skandia", "Klarna"])
   monkeypatch.setattr(settings, "ENABLE_BANKING_BANK_COUNTRY", "SE")
 
 
@@ -80,8 +81,8 @@ def session_maker(session: AsyncSession) -> SessionMaker:
   return maker
 
 
-def _state(user_id: UUID) -> str:
-  return encrypt(json.dumps({"user_id": str(user_id)}))
+def _state(user_id: UUID, bank: str = "Skandia") -> str:
+  return encrypt(json.dumps({"user_id": str(user_id), "bank": bank}))
 
 
 async def _bank_account(save_fixture: SaveFixture, user_id: UUID, name: str = "Skandia") -> BankAccount:
@@ -108,11 +109,17 @@ async def _hand_imported(
 
 
 async def _connection(
-  save_fixture: SaveFixture, user_id: UUID, *, uid: str = "uid-1", bank_account: BankAccount | None = None, import_from: date | None = None
+  save_fixture: SaveFixture,
+  user_id: UUID,
+  *,
+  uid: str = "uid-1",
+  bank_account: BankAccount | None = None,
+  import_from: date | None = None,
+  bank_name: str = "Skandia",
 ) -> BankConnection:
   connection = BankConnection(
     user_id=user_id,
-    bank_name="Skandia",
+    bank_name=bank_name,
     bank_country="SE",
     encrypted_session_id=encrypt("session-old"),
     valid_until=NOW + timedelta(days=100),
@@ -145,24 +152,24 @@ async def _transactions(session: AsyncSession, bank_account: BankAccount) -> lis
 class TestAvailability:
   @pytest.mark.asyncio
   async def test_only_listed_users_see_bank_connections(self, client: AsyncClient, configured: None, monkeypatch: pytest.MonkeyPatch) -> None:
-    assert (await client.get("/v1/bank-connections")).json() == {"available": True, "bank_name": "Skandia", "connections": []}
+    assert (await client.get("/v1/bank-connections")).json() == {"available": True, "banks": ["Skandia", "Klarna"], "connections": []}
 
     monkeypatch.setattr(settings, "ENABLE_BANKING_USER_IDS", [uuid4()])
     assert (await client.get("/v1/bank-connections")).json()["available"] is False
-    assert (await client.post("/v1/bank-connections/authorize")).status_code == 403
+    assert (await client.post("/v1/bank-connections/authorize", json=SKANDIA)).status_code == 403
     assert (await client.post("/v1/bank-connections/callback", json={"code": "c", "state": "s"})).status_code == 403
 
   @pytest.mark.asyncio
   async def test_unconfigured_is_unavailable_even_for_listed_users(self, client: AsyncClient, configured: None, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "ENABLE_BANKING_PRIVATE_KEY", "")
     assert (await client.get("/v1/bank-connections")).json()["available"] is False
-    assert (await client.post("/v1/bank-connections/authorize")).status_code == 403
+    assert (await client.post("/v1/bank-connections/authorize", json=SKANDIA)).status_code == 403
 
 
 class TestConnect:
   @pytest.mark.asyncio
   async def test_authorize_asks_for_skandia_for_as_long_as_it_allows(self, client: AsyncClient, configured: None, bank: FakeEnableBanking, user: User) -> None:
-    response = await client.post("/v1/bank-connections/authorize")
+    response = await client.post("/v1/bank-connections/authorize", json=SKANDIA)
 
     assert response.status_code == 200
     assert response.json()["url"] == "https://tilisy.example/authorize?id=1"
@@ -171,16 +178,24 @@ class TestConnect:
     assert request["psu_type"] == "personal"
     assert request["redirect_url"] == "https://app.example.com/bank-connections/callback"
     assert datetime.fromisoformat(request["access"]["valid_until"]) == NOW + timedelta(days=180, hours=-1)
-    assert json.loads(decrypt(request["state"]))["user_id"] == str(user.id)
+    assert json.loads(decrypt(request["state"])) == {"user_id": str(user.id), "bank": "Skandia"}
+
+  @pytest.mark.asyncio
+  async def test_only_listed_banks_can_be_connected(self, client: AsyncClient, configured: None, bank: FakeEnableBanking) -> None:
+    klarna = await client.post("/v1/bank-connections/authorize", json={"bank_name": "Klarna"})
+    nordea = await client.post("/v1/bank-connections/authorize", json={"bank_name": "Nordea"})
+
+    assert (klarna.status_code, nordea.status_code) == (200, 400)
+    assert [request["aspsp"]["name"] for request in bank.auth_requests] == ["Klarna"]
 
   @pytest.mark.asyncio
   async def test_the_bank_can_be_switched_for_local_testing(
     self, client: AsyncClient, configured: None, bank: FakeEnableBanking, monkeypatch: pytest.MonkeyPatch
   ) -> None:
-    monkeypatch.setattr(settings, "ENABLE_BANKING_BANK_NAME", "Mock ASPSP")
+    monkeypatch.setattr(settings, "ENABLE_BANKING_BANKS", ["Mock ASPSP"])
 
-    assert (await client.get("/v1/bank-connections")).json()["bank_name"] == "Mock ASPSP"
-    assert (await client.post("/v1/bank-connections/authorize")).status_code == 200
+    assert (await client.get("/v1/bank-connections")).json()["banks"] == ["Mock ASPSP"]
+    assert (await client.post("/v1/bank-connections/authorize", json={"bank_name": "Mock ASPSP"})).status_code == 200
     [request] = bank.auth_requests
     assert request["aspsp"] == {"name": "Mock ASPSP", "country": "SE"}
     assert datetime.fromisoformat(request["access"]["valid_until"]) == NOW + timedelta(days=10, hours=-1)
@@ -190,7 +205,7 @@ class TestConnect:
     other_private, _ = generate_key()
     monkeypatch.setattr(settings, "ENABLE_BANKING_PRIVATE_KEY", other_private)
     with pytest.raises(Exception, match="Invalid token"):
-      await open_banking_service.start_connection(settings.ENABLE_BANKING_USER_IDS[0])
+      await open_banking_service.start_connection(settings.ENABLE_BANKING_USER_IDS[0], "Skandia")
     assert bank.auth_requests == []
 
   @pytest.mark.asyncio
@@ -232,10 +247,17 @@ class TestConnect:
     assert "different Bessel account" in other.json()["detail"]
 
     twenty_minutes_ago = int(time.time()) - 20 * 60
-    stale = Fernet(settings.CREDENTIALS_ENCRYPTION_KEY).encrypt_at_time(json.dumps({"user_id": str(user.id)}).encode(), twenty_minutes_ago).decode()
+    stale = (
+      Fernet(settings.CREDENTIALS_ENCRYPTION_KEY)
+      .encrypt_at_time(json.dumps({"user_id": str(user.id), "bank": "Skandia"}).encode(), twenty_minutes_ago)
+      .decode()
+    )
     expired = await client.post("/v1/bank-connections/callback", json={"code": "code-1", "state": stale})
     assert expired.status_code == 400
     assert "expired" in expired.json()["detail"]
+
+    without_bank = await client.post("/v1/bank-connections/callback", json={"code": "code-1", "state": encrypt(json.dumps({"user_id": str(user.id)}))})
+    assert without_bank.status_code == 400
     assert "code-1" in bank.approvals
 
   @pytest.mark.asyncio
@@ -252,7 +274,7 @@ class TestConnect:
     bank_account = await _bank_account(save_fixture, user.id)
     connection = await _connection(save_fixture, user.id, uid="old-uid", bank_account=bank_account, import_from=TODAY)
     connection.expiry_notified_at = NOW
-    connection.sync_error = "Skandia's approval has ended. Renew it with BankID."
+    connection.sync_error = "Skandia's approval has ended. Renew it to keep importing."
     await session.flush()
     bank.approvals["code-2"] = (VALID_UNTIL, [account("new-uid", "hash-1")])
 
@@ -268,6 +290,21 @@ class TestConnect:
     assert (renewed.expiry_notified_at, renewed.sync_error) == (None, None)
     assert bank.deleted_sessions == ["session-old"]
     assert [job[:2] for job in job_queue_manager._enqueued_jobs] == [("sync_bank_connection", (str(connection.id),))]
+
+  @pytest.mark.asyncio
+  async def test_each_bank_gets_its_own_connection(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
+  ) -> None:
+    skandia = await _connection(save_fixture, user.id)
+    bank.approvals["code-1"] = (VALID_UNTIL, [account("klarna-uid", "klarna-hash", name="Klarna Card")])
+
+    response = await client.post("/v1/bank-connections/callback", json={"code": "code-1", "state": _state(user.id, "Klarna")})
+
+    assert response.status_code == 201
+    assert (response.json()["bank_name"], [a["name"] for a in response.json()["accounts"]]) == ("Klarna", ["Klarna Card"])
+    assert bank.deleted_sessions == []
+    listed = (await client.get("/v1/bank-connections")).json()["connections"]
+    assert [(c["id"], c["bank_name"], len(c["accounts"])) for c in listed] == [(str(skandia.id), "Skandia", 1), (response.json()["id"], "Klarna", 1)]
 
 
 class TestLinkAccount:
@@ -605,7 +642,7 @@ class TestSync:
 
     refreshed = await BankConnectionRepository.from_session(session).get_by_id(connection.id)
     assert refreshed is not None
-    assert refreshed.sync_error == "Skandia's approval has ended. Renew it with BankID."
+    assert refreshed.sync_error == "Skandia's approval has ended. Renew it to keep importing."
     assert refreshed.last_synced_at is None
 
   @pytest.mark.asyncio
@@ -613,30 +650,30 @@ class TestSync:
     self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
   ) -> None:
     bank_account = await _bank_account(save_fixture, user.id)
-    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=TODAY)
+    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=TODAY, bank_name="Klarna")
     connection.valid_until = NOW - timedelta(minutes=1)
 
     await open_banking_service.sync(session_maker, connection.id)
 
     assert bank.transaction_requests == []
-    assert connection.sync_error == "Skandia's approval has ended. Renew it with BankID."
+    assert connection.sync_error == "Klarna's approval has ended. Renew it to keep importing."
 
   @pytest.mark.asyncio
   async def test_bank_errors_are_recorded_not_raised(
     self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
   ) -> None:
     bank_account = await _bank_account(save_fixture, user.id)
-    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=TODAY)
+    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=TODAY, bank_name="Klarna")
 
     await open_banking_service.sync(session_maker, connection.id)
 
-    assert connection.sync_error == "Couldn't reach Skandia. Bessel tries again at the next sync."
+    assert connection.sync_error == "Couldn't reach Klarna. Bessel tries again at the next sync."
 
 
 class TestExpiryWarning:
   @pytest.mark.asyncio
   async def test_warns_once_two_weeks_before_the_approval_ends(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
-    connection = await _connection(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, bank_name="Klarna")
     connection.valid_until = NOW + timedelta(days=15)
 
     assert await open_banking_service.warn_before_expiry(session, connection, now=NOW) is False
@@ -646,8 +683,8 @@ class TestExpiryWarning:
     await session.flush()
 
     [notification] = (await session.execute(select(Notification).where(Notification.user_id == user.id))).scalars().all()
-    assert notification.title == "Renew Skandia access"
-    assert notification.body == "Bessel can read Skandia until 5 November. Approve again with BankID to keep transactions importing."
+    assert notification.title == "Renew Klarna access"
+    assert notification.body == "Bessel can read Klarna until 5 November. Renew the approval from Accounts to keep transactions importing."
     assert (notification.link, notification.kind) == ("/accounts", "warning")
 
 

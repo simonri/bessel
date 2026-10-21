@@ -30,6 +30,7 @@ from .bank_account_list_response import BankAccountListResponse
 from .bank_account_schema import BankAccountSchema
 from .bank_account_sort_property import BankAccountSortProperty
 from .bank_account_update import BankAccountUpdate
+from .bank_authorize_request import BankAuthorizeRequest
 from .bank_authorize_response import BankAuthorizeResponse
 from .bank_callback_request import BankCallbackRequest
 from .bank_connection_account_schema import BankConnectionAccountSchema
@@ -247,6 +248,7 @@ __all__ = (
   "BankAccountSchema",
   "BankAccountSortProperty",
   "BankAccountUpdate",
+  "BankAuthorizeRequest",
   "BankAuthorizeResponse",
   "BankCallbackRequest",
   "BankConnectionAccountSchema",

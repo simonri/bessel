@@ -705,6 +705,18 @@ export type BankAccountUpdate = {
 };
 
 /**
+ * BankAuthorizeRequest
+ */
+export type BankAuthorizeRequest = {
+  /**
+   * Bank Name
+   *
+   * The bank to connect, one of `banks`.
+   */
+  bank_name: string;
+};
+
+/**
  * BankAuthorizeResponse
  */
 export type BankAuthorizeResponse = {
@@ -793,11 +805,11 @@ export type BankConnectionListResponse = {
    */
   available: boolean;
   /**
-   * Bank Name
+   * Banks
    *
-   * The bank a new connection goes to.
+   * The banks this user can connect.
    */
-  bank_name: string;
+  banks: Array<string>;
   /**
    * Connections
    */
@@ -819,7 +831,7 @@ export type BankConnectionSchema = {
   /**
    * Valid Until
    *
-   * When the bank approval ends; renew it with BankID before then.
+   * When the bank approval ends; renew it before then.
    */
   valid_until: Date;
   /**
@@ -6208,11 +6220,21 @@ export type ListBankConnectionsV1BankConnectionsGetResponse =
   ListBankConnectionsV1BankConnectionsGetResponses[keyof ListBankConnectionsV1BankConnectionsGetResponses];
 
 export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostData = {
-  body?: never;
+  body: BankAuthorizeRequest;
   path?: never;
   query?: never;
   url: "/v1/bank-connections/authorize";
 };
+
+export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostError =
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors[keyof AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors];
 
 export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses = {
   /**

@@ -86,7 +86,7 @@ describe("ConnectedBanks", () => {
   it("shows nothing to users who can't connect a bank", async () => {
     api.list.mockResolvedValue({
       available: false,
-      bank_name: "Skandia",
+      banks: ["Skandia"],
       connections: [],
     });
 
@@ -101,7 +101,7 @@ describe("ConnectedBanks", () => {
   it("starts the approval with the configured bank from the connect button", async () => {
     api.list.mockResolvedValue({
       available: true,
-      bank_name: "Mock ASPSP",
+      banks: ["Mock ASPSP"],
       connections: [],
     });
     const assign = vi.fn();
@@ -113,16 +113,42 @@ describe("ConnectedBanks", () => {
     await waitFor(() =>
       expect(assign).toHaveBeenCalledWith("https://bank.example/approve"),
     );
+    expect(api.authorize.mock.calls[0][0].body).toEqual({
+      bank_name: "Mock ASPSP",
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it("offers the banks not yet connected and renews each with its own bank", async () => {
+    api.list.mockResolvedValue({
+      available: true,
+      banks: ["Klarna", "Skandia"],
+      connections: [CONNECTION],
+    });
+    vi.stubGlobal("location", { ...window.location, assign: vi.fn() });
+
+    mount();
+    fireEvent.click(await screen.findByText("Renew"));
+    fireEvent.click(screen.getByText("Connect Klarna"));
+
+    await waitFor(() => expect(api.authorize).toHaveBeenCalledTimes(2));
+    expect(api.authorize.mock.calls.map((call) => call[0].body)).toEqual([
+      { bank_name: "Skandia" },
+      { bank_name: "Klarna" },
+    ]);
+    expect(screen.queryByText("Connect Skandia")).toBeNull();
     vi.unstubAllGlobals();
   });
 
   it("shows how far the approval runs and what each account imports into", async () => {
     api.list.mockResolvedValue({
       available: true,
+      banks: ["Skandia"],
       connections: [
         {
           ...CONNECTION,
-          sync_error: "Skandia's approval has ended. Renew it with BankID.",
+          sync_error:
+            "Skandia's approval has ended. Renew it to keep importing.",
           accounts: [
             {
               ...CONNECTION.accounts[0],
@@ -149,7 +175,7 @@ describe("ConnectedBanks", () => {
   it("links an account to a Bessel account of the same currency", async () => {
     api.list.mockResolvedValue({
       available: true,
-      bank_name: "Skandia",
+      banks: ["Skandia"],
       connections: [CONNECTION],
     });
 
@@ -179,6 +205,7 @@ describe("ConnectedBanks", () => {
   it("says when the latest approval left an account out", async () => {
     api.list.mockResolvedValue({
       available: true,
+      banks: ["Skandia"],
       connections: [
         {
           ...CONNECTION,
@@ -199,7 +226,7 @@ describe("ConnectedBanks", () => {
   it("syncs on request", async () => {
     api.list.mockResolvedValue({
       available: true,
-      bank_name: "Skandia",
+      banks: ["Skandia"],
       connections: [CONNECTION],
     });
 

@@ -87,7 +87,7 @@ describe("Bank connection callback", () => {
 
   it("shows the API's reason when the approval is rejected", async () => {
     complete.mockRejectedValue({
-      detail: "This link has expired. Connect Skandia again from Bessel.",
+      detail: "This link has expired. Connect the bank again from Bessel.",
     });
 
     visit("?code=c1&state=s1");

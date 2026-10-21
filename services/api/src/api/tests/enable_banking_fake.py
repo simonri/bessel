@@ -96,6 +96,7 @@ class FakeEnableBanking:
             {"name": "Nordea", "country": "SE", "maximum_consent_validity": 7776000},
             {"name": "Skandia", "country": "SE", "maximum_consent_validity": 15552000},
             {"name": "Mock ASPSP", "country": "SE", "maximum_consent_validity": 864000},
+            {"name": "Klarna", "country": "SE", "maximum_consent_validity": 15552000},
           ]
         },
       )

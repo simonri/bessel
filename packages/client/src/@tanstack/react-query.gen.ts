@@ -142,6 +142,7 @@ import {
 } from "../sdk.gen.js";
 import type {
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse,
@@ -1617,12 +1618,12 @@ export const authorizeBankConnectionV1BankConnectionsAuthorizePostMutation = (
   >,
 ): UseMutationOptions<
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
-  DefaultError,
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
   Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
 > => {
   const mutationOptions: UseMutationOptions<
     AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
-    DefaultError,
+    AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
     Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
   > = {
     mutationFn: async (fnOptions) => {

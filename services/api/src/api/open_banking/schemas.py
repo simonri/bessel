@@ -19,7 +19,7 @@ class BankConnectionAccountSchema(Schema):
 class BankConnectionSchema(Schema):
   id: UUID
   bank_name: str
-  valid_until: datetime = Field(description="When the bank approval ends; renew it with BankID before then.")
+  valid_until: datetime = Field(description="When the bank approval ends; renew it before then.")
   last_synced_at: datetime | None
   sync_error: str | None
   accounts: list[BankConnectionAccountSchema]
@@ -27,8 +27,12 @@ class BankConnectionSchema(Schema):
 
 class BankConnectionListResponse(Schema):
   available: bool = Field(description="Whether this user can connect a bank.")
-  bank_name: str = Field(description="The bank a new connection goes to.")
+  banks: list[str] = Field(description="The banks this user can connect.")
   connections: list[BankConnectionSchema]
+
+
+class BankAuthorizeRequest(Schema):
+  bank_name: str = Field(description="The bank to connect, one of `banks`.")
 
 
 class BankAuthorizeResponse(Schema):

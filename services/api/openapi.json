@@ -1659,6 +1659,16 @@
         ],
         "summary": "Start Bank Connection",
         "operationId": "authorize_bank_connection_v1_bank_connections_authorize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankAuthorizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1666,6 +1676,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BankAuthorizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -7950,6 +7970,20 @@
         "type": "object",
         "title": "BankAccountUpdate"
       },
+      "BankAuthorizeRequest": {
+        "properties": {
+          "bank_name": {
+            "type": "string",
+            "title": "Bank Name",
+            "description": "The bank to connect, one of `banks`."
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_name"
+        ],
+        "title": "BankAuthorizeRequest"
+      },
       "BankAuthorizeResponse": {
         "properties": {
           "url": {
@@ -8088,10 +8122,13 @@
             "title": "Available",
             "description": "Whether this user can connect a bank."
           },
-          "bank_name": {
-            "type": "string",
-            "title": "Bank Name",
-            "description": "The bank a new connection goes to."
+          "banks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Banks",
+            "description": "The banks this user can connect."
           },
           "connections": {
             "items": {
@@ -8104,7 +8141,7 @@
         "type": "object",
         "required": [
           "available",
-          "bank_name",
+          "banks",
           "connections"
         ],
         "title": "BankConnectionListResponse"
@@ -8124,7 +8161,7 @@
             "type": "string",
             "format": "date-time",
             "title": "Valid Until",
-            "description": "When the bank approval ends; renew it with BankID before then."
+            "description": "When the bank approval ends; renew it before then."
           },
           "last_synced_at": {
             "anyOf": [

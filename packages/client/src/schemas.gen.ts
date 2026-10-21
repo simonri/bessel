@@ -955,6 +955,19 @@ export const BankAccountUpdateSchema = {
   title: "BankAccountUpdate",
 } as const;
 
+export const BankAuthorizeRequestSchema = {
+  properties: {
+    bank_name: {
+      type: "string",
+      title: "Bank Name",
+      description: "The bank to connect, one of `banks`.",
+    },
+  },
+  type: "object",
+  required: ["bank_name"],
+  title: "BankAuthorizeRequest",
+} as const;
+
 export const BankAuthorizeResponseSchema = {
   properties: {
     url: {
@@ -1094,10 +1107,13 @@ export const BankConnectionListResponseSchema = {
       title: "Available",
       description: "Whether this user can connect a bank.",
     },
-    bank_name: {
-      type: "string",
-      title: "Bank Name",
-      description: "The bank a new connection goes to.",
+    banks: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Banks",
+      description: "The banks this user can connect.",
     },
     connections: {
       items: {
@@ -1108,7 +1124,7 @@ export const BankConnectionListResponseSchema = {
     },
   },
   type: "object",
-  required: ["available", "bank_name", "connections"],
+  required: ["available", "banks", "connections"],
   title: "BankConnectionListResponse",
 } as const;
 
@@ -1127,8 +1143,7 @@ export const BankConnectionSchemaSchema = {
       type: "string",
       format: "date-time",
       title: "Valid Until",
-      description:
-        "When the bank approval ends; renew it with BankID before then.",
+      description: "When the bank approval ends; renew it before then.",
     },
     last_synced_at: {
       anyOf: [

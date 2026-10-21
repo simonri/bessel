@@ -114,21 +114,30 @@ export function ConnectedBanks() {
   });
 
   if (!data || (!data.available && data.connections.length === 0)) return null;
-  const connect = () => authorize.mutate({ client });
+  const connect = (bankName: string) =>
+    authorize.mutate({ client, body: { bank_name: bankName } });
+  const connected = new Set(data.connections.map((c) => c.bank_name));
+  const unconnected = data.available
+    ? data.banks.filter((bank) => !connected.has(bank))
+    : [];
 
   return (
     <section>
       <SectionLabel
         action={
-          data.available &&
-          data.connections.length === 0 && (
-            <PrimaryButton
-              size="sm"
-              onClick={connect}
-              disabled={authorize.isPending}
-            >
-              Connect {data.bank_name}
-            </PrimaryButton>
+          unconnected.length > 0 && (
+            <div className="flex gap-2">
+              {unconnected.map((bank) => (
+                <PrimaryButton
+                  key={bank}
+                  size="sm"
+                  onClick={() => connect(bank)}
+                  disabled={authorize.isPending}
+                >
+                  Connect {bank}
+                </PrimaryButton>
+              ))}
+            </div>
           )
         }
       >
@@ -136,8 +145,8 @@ export function ConnectedBanks() {
       </SectionLabel>
       {data.connections.length === 0 ? (
         <p className="text-12 text-white/45">
-          Import {data.bank_name} transactions automatically instead of
-          uploading exports. You approve with BankID, about twice a year.
+          Import {data.banks.join(" or ")} transactions automatically instead of
+          uploading exports. You approve at the bank, about twice a year.
         </p>
       ) : (
         <div className="space-y-3">
@@ -158,11 +167,15 @@ export function ConnectedBanks() {
                 >
                   Sync now
                 </SoftButton>
-                {data.available && (
-                  <SoftButton onClick={connect} disabled={authorize.isPending}>
-                    Renew
-                  </SoftButton>
-                )}
+                {data.available &&
+                  data.banks.includes(connection.bank_name) && (
+                    <SoftButton
+                      onClick={() => connect(connection.bank_name)}
+                      disabled={authorize.isPending}
+                    >
+                      Renew
+                    </SoftButton>
+                  )}
                 <SoftButton onClick={() => setDisconnecting(connection)}>
                   Disconnect
                 </SoftButton>

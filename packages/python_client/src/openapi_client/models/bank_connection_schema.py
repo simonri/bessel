@@ -21,7 +21,7 @@ class BankConnectionSchema:
   Attributes:
       id (UUID):
       bank_name (str):
-      valid_until (datetime.datetime): When the bank approval ends; renew it with BankID before then.
+      valid_until (datetime.datetime): When the bank approval ends; renew it before then.
       last_synced_at (datetime.datetime | None):
       sync_error (None | str):
       accounts (list[BankConnectionAccountSchema]):

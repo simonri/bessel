@@ -85,6 +85,7 @@ import {
 } from "./transformers.gen.js";
 import type {
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
@@ -1327,23 +1328,27 @@ export const listBankConnectionsV1BankConnectionsGet = <
 export const authorizeBankConnectionV1BankConnectionsAuthorizePost = <
   ThrowOnError extends boolean = false,
 >(
-  options?: Options<
+  options: Options<
     AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
     ThrowOnError
   >,
 ): RequestResult<
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
-  unknown,
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
   ThrowOnError
 > =>
-  (options?.client ?? client).post<
+  (options.client ?? client).post<
     AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
-    unknown,
+    AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-connections/authorize",
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**
