@@ -26,7 +26,7 @@ def generate_key() -> tuple[str, str]:
   return private, public
 
 
-def account(uid: str, identification_hash: str, *, iban: str = "SE4591500000000000001234", name: str = "Allkonto") -> dict[str, Any]:
+def account(uid: str, identification_hash: str, *, iban: str = "SE4591500000000000001234", name: str | None = "Allkonto") -> dict[str, Any]:
   # As Skandia sends it: `name` is the holder, `details` names the account.
   return {"uid": uid, "identification_hash": identification_hash, "name": "Anna Andersson", "details": name, "account_id": {"iban": iban}, "currency": "SEK"}
 
@@ -43,13 +43,15 @@ def transaction(
   credit: bool = False,
   text: str = "ICA Kvantum",
   status: str = "BOOK",
+  code: str | None = None,
 ) -> dict[str, Any]:
   return {
+    "bank_transaction_code": {"code": code, "sub_code": None, "description": None} if code else None,
     "entry_reference": reference,
     "booking_date": booked.isoformat(),
     "transaction_amount": {"amount": amount, "currency": "SEK"},
     "credit_debit_indicator": "CRDT" if credit else "DBIT",
-    "remittance_information": [text],
+    "remittance_information": [text] if text else [],
     "status": status,
   }
 

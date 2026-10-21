@@ -14,7 +14,8 @@ API_URL = "https://api.enablebanking.com"
 TOKEN_TTL_SECONDS = 3600
 SESSION_GONE_ERRORS = {"EXPIRED_SESSION", "CLOSED_SESSION", "REVOKED_SESSION", "WRONG_SESSION_STATUS"}
 # Booked balances first: they cover exactly the booked transactions Bessel imports.
-BALANCE_TYPES = ("CLBD", "ITBD", "XPCD", "ITAV", "CLAV")
+# Klarna reports only "OTHR".
+BALANCE_TYPES = ("CLBD", "ITBD", "XPCD", "ITAV", "CLAV", "OTHR")
 
 
 class EnableBankingError(Exception):
@@ -60,6 +61,8 @@ class BookedTransaction:
   currency: str
   credit: bool
   description: str
+  # The bank's transaction code, such as "CARD_TRANSACTION"; Klarna's transfers carry nothing else.
+  code: str | None
   raw: dict[str, Any]
 
 
@@ -147,8 +150,8 @@ def _account(account: dict[str, Any]) -> BankAccount:
   return BankAccount(
     uid=account["uid"],
     identification_hash=account["identification_hash"],
-    # `name` is the account holder; `details` is what the bank calls the account ("Sparkonto").
-    name=account.get("details") or account.get("product") or account.get("name"),
+    # `name` is the account holder, never the account; `details` is what the bank calls it ("Sparkonto").
+    name=account.get("details") or account.get("product"),
     iban=identification.get("iban"),
     currency=account.get("currency") or "SEK",
   )
@@ -167,5 +170,6 @@ def _transaction(transaction: dict[str, Any]) -> BookedTransaction:
     currency=amount["currency"],
     credit=credit,
     description=remittance or counterparty.get("name") or transaction.get("note") or "",
+    code=(transaction.get("bank_transaction_code") or {}).get("code"),
     raw=transaction,
   )

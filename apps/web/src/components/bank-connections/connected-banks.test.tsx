@@ -223,6 +223,24 @@ describe("ConnectedBanks", () => {
     ).toBeTruthy();
   });
 
+  it("names an account after its bank when the bank gives it no name", async () => {
+    api.list.mockResolvedValue({
+      available: true,
+      banks: ["Klarna"],
+      connections: [
+        {
+          ...CONNECTION,
+          bank_name: "Klarna",
+          accounts: [{ ...CONNECTION.accounts[0], name: null }],
+        },
+      ],
+    });
+
+    mount();
+
+    expect(await screen.findByLabelText("Import Klarna into")).toBeTruthy();
+  });
+
   it("syncs on request", async () => {
     api.list.mockResolvedValue({
       available: true,

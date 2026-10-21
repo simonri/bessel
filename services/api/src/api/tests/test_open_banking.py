@@ -16,6 +16,7 @@ from api.models.notification import Notification
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.open_banking import http, service, tasks
+from api.open_banking.enable_banking import _transaction
 from api.open_banking.repository import BankConnectionRepository
 from api.open_banking.service import SessionMaker, open_banking_service
 from api.postgres import AsyncSession
@@ -306,6 +307,14 @@ class TestConnect:
     listed = (await client.get("/v1/bank-connections")).json()["connections"]
     assert [(c["id"], c["bank_name"], len(c["accounts"])) for c in listed] == [(str(skandia.id), "Skandia", 1), (response.json()["id"], "Klarna", 1)]
 
+  @pytest.mark.asyncio
+  async def test_the_holders_name_is_never_the_account_name(self, client: AsyncClient, configured: None, bank: FakeEnableBanking, user: User) -> None:
+    bank.approvals["code-1"] = (VALID_UNTIL, [account("uid-1", "hash-1", name=None)])
+
+    response = await client.post("/v1/bank-connections/callback", json={"code": "code-1", "state": _state(user.id, "Klarna")})
+
+    assert [a["name"] for a in response.json()["accounts"]] == [None]
+
 
 class TestLinkAccount:
   @pytest.mark.asyncio
@@ -540,12 +549,47 @@ class TestSync:
     await _hand_imported(save_fixture, bank_account, date(2026, 3, 1), 4000)
     connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 10, 1))
     bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "-125.50"), transaction("r2", date(2026, 10, 3), "300.00", credit=True)]
-    bank.balances["uid-1"] = [balance("ITAV", "400.00"), balance("CLBD", "523.61")]
+    bank.balances["uid-1"] = [balance("OTHR", "1.00"), balance("ITAV", "400.00"), balance("CLBD", "523.61")]
 
     await open_banking_service.sync(session_maker, connection.id)
 
     [stored] = (await client.get("/v1/bank-accounts")).json()["items"]
     assert stored["current_balance"] == 52361
+
+  @pytest.mark.asyncio
+  async def test_a_balance_of_type_other_is_used_when_it_is_the_only_one(
+    self, client: AsyncClient, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 10, 1), bank_name="Klarna")
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 2), "15000", credit=True)]
+    # Klarna's history starts after the account already held an öre.
+    bank.balances["uid-1"] = [balance("OTHR", "15000.01")]
+
+    await open_banking_service.sync(session_maker, connection.id)
+
+    [stored] = (await client.get("/v1/bank-accounts")).json()["items"]
+    assert stored["current_balance"] == 1500001
+
+  @pytest.mark.asyncio
+  async def test_a_transaction_without_text_is_named_by_its_code_and_keeps_its_dedup_hash(
+    self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user.id)
+    connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 10, 1), bank_name="Klarna")
+    bare = transaction(None, date(2026, 10, 2), "2000", credit=True, text="", code="INCOMING_TRANSACTION")
+    bank.transactions["uid-1"] = [
+      bare,
+      transaction("r2", date(2026, 10, 3), "-12", text="", code="CARD_TRANSACTION") | {"creditor": {"name": "APPLE.COM/BILL"}},
+      transaction("r3", date(2026, 10, 4), "-5", text=""),
+    ]
+
+    await open_banking_service.sync(session_maker, connection.id)
+
+    assert [row[3] for row in await _transactions(session, bank_account)] == ["Incoming transaction", "APPLE.COM/BILL", None]
+    stored = (await session.execute(select(Transaction.dedup_hash).where(Transaction.transaction_date == date(2026, 10, 2)))).scalar_one()
+    assert stored == service.dedup_hash("hash-1", _transaction(bare), 0)
+    assert _transaction(bare).description == ""
 
   @pytest.mark.asyncio
   async def test_without_a_balance_from_the_bank_the_starting_balance_is_kept(

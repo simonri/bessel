@@ -184,6 +184,7 @@ export function ConnectedBanks() {
                 <AccountRow
                   key={account.id}
                   account={account}
+                  bankName={connection.bank_name}
                   bankAccounts={accounts?.items ?? []}
                   onLink={(bankAccountId) =>
                     link.mutate({
@@ -244,10 +245,12 @@ function ConnectionStatus({
 
 function AccountRow({
   account,
+  bankName,
   bankAccounts,
   onLink,
 }: {
   account: BankConnectionAccountSchema;
+  bankName: string;
   bankAccounts: BankAccountSchema[];
   onLink: (bankAccountId: string | null) => void;
 }) {
@@ -260,13 +263,13 @@ function AccountRow({
   return (
     <PanelRow
       className="pl-8"
-      label={account.name ?? "Account"}
+      label={account.name ?? bankName}
       description={ending ? `${ending} - ${importing}` : importing}
     >
       <NativeSelect
         size="sm"
         className="w-48 text-12"
-        aria-label={`Import ${account.name ?? "account"} into`}
+        aria-label={`Import ${account.name ?? bankName} into`}
         value={account.bank_account_id ?? NOT_IMPORTING}
         onChange={(event) =>
           onLink(

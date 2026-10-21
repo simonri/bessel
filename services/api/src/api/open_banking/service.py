@@ -83,6 +83,13 @@ def _minor_units(amount: Decimal) -> int:
   return int((amount * 100).to_integral_value())
 
 
+def _description(transaction: BookedTransaction) -> str:
+  """The bank's text, or its transaction code ("Incoming transaction") when it sends none."""
+  if transaction.description or not transaction.code:
+    return transaction.description
+  return transaction.code.replace("_", " ").capitalize()
+
+
 def _direction(transaction: BookedTransaction) -> TransactionDirection:
   return TransactionDirection.credit if transaction.credit else TransactionDirection.debit
 
@@ -257,7 +264,7 @@ class OpenBankingService:
           currency=transaction.currency,
           direction=direction,
           dedup_hash=dedup_hash(account.identification_hash, transaction, occurrences[key]),
-          description=transaction.description,
+          description=_description(transaction),
           raw_data=transaction.raw,
         )
       )
