@@ -10,6 +10,7 @@ import {
   type TDataShape,
 } from "./client/index.js";
 import {
+  completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
   completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   connectIcloudV1CalendarsIcloudPostResponseTransformer,
@@ -38,7 +39,9 @@ import {
   getTaskV1TasksTaskIdGetResponseTransformer,
   getWeatherForecastV1WeatherGetResponseTransformer,
   importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
+  linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
+  listBankConnectionsV1BankConnectionsGetResponseTransformer,
   listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
   listCalendarEventsV1CalendarsEventsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
@@ -85,6 +88,8 @@ import {
   upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
 } from "./transformers.gen.js";
 import type {
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
@@ -93,6 +98,9 @@ import type {
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
+  CompleteBankConnectionV1BankConnectionsCallbackPostData,
+  CompleteBankConnectionV1BankConnectionsCallbackPostErrors,
+  CompleteBankConnectionV1BankConnectionsCallbackPostResponses,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
@@ -192,6 +200,9 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
@@ -271,11 +282,16 @@ import type {
   IngestActivityBatchV1ActivityBatchPostData,
   IngestActivityBatchV1ActivityBatchPostErrors,
   IngestActivityBatchV1ActivityBatchPostResponses,
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
   ListActivitySourcesV1ActivitySourcesGetData,
   ListActivitySourcesV1ActivitySourcesGetResponses,
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetErrors,
   ListBankAccountsV1BankAccountsGetResponses,
+  ListBankConnectionsV1BankConnectionsGetData,
+  ListBankConnectionsV1BankConnectionsGetResponses,
   ListCalendarAccountsV1CalendarsAccountsGetData,
   ListCalendarAccountsV1CalendarsAccountsGetResponses,
   ListCalendarEventsV1CalendarsEventsGetData,
@@ -376,6 +392,9 @@ import type {
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostErrors,
   SyncAgentUsageV1AgentUsageSyncPostResponses,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
@@ -1176,6 +1195,166 @@ export const respondToCalendarEventV1CalendarsEventsEventIdResponsePut = <
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * List Bank Connections
+ */
+export const listBankConnectionsV1BankConnectionsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListBankConnectionsV1BankConnectionsGetData, ThrowOnError>,
+): RequestResult<
+  ListBankConnectionsV1BankConnectionsGetResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListBankConnectionsV1BankConnectionsGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listBankConnectionsV1BankConnectionsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-connections",
+    ...options,
+  });
+
+/**
+ * Start Bank Connection
+ */
+export const authorizeBankConnectionV1BankConnectionsAuthorizePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-connections/authorize",
+    ...options,
+  });
+
+/**
+ * Complete Bank Connection
+ */
+export const completeBankConnectionV1BankConnectionsCallbackPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    CompleteBankConnectionV1BankConnectionsCallbackPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  CompleteBankConnectionV1BankConnectionsCallbackPostResponses,
+  CompleteBankConnectionV1BankConnectionsCallbackPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CompleteBankConnectionV1BankConnectionsCallbackPostResponses,
+    CompleteBankConnectionV1BankConnectionsCallbackPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-connections/callback",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Link Bank Connection Account
+ */
+export const linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
+      ThrowOnError
+    >,
+  ): RequestResult<
+    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
+    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
+    ThrowOnError
+  > =>
+    (options.client ?? client).patch<
+      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
+      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
+      ThrowOnError
+    >({
+      responseTransformer:
+        linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponseTransformer,
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/v1/bank-connections/accounts/{account_id}",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+
+/**
+ * Sync Bank Connection
+ */
+export const syncBankConnectionV1BankConnectionsConnectionIdSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
+    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-connections/{connection_id}/sync",
+    ...options,
+  });
+
+/**
+ * Disconnect Bank Connection
+ */
+export const disconnectBankConnectionV1BankConnectionsConnectionIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
+    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-connections/{connection_id}",
+    ...options,
   });
 
 /**

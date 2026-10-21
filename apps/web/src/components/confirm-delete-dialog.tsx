@@ -18,6 +18,7 @@ export function ConfirmDeleteDialog({
   onConfirm,
   isPending,
   pendingLabel = "Deleting...",
+  confirmLabel = "Delete",
   variant = "destructive",
   size = "default",
 }: {
@@ -28,6 +29,7 @@ export function ConfirmDeleteDialog({
   onConfirm: () => void;
   isPending?: boolean;
   pendingLabel?: string;
+  confirmLabel?: string;
   variant?: "default" | "destructive";
   size?: "default" | "sm";
 }) {
@@ -45,7 +47,7 @@ export function ConfirmDeleteDialog({
             onClick={onConfirm}
             disabled={isPending}
           >
-            {isPending ? pendingLabel : "Delete"}
+            {isPending ? pendingLabel : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

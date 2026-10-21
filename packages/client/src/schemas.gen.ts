@@ -755,6 +755,212 @@ export const BankAccountUpdateSchema = {
   title: "BankAccountUpdate",
 } as const;
 
+export const BankAuthorizeResponseSchema = {
+  properties: {
+    url: {
+      type: "string",
+      title: "Url",
+      description: "Where to send the user to approve access with the bank.",
+    },
+  },
+  type: "object",
+  required: ["url"],
+  title: "BankAuthorizeResponse",
+} as const;
+
+export const BankCallbackRequestSchema = {
+  properties: {
+    code: {
+      type: "string",
+      title: "Code",
+    },
+    state: {
+      type: "string",
+      title: "State",
+    },
+  },
+  type: "object",
+  required: ["code", "state"],
+  title: "BankCallbackRequest",
+} as const;
+
+export const BankConnectionAccountSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    iban: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Iban",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The Bessel account its transactions go into; nothing is imported until one is chosen.",
+    },
+    import_from: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Import From",
+      description:
+        "The first day imported, so transactions imported by hand aren't repeated.",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "name",
+    "iban",
+    "currency",
+    "bank_account_id",
+    "import_from",
+  ],
+  title: "BankConnectionAccountSchema",
+} as const;
+
+export const BankConnectionAccountUpdateSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The Bessel account to import into, or null to stop importing.",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id"],
+  title: "BankConnectionAccountUpdate",
+} as const;
+
+export const BankConnectionListResponseSchema = {
+  properties: {
+    available: {
+      type: "boolean",
+      title: "Available",
+      description: "Whether this user can connect a bank.",
+    },
+    connections: {
+      items: {
+        $ref: "#/components/schemas/BankConnectionSchema",
+      },
+      type: "array",
+      title: "Connections",
+    },
+  },
+  type: "object",
+  required: ["available", "connections"],
+  title: "BankConnectionListResponse",
+} as const;
+
+export const BankConnectionSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    bank_name: {
+      type: "string",
+      title: "Bank Name",
+    },
+    valid_until: {
+      type: "string",
+      format: "date-time",
+      title: "Valid Until",
+      description:
+        "When the bank approval ends; renew it with BankID before then.",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+    sync_error: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync Error",
+    },
+    accounts: {
+      items: {
+        $ref: "#/components/schemas/BankConnectionAccountSchema",
+      },
+      type: "array",
+      title: "Accounts",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "bank_name",
+    "valid_until",
+    "last_synced_at",
+    "sync_error",
+    "accounts",
+  ],
+  title: "BankConnectionSchema",
+} as const;
+
 export const Body_import_location_history_v1_location_history_import_postSchema =
   {
     properties: {

@@ -10,9 +10,11 @@ import {
 
 import { client } from "../client.gen.js";
 import {
+  authorizeBankConnectionV1BankConnectionsAuthorizePost,
   authorizeGoogleV1CalendarsGoogleAuthorizePost,
   bulkUpdateTransactionsV1TransactionsBulkPatch,
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
+  completeBankConnectionV1BankConnectionsCallbackPost,
   completeGoogleConnectV1CalendarsGoogleCallbackPost,
   completeTaskV1TasksTaskIdCompletePost,
   connectIcloudV1CalendarsIcloudPost,
@@ -46,6 +48,7 @@ import {
   deleteTimeEntryV1TimeEntriesEntryIdDelete,
   deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
+  disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
   getActivitySummaryV1ActivitySummaryGet,
   getAgentUsageDailyV1AgentUsageDailyGet,
@@ -74,8 +77,10 @@ import {
   importLocationHistoryV1LocationHistoryImportPost,
   importTransactionsV1TransactionsImportPost,
   ingestActivityBatchV1ActivityBatchPost,
+  linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch,
   listActivitySourcesV1ActivitySourcesGet,
   listBankAccountsV1BankAccountsGet,
+  listBankConnectionsV1BankConnectionsGet,
   listCalendarAccountsV1CalendarsAccountsGet,
   listCalendarEventsV1CalendarsEventsGet,
   listCategoriesV1CategoriesGet,
@@ -113,6 +118,7 @@ import {
   spendingByCategoryV1TransactionsSpendingByCategoryGet,
   structureRecipeTextV1RecipesImportPost,
   syncAgentUsageV1AgentUsageSyncPost,
+  syncBankConnectionV1BankConnectionsConnectionIdSyncPost,
   syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost,
   syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
@@ -139,6 +145,8 @@ import {
   upsertGymExerciseV1GymExercisesExerciseIdPut,
 } from "../sdk.gen.js";
 import type {
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse,
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
@@ -147,6 +155,9 @@ import type {
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
   CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
+  CompleteBankConnectionV1BankConnectionsCallbackPostData,
+  CompleteBankConnectionV1BankConnectionsCallbackPostError,
+  CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
@@ -246,6 +257,9 @@ import type {
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
@@ -323,11 +337,16 @@ import type {
   IngestActivityBatchV1ActivityBatchPostData,
   IngestActivityBatchV1ActivityBatchPostError,
   IngestActivityBatchV1ActivityBatchPostResponse,
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
   ListActivitySourcesV1ActivitySourcesGetData,
   ListActivitySourcesV1ActivitySourcesGetResponse,
   ListBankAccountsV1BankAccountsGetData,
   ListBankAccountsV1BankAccountsGetError,
   ListBankAccountsV1BankAccountsGetResponse,
+  ListBankConnectionsV1BankConnectionsGetData,
+  ListBankConnectionsV1BankConnectionsGetResponse,
   ListCalendarAccountsV1CalendarsAccountsGetData,
   ListCalendarAccountsV1CalendarsAccountsGetResponse,
   ListCalendarEventsV1CalendarsEventsGetData,
@@ -428,6 +447,8 @@ import type {
   SyncAgentUsageV1AgentUsageSyncPostData,
   SyncAgentUsageV1AgentUsageSyncPostError,
   SyncAgentUsageV1AgentUsageSyncPostResponse,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
   SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError,
   SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
@@ -1427,6 +1448,188 @@ export const respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation =
       mutationFn: async (fnOptions) => {
         const { data } =
           await respondToCalendarEventV1CalendarsEventsEventIdResponsePut({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+export const listBankConnectionsV1BankConnectionsGetQueryKey = (
+  options?: Options<ListBankConnectionsV1BankConnectionsGetData>,
+) => createQueryKey("listBankConnectionsV1BankConnectionsGet", options);
+
+/**
+ * List Bank Connections
+ */
+export const listBankConnectionsV1BankConnectionsGetOptions = (
+  options?: Options<ListBankConnectionsV1BankConnectionsGetData>,
+) =>
+  queryOptions<
+    ListBankConnectionsV1BankConnectionsGetResponse,
+    DefaultError,
+    ListBankConnectionsV1BankConnectionsGetResponse,
+    ReturnType<typeof listBankConnectionsV1BankConnectionsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listBankConnectionsV1BankConnectionsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listBankConnectionsV1BankConnectionsGetQueryKey(options),
+  });
+
+/**
+ * Start Bank Connection
+ */
+export const authorizeBankConnectionV1BankConnectionsAuthorizePostMutation = (
+  options?: Partial<
+    Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
+  >,
+): UseMutationOptions<
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
+  DefaultError,
+  Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
+    DefaultError,
+    Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await authorizeBankConnectionV1BankConnectionsAuthorizePost({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Complete Bank Connection
+ */
+export const completeBankConnectionV1BankConnectionsCallbackPostMutation = (
+  options?: Partial<
+    Options<CompleteBankConnectionV1BankConnectionsCallbackPostData>
+  >,
+): UseMutationOptions<
+  CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
+  CompleteBankConnectionV1BankConnectionsCallbackPostError,
+  Options<CompleteBankConnectionV1BankConnectionsCallbackPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
+    CompleteBankConnectionV1BankConnectionsCallbackPostError,
+    Options<CompleteBankConnectionV1BankConnectionsCallbackPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await completeBankConnectionV1BankConnectionsCallbackPost({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Link Bank Connection Account
+ */
+export const linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchMutation =
+  (
+    options?: Partial<
+      Options<LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData>
+    >,
+  ): UseMutationOptions<
+    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
+    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
+    Options<LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
+      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
+      Options<LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            },
+          );
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+/**
+ * Sync Bank Connection
+ */
+export const syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation = (
+  options?: Partial<
+    Options<SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData>
+  >,
+): UseMutationOptions<
+  unknown,
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
+  Options<SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
+    Options<SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await syncBankConnectionV1BankConnectionsConnectionIdSyncPost({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Disconnect Bank Connection
+ */
+export const disconnectBankConnectionV1BankConnectionsConnectionIdDeleteMutation =
+  (
+    options?: Partial<
+      Options<DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData>
+    >,
+  ): UseMutationOptions<
+    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
+    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
+    Options<DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
+      DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
+      Options<DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await disconnectBankConnectionV1BankConnectionsConnectionIdDelete({
             ...options,
             ...fnOptions,
             throwOnError: true,

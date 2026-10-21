@@ -105,7 +105,16 @@ class ElectronAuthCache {
 
 const isElectron = typeof window !== "undefined" && !!window.electron;
 
-const GOOGLE_CALENDAR_CALLBACK_PATH = "/oauth/google-calendar";
+// Third-party redirects that also carry code+state; they're not Auth0
+// callbacks and must be left for their own routes to handle.
+const NON_AUTH0_CALLBACK_PATHS = new Set([
+  "/oauth/google-calendar",
+  "/bank-connections/callback",
+]);
+
+export function isNonAuth0Callback(pathname: string): boolean {
+  return NON_AUTH0_CALLBACK_PATHS.has(pathname);
+}
 
 // One-time purge: remove any plaintext Auth0 tokens left in localStorage from
 // before this change. Keys follow the pattern @@auth0spajs@@::...
@@ -179,11 +188,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cache={isElectron ? electronCache : undefined}
       useRefreshTokens={true}
       useRefreshTokensFallback={!isElectron}
-      // Google Calendar's OAuth redirect also carries code+state; it's not
-      // an Auth0 callback and must be left for that route to handle.
       skipRedirectCallback={
         typeof window !== "undefined" &&
-        window.location.pathname === GOOGLE_CALENDAR_CALLBACK_PATH
+        isNonAuth0Callback(window.location.pathname)
       }
       onRedirectCallback={(appState?: AppState) => {
         navigate({ href: (appState?.returnTo as string) ?? "/" });

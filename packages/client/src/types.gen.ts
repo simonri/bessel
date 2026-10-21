@@ -592,6 +592,126 @@ export type BankAccountUpdate = {
 };
 
 /**
+ * BankAuthorizeResponse
+ */
+export type BankAuthorizeResponse = {
+  /**
+   * Url
+   *
+   * Where to send the user to approve access with the bank.
+   */
+  url: string;
+};
+
+/**
+ * BankCallbackRequest
+ */
+export type BankCallbackRequest = {
+  /**
+   * Code
+   */
+  code: string;
+  /**
+   * State
+   */
+  state: string;
+};
+
+/**
+ * BankConnectionAccountSchema
+ */
+export type BankConnectionAccountSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Name
+   */
+  name: string | null;
+  /**
+   * Iban
+   */
+  iban: string | null;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Bank Account Id
+   *
+   * The Bessel account its transactions go into; nothing is imported until one is chosen.
+   */
+  bank_account_id: string | null;
+  /**
+   * Import From
+   *
+   * The first day imported, so transactions imported by hand aren't repeated.
+   */
+  import_from: Date | null;
+};
+
+/**
+ * BankConnectionAccountUpdate
+ */
+export type BankConnectionAccountUpdate = {
+  /**
+   * Bank Account Id
+   *
+   * The Bessel account to import into, or null to stop importing.
+   */
+  bank_account_id: string | null;
+};
+
+/**
+ * BankConnectionListResponse
+ */
+export type BankConnectionListResponse = {
+  /**
+   * Available
+   *
+   * Whether this user can connect a bank.
+   */
+  available: boolean;
+  /**
+   * Connections
+   */
+  connections: Array<BankConnectionSchema>;
+};
+
+/**
+ * BankConnectionSchema
+ */
+export type BankConnectionSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Bank Name
+   */
+  bank_name: string;
+  /**
+   * Valid Until
+   *
+   * When the bank approval ends; renew it with BankID before then.
+   */
+  valid_until: Date;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+  /**
+   * Sync Error
+   */
+  sync_error: string | null;
+  /**
+   * Accounts
+   */
+  accounts: Array<BankConnectionAccountSchema>;
+};
+
+/**
  * Body_import_location_history_v1_location_history_import_post
  */
 export type BodyImportLocationHistoryV1LocationHistoryImportPost = {
@@ -6066,6 +6186,165 @@ export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses =
 
 export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse =
   RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses[keyof RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses];
+
+export type ListBankConnectionsV1BankConnectionsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/bank-connections";
+};
+
+export type ListBankConnectionsV1BankConnectionsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: BankConnectionListResponse;
+};
+
+export type ListBankConnectionsV1BankConnectionsGetResponse =
+  ListBankConnectionsV1BankConnectionsGetResponses[keyof ListBankConnectionsV1BankConnectionsGetResponses];
+
+export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/bank-connections/authorize";
+};
+
+export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: BankAuthorizeResponse;
+};
+
+export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse =
+  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses[keyof AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses];
+
+export type CompleteBankConnectionV1BankConnectionsCallbackPostData = {
+  body: BankCallbackRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/bank-connections/callback";
+};
+
+export type CompleteBankConnectionV1BankConnectionsCallbackPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CompleteBankConnectionV1BankConnectionsCallbackPostError =
+  CompleteBankConnectionV1BankConnectionsCallbackPostErrors[keyof CompleteBankConnectionV1BankConnectionsCallbackPostErrors];
+
+export type CompleteBankConnectionV1BankConnectionsCallbackPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: BankConnectionSchema;
+};
+
+export type CompleteBankConnectionV1BankConnectionsCallbackPostResponse =
+  CompleteBankConnectionV1BankConnectionsCallbackPostResponses[keyof CompleteBankConnectionV1BankConnectionsCallbackPostResponses];
+
+export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData =
+  {
+    body: BankConnectionAccountUpdate;
+    path: {
+      /**
+       * Account Id
+       */
+      account_id: string;
+    };
+    query?: never;
+    url: "/v1/bank-connections/accounts/{account_id}";
+  };
+
+export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError =
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors[keyof LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors];
+
+export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: BankConnectionSchema;
+  };
+
+export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse =
+  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses[keyof LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses];
+
+export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData = {
+  body?: never;
+  path: {
+    /**
+     * Connection Id
+     */
+    connection_id: string;
+  };
+  query?: never;
+  url: "/v1/bank-connections/{connection_id}/sync";
+};
+
+export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError =
+  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors[keyof SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors];
+
+export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown;
+};
+
+export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Connection Id
+     */
+    connection_id: string;
+  };
+  query?: never;
+  url: "/v1/bank-connections/{connection_id}";
+};
+
+export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError =
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors[keyof DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors];
+
+export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void;
+  };
+
+export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse =
+  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses[keyof DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses];
 
 export type ListCategoriesV1CategoriesGetData = {
   body?: never;

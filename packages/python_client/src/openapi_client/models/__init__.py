@@ -25,6 +25,12 @@ from .bank_account_list_response import BankAccountListResponse
 from .bank_account_schema import BankAccountSchema
 from .bank_account_sort_property import BankAccountSortProperty
 from .bank_account_update import BankAccountUpdate
+from .bank_authorize_response import BankAuthorizeResponse
+from .bank_callback_request import BankCallbackRequest
+from .bank_connection_account_schema import BankConnectionAccountSchema
+from .bank_connection_account_update import BankConnectionAccountUpdate
+from .bank_connection_list_response import BankConnectionListResponse
+from .bank_connection_schema import BankConnectionSchema
 from .body_import_location_history_v1_location_history_import_post import BodyImportLocationHistoryV1LocationHistoryImportPost
 from .body_import_transactions_v1_transactions_import_post import BodyImportTransactionsV1TransactionsImportPost
 from .body_upload_task_attachment_v1_tasks_task_id_attachments_post import BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost
@@ -240,6 +246,12 @@ __all__ = (
   "BankAccountSchema",
   "BankAccountSortProperty",
   "BankAccountUpdate",
+  "BankAuthorizeResponse",
+  "BankCallbackRequest",
+  "BankConnectionAccountSchema",
+  "BankConnectionAccountUpdate",
+  "BankConnectionListResponse",
+  "BankConnectionSchema",
   "BodyImportLocationHistoryV1LocationHistoryImportPost",
   "BodyImportTransactionsV1TransactionsImportPost",
   "BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost",

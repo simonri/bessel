@@ -1453,6 +1453,249 @@
         }
       }
     },
+    "/v1/bank-connections": {
+      "get": {
+        "tags": [
+          "bank-connections"
+        ],
+        "summary": "List Bank Connections",
+        "operationId": "list_bank_connections_v1_bank_connections_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankConnectionListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/authorize": {
+      "post": {
+        "tags": [
+          "bank-connections"
+        ],
+        "summary": "Start Bank Connection",
+        "operationId": "authorize_bank_connection_v1_bank_connections_authorize_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAuthorizeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/callback": {
+      "post": {
+        "tags": [
+          "bank-connections"
+        ],
+        "summary": "Complete Bank Connection",
+        "operationId": "complete_bank_connection_v1_bank_connections_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankCallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankConnectionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/accounts/{account_id}": {
+      "patch": {
+        "tags": [
+          "bank-connections"
+        ],
+        "summary": "Link Bank Connection Account",
+        "operationId": "link_bank_connection_account_v1_bank_connections_accounts__account_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankConnectionAccountUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankConnectionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/bank-connections/{connection_id}/sync": {
+      "post": {
+        "tags": [
+          "bank-connections"
+        ],
+        "summary": "Sync Bank Connection",
+        "operationId": "sync_bank_connection_v1_bank_connections__connection_id__sync_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connection Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/bank-connections/{connection_id}": {
+      "delete": {
+        "tags": [
+          "bank-connections"
+        ],
+        "summary": "Disconnect Bank Connection",
+        "operationId": "disconnect_bank_connection_v1_bank_connections__connection_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connection Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/categories": {
       "get": {
         "tags": [
@@ -7809,6 +8052,212 @@
         },
         "type": "object",
         "title": "BankAccountUpdate"
+      },
+      "BankAuthorizeResponse": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Where to send the user to approve access with the bank."
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "BankAuthorizeResponse"
+      },
+      "BankCallbackRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "BankCallbackRequest"
+      },
+      "BankConnectionAccountSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "iban": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iban"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "bank_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Account Id",
+            "description": "The Bessel account its transactions go into; nothing is imported until one is chosen."
+          },
+          "import_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import From",
+            "description": "The first day imported, so transactions imported by hand aren't repeated."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "iban",
+          "currency",
+          "bank_account_id",
+          "import_from"
+        ],
+        "title": "BankConnectionAccountSchema"
+      },
+      "BankConnectionAccountUpdate": {
+        "properties": {
+          "bank_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Account Id",
+            "description": "The Bessel account to import into, or null to stop importing."
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_account_id"
+        ],
+        "title": "BankConnectionAccountUpdate"
+      },
+      "BankConnectionListResponse": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "description": "Whether this user can connect a bank."
+          },
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/BankConnectionSchema"
+            },
+            "type": "array",
+            "title": "Connections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "connections"
+        ],
+        "title": "BankConnectionListResponse"
+      },
+      "BankConnectionSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "bank_name": {
+            "type": "string",
+            "title": "Bank Name"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Valid Until",
+            "description": "When the bank approval ends; renew it with BankID before then."
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "sync_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Error"
+          },
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/BankConnectionAccountSchema"
+            },
+            "type": "array",
+            "title": "Accounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "bank_name",
+          "valid_until",
+          "last_synced_at",
+          "sync_error",
+          "accounts"
+        ],
+        "title": "BankConnectionSchema"
       },
       "Body_import_location_history_v1_location_history_import_post": {
         "properties": {
