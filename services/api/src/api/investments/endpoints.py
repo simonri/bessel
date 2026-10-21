@@ -4,6 +4,7 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, Depends, Query
 
+from api.avanza.repository import AvanzaAccountRepository, HoldingSnapshotRepository
 from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
 from api.exceptions import ConflictError, ResourceNotFound, ServiceUnavailableError
@@ -219,7 +220,10 @@ async def get_holdings(
   session: DBSession,
   current_user: CurrentDBUser,
 ) -> HoldingsResponse:
-  return HoldingsResponse(items=await investment_service.holdings(TradeRepository.from_session(session), current_user.id))
+  synced = await AvanzaAccountRepository.from_session(session).linked_bank_account_ids(current_user.id)
+  snapshots = await HoldingSnapshotRepository.from_session(session).latest_for_accounts(synced)
+  holdings = await investment_service.holdings(TradeRepository.from_session(session), current_user.id, synced_bank_account_ids=synced, snapshots=snapshots)
+  return HoldingsResponse(items=holdings)
 
 
 # ─── Crypto ───

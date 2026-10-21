@@ -5,6 +5,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from api.models.base import RecordModel
 
+# Investment accounts: their cash moves are buys, sells and transfers between
+# the user's own accounts, not income or spending.
+INVESTMENT_SUBTYPES = ("isk", "af", "kf", "brokerage")
+
 
 class BankAccount(RecordModel):
   __tablename__ = "bank_accounts"

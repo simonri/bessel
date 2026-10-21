@@ -41,6 +41,13 @@ def encryption_key(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
+def skandia(monkeypatch: pytest.MonkeyPatch) -> None:
+  # A local .env may point at the sandbox's mock bank.
+  monkeypatch.setattr(settings, "ENABLE_BANKING_BANK_NAME", "Skandia")
+  monkeypatch.setattr(settings, "ENABLE_BANKING_BANK_COUNTRY", "SE")
+
+
+@pytest.fixture(autouse=True)
 def frozen_now(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(service, "utc_now", lambda: NOW)
 

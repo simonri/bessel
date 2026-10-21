@@ -21,7 +21,7 @@ class TradeRepository(RepositoryBase[Trade], RepositoryIDMixin[Trade, UUID]):
     result = await self.session.execute(statement)
     return result.scalar_one()
 
-  async def holdings_rows(self, user_id: UUID) -> Sequence[Row]:
+  async def holdings_rows(self, user_id: UUID, *, excluding_bank_account_ids: Sequence[UUID] = ()) -> Sequence[Row]:
     """Per-security aggregation: net quantity, buy totals, and latest known price."""
     qty_expr = case(
       (Trade.trade_type == TradeType.buy, Trade.quantity),
@@ -34,7 +34,7 @@ class TradeRepository(RepositoryBase[Trade], RepositoryIDMixin[Trade, UUID]):
         func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity), else_=0)).label("total_buy_qty"),
         func.sum(case((Trade.trade_type == TradeType.buy, Trade.quantity * Trade.price_per_unit), else_=0)).label("total_buy_cost"),
       )
-      .where(Trade.user_id == user_id)
+      .where(Trade.user_id == user_id, Trade.bank_account_id.not_in(excluding_bank_account_ids))
       .group_by(Trade.security_id)
       .subquery()
     )

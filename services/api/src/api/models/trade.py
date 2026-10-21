@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Date, Enum, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import BigInteger, Date, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
 from api.models.bank_account import BankAccount
@@ -26,6 +26,8 @@ class Trade(RecordModel):
   price_per_unit: Mapped[int] = mapped_column(Integer, nullable=False)  # cents
   currency: Mapped[str] = mapped_column(String(3), nullable=False)
   notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # The broker's transaction id for imported trades, so each is imported once.
+  external_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
   @declared_attr
   def security(cls) -> Mapped["Security"]:
@@ -36,3 +38,5 @@ class Trade(RecordModel):
     return relationship("BankAccount", lazy="raise")
 
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+
+  __table_args__ = (UniqueConstraint("user_id", "external_id"),)

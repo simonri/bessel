@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
+from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
 from api.models.bank_profile import BankProfile
 from api.models.category import Category
 from api.models.import_batch import ImportBatch
@@ -145,8 +146,10 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         func.sum(Transaction.amount).label("total"),
       )
       .join(Category, Transaction.category_id == Category.id)
+      .join(BankAccount, Transaction.bank_account_id == BankAccount.id)
       .where(
         Transaction.user_id == user_id,
+        BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
         Transaction.direction == "debit",
         extract("year", Transaction.transaction_date) == year,
         extract("month", Transaction.transaction_date) == month,
@@ -165,7 +168,9 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.direction,
         func.sum(Transaction.amount).label("total"),
       )
+      .join(BankAccount, Transaction.bank_account_id == BankAccount.id)
       .where(Transaction.user_id == user_id)
+      .where(BankAccount.subtype.not_in(INVESTMENT_SUBTYPES))
       .where(Transaction.transaction_date >= start)
       .group_by("yr", "mo", Transaction.direction)
       .order_by("yr", "mo")

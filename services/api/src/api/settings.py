@@ -112,6 +112,10 @@ class Settings(BaseSettings):
   ENABLE_BANKING_BANK_NAME: str = "Skandia"
   ENABLE_BANKING_BANK_COUNTRY: str = "SE"
 
+  # Avanza through its unofficial web API. The login can also trade, so only
+  # the users listed here may store one.
+  AVANZA_USER_IDS: list[UUID] = Field(default=[])
+
   # Worker
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000
