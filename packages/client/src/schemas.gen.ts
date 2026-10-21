@@ -894,6 +894,11 @@ export const BankConnectionListResponseSchema = {
       title: "Available",
       description: "Whether this user can connect a bank.",
     },
+    bank_name: {
+      type: "string",
+      title: "Bank Name",
+      description: "The bank a new connection goes to.",
+    },
     connections: {
       items: {
         $ref: "#/components/schemas/BankConnectionSchema",
@@ -903,7 +908,7 @@ export const BankConnectionListResponseSchema = {
     },
   },
   type: "object",
-  required: ["available", "connections"],
+  required: ["available", "bank_name", "connections"],
   title: "BankConnectionListResponse",
 } as const;
 

@@ -10,7 +10,7 @@ from api.logging import Logger
 from api.open_banking.enable_banking import EnableBankingError
 from api.open_banking.repository import BankConnectionAccountRepository, BankConnectionRepository
 from api.open_banking.schemas import BankAuthorizeResponse, BankCallbackRequest, BankConnectionAccountUpdate, BankConnectionListResponse, BankConnectionSchema
-from api.open_banking.service import BANK_NAME, BankConnectError, BankUnavailableError, available_to, open_banking_service
+from api.open_banking.service import BankConnectError, BankUnavailableError, available_to, bank_name, open_banking_service
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
@@ -29,6 +29,7 @@ async def list_bank_connections(session: DBSession, current_user: CurrentDBUser)
   connections = await BankConnectionRepository.from_session(session).list_for_user(current_user.id)
   return BankConnectionListResponse(
     available=available_to(current_user.id),
+    bank_name=bank_name(),
     connections=[BankConnectionSchema.model_validate(c) for c in connections],
   )
 
@@ -40,7 +41,7 @@ async def authorize_bank_connection(current_user: CurrentDBUser) -> BankAuthoriz
     return BankAuthorizeResponse(url=await open_banking_service.start_connection(current_user.id))
   except (BankUnavailableError, EnableBankingError, httpx.HTTPError) as e:
     log.exception("enable_banking_authorize_failed")
-    raise ServiceUnavailableError(f"Couldn't start the {BANK_NAME} connection. Try again in a moment.", status_code=502) from e
+    raise ServiceUnavailableError(f"Couldn't start the {bank_name()} connection. Try again in a moment.", status_code=502) from e
 
 
 @router.post("/callback", summary="Complete Bank Connection", response_model=BankConnectionSchema, status_code=201)
@@ -53,7 +54,7 @@ async def complete_bank_connection(body: BankCallbackRequest, session: DBSession
     raise ValidationError(str(e)) from e
   except (EnableBankingError, httpx.HTTPError) as e:
     log.exception("enable_banking_connect_failed")
-    raise ServiceUnavailableError(f"{BANK_NAME} couldn't complete the approval. Try again from Bessel.", status_code=502) from e
+    raise ServiceUnavailableError(f"{bank_name()} couldn't complete the approval. Try again from Bessel.", status_code=502) from e
   if any(account.bank_account_id for account in connection.accounts):
     open_banking_service.request_sync(connection.id)
   return BankConnectionSchema.model_validate(await connections.get_owned(connection.id, current_user.id))

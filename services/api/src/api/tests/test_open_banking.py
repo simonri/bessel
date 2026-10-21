@@ -138,7 +138,7 @@ async def _transactions(session: AsyncSession, bank_account: BankAccount) -> lis
 class TestAvailability:
   @pytest.mark.asyncio
   async def test_only_listed_users_see_bank_connections(self, client: AsyncClient, configured: None, monkeypatch: pytest.MonkeyPatch) -> None:
-    assert (await client.get("/v1/bank-connections")).json() == {"available": True, "connections": []}
+    assert (await client.get("/v1/bank-connections")).json() == {"available": True, "bank_name": "Skandia", "connections": []}
 
     monkeypatch.setattr(settings, "ENABLE_BANKING_USER_IDS", [uuid4()])
     assert (await client.get("/v1/bank-connections")).json()["available"] is False
@@ -165,6 +165,18 @@ class TestConnect:
     assert request["redirect_url"] == "https://app.example.com/bank-connections/callback"
     assert datetime.fromisoformat(request["access"]["valid_until"]) == NOW + timedelta(days=180, hours=-1)
     assert json.loads(decrypt(request["state"]))["user_id"] == str(user.id)
+
+  @pytest.mark.asyncio
+  async def test_the_bank_can_be_switched_for_local_testing(
+    self, client: AsyncClient, configured: None, bank: FakeEnableBanking, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    monkeypatch.setattr(settings, "ENABLE_BANKING_BANK_NAME", "Mock ASPSP")
+
+    assert (await client.get("/v1/bank-connections")).json()["bank_name"] == "Mock ASPSP"
+    assert (await client.post("/v1/bank-connections/authorize")).status_code == 200
+    [request] = bank.auth_requests
+    assert request["aspsp"] == {"name": "Mock ASPSP", "country": "SE"}
+    assert datetime.fromisoformat(request["access"]["valid_until"]) == NOW + timedelta(days=10, hours=-1)
 
   @pytest.mark.asyncio
   async def test_requests_are_signed_with_the_app_key(self, configured: None, bank: FakeEnableBanking, monkeypatch: pytest.MonkeyPatch) -> None:

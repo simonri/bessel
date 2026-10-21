@@ -127,7 +127,7 @@ export function ConnectedBanks() {
               onClick={connect}
               disabled={authorize.isPending}
             >
-              Connect Skandia
+              Connect {data.bank_name}
             </PrimaryButton>
           )
         }
@@ -136,8 +136,8 @@ export function ConnectedBanks() {
       </SectionLabel>
       {data.connections.length === 0 ? (
         <p className="text-12 text-white/45">
-          Import Skandia transactions automatically instead of uploading
-          exports. You approve with BankID, about twice a year.
+          Import {data.bank_name} transactions automatically instead of
+          uploading exports. You approve with BankID, about twice a year.
         </p>
       ) : (
         <div className="space-y-3">

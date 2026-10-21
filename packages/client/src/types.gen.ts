@@ -680,6 +680,12 @@ export type BankConnectionListResponse = {
    */
   available: boolean;
   /**
+   * Bank Name
+   *
+   * The bank a new connection goes to.
+   */
+  bank_name: string;
+  /**
    * Connections
    */
   connections: Array<BankConnectionSchema>;

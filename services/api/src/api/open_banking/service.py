@@ -33,8 +33,6 @@ log: Logger = structlog.get_logger()
 type SessionMaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
 SYNC_ACTOR = "sync_bank_connection"
-BANK_NAME = "Skandia"
-BANK_COUNTRY = "SE"
 STATE_TTL_SECONDS = 15 * 60
 # Ask for a little less than the bank allows, so clock drift can't push the request over its limit.
 CONSENT_MARGIN = timedelta(hours=1)
@@ -53,6 +51,10 @@ class BankConnectError(Exception):
 
 class BankUnavailableError(Exception):
   """Enable Banking isn't configured, or doesn't list the bank."""
+
+
+def bank_name() -> str:
+  return settings.ENABLE_BANKING_BANK_NAME
 
 
 def available_to(user_id: UUID) -> bool:
@@ -96,9 +98,9 @@ class OpenBankingService:
     state = encrypt(json.dumps({"user_id": str(user_id)}))
     async with http.client() as http_client:
       client = _client(http_client)
-      bank = await client.get_bank(BANK_NAME, BANK_COUNTRY)
+      bank = await client.get_bank(bank_name(), settings.ENABLE_BANKING_BANK_COUNTRY)
       if bank is None:
-        raise BankUnavailableError(f"Enable Banking doesn't list {BANK_NAME} right now.")
+        raise BankUnavailableError(f"Enable Banking doesn't list {bank_name()} right now.")
       valid_until = utc_now() + timedelta(seconds=bank.maximum_consent_seconds) - CONSENT_MARGIN
       return await client.start_authorization(bank, valid_until=valid_until, redirect_url=settings.enable_banking_redirect_url(), state=state)
 
@@ -106,7 +108,7 @@ class OpenBankingService:
     try:
       state_user_id = UUID(json.loads(decrypt(state, ttl=STATE_TTL_SECONDS))["user_id"])
     except (InvalidToken, ValueError, KeyError) as e:
-      raise BankConnectError(f"This link has expired. Connect {BANK_NAME} again from Bessel.") from e
+      raise BankConnectError(f"This link has expired. Connect {bank_name()} again from Bessel.") from e
     # Otherwise someone could send their own approval link to another user and
     # have that person's bank account land in their Bessel.
     if state_user_id != user_id:
@@ -115,7 +117,7 @@ class OpenBankingService:
     async with http.client() as http_client:
       client = _client(http_client)
       session = await client.create_session(code)
-      connection = await connections.get_for_bank(user_id, BANK_NAME, BANK_COUNTRY)
+      connection = await connections.get_for_bank(user_id, bank_name(), settings.ENABLE_BANKING_BANK_COUNTRY)
       if connection is not None:
         previous_session_id = decrypt(connection.encrypted_session_id)
         try:
@@ -125,7 +127,12 @@ class OpenBankingService:
 
     if connection is None:
       connection = BankConnection(
-        user_id=user_id, bank_name=BANK_NAME, bank_country=BANK_COUNTRY, encrypted_session_id="", valid_until=session.valid_until, accounts=[]
+        user_id=user_id,
+        bank_name=bank_name(),
+        bank_country=settings.ENABLE_BANKING_BANK_COUNTRY,
+        encrypted_session_id="",
+        valid_until=session.valid_until,
+        accounts=[],
       )
       await connections.create(connection)
     connection.encrypted_session_id = encrypt(session.session_id)
@@ -235,7 +242,7 @@ class OpenBankingService:
     return await transaction_service.import_transactions(
       session,
       bank_account_id=account.bank_account_id,
-      bank_name=f"enablebanking:{BANK_NAME.lower()}",
+      bank_name=f"enablebanking:{bank_name().lower()}",
       file_format="api",
       raw_content=json.dumps([t.raw_data for t in parsed]),
       parsed=parsed,
@@ -249,7 +256,7 @@ class OpenBankingService:
       if connection is None:
         return
       if connection.valid_until <= utc_now():
-        connection.sync_error = f"{BANK_NAME}'s approval has ended. Renew it with BankID."
+        connection.sync_error = f"{bank_name()}'s approval has ended. Renew it with BankID."
         return
       user_id, accounts = connection.user_id, self.accounts_to_sync(connection)
 
@@ -257,7 +264,7 @@ class OpenBankingService:
     try:
       booked = await self.fetch(accounts)
     except SessionGoneError:
-      await self._record_error(session_maker, connection_id, f"{BANK_NAME}'s approval has ended. Renew it with BankID.")
+      await self._record_error(session_maker, connection_id, f"{bank_name()}'s approval has ended. Renew it with BankID.")
       return
 
     async with session_maker() as session:
@@ -273,7 +280,7 @@ class OpenBankingService:
         created += (await self.import_booked(session, user_id, account, transactions))[0]
         stored[account.id].last_synced_at = started
       failed = sum(1 for transactions in booked.values() if transactions is None)
-      connection.sync_error = f"Couldn't reach {BANK_NAME}. Bessel tries again at the next sync." if failed else None
+      connection.sync_error = f"Couldn't reach {bank_name()}. Bessel tries again at the next sync." if failed else None
       if failed < len(booked) or not booked:
         connection.last_synced_at = started
     log.info("enable_banking_synced", connection_id=str(connection_id), created=created, failed=failed)
@@ -292,8 +299,8 @@ class OpenBankingService:
     session.add(
       Notification(
         user_id=connection.user_id,
-        title=f"Renew {BANK_NAME} access",
-        body=f"Bessel can read {BANK_NAME} until {ends:%-d %B}. Approve again with BankID to keep transactions importing.",
+        title=f"Renew {bank_name()} access",
+        body=f"Bessel can read {bank_name()} until {ends:%-d %B}. Approve again with BankID to keep transactions importing.",
         link="/accounts",
         kind="warning",
       )

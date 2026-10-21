@@ -84,7 +84,11 @@ afterEach(cleanup);
 
 describe("ConnectedBanks", () => {
   it("shows nothing to users who can't connect a bank", async () => {
-    api.list.mockResolvedValue({ available: false, connections: [] });
+    api.list.mockResolvedValue({
+      available: false,
+      bank_name: "Skandia",
+      connections: [],
+    });
 
     mount();
 
@@ -94,13 +98,17 @@ describe("ConnectedBanks", () => {
     ).rejects.toThrow();
   });
 
-  it("starts the BankID approval from the connect button", async () => {
-    api.list.mockResolvedValue({ available: true, connections: [] });
+  it("starts the approval with the configured bank from the connect button", async () => {
+    api.list.mockResolvedValue({
+      available: true,
+      bank_name: "Mock ASPSP",
+      connections: [],
+    });
     const assign = vi.fn();
     vi.stubGlobal("location", { ...window.location, assign });
 
     mount();
-    fireEvent.click(await screen.findByText("Connect Skandia"));
+    fireEvent.click(await screen.findByText("Connect Mock ASPSP"));
 
     await waitFor(() =>
       expect(assign).toHaveBeenCalledWith("https://bank.example/approve"),
@@ -139,7 +147,11 @@ describe("ConnectedBanks", () => {
   });
 
   it("links an account to a Bessel account of the same currency", async () => {
-    api.list.mockResolvedValue({ available: true, connections: [CONNECTION] });
+    api.list.mockResolvedValue({
+      available: true,
+      bank_name: "Skandia",
+      connections: [CONNECTION],
+    });
 
     mount();
     const select = (await screen.findByLabelText(
@@ -185,7 +197,11 @@ describe("ConnectedBanks", () => {
   });
 
   it("syncs on request", async () => {
-    api.list.mockResolvedValue({ available: true, connections: [CONNECTION] });
+    api.list.mockResolvedValue({
+      available: true,
+      bank_name: "Skandia",
+      connections: [CONNECTION],
+    });
 
     mount();
     fireEvent.click(await screen.findByText("Sync now"));

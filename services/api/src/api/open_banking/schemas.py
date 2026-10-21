@@ -27,6 +27,7 @@ class BankConnectionSchema(Schema):
 
 class BankConnectionListResponse(Schema):
   available: bool = Field(description="Whether this user can connect a bank.")
+  bank_name: str = Field(description="The bank a new connection goes to.")
   connections: list[BankConnectionSchema]
 
 

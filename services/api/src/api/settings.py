@@ -107,6 +107,10 @@ class Settings(BaseSettings):
   # Must match a redirect URL registered for the app; defaults to the web app's callback page.
   ENABLE_BANKING_REDIRECT_URL: str = ""
   ENABLE_BANKING_USER_IDS: list[UUID] = Field(default=[])
+  # The bank to connect, as Enable Banking names it. The sandbox's real banks send
+  # users to the banks' own test logins, so local testing uses "Mock ASPSP".
+  ENABLE_BANKING_BANK_NAME: str = "Skandia"
+  ENABLE_BANKING_BANK_COUNTRY: str = "SE"
 
   # Worker
   WORKER_MAX_RETRIES: int = 20

@@ -18,15 +18,19 @@ class BankConnectionListResponse:
   """
   Attributes:
       available (bool): Whether this user can connect a bank.
+      bank_name (str): The bank a new connection goes to.
       connections (list[BankConnectionSchema]):
   """
 
   available: bool
+  bank_name: str
   connections: list[BankConnectionSchema]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     available = self.available
+
+    bank_name = self.bank_name
 
     connections = []
     for connections_item_data in self.connections:
@@ -38,6 +42,7 @@ class BankConnectionListResponse:
     field_dict.update(
       {
         "available": available,
+        "bank_name": bank_name,
         "connections": connections,
       }
     )
@@ -51,6 +56,8 @@ class BankConnectionListResponse:
     d = dict(src_dict)
     available = d.pop("available")
 
+    bank_name = d.pop("bank_name")
+
     connections = []
     _connections = d.pop("connections")
     for connections_item_data in _connections:
@@ -60,6 +67,7 @@ class BankConnectionListResponse:
 
     bank_connection_list_response = cls(
       available=available,
+      bank_name=bank_name,
       connections=connections,
     )
 
