@@ -2,12 +2,13 @@ import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import httpx
 import pytest
 from api.avanza import client as avanza_client
-from api.avanza import service
+from api.avanza import parsing, service
 from api.avanza.repository import AvanzaConnectionRepository
 from api.avanza.service import SessionMaker, avanza_service
 from api.common.encryption import decrypt, encrypt
@@ -421,3 +422,77 @@ class TestInvestmentAccountsInStats:
     [current] = [m for m in (await client.get("/v1/transactions/monthly-flow")).json()["items"] if m["month"] == day.month and m["year"] == day.year]
 
     assert (current["income"], current["expenses"]) == (0, 1000)
+
+
+FIXTURES = Path(__file__).parent / "fixtures" / "avanza"
+
+
+def _fixture(name: str) -> dict:
+  return json.loads((FIXTURES / name).read_text())
+
+
+class TestRealShapes:
+  """Redacted copies of real Avanza responses: real shapes and field names, fake ids, amounts and names."""
+
+  def test_parses_every_kind_of_row(self) -> None:
+    accounts = parsing.accounts(_fixture("overview.json"))
+    positions = parsing.positions(_fixture("positions.json"))
+    movements = parsing.movements(_fixture("transactions.json"))
+
+    assert [a.account_type for a in accounts] == ["AKTIEFONDKONTO", "KAPITALFORSAKRING", "KAPITALFORSAKRING"]
+    # Funds and delisted holdings come without an order book.
+    assert len(positions) == 3 and {p.currency for p in positions} == {"SEK"}
+    buys = [m for m in movements if m.type == "BUY"]
+    assert buys and all(m.amount < 0 and m.quantity and m.quantity > 0 and m.instrument for m in buys)
+    assert all(m.description == f"Köp {m.instrument.name}" for m in buys if m.instrument)
+    sells = [m for m in movements if m.type == "SELL"]
+    assert sells and all(m.amount > 0 and m.quantity and m.quantity < 0 for m in sells)
+    assert {m.price_currency for m in buys + sells} >= {"SEK", "USD"}
+    interest = [m for m in movements if m.type == "INTEREST"]
+    assert interest and all(m.description in ("Utlåningsränta", "Inlåningsränta") for m in interest)
+    # Corporate actions move shares but no cash.
+    assert any(m.type == "INSTRUMENT_TRANSFER" and m.amount == 0 for m in movements)
+
+  @pytest.mark.asyncio
+  async def test_each_accounts_imported_history_adds_up_to_avanzas_cash(
+    self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, avanza: FakeAvanza, user: User
+  ) -> None:
+    overview = _fixture("overview.json")
+    avanza.accounts = overview["accounts"]
+    avanza.positions_body = _fixture("positions.json")
+    avanza.movements = _fixture("transactions.json")["transactions"]
+    connection = AvanzaConnection(
+      user_id=user.id, username="simon", encrypted_credentials=encrypt(json.dumps({"password": "hunter2", "totpSecret": TOTP_SECRET}))
+    )
+    await save_fixture(connection)
+    bank_accounts = {}
+    for a in overview["accounts"]:
+      bank_account = await _bank_account(save_fixture, user.id, name=a["id"], subtype="kf")
+      bank_accounts[a["id"]] = bank_account
+      await save_fixture(AvanzaAccount(connection_id=connection.id, external_id=a["id"], name=a["id"], account_type=a["type"], bank_account_id=bank_account.id))
+
+    await avanza_service.sync(session_maker, connection.id)
+
+    for a in overview["accounts"]:
+      cash = await _cash(session, bank_accounts[a["id"]])
+      balance = sum(amount if direction == TransactionDirection.credit else -amount for _, amount, direction, _ in cash)
+      assert balance == round(a["balance"]["value"] * 100), a["id"]
+    trades = (await session.execute(select(Trade))).scalars().all()
+    assert len(trades) == sum(1 for m in avanza.movements if m["type"] in ("BUY", "SELL"))
+    assert len((await session.execute(select(HoldingSnapshot))).scalars().all()) == 3
+
+  def test_skips_cancelled_rows_and_prices_bare_trades_in_their_traded_currency(self) -> None:
+    bare = {
+      **movement("b1", "111", "BUY", "2026-03-08", -100.0, volume=1.0, price=9.5, price_unit="USD"),
+      "orderbook": None,
+      "instrumentName": "DELISTED CORP",
+      "isin": "US0000000001",
+      "description": "",
+      "backofficeTypeText": "Köp",
+    }
+    cancelled = {**movement("c1", "111", "DEPOSIT", "2026-03-09", 50.0), "cancelled": True}
+
+    [parsed] = parsing.movements({"transactions": [bare, cancelled]})
+
+    assert parsed.instrument is not None
+    assert (parsed.instrument.name, parsed.instrument.currency, parsed.description) == ("DELISTED CORP", "USD", "Köp DELISTED CORP")

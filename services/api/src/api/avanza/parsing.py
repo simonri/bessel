@@ -87,7 +87,7 @@ def accounts(overview: dict[str, Any]) -> list[Account]:
   return out
 
 
-def _instrument(raw: dict[str, Any] | None, *, name: str | None = None, isin: str | None = None) -> Instrument | None:
+def _instrument(raw: dict[str, Any] | None, *, name: str | None = None, isin: str | None = None, currency: str | None = None) -> Instrument | None:
   raw = raw or {}
   isin = raw.get("isin") or isin
   if not isin:
@@ -96,7 +96,7 @@ def _instrument(raw: dict[str, Any] | None, *, name: str | None = None, isin: st
     isin=isin,
     name=raw.get("name") or name or isin,
     asset_type=ASSET_TYPES.get(str(raw.get("type", "")).upper(), AssetType.other),
-    currency=raw.get("currency") or "SEK",
+    currency=raw.get("currency") or currency or "SEK",
   )
 
 
@@ -121,22 +121,34 @@ def positions(body: dict[str, Any]) -> list[Position]:
   return out
 
 
+def _description(row: dict[str, Any], kind: str, instrument: Instrument | None) -> str:
+  """The row's own text, else Avanza's label for its type ("Köp", "Utlåningsränta") and the instrument."""
+  label = row.get("backofficeTypeText") or kind.title()
+  text = (row.get("description") or "").strip()
+  if text:
+    return text
+  return f"{label} {instrument.name}" if instrument else label
+
+
 def movements(body: dict[str, Any]) -> list[Movement]:
   out = []
   for row in body.get("transactions") or []:
+    if row.get("cancelled"):
+      continue
     amount = row.get("amount") or {}
     orderbook = row.get("orderbook")
-    instrument = _instrument(orderbook, name=row.get("instrumentName"), isin=row.get("isin"))
     price = row.get("priceInTradedCurrency") or {}
+    instrument = _instrument(orderbook, name=row.get("instrumentName"), isin=row.get("isin"), currency=price.get("unit"))
+    kind = str(row.get("type", "UNKNOWN")).upper()
     out.append(
       Movement(
         external_id=str(row["id"]),
         account_id=str(row["account"]["id"]),
-        type=str(row.get("type", "UNKNOWN")).upper(),
+        type=kind,
         day=date.fromisoformat((row.get("tradeDate") or row["date"])[:10]),
         amount=_number(amount) or Decimal(0),
         currency=amount.get("unit") or "SEK",
-        description=row.get("description") or row.get("instrumentName") or str(row.get("type", "")).title(),
+        description=_description(row, kind, instrument),
         settled=not row.get("intraday", False),
         instrument=instrument,
         quantity=_number(row.get("volume")),

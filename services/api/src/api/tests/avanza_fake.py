@@ -79,6 +79,8 @@ class FakeAvanza:
   fail_with: int | None = None
   # How many correct codes to turn down first, as Avanza does with a code that was just used.
   reject_codes: int = 0
+  # A whole positions response, used as is instead of `positions`.
+  positions_body: dict[str, Any] | None = None
 
   def transport(self) -> httpx.MockTransport:
     return httpx.MockTransport(self._handle)
@@ -106,7 +108,8 @@ class FakeAvanza:
     if path == "/_api/account-overview/overview/categorizedAccounts":
       return httpx.Response(200, json={"categories": [], "accounts": self.accounts, "loans": []})
     if path == "/_api/position-data/positions":
-      return httpx.Response(200, json={"withOrderbook": self.positions, "withoutOrderbook": [], "cashPositions": []})
+      body = self.positions_body or {"withOrderbook": self.positions, "withoutOrderbook": [], "cashPositions": []}
+      return httpx.Response(200, json=body)
     if path == "/_api/transactions/list":
       params = dict(request.url.params)
       self.transaction_requests.append(params)
