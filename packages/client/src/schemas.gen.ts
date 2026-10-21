@@ -6372,309 +6372,6 @@ export const SearchResponseSchema = {
   title: "SearchResponse",
 } as const;
 
-export const SecurityCreateSchema = {
-  properties: {
-    name: {
-      type: "string",
-      maxLength: 255,
-      title: "Name",
-    },
-    ticker: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 20,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Ticker",
-    },
-    asset_type: {
-      $ref: "#/components/schemas/AssetType",
-    },
-    currency: {
-      type: "string",
-      maxLength: 3,
-      title: "Currency",
-    },
-    notes: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Notes",
-    },
-  },
-  type: "object",
-  required: ["name", "asset_type", "currency"],
-  title: "SecurityCreate",
-} as const;
-
-export const SecurityListResponseSchema = {
-  properties: {
-    items: {
-      items: {
-        $ref: "#/components/schemas/SecuritySchema",
-      },
-      type: "array",
-      title: "Items",
-    },
-    pagination: {
-      $ref: "#/components/schemas/Pagination",
-    },
-  },
-  type: "object",
-  required: ["items", "pagination"],
-  title: "SecurityListResponse",
-} as const;
-
-export const SecurityPriceCreateSchema = {
-  properties: {
-    price_date: {
-      type: "string",
-      format: "date",
-      title: "Price Date",
-    },
-    price_per_unit: {
-      type: "integer",
-      exclusiveMinimum: 0,
-      title: "Price Per Unit",
-      description: "Price in minor units (cents).",
-    },
-    currency: {
-      type: "string",
-      maxLength: 3,
-      title: "Currency",
-    },
-  },
-  type: "object",
-  required: ["price_date", "price_per_unit", "currency"],
-  title: "SecurityPriceCreate",
-} as const;
-
-export const SecurityPriceListResponseSchema = {
-  properties: {
-    items: {
-      items: {
-        $ref: "#/components/schemas/SecurityPriceSchema",
-      },
-      type: "array",
-      title: "Items",
-    },
-    pagination: {
-      $ref: "#/components/schemas/Pagination",
-    },
-  },
-  type: "object",
-  required: ["items", "pagination"],
-  title: "SecurityPriceListResponse",
-} as const;
-
-export const SecurityPriceSchemaSchema = {
-  properties: {
-    created_at: {
-      type: "string",
-      format: "date-time",
-      title: "Created At",
-      description: "Creation timestamp of the object.",
-    },
-    modified_at: {
-      anyOf: [
-        {
-          type: "string",
-          format: "date-time",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Modified At",
-      description: "Last modification timestamp of the object.",
-    },
-    id: {
-      type: "string",
-      format: "uuid4",
-      title: "Id",
-      description: "The ID of the object.",
-    },
-    security_id: {
-      type: "string",
-      format: "uuid4",
-      title: "Security Id",
-    },
-    price_date: {
-      type: "string",
-      format: "date",
-      title: "Price Date",
-    },
-    price_per_unit: {
-      type: "integer",
-      title: "Price Per Unit",
-      description: "Price in minor units (cents).",
-    },
-    currency: {
-      type: "string",
-      title: "Currency",
-    },
-  },
-  type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "security_id",
-    "price_date",
-    "price_per_unit",
-    "currency",
-  ],
-  title: "SecurityPriceSchema",
-} as const;
-
-export const SecuritySchemaSchema = {
-  properties: {
-    created_at: {
-      type: "string",
-      format: "date-time",
-      title: "Created At",
-      description: "Creation timestamp of the object.",
-    },
-    modified_at: {
-      anyOf: [
-        {
-          type: "string",
-          format: "date-time",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Modified At",
-      description: "Last modification timestamp of the object.",
-    },
-    id: {
-      type: "string",
-      format: "uuid4",
-      title: "Id",
-      description: "The ID of the object.",
-    },
-    name: {
-      type: "string",
-      title: "Name",
-    },
-    ticker: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Ticker",
-    },
-    asset_type: {
-      $ref: "#/components/schemas/AssetType",
-    },
-    currency: {
-      type: "string",
-      title: "Currency",
-    },
-    notes: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Notes",
-    },
-  },
-  type: "object",
-  required: [
-    "created_at",
-    "modified_at",
-    "id",
-    "name",
-    "ticker",
-    "asset_type",
-    "currency",
-    "notes",
-  ],
-  title: "SecuritySchema",
-} as const;
-
-export const SecurityUpdateSchema = {
-  properties: {
-    name: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 255,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Name",
-    },
-    ticker: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 20,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Ticker",
-    },
-    asset_type: {
-      anyOf: [
-        {
-          $ref: "#/components/schemas/AssetType",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    currency: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 3,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Currency",
-    },
-    notes: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Notes",
-    },
-  },
-  type: "object",
-  title: "SecurityUpdate",
-} as const;
-
 export const SleepDailyEntrySchema = {
   properties: {
     date: {
@@ -8092,68 +7789,6 @@ export const TimelineSegmentSchema = {
   title: "TimelineSegment",
 } as const;
 
-export const TradeCreateSchema = {
-  properties: {
-    security_id: {
-      type: "string",
-      format: "uuid4",
-      title: "Security Id",
-    },
-    bank_account_id: {
-      type: "string",
-      format: "uuid4",
-      title: "Bank Account Id",
-    },
-    trade_type: {
-      $ref: "#/components/schemas/TradeType",
-    },
-    trade_date: {
-      type: "string",
-      format: "date",
-      title: "Trade Date",
-    },
-    quantity: {
-      type: "integer",
-      exclusiveMinimum: 0,
-      title: "Quantity",
-      description: "Quantity in micro-units (x1,000,000).",
-    },
-    price_per_unit: {
-      type: "integer",
-      exclusiveMinimum: 0,
-      title: "Price Per Unit",
-      description: "Price per unit in minor units (cents).",
-    },
-    currency: {
-      type: "string",
-      maxLength: 3,
-      title: "Currency",
-    },
-    notes: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Notes",
-    },
-  },
-  type: "object",
-  required: [
-    "security_id",
-    "bank_account_id",
-    "trade_type",
-    "trade_date",
-    "quantity",
-    "price_per_unit",
-    "currency",
-  ],
-  title: "TradeCreate",
-} as const;
-
 export const TradeListResponseSchema = {
   properties: {
     items: {
@@ -8204,10 +7839,18 @@ export const TradeSchemaSchema = {
       format: "uuid4",
       title: "Security Id",
     },
+    security_name: {
+      type: "string",
+      title: "Security Name",
+    },
     bank_account_id: {
       type: "string",
       format: "uuid4",
       title: "Bank Account Id",
+    },
+    bank_account_name: {
+      type: "string",
+      title: "Bank Account Name",
     },
     trade_type: {
       $ref: "#/components/schemas/TradeType",
@@ -8249,7 +7892,9 @@ export const TradeSchemaSchema = {
     "modified_at",
     "id",
     "security_id",
+    "security_name",
     "bank_account_id",
+    "bank_account_name",
     "trade_type",
     "trade_date",
     "quantity",
@@ -8264,82 +7909,6 @@ export const TradeTypeSchema = {
   type: "string",
   enum: ["buy", "sell"],
   title: "TradeType",
-} as const;
-
-export const TradeUpdateSchema = {
-  properties: {
-    trade_type: {
-      anyOf: [
-        {
-          $ref: "#/components/schemas/TradeType",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-    trade_date: {
-      anyOf: [
-        {
-          type: "string",
-          format: "date",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Trade Date",
-    },
-    quantity: {
-      anyOf: [
-        {
-          type: "integer",
-          exclusiveMinimum: 0,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Quantity",
-    },
-    price_per_unit: {
-      anyOf: [
-        {
-          type: "integer",
-          exclusiveMinimum: 0,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Price Per Unit",
-    },
-    currency: {
-      anyOf: [
-        {
-          type: "string",
-          maxLength: 3,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Currency",
-    },
-    notes: {
-      anyOf: [
-        {
-          type: "string",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Notes",
-    },
-  },
-  type: "object",
-  title: "TradeUpdate",
 } as const;
 
 export const TransactionDirectionSchema = {

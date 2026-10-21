@@ -5,29 +5,11 @@ import httpx
 from fastapi import APIRouter, Depends, Query
 
 from api.avanza.repository import AvanzaAccountRepository, HoldingSnapshotRepository
-from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
-from api.exceptions import ConflictError, ResourceNotFound, ServiceUnavailableError
-from api.investments.repository import SecurityPriceRepository, SecurityRepository, TradeRepository
-from api.investments.schemas import (
-  CryptoPriceSchema,
-  HoldingsResponse,
-  SecurityCreate,
-  SecurityListResponse,
-  SecurityPriceCreate,
-  SecurityPriceListResponse,
-  SecurityPriceSchema,
-  SecuritySchema,
-  SecurityUpdate,
-  TradeCreate,
-  TradeListResponse,
-  TradeSchema,
-  TradeUpdate,
-)
+from api.exceptions import ResourceNotFound, ServiceUnavailableError
+from api.investments.repository import TradeRepository
+from api.investments.schemas import CryptoPriceSchema, HoldingsResponse, TradeListResponse, TradeSchema
 from api.investments.service import investment_service
-from api.models.security import Security
-from api.models.security_price import SecurityPrice
-from api.models.trade import Trade
 from api.postgres import DBSession
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
@@ -38,73 +20,8 @@ CRYPTO_PRICE_CACHE_TTL = 120
 router = APIRouter(prefix="/investments", tags=["investments"])
 
 
-# ─── Securities ───
-
-
-@router.get("/securities", summary="List Securities", response_model=SecurityListResponse)
-async def list_securities(
-  session: DBSession,
-  current_user: CurrentDBUser,
-  pagination: PaginationParamsQuery,
-) -> SecurityListResponse:
-  repo = SecurityRepository.from_session(session)
-  statement = repo.get_base_statement().order_by(Security.name.asc())
-  items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
-  return SecurityListResponse.from_paginated_results(
-    [SecuritySchema.model_validate(item) for item in items],
-    total_count,
-    pagination,
-  )
-
-
-@router.post("/securities", summary="Create Security", response_model=SecuritySchema, status_code=201)
-async def create_security(
-  body: SecurityCreate,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> SecuritySchema:
-  repo = SecurityRepository.from_session(session)
-  security = Security(**body.model_dump())
-  await repo.create(security, flush=True)
-  return SecuritySchema.model_validate(security)
-
-
-@router.patch("/securities/{security_id}", summary="Update Security", response_model=SecuritySchema)
-async def update_security(
-  security_id: UUID,
-  body: SecurityUpdate,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> SecuritySchema:
-  repo = SecurityRepository.from_session(session)
-  security = await repo.get_by_id(security_id)
-  if security is None:
-    raise ResourceNotFound("Security not found")
-  update_dict = body.model_dump(exclude_unset=True)
-  if update_dict:
-    await repo.update(security, update_dict=update_dict)
-  return SecuritySchema.model_validate(security)
-
-
-@router.delete("/securities/{security_id}", summary="Delete Security", status_code=204)
-async def delete_security(
-  security_id: UUID,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> None:
-  repo = SecurityRepository.from_session(session)
-  security = await repo.get_by_id(security_id)
-  if security is None:
-    raise ResourceNotFound("Security not found")
-  # Securities are shared; deleting cascades to trades and prices, so never
-  # allow one user to wipe rows belonging to someone else.
-  trade_repo = TradeRepository.from_session(session)
-  if await trade_repo.count_for_security_by_other_users(security_id, current_user.id) > 0:
-    raise ConflictError("Security has trades belonging to other users")
-  await repo.delete(security)
-
-
 # ─── Trades ───
+# Read-only: trades come from a broker sync (Avanza), which would re-import any change.
 
 
 @router.get("/trades", summary="List Trades", response_model=TradeListResponse)
@@ -116,100 +33,22 @@ async def list_trades(
   bank_account_id: Annotated[UUID | None, Query()] = None,
 ) -> TradeListResponse:
   repo = TradeRepository.from_session(session)
-  statement = repo.get_base_statement().where(Trade.user_id == current_user.id).order_by(Trade.trade_date.desc(), Trade.created_at.desc())
-  if security_id is not None:
-    statement = statement.where(Trade.security_id == security_id)
-  if bank_account_id is not None:
-    statement = statement.where(Trade.bank_account_id == bank_account_id)
+  statement = repo.list_statement(current_user.id, security_id=security_id, bank_account_id=bank_account_id)
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return TradeListResponse.from_paginated_results(
-    [TradeSchema.model_validate(item) for item in items],
+    [
+      TradeSchema.model_validate(
+        {
+          **{field: getattr(trade, field) for field in TradeSchema.model_fields if hasattr(trade, field)},
+          "security_name": trade.security.name,
+          "bank_account_name": trade.bank_account.name,
+        }
+      )
+      for trade in items
+    ],
     total_count,
     pagination,
   )
-
-
-@router.post("/trades", summary="Create Trade", response_model=TradeSchema, status_code=201)
-async def create_trade(
-  body: TradeCreate,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> TradeSchema:
-  sec_repo = SecurityRepository.from_session(session)
-  if await sec_repo.get_by_id(body.security_id) is None:
-    raise ResourceNotFound("Security not found")
-  await BankAccountRepository.from_session(session).get_owned_or_404(body.bank_account_id, current_user.id, not_found_message="Bank account not found")
-  repo = TradeRepository.from_session(session)
-  trade = Trade(**body.model_dump(), user_id=current_user.id)
-  await repo.create(trade, flush=True)
-  return TradeSchema.model_validate(trade)
-
-
-@router.patch("/trades/{trade_id}", summary="Update Trade", response_model=TradeSchema)
-async def update_trade(
-  trade_id: UUID,
-  body: TradeUpdate,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> TradeSchema:
-  repo = TradeRepository.from_session(session)
-  trade = await repo.get_owned_or_404(trade_id, current_user.id, not_found_message="Trade not found")
-  update_dict = body.model_dump(exclude_unset=True)
-  if update_dict:
-    await repo.update(trade, update_dict=update_dict)
-  return TradeSchema.model_validate(trade)
-
-
-@router.delete("/trades/{trade_id}", summary="Delete Trade", status_code=204)
-async def delete_trade(
-  trade_id: UUID,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> None:
-  repo = TradeRepository.from_session(session)
-  trade = await repo.get_owned_or_404(trade_id, current_user.id, not_found_message="Trade not found")
-  await repo.delete(trade)
-
-
-# ─── Prices ───
-
-
-@router.get("/securities/{security_id}/prices", summary="List Security Prices", response_model=SecurityPriceListResponse)
-async def list_security_prices(
-  security_id: UUID,
-  session: DBSession,
-  current_user: CurrentDBUser,
-  pagination: PaginationParamsQuery,
-) -> SecurityPriceListResponse:
-  repo = SecurityPriceRepository.from_session(session)
-  statement = repo.get_base_statement().where(SecurityPrice.security_id == security_id).order_by(SecurityPrice.price_date.desc())
-  items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
-  return SecurityPriceListResponse.from_paginated_results(
-    [SecurityPriceSchema.model_validate(item) for item in items],
-    total_count,
-    pagination,
-  )
-
-
-@router.post(
-  "/securities/{security_id}/prices",
-  summary="Add Security Price",
-  response_model=SecurityPriceSchema,
-  status_code=201,
-)
-async def create_security_price(
-  security_id: UUID,
-  body: SecurityPriceCreate,
-  session: DBSession,
-  current_user: CurrentDBUser,
-) -> SecurityPriceSchema:
-  sec_repo = SecurityRepository.from_session(session)
-  if await sec_repo.get_by_id(security_id) is None:
-    raise ResourceNotFound("Security not found")
-  repo = SecurityPriceRepository.from_session(session)
-  price = SecurityPrice(security_id=security_id, **body.model_dump())
-  await repo.create(price, flush=True)
-  return SecurityPriceSchema.model_validate(price)
 
 
 # ─── Holdings (computed) ───

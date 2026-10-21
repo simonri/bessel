@@ -2,10 +2,9 @@ import type { HoldingSchema } from "@bessel/client";
 import { getHoldingsV1InvestmentsHoldingsGetOptions } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { TrendingUp } from "lucide-react";
 import { useMemo } from "react";
-import { CreateSecurityDialog } from "@/components/create-security-dialog";
-import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { DataTable } from "@/components/data-table";
 import {
   BarRow,
@@ -211,11 +210,13 @@ export function HoldingsTab() {
         title="No holdings yet"
         className="py-12"
       >
-        <p>Add securities and record trades to get started.</p>
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
-          <CreateSecurityDialog />
-          <CreateTradeDialog />
-        </div>
+        <p>
+          Connect Avanza on the{" "}
+          <Link to="/accounts" className="underline underline-offset-2">
+            Accounts
+          </Link>{" "}
+          page and link an account to import your holdings.
+        </p>
       </EmptyState>
     );
   }

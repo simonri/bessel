@@ -28,12 +28,9 @@ import {
   createProjectV1ProjectsPost,
   createRecipeV1RecipesPost,
   createResetV1CountersCounterIdResetsPost,
-  createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost,
-  createSecurityV1InvestmentsSecuritiesPost,
   createTaskV1TasksPost,
   createTimeEntryV1TimeEntriesPost,
   createTimeProjectV1TimeProjectsPost,
-  createTradeV1InvestmentsTradesPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCalendarEventV1CalendarsEventsEventIdDelete,
   deleteCounterV1CountersCounterIdDelete,
@@ -43,11 +40,9 @@ import {
   deletePlaceV1PlacesPlaceIdDelete,
   deleteProjectV1ProjectsProjectIdDelete,
   deleteRecipeV1RecipesRecipeIdDelete,
-  deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete,
   deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete,
   deleteTaskV1TasksTaskIdDelete,
   deleteTimeEntryV1TimeEntriesEntryIdDelete,
-  deleteTradeV1InvestmentsTradesTradeIdDelete,
   deleteTransactionsV1TransactionsDelete,
   disconnectAvanzaV1AvanzaDelete,
   disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
@@ -100,8 +95,6 @@ import {
   listProjectsV1ProjectsGet,
   listRecipesV1RecipesGet,
   listResetsV1CountersCounterIdResetsGet,
-  listSecuritiesV1InvestmentsSecuritiesGet,
-  listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet,
   listTasksV1TasksGet,
   listTimeEntriesV1TimeEntriesGet,
   listTimeProjectsV1TimeProjectsGet,
@@ -139,11 +132,9 @@ import {
   updatePlaceV1PlacesPlaceIdPatch,
   updateProjectV1ProjectsProjectIdPatch,
   updateRecipeV1RecipesRecipeIdPatch,
-  updateSecurityV1InvestmentsSecuritiesSecurityIdPatch,
   updateTaskV1TasksTaskIdPatch,
   updateTimeEntryV1TimeEntriesEntryIdPatch,
   updateTimeProjectV1TimeProjectsProjectIdPatch,
-  updateTradeV1InvestmentsTradesTradeIdPatch,
   updateTransactionV1TransactionsTransactionIdPatch,
   uploadClientDiagnosticsV1ClientDiagnosticsPost,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPost,
@@ -202,12 +193,6 @@ import type {
   CreateResetV1CountersCounterIdResetsPostData,
   CreateResetV1CountersCounterIdResetsPostError,
   CreateResetV1CountersCounterIdResetsPostResponse,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
-  CreateSecurityV1InvestmentsSecuritiesPostData,
-  CreateSecurityV1InvestmentsSecuritiesPostError,
-  CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostData,
   CreateTaskV1TasksPostError,
   CreateTaskV1TasksPostResponse,
@@ -217,9 +202,6 @@ import type {
   CreateTimeProjectV1TimeProjectsPostData,
   CreateTimeProjectV1TimeProjectsPostError,
   CreateTimeProjectV1TimeProjectsPostResponse,
-  CreateTradeV1InvestmentsTradesPostData,
-  CreateTradeV1InvestmentsTradesPostError,
-  CreateTradeV1InvestmentsTradesPostResponse,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
@@ -247,9 +229,6 @@ import type {
   DeleteRecipeV1RecipesRecipeIdDeleteData,
   DeleteRecipeV1RecipesRecipeIdDeleteError,
   DeleteRecipeV1RecipesRecipeIdDeleteResponse,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse,
   DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
   DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
   DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
@@ -259,9 +238,6 @@ import type {
   DeleteTimeEntryV1TimeEntriesEntryIdDeleteData,
   DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
   DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteError,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteResponse,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteError,
   DeleteTransactionsV1TransactionsDeleteResponse,
@@ -401,12 +377,6 @@ import type {
   ListResetsV1CountersCounterIdResetsGetData,
   ListResetsV1CountersCounterIdResetsGetError,
   ListResetsV1CountersCounterIdResetsGetResponse,
-  ListSecuritiesV1InvestmentsSecuritiesGetData,
-  ListSecuritiesV1InvestmentsSecuritiesGetError,
-  ListSecuritiesV1InvestmentsSecuritiesGetResponse,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetData,
   ListTasksV1TasksGetError,
   ListTasksV1TasksGetResponse,
@@ -509,9 +479,6 @@ import type {
   UpdateRecipeV1RecipesRecipeIdPatchData,
   UpdateRecipeV1RecipesRecipeIdPatchError,
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchError,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchData,
   UpdateTaskV1TasksTaskIdPatchError,
   UpdateTaskV1TasksTaskIdPatchResponse,
@@ -521,9 +488,6 @@ import type {
   UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
   UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
   UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchData,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchError,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchError,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
@@ -2781,174 +2745,6 @@ export const revokeIngestTokenV1IngestTokensTokenIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const listSecuritiesV1InvestmentsSecuritiesGetQueryKey = (
-  options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
-) => createQueryKey("listSecuritiesV1InvestmentsSecuritiesGet", options);
-
-/**
- * List Securities
- */
-export const listSecuritiesV1InvestmentsSecuritiesGetOptions = (
-  options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
-) =>
-  queryOptions<
-    ListSecuritiesV1InvestmentsSecuritiesGetResponse,
-    ListSecuritiesV1InvestmentsSecuritiesGetError,
-    ListSecuritiesV1InvestmentsSecuritiesGetResponse,
-    ReturnType<typeof listSecuritiesV1InvestmentsSecuritiesGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listSecuritiesV1InvestmentsSecuritiesGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listSecuritiesV1InvestmentsSecuritiesGetQueryKey(options),
-  });
-
-export const listSecuritiesV1InvestmentsSecuritiesGetInfiniteQueryKey = (
-  options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
-): QueryKey<Options<ListSecuritiesV1InvestmentsSecuritiesGetData>> =>
-  createQueryKey("listSecuritiesV1InvestmentsSecuritiesGet", options, true);
-
-/**
- * List Securities
- */
-export const listSecuritiesV1InvestmentsSecuritiesGetInfiniteOptions = (
-  options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData>,
-) => {
-  const opts = infiniteQueryOptions<
-    ListSecuritiesV1InvestmentsSecuritiesGetResponse,
-    ListSecuritiesV1InvestmentsSecuritiesGetError,
-    InfiniteData<ListSecuritiesV1InvestmentsSecuritiesGetResponse>,
-    QueryKey<Options<ListSecuritiesV1InvestmentsSecuritiesGetData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListSecuritiesV1InvestmentsSecuritiesGetData>>[0],
-        "body" | "headers" | "path" | "query"
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<ListSecuritiesV1InvestmentsSecuritiesGetData>>[0],
-          "body" | "headers" | "path" | "query"
-        > =
-          typeof pageParam === "object"
-            ? pageParam
-            : {
-                query: {
-                  page: pageParam,
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listSecuritiesV1InvestmentsSecuritiesGet({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey:
-        listSecuritiesV1InvestmentsSecuritiesGetInfiniteQueryKey(options),
-    },
-  );
-  return opts as Omit<typeof opts, "initialData">;
-};
-
-/**
- * Create Security
- */
-export const createSecurityV1InvestmentsSecuritiesPostMutation = (
-  options?: Partial<Options<CreateSecurityV1InvestmentsSecuritiesPostData>>,
-): UseMutationOptions<
-  CreateSecurityV1InvestmentsSecuritiesPostResponse,
-  CreateSecurityV1InvestmentsSecuritiesPostError,
-  Options<CreateSecurityV1InvestmentsSecuritiesPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateSecurityV1InvestmentsSecuritiesPostResponse,
-    CreateSecurityV1InvestmentsSecuritiesPostError,
-    Options<CreateSecurityV1InvestmentsSecuritiesPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createSecurityV1InvestmentsSecuritiesPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete Security
- */
-export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData>
-  >,
-): UseMutationOptions<
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError,
-  Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponse,
-    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteError,
-    Options<DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } =
-        await deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update Security
- */
-export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData>
-  >,
-): UseMutationOptions<
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchError,
-  Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
-    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchError,
-    Options<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } =
-        await updateSecurityV1InvestmentsSecuritiesSecurityIdPatch({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const listTradesV1InvestmentsTradesGetQueryKey = (
   options?: Options<ListTradesV1InvestmentsTradesGetData>,
 ) => createQueryKey("listTradesV1InvestmentsTradesGet", options);
@@ -3028,228 +2824,6 @@ export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
   );
   return opts as Omit<typeof opts, "initialData">;
 };
-
-/**
- * Create Trade
- */
-export const createTradeV1InvestmentsTradesPostMutation = (
-  options?: Partial<Options<CreateTradeV1InvestmentsTradesPostData>>,
-): UseMutationOptions<
-  CreateTradeV1InvestmentsTradesPostResponse,
-  CreateTradeV1InvestmentsTradesPostError,
-  Options<CreateTradeV1InvestmentsTradesPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateTradeV1InvestmentsTradesPostResponse,
-    CreateTradeV1InvestmentsTradesPostError,
-    Options<CreateTradeV1InvestmentsTradesPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createTradeV1InvestmentsTradesPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Delete Trade
- */
-export const deleteTradeV1InvestmentsTradesTradeIdDeleteMutation = (
-  options?: Partial<Options<DeleteTradeV1InvestmentsTradesTradeIdDeleteData>>,
-): UseMutationOptions<
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteResponse,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteError,
-  Options<DeleteTradeV1InvestmentsTradesTradeIdDeleteData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    DeleteTradeV1InvestmentsTradesTradeIdDeleteResponse,
-    DeleteTradeV1InvestmentsTradesTradeIdDeleteError,
-    Options<DeleteTradeV1InvestmentsTradesTradeIdDeleteData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await deleteTradeV1InvestmentsTradesTradeIdDelete({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update Trade
- */
-export const updateTradeV1InvestmentsTradesTradeIdPatchMutation = (
-  options?: Partial<Options<UpdateTradeV1InvestmentsTradesTradeIdPatchData>>,
-): UseMutationOptions<
-  UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchError,
-  Options<UpdateTradeV1InvestmentsTradesTradeIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
-    UpdateTradeV1InvestmentsTradesTradeIdPatchError,
-    Options<UpdateTradeV1InvestmentsTradesTradeIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await updateTradeV1InvestmentsTradesTradeIdPatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) =>
-    createQueryKey(
-      "listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet",
-      options,
-    );
-
-/**
- * List Security Prices
- */
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetOptions =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) =>
-    queryOptions<
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
-      ReturnType<
-        typeof listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey
-      >
-    >({
-      queryFn: async ({ queryKey, signal }) => {
-        const { data } =
-          await listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true,
-          });
-        return data;
-      },
-      queryKey:
-        listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetQueryKey(
-          options,
-        ),
-    });
-
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteQueryKey =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ): QueryKey<
-    Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-  > =>
-    createQueryKey(
-      "listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet",
-      options,
-      true,
-    );
-
-/**
- * List Security Prices
- */
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteOptions =
-  (
-    options: Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>,
-  ) => {
-    const opts = infiniteQueryOptions<
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
-      ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetError,
-      InfiniteData<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse>,
-      QueryKey<
-        Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-      >,
-      | number
-      | Pick<
-          QueryKey<
-            Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-          >[0],
-          "body" | "headers" | "path" | "query"
-        >
-    >(
-      // @ts-ignore
-      {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-          // @ts-ignore
-          const page: Pick<
-            QueryKey<
-              Options<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData>
-            >[0],
-            "body" | "headers" | "path" | "query"
-          > =
-            typeof pageParam === "object"
-              ? pageParam
-              : {
-                  query: {
-                    page: pageParam,
-                  },
-                };
-          const params = createInfiniteParams(queryKey, page);
-          const { data } =
-            await listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet({
-              ...options,
-              ...params,
-              signal,
-              throwOnError: true,
-            });
-          return data;
-        },
-        queryKey:
-          listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetInfiniteQueryKey(
-            options,
-          ),
-      },
-    );
-    return opts as Omit<typeof opts, "initialData">;
-  };
-
-/**
- * Add Security Price
- */
-export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostMutation =
-  (
-    options?: Partial<
-      Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
-    >,
-  ): UseMutationOptions<
-    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
-    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
-    Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
-      CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostError,
-      Options<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
-  };
 
 export const getHoldingsV1InvestmentsHoldingsGetQueryKey = (
   options?: Options<GetHoldingsV1InvestmentsHoldingsGetData>,

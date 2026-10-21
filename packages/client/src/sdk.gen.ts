@@ -24,12 +24,9 @@ import {
   createProjectV1ProjectsPostResponseTransformer,
   createRecipeV1RecipesPostResponseTransformer,
   createResetV1CountersCounterIdResetsPostResponseTransformer,
-  createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
-  createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
   createTaskV1TasksPostResponseTransformer,
   createTimeEntryV1TimeEntriesPostResponseTransformer,
   createTimeProjectV1TimeProjectsPostResponseTransformer,
-  createTradeV1InvestmentsTradesPostResponseTransformer,
   getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
   getAvanzaV1AvanzaGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
@@ -60,8 +57,6 @@ import {
   listProjectsV1ProjectsGetResponseTransformer,
   listRecipesV1RecipesGetResponseTransformer,
   listResetsV1CountersCounterIdResetsGetResponseTransformer,
-  listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
-  listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
   listTasksV1TasksGetResponseTransformer,
   listTimeEntriesV1TimeEntriesGetResponseTransformer,
   listTimeProjectsV1TimeProjectsGetResponseTransformer,
@@ -81,11 +76,9 @@ import {
   updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
   updateProjectV1ProjectsProjectIdPatchResponseTransformer,
   updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
-  updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
   updateTaskV1TasksTaskIdPatchResponseTransformer,
   updateTimeEntryV1TimeEntriesEntryIdPatchResponseTransformer,
   updateTimeProjectV1TimeProjectsProjectIdPatchResponseTransformer,
-  updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
   updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
   upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
@@ -143,12 +136,6 @@ import type {
   CreateResetV1CountersCounterIdResetsPostData,
   CreateResetV1CountersCounterIdResetsPostErrors,
   CreateResetV1CountersCounterIdResetsPostResponses,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
-  CreateSecurityV1InvestmentsSecuritiesPostData,
-  CreateSecurityV1InvestmentsSecuritiesPostErrors,
-  CreateSecurityV1InvestmentsSecuritiesPostResponses,
   CreateTaskV1TasksPostData,
   CreateTaskV1TasksPostErrors,
   CreateTaskV1TasksPostResponses,
@@ -158,9 +145,6 @@ import type {
   CreateTimeProjectV1TimeProjectsPostData,
   CreateTimeProjectV1TimeProjectsPostErrors,
   CreateTimeProjectV1TimeProjectsPostResponses,
-  CreateTradeV1InvestmentsTradesPostData,
-  CreateTradeV1InvestmentsTradesPostErrors,
-  CreateTradeV1InvestmentsTradesPostResponses,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
   DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
@@ -188,9 +172,6 @@ import type {
   DeleteRecipeV1RecipesRecipeIdDeleteData,
   DeleteRecipeV1RecipesRecipeIdDeleteErrors,
   DeleteRecipeV1RecipesRecipeIdDeleteResponses,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
   DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
   DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors,
   DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses,
@@ -200,9 +181,6 @@ import type {
   DeleteTimeEntryV1TimeEntriesEntryIdDeleteData,
   DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors,
   DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
   DeleteTransactionsV1TransactionsDeleteData,
   DeleteTransactionsV1TransactionsDeleteErrors,
   DeleteTransactionsV1TransactionsDeleteResponses,
@@ -344,12 +322,6 @@ import type {
   ListResetsV1CountersCounterIdResetsGetData,
   ListResetsV1CountersCounterIdResetsGetErrors,
   ListResetsV1CountersCounterIdResetsGetResponses,
-  ListSecuritiesV1InvestmentsSecuritiesGetData,
-  ListSecuritiesV1InvestmentsSecuritiesGetErrors,
-  ListSecuritiesV1InvestmentsSecuritiesGetResponses,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses,
   ListTasksV1TasksGetData,
   ListTasksV1TasksGetErrors,
   ListTasksV1TasksGetResponses,
@@ -455,9 +427,6 @@ import type {
   UpdateRecipeV1RecipesRecipeIdPatchData,
   UpdateRecipeV1RecipesRecipeIdPatchErrors,
   UpdateRecipeV1RecipesRecipeIdPatchResponses,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
   UpdateTaskV1TasksTaskIdPatchData,
   UpdateTaskV1TasksTaskIdPatchErrors,
   UpdateTaskV1TasksTaskIdPatchResponses,
@@ -467,9 +436,6 @@ import type {
   UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
   UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors,
   UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchData,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
   UpdateTransactionV1TransactionsTransactionIdPatchData,
   UpdateTransactionV1TransactionsTransactionIdPatchErrors,
   UpdateTransactionV1TransactionsTransactionIdPatchResponses,
@@ -2230,114 +2196,6 @@ export const revokeIngestTokenV1IngestTokensTokenIdDelete = <
   });
 
 /**
- * List Securities
- */
-export const listSecuritiesV1InvestmentsSecuritiesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListSecuritiesV1InvestmentsSecuritiesGetData, ThrowOnError>,
-): RequestResult<
-  ListSecuritiesV1InvestmentsSecuritiesGetResponses,
-  ListSecuritiesV1InvestmentsSecuritiesGetErrors,
-  ThrowOnError
-> =>
-  (options?.client ?? client).get<
-    ListSecuritiesV1InvestmentsSecuritiesGetResponses,
-    ListSecuritiesV1InvestmentsSecuritiesGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/securities",
-    ...options,
-  });
-
-/**
- * Create Security
- */
-export const createSecurityV1InvestmentsSecuritiesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateSecurityV1InvestmentsSecuritiesPostData, ThrowOnError>,
-): RequestResult<
-  CreateSecurityV1InvestmentsSecuritiesPostResponses,
-  CreateSecurityV1InvestmentsSecuritiesPostErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).post<
-    CreateSecurityV1InvestmentsSecuritiesPostResponses,
-    CreateSecurityV1InvestmentsSecuritiesPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      createSecurityV1InvestmentsSecuritiesPostResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/securities",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Delete Security
- */
-export const deleteSecurityV1InvestmentsSecuritiesSecurityIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteData,
-    ThrowOnError
-  >,
-): RequestResult<
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
-  DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).delete<
-    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteResponses,
-    DeleteSecurityV1InvestmentsSecuritiesSecurityIdDeleteErrors,
-    ThrowOnError
-  >({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/securities/{security_id}",
-    ...options,
-  });
-
-/**
- * Update Security
- */
-export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchData,
-    ThrowOnError
-  >,
-): RequestResult<
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).patch<
-    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponses,
-    UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/securities/{security_id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
  * List Trades
  */
 export const listTradesV1InvestmentsTradesGet = <
@@ -2358,147 +2216,6 @@ export const listTradesV1InvestmentsTradesGet = <
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/trades",
     ...options,
-  });
-
-/**
- * Create Trade
- */
-export const createTradeV1InvestmentsTradesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateTradeV1InvestmentsTradesPostData, ThrowOnError>,
-): RequestResult<
-  CreateTradeV1InvestmentsTradesPostResponses,
-  CreateTradeV1InvestmentsTradesPostErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).post<
-    CreateTradeV1InvestmentsTradesPostResponses,
-    CreateTradeV1InvestmentsTradesPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createTradeV1InvestmentsTradesPostResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/trades",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * Delete Trade
- */
-export const deleteTradeV1InvestmentsTradesTradeIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteTradeV1InvestmentsTradesTradeIdDeleteData,
-    ThrowOnError
-  >,
-): RequestResult<
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
-  DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).delete<
-    DeleteTradeV1InvestmentsTradesTradeIdDeleteResponses,
-    DeleteTradeV1InvestmentsTradesTradeIdDeleteErrors,
-    ThrowOnError
-  >({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/trades/{trade_id}",
-    ...options,
-  });
-
-/**
- * Update Trade
- */
-export const updateTradeV1InvestmentsTradesTradeIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateTradeV1InvestmentsTradesTradeIdPatchData,
-    ThrowOnError
-  >,
-): RequestResult<
-  UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).patch<
-    UpdateTradeV1InvestmentsTradesTradeIdPatchResponses,
-    UpdateTradeV1InvestmentsTradesTradeIdPatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/trades/{trade_id}",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-/**
- * List Security Prices
- */
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).get<
-    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponses,
-    ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/securities/{security_id}/prices",
-    ...options,
-  });
-
-/**
- * Add Security Price
- */
-export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostData,
-    ThrowOnError
-  >,
-): RequestResult<
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).post<
-    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponses,
-    CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostErrors,
-    ThrowOnError
-  >({
-    responseTransformer:
-      createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/investments/securities/{security_id}/prices",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
   });
 
 /**

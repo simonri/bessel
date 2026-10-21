@@ -1,31 +1,12 @@
 import type { TradeSchema } from "@bessel/client";
-import {
-  deleteTradeV1InvestmentsTradesTradeIdDeleteMutation,
-  getHoldingsV1InvestmentsHoldingsGetOptions,
-  listTradesV1InvestmentsTradesGetOptions,
-  listTradesV1InvestmentsTradesGetQueryKey,
-} from "@bessel/client";
+import { listTradesV1InvestmentsTradesGetOptions } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Trash2, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { CreateTradeDialog } from "@/components/create-trade-dialog";
 import { DataTable } from "@/components/data-table";
-import {
-  EmptyState,
-  IconButton,
-  PageToolbar,
-  PeriodNav,
-  placeholderKeys,
-} from "@/components/ui-kit";
+import { EmptyState, PeriodNav, placeholderKeys } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import type { DataColumnDef } from "@/lib/data-table";
 import { formatAmount, formatQuantity } from "@/lib/money";
@@ -33,9 +14,7 @@ import { cn } from "@/lib/utils";
 
 export function TradesTab() {
   const [page, setPage] = useState(1);
-  const [deleteTarget, setDeleteTarget] = useState<TradeSchema | null>(null);
   const limit = 20;
-  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     ...listTradesV1InvestmentsTradesGetOptions({
@@ -43,24 +22,6 @@ export function TradesTab() {
       query: { page, limit },
     }),
     placeholderData: keepPreviousData,
-  });
-
-  const queryKey = listTradesV1InvestmentsTradesGetQueryKey({ client });
-
-  const deleteMutation = useMutation({
-    ...deleteTradeV1InvestmentsTradesTradeIdDeleteMutation({ client }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-      void queryClient.invalidateQueries({
-        queryKey: getHoldingsV1InvestmentsHoldingsGetOptions({ client })
-          .queryKey,
-      });
-      toast.success("Trade deleted");
-      setDeleteTarget(null);
-    },
-    onError: () => {
-      toast.error("Failed to delete trade");
-    },
   });
 
   // Stable identity so react-table doesn't rebuild its column model per render.
@@ -90,6 +51,25 @@ export function TradesTab() {
             )}
           >
             {row.original.trade_type}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "security_name",
+        header: "Security",
+        cell: ({ row }) => (
+          <span className="block truncate font-medium text-white/85">
+            {row.original.security_name}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "bank_account_name",
+        header: "Account",
+        size: 130,
+        cell: ({ row }) => (
+          <span className="block truncate text-12 text-white/55">
+            {row.original.bank_account_name}
           </span>
         ),
       },
@@ -144,21 +124,6 @@ export function TradesTab() {
           </span>
         ),
       },
-      {
-        id: "actions",
-        size: 50,
-        cell: ({ row }) => (
-          <div className="flex justify-end">
-            <IconButton
-              destructive
-              title="Delete trade"
-              onClick={() => setDeleteTarget(row.original)}
-            >
-              <Trash2 />
-            </IconButton>
-          </div>
-        ),
-      },
     ],
     [],
   );
@@ -168,10 +133,6 @@ export function TradesTab() {
 
   return (
     <div className="space-y-4">
-      <PageToolbar>
-        <CreateTradeDialog />
-      </PageToolbar>
-
       {isLoading ? (
         <div className="space-y-2">
           {placeholderKeys(6).map((key) => (
@@ -183,7 +144,7 @@ export function TradesTab() {
         </div>
       ) : trades.length === 0 ? (
         <EmptyState icon={<TrendingUp />} title="No trades yet">
-          Record your first trade to see it here.
+          Trades appear here once an Avanza account is linked and synced.
         </EmptyState>
       ) : (
         <DataTable columns={columns} data={trades} />
@@ -200,26 +161,6 @@ export function TradesTab() {
           />
         </div>
       )}
-
-      <ConfirmDeleteDialog
-        size="sm"
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Delete trade?"
-        description={
-          <>
-            This trade will be permanently removed. This can&rsquo;t be undone.
-          </>
-        }
-        onConfirm={() => {
-          if (!deleteTarget) return;
-          deleteMutation.mutate({
-            client,
-            path: { trade_id: deleteTarget.id },
-          });
-        }}
-        isPending={deleteMutation.isPending}
-      />
     </div>
   );
 }

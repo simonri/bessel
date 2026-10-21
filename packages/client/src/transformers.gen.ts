@@ -15,12 +15,9 @@ import type {
   CreateProjectV1ProjectsPostResponse,
   CreateRecipeV1RecipesPostResponse,
   CreateResetV1CountersCounterIdResetsPostResponse,
-  CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse,
-  CreateSecurityV1InvestmentsSecuritiesPostResponse,
   CreateTaskV1TasksPostResponse,
   CreateTimeEntryV1TimeEntriesPostResponse,
   CreateTimeProjectV1TimeProjectsPostResponse,
-  CreateTradeV1InvestmentsTradesPostResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetAvanzaV1AvanzaGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
@@ -51,8 +48,6 @@ import type {
   ListProjectsV1ProjectsGetResponse,
   ListRecipesV1RecipesGetResponse,
   ListResetsV1CountersCounterIdResetsGetResponse,
-  ListSecuritiesV1InvestmentsSecuritiesGetResponse,
-  ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse,
   ListTasksV1TasksGetResponse,
   ListTimeEntriesV1TimeEntriesGetResponse,
   ListTimeProjectsV1TimeProjectsGetResponse,
@@ -72,11 +67,9 @@ import type {
   UpdatePlaceV1PlacesPlaceIdPatchResponse,
   UpdateProjectV1ProjectsProjectIdPatchResponse,
   UpdateRecipeV1RecipesRecipeIdPatchResponse,
-  UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse,
   UpdateTaskV1TasksTaskIdPatchResponse,
   UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
   UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
-  UpdateTradeV1InvestmentsTradesTradeIdPatchResponse,
   UpdateTransactionV1TransactionsTransactionIdPatchResponse,
   UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
   UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
@@ -639,45 +632,6 @@ export const createIngestTokenV1IngestTokensPostResponseTransformer = async (
   return data;
 };
 
-const securitySchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  return data;
-};
-
-const securityListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    securitySchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const listSecuritiesV1InvestmentsSecuritiesGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<ListSecuritiesV1InvestmentsSecuritiesGetResponse> => {
-    data = securityListResponseSchemaResponseTransformer(data);
-    return data;
-  };
-
-export const createSecurityV1InvestmentsSecuritiesPostResponseTransformer =
-  async (
-    data: any,
-  ): Promise<CreateSecurityV1InvestmentsSecuritiesPostResponse> => {
-    data = securitySchemaSchemaResponseTransformer(data);
-    return data;
-  };
-
-export const updateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateSecurityV1InvestmentsSecuritiesSecurityIdPatchResponse> => {
-    data = securitySchemaSchemaResponseTransformer(data);
-    return data;
-  };
-
 const tradeSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
@@ -700,53 +654,6 @@ export const listTradesV1InvestmentsTradesGetResponseTransformer = async (
   data = tradeListResponseSchemaResponseTransformer(data);
   return data;
 };
-
-export const createTradeV1InvestmentsTradesPostResponseTransformer = async (
-  data: any,
-): Promise<CreateTradeV1InvestmentsTradesPostResponse> => {
-  data = tradeSchemaSchemaResponseTransformer(data);
-  return data;
-};
-
-export const updateTradeV1InvestmentsTradesTradeIdPatchResponseTransformer =
-  async (
-    data: any,
-  ): Promise<UpdateTradeV1InvestmentsTradesTradeIdPatchResponse> => {
-    data = tradeSchemaSchemaResponseTransformer(data);
-    return data;
-  };
-
-const securityPriceSchemaSchemaResponseTransformer = (data: any) => {
-  data.created_at = new Date(data.created_at);
-  if (data.modified_at) {
-    data.modified_at = new Date(data.modified_at);
-  }
-  data.price_date = new Date(data.price_date);
-  return data;
-};
-
-const securityPriceListResponseSchemaResponseTransformer = (data: any) => {
-  data.items = data.items.map((item: any) =>
-    securityPriceSchemaSchemaResponseTransformer(item),
-  );
-  return data;
-};
-
-export const listSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponseTransformer =
-  async (
-    data: any,
-  ): Promise<ListSecurityPricesV1InvestmentsSecuritiesSecurityIdPricesGetResponse> => {
-    data = securityPriceListResponseSchemaResponseTransformer(data);
-    return data;
-  };
-
-export const createSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponseTransformer =
-  async (
-    data: any,
-  ): Promise<CreateSecurityPriceV1InvestmentsSecuritiesSecurityIdPricesPostResponse> => {
-    data = securityPriceSchemaSchemaResponseTransformer(data);
-    return data;
-  };
 
 const locationImportSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

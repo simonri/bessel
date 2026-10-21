@@ -7,7 +7,6 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-kit";
 import { HoldingsTab } from "./-holdings-tab";
-import { SecuritiesTab } from "./-securities-tab";
 import { TradesTab } from "./-trades-tab";
 
 export const Route = createFileRoute("/_app/investments")({
@@ -22,7 +21,7 @@ function Investments() {
     <Tabs defaultValue="holdings" className="flex flex-col gap-4">
       <PageHeader
         title="Investments"
-        summary="What you hold, the trades behind it, and the securities you track."
+        summary="What you hold at Avanza and every trade behind it, synced from Avanza."
       />
       <TabsList className="h-8 rounded-lg border border-white/[0.07] bg-white/[0.04] p-0.5 group-data-[orientation=horizontal]/tabs:h-8">
         <TabsTrigger value="holdings" className={TRIGGER_CLASS}>
@@ -31,18 +30,12 @@ function Investments() {
         <TabsTrigger value="trades" className={TRIGGER_CLASS}>
           Trades
         </TabsTrigger>
-        <TabsTrigger value="securities" className={TRIGGER_CLASS}>
-          Securities
-        </TabsTrigger>
       </TabsList>
       <TabsContent value="holdings" className="min-h-0 flex-1">
         <HoldingsTab />
       </TabsContent>
       <TabsContent value="trades" className="min-h-0 flex-1">
         <TradesTab />
-      </TabsContent>
-      <TabsContent value="securities" className="min-h-0 flex-1">
-        <SecuritiesTab />
       </TabsContent>
     </Tabs>
   );

@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import Row, case, func, select
+from sqlalchemy import Row, Select, case, func, select
+from sqlalchemy.orm import selectinload
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.security import Security
@@ -9,17 +10,22 @@ from api.models.security_price import SecurityPrice
 from api.models.trade import Trade, TradeType
 
 
-class SecurityRepository(RepositoryBase[Security], RepositoryIDMixin[Security, UUID]):
-  model = Security
-
-
 class TradeRepository(RepositoryBase[Trade], RepositoryIDMixin[Trade, UUID]):
   model = Trade
 
-  async def count_for_security_by_other_users(self, security_id: UUID, user_id: UUID) -> int:
-    statement = select(func.count()).select_from(Trade).where(Trade.security_id == security_id, Trade.user_id.is_distinct_from(user_id))
-    result = await self.session.execute(statement)
-    return result.scalar_one()
+  def list_statement(self, user_id: UUID, *, security_id: UUID | None = None, bank_account_id: UUID | None = None) -> Select[Trade]:
+    """The user's trades, newest first, with the security and account loaded for their names."""
+    statement = (
+      self.get_base_statement()
+      .where(Trade.user_id == user_id)
+      .options(selectinload(Trade.security), selectinload(Trade.bank_account))
+      .order_by(Trade.trade_date.desc(), Trade.created_at.desc())
+    )
+    if security_id is not None:
+      statement = statement.where(Trade.security_id == security_id)
+    if bank_account_id is not None:
+      statement = statement.where(Trade.bank_account_id == bank_account_id)
+    return statement
 
   async def holdings_rows(self, user_id: UUID, *, excluding_bank_account_ids: Sequence[UUID] = ()) -> Sequence[Row]:
     """Per-security aggregation: net quantity, buy totals, and latest known price."""
@@ -65,7 +71,3 @@ class TradeRepository(RepositoryBase[Trade], RepositoryIDMixin[Trade, UUID]):
     )
     result = await self.session.execute(statement)
     return result.all()
-
-
-class SecurityPriceRepository(RepositoryBase[SecurityPrice], RepositoryIDMixin[SecurityPrice, UUID]):
-  model = SecurityPrice

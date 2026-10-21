@@ -7,7 +7,7 @@ through any write. TestCoverage fails when an API route isn't covered here.
 
 import json
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -17,11 +17,14 @@ import pytest
 import pytest_asyncio
 from api.app import app
 from api.common.encryption import encrypt
+from api.models.bank_account import BankAccount
 from api.models.bank_connection import BankConnection, BankConnectionAccount
 from api.models.calendar import Calendar
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
 from api.models.category import Category
+from api.models.security import AssetType, Security
+from api.models.trade import Trade, TradeType
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.postgres import AsyncSession
@@ -108,10 +111,8 @@ AUDITED: set[str] = {
   "GET /v1/ingest-tokens",
   "POST /v1/ingest-tokens",
   "DELETE /v1/ingest-tokens/{token_id}",
+  "GET /v1/investments/holdings",
   "GET /v1/investments/trades",
-  "POST /v1/investments/trades",
-  "DELETE /v1/investments/trades/{trade_id}",
-  "PATCH /v1/investments/trades/{trade_id}",
   "POST /v1/klarna/import",
   "GET /v1/location-history/day",
   "POST /v1/location-history/import",
@@ -159,7 +160,6 @@ AUDITED: set[str] = {
   "PATCH /v1/transactions/{transaction_id}",
 }
 
-_SHARED_SECURITIES = "Securities are a shared catalog — known gap, removal pending"
 
 # Routes that hold no per-user data, or only create data for the caller.
 EXEMPT: dict[str, str] = {
@@ -176,13 +176,6 @@ EXEMPT: dict[str, str] = {
   "POST /v1/avanza/connect": "Creates or updates the caller's own connection only",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
   "GET /v1/klarna/transactions": "Proxies the caller's own Klarna credentials; reads no Bessel data",
-  "GET /v1/investments/holdings": _SHARED_SECURITIES,
-  "GET /v1/investments/securities": _SHARED_SECURITIES,
-  "POST /v1/investments/securities": _SHARED_SECURITIES,
-  "DELETE /v1/investments/securities/{security_id}": _SHARED_SECURITIES,
-  "PATCH /v1/investments/securities/{security_id}": _SHARED_SECURITIES,
-  "GET /v1/investments/securities/{security_id}/prices": _SHARED_SECURITIES,
-  "POST /v1/investments/securities/{security_id}/prices": _SHARED_SECURITIES,
 }
 
 
@@ -474,44 +467,29 @@ class TestBankingAndTransactions:
 
 class TestTrades:
   @pytest.mark.asyncio
-  async def test_other_user_cannot_read_or_change_trades(self, client: AsyncClient, other_client: AsyncClient) -> None:
-    account = await _create(client, "/v1/bank-accounts", {"name": "A broker", "currency": "USD", "subtype": "investment"})
-    security = await _create(client, "/v1/investments/securities", {"name": "Isolation Corp", "ticker": "ISO", "asset_type": "stock", "currency": "USD"})
-    trade = await _create(
-      client,
-      "/v1/investments/trades",
-      {
-        "security_id": security["id"],
-        "bank_account_id": account["id"],
-        "trade_type": "buy",
-        "trade_date": "2024-01-15",
-        "quantity": 1_000_000,
-        "price_per_unit": 10_000,
-        "currency": "USD",
-      },
+  async def test_other_user_cannot_see_trades_or_holdings(self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
+    account = BankAccount(name="A broker", currency="SEK", base_balance=0, subtype="isk", user_id=user.id)
+    await save_fixture(account)
+    security = Security(name="Isolation Corp", asset_type=AssetType.stock, currency="SEK", isin="SE0000000099")
+    await save_fixture(security)
+    trade = Trade(
+      security_id=security.id,
+      bank_account_id=account.id,
+      trade_type=TradeType.buy,
+      trade_date=date(2024, 1, 15),
+      quantity=1_000_000,
+      price_per_unit=10_000,
+      currency="SEK",
+      user_id=user.id,
     )
+    await save_fixture(trade)
 
     assert (await other_client.get("/v1/investments/trades")).json()["items"] == []
     assert (await other_client.get("/v1/investments/holdings")).json()["items"] == []
-    assert (await other_client.patch(f"/v1/investments/trades/{trade['id']}", json={"quantity": 5})).status_code == 404
-    assert (await other_client.delete(f"/v1/investments/trades/{trade['id']}")).status_code == 404
-    stolen = await other_client.post(
-      "/v1/investments/trades",
-      json={
-        "security_id": security["id"],
-        "bank_account_id": account["id"],
-        "trade_type": "sell",
-        "trade_date": "2024-01-16",
-        "quantity": 1_000_000,
-        "price_per_unit": 1,
-        "currency": "USD",
-      },
-    )
-    assert stolen.status_code == 404
 
-    own = (await client.get("/v1/investments/trades")).json()["items"]
-    assert [t["id"] for t in own] == [trade["id"]]
-    assert own[0]["quantity"] == 1_000_000
+    [own] = (await client.get("/v1/investments/trades")).json()["items"]
+    assert (own["id"], own["security_name"], own["bank_account_name"]) == (str(trade.id), "Isolation Corp", "A broker")
+    assert [h["security_name"] for h in (await client.get("/v1/investments/holdings")).json()["items"]] == ["Isolation Corp"]
 
 
 def _sleep_sample(start: datetime, minutes: int) -> dict[str, Any]:

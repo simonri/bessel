@@ -20,7 +20,9 @@ class TradeSchema:
       modified_at (datetime.datetime | None): Last modification timestamp of the object.
       id (str): The ID of the object.
       security_id (str):
+      security_name (str):
       bank_account_id (str):
+      bank_account_name (str):
       trade_type (TradeType):
       trade_date (datetime.date):
       quantity (int): Quantity in micro-units (x1,000,000).
@@ -33,7 +35,9 @@ class TradeSchema:
   modified_at: datetime.datetime | None
   id: str
   security_id: str
+  security_name: str
   bank_account_id: str
+  bank_account_name: str
   trade_type: TradeType
   trade_date: datetime.date
   quantity: int
@@ -55,7 +59,11 @@ class TradeSchema:
 
     security_id = self.security_id
 
+    security_name = self.security_name
+
     bank_account_id = self.bank_account_id
+
+    bank_account_name = self.bank_account_name
 
     trade_type = self.trade_type.value
 
@@ -78,7 +86,9 @@ class TradeSchema:
         "modified_at": modified_at,
         "id": id,
         "security_id": security_id,
+        "security_name": security_name,
         "bank_account_id": bank_account_id,
+        "bank_account_name": bank_account_name,
         "trade_type": trade_type,
         "trade_date": trade_date,
         "quantity": quantity,
@@ -114,7 +124,11 @@ class TradeSchema:
 
     security_id = d.pop("security_id")
 
+    security_name = d.pop("security_name")
+
     bank_account_id = d.pop("bank_account_id")
+
+    bank_account_name = d.pop("bank_account_name")
 
     trade_type = TradeType(d.pop("trade_type"))
 
@@ -138,7 +152,9 @@ class TradeSchema:
       modified_at=modified_at,
       id=id,
       security_id=security_id,
+      security_name=security_name,
       bank_account_id=bank_account_id,
+      bank_account_name=bank_account_name,
       trade_type=trade_type,
       trade_date=trade_date,
       quantity=quantity,
