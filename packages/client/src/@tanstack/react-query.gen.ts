@@ -4806,8 +4806,8 @@ export const getKlarnaTransactionsV1KlarnaTransactionsGetOptions = (
 /**
  * Import Klarna Transactions
  *
- * Fetch Klarna transactions and import them into Bessel.
- * Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+ * Fetch Klarna purchases and import the pay later ones into Bessel.
+ * Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
  */
 export const importKlarnaTransactionsV1KlarnaImportPostMutation = (
   options?: Partial<Options<ImportKlarnaTransactionsV1KlarnaImportPostData>>,

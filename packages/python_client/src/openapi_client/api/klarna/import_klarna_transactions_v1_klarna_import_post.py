@@ -6,8 +6,8 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...models.import_response import ImportResponse
 from ...models.klarna_import_request import KlarnaImportRequest
+from ...models.klarna_import_response import KlarnaImportResponse
 from ...types import Response
 
 
@@ -30,9 +30,9 @@ def _get_kwargs(
   return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | ImportResponse | None:
+def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> HTTPValidationError | KlarnaImportResponse | None:
   if response.status_code == 200:
-    response_200 = ImportResponse.from_dict(response.json())
+    response_200 = KlarnaImportResponse.from_dict(response.json())
 
     return response_200
 
@@ -47,7 +47,7 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
     return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | ImportResponse]:
+def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[HTTPValidationError | KlarnaImportResponse]:
   return Response(
     status_code=HTTPStatus(response.status_code),
     content=response.content,
@@ -60,11 +60,11 @@ def sync_detailed(
   *,
   client: AuthenticatedClient,
   body: KlarnaImportRequest,
-) -> Response[HTTPValidationError | ImportResponse]:
+) -> Response[HTTPValidationError | KlarnaImportResponse]:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Bessel.
-  Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+   Fetch Klarna purchases and import the pay later ones into Bessel.
+  Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
 
   Args:
       body (KlarnaImportRequest):
@@ -74,7 +74,7 @@ def sync_detailed(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[HTTPValidationError | ImportResponse]
+      Response[HTTPValidationError | KlarnaImportResponse]
   """
 
   kwargs = _get_kwargs(
@@ -92,11 +92,11 @@ def sync(
   *,
   client: AuthenticatedClient,
   body: KlarnaImportRequest,
-) -> HTTPValidationError | ImportResponse | None:
+) -> HTTPValidationError | KlarnaImportResponse | None:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Bessel.
-  Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+   Fetch Klarna purchases and import the pay later ones into Bessel.
+  Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
 
   Args:
       body (KlarnaImportRequest):
@@ -106,7 +106,7 @@ def sync(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      HTTPValidationError | ImportResponse
+      HTTPValidationError | KlarnaImportResponse
   """
 
   return sync_detailed(
@@ -119,11 +119,11 @@ async def asyncio_detailed(
   *,
   client: AuthenticatedClient,
   body: KlarnaImportRequest,
-) -> Response[HTTPValidationError | ImportResponse]:
+) -> Response[HTTPValidationError | KlarnaImportResponse]:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Bessel.
-  Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+   Fetch Klarna purchases and import the pay later ones into Bessel.
+  Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
 
   Args:
       body (KlarnaImportRequest):
@@ -133,7 +133,7 @@ async def asyncio_detailed(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      Response[HTTPValidationError | ImportResponse]
+      Response[HTTPValidationError | KlarnaImportResponse]
   """
 
   kwargs = _get_kwargs(
@@ -149,11 +149,11 @@ async def asyncio(
   *,
   client: AuthenticatedClient,
   body: KlarnaImportRequest,
-) -> HTTPValidationError | ImportResponse | None:
+) -> HTTPValidationError | KlarnaImportResponse | None:
   """Import Klarna Transactions
 
-   Fetch Klarna transactions and import them into Bessel.
-  Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+   Fetch Klarna purchases and import the pay later ones into Bessel.
+  Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
 
   Args:
       body (KlarnaImportRequest):
@@ -163,7 +163,7 @@ async def asyncio(
       httpx.TimeoutException: If the request takes longer than Client.timeout.
 
   Returns:
-      HTTPValidationError | ImportResponse
+      HTTPValidationError | KlarnaImportResponse
   """
 
   return (

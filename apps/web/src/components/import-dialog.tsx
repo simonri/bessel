@@ -38,10 +38,7 @@ const FILE_BANKS = [
 
 export function ImportDialog() {
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<{
-    created: number;
-    skipped: number;
-  } | null>(null);
+  const [result, setResult] = useState<string[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -66,7 +63,10 @@ export function ImportDialog() {
   const fileMutation = useMutation({
     ...importTransactionsV1TransactionsImportPostMutation({ client }),
     onSuccess: (data) => {
-      setResult(data);
+      setResult([
+        `${data.created} transactions imported`,
+        `${data.skipped} duplicates skipped`,
+      ]);
       invalidateImported();
       toast.success(`${data.created} transactions imported`);
     },
@@ -76,9 +76,18 @@ export function ImportDialog() {
   const klarnaMutation = useMutation({
     ...importKlarnaTransactionsV1KlarnaImportPostMutation({ client }),
     onSuccess: (data) => {
-      setResult(data);
+      setResult([
+        `${data.created} pay later purchases imported`,
+        `${data.updated} updated after a return`,
+        `${data.paid_at_purchase} paid at purchase, already in a bank account or the Klarna balance`,
+        ...(data.unrecognized_plans.length
+          ? [
+              `Imported as pay later, new plans: ${data.unrecognized_plans.join(", ")}`,
+            ]
+          : []),
+      ]);
       invalidateImported();
-      toast.success(`${data.created} transactions imported`);
+      toast.success(`${data.created} pay later purchases imported`);
     },
     onError: () => toast.error("Klarna import failed"),
   });
@@ -143,7 +152,7 @@ export function ImportDialog() {
         <DialogHeader>
           <DialogTitle>Import Transactions</DialogTitle>
           <DialogDescription>
-            Import from a bank export file or your Klarna account.
+            Import from a bank export file, or your Klarna pay later purchases.
           </DialogDescription>
         </DialogHeader>
 
@@ -180,7 +189,7 @@ export function ImportDialog() {
                         {b.label}
                       </SelectItem>
                     ))}
-                    <SelectItem value="klarna">Klarna</SelectItem>
+                    <SelectItem value="klarna">Klarna pay later</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -290,14 +299,9 @@ export function ImportDialog() {
 
           {result && (
             <div className="text-sm rounded-md border p-3 space-y-0.5">
-              <p>
-                <span className="font-medium">{result.created}</span>{" "}
-                transactions imported
-              </p>
-              <p>
-                <span className="font-medium">{result.skipped}</span> duplicates
-                skipped
-              </p>
+              {result.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </div>
           )}
 

@@ -2,11 +2,9 @@ from typing import Annotated, Any
 
 from api.bank_accounts.repository import BankAccountRepository
 from api.exceptions import ValidationError
-from api.klarna.schemas import KlarnaImportRequest
-from api.klarna.service import fetch_klarna_items, map_to_parsed
+from api.klarna.schemas import KlarnaImportRequest, KlarnaImportResponse
+from api.klarna.service import fetch_klarna_items, import_pay_later
 from api.postgres import DBSession
-from api.transactions.schemas import ImportResponse
-from api.transactions.service import transaction_service
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Header
 
@@ -31,15 +29,15 @@ async def get_klarna_transactions(
   return {"data": {"transactionsList": {"items": items}}}
 
 
-@router.post("/import", response_model=ImportResponse)
+@router.post("/import", response_model=KlarnaImportResponse)
 async def import_klarna_transactions(
   body: KlarnaImportRequest,
   session: DBSession,
   current_user: CurrentDBUser,
-) -> ImportResponse:
+) -> KlarnaImportResponse:
   """
-  Fetch Klarna transactions and import them into Bessel.
-  Skips rejected (isAmountLineThrough), pending, and duplicate transactions.
+  Fetch Klarna purchases and import the pay later ones into Bessel.
+  Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
   """
   _require_bearer(body.authorization)
 
@@ -48,16 +46,7 @@ async def import_klarna_transactions(
   )
 
   items = await fetch_klarna_items(body.authorization, body.cookie)
-  parsed = [p for item in items if (p := map_to_parsed(item)) is not None]
-
-  created, skipped = await transaction_service.import_transactions(
-    session,
-    bank_account_id=bank_account.id,
-    bank_name="klarna",
-    file_format="klarna_api",
-    raw_content=f"[klarna api, {len(items)} items fetched]",
-    parsed=parsed,
-    user_id=current_user.id,
+  result = await import_pay_later(session, user_id=current_user.id, bank_account_id=bank_account.id, items=items)
+  return KlarnaImportResponse(
+    created=result.created, updated=result.updated, paid_at_purchase=result.paid_at_purchase, unrecognized_plans=result.unrecognized_plans
   )
-
-  return ImportResponse(created=created, skipped=skipped)

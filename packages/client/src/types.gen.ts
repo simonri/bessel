@@ -2803,6 +2803,36 @@ export type KlarnaImportRequest = {
 };
 
 /**
+ * KlarnaImportResponse
+ */
+export type KlarnaImportResponse = {
+  /**
+   * Created
+   *
+   * Pay later purchases imported for the first time.
+   */
+  created: number;
+  /**
+   * Updated
+   *
+   * Purchases imported before whose amount changed, after a return.
+   */
+  updated: number;
+  /**
+   * Paid At Purchase
+   *
+   * Items left out because they were paid at purchase and show in a bank account, card or the Klarna balance.
+   */
+  paid_at_purchase: number;
+  /**
+   * Unrecognized Plans
+   *
+   * Payment plans Bessel doesn't know yet; their purchases were imported as pay later.
+   */
+  unrecognized_plans: Array<string>;
+};
+
+/**
  * LocationActivity
  */
 export type LocationActivity = {
@@ -9472,7 +9502,7 @@ export type ImportKlarnaTransactionsV1KlarnaImportPostResponses = {
   /**
    * Successful Response
    */
-  200: ImportResponse;
+  200: KlarnaImportResponse;
 };
 
 export type ImportKlarnaTransactionsV1KlarnaImportPostResponse =

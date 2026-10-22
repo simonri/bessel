@@ -113,6 +113,23 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.transfer_id == transfer_id).values(transfer_id=None, not_a_transfer=True)
     return await self.execute_for_rowcount(statement)
 
+  async def update_amounts(self, user_id: UUID, bank_account_id: UUID, amounts: dict[str, tuple[int, TransactionDirection]]) -> int:
+    """Brings already imported rows up to date with their source, by dedup hash; returns how many changed."""
+    changed = 0
+    for dedup_hash, (amount, direction) in amounts.items():
+      statement = (
+        update(Transaction)
+        .where(
+          Transaction.user_id == user_id,
+          Transaction.bank_account_id == bank_account_id,
+          Transaction.dedup_hash == dedup_hash,
+          or_(Transaction.amount != amount, Transaction.direction != direction),
+        )
+        .values(amount=amount, direction=direction)
+      )
+      changed += await self.execute_for_rowcount(statement)
+    return changed
+
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
     return await self.execute_for_rowcount(stmt)

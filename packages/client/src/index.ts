@@ -753,6 +753,7 @@ export {
   type IngestTokenCreated,
   type IngestTokenSchema,
   type KlarnaImportRequest,
+  type KlarnaImportResponse,
   type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
   type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
   type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,

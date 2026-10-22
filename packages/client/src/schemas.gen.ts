@@ -4284,6 +4284,40 @@ export const KlarnaImportRequestSchema = {
   title: "KlarnaImportRequest",
 } as const;
 
+export const KlarnaImportResponseSchema = {
+  properties: {
+    created: {
+      type: "integer",
+      title: "Created",
+      description: "Pay later purchases imported for the first time.",
+    },
+    updated: {
+      type: "integer",
+      title: "Updated",
+      description:
+        "Purchases imported before whose amount changed, after a return.",
+    },
+    paid_at_purchase: {
+      type: "integer",
+      title: "Paid At Purchase",
+      description:
+        "Items left out because they were paid at purchase and show in a bank account, card or the Klarna balance.",
+    },
+    unrecognized_plans: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Unrecognized Plans",
+      description:
+        "Payment plans Bessel doesn't know yet; their purchases were imported as pay later.",
+    },
+  },
+  type: "object",
+  required: ["created", "updated", "paid_at_purchase", "unrecognized_plans"],
+  title: "KlarnaImportResponse",
+} as const;
+
 export const LocationActivitySchema = {
   properties: {
     id: {

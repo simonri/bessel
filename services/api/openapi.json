@@ -6984,7 +6984,7 @@
           "klarna"
         ],
         "summary": "Import Klarna Transactions",
-        "description": "Fetch Klarna transactions and import them into Bessel.\nSkips rejected (isAmountLineThrough), pending, and duplicate transactions.",
+        "description": "Fetch Klarna purchases and import the pay later ones into Bessel.\nSkips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.",
         "operationId": "import_klarna_transactions_v1_klarna_import_post",
         "requestBody": {
           "content": {
@@ -7002,7 +7002,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportResponse"
+                  "$ref": "#/components/schemas/KlarnaImportResponse"
                 }
               }
             }
@@ -11417,6 +11417,41 @@
           "authorization"
         ],
         "title": "KlarnaImportRequest"
+      },
+      "KlarnaImportResponse": {
+        "properties": {
+          "created": {
+            "type": "integer",
+            "title": "Created",
+            "description": "Pay later purchases imported for the first time."
+          },
+          "updated": {
+            "type": "integer",
+            "title": "Updated",
+            "description": "Purchases imported before whose amount changed, after a return."
+          },
+          "paid_at_purchase": {
+            "type": "integer",
+            "title": "Paid At Purchase",
+            "description": "Items left out because they were paid at purchase and show in a bank account, card or the Klarna balance."
+          },
+          "unrecognized_plans": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unrecognized Plans",
+            "description": "Payment plans Bessel doesn't know yet; their purchases were imported as pay later."
+          }
+        },
+        "type": "object",
+        "required": [
+          "created",
+          "updated",
+          "paid_at_purchase",
+          "unrecognized_plans"
+        ],
+        "title": "KlarnaImportResponse"
       },
       "LocationActivity": {
         "properties": {

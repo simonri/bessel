@@ -1,13 +1,26 @@
 import hashlib
+import json
+import re
 import time
 import uuid
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
+from uuid import UUID
 
 import httpx
+from api.common.db.postgres import AsyncSession
 from api.exceptions import ServiceUnavailableError, ValidationError
 from api.models.transaction import TransactionDirection
 from api.transactions.parsers.base import ParsedTransaction
+from api.transactions.repository import TransactionRepository
+from api.transactions.service import transaction_service
+
+# Plans paid at purchase: the money already shows in a bank account, on a card or in the
+# Klarna balance (synced through Enable Banking), so importing them would count it twice.
+PAID_AT_PURCHASE = frozenset({"pay in full", "pay now", "pay by card", "swish", "imported from gmail"})
+PAY_LATER_PLANS = re.compile(r"^(pay in \d+ days|pay later|pay over \d+ months|pay in \d+( (instal+ments|parts))?|financing)$", re.IGNORECASE)
+_CLOCK = re.compile(r"^\d{1,2}:\d{2}$")
 
 KLARNA_URL = "https://app.klarna.com/se/api/post_purchase_bff/post-purchase/feature/graphql"
 
@@ -130,7 +143,7 @@ def _build_klarna_headers(authorization: str, cookie: str | None) -> dict[str, s
 async def fetch_klarna_items(
   authorization: str,
   cookie: str | None,
-  max_pages: int = 5,
+  max_pages: int = 20,
 ) -> list[dict[str, Any]]:
   """Fetch all transaction items from Klarna, paginating up to max_pages."""
   headers = _build_klarna_headers(authorization, cookie)
@@ -175,6 +188,22 @@ async def fetch_klarna_items(
   return all_items
 
 
+def plan(item: dict[str, Any]) -> str | None:
+  """How the purchase is paid, as Klarna's app shows it under the merchant ("Pay in 30 days")."""
+  subtitle = item.get("subtitle") or []
+  for part in subtitle if isinstance(subtitle, list) else [subtitle]:
+    text = (part or {}).get("text")
+    if text and not _CLOCK.match(text):
+      return text
+  return None
+
+
+def is_pay_later(item: dict[str, Any]) -> bool:
+  """Anything not paid at purchase, including plans Klarna adds later: a missed purchase is worse than an odd one."""
+  item_plan = plan(item)
+  return item_plan is not None and item_plan.lower() not in PAID_AT_PURCHASE
+
+
 def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   """Map a single Klarna item to ParsedTransaction. Returns None if the item should be skipped."""
   # Skip rejected/failed authorisations — these never settled
@@ -187,17 +216,20 @@ def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   if avatar.get("avatarType") == "REJECTED_CARD":
     return None
 
+  # What is still owed after returns; Klarna lowers it in place, and can take it below zero.
   amount_minor: int | None = amount.get("currentAmount")
   currency: str | None = amount.get("currency")
   unique_id: str | None = item.get("uniqueId")
   created_at: str | None = item.get("createdAt")
   title: str = item.get("title") or "Unknown"
 
-  if not amount_minor or not currency or not unique_id or not created_at:
+  if amount_minor is None or not currency or not unique_id or not created_at:
     return None
 
   tx_date = date.fromisoformat(created_at[:10])
-  direction = TransactionDirection.credit if amount.get("hasPlus") else TransactionDirection.debit
+  credit = bool(amount.get("hasPlus")) != (amount_minor < 0)
+  direction = TransactionDirection.credit if credit else TransactionDirection.debit
+  amount_minor = abs(amount_minor)
   dedup_hash = hashlib.sha256(f"klarna:{unique_id}".encode()).hexdigest()
 
   return ParsedTransaction(
@@ -209,3 +241,31 @@ def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
     description=title,
     raw_data=item,
   )
+
+
+@dataclass(frozen=True, slots=True)
+class PayLaterImport:
+  created: int
+  updated: int
+  paid_at_purchase: int
+  unrecognized_plans: list[str] = field(default_factory=list)
+
+
+async def import_pay_later(session: AsyncSession, *, user_id: UUID, bank_account_id: UUID, items: list[dict[str, Any]]) -> PayLaterImport:
+  """Imports the purchases Klarna lets the user pay later, and brings earlier ones up to date after returns."""
+  pay_later = [item for item in items if is_pay_later(item)]
+  parsed = [p for item in pay_later if (p := map_to_parsed(item)) is not None]
+  created, _ = await transaction_service.import_transactions(
+    session,
+    bank_account_id=bank_account_id,
+    bank_name="klarna",
+    file_format="klarna_api",
+    raw_content=json.dumps([p.raw_data for p in parsed]),
+    parsed=parsed,
+    user_id=user_id,
+  )
+  updated = await TransactionRepository.from_session(session).update_amounts(
+    user_id, bank_account_id, {p.dedup_hash: (p.amount_minor, p.direction) for p in parsed}
+  )
+  unrecognized = sorted({item_plan for item in pay_later if (item_plan := plan(item)) and not PAY_LATER_PLANS.match(item_plan)})
+  return PayLaterImport(created=created, updated=updated, paid_at_purchase=len(items) - len(pay_later), unrecognized_plans=unrecognized)

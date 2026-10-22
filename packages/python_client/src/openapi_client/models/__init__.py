@@ -123,6 +123,7 @@ from .ingest_token_create import IngestTokenCreate
 from .ingest_token_created import IngestTokenCreated
 from .ingest_token_schema import IngestTokenSchema
 from .klarna_import_request import KlarnaImportRequest
+from .klarna_import_response import KlarnaImportResponse
 from .location_activity import LocationActivity
 from .location_day import LocationDay
 from .location_history_summary import LocationHistorySummary
@@ -339,6 +340,7 @@ __all__ = (
   "IngestTokenCreated",
   "IngestTokenSchema",
   "KlarnaImportRequest",
+  "KlarnaImportResponse",
   "LocationActivity",
   "LocationDay",
   "LocationHistorySummary",
