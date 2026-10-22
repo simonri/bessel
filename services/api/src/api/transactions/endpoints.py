@@ -7,7 +7,7 @@ from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
-from api.exceptions import ResourceNotFound
+from api.exceptions import ResourceNotFound, ValidationError
 from api.models.transaction import Transaction
 from api.postgres import DBSession
 from api.transactions.parsers.csv_parser import parse_csv
@@ -189,6 +189,20 @@ async def update_transaction(
     **TransactionSchema.model_validate(transaction).model_dump(),
     same_description_count=same_description_count,
   )
+
+
+@router.delete(
+  "/{transaction_id}/transfer",
+  summary="Unpair Transfer",
+  status_code=204,
+)
+async def unpair_transfer(transaction_id: UUID, session: DBSession, current_user: CurrentDBUser) -> None:
+  """Counts both sides of a paired transfer as income and spending again, and never pairs them again."""
+  repo = TransactionRepository.from_session(session)
+  transaction = await repo.get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
+  if transaction.transfer_id is None:
+    raise ValidationError("This transaction isn't paired as a transfer.")
+  await repo.unpair_transfer(current_user.id, transaction.transfer_id)
 
 
 @router.post(

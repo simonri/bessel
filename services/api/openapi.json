@@ -6643,6 +6643,48 @@
         }
       }
     },
+    "/v1/transactions/{transaction_id}/transfer": {
+      "delete": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Unpair Transfer",
+        "description": "Counts both sides of a paired transfer as income and spending again, and never pairs them again.",
+        "operationId": "unpair_transfer_v1_transactions__transaction_id__transfer_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transaction Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/transactions/categorize-by-description": {
       "post": {
         "tags": [
@@ -15275,6 +15317,19 @@
             "title": "Is Business",
             "description": "Whether this is a business transaction.",
             "default": false
+          },
+          "transfer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transfer Id",
+            "description": "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
           }
         },
         "type": "object",
@@ -15444,6 +15499,19 @@
             "title": "Is Business",
             "description": "Whether this is a business transaction.",
             "default": false
+          },
+          "transfer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transfer Id",
+            "description": "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
           },
           "same_description_count": {
             "type": "integer",

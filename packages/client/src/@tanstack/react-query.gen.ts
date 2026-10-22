@@ -123,6 +123,7 @@ import {
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
   undoCompleteTaskV1TasksTaskIdUndoCompletePost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
+  unpairTransferV1TransactionsTransactionIdTransferDelete,
   updateBankAccountV1BankAccountsBankAccountIdPatch,
   updateCalendarEventV1CalendarsEventsEventIdPatch,
   updateCalendarV1CalendarsCalendarIdPatch,
@@ -453,6 +454,9 @@ import type {
   UndoResetV1CountersCounterIdResetsResetIdDeleteData,
   UndoResetV1CountersCounterIdResetsResetIdDeleteError,
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteData,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteError,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
@@ -4600,6 +4604,38 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
         ...fnOptions,
         throwOnError: true,
       });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Unpair Transfer
+ *
+ * Counts both sides of a paired transfer as income and spending again, and never pairs them again.
+ */
+export const unpairTransferV1TransactionsTransactionIdTransferDeleteMutation = (
+  options?: Partial<
+    Options<UnpairTransferV1TransactionsTransactionIdTransferDeleteData>
+  >,
+): UseMutationOptions<
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteError,
+  Options<UnpairTransferV1TransactionsTransactionIdTransferDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse,
+    UnpairTransferV1TransactionsTransactionIdTransferDeleteError,
+    Options<UnpairTransferV1TransactionsTransactionIdTransferDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await unpairTransferV1TransactionsTransactionIdTransferDelete({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
       return data;
     },
   };

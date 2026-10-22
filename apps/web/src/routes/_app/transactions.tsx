@@ -8,6 +8,7 @@ import {
   listCategoriesV1CategoriesGetOptions,
   listTransactionsV1TransactionsGetOptions,
   listTransactionsV1TransactionsGetQueryKey,
+  unpairTransferV1TransactionsTransactionIdTransferDeleteMutation,
   updateTransactionV1TransactionsTransactionIdPatchMutation,
 } from "@bessel/client";
 import {
@@ -145,13 +146,17 @@ function getDateGroupLabel(
 const TransactionActions = memo(function TransactionActions({
   id,
   isBusiness,
+  isTransfer,
   onDelete,
   onToggleBusiness,
+  onUnpair,
 }: {
   id: string;
   isBusiness: boolean;
+  isTransfer: boolean;
   onDelete: (ids: string[]) => void;
   onToggleBusiness: (id: string, value: boolean) => void;
+  onUnpair: (id: string) => void;
 }) {
   return (
     <div className="flex justify-end">
@@ -167,6 +172,11 @@ const TransactionActions = memo(function TransactionActions({
               ? "Remove business expense"
               : "Mark as business expense"}
           </DropdownMenuItem>
+          {isTransfer && (
+            <DropdownMenuItem onClick={() => onUnpair(id)}>
+              Not a transfer
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="text-red-400 focus:bg-red-500/10 focus:text-red-400"
             onClick={() => onDelete([id])}
@@ -431,6 +441,24 @@ function Transactions() {
     [toggleBusinessMutation.mutate],
   );
 
+  const unpairMutation = useMutation({
+    ...unpairTransferV1TransactionsTransactionIdTransferDeleteMutation({
+      client,
+    }),
+    ...transactionWrites,
+    onSuccess: () =>
+      toast.success("Both sides count as income and spending again"),
+    onError: () => toast.error("Couldn't unpair the transfer"),
+    onSettled: settle,
+  });
+
+  const handleUnpair = useCallback(
+    (id: string) => {
+      unpairMutation.mutate({ client, path: { transaction_id: id } });
+    },
+    [unpairMutation.mutate],
+  );
+
   const handleDeleteRows = useCallback(
     (ids: string[]) => {
       if (ids.length === 0) return;
@@ -492,6 +520,14 @@ function Transactions() {
             <span className="truncate text-13 text-white/85">
               {row.original.description ?? "—"}
             </span>
+            {row.original.transfer_id && (
+              <span
+                className="inline-flex shrink-0 items-center rounded-md border border-white/15 bg-white/5 px-1.5 py-px text-10 font-semibold text-white/55"
+                title="Moved between your own accounts, so it counts as neither income nor spending"
+              >
+                Transfer
+              </span>
+            )}
             {row.original.is_business && (
               <span className="inline-flex shrink-0 items-center rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 py-px text-10 font-semibold text-primary-300">
                 Business
@@ -555,8 +591,10 @@ function Transactions() {
             <TransactionActions
               id={row.original.id}
               isBusiness={row.original.is_business ?? false}
+              isTransfer={!!row.original.transfer_id}
               onDelete={handleDeleteRows}
               onToggleBusiness={handleToggleBusiness}
+              onUnpair={handleUnpair}
             />
           </div>
         ),
@@ -568,6 +606,7 @@ function Transactions() {
       handleBulkSuggestion,
       handleDeleteRows,
       handleToggleBusiness,
+      handleUnpair,
     ],
   );
 

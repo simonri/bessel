@@ -29,6 +29,10 @@ class Transaction(RecordModel):
   description: Mapped[str | None] = mapped_column(Text, nullable=True)
   transaction_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
   is_business: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+  # Shared by both sides of money moving between the user's own accounts; such pairs count as neither income nor spending.
+  transfer_id: Mapped[UUID | None] = mapped_column(Uuid, nullable=True, index=True)
+  # Set when the user undid a pairing, so it isn't paired again.
+  not_a_transfer: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
   bank_account_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("bank_accounts.id", onupdate="CASCADE"), nullable=False)
 

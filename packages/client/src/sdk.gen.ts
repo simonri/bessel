@@ -401,6 +401,9 @@ import type {
   UndoResetV1CountersCounterIdResetsResetIdDeleteData,
   UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
   UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteData,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
   UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
@@ -3575,6 +3578,33 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Unpair Transfer
+ *
+ * Counts both sides of a paired transfer as income and spending again, and never pairs them again.
+ */
+export const unpairTransferV1TransactionsTransactionIdTransferDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UnpairTransferV1TransactionsTransactionIdTransferDeleteData,
+    ThrowOnError
+  >,
+): RequestResult<
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses,
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses,
+    UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/{transaction_id}/transfer",
+    ...options,
   });
 
 /**

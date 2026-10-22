@@ -18,6 +18,9 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   bank_account_id: UUID4
   raw_id: UUID4 | None
   is_business: bool = Field(default=False, description="Whether this is a business transaction.")
+  transfer_id: UUID4 | None = Field(
+    default=None, description="Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
+  )
 
 
 class TransactionUpdate(Schema):

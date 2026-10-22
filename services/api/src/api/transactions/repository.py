@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import date
-from typing import Any
+from typing import Any, NamedTuple
 from uuid import UUID
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
@@ -12,6 +12,24 @@ from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
 from sqlalchemy import Row, Select, case, delete, extract, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+
+class TransferCandidate(NamedTuple):
+  id: UUID
+  bank_account_id: UUID
+  amount: int
+  currency: str
+  direction: TransactionDirection
+  transaction_date: date
+
+
+def _counted_in_reports[*Ts](statement: Select[*Ts]) -> Select[*Ts]:
+  """Leaves out money that only moves: investment accounts, transfers between own accounts, and categories excluded from reports."""
+  return statement.join(BankAccount, Transaction.bank_account_id == BankAccount.id).where(
+    BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
+    Transaction.transfer_id.is_(None),
+    or_(Category.id.is_(None), Category.excluded.is_(False)),
+  )
 
 
 class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Transaction, UUID]):
@@ -57,6 +75,30 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
   async def create_raw_transactions(self, raw_transactions: Sequence[RawTransaction]) -> None:
     self.session.add_all(raw_transactions)
     await self.session.flush()
+
+  async def transfer_candidates(self, user_id: UUID, *, since: date | None) -> list[TransferCandidate]:
+    """Unpaired, uncategorized transactions; a category the user chose is never overridden."""
+    statement = select(
+      Transaction.id, Transaction.bank_account_id, Transaction.amount, Transaction.currency, Transaction.direction, Transaction.transaction_date
+    ).where(
+      Transaction.user_id == user_id,
+      Transaction.deleted_at.is_(None),
+      Transaction.transfer_id.is_(None),
+      Transaction.not_a_transfer.is_(False),
+      Transaction.category_id.is_(None),
+    )
+    if since is not None:
+      statement = statement.where(Transaction.transaction_date >= since)
+    return [TransferCandidate(*row) for row in await self.session.execute(statement)]
+
+  async def set_transfer(self, user_id: UUID, ids: Sequence[UUID], transfer_id: UUID) -> int:
+    statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.id.in_(ids)).values(transfer_id=transfer_id)
+    return await self.execute_for_rowcount(statement)
+
+  async def unpair_transfer(self, user_id: UUID, transfer_id: UUID) -> int:
+    """Splits a pair for good: both sides count again and are never paired again."""
+    statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.transfer_id == transfer_id).values(transfer_id=None, not_a_transfer=True)
+    return await self.execute_for_rowcount(statement)
 
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
@@ -146,10 +188,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         func.sum(Transaction.amount).label("total"),
       )
       .join(Category, Transaction.category_id == Category.id)
-      .join(BankAccount, Transaction.bank_account_id == BankAccount.id)
       .where(
         Transaction.user_id == user_id,
-        BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
         Transaction.direction == "debit",
         extract("year", Transaction.transaction_date) == year,
         extract("month", Transaction.transaction_date) == month,
@@ -157,7 +197,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .group_by(Transaction.category_id, Category.name, Category.color)
       .order_by(func.sum(Transaction.amount).desc())
     )
-    result = await self.session.execute(statement)
+    result = await self.session.execute(_counted_in_reports(statement))
     return result.all()
 
   async def monthly_flow_totals(self, *, user_id: UUID, start: date) -> Sequence[Row]:
@@ -168,14 +208,13 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.direction,
         func.sum(Transaction.amount).label("total"),
       )
-      .join(BankAccount, Transaction.bank_account_id == BankAccount.id)
+      .outerjoin(Category, Transaction.category_id == Category.id)
       .where(Transaction.user_id == user_id)
-      .where(BankAccount.subtype.not_in(INVESTMENT_SUBTYPES))
       .where(Transaction.transaction_date >= start)
       .group_by("yr", "mo", Transaction.direction)
       .order_by("yr", "mo")
     )
-    result = await self.session.execute(statement)
+    result = await self.session.execute(_counted_in_reports(statement))
     return result.all()
 
 

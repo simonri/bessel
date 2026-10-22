@@ -31,6 +31,8 @@ class TransactionUpdateResponse:
       bank_account_id (str):
       raw_id (None | str):
       is_business (bool | Unset): Whether this is a business transaction. Default: False.
+      transfer_id (None | str | Unset): Shared with the other side of a move between the user's own accounts; such
+          pairs count as neither income nor spending.
       same_description_count (int | Unset): Number of other transactions with the same description not yet assigned
           this category. Default: 0.
   """
@@ -49,6 +51,7 @@ class TransactionUpdateResponse:
   bank_account_id: str
   raw_id: None | str
   is_business: bool | Unset = False
+  transfer_id: None | str | Unset = UNSET
   same_description_count: int | Unset = 0
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -89,6 +92,12 @@ class TransactionUpdateResponse:
 
     is_business = self.is_business
 
+    transfer_id: None | str | Unset
+    if isinstance(self.transfer_id, Unset):
+      transfer_id = UNSET
+    else:
+      transfer_id = self.transfer_id
+
     same_description_count = self.same_description_count
 
     field_dict: dict[str, Any] = {}
@@ -112,6 +121,8 @@ class TransactionUpdateResponse:
     )
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
+    if transfer_id is not UNSET:
+      field_dict["transfer_id"] = transfer_id
     if same_description_count is not UNSET:
       field_dict["same_description_count"] = same_description_count
 
@@ -181,6 +192,15 @@ class TransactionUpdateResponse:
 
     is_business = d.pop("is_business", UNSET)
 
+    def _parse_transfer_id(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    transfer_id = _parse_transfer_id(d.pop("transfer_id", UNSET))
+
     same_description_count = d.pop("same_description_count", UNSET)
 
     transaction_update_response = cls(
@@ -198,6 +218,7 @@ class TransactionUpdateResponse:
       bank_account_id=bank_account_id,
       raw_id=raw_id,
       is_business=is_business,
+      transfer_id=transfer_id,
       same_description_count=same_description_count,
     )
 

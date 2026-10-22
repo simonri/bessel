@@ -8082,6 +8082,20 @@ export const TransactionSchemaSchema = {
       description: "Whether this is a business transaction.",
       default: false,
     },
+    transfer_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transfer Id",
+      description:
+        "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
+    },
   },
   type: "object",
   required: [
@@ -8253,6 +8267,20 @@ export const TransactionUpdateResponseSchema = {
       title: "Is Business",
       description: "Whether this is a business transaction.",
       default: false,
+    },
+    transfer_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transfer Id",
+      description:
+        "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
     same_description_count: {
       type: "integer",

@@ -7,6 +7,7 @@ from api.models.raw_transaction import RawTransaction
 from api.transactions.parsers.base import ParsedTransaction
 from api.transactions.repository import TransactionRepository
 from api.transactions.schemas import MonthlyFlow
+from api.transactions.transfers import match_transfers
 from dateutil.relativedelta import relativedelta
 
 
@@ -64,6 +65,8 @@ class TransactionService:
 
     created = await repo.insert_ignoring_duplicates(values)
     skipped = len(parsed) - created
+    if created:
+      await match_transfers(session, user_id, since=min(tx.transaction_date for tx in parsed))
 
     return created, skipped
 

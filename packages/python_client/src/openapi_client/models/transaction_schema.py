@@ -31,6 +31,8 @@ class TransactionSchema:
       bank_account_id (str):
       raw_id (None | str):
       is_business (bool | Unset): Whether this is a business transaction. Default: False.
+      transfer_id (None | str | Unset): Shared with the other side of a move between the user's own accounts; such
+          pairs count as neither income nor spending.
   """
 
   created_at: datetime.datetime
@@ -47,6 +49,7 @@ class TransactionSchema:
   bank_account_id: str
   raw_id: None | str
   is_business: bool | Unset = False
+  transfer_id: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -86,6 +89,12 @@ class TransactionSchema:
 
     is_business = self.is_business
 
+    transfer_id: None | str | Unset
+    if isinstance(self.transfer_id, Unset):
+      transfer_id = UNSET
+    else:
+      transfer_id = self.transfer_id
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -107,6 +116,8 @@ class TransactionSchema:
     )
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
+    if transfer_id is not UNSET:
+      field_dict["transfer_id"] = transfer_id
 
     return field_dict
 
@@ -174,6 +185,15 @@ class TransactionSchema:
 
     is_business = d.pop("is_business", UNSET)
 
+    def _parse_transfer_id(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    transfer_id = _parse_transfer_id(d.pop("transfer_id", UNSET))
+
     transaction_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -189,6 +209,7 @@ class TransactionSchema:
       bank_account_id=bank_account_id,
       raw_id=raw_id,
       is_business=is_business,
+      transfer_id=transfer_id,
     )
 
     transaction_schema.additional_properties = d

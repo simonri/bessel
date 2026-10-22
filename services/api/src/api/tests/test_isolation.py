@@ -158,6 +158,7 @@ AUDITED: set[str] = {
   "GET /v1/transactions/monthly-flow",
   "GET /v1/transactions/spending-by-category",
   "PATCH /v1/transactions/{transaction_id}",
+  "DELETE /v1/transactions/{transaction_id}/transfer",
 }
 
 
@@ -421,6 +422,7 @@ class TestBankingAndTransactions:
       description="A's grocery store",
       bank_account_id=UUID(account["id"]),
       category_id=category.id,
+      transfer_id=uuid4(),
     )
     await save_owned(tx)
     tx_id = str(tx.id)
@@ -432,6 +434,7 @@ class TestBankingAndTransactions:
     assert spending.json()["items"] == []
 
     assert (await other_client.patch(f"/v1/transactions/{tx_id}", json={"is_business": True})).status_code == 404
+    assert (await other_client.delete(f"/v1/transactions/{tx_id}/transfer")).status_code == 404
     bulk = await other_client.patch("/v1/transactions/bulk", json={"ids": [tx_id], "category_id": None})
     assert bulk.status_code == 404 or bulk.json()["updated"] == 0
     categorize = await other_client.post("/v1/transactions/categorize-by-description", json={"description": "A's grocery store", "category_id": None})
@@ -450,6 +453,7 @@ class TestBankingAndTransactions:
     assert [t["id"] for t in own] == [tx_id]
     assert own[0]["category_id"] == str(category.id)
     assert own[0]["is_business"] is False
+    assert own[0]["transfer_id"] == str(tx.transfer_id)
 
   @pytest.mark.asyncio
   async def test_klarna_import_into_other_users_account_is_rejected(

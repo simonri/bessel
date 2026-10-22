@@ -5018,6 +5018,12 @@ export type TransactionSchema = {
    * Whether this is a business transaction.
    */
   is_business?: boolean;
+  /**
+   * Transfer Id
+   *
+   * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
+   */
+  transfer_id?: string | null;
 };
 
 /**
@@ -5125,6 +5131,12 @@ export type TransactionUpdateResponse = {
    * Whether this is a business transaction.
    */
   is_business?: boolean;
+  /**
+   * Transfer Id
+   *
+   * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
+   */
+  transfer_id?: string | null;
   /**
    * Same Description Count
    *
@@ -9199,6 +9211,38 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
 
 export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
   UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
+
+export type UnpairTransferV1TransactionsTransactionIdTransferDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Transaction Id
+     */
+    transaction_id: string;
+  };
+  query?: never;
+  url: "/v1/transactions/{transaction_id}/transfer";
+};
+
+export type UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UnpairTransferV1TransactionsTransactionIdTransferDeleteError =
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors[keyof UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors];
+
+export type UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse =
+  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses[keyof UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses];
 
 export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData =
   {
