@@ -202,18 +202,26 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     date_to: date | None = None,
     is_business: bool | None = None,
     transfers: bool | None = None,
-    has_documents: bool | None = None,
+    missing_documents: bool = False,
   ) -> Select[Transaction]:
     statement = self.get_base_statement().where(Transaction.user_id == user_id)
     if bank_account_ids:
       statement = statement.where(Transaction.bank_account_id.in_(bank_account_ids))
     if category_ids:
       statement = statement.where(Transaction.category_id.in_(category_ids))
+    investment_accounts = select(BankAccount.id).where(BankAccount.subtype.in_(INVESTMENT_SUBTYPES))
     if uncategorized:
       # Only what still needs one: a move between own accounts and a broker's movement are filed already.
-      investment_accounts = select(BankAccount.id).where(BankAccount.subtype.in_(INVESTMENT_SUBTYPES))
       statement = statement.where(
         Transaction.category_id.is_(None),
+        Transaction.transfer_id.is_(None),
+        Transaction.bank_account_id.not_in(investment_accounts),
+      )
+    if missing_documents:
+      # Only purchases can have an invoice or receipt: not money in, moves between own accounts, or a broker's movements.
+      statement = statement.where(
+        ~exists().where(TransactionDocument.transaction_id == Transaction.id),
+        Transaction.direction == TransactionDirection.debit,
         Transaction.transfer_id.is_(None),
         Transaction.bank_account_id.not_in(investment_accounts),
       )
@@ -229,9 +237,6 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       statement = statement.where(Transaction.is_business == is_business)
     if transfers is not None:
       statement = statement.where(Transaction.transfer_id.is_not(None) if transfers else Transaction.transfer_id.is_(None))
-    if has_documents is not None:
-      documented = exists().where(TransactionDocument.transaction_id == Transaction.id)
-      statement = statement.where(documented if has_documents else ~documented)
     return statement
 
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:

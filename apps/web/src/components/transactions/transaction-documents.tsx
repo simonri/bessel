@@ -299,7 +299,7 @@ function DocumentViewer({
       download: document.filename,
     });
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   return (
     <Dialog open={!!document} onOpenChange={(isOpen) => !isOpen && onClose()}>

@@ -71,7 +71,9 @@ async def list_transactions(
   date_to: Annotated[date | None, Query(description="End date (inclusive).")] = None,
   is_business: Annotated[bool | None, Query(description="Filter by business flag.")] = None,
   transfers: Annotated[bool | None, Query(description="True for only moves between the user's own accounts, false to leave them out.")] = None,
-  has_documents: Annotated[bool | None, Query(description="True for only those with an invoice or receipt, false for those without one.")] = None,
+  missing_documents: Annotated[
+    bool, Query(description="If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.")
+  ] = False,
 ) -> TransactionListResponse:
   """List transactions."""
   repo = TransactionRepository.from_session(session)
@@ -86,7 +88,7 @@ async def list_transactions(
     date_to=date_to,
     is_business=is_business,
     transfers=transfers,
-    has_documents=has_documents,
+    missing_documents=missing_documents,
   )
 
   statement = apply_sorting(statement, Transaction, sorting)

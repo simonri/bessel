@@ -47,16 +47,23 @@ async def account(save_fixture: SaveFixture, user: User) -> BankAccount:
   return bank_account
 
 
-async def _transaction(save_fixture: SaveFixture, account: BankAccount, description: str = "Elgiganten") -> Transaction:
+async def _transaction(
+  save_fixture: SaveFixture,
+  account: BankAccount,
+  description: str = "Elgiganten",
+  direction: TransactionDirection = TransactionDirection.debit,
+  **fields: object,
+) -> Transaction:
   transaction = Transaction(
     amount=129900,
     currency="SEK",
     transaction_date=date(2026, 10, 1),
-    direction=TransactionDirection.debit,
+    direction=direction,
     dedup_hash=uuid4().hex,
     description=description,
     bank_account_id=account.id,
     user_id=account.user_id,
+    **fields,
   )
   await save_fixture(transaction)
   return transaction
@@ -161,17 +168,23 @@ class TestTransactionDocuments:
     assert (await client.get(f"/v1/documents/{one['id']}/file")).status_code == 404
 
   @pytest.mark.asyncio
-  async def test_the_list_counts_documents_and_finds_those_with_and_without(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+  async def test_the_list_counts_documents_and_finds_purchases_still_missing_one(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User, account: BankAccount
+  ) -> None:
+    isk = BankAccount(name="ISK", currency="SEK", base_balance=0, subtype="isk", user_id=user.id)
+    await save_fixture(isk)
     with_receipt = await _transaction(save_fixture, account, "Elgiganten")
     await _transaction(save_fixture, account, "ICA")
+    await _transaction(save_fixture, account, "Lön", TransactionDirection.credit)
+    await _transaction(save_fixture, account, "Till sparkonto", transfer_id=uuid4())
+    await _transaction(save_fixture, isk, "Riskpremie")
     await _upload(client, with_receipt.id, a_pdf(1))
 
     every = (await client.get("/v1/transactions")).json()["items"]
-    have = (await client.get("/v1/transactions", params={"has_documents": True})).json()["items"]
-    missing = (await client.get("/v1/transactions", params={"has_documents": False})).json()["items"]
+    missing = (await client.get("/v1/transactions", params={"missing_documents": True})).json()["items"]
 
-    assert {t["description"]: t["document_count"] for t in every} == {"Elgiganten": 1, "ICA": 0}
-    assert ([t["description"] for t in have], [t["description"] for t in missing]) == (["Elgiganten"], ["ICA"])
+    assert {t["description"]: t["document_count"] for t in every} == {"Elgiganten": 1, "ICA": 0, "Lön": 0, "Till sparkonto": 0, "Riskpremie": 0}
+    assert [t["description"] for t in missing] == ["ICA"]
 
   @pytest.mark.asyncio
   async def test_size_and_storage_limits(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -206,12 +219,19 @@ class TestTransactionDocuments:
 
 
 class TestFileStorage:
-  def test_production_refuses_to_store_files_without_a_bucket(self, monkeypatch: pytest.MonkeyPatch) -> None:
+  @pytest.mark.asyncio
+  async def test_production_refuses_to_store_files_without_a_bucket_but_still_reads_and_deletes(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(settings, "ENV", Environment.production)
     monkeypatch.setattr(settings, "STORAGE_ENDPOINT_URL", "")
+    monkeypatch.setattr(settings, "FILES_DIR", str(tmp_path))
+    (tmp_path / "left-behind").write_bytes(b"x")
+    storage = storage_module.file_storage()
 
     with pytest.raises(storage_module.StorageNotConfiguredError):
-      storage_module.file_storage()
+      await storage.put("receipt", b"x", "image/png")
+    assert await storage.get("left-behind") is None
+    await storage.delete("left-behind")
+    assert (tmp_path / "left-behind").exists()
 
   def test_a_configured_bucket_is_used_anywhere(self, monkeypatch: pytest.MonkeyPatch) -> None:
     for name, value in {

@@ -6565,22 +6565,16 @@
             "description": "True for only moves between the user's own accounts, false to leave them out."
           },
           {
-            "name": "has_documents",
+            "name": "missing_documents",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "True for only those with an invoice or receipt, false for those without one.",
-              "title": "Has Documents"
+              "type": "boolean",
+              "description": "If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.",
+              "default": false,
+              "title": "Missing Documents"
             },
-            "description": "True for only those with an invoice or receipt, false for those without one."
+            "description": "If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements."
           },
           {
             "name": "page",

@@ -212,7 +212,7 @@ function Transactions() {
         uncategorized: filters.uncategorized,
         direction: filters.direction,
         is_business: filters.is_business,
-        has_documents: filters.missing_documents ? false : undefined,
+        missing_documents: filters.missing_documents,
         search: filters.search,
         transfers:
           filters.transfers === "only"

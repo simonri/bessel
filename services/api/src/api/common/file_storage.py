@@ -1,6 +1,7 @@
 """Where uploaded files live: an S3-compatible bucket (Cloudflare R2) in production, a local folder elsewhere.
 
-A container's own disk is lost on every deploy, so production refuses to store files until the bucket is set up.
+A container's own disk is lost on every deploy, so production refuses to store files until the bucket is set up,
+while reads and deletes carry on as if nothing had been stored.
 """
 
 from functools import cache
@@ -57,6 +58,17 @@ class LocalFileStorage:
     await anyio.to_thread.run_sync(lambda: path.unlink(missing_ok=True))
 
 
+class UnconfiguredFileStorage:
+  async def put(self, key: str, content: bytes, content_type: str) -> None:
+    raise StorageNotConfiguredError()
+
+  async def get(self, key: str) -> bytes | None:
+    return None
+
+  async def delete(self, key: str) -> None:
+    return None
+
+
 class S3FileStorage:
   def __init__(self, *, endpoint_url: str, bucket: str, access_key_id: str, secret_access_key: str) -> None:
     self.bucket = bucket
@@ -102,5 +114,5 @@ def file_storage() -> FileStorage:
   if settings.storage_configured():
     return _bucket()
   if settings.ENV == Environment.production:
-    raise StorageNotConfiguredError()
+    return UnconfiguredFileStorage()
   return LocalFileStorage(Path(settings.FILES_DIR))

@@ -24,7 +24,7 @@ export interface TransactionFilters {
   uncategorized?: boolean;
   direction?: string;
   is_business?: boolean;
-  /** Only rows with no invoice or receipt kept yet. */
+  /** Only purchases with no invoice or receipt kept yet. */
   missing_documents?: boolean;
   search?: string;
   /** Moves between the user's own accounts: shown by default, or hidden, or the only rows. */
@@ -305,7 +305,7 @@ function MissingDocumentsToggle({
     <button
       type="button"
       onClick={() => onChange(value ? undefined : true)}
-      title="Only rows with no invoice or receipt yet"
+      title="Purchases with no invoice or receipt yet"
       className={cn(
         CHIP_CLASS,
         "px-2.5",

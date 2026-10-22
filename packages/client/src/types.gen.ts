@@ -10450,11 +10450,11 @@ export type ListTransactionsV1TransactionsGetData = {
      */
     transfers?: boolean | null;
     /**
-     * Has Documents
+     * Missing Documents
      *
-     * True for only those with an invoice or receipt, false for those without one.
+     * If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.
      */
-    has_documents?: boolean | null;
+    missing_documents?: boolean;
     /**
      * Page
      *
