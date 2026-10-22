@@ -344,7 +344,7 @@ class TestNetWorthHistory:
     }
 
   @pytest.mark.asyncio
-  async def test_holdings_count_from_their_first_snapshot_and_what_was_put_in_before(
+  async def test_before_the_first_snapshot_what_was_put_in_is_scaled_to_join_it(
     self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts
   ) -> None:
     today = utc_now().date()
@@ -368,7 +368,36 @@ class TestNetWorthHistory:
     )
 
     assert await _history(client) == {
-      "SEK": [(deposited.isoformat(), 10000), (snapshot.isoformat(), 10500), (today.isoformat(), 10500)],
+      "SEK": [(deposited.isoformat(), 10500), (today.isoformat(), 10500)],
+    }
+
+  @pytest.mark.asyncio
+  async def test_an_account_with_more_taken_out_than_put_in_counts_nothing_before_its_first_snapshot(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts
+  ) -> None:
+    today = utc_now().date()
+    deposited, withdrew, snapshot = today - timedelta(days=30), today - timedelta(days=20), today - timedelta(days=2)
+    af = await accounts.account("AF", subtype="af")
+    await accounts.add(af, deposited, 10000, kind="DEPOSIT")
+    await accounts.add(af, withdrew, 15000, TransactionDirection.debit, kind="WITHDRAW")
+    await accounts.add(af, withdrew, 5100, kind="SELL")
+    security = Security(name="Fund", asset_type=AssetType.mutual_fund, currency="SEK", isin="SE0000000002")
+    await save_fixture(security)
+    await save_fixture(
+      HoldingSnapshot(
+        user_id=user.id,
+        bank_account_id=af.id,
+        security_id=security.id,
+        snapshot_date=snapshot,
+        quantity=1_000_000,
+        value=0,
+        acquired_value=0,
+        currency="SEK",
+      )
+    )
+
+    assert await _history(client) == {
+      "SEK": [(deposited.isoformat(), 10000), (withdrew.isoformat(), 0), (snapshot.isoformat(), 100), (today.isoformat(), 100)],
     }
 
   @pytest.mark.asyncio

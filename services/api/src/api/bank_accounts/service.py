@@ -244,7 +244,8 @@ class NetWorthHistory:
     """Net worth on every day it changed, per currency, valued the way the overview's totals are.
 
     Investments are worth their cash plus the holdings on the latest snapshot. Before an account's first
-    snapshot nothing says what its holdings were worth, so it counts what was put in.
+    snapshot nothing says what its holdings were worth, so it counts what was put in, scaled by how the
+    first snapshot compares to it: the line joins up instead of jumping by every gain or loss so far.
     """
     accounts = [a for a in await BankAccountRepository.from_session(session).list_for_user(user_id) if a.include_in_net_worth]
     ids = [a.id for a in accounts]
@@ -267,6 +268,20 @@ def _by_account(rows: Sequence[tuple[UUID, date, int]]) -> dict[UUID, dict[date,
   return grouped
 
 
+def _first_snapshot_scale(
+  account: BankAccount, net: dict[UUID, dict[date, int]], deposits: dict[UUID, dict[date, int]], holdings: dict[UUID, dict[date, int]]
+) -> float:
+  """What the account was worth on its first snapshot for each krona put in by then."""
+  snapshots = holdings.get(account.id)
+  if not snapshots:
+    return 1.0
+  first = min(snapshots)
+  put_in = account.base_balance + sum(v for day, v in deposits.get(account.id, {}).items() if day <= first)
+  worth = account.base_balance + sum(v for day, v in net.get(account.id, {}).items() if day <= first) + snapshots[first]
+  # More taken out than put in, as when gains moved on: there's nothing to scale.
+  return worth / put_in if put_in > 0 else 1.0
+
+
 def _walk(
   accounts: Sequence[BankAccount],
   net: dict[UUID, dict[date, int]],
@@ -278,6 +293,7 @@ def _walk(
   cash = {a.id: a.base_balance for a in accounts}
   put_in = {a.id: a.base_balance for a in accounts}
   held: dict[UUID, int | None] = {a.id: None for a in accounts}
+  scale = {a.id: _first_snapshot_scale(a, net, deposits, holdings) for a in accounts}
 
   def value(account: BankAccount) -> int:
     match _group(account):
@@ -286,7 +302,9 @@ def _walk(
         return min(0, cash[account.id])
       case "investments" if holdings.get(account.id):
         current = held[account.id]
-        return put_in[account.id] if current is None else cash[account.id] + current
+        if current is None:
+          return round(max(0, put_in[account.id]) * scale[account.id])
+        return cash[account.id] + current
       case _:
         return cash[account.id]
 
