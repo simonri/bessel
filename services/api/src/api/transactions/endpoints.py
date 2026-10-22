@@ -61,7 +61,9 @@ async def list_transactions(
   sorting: Annotated[list[Sorting[TransactionSortProperty]], Depends(sorting_getter)],
   bank_account_id: Annotated[list[UUID] | None, Query(description="Filter by bank account ID(s).")] = None,
   category_id: Annotated[list[UUID] | None, Query(description="Filter by category ID(s).")] = None,
-  uncategorized: bool = Query(False, description="If true, only show transactions without a category."),
+  uncategorized: bool = Query(
+    False, description="If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements."
+  ),
   direction: Annotated[str | None, Query(description="Filter by direction: 'debit' or 'credit'.")] = None,
   search: Annotated[str | None, Query(description="Search in description (case-insensitive).")] = None,
   date_from: Annotated[date | None, Query(description="Start date (inclusive).")] = None,

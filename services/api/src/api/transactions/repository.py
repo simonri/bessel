@@ -208,7 +208,13 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if category_ids:
       statement = statement.where(Transaction.category_id.in_(category_ids))
     if uncategorized:
-      statement = statement.where(Transaction.category_id.is_(None))
+      # Only what still needs one: a move between own accounts and a broker's movement are filed already.
+      investment_accounts = select(BankAccount.id).where(BankAccount.subtype.in_(INVESTMENT_SUBTYPES))
+      statement = statement.where(
+        Transaction.category_id.is_(None),
+        Transaction.transfer_id.is_(None),
+        Transaction.bank_account_id.not_in(investment_accounts),
+      )
     if direction:
       statement = statement.where(Transaction.direction == direction)
     if search:

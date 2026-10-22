@@ -10329,7 +10329,7 @@ export type ListTransactionsV1TransactionsGetData = {
     /**
      * Uncategorized
      *
-     * If true, only show transactions without a category.
+     * If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements.
      */
     uncategorized?: boolean;
     /**

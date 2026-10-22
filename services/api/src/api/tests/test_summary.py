@@ -156,3 +156,22 @@ class TestTransferFilter:
     without = (await client.get("/v1/transactions", params={"transfers": False})).json()["items"]
 
     assert ([t["description"] for t in only], [t["description"] for t in without]) == (["Överföring"], ["ICA"])
+
+
+class TestWithoutACategoryFilter:
+  @pytest.mark.asyncio
+  async def test_lists_only_what_still_needs_a_category(self, client: AsyncClient, ledger: _Ledger) -> None:
+    checking = await ledger.account("Skandia")
+    company = await ledger.account("Marginalen", business=True)
+    kf = await ledger.account("Avanza KF", subtype="kf")
+    food = await ledger.category("Food")
+    day = date(2026, 9, 3)
+    await ledger.add(checking, day, 30000, DEBIT, "ICA")
+    await ledger.add(checking, day, 40000, DEBIT, "ICA Kvantum", category=food)
+    await ledger.add(checking, day, 50000, DEBIT, "Överföring", transfer=True)
+    await ledger.add(company, day, 2375000, DEBIT, "DER Juridik")
+    await ledger.add(kf, day, 1800, DEBIT, "Utlåningsränta")
+
+    items = (await client.get("/v1/transactions", params={"uncategorized": True})).json()["items"]
+
+    assert sorted(t["description"] for t in items) == ["DER Juridik", "ICA"]

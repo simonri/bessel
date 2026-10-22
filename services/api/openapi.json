@@ -6448,11 +6448,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "If true, only show transactions without a category.",
+              "description": "If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements.",
               "default": false,
               "title": "Uncategorized"
             },
-            "description": "If true, only show transactions without a category."
+            "description": "If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements."
           },
           {
             "name": "direction",

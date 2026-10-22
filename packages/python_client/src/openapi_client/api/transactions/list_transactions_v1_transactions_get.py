@@ -182,8 +182,8 @@ def sync_detailed(
   Args:
       bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
       category_id (list[UUID] | None | Unset): Filter by category ID(s).
-      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
-          False.
+      uncategorized (bool | Unset): If true, only transactions that still need a category: not
+          moves between own accounts, nor investment accounts' movements. Default: False.
       direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
@@ -250,8 +250,8 @@ def sync(
   Args:
       bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
       category_id (list[UUID] | None | Unset): Filter by category ID(s).
-      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
-          False.
+      uncategorized (bool | Unset): If true, only transactions that still need a category: not
+          moves between own accounts, nor investment accounts' movements. Default: False.
       direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
@@ -313,8 +313,8 @@ async def asyncio_detailed(
   Args:
       bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
       category_id (list[UUID] | None | Unset): Filter by category ID(s).
-      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
-          False.
+      uncategorized (bool | Unset): If true, only transactions that still need a category: not
+          moves between own accounts, nor investment accounts' movements. Default: False.
       direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
@@ -379,8 +379,8 @@ async def asyncio(
   Args:
       bank_account_id (list[UUID] | None | Unset): Filter by bank account ID(s).
       category_id (list[UUID] | None | Unset): Filter by category ID(s).
-      uncategorized (bool | Unset): If true, only show transactions without a category. Default:
-          False.
+      uncategorized (bool | Unset): If true, only transactions that still need a category: not
+          moves between own accounts, nor investment accounts' movements. Default: False.
       direction (None | str | Unset): Filter by direction: 'debit' or 'credit'.
       search (None | str | Unset): Search in description (case-insensitive).
       date_from (datetime.date | None | Unset): Start date (inclusive).
