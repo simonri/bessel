@@ -128,12 +128,18 @@ describe("TransactionList", () => {
 
   it("shows the merchant's logo, and the category's initial if it doesn't load", () => {
     mount([
-      tx({ id: "a", description: "Hallon", logo_url: "https://assets.klarnacdn.net/image/a/b" }),
+      tx({
+        id: "a",
+        description: "Hallon",
+        logo_url: "https://assets.klarnacdn.net/image/a/b",
+      }),
       tx({ id: "b", description: "ICA Nära" }),
     ]);
 
     const [logo] = Array.from(document.querySelectorAll("img"));
-    expect(logo.getAttribute("src")).toBe("https://assets.klarnacdn.net/image/a/b");
+    expect(logo.getAttribute("src")).toBe(
+      "https://assets.klarnacdn.net/image/a/b",
+    );
     expect(document.querySelectorAll("img")).toHaveLength(1);
 
     fireEvent.error(logo);
@@ -142,7 +148,26 @@ describe("TransactionList", () => {
     expect(screen.getAllByText("M")).toHaveLength(2);
   });
 
-    it("opens a transaction when its description is clicked", () => {
+  it("files a broker's movement by its kind, with nothing to categorize", () => {
+    mount([
+      tx({
+        id: "a",
+        description: "Avkastningsskatt",
+        category_id: null,
+        transaction_type: "UNKNOWN",
+        investment_kind: "tax",
+      }),
+    ]);
+
+    const row = screen
+      .getByRole("button", { name: /^Avkastningsskatt/ })
+      .closest("li") as HTMLElement;
+    expect(within(row).queryByText(/category picker/)).toBeNull();
+    expect(within(row).getAllByText(/Skatt/).length).toBeGreaterThan(0);
+    expect(within(row).queryByText(/No category/)).toBeNull();
+  });
+
+  it("opens a transaction when its description is clicked", () => {
     const transaction = tx({});
     const { on } = mount([transaction]);
 
@@ -198,6 +223,14 @@ describe("TransactionPanel", () => {
     expect(on.onDelete).toHaveBeenCalledWith(["t1"]);
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByText("category picker food")).toBeTruthy();
+  });
+
+  it("says what a broker's movement is instead of asking for a category", () => {
+    mountPanel(tx({ investment_kind: "fee", description: "Riskpremie" }));
+
+    expect(screen.getByText("What it is")).toBeTruthy();
+    expect(screen.getByText("Avgift")).toBeTruthy();
+    expect(screen.queryByText(/category picker/)).toBeNull();
   });
 
   it("lets a transfer count again, and has no category for it", () => {

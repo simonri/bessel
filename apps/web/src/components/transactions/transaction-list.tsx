@@ -1,4 +1,8 @@
-import type { CategorySchema, TransactionSchema } from "@bessel/client";
+import type {
+  CategorySchema,
+  InvestmentKind,
+  TransactionSchema,
+} from "@bessel/client";
 import { Checkbox } from "@bessel/ui/components/checkbox";
 import {
   DropdownMenu,
@@ -7,12 +11,52 @@ import {
   DropdownMenuTrigger,
 } from "@bessel/ui/components/dropdown-menu";
 import { format, isToday, isYesterday } from "date-fns";
-import { ArrowLeftRight, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ArrowUpFromLine,
+  Coins,
+  Landmark,
+  type LucideIcon,
+  Minus,
+  MoreHorizontal,
+  Percent,
+  Plus,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
 import { IconButton, Panel } from "@/components/ui-kit";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
+
+// A broker's own kind of movement files it: nothing to categorize by hand.
+export const INVESTMENT_KINDS: Record<
+  InvestmentKind,
+  { label: string; icon: LucideIcon }
+> = {
+  buy: { label: "Köp", icon: Plus },
+  sell: { label: "Sälj", icon: Minus },
+  deposit: { label: "Insättning", icon: ArrowDownToLine },
+  withdrawal: { label: "Uttag", icon: ArrowUpFromLine },
+  dividend: { label: "Utdelning", icon: Coins },
+  interest: { label: "Ränta", icon: Percent },
+  tax: { label: "Skatt", icon: Landmark },
+  fee: { label: "Avgift", icon: Receipt },
+};
+
+/** How a transaction is filed, in words: a move between accounts, a broker's kind, or its category. */
+export function filedAs(
+  transaction: TransactionSchema,
+  category: CategorySchema | undefined,
+): string {
+  if (transaction.transfer_id) return "Between your accounts";
+  if (transaction.investment_kind) {
+    return INVESTMENT_KINDS[transaction.investment_kind].label;
+  }
+  return category?.name ?? "No category";
+}
 
 export interface TransactionHandlers {
   onOpen: (transaction: TransactionSchema) => void;
@@ -201,6 +245,7 @@ const TransactionRow = memo(function TransactionRow({
       />
       <TransactionIcon
         logo={transaction.logo_url}
+        kind={transaction.investment_kind}
         category={category}
         transfer={!!transaction.transfer_id}
       />
@@ -223,16 +268,14 @@ const TransactionRow = memo(function TransactionRow({
           {account ?? "Unknown account"}
           <span className="@2xl:hidden">
             {" - "}
-            {transaction.transfer_id
-              ? "Between your accounts"
-              : (category?.name ?? "No category")}
+            {filedAs(transaction, category)}
           </span>
         </span>
       </button>
       <div className="hidden w-44 shrink-0 @2xl:block">
-        {transaction.transfer_id ? (
+        {transaction.transfer_id || transaction.investment_kind ? (
           <span className="type-caption text-white/40">
-            Between your accounts
+            {filedAs(transaction, category)}
           </span>
         ) : (
           <CategoryCell
@@ -264,10 +307,12 @@ const TransactionRow = memo(function TransactionRow({
 /** The merchant's logo when the source gave one, otherwise the category's colour and initial. */
 export function TransactionIcon({
   logo,
+  kind,
   category,
   transfer,
 }: {
   logo?: string | null;
+  kind?: InvestmentKind | null;
   category: CategorySchema | undefined;
   transfer: boolean;
 }) {
@@ -282,6 +327,14 @@ export function TransactionIcon({
           className="size-full object-cover"
           onError={() => setBroken(true)}
         />
+      </span>
+    );
+  }
+  const KindIcon = kind ? INVESTMENT_KINDS[kind].icon : null;
+  if (KindIcon && !transfer) {
+    return (
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/55">
+        <KindIcon className="size-3.5" aria-hidden />
       </span>
     );
   }

@@ -5057,6 +5057,32 @@ export const InvestmentAccountSummarySchema = {
       title: "Dividends",
       description: "Dividends received per year, newest first.",
     },
+    interest: {
+      items: {
+        $ref: "#/components/schemas/YearAmount",
+      },
+      type: "array",
+      title: "Interest",
+      description:
+        "Interest per year, newest first; below zero when paying it on a loan.",
+    },
+    tax: {
+      items: {
+        $ref: "#/components/schemas/YearAmount",
+      },
+      type: "array",
+      title: "Tax",
+      description:
+        "Tax per year, such as a KF's yield tax, newest first; below zero.",
+    },
+    fees: {
+      items: {
+        $ref: "#/components/schemas/YearAmount",
+      },
+      type: "array",
+      title: "Fees",
+      description: "Fees per year, newest first; below zero.",
+    },
     first_transaction: {
       anyOf: [
         {
@@ -5085,6 +5111,9 @@ export const InvestmentAccountSummarySchema = {
     "net_deposits",
     "growth",
     "dividends",
+    "interest",
+    "tax",
+    "fees",
     "first_transaction",
   ],
   title: "InvestmentAccountSummary",
@@ -5103,6 +5132,20 @@ export const InvestmentAccountsResponseSchema = {
   type: "object",
   required: ["items"],
   title: "InvestmentAccountsResponse",
+} as const;
+
+export const InvestmentKindSchema = {
+  type: "string",
+  enum: [
+    "buy",
+    "sell",
+    "deposit",
+    "withdrawal",
+    "dividend",
+    "interest",
+    "tax",
+    "fee",
+  ],
 } as const;
 
 export const KlarnaImportRequestSchema = {
@@ -9249,6 +9292,19 @@ export const TransactionSchemaSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    investment_kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/InvestmentKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "For a broker's movement, what it is, such as a buy or a tax.",
+      readOnly: true,
+    },
   },
   type: "object",
   required: [
@@ -9265,6 +9321,7 @@ export const TransactionSchemaSchema = {
     "dedup_hash",
     "bank_account_id",
     "raw_id",
+    "investment_kind",
   ],
   title: "TransactionSchema",
 } as const;
@@ -9490,6 +9547,19 @@ export const TransactionUpdateResponseSchema = {
         "Number of other transactions with the same description not yet assigned this category.",
       default: 0,
     },
+    investment_kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/InvestmentKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "For a broker's movement, what it is, such as a buy or a tax.",
+      readOnly: true,
+    },
   },
   type: "object",
   required: [
@@ -9506,6 +9576,7 @@ export const TransactionUpdateResponseSchema = {
     "dedup_hash",
     "bank_account_id",
     "raw_id",
+    "investment_kind",
   ],
   title: "TransactionUpdateResponse",
 } as const;
@@ -9726,4 +9797,331 @@ export const BankConnectionSchemaWritableSchema = {
     "accounts",
   ],
   title: "BankConnectionSchema",
+} as const;
+
+export const TransactionListResponseWritableSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/TransactionSchemaWritable",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "TransactionListResponse",
+} as const;
+
+export const TransactionSchemaWritableSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    transaction_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transaction Type",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+      description: "The merchant's logo, when the source provides it.",
+    },
+    dedup_hash: {
+      type: "string",
+      title: "Dedup Hash",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    raw_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Raw Id",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "Whether this is a business transaction.",
+      default: false,
+    },
+    transfer_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transfer Id",
+      description:
+        "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "amount",
+    "currency",
+    "transaction_date",
+    "direction",
+    "description",
+    "category_id",
+    "transaction_type",
+    "dedup_hash",
+    "bank_account_id",
+    "raw_id",
+  ],
+  title: "TransactionSchema",
+} as const;
+
+export const TransactionUpdateResponseWritableSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    transaction_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transaction Type",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+      description: "The merchant's logo, when the source provides it.",
+    },
+    dedup_hash: {
+      type: "string",
+      title: "Dedup Hash",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    raw_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Raw Id",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "Whether this is a business transaction.",
+      default: false,
+    },
+    transfer_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transfer Id",
+      description:
+        "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
+    },
+    same_description_count: {
+      type: "integer",
+      title: "Same Description Count",
+      description:
+        "Number of other transactions with the same description not yet assigned this category.",
+      default: 0,
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "amount",
+    "currency",
+    "transaction_date",
+    "direction",
+    "description",
+    "category_id",
+    "transaction_type",
+    "dedup_hash",
+    "bank_account_id",
+    "raw_id",
+  ],
+  title: "TransactionUpdateResponse",
 } as const;

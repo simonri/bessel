@@ -5,11 +5,16 @@ from sqlalchemy import Row
 
 from api.avanza.repository import HoldingSnapshotRepository
 from api.bank_accounts.repository import BankAccountRepository
+from api.investments.kinds import InvestmentKind, investment_kind
 from api.investments.repository import TradeRepository
 from api.investments.schemas import HoldingSchema, InvestmentAccountSummary, YearAmount
 from api.models.bank_account import INVESTMENT_SUBTYPES
 from api.postgres import AsyncSession
 from api.transactions.repository import TransactionRepository
+
+
+def _per_year(amounts: dict[int, int]) -> list[YearAmount]:
+  return [YearAmount(year=year, amount=amount) for year, amount in sorted(amounts.items(), reverse=True)]
 
 
 class InvestmentService:
@@ -92,6 +97,12 @@ class InvestmentService:
     balances = await transactions.net_balances_by_account(ids)
     activity = await transactions.account_activity(ids)
     flows = await transactions.flows_by_type(ids)
+    by_kind: dict[UUID, dict[InvestmentKind, dict[int, int]]] = {}
+    for account_id, transaction_type, description, year, net in await transactions.yearly_net_by_movement(ids):
+      kind = investment_kind(transaction_type, description)
+      if kind is not None:
+        years = by_kind.setdefault(account_id, {}).setdefault(kind, {})
+        years[year] = years.get(year, 0) + net
     value: dict[UUID, list[int]] = {account_id: [0, 0] for account_id in ids}
     for row in await HoldingSnapshotRepository.from_session(session).latest_for_accounts(ids):
       value[row.bank_account_id][0] += row.value
@@ -118,7 +129,10 @@ class InvestmentService:
           withdrawals=withdrawals,
           net_deposits=deposits - withdrawals,
           growth=total - (deposits - withdrawals),
-          dividends=[YearAmount(year=year, amount=amount) for year, amount in sorted(by_type.get("DIVIDEND", {}).items(), reverse=True)],
+          dividends=_per_year(by_kind.get(account.id, {}).get("dividend", {})),
+          interest=_per_year(by_kind.get(account.id, {}).get("interest", {})),
+          tax=_per_year(by_kind.get(account.id, {}).get("tax", {})),
+          fees=_per_year(by_kind.get(account.id, {}).get("fee", {})),
           first_transaction=activity.get(account.id, (None,))[0],
         )
       )

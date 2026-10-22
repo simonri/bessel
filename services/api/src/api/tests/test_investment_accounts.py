@@ -20,7 +20,9 @@ async def _account(save_fixture: SaveFixture, user: User, name: str, subtype: st
   return account
 
 
-async def _move(save_fixture: SaveFixture, account: BankAccount, day: date, amount: int, direction: TransactionDirection, kind: str) -> None:
+async def _move(
+  save_fixture: SaveFixture, account: BankAccount, day: date, amount: int, direction: TransactionDirection, kind: str, description: str | None = None
+) -> None:
   await save_fixture(
     Transaction(
       amount=amount,
@@ -28,7 +30,7 @@ async def _move(save_fixture: SaveFixture, account: BankAccount, day: date, amou
       transaction_date=day,
       direction=direction,
       dedup_hash=uuid4().hex,
-      description=kind.title(),
+      description=description or kind.title(),
       transaction_type=kind,
       bank_account_id=account.id,
       user_id=account.user_id,
@@ -104,3 +106,53 @@ class TestInvestmentAccounts:
     await _account(save_fixture, user, "Avanza AF", "af")
 
     assert (await other_client.get("/v1/investments/accounts")).json()["items"] == []
+
+  @pytest.mark.asyncio
+  async def test_interest_tax_and_fees_per_year_including_what_avanza_files_as_unknown(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User
+  ) -> None:
+    kf = await _account(save_fixture, user, "Avanza KF", "kf", business=True)
+    await _move(save_fixture, kf, date(2026, 1, 15), 2898600, DEBIT, "UNKNOWN", "Avkastningsskatt")
+    await _move(save_fixture, kf, date(2025, 1, 15), 100000, DEBIT, "UNKNOWN", "Avkastningsskatt")
+    await _move(save_fixture, kf, date(2026, 3, 1), 1800, DEBIT, "INTEREST", "Utlåningsränta")
+    await _move(save_fixture, kf, date(2026, 3, 1), 800, CREDIT, "INTEREST", "Inlåningsränta")
+    await _move(save_fixture, kf, date(2026, 4, 1), 9900, DEBIT, "UNKNOWN", "Övertrasseringsavgift")
+    await _move(save_fixture, kf, date(2026, 4, 1), 190, DEBIT, "UNKNOWN", "Riskpremie")
+    await _move(save_fixture, kf, date(2026, 5, 1), 11100, CREDIT, "UNKNOWN", "Utdelning CIBUS 0.817145 SEK/aktie")
+    await _move(save_fixture, kf, date(2026, 5, 2), 700, DEBIT, "UNKNOWN", "Något helt nytt")
+
+    [summary] = (await client.get("/v1/investments/accounts")).json()["items"]
+
+    assert {k: summary[k] for k in ("dividends", "interest", "tax", "fees")} == {
+      "dividends": [{"year": 2026, "amount": 11100}],
+      "interest": [{"year": 2026, "amount": -1000}],
+      "tax": [{"year": 2026, "amount": -2898600}, {"year": 2025, "amount": -100000}],
+      "fees": [{"year": 2026, "amount": -10090}],
+    }
+
+  @pytest.mark.asyncio
+  async def test_each_broker_movement_in_the_list_says_what_it_is(self, client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
+    kf = await _account(save_fixture, user, "Avanza KF", "kf")
+    skandia = await _account(save_fixture, user, "Skandia", "checking")
+    await _move(save_fixture, kf, date(2026, 1, 15), 2898600, DEBIT, "UNKNOWN", "Avkastningsskatt")
+    await _move(save_fixture, kf, date(2026, 1, 16), 500000, DEBIT, "BUY", "Köp Investor B")
+    await save_fixture(
+      Transaction(
+        amount=9900,
+        currency="SEK",
+        transaction_date=date(2026, 1, 17),
+        direction=DEBIT,
+        dedup_hash=uuid4().hex,
+        description="Skatteverket",
+        bank_account_id=skandia.id,
+        user_id=user.id,
+      )
+    )
+
+    items = (await client.get("/v1/transactions", params={"limit": 10})).json()["items"]
+
+    assert {t["description"]: t["investment_kind"] for t in items} == {
+      "Avkastningsskatt": "tax",
+      "Köp Investor B": "buy",
+      "Skatteverket": None,
+    }

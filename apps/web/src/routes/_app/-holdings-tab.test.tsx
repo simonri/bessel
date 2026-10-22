@@ -31,6 +31,9 @@ function account(
       { year: year - 1, amount: 9900 },
     ],
     first_transaction: null,
+    interest: [],
+    tax: [],
+    fees: [],
     ...overrides,
   };
 }
@@ -55,7 +58,7 @@ function holding(overrides: Partial<HoldingSchema>): HoldingSchema {
 }
 
 const ACCOUNTS = [
-  account({}),
+  account({ tax: [{ year, amount: -2898600 }] }),
   account({
     bank_account_id: "af",
     name: "AF",
@@ -122,8 +125,35 @@ describe("investmentTotals", () => {
       netDeposits: 600050,
       growth: 50050,
       dividendsThisYear: 2400,
+      interestThisYear: 0,
+      taxThisYear: 0,
+      feesThisYear: 0,
       hasCompany: true,
     });
+  });
+});
+
+describe("costs this year", () => {
+  it("adds up this year's tax, interest and fees and leaves other years out", () => {
+    const [total] = investmentTotals(
+      [
+        account({
+          tax: [
+            { year, amount: -2898600 },
+            { year: year - 1, amount: -100000 },
+          ],
+          interest: [{ year, amount: -1000 }],
+          fees: [{ year, amount: -9900 }],
+        }),
+        account({ tax: [{ year, amount: -400 }] }),
+      ],
+      year,
+    );
+    expect([
+      total.taxThisYear,
+      total.interestThisYear,
+      total.feesThisYear,
+    ]).toEqual([-2899000, -1000, -9900]);
   });
 });
 
@@ -193,6 +223,9 @@ describe("HoldingsTab", () => {
     );
     expect(screen.getByText("Avanza Global")).toBeTruthy();
     expect(screen.getByText("10 units - AF")).toBeTruthy();
+    expect(plain(screen.getByText(/^This year/).textContent)).toBe(
+      "This year Tax -28 986 kr",
+    );
     expect(screen.getByText("10 shares - ISK")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /^ISK/ }));

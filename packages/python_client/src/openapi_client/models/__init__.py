@@ -138,6 +138,7 @@ from .ingest_token_created import IngestTokenCreated
 from .ingest_token_schema import IngestTokenSchema
 from .investment_account_summary import InvestmentAccountSummary
 from .investment_accounts_response import InvestmentAccountsResponse
+from .investment_kind import InvestmentKind
 from .klarna_import_request import KlarnaImportRequest
 from .klarna_import_response import KlarnaImportResponse
 from .location_activity import LocationActivity
@@ -382,6 +383,7 @@ __all__ = (
   "IngestTokenSchema",
   "InvestmentAccountsResponse",
   "InvestmentAccountSummary",
+  "InvestmentKind",
   "KlarnaImportRequest",
   "KlarnaImportResponse",
   "LocationActivity",

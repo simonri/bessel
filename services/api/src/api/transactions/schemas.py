@@ -2,8 +2,9 @@ from datetime import date
 
 from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
+from api.investments.kinds import InvestmentKind, investment_kind
 from api.models.transaction import TransactionDirection
-from pydantic import UUID4, Field
+from pydantic import UUID4, Field, computed_field
 
 
 class TransactionSchema(IDSchema, TimestampedSchema):
@@ -22,6 +23,11 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   transfer_id: UUID4 | None = Field(
     default=None, description="Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
   )
+
+  @computed_field(description="For a broker's movement, what it is, such as a buy or a tax.")  # type: ignore[prop-decorator]
+  @property
+  def investment_kind(self) -> InvestmentKind | None:
+    return investment_kind(self.transaction_type, self.description)
 
 
 class TransactionUpdate(Schema):

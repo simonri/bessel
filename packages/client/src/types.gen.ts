@@ -3340,6 +3340,24 @@ export type InvestmentAccountSummary = {
    */
   dividends: Array<YearAmount>;
   /**
+   * Interest
+   *
+   * Interest per year, newest first; below zero when paying it on a loan.
+   */
+  interest: Array<YearAmount>;
+  /**
+   * Tax
+   *
+   * Tax per year, such as a KF's yield tax, newest first; below zero.
+   */
+  tax: Array<YearAmount>;
+  /**
+   * Fees
+   *
+   * Fees per year, newest first; below zero.
+   */
+  fees: Array<YearAmount>;
+  /**
    * First Transaction
    */
   first_transaction: Date | null;
@@ -3354,6 +3372,20 @@ export type InvestmentAccountsResponse = {
    */
   items: Array<InvestmentAccountSummary>;
 };
+
+export const InvestmentKind = {
+  BUY: "buy",
+  SELL: "sell",
+  DEPOSIT: "deposit",
+  WITHDRAWAL: "withdrawal",
+  DIVIDEND: "dividend",
+  INTEREST: "interest",
+  TAX: "tax",
+  FEE: "fee",
+} as const;
+
+export type InvestmentKind =
+  (typeof InvestmentKind)[keyof typeof InvestmentKind];
 
 /**
  * KlarnaImportRequest
@@ -5849,6 +5881,10 @@ export type TransactionSchema = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id?: string | null;
+  /**
+   * For a broker's movement, what it is, such as a buy or a tax.
+   */
+  readonly investment_kind: InvestmentKind | null;
 };
 
 /**
@@ -6006,6 +6042,10 @@ export type TransactionUpdateResponse = {
    * Number of other transactions with the same description not yet assigned this category.
    */
   same_description_count?: number;
+  /**
+   * For a broker's movement, what it is, such as a buy or a tax.
+   */
+  readonly investment_kind: InvestmentKind | null;
 };
 
 /**
@@ -6170,6 +6210,185 @@ export type BankConnectionSchemaWritable = {
    * Accounts
    */
   accounts: Array<BankConnectionAccountSchema>;
+};
+
+/**
+ * TransactionListResponse
+ */
+export type TransactionListResponseWritable = {
+  /**
+   * Items
+   */
+  items: Array<TransactionSchemaWritable>;
+  pagination: Pagination;
+};
+
+/**
+ * TransactionSchema
+ */
+export type TransactionSchemaWritable = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  direction: TransactionDirection;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Category Id
+   */
+  category_id: string | null;
+  /**
+   * Transaction Type
+   */
+  transaction_type: string | null;
+  /**
+   * Logo Url
+   *
+   * The merchant's logo, when the source provides it.
+   */
+  logo_url?: string | null;
+  /**
+   * Dedup Hash
+   */
+  dedup_hash: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Raw Id
+   */
+  raw_id: string | null;
+  /**
+   * Is Business
+   *
+   * Whether this is a business transaction.
+   */
+  is_business?: boolean;
+  /**
+   * Transfer Id
+   *
+   * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
+   */
+  transfer_id?: string | null;
+};
+
+/**
+ * TransactionUpdateResponse
+ */
+export type TransactionUpdateResponseWritable = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  direction: TransactionDirection;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Category Id
+   */
+  category_id: string | null;
+  /**
+   * Transaction Type
+   */
+  transaction_type: string | null;
+  /**
+   * Logo Url
+   *
+   * The merchant's logo, when the source provides it.
+   */
+  logo_url?: string | null;
+  /**
+   * Dedup Hash
+   */
+  dedup_hash: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Raw Id
+   */
+  raw_id: string | null;
+  /**
+   * Is Business
+   *
+   * Whether this is a business transaction.
+   */
+  is_business?: boolean;
+  /**
+   * Transfer Id
+   *
+   * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
+   */
+  transfer_id?: string | null;
+  /**
+   * Same Description Count
+   *
+   * Number of other transactions with the same description not yet assigned this category.
+   */
+  same_description_count?: number;
 };
 
 export type HealthzHealthzGetData = {

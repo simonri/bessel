@@ -69,6 +69,9 @@ class InvestmentAccountSummary(Schema):
   net_deposits: int = Field(description="Deposits minus withdrawals.")
   growth: int = Field(description="Total minus net deposits: what the account made or lost overall.")
   dividends: list[YearAmount] = Field(description="Dividends received per year, newest first.")
+  interest: list[YearAmount] = Field(description="Interest per year, newest first; below zero when paying it on a loan.")
+  tax: list[YearAmount] = Field(description="Tax per year, such as a KF's yield tax, newest first; below zero.")
+  fees: list[YearAmount] = Field(description="Fees per year, newest first; below zero.")
   first_transaction: date | None
 
 

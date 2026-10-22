@@ -31,6 +31,9 @@ class InvestmentAccountSummary:
       net_deposits (int): Deposits minus withdrawals.
       growth (int): Total minus net deposits: what the account made or lost overall.
       dividends (list[YearAmount]): Dividends received per year, newest first.
+      interest (list[YearAmount]): Interest per year, newest first; below zero when paying it on a loan.
+      tax (list[YearAmount]): Tax per year, such as a KF's yield tax, newest first; below zero.
+      fees (list[YearAmount]): Fees per year, newest first; below zero.
       first_transaction (datetime.date | None):
   """
 
@@ -47,6 +50,9 @@ class InvestmentAccountSummary:
   net_deposits: int
   growth: int
   dividends: list[YearAmount]
+  interest: list[YearAmount]
+  tax: list[YearAmount]
+  fees: list[YearAmount]
   first_transaction: datetime.date | None
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -80,6 +86,21 @@ class InvestmentAccountSummary:
       dividends_item = dividends_item_data.to_dict()
       dividends.append(dividends_item)
 
+    interest = []
+    for interest_item_data in self.interest:
+      interest_item = interest_item_data.to_dict()
+      interest.append(interest_item)
+
+    tax = []
+    for tax_item_data in self.tax:
+      tax_item = tax_item_data.to_dict()
+      tax.append(tax_item)
+
+    fees = []
+    for fees_item_data in self.fees:
+      fees_item = fees_item_data.to_dict()
+      fees.append(fees_item)
+
     first_transaction: None | str
     if isinstance(self.first_transaction, datetime.date):
       first_transaction = self.first_transaction.isoformat()
@@ -103,6 +124,9 @@ class InvestmentAccountSummary:
         "net_deposits": net_deposits,
         "growth": growth,
         "dividends": dividends,
+        "interest": interest,
+        "tax": tax,
+        "fees": fees,
         "first_transaction": first_transaction,
       }
     )
@@ -145,6 +169,27 @@ class InvestmentAccountSummary:
 
       dividends.append(dividends_item)
 
+    interest = []
+    _interest = d.pop("interest")
+    for interest_item_data in _interest:
+      interest_item = YearAmount.from_dict(interest_item_data)
+
+      interest.append(interest_item)
+
+    tax = []
+    _tax = d.pop("tax")
+    for tax_item_data in _tax:
+      tax_item = YearAmount.from_dict(tax_item_data)
+
+      tax.append(tax_item)
+
+    fees = []
+    _fees = d.pop("fees")
+    for fees_item_data in _fees:
+      fees_item = YearAmount.from_dict(fees_item_data)
+
+      fees.append(fees_item)
+
     def _parse_first_transaction(data: object) -> datetime.date | None:
       if data is None:
         return data
@@ -174,6 +219,9 @@ class InvestmentAccountSummary:
       net_deposits=net_deposits,
       growth=growth,
       dividends=dividends,
+      interest=interest,
+      tax=tax,
+      fees=fees,
       first_transaction=first_transaction,
     )
 

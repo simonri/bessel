@@ -7,6 +7,7 @@ from typing import Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.investment_kind import InvestmentKind
 from ..models.transaction_direction import TransactionDirection
 from ..types import UNSET, Unset
 
@@ -30,6 +31,7 @@ class TransactionUpdateResponse:
       dedup_hash (str):
       bank_account_id (str):
       raw_id (None | str):
+      investment_kind (InvestmentKind | None): For a broker's movement, what it is, such as a buy or a tax.
       logo_url (None | str | Unset): The merchant's logo, when the source provides it.
       is_business (bool | Unset): Whether this is a business transaction. Default: False.
       transfer_id (None | str | Unset): Shared with the other side of a move between the user's own accounts; such
@@ -51,6 +53,7 @@ class TransactionUpdateResponse:
   dedup_hash: str
   bank_account_id: str
   raw_id: None | str
+  investment_kind: InvestmentKind | None
   logo_url: None | str | Unset = UNSET
   is_business: bool | Unset = False
   transfer_id: None | str | Unset = UNSET
@@ -92,6 +95,12 @@ class TransactionUpdateResponse:
     raw_id: None | str
     raw_id = self.raw_id
 
+    investment_kind: None | str
+    if isinstance(self.investment_kind, InvestmentKind):
+      investment_kind = self.investment_kind.value
+    else:
+      investment_kind = self.investment_kind
+
     logo_url: None | str | Unset
     if isinstance(self.logo_url, Unset):
       logo_url = UNSET
@@ -125,6 +134,7 @@ class TransactionUpdateResponse:
         "dedup_hash": dedup_hash,
         "bank_account_id": bank_account_id,
         "raw_id": raw_id,
+        "investment_kind": investment_kind,
       }
     )
     if logo_url is not UNSET:
@@ -200,6 +210,21 @@ class TransactionUpdateResponse:
 
     raw_id = _parse_raw_id(d.pop("raw_id"))
 
+    def _parse_investment_kind(data: object) -> InvestmentKind | None:
+      if data is None:
+        return data
+      try:
+        if not isinstance(data, str):
+          raise TypeError()
+        investment_kind_type_0 = InvestmentKind(data)
+
+        return investment_kind_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(InvestmentKind | None, data)
+
+    investment_kind = _parse_investment_kind(d.pop("investment_kind"))
+
     def _parse_logo_url(data: object) -> None | str | Unset:
       if data is None:
         return data
@@ -236,6 +261,7 @@ class TransactionUpdateResponse:
       dedup_hash=dedup_hash,
       bank_account_id=bank_account_id,
       raw_id=raw_id,
+      investment_kind=investment_kind,
       logo_url=logo_url,
       is_business=is_business,
       transfer_id=transfer_id,

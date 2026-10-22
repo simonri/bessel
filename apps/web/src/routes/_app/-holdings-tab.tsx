@@ -30,7 +30,15 @@ export interface InvestmentTotals {
   netDeposits: number;
   growth: number;
   dividendsThisYear: number;
+  /** What the accounts cost this year: below zero, like interest on a loan, a KF's yield tax and fees. */
+  interestThisYear: number;
+  taxThisYear: number;
+  feesThisYear: number;
   hasCompany: boolean;
+}
+
+function inYear(amounts: { year: number; amount: number }[], year: number) {
+  return amounts.find((a) => a.year === year)?.amount ?? 0;
 }
 
 /** The accounts added up per currency; growth is what they're worth beyond what was put in. */
@@ -47,14 +55,19 @@ export function investmentTotals(
       netDeposits: 0,
       growth: 0,
       dividendsThisYear: 0,
+      interestThisYear: 0,
+      taxThisYear: 0,
+      feesThisYear: 0,
       hasCompany: false,
     };
     t.total += a.total;
     t.cash += a.cash;
     t.netDeposits += a.net_deposits;
     t.growth += a.growth;
-    t.dividendsThisYear +=
-      a.dividends.find((d) => d.year === year)?.amount ?? 0;
+    t.dividendsThisYear += inYear(a.dividends, year);
+    t.interestThisYear += inYear(a.interest, year);
+    t.taxThisYear += inYear(a.tax, year);
+    t.feesThisYear += inYear(a.fees, year);
     t.hasCompany ||= a.is_business;
     totals.set(a.currency, t);
   }
@@ -179,6 +192,7 @@ function Overview({
           <Amount value={totals.dividendsThisYear} currency={currency} />
         </Fact>
       </dl>
+      <CostsThisYear totals={totals} />
 
       {slices.length > 0 && (
         <div className="mt-5">
@@ -199,6 +213,33 @@ function Overview({
         </div>
       )}
     </Panel>
+  );
+}
+
+/** Tax, interest and fees taken from the accounts this year; already counted in the growth above. */
+function CostsThisYear({ totals }: { totals: InvestmentTotals }) {
+  const costs = [
+    { label: "Tax", value: totals.taxThisYear },
+    { label: "Interest", value: totals.interestThisYear },
+    { label: "Fees", value: totals.feesThisYear },
+  ].filter((c) => c.value !== 0);
+  if (costs.length === 0) return null;
+  return (
+    <p className="mt-3 type-caption text-white/45">
+      This year{" "}
+      {costs.map((cost, i) => (
+        <span key={cost.label}>
+          {i > 0 && " - "}
+          {cost.label}{" "}
+          <Amount
+            value={cost.value}
+            currency={totals.currency}
+            sign
+            className="text-white/70"
+          />
+        </span>
+      ))}
+    </p>
   );
 }
 

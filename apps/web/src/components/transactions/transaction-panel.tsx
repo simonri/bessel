@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import type { ReactNode } from "react";
 import { CategoryCell } from "@/components/category-cell";
 import {
+  filedAs,
   signedAmount,
   type TransactionHandlers,
   TransactionIcon,
@@ -72,6 +73,7 @@ function Body({
       <header className="flex items-center gap-3 border-b border-white/[0.06] px-5 pt-5 pr-12 pb-4">
         <TransactionIcon
           logo={transaction.logo_url}
+          kind={transaction.investment_kind}
           category={categories.find((c) => c.id === transaction.category_id)}
           transfer={!!transaction.transfer_id}
         />
@@ -99,10 +101,15 @@ function Body({
 
         <dl className="space-y-1">
           <Detail label="Account">{account ?? "Unknown account"}</Detail>
-          <Detail label="Category">
-            {transaction.transfer_id ? (
+          <Detail
+            label={transaction.investment_kind ? "What it is" : "Category"}
+          >
+            {transaction.transfer_id || transaction.investment_kind ? (
               <span className="text-13 text-white/60">
-                Between your accounts
+                {filedAs(
+                  transaction,
+                  categories.find((c) => c.id === transaction.category_id),
+                )}
               </span>
             ) : (
               <CategoryCell

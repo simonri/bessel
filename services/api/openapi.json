@@ -12466,6 +12466,30 @@
             "title": "Dividends",
             "description": "Dividends received per year, newest first."
           },
+          "interest": {
+            "items": {
+              "$ref": "#/components/schemas/YearAmount"
+            },
+            "type": "array",
+            "title": "Interest",
+            "description": "Interest per year, newest first; below zero when paying it on a loan."
+          },
+          "tax": {
+            "items": {
+              "$ref": "#/components/schemas/YearAmount"
+            },
+            "type": "array",
+            "title": "Tax",
+            "description": "Tax per year, such as a KF's yield tax, newest first; below zero."
+          },
+          "fees": {
+            "items": {
+              "$ref": "#/components/schemas/YearAmount"
+            },
+            "type": "array",
+            "title": "Fees",
+            "description": "Fees per year, newest first; below zero."
+          },
           "first_transaction": {
             "anyOf": [
               {
@@ -12494,6 +12518,9 @@
           "net_deposits",
           "growth",
           "dividends",
+          "interest",
+          "tax",
+          "fees",
           "first_transaction"
         ],
         "title": "InvestmentAccountSummary"
@@ -12513,6 +12540,19 @@
           "items"
         ],
         "title": "InvestmentAccountsResponse"
+      },
+      "InvestmentKind": {
+        "type": "string",
+        "enum": [
+          "buy",
+          "sell",
+          "deposit",
+          "withdrawal",
+          "dividend",
+          "interest",
+          "tax",
+          "fee"
+        ]
       },
       "KlarnaImportRequest": {
         "properties": {
@@ -16777,6 +16817,18 @@
             ],
             "title": "Transfer Id",
             "description": "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
+          },
+          "investment_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestmentKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a broker's movement, what it is, such as a buy or a tax.",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -16793,7 +16845,8 @@
           "transaction_type",
           "dedup_hash",
           "bank_account_id",
-          "raw_id"
+          "raw_id",
+          "investment_kind"
         ],
         "title": "TransactionSchema"
       },
@@ -17016,6 +17069,18 @@
             "title": "Same Description Count",
             "description": "Number of other transactions with the same description not yet assigned this category.",
             "default": 0
+          },
+          "investment_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestmentKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a broker's movement, what it is, such as a buy or a tax.",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -17032,7 +17097,8 @@
           "transaction_type",
           "dedup_hash",
           "bank_account_id",
-          "raw_id"
+          "raw_id",
+          "investment_kind"
         ],
         "title": "TransactionUpdateResponse"
       },

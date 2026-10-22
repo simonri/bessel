@@ -119,6 +119,19 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       flows.setdefault(account_id, {}).setdefault(kind or "", {})[int(in_year)] = int(total)
     return flows
 
+  async def yearly_net_by_movement(self, account_ids: Sequence[UUID]) -> list[tuple[UUID, str, str | None, int, int]]:
+    """Per account, the net of each kind and text of a broker's movement per year: credits positive, debits negative."""
+    if not account_ids:
+      return []
+    year = extract("year", Transaction.transaction_date)
+    net = func.sum(case((Transaction.direction == TransactionDirection.credit, Transaction.amount), else_=-Transaction.amount))
+    statement = (
+      select(Transaction.bank_account_id, Transaction.transaction_type, Transaction.description, year, net)
+      .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None), Transaction.transaction_type.is_not(None))
+      .group_by(Transaction.bank_account_id, Transaction.transaction_type, Transaction.description, year)
+    )
+    return [(account_id, kind, text, int(in_year), int(total)) for account_id, kind, text, in_year, total in await self.session.execute(statement)]
+
   async def monthly_net_by_account(self, account_ids: Sequence[UUID]) -> list[tuple[UUID, date, int]]:
     """Each account's credits minus debits per month, keyed by the month's first day."""
     if not account_ids:
