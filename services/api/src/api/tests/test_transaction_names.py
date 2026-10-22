@@ -73,7 +73,7 @@ class TestRename:
     for _ in range(3):
       await _add(save_fixture, account, "CLAUDE.AI SUBSCRIPTION")
     await _add(save_fixture, account, "claude.ai api credits", name="Claude API")
-    await _add(save_fixture, account, "ICA Nära")
+    await _add(save_fixture, account, "ICA Maxi")
 
     response = await client.put(f"/v1/transactions/{this.id}/name", json={"name": "  Claude Max  "})
 
@@ -87,11 +87,12 @@ class TestRename:
     assert [name for description, name in await _names(session, account) if description == "ANTHROPIC* CLAUDE SUB"] == [None, None, "Claude Max", "My own name"]
 
   @pytest.mark.asyncio
-  async def test_short_words_suggest_nothing(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+  async def test_short_and_common_words_suggest_nothing(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
     this = await _add(save_fixture, account, "SPOTIFY P2B3C")
     await _add(save_fixture, account, "AB Svenska Spel")
+    await _add(save_fixture, account, "Skolavgift och fritid")
 
-    body = (await client.put(f"/v1/transactions/{this.id}/name", json={"name": "AB"})).json()
+    body = (await client.put(f"/v1/transactions/{this.id}/name", json={"name": "AB fika och lunch"})).json()
 
     assert body["suggestions"] == []
 
@@ -149,6 +150,38 @@ class TestNameAll:
 
     assert second.json() == {"renamed": 2}
     assert await _names(session, account) == [("CLAUDE.AI SUBSCRIPTION", "Claude Max")] * 2 + [("CLAUDE.AI SUBSCRIPTION", "Team plan")]
+
+  @pytest.mark.asyncio
+  async def test_renaming_a_named_group_again_reaches_every_one_of_its_bank_texts(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    first, second, third = [await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB") for _ in range(3)]
+    renamed_alike, _ = [await _add(save_fixture, account, "CLAUDE.AI SUBSCRIPTION") for _ in range(2)]
+    await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB", name="Team plan")
+
+    async def rename(transaction: Transaction, name: str) -> list[dict]:
+      return (await client.put(f"/v1/transactions/{transaction.id}/name", json={"name": name})).json()["suggestions"]
+
+    async def accept(suggestions: list[dict], name: str) -> None:
+      for suggestion in suggestions:
+        await client.post("/v1/transactions/names", json={"description": suggestion["description"], "name": name})
+
+    await accept(await rename(first, "Claude"), "Claude")
+    # Named by hand with what the group is already called: still part of the group.
+    await rename(renamed_alike, "Claude")
+    await rename(third, "Claude")
+    again = await rename(second, "Claude Max")
+    await accept(again, "Claude Max")
+
+    assert again == [{"description": "ANTHROPIC* CLAUDE SUB", "count": 2}, {"description": "CLAUDE.AI SUBSCRIPTION", "count": 2}]
+    assert await _names(session, account) == [
+      ("ANTHROPIC* CLAUDE SUB", "Claude Max"),
+      ("ANTHROPIC* CLAUDE SUB", "Claude Max"),
+      ("ANTHROPIC* CLAUDE SUB", "Claude Max"),
+      ("ANTHROPIC* CLAUDE SUB", "Team plan"),
+      ("CLAUDE.AI SUBSCRIPTION", "Claude Max"),
+      ("CLAUDE.AI SUBSCRIPTION", "Claude Max"),
+    ]
 
   @pytest.mark.asyncio
   async def test_later_imports_arrive_named_and_a_name_cleared_by_hand_stays_cleared(

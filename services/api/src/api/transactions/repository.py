@@ -1,3 +1,4 @@
+import re
 from collections.abc import Sequence
 from datetime import date
 from typing import Any, NamedTuple
@@ -12,7 +13,7 @@ from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.transaction_name_rule import TransactionNameRule
-from sqlalchemy import Row, Select, case, delete, exists, extract, func, or_, select, update
+from sqlalchemy import ColumnElement, Row, Select, and_, case, delete, exists, extract, false, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import aliased
 
@@ -56,6 +57,12 @@ def _counted_in_reports[*Ts](statement: Select[*Ts]) -> Select[*Ts]:
     Transaction.transfer_id.is_(None),
     or_(Category.id.is_(None), Category.excluded.is_(False)),
   )
+
+
+def _renamable(adopt: Sequence[str]) -> ColumnElement[bool]:
+  """What naming a bank text may change: rows without a name, named by a rule, or named by hand with one of `adopt`,
+  such as the one renamed first, whose name the rule then took on. Any other name the user gave stays."""
+  return or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None), Transaction.name.in_(adopt))
 
 
 class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Transaction, UUID]):
@@ -331,30 +338,29 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       changed += await self.execute_for_rowcount(statement)
     return changed
 
-  async def count_to_rename(self, user_id: UUID, *, description: str, name: str) -> int:
-    """The user's transactions with this bank text that naming it would change; names the user gave stay."""
+  async def count_to_rename(self, user_id: UUID, *, description: str, name: str, adopt: Sequence[str]) -> int:
+    """The user's transactions with this bank text that naming it would change."""
     statement = select(func.count()).where(
       Transaction.user_id == user_id,
       Transaction.deleted_at.is_(None),
       Transaction.description == description,
-      or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None)),
+      _renamable(adopt),
       Transaction.name.is_distinct_from(name),
     )
     return (await self.session.execute(statement)).scalar_one()
 
-  async def unnamed_descriptions_containing(self, user_id: UUID, words: Sequence[str], *, exclude: str, limit: int) -> list[tuple[str, int]]:
-    """Other bank texts, still without a name, that mention any of the words; the most frequent first."""
-    if not words:
-      return []
+  async def descriptions_to_suggest(self, user_id: UUID, *, words: Sequence[str], named: Sequence[str], exclude: str, limit: int) -> list[tuple[str, int]]:
+    """Other bank texts that likely belong under the same name: ones already called what this one was called,
+    and unnamed ones mentioning any of the words in full. The most frequent first."""
+    mentions = [Transaction.description.op("~*")(rf"\m{re.escape(word)}\M") for word in words]
     statement = (
       select(Transaction.description, func.count())
       .where(
         Transaction.user_id == user_id,
         Transaction.deleted_at.is_(None),
-        Transaction.name.is_(None),
         Transaction.description.is_not(None),
         Transaction.description != exclude,
-        or_(*(Transaction.description.icontains(word, autoescape=True) for word in words)),
+        or_(Transaction.name.in_(named), and_(Transaction.name.is_(None), or_(false(), *mentions))),
       )
       .group_by(Transaction.description)
       .order_by(func.count().desc(), Transaction.description)
@@ -362,15 +368,15 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     )
     return [(description, count) for description, count in await self.session.execute(statement)]
 
-  async def name_by_rule(self, rule: TransactionNameRule) -> int:
-    """Gives the rule's name to every transaction with its bank text, except those the user named themselves."""
+  async def name_by_rule(self, rule: TransactionNameRule, *, adopt: Sequence[str]) -> int:
+    """Gives the rule's name to every transaction with its bank text, except those the user named something else."""
     statement = (
       update(Transaction)
       .where(
         Transaction.user_id == rule.user_id,
         Transaction.deleted_at.is_(None),
         Transaction.description == rule.description,
-        or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None)),
+        _renamable(adopt),
       )
       .values(name=rule.name, name_rule_id=rule.id)
     )

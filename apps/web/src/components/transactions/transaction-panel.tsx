@@ -103,7 +103,7 @@ function Body({
             transaction={transaction}
             onSuggestions={setSuggestions}
             renderTitle={(title) => (
-              <SheetTitle className="truncate type-heading text-white/90">
+              <SheetTitle className="min-w-0 type-heading text-white/90">
                 {title}
               </SheetTitle>
             )}

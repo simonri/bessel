@@ -52,7 +52,7 @@ export function NameHeading({
 }: {
   transaction: TransactionSchema;
   onSuggestions: (suggestions: NameSuggestion[]) => void;
-  renderTitle: (title: string) => ReactNode;
+  renderTitle: (title: ReactNode) => ReactNode;
 }) {
   const refresh = useRefresh();
   const [editing, setEditing] = useState(false);
@@ -112,22 +112,24 @@ export function NameHeading({
   }
   return (
     <div className="min-w-0">
-      <button
-        type="button"
-        onClick={() => {
-          setDraft(transaction.name ?? transaction.description ?? "");
-          cancelled.current = false;
-          setEditing(true);
-        }}
-        aria-label={`Rename ${displayName(transaction)}`}
-        className="group flex max-w-full items-center gap-1.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/60"
-      >
-        {renderTitle(displayName(transaction))}
-        <Pencil
-          aria-hidden
-          className="size-3 shrink-0 text-white/0 transition-colors group-hover:text-white/40 group-focus-visible:text-white/40 pointer-coarse:text-white/30"
-        />
-      </button>
+      {renderTitle(
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(transaction.name ?? transaction.description ?? "");
+            cancelled.current = false;
+            setEditing(true);
+          }}
+          aria-label={`Rename ${displayName(transaction)}`}
+          className="group flex max-w-full items-center gap-1.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/60"
+        >
+          <span className="truncate">{displayName(transaction)}</span>
+          <Pencil
+            aria-hidden
+            className="size-3 shrink-0 text-white/0 transition-colors group-hover:text-white/40 group-focus-visible:text-white/40 pointer-coarse:text-white/30"
+          />
+        </button>,
+      )}
       {transaction.name && transaction.description && (
         <p className="truncate type-caption text-white/40">
           Bank text: {transaction.description}
