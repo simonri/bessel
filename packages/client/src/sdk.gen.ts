@@ -27,10 +27,12 @@ import {
   createTaskV1TasksPostResponseTransformer,
   createTimeEntryV1TimeEntriesPostResponseTransformer,
   createTimeProjectV1TimeProjectsPostResponseTransformer,
+  getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer,
   getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
   getAvanzaV1AvanzaGetResponseTransformer,
   getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
   getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
+  getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer,
   getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
   getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
   getPlaceV1PlacesPlaceIdGetResponseTransformer,
@@ -193,6 +195,8 @@ import type {
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
+  GetAccountsOverviewV1BankAccountsOverviewGetData,
+  GetAccountsOverviewV1BankAccountsOverviewGetResponses,
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetErrors,
   GetActivitySummaryV1ActivitySummaryGetResponses,
@@ -223,6 +227,8 @@ import type {
   GetIntradayActivityV1ActivityIntradayGetData,
   GetIntradayActivityV1ActivityIntradayGetErrors,
   GetIntradayActivityV1ActivityIntradayGetResponses,
+  GetInvestmentAccountsV1InvestmentsAccountsGetData,
+  GetInvestmentAccountsV1InvestmentsAccountsGetResponses,
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
@@ -395,6 +401,9 @@ import type {
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
+  TransactionSummaryV1TransactionsSummaryGetData,
+  TransactionSummaryV1TransactionsSummaryGetErrors,
+  TransactionSummaryV1TransactionsSummaryGetResponses,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses,
@@ -763,6 +772,35 @@ export const createBankAccountV1BankAccountsPost = <
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Accounts Overview
+ *
+ * Every account with its balance, history and where its data comes from, plus totals per owner and currency.
+ */
+export const getAccountsOverviewV1BankAccountsOverviewGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetAccountsOverviewV1BankAccountsOverviewGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetAccountsOverviewV1BankAccountsOverviewGetResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetAccountsOverviewV1BankAccountsOverviewGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-accounts/overview",
+    ...options,
   });
 
 /**
@@ -2227,6 +2265,35 @@ export const listTradesV1InvestmentsTradesGet = <
   });
 
 /**
+ * Investment Accounts
+ *
+ * Each investment account's value, the money put in and taken out, what it made, and its dividends.
+ */
+export const getInvestmentAccountsV1InvestmentsAccountsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetInvestmentAccountsV1InvestmentsAccountsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetInvestmentAccountsV1InvestmentsAccountsGetResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetInvestmentAccountsV1InvestmentsAccountsGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/accounts",
+    ...options,
+  });
+
+/**
  * Get Holdings
  */
 export const getHoldingsV1InvestmentsHoldingsGet = <
@@ -3661,6 +3728,33 @@ export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/spending-by-category",
+    ...options,
+  });
+
+/**
+ * Month Summary
+ *
+ * The user's own income and spending for a month, with the year before it for comparison.
+ */
+export const transactionSummaryV1TransactionsSummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    TransactionSummaryV1TransactionsSummaryGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  TransactionSummaryV1TransactionsSummaryGetResponses,
+  TransactionSummaryV1TransactionsSummaryGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    TransactionSummaryV1TransactionsSummaryGetResponses,
+    TransactionSummaryV1TransactionsSummaryGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/summary",
     ...options,
   });
 

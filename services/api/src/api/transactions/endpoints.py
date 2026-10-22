@@ -25,10 +25,12 @@ from api.transactions.schemas import (
   MonthlySpendingResponse,
   TransactionListResponse,
   TransactionSchema,
+  TransactionSummaryResponse,
   TransactionUpdate,
   TransactionUpdateResponse,
 )
 from api.transactions.service import transaction_service
+from api.transactions.summary import month_summary
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query, UploadFile
 
@@ -65,6 +67,7 @@ async def list_transactions(
   date_from: Annotated[date | None, Query(description="Start date (inclusive).")] = None,
   date_to: Annotated[date | None, Query(description="End date (inclusive).")] = None,
   is_business: Annotated[bool | None, Query(description="Filter by business flag.")] = None,
+  transfers: Annotated[bool | None, Query(description="True for only moves between the user's own accounts, false to leave them out.")] = None,
 ) -> TransactionListResponse:
   """List transactions."""
   repo = TransactionRepository.from_session(session)
@@ -78,6 +81,7 @@ async def list_transactions(
     date_from=date_from,
     date_to=date_to,
     is_business=is_business,
+    transfers=transfers,
   )
 
   statement = apply_sorting(statement, Transaction, sorting)
@@ -262,6 +266,21 @@ async def spending_by_category(
     for row in rows
   ]
   return MonthlySpendingResponse(year=year, month=month, items=items)
+
+
+@router.get(
+  "/summary",
+  summary="Month Summary",
+  response_model=TransactionSummaryResponse,
+)
+async def transaction_summary(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  year: int = Query(description="Year to summarize."),
+  month: int = Query(ge=1, le=12, description="Month to summarize (1-12)."),
+) -> TransactionSummaryResponse:
+  """The user's own income and spending for a month, with the year before it for comparison."""
+  return await month_summary(session, current_user.id, year=year, month=month)
 
 
 @router.get(

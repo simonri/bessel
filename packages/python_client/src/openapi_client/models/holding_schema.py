@@ -7,6 +7,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.asset_type import AssetType
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="HoldingSchema")
 
@@ -27,6 +28,7 @@ class HoldingSchema:
       current_value (int | None): Current value in minor units, or null if no price recorded.
       gain_loss (int | None): Unrealized gain/loss in minor units, or null if no price.
       gain_loss_pct (float | None): Unrealized gain/loss percentage, or null if no price or zero cost.
+      bank_account_id (None | str | Unset): The account holding it, for accounts a broker syncs.
   """
 
   security_id: str
@@ -41,6 +43,7 @@ class HoldingSchema:
   current_value: int | None
   gain_loss: int | None
   gain_loss_pct: float | None
+  bank_account_id: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -73,6 +76,12 @@ class HoldingSchema:
     gain_loss_pct: float | None
     gain_loss_pct = self.gain_loss_pct
 
+    bank_account_id: None | str | Unset
+    if isinstance(self.bank_account_id, Unset):
+      bank_account_id = UNSET
+    else:
+      bank_account_id = self.bank_account_id
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -91,6 +100,8 @@ class HoldingSchema:
         "gain_loss_pct": gain_loss_pct,
       }
     )
+    if bank_account_id is not UNSET:
+      field_dict["bank_account_id"] = bank_account_id
 
     return field_dict
 
@@ -146,6 +157,15 @@ class HoldingSchema:
 
     gain_loss_pct = _parse_gain_loss_pct(d.pop("gain_loss_pct"))
 
+    def _parse_bank_account_id(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    bank_account_id = _parse_bank_account_id(d.pop("bank_account_id", UNSET))
+
     holding_schema = cls(
       security_id=security_id,
       security_name=security_name,
@@ -159,6 +179,7 @@ class HoldingSchema:
       current_value=current_value,
       gain_loss=gain_loss,
       gain_loss_pct=gain_loss_pct,
+      bank_account_id=bank_account_id,
     )
 
     holding_schema.additional_properties = d

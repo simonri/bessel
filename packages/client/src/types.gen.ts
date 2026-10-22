@@ -5,6 +5,153 @@ export type ClientOptions = {
 };
 
 /**
+ * AccountOverview
+ */
+export type AccountOverview = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Name
+   *
+   * Display name of the bank account.
+   */
+  name: string;
+  /**
+   * Currency
+   *
+   * ISO 4217 currency code.
+   */
+  currency: string;
+  /**
+   * Base Balance
+   *
+   * Starting balance in minor units (cents).
+   */
+  base_balance: number;
+  /**
+   * Subtype
+   *
+   * Account subtype, e.g. 'checking', 'savings'.
+   */
+  subtype: string;
+  /**
+   * Is Business
+   *
+   * Whether the account belongs to the user's company rather than the user.
+   */
+  is_business: boolean;
+  /**
+   * Current Balance
+   *
+   * Current balance in minor units (base_balance + credits - debits).
+   */
+  current_balance?: number;
+  /**
+   * Group
+   */
+  group: "cash" | "investments" | "credit";
+  source: AccountSource;
+  /**
+   * Bank Balance
+   *
+   * The balance the bank or broker reported at the last sync, in minor units.
+   */
+  bank_balance: number | null;
+  /**
+   * Balance Drift
+   *
+   * The bank's balance minus Bessel's; anything but 0 means a transaction is missing.
+   */
+  balance_drift: number | null;
+  /**
+   * Holdings Value
+   *
+   * What the account's holdings are worth, for investment accounts, in minor units.
+   */
+  holdings_value: number | null;
+  /**
+   * First Transaction
+   */
+  first_transaction: Date | null;
+  /**
+   * Last Transaction
+   */
+  last_transaction: Date | null;
+  /**
+   * Transaction Count
+   */
+  transaction_count: number;
+  /**
+   * History
+   *
+   * Month-end balances for up to a year, from the account's first transaction on.
+   */
+  history: Array<BalancePoint>;
+};
+
+/**
+ * AccountSource
+ */
+export type AccountSource = {
+  /**
+   * Kind
+   *
+   * Where the account's transactions come from.
+   */
+  kind: "bank" | "avanza" | "klarna" | "manual";
+  /**
+   * Label
+   *
+   * The source as the user knows it, such as 'Skandia' or 'Imported by hand'.
+   */
+  label: string;
+  /**
+   * Synced At
+   *
+   * The last sync or import that worked.
+   */
+  synced_at: Date | null;
+  /**
+   * Problem
+   *
+   * What needs the user's attention, if anything.
+   */
+  problem: string | null;
+};
+
+/**
+ * AccountsOverviewResponse
+ */
+export type AccountsOverviewResponse = {
+  /**
+   * Accounts
+   */
+  accounts: Array<AccountOverview>;
+  /**
+   * Totals
+   *
+   * Per owner and currency; currencies are never added together.
+   */
+  totals: Array<OverviewTotal>;
+};
+
+/**
  * ActivityAppSummary
  */
 export type ActivityAppSummary = {
@@ -561,6 +708,24 @@ export type AvanzaStatusResponse = {
    */
   available: boolean;
   connection: AvanzaConnectionSchema | null;
+};
+
+/**
+ * BalancePoint
+ */
+export type BalancePoint = {
+  /**
+   * Month
+   *
+   * The month's first day.
+   */
+  month: Date;
+  /**
+   * Balance
+   *
+   * The balance at the end of the month, in minor units.
+   */
+  balance: number;
 };
 
 /**
@@ -1487,6 +1652,64 @@ export type CryptoPriceSchema = {
    * Price Change Pct 24H
    */
   price_change_pct_24h?: number | null;
+};
+
+/**
+ * CurrencySummary
+ */
+export type CurrencySummary = {
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Income
+   */
+  income: number;
+  /**
+   * Spending
+   */
+  spending: number;
+  /**
+   * Net
+   *
+   * Income minus spending.
+   */
+  net: number;
+  /**
+   * The month before.
+   */
+  previous: SummaryMonth;
+  /**
+   * Average Income
+   *
+   * Average income over the six months before this one.
+   */
+  average_income: number;
+  /**
+   * Average Spending
+   *
+   * Average spending over the six months before this one.
+   */
+  average_spending: number;
+  /**
+   * Months
+   *
+   * The twelve months up to and including this one, oldest first.
+   */
+  months: Array<SummaryMonth>;
+  /**
+   * Categories
+   *
+   * This month's spending per category, largest first.
+   */
+  categories: Array<SummaryCategory>;
+  /**
+   * Merchants
+   *
+   * This month's biggest spending by description, largest first.
+   */
+  merchants: Array<SummaryMerchant>;
 };
 
 /**
@@ -2602,6 +2825,12 @@ export type HoldingSchema = {
    */
   security_id: string;
   /**
+   * Bank Account Id
+   *
+   * The account holding it, for accounts a broker syncs.
+   */
+  bank_account_id?: string | null;
+  /**
    * Security Name
    */
   security_name: string;
@@ -2782,6 +3011,96 @@ export type IngestTokenSchema = {
    * Last Used At
    */
   last_used_at: Date | null;
+};
+
+/**
+ * InvestmentAccountSummary
+ */
+export type InvestmentAccountSummary = {
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Is Business
+   */
+  is_business: boolean;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Holdings Value
+   *
+   * What the holdings are worth, in minor units.
+   */
+  holdings_value: number;
+  /**
+   * Cash
+   *
+   * Uninvested cash in the account, in minor units.
+   */
+  cash: number;
+  /**
+   * Total
+   *
+   * Holdings plus cash.
+   */
+  total: number;
+  /**
+   * Acquired Value
+   *
+   * What the current holdings cost, in minor units.
+   */
+  acquired_value: number;
+  /**
+   * Deposits
+   *
+   * All money put into the account, in minor units.
+   */
+  deposits: number;
+  /**
+   * Withdrawals
+   *
+   * All money taken out of the account, in minor units.
+   */
+  withdrawals: number;
+  /**
+   * Net Deposits
+   *
+   * Deposits minus withdrawals.
+   */
+  net_deposits: number;
+  /**
+   * Growth
+   *
+   * Total minus net deposits: what the account made or lost overall.
+   */
+  growth: number;
+  /**
+   * Dividends
+   *
+   * Dividends received per year, newest first.
+   */
+  dividends: Array<YearAmount>;
+  /**
+   * First Transaction
+   */
+  first_transaction: Date | null;
+};
+
+/**
+ * InvestmentAccountsResponse
+ */
+export type InvestmentAccountsResponse = {
+  /**
+   * Items
+   */
+  items: Array<InvestmentAccountSummary>;
 };
 
 /**
@@ -3323,6 +3642,44 @@ export type NotificationsListResponse = {
    * Unread Count
    */
   unread_count: number;
+};
+
+/**
+ * OverviewTotal
+ */
+export type OverviewTotal = {
+  /**
+   * Owner
+   */
+  owner: "personal" | "company";
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Cash
+   *
+   * Money in cash and savings accounts.
+   */
+  cash: number;
+  /**
+   * Investments
+   *
+   * Investment accounts: holdings plus cash.
+   */
+  investments: number;
+  /**
+   * Debt
+   *
+   * What is owed on credit accounts, as a positive amount.
+   */
+  debt: number;
+  /**
+   * Net
+   *
+   * Cash plus investments minus debt.
+   */
+  net: number;
 };
 
 /**
@@ -4243,6 +4600,82 @@ export type SleepSummaryResponse = {
 };
 
 /**
+ * SummaryCategory
+ */
+export type SummaryCategory = {
+  /**
+   * Category Id
+   *
+   * Null for spending without a category.
+   */
+  category_id: string | null;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Color
+   */
+  color: string;
+  /**
+   * Total
+   *
+   * Spending less refunds, in minor units.
+   */
+  total: number;
+  /**
+   * Count
+   */
+  count: number;
+};
+
+/**
+ * SummaryMerchant
+ */
+export type SummaryMerchant = {
+  /**
+   * Description
+   */
+  description: string;
+  /**
+   * Total
+   *
+   * Spending less refunds, in minor units.
+   */
+  total: number;
+  /**
+   * Count
+   */
+  count: number;
+};
+
+/**
+ * SummaryMonth
+ */
+export type SummaryMonth = {
+  /**
+   * Year
+   */
+  year: number;
+  /**
+   * Month
+   */
+  month: number;
+  /**
+   * Income
+   *
+   * Money in, in minor units: credits that aren't refunds.
+   */
+  income: number;
+  /**
+   * Spending
+   *
+   * Money out, in minor units: debits less refunds.
+   */
+  spending: number;
+};
+
+/**
  * TaskAttachmentSchema
  */
 export type TaskAttachmentSchema = {
@@ -5119,6 +5552,38 @@ export type TransactionSortProperty =
   (typeof TransactionSortProperty)[keyof typeof TransactionSortProperty];
 
 /**
+ * TransactionSummaryResponse
+ */
+export type TransactionSummaryResponse = {
+  /**
+   * Year
+   */
+  year: number;
+  /**
+   * Month
+   */
+  month: number;
+  /**
+   * Currencies
+   *
+   * One summary per currency, never added together; most spending first.
+   */
+  currencies: Array<CurrencySummary>;
+  /**
+   * Uncategorized
+   *
+   * This month's counted transactions without a category.
+   */
+  uncategorized: number;
+  /**
+   * Transfers
+   *
+   * This month's transactions left out as moves between the user's own accounts.
+   */
+  transfers: number;
+};
+
+/**
  * TransactionUpdate
  */
 export type TransactionUpdate = {
@@ -5303,6 +5768,22 @@ export type WeatherForecastResponse = {
    * 10-day weather forecast.
    */
   days: Array<WeatherDaySchema>;
+};
+
+/**
+ * YearAmount
+ */
+export type YearAmount = {
+  /**
+   * Year
+   */
+  year: number;
+  /**
+   * Amount
+   *
+   * In minor units.
+   */
+  amount: number;
 };
 
 export type HealthzHealthzGetData = {
@@ -5725,6 +6206,23 @@ export type CreateBankAccountV1BankAccountsPostResponses = {
 
 export type CreateBankAccountV1BankAccountsPostResponse =
   CreateBankAccountV1BankAccountsPostResponses[keyof CreateBankAccountV1BankAccountsPostResponses];
+
+export type GetAccountsOverviewV1BankAccountsOverviewGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/bank-accounts/overview";
+};
+
+export type GetAccountsOverviewV1BankAccountsOverviewGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: AccountsOverviewResponse;
+};
+
+export type GetAccountsOverviewV1BankAccountsOverviewGetResponse =
+  GetAccountsOverviewV1BankAccountsOverviewGetResponses[keyof GetAccountsOverviewV1BankAccountsOverviewGetResponses];
 
 export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteData = {
   body?: never;
@@ -7451,6 +7949,23 @@ export type ListTradesV1InvestmentsTradesGetResponses = {
 export type ListTradesV1InvestmentsTradesGetResponse =
   ListTradesV1InvestmentsTradesGetResponses[keyof ListTradesV1InvestmentsTradesGetResponses];
 
+export type GetInvestmentAccountsV1InvestmentsAccountsGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/investments/accounts";
+};
+
+export type GetInvestmentAccountsV1InvestmentsAccountsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: InvestmentAccountsResponse;
+};
+
+export type GetInvestmentAccountsV1InvestmentsAccountsGetResponse =
+  GetInvestmentAccountsV1InvestmentsAccountsGetResponses[keyof GetInvestmentAccountsV1InvestmentsAccountsGetResponses];
+
 export type GetHoldingsV1InvestmentsHoldingsGetData = {
   body?: never;
   path?: never;
@@ -9144,6 +9659,12 @@ export type ListTransactionsV1TransactionsGetData = {
      */
     is_business?: boolean | null;
     /**
+     * Transfers
+     *
+     * True for only moves between the user's own accounts, false to leave them out.
+     */
+    transfers?: boolean | null;
+    /**
      * Page
      *
      * Page number, defaults to 1.
@@ -9385,6 +9906,46 @@ export type SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses = {
 
 export type SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse =
   SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses[keyof SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses];
+
+export type TransactionSummaryV1TransactionsSummaryGetData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Year
+     *
+     * Year to summarize.
+     */
+    year: number;
+    /**
+     * Month
+     *
+     * Month to summarize (1-12).
+     */
+    month: number;
+  };
+  url: "/v1/transactions/summary";
+};
+
+export type TransactionSummaryV1TransactionsSummaryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type TransactionSummaryV1TransactionsSummaryGetError =
+  TransactionSummaryV1TransactionsSummaryGetErrors[keyof TransactionSummaryV1TransactionsSummaryGetErrors];
+
+export type TransactionSummaryV1TransactionsSummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TransactionSummaryResponse;
+};
+
+export type TransactionSummaryV1TransactionsSummaryGetResponse =
+  TransactionSummaryV1TransactionsSummaryGetResponses[keyof TransactionSummaryV1TransactionsSummaryGetResponses];
 
 export type MonthlyFlowV1TransactionsMonthlyFlowGetData = {
   body?: never;

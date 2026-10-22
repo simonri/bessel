@@ -18,10 +18,12 @@ import type {
   CreateTaskV1TasksPostResponse,
   CreateTimeEntryV1TimeEntriesPostResponse,
   CreateTimeProjectV1TimeProjectsPostResponse,
+  GetAccountsOverviewV1BankAccountsOverviewGetResponse,
   GetAgentUsageStatusV1AgentUsageStatusGetResponse,
   GetAvanzaV1AvanzaGetResponse,
   GetBankAccountV1BankAccountsBankAccountIdGetResponse,
   GetHealthSummaryV1HealthkitSummaryGetResponse,
+  GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
   GetLocationHistoryDayV1LocationHistoryDayGetResponse,
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetPlaceV1PlacesPlaceIdGetResponse,
@@ -126,6 +128,51 @@ export const createBankAccountV1BankAccountsPostResponseTransformer = async (
   data = bankAccountSchemaSchemaResponseTransformer(data);
   return data;
 };
+
+const accountSourceSchemaResponseTransformer = (data: any) => {
+  if (data.synced_at) {
+    data.synced_at = new Date(data.synced_at);
+  }
+  return data;
+};
+
+const balancePointSchemaResponseTransformer = (data: any) => {
+  data.month = new Date(data.month);
+  return data;
+};
+
+const accountOverviewSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.source = accountSourceSchemaResponseTransformer(data.source);
+  if (data.first_transaction) {
+    data.first_transaction = new Date(data.first_transaction);
+  }
+  if (data.last_transaction) {
+    data.last_transaction = new Date(data.last_transaction);
+  }
+  data.history = data.history.map((item: any) =>
+    balancePointSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const accountsOverviewResponseSchemaResponseTransformer = (data: any) => {
+  data.accounts = data.accounts.map((item: any) =>
+    accountOverviewSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<GetAccountsOverviewV1BankAccountsOverviewGetResponse> => {
+    data = accountsOverviewResponseSchemaResponseTransformer(data);
+    return data;
+  };
 
 export const getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer =
   async (
@@ -654,6 +701,28 @@ export const listTradesV1InvestmentsTradesGetResponseTransformer = async (
   data = tradeListResponseSchemaResponseTransformer(data);
   return data;
 };
+
+const investmentAccountSummarySchemaResponseTransformer = (data: any) => {
+  if (data.first_transaction) {
+    data.first_transaction = new Date(data.first_transaction);
+  }
+  return data;
+};
+
+const investmentAccountsResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    investmentAccountSummarySchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<GetInvestmentAccountsV1InvestmentsAccountsGetResponse> => {
+    data = investmentAccountsResponseSchemaResponseTransformer(data);
+    return data;
+  };
 
 const locationImportSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);

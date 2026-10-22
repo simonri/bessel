@@ -10,8 +10,22 @@ from api.models.category import Category
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
-from sqlalchemy import Row, Select, case, delete, extract, func, or_, select, update
+from sqlalchemy import Row, Select, case, delete, exists, extract, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.orm import aliased
+
+
+class ReportRow(NamedTuple):
+  transaction_date: date
+  currency: str
+  direction: TransactionDirection
+  amount: int
+  description: str | None
+  category_id: UUID | None
+  category_name: str | None
+  category_color: str | None
+  # A credit under a description the user was also charged under: money back, not income.
+  refund: bool
 
 
 class TransferCandidate(NamedTuple):
@@ -38,6 +52,88 @@ def _counted_in_reports[*Ts](statement: Select[*Ts]) -> Select[*Ts]:
 class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Transaction, UUID]):
   model = Transaction
 
+  async def report_rows(self, user_id: UUID, *, start: date, end: date) -> list[ReportRow]:
+    """The user's own income and spending between two days (inclusive), with what each row counts as."""
+    charged = aliased(Transaction)
+    refund = (Transaction.direction == TransactionDirection.credit) & exists().where(
+      charged.user_id == Transaction.user_id,
+      charged.direction == TransactionDirection.debit,
+      charged.description == Transaction.description,
+      charged.deleted_at.is_(None),
+    )
+    statement = _counted_in_reports(
+      select(
+        Transaction.transaction_date,
+        Transaction.currency,
+        Transaction.direction,
+        Transaction.amount,
+        Transaction.description,
+        Transaction.category_id,
+        Category.name,
+        Category.color,
+        refund.label("refund"),
+      )
+      .outerjoin(Category, Transaction.category_id == Category.id)
+      .where(
+        Transaction.user_id == user_id,
+        Transaction.deleted_at.is_(None),
+        Transaction.transaction_date >= start,
+        Transaction.transaction_date <= end,
+      )
+    )
+    return [ReportRow(*row) for row in await self.session.execute(statement)]
+
+  async def account_activity(self, account_ids: Sequence[UUID]) -> dict[UUID, tuple[date, date, int]]:
+    """Each account's first and last transaction day, and how many it has."""
+    if not account_ids:
+      return {}
+    statement = (
+      select(Transaction.bank_account_id, func.min(Transaction.transaction_date), func.max(Transaction.transaction_date), func.count())
+      .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None))
+      .group_by(Transaction.bank_account_id)
+    )
+    return {account_id: (first, last, count) for account_id, first, last, count in await self.session.execute(statement)}
+
+  async def flows_by_type(self, account_ids: Sequence[UUID]) -> dict[UUID, dict[str, dict[int, int]]]:
+    """Per account, the net amount of each kind of movement per year: credits positive, debits negative."""
+    if not account_ids:
+      return {}
+    year = extract("year", Transaction.transaction_date)
+    net = func.sum(case((Transaction.direction == TransactionDirection.credit, Transaction.amount), else_=-Transaction.amount))
+    statement = (
+      select(Transaction.bank_account_id, Transaction.transaction_type, year, net)
+      .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None), Transaction.transaction_type.is_not(None))
+      .group_by(Transaction.bank_account_id, Transaction.transaction_type, year)
+    )
+    flows: dict[UUID, dict[str, dict[int, int]]] = {}
+    for account_id, kind, in_year, total in await self.session.execute(statement):
+      flows.setdefault(account_id, {}).setdefault(kind or "", {})[int(in_year)] = int(total)
+    return flows
+
+  async def monthly_net_by_account(self, account_ids: Sequence[UUID]) -> list[tuple[UUID, date, int]]:
+    """Each account's credits minus debits per month, keyed by the month's first day."""
+    if not account_ids:
+      return []
+    month = func.date_trunc("month", Transaction.transaction_date)
+    net = func.sum(case((Transaction.direction == TransactionDirection.credit, Transaction.amount), else_=-Transaction.amount))
+    statement = (
+      select(Transaction.bank_account_id, month, net)
+      .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None))
+      .group_by(Transaction.bank_account_id, month)
+      .order_by(month)
+    )
+    return [(account_id, first.date(), int(total)) for account_id, first, total in await self.session.execute(statement)]
+
+  async def count_left_out_as_transfers(self, user_id: UUID, *, start: date, end: date) -> int:
+    statement = select(func.count()).where(
+      Transaction.user_id == user_id,
+      Transaction.deleted_at.is_(None),
+      Transaction.transfer_id.is_not(None),
+      Transaction.transaction_date >= start,
+      Transaction.transaction_date <= end,
+    )
+    return (await self.session.execute(statement)).scalar_one()
+
   def get_filtered_statement(
     self,
     user_id: UUID,
@@ -50,6 +146,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     date_from: date | None = None,
     date_to: date | None = None,
     is_business: bool | None = None,
+    transfers: bool | None = None,
   ) -> Select[Transaction]:
     statement = self.get_base_statement().where(Transaction.user_id == user_id)
     if bank_account_ids:
@@ -68,6 +165,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       statement = statement.where(Transaction.transaction_date <= date_to)
     if is_business is not None:
       statement = statement.where(Transaction.is_business == is_business)
+    if transfers is not None:
+      statement = statement.where(Transaction.transfer_id.is_not(None) if transfers else Transaction.transfer_id.is_(None))
     return statement
 
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:

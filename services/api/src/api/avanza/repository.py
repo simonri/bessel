@@ -110,6 +110,7 @@ class HoldingSnapshotRepository(RepositoryBase[HoldingSnapshot], RepositoryIDMix
     )
     statement = (
       select(
+        HoldingSnapshot.bank_account_id,
         HoldingSnapshot.security_id,
         Security.name,
         Security.ticker,

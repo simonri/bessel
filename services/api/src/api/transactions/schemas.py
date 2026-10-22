@@ -83,5 +83,47 @@ class MonthlyFlow(Schema):
   expenses: int = Field(description="Total debit amount in minor units.")
 
 
+class SummaryMonth(Schema):
+  year: int
+  month: int
+  income: int = Field(description="Money in, in minor units: credits that aren't refunds.")
+  spending: int = Field(description="Money out, in minor units: debits less refunds.")
+
+
+class SummaryCategory(Schema):
+  category_id: UUID4 | None = Field(description="Null for spending without a category.")
+  name: str
+  color: str
+  total: int = Field(description="Spending less refunds, in minor units.")
+  count: int
+
+
+class SummaryMerchant(Schema):
+  description: str
+  total: int = Field(description="Spending less refunds, in minor units.")
+  count: int
+
+
+class CurrencySummary(Schema):
+  currency: str
+  income: int
+  spending: int
+  net: int = Field(description="Income minus spending.")
+  previous: SummaryMonth = Field(description="The month before.")
+  average_income: int = Field(description="Average income over the six months before this one.")
+  average_spending: int = Field(description="Average spending over the six months before this one.")
+  months: list[SummaryMonth] = Field(description="The twelve months up to and including this one, oldest first.")
+  categories: list[SummaryCategory] = Field(description="This month's spending per category, largest first.")
+  merchants: list[SummaryMerchant] = Field(description="This month's biggest spending by description, largest first.")
+
+
+class TransactionSummaryResponse(Schema):
+  year: int
+  month: int
+  currencies: list[CurrencySummary] = Field(description="One summary per currency, never added together; most spending first.")
+  uncategorized: int = Field(description="This month's counted transactions without a category.")
+  transfers: int = Field(description="This month's transactions left out as moves between the user's own accounts.")
+
+
 class MonthlyFlowResponse(Schema):
   items: list[MonthlyFlow] = Field(description="Monthly income/expenses, ordered chronologically.")

@@ -157,6 +157,9 @@ AUDITED: set[str] = {
   "POST /v1/transactions/import",
   "GET /v1/transactions/monthly-flow",
   "GET /v1/transactions/spending-by-category",
+  "GET /v1/transactions/summary",
+  "GET /v1/bank-accounts/overview",
+  "GET /v1/investments/accounts",
   "PATCH /v1/transactions/{transaction_id}",
   "DELETE /v1/transactions/{transaction_id}/transfer",
 }

@@ -47,6 +47,7 @@ import {
   disconnectAvanzaV1AvanzaDelete,
   disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
+  getAccountsOverviewV1BankAccountsOverviewGet,
   getActivitySummaryV1ActivitySummaryGet,
   getAgentUsageDailyV1AgentUsageDailyGet,
   getAgentUsageStatusV1AgentUsageStatusGet,
@@ -58,6 +59,7 @@ import {
   getHealthSummaryV1HealthkitSummaryGet,
   getHoldingsV1InvestmentsHoldingsGet,
   getIntradayActivityV1ActivityIntradayGet,
+  getInvestmentAccountsV1InvestmentsAccountsGet,
   getKlarnaTransactionsV1KlarnaTransactionsGet,
   getLocationHistoryDayV1LocationHistoryDayGet,
   getLocationHistorySummaryV1LocationHistorySummaryGet,
@@ -121,6 +123,7 @@ import {
   syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
+  transactionSummaryV1TransactionsSummaryGet,
   undoCompleteTaskV1TasksTaskIdUndoCompletePost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
   unpairTransferV1TransactionsTransactionIdTransferDelete,
@@ -251,6 +254,8 @@ import type {
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
+  GetAccountsOverviewV1BankAccountsOverviewGetData,
+  GetAccountsOverviewV1BankAccountsOverviewGetResponse,
   GetActivitySummaryV1ActivitySummaryGetData,
   GetActivitySummaryV1ActivitySummaryGetError,
   GetActivitySummaryV1ActivitySummaryGetResponse,
@@ -281,6 +286,8 @@ import type {
   GetIntradayActivityV1ActivityIntradayGetData,
   GetIntradayActivityV1ActivityIntradayGetError,
   GetIntradayActivityV1ActivityIntradayGetResponse,
+  GetInvestmentAccountsV1InvestmentsAccountsGetData,
+  GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
   GetKlarnaTransactionsV1KlarnaTransactionsGetData,
   GetKlarnaTransactionsV1KlarnaTransactionsGetError,
   GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
@@ -448,6 +455,9 @@ import type {
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
+  TransactionSummaryV1TransactionsSummaryGetData,
+  TransactionSummaryV1TransactionsSummaryGetError,
+  TransactionSummaryV1TransactionsSummaryGetResponse,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
   UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
@@ -999,6 +1009,36 @@ export const createBankAccountV1BankAccountsPostMutation = (
   };
   return mutationOptions;
 };
+
+export const getAccountsOverviewV1BankAccountsOverviewGetQueryKey = (
+  options?: Options<GetAccountsOverviewV1BankAccountsOverviewGetData>,
+) => createQueryKey("getAccountsOverviewV1BankAccountsOverviewGet", options);
+
+/**
+ * Accounts Overview
+ *
+ * Every account with its balance, history and where its data comes from, plus totals per owner and currency.
+ */
+export const getAccountsOverviewV1BankAccountsOverviewGetOptions = (
+  options?: Options<GetAccountsOverviewV1BankAccountsOverviewGetData>,
+) =>
+  queryOptions<
+    GetAccountsOverviewV1BankAccountsOverviewGetResponse,
+    DefaultError,
+    GetAccountsOverviewV1BankAccountsOverviewGetResponse,
+    ReturnType<typeof getAccountsOverviewV1BankAccountsOverviewGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAccountsOverviewV1BankAccountsOverviewGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAccountsOverviewV1BankAccountsOverviewGetQueryKey(options),
+  });
 
 /**
  * Delete Bank Account
@@ -2829,6 +2869,36 @@ export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
   );
   return opts as Omit<typeof opts, "initialData">;
 };
+
+export const getInvestmentAccountsV1InvestmentsAccountsGetQueryKey = (
+  options?: Options<GetInvestmentAccountsV1InvestmentsAccountsGetData>,
+) => createQueryKey("getInvestmentAccountsV1InvestmentsAccountsGet", options);
+
+/**
+ * Investment Accounts
+ *
+ * Each investment account's value, the money put in and taken out, what it made, and its dividends.
+ */
+export const getInvestmentAccountsV1InvestmentsAccountsGetOptions = (
+  options?: Options<GetInvestmentAccountsV1InvestmentsAccountsGetData>,
+) =>
+  queryOptions<
+    GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
+    DefaultError,
+    GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
+    ReturnType<typeof getInvestmentAccountsV1InvestmentsAccountsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInvestmentAccountsV1InvestmentsAccountsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInvestmentAccountsV1InvestmentsAccountsGetQueryKey(options),
+  });
 
 export const getHoldingsV1InvestmentsHoldingsGetQueryKey = (
   options?: Options<GetHoldingsV1InvestmentsHoldingsGetData>,
@@ -4713,6 +4783,36 @@ export const spendingByCategoryV1TransactionsSpendingByCategoryGetOptions = (
     },
     queryKey:
       spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey(options),
+  });
+
+export const transactionSummaryV1TransactionsSummaryGetQueryKey = (
+  options: Options<TransactionSummaryV1TransactionsSummaryGetData>,
+) => createQueryKey("transactionSummaryV1TransactionsSummaryGet", options);
+
+/**
+ * Month Summary
+ *
+ * The user's own income and spending for a month, with the year before it for comparison.
+ */
+export const transactionSummaryV1TransactionsSummaryGetOptions = (
+  options: Options<TransactionSummaryV1TransactionsSummaryGetData>,
+) =>
+  queryOptions<
+    TransactionSummaryV1TransactionsSummaryGetResponse,
+    TransactionSummaryV1TransactionsSummaryGetError,
+    TransactionSummaryV1TransactionsSummaryGetResponse,
+    ReturnType<typeof transactionSummaryV1TransactionsSummaryGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await transactionSummaryV1TransactionsSummaryGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: transactionSummaryV1TransactionsSummaryGetQueryKey(options),
   });
 
 export const monthlyFlowV1TransactionsMonthlyFlowGetQueryKey = (

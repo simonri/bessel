@@ -15,6 +15,8 @@ class ParsedTransaction:
   dedup_hash: str
   description: str
   raw_data: dict[str, Any]
+  # The source's own kind of movement, such as Avanza's "DEPOSIT" or "DIVIDEND".
+  transaction_type: str | None = None
 
 
 def compute_dedup_hash(

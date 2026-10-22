@@ -32,6 +32,7 @@ class TradeListResponse(ListResource[TradeSchema]):
 
 class HoldingSchema(Schema):
   security_id: UUID4
+  bank_account_id: UUID4 | None = Field(default=None, description="The account holding it, for accounts a broker syncs.")
   security_name: str
   ticker: str | None
   asset_type: AssetType
@@ -47,6 +48,32 @@ class HoldingSchema(Schema):
 
 class HoldingsResponse(Schema):
   items: list[HoldingSchema]
+
+
+class YearAmount(Schema):
+  year: int
+  amount: int = Field(description="In minor units.")
+
+
+class InvestmentAccountSummary(Schema):
+  bank_account_id: UUID4
+  name: str
+  is_business: bool
+  currency: str
+  holdings_value: int = Field(description="What the holdings are worth, in minor units.")
+  cash: int = Field(description="Uninvested cash in the account, in minor units.")
+  total: int = Field(description="Holdings plus cash.")
+  acquired_value: int = Field(description="What the current holdings cost, in minor units.")
+  deposits: int = Field(description="All money put into the account, in minor units.")
+  withdrawals: int = Field(description="All money taken out of the account, in minor units.")
+  net_deposits: int = Field(description="Deposits minus withdrawals.")
+  growth: int = Field(description="Total minus net deposits: what the account made or lost overall.")
+  dividends: list[YearAmount] = Field(description="Dividends received per year, newest first.")
+  first_transaction: date | None
+
+
+class InvestmentAccountsResponse(Schema):
+  items: list[InvestmentAccountSummary]
 
 
 # --- Crypto ---

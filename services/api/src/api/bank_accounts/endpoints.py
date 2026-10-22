@@ -5,9 +5,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from api.bank_accounts.repository import BankAccountRepository
-from api.bank_accounts.schemas import BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
+from api.bank_accounts.schemas import AccountsOverviewResponse, BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
+from api.bank_accounts.service import accounts_overview
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
+from api.common.utils import utc_now
 from api.models.bank_account import BankAccount
 from api.postgres import AsyncSession, DBSession
 from api.transactions.repository import TransactionRepository
@@ -58,6 +60,12 @@ async def list_bank_accounts(
     total_count,
     pagination,
   )
+
+
+@router.get("/overview", summary="Accounts Overview", response_model=AccountsOverviewResponse)
+async def get_accounts_overview(session: DBSession, current_user: CurrentDBUser) -> AccountsOverviewResponse:
+  """Every account with its balance, history and where its data comes from, plus totals per owner and currency."""
+  return await accounts_overview.overview(session, current_user.id, now=utc_now())
 
 
 @router.get(

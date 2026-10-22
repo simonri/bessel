@@ -11,5 +11,8 @@ class KlarnaPayLaterRepository(RepositoryBase[KlarnaPayLater], RepositoryIDMixin
   async def get_for_account(self, bank_account_id: UUID) -> KlarnaPayLater | None:
     return await self.get_one_or_none(self.get_base_statement().where(KlarnaPayLater.bank_account_id == bank_account_id))
 
+  async def list_for_user(self, user_id: UUID) -> Sequence[KlarnaPayLater]:
+    return await self.get_all(self.get_base_statement().where(KlarnaPayLater.user_id == user_id))
+
   async def list_all(self) -> Sequence[KlarnaPayLater]:
     return await self.get_all(self.get_base_statement())

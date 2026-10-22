@@ -23,6 +23,7 @@ def _get_kwargs(
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
   is_business: bool | None | Unset = UNSET,
+  transfers: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -97,6 +98,13 @@ def _get_kwargs(
     json_is_business = is_business
   params["is_business"] = json_is_business
 
+  json_transfers: bool | None | Unset
+  if isinstance(transfers, Unset):
+    json_transfers = UNSET
+  else:
+    json_transfers = transfers
+  params["transfers"] = json_transfers
+
   params["page"] = page
 
   params["limit"] = limit
@@ -162,6 +170,7 @@ def sync_detailed(
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
   is_business: bool | None | Unset = UNSET,
+  transfers: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -180,6 +189,8 @@ def sync_detailed(
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
       is_business (bool | None | Unset): Filter by business flag.
+      transfers (bool | None | Unset): True for only moves between the user's own accounts,
+          false to leave them out.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -203,6 +214,7 @@ def sync_detailed(
     date_from=date_from,
     date_to=date_to,
     is_business=is_business,
+    transfers=transfers,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -226,6 +238,7 @@ def sync(
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
   is_business: bool | None | Unset = UNSET,
+  transfers: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -244,6 +257,8 @@ def sync(
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
       is_business (bool | None | Unset): Filter by business flag.
+      transfers (bool | None | Unset): True for only moves between the user's own accounts,
+          false to leave them out.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -268,6 +283,7 @@ def sync(
     date_from=date_from,
     date_to=date_to,
     is_business=is_business,
+    transfers=transfers,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -285,6 +301,7 @@ async def asyncio_detailed(
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
   is_business: bool | None | Unset = UNSET,
+  transfers: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -303,6 +320,8 @@ async def asyncio_detailed(
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
       is_business (bool | None | Unset): Filter by business flag.
+      transfers (bool | None | Unset): True for only moves between the user's own accounts,
+          false to leave them out.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -326,6 +345,7 @@ async def asyncio_detailed(
     date_from=date_from,
     date_to=date_to,
     is_business=is_business,
+    transfers=transfers,
     page=page,
     limit=limit,
     sorting=sorting,
@@ -347,6 +367,7 @@ async def asyncio(
   date_from: datetime.date | None | Unset = UNSET,
   date_to: datetime.date | None | Unset = UNSET,
   is_business: bool | None | Unset = UNSET,
+  transfers: bool | None | Unset = UNSET,
   page: int | Unset = 1,
   limit: int | Unset = 10,
   sorting: list[TransactionSortProperty] | None | Unset = UNSET,
@@ -365,6 +386,8 @@ async def asyncio(
       date_from (datetime.date | None | Unset): Start date (inclusive).
       date_to (datetime.date | None | Unset): End date (inclusive).
       is_business (bool | None | Unset): Filter by business flag.
+      transfers (bool | None | Unset): True for only moves between the user's own accounts,
+          false to leave them out.
       page (int | Unset): Page number, defaults to 1. Default: 1.
       limit (int | Unset): Size of a page, defaults to 10. Maximum is 100. Default: 10.
       sorting (list[TransactionSortProperty] | None | Unset): Sorting criterion. Several
@@ -390,6 +413,7 @@ async def asyncio(
       date_from=date_from,
       date_to=date_to,
       is_business=is_business,
+      transfers=transfers,
       page=page,
       limit=limit,
       sorting=sorting,

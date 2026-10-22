@@ -251,6 +251,8 @@ class TestSync:
       (date(2026, 6, 1), 50000, TransactionDirection.credit, "Sälj Avanza Global"),
       (date(2026, 6, 15), 1234, TransactionDirection.credit, "Utdelning"),
     ]
+    kinds = (await session.execute(select(Transaction.transaction_type).where(Transaction.bank_account_id == bank_account.id))).scalars().all()
+    assert sorted(kinds) == ["BUY", "DEPOSIT", "DIVIDEND", "SELL"]
     assert await _trades(session, bank_account) == [
       (TradeType.buy, date(2026, 3, 8), 1_000_000, 34215, "USD", "Courtage 1.0 SEK"),
       (TradeType.sell, date(2026, 6, 1), 2_500_000, 20000, "SEK", None),

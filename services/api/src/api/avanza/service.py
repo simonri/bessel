@@ -182,6 +182,7 @@ class AvanzaService:
         dedup_hash=cash_hash(account.external_id, m.external_id),
         description=m.description,
         raw_data={"id": m.external_id, "type": m.type, "amount": str(m.amount), "description": m.description},
+        transaction_type=m.type,
       )
       for m in movements
       if m.amount != 0

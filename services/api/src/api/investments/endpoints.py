@@ -8,7 +8,7 @@ from api.avanza.repository import AvanzaAccountRepository, HoldingSnapshotReposi
 from api.common.pagination import PaginationParamsQuery
 from api.exceptions import ResourceNotFound, ServiceUnavailableError
 from api.investments.repository import TradeRepository
-from api.investments.schemas import CryptoPriceSchema, HoldingsResponse, TradeListResponse, TradeSchema
+from api.investments.schemas import CryptoPriceSchema, HoldingsResponse, InvestmentAccountsResponse, TradeListResponse, TradeSchema
 from api.investments.service import investment_service
 from api.postgres import DBSession
 from api.redis import Redis, get_redis
@@ -52,6 +52,12 @@ async def list_trades(
 
 
 # ─── Holdings (computed) ───
+
+
+@router.get("/accounts", summary="Investment Accounts", response_model=InvestmentAccountsResponse)
+async def get_investment_accounts(session: DBSession, current_user: CurrentDBUser) -> InvestmentAccountsResponse:
+  """Each investment account's value, the money put in and taken out, what it made, and its dividends."""
+  return InvestmentAccountsResponse(items=await investment_service.accounts(session, current_user.id))
 
 
 @router.get("/holdings", summary="Get Holdings", response_model=HoldingsResponse)
