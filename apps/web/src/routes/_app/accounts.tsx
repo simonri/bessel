@@ -186,7 +186,7 @@ function AccountsPage({
     history?.series.find((s) => s.currency === currency)?.points ?? [];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="@container flex flex-col gap-5">
       <PageHeader
         title="Accounts"
         summary={
@@ -214,8 +214,8 @@ function AccountsPage({
       </PageHeader>
 
       {isLoading || !data ? (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Skeleton className="h-72 rounded-xl bg-white/[0.06] lg:col-span-2" />
+        <div className="grid gap-4 @4xl:grid-cols-3">
+          <Skeleton className="h-72 rounded-xl bg-white/[0.06] @4xl:col-span-2" />
           <div className="space-y-4">
             {placeholderKeys(2).map((key) => (
               <Skeleton key={key} className="h-32 rounded-xl bg-white/[0.06]" />
@@ -225,8 +225,8 @@ function AccountsPage({
       ) : accounts.length === 0 ? (
         <EmptyState onAdd={() => onAdding({ step: "choose" })} />
       ) : (
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-          <div className="min-w-0 space-y-5 lg:col-span-2">
+        <div className="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-3">
+          <div className="min-w-0 space-y-5 @4xl:col-span-2">
             {currency && (
               <NetWorthCard
                 total={total}
@@ -240,7 +240,7 @@ function AccountsPage({
               />
             )}
             {/* On a phone, what needs fixing comes before the list. */}
-            <div className="lg:hidden">
+            <div className="@4xl:hidden">
               <NeedsAttention accounts={accounts} />
             </div>
             <AccountList
@@ -248,8 +248,8 @@ function AccountsPage({
               onOpen={(account) => onOpen(account.id)}
             />
           </div>
-          <div className="min-w-0 space-y-4 lg:sticky lg:top-4">
-            <div className="hidden lg:block">
+          <div className="min-w-0 space-y-4 @4xl:sticky @4xl:top-4">
+            <div className="hidden @4xl:block">
               <NeedsAttention accounts={accounts} />
             </div>
             {currency && <WhereItIs totals={data.totals} currency={currency} />}

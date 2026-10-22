@@ -287,10 +287,10 @@ function AccountRow({
           {account.name}
         </p>
         <p className="flex items-center gap-1.5 truncate type-caption text-white/45">
-          <span className="hidden truncate sm:inline">
+          <span className="hidden truncate @md:inline">
             {accountTypeLabel(account)}
           </span>
-          <span aria-hidden className="hidden sm:inline">
+          <span aria-hidden className="hidden @md:inline">
             -
           </span>
           <span
