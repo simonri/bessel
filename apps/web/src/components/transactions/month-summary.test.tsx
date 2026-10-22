@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({ summary: vi.fn() }));
@@ -18,7 +24,9 @@ vi.mock("recharts", async (importOriginal) => ({
   ResponsiveContainer: () => null,
 }));
 
-const { MonthSummary, versusUsual } = await import("./month-summary");
+const { MonthSummary, topCategories, versusUsual } = await import(
+  "./month-summary"
+);
 
 function months(spending: number) {
   return Array.from({ length: 12 }, (_, i) => ({
@@ -67,7 +75,9 @@ function mount(actions = {}) {
   };
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MonthSummary year={2026} month={9} actions={handlers} />
+      <MonthSummary year={2026} month={9} actions={handlers}>
+        <p>The month's transactions</p>
+      </MonthSummary>
     </QueryClientProvider>,
   );
   return handlers;
@@ -88,7 +98,48 @@ describe("versusUsual", () => {
   });
 });
 
+describe("topCategories", () => {
+  const category = (name: string, total: number) => ({
+    category_id: name,
+    name,
+    color: "#fff",
+    total,
+    count: 1,
+  });
+
+  it("adds up everything past the biggest few", () => {
+    const all = ["a", "b", "c", "d", "e", "f", "g", "h"].map((n, i) =>
+      category(n, 100 - i),
+    );
+    const { shown, rest } = topCategories(all, 6);
+    expect(shown.map((c) => c.name)).toEqual(["a", "b", "c", "d", "e", "f"]);
+    expect(rest).toBe(94 + 93);
+  });
+
+  it("names a single leftover instead of hiding it", () => {
+    const all = ["a", "b", "c"].map((n) => category(n, 10));
+    expect(topCategories(all, 2)).toEqual({ shown: all, rest: 0 });
+  });
+});
+
 describe("MonthSummary", () => {
+  it("shows the month's list beside where the money went, or alone without a summary", async () => {
+    api.summary.mockResolvedValue({
+      year: 2026,
+      month: 9,
+      currencies: [],
+      uncategorized: 0,
+      transfers: 0,
+    });
+    mount();
+    await waitFor(() =>
+      expect(document.querySelector('[data-slot="skeleton"]')).toBeNull(),
+    );
+
+    expect(screen.getByText("The month's transactions")).toBeTruthy();
+    expect(screen.queryByText("Where it went")).toBeNull();
+  });
+
   it("shows the month against usual and what's left out", async () => {
     api.summary.mockResolvedValue({
       year: 2026,
@@ -110,7 +161,8 @@ describe("MonthSummary", () => {
     fireEvent.click(
       screen.getByText("7 moves between your own accounts left out"),
     );
-    fireEvent.click(screen.getByText("3 without a category"));
+    expect(screen.getByText("3 without a category")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Sort them" }));
     expect(handlers.onShowTransfers).toHaveBeenCalledOnce();
     expect(handlers.onPickCategory).toHaveBeenCalledWith(null);
   });
@@ -169,11 +221,13 @@ describe("MonthSummary", () => {
             onPickMerchant: vi.fn(),
             onShowTransfers: vi.fn(),
           }}
-        />
+        >
+          {null}
+        </MonthSummary>
       </QueryClientProvider>,
     );
 
-    expect(await screen.findAllByText("So far this month")).toHaveLength(2);
+    expect(await screen.findAllByText("So far")).toHaveLength(2);
     expect(
       screen.getAllByText(withText("Usually overspends 5 000 kr")).length,
     ).toBeGreaterThan(0);

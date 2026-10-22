@@ -50,7 +50,7 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
 }
 
 const CHIP_CLASS =
-  "flex h-8 min-w-0 items-center gap-1.5 rounded-lg border px-3 text-12 font-medium transition-colors duration-150";
+  "flex h-8 shrink-0 items-center whitespace-nowrap gap-1.5 rounded-lg border px-3 text-12 font-medium transition-colors duration-150";
 const CHIP_IDLE_CLASS =
   "border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white/85";
 const CHIP_ACTIVE_CLASS =
@@ -240,8 +240,8 @@ function DirectionToggle({
       {(
         [
           { label: "All", value: undefined },
-          { label: "Expenses", value: "debit" },
-          { label: "Income", value: "credit" },
+          { label: "Out", value: "debit" },
+          { label: "In", value: "credit" },
         ] as const
       ).map((opt) => (
         <button
@@ -275,7 +275,7 @@ function BusinessToggle({
     <button
       type="button"
       onClick={() => onChange(value === true ? undefined : true)}
-      title="Show business expenses only"
+      title="Only your company's expenses"
       className={cn(
         CHIP_CLASS,
         "px-2.5",
@@ -285,7 +285,7 @@ function BusinessToggle({
       <Briefcase
         className={cn("size-3.5", value === true && "text-primary-300")}
       />
-      Business
+      Company
     </button>
   );
 }
@@ -336,7 +336,7 @@ function SearchInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="relative w-full min-w-0 sm:w-48">
+    <div className="relative w-full min-w-0 @2xl:w-48 @2xl:shrink-0">
       <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-white/35" />
       <TextInput
         value={value}
@@ -394,74 +394,76 @@ export function TransactionFiltersBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2 @2xl:flex-row @2xl:items-center">
       <SearchInput value={searchValue} onChange={handleSearchChange} />
-
-      <AccountDropdown
-        accounts={accounts}
-        selected={filters.bank_account_id ?? []}
-        onToggle={(id) => toggleArrayFilter("bank_account_id", id)}
-        onClear={() =>
-          onFiltersChange({ ...filters, bank_account_id: undefined })
-        }
-      />
-
-      <CategoryDropdown
-        categories={categories}
-        selected={filters.category_id ?? []}
-        uncategorized={filters.uncategorized ?? false}
-        onToggle={(id) => {
-          if (filters.uncategorized) {
-            onFiltersChange({ ...filters, uncategorized: undefined });
+      {/* One row that scrolls sideways when narrow, instead of wrapping into three. */}
+      <div className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 pb-1 @2xl:pb-0">
+        <AccountDropdown
+          accounts={accounts}
+          selected={filters.bank_account_id ?? []}
+          onToggle={(id) => toggleArrayFilter("bank_account_id", id)}
+          onClear={() =>
+            onFiltersChange({ ...filters, bank_account_id: undefined })
           }
-          toggleArrayFilter("category_id", id);
-        }}
-        onToggleUncategorized={() =>
-          onFiltersChange({
-            ...filters,
-            uncategorized: !filters.uncategorized ? true : undefined,
-            category_id: !filters.uncategorized
-              ? undefined
-              : filters.category_id,
-          })
-        }
-        onClear={() =>
-          onFiltersChange({
-            ...filters,
-            category_id: undefined,
-            uncategorized: undefined,
-          })
-        }
-      />
+        />
 
-      <DirectionToggle
-        value={filters.direction}
-        onChange={(d) => onFiltersChange({ ...filters, direction: d })}
-      />
-
-      <BusinessToggle
-        value={filters.is_business}
-        onChange={(v) => onFiltersChange({ ...filters, is_business: v })}
-      />
-
-      <TransfersToggle
-        value={filters.transfers}
-        onChange={(v) => onFiltersChange({ ...filters, transfers: v })}
-      />
-
-      {active && (
-        <button
-          type="button"
-          className="flex h-8 items-center gap-1 rounded-md px-2 text-12 font-medium text-white/45 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85"
-          onClick={() => {
-            setSearchValue("");
-            onFiltersChange({});
+        <CategoryDropdown
+          categories={categories}
+          selected={filters.category_id ?? []}
+          uncategorized={filters.uncategorized ?? false}
+          onToggle={(id) => {
+            if (filters.uncategorized) {
+              onFiltersChange({ ...filters, uncategorized: undefined });
+            }
+            toggleArrayFilter("category_id", id);
           }}
-        >
-          <X className="size-3.5" />
-          Clear
-        </button>
-      )}
+          onToggleUncategorized={() =>
+            onFiltersChange({
+              ...filters,
+              uncategorized: !filters.uncategorized ? true : undefined,
+              category_id: !filters.uncategorized
+                ? undefined
+                : filters.category_id,
+            })
+          }
+          onClear={() =>
+            onFiltersChange({
+              ...filters,
+              category_id: undefined,
+              uncategorized: undefined,
+            })
+          }
+        />
+
+        <DirectionToggle
+          value={filters.direction}
+          onChange={(d) => onFiltersChange({ ...filters, direction: d })}
+        />
+
+        <BusinessToggle
+          value={filters.is_business}
+          onChange={(v) => onFiltersChange({ ...filters, is_business: v })}
+        />
+
+        <TransfersToggle
+          value={filters.transfers}
+          onChange={(v) => onFiltersChange({ ...filters, transfers: v })}
+        />
+
+        {active && (
+          <button
+            type="button"
+            className="flex h-8 items-center gap-1 rounded-md px-2 text-12 font-medium text-white/45 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/85"
+            onClick={() => {
+              setSearchValue("");
+              onFiltersChange({});
+            }}
+          >
+            <X className="size-3.5" />
+            Clear
+          </button>
+        )}
+      </div>
     </div>
   );
 }

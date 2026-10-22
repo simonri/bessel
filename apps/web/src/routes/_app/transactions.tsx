@@ -24,12 +24,6 @@ import {
 } from "@bessel/ui/components/alert-dialog";
 import { Checkbox } from "@bessel/ui/components/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@bessel/ui/components/dropdown-menu";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -42,18 +36,11 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { RowSelectionState } from "@tanstack/react-table";
-import { format, isToday, isYesterday } from "date-fns";
-import {
-  ArrowLeftRight,
-  ChevronDown,
-  MoreHorizontal,
-  Tag,
-  Trash2,
-} from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { format } from "date-fns";
+import { ArrowLeftRight, ChevronDown, Tag, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
+import type { BulkSuggestion } from "@/components/category-cell";
 import { ImportDialog } from "@/components/import-dialog";
 import {
   type TransactionFilters,
@@ -61,23 +48,25 @@ import {
 } from "@/components/transaction-filters";
 import { MonthSummary } from "@/components/transactions/month-summary";
 import {
+  type TransactionHandlers,
+  TransactionList,
+} from "@/components/transactions/transaction-list";
+import { TransactionPanel } from "@/components/transactions/transaction-panel";
+import {
   EmptyState,
-  IconButton,
   PageHeader,
   PeriodNav,
   placeholderKeys,
   SoftButton,
 } from "@/components/ui-kit";
-import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
-import type { DataColumnDef } from "@/lib/data-table";
 import { apiDate } from "@/lib/local-day";
 import {
   mutationFamily,
   restoreItemFields,
   settleWhenIdle,
 } from "@/lib/optimistic";
-import { Amount, HideAmountsButton } from "@/lib/privacy";
+import { HideAmountsButton } from "@/lib/privacy";
 import { useRouteFilters } from "@/lib/route-filters";
 
 // ─── Route + URL search params ────────────────────────────────────────────────
@@ -127,76 +116,6 @@ export const Route = createFileRoute("/_app/transactions")({
 
 const MONTH_LIMIT = 500;
 
-// ─── Date group label ─────────────────────────────────────────────────────────
-
-function toLocalDateStr(value: Date | string): string {
-  const d = value instanceof Date ? value : new Date(value);
-  return format(d, "yyyy-MM-dd");
-}
-
-function getDateGroupLabel(
-  tx: TransactionSchema,
-  prev: TransactionSchema | undefined,
-): string | null {
-  const dateStr = toLocalDateStr(tx.transaction_date);
-  const prevStr = prev ? toLocalDateStr(prev.transaction_date) : null;
-  if (dateStr === prevStr) return null;
-
-  const d = new Date(`${dateStr}T00:00:00`);
-  if (isToday(d)) return "Today";
-  if (isYesterday(d)) return "Yesterday";
-  return format(d, "EEE, MMM d");
-}
-
-// ─── Actions cell ─────────────────────────────────────────────────────────────
-
-const TransactionActions = memo(function TransactionActions({
-  id,
-  isBusiness,
-  isTransfer,
-  onDelete,
-  onToggleBusiness,
-  onUnpair,
-}: {
-  id: string;
-  isBusiness: boolean;
-  isTransfer: boolean;
-  onDelete: (ids: string[]) => void;
-  onToggleBusiness: (id: string, value: boolean) => void;
-  onUnpair: (id: string) => void;
-}) {
-  return (
-    <div className="flex justify-end">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <IconButton aria-label="Open menu">
-            <MoreHorizontal />
-          </IconButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onToggleBusiness(id, !isBusiness)}>
-            {isBusiness
-              ? "Remove business expense"
-              : "Mark as business expense"}
-          </DropdownMenuItem>
-          {isTransfer && (
-            <DropdownMenuItem onClick={() => onUnpair(id)}>
-              Not a transfer
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            className="text-red-400 focus:bg-red-500/10 focus:text-red-400"
-            onClick={() => onDelete([id])}
-          >
-            <Trash2 className="size-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-});
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function Transactions() {
@@ -204,7 +123,8 @@ function Transactions() {
   // Filters live in the URL, so other pages can link straight to a filtered list.
   const [filters, setFilters] =
     useRouteFilters<TransactionFilters>("/transactions");
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [openId, setOpenId] = useState<string | null>(null);
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(
     null,
   );
@@ -235,7 +155,7 @@ function Transactions() {
         (next as Record<string, unknown>)[k] = v;
       }
       setFilters(next);
-      setRowSelection({});
+      setSelected(new Set());
     },
     [year, month, filters, setFilters],
   );
@@ -250,7 +170,7 @@ function Transactions() {
         (clean as Record<string, unknown>)[k] = v;
       }
       setFilters(clean);
-      setRowSelection({});
+      setSelected(new Set());
     },
     [year, month, setFilters],
   );
@@ -261,7 +181,7 @@ function Transactions() {
     () => ({
       onPickMonth: (y: number, m: number) => {
         setFilters({ year: y, month: m });
-        setRowSelection({});
+        setSelected(new Set());
       },
       onPickCategory: (categoryId: string | null) =>
         handleFiltersChange(
@@ -357,7 +277,7 @@ function Transactions() {
           },
         };
       });
-      setRowSelection({});
+      setSelected(new Set());
     },
     onError: () => toast.error("Failed to delete transactions"),
     onSettled: () => {
@@ -382,7 +302,7 @@ function Transactions() {
           ),
         };
       });
-      setRowSelection({});
+      setSelected(new Set());
       return { previous, ids: idSet };
     },
     onError: (_err, _vars, context) => {
@@ -534,130 +454,15 @@ function Transactions() {
     }
   };
 
-  // Stable columns identity — a fresh array (with fresh cell closures) every
-  // render forces react-table to rebuild its column model per keystroke in
-  // the filters and re-render every cell.
-  const columns: DataColumnDef<TransactionSchema>[] = useMemo(
-    () => [
-      {
-        id: "select",
-        size: 40,
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        accessorKey: "description",
-        header: "Description",
-        cell: ({ row }) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-13 text-white/85">
-              {row.original.description ?? "—"}
-            </span>
-            {row.original.transfer_id && (
-              <span
-                className="inline-flex shrink-0 items-center rounded-md border border-white/15 bg-white/5 px-1.5 py-px type-badge text-white/55"
-                title="Moved between your own accounts, so it counts as neither income nor spending"
-              >
-                Transfer
-              </span>
-            )}
-            {row.original.is_business && (
-              <span className="inline-flex shrink-0 items-center rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 py-px type-badge text-primary-300">
-                Business
-              </span>
-            )}
-          </div>
-        ),
-      },
-      {
-        id: "account",
-        size: 120,
-        header: "Account",
-        // hidden on mobile via meta — handled by className on TableCell below
-        cell: ({ row }) => (
-          <span className="hidden truncate text-12 text-white/45 sm:block">
-            {accountMap.get(row.original.bank_account_id) ?? "—"}
-          </span>
-        ),
-      },
-      {
-        id: "category",
-        size: 160,
-        header: "Category",
-        cell: ({ row }) => (
-          <CategoryCell
-            transactionId={row.original.id}
-            categoryId={row.original.category_id}
-            description={row.original.description}
-            categories={categories}
-            onBulkSuggestion={handleBulkSuggestion}
-          />
-        ),
-      },
-      {
-        accessorKey: "amount",
-        size: 120,
-        header: () => <div className="text-right">Amount</div>,
-        cell: ({ row }) => {
-          const { amount, currency, direction } = row.original;
-          return (
-            <div
-              className={`text-right text-13 font-medium tabular-nums ${
-                row.original.direction === "credit"
-                  ? "text-income"
-                  : "text-white/80"
-              }`}
-            >
-              <Amount
-                value={direction === "debit" ? -amount : amount}
-                currency={currency}
-                sign
-                exact
-              />
-            </div>
-          );
-        },
-      },
-      {
-        id: "actions",
-        size: 48,
-        header: () => null,
-        cell: ({ row }) => (
-          <div className="hidden sm:block">
-            <TransactionActions
-              id={row.original.id}
-              isBusiness={row.original.is_business ?? false}
-              isTransfer={!!row.original.transfer_id}
-              onDelete={handleDeleteRows}
-              onToggleBusiness={handleToggleBusiness}
-              onUnpair={handleUnpair}
-            />
-          </div>
-        ),
-      },
-    ],
+  const handlers: TransactionHandlers = useMemo(
+    () => ({
+      onOpen: (transaction) => setOpenId(transaction.id),
+      onDelete: handleDeleteRows,
+      onToggleBusiness: handleToggleBusiness,
+      onUnpair: handleUnpair,
+      onBulkSuggestion: handleBulkSuggestion,
+    }),
     [
-      accountMap,
-      categories,
       handleBulkSuggestion,
       handleDeleteRows,
       handleToggleBusiness,
@@ -667,39 +472,13 @@ function Transactions() {
 
   const transactions = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
-  const selectedCount = Object.keys(rowSelection).length;
+  const selectedCount = selected.size;
+  const open = transactions.find((t) => t.id === openId) ?? null;
   const monthLabel = format(firstDay, "MMMM yyyy");
   const shown = Math.min(totalCount, MONTH_LIMIT);
 
-  return (
-    <div className="flex flex-col gap-4">
-      <PageHeader
-        title={searching ? "Search" : monthLabel}
-        summary={
-          isLoading
-            ? null
-            : searching
-              ? `${totalCount} match${totalCount !== 1 ? "es" : ""} for "${filters.search}" across all months${totalCount > shown ? `, newest ${shown} shown` : ""}.`
-              : `${totalCount} transaction${totalCount !== 1 ? "s" : ""} this month.`
-        }
-      >
-        {!searching && (
-          <PeriodNav
-            label={monthLabel}
-            onPrev={() => navigateMonth(-1)}
-            onNext={() => navigateMonth(1)}
-            nextDisabled={isCurrentMonth}
-          />
-        )}
-        <HideAmountsButton />
-        <ImportDialog />
-      </PageHeader>
-
-      {/* The summary covers all your own accounts, so it'd mislead next to one account's list. */}
-      {!searching && !filters.bank_account_id?.length && (
-        <MonthSummary year={year} month={month} actions={summaryActions} />
-      )}
-
+  const list = (
+    <div className="min-w-0 space-y-3">
       <TransactionFiltersBar
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -707,7 +486,6 @@ function Transactions() {
         categories={categories}
       />
 
-      {/* Table */}
       {isLoading ? (
         <div className="space-y-1.5">
           {placeholderKeys(8).map((key) => (
@@ -728,7 +506,7 @@ function Transactions() {
           {selectedCount > 0 && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2">
               <span className="mr-auto text-12 tabular-nums text-white/55">
-                {selectedCount} row{selectedCount !== 1 ? "s" : ""} selected
+                {selectedCount} selected
               </span>
 
               {/* Bulk categorize */}
@@ -751,13 +529,13 @@ function Transactions() {
                       bulkUpdateMutation.mutate({
                         client,
                         body: {
-                          ids: Object.keys(rowSelection),
+                          ids: [...selected],
                           category_id: null,
                         },
                       })
                     }
                   >
-                    None (clear)
+                    No category
                   </button>
                   {categories
                     .filter((c) => c.parent_id)
@@ -770,7 +548,7 @@ function Transactions() {
                           bulkUpdateMutation.mutate({
                             client,
                             body: {
-                              ids: Object.keys(rowSelection),
+                              ids: [...selected],
                               category_id: cat.id,
                             },
                           })
@@ -787,7 +565,7 @@ function Transactions() {
               </Popover>
 
               <SoftButton
-                onClick={() => handleDeleteRows(Object.keys(rowSelection))}
+                onClick={() => handleDeleteRows([...selected])}
                 disabled={deleteMutation.isPending}
                 className="bg-red-500/10 text-red-400 hover:bg-red-500/15 hover:text-red-300"
               >
@@ -797,16 +575,59 @@ function Transactions() {
             </div>
           )}
 
-          <VirtualDataTable
-            columns={columns}
-            data={transactions}
-            getRowId={(row) => row.id}
-            rowSelection={rowSelection}
-            onRowSelectionChange={setRowSelection}
-            getGroupLabel={getDateGroupLabel}
+          <TransactionList
+            transactions={transactions}
+            accounts={accountMap}
+            categories={categories}
+            selected={selected}
+            onSelectedChange={setSelected}
+            handlers={handlers}
           />
         </>
       )}
+    </div>
+  );
+
+  return (
+    <div className="@container flex flex-col gap-4">
+      <PageHeader
+        title={searching ? "Search" : "Transactions"}
+        summary={
+          isLoading
+            ? null
+            : searching
+              ? `${totalCount} match${totalCount !== 1 ? "es" : ""} for "${filters.search}" across all months${totalCount > shown ? `, newest ${shown} shown` : ""}`
+              : `${totalCount} in ${format(firstDay, "MMMM")}`
+        }
+      >
+        {!searching && (
+          <PeriodNav
+            label={monthLabel}
+            onPrev={() => navigateMonth(-1)}
+            onNext={() => navigateMonth(1)}
+            nextDisabled={isCurrentMonth}
+          />
+        )}
+        <HideAmountsButton />
+        <ImportDialog />
+      </PageHeader>
+
+      {/* The summary covers all your own accounts, so it'd mislead next to one account's list. */}
+      {!searching && !filters.bank_account_id?.length ? (
+        <MonthSummary year={year} month={month} actions={summaryActions}>
+          {list}
+        </MonthSummary>
+      ) : (
+        list
+      )}
+
+      <TransactionPanel
+        transaction={open}
+        account={open ? accountMap.get(open.bank_account_id) : undefined}
+        categories={categories}
+        handlers={handlers}
+        onOpenChange={(isOpen) => !isOpen && setOpenId(null)}
+      />
 
       {/* Bulk categorize suggestion dialog */}
       <AlertDialog

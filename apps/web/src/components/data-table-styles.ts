@@ -9,5 +9,3 @@ export const TABLE_ROW =
   "border-white/[0.05] text-white/80 transition-colors duration-150 hover:bg-white/[0.03] data-[state=selected]:bg-primary-500/[0.07]";
 export const TABLE_CELL = "px-3 py-2";
 export const TABLE_EMPTY = "h-24 text-center type-caption text-white/40";
-export const TABLE_GROUP =
-  "border-b border-white/[0.05] bg-white/[0.015] px-3 pt-3 pb-1.5 type-label text-white/50";
