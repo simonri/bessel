@@ -12,7 +12,17 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 
-def item(unique_id: str, title: str, plan: str, amount: int, *, created: str = "2026-05-02T10:00:00.000Z", plus: bool = False) -> dict[str, Any]:
+def item(
+  unique_id: str,
+  title: str,
+  plan: str,
+  amount: int,
+  *,
+  created: str = "2026-05-02T10:00:00.000Z",
+  plus: bool = False,
+  struck: bool = False,
+  avatar: str | None = None,
+) -> dict[str, Any]:
   """A purchase as Klarna's app API lists it (fake ids and amounts, real field names)."""
   return {
     "__typename": "TransactionStateV2MasterOutput",
@@ -21,8 +31,8 @@ def item(unique_id: str, title: str, plan: str, amount: int, *, created: str = "
     "createdAt": created,
     "isPending": False,
     "subtitle": [{"text": "12:00", "icon": None}, {"text": plan, "icon": "klarnacard"}],
-    "amount": {"currentAmount": amount, "currency": "SEK", "hasPlus": plus, "isAmountLineThrough": False},
-    "avatar": {"avatarType": None},
+    "amount": {"currentAmount": amount, "currency": "SEK", "hasPlus": plus, "isAmountLineThrough": struck},
+    "avatar": {"avatarType": avatar},
   }
 
 
@@ -72,12 +82,14 @@ class TestPayLaterImport:
         item("6", "Zalando", "Imported from Gmail", 1821),
         item("7", "Ikea", "Delbetala", 99900),
         item("8", "Klarna refund", "Pay in 30 days", 2500, plus=True),
+        item("9", "Lime", "Insufficient balance", 2900, struck=True, avatar="REJECTED_CARD"),
+        item("10", "Uber", "Frozen card", 18900, struck=True, avatar="REJECTED_CARD"),
       ]
     )
 
     result = await _import(client, account)
 
-    assert result == {"created": 4, "updated": 0, "paid_at_purchase": 4, "unrecognized_plans": ["Delbetala"]}
+    assert result == {"created": 4, "updated": 0, "paid_at_purchase": 4, "declined": 2, "unrecognized_plans": ["Delbetala"]}
     assert await _stored(session, account) == [
       ("Ikea", 99900, TransactionDirection.debit),
       ("Klarna refund", 2500, TransactionDirection.credit),
@@ -112,3 +124,16 @@ class TestPayLaterImport:
 
     assert (await _import(client, account))["updated"] == 1
     assert await _stored(session, account) == [("Zara", 0, TransactionDirection.debit)]
+
+  @pytest.mark.asyncio
+  async def test_a_purchase_cancelled_after_importing_comes_to_nothing_and_a_new_cancelled_one_is_left_out(
+    self, client: AsyncClient, session: AsyncSession, account: BankAccount, klarna: list[dict[str, Any]]
+  ) -> None:
+    klarna.append(item("1", "Booking.com", "Pay in 30 days", 452300))
+    await _import(client, account)
+    klarna[:] = [item("1", "Booking.com", "Pay in 30 days", 452300, struck=True), item("2", "Kiwi.com", "Pay in 30 days", 312000, struck=True)]
+
+    result = await _import(client, account)
+
+    assert (result["created"], result["updated"]) == (0, 1)
+    assert await _stored(session, account) == [("Booking.com", 0, TransactionDirection.debit)]

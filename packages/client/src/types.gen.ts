@@ -2825,6 +2825,12 @@ export type KlarnaImportResponse = {
    */
   paid_at_purchase: number;
   /**
+   * Declined
+   *
+   * Card payments Klarna refused; no money moved, so nothing was imported.
+   */
+  declined: number;
+  /**
    * Unrecognized Plans
    *
    * Payment plans Bessel doesn't know yet; their purchases were imported as pay later.

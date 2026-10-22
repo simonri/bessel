@@ -198,6 +198,20 @@ def plan(item: dict[str, Any]) -> str | None:
   return None
 
 
+def declined(item: dict[str, Any]) -> bool:
+  """A card payment Klarna refused ("Insufficient balance", "Frozen card"); no money moved."""
+  return (item.get("avatar") or {}).get("avatarType") == "REJECTED_CARD"
+
+
+def cancelled(item: dict[str, Any]) -> bool:
+  """A purchase Klarna struck through after it went ahead, so nothing is owed for it any more."""
+  return bool((item.get("amount") or {}).get("isAmountLineThrough"))
+
+
+def dedup_hash(unique_id: str) -> str:
+  return hashlib.sha256(f"klarna:{unique_id}".encode()).hexdigest()
+
+
 def is_pay_later(item: dict[str, Any]) -> bool:
   """Anything not paid at purchase, including plans Klarna adds later: a missed purchase is worse than an odd one."""
   item_plan = plan(item)
@@ -230,14 +244,13 @@ def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   credit = bool(amount.get("hasPlus")) != (amount_minor < 0)
   direction = TransactionDirection.credit if credit else TransactionDirection.debit
   amount_minor = abs(amount_minor)
-  dedup_hash = hashlib.sha256(f"klarna:{unique_id}".encode()).hexdigest()
 
   return ParsedTransaction(
     transaction_date=tx_date,
     amount_minor=amount_minor,
     currency=currency,
     direction=direction,
-    dedup_hash=dedup_hash,
+    dedup_hash=dedup_hash(unique_id),
     description=title,
     raw_data=item,
   )
@@ -248,13 +261,17 @@ class PayLaterImport:
   created: int
   updated: int
   paid_at_purchase: int
+  declined: int
   unrecognized_plans: list[str] = field(default_factory=list)
 
 
 async def import_pay_later(session: AsyncSession, *, user_id: UUID, bank_account_id: UUID, items: list[dict[str, Any]]) -> PayLaterImport:
-  """Imports the purchases Klarna lets the user pay later, and brings earlier ones up to date after returns."""
-  pay_later = [item for item in items if is_pay_later(item)]
+  """Imports the purchases Klarna lets the user pay later, and brings earlier ones up to date after returns and cancellations."""
+  refused = [item for item in items if declined(item)]
+  pay_later = [item for item in items if not declined(item) and is_pay_later(item)]
   parsed = [p for item in pay_later if (p := map_to_parsed(item)) is not None]
+  # Cancelled after an earlier import: the row stays, owing nothing.
+  struck = {dedup_hash(item["uniqueId"]): (0, TransactionDirection.debit) for item in pay_later if cancelled(item) and item.get("uniqueId")}
   created, _ = await transaction_service.import_transactions(
     session,
     bank_account_id=bank_account_id,
@@ -265,7 +282,13 @@ async def import_pay_later(session: AsyncSession, *, user_id: UUID, bank_account
     user_id=user_id,
   )
   updated = await TransactionRepository.from_session(session).update_amounts(
-    user_id, bank_account_id, {p.dedup_hash: (p.amount_minor, p.direction) for p in parsed}
+    user_id, bank_account_id, {**struck, **{p.dedup_hash: (p.amount_minor, p.direction) for p in parsed}}
   )
   unrecognized = sorted({item_plan for item in pay_later if (item_plan := plan(item)) and not PAY_LATER_PLANS.match(item_plan)})
-  return PayLaterImport(created=created, updated=updated, paid_at_purchase=len(items) - len(pay_later), unrecognized_plans=unrecognized)
+  return PayLaterImport(
+    created=created,
+    updated=updated,
+    paid_at_purchase=len(items) - len(pay_later) - len(refused),
+    declined=len(refused),
+    unrecognized_plans=unrecognized,
+  )

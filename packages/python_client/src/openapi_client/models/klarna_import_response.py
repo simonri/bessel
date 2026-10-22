@@ -17,6 +17,7 @@ class KlarnaImportResponse:
       updated (int): Purchases imported before whose amount changed, after a return.
       paid_at_purchase (int): Items left out because they were paid at purchase and show in a bank account, card or
           the Klarna balance.
+      declined (int): Card payments Klarna refused; no money moved, so nothing was imported.
       unrecognized_plans (list[str]): Payment plans Bessel doesn't know yet; their purchases were imported as pay
           later.
   """
@@ -24,6 +25,7 @@ class KlarnaImportResponse:
   created: int
   updated: int
   paid_at_purchase: int
+  declined: int
   unrecognized_plans: list[str]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,6 +36,8 @@ class KlarnaImportResponse:
 
     paid_at_purchase = self.paid_at_purchase
 
+    declined = self.declined
+
     unrecognized_plans = self.unrecognized_plans
 
     field_dict: dict[str, Any] = {}
@@ -43,6 +47,7 @@ class KlarnaImportResponse:
         "created": created,
         "updated": updated,
         "paid_at_purchase": paid_at_purchase,
+        "declined": declined,
         "unrecognized_plans": unrecognized_plans,
       }
     )
@@ -58,12 +63,15 @@ class KlarnaImportResponse:
 
     paid_at_purchase = d.pop("paid_at_purchase")
 
+    declined = d.pop("declined")
+
     unrecognized_plans = cast(list[str], d.pop("unrecognized_plans"))
 
     klarna_import_response = cls(
       created=created,
       updated=updated,
       paid_at_purchase=paid_at_purchase,
+      declined=declined,
       unrecognized_plans=unrecognized_plans,
     )
 

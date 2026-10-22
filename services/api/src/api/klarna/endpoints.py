@@ -48,5 +48,9 @@ async def import_klarna_transactions(
   items = await fetch_klarna_items(body.authorization, body.cookie)
   result = await import_pay_later(session, user_id=current_user.id, bank_account_id=bank_account.id, items=items)
   return KlarnaImportResponse(
-    created=result.created, updated=result.updated, paid_at_purchase=result.paid_at_purchase, unrecognized_plans=result.unrecognized_plans
+    created=result.created,
+    updated=result.updated,
+    paid_at_purchase=result.paid_at_purchase,
+    declined=result.declined,
+    unrecognized_plans=result.unrecognized_plans,
   )

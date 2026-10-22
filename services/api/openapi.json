@@ -11435,6 +11435,11 @@
             "title": "Paid At Purchase",
             "description": "Items left out because they were paid at purchase and show in a bank account, card or the Klarna balance."
           },
+          "declined": {
+            "type": "integer",
+            "title": "Declined",
+            "description": "Card payments Klarna refused; no money moved, so nothing was imported."
+          },
           "unrecognized_plans": {
             "items": {
               "type": "string"
@@ -11449,6 +11454,7 @@
           "created",
           "updated",
           "paid_at_purchase",
+          "declined",
           "unrecognized_plans"
         ],
         "title": "KlarnaImportResponse"

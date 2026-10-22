@@ -80,6 +80,7 @@ export function ImportDialog() {
         `${data.created} pay later purchases imported`,
         `${data.updated} updated after a return`,
         `${data.paid_at_purchase} paid at purchase, already in a bank account or the Klarna balance`,
+        `${data.declined} declined card payments left out`,
         ...(data.unrecognized_plans.length
           ? [
               `Imported as pay later, new plans: ${data.unrecognized_plans.join(", ")}`,

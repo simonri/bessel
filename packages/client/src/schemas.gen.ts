@@ -4303,6 +4303,12 @@ export const KlarnaImportResponseSchema = {
       description:
         "Items left out because they were paid at purchase and show in a bank account, card or the Klarna balance.",
     },
+    declined: {
+      type: "integer",
+      title: "Declined",
+      description:
+        "Card payments Klarna refused; no money moved, so nothing was imported.",
+    },
     unrecognized_plans: {
       items: {
         type: "string",
@@ -4314,7 +4320,13 @@ export const KlarnaImportResponseSchema = {
     },
   },
   type: "object",
-  required: ["created", "updated", "paid_at_purchase", "unrecognized_plans"],
+  required: [
+    "created",
+    "updated",
+    "paid_at_purchase",
+    "declined",
+    "unrecognized_plans",
+  ],
   title: "KlarnaImportResponse",
 } as const;
 
