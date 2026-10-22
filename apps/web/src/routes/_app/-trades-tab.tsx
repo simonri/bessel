@@ -3,162 +3,95 @@ import { listTradesV1InvestmentsTradesGetOptions } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
-import { DataTable } from "@/components/data-table";
-import { EmptyState, PeriodNav, placeholderKeys } from "@/components/ui-kit";
+import { Minus, Plus, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import {
+  EmptyState,
+  Panel,
+  PeriodNav,
+  placeholderKeys,
+} from "@/components/ui-kit";
 import { client } from "@/lib/client";
-import type { DataColumnDef } from "@/lib/data-table";
 import { formatQuantity } from "@/lib/money";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
+const PAGE_SIZE = 30;
+
+/** What the trade came to: units are millionths, prices minor units. */
+export function tradeTotal(trade: TradeSchema): number {
+  return Math.round((trade.quantity * trade.price_per_unit) / 1_000_000);
+}
+
+/** Newest first, one group per month; the list arrives sorted by date already. */
+export function groupByMonth(
+  trades: TradeSchema[],
+): { key: string; label: string; trades: TradeSchema[] }[] {
+  const groups: { key: string; label: string; trades: TradeSchema[] }[] = [];
+  for (const trade of trades) {
+    const key = format(trade.trade_date, "yyyy-MM");
+    const last = groups.at(-1);
+    if (last?.key === key) last.trades.push(trade);
+    else {
+      groups.push({
+        key,
+        label: format(trade.trade_date, "MMMM yyyy"),
+        trades: [trade],
+      });
+    }
+  }
+  return groups;
+}
+
 export function TradesTab() {
   const [page, setPage] = useState(1);
-  const limit = 20;
-
   const { data, isLoading } = useQuery({
     ...listTradesV1InvestmentsTradesGetOptions({
       client,
-      query: { page, limit },
+      query: { page, limit: PAGE_SIZE },
     }),
     placeholderData: keepPreviousData,
   });
 
-  // Stable identity so react-table doesn't rebuild its column model per render.
-  const columns: DataColumnDef<TradeSchema>[] = useMemo(
-    () => [
-      {
-        accessorKey: "trade_date",
-        header: "Date",
-        size: 110,
-        cell: ({ row }) => (
-          <span className="text-12 tabular-nums text-white/55">
-            {format(row.original.trade_date, "yyyy-MM-dd")}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "trade_type",
-        header: "Type",
-        size: 70,
-        cell: ({ row }) => (
-          <span
-            className={cn(
-              "inline-flex h-5 items-center rounded-md px-1.5 type-badge capitalize",
-              row.original.trade_type === "buy"
-                ? "bg-emerald-500/10 text-emerald-400"
-                : "bg-red-500/10 text-red-400",
-            )}
-          >
-            {row.original.trade_type}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "security_name",
-        header: "Security",
-        cell: ({ row }) => (
-          <span className="block truncate font-medium text-white/85">
-            {row.original.security_name}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "bank_account_name",
-        header: "Account",
-        size: 130,
-        cell: ({ row }) => (
-          <span className="block truncate text-12 text-white/55">
-            {row.original.bank_account_name}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "quantity",
-        header: () => <div className="text-right">Quantity</div>,
-        size: 120,
-        cell: ({ row }) => (
-          <div className="text-right tabular-nums text-white/70">
-            {formatQuantity(row.original.quantity)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "price_per_unit",
-        header: () => <div className="text-right">Price/Unit</div>,
-        size: 120,
-        cell: ({ row }) => (
-          <div className="text-right tabular-nums text-white/70">
-            <Amount
-              value={row.original.price_per_unit}
-              currency={row.original.currency}
-              exact
-            />
-          </div>
-        ),
-      },
-      {
-        id: "total",
-        header: () => <div className="text-right">Total</div>,
-        size: 120,
-        cell: ({ row }) => {
-          const total =
-            (row.original.quantity * row.original.price_per_unit) / 1_000_000;
-          return (
-            <div className="text-right font-medium tabular-nums text-white/85">
-              <Amount
-                value={Math.round(total)}
-                currency={row.original.currency}
-                exact
-              />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "currency",
-        header: "Ccy",
-        size: 60,
-        cell: ({ row }) => (
-          <span className="text-12 text-white/45">{row.original.currency}</span>
-        ),
-      },
-      {
-        accessorKey: "notes",
-        header: "Notes",
-        cell: ({ row }) => (
-          <span className="block truncate text-12 text-white/45">
-            {row.original.notes ?? ""}
-          </span>
-        ),
-      },
-    ],
-    [],
-  );
-
   const trades = data?.items ?? [];
   const maxPage = data?.pagination.max_page ?? 1;
 
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {placeholderKeys(6).map((key) => (
+          <Skeleton
+            key={key}
+            className="h-12 w-full rounded-lg bg-white/[0.06]"
+          />
+        ))}
+      </div>
+    );
+  }
+  if (trades.length === 0) {
+    return (
+      <EmptyState icon={<TrendingUp />} title="Nothing bought or sold yet">
+        Buys and sells show up here once Avanza has synced.
+      </EmptyState>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {isLoading ? (
-        <div className="space-y-2">
-          {placeholderKeys(6).map((key) => (
-            <Skeleton
-              key={key}
-              className="h-10 w-full rounded-lg bg-white/[0.06]"
-            />
-          ))}
-        </div>
-      ) : trades.length === 0 ? (
-        <EmptyState icon={<TrendingUp />} title="No trades yet">
-          Trades appear here once an Avanza account is linked and synced.
-        </EmptyState>
-      ) : (
-        <DataTable columns={columns} data={trades} />
-      )}
-
+      <Panel className="divide-y-0">
+        {groupByMonth(trades).map((group) => (
+          <section key={group.key} aria-label={group.label}>
+            <h3 className="bg-white/[0.02] px-4 pt-3 pb-1.5 type-section text-white/50">
+              {group.label}
+            </h3>
+            <ul>
+              {group.trades.map((trade) => (
+                <TradeRow key={trade.id} trade={trade} />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </Panel>
       {maxPage > 1 && (
         <div className="flex justify-end">
           <PeriodNav
@@ -171,5 +104,50 @@ export function TradesTab() {
         </div>
       )}
     </div>
+  );
+}
+
+function TradeRow({ trade }: { trade: TradeSchema }) {
+  const buy = trade.trade_type === "buy";
+  const Icon = buy ? Plus : Minus;
+  return (
+    <li className="flex items-center gap-3 px-4 py-2.5">
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-full",
+          buy
+            ? "bg-primary-500/15 text-primary-300"
+            : "bg-emerald-400/10 text-emerald-300",
+        )}
+      >
+        <Icon className="size-3.5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-13 font-medium text-white/85">
+          {buy ? "Bought" : "Sold"} {trade.security_name}
+        </p>
+        <p className="truncate type-caption text-white/45">
+          {format(trade.trade_date, "d MMM")} - {formatQuantity(trade.quantity)}{" "}
+          ×{" "}
+          <Amount
+            value={trade.price_per_unit}
+            currency={trade.currency}
+            exact
+          />{" "}
+          - {trade.bank_account_name}
+        </p>
+      </div>
+      <Amount
+        value={buy ? -tradeTotal(trade) : tradeTotal(trade)}
+        currency={trade.currency}
+        sign
+        exact
+        className={cn(
+          "shrink-0 text-13 font-medium",
+          buy ? "text-white/80" : "text-income",
+        )}
+      />
+    </li>
   );
 }

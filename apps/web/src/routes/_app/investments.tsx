@@ -19,10 +19,10 @@ const TRIGGER_CLASS =
 
 function Investments() {
   return (
-    <Tabs defaultValue="holdings" className="flex flex-col gap-4">
+    <Tabs defaultValue="holdings" className="@container flex flex-col gap-4">
       <PageHeader
         title="Investments"
-        summary="What you hold at Avanza and every trade behind it, synced from Avanza."
+        summary="What you hold at Avanza, and what you bought and sold"
       >
         <HideAmountsButton />
       </PageHeader>
@@ -31,7 +31,7 @@ function Investments() {
           Holdings
         </TabsTrigger>
         <TabsTrigger value="trades" className={TRIGGER_CLASS}>
-          Trades
+          Bought and sold
         </TabsTrigger>
       </TabsList>
       <TabsContent value="holdings" className="min-h-0 flex-1">

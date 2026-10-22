@@ -6,193 +6,339 @@ import {
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
-import { DataTable } from "@/components/data-table";
-import {
-  BarRow,
-  EmptyState,
-  Panel,
-  placeholderKeys,
-  SectionLabel,
-} from "@/components/ui-kit";
+import { ArrowDownRight, ArrowUpRight, TrendingUp } from "lucide-react";
+import { type ReactNode, useMemo, useState } from "react";
+import { BankLogo } from "@/components/bank-logo";
+import { EmptyState, Panel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
-import type { DataColumnDef } from "@/lib/data-table";
 import { formatQuantity } from "@/lib/money";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
-const NUMERIC_CELL = "text-right tabular-nums text-white/70";
-const LARGEST = 8;
+const LARGEST = 6;
 
-function whole(minor: number, currency: string) {
-  return <Amount value={minor} currency={currency} />;
-}
-
-function signed(minor: number, currency: string) {
-  return <Amount value={minor} currency={currency} sign />;
-}
-
-function percent(part: number, of: number): string | null {
+export function percent(part: number, of: number): string | null {
   return of > 0
-    ? `${part >= 0 ? "+" : ""}${((part / of) * 100).toFixed(1)}%`
+    ? `${part >= 0 ? "+" : ""}${((part / of) * 100).toFixed(1).replace(".", ",")}%`
     : null;
 }
 
-function gainClass(value: number) {
-  return value >= 0 ? "text-income" : "text-expense";
+export interface InvestmentTotals {
+  currency: string;
+  total: number;
+  cash: number;
+  netDeposits: number;
+  growth: number;
+  dividendsThisYear: number;
+  hasCompany: boolean;
 }
 
-export function AccountCard({
-  account,
+/** The accounts added up per currency; growth is what they're worth beyond what was put in. */
+export function investmentTotals(
+  accounts: InvestmentAccountSummary[],
+  year: number,
+): InvestmentTotals[] {
+  const totals = new Map<string, InvestmentTotals>();
+  for (const a of accounts) {
+    const t = totals.get(a.currency) ?? {
+      currency: a.currency,
+      total: 0,
+      cash: 0,
+      netDeposits: 0,
+      growth: 0,
+      dividendsThisYear: 0,
+      hasCompany: false,
+    };
+    t.total += a.total;
+    t.cash += a.cash;
+    t.netDeposits += a.net_deposits;
+    t.growth += a.growth;
+    t.dividendsThisYear +=
+      a.dividends.find((d) => d.year === year)?.amount ?? 0;
+    t.hasCompany ||= a.is_business;
+    totals.set(a.currency, t);
+  }
+  return [...totals.values()];
+}
+
+export interface Slice {
+  key: string;
+  label: string;
+  value: number;
+  share: number;
+}
+
+/** The biggest holdings and what share of the whole each is, with the rest as one slice. */
+export function allocation(
+  holdings: HoldingSchema[],
+  limit = LARGEST,
+): Slice[] {
+  const valued = holdings
+    .filter((h) => (h.current_value ?? 0) > 0)
+    .sort((a, b) => (b.current_value ?? 0) - (a.current_value ?? 0));
+  const whole = valued.reduce((s, h) => s + (h.current_value ?? 0), 0);
+  if (whole === 0) return [];
+  const slices: Slice[] = valued.slice(0, limit).map((h) => ({
+    key: `${h.bank_account_id}-${h.security_id}`,
+    label: h.security_name,
+    value: h.current_value ?? 0,
+    share: (h.current_value ?? 0) / whole,
+  }));
+  const rest = valued
+    .slice(limit)
+    .reduce((s, h) => s + (h.current_value ?? 0), 0);
+  if (rest > 0) {
+    slices.push({
+      key: "rest",
+      label: `${valued.length - limit} more`,
+      value: rest,
+      share: rest / whole,
+    });
+  }
+  return slices;
+}
+
+// One hue, fading for smaller slices: the order is the information, not the colour.
+const SLICE_STRENGTH = [100, 72, 52, 38, 28, 20];
+
+function sliceColor(index: number, key: string): string {
+  if (key === "rest") return "rgb(255 255 255 / 0.18)";
+  const strength = SLICE_STRENGTH[Math.min(index, SLICE_STRENGTH.length - 1)];
+  return `color-mix(in srgb, var(--color-primary-400) ${strength}%, var(--color-panel))`;
+}
+
+function Growth({
+  value,
+  of,
+  currency,
+  className,
 }: {
-  account: InvestmentAccountSummary;
+  value: number;
+  of: number;
+  currency: string;
+  className?: string;
 }) {
-  const thisYear = new Date().getFullYear();
-  const dividends =
-    account.dividends.find((d) => d.year === thisYear)?.amount ?? 0;
-  const lifetimeDividends = account.dividends.reduce((s, d) => s + d.amount, 0);
-  const madePct = percent(account.growth, account.net_deposits);
+  const up = value >= 0;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <div className="min-w-0 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3.5">
-      <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-13 font-medium text-white/85">
-          {account.name}
-        </p>
-        {account.is_business && (
-          <span className="shrink-0 rounded-md border border-white/15 px-1.5 py-px type-badge text-white/55">
-            Company
-          </span>
-        )}
-      </div>
-      <p className="mt-1 type-metric text-white/90">
-        {whole(account.total, account.currency)}
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 font-medium",
+        up ? "text-income" : "text-expense",
+        className,
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden />
+      <Amount value={value} currency={currency} sign />
+      {percent(value, of) && (
+        <span className="ml-1 font-normal opacity-80">
+          {percent(value, of)}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Overview({
+  totals,
+  slices,
+}: {
+  totals: InvestmentTotals;
+  slices: Slice[];
+}) {
+  const { currency } = totals;
+  return (
+    <Panel className="divide-y-0 p-5">
+      <p className="type-label text-white/55">
+        {totals.hasCompany
+          ? "Yours and your company's"
+          : "All your investments"}
       </p>
-      <p className="type-caption text-white/40">
-        {whole(account.holdings_value, account.currency)} invested -{" "}
-        {whole(account.cash, account.currency)} cash
+      <Amount
+        value={totals.total}
+        currency={currency}
+        className="mt-1 block type-display text-white"
+      />
+      <p className="mt-1.5 type-caption">
+        <Growth
+          value={totals.growth}
+          of={totals.netDeposits}
+          currency={currency}
+        />
+        <span className="ml-2 text-white/40">since you started</span>
       </p>
-      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-12">
-        {/* More taken out than put in, as when money moves on to another account. */}
-        <dt className="text-white/45">
-          {account.net_deposits >= 0 ? "Put in" : "Taken out"}
-        </dt>
-        <dd className="text-right tabular-nums text-white/75">
-          {whole(Math.abs(account.net_deposits), account.currency)}
-        </dd>
-        <dt className="text-white/45">Made</dt>
-        <dd
-          className={cn("text-right tabular-nums", gainClass(account.growth))}
-        >
-          {signed(account.growth, account.currency)}
-          {madePct && (
-            <span className="ml-1 type-caption opacity-80">{madePct}</span>
-          )}
-        </dd>
-        <dt className="text-white/45">Unrealized</dt>
-        <dd
-          className={cn(
-            "text-right tabular-nums",
-            gainClass(account.holdings_value - account.acquired_value),
-          )}
-        >
-          {signed(
-            account.holdings_value - account.acquired_value,
-            account.currency,
-          )}
-        </dd>
-        <dt className="text-white/45">Dividends {thisYear}</dt>
-        <dd className="text-right tabular-nums text-white/75">
-          {whole(dividends, account.currency)}
-          {lifetimeDividends > dividends && (
-            <span className="ml-1 type-caption text-white/40">
-              {whole(lifetimeDividends, account.currency)} all time
-            </span>
-          )}
-        </dd>
+
+      <dl className="mt-5 grid grid-cols-3 gap-4">
+        <Fact label={totals.netDeposits >= 0 ? "Put in" : "Taken out"}>
+          <Amount value={Math.abs(totals.netDeposits)} currency={currency} />
+        </Fact>
+        <Fact label="Cash to invest">
+          <Amount value={totals.cash} currency={currency} />
+        </Fact>
+        <Fact label={`Dividends ${new Date().getFullYear()}`}>
+          <Amount value={totals.dividendsThisYear} currency={currency} />
+        </Fact>
       </dl>
+
+      {slices.length > 0 && (
+        <div className="mt-5">
+          <p className="mb-2 type-caption text-white/45">What it's in</p>
+          <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
+            {slices.map((slice, index) => (
+              <span
+                key={slice.key}
+                title={`${slice.label} ${Math.round(slice.share * 100)}%`}
+                className="h-full first:rounded-l-full last:rounded-r-full"
+                style={{
+                  width: `${slice.share * 100}%`,
+                  backgroundColor: sliceColor(index, slice.key),
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="type-caption text-white/45">{label}</dt>
+      <dd className="mt-0.5 text-13 font-medium text-white/85">{children}</dd>
     </div>
   );
 }
 
-function positionColumns(
-  showAccount: boolean,
-  accountNames: Map<string, string>,
-  scopeValue: number,
-): DataColumnDef<HoldingSchema>[] {
-  return [
-    {
-      accessorKey: "security_name",
-      header: "Security",
-      cell: ({ row }) => (
-        <div className="min-w-0">
-          <div className="truncate font-medium text-white/85">
-            {row.original.security_name}
-          </div>
-          {showAccount && row.original.bank_account_id && (
-            <div className="truncate type-caption text-white/40">
-              {accountNames.get(row.original.bank_account_id)}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "quantity",
-      header: () => <div className="text-right">Quantity</div>,
-      size: 110,
-      cell: ({ row }) => (
-        <div className={NUMERIC_CELL}>
-          {formatQuantity(row.original.quantity)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "current_value",
-      header: () => <div className="text-right">Value</div>,
-      size: 140,
-      cell: ({ row }) => (
-        <div className="text-right font-medium tabular-nums text-white/85">
-          {row.original.current_value != null
-            ? whole(row.original.current_value, row.original.currency)
-            : "—"}
-        </div>
-      ),
-    },
-    {
-      id: "share",
-      header: () => <div className="text-right">Share</div>,
-      size: 80,
-      cell: ({ row }) => (
-        <div className={NUMERIC_CELL}>
-          {row.original.current_value != null && scopeValue > 0
-            ? `${Math.round((row.original.current_value / scopeValue) * 100)}%`
-            : "—"}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "gain_loss",
-      header: () => <div className="text-right">Gain or loss</div>,
-      size: 170,
-      cell: ({ row }) => {
-        const { gain_loss, gain_loss_pct } = row.original;
-        if (gain_loss == null)
-          return <div className="text-right text-white/30">—</div>;
+function AccountPicker({
+  accounts,
+  scope,
+  onScope,
+}: {
+  accounts: InvestmentAccountSummary[];
+  scope: string | null;
+  onScope: (id: string | null) => void;
+}) {
+  return (
+    <Panel className="divide-y-0 p-2">
+      <p className="px-2 pt-2 pb-1 type-label text-white/55">Accounts</p>
+      <ul>
+        {accounts.map((account) => {
+          const picked = scope === account.bank_account_id;
+          return (
+            <li key={account.bank_account_id}>
+              <button
+                type="button"
+                aria-pressed={picked}
+                onClick={() => onScope(picked ? null : account.bank_account_id)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors duration-150",
+                  picked ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
+                )}
+              >
+                <BankLogo name="Avanza" size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="truncate text-13 font-medium text-white/85">
+                      {account.name}
+                    </span>
+                    {account.is_business && (
+                      <span className="shrink-0 rounded-md border border-white/15 px-1.5 type-badge text-white/55">
+                        Company
+                      </span>
+                    )}
+                  </span>
+                  <span className="block truncate type-caption text-white/45">
+                    {account.net_deposits >= 0 ? "Put in" : "Taken out"}{" "}
+                    <Amount
+                      value={Math.abs(account.net_deposits)}
+                      currency={account.currency}
+                    />
+                  </span>
+                </span>
+                <span className="shrink-0 text-right">
+                  <Amount
+                    value={account.total}
+                    currency={account.currency}
+                    className="block text-13 font-medium text-white/85"
+                  />
+                  <Growth
+                    value={account.growth}
+                    of={account.net_deposits}
+                    currency={account.currency}
+                    className="type-caption"
+                  />
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
+
+function HoldingList({
+  holdings,
+  colors,
+  accountNames,
+  showAccount,
+}: {
+  holdings: HoldingSchema[];
+  colors: Map<string, string>;
+  accountNames: Map<string, string>;
+  showAccount: boolean;
+}) {
+  return (
+    <Panel>
+      {holdings.map((h) => {
+        const key = `${h.bank_account_id}-${h.security_id}`;
+        const units = formatQuantity(h.quantity);
         return (
-          <div className={cn("text-right tabular-nums", gainClass(gain_loss))}>
-            {signed(gain_loss, row.original.currency)}
-            {gain_loss_pct != null && (
-              <span className="ml-1.5 type-caption opacity-80">
-                {gain_loss_pct >= 0 ? "+" : ""}
-                {gain_loss_pct.toFixed(1)}%
-              </span>
-            )}
+          <div key={key} className="flex items-center gap-3 px-4 py-3">
+            <span
+              aria-hidden
+              className="size-2.5 shrink-0 rounded-full"
+              style={{
+                backgroundColor: colors.get(key) ?? "rgb(255 255 255 / 0.22)",
+              }}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-13 font-medium text-white/85">
+                {h.security_name}
+              </p>
+              <p className="truncate type-caption text-white/45">
+                {units} {h.asset_type === "stock" ? "shares" : "units"}
+                {showAccount &&
+                  h.bank_account_id &&
+                  ` - ${accountNames.get(h.bank_account_id) ?? ""}`}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              {h.current_value != null ? (
+                <Amount
+                  value={h.current_value}
+                  currency={h.currency}
+                  className="block text-13 font-medium text-white/85"
+                />
+              ) : (
+                <span className="block text-13 text-white/40">No price</span>
+              )}
+              {h.gain_loss != null && (
+                <Growth
+                  value={h.gain_loss}
+                  of={h.cost_basis}
+                  currency={h.currency}
+                  className="type-caption"
+                />
+              )}
+            </div>
           </div>
         );
-      },
-    },
-  ];
+      })}
+    </Panel>
+  );
 }
 
 export function HoldingsTab() {
@@ -216,22 +362,12 @@ export function HoldingsTab() {
         .sort((a, b) => (b.current_value ?? 0) - (a.current_value ?? 0)),
     [holdingsData, scope],
   );
-  const scopeValue = holdings.reduce((s, h) => s + (h.current_value ?? 0), 0);
-  const columns = useMemo(
-    () =>
-      positionColumns(!scope && accounts.length > 1, accountNames, scopeValue),
-    [scope, accounts.length, accountNames, scopeValue],
-  );
 
   if (holdingsLoading || accountsLoading) {
     return (
-      <div className="space-y-2">
-        {placeholderKeys(6).map((key) => (
-          <Skeleton
-            key={key}
-            className="h-10 w-full rounded-lg bg-white/[0.06]"
-          />
-        ))}
+      <div className="grid gap-4 @4xl:grid-cols-3">
+        <Skeleton className="h-64 rounded-xl bg-white/[0.06] @4xl:col-span-2" />
+        <Skeleton className="h-64 rounded-xl bg-white/[0.06]" />
       </div>
     );
   }
@@ -244,94 +380,42 @@ export function HoldingsTab() {
         className="py-12"
       >
         <p>
-          Connect Avanza on the{" "}
+          Add Avanza on the{" "}
           <Link to="/accounts" className="underline underline-offset-2">
             Accounts
           </Link>{" "}
-          page and link an account to import your holdings.
+          page to see your holdings here.
         </p>
       </EmptyState>
     );
   }
 
   const shown = accounts.filter((a) => !scope || a.bank_account_id === scope);
-  const largest = holdings.slice(0, LARGEST);
-  const rest = holdings
-    .slice(LARGEST)
-    .reduce((s, h) => s + (h.current_value ?? 0), 0);
-  const top = largest[0]?.current_value ?? 0;
-  const currency = holdings[0]?.currency ?? shown[0]?.currency ?? "SEK";
+  const [totals] = investmentTotals(shown, new Date().getFullYear());
+  const slices = allocation(holdings);
+  const colors = new Map(
+    slices.map((slice, index) => [slice.key, sliceColor(index, slice.key)]),
+  );
 
   return (
-    <div className="space-y-5">
-      {accounts.length > 1 && (
-        <div
-          className="flex flex-wrap gap-1"
-          role="tablist"
-          aria-label="Account"
-        >
-          {[{ bank_account_id: null, name: "All accounts" }, ...accounts].map(
-            (a) => (
-              <button
-                key={a.bank_account_id ?? "all"}
-                type="button"
-                role="tab"
-                aria-selected={scope === a.bank_account_id}
-                onClick={() => setScope(a.bank_account_id)}
-                className={cn(
-                  "rounded-md px-2.5 py-1 text-12 font-medium transition-colors duration-150",
-                  scope === a.bank_account_id
-                    ? "bg-white/10 text-white/90"
-                    : "text-white/45 hover:text-white/80",
-                )}
-              >
-                {a.name}
-              </button>
-            ),
-          )}
-        </div>
-      )}
-
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
-        {shown.map((account) => (
-          <AccountCard key={account.bank_account_id} account={account} />
-        ))}
+    <div className="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-3">
+      <div className="min-w-0 space-y-4 @4xl:col-span-2">
+        {totals && <Overview totals={totals} slices={slices} />}
+        {holdings.length > 0 && (
+          <section aria-label="Holdings">
+            <h2 className="mb-2 px-1 type-section text-white/55">Holdings</h2>
+            <HoldingList
+              holdings={holdings}
+              colors={colors}
+              accountNames={accountNames}
+              showAccount={!scope && accounts.length > 1}
+            />
+          </section>
+        )}
       </div>
-
-      {largest.length > 0 && (
-        <section>
-          <SectionLabel>Largest holdings</SectionLabel>
-          <Panel className="space-y-2.5 divide-y-0 px-4 py-3.5">
-            {largest.map((h) => (
-              <BarRow
-                key={`${h.bank_account_id}-${h.security_id}`}
-                label={h.security_name}
-                fraction={top > 0 ? (h.current_value ?? 0) / top : 0}
-                value={whole(h.current_value ?? 0, h.currency)}
-                detail={
-                  scopeValue > 0
-                    ? `${Math.round(((h.current_value ?? 0) / scopeValue) * 100)}%`
-                    : undefined
-                }
-              />
-            ))}
-            {rest > 0 && (
-              <BarRow
-                label={`${holdings.length - LARGEST} more`}
-                fraction={top > 0 ? rest / top : 0}
-                value={whole(rest, currency)}
-                detail={`${Math.round((rest / scopeValue) * 100)}%`}
-                color="rgb(255 255 255 / 0.25)"
-              />
-            )}
-          </Panel>
-        </section>
-      )}
-
-      <section>
-        <SectionLabel>Positions</SectionLabel>
-        <DataTable columns={columns} data={holdings} />
-      </section>
+      <div className="min-w-0 @4xl:sticky @4xl:top-4">
+        <AccountPicker accounts={accounts} scope={scope} onScope={setScope} />
+      </div>
     </div>
   );
 }

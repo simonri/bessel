@@ -1,79 +1,213 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import type {
+  HoldingSchema,
+  InvestmentAccountSummary,
+  TradeSchema,
+} from "@bessel/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-router", () => ({ Link: () => null }));
+const year = new Date().getFullYear();
 
-const { AccountCard } = await import("./-holdings-tab");
+function account(
+  overrides: Partial<InvestmentAccountSummary>,
+): InvestmentAccountSummary {
+  return {
+    bank_account_id: "isk",
+    name: "ISK",
+    is_business: false,
+    currency: "SEK",
+    holdings_value: 600000,
+    cash: 50000,
+    total: 650000,
+    acquired_value: 500000,
+    deposits: 600000,
+    withdrawals: 0,
+    net_deposits: 600000,
+    growth: 50000,
+    dividends: [
+      { year, amount: 1200 },
+      { year: year - 1, amount: 9900 },
+    ],
+    first_transaction: null,
+    ...overrides,
+  };
+}
+
+function holding(overrides: Partial<HoldingSchema>): HoldingSchema {
+  return {
+    security_id: "s1",
+    bank_account_id: "isk",
+    security_name: "Investor B",
+    ticker: null,
+    asset_type: "stock",
+    currency: "SEK",
+    quantity: 10_000_000,
+    avg_cost_per_unit: 0,
+    cost_basis: 100000,
+    current_price: null,
+    current_value: 110000,
+    gain_loss: 10000,
+    gain_loss_pct: 10,
+    ...overrides,
+  } as HoldingSchema;
+}
+
+const ACCOUNTS = [
+  account({}),
+  account({
+    bank_account_id: "af",
+    name: "AF",
+    total: 8600,
+    cash: 8600,
+    holdings_value: 0,
+    net_deposits: -7779600,
+    growth: 7788200,
+    dividends: [],
+  }),
+];
+const HOLDINGS = [
+  holding({}),
+  holding({
+    security_id: "s2",
+    bank_account_id: "af",
+    security_name: "Avanza Global",
+    asset_type: "mutual_fund",
+    current_value: 30000,
+  }),
+];
+
+vi.mock("@tanstack/react-router", () => ({ Link: () => null }));
+vi.mock("@bessel/client", () => ({
+  getHoldingsV1InvestmentsHoldingsGetOptions: () => ({
+    queryKey: ["holdings"],
+    queryFn: async () => ({ items: HOLDINGS }),
+  }),
+  getInvestmentAccountsV1InvestmentsAccountsGetOptions: () => ({
+    queryKey: ["accounts"],
+    queryFn: async () => ({ items: ACCOUNTS }),
+  }),
+}));
+
+const { HoldingsTab, allocation, investmentTotals } = await import(
+  "./-holdings-tab"
+);
+const { groupByMonth, tradeTotal } = await import("./-trades-tab");
+
+const plain = (text: string | null) =>
+  (text ?? "").replace(/\s/g, " ").replace(/−/g, "-");
 
 afterEach(cleanup);
 
-const thisYear = new Date().getFullYear();
-
-describe("AccountCard", () => {
-  it("shows what the account is worth, what went in and what it made", () => {
-    render(
-      <AccountCard
-        account={{
-          bank_account_id: "af",
-          name: "Avanza AF",
+describe("investmentTotals", () => {
+  it("adds the accounts up, with this year's dividends and whether a company's is among them", () => {
+    const [total] = investmentTotals(
+      [
+        account({}),
+        account({
+          total: 100,
+          net_deposits: 50,
+          growth: 50,
+          cash: 10,
           is_business: true,
-          currency: "SEK",
-          holdings_value: 600000,
-          cash: 316100,
-          total: 916100,
-          acquired_value: 500000,
-          deposits: 1000000,
-          withdrawals: 200000,
-          net_deposits: 800000,
-          growth: 116100,
-          dividends: [
-            { year: thisYear, amount: 5000 },
-            { year: thisYear - 1, amount: 11100 },
-          ],
-          first_transaction: null,
-        }}
-      />,
+        }),
+      ],
+      year,
     );
-
-    expect(screen.getByText("Company")).toBeTruthy();
-    expect(screen.getByText("9 161 kr")).toBeTruthy();
-    expect(screen.getByText("8 000 kr")).toBeTruthy();
-    expect(screen.getByText("+1 161 kr").parentElement?.textContent).toContain(
-      "+14.5%",
-    );
-    expect(screen.getByText("+1 000 kr")).toBeTruthy();
-    expect(screen.getByText("50 kr").parentElement?.textContent).toContain(
-      "161 kr all time",
-    );
+    expect(total).toEqual({
+      currency: "SEK",
+      total: 650100,
+      cash: 50010,
+      netDeposits: 600050,
+      growth: 50050,
+      dividendsThisYear: 2400,
+      hasCompany: true,
+    });
   });
 });
 
-describe("AccountCard with more taken out", () => {
-  it("says taken out instead of a negative put in", () => {
-    render(
-      <AccountCard
-        account={{
-          bank_account_id: "af",
-          name: "Avanza AF",
-          is_business: false,
-          currency: "SEK",
-          holdings_value: 0,
-          cash: 8600,
-          total: 8600,
-          acquired_value: 0,
-          deposits: 191715600,
-          withdrawals: 199495200,
-          net_deposits: -7779600,
-          growth: 7788200,
-          dividends: [],
-          first_transaction: null,
-        }}
-      />,
+describe("allocation", () => {
+  it("gives each of the biggest holdings its share and adds up the rest", () => {
+    const slices = allocation(
+      [10, 40, 30, 20].map((v, i) =>
+        holding({
+          security_id: `s${i}`,
+          security_name: `H${v}`,
+          current_value: v,
+        }),
+      ),
+      2,
     );
+    expect(slices.map((s) => [s.label, s.share])).toEqual([
+      ["H40", 0.4],
+      ["H30", 0.3],
+      ["2 more", 0.3],
+    ]);
+  });
 
-    expect(screen.getByText("Taken out")).toBeTruthy();
-    expect(screen.getByText("77 796 kr")).toBeTruthy();
-    expect(screen.queryByText("Put in")).toBeNull();
+  it("is empty when nothing has a value", () => {
+    expect(allocation([holding({ current_value: null })])).toEqual([]);
+  });
+});
+
+describe("trades", () => {
+  const trade = (date: string, overrides: Partial<TradeSchema> = {}) =>
+    ({
+      id: date,
+      trade_date: new Date(`${date}T00:00:00`),
+      quantity: 2_500_000,
+      price_per_unit: 10050,
+      ...overrides,
+    }) as TradeSchema;
+
+  it("groups by month and totals units times price", () => {
+    expect(
+      groupByMonth([
+        trade("2026-10-02"),
+        trade("2026-10-01"),
+        trade("2026-09-30"),
+      ]).map((g) => [g.label, g.trades.length]),
+    ).toEqual([
+      ["October 2026", 2],
+      ["September 2026", 1],
+    ]);
+    expect(tradeTotal(trade("2026-10-02"))).toBe(25125);
+  });
+});
+
+describe("HoldingsTab", () => {
+  function mount() {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <HoldingsTab />
+      </QueryClientProvider>,
+    );
+  }
+
+  it("shows everything together, and one account when it's picked", async () => {
+    mount();
+
+    expect(plain((await screen.findByText(/^6\s586 kr$/)).textContent)).toBe(
+      "6 586 kr",
+    );
+    expect(screen.getByText("Avanza Global")).toBeTruthy();
+    expect(screen.getByText("10 units - AF")).toBeTruthy();
+    expect(screen.getByText("10 shares - ISK")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /^ISK/ }));
+
+    expect(screen.queryByText("Avanza Global")).toBeNull();
+    const overview = screen.getByText("All your investments").parentElement;
+    expect(plain(overview?.textContent ?? null)).toContain("6 500 kr");
+    expect(plain(overview?.textContent ?? null)).not.toContain("6 586 kr");
+    expect(screen.getAllByText(/^6\s500 kr$/).length).toBeGreaterThan(0);
+  });
+
+  it("says taken out when more came out of an account than went in", async () => {
+    mount();
+
+    const af = await screen.findByRole("button", { name: /^AF/ });
+    expect(plain(af.textContent)).toContain("Taken out 77 796 kr");
   });
 });
