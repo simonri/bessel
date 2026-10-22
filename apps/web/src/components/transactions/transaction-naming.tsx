@@ -68,9 +68,12 @@ export function NameHeading({
     },
     onError: (error) => toast.error(errorDetail(error, "Couldn't rename it")),
   });
-  const save = (name: string | null) => {
+  const save = (draft: string | null) => {
     setEditing(false);
-    if ((name?.trim() || null) === (transaction.name ?? null)) return;
+    // The field starts out with the bank's text; leaving it as that is no name at all.
+    const trimmed = draft?.trim() || null;
+    const name = trimmed === transaction.description ? null : trimmed;
+    if (name === (transaction.name ?? null)) return;
     rename.mutate({
       client,
       path: { transaction_id: transaction.id },

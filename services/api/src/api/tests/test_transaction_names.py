@@ -109,6 +109,18 @@ class TestRename:
     assert await _names(session, account) == [("ANTHROPIC* CLAUDE SUB", None), ("ANTHROPIC* CLAUDE SUB", None)]
 
   @pytest.mark.asyncio
+  async def test_the_bank_text_itself_is_no_name_and_suggests_nothing(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    this = await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB", name="Claude")
+    await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB")
+
+    body = (await client.put(f"/v1/transactions/{this.id}/name", json={"name": " ANTHROPIC* CLAUDE SUB "})).json()
+
+    assert (body["name"], body["suggestions"]) == (None, [])
+    assert await _names(session, account) == [("ANTHROPIC* CLAUDE SUB", None), ("ANTHROPIC* CLAUDE SUB", None)]
+
+  @pytest.mark.asyncio
   async def test_a_name_has_a_length_limit(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
     this = await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB")
 

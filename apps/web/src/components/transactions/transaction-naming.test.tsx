@@ -153,6 +153,20 @@ describe("NameHeading", () => {
     );
   });
 
+  it("saves nothing when the bank's text it starts with is left as it is", async () => {
+    heading(tx({}));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Rename ANTHROPIC* CLAUDE SUB" }),
+    );
+    const input = screen.getByLabelText("Name");
+    fireEvent.change(input, { target: { value: " ANTHROPIC* CLAUDE SUB " } });
+    fireEvent.blur(input);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(api.renamed).toEqual([]);
+  });
+
   it("shows the bank's text under a name, and goes back to it", async () => {
     heading(tx({ name: "Claude" }));
 

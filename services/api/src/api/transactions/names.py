@@ -17,6 +17,8 @@ MAX_SUGGESTIONS = 5
 
 async def rename(session: AsyncSession, transaction: Transaction, name: str | None) -> list[NameSuggestion]:
   """Names this transaction only, and suggests others that likely want the same name."""
+  if name == transaction.description:
+    name = None
   repository = TransactionRepository.from_session(session)
   previous = transaction.name
   await repository.update(transaction, update_dict={"name": name, "name_rule_id": None}, flush=True)
