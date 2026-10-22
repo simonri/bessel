@@ -216,6 +216,11 @@ declare global {
         read: () => Promise<string>;
         reveal: () => Promise<void>;
       };
+      /** Absent in desktop builds before 0.1.53. */
+      klarna?: {
+        /** Opens Klarna's sign-in; resolves with the token its page uses, or null if closed. */
+        signIn: () => Promise<{ authorization: string; cookie: string } | null>;
+      };
       spotify: {
         getStatus: () => Promise<ElectronSpotifyStatus>;
         playPause: () => Promise<void>;

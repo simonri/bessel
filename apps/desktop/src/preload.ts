@@ -185,6 +185,10 @@ const bridge = {
     read: (): Promise<string> => ipcRenderer.invoke("logs:read"),
     reveal: (): Promise<void> => ipcRenderer.invoke("logs:reveal"),
   },
+  klarna: {
+    signIn: (): Promise<{ authorization: string; cookie: string } | null> =>
+      ipcRenderer.invoke("klarna:signIn"),
+  },
   spotify: {
     getStatus: (): Promise<SpotifyStatus> =>
       ipcRenderer.invoke("spotify:status"),

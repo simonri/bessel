@@ -39,6 +39,7 @@ import {
   setMainWindow,
   TRUSTED_ORIGINS,
 } from "./ipc.js";
+import { KLARNA_PARTITION, signInToKlarna } from "./klarna.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -1543,6 +1544,13 @@ app.whenReady().then(() => {
   registerVaultHandlers(appendLog);
   registerAgentUsageHandlers();
   void removeLegacyCollector(appendLog);
+
+  ipcHandle("klarna:signIn", () =>
+    signInToKlarna(
+      getMainWindow(),
+      chromeUserAgent(session.fromPartition(KLARNA_PARTITION)),
+    ),
+  );
 
   ipcHandle("spotify:status", async () => getSpotifyStatus());
   ipcHandle("spotify:position", () => getSpotifyPositionMs());

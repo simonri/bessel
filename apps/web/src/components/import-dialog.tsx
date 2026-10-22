@@ -102,7 +102,26 @@ export function ImportDialog() {
     onError: () => toast.error("Klarna import failed"),
   });
 
-  const isPending = fileMutation.isPending || klarnaMutation.isPending;
+  // The desktop app signs in to Klarna itself, so there's no token to copy.
+  const klarnaSignIn = window.electron?.klarna?.signIn;
+  const [signingIn, setSigningIn] = useState(false);
+  const isPending =
+    fileMutation.isPending || klarnaMutation.isPending || signingIn;
+
+  const importFromKlarnaApp = async (bankAccountId: string) => {
+    if (!klarnaSignIn) return;
+    setSigningIn(true);
+    try {
+      const credentials = await klarnaSignIn();
+      if (!credentials) return;
+      klarnaMutation.mutate({
+        client,
+        body: { bank_account_id: bankAccountId, ...credentials },
+      });
+    } finally {
+      setSigningIn(false);
+    }
+  };
 
   const form = useForm({
     defaultValues: {
@@ -116,7 +135,9 @@ export function ImportDialog() {
       if (!value.bankAccountId || !value.source) return;
       setResult(null);
 
-      if (value.source === "klarna") {
+      if (value.source === "klarna" && klarnaSignIn) {
+        void importFromKlarnaApp(value.bankAccountId);
+      } else if (value.source === "klarna") {
         const bearer = value.klarnaToken.trim().startsWith("Bearer ")
           ? value.klarnaToken.trim()
           : `Bearer ${value.klarnaToken.trim()}`;
@@ -264,7 +285,12 @@ export function ImportDialog() {
           {/* Klarna credentials — shown only when Klarna is selected */}
           <form.Subscribe selector={(s) => s.values.source}>
             {(source) =>
-              source === "klarna" ? (
+              source === "klarna" && klarnaSignIn ? (
+                <p className="text-xs text-muted-foreground">
+                  Klarna opens in a window. Sign in with BankID and Bessel
+                  imports your pay later purchases and payments.
+                </p>
+              ) : source === "klarna" ? (
                 <div className="space-y-3">
                   <form.Field name="klarnaToken">
                     {(field) => (
@@ -324,11 +350,20 @@ export function ImportDialog() {
                 {(values) => {
                   const isKlarna = values.source === "klarna";
                   const ready = isKlarna
-                    ? !!(values.klarnaToken.trim() && values.bankAccountId)
+                    ? !!(
+                        values.bankAccountId &&
+                        (klarnaSignIn || values.klarnaToken.trim())
+                      )
                     : !!(values.file && values.bankAccountId && values.source);
                   return (
                     <Button type="submit" disabled={isPending || !ready}>
-                      {isPending ? "Importing…" : "Import"}
+                      {signingIn
+                        ? "Waiting for Klarna…"
+                        : isPending
+                          ? "Importing…"
+                          : isKlarna && klarnaSignIn
+                            ? "Sign in to Klarna"
+                            : "Import"}
                     </Button>
                   );
                 }}
