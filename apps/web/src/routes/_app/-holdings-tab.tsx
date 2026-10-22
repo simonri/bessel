@@ -274,11 +274,11 @@ function AccountPicker({
                 aria-pressed={picked}
                 onClick={() => onScope(picked ? null : account.bank_account_id)}
                 className={cn(
-                  "flex w-full items-start gap-3 rounded-lg px-2 py-2.5 text-left transition-colors duration-150",
+                  "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors duration-150",
                   picked ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
                 )}
               >
-                <BankLogo name="Avanza" size="sm" className="mt-1" />
+                <BankLogo name="Avanza" size="sm" />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate text-13 font-medium text-white/85">
@@ -337,10 +337,10 @@ function HoldingList({
         const key = `${h.bank_account_id}-${h.security_id}`;
         const units = formatQuantity(h.quantity);
         return (
-          <div key={key} className="flex items-start gap-3 px-5 py-3">
+          <div key={key} className="flex items-center gap-3 px-5 py-3">
             <span
               aria-hidden
-              className="mt-[5px] size-2.5 shrink-0 rounded-full"
+              className="size-2.5 shrink-0 rounded-full"
               style={{
                 backgroundColor: colors.get(key) ?? "rgb(255 255 255 / 0.22)",
               }}

@@ -279,7 +279,7 @@ function AccountRow({
     <button
       type="button"
       onClick={onOpen}
-      className="group flex w-full items-start gap-3 px-5 py-3 text-left transition-colors duration-150 hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
+      className="group flex w-full items-center gap-3 px-5 py-3 text-left transition-colors duration-150 hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
     >
       <AccountLogo account={account} />
       <div className="min-w-0 flex-1">
@@ -323,7 +323,7 @@ function AccountRow({
           <p className="type-caption text-white/35">Not in net worth</p>
         )}
       </div>
-      <ChevronRight className="mt-0.5 size-4 shrink-0 text-white/20 transition-colors group-hover:text-white/55" />
+      <ChevronRight className="size-4 shrink-0 text-white/20 transition-colors group-hover:text-white/55" />
     </button>
   );
 }
