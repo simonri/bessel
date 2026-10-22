@@ -2,6 +2,8 @@
 
 from .account_overview import AccountOverview
 from .account_overview_group import AccountOverviewGroup
+from .account_problem import AccountProblem
+from .account_problem_kind import AccountProblemKind
 from .account_source import AccountSource
 from .account_source_kind import AccountSourceKind
 from .accounts_overview_response import AccountsOverviewResponse
@@ -43,6 +45,7 @@ from .bank_connection_account_schema import BankConnectionAccountSchema
 from .bank_connection_account_update import BankConnectionAccountUpdate
 from .bank_connection_list_response import BankConnectionListResponse
 from .bank_connection_schema import BankConnectionSchema
+from .bank_option import BankOption
 from .body_import_location_history_v1_location_history_import_post import BodyImportLocationHistoryV1LocationHistoryImportPost
 from .body_import_transactions_v1_transactions_import_post import BodyImportTransactionsV1TransactionsImportPost
 from .body_upload_task_attachment_v1_tasks_task_id_attachments_post import BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost
@@ -152,6 +155,9 @@ from .monthly_flow import MonthlyFlow
 from .monthly_flow_response import MonthlyFlowResponse
 from .monthly_spending_response import MonthlySpendingResponse
 from .move_day_summary import MoveDaySummary
+from .net_worth_history_response import NetWorthHistoryResponse
+from .net_worth_point import NetWorthPoint
+from .net_worth_series import NetWorthSeries
 from .notification_create import NotificationCreate
 from .notification_create_kind import NotificationCreateKind
 from .notification_response import NotificationResponse
@@ -242,6 +248,8 @@ from .year_amount import YearAmount
 __all__ = (
   "AccountOverview",
   "AccountOverviewGroup",
+  "AccountProblem",
+  "AccountProblemKind",
   "AccountSource",
   "AccountSourceKind",
   "AccountsOverviewResponse",
@@ -283,6 +291,7 @@ __all__ = (
   "BankConnectionAccountUpdate",
   "BankConnectionListResponse",
   "BankConnectionSchema",
+  "BankOption",
   "BodyImportLocationHistoryV1LocationHistoryImportPost",
   "BodyImportTransactionsV1TransactionsImportPost",
   "BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost",
@@ -388,6 +397,9 @@ __all__ = (
   "MonthlyFlowResponse",
   "MonthlySpendingResponse",
   "MoveDaySummary",
+  "NetWorthHistoryResponse",
+  "NetWorthPoint",
+  "NetWorthSeries",
   "NotificationCreate",
   "NotificationCreateKind",
   "NotificationResponse",

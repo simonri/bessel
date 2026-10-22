@@ -153,7 +153,14 @@ async def _transactions(session: AsyncSession, bank_account: BankAccount) -> lis
 class TestAvailability:
   @pytest.mark.asyncio
   async def test_only_listed_users_see_bank_connections(self, client: AsyncClient, configured: None, monkeypatch: pytest.MonkeyPatch) -> None:
-    assert (await client.get("/v1/bank-connections")).json() == {"available": True, "banks": ["Skandia", "Klarna"], "connections": []}
+    assert (await client.get("/v1/bank-connections")).json() == {
+      "available": True,
+      "banks": [
+        {"name": "Skandia", "logo": "https://enablebanking.com/brands/SE/Skandia/"},
+        {"name": "Klarna", "logo": "https://enablebanking.com/brands/SE/Klarna/"},
+      ],
+      "connections": [],
+    }
 
     monkeypatch.setattr(settings, "ENABLE_BANKING_USER_IDS", [uuid4()])
     assert (await client.get("/v1/bank-connections")).json()["available"] is False
@@ -195,7 +202,7 @@ class TestConnect:
   ) -> None:
     monkeypatch.setattr(settings, "ENABLE_BANKING_BANKS", ["Mock ASPSP"])
 
-    assert (await client.get("/v1/bank-connections")).json()["banks"] == ["Mock ASPSP"]
+    assert [bank["name"] for bank in (await client.get("/v1/bank-connections")).json()["banks"]] == ["Mock ASPSP"]
     assert (await client.post("/v1/bank-connections/authorize", json={"bank_name": "Mock ASPSP"})).status_code == 200
     [request] = bank.auth_requests
     assert request["aspsp"] == {"name": "Mock ASPSP", "country": "SE"}

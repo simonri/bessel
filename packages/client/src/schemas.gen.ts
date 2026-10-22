@@ -53,6 +53,11 @@ export const AccountOverviewSchema = {
       description:
         "Whether the account belongs to the user's company rather than the user.",
     },
+    include_in_net_worth: {
+      type: "boolean",
+      title: "Include In Net Worth",
+      description: "Whether the account counts toward net worth.",
+    },
     current_balance: {
       type: "integer",
       title: "Current Balance",
@@ -155,6 +160,7 @@ export const AccountOverviewSchema = {
     "base_balance",
     "subtype",
     "is_business",
+    "include_in_net_worth",
     "group",
     "source",
     "bank_balance",
@@ -166,6 +172,71 @@ export const AccountOverviewSchema = {
     "history",
   ],
   title: "AccountOverview",
+} as const;
+
+export const AccountProblemSchema = {
+  properties: {
+    kind: {
+      type: "string",
+      enum: [
+        "sync_failed",
+        "not_shared",
+        "stale",
+        "renew_soon",
+        "balance_mismatch",
+        "sign_in",
+        "import_due",
+        "no_transactions",
+      ],
+      title: "Kind",
+      description:
+        "What went wrong; not_shared means the latest bank approval left the account out, sign_in that the login was rejected.",
+    },
+    day: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Day",
+      description:
+        "The last sync or import, or for renew_soon the day the approval ends.",
+    },
+    source_balance: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Source Balance",
+      description:
+        "For balance_mismatch, the balance the source reports, in minor units.",
+    },
+    detail: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Detail",
+      description: "For sync_failed, what went wrong.",
+    },
+  },
+  type: "object",
+  required: ["kind"],
+  title: "AccountProblem",
+  description:
+    "What needs the user's attention; the app words it, so amounts and dates stay in its own formats.",
 } as const;
 
 export const AccountSourceSchema = {
@@ -182,6 +253,18 @@ export const AccountSourceSchema = {
       description:
         "The source as the user knows it, such as 'Skandia' or 'Imported by hand'.",
     },
+    logo: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo",
+      description: "The bank's logo image URL, when one is known.",
+    },
     synced_at: {
       anyOf: [
         {
@@ -195,7 +278,21 @@ export const AccountSourceSchema = {
       title: "Synced At",
       description: "The last sync or import that worked.",
     },
-    problem: {
+    access_until: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Access Until",
+      description:
+        "When the bank's read-only approval ends, for connected banks.",
+    },
+    import_bank: {
       anyOf: [
         {
           type: "string",
@@ -204,7 +301,19 @@ export const AccountSourceSchema = {
           type: "null",
         },
       ],
-      title: "Problem",
+      title: "Import Bank",
+      description:
+        "For accounts imported by hand, the bank of the latest export file, such as 'marginalen'.",
+    },
+    problem: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/AccountProblem",
+        },
+        {
+          type: "null",
+        },
+      ],
       description: "What needs the user's attention, if anything.",
     },
   },
@@ -1064,6 +1173,12 @@ export const BankAccountCreateSchema = {
         "Whether the account belongs to the user's company rather than the user.",
       default: false,
     },
+    include_in_net_worth: {
+      type: "boolean",
+      title: "Include In Net Worth",
+      description: "Whether the account counts toward net worth.",
+      default: true,
+    },
   },
   type: "object",
   required: ["name", "currency", "subtype"],
@@ -1141,6 +1256,11 @@ export const BankAccountSchemaSchema = {
       description:
         "Whether the account belongs to the user's company rather than the user.",
     },
+    include_in_net_worth: {
+      type: "boolean",
+      title: "Include In Net Worth",
+      description: "Whether the account counts toward net worth.",
+    },
     current_balance: {
       type: "integer",
       title: "Current Balance",
@@ -1159,6 +1279,7 @@ export const BankAccountSchemaSchema = {
     "base_balance",
     "subtype",
     "is_business",
+    "include_in_net_worth",
   ],
   title: "BankAccountSchema",
 } as const;
@@ -1232,6 +1353,18 @@ export const BankAccountUpdateSchema = {
       title: "Is Business",
       description:
         "Whether the account belongs to the user's company rather than the user.",
+    },
+    include_in_net_worth: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Include In Net Worth",
+      description: "Whether the account counts toward net worth.",
     },
   },
   type: "object",
@@ -1419,7 +1552,7 @@ export const BankConnectionListResponseSchema = {
     },
     banks: {
       items: {
-        type: "string",
+        $ref: "#/components/schemas/BankOption",
       },
       type: "array",
       title: "Banks",
@@ -1485,6 +1618,12 @@ export const BankConnectionSchemaSchema = {
       type: "array",
       title: "Accounts",
     },
+    logo: {
+      type: "string",
+      title: "Logo",
+      description: "The bank's logo image URL.",
+      readOnly: true,
+    },
   },
   type: "object",
   required: [
@@ -1494,8 +1633,26 @@ export const BankConnectionSchemaSchema = {
     "last_synced_at",
     "sync_error",
     "accounts",
+    "logo",
   ],
   title: "BankConnectionSchema",
+} as const;
+
+export const BankOptionSchema = {
+  properties: {
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    logo: {
+      type: "string",
+      title: "Logo",
+      description: "The bank's logo image URL.",
+    },
+  },
+  type: "object",
+  required: ["name", "logo"],
+  title: "BankOption",
 } as const;
 
 export const Body_import_location_history_v1_location_history_import_postSchema =
@@ -5676,6 +5833,61 @@ export const MoveDaySummarySchema = {
   title: "MoveDaySummary",
 } as const;
 
+export const NetWorthHistoryResponseSchema = {
+  properties: {
+    series: {
+      items: {
+        $ref: "#/components/schemas/NetWorthSeries",
+      },
+      type: "array",
+      title: "Series",
+      description:
+        "Per currency, personal and company accounts counted toward net worth together.",
+    },
+  },
+  type: "object",
+  required: ["series"],
+  title: "NetWorthHistoryResponse",
+} as const;
+
+export const NetWorthPointSchema = {
+  properties: {
+    day: {
+      type: "string",
+      format: "date",
+      title: "Day",
+    },
+    value: {
+      type: "integer",
+      title: "Value",
+      description: "Net worth at the end of the day, in minor units.",
+    },
+  },
+  type: "object",
+  required: ["day", "value"],
+  title: "NetWorthPoint",
+} as const;
+
+export const NetWorthSeriesSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    points: {
+      items: {
+        $ref: "#/components/schemas/NetWorthPoint",
+      },
+      type: "array",
+      title: "Points",
+      description: "The days net worth changed, oldest first, ending today.",
+    },
+  },
+  type: "object",
+  required: ["currency", "points"],
+  title: "NetWorthSeries",
+} as const;
+
 export const NotificationCreateSchema = {
   properties: {
     title: {
@@ -9374,4 +9586,92 @@ export const YearAmountSchema = {
   type: "object",
   required: ["year", "amount"],
   title: "YearAmount",
+} as const;
+
+export const BankConnectionListResponseWritableSchema = {
+  properties: {
+    available: {
+      type: "boolean",
+      title: "Available",
+      description: "Whether this user can connect a bank.",
+    },
+    banks: {
+      items: {
+        $ref: "#/components/schemas/BankOption",
+      },
+      type: "array",
+      title: "Banks",
+      description: "The banks this user can connect.",
+    },
+    connections: {
+      items: {
+        $ref: "#/components/schemas/BankConnectionSchemaWritable",
+      },
+      type: "array",
+      title: "Connections",
+    },
+  },
+  type: "object",
+  required: ["available", "banks", "connections"],
+  title: "BankConnectionListResponse",
+} as const;
+
+export const BankConnectionSchemaWritableSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    bank_name: {
+      type: "string",
+      title: "Bank Name",
+    },
+    valid_until: {
+      type: "string",
+      format: "date-time",
+      title: "Valid Until",
+      description: "When the bank approval ends; renew it before then.",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+    sync_error: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync Error",
+    },
+    accounts: {
+      items: {
+        $ref: "#/components/schemas/BankConnectionAccountSchema",
+      },
+      type: "array",
+      title: "Accounts",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "bank_name",
+    "valid_until",
+    "last_synced_at",
+    "sync_error",
+    "accounts",
+  ],
+  title: "BankConnectionSchema",
 } as const;

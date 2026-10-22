@@ -27,6 +27,7 @@ import type {
   GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
   GetLocationHistoryDayV1LocationHistoryDayGetResponse,
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
+  GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
   GetPlaceV1PlacesPlaceIdGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
   GetTaskV1TasksTaskIdGetResponse,
@@ -131,9 +132,22 @@ export const createBankAccountV1BankAccountsPostResponseTransformer = async (
   return data;
 };
 
+const accountProblemSchemaResponseTransformer = (data: any) => {
+  if (data.day) {
+    data.day = new Date(data.day);
+  }
+  return data;
+};
+
 const accountSourceSchemaResponseTransformer = (data: any) => {
   if (data.synced_at) {
     data.synced_at = new Date(data.synced_at);
+  }
+  if (data.access_until) {
+    data.access_until = new Date(data.access_until);
+  }
+  if (data.problem) {
+    data.problem = accountProblemSchemaResponseTransformer(data.problem);
   }
   return data;
 };
@@ -173,6 +187,33 @@ export const getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer =
     data: any,
   ): Promise<GetAccountsOverviewV1BankAccountsOverviewGetResponse> => {
     data = accountsOverviewResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+const netWorthPointSchemaResponseTransformer = (data: any) => {
+  data.day = new Date(data.day);
+  return data;
+};
+
+const netWorthSeriesSchemaResponseTransformer = (data: any) => {
+  data.points = data.points.map((item: any) =>
+    netWorthPointSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const netWorthHistoryResponseSchemaResponseTransformer = (data: any) => {
+  data.series = data.series.map((item: any) =>
+    netWorthSeriesSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getNetWorthHistoryV1BankAccountsNetWorthGetResponseTransformer =
+  async (
+    data: any,
+  ): Promise<GetNetWorthHistoryV1BankAccountsNetWorthGetResponse> => {
+    data = netWorthHistoryResponseSchemaResponseTransformer(data);
     return data;
   };
 

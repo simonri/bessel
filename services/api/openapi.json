@@ -738,6 +738,33 @@
         ]
       }
     },
+    "/v1/bank-accounts/net-worth": {
+      "get": {
+        "tags": [
+          "bank-accounts"
+        ],
+        "summary": "Net Worth History",
+        "description": "Net worth on every day it changed, per currency, from the first transaction to today.",
+        "operationId": "get_net_worth_history_v1_bank_accounts_net_worth_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetWorthHistoryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/bank-accounts/{bank_account_id}": {
       "get": {
         "tags": [
@@ -7328,6 +7355,11 @@
             "title": "Is Business",
             "description": "Whether the account belongs to the user's company rather than the user."
           },
+          "include_in_net_worth": {
+            "type": "boolean",
+            "title": "Include In Net Worth",
+            "description": "Whether the account counts toward net worth."
+          },
           "current_balance": {
             "type": "integer",
             "title": "Current Balance",
@@ -7429,6 +7461,7 @@
           "base_balance",
           "subtype",
           "is_business",
+          "include_in_net_worth",
           "group",
           "source",
           "bank_balance",
@@ -7440,6 +7473,68 @@
           "history"
         ],
         "title": "AccountOverview"
+      },
+      "AccountProblem": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sync_failed",
+              "not_shared",
+              "stale",
+              "renew_soon",
+              "balance_mismatch",
+              "sign_in",
+              "import_due",
+              "no_transactions"
+            ],
+            "title": "Kind",
+            "description": "What went wrong; not_shared means the latest bank approval left the account out, sign_in that the login was rejected."
+          },
+          "day": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day",
+            "description": "The last sync or import, or for renew_soon the day the approval ends."
+          },
+          "source_balance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Balance",
+            "description": "For balance_mismatch, the balance the source reports, in minor units."
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail",
+            "description": "For sync_failed, what went wrong."
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "AccountProblem",
+        "description": "What needs the user's attention; the app words it, so amounts and dates stay in its own formats."
       },
       "AccountSource": {
         "properties": {
@@ -7459,6 +7554,18 @@
             "title": "Label",
             "description": "The source as the user knows it, such as 'Skandia' or 'Imported by hand'."
           },
+          "logo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo",
+            "description": "The bank's logo image URL, when one is known."
+          },
           "synced_at": {
             "anyOf": [
               {
@@ -7472,7 +7579,20 @@
             "title": "Synced At",
             "description": "The last sync or import that worked."
           },
-          "problem": {
+          "access_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Until",
+            "description": "When the bank's read-only approval ends, for connected banks."
+          },
+          "import_bank": {
             "anyOf": [
               {
                 "type": "string"
@@ -7481,7 +7601,18 @@
                 "type": "null"
               }
             ],
-            "title": "Problem",
+            "title": "Import Bank",
+            "description": "For accounts imported by hand, the bank of the latest export file, such as 'marginalen'."
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AccountProblem"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "description": "What needs the user's attention, if anything."
           }
         },
@@ -8369,6 +8500,12 @@
             "title": "Is Business",
             "description": "Whether the account belongs to the user's company rather than the user.",
             "default": false
+          },
+          "include_in_net_worth": {
+            "type": "boolean",
+            "title": "Include In Net Worth",
+            "description": "Whether the account counts toward net worth.",
+            "default": true
           }
         },
         "type": "object",
@@ -8451,6 +8588,11 @@
             "title": "Is Business",
             "description": "Whether the account belongs to the user's company rather than the user."
           },
+          "include_in_net_worth": {
+            "type": "boolean",
+            "title": "Include In Net Worth",
+            "description": "Whether the account counts toward net worth."
+          },
           "current_balance": {
             "type": "integer",
             "title": "Current Balance",
@@ -8467,7 +8609,8 @@
           "currency",
           "base_balance",
           "subtype",
-          "is_business"
+          "is_business",
+          "include_in_net_worth"
         ],
         "title": "BankAccountSchema"
       },
@@ -8543,6 +8686,18 @@
             ],
             "title": "Is Business",
             "description": "Whether the account belongs to the user's company rather than the user."
+          },
+          "include_in_net_worth": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Include In Net Worth",
+            "description": "Whether the account counts toward net worth."
           }
         },
         "type": "object",
@@ -8728,7 +8883,7 @@
           },
           "banks": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/BankOption"
             },
             "type": "array",
             "title": "Banks",
@@ -8796,6 +8951,12 @@
             },
             "type": "array",
             "title": "Accounts"
+          },
+          "logo": {
+            "type": "string",
+            "title": "Logo",
+            "description": "The bank's logo image URL.",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -8805,9 +8966,29 @@
           "valid_until",
           "last_synced_at",
           "sync_error",
-          "accounts"
+          "accounts",
+          "logo"
         ],
         "title": "BankConnectionSchema"
+      },
+      "BankOption": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "logo": {
+            "type": "string",
+            "title": "Logo",
+            "description": "The bank's logo image URL."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "logo"
+        ],
+        "title": "BankOption"
       },
       "Body_import_location_history_v1_location_history_import_post": {
         "properties": {
@@ -13063,6 +13244,65 @@
           "workout_minutes"
         ],
         "title": "MoveDaySummary"
+      },
+      "NetWorthHistoryResponse": {
+        "properties": {
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/NetWorthSeries"
+            },
+            "type": "array",
+            "title": "Series",
+            "description": "Per currency, personal and company accounts counted toward net worth together."
+          }
+        },
+        "type": "object",
+        "required": [
+          "series"
+        ],
+        "title": "NetWorthHistoryResponse"
+      },
+      "NetWorthPoint": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value",
+            "description": "Net worth at the end of the day, in minor units."
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "value"
+        ],
+        "title": "NetWorthPoint"
+      },
+      "NetWorthSeries": {
+        "properties": {
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/NetWorthPoint"
+            },
+            "type": "array",
+            "title": "Points",
+            "description": "The days net worth changed, oldest first, ending today."
+          }
+        },
+        "type": "object",
+        "required": [
+          "currency",
+          "points"
+        ],
+        "title": "NetWorthSeries"
       },
       "NotificationCreate": {
         "properties": {

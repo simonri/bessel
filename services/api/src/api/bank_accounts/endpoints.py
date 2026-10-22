@@ -5,8 +5,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from api.bank_accounts.repository import BankAccountRepository
-from api.bank_accounts.schemas import AccountsOverviewResponse, BankAccountCreate, BankAccountListResponse, BankAccountSchema, BankAccountUpdate
-from api.bank_accounts.service import accounts_overview
+from api.bank_accounts.schemas import (
+  AccountsOverviewResponse,
+  BankAccountCreate,
+  BankAccountListResponse,
+  BankAccountSchema,
+  BankAccountUpdate,
+  NetWorthHistoryResponse,
+)
+from api.bank_accounts.service import accounts_overview, net_worth_history
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
@@ -68,6 +75,12 @@ async def get_accounts_overview(session: DBSession, current_user: CurrentDBUser)
   return await accounts_overview.overview(session, current_user.id, now=utc_now())
 
 
+@router.get("/net-worth", summary="Net Worth History", response_model=NetWorthHistoryResponse)
+async def get_net_worth_history(session: DBSession, current_user: CurrentDBUser) -> NetWorthHistoryResponse:
+  """Net worth on every day it changed, per currency, from the first transaction to today."""
+  return await net_worth_history.history(session, current_user.id, today=utc_now().date())
+
+
 @router.get(
   "/{bank_account_id}",
   summary="Get Bank Account",
@@ -104,6 +117,7 @@ async def create_bank_account(
     base_balance=body.base_balance,
     subtype=body.subtype,
     is_business=body.is_business,
+    include_in_net_worth=body.include_in_net_worth,
     user_id=current_user.id,
   )
   await repo.create(account, flush=True)

@@ -24,6 +24,7 @@ class BankAccountSchema:
       base_balance (int): Starting balance in minor units (cents).
       subtype (str): Account subtype, e.g. 'checking', 'savings'.
       is_business (bool): Whether the account belongs to the user's company rather than the user.
+      include_in_net_worth (bool): Whether the account counts toward net worth.
       current_balance (int | Unset): Current balance in minor units (base_balance + credits - debits). Default: 0.
   """
 
@@ -35,6 +36,7 @@ class BankAccountSchema:
   base_balance: int
   subtype: str
   is_business: bool
+  include_in_net_worth: bool
   current_balance: int | Unset = 0
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -59,6 +61,8 @@ class BankAccountSchema:
 
     is_business = self.is_business
 
+    include_in_net_worth = self.include_in_net_worth
+
     current_balance = self.current_balance
 
     field_dict: dict[str, Any] = {}
@@ -73,6 +77,7 @@ class BankAccountSchema:
         "base_balance": base_balance,
         "subtype": subtype,
         "is_business": is_business,
+        "include_in_net_worth": include_in_net_worth,
       }
     )
     if current_balance is not UNSET:
@@ -112,6 +117,8 @@ class BankAccountSchema:
 
     is_business = d.pop("is_business")
 
+    include_in_net_worth = d.pop("include_in_net_worth")
+
     current_balance = d.pop("current_balance", UNSET)
 
     bank_account_schema = cls(
@@ -123,6 +130,7 @@ class BankAccountSchema:
       base_balance=base_balance,
       subtype=subtype,
       is_business=is_business,
+      include_in_net_worth=include_in_net_worth,
       current_balance=current_balance,
     )
 

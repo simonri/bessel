@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from jose import jwt
 
 API_URL = "https://api.enablebanking.com"
+BRANDS_URL = "https://enablebanking.com/brands"
 # Enable Banking rejects tokens that live longer than a day.
 TOKEN_TTL_SECONDS = 3600
 SESSION_GONE_ERRORS = {"EXPIRED_SESSION", "CLOSED_SESSION", "REVOKED_SESSION", "WRONG_SESSION_STATUS"}
@@ -27,6 +29,11 @@ class EnableBankingError(Exception):
 
 class SessionGoneError(EnableBankingError):
   """The bank consent behind the session expired or was revoked; the user has to approve again."""
+
+
+def bank_logo(bank_name: str, country: str) -> str:
+  """The bank's logo as Enable Banking lists it, served from its public CDN."""
+  return f"{BRANDS_URL}/{country}/{quote(bank_name)}/"
 
 
 @dataclass(frozen=True, slots=True)

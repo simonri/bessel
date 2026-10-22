@@ -133,6 +133,34 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     )
     return [(account_id, first.date(), int(total)) for account_id, first, total in await self.session.execute(statement)]
 
+  async def daily_net_by_account(self, account_ids: Sequence[UUID], *, transaction_types: Sequence[str] | None = None) -> list[tuple[UUID, date, int]]:
+    """Each account's credits minus debits per day, optionally only of the given kinds."""
+    if not account_ids:
+      return []
+    net = func.sum(case((Transaction.direction == TransactionDirection.credit, Transaction.amount), else_=-Transaction.amount))
+    statement = (
+      select(Transaction.bank_account_id, Transaction.transaction_date, net)
+      .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None))
+      .group_by(Transaction.bank_account_id, Transaction.transaction_date)
+    )
+    if transaction_types is not None:
+      statement = statement.where(Transaction.transaction_type.in_(transaction_types))
+    return [(account_id, day, int(total)) for account_id, day, total in await self.session.execute(statement)]
+
+  async def latest_import_bank_by_account(self, account_ids: Sequence[UUID]) -> dict[UUID, str]:
+    """The bank whose export file each account's newest imported transaction came from."""
+    if not account_ids:
+      return {}
+    statement = (
+      select(Transaction.bank_account_id, ImportBatch.bank_name)
+      .join(RawTransaction, RawTransaction.id == Transaction.raw_id)
+      .join(ImportBatch, ImportBatch.id == RawTransaction.batch_id)
+      .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None))
+      .order_by(Transaction.bank_account_id, Transaction.transaction_date.desc())
+      .distinct(Transaction.bank_account_id)
+    )
+    return dict((await self.session.execute(statement)).tuples().all())
+
   async def count_left_out_as_transfers(self, user_id: UUID, *, start: date, end: date) -> int:
     statement = select(func.count()).where(
       Transaction.user_id == user_id,

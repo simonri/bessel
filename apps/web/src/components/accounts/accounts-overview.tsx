@@ -1,315 +1,262 @@
-import type {
-  AccountOverview,
-  AccountsOverviewResponse,
-  OverviewTotal,
-} from "@bessel/client";
-import { Link } from "@tanstack/react-router";
-import { format, formatDistanceToNow } from "date-fns";
-import { AlertTriangle, ChevronRight, Trash2 } from "lucide-react";
-import { useId } from "react";
+import type { AccountOverview, OverviewTotal } from "@bessel/client";
+import { CheckCircle2, ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
+import { useAccountActions } from "@/components/accounts/account-actions";
+import { BankLogo } from "@/components/bank-logo";
+import { FILE_BANKS } from "@/components/import-dialog";
+import { Panel, SoftButton } from "@/components/ui-kit";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { EditAccountDialog } from "@/components/edit-account-dialog";
-import { IconButton, Panel, SectionLabel, StatTile } from "@/components/ui-kit";
-import { ACCOUNT_SUBTYPES } from "@/lib/account-constants";
-import { formatMoney } from "@/lib/money";
+  ACCOUNT_KINDS,
+  accountKind,
+  accountTypeLabel,
+  problemCopy,
+} from "@/lib/account-labels";
+import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
-
-const LINE = "var(--color-primary-400)";
-const TICK = { fill: "rgb(255 255 255 / 0.38)", fontSize: 11 };
-
-function whole(minor: number, currency: string): string {
-  return formatMoney(Math.round(minor / 100) * 100, currency).replace(
-    /,00(?= )/,
-    "",
-  );
-}
-
-function typeLabel(subtype: string): string {
-  return ACCOUNT_SUBTYPES.find((s) => s.value === subtype)?.label ?? subtype;
-}
 
 /** What an account is worth: an investment account's holdings count too. */
 export function accountValue(account: AccountOverview): number {
   return (account.current_balance ?? 0) + (account.holdings_value ?? 0);
 }
 
-/** You own the company, so its money counts toward your net worth, shown apart from your own. */
-export function NetWorth({ totals }: { totals: OverviewTotal[] }) {
-  const currencies = [...new Set(totals.map((t) => t.currency))];
+/** The bank or app an account's data comes from, as people know it. */
+export function sourceName(account: AccountOverview): string {
+  const { source } = account;
+  if (source.kind === "klarna") return "Klarna";
+  if (source.kind !== "manual") return source.label;
   return (
-    <div className="space-y-3">
-      {currencies.map((currency) => {
-        const personal = totals.find(
-          (t) => t.owner === "personal" && t.currency === currency,
-        );
-        const company = totals.find(
-          (t) => t.owner === "company" && t.currency === currency,
-        );
-        const total = (personal?.net ?? 0) + (company?.net ?? 0);
-        return (
-          <div
-            key={currency}
-            className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2"
-          >
-            <StatTile
-              label="Net worth"
-              value={whole(total, currency)}
-              hint={
-                company
-                  ? "Yours and your company's, before tax"
-                  : "Cash and investments, minus what you owe"
-              }
-            />
-            {personal && (
-              <StatTile
-                label="Yours"
-                value={whole(personal.net, currency)}
-                hint={`${whole(personal.cash, currency)} cash - ${whole(personal.investments, currency)} invested`}
-              />
-            )}
-            {company && (
-              <StatTile
-                label="Your company"
-                value={whole(company.net, currency)}
-                hint={`${whole(company.cash, currency)} cash - ${whole(company.investments, currency)} invested`}
-              />
-            )}
-            <StatTile
-              label="Owed"
-              value={whole(
-                (personal?.debt ?? 0) + (company?.debt ?? 0),
-                currency,
-              )}
-              hint="Klarna pay later and cards"
-            />
-          </div>
-        );
-      })}
-    </div>
+    FILE_BANKS.find((b) => b.value === source.import_bank)?.label ??
+    account.name
   );
 }
 
-/** Personal cash accounts' month-end balances added up, in one currency. */
-export function cashHistory(
-  accounts: AccountOverview[],
-  currency: string,
-): { month: string; balance: number }[] {
-  const byMonth = new Map<string, number>();
-  for (const account of accounts) {
-    if (account.is_business || account.currency !== currency) continue;
-    // A pay later or card balance is debt, and its starting balance covers payments from before Bessel's history.
-    if (account.group !== "cash") continue;
-    for (const point of account.history) {
-      const month = format(point.month, "yyyy-MM-01");
-      byMonth.set(month, (byMonth.get(month) ?? 0) + point.balance);
-    }
-  }
-  return [...byMonth.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, balance]) => ({ month, balance }));
+export function AccountLogo({
+  account,
+  size,
+}: {
+  account: AccountOverview;
+  size?: "sm" | "md" | "lg";
+}) {
+  return (
+    <BankLogo
+      name={sourceName(account)}
+      logo={account.source.logo}
+      size={size}
+    />
+  );
 }
 
-export function CashChart({
-  accounts,
+/** Net worth split into the company's, your own and what's owed; the three add up to it. */
+export function WhereItIs({
+  totals,
   currency,
 }: {
-  accounts: AccountOverview[];
+  totals: OverviewTotal[];
   currency: string;
 }) {
-  const gradientId = `cash-fill-${useId().replace(/[^\w-]/g, "")}`;
-  const data = cashHistory(accounts, currency);
-  if (data.length < 2) return null;
+  const personal = totals.find(
+    (t) => t.owner === "personal" && t.currency === currency,
+  );
+  const company = totals.find(
+    (t) => t.owner === "company" && t.currency === currency,
+  );
+  const rows = [
+    company && {
+      label: "Company",
+      value: company.cash + company.investments,
+      detail: company,
+    },
+    personal && {
+      label: "You",
+      value: personal.cash + personal.investments,
+      detail: personal,
+    },
+  ].filter((row) => !!row);
+  const owed = (personal?.debt ?? 0) + (company?.debt ?? 0);
+  const largest = Math.max(1, ...rows.map((r) => r.value), owed);
   return (
-    <Panel className="divide-y-0 px-4 pt-3 pb-2">
-      <p className="mb-1 text-12 text-white/55">Your cash, end of each month</p>
-      <div className="h-40 w-full">
-        <ResponsiveContainer>
-          <AreaChart
-            data={data}
-            margin={{ top: 4, right: 4, bottom: 0, left: 0 }}
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={LINE} stopOpacity={0.28} />
-                <stop offset="100%" stopColor={LINE} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} stroke="rgb(255 255 255 / 0.05)" />
-            <XAxis
-              dataKey="month"
-              tickFormatter={(m: string) =>
-                format(new Date(`${m}T00:00:00`), "MMM")
-              }
-              tickLine={false}
-              axisLine={false}
-              tick={TICK}
-              tickMargin={6}
-            />
-            <YAxis
-              tickFormatter={(v: number) => `${Math.round(v / 100_000)}k`}
-              tickLine={false}
-              axisLine={false}
-              width={40}
-              tick={TICK}
-            />
-            <Tooltip
-              cursor={{ stroke: "rgb(255 255 255 / 0.2)" }}
-              content={({ active, payload }) => {
-                const point = payload?.[0]?.payload as
-                  | (typeof data)[number]
-                  | undefined;
-                if (!active || !point) return null;
-                return (
-                  <div className="rounded-lg border border-white/10 bg-neutral-900/95 px-3 py-2 text-12 shadow-lg">
-                    <p className="font-medium text-white/85">
-                      {format(new Date(`${point.month}T00:00:00`), "MMMM yyyy")}
-                    </p>
-                    <p className="text-white/60">
-                      {whole(point.balance, currency)}
-                    </p>
-                  </div>
-                );
-              }}
-            />
-            {/* Stepped like the trading chart: a balance holds until the month it changes. */}
-            <Area
-              type="stepAfter"
-              dataKey="balance"
-              stroke={LINE}
-              strokeWidth={2}
-              strokeLinejoin="round"
-              fill={`url(#${gradientId})`}
-              isAnimationActive={false}
-              activeDot={{
-                r: 4.5,
-                strokeWidth: 2,
-                stroke: "var(--color-chrome)",
-              }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+    <Panel className="divide-y-0 p-4">
+      <p className="mb-3 type-label text-white/55">Where it is</p>
+      <div className="space-y-3.5">
+        {rows.map((row) => (
+          <Share
+            key={row.label}
+            label={row.label}
+            value={row.value}
+            currency={currency}
+            fraction={row.value / largest}
+            detail={
+              row.detail.investments === 0 ? (
+                "All in cash"
+              ) : (
+                <>
+                  <Amount value={row.detail.cash} currency={currency} compact />{" "}
+                  cash -{" "}
+                  <Amount
+                    value={row.detail.investments}
+                    currency={currency}
+                    compact
+                  />{" "}
+                  invested
+                </>
+              )
+            }
+          />
+        ))}
+        {owed > 0 && (
+          <Share
+            label="Owed"
+            value={-owed}
+            currency={currency}
+            fraction={owed / largest}
+            detail="Pay later and cards"
+            owed
+          />
+        )}
       </div>
     </Panel>
   );
 }
 
-function sourceLine(account: AccountOverview): string {
-  const { source } = account;
-  const parts = [typeLabel(account.subtype), source.label];
-  if (source.synced_at) {
-    parts.push(
-      `${source.kind === "klarna" ? "imported" : "synced"} ${formatDistanceToNow(source.synced_at, { addSuffix: true })}`,
-    );
-  } else if (account.last_transaction) {
-    parts.push(
-      `last transaction ${format(account.last_transaction, "d MMM yyyy")}`,
-    );
-  }
-  return parts.join(" - ");
-}
-
-function AccountRow({
-  account,
-  onDelete,
+function Share({
+  label,
+  value,
+  currency,
+  fraction,
+  detail,
+  owed,
 }: {
-  account: AccountOverview;
-  onDelete: (account: AccountOverview) => void;
+  label: string;
+  value: number;
+  currency: string;
+  fraction: number;
+  detail: ReactNode;
+  owed?: boolean;
 }) {
-  const problem = account.source.problem;
   return (
-    <div className="group flex items-center gap-3 px-4 py-3">
-      <Link
-        to="/transactions"
-        search={{ bank_account_id: [account.id] }}
-        className="flex min-w-0 flex-1 items-center gap-3"
-      >
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-13 font-medium text-white/85">
-            {account.name}
-          </p>
-          <p className="truncate type-caption text-white/45">
-            {sourceLine(account)}
-          </p>
-          {problem && (
-            <p className="mt-0.5 flex items-center gap-1 truncate type-caption text-amber-300/90">
-              <AlertTriangle className="size-3 shrink-0" aria-hidden />
-              {problem}
-            </p>
-          )}
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="text-13 font-medium tabular-nums text-white/85">
-            {formatMoney(accountValue(account), account.currency)}
-          </p>
-          {account.holdings_value != null && (
-            <p className="type-caption tabular-nums text-white/40">
-              {formatMoney(account.current_balance ?? 0, account.currency)} cash
-            </p>
-          )}
-        </div>
-        <ChevronRight className="size-4 shrink-0 text-white/25 transition-colors group-hover:text-white/60" />
-      </Link>
-      <div className="flex shrink-0 items-center gap-0.5 opacity-60 transition-opacity group-hover:opacity-100">
-        <EditAccountDialog account={account} />
-        <IconButton
-          destructive
-          title="Delete account"
-          onClick={() => onDelete(account)}
-        >
-          <Trash2 />
-        </IconButton>
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-13 text-white/75">{label}</span>
+        <Amount
+          value={value}
+          currency={currency}
+          compact
+          className="text-13 font-medium text-white/85"
+        />
       </div>
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className={cn(
+            "h-full rounded-full",
+            owed ? "bg-rose-400/70" : "bg-primary-500",
+          )}
+          style={{ width: `${Math.max(0, Math.min(1, fraction)) * 100}%` }}
+        />
+      </div>
+      <p className="mt-1 type-caption text-white/40">{detail}</p>
     </div>
   );
 }
 
-const GROUPS: { owner: "personal" | "company"; title: string }[] = [
-  { owner: "personal", title: "Your accounts" },
-  { owner: "company", title: "Company accounts" },
-];
+/** Accounts with a problem, each with the one button that fixes it. */
+export function NeedsAttention({ accounts }: { accounts: AccountOverview[] }) {
+  const { run, busy } = useAccountActions();
+  const problems = accounts.flatMap((account) =>
+    account.source.problem
+      ? [{ account, copy: problemCopy(account, account.source.problem) }]
+      : [],
+  );
+  if (problems.length === 0) {
+    return (
+      <Panel className="flex items-center gap-3 divide-y-0 p-4">
+        <CheckCircle2
+          className="size-5 shrink-0 text-emerald-300/90"
+          aria-hidden
+        />
+        <div>
+          <p className="text-13 font-medium text-white/85">All up to date</p>
+          <p className="type-caption text-white/45">
+            Every account is importing as it should.
+          </p>
+        </div>
+      </Panel>
+    );
+  }
+  return (
+    <Panel className="divide-y-0 p-4">
+      <p className="mb-3 flex items-center gap-2 type-label text-white/55">
+        Needs attention
+        <span className="rounded-full bg-amber-300/15 px-1.5 type-badge text-amber-200">
+          {problems.length}
+        </span>
+      </p>
+      <ul className="space-y-3">
+        {problems.map(({ account, copy }) => (
+          <li key={account.id} className="flex items-center gap-3">
+            <AccountLogo account={account} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-13 font-medium text-white/85">
+                {account.name}
+              </p>
+              <p className="type-caption text-amber-200/80">{copy.title}</p>
+            </div>
+            <SoftButton
+              onClick={() => run(copy.action, account)}
+              disabled={busy}
+            >
+              {copy.actionLabel}
+            </SoftButton>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
 
-export function AccountGroups({
-  data,
-  onDelete,
+function groupTotals(accounts: AccountOverview[]): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const account of accounts) {
+    if (!account.include_in_net_worth) continue;
+    totals.set(
+      account.currency,
+      (totals.get(account.currency) ?? 0) + accountValue(account),
+    );
+  }
+  return totals;
+}
+
+/** Accounts grouped by what they're for; the company's are a group of their own. */
+export function AccountList({
+  accounts,
+  onOpen,
 }: {
-  data: AccountsOverviewResponse;
-  onDelete: (account: AccountOverview) => void;
+  accounts: AccountOverview[];
+  onOpen: (account: AccountOverview) => void;
 }) {
   return (
     <div className="space-y-5">
-      {GROUPS.map(({ owner, title }) => {
-        const accounts = data.accounts.filter(
-          (a) => a.is_business === (owner === "company"),
-        );
-        if (accounts.length === 0) return null;
-        const issues = accounts.filter((a) => a.source.problem).length;
+      {ACCOUNT_KINDS.map(({ kind, label }) => {
+        const inGroup = accounts.filter((a) => accountKind(a) === kind);
+        if (inGroup.length === 0) return null;
         return (
-          <section key={owner}>
-            <SectionLabel
-              action={
-                issues > 0 && (
-                  <span className="type-caption text-amber-300/90">
-                    {issues} need{issues === 1 ? "s" : ""} attention
+          <section key={kind} aria-label={label}>
+            <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+              <h2 className="type-section text-white/55">{label}</h2>
+              <p className="type-caption text-white/45">
+                {[...groupTotals(inGroup)].map(([currency, total], i) => (
+                  <span key={currency}>
+                    {i > 0 && " + "}
+                    <Amount value={total} currency={currency} />
                   </span>
-                )
-              }
-            >
-              {title}
-            </SectionLabel>
-            <Panel className={cn(issues > 0 && "border-amber-300/15")}>
-              {accounts.map((account) => (
+                ))}
+              </p>
+            </div>
+            <Panel>
+              {inGroup.map((account) => (
                 <AccountRow
                   key={account.id}
                   account={account}
-                  onDelete={onDelete}
+                  onOpen={() => onOpen(account)}
                 />
               ))}
             </Panel>
@@ -317,5 +264,66 @@ export function AccountGroups({
         );
       })}
     </div>
+  );
+}
+
+function AccountRow({
+  account,
+  onOpen,
+}: {
+  account: AccountOverview;
+  onOpen: () => void;
+}) {
+  const needsYou = !!account.source.problem;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
+    >
+      <AccountLogo account={account} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-13 font-medium text-white/85">
+          {account.name}
+        </p>
+        <p className="flex items-center gap-1.5 truncate type-caption text-white/45">
+          <span className="hidden truncate sm:inline">
+            {accountTypeLabel(account)}
+          </span>
+          <span aria-hidden className="hidden sm:inline">
+            -
+          </span>
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center gap-1",
+              needsYou && "text-amber-200/85",
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "size-1.5 rounded-full",
+                needsYou ? "bg-amber-300" : "bg-emerald-400/80",
+              )}
+            />
+            {needsYou ? "Needs you" : "Up to date"}
+          </span>
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <Amount
+          value={accountValue(account)}
+          currency={account.currency}
+          className={cn(
+            "text-13 font-medium",
+            account.include_in_net_worth ? "text-white/85" : "text-white/45",
+          )}
+        />
+        {!account.include_in_net_worth && (
+          <p className="type-caption text-white/35">Not in net worth</p>
+        )}
+      </div>
+      <ChevronRight className="size-4 shrink-0 text-white/20 transition-colors group-hover:text-white/55" />
+    </button>
   );
 }

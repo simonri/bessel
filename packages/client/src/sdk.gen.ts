@@ -36,6 +36,7 @@ import {
   getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer,
   getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
   getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
+  getNetWorthHistoryV1BankAccountsNetWorthGetResponseTransformer,
   getPlaceV1PlacesPlaceIdGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
   getTaskV1TasksTaskIdGetResponseTransformer,
@@ -247,6 +248,8 @@ import type {
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponses,
+  GetNetWorthHistoryV1BankAccountsNetWorthGetData,
+  GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
   GetPlaceV1PlacesPlaceIdGetData,
   GetPlaceV1PlacesPlaceIdGetErrors,
   GetPlaceV1PlacesPlaceIdGetResponses,
@@ -810,6 +813,35 @@ export const getAccountsOverviewV1BankAccountsOverviewGet = <
       getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/overview",
+    ...options,
+  });
+
+/**
+ * Net Worth History
+ *
+ * Net worth on every day it changed, per currency, from the first transaction to today.
+ */
+export const getNetWorthHistoryV1BankAccountsNetWorthGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetNetWorthHistoryV1BankAccountsNetWorthGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      getNetWorthHistoryV1BankAccountsNetWorthGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-accounts/net-worth",
     ...options,
   });
 

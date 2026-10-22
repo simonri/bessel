@@ -98,6 +98,17 @@ class HoldingSnapshotRepository(RepositoryBase[HoldingSnapshot], RepositoryIDMix
     if rows:
       await self.session.execute(insert(HoldingSnapshot).values(rows))
 
+  async def daily_values(self, bank_account_ids: Sequence[UUID]) -> list[tuple[UUID, date, int]]:
+    """What each account's holdings were worth on each snapshot day."""
+    if not bank_account_ids:
+      return []
+    statement = (
+      select(HoldingSnapshot.bank_account_id, HoldingSnapshot.snapshot_date, func.sum(HoldingSnapshot.value))
+      .where(HoldingSnapshot.bank_account_id.in_(bank_account_ids))
+      .group_by(HoldingSnapshot.bank_account_id, HoldingSnapshot.snapshot_date)
+    )
+    return [(account_id, day, int(total)) for account_id, day, total in await self.session.execute(statement)]
+
   async def latest_for_accounts(self, bank_account_ids: Sequence[UUID]) -> Sequence[Row]:
     """Each account's positions on its most recent snapshot day, with the security's details."""
     if not bank_account_ids:

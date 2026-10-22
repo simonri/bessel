@@ -20,4 +20,6 @@ class BankAccount(RecordModel):
   # Owned by the user's company: its money isn't the user's own income or spending,
   # and moves between it and a personal account are real income or spending.
   is_business: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+  # Left out of net worth, such as money held for someone else.
+  include_in_net_worth: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

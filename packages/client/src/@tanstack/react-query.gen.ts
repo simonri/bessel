@@ -66,6 +66,7 @@ import {
   getLocationHistoryDayV1LocationHistoryDayGet,
   getLocationHistorySummaryV1LocationHistorySummaryGet,
   getMeV1AuthMeGet,
+  getNetWorthHistoryV1BankAccountsNetWorthGet,
   getPlaceV1PlacesPlaceIdGet,
   getRecipeV1RecipesRecipeIdGet,
   getSleepSummaryV1HealthkitSleepSummaryGet,
@@ -307,6 +308,8 @@ import type {
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponse,
+  GetNetWorthHistoryV1BankAccountsNetWorthGetData,
+  GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
   GetPlaceV1PlacesPlaceIdGetData,
   GetPlaceV1PlacesPlaceIdGetError,
   GetPlaceV1PlacesPlaceIdGetResponse,
@@ -1049,6 +1052,36 @@ export const getAccountsOverviewV1BankAccountsOverviewGetOptions = (
       return data;
     },
     queryKey: getAccountsOverviewV1BankAccountsOverviewGetQueryKey(options),
+  });
+
+export const getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey = (
+  options?: Options<GetNetWorthHistoryV1BankAccountsNetWorthGetData>,
+) => createQueryKey("getNetWorthHistoryV1BankAccountsNetWorthGet", options);
+
+/**
+ * Net Worth History
+ *
+ * Net worth on every day it changed, per currency, from the first transaction to today.
+ */
+export const getNetWorthHistoryV1BankAccountsNetWorthGetOptions = (
+  options?: Options<GetNetWorthHistoryV1BankAccountsNetWorthGetData>,
+) =>
+  queryOptions<
+    GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
+    DefaultError,
+    GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
+    ReturnType<typeof getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getNetWorthHistoryV1BankAccountsNetWorthGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey(options),
   });
 
 /**

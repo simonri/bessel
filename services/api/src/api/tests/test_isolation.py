@@ -159,6 +159,7 @@ AUDITED: set[str] = {
   "GET /v1/transactions/spending-by-category",
   "GET /v1/transactions/summary",
   "GET /v1/bank-accounts/overview",
+  "GET /v1/bank-accounts/net-worth",
   "GET /v1/investments/accounts",
   "GET /v1/categories/rules",
   "POST /v1/categories/rules",

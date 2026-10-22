@@ -20,6 +20,7 @@ class BankAccountUpdate:
       base_balance (int | None | Unset): Starting balance in minor units (cents).
       subtype (None | str | Unset): Account subtype, e.g. 'checking', 'savings'.
       is_business (bool | None | Unset): Whether the account belongs to the user's company rather than the user.
+      include_in_net_worth (bool | None | Unset): Whether the account counts toward net worth.
   """
 
   name: None | str | Unset = UNSET
@@ -27,6 +28,7 @@ class BankAccountUpdate:
   base_balance: int | None | Unset = UNSET
   subtype: None | str | Unset = UNSET
   is_business: bool | None | Unset = UNSET
+  include_in_net_worth: bool | None | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -60,6 +62,12 @@ class BankAccountUpdate:
     else:
       is_business = self.is_business
 
+    include_in_net_worth: bool | None | Unset
+    if isinstance(self.include_in_net_worth, Unset):
+      include_in_net_worth = UNSET
+    else:
+      include_in_net_worth = self.include_in_net_worth
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update({})
@@ -73,6 +81,8 @@ class BankAccountUpdate:
       field_dict["subtype"] = subtype
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
+    if include_in_net_worth is not UNSET:
+      field_dict["include_in_net_worth"] = include_in_net_worth
 
     return field_dict
 
@@ -125,12 +135,22 @@ class BankAccountUpdate:
 
     is_business = _parse_is_business(d.pop("is_business", UNSET))
 
+    def _parse_include_in_net_worth(data: object) -> bool | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(bool | None | Unset, data)
+
+    include_in_net_worth = _parse_include_in_net_worth(d.pop("include_in_net_worth", UNSET))
+
     bank_account_update = cls(
       name=name,
       currency=currency,
       base_balance=base_balance,
       subtype=subtype,
       is_business=is_business,
+      include_in_net_worth=include_in_net_worth,
     )
 
     bank_account_update.additional_properties = d

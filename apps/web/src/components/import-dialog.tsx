@@ -1,4 +1,6 @@
 import {
+  getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
+  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
   importKlarnaTransactionsV1KlarnaImportPostMutation,
   importTransactionsV1TransactionsImportPostMutation,
   listBankAccountsV1BankAccountsGetOptions,
@@ -27,18 +29,40 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
-import { formatMoney } from "@/lib/money";
+import { formatKr } from "@/lib/money";
 
-const FILE_BANKS = [
+export const FILE_BANKS = [
   { value: "marginalen", label: "Marginalen", accept: ".csv" },
   { value: "skandiabanken", label: "Skandiabanken", accept: ".xlsx" },
 ] as const;
 
-export function ImportDialog() {
-  const [open, setOpen] = useState(false);
+export interface ImportPreset {
+  /** A bank from FILE_BANKS, or "klarna". */
+  source?: string | null;
+  bankAccountId?: string;
+}
+
+/**
+ * Imports a bank's export file or Klarna pay later purchases. Pass `open` to
+ * control it from elsewhere, with `preset` filling in the source and account.
+ */
+export function ImportDialog({
+  open: openProp,
+  onOpenChange,
+  preset,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  preset?: ImportPreset;
+} = {}) {
+  const [openState, setOpenState] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openState;
+  const setOpen = (value: boolean) =>
+    controlled ? onOpenChange?.(value) : setOpenState(value);
   const [result, setResult] = useState<string[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -56,9 +80,13 @@ export function ImportDialog() {
       queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
     });
     // Account balances are derived from their transactions.
-    void queryClient.invalidateQueries({
-      queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
-    });
+    for (const queryKey of [
+      listBankAccountsV1BankAccountsGetQueryKey({ client }),
+      getAccountsOverviewV1BankAccountsOverviewGetQueryKey({ client }),
+      getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
+    ]) {
+      void queryClient.invalidateQueries({ queryKey });
+    }
   };
 
   const fileMutation = useMutation({
@@ -87,8 +115,8 @@ export function ImportDialog() {
           ? []
           : [
               data.drift
-                ? `Klarna says you owe ${formatMoney(data.owed, "SEK")}, Bessel ${formatMoney(data.owed + data.drift, "SEK")}; a purchase or payment is missing`
-                : `Matches Klarna: ${formatMoney(data.owed, "SEK")} left to pay`,
+                ? `Klarna says you owe ${formatKr(data.owed)}, Bessel ${formatKr(data.owed + data.drift)}; a purchase or payment is missing`
+                : `Matches Klarna: ${formatKr(data.owed)} left to pay`,
             ]),
         ...(data.unrecognized_plans.length
           ? [
@@ -125,8 +153,8 @@ export function ImportDialog() {
 
   const form = useForm({
     defaultValues: {
-      source: "" as string,
-      bankAccountId: "",
+      source: preset?.source ?? "",
+      bankAccountId: preset?.bankAccountId ?? "",
       file: null as File | null,
       klarnaToken: "",
       klarnaCookie: "",
@@ -160,6 +188,15 @@ export function ImportDialog() {
     },
   });
 
+  // Opened for another account or source than last time.
+  const presetSource = preset?.source ?? "";
+  const presetAccount = preset?.bankAccountId ?? "";
+  useEffect(() => {
+    if (!open) return;
+    form.setFieldValue("source", presetSource);
+    form.setFieldValue("bankAccountId", presetAccount);
+  }, [open, presetSource, presetAccount, form]);
+
   const handleClose = () => {
     setOpen(false);
     form.reset();
@@ -173,15 +210,17 @@ export function ImportDialog() {
       open={open}
       onOpenChange={(v) => (v ? setOpen(true) : handleClose())}
     >
-      <DialogTrigger asChild>
-        <Button>
-          <Upload className="size-4" />
-          Import
-        </Button>
-      </DialogTrigger>
+      {!controlled && (
+        <DialogTrigger asChild>
+          <Button>
+            <Upload className="size-4" />
+            Import
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Import Transactions</DialogTitle>
+          <DialogTitle>Import transactions</DialogTitle>
           <DialogDescription>
             Import from a bank export file, or your Klarna pay later purchases.
           </DialogDescription>

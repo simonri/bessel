@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
   from ..models.bank_connection_schema import BankConnectionSchema
+  from ..models.bank_option import BankOption
 
 
 T = TypeVar("T", bound="BankConnectionListResponse")
@@ -18,19 +19,22 @@ class BankConnectionListResponse:
   """
   Attributes:
       available (bool): Whether this user can connect a bank.
-      banks (list[str]): The banks this user can connect.
+      banks (list[BankOption]): The banks this user can connect.
       connections (list[BankConnectionSchema]):
   """
 
   available: bool
-  banks: list[str]
+  banks: list[BankOption]
   connections: list[BankConnectionSchema]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     available = self.available
 
-    banks = self.banks
+    banks = []
+    for banks_item_data in self.banks:
+      banks_item = banks_item_data.to_dict()
+      banks.append(banks_item)
 
     connections = []
     for connections_item_data in self.connections:
@@ -52,11 +56,17 @@ class BankConnectionListResponse:
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
     from ..models.bank_connection_schema import BankConnectionSchema
+    from ..models.bank_option import BankOption
 
     d = dict(src_dict)
     available = d.pop("available")
 
-    banks = cast(list[str], d.pop("banks"))
+    banks = []
+    _banks = d.pop("banks")
+    for banks_item_data in _banks:
+      banks_item = BankOption.from_dict(banks_item_data)
+
+      banks.append(banks_item)
 
     connections = []
     _connections = d.pop("connections")

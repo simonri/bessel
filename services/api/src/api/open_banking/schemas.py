@@ -1,9 +1,10 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, computed_field
 
 from api.common.schemas import Schema
+from api.open_banking.enable_banking import bank_logo
 
 
 class BankConnectionAccountSchema(Schema):
@@ -27,11 +28,22 @@ class BankConnectionSchema(Schema):
   last_synced_at: datetime | None
   sync_error: str | None
   accounts: list[BankConnectionAccountSchema]
+  bank_country: str = Field(exclude=True)
+
+  @computed_field(description="The bank's logo image URL.")  # type: ignore[prop-decorator]
+  @property
+  def logo(self) -> str:
+    return bank_logo(self.bank_name, self.bank_country)
+
+
+class BankOption(Schema):
+  name: str
+  logo: str = Field(description="The bank's logo image URL.")
 
 
 class BankConnectionListResponse(Schema):
   available: bool = Field(description="Whether this user can connect a bank.")
-  banks: list[str] = Field(description="The banks this user can connect.")
+  banks: list[BankOption] = Field(description="The banks this user can connect.")
   connections: list[BankConnectionSchema]
 
 

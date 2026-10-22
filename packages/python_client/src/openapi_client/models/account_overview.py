@@ -30,6 +30,7 @@ class AccountOverview:
       base_balance (int): Starting balance in minor units (cents).
       subtype (str): Account subtype, e.g. 'checking', 'savings'.
       is_business (bool): Whether the account belongs to the user's company rather than the user.
+      include_in_net_worth (bool): Whether the account counts toward net worth.
       group (AccountOverviewGroup):
       source (AccountSource):
       bank_balance (int | None): The balance the bank or broker reported at the last sync, in minor units.
@@ -50,6 +51,7 @@ class AccountOverview:
   base_balance: int
   subtype: str
   is_business: bool
+  include_in_net_worth: bool
   group: AccountOverviewGroup
   source: AccountSource
   bank_balance: int | None
@@ -82,6 +84,8 @@ class AccountOverview:
     subtype = self.subtype
 
     is_business = self.is_business
+
+    include_in_net_worth = self.include_in_net_worth
 
     group = self.group.value
 
@@ -129,6 +133,7 @@ class AccountOverview:
         "base_balance": base_balance,
         "subtype": subtype,
         "is_business": is_business,
+        "include_in_net_worth": include_in_net_worth,
         "group": group,
         "source": source,
         "bank_balance": bank_balance,
@@ -179,6 +184,8 @@ class AccountOverview:
     subtype = d.pop("subtype")
 
     is_business = d.pop("is_business")
+
+    include_in_net_worth = d.pop("include_in_net_worth")
 
     group = AccountOverviewGroup(d.pop("group"))
 
@@ -255,6 +262,7 @@ class AccountOverview:
       base_balance=base_balance,
       subtype=subtype,
       is_business=is_business,
+      include_in_net_worth=include_in_net_worth,
       group=group,
       source=source,
       bank_balance=bank_balance,

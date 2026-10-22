@@ -61,6 +61,14 @@
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+/* The one number a page is about, such as net worth. */
+@utility type-display {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
 @utility type-metric {
   font-size: 20px;
   line-height: 28px;

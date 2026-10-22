@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from api.bank_accounts.repository import BankAccountRepository
 from api.exceptions import ForbiddenError, ServiceUnavailableError, ValidationError
 from api.logging import Logger
-from api.open_banking.enable_banking import EnableBankingError
+from api.open_banking.enable_banking import EnableBankingError, bank_logo
 from api.open_banking.repository import BankConnectionAccountRepository, BankConnectionRepository
 from api.open_banking.schemas import (
   BankAuthorizeRequest,
@@ -16,9 +16,11 @@ from api.open_banking.schemas import (
   BankConnectionAccountUpdate,
   BankConnectionListResponse,
   BankConnectionSchema,
+  BankOption,
 )
 from api.open_banking.service import BankConnectError, BankUnavailableError, available_to, banks, open_banking_service
 from api.postgres import DBSession
+from api.settings import settings
 from api.users.dependencies import CurrentDBUser
 
 log: Logger = structlog.get_logger()
@@ -36,7 +38,7 @@ async def list_bank_connections(session: DBSession, current_user: CurrentDBUser)
   connections = await BankConnectionRepository.from_session(session).list_for_user(current_user.id)
   return BankConnectionListResponse(
     available=available_to(current_user.id),
-    banks=banks(),
+    banks=[BankOption(name=name, logo=bank_logo(name, settings.ENABLE_BANKING_BANK_COUNTRY)) for name in banks()],
     connections=[BankConnectionSchema.model_validate(c) for c in connections],
   )
 

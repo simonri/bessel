@@ -25,6 +25,7 @@ class BankConnectionSchema:
       last_synced_at (datetime.datetime | None):
       sync_error (None | str):
       accounts (list[BankConnectionAccountSchema]):
+      logo (str): The bank's logo image URL.
   """
 
   id: UUID
@@ -33,6 +34,7 @@ class BankConnectionSchema:
   last_synced_at: datetime.datetime | None
   sync_error: None | str
   accounts: list[BankConnectionAccountSchema]
+  logo: str
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -56,6 +58,8 @@ class BankConnectionSchema:
       accounts_item = accounts_item_data.to_dict()
       accounts.append(accounts_item)
 
+    logo = self.logo
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -66,6 +70,7 @@ class BankConnectionSchema:
         "last_synced_at": last_synced_at,
         "sync_error": sync_error,
         "accounts": accounts,
+        "logo": logo,
       }
     )
 
@@ -111,6 +116,8 @@ class BankConnectionSchema:
 
       accounts.append(accounts_item)
 
+    logo = d.pop("logo")
+
     bank_connection_schema = cls(
       id=id,
       bank_name=bank_name,
@@ -118,6 +125,7 @@ class BankConnectionSchema:
       last_synced_at=last_synced_at,
       sync_error=sync_error,
       accounts=accounts,
+      logo=logo,
     )
 
     bank_connection_schema.additional_properties = d

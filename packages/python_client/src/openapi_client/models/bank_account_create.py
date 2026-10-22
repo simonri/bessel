@@ -21,6 +21,7 @@ class BankAccountCreate:
       base_balance (int | Unset): Starting balance in minor units (cents). Default: 0.
       is_business (bool | Unset): Whether the account belongs to the user's company rather than the user. Default:
           False.
+      include_in_net_worth (bool | Unset): Whether the account counts toward net worth. Default: True.
   """
 
   name: str
@@ -28,6 +29,7 @@ class BankAccountCreate:
   subtype: str
   base_balance: int | Unset = 0
   is_business: bool | Unset = False
+  include_in_net_worth: bool | Unset = True
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -40,6 +42,8 @@ class BankAccountCreate:
     base_balance = self.base_balance
 
     is_business = self.is_business
+
+    include_in_net_worth = self.include_in_net_worth
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -54,6 +58,8 @@ class BankAccountCreate:
       field_dict["base_balance"] = base_balance
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
+    if include_in_net_worth is not UNSET:
+      field_dict["include_in_net_worth"] = include_in_net_worth
 
     return field_dict
 
@@ -70,12 +76,15 @@ class BankAccountCreate:
 
     is_business = d.pop("is_business", UNSET)
 
+    include_in_net_worth = d.pop("include_in_net_worth", UNSET)
+
     bank_account_create = cls(
       name=name,
       currency=currency,
       subtype=subtype,
       base_balance=base_balance,
       is_business=is_business,
+      include_in_net_worth=include_in_net_worth,
     )
 
     bank_account_create.additional_properties = d

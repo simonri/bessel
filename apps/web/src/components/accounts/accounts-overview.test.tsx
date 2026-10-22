@@ -1,31 +1,36 @@
 // @vitest-environment jsdom
-import type { AccountOverview } from "@bessel/client";
-import { cleanup, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import type { AccountOverview, OverviewTotal } from "@bessel/client";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, search }: { children: ReactNode; search: unknown }) => (
-    <a href={`/transactions?${JSON.stringify(search)}`}>{children}</a>
-  ),
-}));
-vi.mock("@/components/edit-account-dialog", () => ({
-  EditAccountDialog: () => null,
+const run = vi.fn();
+vi.mock("@/components/accounts/account-actions", () => ({
+  useAccountActions: () => ({ run, busy: false }),
 }));
 
-const { AccountGroups, NetWorth, cashHistory } = await import(
+const { AccountList, NeedsAttention, WhereItIs } = await import(
   "./accounts-overview"
 );
+
+const plain = (text: string | null) =>
+  (text ?? "").replace(/\s/g, " ").replace("−", "-");
 
 function account(overrides: Partial<AccountOverview>): AccountOverview {
   return {
     id: "a1",
-    name: "Skandia",
+    name: "Lönekonto",
     currency: "SEK",
     base_balance: 0,
     subtype: "checking",
     is_business: false,
-    current_balance: 52361,
+    include_in_net_worth: true,
+    current_balance: 1_000_00,
     created_at: new Date("2026-01-01"),
     modified_at: null,
     group: "cash",
@@ -41,135 +46,158 @@ function account(overrides: Partial<AccountOverview>): AccountOverview {
   } as AccountOverview;
 }
 
-afterEach(cleanup);
-
-describe("cashHistory", () => {
-  it("adds up personal cash per month, leaving out the company, investments, debt and other currencies", () => {
-    const sep = new Date("2026-09-01T00:00:00");
-    const oct = new Date("2026-10-01T00:00:00");
-    const history = [
-      { month: sep, balance: 100 },
-      { month: oct, balance: 200 },
-    ];
-    const accounts = [
-      account({ id: "1", history }),
-      account({ id: "2", history: [{ month: oct, balance: 50 }] }),
-      account({ id: "3", is_business: true, history }),
-      account({ id: "4", group: "investments", history }),
-      account({ id: "6", group: "credit", history }),
-      account({ id: "5", currency: "EUR", history }),
-    ];
-
-    expect(cashHistory(accounts, "SEK")).toEqual([
-      { month: "2026-09-01", balance: 100 },
-      { month: "2026-10-01", balance: 250 },
-    ]);
-  });
+afterEach(() => {
+  cleanup();
+  run.mockReset();
 });
 
-describe("NetWorth", () => {
-  it("counts the company you own toward net worth, shown apart from your own", () => {
+describe("AccountList", () => {
+  it("groups by what accounts are for, in order, with the company last", () => {
     render(
-      <NetWorth
-        totals={[
-          {
-            owner: "personal",
-            currency: "SEK",
-            cash: 466000,
-            investments: 1000000,
-            debt: 10900,
-            net: 1455100,
-          },
-          {
-            owner: "company",
-            currency: "SEK",
-            cash: 300000,
-            investments: 3700000,
-            debt: 0,
-            net: 4000000,
-          },
+      <AccountList
+        onOpen={() => {}}
+        accounts={[
+          account({ id: "c", name: "Företag", is_business: true }),
+          account({ id: "s", name: "Buffert", subtype: "savings" }),
+          account({ id: "e", name: "Lönekonto" }),
+          account({
+            id: "i",
+            name: "ISK",
+            subtype: "isk",
+            holdings_value: 500_00,
+          }),
         ]}
       />,
     );
 
-    expect(screen.getAllByText("Net worth")).toHaveLength(1);
-    expect(screen.getByText("54 551 SEK")).toBeTruthy();
     expect(
-      screen.getByText("Yours and your company's, before tax"),
-    ).toBeTruthy();
-    expect(screen.getByText("14 551 SEK")).toBeTruthy();
-    expect(screen.getByText("40 000 SEK")).toBeTruthy();
-    expect(screen.getByText("109 SEK")).toBeTruthy();
+      screen.getAllByRole("region").map((r) => r.getAttribute("aria-label")),
+    ).toEqual(["Everyday", "Savings", "Investments", "Company"]);
+    const investments = screen.getByRole("region", { name: "Investments" });
+    expect(plain(within(investments).getAllByText(/kr$/)[0].textContent)).toBe(
+      "1 500 kr",
+    );
   });
 
-  it("keeps the plain wording without a company", () => {
+  it("has no company group without company accounts", () => {
+    render(<AccountList onOpen={() => {}} accounts={[account({})]} />);
+
+    expect(screen.queryByRole("region", { name: "Company" })).toBeNull();
+  });
+
+  it("leaves an account outside net worth out of its group's total", () => {
     render(
-      <NetWorth
-        totals={[
-          {
-            owner: "personal",
-            currency: "SEK",
-            cash: 466000,
-            investments: 0,
-            debt: 0,
-            net: 466000,
-          },
+      <AccountList
+        onOpen={() => {}}
+        accounts={[
+          account({ id: "1" }),
+          account({
+            id: "2",
+            name: "Mum's",
+            current_balance: 5_000_00,
+            include_in_net_worth: false,
+          }),
         ]}
       />,
     );
 
-    expect(screen.queryByText("Your company")).toBeNull();
+    const group = screen.getByRole("region", { name: "Everyday" });
+    expect(plain(group.querySelector("p")?.textContent ?? null)).toBe(
+      "1 000 kr",
+    );
+    expect(screen.getByText("Not in net worth")).toBeTruthy();
+  });
+
+  it("opens the account it was clicked on, saying whether it needs you", () => {
+    const onOpen = vi.fn();
+    const broken = account({
+      id: "b",
+      name: "Buffert",
+      source: {
+        kind: "manual",
+        label: "Imported by hand",
+        synced_at: null,
+        problem: { kind: "no_transactions" },
+      },
+    });
+    render(<AccountList onOpen={onOpen} accounts={[account({}), broken]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Buffert/ }));
+
+    expect(onOpen).toHaveBeenCalledWith(broken);
     expect(
-      screen.getByText("Cash and investments, minus what you owe"),
-    ).toBeTruthy();
+      screen.getByRole("button", { name: /Buffert/ }).textContent,
+    ).toContain("Needs you");
+    expect(
+      screen.getByRole("button", { name: /Lönekonto/ }).textContent,
+    ).toContain("Up to date");
   });
 });
 
-describe("AccountGroups", () => {
-  it("groups by owner, flags what needs attention and links to each account's transactions", () => {
-    render(
-      <AccountGroups
-        data={{
-          totals: [],
-          accounts: [
-            account({
-              id: "skandia",
-              source: {
-                kind: "bank",
-                label: "Skandia",
-                synced_at: null,
-                problem: "Skandia says 523,61 SEK, Bessel 528,61 SEK.",
-              },
-            }),
-            account({
-              id: "af",
-              name: "Avanza AF",
-              group: "investments",
-              holdings_value: 900000,
-              current_balance: 8635,
-            }),
-            account({
-              id: "marginalen",
-              name: "Marginalen",
-              is_business: true,
-            }),
-          ],
-        }}
-        onDelete={() => {}}
-      />,
-    );
+describe("NeedsAttention", () => {
+  it("lists each problem with the button that fixes it", () => {
+    const stale = account({
+      name: "Buffert",
+      source: {
+        kind: "manual",
+        label: "Imported by hand",
+        synced_at: null,
+        import_bank: "marginalen",
+        problem: { kind: "import_due", day: new Date("2026-07-02T00:00:00") },
+      },
+    });
+    render(<NeedsAttention accounts={[account({ id: "ok" }), stale]} />);
 
-    expect(screen.getByText("Your accounts")).toBeTruthy();
-    expect(screen.getByText("Company accounts")).toBeTruthy();
-    expect(screen.getByText("1 needs attention")).toBeTruthy();
-    expect(
-      screen.getByText("Skandia says 523,61 SEK, Bessel 528,61 SEK."),
-    ).toBeTruthy();
-    // An investment account is worth its holdings plus its cash.
-    expect(screen.getByText("9 086,35 SEK")).toBeTruthy();
-    const link = screen.getByText("Avanza AF").closest("a");
-    expect(link?.getAttribute("href")).toBe(
-      '/transactions?{"bank_account_id":["af"]}',
-    );
+    expect(screen.getByText("Nothing new since 2 Jul")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Upload latest file" }));
+    expect(run).toHaveBeenCalledWith("upload", stale);
+    expect(screen.queryByText("Lönekonto")).toBeNull();
+  });
+
+  it("says all is well when nothing needs fixing", () => {
+    render(<NeedsAttention accounts={[account({})]} />);
+
+    expect(screen.getByText("All up to date")).toBeTruthy();
+  });
+});
+
+describe("WhereItIs", () => {
+  const totals: OverviewTotal[] = [
+    {
+      owner: "personal",
+      currency: "SEK",
+      cash: 200_00,
+      investments: 300_00,
+      debt: 50_00,
+      net: 450_00,
+    },
+    {
+      owner: "company",
+      currency: "SEK",
+      cash: 1_000_00,
+      investments: 0,
+      debt: 0,
+      net: 1_000_00,
+    },
+    {
+      owner: "personal",
+      currency: "EUR",
+      cash: 9_00,
+      investments: 0,
+      debt: 0,
+      net: 9_00,
+    },
+  ];
+
+  it("splits net worth into the company's, yours and what's owed", () => {
+    const { container } = render(<WhereItIs totals={totals} currency="SEK" />);
+
+    const text = plain(container.textContent);
+    expect(text).toContain("Company1 000 kr");
+    expect(text).toContain("You500 kr");
+    expect(text).toContain("200 kr cash - 300 kr invested");
+    expect(text).toContain("Owed-50 kr");
+    expect(text).toContain("All in cash");
+    expect(text).not.toContain("9 kr");
   });
 });

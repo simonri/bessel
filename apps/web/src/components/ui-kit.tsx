@@ -334,14 +334,17 @@ export function StatTile({
   return (
     <div
       className={cn(
-        "min-w-0 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3",
+        "@container min-w-0 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-3",
         className,
       )}
     >
       <p className="truncate type-caption text-white/50">{label}</p>
-      <p className="mt-1 truncate type-metric text-white/90">{value}</p>
+      {/* A number is never cut off: narrow tiles step the size down instead. */}
+      <p className="mt-1 type-metric whitespace-nowrap text-white/90 @max-[11rem]:text-15">
+        {value}
+      </p>
       {hint && (
-        <p className="mt-0.5 truncate type-caption text-white/40">{hint}</p>
+        <p className="mt-0.5 line-clamp-2 type-caption text-white/40">{hint}</p>
       )}
     </div>
   );

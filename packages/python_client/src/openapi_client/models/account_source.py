@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.account_source_kind import AccountSourceKind
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+  from ..models.account_problem import AccountProblem
+
 
 T = TypeVar("T", bound="AccountSource")
 
@@ -19,16 +24,25 @@ class AccountSource:
       kind (AccountSourceKind): Where the account's transactions come from.
       label (str): The source as the user knows it, such as 'Skandia' or 'Imported by hand'.
       synced_at (datetime.datetime | None): The last sync or import that worked.
-      problem (None | str): What needs the user's attention, if anything.
+      problem (AccountProblem | None): What needs the user's attention, if anything.
+      logo (None | str | Unset): The bank's logo image URL, when one is known.
+      access_until (datetime.datetime | None | Unset): When the bank's read-only approval ends, for connected banks.
+      import_bank (None | str | Unset): For accounts imported by hand, the bank of the latest export file, such as
+          'marginalen'.
   """
 
   kind: AccountSourceKind
   label: str
   synced_at: datetime.datetime | None
-  problem: None | str
+  problem: AccountProblem | None
+  logo: None | str | Unset = UNSET
+  access_until: datetime.datetime | None | Unset = UNSET
+  import_bank: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
+    from ..models.account_problem import AccountProblem
+
     kind = self.kind.value
 
     label = self.label
@@ -39,8 +53,31 @@ class AccountSource:
     else:
       synced_at = self.synced_at
 
-    problem: None | str
-    problem = self.problem
+    problem: dict[str, Any] | None
+    if isinstance(self.problem, AccountProblem):
+      problem = self.problem.to_dict()
+    else:
+      problem = self.problem
+
+    logo: None | str | Unset
+    if isinstance(self.logo, Unset):
+      logo = UNSET
+    else:
+      logo = self.logo
+
+    access_until: None | str | Unset
+    if isinstance(self.access_until, Unset):
+      access_until = UNSET
+    elif isinstance(self.access_until, datetime.datetime):
+      access_until = self.access_until.isoformat()
+    else:
+      access_until = self.access_until
+
+    import_bank: None | str | Unset
+    if isinstance(self.import_bank, Unset):
+      import_bank = UNSET
+    else:
+      import_bank = self.import_bank
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -52,11 +89,19 @@ class AccountSource:
         "problem": problem,
       }
     )
+    if logo is not UNSET:
+      field_dict["logo"] = logo
+    if access_until is not UNSET:
+      field_dict["access_until"] = access_until
+    if import_bank is not UNSET:
+      field_dict["import_bank"] = import_bank
 
     return field_dict
 
   @classmethod
   def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    from ..models.account_problem import AccountProblem
+
     d = dict(src_dict)
     kind = AccountSourceKind(d.pop("kind"))
 
@@ -77,18 +122,64 @@ class AccountSource:
 
     synced_at = _parse_synced_at(d.pop("synced_at"))
 
-    def _parse_problem(data: object) -> None | str:
+    def _parse_problem(data: object) -> AccountProblem | None:
       if data is None:
         return data
-      return cast(None | str, data)
+      try:
+        if not isinstance(data, dict):
+          raise TypeError()
+        problem_type_0 = AccountProblem.from_dict(data)
+
+        return problem_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(AccountProblem | None, data)
 
     problem = _parse_problem(d.pop("problem"))
+
+    def _parse_logo(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    logo = _parse_logo(d.pop("logo", UNSET))
+
+    def _parse_access_until(data: object) -> datetime.datetime | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      try:
+        if not isinstance(data, str):
+          raise TypeError()
+        access_until_type_0 = datetime.datetime.fromisoformat(data)
+
+        return access_until_type_0
+      except (TypeError, ValueError, AttributeError, KeyError):
+        pass
+      return cast(datetime.datetime | None | Unset, data)
+
+    access_until = _parse_access_until(d.pop("access_until", UNSET))
+
+    def _parse_import_bank(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    import_bank = _parse_import_bank(d.pop("import_bank", UNSET))
 
     account_source = cls(
       kind=kind,
       label=label,
       synced_at=synced_at,
       problem=problem,
+      logo=logo,
+      access_until=access_until,
+      import_bank=import_bank,
     )
 
     account_source.additional_properties = d

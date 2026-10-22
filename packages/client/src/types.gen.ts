@@ -57,6 +57,12 @@ export type AccountOverview = {
    */
   is_business: boolean;
   /**
+   * Include In Net Worth
+   *
+   * Whether the account counts toward net worth.
+   */
+  include_in_net_worth: boolean;
+  /**
    * Current Balance
    *
    * Current balance in minor units (base_balance + credits - debits).
@@ -106,6 +112,46 @@ export type AccountOverview = {
 };
 
 /**
+ * AccountProblem
+ *
+ * What needs the user's attention; the app words it, so amounts and dates stay in its own formats.
+ */
+export type AccountProblem = {
+  /**
+   * Kind
+   *
+   * What went wrong; not_shared means the latest bank approval left the account out, sign_in that the login was rejected.
+   */
+  kind:
+    | "sync_failed"
+    | "not_shared"
+    | "stale"
+    | "renew_soon"
+    | "balance_mismatch"
+    | "sign_in"
+    | "import_due"
+    | "no_transactions";
+  /**
+   * Day
+   *
+   * The last sync or import, or for renew_soon the day the approval ends.
+   */
+  day?: Date | null;
+  /**
+   * Source Balance
+   *
+   * For balance_mismatch, the balance the source reports, in minor units.
+   */
+  source_balance?: number | null;
+  /**
+   * Detail
+   *
+   * For sync_failed, what went wrong.
+   */
+  detail?: string | null;
+};
+
+/**
  * AccountSource
  */
 export type AccountSource = {
@@ -122,17 +168,33 @@ export type AccountSource = {
    */
   label: string;
   /**
+   * Logo
+   *
+   * The bank's logo image URL, when one is known.
+   */
+  logo?: string | null;
+  /**
    * Synced At
    *
    * The last sync or import that worked.
    */
   synced_at: Date | null;
   /**
-   * Problem
+   * Access Until
    *
+   * When the bank's read-only approval ends, for connected banks.
+   */
+  access_until?: Date | null;
+  /**
+   * Import Bank
+   *
+   * For accounts imported by hand, the bank of the latest export file, such as 'marginalen'.
+   */
+  import_bank?: string | null;
+  /**
    * What needs the user's attention, if anything.
    */
-  problem: string | null;
+  problem: AccountProblem | null;
 };
 
 /**
@@ -762,6 +824,12 @@ export type BankAccountCreate = {
    * Whether the account belongs to the user's company rather than the user.
    */
   is_business?: boolean;
+  /**
+   * Include In Net Worth
+   *
+   * Whether the account counts toward net worth.
+   */
+  include_in_net_worth?: boolean;
 };
 
 /**
@@ -828,6 +896,12 @@ export type BankAccountSchema = {
    */
   is_business: boolean;
   /**
+   * Include In Net Worth
+   *
+   * Whether the account counts toward net worth.
+   */
+  include_in_net_worth: boolean;
+  /**
    * Current Balance
    *
    * Current balance in minor units (base_balance + credits - debits).
@@ -885,6 +959,12 @@ export type BankAccountUpdate = {
    * Whether the account belongs to the user's company rather than the user.
    */
   is_business?: boolean | null;
+  /**
+   * Include In Net Worth
+   *
+   * Whether the account counts toward net worth.
+   */
+  include_in_net_worth?: boolean | null;
 };
 
 /**
@@ -1004,7 +1084,7 @@ export type BankConnectionListResponse = {
    *
    * The banks this user can connect.
    */
-  banks: Array<string>;
+  banks: Array<BankOption>;
   /**
    * Connections
    */
@@ -1041,6 +1121,28 @@ export type BankConnectionSchema = {
    * Accounts
    */
   accounts: Array<BankConnectionAccountSchema>;
+  /**
+   * Logo
+   *
+   * The bank's logo image URL.
+   */
+  readonly logo: string;
+};
+
+/**
+ * BankOption
+ */
+export type BankOption = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Logo
+   *
+   * The bank's logo image URL.
+   */
+  logo: string;
 };
 
 /**
@@ -3695,6 +3797,50 @@ export type MoveDaySummary = {
 };
 
 /**
+ * NetWorthHistoryResponse
+ */
+export type NetWorthHistoryResponse = {
+  /**
+   * Series
+   *
+   * Per currency, personal and company accounts counted toward net worth together.
+   */
+  series: Array<NetWorthSeries>;
+};
+
+/**
+ * NetWorthPoint
+ */
+export type NetWorthPoint = {
+  /**
+   * Day
+   */
+  day: Date;
+  /**
+   * Value
+   *
+   * Net worth at the end of the day, in minor units.
+   */
+  value: number;
+};
+
+/**
+ * NetWorthSeries
+ */
+export type NetWorthSeries = {
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Points
+   *
+   * The days net worth changed, oldest first, ending today.
+   */
+  points: Array<NetWorthPoint>;
+};
+
+/**
  * NotificationCreate
  */
 export type NotificationCreate = {
@@ -5942,6 +6088,60 @@ export type YearAmount = {
   amount: number;
 };
 
+/**
+ * BankConnectionListResponse
+ */
+export type BankConnectionListResponseWritable = {
+  /**
+   * Available
+   *
+   * Whether this user can connect a bank.
+   */
+  available: boolean;
+  /**
+   * Banks
+   *
+   * The banks this user can connect.
+   */
+  banks: Array<BankOption>;
+  /**
+   * Connections
+   */
+  connections: Array<BankConnectionSchemaWritable>;
+};
+
+/**
+ * BankConnectionSchema
+ */
+export type BankConnectionSchemaWritable = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Bank Name
+   */
+  bank_name: string;
+  /**
+   * Valid Until
+   *
+   * When the bank approval ends; renew it before then.
+   */
+  valid_until: Date;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+  /**
+   * Sync Error
+   */
+  sync_error: string | null;
+  /**
+   * Accounts
+   */
+  accounts: Array<BankConnectionAccountSchema>;
+};
+
 export type HealthzHealthzGetData = {
   body?: never;
   path?: never;
@@ -6379,6 +6579,23 @@ export type GetAccountsOverviewV1BankAccountsOverviewGetResponses = {
 
 export type GetAccountsOverviewV1BankAccountsOverviewGetResponse =
   GetAccountsOverviewV1BankAccountsOverviewGetResponses[keyof GetAccountsOverviewV1BankAccountsOverviewGetResponses];
+
+export type GetNetWorthHistoryV1BankAccountsNetWorthGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/bank-accounts/net-worth";
+};
+
+export type GetNetWorthHistoryV1BankAccountsNetWorthGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: NetWorthHistoryResponse;
+};
+
+export type GetNetWorthHistoryV1BankAccountsNetWorthGetResponse =
+  GetNetWorthHistoryV1BankAccountsNetWorthGetResponses[keyof GetNetWorthHistoryV1BankAccountsNetWorthGetResponses];
 
 export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteData = {
   body?: never;
