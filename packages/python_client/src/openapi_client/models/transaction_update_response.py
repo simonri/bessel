@@ -25,13 +25,15 @@ class TransactionUpdateResponse:
       currency (str):
       transaction_date (datetime.date):
       direction (TransactionDirection):
-      description (None | str):
+      description (None | str): The bank's own text, never changed.
       category_id (None | str):
       transaction_type (None | str):
       dedup_hash (str):
       bank_account_id (str):
       raw_id (None | str):
       investment_kind (InvestmentKind | None): For a broker's movement, what it is, such as a buy or a tax.
+      name (None | str | Unset): What the user calls it, shown in place of the bank's text.
+      note (None | str | Unset): The user's own words about this one transaction.
       logo_url (None | str | Unset): The merchant's logo, when the source provides it.
       document_count (int | Unset): Invoices and receipts kept with it. Default: 0.
       is_business (bool | Unset): Whether this is a business transaction. Default: False.
@@ -55,6 +57,8 @@ class TransactionUpdateResponse:
   bank_account_id: str
   raw_id: None | str
   investment_kind: InvestmentKind | None
+  name: None | str | Unset = UNSET
+  note: None | str | Unset = UNSET
   logo_url: None | str | Unset = UNSET
   document_count: int | Unset = 0
   is_business: bool | Unset = False
@@ -103,6 +107,18 @@ class TransactionUpdateResponse:
     else:
       investment_kind = self.investment_kind
 
+    name: None | str | Unset
+    if isinstance(self.name, Unset):
+      name = UNSET
+    else:
+      name = self.name
+
+    note: None | str | Unset
+    if isinstance(self.note, Unset):
+      note = UNSET
+    else:
+      note = self.note
+
     logo_url: None | str | Unset
     if isinstance(self.logo_url, Unset):
       logo_url = UNSET
@@ -141,6 +157,10 @@ class TransactionUpdateResponse:
         "investment_kind": investment_kind,
       }
     )
+    if name is not UNSET:
+      field_dict["name"] = name
+    if note is not UNSET:
+      field_dict["note"] = note
     if logo_url is not UNSET:
       field_dict["logo_url"] = logo_url
     if document_count is not UNSET:
@@ -231,6 +251,24 @@ class TransactionUpdateResponse:
 
     investment_kind = _parse_investment_kind(d.pop("investment_kind"))
 
+    def _parse_name(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    name = _parse_name(d.pop("name", UNSET))
+
+    def _parse_note(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    note = _parse_note(d.pop("note", UNSET))
+
     def _parse_logo_url(data: object) -> None | str | Unset:
       if data is None:
         return data
@@ -270,6 +308,8 @@ class TransactionUpdateResponse:
       bank_account_id=bank_account_id,
       raw_id=raw_id,
       investment_kind=investment_kind,
+      name=name,
+      note=note,
       logo_url=logo_url,
       document_count=document_count,
       is_business=is_business,

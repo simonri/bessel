@@ -11,6 +11,7 @@ from api.documents.repository import DocumentRepository
 from api.exceptions import ResourceNotFound, ValidationError
 from api.models.transaction import Transaction
 from api.postgres import DBSession
+from api.transactions.names import name_all, rename
 from api.transactions.parsers.csv_parser import parse_csv
 from api.transactions.parsers.xlsx_parser import parse_xlsx
 from api.transactions.repository import BankProfileRepository, TransactionRepository
@@ -24,7 +25,11 @@ from api.transactions.schemas import (
   ImportResponse,
   MonthlyFlowResponse,
   MonthlySpendingResponse,
+  NameAllRequest,
+  NameAllResponse,
   TransactionListResponse,
+  TransactionRename,
+  TransactionRenameResponse,
   TransactionSchema,
   TransactionSummaryResponse,
   TransactionUpdate,
@@ -189,7 +194,7 @@ async def update_transaction(
     # The user's own choice: rules and transfer pairing leave it alone from now on.
     update_dict["category_rule_id"] = None
   if update_dict:
-    await repo.update(transaction, update_dict=update_dict)
+    await repo.update(transaction, update_dict=update_dict, flush=True)
 
   same_description_count = 0
   if transaction.description and "category_id" in update_dict:
@@ -204,6 +209,34 @@ async def update_transaction(
     **TransactionSchema.model_validate(transaction).model_dump(),
     same_description_count=same_description_count,
   )
+
+
+@router.put(
+  "/{transaction_id}/name",
+  summary="Rename Transaction",
+  response_model=TransactionRenameResponse,
+)
+async def rename_transaction(
+  transaction_id: UUID,
+  body: TransactionRename,
+  session: DBSession,
+  current_user: CurrentDBUser,
+) -> TransactionRenameResponse:
+  """Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name."""
+  transaction = await TransactionRepository.from_session(session).get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
+  suggestions = await rename(session, transaction, body.name)
+  return TransactionRenameResponse(**TransactionSchema.model_validate(transaction).model_dump(), suggestions=suggestions)
+
+
+@router.post(
+  "/names",
+  summary="Name Transactions by Bank Text",
+  response_model=NameAllResponse,
+)
+async def name_transactions(body: NameAllRequest, session: DBSession, current_user: CurrentDBUser) -> NameAllResponse:
+  """Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay."""
+  renamed = await name_all(session, current_user.id, description=body.description, name=body.name)
+  return NameAllResponse(renamed=renamed)
 
 
 @router.delete(

@@ -1,10 +1,22 @@
 from datetime import date
+from typing import Annotated
 
 from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
 from api.investments.kinds import InvestmentKind, investment_kind
 from api.models.transaction import TransactionDirection
-from pydantic import UUID4, Field, computed_field
+from pydantic import UUID4, BeforeValidator, Field, computed_field
+
+
+def _blank_as_none(value: object) -> object:
+  if isinstance(value, str):
+    return value.strip() or None
+  return value
+
+
+# Surrounding space is dropped, and nothing but space means none.
+Name = Annotated[Annotated[str, Field(max_length=120)] | None, BeforeValidator(_blank_as_none)]
+Note = Annotated[Annotated[str, Field(max_length=1000)] | None, BeforeValidator(_blank_as_none)]
 
 
 class TransactionSchema(IDSchema, TimestampedSchema):
@@ -12,7 +24,9 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   currency: str
   transaction_date: date
   direction: TransactionDirection
-  description: str | None
+  description: str | None = Field(description="The bank's own text, never changed.")
+  name: str | None = Field(default=None, description="What the user calls it, shown in place of the bank's text.")
+  note: str | None = Field(default=None, description="The user's own words about this one transaction.")
   category_id: UUID4 | None
   transaction_type: str | None
   logo_url: str | None = Field(default=None, description="The merchant's logo, when the source provides it.")
@@ -34,6 +48,31 @@ class TransactionSchema(IDSchema, TimestampedSchema):
 class TransactionUpdate(Schema):
   category_id: UUID4 | None = Field(default=None, description="Category ID to assign.")
   is_business: bool | None = Field(default=None, description="Mark as a business transaction.")
+  note: Note = Field(default=None, description="The user's own words about it; empty removes it.")
+
+
+class TransactionRename(Schema):
+  name: Name = Field(description="What to call it; empty goes back to the bank's text.")
+
+
+class NameSuggestion(Schema):
+  description: str = Field(description="Bank text that would get the same name.")
+  count: int = Field(description="How many transactions have it.")
+
+
+class TransactionRenameResponse(TransactionSchema):
+  suggestions: list[NameSuggestion] = Field(
+    description="Others that likely want the same name: first this one's own bank text, if others have it, then similar ones."
+  )
+
+
+class NameAllRequest(Schema):
+  description: str = Field(min_length=1, description="Exact bank text to name, now and in later imports.")
+  name: Annotated[str, BeforeValidator(_blank_as_none), Field(max_length=120)]
+
+
+class NameAllResponse(Schema):
+  renamed: int = Field(description="How many transactions got the name.")
 
 
 class TransactionUpdateResponse(TransactionSchema):

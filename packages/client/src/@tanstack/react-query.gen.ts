@@ -114,9 +114,11 @@ import {
   markAllNotificationsReadV1NotificationsReadAllPost,
   markNotificationReadV1NotificationsNotificationIdReadPost,
   monthlyFlowV1TransactionsMonthlyFlowGet,
+  nameTransactionsV1TransactionsNamesPost,
   type Options,
   putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut,
   removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete,
+  renameTransactionV1TransactionsTransactionIdNamePut,
   reopenTaskV1TasksTaskIdReopenPost,
   reorderTasksV1TasksReorderPatch,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
@@ -440,12 +442,18 @@ import type {
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetError,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
+  NameTransactionsV1TransactionsNamesPostData,
+  NameTransactionsV1TransactionsNamesPostError,
+  NameTransactionsV1TransactionsNamesPostResponse,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
   RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
   RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
   RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
+  RenameTransactionV1TransactionsTransactionIdNamePutData,
+  RenameTransactionV1TransactionsTransactionIdNamePutError,
+  RenameTransactionV1TransactionsTransactionIdNamePutResponse,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostError,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
@@ -4823,6 +4831,67 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateTransactionV1TransactionsTransactionIdPatch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Rename Transaction
+ *
+ * Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name.
+ */
+export const renameTransactionV1TransactionsTransactionIdNamePutMutation = (
+  options?: Partial<
+    Options<RenameTransactionV1TransactionsTransactionIdNamePutData>
+  >,
+): UseMutationOptions<
+  RenameTransactionV1TransactionsTransactionIdNamePutResponse,
+  RenameTransactionV1TransactionsTransactionIdNamePutError,
+  Options<RenameTransactionV1TransactionsTransactionIdNamePutData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RenameTransactionV1TransactionsTransactionIdNamePutResponse,
+    RenameTransactionV1TransactionsTransactionIdNamePutError,
+    Options<RenameTransactionV1TransactionsTransactionIdNamePutData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await renameTransactionV1TransactionsTransactionIdNamePut({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Name Transactions by Bank Text
+ *
+ * Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay.
+ */
+export const nameTransactionsV1TransactionsNamesPostMutation = (
+  options?: Partial<Options<NameTransactionsV1TransactionsNamesPostData>>,
+): UseMutationOptions<
+  NameTransactionsV1TransactionsNamesPostResponse,
+  NameTransactionsV1TransactionsNamesPostError,
+  Options<NameTransactionsV1TransactionsNamesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    NameTransactionsV1TransactionsNamesPostResponse,
+    NameTransactionsV1TransactionsNamesPostError,
+    Options<NameTransactionsV1TransactionsNamesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await nameTransactionsV1TransactionsNamesPost({
         ...options,
         ...fnOptions,
         throwOnError: true,

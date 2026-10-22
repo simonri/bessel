@@ -158,6 +158,9 @@ from .monthly_flow import MonthlyFlow
 from .monthly_flow_response import MonthlyFlowResponse
 from .monthly_spending_response import MonthlySpendingResponse
 from .move_day_summary import MoveDaySummary
+from .name_all_request import NameAllRequest
+from .name_all_response import NameAllResponse
+from .name_suggestion import NameSuggestion
 from .net_worth_history_response import NetWorthHistoryResponse
 from .net_worth_point import NetWorthPoint
 from .net_worth_series import NetWorthSeries
@@ -237,6 +240,8 @@ from .trade_schema import TradeSchema
 from .trade_type import TradeType
 from .transaction_direction import TransactionDirection
 from .transaction_list_response import TransactionListResponse
+from .transaction_rename import TransactionRename
+from .transaction_rename_response import TransactionRenameResponse
 from .transaction_schema import TransactionSchema
 from .transaction_sort_property import TransactionSortProperty
 from .transaction_summary_response import TransactionSummaryResponse
@@ -403,6 +408,9 @@ __all__ = (
   "MonthlyFlowResponse",
   "MonthlySpendingResponse",
   "MoveDaySummary",
+  "NameAllRequest",
+  "NameAllResponse",
+  "NameSuggestion",
   "NetWorthHistoryResponse",
   "NetWorthPoint",
   "NetWorthSeries",
@@ -482,6 +490,8 @@ __all__ = (
   "TradeType",
   "TransactionDirection",
   "TransactionListResponse",
+  "TransactionRename",
+  "TransactionRenameResponse",
   "TransactionSchema",
   "TransactionSortProperty",
   "TransactionSummaryResponse",

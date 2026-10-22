@@ -5979,6 +5979,56 @@ export const MoveDaySummarySchema = {
   title: "MoveDaySummary",
 } as const;
 
+export const NameAllRequestSchema = {
+  properties: {
+    description: {
+      type: "string",
+      minLength: 1,
+      title: "Description",
+      description: "Exact bank text to name, now and in later imports.",
+    },
+    name: {
+      type: "string",
+      maxLength: 120,
+      title: "Name",
+    },
+  },
+  type: "object",
+  required: ["description", "name"],
+  title: "NameAllRequest",
+} as const;
+
+export const NameAllResponseSchema = {
+  properties: {
+    renamed: {
+      type: "integer",
+      title: "Renamed",
+      description: "How many transactions got the name.",
+    },
+  },
+  type: "object",
+  required: ["renamed"],
+  title: "NameAllResponse",
+} as const;
+
+export const NameSuggestionSchema = {
+  properties: {
+    description: {
+      type: "string",
+      title: "Description",
+      description: "Bank text that would get the same name.",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+      description: "How many transactions have it.",
+    },
+  },
+  type: "object",
+  required: ["description", "count"],
+  title: "NameSuggestion",
+} as const;
+
 export const NetWorthHistoryResponseSchema = {
   properties: {
     series: {
@@ -9244,6 +9294,233 @@ export const TransactionListResponseSchema = {
   title: "TransactionListResponse",
 } as const;
 
+export const TransactionRenameSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 120,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What to call it; empty goes back to the bank's text.",
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "TransactionRename",
+} as const;
+
+export const TransactionRenameResponseSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+      description: "The bank's own text, never changed.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What the user calls it, shown in place of the bank's text.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about this one transaction.",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    transaction_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transaction Type",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+      description: "The merchant's logo, when the source provides it.",
+    },
+    document_count: {
+      type: "integer",
+      title: "Document Count",
+      description: "Invoices and receipts kept with it.",
+      default: 0,
+    },
+    dedup_hash: {
+      type: "string",
+      title: "Dedup Hash",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    raw_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Raw Id",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "Whether this is a business transaction.",
+      default: false,
+    },
+    transfer_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transfer Id",
+      description:
+        "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
+    },
+    suggestions: {
+      items: {
+        $ref: "#/components/schemas/NameSuggestion",
+      },
+      type: "array",
+      title: "Suggestions",
+      description:
+        "Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.",
+    },
+    investment_kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/InvestmentKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "For a broker's movement, what it is, such as a buy or a tax.",
+      readOnly: true,
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "amount",
+    "currency",
+    "transaction_date",
+    "direction",
+    "description",
+    "category_id",
+    "transaction_type",
+    "dedup_hash",
+    "bank_account_id",
+    "raw_id",
+    "suggestions",
+    "investment_kind",
+  ],
+  title: "TransactionRenameResponse",
+} as const;
+
 export const TransactionSchemaSchema = {
   properties: {
     created_at: {
@@ -9298,6 +9575,31 @@ export const TransactionSchemaSchema = {
         },
       ],
       title: "Description",
+      description: "The bank's own text, never changed.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What the user calls it, shown in place of the bank's text.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about this one transaction.",
     },
     category_id: {
       anyOf: [
@@ -9493,6 +9795,19 @@ export const TransactionUpdateSchema = {
       title: "Is Business",
       description: "Mark as a business transaction.",
     },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 1000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about it; empty removes it.",
+    },
   },
   type: "object",
   title: "TransactionUpdate",
@@ -9552,6 +9867,31 @@ export const TransactionUpdateResponseSchema = {
         },
       ],
       title: "Description",
+      description: "The bank's own text, never changed.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What the user calls it, shown in place of the bank's text.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about this one transaction.",
     },
     category_id: {
       anyOf: [
@@ -9912,6 +10252,198 @@ export const TransactionListResponseWritableSchema = {
   title: "TransactionListResponse",
 } as const;
 
+export const TransactionRenameResponseWritableSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+      description: "The bank's own text, never changed.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What the user calls it, shown in place of the bank's text.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about this one transaction.",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    transaction_type: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transaction Type",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+      description: "The merchant's logo, when the source provides it.",
+    },
+    document_count: {
+      type: "integer",
+      title: "Document Count",
+      description: "Invoices and receipts kept with it.",
+      default: 0,
+    },
+    dedup_hash: {
+      type: "string",
+      title: "Dedup Hash",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    raw_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Raw Id",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "Whether this is a business transaction.",
+      default: false,
+    },
+    transfer_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Transfer Id",
+      description:
+        "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
+    },
+    suggestions: {
+      items: {
+        $ref: "#/components/schemas/NameSuggestion",
+      },
+      type: "array",
+      title: "Suggestions",
+      description:
+        "Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "amount",
+    "currency",
+    "transaction_date",
+    "direction",
+    "description",
+    "category_id",
+    "transaction_type",
+    "dedup_hash",
+    "bank_account_id",
+    "raw_id",
+    "suggestions",
+  ],
+  title: "TransactionRenameResponse",
+} as const;
+
 export const TransactionSchemaWritableSchema = {
   properties: {
     created_at: {
@@ -9966,6 +10498,31 @@ export const TransactionSchemaWritableSchema = {
         },
       ],
       title: "Description",
+      description: "The bank's own text, never changed.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What the user calls it, shown in place of the bank's text.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about this one transaction.",
     },
     category_id: {
       anyOf: [
@@ -10123,6 +10680,31 @@ export const TransactionUpdateResponseWritableSchema = {
         },
       ],
       title: "Description",
+      description: "The bank's own text, never changed.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "What the user calls it, shown in place of the bank's text.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "The user's own words about this one transaction.",
     },
     category_id: {
       anyOf: [

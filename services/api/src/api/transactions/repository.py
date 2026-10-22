@@ -11,6 +11,7 @@ from api.models.document import TransactionDocument
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
+from api.models.transaction_name_rule import TransactionNameRule
 from sqlalchemy import Row, Select, case, delete, exists, extract, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import aliased
@@ -81,7 +82,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.currency,
         Transaction.direction,
         Transaction.amount,
-        Transaction.description,
+        # What the user calls it groups the summary, so two bank texts for one shop add up.
+        func.coalesce(Transaction.name, Transaction.description),
         Transaction.category_id,
         Category.name,
         Category.color,
@@ -228,7 +230,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if direction:
       statement = statement.where(Transaction.direction == direction)
     if search:
-      statement = statement.where(Transaction.description.ilike(f"%{search}%"))
+      statement = statement.where(or_(*(column.ilike(f"%{search}%") for column in (Transaction.description, Transaction.name, Transaction.note))))
     if date_from:
       statement = statement.where(Transaction.transaction_date >= date_from)
     if date_to:
@@ -328,6 +330,51 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       )
       changed += await self.execute_for_rowcount(statement)
     return changed
+
+  async def count_to_rename(self, user_id: UUID, *, description: str, name: str) -> int:
+    """The user's transactions with this bank text that naming it would change; names the user gave stay."""
+    statement = select(func.count()).where(
+      Transaction.user_id == user_id,
+      Transaction.deleted_at.is_(None),
+      Transaction.description == description,
+      or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None)),
+      Transaction.name.is_distinct_from(name),
+    )
+    return (await self.session.execute(statement)).scalar_one()
+
+  async def unnamed_descriptions_containing(self, user_id: UUID, words: Sequence[str], *, exclude: str, limit: int) -> list[tuple[str, int]]:
+    """Other bank texts, still without a name, that mention any of the words; the most frequent first."""
+    if not words:
+      return []
+    statement = (
+      select(Transaction.description, func.count())
+      .where(
+        Transaction.user_id == user_id,
+        Transaction.deleted_at.is_(None),
+        Transaction.name.is_(None),
+        Transaction.description.is_not(None),
+        Transaction.description != exclude,
+        or_(*(Transaction.description.icontains(word, autoescape=True) for word in words)),
+      )
+      .group_by(Transaction.description)
+      .order_by(func.count().desc(), Transaction.description)
+      .limit(limit)
+    )
+    return [(description, count) for description, count in await self.session.execute(statement)]
+
+  async def name_by_rule(self, rule: TransactionNameRule) -> int:
+    """Gives the rule's name to every transaction with its bank text, except those the user named themselves."""
+    statement = (
+      update(Transaction)
+      .where(
+        Transaction.user_id == rule.user_id,
+        Transaction.deleted_at.is_(None),
+        Transaction.description == rule.description,
+        or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None)),
+      )
+      .values(name=rule.name, name_rule_id=rule.id)
+    )
+    return await self.execute_for_rowcount(statement)
 
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
@@ -455,3 +502,14 @@ class BankProfileRepository(RepositoryBase[BankProfile], RepositoryIDMixin[BankP
   async def get_by_bank_name(self, bank_name: str) -> BankProfile | None:
     statement = select(BankProfile).where(BankProfile.bank_name == bank_name)
     return await self.get_one_or_none(statement)
+
+
+class TransactionNameRuleRepository(RepositoryBase[TransactionNameRule], RepositoryIDMixin[TransactionNameRule, UUID]):
+  model = TransactionNameRule
+
+  async def by_description(self, user_id: UUID) -> dict[str, TransactionNameRule]:
+    rules = await self.get_all(self.get_base_statement().where(TransactionNameRule.user_id == user_id))
+    return {rule.description: rule for rule in rules}
+
+  async def get_for_description(self, user_id: UUID, description: str) -> TransactionNameRule | None:
+    return await self.get_one_or_none(self.get_base_statement().where(TransactionNameRule.user_id == user_id, TransactionNameRule.description == description))

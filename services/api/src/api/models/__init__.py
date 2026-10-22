@@ -37,6 +37,7 @@ from .task_attachment import TaskAttachment
 from .time_tracking import TimeEntry, TimeProject
 from .trade import Trade
 from .transaction import Transaction
+from .transaction_name_rule import TransactionNameRule
 from .user import User
 from .weather_cache import WeatherCache
 
@@ -87,6 +88,7 @@ __all__ = [
   "TimeProject",
   "Trade",
   "Transaction",
+  "TransactionNameRule",
   "TransactionDocument",
   "WeatherCache",
 ]

@@ -3904,6 +3904,52 @@ export type MoveDaySummary = {
 };
 
 /**
+ * NameAllRequest
+ */
+export type NameAllRequest = {
+  /**
+   * Description
+   *
+   * Exact bank text to name, now and in later imports.
+   */
+  description: string;
+  /**
+   * Name
+   */
+  name: string;
+};
+
+/**
+ * NameAllResponse
+ */
+export type NameAllResponse = {
+  /**
+   * Renamed
+   *
+   * How many transactions got the name.
+   */
+  renamed: number;
+};
+
+/**
+ * NameSuggestion
+ */
+export type NameSuggestion = {
+  /**
+   * Description
+   *
+   * Bank text that would get the same name.
+   */
+  description: string;
+  /**
+   * Count
+   *
+   * How many transactions have it.
+   */
+  count: number;
+};
+
+/**
  * NetWorthHistoryResponse
  */
 export type NetWorthHistoryResponse = {
@@ -5866,6 +5912,129 @@ export type TransactionListResponse = {
 };
 
 /**
+ * TransactionRename
+ */
+export type TransactionRename = {
+  /**
+   * Name
+   *
+   * What to call it; empty goes back to the bank's text.
+   */
+  name: string | null;
+};
+
+/**
+ * TransactionRenameResponse
+ */
+export type TransactionRenameResponse = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  direction: TransactionDirection;
+  /**
+   * Description
+   *
+   * The bank's own text, never changed.
+   */
+  description: string | null;
+  /**
+   * Name
+   *
+   * What the user calls it, shown in place of the bank's text.
+   */
+  name?: string | null;
+  /**
+   * Note
+   *
+   * The user's own words about this one transaction.
+   */
+  note?: string | null;
+  /**
+   * Category Id
+   */
+  category_id: string | null;
+  /**
+   * Transaction Type
+   */
+  transaction_type: string | null;
+  /**
+   * Logo Url
+   *
+   * The merchant's logo, when the source provides it.
+   */
+  logo_url?: string | null;
+  /**
+   * Document Count
+   *
+   * Invoices and receipts kept with it.
+   */
+  document_count?: number;
+  /**
+   * Dedup Hash
+   */
+  dedup_hash: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Raw Id
+   */
+  raw_id: string | null;
+  /**
+   * Is Business
+   *
+   * Whether this is a business transaction.
+   */
+  is_business?: boolean;
+  /**
+   * Transfer Id
+   *
+   * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
+   */
+  transfer_id?: string | null;
+  /**
+   * Suggestions
+   *
+   * Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.
+   */
+  suggestions: Array<NameSuggestion>;
+  /**
+   * For a broker's movement, what it is, such as a buy or a tax.
+   */
+  readonly investment_kind: InvestmentKind | null;
+};
+
+/**
  * TransactionSchema
  */
 export type TransactionSchema = {
@@ -5904,8 +6073,22 @@ export type TransactionSchema = {
   direction: TransactionDirection;
   /**
    * Description
+   *
+   * The bank's own text, never changed.
    */
   description: string | null;
+  /**
+   * Name
+   *
+   * What the user calls it, shown in place of the bank's text.
+   */
+  name?: string | null;
+  /**
+   * Note
+   *
+   * The user's own words about this one transaction.
+   */
+  note?: string | null;
   /**
    * Category Id
    */
@@ -6024,6 +6207,12 @@ export type TransactionUpdate = {
    * Mark as a business transaction.
    */
   is_business?: boolean | null;
+  /**
+   * Note
+   *
+   * The user's own words about it; empty removes it.
+   */
+  note?: string | null;
 };
 
 /**
@@ -6065,8 +6254,22 @@ export type TransactionUpdateResponse = {
   direction: TransactionDirection;
   /**
    * Description
+   *
+   * The bank's own text, never changed.
    */
   description: string | null;
+  /**
+   * Name
+   *
+   * What the user calls it, shown in place of the bank's text.
+   */
+  name?: string | null;
+  /**
+   * Note
+   *
+   * The user's own words about this one transaction.
+   */
+  note?: string | null;
   /**
    * Category Id
    */
@@ -6299,6 +6502,113 @@ export type TransactionListResponseWritable = {
 };
 
 /**
+ * TransactionRenameResponse
+ */
+export type TransactionRenameResponseWritable = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  direction: TransactionDirection;
+  /**
+   * Description
+   *
+   * The bank's own text, never changed.
+   */
+  description: string | null;
+  /**
+   * Name
+   *
+   * What the user calls it, shown in place of the bank's text.
+   */
+  name?: string | null;
+  /**
+   * Note
+   *
+   * The user's own words about this one transaction.
+   */
+  note?: string | null;
+  /**
+   * Category Id
+   */
+  category_id: string | null;
+  /**
+   * Transaction Type
+   */
+  transaction_type: string | null;
+  /**
+   * Logo Url
+   *
+   * The merchant's logo, when the source provides it.
+   */
+  logo_url?: string | null;
+  /**
+   * Document Count
+   *
+   * Invoices and receipts kept with it.
+   */
+  document_count?: number;
+  /**
+   * Dedup Hash
+   */
+  dedup_hash: string;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Raw Id
+   */
+  raw_id: string | null;
+  /**
+   * Is Business
+   *
+   * Whether this is a business transaction.
+   */
+  is_business?: boolean;
+  /**
+   * Transfer Id
+   *
+   * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
+   */
+  transfer_id?: string | null;
+  /**
+   * Suggestions
+   *
+   * Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.
+   */
+  suggestions: Array<NameSuggestion>;
+};
+
+/**
  * TransactionSchema
  */
 export type TransactionSchemaWritable = {
@@ -6337,8 +6647,22 @@ export type TransactionSchemaWritable = {
   direction: TransactionDirection;
   /**
    * Description
+   *
+   * The bank's own text, never changed.
    */
   description: string | null;
+  /**
+   * Name
+   *
+   * What the user calls it, shown in place of the bank's text.
+   */
+  name?: string | null;
+  /**
+   * Note
+   *
+   * The user's own words about this one transaction.
+   */
+  note?: string | null;
   /**
    * Category Id
    */
@@ -6424,8 +6748,22 @@ export type TransactionUpdateResponseWritable = {
   direction: TransactionDirection;
   /**
    * Description
+   *
+   * The bank's own text, never changed.
    */
   description: string | null;
+  /**
+   * Name
+   *
+   * What the user calls it, shown in place of the bank's text.
+   */
+  name?: string | null;
+  /**
+   * Note
+   *
+   * The user's own words about this one transaction.
+   */
+  note?: string | null;
   /**
    * Category Id
    */
@@ -10595,6 +10933,65 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
 
 export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
   UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
+
+export type RenameTransactionV1TransactionsTransactionIdNamePutData = {
+  body: TransactionRename;
+  path: {
+    /**
+     * Transaction Id
+     */
+    transaction_id: string;
+  };
+  query?: never;
+  url: "/v1/transactions/{transaction_id}/name";
+};
+
+export type RenameTransactionV1TransactionsTransactionIdNamePutErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type RenameTransactionV1TransactionsTransactionIdNamePutError =
+  RenameTransactionV1TransactionsTransactionIdNamePutErrors[keyof RenameTransactionV1TransactionsTransactionIdNamePutErrors];
+
+export type RenameTransactionV1TransactionsTransactionIdNamePutResponses = {
+  /**
+   * Successful Response
+   */
+  200: TransactionRenameResponse;
+};
+
+export type RenameTransactionV1TransactionsTransactionIdNamePutResponse =
+  RenameTransactionV1TransactionsTransactionIdNamePutResponses[keyof RenameTransactionV1TransactionsTransactionIdNamePutResponses];
+
+export type NameTransactionsV1TransactionsNamesPostData = {
+  body: NameAllRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/names";
+};
+
+export type NameTransactionsV1TransactionsNamesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type NameTransactionsV1TransactionsNamesPostError =
+  NameTransactionsV1TransactionsNamesPostErrors[keyof NameTransactionsV1TransactionsNamesPostErrors];
+
+export type NameTransactionsV1TransactionsNamesPostResponses = {
+  /**
+   * Successful Response
+   */
+  200: NameAllResponse;
+};
+
+export type NameTransactionsV1TransactionsNamesPostResponse =
+  NameTransactionsV1TransactionsNamesPostResponses[keyof NameTransactionsV1TransactionsNamesPostResponses];
 
 export type UnpairTransferV1TransactionsTransactionIdTransferDeleteData = {
   body?: never;

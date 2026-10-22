@@ -62,6 +62,7 @@ import type {
   ListTransactionsV1TransactionsGetResponse,
   MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
+  RenameTransactionV1TransactionsTransactionIdNamePutResponse,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
   RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
   SearchV1SearchGetResponse,
@@ -1270,6 +1271,23 @@ export const updateTransactionV1TransactionsTransactionIdPatchResponseTransforme
     data: any,
   ): Promise<UpdateTransactionV1TransactionsTransactionIdPatchResponse> => {
     data = transactionUpdateResponseSchemaResponseTransformer(data);
+    return data;
+  };
+
+const transactionRenameResponseSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  data.transaction_date = new Date(data.transaction_date);
+  return data;
+};
+
+export const renameTransactionV1TransactionsTransactionIdNamePutResponseTransformer =
+  async (
+    data: any,
+  ): Promise<RenameTransactionV1TransactionsTransactionIdNamePutResponse> => {
+    data = transactionRenameResponseSchemaResponseTransformer(data);
     return data;
   };
 

@@ -1,4 +1,8 @@
-import type { CategorySchema, TransactionSchema } from "@bessel/client";
+import type {
+  CategorySchema,
+  NameSuggestion,
+  TransactionSchema,
+} from "@bessel/client";
 import {
   Sheet,
   SheetContent,
@@ -7,7 +11,7 @@ import {
 } from "@bessel/ui/components/sheet";
 import { Switch } from "@bessel/ui/components/switch";
 import { format } from "date-fns";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { CategoryCell } from "@/components/category-cell";
 import { TransactionDocuments } from "@/components/transactions/transaction-documents";
 import {
@@ -16,6 +20,11 @@ import {
   type TransactionHandlers,
   TransactionIcon,
 } from "@/components/transactions/transaction-list";
+import {
+  NameHeading,
+  NameSuggestions,
+  NoteField,
+} from "@/components/transactions/transaction-naming";
 import { SoftButton } from "@/components/ui-kit";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
@@ -38,10 +47,20 @@ export function TransactionPanel({
     <Sheet open={!!transaction} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
+        // Escape while typing leaves the field first; the next one closes the panel.
+        onEscapeKeyDown={(event) => {
+          if (
+            event.target instanceof HTMLElement &&
+            event.target.closest("input, textarea")
+          ) {
+            event.preventDefault();
+          }
+        }}
         className="w-full gap-0 overflow-y-auto border-white/10 bg-panel p-0 sm:max-w-md"
       >
         {transaction && (
           <Body
+            key={transaction.id}
             transaction={transaction}
             account={account}
             categories={categories}
@@ -69,6 +88,7 @@ function Body({
 }) {
   const credit = transaction.direction === "credit";
   const business = transaction.is_business ?? false;
+  const [suggestions, setSuggestions] = useState<NameSuggestion[]>([]);
   return (
     <div className="flex min-h-full flex-col">
       <header className="flex items-center gap-3 border-b border-white/[0.06] px-5 pt-5 pr-12 pb-4">
@@ -78,10 +98,16 @@ function Body({
           category={categories.find((c) => c.id === transaction.category_id)}
           transfer={!!transaction.transfer_id}
         />
-        <div className="min-w-0">
-          <SheetTitle className="truncate type-heading text-white/90">
-            {transaction.description ?? "No description"}
-          </SheetTitle>
+        <div className="min-w-0 flex-1">
+          <NameHeading
+            transaction={transaction}
+            onSuggestions={setSuggestions}
+            renderTitle={(title) => (
+              <SheetTitle className="truncate type-heading text-white/90">
+                {title}
+              </SheetTitle>
+            )}
+          />
           <SheetDescription className="type-caption text-white/45">
             {format(transaction.transaction_date, "EEEE d MMMM yyyy")}
           </SheetDescription>
@@ -89,6 +115,18 @@ function Body({
       </header>
 
       <div className="space-y-6 px-5 py-5">
+        {transaction.name && (
+          <NameSuggestions
+            name={transaction.name}
+            description={transaction.description}
+            suggestions={suggestions}
+            onDone={(description) =>
+              setSuggestions((current) =>
+                current.filter((s) => s.description !== description),
+              )
+            }
+          />
+        )}
         <Amount
           value={signedAmount(transaction)}
           currency={transaction.currency}
@@ -135,6 +173,8 @@ function Body({
             />
           </Detail>
         </dl>
+
+        <NoteField transaction={transaction} />
 
         <TransactionDocuments transactionId={transaction.id} />
 

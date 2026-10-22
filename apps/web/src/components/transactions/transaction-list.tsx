@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
+import { displayName } from "@/components/transactions/transaction-naming";
 import { IconButton, Panel } from "@/components/ui-kit";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
@@ -223,7 +224,7 @@ const TransactionRow = memo(function TransactionRow({
   handlers: TransactionHandlers;
 }) {
   const credit = transaction.direction === "credit";
-  const description = transaction.description ?? "No description";
+  const description = displayName(transaction);
   return (
     <li
       className={cn(
@@ -389,9 +390,7 @@ export function RowMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <IconButton
-          aria-label={`More for ${transaction.description ?? "transaction"}`}
-        >
+        <IconButton aria-label={`More for ${displayName(transaction)}`}>
           <MoreHorizontal />
         </IconButton>
       </DropdownMenuTrigger>

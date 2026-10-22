@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import type { CategorySchema, TransactionSchema } from "@bessel/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   cleanup,
   fireEvent,
@@ -203,6 +204,19 @@ describe("TransactionList", () => {
   });
 });
 
+describe("TransactionList names", () => {
+  it("shows the name the user gave in place of the bank's text", () => {
+    mount([
+      tx({ id: "a", description: "ANTHROPIC* CLAUDE SUB", name: "Claude" }),
+      tx({ id: "b", description: "ICA Nära" }),
+    ]);
+
+    expect(screen.getByText("Claude")).toBeTruthy();
+    expect(screen.queryByText("ANTHROPIC* CLAUDE SUB")).toBeNull();
+    expect(screen.getByText("ICA Nära")).toBeTruthy();
+  });
+});
+
 describe("TransactionList paperclip", () => {
   it("shows which rows already have an invoice or receipt", () => {
     mount([
@@ -222,13 +236,15 @@ describe("TransactionPanel", () => {
     const on = handlers();
     const onOpenChange = vi.fn();
     render(
-      <TransactionPanel
-        transaction={transaction}
-        account="Lönekonto"
-        categories={categories}
-        handlers={on}
-        onOpenChange={onOpenChange}
-      />,
+      <QueryClientProvider client={new QueryClient()}>
+        <TransactionPanel
+          transaction={transaction}
+          account="Lönekonto"
+          categories={categories}
+          handlers={on}
+          onOpenChange={onOpenChange}
+        />
+      </QueryClientProvider>,
     );
     return { on, onOpenChange };
   }

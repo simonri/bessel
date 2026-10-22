@@ -36,6 +36,7 @@ import {
   sourceName,
 } from "@/components/accounts/accounts-overview";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { displayName } from "@/components/transactions/transaction-naming";
 import { IconButton, SoftButton } from "@/components/ui-kit";
 import { ACCOUNT_SUBTYPES } from "@/lib/account-constants";
 import { accountTypeLabel, problemCopy } from "@/lib/account-labels";
@@ -403,7 +404,7 @@ function RecentTransactions({ account }: { account: AccountOverview }) {
                 {format(t.transaction_date, "d MMM")}
               </span>
               <span className="min-w-0 flex-1 truncate text-13 text-white/75">
-                {t.description ?? "No description"}
+                {displayName(t)}
               </span>
               <Amount
                 value={t.direction === "credit" ? t.amount : -t.amount}

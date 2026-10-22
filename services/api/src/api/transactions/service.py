@@ -5,6 +5,7 @@ from api.categories.rules import categorize
 from api.common.db.postgres import AsyncSession
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
+from api.transactions.names import names_for_import
 from api.transactions.parsers.base import ParsedTransaction
 from api.transactions.repository import TransactionRepository
 from api.transactions.schemas import MonthlyFlow
@@ -48,6 +49,9 @@ class TransactionService:
     raw_transactions = [RawTransaction(row_number=i, raw_data=tx.raw_data, batch_id=batch.id) for i, tx in enumerate(parsed)]
     await repo.create_raw_transactions(raw_transactions)
 
+    names = await names_for_import(session, user_id)
+    name_rules = [names.get(tx.description) for tx in parsed]
+
     # 3. Deduplicate: INSERT ... ON CONFLICT (user_id, dedup_hash) DO NOTHING
     values = [
       {
@@ -59,6 +63,8 @@ class TransactionService:
         "description": tx.description or None,
         "transaction_type": tx.transaction_type,
         "logo_url": tx.logo_url,
+        "name": name_rules[i].name if name_rules[i] else None,
+        "name_rule_id": name_rules[i].id if name_rules[i] else None,
         "bank_account_id": bank_account_id,
         "raw_id": raw_transactions[i].id,
         "user_id": user_id,

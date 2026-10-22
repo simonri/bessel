@@ -51,6 +51,12 @@ class Transaction(RecordModel):
   # Set when a rule chose the category rather than the user: a rule's choice gives way to a transfer pair.
   category_rule_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("category_rules.id", ondelete="SET NULL"), nullable=True)
 
+  # What the user calls it; the bank's own text stays in `description`.
+  name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+  # Set when a naming rule gave the name rather than the user.
+  name_rule_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("transaction_name_rules.id", ondelete="SET NULL"), nullable=True)
+  note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
   raw_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("raw_transactions.id", onupdate="CASCADE"), nullable=True)
 
   @declared_attr

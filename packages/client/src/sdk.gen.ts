@@ -71,6 +71,7 @@ import {
   listTransactionsV1TransactionsGetResponseTransformer,
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer,
+  renameTransactionV1TransactionsTransactionIdNamePutResponseTransformer,
   reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
   searchV1SearchGetResponseTransformer,
@@ -381,12 +382,18 @@ import type {
   MonthlyFlowV1TransactionsMonthlyFlowGetData,
   MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
+  NameTransactionsV1TransactionsNamesPostData,
+  NameTransactionsV1TransactionsNamesPostErrors,
+  NameTransactionsV1TransactionsNamesPostResponses,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
   RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
   RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
   RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
+  RenameTransactionV1TransactionsTransactionIdNamePutData,
+  RenameTransactionV1TransactionsTransactionIdNamePutErrors,
+  RenameTransactionV1TransactionsTransactionIdNamePutResponses,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostErrors,
   ReopenTaskV1TasksTaskIdReopenPostResponses,
@@ -3783,6 +3790,67 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
       updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Rename Transaction
+ *
+ * Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name.
+ */
+export const renameTransactionV1TransactionsTransactionIdNamePut = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RenameTransactionV1TransactionsTransactionIdNamePutData,
+    ThrowOnError
+  >,
+): RequestResult<
+  RenameTransactionV1TransactionsTransactionIdNamePutResponses,
+  RenameTransactionV1TransactionsTransactionIdNamePutErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    RenameTransactionV1TransactionsTransactionIdNamePutResponses,
+    RenameTransactionV1TransactionsTransactionIdNamePutErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      renameTransactionV1TransactionsTransactionIdNamePutResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/{transaction_id}/name",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Name Transactions by Bank Text
+ *
+ * Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay.
+ */
+export const nameTransactionsV1TransactionsNamesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<NameTransactionsV1TransactionsNamesPostData, ThrowOnError>,
+): RequestResult<
+  NameTransactionsV1TransactionsNamesPostResponses,
+  NameTransactionsV1TransactionsNamesPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    NameTransactionsV1TransactionsNamesPostResponses,
+    NameTransactionsV1TransactionsNamesPostErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/names",
     ...options,
     headers: {
       "Content-Type": "application/json",
