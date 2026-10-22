@@ -23,6 +23,7 @@ class CategorySchema:
       slug (str): URL-friendly identifier.
       color (str): Hex color code for UI display.
       excluded (bool): Whether this category is excluded from reports.
+      income (bool): Whether money in under it counts as income; elsewhere it's money back that lowers spending.
       parent_id (None | str | Unset): Parent category ID, null for top-level.
   """
 
@@ -33,6 +34,7 @@ class CategorySchema:
   slug: str
   color: str
   excluded: bool
+  income: bool
   parent_id: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -55,6 +57,8 @@ class CategorySchema:
 
     excluded = self.excluded
 
+    income = self.income
+
     parent_id: None | str | Unset
     if isinstance(self.parent_id, Unset):
       parent_id = UNSET
@@ -72,6 +76,7 @@ class CategorySchema:
         "slug": slug,
         "color": color,
         "excluded": excluded,
+        "income": income,
       }
     )
     if parent_id is not UNSET:
@@ -109,6 +114,8 @@ class CategorySchema:
 
     excluded = d.pop("excluded")
 
+    income = d.pop("income")
+
     def _parse_parent_id(data: object) -> None | str | Unset:
       if data is None:
         return data
@@ -126,6 +133,7 @@ class CategorySchema:
       slug=slug,
       color=color,
       excluded=excluded,
+      income=income,
       parent_id=parent_id,
     )
 

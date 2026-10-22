@@ -13,5 +13,7 @@ class Category(RecordModel):
   slug: Mapped[str] = mapped_column(String(100), nullable=False)
   color: Mapped[str] = mapped_column(String(7), nullable=False, default="#6B7280")
   excluded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+  # Money in under it is earned, like salary; money in under any other category is money back, like a friend's Swish for dinner.
+  income: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
   parent_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("categories.id", ondelete="CASCADE"), nullable=True)
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)

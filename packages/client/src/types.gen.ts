@@ -1731,6 +1731,12 @@ export type CategorySchema = {
    */
   excluded: boolean;
   /**
+   * Income
+   *
+   * Whether money in under it counts as income; elsewhere it's money back that lowers spending.
+   */
+  income: boolean;
+  /**
    * Parent Id
    *
    * Parent category ID, null for top-level.

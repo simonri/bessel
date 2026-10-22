@@ -21,8 +21,8 @@ class _Ledger:
     await self.save_fixture(account)
     return account
 
-  async def category(self, name: str, *, excluded: bool = False) -> Category:
-    category = Category(name=name, slug=name.lower(), color="#22c55e", excluded=excluded, user_id=self.user.id)
+  async def category(self, name: str, *, excluded: bool = False, income: bool = False) -> Category:
+    category = Category(name=name, slug=name.lower(), color="#22c55e", excluded=excluded, income=income, user_id=self.user.id)
     await self.save_fixture(category)
     return category
 
@@ -95,6 +95,23 @@ class TestMonthSummary:
     assert sek["categories"][1]["category_id"] is None
     assert [(m["description"], m["total"]) for m in sek["merchants"]] == [("ICA Kvantum", 80000), ("Överföring 9159", 30000), ("Hallon", 10900)]
     assert (summary["uncategorized"], summary["transfers"]) == (4, 1)
+
+  @pytest.mark.asyncio
+  async def test_a_friend_paying_back_lowers_spending_where_its_filed_and_earned_money_stays_income(
+    self, client: AsyncClient, ledger: _Ledger
+  ) -> None:
+    checking = await ledger.account("Skandia")
+    dinner, other_income = await ledger.category("Restaurang"), await ledger.category("Övriga inkomster", income=True)
+    day = date(2026, 9, 10)
+    await ledger.add(checking, day, 60000, DEBIT, "Restaurang Prinsen", category=dinner)
+    await ledger.add(checking, day, 30000, CREDIT, "Swish från Anna", category=dinner)
+    await ledger.add(checking, day, 50000, CREDIT, "Swish från Blocket-köpare", category=other_income)
+    await ledger.add(checking, day, 20000, CREDIT, "Swish från Erik")
+
+    [sek] = (await _summary(client))["currencies"]
+
+    assert (sek["income"], sek["spending"]) == (70000, 30000)
+    assert [(c["name"], c["total"]) for c in sek["categories"]] == [("Restaurang", 30000)]
 
   @pytest.mark.asyncio
   async def test_compares_with_the_month_before_and_the_six_before_that(self, client: AsyncClient, ledger: _Ledger) -> None:

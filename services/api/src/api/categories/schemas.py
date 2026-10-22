@@ -11,6 +11,7 @@ class CategorySchema(IDSchema, TimestampedSchema):
   slug: str = Field(description="URL-friendly identifier.")
   color: str = Field(description="Hex color code for UI display.")
   excluded: bool = Field(description="Whether this category is excluded from reports.")
+  income: bool = Field(description="Whether money in under it counts as income; elsewhere it's money back that lowers spending.")
   parent_id: UUID4 | None = Field(default=None, description="Parent category ID, null for top-level.")
 
 

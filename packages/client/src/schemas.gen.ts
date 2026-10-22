@@ -2553,6 +2553,12 @@ export const CategorySchemaSchema = {
       title: "Excluded",
       description: "Whether this category is excluded from reports.",
     },
+    income: {
+      type: "boolean",
+      title: "Income",
+      description:
+        "Whether money in under it counts as income; elsewhere it's money back that lowers spending.",
+    },
     parent_id: {
       anyOf: [
         {
@@ -2576,6 +2582,7 @@ export const CategorySchemaSchema = {
     "slug",
     "color",
     "excluded",
+    "income",
   ],
   title: "CategorySchema",
 } as const;

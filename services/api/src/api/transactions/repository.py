@@ -62,13 +62,17 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
   async def report_rows(self, user_id: UUID, *, start: date, end: date) -> list[ReportRow]:
     """The user's own income and spending between two days (inclusive), with what each row counts as."""
     charged = aliased(Transaction)
-    refund = (Transaction.direction == TransactionDirection.credit) & exists().where(
-      charged.user_id == Transaction.user_id,
-      # Money back lands where it was charged; a generic text like "Överföring" elsewhere isn't a refund.
-      charged.bank_account_id == Transaction.bank_account_id,
-      charged.direction == TransactionDirection.debit,
-      charged.description == Transaction.description,
-      charged.deleted_at.is_(None),
+    refund = (Transaction.direction == TransactionDirection.credit) & or_(
+      exists().where(
+        charged.user_id == Transaction.user_id,
+        # Money back lands where it was charged; a generic text like "Överföring" elsewhere isn't a refund.
+        charged.bank_account_id == Transaction.bank_account_id,
+        charged.direction == TransactionDirection.debit,
+        charged.description == Transaction.description,
+        charged.deleted_at.is_(None),
+      ),
+      # Filed under what it paid back, such as dinner a friend Swished for.
+      Category.income.is_(False),
     )
     statement = _counted_in_reports(
       select(
