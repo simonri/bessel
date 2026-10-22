@@ -19,12 +19,15 @@ class BankAccountCreate:
       currency (str): ISO 4217 currency code.
       subtype (str): Account subtype, e.g. 'checking', 'savings'.
       base_balance (int | Unset): Starting balance in minor units (cents). Default: 0.
+      is_business (bool | Unset): Whether the account belongs to the user's company rather than the user. Default:
+          False.
   """
 
   name: str
   currency: str
   subtype: str
   base_balance: int | Unset = 0
+  is_business: bool | Unset = False
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -35,6 +38,8 @@ class BankAccountCreate:
     subtype = self.subtype
 
     base_balance = self.base_balance
+
+    is_business = self.is_business
 
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
@@ -47,6 +52,8 @@ class BankAccountCreate:
     )
     if base_balance is not UNSET:
       field_dict["base_balance"] = base_balance
+    if is_business is not UNSET:
+      field_dict["is_business"] = is_business
 
     return field_dict
 
@@ -61,11 +68,14 @@ class BankAccountCreate:
 
     base_balance = d.pop("base_balance", UNSET)
 
+    is_business = d.pop("is_business", UNSET)
+
     bank_account_create = cls(
       name=name,
       currency=currency,
       subtype=subtype,
       base_balance=base_balance,
+      is_business=is_business,
     )
 
     bank_account_create.additional_properties = d

@@ -21,12 +21,15 @@ class TransferCandidate(NamedTuple):
   currency: str
   direction: TransactionDirection
   transaction_date: date
+  # Whether the account is the company's; money only moves "between own accounts" on one side of that line.
+  business: bool = False
 
 
 def _counted_in_reports[*Ts](statement: Select[*Ts]) -> Select[*Ts]:
-  """Leaves out money that only moves: investment accounts, transfers between own accounts, and categories excluded from reports."""
+  """The user's own income and spending: no investment or company accounts, transfers between own accounts, or excluded categories."""
   return statement.join(BankAccount, Transaction.bank_account_id == BankAccount.id).where(
     BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
+    BankAccount.is_business.is_(False),
     Transaction.transfer_id.is_(None),
     or_(Category.id.is_(None), Category.excluded.is_(False)),
   )
@@ -78,14 +81,24 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
 
   async def transfer_candidates(self, user_id: UUID, *, since: date | None) -> list[TransferCandidate]:
     """Unpaired, uncategorized transactions; a category the user chose is never overridden."""
-    statement = select(
-      Transaction.id, Transaction.bank_account_id, Transaction.amount, Transaction.currency, Transaction.direction, Transaction.transaction_date
-    ).where(
-      Transaction.user_id == user_id,
-      Transaction.deleted_at.is_(None),
-      Transaction.transfer_id.is_(None),
-      Transaction.not_a_transfer.is_(False),
-      Transaction.category_id.is_(None),
+    statement = (
+      select(
+        Transaction.id,
+        Transaction.bank_account_id,
+        Transaction.amount,
+        Transaction.currency,
+        Transaction.direction,
+        Transaction.transaction_date,
+        BankAccount.is_business,
+      )
+      .join(BankAccount, BankAccount.id == Transaction.bank_account_id)
+      .where(
+        Transaction.user_id == user_id,
+        Transaction.deleted_at.is_(None),
+        Transaction.transfer_id.is_(None),
+        Transaction.not_a_transfer.is_(False),
+        Transaction.category_id.is_(None),
+      )
     )
     if since is not None:
       statement = statement.where(Transaction.transaction_date >= since)

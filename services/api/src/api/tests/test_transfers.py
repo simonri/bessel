@@ -18,8 +18,8 @@ DAY = date.today().replace(day=1) + timedelta(days=5)
 _counter = iter(range(10_000))
 
 
-async def _account(save_fixture: SaveFixture, user: User, name: str) -> BankAccount:
-  bank_account = BankAccount(name=name, currency="SEK", base_balance=0, subtype="checking", user_id=user.id)
+async def _account(save_fixture: SaveFixture, user: User, name: str, *, business: bool = False) -> BankAccount:
+  bank_account = BankAccount(name=name, currency="SEK", base_balance=0, subtype="checking", is_business=business, user_id=user.id)
   await save_fixture(bank_account)
   return bank_account
 
@@ -174,6 +174,20 @@ class TestPairing:
     for day, transfer_id in top_ups:
       by_day.setdefault(day, set()).add(transfer_id)
     assert all(len(ids) == 1 for ids in by_day.values()) and len({next(iter(ids)) for ids in by_day.values()}) == 2
+
+  @pytest.mark.asyncio
+  async def test_money_between_the_user_and_their_company_is_not_a_transfer(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
+    personal = await _account(save_fixture, user, "Skandia")
+    company, company_savings = await _account(save_fixture, user, "Marginalen", business=True), await _account(save_fixture, user, "KF", business=True)
+    # A dividend from the company is the user's income.
+    await _import(session, company, 10000000, TransactionDirection.debit)
+    await _import(session, personal, 10000000, TransactionDirection.credit)
+    # Moving the company's own money is a transfer.
+    await _import(session, company, 500000, TransactionDirection.debit)
+    await _import(session, company_savings, 500000, TransactionDirection.credit)
+
+    paired = (await session.execute(select(Transaction.amount).where(Transaction.transfer_id.is_not(None)))).scalars().all()
+    assert sorted(paired) == [500000, 500000]
 
   @pytest.mark.asyncio
   async def test_a_categorized_transaction_is_left_alone(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:

@@ -23,6 +23,7 @@ class BankAccountSchema:
       currency (str): ISO 4217 currency code.
       base_balance (int): Starting balance in minor units (cents).
       subtype (str): Account subtype, e.g. 'checking', 'savings'.
+      is_business (bool): Whether the account belongs to the user's company rather than the user.
       current_balance (int | Unset): Current balance in minor units (base_balance + credits - debits). Default: 0.
   """
 
@@ -33,6 +34,7 @@ class BankAccountSchema:
   currency: str
   base_balance: int
   subtype: str
+  is_business: bool
   current_balance: int | Unset = 0
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -55,6 +57,8 @@ class BankAccountSchema:
 
     subtype = self.subtype
 
+    is_business = self.is_business
+
     current_balance = self.current_balance
 
     field_dict: dict[str, Any] = {}
@@ -68,6 +72,7 @@ class BankAccountSchema:
         "currency": currency,
         "base_balance": base_balance,
         "subtype": subtype,
+        "is_business": is_business,
       }
     )
     if current_balance is not UNSET:
@@ -105,6 +110,8 @@ class BankAccountSchema:
 
     subtype = d.pop("subtype")
 
+    is_business = d.pop("is_business")
+
     current_balance = d.pop("current_balance", UNSET)
 
     bank_account_schema = cls(
@@ -115,6 +122,7 @@ class BankAccountSchema:
       currency=currency,
       base_balance=base_balance,
       subtype=subtype,
+      is_business=is_business,
       current_balance=current_balance,
     )
 

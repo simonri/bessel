@@ -801,6 +801,13 @@ export const BankAccountCreateSchema = {
       title: "Subtype",
       description: "Account subtype, e.g. 'checking', 'savings'.",
     },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description:
+        "Whether the account belongs to the user's company rather than the user.",
+      default: false,
+    },
   },
   type: "object",
   required: ["name", "currency", "subtype"],
@@ -872,6 +879,12 @@ export const BankAccountSchemaSchema = {
       title: "Subtype",
       description: "Account subtype, e.g. 'checking', 'savings'.",
     },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description:
+        "Whether the account belongs to the user's company rather than the user.",
+    },
     current_balance: {
       type: "integer",
       title: "Current Balance",
@@ -889,6 +902,7 @@ export const BankAccountSchemaSchema = {
     "currency",
     "base_balance",
     "subtype",
+    "is_business",
   ],
   title: "BankAccountSchema",
 } as const;
@@ -949,6 +963,19 @@ export const BankAccountUpdateSchema = {
       ],
       title: "Subtype",
       description: "Account subtype, e.g. 'checking', 'savings'.",
+    },
+    is_business: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Is Business",
+      description:
+        "Whether the account belongs to the user's company rather than the user.",
     },
   },
   type: "object",

@@ -4,6 +4,7 @@ import {
   updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
+import { Checkbox } from "@bessel/ui/components/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
       currency: account.currency,
       subtype: account.subtype,
       baseBalance: String(account.base_balance / 100),
+      isBusiness: account.is_business,
     },
     onSubmit: ({ value }) => {
       mutation.mutate({
@@ -84,6 +86,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           subtype: value.subtype,
           base_balance:
             Math.round(Number.parseFloat(value.baseBalance) * 100) || 0,
+          is_business: value.isBusiness,
         },
       });
     },
@@ -95,6 +98,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
       currency: account.currency,
       subtype: account.subtype,
       baseBalance: String(account.base_balance / 100),
+      isBusiness: account.is_business,
     });
     setOpen(true);
   };
@@ -199,6 +203,30 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
                   required
                 />
               </div>
+            )}
+          </form.Field>
+
+          <form.Field name="isBusiness">
+            {(field) => (
+              <label
+                htmlFor="edit-is-business"
+                className="flex items-start gap-2 text-sm"
+              >
+                <Checkbox
+                  id="edit-is-business"
+                  checked={field.state.value}
+                  onCheckedChange={(checked) =>
+                    field.handleChange(checked === true)
+                  }
+                />
+                <span>
+                  Company account
+                  <span className="block text-muted-foreground text-xs">
+                    Its money isn't your own income or spending. Money between
+                    it and your accounts counts as income or spending.
+                  </span>
+                </span>
+              </label>
             )}
           </form.Field>
 

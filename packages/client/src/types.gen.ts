@@ -591,6 +591,12 @@ export type BankAccountCreate = {
    * Account subtype, e.g. 'checking', 'savings'.
    */
   subtype: string;
+  /**
+   * Is Business
+   *
+   * Whether the account belongs to the user's company rather than the user.
+   */
+  is_business?: boolean;
 };
 
 /**
@@ -651,6 +657,12 @@ export type BankAccountSchema = {
    */
   subtype: string;
   /**
+   * Is Business
+   *
+   * Whether the account belongs to the user's company rather than the user.
+   */
+  is_business: boolean;
+  /**
    * Current Balance
    *
    * Current balance in minor units (base_balance + credits - debits).
@@ -702,6 +714,12 @@ export type BankAccountUpdate = {
    * Account subtype, e.g. 'checking', 'savings'.
    */
   subtype?: string | null;
+  /**
+   * Is Business
+   *
+   * Whether the account belongs to the user's company rather than the user.
+   */
+  is_business?: boolean | null;
 };
 
 /**

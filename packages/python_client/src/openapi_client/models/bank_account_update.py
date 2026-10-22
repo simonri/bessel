@@ -19,12 +19,14 @@ class BankAccountUpdate:
       currency (None | str | Unset): ISO 4217 currency code.
       base_balance (int | None | Unset): Starting balance in minor units (cents).
       subtype (None | str | Unset): Account subtype, e.g. 'checking', 'savings'.
+      is_business (bool | None | Unset): Whether the account belongs to the user's company rather than the user.
   """
 
   name: None | str | Unset = UNSET
   currency: None | str | Unset = UNSET
   base_balance: int | None | Unset = UNSET
   subtype: None | str | Unset = UNSET
+  is_business: bool | None | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -52,6 +54,12 @@ class BankAccountUpdate:
     else:
       subtype = self.subtype
 
+    is_business: bool | None | Unset
+    if isinstance(self.is_business, Unset):
+      is_business = UNSET
+    else:
+      is_business = self.is_business
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update({})
@@ -63,6 +71,8 @@ class BankAccountUpdate:
       field_dict["base_balance"] = base_balance
     if subtype is not UNSET:
       field_dict["subtype"] = subtype
+    if is_business is not UNSET:
+      field_dict["is_business"] = is_business
 
     return field_dict
 
@@ -106,11 +116,21 @@ class BankAccountUpdate:
 
     subtype = _parse_subtype(d.pop("subtype", UNSET))
 
+    def _parse_is_business(data: object) -> bool | None | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(bool | None | Unset, data)
+
+    is_business = _parse_is_business(d.pop("is_business", UNSET))
+
     bank_account_update = cls(
       name=name,
       currency=currency,
       base_balance=base_balance,
       subtype=subtype,
+      is_business=is_business,
     )
 
     bank_account_update.additional_properties = d

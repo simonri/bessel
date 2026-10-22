@@ -12,8 +12,8 @@ from httpx import AsyncClient
 DAY = date.today().replace(day=1)
 
 
-async def _account(save_fixture: SaveFixture, user: User, subtype: str = "checking") -> BankAccount:
-  bank_account = BankAccount(name=subtype, currency="SEK", base_balance=0, subtype=subtype, user_id=user.id)
+async def _account(save_fixture: SaveFixture, user: User, subtype: str = "checking", *, business: bool = False) -> BankAccount:
+  bank_account = BankAccount(name=subtype, currency="SEK", base_balance=0, subtype=subtype, is_business=business, user_id=user.id)
   await save_fixture(bank_account)
   return bank_account
 
@@ -48,7 +48,7 @@ async def _spend(
 
 class TestExcludedFromReports:
   @pytest.mark.asyncio
-  async def test_excluded_categories_and_investment_accounts_dont_count_but_uncategorized_does(
+  async def test_excluded_categories_investment_and_company_accounts_dont_count_but_uncategorized_does(
     self, client: AsyncClient, save_fixture: SaveFixture, user: User
   ) -> None:
     checking, isk = await _account(save_fixture, user), await _account(save_fixture, user, "isk")
@@ -59,9 +59,23 @@ class TestExcludedFromReports:
     await _spend(save_fixture, checking, 7000, category=transfer, direction=TransactionDirection.credit)
     await _spend(save_fixture, checking, 3, direction=TransactionDirection.credit)
     await _spend(save_fixture, isk, 900, category=food)
+    company = await _account(save_fixture, user, business=True)
+    await _spend(save_fixture, company, 40000, category=food)
+    await _spend(save_fixture, company, 60000, direction=TransactionDirection.credit)
 
     [current] = [m for m in (await client.get("/v1/transactions/monthly-flow")).json()["items"] if (m["year"], m["month"]) == (DAY.year, DAY.month)]
     spending = (await client.get("/v1/transactions/spending-by-category", params={"year": DAY.year, "month": DAY.month})).json()["items"]
 
     assert (current["income"], current["expenses"]) == (3, 120)
     assert [(item["category_name"], item["total"]) for item in spending] == [("Food", 100)]
+
+
+class TestCompanyAccounts:
+  @pytest.mark.asyncio
+  async def test_an_account_can_be_marked_as_the_companys(self, client: AsyncClient) -> None:
+    company = {"name": "Marginalen", "currency": "SEK", "subtype": "checking", "is_business": True}
+    created = (await client.post("/v1/bank-accounts", json=company)).json()
+    personal = (await client.post("/v1/bank-accounts", json={"name": "Skandia", "currency": "SEK", "subtype": "checking"})).json()
+    updated = (await client.patch(f"/v1/bank-accounts/{personal['id']}", json={"is_business": True})).json()
+
+    assert (created["is_business"], personal["is_business"], updated["is_business"]) == (True, False, True)

@@ -95,6 +95,7 @@ async def create_bank_account(
     currency=body.currency,
     base_balance=body.base_balance,
     subtype=body.subtype,
+    is_business=body.is_business,
     user_id=current_user.id,
   )
   await repo.create(account, flush=True)

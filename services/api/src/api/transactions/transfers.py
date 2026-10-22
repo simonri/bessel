@@ -17,7 +17,9 @@ MAX_GROUP = 6
 
 def _matches(debit: TransferCandidate, credit: TransferCandidate) -> bool:
   """For a debit and credit of the same amount and currency."""
-  return debit.bank_account_id != credit.bank_account_id and abs(debit.transaction_date - credit.transaction_date) <= WINDOW
+  return (
+    debit.bank_account_id != credit.bank_account_id and debit.business == credit.business and abs(debit.transaction_date - credit.transaction_date) <= WINDOW
+  )
 
 
 def _by_date(candidates: list[TransferCandidate]) -> list[TransferCandidate]:
