@@ -164,12 +164,20 @@ export function CashChart({
                 );
               }}
             />
+            {/* Stepped like the trading chart: a balance holds until the month it changes. */}
             <Area
-              type="monotone"
+              type="stepAfter"
               dataKey="balance"
               stroke={LINE}
               strokeWidth={2}
+              strokeLinejoin="round"
               fill={`url(#${gradientId})`}
+              isAnimationActive={false}
+              activeDot={{
+                r: 4.5,
+                strokeWidth: 2,
+                stroke: "var(--color-chrome)",
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>
