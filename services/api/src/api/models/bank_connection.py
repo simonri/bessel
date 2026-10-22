@@ -22,6 +22,8 @@ class BankConnection(RecordModel):
   expiry_notified_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   sync_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # Set when the user was told syncing stopped; cleared by the next sync that works.
+  stale_notified_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
   accounts: Mapped[list["BankConnectionAccount"]] = relationship(
     back_populates="connection",

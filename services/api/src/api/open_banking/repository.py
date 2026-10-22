@@ -33,6 +33,9 @@ class BankConnectionRepository(RepositoryBase[BankConnection], RepositoryIDMixin
     )
     return await self.get_one_or_none(statement)
 
+  async def list_with_accounts(self) -> Sequence[BankConnection]:
+    return await self.get_all(self._with_accounts())
+
   async def list_ids(self) -> Sequence[UUID]:
     return (await self.session.execute(select(BankConnection.id))).scalars().all()
 

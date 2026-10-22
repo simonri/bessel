@@ -146,8 +146,8 @@ export function ConnectedBanks() {
       </SectionLabel>
       {data.connections.length === 0 ? (
         <p className="text-12 text-white/45">
-          Import {data.banks.join(" or ")} transactions automatically instead of
-          uploading exports. You approve at the bank, about twice a year.
+          Import transactions from your banks automatically instead of uploading
+          exports. You approve at each bank, about twice a year.
         </p>
       ) : (
         <div className="space-y-3">

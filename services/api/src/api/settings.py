@@ -109,7 +109,7 @@ class Settings(BaseSettings):
   ENABLE_BANKING_USER_IDS: list[UUID] = Field(default=[])
   # The banks users may connect, as Enable Banking names them. The sandbox's real
   # banks send users to the banks' own test logins, so local testing uses "Mock ASPSP".
-  ENABLE_BANKING_BANKS: list[str] = Field(default=["Skandia", "Klarna"])
+  ENABLE_BANKING_BANKS: list[str] = Field(default=["Skandia", "Klarna", "Marginalen Bank", "Revolut"])
   ENABLE_BANKING_BANK_COUNTRY: str = "SE"
 
   # Avanza through its unofficial web API. The login can also trade, so only

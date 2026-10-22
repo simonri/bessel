@@ -274,7 +274,7 @@ class AvanzaService:
         stored = by_external_id.get(account.external_id)
         if stored is not None:
           stored.last_synced_at = started
-      connection.last_synced_at, connection.sync_error = started, None
+      connection.last_synced_at, connection.sync_error, connection.stale_notified_at = started, None, None
     log.info("avanza_synced", connection_id=str(connection_id), created=created)
 
   async def _record(self, session_maker: SessionMaker, connection_id: UUID, *, error: str, rejected_at: datetime | None = None) -> None:

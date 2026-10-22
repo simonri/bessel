@@ -356,6 +356,7 @@ class TestSync:
   ) -> None:
     bank_account = await _bank_account(save_fixture, user.id)
     connection = await _connection(save_fixture, user.id, bank_account=bank_account, import_from=date(2026, 10, 1))
+    connection.stale_notified_at = NOW - timedelta(days=1)
     bank.transactions["uid-1"] = [
       transaction("r1", date(2026, 10, 2), "-125.50", text="Systembolaget"),
       transaction("r2", date(2026, 10, 3), "25000.00", credit=True, text="Lön"),
@@ -374,7 +375,7 @@ class TestSync:
     assert [r.get("continuation_key") for r in bank.transaction_requests] == [None, "2"]
     assert {r["transaction_status"] for r in bank.transaction_requests} == {"BOOK"}
     refreshed = await BankConnectionRepository.from_session(session).get_by_id(connection.id)
-    assert refreshed is not None and refreshed.last_synced_at == NOW
+    assert refreshed is not None and (refreshed.last_synced_at, refreshed.stale_notified_at) == (NOW, None)
 
   @pytest.mark.asyncio
   async def test_keeps_only_booked_days_from_linking_on_when_the_bank_returns_more(

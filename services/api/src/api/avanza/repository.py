@@ -25,6 +25,9 @@ class AvanzaConnectionRepository(RepositoryBase[AvanzaConnection], RepositoryIDM
   async def get_with_accounts(self, connection_id: UUID) -> AvanzaConnection | None:
     return await self.get_one_or_none(self._with_accounts().where(AvanzaConnection.id == connection_id))
 
+  async def list_with_accounts(self) -> Sequence[AvanzaConnection]:
+    return await self.get_all(self.get_base_statement().options(selectinload(AvanzaConnection.accounts)))
+
   async def list_syncable_ids(self) -> Sequence[UUID]:
     """Connections whose login Avanza hasn't rejected."""
     statement = select(AvanzaConnection.id).where(AvanzaConnection.credentials_rejected_at.is_(None))

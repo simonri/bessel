@@ -229,6 +229,7 @@ class TestSync:
   ) -> None:
     bank_account = await _bank_account(save_fixture, user.id)
     connection = await _connection(save_fixture, user.id, linked=bank_account)
+    connection.stale_notified_at = datetime(2026, 10, 1, tzinfo=UTC)
     avanza.movements = [
       movement("m1", "111", "DEPOSIT", "2026-03-01", 10000.0, description="Insättning"),
       movement("m2", "111", "BUY", "2026-03-08", -3600.5, inst=MSTR, volume=1.0, price=342.15, price_unit="USD", commission=1.0, description="Köp Strategy A"),
@@ -260,7 +261,13 @@ class TestSync:
     assert (snapshot.snapshot_date, snapshot.quantity, snapshot.value, snapshot.acquired_value, snapshot.currency) == (TODAY, 1_000_000, 390000, 360150, "SEK")
     stored = await AvanzaConnectionRepository.from_session(session).get_with_accounts(connection.id)
     assert stored is not None
-    assert (stored.last_synced_at, stored.sync_error, stored.accounts[0].last_synced_at, stored.accounts[0].cash_balance) == (NOW, None, NOW, 25050)
+    assert (stored.last_synced_at, stored.sync_error, stored.stale_notified_at, stored.accounts[0].last_synced_at, stored.accounts[0].cash_balance) == (
+      NOW,
+      None,
+      None,
+      NOW,
+      25050,
+    )
 
   @pytest.mark.asyncio
   async def test_syncing_again_imports_nothing_twice_and_reads_two_weeks_back(

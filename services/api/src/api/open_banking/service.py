@@ -354,7 +354,7 @@ class OpenBankingService:
       failed = sum(1 for read in reads.values() if read is None)
       connection.sync_error = f"Couldn't reach {bank_name}. Bessel tries again at the next sync." if failed else None
       if failed < len(reads) or not reads:
-        connection.last_synced_at = started
+        connection.last_synced_at, connection.stale_notified_at = started, None
     log.info("enable_banking_synced", connection_id=str(connection_id), created=created, failed=failed)
 
   async def _record_error(self, session_maker: SessionMaker, connection_id: UUID, message: str) -> None:
