@@ -177,6 +177,9 @@ async def update_transaction(
   transaction = await repo.get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
 
   update_dict = body.model_dump(exclude_unset=True)
+  if "category_id" in update_dict:
+    # The user's own choice: rules and transfer pairing leave it alone from now on.
+    update_dict["category_rule_id"] = None
   if update_dict:
     await repo.update(transaction, update_dict=update_dict)
 

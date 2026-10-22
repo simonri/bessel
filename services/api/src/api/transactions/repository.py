@@ -28,6 +28,13 @@ class ReportRow(NamedTuple):
   refund: bool
 
 
+class RuleCandidate(NamedTuple):
+  id: UUID
+  description: str | None
+  direction: TransactionDirection
+  company_account: bool
+
+
 class TransferCandidate(NamedTuple):
   id: UUID
   bank_account_id: UUID
@@ -198,7 +205,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.deleted_at.is_(None),
         Transaction.transfer_id.is_(None),
         Transaction.not_a_transfer.is_(False),
-        Transaction.category_id.is_(None),
+        # A category a rule chose may still turn out to be one side of a transfer; one the user chose never is.
+        or_(Transaction.category_id.is_(None), Transaction.category_rule_id.is_not(None)),
         # Card purchases, never money moving out to another of the user's accounts.
         ~((BankAccount.subtype == "credit_card") & (Transaction.direction == TransactionDirection.debit)),
       )
@@ -207,8 +215,35 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       statement = statement.where(Transaction.transaction_date >= since)
     return [TransferCandidate(*row) for row in await self.session.execute(statement)]
 
+  async def rule_candidates(self, user_id: UUID, *, since: date | None) -> list[RuleCandidate]:
+    """Uncategorized transactions a rule may sort: not investment accounts' buys and sells, nor paired transfers."""
+    statement = (
+      select(Transaction.id, Transaction.description, Transaction.direction, BankAccount.is_business)
+      .join(BankAccount, BankAccount.id == Transaction.bank_account_id)
+      .where(
+        Transaction.user_id == user_id,
+        Transaction.deleted_at.is_(None),
+        Transaction.category_id.is_(None),
+        Transaction.transfer_id.is_(None),
+        BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
+      )
+    )
+    if since is not None:
+      statement = statement.where(Transaction.transaction_date >= since)
+    return [RuleCandidate(*row) for row in await self.session.execute(statement)]
+
+  async def set_category_from_rule(self, transaction_id: UUID, category_id: UUID, *, rule_id: UUID, mark_business: bool) -> None:
+    values: dict[str, Any] = {"category_id": category_id, "category_rule_id": rule_id}
+    if mark_business:
+      values["is_business"] = True
+    await self.session.execute(update(Transaction).where(Transaction.id == transaction_id).values(**values))
+
   async def set_transfer(self, user_id: UUID, ids: Sequence[UUID], transfer_id: UUID) -> int:
-    statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.id.in_(ids)).values(transfer_id=transfer_id)
+    statement = (
+      update(Transaction)
+      .where(Transaction.user_id == user_id, Transaction.id.in_(ids))
+      .values(transfer_id=transfer_id, category_id=None, category_rule_id=None)
+    )
     return await self.execute_for_rowcount(statement)
 
   async def unpair_transfer(self, user_id: UUID, transfer_id: UUID) -> int:
@@ -266,11 +301,13 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     return result.scalar() or 0
 
   async def set_category_for_ids(self, *, user_id: UUID, ids: Sequence[UUID], category_id: UUID | None) -> int:
-    statement = update(Transaction).where(Transaction.id.in_(ids), Transaction.user_id == user_id).values(category_id=category_id)
+    statement = update(Transaction).where(Transaction.id.in_(ids), Transaction.user_id == user_id).values(category_id=category_id, category_rule_id=None)
     return await self.execute_for_rowcount(statement)
 
   async def set_category_for_description(self, *, user_id: UUID, description: str, category_id: UUID | None) -> int:
-    statement = update(Transaction).where(Transaction.description == description, Transaction.user_id == user_id).values(category_id=category_id)
+    statement = (
+      update(Transaction).where(Transaction.description == description, Transaction.user_id == user_id).values(category_id=category_id, category_rule_id=None)
+    )
     return await self.execute_for_rowcount(statement)
 
   async def newest_date_for_bank_account(self, bank_account_id: UUID) -> date | None:

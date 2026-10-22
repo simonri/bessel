@@ -1,6 +1,7 @@
 from datetime import date
 from uuid import UUID
 
+from api.categories.rules import categorize
 from api.common.db.postgres import AsyncSession
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
@@ -67,7 +68,9 @@ class TransactionService:
     created = await repo.insert_ignoring_duplicates(values)
     skipped = len(parsed) - created
     if created:
-      await match_transfers(session, user_id, since=min(tx.transaction_date for tx in parsed))
+      since = min(tx.transaction_date for tx in parsed)
+      await match_transfers(session, user_id, since=since)
+      await categorize(session, user_id, since=since)
 
     return created, skipped
 

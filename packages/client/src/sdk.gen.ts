@@ -17,6 +17,7 @@ import {
   connectIcloudV1CalendarsIcloudPostResponseTransformer,
   createBankAccountV1BankAccountsPostResponseTransformer,
   createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
+  createCategoryRuleV1CategoriesRulesPostResponseTransformer,
   createCounterV1CountersPostResponseTransformer,
   createIngestTokenV1IngestTokensPostResponseTransformer,
   createNotificationV1NotificationsPostResponseTransformer,
@@ -47,6 +48,7 @@ import {
   listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
   listCalendarEventsV1CalendarsEventsGetResponseTransformer,
   listCategoriesV1CategoriesGetResponseTransformer,
+  listCategoryRulesV1CategoriesRulesGetResponseTransformer,
   listCountersV1CountersGetResponseTransformer,
   listDevicesV1DevicesGetResponseTransformer,
   listGymExercisesV1GymExercisesGetResponseTransformer,
@@ -118,6 +120,9 @@ import type {
   CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses,
+  CreateCategoryRuleV1CategoriesRulesPostData,
+  CreateCategoryRuleV1CategoriesRulesPostErrors,
+  CreateCategoryRuleV1CategoriesRulesPostResponses,
   CreateCounterV1CountersPostData,
   CreateCounterV1CountersPostErrors,
   CreateCounterV1CountersPostResponses,
@@ -154,6 +159,9 @@ import type {
   DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
   DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors,
   DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses,
   DeleteCounterV1CountersCounterIdDeleteData,
   DeleteCounterV1CountersCounterIdDeleteErrors,
   DeleteCounterV1CountersCounterIdDeleteResponses,
@@ -298,6 +306,8 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetErrors,
   ListCategoriesV1CategoriesGetResponses,
+  ListCategoryRulesV1CategoriesRulesGetData,
+  ListCategoryRulesV1CategoriesRulesGetResponses,
   ListCountersV1CountersGetData,
   ListCountersV1CountersGetResponses,
   ListDevicesV1DevicesGetData,
@@ -1525,6 +1535,87 @@ export const listCategoriesV1CategoriesGet = <
     responseTransformer: listCategoriesV1CategoriesGetResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/categories",
+    ...options,
+  });
+
+/**
+ * List Category Rules
+ */
+export const listCategoryRulesV1CategoriesRulesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ListCategoryRulesV1CategoriesRulesGetData, ThrowOnError>,
+): RequestResult<
+  ListCategoryRulesV1CategoriesRulesGetResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListCategoryRulesV1CategoriesRulesGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listCategoryRulesV1CategoriesRulesGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/rules",
+    ...options,
+  });
+
+/**
+ * Create Category Rule
+ *
+ * Sorts future imports whose description contains the text into the category, and by default the ones already here.
+ */
+export const createCategoryRuleV1CategoriesRulesPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateCategoryRuleV1CategoriesRulesPostData, ThrowOnError>,
+): RequestResult<
+  CreateCategoryRuleV1CategoriesRulesPostResponses,
+  CreateCategoryRuleV1CategoriesRulesPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateCategoryRuleV1CategoriesRulesPostResponses,
+    CreateCategoryRuleV1CategoriesRulesPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      createCategoryRuleV1CategoriesRulesPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/rules",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Category Rule
+ *
+ * Stops sorting new imports by it; transactions it already sorted keep their category.
+ */
+export const deleteCategoryRuleV1CategoriesRulesRuleIdDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses,
+    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/rules/{rule_id}",
     ...options,
   });
 

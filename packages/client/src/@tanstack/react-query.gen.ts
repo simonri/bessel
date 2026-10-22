@@ -21,6 +21,7 @@ import {
   connectIcloudV1CalendarsIcloudPost,
   createBankAccountV1BankAccountsPost,
   createCalendarEventV1CalendarsCalendarIdEventsPost,
+  createCategoryRuleV1CategoriesRulesPost,
   createCounterV1CountersPost,
   createIngestTokenV1IngestTokensPost,
   createNotificationV1NotificationsPost,
@@ -33,6 +34,7 @@ import {
   createTimeProjectV1TimeProjectsPost,
   deleteBankAccountV1BankAccountsBankAccountIdDelete,
   deleteCalendarEventV1CalendarsEventsEventIdDelete,
+  deleteCategoryRuleV1CategoriesRulesRuleIdDelete,
   deleteCounterV1CountersCounterIdDelete,
   deleteDeviceV1DevicesDeviceIdDelete,
   deleteGymExerciseV1GymExercisesExerciseIdDelete,
@@ -85,6 +87,7 @@ import {
   listCalendarAccountsV1CalendarsAccountsGet,
   listCalendarEventsV1CalendarsEventsGet,
   listCategoriesV1CategoriesGet,
+  listCategoryRulesV1CategoriesRulesGet,
   listCountersV1CountersGet,
   listDevicesV1DevicesGet,
   listGymExercisesV1GymExercisesGet,
@@ -177,6 +180,9 @@ import type {
   CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
+  CreateCategoryRuleV1CategoriesRulesPostData,
+  CreateCategoryRuleV1CategoriesRulesPostError,
+  CreateCategoryRuleV1CategoriesRulesPostResponse,
   CreateCounterV1CountersPostData,
   CreateCounterV1CountersPostError,
   CreateCounterV1CountersPostResponse,
@@ -213,6 +219,9 @@ import type {
   DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
   DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
   DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse,
   DeleteCounterV1CountersCounterIdDeleteData,
   DeleteCounterV1CountersCounterIdDeleteError,
   DeleteCounterV1CountersCounterIdDeleteResponse,
@@ -355,6 +364,8 @@ import type {
   ListCategoriesV1CategoriesGetData,
   ListCategoriesV1CategoriesGetError,
   ListCategoriesV1CategoriesGetResponse,
+  ListCategoryRulesV1CategoriesRulesGetData,
+  ListCategoryRulesV1CategoriesRulesGetResponse,
   ListCountersV1CountersGetData,
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetData,
@@ -1889,6 +1900,94 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
     },
   );
   return opts as Omit<typeof opts, "initialData">;
+};
+
+export const listCategoryRulesV1CategoriesRulesGetQueryKey = (
+  options?: Options<ListCategoryRulesV1CategoriesRulesGetData>,
+) => createQueryKey("listCategoryRulesV1CategoriesRulesGet", options);
+
+/**
+ * List Category Rules
+ */
+export const listCategoryRulesV1CategoriesRulesGetOptions = (
+  options?: Options<ListCategoryRulesV1CategoriesRulesGetData>,
+) =>
+  queryOptions<
+    ListCategoryRulesV1CategoriesRulesGetResponse,
+    DefaultError,
+    ListCategoryRulesV1CategoriesRulesGetResponse,
+    ReturnType<typeof listCategoryRulesV1CategoriesRulesGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCategoryRulesV1CategoriesRulesGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCategoryRulesV1CategoriesRulesGetQueryKey(options),
+  });
+
+/**
+ * Create Category Rule
+ *
+ * Sorts future imports whose description contains the text into the category, and by default the ones already here.
+ */
+export const createCategoryRuleV1CategoriesRulesPostMutation = (
+  options?: Partial<Options<CreateCategoryRuleV1CategoriesRulesPostData>>,
+): UseMutationOptions<
+  CreateCategoryRuleV1CategoriesRulesPostResponse,
+  CreateCategoryRuleV1CategoriesRulesPostError,
+  Options<CreateCategoryRuleV1CategoriesRulesPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCategoryRuleV1CategoriesRulesPostResponse,
+    CreateCategoryRuleV1CategoriesRulesPostError,
+    Options<CreateCategoryRuleV1CategoriesRulesPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createCategoryRuleV1CategoriesRulesPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Category Rule
+ *
+ * Stops sorting new imports by it; transactions it already sorted keep their category.
+ */
+export const deleteCategoryRuleV1CategoriesRulesRuleIdDeleteMutation = (
+  options?: Partial<
+    Options<DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData>
+  >,
+): UseMutationOptions<
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse,
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError,
+  Options<DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse,
+    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError,
+    Options<DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteCategoryRuleV1CategoriesRulesRuleIdDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
 };
 
 export const listCountersV1CountersGetQueryKey = (

@@ -2118,6 +2118,217 @@ export const CategoryListResponseSchema = {
   title: "CategoryListResponse",
 } as const;
 
+export const CategoryRuleCreateSchema = {
+  properties: {
+    category_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Category Id",
+    },
+    pattern: {
+      type: "string",
+      maxLength: 255,
+      minLength: 2,
+      title: "Pattern",
+    },
+    scope: {
+      $ref: "#/components/schemas/RuleScope",
+      default: "any",
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    mark_business: {
+      type: "boolean",
+      title: "Mark Business",
+      default: false,
+    },
+    apply_now: {
+      type: "boolean",
+      title: "Apply Now",
+      description: "Also sort the uncategorized transactions already imported.",
+      default: true,
+    },
+  },
+  type: "object",
+  required: ["category_id", "pattern"],
+  title: "CategoryRuleCreate",
+} as const;
+
+export const CategoryRuleCreatedSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    category_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Category Id",
+    },
+    pattern: {
+      type: "string",
+      title: "Pattern",
+      description:
+        "Text matched case-insensitively anywhere in the description.",
+    },
+    scope: {
+      $ref: "#/components/schemas/RuleScope",
+      description: "Which accounts it looks at: any, private or company.",
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Only money in (credit) or out (debit), or both when null.",
+    },
+    mark_business: {
+      type: "boolean",
+      title: "Mark Business",
+      description: "Also mark matching transactions as business expenses.",
+    },
+    categorized: {
+      type: "integer",
+      title: "Categorized",
+      description: "Transactions already imported that the rules sorted.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "category_id",
+    "pattern",
+    "scope",
+    "direction",
+    "mark_business",
+    "categorized",
+  ],
+  title: "CategoryRuleCreated",
+} as const;
+
+export const CategoryRuleListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/CategoryRuleSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+  },
+  type: "object",
+  required: ["items"],
+  title: "CategoryRuleListResponse",
+} as const;
+
+export const CategoryRuleSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    category_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Category Id",
+    },
+    pattern: {
+      type: "string",
+      title: "Pattern",
+      description:
+        "Text matched case-insensitively anywhere in the description.",
+    },
+    scope: {
+      $ref: "#/components/schemas/RuleScope",
+      description: "Which accounts it looks at: any, private or company.",
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Only money in (credit) or out (debit), or both when null.",
+    },
+    mark_business: {
+      type: "boolean",
+      title: "Mark Business",
+      description: "Also mark matching transactions as business expenses.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "category_id",
+    "pattern",
+    "scope",
+    "direction",
+    "mark_business",
+  ],
+  title: "CategoryRuleSchema",
+} as const;
+
 export const CategorySchemaSchema = {
   properties: {
     created_at: {
@@ -6981,6 +7192,14 @@ export const RruleFrequencySchema = {
   type: "string",
   enum: ["daily", "weekly", "monthly", "yearly"],
   title: "RruleFrequency",
+} as const;
+
+export const RuleScopeSchema = {
+  type: "string",
+  enum: ["any", "private", "company"],
+  title: "RuleScope",
+  description:
+    "Which accounts a rule looks at: the same text means different things on a company account.",
 } as const;
 
 export const SearchResponseSchema = {

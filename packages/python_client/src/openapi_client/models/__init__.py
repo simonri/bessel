@@ -63,6 +63,10 @@ from .calendar_provider import CalendarProvider
 from .calendar_schema import CalendarSchema
 from .calendar_update import CalendarUpdate
 from .category_list_response import CategoryListResponse
+from .category_rule_create import CategoryRuleCreate
+from .category_rule_created import CategoryRuleCreated
+from .category_rule_list_response import CategoryRuleListResponse
+from .category_rule_schema import CategoryRuleSchema
 from .category_schema import CategorySchema
 from .category_spending import CategorySpending
 from .client_diagnostics_upload import ClientDiagnosticsUpload
@@ -186,6 +190,7 @@ from .recurrence_schema import RecurrenceSchema
 from .recurrence_schema_by_weekday_item import RecurrenceSchemaByWeekdayItem
 from .recurrence_schema_frequency import RecurrenceSchemaFrequency
 from .rrule_frequency import RruleFrequency
+from .rule_scope import RuleScope
 from .search_response import SearchResponse
 from .sleep_daily_entry import SleepDailyEntry
 from .sleep_daily_response import SleepDailyResponse
@@ -298,6 +303,10 @@ __all__ = (
   "CalendarSchema",
   "CalendarUpdate",
   "CategoryListResponse",
+  "CategoryRuleCreate",
+  "CategoryRuleCreated",
+  "CategoryRuleListResponse",
+  "CategoryRuleSchema",
   "CategorySchema",
   "CategorySpending",
   "ClientDiagnosticsUpload",
@@ -417,6 +426,7 @@ __all__ = (
   "RecurrenceSchemaByWeekdayItem",
   "RecurrenceSchemaFrequency",
   "RruleFrequency",
+  "RuleScope",
   "SearchResponse",
   "SleepDailyEntry",
   "SleepDailyResponse",

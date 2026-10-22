@@ -1433,6 +1433,144 @@ export type CategoryListResponse = {
 };
 
 /**
+ * CategoryRuleCreate
+ */
+export type CategoryRuleCreate = {
+  /**
+   * Category Id
+   */
+  category_id: string;
+  /**
+   * Pattern
+   */
+  pattern: string;
+  scope?: RuleScope;
+  direction?: TransactionDirection | null;
+  /**
+   * Mark Business
+   */
+  mark_business?: boolean;
+  /**
+   * Apply Now
+   *
+   * Also sort the uncategorized transactions already imported.
+   */
+  apply_now?: boolean;
+};
+
+/**
+ * CategoryRuleCreated
+ */
+export type CategoryRuleCreated = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Category Id
+   */
+  category_id: string;
+  /**
+   * Pattern
+   *
+   * Text matched case-insensitively anywhere in the description.
+   */
+  pattern: string;
+  /**
+   * Which accounts it looks at: any, private or company.
+   */
+  scope: RuleScope;
+  /**
+   * Only money in (credit) or out (debit), or both when null.
+   */
+  direction: TransactionDirection | null;
+  /**
+   * Mark Business
+   *
+   * Also mark matching transactions as business expenses.
+   */
+  mark_business: boolean;
+  /**
+   * Categorized
+   *
+   * Transactions already imported that the rules sorted.
+   */
+  categorized: number;
+};
+
+/**
+ * CategoryRuleListResponse
+ */
+export type CategoryRuleListResponse = {
+  /**
+   * Items
+   */
+  items: Array<CategoryRuleSchema>;
+};
+
+/**
+ * CategoryRuleSchema
+ */
+export type CategoryRuleSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Category Id
+   */
+  category_id: string;
+  /**
+   * Pattern
+   *
+   * Text matched case-insensitively anywhere in the description.
+   */
+  pattern: string;
+  /**
+   * Which accounts it looks at: any, private or company.
+   */
+  scope: RuleScope;
+  /**
+   * Only money in (credit) or out (debit), or both when null.
+   */
+  direction: TransactionDirection | null;
+  /**
+   * Mark Business
+   *
+   * Also mark matching transactions as business expenses.
+   */
+  mark_business: boolean;
+};
+
+/**
  * CategorySchema
  */
 export type CategorySchema = {
@@ -4426,6 +4564,24 @@ export type RruleFrequency =
   (typeof RruleFrequency)[keyof typeof RruleFrequency];
 
 /**
+ * RuleScope
+ *
+ * Which accounts a rule looks at: the same text means different things on a company account.
+ */
+export const RuleScope = {
+  ANY: "any",
+  PRIVATE: "private",
+  COMPANY: "company",
+} as const;
+
+/**
+ * RuleScope
+ *
+ * Which accounts a rule looks at: the same text means different things on a company account.
+ */
+export type RuleScope = (typeof RuleScope)[keyof typeof RuleScope];
+
+/**
  * SearchResponse
  */
 export type SearchResponse = {
@@ -7004,6 +7160,82 @@ export type ListCategoriesV1CategoriesGetResponses = {
 
 export type ListCategoriesV1CategoriesGetResponse =
   ListCategoriesV1CategoriesGetResponses[keyof ListCategoriesV1CategoriesGetResponses];
+
+export type ListCategoryRulesV1CategoriesRulesGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/categories/rules";
+};
+
+export type ListCategoryRulesV1CategoriesRulesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoryRuleListResponse;
+};
+
+export type ListCategoryRulesV1CategoriesRulesGetResponse =
+  ListCategoryRulesV1CategoriesRulesGetResponses[keyof ListCategoryRulesV1CategoriesRulesGetResponses];
+
+export type CreateCategoryRuleV1CategoriesRulesPostData = {
+  body: CategoryRuleCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/categories/rules";
+};
+
+export type CreateCategoryRuleV1CategoriesRulesPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCategoryRuleV1CategoriesRulesPostError =
+  CreateCategoryRuleV1CategoriesRulesPostErrors[keyof CreateCategoryRuleV1CategoriesRulesPostErrors];
+
+export type CreateCategoryRuleV1CategoriesRulesPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: CategoryRuleCreated;
+};
+
+export type CreateCategoryRuleV1CategoriesRulesPostResponse =
+  CreateCategoryRuleV1CategoriesRulesPostResponses[keyof CreateCategoryRuleV1CategoriesRulesPostResponses];
+
+export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData = {
+  body?: never;
+  path: {
+    /**
+     * Rule Id
+     */
+    rule_id: string;
+  };
+  query?: never;
+  url: "/v1/categories/rules/{rule_id}";
+};
+
+export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError =
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors[keyof DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors];
+
+export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse =
+  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses[keyof DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses];
 
 export type ListCountersV1CountersGetData = {
   body?: never;

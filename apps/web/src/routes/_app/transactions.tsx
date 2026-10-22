@@ -2,6 +2,7 @@ import type { TransactionSchema } from "@bessel/client";
 import {
   bulkUpdateTransactionsV1TransactionsBulkPatchMutation,
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
+  createCategoryRuleV1CategoriesRulesPostMutation,
   deleteTransactionsV1TransactionsDeleteMutation,
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
@@ -503,6 +504,15 @@ function Transactions() {
     setBulkSuggestion(info);
   }, []);
 
+  // Remembered as a rule, so later imports with the same text arrive sorted.
+  const [rememberRule, setRememberRule] = useState(true);
+  const createRuleMutation = useMutation({
+    ...createCategoryRuleV1CategoriesRulesPostMutation({ client }),
+    onSuccess: () =>
+      toast.success("New ones like this will be sorted automatically"),
+    onError: () => toast.error("Couldn't save the rule"),
+  });
+
   const handleConfirmBulk = () => {
     if (!bulkSuggestion) return;
     bulkCategorizeMutation.mutate({
@@ -512,6 +522,16 @@ function Transactions() {
         category_id: bulkSuggestion.categoryId,
       },
     });
+    if (rememberRule && bulkSuggestion.categoryId) {
+      createRuleMutation.mutate({
+        client,
+        body: {
+          category_id: bulkSuggestion.categoryId,
+          pattern: bulkSuggestion.description,
+          apply_now: false,
+        },
+      });
+    }
   };
 
   // Stable columns identity — a fresh array (with fresh cell closures) every
@@ -801,6 +821,15 @@ function Transactions() {
               <strong>{bulkSuggestion?.categoryName}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {bulkSuggestion?.categoryId && (
+            <label className="flex items-center gap-2 text-13 text-white/70">
+              <Checkbox
+                checked={rememberRule}
+                onCheckedChange={(checked) => setRememberRule(checked === true)}
+              />
+              Also sort new ones like this automatically
+            </label>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>No thanks</AlertDialogCancel>
             <AlertDialogAction

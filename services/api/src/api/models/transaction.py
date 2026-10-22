@@ -46,6 +46,9 @@ class Transaction(RecordModel):
   def category(cls) -> Mapped["Category | None"]:
     return relationship("Category", lazy="raise")
 
+  # Set when a rule chose the category rather than the user: a rule's choice gives way to a transfer pair.
+  category_rule_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("category_rules.id", ondelete="SET NULL"), nullable=True)
+
   raw_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("raw_transactions.id", onupdate="CASCADE"), nullable=True)
 
   @declared_attr

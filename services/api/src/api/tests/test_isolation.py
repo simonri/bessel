@@ -160,6 +160,9 @@ AUDITED: set[str] = {
   "GET /v1/transactions/summary",
   "GET /v1/bank-accounts/overview",
   "GET /v1/investments/accounts",
+  "GET /v1/categories/rules",
+  "POST /v1/categories/rules",
+  "DELETE /v1/categories/rules/{rule_id}",
   "PATCH /v1/transactions/{transaction_id}",
   "DELETE /v1/transactions/{transaction_id}/transfer",
 }

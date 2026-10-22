@@ -11,6 +11,7 @@ from .calendar_account import CalendarAccount
 from .calendar_event import CalendarEvent
 from .calendar_person import CalendarPerson
 from .category import Category
+from .category_rule import CategoryRule
 from .counter import Counter, CounterReset
 from .device import Device
 from .gym import GymExercise, GymTopSet
@@ -55,6 +56,7 @@ __all__ = [
   "CalendarEvent",
   "CalendarPerson",
   "Category",
+  "CategoryRule",
   "Counter",
   "CounterReset",
   "Device",

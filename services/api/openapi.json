@@ -1981,6 +1981,119 @@
         }
       }
     },
+    "/v1/categories/rules": {
+      "get": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "List Category Rules",
+        "operationId": "list_category_rules_v1_categories_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryRuleListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Create Category Rule",
+        "description": "Sorts future imports whose description contains the text into the category, and by default the ones already here.",
+        "operationId": "create_category_rule_v1_categories_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRuleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryRuleCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/categories/rules/{rule_id}": {
+      "delete": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Delete Category Rule",
+        "description": "Stops sorting new imports by it; transactions it already sorted keep their category.",
+        "operationId": "delete_category_rule_v1_categories_rules__rule_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/counters": {
       "get": {
         "tags": [
@@ -9346,6 +9459,216 @@
         ],
         "title": "CategoryListResponse"
       },
+      "CategoryRuleCreate": {
+        "properties": {
+          "category_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Category Id"
+          },
+          "pattern": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 2,
+            "title": "Pattern"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/RuleScope",
+            "default": "any"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDirection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mark_business": {
+            "type": "boolean",
+            "title": "Mark Business",
+            "default": false
+          },
+          "apply_now": {
+            "type": "boolean",
+            "title": "Apply Now",
+            "description": "Also sort the uncategorized transactions already imported.",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "category_id",
+          "pattern"
+        ],
+        "title": "CategoryRuleCreate"
+      },
+      "CategoryRuleCreated": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp of the object."
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At",
+            "description": "Last modification timestamp of the object."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Category Id"
+          },
+          "pattern": {
+            "type": "string",
+            "title": "Pattern",
+            "description": "Text matched case-insensitively anywhere in the description."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/RuleScope",
+            "description": "Which accounts it looks at: any, private or company."
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDirection"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only money in (credit) or out (debit), or both when null."
+          },
+          "mark_business": {
+            "type": "boolean",
+            "title": "Mark Business",
+            "description": "Also mark matching transactions as business expenses."
+          },
+          "categorized": {
+            "type": "integer",
+            "title": "Categorized",
+            "description": "Transactions already imported that the rules sorted."
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "modified_at",
+          "id",
+          "category_id",
+          "pattern",
+          "scope",
+          "direction",
+          "mark_business",
+          "categorized"
+        ],
+        "title": "CategoryRuleCreated"
+      },
+      "CategoryRuleListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryRuleSchema"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "CategoryRuleListResponse"
+      },
+      "CategoryRuleSchema": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp of the object."
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At",
+            "description": "Last modification timestamp of the object."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "category_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Category Id"
+          },
+          "pattern": {
+            "type": "string",
+            "title": "Pattern",
+            "description": "Text matched case-insensitively anywhere in the description."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/RuleScope",
+            "description": "Which accounts it looks at: any, private or company."
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDirection"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only money in (credit) or out (debit), or both when null."
+          },
+          "mark_business": {
+            "type": "boolean",
+            "title": "Mark Business",
+            "description": "Also mark matching transactions as business expenses."
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at",
+          "modified_at",
+          "id",
+          "category_id",
+          "pattern",
+          "scope",
+          "direction",
+          "mark_business"
+        ],
+        "title": "CategoryRuleSchema"
+      },
       "CategorySchema": {
         "properties": {
           "created_at": {
@@ -14312,6 +14635,16 @@
           "yearly"
         ],
         "title": "RruleFrequency"
+      },
+      "RuleScope": {
+        "type": "string",
+        "enum": [
+          "any",
+          "private",
+          "company"
+        ],
+        "title": "RuleScope",
+        "description": "Which accounts a rule looks at: the same text means different things on a company account."
       },
       "SearchResponse": {
         "properties": {

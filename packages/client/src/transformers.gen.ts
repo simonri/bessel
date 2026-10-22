@@ -8,6 +8,7 @@ import type {
   ConnectIcloudV1CalendarsIcloudPostResponse,
   CreateBankAccountV1BankAccountsPostResponse,
   CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
+  CreateCategoryRuleV1CategoriesRulesPostResponse,
   CreateCounterV1CountersPostResponse,
   CreateIngestTokenV1IngestTokensPostResponse,
   CreateNotificationV1NotificationsPostResponse,
@@ -38,6 +39,7 @@ import type {
   ListCalendarAccountsV1CalendarsAccountsGetResponse,
   ListCalendarEventsV1CalendarsEventsGetResponse,
   ListCategoriesV1CategoriesGetResponse,
+  ListCategoryRulesV1CategoriesRulesGetResponse,
   ListCountersV1CountersGetResponse,
   ListDevicesV1DevicesGetResponse,
   ListGymExercisesV1GymExercisesGetResponse,
@@ -406,6 +408,44 @@ export const listCategoriesV1CategoriesGetResponseTransformer = async (
   data = categoryListResponseSchemaResponseTransformer(data);
   return data;
 };
+
+const categoryRuleSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+const categoryRuleListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    categoryRuleSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listCategoryRulesV1CategoriesRulesGetResponseTransformer = async (
+  data: any,
+): Promise<ListCategoryRulesV1CategoriesRulesGetResponse> => {
+  data = categoryRuleListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const categoryRuleCreatedSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+export const createCategoryRuleV1CategoriesRulesPostResponseTransformer =
+  async (
+    data: any,
+  ): Promise<CreateCategoryRuleV1CategoriesRulesPostResponse> => {
+    data = categoryRuleCreatedSchemaResponseTransformer(data);
+    return data;
+  };
 
 const counterSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
