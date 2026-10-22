@@ -77,6 +77,7 @@ import {
   restoreItemFields,
   settleWhenIdle,
 } from "@/lib/optimistic";
+import { useRouteFilters } from "@/lib/route-filters";
 
 // ─── Route + URL search params ────────────────────────────────────────────────
 
@@ -200,14 +201,8 @@ const TransactionActions = memo(function TransactionActions({
 function Transactions() {
   const now = new Date();
   // Filters live in the URL, so other pages can link straight to a filtered list.
-  const filters = Route.useSearch();
-  const navigate = Route.useNavigate();
-  const setFilters = useCallback(
-    (next: TransactionFilters) => {
-      void navigate({ search: next, replace: true });
-    },
-    [navigate],
-  );
+  const [filters, setFilters] =
+    useRouteFilters<TransactionFilters>("/transactions");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(
     null,
