@@ -184,11 +184,18 @@ function AccountsPage({
                 : `${accounts.length} accounts, all up to date`
         }
       >
-        <HideAmountsButton />
-        <PrimaryButton size="sm" onClick={() => onAdding({ step: "choose" })}>
-          <Plus aria-hidden />
-          Add account
-        </PrimaryButton>
+        {accounts.length > 0 && (
+          <>
+            <HideAmountsButton />
+            <PrimaryButton
+              size="sm"
+              onClick={() => onAdding({ step: "choose" })}
+            >
+              <Plus aria-hidden />
+              Add account
+            </PrimaryButton>
+          </>
+        )}
       </PageHeader>
 
       {isLoading || !data ? (
@@ -256,8 +263,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
     <div className="flex flex-col items-center rounded-2xl border border-white/[0.07] bg-white/[0.03] px-6 py-14 text-center">
       <p className="type-heading text-white/90">All your money in one place</p>
       <p className="mt-1 max-w-sm text-13 text-white/50">
-        Connect your bank to see balances and spending update by themselves.
-        Bessel can only read - it never moves money.
+        Add your accounts to see your balances, spending and net worth together.
+        Bessel only reads - it never moves money.
       </p>
       <PrimaryButton className="mt-5" onClick={onAdd}>
         <Plus aria-hidden />
