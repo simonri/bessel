@@ -68,7 +68,7 @@ describe("cashHistory", () => {
 });
 
 describe("NetWorth", () => {
-  it("shows your own net worth and keeps the company's apart", () => {
+  it("counts the company you own toward net worth, shown apart from your own", () => {
     render(
       <NetWorth
         totals={[
@@ -93,14 +93,35 @@ describe("NetWorth", () => {
     );
 
     expect(screen.getAllByText("Net worth")).toHaveLength(1);
-    expect(screen.getByText("14 551 SEK")).toBeTruthy();
-    expect(screen.getByText("109 SEK")).toBeTruthy();
-    // sv-SE groups thousands with a no-break space.
+    expect(screen.getByText("54 551 SEK")).toBeTruthy();
     expect(
-      screen
-        .getByText(/kept out of your own net worth/)
-        .textContent?.replace(/\s/g, " "),
-    ).toContain("40 000 SEK");
+      screen.getByText("Yours and your company's, before tax"),
+    ).toBeTruthy();
+    expect(screen.getByText("14 551 SEK")).toBeTruthy();
+    expect(screen.getByText("40 000 SEK")).toBeTruthy();
+    expect(screen.getByText("109 SEK")).toBeTruthy();
+  });
+
+  it("keeps the plain wording without a company", () => {
+    render(
+      <NetWorth
+        totals={[
+          {
+            owner: "personal",
+            currency: "SEK",
+            cash: 466000,
+            investments: 0,
+            debt: 0,
+            net: 466000,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.queryByText("Your company")).toBeNull();
+    expect(
+      screen.getByText("Cash and investments, minus what you owe"),
+    ).toBeTruthy();
   });
 });
 

@@ -41,43 +41,58 @@ export function accountValue(account: AccountOverview): number {
   return (account.current_balance ?? 0) + (account.holdings_value ?? 0);
 }
 
+/** You own the company, so its money counts toward your net worth, shown apart from your own. */
 export function NetWorth({ totals }: { totals: OverviewTotal[] }) {
-  const personal = totals.filter((t) => t.owner === "personal");
-  const company = totals.filter((t) => t.owner === "company");
+  const currencies = [...new Set(totals.map((t) => t.currency))];
   return (
     <div className="space-y-3">
-      {personal.map((total) => (
-        <div
-          key={total.currency}
-          className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2"
-        >
-          <StatTile
-            label="Net worth"
-            value={whole(total.net, total.currency)}
-            hint="Cash and investments, minus what you owe"
-          />
-          <StatTile label="Cash" value={whole(total.cash, total.currency)} />
-          <StatTile
-            label="Investments"
-            value={whole(total.investments, total.currency)}
-            hint="Holdings plus cash in them"
-          />
-          <StatTile
-            label="Owed"
-            value={whole(total.debt, total.currency)}
-            hint="Klarna pay later and cards"
-          />
-        </div>
-      ))}
-      {company.map((total) => (
-        <p key={total.currency} className="text-12 text-white/50">
-          Your company's accounts hold{" "}
-          <span className="font-medium tabular-nums text-white/75">
-            {whole(total.net, total.currency)}
-          </span>{" "}
-          - kept out of your own net worth.
-        </p>
-      ))}
+      {currencies.map((currency) => {
+        const personal = totals.find(
+          (t) => t.owner === "personal" && t.currency === currency,
+        );
+        const company = totals.find(
+          (t) => t.owner === "company" && t.currency === currency,
+        );
+        const total = (personal?.net ?? 0) + (company?.net ?? 0);
+        return (
+          <div
+            key={currency}
+            className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2"
+          >
+            <StatTile
+              label="Net worth"
+              value={whole(total, currency)}
+              hint={
+                company
+                  ? "Yours and your company's, before tax"
+                  : "Cash and investments, minus what you owe"
+              }
+            />
+            {personal && (
+              <StatTile
+                label="Yours"
+                value={whole(personal.net, currency)}
+                hint={`${whole(personal.cash, currency)} cash - ${whole(personal.investments, currency)} invested`}
+              />
+            )}
+            {company && (
+              <StatTile
+                label="Your company"
+                value={whole(company.net, currency)}
+                hint={`${whole(company.cash, currency)} cash - ${whole(company.investments, currency)} invested`}
+              />
+            )}
+            <StatTile
+              label="Owed"
+              value={whole(
+                (personal?.debt ?? 0) + (company?.debt ?? 0),
+                currency,
+              )}
+              hint="Klarna pay later and cards"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

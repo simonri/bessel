@@ -48,3 +48,32 @@ describe("AccountCard", () => {
     );
   });
 });
+
+describe("AccountCard with more taken out", () => {
+  it("says taken out instead of a negative put in", () => {
+    render(
+      <AccountCard
+        account={{
+          bank_account_id: "af",
+          name: "Avanza AF",
+          is_business: false,
+          currency: "SEK",
+          holdings_value: 0,
+          cash: 8600,
+          total: 8600,
+          acquired_value: 0,
+          deposits: 191715600,
+          withdrawals: 199495200,
+          net_deposits: -7779600,
+          growth: 7788200,
+          dividends: [],
+          first_transaction: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Taken out")).toBeTruthy();
+    expect(screen.getByText("77 796 SEK")).toBeTruthy();
+    expect(screen.queryByText("Put in")).toBeNull();
+  });
+});

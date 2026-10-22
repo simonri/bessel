@@ -75,9 +75,12 @@ export function AccountCard({
         {whole(account.cash, account.currency)} cash
       </p>
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-12">
-        <dt className="text-white/45">Put in</dt>
+        {/* More taken out than put in, as when money moves on to another account. */}
+        <dt className="text-white/45">
+          {account.net_deposits >= 0 ? "Put in" : "Taken out"}
+        </dt>
         <dd className="text-right tabular-nums text-white/75">
-          {whole(account.net_deposits, account.currency)}
+          {whole(Math.abs(account.net_deposits), account.currency)}
         </dd>
         <dt className="text-white/45">Made</dt>
         <dd
