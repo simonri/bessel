@@ -36,7 +36,7 @@ export function WindowTitleBar({
     >
       {leading}
       <Icon className="size-3.5 shrink-0 text-white/60" />
-      <span className="min-w-0 select-none truncate text-xs font-semibold text-white/90">
+      <span className="min-w-0 select-none truncate text-12 font-semibold text-white/90">
         {title}
         {subtitle && (
           <span className="ml-1.5 font-normal text-white/50">/ {subtitle}</span>

@@ -352,7 +352,7 @@ function CounterDetailDialog({
           </DialogHeader>
 
           {/* Stats */}
-          <div className="flex gap-4 border-b border-white/10 pb-4 text-xs text-white/50">
+          <div className="flex gap-4 border-b border-white/10 pb-4 text-12 text-white/50">
             <span>
               <span className="text-white/60">Last: </span>
               {counter.last_reset_at
@@ -368,7 +368,7 @@ function CounterDetailDialog({
           {/* Reset history */}
           <div className="max-h-56 overflow-y-auto">
             {resets.length === 0 ? (
-              <p className="py-4 text-center text-xs text-white/50">
+              <p className="py-4 text-center text-12 text-white/50">
                 No resets recorded yet
               </p>
             ) : (
@@ -379,7 +379,7 @@ function CounterDetailDialog({
                     className="group flex items-center gap-2 rounded px-1 py-1.5"
                   >
                     <Clock className="size-3 shrink-0 text-white/20" />
-                    <span className="flex-1 text-xs text-white/55">
+                    <span className="flex-1 text-12 text-white/55">
                       {formatDateTime(reset.created_at)}
                     </span>
                     <button
@@ -400,7 +400,7 @@ function CounterDetailDialog({
           <div className="border-t border-white/10 pt-3">
             <button
               type="button"
-              className="flex items-center gap-1.5 text-xs text-white/50 transition-colors hover:text-red-400"
+              className="flex items-center gap-1.5 text-12 text-white/50 transition-colors hover:text-red-400"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="size-3" />

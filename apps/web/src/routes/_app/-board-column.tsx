@@ -29,9 +29,7 @@ export function BoardColumn({
     >
       <div className="flex items-center gap-2 mb-2 px-1.5 shrink-0">
         <Icon className={`size-3.5 ${config.color}`} />
-        <span className="text-11 font-semibold text-white/55">
-          {config.label}
-        </span>
+        <span className="type-section text-white/55">{config.label}</span>
         <span className="text-10 font-medium text-white/40 tabular-nums">
           {tasks.length}
         </span>

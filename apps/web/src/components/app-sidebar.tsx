@@ -34,7 +34,7 @@ import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEM =
-  "flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-medium transition-[background-color,color] duration-150";
+  "flex h-7 w-full items-center gap-2 rounded-md px-2 text-left text-12 font-medium transition-[background-color,color] duration-150";
 const NAV_ACTIVE = "bg-white/12 text-white/90";
 const NAV_IDLE = "text-white/55 hover:bg-white/[0.06] hover:text-white/75";
 
@@ -324,10 +324,12 @@ export const AppSidebar = memo(function AppSidebar({
                 ))}
               </SortableContext>
             </DndContext>
-            <MorePagesMenu
-              activePage={activePage}
-              onSelectPage={onSelectPage}
-            />
+            {MORE_PAGES.length > 0 && (
+              <MorePagesMenu
+                activePage={activePage}
+                onSelectPage={onSelectPage}
+              />
+            )}
           </div>
         </nav>
 

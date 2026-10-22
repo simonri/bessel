@@ -42,9 +42,7 @@ function Card({
         <span className="text-11 font-medium text-white/50">{label}</span>
       </div>
       <div className="min-w-0">
-        <p className="text-lg font-semibold tabular-nums tracking-tight text-white/90">
-          {value}
-        </p>
+        <p className="type-metric text-white/90">{value}</p>
         <p className="truncate text-11 text-white/40">{detail ?? " "}</p>
       </div>
     </div>

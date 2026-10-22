@@ -142,7 +142,7 @@ function TaskList({
   if (tasks.length === 0) return null;
   return (
     <div>
-      <p className="px-2.5 pb-1 text-11 font-semibold text-white/40">{label}</p>
+      <p className="px-2.5 pb-1 type-section text-white/40">{label}</p>
       {tasks.map((task) => (
         <div key={task.id} className="flex items-center gap-2">
           <div className="min-w-0 flex-1">

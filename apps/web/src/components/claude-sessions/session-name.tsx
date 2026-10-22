@@ -84,7 +84,7 @@ function SessionNameInput({
           e.currentTarget.blur();
         }
       }}
-      className="h-5 w-48 max-w-full rounded border border-white/15 bg-black/30 px-1 font-normal text-xs text-white/90 outline-none focus:border-primary-500/50"
+      className="h-5 w-48 max-w-full rounded border border-white/15 bg-black/30 px-1 font-normal text-12 text-white/90 outline-none focus:border-primary-500/50"
     />
   );
 }

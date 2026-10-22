@@ -202,7 +202,7 @@ function CategoryDropdown({
           if (kids.length === 0) return null;
           return (
             <div key={parent.id}>
-              <div className="px-2 pt-2.5 pb-1 text-11 font-semibold tracking-wide text-white/40">
+              <div className="px-2 pt-2.5 pb-1 type-section text-white/40">
                 {parent.name}
               </div>
               {kids.map((cat) => (

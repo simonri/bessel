@@ -12,6 +12,14 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import { DataTableHeader } from "@/components/data-table-header";
+import {
+  TABLE,
+  TABLE_CELL,
+  TABLE_EMPTY,
+  TABLE_FRAME,
+  TABLE_HEADER,
+  TABLE_ROW,
+} from "@/components/data-table-styles";
 import { type DataColumnDef, dataTableFeatures } from "@/lib/data-table";
 
 interface DataTableProps<TData extends RowData> {
@@ -45,14 +53,15 @@ export function DataTable<TData extends RowData>({
   });
 
   return (
-    <div className="rounded-md border">
-      <Table className="table-fixed">
-        <DataTableHeader table={table} />
+    <div className={TABLE_FRAME}>
+      <Table className={TABLE}>
+        <DataTableHeader table={table} className={TABLE_HEADER} />
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
+                className={TABLE_ROW}
                 data-state={
                   row.getIsSelected()
                     ? "selected"
@@ -62,15 +71,15 @@ export function DataTable<TData extends RowData>({
                 }
               >
                 {row.getAllCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className={TABLE_CELL}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
             ))
           ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={columns.length} className={TABLE_EMPTY}>
                 {emptyMessage}
               </TableCell>
             </TableRow>

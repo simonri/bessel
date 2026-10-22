@@ -36,7 +36,7 @@ export function ImagePreview({ root, rel }: ImagePreviewProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 px-5 pt-4 pb-3 text-lg font-semibold text-white/90">
+      <div className="shrink-0 px-5 pt-4 pb-3 type-heading text-white/90">
         {basenameOf(rel)}
       </div>
       <div className="min-h-0 flex-1 p-5 pt-0">

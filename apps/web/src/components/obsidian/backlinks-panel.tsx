@@ -54,7 +54,7 @@ export function BacklinksPanel({
   );
 
   if (groups.length === 0) {
-    return <div className="p-3 text-xs text-white/40">No backlinks</div>;
+    return <div className="p-3 text-12 text-white/40">No backlinks</div>;
   }
 
   return (
@@ -64,7 +64,7 @@ export function BacklinksPanel({
       </p>
       {groups.map((group) => (
         <div key={group.src} className="mb-1">
-          <p className="truncate px-3 py-1 text-xs font-medium text-white/70">
+          <p className="truncate px-3 py-1 text-12 font-medium text-white/70">
             {basenameOf(group.src)}
           </p>
           {group.lines.map((line) => (

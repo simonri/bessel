@@ -169,7 +169,7 @@ export const DiffViewer = memo(function DiffViewer({
   );
   if (!hasContent) {
     return (
-      <div className="flex h-full items-center justify-center text-xs text-white/50">
+      <div className="flex h-full items-center justify-center text-12 text-white/50">
         No diff available
       </div>
     );
@@ -185,7 +185,7 @@ export const DiffViewer = memo(function DiffViewer({
       // rows mount/unmount during a scroll, producing a transient sub-pixel
       // shimmer in the visible rows.
       style={{ overflowAnchor: "none" }}
-      className="h-full overflow-auto font-mono text-xs leading-5"
+      className="h-full overflow-auto font-mono text-12 leading-5"
     >
       <table className="diff-viewer min-w-full table-fixed border-collapse">
         <colgroup>

@@ -133,7 +133,7 @@ export function InlineAttachmentBadge({
   } | null>(null);
 
   return (
-    <span className="mx-0.5 inline-flex max-w-full items-center gap-1 align-middle rounded-md border border-white/10 bg-muted/40 py-0.5 pl-0.5 pr-1.5 text-xs">
+    <span className="mx-0.5 inline-flex max-w-full items-center gap-1 align-middle rounded-md border border-white/10 bg-muted/40 py-0.5 pl-0.5 pr-1.5 text-12">
       <span
         ref={thumbRef}
         className="relative inline-block size-5 shrink-0 overflow-hidden rounded bg-muted"
@@ -208,7 +208,7 @@ export function DescriptionWithAttachments({
 
   let offset = 0;
   return (
-    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">
+    <p className="text-13 leading-relaxed whitespace-pre-wrap break-words text-muted-foreground">
       {segments.map((seg) => {
         // Keyed by position in the source text rather than array index —
         // segments are a deterministic, order-preserving split of

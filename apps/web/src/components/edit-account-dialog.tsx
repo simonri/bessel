@@ -210,7 +210,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
             {(field) => (
               <label
                 htmlFor="edit-is-business"
-                className="flex items-start gap-2 text-sm"
+                className="flex items-start gap-2 text-13"
               >
                 <Checkbox
                   id="edit-is-business"
@@ -221,7 +221,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
                 />
                 <span>
                   Company account
-                  <span className="block text-muted-foreground text-xs">
+                  <span className="block text-muted-foreground text-12">
                     Its money isn't your own income or spending. Money between
                     it and your accounts counts as income or spending.
                   </span>
@@ -231,7 +231,7 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
           </form.Field>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
+            <p className="text-destructive text-13">
               Failed to update account. Please try again.
             </p>
           )}

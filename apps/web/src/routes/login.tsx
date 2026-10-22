@@ -33,12 +33,12 @@ function LoginPage() {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4 max-w-md text-center">
-          <p className="text-sm text-white/70">Authentication error</p>
-          <p className="text-xs text-white/50">{error.message}</p>
+          <p className="text-13 text-white/70">Authentication error</p>
+          <p className="text-12 text-white/50">{error.message}</p>
           <button
             type="button"
             onClick={() => void startLogin(loginWithRedirect)}
-            className="text-xs text-white/60 underline"
+            className="text-12 text-white/60 underline"
           >
             Try again
           </button>
@@ -51,7 +51,7 @@ function LoginPage() {
     <div className="flex h-screen w-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-        <p className="text-sm text-white/50">Signing in…</p>
+        <p className="text-13 text-white/50">Signing in…</p>
       </div>
     </div>
   );

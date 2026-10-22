@@ -189,7 +189,7 @@ export function AddPlaceDialog() {
                       <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-1.5 min-w-0">
-                          <span className="font-medium text-sm truncate">
+                          <span className="font-medium text-13 truncate">
                             {result.name}
                           </span>
                           {result.category && (
@@ -198,7 +198,7 @@ export function AddPlaceDialog() {
                             </span>
                           )}
                         </div>
-                        <div className="text-muted-foreground text-xs truncate mt-0.5">
+                        <div className="text-muted-foreground text-12 truncate mt-0.5">
                           {result.address}
                         </div>
                       </div>
@@ -209,7 +209,7 @@ export function AddPlaceDialog() {
             )}
 
             {searchEnabled && searchResults?.results?.length === 0 && (
-              <p className="text-muted-foreground text-center text-sm py-4">
+              <p className="text-muted-foreground text-center text-13 py-4">
                 No results found.
               </p>
             )}
@@ -349,7 +349,7 @@ export function AddPlaceDialog() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex-1 rounded-md border px-3 py-2 text-13 font-medium transition-colors ${
                         field.state.value === "want_to_go"
                           ? "border-amber-500 bg-amber-500/10 text-amber-500"
                           : "border-border text-muted-foreground hover:text-foreground"
@@ -360,7 +360,7 @@ export function AddPlaceDialog() {
                     </button>
                     <button
                       type="button"
-                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex-1 rounded-md border px-3 py-2 text-13 font-medium transition-colors ${
                         field.state.value === "visited"
                           ? "border-green-500 bg-green-500/10 text-green-500"
                           : "border-border text-muted-foreground hover:text-foreground"
@@ -440,7 +440,7 @@ export function AddPlaceDialog() {
                             value={field.state.value}
                             onChange={(e) => field.handleChange(e.target.value)}
                             placeholder="Your thoughts, tips, what you ordered..."
-                            className="border-input bg-background placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm"
+                            className="border-input bg-background placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border px-3 py-2 text-13"
                           />
                         </div>
                       )}
@@ -451,7 +451,7 @@ export function AddPlaceDialog() {
             </form.Subscribe>
 
             {mutation.isError && (
-              <p className="text-destructive text-sm">
+              <p className="text-destructive text-13">
                 Failed to add place. Please try again.
               </p>
             )}

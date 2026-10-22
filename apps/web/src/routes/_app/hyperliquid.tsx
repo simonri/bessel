@@ -128,10 +128,10 @@ function ConnectForm({ onConnect }: { onConnect: (address: string) => void }) {
           <Wallet className="size-5" />
         </span>
         <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold text-white/90">
+          <h2 className="type-heading text-white/90">
             Connect your Hyperliquid account
           </h2>
-          <p className="text-xs leading-relaxed text-white/45">
+          <p className="text-12 leading-relaxed text-white/45">
             Paste your wallet address or a Hypurrscan link. It's read-only:
             Hyperliquid account data is public, and the address is only saved in
             this browser.
@@ -240,8 +240,8 @@ function HyperliquidAccount({
 
       {failed && (
         <div className="flex flex-col items-center gap-1 rounded-2xl bg-white/[0.03] px-4 py-10 text-center ring-1 ring-white/[0.06]">
-          <p className="text-sm font-medium text-white/80">Hang tight 🌧</p>
-          <p className="max-w-sm text-xs leading-relaxed text-white/45">
+          <p className="text-13 font-medium text-white/80">Hang tight 🌧</p>
+          <p className="max-w-sm text-12 leading-relaxed text-white/45">
             Hyperliquid didn't answer just now. Bessel keeps trying in the
             background, so this page fills in again on its own.
           </p>
@@ -370,7 +370,7 @@ function positionsSummary(
 }
 
 const PILL =
-  "w-auto min-w-0 max-w-full gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-xs ring-1 ring-white/[0.06] dark:bg-white/[0.04]";
+  "w-auto min-w-0 max-w-full gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-12 ring-1 ring-white/[0.06] dark:bg-white/[0.04]";
 
 function AccountPicker({
   accounts,

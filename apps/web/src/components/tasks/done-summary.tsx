@@ -5,7 +5,7 @@ export function DoneSummary({ count }: { count: number }) {
   return (
     <p
       className={cn(
-        "rounded-xl px-3 py-2 text-xs",
+        "rounded-xl px-3 py-2 text-12",
         count > 0
           ? "bg-primary-500/10 text-primary-300/90"
           : "bg-white/[0.04] text-white/55",

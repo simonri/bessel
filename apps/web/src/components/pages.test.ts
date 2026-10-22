@@ -12,7 +12,7 @@ describe("orderPrimaryPages", () => {
   });
 
   it("drops pages that are no longer in the sidebar", () => {
-    const order = ["removed", ...PRIMARY_PAGES, "transactions"];
+    const order = ["removed", ...PRIMARY_PAGES, "sessions"];
     expect(orderPrimaryPages(order)).toEqual(PRIMARY_PAGES);
   });
 

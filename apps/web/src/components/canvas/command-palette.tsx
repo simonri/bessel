@@ -520,7 +520,7 @@ function CommandPaletteContent({
                 ? "New task, e.g. Call the bank fri #Home !"
                 : "Search tasks, events, recipes, places, notes - or jump to a page"
             }
-            className="flex-1 bg-transparent text-sm text-white/90 outline-none placeholder:text-white/30"
+            className="flex-1 bg-transparent text-13 text-white/90 outline-none placeholder:text-white/30"
           />
           <kbd className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 font-mono text-10 text-white/50">
             esc
@@ -545,7 +545,7 @@ function CommandPaletteContent({
         ) : (
           <div ref={listRef} className="max-h-[22rem] overflow-y-auto py-1.5">
             {selectable.length === 0 ? (
-              <p className="py-8 text-center text-sm text-white/50">
+              <p className="py-8 text-center text-13 text-white/50">
                 {query.trim().length >= 2
                   ? "Nothing matches"
                   : "Keep typing to search"}
@@ -588,7 +588,7 @@ function CommandPaletteContent({
                     <div className="min-w-0 flex-1">
                       <p
                         className={cn(
-                          "truncate text-sm",
+                          "truncate text-13",
                           item.isOpen ? "text-primary-300" : "text-white/80",
                         )}
                       >

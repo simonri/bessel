@@ -59,7 +59,9 @@ export function PanelRow({
       <div className="min-w-0">
         <p className="truncate text-13 text-white/80">{label}</p>
         {description && (
-          <p className="mt-0.5 truncate text-11 text-white/45">{description}</p>
+          <p className="mt-0.5 truncate type-caption text-white/45">
+            {description}
+          </p>
         )}
       </div>
       {children && (
@@ -86,9 +88,7 @@ export function SectionLabel({
         className,
       )}
     >
-      <p className="text-11 font-semibold tracking-wide text-white/40">
-        {children}
-      </p>
+      <p className="type-section text-white/50">{children}</p>
       {action}
     </div>
   );
@@ -119,9 +119,7 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold tracking-tight text-white/90">
-          {title}
-        </h2>
+        <h2 className="type-title text-white/90">{title}</h2>
         <p className="mt-0.5 text-13 text-white/50">{summary || "\u00a0"}</p>
       </div>
       {children && (
@@ -340,11 +338,11 @@ export function StatTile({
         className,
       )}
     >
-      <p className="truncate text-11 text-white/45">{label}</p>
-      <p className="mt-1 truncate text-lg font-semibold tabular-nums text-white/90">
-        {value}
-      </p>
-      {hint && <p className="mt-0.5 truncate text-11 text-white/40">{hint}</p>}
+      <p className="truncate type-caption text-white/50">{label}</p>
+      <p className="mt-1 truncate type-metric text-white/90">{value}</p>
+      {hint && (
+        <p className="mt-0.5 truncate type-caption text-white/40">{hint}</p>
+      )}
     </div>
   );
 }

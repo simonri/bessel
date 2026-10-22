@@ -100,6 +100,9 @@ export const PRIMARY_PAGES: PageKey[] = [
   "timeline",
   "googleTimeline",
   "activity",
+  "transactions",
+  "accounts",
+  "investments",
   "hyperliquid",
   "sleep",
   "recipes",
@@ -109,9 +112,6 @@ export const PRIMARY_PAGES: PageKey[] = [
 
 /** Tucked behind the sidebar's "More" menu. */
 export const MORE_PAGES: PageKey[] = [
-  "transactions",
-  "accounts",
-  "investments",
   ...(isDesktop ? (["sessions"] as PageKey[]) : []),
 ];
 

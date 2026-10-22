@@ -144,7 +144,7 @@ const ROW_PLACEHOLDER =
 const ICON_BUTTON =
   "flex size-6 shrink-0 items-center justify-center rounded-md text-white/35 transition-colors hover:bg-white/[0.08] hover:text-white/80 focus-visible:bg-white/[0.08] focus-visible:text-white/80 outline-none disabled:pointer-events-none disabled:opacity-30";
 const ADD_BUTTON =
-  "flex h-8 w-fit items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-white/50 transition-colors hover:bg-primary-500/10 hover:text-primary-300 focus-visible:bg-primary-500/10 focus-visible:text-primary-300 outline-none";
+  "flex h-8 w-fit items-center gap-1.5 rounded-lg px-2.5 text-12 font-medium text-white/50 transition-colors hover:bg-primary-500/10 hover:text-primary-300 focus-visible:bg-primary-500/10 focus-visible:text-primary-300 outline-none";
 
 function AutoTextarea({
   value,
@@ -507,7 +507,7 @@ function IngredientGroupCard({
                 setPasting(false);
                 setPasteText("");
               }}
-              className="flex h-8 items-center gap-1.5 rounded-lg bg-primary-500 px-3 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
+              className="flex h-8 items-center gap-1.5 rounded-lg bg-primary-500 px-3 text-12 font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
             >
               Add ingredients
             </button>
@@ -569,7 +569,7 @@ function IngredientsEditor({
         </button>
       </SectionHeading>
       {groups.length === 0 ? (
-        <p className={cn(CARD, "px-3 py-4 text-center text-xs text-white/40")}>
+        <p className={cn(CARD, "px-3 py-4 text-center text-12 text-white/40")}>
           No ingredients yet - add a group to start your list.
         </p>
       ) : (
@@ -651,7 +651,7 @@ function CalloutEditor({
           placeholder={warning ? "Common mistake" : "Pro tip"}
           value={callout.label ?? ""}
           onChange={(e) => onChange({ ...callout, label: e.target.value })}
-          className={cn(GHOST_FIELD, "h-6 flex-1 text-xs")}
+          className={cn(GHOST_FIELD, "h-6 flex-1 text-12")}
         />
         <button
           type="button"
@@ -696,7 +696,7 @@ function StepCard({
     <li className={cn(CARD, "group/step flex gap-3 p-3")}>
       <span
         aria-hidden
-        className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500/15 text-11 font-semibold text-primary-300 tabular-nums"
+        className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500/15 type-badge text-primary-300 tabular-nums"
       >
         {n}
       </span>
@@ -854,7 +854,7 @@ export function RecipeEditor({
         <SectionHeading title="Steps" hint="One card per step, in order." />
         {steps.length === 0 ? (
           <p
-            className={cn(CARD, "px-3 py-4 text-center text-xs text-white/40")}
+            className={cn(CARD, "px-3 py-4 text-center text-12 text-white/40")}
           >
             No steps yet - how does it come together?
           </p>

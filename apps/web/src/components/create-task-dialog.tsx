@@ -114,7 +114,7 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
               onChange(p);
               setOpen(false);
             }}
-            className="flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+            className="flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-13 hover:bg-accent hover:text-accent-foreground"
           >
             {p}
           </button>
@@ -607,7 +607,7 @@ export function TaskFormDialog({
           </form.Subscribe>
 
           {(createMutation.isError || updateMutation.isError) && (
-            <p className="text-sm text-destructive">
+            <p className="text-13 text-destructive">
               {isEditing ? "Failed to update task." : "Failed to create task."}{" "}
               Please try again.
             </p>

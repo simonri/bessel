@@ -107,8 +107,8 @@ const dropAnimationConfig: DropAnimation = {
 function FirstTaskHint() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-1 pb-10 text-center">
-      <p className="text-sm font-medium text-white/80">What's on your mind?</p>
-      <p className="text-xs text-white/45">
+      <p className="text-13 font-medium text-white/80">What's on your mind?</p>
+      <p className="text-12 text-white/45">
         Add your first task above - try "Call mom tomorrow".
       </p>
     </div>
@@ -595,7 +595,7 @@ function Tasks() {
                   type="button"
                   aria-pressed={viewTab === tab.value}
                   className={cn(
-                    "h-6 rounded-full px-3 text-xs font-medium transition-[background-color,color] duration-150",
+                    "h-6 rounded-full px-3 text-12 font-medium transition-[background-color,color] duration-150",
                     viewTab === tab.value
                       ? "bg-white/[0.12] text-white/90 shadow-sm"
                       : "text-white/45 hover:text-white/75",
@@ -705,7 +705,7 @@ function Tasks() {
                 aria-pressed={selecting}
                 title="Pick tasks to send to Claude"
                 className={cn(
-                  "flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors duration-150",
+                  "flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-12 font-medium transition-colors duration-150",
                   selecting
                     ? "bg-primary-500/15 text-primary-200"
                     : "text-white/50 hover:bg-white/[0.06] hover:text-white/80",
@@ -806,7 +806,7 @@ function Tasks() {
                   />
                 ))}
                 {allTasks.length === 0 && (
-                  <p className="py-8 text-center text-xs text-white/40">
+                  <p className="py-8 text-center text-12 text-white/40">
                     {viewTab === "done"
                       ? "Finished tasks land here."
                       : "No tasks yet - add one above."}
@@ -824,7 +824,7 @@ function Tasks() {
                     <ChevronLeft className="size-4" />
                     Previous
                   </Button>
-                  <span className="text-muted-foreground text-sm tabular-nums">
+                  <span className="text-muted-foreground text-13 tabular-nums">
                     {page} / {maxPage}
                   </span>
                   <Button

@@ -103,9 +103,9 @@ function ConversationsSubmenu({
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-64">
         {conversations === null ? (
-          <p className="px-2.5 py-1.5 text-xs text-white/40">Loading…</p>
+          <p className="px-2.5 py-1.5 text-12 text-white/40">Loading…</p>
         ) : conversations.length === 0 ? (
-          <p className="px-2.5 py-1.5 text-xs text-white/40">
+          <p className="px-2.5 py-1.5 text-12 text-white/40">
             No conversations yet
           </p>
         ) : (
@@ -288,7 +288,7 @@ export function ProjectQuickStart({
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <div className="border-b border-white/[0.06] px-3 py-2">
-          <p className="truncate text-xs font-medium text-white/80">
+          <p className="truncate text-12 font-medium text-white/80">
             {project.name}
           </p>
           <p className="truncate text-11 text-white/40">

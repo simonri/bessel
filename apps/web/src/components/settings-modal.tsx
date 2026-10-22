@@ -76,7 +76,7 @@ export function SettingsModal({
         <aside className="flex w-48 shrink-0 flex-col border-r border-white/10 bg-chrome">
           <div className="flex h-[69px] items-center gap-2 px-4">
             <Settings className="size-3.5 text-white/40" />
-            <span className="text-xs font-semibold text-white/60">
+            <span className="text-12 font-semibold text-white/60">
               Settings
             </span>
           </div>

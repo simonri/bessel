@@ -52,7 +52,7 @@ function ProjectPicker({
             e.preventDefault();
             setOpen(true);
           }}
-          className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color] duration-150 ${
+          className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-12 font-medium transition-[background-color,color] duration-150 ${
             active
               ? "text-primary-400"
               : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"
@@ -114,7 +114,7 @@ export const CanvasDock = memo(function CanvasDock() {
             onClick={() =>
               config.multiInstance ? openWindow(key) : toggleWindow(key)
             }
-            className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-xs font-medium transition-[background-color,color] duration-150 ${
+            className={`flex shrink-0 items-center gap-2 rounded px-2.5 py-1.5 text-12 font-medium transition-[background-color,color] duration-150 ${
               active
                 ? "text-primary-400"
                 : "text-white/50 pointer-fine:hover:bg-white/[0.08] pointer-fine:hover:text-white/70"

@@ -177,7 +177,7 @@ export function RecipeImportDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={structure.isPending}
-              className="flex h-8 items-center rounded-full px-3.5 text-xs font-medium text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85 disabled:opacity-40"
+              className="flex h-8 items-center rounded-full px-3.5 text-12 font-medium text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white/85 disabled:opacity-40"
             >
               Cancel
             </button>
@@ -185,7 +185,7 @@ export function RecipeImportDialog({
               type="button"
               onClick={submit}
               disabled={!canSubmit}
-              className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-xs font-medium text-white transition-[background-color,opacity,transform] duration-150 hover:bg-primary-400 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
+              className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-12 font-medium text-white transition-[background-color,opacity,transform] duration-150 hover:bg-primary-400 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
             >
               {structure.isPending ? (
                 <Loader2 className="size-3.5 animate-spin" />

@@ -150,7 +150,7 @@ function ProjectOption({
         className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left text-white/70 transition-colors hover:bg-white/5 peer-checked:bg-white/10 peer-checked:text-white/95 peer-focus-visible:bg-white/5 peer-checked:[&>svg]:opacity-100"
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{label}</span>
+          <span className="block truncate text-13 font-medium">{label}</span>
           {sublabel && (
             <span className="block truncate text-11 text-white/45">
               {sublabel}
@@ -272,7 +272,7 @@ function ConversationOption({
         htmlFor={id}
         className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left text-white/70 transition-colors hover:bg-white/5 peer-checked:bg-white/10 peer-checked:text-white/95 peer-focus-visible:bg-white/5 peer-checked:[&>svg]:opacity-100"
       >
-        <span className="min-w-0 flex-1 truncate text-sm">
+        <span className="min-w-0 flex-1 truncate text-13">
           {conversation ? conversation.title : "New conversation"}
         </span>
         {running && (
@@ -456,16 +456,14 @@ export function NewSessionPage({
         <button
           type="button"
           onClick={onCancel}
-          className="flex w-fit items-center gap-1 text-xs text-white/45 transition-colors hover:text-white/75"
+          className="flex w-fit items-center gap-1 text-12 text-white/45 transition-colors hover:text-white/75"
         >
           <ArrowLeft className="size-3.5" />
           Back
         </button>
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-white/90">
-            New session
-          </h1>
-          <p className="mt-0.5 text-xs text-white/50">
+          <h1 className="type-title text-white/90">New session</h1>
+          <p className="mt-0.5 text-12 text-white/50">
             {background
               ? "Runs on this machine without a window. Reach it from the sidebar, claude.ai or the Claude app."
               : "Opens a fresh canvas with your agents laid out side by side."}
@@ -520,7 +518,7 @@ export function NewSessionPage({
               >
                 <span className="flex items-center gap-2">
                   <Icon className="size-4" />
-                  <span className="text-xs font-medium">{title}</span>
+                  <span className="text-12 font-medium">{title}</span>
                 </span>
                 {selected && (
                   <Check className="size-3.5 shrink-0 text-primary-400" />
@@ -611,7 +609,7 @@ export function NewSessionPage({
                       onSelect={() => setRunMode(mode)}
                       className="flex-col gap-0.5 px-3 py-2.5"
                     >
-                      <span className="text-xs font-medium">{title}</span>
+                      <span className="text-12 font-medium">{title}</span>
                       <span className="text-11 text-white/45">
                         {description}
                       </span>
@@ -637,13 +635,13 @@ export function NewSessionPage({
                         checked={n === effectiveCount}
                         disabled={conversation !== null && n !== 1}
                         onSelect={() => setCount(n)}
-                        className="size-9 items-center justify-center font-mono text-sm tabular-nums"
+                        className="size-9 items-center justify-center font-mono text-13 tabular-nums"
                       >
                         {n}
                       </RadioOption>
                     ))}
                   </fieldset>
-                  <span className="text-xs text-white/40">
+                  <span className="text-12 text-white/40">
                     session{effectiveCount > 1 ? "s" : ""}
                     {background ? ", in the background" : ", tiled evenly"}
                   </span>
@@ -661,7 +659,7 @@ export function NewSessionPage({
                 onChange={(e) => setName(e.target.value)}
                 placeholder={defaultName}
                 aria-label="Session name"
-                className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-white/90 outline-none transition-colors placeholder:text-white/30 focus:border-primary-500/50"
+                className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-13 text-white/90 outline-none transition-colors placeholder:text-white/30 focus:border-primary-500/50"
               />
             </Field>
           </>
@@ -669,7 +667,7 @@ export function NewSessionPage({
       </div>
 
       {!isDesktop && (
-        <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-200/80">
+        <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-12 text-amber-200/80">
           Agent widgets require the desktop app. You can still open an empty
           session here.
         </p>
@@ -679,7 +677,7 @@ export function NewSessionPage({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-white/55 transition-colors hover:text-white/85"
+          className="rounded-lg px-3 py-1.5 text-12 font-medium text-white/55 transition-colors hover:text-white/85"
         >
           Cancel
         </button>
@@ -687,14 +685,14 @@ export function NewSessionPage({
           <button
             type="button"
             onClick={skip}
-            className="rounded-lg border border-white/10 px-3.5 py-1.5 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white/90"
+            className="rounded-lg border border-white/10 px-3.5 py-1.5 text-12 font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white/90"
           >
             Empty session
           </button>
           <button
             type="submit"
             disabled={!isDesktop || starting}
-            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-1.5 text-xs font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color] duration-150 hover:bg-primary-400 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-1.5 text-12 font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color] duration-150 hover:bg-primary-400 disabled:opacity-40"
           >
             <Play className="size-3 fill-current" />
             {submitLabel}

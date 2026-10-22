@@ -15,6 +15,15 @@ import {
 import { useMemo, useRef, useState } from "react";
 import { DataTableHeader } from "@/components/data-table-header";
 import {
+  TABLE,
+  TABLE_CELL,
+  TABLE_EMPTY,
+  TABLE_FRAME,
+  TABLE_GROUP,
+  TABLE_HEADER,
+  TABLE_ROW,
+} from "@/components/data-table-styles";
+import {
   type DataColumnDef,
   type DataTableInstance,
   dataTableFeatures,
@@ -94,19 +103,13 @@ export function VirtualDataTable<TData extends RowData>({
   );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.03]">
-      <Table className="table-fixed text-13">
-        <DataTableHeader
-          table={table}
-          className="bg-white/[0.02] [&_th]:h-9 [&_th]:px-3 [&_th]:text-11 [&_th]:font-medium [&_th]:text-white/45 [&_tr]:border-white/[0.07] [&_tr]:hover:bg-transparent"
-        />
+    <div className={TABLE_FRAME}>
+      <Table className={TABLE}>
+        <DataTableHeader table={table} className={TABLE_HEADER} />
         <TableBody>
           {rows.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center text-12 text-white/40"
-              >
+              <TableCell colSpan={columns.length} className={TABLE_EMPTY}>
                 {emptyMessage}
               </TableCell>
             </TableRow>
@@ -115,10 +118,7 @@ export function VirtualDataTable<TData extends RowData>({
               if (item._kind === "group-header") {
                 return (
                   <tr key={`group-${item.label}`}>
-                    <td
-                      colSpan={columns.length}
-                      className="border-b border-white/[0.05] bg-white/[0.015] px-3 pt-3 pb-1.5 text-11 font-semibold tracking-wide text-white/40"
-                    >
+                    <td colSpan={columns.length} className={TABLE_GROUP}>
                       {item.label}
                     </td>
                   </tr>
@@ -175,16 +175,13 @@ function LongPressRow<TData extends RowData>({
   return (
     <TableRow
       data-state={row.getIsSelected() ? "selected" : undefined}
-      className={cn(
-        "border-white/[0.05] text-white/80 transition-colors duration-150 hover:bg-white/[0.03] data-[state=selected]:bg-primary-500/[0.07]",
-        pressing && "bg-white/[0.06]",
-      )}
+      className={cn(TABLE_ROW, pressing && "bg-white/[0.06]")}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchEnd}
     >
       {row.getAllCells().map((cell) => (
-        <TableCell key={cell.id} className="px-3 py-2">
+        <TableCell key={cell.id} className={TABLE_CELL}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
       ))}

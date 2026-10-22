@@ -81,7 +81,7 @@ function Block({
     >
       {showName && width >= LABEL_MIN_PCT && (
         <span
-          className="truncate text-10 font-semibold"
+          className="truncate type-badge"
           style={{ color: `oklch(0.3 0.06 ${block.hue})` }}
         >
           {block.name}
@@ -103,7 +103,7 @@ function LaneLabel({ lane }: { lane: RibbonLane }) {
         <Icon className="size-3.5" />
       </span>
       <div className="flex min-w-0 flex-col leading-tight">
-        <span className="truncate text-xs font-medium text-white/80">
+        <span className="truncate text-12 font-medium text-white/80">
           {lane.title}
         </span>
         <span className="text-10 tabular-nums text-white/40">
@@ -174,7 +174,7 @@ export function DayRibbon({
         })}
         {nowPct !== null && (
           <span
-            className="absolute -top-0.5 z-10 -translate-x-1/2 rounded-full bg-primary-500 px-1.5 text-10 font-semibold leading-4 text-white shadow-sm"
+            className="absolute -top-0.5 z-10 -translate-x-1/2 rounded-full bg-primary-500 px-1.5 type-badge leading-4 text-white shadow-sm"
             style={{ left: `${Math.min(Math.max(nowPct, 3), 97)}%` }}
           >
             now

@@ -62,15 +62,15 @@ export function AccountCard({
           {account.name}
         </p>
         {account.is_business && (
-          <span className="shrink-0 rounded-md border border-white/15 px-1.5 py-px text-10 font-semibold text-white/55">
+          <span className="shrink-0 rounded-md border border-white/15 px-1.5 py-px type-badge text-white/55">
             Company
           </span>
         )}
       </div>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-white/90">
+      <p className="mt-1 type-metric text-white/90">
         {whole(account.total, account.currency)}
       </p>
-      <p className="text-11 text-white/40">
+      <p className="type-caption text-white/40">
         {whole(account.holdings_value, account.currency)} invested -{" "}
         {whole(account.cash, account.currency)} cash
       </p>
@@ -85,7 +85,7 @@ export function AccountCard({
         >
           {signed(account.growth, account.currency)}
           {madePct && (
-            <span className="ml-1 text-11 opacity-80">{madePct}</span>
+            <span className="ml-1 type-caption opacity-80">{madePct}</span>
           )}
         </dd>
         <dt className="text-white/45">Unrealized</dt>
@@ -104,7 +104,7 @@ export function AccountCard({
         <dd className="text-right tabular-nums text-white/75">
           {whole(dividends, account.currency)}
           {lifetimeDividends > dividends && (
-            <span className="ml-1 text-11 text-white/40">
+            <span className="ml-1 type-caption text-white/40">
               {whole(lifetimeDividends, account.currency)} all time
             </span>
           )}
@@ -129,7 +129,7 @@ function positionColumns(
             {row.original.security_name}
           </div>
           {showAccount && row.original.bank_account_id && (
-            <div className="truncate text-11 text-white/40">
+            <div className="truncate type-caption text-white/40">
               {accountNames.get(row.original.bank_account_id)}
             </div>
           )}
@@ -183,7 +183,7 @@ function positionColumns(
             {gain_loss >= 0 ? "+" : ""}
             {formatAmount(gain_loss)}
             {gain_loss_pct != null && (
-              <span className="ml-1.5 text-11 opacity-80">
+              <span className="ml-1.5 type-caption opacity-80">
                 {gain_loss_pct >= 0 ? "+" : ""}
                 {gain_loss_pct.toFixed(1)}%
               </span>

@@ -539,9 +539,7 @@ function Travel() {
 
                 {selectedPlace.review && (
                   <div>
-                    <p className="mb-1.5 text-11 font-semibold tracking-wide text-white/40">
-                      Review
-                    </p>
+                    <p className="mb-1.5 type-section text-white/40">Review</p>
                     <p className="whitespace-pre-wrap rounded-lg border-l-2 border-primary-500/40 bg-white/[0.03] px-3 py-2 text-12 leading-relaxed text-white/70">
                       {selectedPlace.review}
                     </p>

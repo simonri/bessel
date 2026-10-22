@@ -558,7 +558,7 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
                 e.currentTarget.blur();
               }
             }}
-            className="min-w-0 flex-1 truncate border-none bg-transparent text-lg font-semibold text-white/90 outline-none"
+            className="min-w-0 flex-1 truncate border-none bg-transparent type-title text-white/90 outline-none"
           />
           <ToggleGroup
             type="single"
@@ -581,7 +581,7 @@ export const NoteView = forwardRef<NoteViewHandle, NoteViewProps>(
         </div>
 
         {conflict && (
-          <div className="mx-5 mb-3 flex shrink-0 items-center gap-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200/90">
+          <div className="mx-5 mb-3 flex shrink-0 items-center gap-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-12 text-amber-200/90">
             <TriangleAlert className="size-3.5 shrink-0" />
             <span className="flex-1">This note changed on disk</span>
             <button

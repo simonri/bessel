@@ -30,7 +30,7 @@ export function AppBreakdown({
           >
             <span
               aria-hidden
-              className="flex size-7 shrink-0 items-center justify-center rounded-full text-11 font-semibold uppercase"
+              className="flex size-7 shrink-0 items-center justify-center rounded-full type-badge uppercase"
               style={{ backgroundColor: pastel(hue, 0.16), color: pastel(hue) }}
             >
               {name.slice(0, 1)}
@@ -38,7 +38,7 @@ export function AppBreakdown({
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate text-13 text-white/85">{name}</span>
-                <span className="shrink-0 text-xs tabular-nums text-white/70">
+                <span className="shrink-0 text-12 tabular-nums text-white/70">
                   {fmtDur(app.active_secs)}
                   <span className="ml-2 text-11 text-white/35">
                     {Math.round(app.percentage)}%

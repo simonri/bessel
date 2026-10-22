@@ -22,13 +22,13 @@ export function ProjectPickerMenu({
   return (
     <>
       <div className="border-b border-white/10 px-3 py-2.5">
-        <p className="text-xs font-medium text-white/50">Select project</p>
+        <p className="text-12 font-medium text-white/50">Select project</p>
       </div>
 
       <button
         type="button"
         onClick={() => onSelect()}
-        className="w-full px-3 py-2.5 text-left text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white/80"
+        className="w-full px-3 py-2.5 text-left text-13 text-white/60 transition-colors hover:bg-white/5 hover:text-white/80"
       >
         {noProjectLabel}
       </button>
@@ -42,7 +42,7 @@ export function ProjectPickerMenu({
               onClick={() => onSelect(p)}
               className="flex w-full flex-col px-3 py-2.5 text-left transition-colors hover:bg-white/5"
             >
-              <span className="text-sm font-medium text-white/80">
+              <span className="text-13 font-medium text-white/80">
                 {p.name}
               </span>
               <span className="truncate text-11 text-white/50">

@@ -286,7 +286,7 @@ export function ImportDialog() {
           <form.Subscribe selector={(s) => s.values.source}>
             {(source) =>
               source === "klarna" && klarnaSignIn ? (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-12 text-muted-foreground">
                   Klarna opens in a window. Sign in with BankID and Bessel
                   imports your pay later purchases and payments.
                 </p>
@@ -305,7 +305,7 @@ export function ImportDialog() {
                           onChange={(e) => field.handleChange(e.target.value)}
                           placeholder="eyJhbGciOi…"
                           rows={2}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-12 font-mono text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                         />
                       </div>
                     )}
@@ -320,12 +320,12 @@ export function ImportDialog() {
                           onChange={(e) => field.handleChange(e.target.value)}
                           placeholder="sessionId=…; kdid=…"
                           rows={2}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-12 font-mono text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                         />
                       </div>
                     )}
                   </form.Field>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-12 text-muted-foreground">
                     Devtools → Network → any Klarna request → Headers tab
                   </p>
                 </div>
@@ -334,7 +334,7 @@ export function ImportDialog() {
           </form.Subscribe>
 
           {result && (
-            <div className="text-sm rounded-md border p-3 space-y-0.5">
+            <div className="text-13 rounded-md border p-3 space-y-0.5">
               {result.map((line) => (
                 <p key={line}>{line}</p>
               ))}

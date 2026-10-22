@@ -168,10 +168,10 @@ function SleepPage() {
           <div
             className={`${CARD} flex flex-col items-center gap-1 py-10 text-center`}
           >
-            <p className="text-sm font-medium text-white/80">
+            <p className="text-13 font-medium text-white/80">
               No sleep here yet 🌙
             </p>
-            <p className="max-w-sm text-xs leading-relaxed text-white/45">
+            <p className="max-w-sm text-12 leading-relaxed text-white/45">
               Sleep comes from Apple Health through the Bessel app on your
               iPhone. Wear your watch to bed and the night shows up here.
             </p>

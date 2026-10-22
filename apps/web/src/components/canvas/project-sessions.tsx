@@ -58,7 +58,7 @@ import type { ProjectWithPath } from "./project-picker-menu";
 import { ProjectQuickStart } from "./project-quick-start";
 
 const ROW =
-  "flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md text-left text-xs font-medium transition-[background-color,color] duration-150";
+  "flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md text-left text-12 font-medium transition-[background-color,color] duration-150";
 const ROW_ACTIVE = "bg-white/12 text-white/90";
 const ROW_IDLE = "text-white/55 hover:bg-white/[0.06] hover:text-white/75";
 const ICON_BUTTON =
@@ -185,7 +185,7 @@ function RenameInput({
           e.currentTarget.blur();
         }
       }}
-      className="h-5 min-w-0 flex-1 rounded border border-white/15 bg-black/30 px-1 text-xs text-white/90 outline-none placeholder:text-white/30 focus:border-primary-500/50"
+      className="h-5 min-w-0 flex-1 rounded border border-white/15 bg-black/30 px-1 text-12 text-white/90 outline-none placeholder:text-white/30 focus:border-primary-500/50"
     />
   );
 }
@@ -598,7 +598,7 @@ function HeaderActions({
 function FirstProjectCard({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="mx-1 mt-1 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3">
-      <p className="text-xs font-medium text-white/80">
+      <p className="text-12 font-medium text-white/80">
         Add your first project
       </p>
       <p className="text-11 leading-relaxed text-white/45">
@@ -607,7 +607,7 @@ function FirstProjectCard({ onAdd }: { onAdd: () => void }) {
       <button
         type="button"
         onClick={onAdd}
-        className="flex h-7 w-fit items-center gap-1.5 rounded-md bg-primary-500 px-2.5 text-xs font-medium text-white transition-[background-color] duration-150 hover:bg-primary-400"
+        className="flex h-7 w-fit items-center gap-1.5 rounded-md bg-primary-500 px-2.5 text-12 font-medium text-white transition-[background-color] duration-150 hover:bg-primary-400"
       >
         <Plus className="size-3" />
         Add project
@@ -722,7 +722,7 @@ export function ProjectSessions({
   return (
     <div className="flex flex-col">
       <div className="group/header mb-0.5 flex h-7 items-center justify-between pl-2 pr-1">
-        <span className="text-xs font-medium text-white/40">Projects</span>
+        <span className="text-12 font-medium text-white/40">Projects</span>
         <HeaderActions
           newProjectOpen={newProjectOpen}
           onNewProjectOpenChange={setNewProjectOpen}

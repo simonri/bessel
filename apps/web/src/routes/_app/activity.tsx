@@ -44,7 +44,7 @@ const SURFACE = "rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06]";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-2 px-1 text-xs font-medium text-white/55">{children}</h3>
+    <h3 className="mb-2 px-1 text-12 font-medium text-white/55">{children}</h3>
   );
 }
 
@@ -173,7 +173,7 @@ function ActivityPage() {
               >
                 <SelectTrigger
                   size="default"
-                  className="w-auto min-w-0 gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-xs ring-1 ring-white/[0.06] dark:bg-white/[0.04]"
+                  className="w-auto min-w-0 gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-12 ring-1 ring-white/[0.06] dark:bg-white/[0.04]"
                 >
                   <SelectValue placeholder="Select machine" />
                 </SelectTrigger>
@@ -206,10 +206,10 @@ function ActivityPage() {
         <div
           className={`${SURFACE} flex flex-col items-center gap-1.5 px-6 py-14 text-center`}
         >
-          <p className="text-sm font-medium text-white/85">
+          <p className="text-13 font-medium text-white/85">
             Your screen time lives here 💻
           </p>
-          <p className="max-w-sm text-xs leading-relaxed text-white/50">
+          <p className="max-w-sm text-12 leading-relaxed text-white/50">
             Turn on the activity monitor in Settings → Services on your
             computer, and Bessel will show where your hours go.
           </p>
@@ -234,7 +234,7 @@ function ActivityPage() {
                 nowTs={isCurrentDay ? Date.now() / 1000 : null}
               />
             ) : (
-              <p className="py-6 text-center text-xs text-white/45">
+              <p className="py-6 text-center text-12 text-white/45">
                 {isCurrentDay
                   ? "Nothing on the clock yet today 🌿"
                   : "A screen-free day 🌿"}
@@ -258,7 +258,7 @@ function ActivityPage() {
                 <AppBreakdown apps={daySummary.apps} displayName={mapName} />
               ) : (
                 <p
-                  className={`${SURFACE} px-4 py-8 text-center text-xs text-white/45`}
+                  className={`${SURFACE} px-4 py-8 text-center text-12 text-white/45`}
                 >
                   No apps used this day.
                 </p>

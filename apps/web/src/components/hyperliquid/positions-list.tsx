@@ -74,7 +74,7 @@ function PositionCard({
           <span className="text-13 font-semibold text-white/90">{p.coin}</span>
           <span
             className={cn(
-              "rounded-full px-2 py-px text-10 font-semibold",
+              "rounded-full px-2 py-px type-badge",
               long
                 ? "bg-emerald-300/15 text-emerald-200"
                 : "bg-rose-300/15 text-rose-200",
@@ -127,10 +127,10 @@ export function PositionsList({
   if (perp.positions.length === 0) {
     return (
       <div className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center ring-1 ring-white/[0.06]">
-        <p className="text-sm font-medium text-white/75">
+        <p className="text-13 font-medium text-white/75">
           No open positions ☕
         </p>
-        <p className="mt-0.5 text-xs text-white/40">
+        <p className="mt-0.5 text-12 text-white/40">
           Enjoying the calm. New trades show up here live.
         </p>
       </div>

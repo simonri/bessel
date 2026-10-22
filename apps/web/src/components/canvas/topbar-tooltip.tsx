@@ -28,7 +28,7 @@ export function TopbarTooltip({
       <TooltipContent
         side="bottom"
         sideOffset={6}
-        className="rounded-lg border border-white/10 bg-popover px-2.5 py-1 text-xs font-medium text-white/85 shadow-xl [&>span]:hidden"
+        className="rounded-lg border border-white/10 bg-popover px-2.5 py-1 text-12 font-medium text-white/85 shadow-xl [&>span]:hidden"
       >
         {label}
       </TooltipContent>

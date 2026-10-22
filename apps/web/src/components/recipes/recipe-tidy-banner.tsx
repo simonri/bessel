@@ -34,7 +34,7 @@ export function RecipeTidyBanner({
           type="button"
           onClick={onTidy}
           disabled={disabled}
-          className="flex h-7 shrink-0 items-center gap-1.5 rounded-full bg-primary-500 px-3 text-xs font-medium text-white transition-[background-color,opacity,transform] duration-150 hover:bg-primary-400 active:scale-[0.97] disabled:opacity-60"
+          className="flex h-7 shrink-0 items-center gap-1.5 rounded-full bg-primary-500 px-3 text-12 font-medium text-white transition-[background-color,opacity,transform] duration-150 hover:bg-primary-400 active:scale-[0.97] disabled:opacity-60"
         >
           {pending ? (
             <Loader2 className="size-3.5 animate-spin" />

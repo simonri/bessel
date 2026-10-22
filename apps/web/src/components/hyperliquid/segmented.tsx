@@ -24,7 +24,7 @@ export function Segmented<T extends string>({
           aria-pressed={value === key}
           onClick={() => onChange(key)}
           className={cn(
-            "h-6 rounded-full px-2.5 text-xs font-medium tabular-nums transition-[background-color,color] duration-150",
+            "h-6 rounded-full px-2.5 text-12 font-medium tabular-nums transition-[background-color,color] duration-150",
             value === key
               ? "bg-white/[0.12] text-white/90 shadow-sm"
               : "text-white/45 hover:text-white/75",

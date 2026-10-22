@@ -574,14 +574,14 @@ function Transactions() {
             </span>
             {row.original.transfer_id && (
               <span
-                className="inline-flex shrink-0 items-center rounded-md border border-white/15 bg-white/5 px-1.5 py-px text-10 font-semibold text-white/55"
+                className="inline-flex shrink-0 items-center rounded-md border border-white/15 bg-white/5 px-1.5 py-px type-badge text-white/55"
                 title="Moved between your own accounts, so it counts as neither income nor spending"
               >
                 Transfer
               </span>
             )}
             {row.original.is_business && (
-              <span className="inline-flex shrink-0 items-center rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 py-px text-10 font-semibold text-primary-300">
+              <span className="inline-flex shrink-0 items-center rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 py-px type-badge text-primary-300">
                 Business
               </span>
             )}

@@ -86,7 +86,7 @@ export function TaskDetailDialog({
     <DialogContent className="max-w-md gap-0 p-0">
       <DialogHeader className="px-5 pt-5 pb-0">
         <DialogTitle
-          className="text-base leading-snug pr-6 break-words"
+          className="type-heading leading-snug pr-6 break-words"
           onCopy={(e) => {
             e.preventDefault();
             const text =
@@ -104,9 +104,9 @@ export function TaskDetailDialog({
 
       <div className="px-5 py-4 space-y-5">
         {/* Properties grid */}
-        <div className="grid grid-cols-[100px_1fr] gap-y-3 gap-x-3 text-sm items-center">
+        <div className="grid grid-cols-[100px_1fr] gap-y-3 gap-x-3 text-13 items-center">
           {/* Status */}
-          <span className="text-muted-foreground text-xs">Status</span>
+          <span className="text-muted-foreground text-12">Status</span>
           <div className="flex gap-1">
             {(["todo", "in_progress", "in_review"] as const).map((s) => {
               const sc = STATUS_CONFIG[s];
@@ -132,7 +132,7 @@ export function TaskDetailDialog({
           </div>
 
           {/* Priority */}
-          <span className="text-muted-foreground text-xs">Priority</span>
+          <span className="text-muted-foreground text-12">Priority</span>
           <div className="flex gap-0.5">
             {[0, 1, 2, 3, 4].map((p) => {
               const pc = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG[0];
@@ -165,9 +165,9 @@ export function TaskDetailDialog({
           {/* Due date */}
           {task.due_date && (
             <>
-              <span className="text-muted-foreground text-xs">Due</span>
+              <span className="text-muted-foreground text-12">Due</span>
               <div
-                className={`flex items-center gap-1.5 text-sm ${getDueDateColor(task.due_date)}`}
+                className={`flex items-center gap-1.5 text-13 ${getDueDateColor(task.due_date)}`}
               >
                 <Calendar className="size-3.5" />
                 {formatDueDate(task.due_date)}
@@ -178,8 +178,8 @@ export function TaskDetailDialog({
           {/* Recurrence */}
           {task.is_recurring && recurrence && (
             <>
-              <span className="text-muted-foreground text-xs">Recurrence</span>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-12">Recurrence</span>
+              <div className="flex items-center gap-1.5 text-13 text-muted-foreground">
                 <Repeat className="size-3.5" />
                 {recurrence}
               </div>
@@ -189,8 +189,8 @@ export function TaskDetailDialog({
           {/* Project */}
           {task.project && (
             <>
-              <span className="text-muted-foreground text-xs">Project</span>
-              <div className="flex items-center gap-1.5 text-sm">
+              <span className="text-muted-foreground text-12">Project</span>
+              <div className="flex items-center gap-1.5 text-13">
                 <Folder className="size-3.5 text-muted-foreground" />
                 {task.project}
               </div>
@@ -217,7 +217,7 @@ export function TaskDetailDialog({
         {!isDone ? (
           <Button
             size="sm"
-            className="text-xs"
+            className="text-12"
             onClick={onComplete}
             disabled={completePending}
           >
@@ -228,7 +228,7 @@ export function TaskDetailDialog({
           <Button
             size="sm"
             variant="outline"
-            className="text-xs"
+            className="text-12"
             onClick={onReopen}
             disabled={reopenPending}
           >
@@ -236,14 +236,14 @@ export function TaskDetailDialog({
             Reopen
           </Button>
         )}
-        <Button variant="ghost" size="sm" className="text-xs" onClick={onEdit}>
+        <Button variant="ghost" size="sm" className="text-12" onClick={onEdit}>
           <Pencil className="size-3.5 mr-1.5" />
           Edit
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs"
+          className="text-12"
           onClick={() => {
             copyText(buildTaskPrompt(task))
               .then(() => toast.success("Copied to clipboard"))
@@ -256,7 +256,7 @@ export function TaskDetailDialog({
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs hover:text-destructive ml-auto"
+          className="text-12 hover:text-destructive ml-auto"
           onClick={onDelete}
         >
           <Trash2 className="size-3.5 mr-1.5" />

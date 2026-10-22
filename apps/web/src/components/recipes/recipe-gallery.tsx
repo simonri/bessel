@@ -65,10 +65,10 @@ export function RecipeGallery({
           🍳
         </span>
         <div>
-          <p className="text-sm font-medium text-white/85">
+          <p className="text-13 font-medium text-white/85">
             Your cookbook is empty
           </p>
-          <p className="mt-1 text-xs text-white/45">
+          <p className="mt-1 text-12 text-white/45">
             Paste one from anywhere and it gets sorted into ingredients and
             steps.
           </p>
@@ -77,7 +77,7 @@ export function RecipeGallery({
           <button
             type="button"
             onClick={onImport}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-xs font-medium text-white transition-colors hover:bg-primary-400"
+            className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500 px-4 text-12 font-medium text-white transition-colors hover:bg-primary-400"
           >
             <Sparkles className="size-3.5" />
             Paste a recipe
@@ -85,7 +85,7 @@ export function RecipeGallery({
           <button
             type="button"
             onClick={onCreate}
-            className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-white/60 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white/85"
+            className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-12 font-medium text-white/60 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white/85"
           >
             <Plus className="size-3.5" />
             Write one
@@ -104,10 +104,8 @@ export function RecipeGallery({
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-white/90">
-              What are we cooking?
-            </h2>
-            <p className="text-xs text-white/45">
+            <h2 className="type-title text-white/90">What are we cooking?</h2>
+            <p className="text-12 text-white/45">
               {filtered
                 ? `${recipes.length} of ${totalCount} recipes`
                 : `${totalCount} recipe${totalCount === 1 ? "" : "s"} in your cookbook`}
@@ -117,7 +115,7 @@ export function RecipeGallery({
             <button
               type="button"
               onClick={onImport}
-              className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-white/60 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white/85"
+              className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-12 font-medium text-white/60 ring-1 ring-white/10 transition-colors hover:bg-white/[0.05] hover:text-white/85"
             >
               <Sparkles className="size-3.5" />
               Paste a recipe
@@ -126,7 +124,7 @@ export function RecipeGallery({
               type="button"
               onClick={surprise}
               disabled={recipes.length === 0}
-              className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500/15 px-3.5 text-xs font-medium text-primary-300 ring-1 ring-primary-400/20 transition-colors hover:bg-primary-500/25 disabled:opacity-40"
+              className="flex h-8 items-center gap-1.5 rounded-full bg-primary-500/15 px-3.5 text-12 font-medium text-primary-300 ring-1 ring-primary-400/20 transition-colors hover:bg-primary-500/25 disabled:opacity-40"
             >
               <Shuffle className="size-3.5" />
               Surprise me
@@ -134,7 +132,7 @@ export function RecipeGallery({
           </div>
         </div>
         {recipes.length === 0 ? (
-          <p className="py-10 text-center text-xs text-white/45">
+          <p className="py-10 text-center text-12 text-white/45">
             Nothing matches - try another search.
           </p>
         ) : (

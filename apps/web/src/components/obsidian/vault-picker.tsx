@@ -71,7 +71,7 @@ function VaultCard({
         <ObsidianIcon className="size-5 shrink-0 text-purple-300/80" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium text-white/85">
+            <span className="truncate text-13 font-medium text-white/85">
               {basenameOfPath(path)}
             </span>
             {badge && (

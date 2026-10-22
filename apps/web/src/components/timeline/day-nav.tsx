@@ -24,7 +24,7 @@ export function DayNav({
         <button
           type="button"
           onClick={onToday}
-          className="h-8 rounded-full px-3 text-xs font-medium text-primary-300 transition-colors duration-150 hover:bg-primary-500/10"
+          className="h-8 rounded-full px-3 text-12 font-medium text-primary-300 transition-colors duration-150 hover:bg-primary-500/10"
         >
           Back to today
         </button>
@@ -40,7 +40,7 @@ export function DayNav({
         </button>
         <span
           className={cn(
-            "min-w-28 text-center text-xs font-medium tabular-nums text-white/85",
+            "min-w-28 text-center text-12 font-medium tabular-nums text-white/85",
           )}
         >
           {label}

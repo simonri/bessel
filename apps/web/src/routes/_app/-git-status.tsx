@@ -481,19 +481,19 @@ export function GitStatus() {
         <GitBranch className="size-8 text-white/15" />
         {unconfiguredCount > 0 ? (
           <>
-            <p className="text-sm text-white/50">
+            <p className="text-13 text-white/50">
               {unconfiguredCount === 1
                 ? "1 project isn't set up on this device"
                 : `${unconfiguredCount} projects aren't set up on this device`}
             </p>
-            <p className="text-xs text-white/50">
+            <p className="text-12 text-white/50">
               Set a local path via the folder icon in the top bar
             </p>
           </>
         ) : (
           <>
-            <p className="text-sm text-white/50">No projects configured</p>
-            <p className="text-xs text-white/50">
+            <p className="text-13 text-white/50">No projects configured</p>
+            <p className="text-12 text-white/50">
               Add a project via the folder icon in the top bar
             </p>
           </>
@@ -509,7 +509,7 @@ export function GitStatus() {
         <select
           value={selectedProject?.id ?? ""}
           onChange={(e) => selectProject(e.target.value)}
-          className="min-w-0 flex-1 cursor-pointer truncate bg-transparent text-xs text-white/65 outline-none"
+          className="min-w-0 flex-1 cursor-pointer truncate bg-transparent text-12 text-white/65 outline-none"
         >
           {projects.map((p) => (
             <option key={p.id} value={p.id} className="bg-neutral-900">
@@ -597,7 +597,7 @@ export function GitStatus() {
               onChange={(e) => setCommitMessage(e.target.value)}
               placeholder="Message"
               rows={1}
-              className="w-full resize-none overflow-hidden rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs text-white/80 placeholder:text-white/20 outline-none transition-colors focus:border-white/20"
+              className="w-full resize-none overflow-hidden rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-12 text-white/80 placeholder:text-white/20 outline-none transition-colors focus:border-white/20"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                   e.preventDefault();
@@ -610,7 +610,7 @@ export function GitStatus() {
                 type="button"
                 onClick={() => commitMutation.mutate(commitMessage)}
                 disabled={!canCommit}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/[0.08] py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/[0.12] hover:text-white disabled:cursor-default disabled:opacity-25"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/[0.08] py-1.5 text-12 font-medium text-white/70 transition-colors hover:bg-white/[0.12] hover:text-white disabled:cursor-default disabled:opacity-25"
               >
                 <Check className="size-3" />
                 {commitMutation.isPending
@@ -709,7 +709,7 @@ export function GitStatus() {
                 {stagedOpen && (
                   <>
                     {staged.length === 0 && (
-                      <p className="py-1 pl-8 text-xs text-white/50">
+                      <p className="py-1 pl-8 text-12 text-white/50">
                         Nothing staged
                       </p>
                     )}
@@ -753,7 +753,7 @@ export function GitStatus() {
                 {changesOpen && (
                   <>
                     {changes.length === 0 && (
-                      <p className="py-1 pl-8 text-xs text-white/50">
+                      <p className="py-1 pl-8 text-12 text-white/50">
                         No changes
                       </p>
                     )}
@@ -862,7 +862,7 @@ export function GitStatus() {
               )}
             </>
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-white/50">
+            <div className="flex h-full items-center justify-center text-12 text-white/50">
               Select a file to view diff
             </div>
           )}

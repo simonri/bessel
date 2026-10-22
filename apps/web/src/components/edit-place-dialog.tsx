@@ -202,7 +202,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`flex-1 rounded-md border px-3 py-2 text-13 font-medium transition-colors ${
                       field.state.value === "want_to_go"
                         ? "border-amber-500 bg-amber-500/10 text-amber-500"
                         : "border-border text-muted-foreground hover:text-foreground"
@@ -213,7 +213,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`flex-1 rounded-md border px-3 py-2 text-13 font-medium transition-colors ${
                       field.state.value === "visited"
                         ? "border-green-500 bg-green-500/10 text-green-500"
                         : "border-border text-muted-foreground hover:text-foreground"
@@ -294,14 +294,14 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   placeholder="Your thoughts, tips, what you ordered..."
-                  className="border-input bg-background placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm"
+                  className="border-input bg-background placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border px-3 py-2 text-13"
                 />
               </div>
             )}
           </form.Field>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
+            <p className="text-destructive text-13">
               Failed to update place. Please try again.
             </p>
           )}

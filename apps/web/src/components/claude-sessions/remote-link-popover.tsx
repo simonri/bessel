@@ -80,7 +80,7 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
     return (
       <div className="flex h-56 flex-col items-center justify-center gap-3 px-6 text-center">
         <Spinner className="size-5 text-white/50" />
-        <p className="text-xs text-white/50">
+        <p className="text-12 text-white/50">
           Waiting for Remote Control to connect…
         </p>
         {slow && (
@@ -109,7 +109,7 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
               () => toast.error("Couldn't copy the link"),
             );
           }}
-          className="flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md border border-white/10 text-xs font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95"
+          className="flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md border border-white/10 text-12 font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95"
         >
           {copied ? (
             <Check className="size-3.5" />
@@ -121,7 +121,7 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
         <button
           type="button"
           onClick={() => void window.electron?.shell.openExternal(url)}
-          className="flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md border border-white/10 text-xs font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95"
+          className="flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md border border-white/10 text-12 font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95"
         >
           <ExternalLink className="size-3.5" />
           Open

@@ -44,7 +44,7 @@ export function TradesTab() {
         cell: ({ row }) => (
           <span
             className={cn(
-              "inline-flex h-5 items-center rounded-md px-1.5 text-11 font-medium capitalize",
+              "inline-flex h-5 items-center rounded-md px-1.5 type-badge capitalize",
               row.original.trade_type === "buy"
                 ? "bg-emerald-500/10 text-emerald-400"
                 : "bg-red-500/10 text-red-400",

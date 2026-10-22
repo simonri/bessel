@@ -179,7 +179,7 @@ export function AgentUsageDropdown() {
               ))}
             </div>
           ) : !hasAnyData ? (
-            <p className="text-xs text-white/50">
+            <p className="text-12 text-white/50">
               No usage yet. Open the Bessel desktop app on a computer where you
               use Claude Code.
             </p>
@@ -290,7 +290,7 @@ export function AgentUsageDropdown() {
                         <TooltipContent
                           side="top"
                           sideOffset={6}
-                          className="rounded-lg border border-white/10 bg-popover px-2.5 py-1 text-xs font-medium text-white/85 shadow-xl [&>span]:hidden"
+                          className="rounded-lg border border-white/10 bg-popover px-2.5 py-1 text-12 font-medium text-white/85 shadow-xl [&>span]:hidden"
                         >
                           <span className="text-white/50">
                             {format(parseISO(d.date), "MMM d")} -{" "}
@@ -308,7 +308,7 @@ export function AgentUsageDropdown() {
               {todayModels.length > 0 && (
                 <div className="space-y-1.5 border-t border-white/[0.06] pt-4">
                   <p className="text-13 text-white/55">
-                    <span className="text-base font-medium tabular-nums text-white/85">
+                    <span className="text-15 font-medium tabular-nums text-white/85">
                       {fmtTokens(todayTotal)}
                     </span>{" "}
                     tokens today

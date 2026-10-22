@@ -51,7 +51,7 @@ export function FileItem({
     >
       <FileTypeDot filename={name} />
 
-      <span className="min-w-0 flex-1 truncate text-xs">
+      <span className="min-w-0 flex-1 truncate text-12">
         <span className="text-white/80">{name}</span>
         {dir && <span className="ml-1.5 text-white/50">{dir}</span>}
       </span>
@@ -84,7 +84,7 @@ export function FileItem({
       </button>
 
       <span
-        className={`w-3 shrink-0 text-center text-10 font-semibold ${STATUS_COLOR[file.status] ?? "text-white/50"}`}
+        className={`w-3 shrink-0 text-center type-badge ${STATUS_COLOR[file.status] ?? "text-white/50"}`}
       >
         {statusBadge}
       </span>
@@ -118,9 +118,7 @@ export function SectionHeader({
       className="group flex cursor-pointer items-center gap-1 px-2 py-[5px] hover:bg-white/[0.03]"
     >
       <Chevron className="size-3 shrink-0 text-white/40" />
-      <span className="flex-1 text-10 font-semibold text-white/50">
-        {label}
-      </span>
+      <span className="flex-1 type-badge text-white/50">{label}</span>
       {count > 0 && (
         <span className="rounded px-1 text-10 text-white/50">{count}</span>
       )}

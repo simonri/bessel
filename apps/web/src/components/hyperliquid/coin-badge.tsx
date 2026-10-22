@@ -18,7 +18,7 @@ export function CoinBadge({
     <span
       aria-hidden
       className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+        "flex size-8 shrink-0 items-center justify-center rounded-full text-12 font-semibold",
         className,
       )}
       style={{ backgroundColor: pastel(hue, 0.16), color: pastel(hue) }}

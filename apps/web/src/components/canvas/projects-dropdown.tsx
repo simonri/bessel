@@ -96,7 +96,7 @@ function SshFolderPicker({
   return (
     <div className="absolute inset-0 z-10 flex flex-col bg-popover">
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
-        <span className="truncate text-xs font-medium text-white/70">
+        <span className="truncate text-12 font-medium text-white/70">
           {host}
         </span>
         <button
@@ -112,13 +112,13 @@ function SshFolderPicker({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading && (
-          <div className="px-3 py-4 text-center text-xs text-white/50">
+          <div className="px-3 py-4 text-center text-12 text-white/50">
             Loading…
           </div>
         )}
         {error && !loading && (
           <div className="space-y-2 px-3 py-4">
-            <p className="text-xs leading-relaxed text-red-400/80">{error}</p>
+            <p className="text-12 leading-relaxed text-red-400/80">{error}</p>
             <button
               type="button"
               onClick={() => load("~")}
@@ -134,13 +134,13 @@ function SshFolderPicker({
               <button
                 type="button"
                 onClick={() => cwd && load(parentDir(cwd))}
-                className="px-3 py-1.5 text-left text-xs text-white/50 transition-colors hover:bg-white/5"
+                className="px-3 py-1.5 text-left text-12 text-white/50 transition-colors hover:bg-white/5"
               >
                 ../
               </button>
             )}
             {dirs.length === 0 && (
-              <div className="px-3 py-4 text-center text-xs text-white/50">
+              <div className="px-3 py-4 text-center text-12 text-white/50">
                 No subfolders
               </div>
             )}
@@ -149,7 +149,7 @@ function SshFolderPicker({
                 type="button"
                 key={d}
                 onClick={() => cwd && load(joinDir(cwd, d))}
-                className="truncate px-3 py-1.5 text-left text-xs text-white/70 transition-colors hover:bg-white/5"
+                className="truncate px-3 py-1.5 text-left text-12 text-white/70 transition-colors hover:bg-white/5"
               >
                 {d}/
               </button>
@@ -161,7 +161,7 @@ function SshFolderPicker({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
+          className="rounded px-2.5 py-1 text-12 text-white/50 transition-colors hover:text-white/70"
         >
           Cancel
         </button>
@@ -169,7 +169,7 @@ function SshFolderPicker({
           type="button"
           onClick={() => cwd && onSelect(cwd)}
           disabled={!cwd}
-          className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
+          className="rounded bg-primary-500 px-2.5 py-1 text-12 font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
         >
           Select this folder
         </button>
@@ -330,7 +330,7 @@ export function ProjectsDropdown() {
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="Name"
                       ref={focusOnMount}
-                      className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
+                      className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-12 text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                     />
                     <p className="text-11 text-white/30">
                       Location on this device
@@ -340,7 +340,7 @@ export function ProjectsDropdown() {
                       value={editSshHost}
                       onChange={(e) => setEditSshHost(e.target.value)}
                       placeholder="SSH Host (optional, e.g. user@host)"
-                      className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
+                      className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-12 text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                     />
                     <div className="flex gap-1.5">
                       <input
@@ -348,7 +348,7 @@ export function ProjectsDropdown() {
                         value={editPath}
                         onChange={(e) => setEditPath(e.target.value)}
                         placeholder="Path"
-                        className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
+                        className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-12 text-white/80 outline-none placeholder:text-white/20 focus:border-primary-500/40"
                       />
                       <button
                         type="button"
@@ -358,7 +358,7 @@ export function ProjectsDropdown() {
                             if (!editName) setEditName(name);
                           })
                         }
-                        className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white/80"
+                        className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2 py-1.5 text-12 text-white/50 transition-colors hover:bg-white/10 hover:text-white/80"
                       >
                         Browse
                       </button>
@@ -367,7 +367,7 @@ export function ProjectsDropdown() {
                       <button
                         type="button"
                         onClick={() => setEditingId(null)}
-                        className="rounded px-2.5 py-1 text-xs text-white/50 transition-colors hover:text-white/70"
+                        className="rounded px-2.5 py-1 text-12 text-white/50 transition-colors hover:text-white/70"
                       >
                         Cancel
                       </button>
@@ -380,7 +380,7 @@ export function ProjectsDropdown() {
                           updateMutation.isPending ||
                           locationMutation.isPending
                         }
-                        className="rounded bg-primary-500 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
+                        className="rounded bg-primary-500 px-2.5 py-1 text-12 font-medium text-white transition-colors hover:bg-primary-400 disabled:opacity-40"
                       >
                         Save
                       </button>

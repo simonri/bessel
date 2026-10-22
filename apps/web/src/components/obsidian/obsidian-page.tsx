@@ -53,7 +53,7 @@ function ObsidianWidget({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.06] px-3 py-1.5">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/70">
+        <span className="min-w-0 flex-1 truncate text-12 font-medium text-white/70">
           {basenameOf(rel)}
         </span>
       </div>

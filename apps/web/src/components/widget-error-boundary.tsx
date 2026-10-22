@@ -29,7 +29,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
           <AlertTriangle className="size-5 text-white/25" />
-          <p className="text-xs text-white/50">Couldn't render this view</p>
+          <p className="text-12 text-white/50">Couldn't render this view</p>
         </div>
       );
     }

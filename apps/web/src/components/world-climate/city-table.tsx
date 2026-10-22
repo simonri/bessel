@@ -338,7 +338,7 @@ export function CityTable({
                   {score && (
                     <span
                       title={describeScore(score)}
-                      className="inline-flex h-6 min-w-9 items-center justify-center rounded-[4px] px-1.5 text-11 font-semibold text-black/80"
+                      className="inline-flex h-6 min-w-9 items-center justify-center rounded-[4px] px-1.5 type-badge text-black/80"
                       style={{ background: scoreColor(score.total) }}
                     >
                       {score.total}

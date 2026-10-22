@@ -190,7 +190,7 @@ const BrowserToolbar = memo(function BrowserToolbar({
           onChange={(e) => setAddress(e.target.value)}
           onFocus={(e) => e.target.select()}
           placeholder="Search or enter address"
-          className="min-w-0 flex-1 bg-transparent text-xs text-white/80 placeholder:text-white/30 focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-12 text-white/80 placeholder:text-white/30 focus:outline-none"
           spellCheck={false}
         />
       </form>
@@ -402,17 +402,17 @@ export function BrowserWidget({ initialUrl, onUrlChange }: BrowserWidgetProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-950 px-6 text-center">
             <ShieldAlert className="size-6 text-white/30" />
             <div>
-              <div className="text-sm text-white/70">
+              <div className="text-13 text-white/70">
                 Couldn't load {hostOf(currentUrl)}
               </div>
-              <div className="mt-0.5 text-xs text-white/50">
+              <div className="mt-0.5 text-12 text-white/50">
                 {failed.description}
               </div>
             </div>
             <button
               type="button"
               onClick={() => webviewRef.current?.reload()}
-              className="rounded-md border border-white/10 px-3 py-1 text-xs text-white/70 transition hover:bg-white/10"
+              className="rounded-md border border-white/10 px-3 py-1 text-12 text-white/70 transition hover:bg-white/10"
             >
               Retry
             </button>

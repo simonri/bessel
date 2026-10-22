@@ -41,13 +41,13 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
             </div>
             <div className="space-y-2">
-              <h1 className="text-xl font-semibold">Something went wrong</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="type-title">Something went wrong</h1>
+              <p className="text-13 text-muted-foreground">
                 An unexpected error occurred. Try refreshing the page.
               </p>
             </div>
             {this.state.error && (
-              <pre className="rounded-md bg-muted p-3 text-xs text-left text-muted-foreground overflow-auto max-h-32">
+              <pre className="rounded-md bg-muted p-3 text-12 text-left text-muted-foreground overflow-auto max-h-32">
                 {this.state.error.message}
               </pre>
             )}
@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <button
                 type="button"
                 onClick={this.handleReset}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-13 font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <RotateCcw className="size-4" />
                 Try again
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-13 font-medium hover:bg-accent transition-colors"
               >
                 Refresh page
               </button>

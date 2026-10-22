@@ -125,7 +125,7 @@ function TimelinePage() {
             >
               <SelectTrigger
                 size="default"
-                className="w-auto min-w-0 gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-xs ring-1 ring-white/[0.06] dark:bg-white/[0.04]"
+                className="w-auto min-w-0 gap-1.5 rounded-full border-0 bg-white/[0.04] px-3 text-12 ring-1 ring-white/[0.06] dark:bg-white/[0.04]"
               >
                 <SelectValue placeholder="Select machine" />
               </SelectTrigger>
@@ -166,8 +166,8 @@ function TimelinePage() {
           </div>
         ) : isEmpty ? (
           <div className="flex flex-col items-center gap-1 py-8 text-center">
-            <p className="text-sm font-medium text-white/80">A quiet day 🌙</p>
-            <p className="max-w-sm text-xs leading-relaxed text-white/45">
+            <p className="text-13 font-medium text-white/80">A quiet day 🌙</p>
+            <p className="max-w-sm text-12 leading-relaxed text-white/45">
               Nothing was recorded here. Sleep comes from Apple Health, screen
               time from the activity monitor and places from your Google
               Timeline.

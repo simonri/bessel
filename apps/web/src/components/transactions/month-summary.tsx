@@ -308,7 +308,7 @@ export function MonthSummary({
       <Panel className="divide-y-0 px-4 pt-3 pb-2">
         <div className="mb-1 flex items-center justify-between gap-3">
           <p className="text-12 text-white/55">The last 12 months</p>
-          <div className="flex items-center gap-3 text-11 text-white/50">
+          <div className="flex items-center gap-3 type-caption text-white/50">
             <span className="flex items-center gap-1.5">
               <span
                 className="size-2 rounded-sm"

@@ -51,16 +51,16 @@ export function AvatarMenu() {
       >
         {user && (
           <div className="border-b border-white/[0.08] px-4 py-3">
-            <p className="truncate text-sm font-medium text-white/80">
+            <p className="truncate text-13 font-medium text-white/80">
               {user.name}
             </p>
-            <p className="truncate text-xs text-white/50">{user.email}</p>
+            <p className="truncate text-12 text-white/50">{user.email}</p>
           </div>
         )}
         <button
           type="button"
           onClick={() => logOut(logout)}
-          className="flex w-full items-center px-4 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+          className="flex w-full items-center px-4 py-2.5 text-13 text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
         >
           Log out
         </button>

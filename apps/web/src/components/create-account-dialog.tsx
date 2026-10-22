@@ -168,7 +168,7 @@ export function CreateAccountDialog() {
           </div>
 
           {mutation.isError && (
-            <p className="text-destructive text-sm">
+            <p className="text-destructive text-13">
               Failed to create account. Please try again.
             </p>
           )}

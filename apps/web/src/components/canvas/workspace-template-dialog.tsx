@@ -173,7 +173,7 @@ function WidgetRow({
               "Commands to run, one per line (optional)\nnpm install\nnpm run dev"
             }
             rows={2}
-            className="resize-none font-mono text-xs"
+            className="resize-none font-mono text-12"
           />
         </>
       )}
@@ -348,7 +348,7 @@ function TemplateList({
       {templates.length === 0 ? (
         <div className="rounded-xl border border-dashed py-10 text-center">
           <LayoutTemplate className="mx-auto mb-2 size-6 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">No templates yet</p>
+          <p className="text-13 text-muted-foreground">No templates yet</p>
         </div>
       ) : (
         <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
@@ -358,8 +358,8 @@ function TemplateList({
               className="flex items-center gap-2 rounded-lg border p-3"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{t.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-13 font-medium">{t.name}</p>
+                <p className="truncate text-12 text-muted-foreground">
                   {widgetSummary(t.widgets)}
                 </p>
               </div>

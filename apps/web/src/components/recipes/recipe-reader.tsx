@@ -189,7 +189,7 @@ function Callout({ callout }: { callout: RecipeCallout }) {
 function Step({ step, number }: { step: RecipeStep; number: number }) {
   return (
     <li className="flex gap-3">
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500/15 text-11 font-semibold text-primary-300">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500/15 type-badge text-primary-300">
         {number}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-2 pt-0.5">
@@ -262,7 +262,7 @@ export function RecipeReader({
           {meta.emoji}
         </span>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <h1 className="truncate text-lg font-semibold tracking-tight text-white/95">
+          <h1 className="truncate type-title text-white/95">
             {title || "Untitled"}
           </h1>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -293,7 +293,7 @@ export function RecipeReader({
       </div>
 
       {isEmpty(body) ? (
-        <p className="py-6 text-center text-xs text-white/40">
+        <p className="py-6 text-center text-12 text-white/40">
           Nothing written yet - switch to Edit to add ingredients and steps.
         </p>
       ) : (
@@ -308,7 +308,7 @@ export function RecipeReader({
                   // biome-ignore lint/suspicious/noArrayIndexKey: groups have no ids; order is the content
                   <div key={g}>
                     {group.title && (
-                      <h4 className="mb-1 px-1.5 text-xs font-semibold text-white/70">
+                      <h4 className="mb-1 px-1.5 text-12 font-semibold text-white/70">
                         {group.title}
                       </h4>
                     )}

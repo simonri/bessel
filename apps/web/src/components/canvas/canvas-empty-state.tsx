@@ -18,7 +18,7 @@ const WIDGET_ACTIONS: ModuleKey[] = isDesktop
   : ["tasks"];
 
 const ACTION =
-  "inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.05] px-3 text-xs font-medium text-white/75 transition-colors duration-150 hover:border-white/20 hover:bg-white/[0.1] hover:text-white/95 [&_svg]:size-3.5 [&_svg]:shrink-0";
+  "inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.05] px-3 text-12 font-medium text-white/75 transition-colors duration-150 hover:border-white/20 hover:bg-white/[0.1] hover:text-white/95 [&_svg]:size-3.5 [&_svg]:shrink-0";
 
 /** What to do in a session with nothing open yet. */
 export function CanvasEmptyState() {
@@ -45,12 +45,12 @@ export function CanvasEmptyState() {
         )}
       >
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-medium text-white/90">
+          <h2 className="text-13 font-medium text-white/90">
             {project
               ? `Start something in ${project.name}`
               : "This session is empty"}
           </h2>
-          <p className="text-xs text-white/50">
+          <p className="text-12 text-white/50">
             Start an agent here, or add widgets from the dock below.
           </p>
         </div>

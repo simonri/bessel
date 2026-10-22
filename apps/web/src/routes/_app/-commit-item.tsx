@@ -19,7 +19,7 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
   return (
     <div className="cursor-default px-3 py-1.5 hover:bg-white/[0.04]">
       <div className="flex items-baseline gap-2">
-        <span className="flex-1 truncate text-xs leading-tight text-white/70">
+        <span className="flex-1 truncate text-12 leading-tight text-white/70">
           {commit.subject}
         </span>
         <span className="shrink-0 whitespace-nowrap text-10 text-white/50">

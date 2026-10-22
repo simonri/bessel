@@ -23,7 +23,7 @@ export function ImageDiffViewer({
 }) {
   if (!oldImage && !newImage) {
     return (
-      <div className="flex h-full items-center justify-center text-xs text-white/50">
+      <div className="flex h-full items-center justify-center text-12 text-white/50">
         Image not available
       </div>
     );

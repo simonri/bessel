@@ -78,9 +78,7 @@ export function CryptoPairTicker({ pair }: { pair: string }) {
 
   return (
     <div className="flex h-6 shrink-0 items-center gap-1.5 rounded-full bg-white/[0.04] px-2.5 ring-1 ring-white/[0.06]">
-      <span className="text-10 font-semibold tracking-wide text-white/45">
-        {pair}
-      </span>
+      <span className="type-badge text-white/45">{pair}</span>
       {formatted === null ? (
         <span className="h-2 w-12 animate-pulse rounded-full bg-white/10">
           <span className="sr-only">Loading price</span>

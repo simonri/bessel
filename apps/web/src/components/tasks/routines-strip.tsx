@@ -36,7 +36,7 @@ function RoutineChip({
       <button
         type="button"
         onClick={onSelect}
-        className="flex min-w-0 items-center gap-1.5 text-left text-xs outline-none"
+        className="flex min-w-0 items-center gap-1.5 text-left text-12 outline-none"
       >
         <span
           className={cn(
@@ -70,7 +70,7 @@ export function RoutinesStrip({
   if (routines.length === 0) return null;
   return (
     <section aria-label="Routines" className="flex flex-col gap-2 pb-4">
-      <div className="flex items-center gap-1.5 px-2.5 text-11 font-semibold text-white/45">
+      <div className="flex items-center gap-1.5 px-2.5 type-section text-white/45">
         <Repeat className="size-3" />
         Routines
       </div>

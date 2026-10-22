@@ -23,7 +23,7 @@ function sshQuote(p: string): string {
 }
 
 const PANEL_BUTTON =
-  "rounded-md border border-white/10 px-3 py-1.5 text-xs font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95";
+  "rounded-md border border-white/10 px-3 py-1.5 text-12 font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95";
 
 function Panel({
   title,
@@ -36,9 +36,9 @@ function Panel({
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 bg-[#06060e] px-6 text-center">
-      <p className="text-sm text-white/80">{title}</p>
+      <p className="text-13 text-white/80">{title}</p>
       {detail && (
-        <p className="max-w-sm text-xs leading-relaxed text-white/50">
+        <p className="max-w-sm text-12 leading-relaxed text-white/50">
           {detail}
         </p>
       )}
@@ -51,7 +51,7 @@ function Starting({ label }: { label: string }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 bg-[#06060e]">
       <Spinner className="size-5 text-white/50" />
-      <p className="text-xs text-white/45">{label}</p>
+      <p className="text-12 text-white/45">{label}</p>
     </div>
   );
 }

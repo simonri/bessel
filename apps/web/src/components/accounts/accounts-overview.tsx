@@ -212,11 +212,11 @@ function AccountRow({
           <p className="truncate text-13 font-medium text-white/85">
             {account.name}
           </p>
-          <p className="truncate text-11 text-white/45">
+          <p className="truncate type-caption text-white/45">
             {sourceLine(account)}
           </p>
           {problem && (
-            <p className="mt-0.5 flex items-center gap-1 truncate text-11 text-amber-300/90">
+            <p className="mt-0.5 flex items-center gap-1 truncate type-caption text-amber-300/90">
               <AlertTriangle className="size-3 shrink-0" aria-hidden />
               {problem}
             </p>
@@ -227,7 +227,7 @@ function AccountRow({
             {formatMoney(accountValue(account), account.currency)}
           </p>
           {account.holdings_value != null && (
-            <p className="text-11 tabular-nums text-white/40">
+            <p className="type-caption tabular-nums text-white/40">
               {formatMoney(account.current_balance ?? 0, account.currency)} cash
             </p>
           )}
@@ -273,7 +273,7 @@ export function AccountGroups({
             <SectionLabel
               action={
                 issues > 0 && (
-                  <span className="text-11 text-amber-300/90">
+                  <span className="type-caption text-amber-300/90">
                     {issues} need{issues === 1 ? "s" : ""} attention
                   </span>
                 )

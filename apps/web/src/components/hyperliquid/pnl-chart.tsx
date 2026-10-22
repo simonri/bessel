@@ -30,10 +30,10 @@ export function PnlChart({ points, range }: { points: Point[]; range: Range }) {
   if (points.length < 2) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-1 text-center">
-        <p className="text-sm font-medium text-white/75">
+        <p className="text-13 font-medium text-white/75">
           Nothing to chart yet
         </p>
-        <p className="text-xs text-white/40">
+        <p className="text-12 text-white/40">
           Try a longer range once there's some history.
         </p>
       </div>

@@ -19,8 +19,8 @@ export function SpotList({
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl bg-white/[0.03] px-4 py-6 text-center ring-1 ring-white/[0.06]">
-        <p className="text-sm font-medium text-white/75">No spot balances</p>
-        <p className="mt-0.5 text-xs text-white/40">
+        <p className="text-13 font-medium text-white/75">No spot balances</p>
+        <p className="mt-0.5 text-12 text-white/40">
           Coins you hold outright land here.
         </p>
       </div>

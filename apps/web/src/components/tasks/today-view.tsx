@@ -4,7 +4,7 @@ import { groupTasksByWhen, type WhenGroup } from "./today-groups";
 
 function GroupHeader({ group }: { group: WhenGroup }) {
   return (
-    <div className="flex items-center gap-1.5 px-2.5 pb-1 text-11 font-semibold text-white/45">
+    <div className="flex items-center gap-1.5 px-2.5 pb-1 type-section text-white/45">
       {group.key === "doing" && (
         <span
           aria-hidden
@@ -36,8 +36,8 @@ export function TodayView({
   if (groups.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-1 py-10 text-center">
-        <p className="text-sm font-medium text-white/80">All clear ✨</p>
-        <p className="text-xs text-white/45">
+        <p className="text-13 font-medium text-white/80">All clear ✨</p>
+        <p className="text-12 text-white/45">
           Enjoy your day. New tasks show up here.
         </p>
       </div>

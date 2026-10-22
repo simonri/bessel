@@ -19,7 +19,7 @@ export function WeekStrip({
   return (
     <div className="flex flex-col gap-3 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]">
       <div className="flex items-baseline justify-between">
-        <span className="text-xs font-medium text-white/70">This week</span>
+        <span className="text-12 font-medium text-white/70">This week</span>
         {usual !== null && (
           <span className="text-11 text-white/40">usual {fmtDur(usual)}</span>
         )}

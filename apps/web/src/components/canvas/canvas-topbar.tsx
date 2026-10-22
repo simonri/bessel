@@ -76,7 +76,7 @@ export const CanvasTopBar = memo(function CanvasTopBar({
             </button>
           )}
           <BesselMark />
-          <span className="text-[15px] font-medium tracking-tight text-white/90 max-md:hidden">
+          <span className="text-15 font-medium tracking-tight text-white/90 max-md:hidden">
             Bessel
           </span>
           {version && (

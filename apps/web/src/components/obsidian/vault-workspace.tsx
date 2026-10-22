@@ -73,7 +73,7 @@ function EmptyNoteState({ onNewNote }: { onNewNote: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
       <FileText className="size-8 text-white/15" />
-      <p className="text-sm text-white/50">No note open</p>
+      <p className="text-13 text-white/50">No note open</p>
       <p className="flex items-center gap-1 text-11 text-white/35">
         <span>Select a note in the sidebar or</span>
         <button

@@ -510,7 +510,7 @@ export function TerminalWidget({
                 : "bg-primary-500/5 border-primary-500/20"
             }`}
           >
-            <span className="text-primary-400 text-sm font-medium bg-black/60 px-3 py-1.5 rounded-md">
+            <span className="text-primary-400 text-13 font-medium bg-black/60 px-3 py-1.5 rounded-md">
               Drop to send
             </span>
           </div>
@@ -532,14 +532,14 @@ export function TerminalWidget({
               type="button"
               onClick={handleCopy}
               disabled={!contextMenu.hasSelection}
-              className="flex w-full items-center px-4 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-default"
+              className="flex w-full items-center px-4 py-1.5 text-13 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-default"
             >
               Copy
             </button>
             <button
               type="button"
               onClick={handlePaste}
-              className="flex w-full items-center px-4 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+              className="flex w-full items-center px-4 py-1.5 text-13 text-white/70 hover:bg-white/10 hover:text-white"
             >
               Paste
             </button>

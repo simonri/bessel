@@ -107,7 +107,7 @@ export function Avatar({
         />
       ) : (
         <span
-          className="flex size-5 items-center justify-center rounded-full text-10 font-semibold text-white/90"
+          className="flex size-5 items-center justify-center rounded-full type-badge text-white/90"
           style={{ background: avatarColor(attendee.email) }}
         >
           {initialOf({ name, email: attendee.email })}

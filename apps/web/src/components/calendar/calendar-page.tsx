@@ -499,7 +499,7 @@ export function CalendarView({
             >
               <PanelLeft />
             </IconButton>
-            <h2 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-white/90">
+            <h2 className="min-w-0 flex-1 truncate type-title text-white/90">
               {title}
             </h2>
             <Select

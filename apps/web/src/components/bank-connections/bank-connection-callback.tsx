@@ -72,23 +72,23 @@ export function BankConnectionCallbackPage() {
       {outcome.status === "pending" ? (
         <div className="flex flex-col items-center gap-4">
           <Spinner className="size-6 text-white" />
-          <p className="text-sm text-white/50">Connecting your bank…</p>
+          <p className="text-13 text-white/50">Connecting your bank…</p>
         </div>
       ) : (
         <div className="flex max-w-md flex-col items-center gap-3 px-6 text-center">
-          <p className="text-sm text-white/80">
+          <p className="text-13 text-white/80">
             {outcome.status === "connected"
               ? `${outcome.bank} connected`
               : "Bank not connected"}
           </p>
-          <p className="text-xs leading-relaxed text-white/50">
+          <p className="text-12 leading-relaxed text-white/50">
             {outcome.status === "failed"
               ? outcome.message
               : outcome.linked
                 ? "Transactions keep importing into the same accounts."
                 : "Choose which Bessel account each bank account imports into."}
           </p>
-          <Link to="/accounts" className="text-xs text-white/60 underline">
+          <Link to="/accounts" className="text-12 text-white/60 underline">
             Open accounts
           </Link>
         </div>

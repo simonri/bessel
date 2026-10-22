@@ -44,7 +44,7 @@ function getTagColor(tag: string) {
 export function Tag({ tag, onRemove }: { tag: string; onRemove?: () => void }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium ${getTagColor(tag)}`}
+      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-12 font-medium ${getTagColor(tag)}`}
     >
       {tag}
       {onRemove && (
@@ -133,7 +133,7 @@ export function TagInput({ tags, onChange }: TagInputProps) {
               setTimeout(() => setShowSuggestions(false), 150);
             }}
             placeholder={tags.length === 0 ? "Add tags..." : ""}
-            className="bg-transparent text-sm outline-none flex-1 min-w-[80px] placeholder:text-muted-foreground"
+            className="bg-transparent text-13 outline-none flex-1 min-w-[80px] placeholder:text-muted-foreground"
           />
         </div>
 
@@ -144,7 +144,7 @@ export function TagInput({ tags, onChange }: TagInputProps) {
               <button
                 key={suggestion}
                 type="button"
-                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-sm hover:bg-accent transition-colors text-left"
+                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-13 hover:bg-accent transition-colors text-left"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addTag(suggestion)}
               >
