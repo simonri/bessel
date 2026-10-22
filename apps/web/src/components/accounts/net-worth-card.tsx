@@ -102,22 +102,19 @@ export function NetWorthCard({
   const data = pointsInRange(points, range, today);
   return (
     <Panel className="divide-y-0 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="type-label text-white/55">Net worth</p>
-          <Amount
-            value={total}
-            currency={currency}
-            className="mt-1 block type-display text-white"
-          />
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 type-caption">
-            {change !== null && (
-              <MonthChange change={change} currency={currency} />
-            )}
-            <span className="text-white/40">{hint}</span>
-          </div>
-        </div>
+      {/* The range sits on the label's line, so the big number has the width to itself. */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="type-label text-white/55">Net worth</p>
         <RangePicker value={range} onChange={setRange} />
+      </div>
+      <Amount
+        value={total}
+        currency={currency}
+        className="mt-1 block type-display text-white"
+      />
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 type-caption">
+        {change !== null && <MonthChange change={change} currency={currency} />}
+        <span className="text-white/40">{hint}</span>
       </div>
       <NetWorthChart data={data} currency={currency} />
     </Panel>
@@ -157,11 +154,8 @@ function RangePicker({
   onChange: (range: Range) => void;
 }) {
   return (
-    <div
-      role="group"
-      aria-label="Time range"
-      className="flex shrink-0 rounded-lg bg-white/[0.05] p-0.5"
-    >
+    <fieldset className="flex shrink-0 rounded-lg border-0 bg-white/[0.05] p-0.5">
+      <legend className="sr-only">Time range</legend>
       {RANGES.map((r) => (
         <button
           key={r.key}
@@ -178,7 +172,7 @@ function RangePicker({
           {r.label}
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 }
 

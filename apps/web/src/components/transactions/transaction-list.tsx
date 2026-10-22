@@ -145,7 +145,7 @@ export function TransactionList({
 
   return (
     <Panel className="divide-y-0">
-      <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-2">
+      <div className="flex items-center gap-3 border-b border-white/[0.06] px-5 py-2">
         <Checkbox
           checked={allSelected || (selecting && "indeterminate")}
           onCheckedChange={(on) =>
@@ -161,7 +161,7 @@ export function TransactionList({
       </div>
       {groups.map((group) => (
         <section key={group.key} aria-label={dayLabel(group.day)}>
-          <div className="flex items-baseline justify-between gap-3 bg-white/[0.02] px-4 pt-3 pb-1.5">
+          <div className="flex items-baseline justify-between gap-3 bg-white/[0.02] px-5 pt-3 pb-1.5">
             <h3 className="type-section text-white/50">
               {dayLabel(group.day)}
             </h3>
@@ -226,7 +226,7 @@ const TransactionRow = memo(function TransactionRow({
   return (
     <li
       className={cn(
-        "group flex items-center gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-white/[0.03]",
+        "group flex items-start gap-3 px-5 py-2.5 transition-colors duration-150 hover:bg-white/[0.03]",
         checked && "bg-primary-500/[0.06]",
       )}
     >
@@ -236,7 +236,7 @@ const TransactionRow = memo(function TransactionRow({
         onCheckedChange={(on) => onCheck(!!on)}
         aria-label={`Select ${description}`}
         className={cn(
-          "hidden shrink-0 @2xl:flex",
+          "mt-0.5 hidden shrink-0 @2xl:flex",
           !selecting &&
             !checked &&
             "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
@@ -272,7 +272,7 @@ const TransactionRow = memo(function TransactionRow({
           </span>
         </span>
       </button>
-      <div className="hidden w-44 shrink-0 @2xl:block">
+      <div className="hidden h-5 w-44 shrink-0 items-center @2xl:flex">
         {transaction.transfer_id || transaction.investment_kind ? (
           <span className="type-caption text-white/40">
             {filedAs(transaction, category)}
@@ -297,7 +297,7 @@ const TransactionRow = memo(function TransactionRow({
           credit ? "text-income" : "text-white/80",
         )}
       />
-      <div className="hidden shrink-0 @2xl:block">
+      <div className="hidden h-5 shrink-0 items-center @2xl:flex">
         <RowMenu transaction={transaction} handlers={handlers} />
       </div>
     </li>
@@ -319,7 +319,7 @@ export function TransactionIcon({
   const [broken, setBroken] = useState(false);
   if (logo && !broken) {
     return (
-      <span className="flex size-8 shrink-0 overflow-hidden rounded-full bg-white">
+      <span className="mt-0.5 flex size-8 shrink-0 overflow-hidden rounded-full bg-white">
         <img
           src={logo}
           alt=""
@@ -333,14 +333,14 @@ export function TransactionIcon({
   const KindIcon = kind ? INVESTMENT_KINDS[kind].icon : null;
   if (KindIcon && !transfer) {
     return (
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/55">
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/55">
         <KindIcon className="size-3.5" aria-hidden />
       </span>
     );
   }
   if (transfer) {
     return (
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/50">
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/50">
         <ArrowLeftRight className="size-3.5" aria-hidden />
       </span>
     );
@@ -348,7 +348,7 @@ export function TransactionIcon({
   return (
     <span
       aria-hidden
-      className="flex size-8 shrink-0 items-center justify-center rounded-full text-12 font-medium"
+      className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-12 font-medium"
       style={
         category
           ? {

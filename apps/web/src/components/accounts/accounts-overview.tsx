@@ -75,7 +75,7 @@ export function WhereItIs({
   const owed = (personal?.debt ?? 0) + (company?.debt ?? 0);
   const largest = Math.max(1, ...rows.map((r) => r.value), owed);
   return (
-    <Panel className="divide-y-0 p-4">
+    <Panel className="divide-y-0 p-5">
       <p className="mb-3 type-label text-white/55">Where it is</p>
       <div className="space-y-3.5">
         {rows.map((row) => (
@@ -168,7 +168,7 @@ export function NeedsAttention({ accounts }: { accounts: AccountOverview[] }) {
   );
   if (problems.length === 0) {
     return (
-      <Panel className="flex items-center gap-3 divide-y-0 p-4">
+      <Panel className="flex items-center gap-3 divide-y-0 p-5">
         <CheckCircle2
           className="size-5 shrink-0 text-emerald-300/90"
           aria-hidden
@@ -183,8 +183,8 @@ export function NeedsAttention({ accounts }: { accounts: AccountOverview[] }) {
     );
   }
   return (
-    <Panel className="divide-y-0 p-4">
-      <p className="mb-3 flex items-center gap-2 type-label text-white/55">
+    <Panel className="divide-y-0 p-5">
+      <p className="mb-2 flex h-8 items-center gap-2 type-label text-white/55">
         Needs attention
         <span className="rounded-full bg-amber-300/15 px-1.5 type-badge text-amber-200">
           {problems.length}
@@ -240,7 +240,7 @@ export function AccountList({
         if (inGroup.length === 0) return null;
         return (
           <section key={kind} aria-label={label}>
-            <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+            <div className="mb-2 flex items-baseline justify-between gap-3 pr-12 pl-5">
               <h2 className="type-section text-white/55">{label}</h2>
               <p className="type-caption text-white/45">
                 {[...groupTotals(inGroup)].map(([currency, total], i) => (
@@ -279,7 +279,7 @@ function AccountRow({
     <button
       type="button"
       onClick={onOpen}
-      className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
+      className="group flex w-full items-start gap-3 px-5 py-3 text-left transition-colors duration-150 hover:bg-white/[0.03] focus-visible:bg-white/[0.04] focus-visible:outline-none"
     >
       <AccountLogo account={account} />
       <div className="min-w-0 flex-1">
@@ -323,7 +323,7 @@ function AccountRow({
           <p className="type-caption text-white/35">Not in net worth</p>
         )}
       </div>
-      <ChevronRight className="size-4 shrink-0 text-white/20 transition-colors group-hover:text-white/55" />
+      <ChevronRight className="mt-0.5 size-4 shrink-0 text-white/20 transition-colors group-hover:text-white/55" />
     </button>
   );
 }

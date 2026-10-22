@@ -122,8 +122,11 @@ export function PageHeader({
         <h2 className="type-title text-white/90">{title}</h2>
         <p className="mt-0.5 text-13 text-white/50">{summary || "\u00a0"}</p>
       </div>
+      {/* Controls up to 32px tall, centred on the title's 28px line. */}
       {children && (
-        <div className="flex flex-wrap items-center gap-2">{children}</div>
+        <div className="-my-0.5 flex min-h-8 flex-wrap items-center gap-2">
+          {children}
+        </div>
       )}
     </header>
   );

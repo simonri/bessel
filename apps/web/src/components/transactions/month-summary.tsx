@@ -267,7 +267,7 @@ function WhereItWent({
   const { shown, rest } = topCategories(summary.categories);
   const largest = Math.max(1, shown[0]?.total ?? 0, rest);
   return (
-    <Panel className="divide-y-0 p-4">
+    <Panel className="divide-y-0 p-5">
       <p className="mb-2 type-label text-white/55">Where it went</p>
       {shown.length === 0 ? (
         <p className="type-caption text-white/40">Nothing spent yet.</p>
@@ -365,7 +365,7 @@ function Biggest({
 }) {
   if (merchants.length === 0) return null;
   return (
-    <Panel className="divide-y-0 p-4">
+    <Panel className="divide-y-0 p-5">
       <p className="mb-1 type-label text-white/55">Biggest spending</p>
       <ul className="-mx-2">
         {merchants.slice(0, TOP_MERCHANTS).map((merchant) => (
@@ -398,7 +398,7 @@ function Biggest({
 
 function ToSort({ count, onSort }: { count: number; onSort: () => void }) {
   return (
-    <Panel className="flex items-center gap-3 divide-y-0 border-amber-300/15 bg-amber-300/[0.05] p-4">
+    <Panel className="flex items-center gap-3 divide-y-0 border-amber-300/15 bg-amber-300/[0.05] p-5">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-300/15 text-amber-200">
         <Tag className="size-3.5" aria-hidden />
       </span>

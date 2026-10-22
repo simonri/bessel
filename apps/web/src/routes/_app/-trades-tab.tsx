@@ -81,7 +81,7 @@ export function TradesTab() {
       <Panel className="divide-y-0">
         {groupByMonth(trades).map((group) => (
           <section key={group.key} aria-label={group.label}>
-            <h3 className="bg-white/[0.02] px-4 pt-3 pb-1.5 type-section text-white/50">
+            <h3 className="bg-white/[0.02] px-5 pt-3 pb-1.5 type-section text-white/50">
               {group.label}
             </h3>
             <ul>
@@ -111,11 +111,11 @@ function TradeRow({ trade }: { trade: TradeSchema }) {
   const buy = trade.trade_type === "buy";
   const Icon = buy ? Plus : Minus;
   return (
-    <li className="flex items-center gap-3 px-4 py-2.5">
+    <li className="flex items-start gap-3 px-5 py-2.5">
       <span
         aria-hidden
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-full",
+          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
           buy
             ? "bg-primary-500/15 text-primary-300"
             : "bg-emerald-400/10 text-emerald-300",
