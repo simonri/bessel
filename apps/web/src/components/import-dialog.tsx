@@ -30,6 +30,7 @@ import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { client } from "@/lib/client";
+import { formatMoney } from "@/lib/money";
 
 const FILE_BANKS = [
   { value: "marginalen", label: "Marginalen", accept: ".csv" },
@@ -81,6 +82,14 @@ export function ImportDialog() {
         `${data.updated} updated after a return`,
         `${data.paid_at_purchase} paid at purchase, already in a bank account or the Klarna balance`,
         `${data.declined} declined card payments left out`,
+        `${data.payments} payments imported`,
+        ...(data.owed === null
+          ? []
+          : [
+              data.drift
+                ? `Klarna says you owe ${formatMoney(data.owed, "SEK")}, Bessel ${formatMoney(data.owed + data.drift, "SEK")}; a purchase or payment is missing`
+                : `Matches Klarna: ${formatMoney(data.owed, "SEK")} left to pay`,
+            ]),
         ...(data.unrecognized_plans.length
           ? [
               `Imported as pay later, new plans: ${data.unrecognized_plans.join(", ")}`,

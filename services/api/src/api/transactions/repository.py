@@ -98,6 +98,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.transfer_id.is_(None),
         Transaction.not_a_transfer.is_(False),
         Transaction.category_id.is_(None),
+        # Card purchases, never money moving out to another of the user's accounts.
+        ~((BankAccount.subtype == "credit_card") & (Transaction.direction == TransactionDirection.debit)),
       )
     )
     if since is not None:

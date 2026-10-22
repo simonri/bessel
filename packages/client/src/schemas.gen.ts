@@ -4303,6 +4303,37 @@ export const KlarnaImportResponseSchema = {
       description:
         "Items left out because they were paid at purchase and show in a bank account, card or the Klarna balance.",
     },
+    payments: {
+      type: "integer",
+      title: "Payments",
+      description:
+        "Payments of pay later purchases imported for the first time, as money into the account.",
+    },
+    owed: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Owed",
+      description: "What Klarna says is left to pay, in minor units.",
+    },
+    drift: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Drift",
+      description:
+        "What Bessel owes minus what Klarna says is owed; anything but 0 means a purchase or payment is missing.",
+    },
     declined: {
       type: "integer",
       title: "Declined",
@@ -4324,6 +4355,9 @@ export const KlarnaImportResponseSchema = {
     "created",
     "updated",
     "paid_at_purchase",
+    "payments",
+    "owed",
+    "drift",
     "declined",
     "unrecognized_plans",
   ],

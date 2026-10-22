@@ -1,9 +1,10 @@
 from typing import Annotated, Any
 
 from api.bank_accounts.repository import BankAccountRepository
+from api.common.utils import utc_now
 from api.exceptions import ValidationError
 from api.klarna.schemas import KlarnaImportRequest, KlarnaImportResponse
-from api.klarna.service import fetch_klarna_items, import_pay_later
+from api.klarna.service import fetch_klarna_items, fetch_klarna_payments, import_pay_later
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Header
@@ -46,11 +47,15 @@ async def import_klarna_transactions(
   )
 
   items = await fetch_klarna_items(body.authorization, body.cookie)
-  result = await import_pay_later(session, user_id=current_user.id, bank_account_id=bank_account.id, items=items)
+  payments = await fetch_klarna_payments(body.authorization, body.cookie)
+  result = await import_pay_later(session, user_id=current_user.id, bank_account_id=bank_account.id, items=items, payments=payments, now=utc_now())
   return KlarnaImportResponse(
     created=result.created,
     updated=result.updated,
     paid_at_purchase=result.paid_at_purchase,
     declined=result.declined,
+    payments=result.payments,
+    owed=result.owed,
+    drift=result.drift,
     unrecognized_plans=result.unrecognized_plans,
   )

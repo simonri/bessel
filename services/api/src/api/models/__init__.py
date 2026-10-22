@@ -19,6 +19,7 @@ from .healthkit_sleep_sample import HealthKitSleepSample
 from .healthkit_workout import HealthKitWorkout
 from .import_batch import ImportBatch
 from .ingest_token import IngestToken
+from .klarna import KlarnaPayLater
 from .location_import import LocationImport
 from .location_segment import LocationSegment
 from .notification import Notification
@@ -64,6 +65,7 @@ __all__ = [
   "HealthKitWorkout",
   "ImportBatch",
   "IngestToken",
+  "KlarnaPayLater",
   "LocationImport",
   "LocationSegment",
   "Model",

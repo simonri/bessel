@@ -2825,6 +2825,24 @@ export type KlarnaImportResponse = {
    */
   paid_at_purchase: number;
   /**
+   * Payments
+   *
+   * Payments of pay later purchases imported for the first time, as money into the account.
+   */
+  payments: number;
+  /**
+   * Owed
+   *
+   * What Klarna says is left to pay, in minor units.
+   */
+  owed: number | null;
+  /**
+   * Drift
+   *
+   * What Bessel owes minus what Klarna says is owed; anything but 0 means a purchase or payment is missing.
+   */
+  drift: number | null;
+  /**
    * Declined
    *
    * Card payments Klarna refused; no money moved, so nothing was imported.
