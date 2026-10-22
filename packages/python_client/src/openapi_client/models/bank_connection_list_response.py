@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,22 +19,26 @@ class BankConnectionListResponse:
   """
   Attributes:
       available (bool): Whether this user can connect a bank.
-      banks (list[BankOption]): The banks this user can connect.
+      banks (list[str]): The banks this user can connect.
+      bank_options (list[BankOption]): The same banks with their logos.
       connections (list[BankConnectionSchema]):
   """
 
   available: bool
-  banks: list[BankOption]
+  banks: list[str]
+  bank_options: list[BankOption]
   connections: list[BankConnectionSchema]
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     available = self.available
 
-    banks = []
-    for banks_item_data in self.banks:
-      banks_item = banks_item_data.to_dict()
-      banks.append(banks_item)
+    banks = self.banks
+
+    bank_options = []
+    for bank_options_item_data in self.bank_options:
+      bank_options_item = bank_options_item_data.to_dict()
+      bank_options.append(bank_options_item)
 
     connections = []
     for connections_item_data in self.connections:
@@ -47,6 +51,7 @@ class BankConnectionListResponse:
       {
         "available": available,
         "banks": banks,
+        "bank_options": bank_options,
         "connections": connections,
       }
     )
@@ -61,12 +66,14 @@ class BankConnectionListResponse:
     d = dict(src_dict)
     available = d.pop("available")
 
-    banks = []
-    _banks = d.pop("banks")
-    for banks_item_data in _banks:
-      banks_item = BankOption.from_dict(banks_item_data)
+    banks = cast(list[str], d.pop("banks"))
 
-      banks.append(banks_item)
+    bank_options = []
+    _bank_options = d.pop("bank_options")
+    for bank_options_item_data in _bank_options:
+      bank_options_item = BankOption.from_dict(bank_options_item_data)
+
+      bank_options.append(bank_options_item)
 
     connections = []
     _connections = d.pop("connections")
@@ -78,6 +85,7 @@ class BankConnectionListResponse:
     bank_connection_list_response = cls(
       available=available,
       banks=banks,
+      bank_options=bank_options,
       connections=connections,
     )
 

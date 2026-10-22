@@ -44,6 +44,37 @@ FILE_BANKS = {"marginalen": "Marginalen Bank", "skandiabanken": "Skandia"}
 type Group = Literal["cash", "investments", "credit"]
 
 
+def _money(minor: int, currency: str) -> str:
+  return f"{minor / 100:,.2f} {currency}"
+
+
+def _in_words(issue: AccountProblem, label: str, *, bessel_balance: int, currency: str, can_connect: bool) -> str:
+  """How app versions from before structured issues word them; they show this string as it is."""
+  day = f"{issue.day:%-d %b}" if issue.day else ""
+  match issue.kind:
+    case "sync_failed":
+      return issue.detail or f"Couldn't sync {label}."
+    case "not_shared":
+      return f"Left out of the latest {label} approval. Renew to include it."
+    case "stale":
+      return f"Hasn't synced since {day}."
+    case "renew_soon":
+      return f"The {label} approval ends {day}. Renew it to keep importing."
+    case "sign_in":
+      return "Avanza didn't accept the login. Save new credentials to resume syncing."
+    case "balance_mismatch" if label == "Klarna pay later":
+      return f"Doesn't match what Klarna says is owed, {_money(-(issue.source_balance or 0), currency)}. Import again."
+    case "balance_mismatch":
+      return f"{label} says {_money(issue.source_balance or 0, currency)}, Bessel {_money(bessel_balance, currency)}."
+    case "import_due" if label == "Klarna pay later":
+      return f"Last imported {day}. Import again from the desktop app."
+    case "import_due":
+      connect = ", or connect the bank" if can_connect else ""
+      return f"Imported by hand, nothing since {issue.day:%-d %b %Y}. Import the latest export{connect}." if issue.day else "Import the latest export."
+    case "no_transactions":
+      return "No transactions yet. Import an export, or connect the bank."
+
+
 def _group(account: BankAccount) -> Group:
   if account.subtype in INVESTMENT_SUBTYPES:
     return "investments"
@@ -83,10 +114,19 @@ class AccountsOverview:
     for account in accounts:
       first, last, count = activity.get(account.id, (None, None, 0))
       source, bank_balance, drift = sources[account.id]
+      current_balance = account.base_balance + balances.get(account.id, 0)
+      if source.issue is not None:
+        source.problem = _in_words(
+          source.issue,
+          source.label,
+          bessel_balance=bank_balance - drift if bank_balance is not None and drift is not None else current_balance,
+          currency=account.currency,
+          can_connect=not account.is_business,
+        )
       overviews.append(
         AccountOverview(
           **BankAccountSchema.model_validate(account).model_dump(exclude={"current_balance"}),
-          current_balance=account.base_balance + balances.get(account.id, 0),
+          current_balance=current_balance,
           group=_group(account),
           source=source,
           bank_balance=bank_balance,
@@ -144,7 +184,8 @@ class AccountsOverview:
             logo=bank_logo(connection.bank_name, connection.bank_country),
             synced_at=connection.last_synced_at,
             access_until=connection.valid_until,
-            problem=problem,
+            issue=problem,
+            problem=None,
           ),
           linked.bank_balance,
           linked.balance_drift,
@@ -161,7 +202,7 @@ class AccountsOverview:
       elif avanza.last_synced_at and now - avanza.last_synced_at > STALE_AFTER:
         problem = AccountProblem(kind="stale", day=avanza.last_synced_at.date())
       found[linked.bank_account_id] = (
-        AccountSource(kind="avanza", label="Avanza", synced_at=avanza.last_synced_at, problem=problem),
+        AccountSource(kind="avanza", label="Avanza", synced_at=avanza.last_synced_at, issue=problem, problem=None),
         linked.cash_balance,
         None,
       )
@@ -173,7 +214,7 @@ class AccountsOverview:
       elif pay_later.last_imported_at and now - pay_later.last_imported_at > PAY_LATER_STALE_AFTER:
         problem = AccountProblem(kind="import_due", day=pay_later.last_imported_at.date())
       found[pay_later.bank_account_id] = (
-        AccountSource(kind="klarna", label="Klarna pay later", logo=KLARNA_LOGO, synced_at=pay_later.last_imported_at, problem=problem),
+        AccountSource(kind="klarna", label="Klarna pay later", logo=KLARNA_LOGO, synced_at=pay_later.last_imported_at, issue=problem, problem=None),
         owed,
         # Owing more in Bessel than Klarna says is a lower balance than the bank's: the same sign as a bank's drift.
         pay_later.balance_drift,
@@ -191,7 +232,7 @@ class AccountsOverview:
       import_bank = import_banks.get(account.id)
       logo = bank_logo(FILE_BANKS[import_bank], "SE") if import_bank in FILE_BANKS else None
       found[account.id] = (
-        AccountSource(kind="manual", label="Imported by hand", logo=logo, synced_at=None, import_bank=import_bank, problem=problem),
+        AccountSource(kind="manual", label="Imported by hand", logo=logo, synced_at=None, import_bank=import_bank, issue=problem, problem=None),
         None,
         None,
       )

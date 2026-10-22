@@ -305,7 +305,7 @@ export const AccountSourceSchema = {
       description:
         "For accounts imported by hand, the bank of the latest export file, such as 'marginalen'.",
     },
-    problem: {
+    issue: {
       anyOf: [
         {
           $ref: "#/components/schemas/AccountProblem",
@@ -316,9 +316,21 @@ export const AccountSourceSchema = {
       ],
       description: "What needs the user's attention, if anything.",
     },
+    problem: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Problem",
+      description: "The issue in words, for app versions from before `issue`.",
+    },
   },
   type: "object",
-  required: ["kind", "label", "synced_at", "problem"],
+  required: ["kind", "label", "synced_at", "issue", "problem"],
   title: "AccountSource",
 } as const;
 
@@ -1552,11 +1564,19 @@ export const BankConnectionListResponseSchema = {
     },
     banks: {
       items: {
-        $ref: "#/components/schemas/BankOption",
+        type: "string",
       },
       type: "array",
       title: "Banks",
       description: "The banks this user can connect.",
+    },
+    bank_options: {
+      items: {
+        $ref: "#/components/schemas/BankOption",
+      },
+      type: "array",
+      title: "Bank Options",
+      description: "The same banks with their logos.",
     },
     connections: {
       items: {
@@ -1567,7 +1587,7 @@ export const BankConnectionListResponseSchema = {
     },
   },
   type: "object",
-  required: ["available", "banks", "connections"],
+  required: ["available", "banks", "bank_options", "connections"],
   title: "BankConnectionListResponse",
 } as const;
 
@@ -9597,11 +9617,19 @@ export const BankConnectionListResponseWritableSchema = {
     },
     banks: {
       items: {
-        $ref: "#/components/schemas/BankOption",
+        type: "string",
       },
       type: "array",
       title: "Banks",
       description: "The banks this user can connect.",
+    },
+    bank_options: {
+      items: {
+        $ref: "#/components/schemas/BankOption",
+      },
+      type: "array",
+      title: "Bank Options",
+      description: "The same banks with their logos.",
     },
     connections: {
       items: {
@@ -9612,7 +9640,7 @@ export const BankConnectionListResponseWritableSchema = {
     },
   },
   type: "object",
-  required: ["available", "banks", "connections"],
+  required: ["available", "banks", "bank_options", "connections"],
   title: "BankConnectionListResponse",
 } as const;
 

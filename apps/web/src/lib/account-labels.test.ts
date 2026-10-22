@@ -13,6 +13,7 @@ function account(
       kind: "manual",
       label: "Imported by hand",
       synced_at: null,
+      issue: null,
       problem: null,
       ...source,
     },

@@ -319,7 +319,7 @@ function BalanceHistory({ account }: { account: AccountOverview }) {
 
 function ProblemBanner({ account }: { account: AccountOverview }) {
   const { run, busy } = useAccountActions();
-  const problem = account.source.problem;
+  const problem = account.source.issue;
   if (!problem) return null;
   const copy = problemCopy(account, problem);
   return (

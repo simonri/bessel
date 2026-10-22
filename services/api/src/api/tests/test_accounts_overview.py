@@ -184,7 +184,7 @@ class TestSources:
     await save_fixture(KlarnaPayLater(user_id=user.id, bank_account_id=pay_later.id, owed=10900, balance_drift=0, last_imported_at=now))
 
     by_name = {a["name"]: a for a in (await _overview(client))["accounts"]}
-    problems = {name: a["source"]["problem"] and a["source"]["problem"]["kind"] for name, a in by_name.items()}
+    problems = {name: a["source"]["issue"] and a["source"]["issue"]["kind"] for name, a in by_name.items()}
 
     assert {name: (a["source"]["kind"], a["source"]["label"]) for name, a in by_name.items()} == {
       "Skandia": ("bank", "Skandia"),
@@ -202,17 +202,26 @@ class TestSources:
       "Company bank": "import_due",
       "Empty": "no_transactions",
     }
-    assert by_name["Skandia"]["source"]["problem"]["source_balance"] == 52361
+    assert by_name["Skandia"]["source"]["issue"]["source_balance"] == 52361
     assert (by_name["Skandia"]["bank_balance"], by_name["Skandia"]["balance_drift"]) == (52361, -500)
-    assert by_name["Avanza AF"]["source"]["problem"]["day"] == (now - timedelta(days=3)).date().isoformat()
+    assert by_name["Avanza AF"]["source"]["issue"]["day"] == (now - timedelta(days=3)).date().isoformat()
     assert by_name["Avanza AF"]["bank_balance"] == 8635
     assert by_name["Klarna Pay later"]["bank_balance"] == -10900
-    assert by_name["Marginalen"]["source"]["problem"]["day"] == (now.date() - timedelta(days=60)).isoformat()
+    assert by_name["Marginalen"]["source"]["issue"]["day"] == (now.date() - timedelta(days=60)).isoformat()
     assert {name: a["source"]["logo"] for name, a in by_name.items() if a["source"]["logo"]} == {
       "Skandia": "https://enablebanking.com/brands/SE/Skandia/",
       "Klarna Pay later": "https://enablebanking.com/brands/SE/Klarna/",
     }
     assert by_name["Skandia"]["source"]["access_until"] is not None
+    # App versions from before `issue` show these words as they are.
+    assert {name: a["source"]["problem"] for name, a in by_name.items()} == {
+      "Skandia": "Skandia says 523.61 SEK, Bessel 528.61 SEK.",
+      "Avanza AF": f"Hasn't synced since {now - timedelta(days=3):%-d %b}.",
+      "Klarna Pay later": None,
+      "Marginalen": f"Imported by hand, nothing since {now.date() - timedelta(days=60):%-d %b %Y}. Import the latest export, or connect the bank.",
+      "Company bank": f"Imported by hand, nothing since {now.date() - timedelta(days=60):%-d %b %Y}. Import the latest export.",
+      "Empty": "No transactions yet. Import an export, or connect the bank.",
+    }
     assert by_name["Marginalen"]["source"]["access_until"] is None
 
   @pytest.mark.asyncio
@@ -255,8 +264,8 @@ class TestSources:
 
     [account] = (await _overview(client))["accounts"]
 
-    assert account["source"]["problem"]["kind"] == kind
-    assert account["source"]["problem"]["detail"] == sync_error
+    assert account["source"]["issue"]["kind"] == kind
+    assert account["source"]["issue"]["detail"] == sync_error
 
   @pytest.mark.asyncio
   async def test_an_account_imported_by_hand_knows_the_bank_of_its_newest_file(
@@ -297,7 +306,7 @@ class TestSources:
 
     [account] = (await _overview(client))["accounts"]
 
-    assert account["source"]["problem"]["kind"] == "sign_in"
+    assert account["source"]["issue"]["kind"] == "sign_in"
 
   @pytest.mark.asyncio
   async def test_pay_later_owing_more_than_klarna_says_is_flagged(
@@ -308,7 +317,8 @@ class TestSources:
 
     [account] = (await _overview(client))["accounts"]
 
-    assert account["source"]["problem"] == {"kind": "balance_mismatch", "day": None, "source_balance": -10900, "detail": None}
+    assert account["source"]["issue"] == {"kind": "balance_mismatch", "day": None, "source_balance": -10900, "detail": None}
+    assert account["source"]["problem"] == "Doesn't match what Klarna says is owed, 109.00 SEK. Import again."
     assert account["balance_drift"] == 5000
 
 

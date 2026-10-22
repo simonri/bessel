@@ -162,8 +162,8 @@ function Share({
 export function NeedsAttention({ accounts }: { accounts: AccountOverview[] }) {
   const { run, busy } = useAccountActions();
   const problems = accounts.flatMap((account) =>
-    account.source.problem
-      ? [{ account, copy: problemCopy(account, account.source.problem) }]
+    account.source.issue
+      ? [{ account, copy: problemCopy(account, account.source.issue) }]
       : [],
   );
   if (problems.length === 0) {
@@ -274,7 +274,7 @@ function AccountRow({
   account: AccountOverview;
   onOpen: () => void;
 }) {
-  const needsYou = !!account.source.problem;
+  const needsYou = !!account.source.issue;
   return (
     <button
       type="button"

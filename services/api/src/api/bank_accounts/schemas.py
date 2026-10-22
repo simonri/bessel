@@ -57,7 +57,8 @@ class AccountSource(Schema):
   synced_at: datetime | None = Field(description="The last sync or import that worked.")
   access_until: datetime | None = Field(default=None, description="When the bank's read-only approval ends, for connected banks.")
   import_bank: str | None = Field(default=None, description="For accounts imported by hand, the bank of the latest export file, such as 'marginalen'.")
-  problem: AccountProblem | None = Field(description="What needs the user's attention, if anything.")
+  issue: AccountProblem | None = Field(description="What needs the user's attention, if anything.")
+  problem: str | None = Field(description="The issue in words, for app versions from before `issue`.")
 
 
 class BalancePoint(Schema):

@@ -34,7 +34,13 @@ function account(overrides: Partial<AccountOverview>): AccountOverview {
     created_at: new Date("2026-01-01"),
     modified_at: null,
     group: "cash",
-    source: { kind: "bank", label: "Skandia", synced_at: null, problem: null },
+    source: {
+      kind: "bank",
+      label: "Skandia",
+      synced_at: null,
+      issue: null,
+      problem: null,
+    },
     bank_balance: null,
     balance_drift: null,
     holdings_value: null,
@@ -117,7 +123,8 @@ describe("AccountList", () => {
         kind: "manual",
         label: "Imported by hand",
         synced_at: null,
-        problem: { kind: "no_transactions" },
+        issue: { kind: "no_transactions" },
+        problem: "No transactions yet.",
       },
     });
     render(<AccountList onOpen={onOpen} accounts={[account({}), broken]} />);
@@ -143,7 +150,8 @@ describe("NeedsAttention", () => {
         label: "Imported by hand",
         synced_at: null,
         import_bank: "marginalen",
-        problem: { kind: "import_due", day: new Date("2026-07-02T00:00:00") },
+        problem: "Imported by hand, nothing since 2 Jul 2026.",
+        issue: { kind: "import_due", day: new Date("2026-07-02T00:00:00") },
       },
     });
     render(<NeedsAttention accounts={[account({ id: "ok" }), stale]} />);

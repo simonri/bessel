@@ -24,7 +24,8 @@ class AccountSource:
       kind (AccountSourceKind): Where the account's transactions come from.
       label (str): The source as the user knows it, such as 'Skandia' or 'Imported by hand'.
       synced_at (datetime.datetime | None): The last sync or import that worked.
-      problem (AccountProblem | None): What needs the user's attention, if anything.
+      issue (AccountProblem | None): What needs the user's attention, if anything.
+      problem (None | str): The issue in words, for app versions from before `issue`.
       logo (None | str | Unset): The bank's logo image URL, when one is known.
       access_until (datetime.datetime | None | Unset): When the bank's read-only approval ends, for connected banks.
       import_bank (None | str | Unset): For accounts imported by hand, the bank of the latest export file, such as
@@ -34,7 +35,8 @@ class AccountSource:
   kind: AccountSourceKind
   label: str
   synced_at: datetime.datetime | None
-  problem: AccountProblem | None
+  issue: AccountProblem | None
+  problem: None | str
   logo: None | str | Unset = UNSET
   access_until: datetime.datetime | None | Unset = UNSET
   import_bank: None | str | Unset = UNSET
@@ -53,11 +55,14 @@ class AccountSource:
     else:
       synced_at = self.synced_at
 
-    problem: dict[str, Any] | None
-    if isinstance(self.problem, AccountProblem):
-      problem = self.problem.to_dict()
+    issue: dict[str, Any] | None
+    if isinstance(self.issue, AccountProblem):
+      issue = self.issue.to_dict()
     else:
-      problem = self.problem
+      issue = self.issue
+
+    problem: None | str
+    problem = self.problem
 
     logo: None | str | Unset
     if isinstance(self.logo, Unset):
@@ -86,6 +91,7 @@ class AccountSource:
         "kind": kind,
         "label": label,
         "synced_at": synced_at,
+        "issue": issue,
         "problem": problem,
       }
     )
@@ -122,18 +128,25 @@ class AccountSource:
 
     synced_at = _parse_synced_at(d.pop("synced_at"))
 
-    def _parse_problem(data: object) -> AccountProblem | None:
+    def _parse_issue(data: object) -> AccountProblem | None:
       if data is None:
         return data
       try:
         if not isinstance(data, dict):
           raise TypeError()
-        problem_type_0 = AccountProblem.from_dict(data)
+        issue_type_0 = AccountProblem.from_dict(data)
 
-        return problem_type_0
+        return issue_type_0
       except (TypeError, ValueError, AttributeError, KeyError):
         pass
       return cast(AccountProblem | None, data)
+
+    issue = _parse_issue(d.pop("issue"))
+
+    def _parse_problem(data: object) -> None | str:
+      if data is None:
+        return data
+      return cast(None | str, data)
 
     problem = _parse_problem(d.pop("problem"))
 
@@ -176,6 +189,7 @@ class AccountSource:
       kind=kind,
       label=label,
       synced_at=synced_at,
+      issue=issue,
       problem=problem,
       logo=logo,
       access_until=access_until,

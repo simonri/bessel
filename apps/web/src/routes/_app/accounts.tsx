@@ -6,6 +6,7 @@ import {
   getNetWorthHistoryV1BankAccountsNetWorthGetOptions,
   getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
   listBankAccountsV1BankAccountsGetQueryKey,
+  listBankConnectionsV1BankConnectionsGetOptions,
   listTradesV1InvestmentsTradesGetQueryKey,
   listTransactionsV1TransactionsGetQueryKey,
 } from "@bessel/client";
@@ -104,15 +105,29 @@ function AccountsPage({
   });
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
 
-  // Back from a bank's approval page: choose which of its accounts to bring in.
+  // Back from a bank's approval page: choose which of its accounts to bring
+  // in, if it has any not in Bessel yet. A renewal usually has none.
+  const { data: connections } = useQuery(
+    listBankConnectionsV1BankConnectionsGetOptions({ client }),
+  );
   useEffect(() => {
+    if (!connections) return;
     let bank: string | null = null;
     try {
       bank = sessionStorage.getItem(CONNECTING_BANK_KEY);
       sessionStorage.removeItem(CONNECTING_BANK_KEY);
     } catch {}
-    if (bank) onAdding({ step: "pick", source: "bank", bankName: bank });
-  }, [onAdding]);
+    const connection = connections.connections.find(
+      (c) => c.bank_name === bank,
+    );
+    if (connection?.accounts.some((a) => a.shared && !a.bank_account_id)) {
+      onAdding({
+        step: "pick",
+        source: "bank",
+        bankName: connection.bank_name,
+      });
+    }
+  }, [connections, onAdding]);
 
   const deleteMutation = useMutation({
     ...deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation({ client }),
@@ -160,7 +175,7 @@ function AccountsPage({
 
   const accounts = (data?.accounts ?? []).filter((a) => !removed.has(a.id));
   const open = accounts.find((a) => a.id === openId) ?? null;
-  const issues = accounts.filter((a) => a.source.problem).length;
+  const issues = accounts.filter((a) => a.source.issue).length;
   const currency =
     data?.totals.find((t) => t.owner === "personal")?.currency ??
     data?.totals[0]?.currency;

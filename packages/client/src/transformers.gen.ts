@@ -146,8 +146,8 @@ const accountSourceSchemaResponseTransformer = (data: any) => {
   if (data.access_until) {
     data.access_until = new Date(data.access_until);
   }
-  if (data.problem) {
-    data.problem = accountProblemSchemaResponseTransformer(data.problem);
+  if (data.issue) {
+    data.issue = accountProblemSchemaResponseTransformer(data.issue);
   }
   return data;
 };

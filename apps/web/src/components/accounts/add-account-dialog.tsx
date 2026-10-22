@@ -85,7 +85,7 @@ function useProviders(): Provider[] {
   const { data: avanza } = useQuery(getAvanzaV1AvanzaGetOptions({ client }));
   const providers: Provider[] = [];
   if (banks?.available) {
-    for (const bank of banks.banks) {
+    for (const bank of banks.bank_options) {
       providers.push({
         name: bank.name,
         logo: bank.logo,

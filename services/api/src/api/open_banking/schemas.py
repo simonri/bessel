@@ -43,7 +43,8 @@ class BankOption(Schema):
 
 class BankConnectionListResponse(Schema):
   available: bool = Field(description="Whether this user can connect a bank.")
-  banks: list[BankOption] = Field(description="The banks this user can connect.")
+  banks: list[str] = Field(description="The banks this user can connect.")
+  bank_options: list[BankOption] = Field(description="The same banks with their logos.")
   connections: list[BankConnectionSchema]
 
 

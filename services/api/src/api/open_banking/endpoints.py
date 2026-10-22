@@ -38,7 +38,8 @@ async def list_bank_connections(session: DBSession, current_user: CurrentDBUser)
   connections = await BankConnectionRepository.from_session(session).list_for_user(current_user.id)
   return BankConnectionListResponse(
     available=available_to(current_user.id),
-    banks=[BankOption(name=name, logo=bank_logo(name, settings.ENABLE_BANKING_BANK_COUNTRY)) for name in banks()],
+    banks=banks(),
+    bank_options=[BankOption(name=name, logo=bank_logo(name, settings.ENABLE_BANKING_BANK_COUNTRY)) for name in banks()],
     connections=[BankConnectionSchema.model_validate(c) for c in connections],
   )
 

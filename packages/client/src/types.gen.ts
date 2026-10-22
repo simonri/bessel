@@ -194,7 +194,13 @@ export type AccountSource = {
   /**
    * What needs the user's attention, if anything.
    */
-  problem: AccountProblem | null;
+  issue: AccountProblem | null;
+  /**
+   * Problem
+   *
+   * The issue in words, for app versions from before `issue`.
+   */
+  problem: string | null;
 };
 
 /**
@@ -1084,7 +1090,13 @@ export type BankConnectionListResponse = {
    *
    * The banks this user can connect.
    */
-  banks: Array<BankOption>;
+  banks: Array<string>;
+  /**
+   * Bank Options
+   *
+   * The same banks with their logos.
+   */
+  bank_options: Array<BankOption>;
   /**
    * Connections
    */
@@ -6103,7 +6115,13 @@ export type BankConnectionListResponseWritable = {
    *
    * The banks this user can connect.
    */
-  banks: Array<BankOption>;
+  banks: Array<string>;
+  /**
+   * Bank Options
+   *
+   * The same banks with their logos.
+   */
+  bank_options: Array<BankOption>;
   /**
    * Connections
    */
