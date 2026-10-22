@@ -97,9 +97,7 @@ class TestMonthSummary:
     assert (summary["uncategorized"], summary["transfers"]) == (4, 1)
 
   @pytest.mark.asyncio
-  async def test_a_friend_paying_back_lowers_spending_where_its_filed_and_earned_money_stays_income(
-    self, client: AsyncClient, ledger: _Ledger
-  ) -> None:
+  async def test_a_friend_paying_back_lowers_spending_where_its_filed_and_earned_money_stays_income(self, client: AsyncClient, ledger: _Ledger) -> None:
     checking = await ledger.account("Skandia")
     dinner, other_income = await ledger.category("Restaurang"), await ledger.category("Övriga inkomster", income=True)
     day = date(2026, 9, 10)
