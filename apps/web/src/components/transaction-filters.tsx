@@ -7,8 +7,14 @@ import {
 } from "@bessel/ui/components/popover";
 import { cn } from "@bessel/ui/lib/utils";
 // Note: date range filter removed — month navigation in transactions.tsx handles date scoping
-import { Briefcase, ChevronDown, Search, X } from "lucide-react";
-import { useRef, useState } from "react";
+import {
+  ArrowLeftRight,
+  Briefcase,
+  ChevronDown,
+  Search,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { TextInput } from "@/components/ui-kit";
 
 export interface TransactionFilters {
@@ -18,6 +24,8 @@ export interface TransactionFilters {
   direction?: string;
   is_business?: boolean;
   search?: string;
+  /** Moves between the user's own accounts: shown by default, or hidden, or the only rows. */
+  transfers?: "hide" | "only";
   year?: number;
   month?: number;
 }
@@ -36,7 +44,8 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
     filters.uncategorized ||
     filters.direction ||
     filters.is_business !== undefined ||
-    filters.search
+    filters.search ||
+    filters.transfers
   );
 }
 
@@ -281,6 +290,42 @@ function BusinessToggle({
   );
 }
 
+// ─── Transfers toggle ────────────────────────────────────────────────────────
+
+const TRANSFER_STEPS: Record<string, TransactionFilters["transfers"]> = {
+  shown: "hide",
+  hide: "only",
+  only: undefined,
+};
+
+function TransfersToggle({
+  value,
+  onChange,
+}: {
+  value: TransactionFilters["transfers"];
+  onChange: (v: TransactionFilters["transfers"]) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(TRANSFER_STEPS[value ?? "shown"])}
+      title="Moves between your own accounts"
+      className={cn(
+        CHIP_CLASS,
+        "px-2.5",
+        value ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
+      )}
+    >
+      <ArrowLeftRight className={cn("size-3.5", value && "text-primary-300")} />
+      {value === "hide"
+        ? "Transfers hidden"
+        : value === "only"
+          ? "Only transfers"
+          : "Transfers"}
+    </button>
+  );
+}
+
 // ─── Search input ────────────────────────────────────────────────────────────
 
 function SearchInput({
@@ -323,6 +368,10 @@ export function TransactionFiltersBar({
 }: TransactionFiltersBarProps) {
   const [searchValue, setSearchValue] = useState(filters.search ?? "");
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  // A link elsewhere on the page (a merchant, say) can set the search too.
+  useEffect(() => {
+    setSearchValue(filters.search ?? "");
+  }, [filters.search]);
   const active = hasActiveFilters(filters);
 
   const toggleArrayFilter = (
@@ -393,6 +442,11 @@ export function TransactionFiltersBar({
       <BusinessToggle
         value={filters.is_business}
         onChange={(v) => onFiltersChange({ ...filters, is_business: v })}
+      />
+
+      <TransfersToggle
+        value={filters.transfers}
+        onChange={(v) => onFiltersChange({ ...filters, transfers: v })}
       />
 
       {active && (

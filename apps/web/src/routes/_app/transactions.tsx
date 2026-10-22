@@ -58,6 +58,7 @@ import {
   type TransactionFilters,
   TransactionFiltersBar,
 } from "@/components/transaction-filters";
+import { MonthSummary } from "@/components/transactions/month-summary";
 import {
   EmptyState,
   IconButton,
@@ -106,6 +107,10 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
     is_business:
       raw.is_business === "true" || raw.is_business === true ? true : undefined,
     search: typeof raw.search === "string" ? raw.search : undefined,
+    transfers:
+      raw.transfers === "hide" || raw.transfers === "only"
+        ? raw.transfers
+        : undefined,
     year: asInt(raw.year),
     month: asInt(raw.month),
   };
@@ -194,10 +199,15 @@ const TransactionActions = memo(function TransactionActions({
 
 function Transactions() {
   const now = new Date();
-  const [filters, setFilters] = useState<TransactionFilters>({
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-  });
+  // Filters live in the URL, so other pages can link straight to a filtered list.
+  const filters = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setFilters = useCallback(
+    (next: TransactionFilters) => {
+      void navigate({ search: next, replace: true });
+    },
+    [navigate],
+  );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(
     null,
@@ -231,7 +241,7 @@ function Transactions() {
       setFilters(next);
       setRowSelection({});
     },
-    [year, month, filters],
+    [year, month, filters, setFilters],
   );
 
   const handleFiltersChange = useCallback(
@@ -246,7 +256,28 @@ function Transactions() {
       setFilters(clean);
       setRowSelection({});
     },
-    [year, month],
+    [year, month, setFilters],
+  );
+
+  // A search reaches across every month: "when did I last pay X?"
+  const searching = !!filters.search;
+  const summaryActions = useMemo(
+    () => ({
+      onPickMonth: (y: number, m: number) => {
+        setFilters({ year: y, month: m });
+        setRowSelection({});
+      },
+      onPickCategory: (categoryId: string | null) =>
+        handleFiltersChange(
+          categoryId
+            ? { category_id: [categoryId], transfers: "hide" }
+            : { uncategorized: true, transfers: "hide" },
+        ),
+      onPickMerchant: (description: string) =>
+        handleFiltersChange({ search: description }),
+      onShowTransfers: () => handleFiltersChange({ transfers: "only" }),
+    }),
+    [setFilters, handleFiltersChange],
   );
 
   const { data, isLoading } = useQuery({
@@ -262,8 +293,14 @@ function Transactions() {
         direction: filters.direction,
         is_business: filters.is_business,
         search: filters.search,
-        date_from: dateFrom,
-        date_to: dateTo,
+        transfers:
+          filters.transfers === "only"
+            ? true
+            : filters.transfers === "hide"
+              ? false
+              : undefined,
+        date_from: searching ? undefined : dateFrom,
+        date_to: searching ? undefined : dateTo,
       },
     }),
     placeholderData: keepPreviousData,
@@ -614,25 +651,34 @@ function Transactions() {
   const totalCount = data?.pagination.total_count ?? 0;
   const selectedCount = Object.keys(rowSelection).length;
   const monthLabel = format(firstDay, "MMMM yyyy");
+  const shown = Math.min(totalCount, MONTH_LIMIT);
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title={monthLabel}
+        title={searching ? "Search" : monthLabel}
         summary={
           isLoading
             ? null
-            : `${totalCount} transaction${totalCount !== 1 ? "s" : ""} this month.`
+            : searching
+              ? `${totalCount} match${totalCount !== 1 ? "es" : ""} for "${filters.search}" across all months${totalCount > shown ? `, newest ${shown} shown` : ""}.`
+              : `${totalCount} transaction${totalCount !== 1 ? "s" : ""} this month.`
         }
       >
-        <PeriodNav
-          label={monthLabel}
-          onPrev={() => navigateMonth(-1)}
-          onNext={() => navigateMonth(1)}
-          nextDisabled={isCurrentMonth}
-        />
+        {!searching && (
+          <PeriodNav
+            label={monthLabel}
+            onPrev={() => navigateMonth(-1)}
+            onNext={() => navigateMonth(1)}
+            nextDisabled={isCurrentMonth}
+          />
+        )}
         <ImportDialog />
       </PageHeader>
+
+      {!searching && (
+        <MonthSummary year={year} month={month} actions={summaryActions} />
+      )}
 
       <TransactionFiltersBar
         filters={filters}

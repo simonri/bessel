@@ -5,7 +5,7 @@ export const ACCOUNT_SUBTYPES = [
   { value: "af", label: "AF" },
   { value: "kf", label: "KF" },
   { value: "brokerage", label: "Brokerage" },
-  { value: "credit_card", label: "Credit Card" },
+  { value: "credit_card", label: "Credit card" },
   { value: "loan", label: "Loan" },
   { value: "other", label: "Other" },
 ] as const;
