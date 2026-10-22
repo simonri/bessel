@@ -38,14 +38,28 @@ const MILLION = 1_000_000;
  *   formatKr(123456)                                → "1 235 kr"
  *   formatKr(297_000_000, "SEK", { compact: true }) → "2,97 mn kr"
  *   formatKr(5000, "SEK", { sign: true })           → "+50 kr"
+ *   formatKr(8950, "SEK", { exact: true })          → "89,50 kr"
  */
 export function formatKr(
   minor: number,
   currency = "SEK",
-  { compact = false, sign = false }: { compact?: boolean; sign?: boolean } = {},
+  {
+    compact = false,
+    sign = false,
+    exact = false,
+  }: { compact?: boolean; sign?: boolean; exact?: boolean } = {},
 ): string {
-  const units = Math.round(minor / 100);
   const suffix = currency === "SEK" ? "kr" : currency;
+  // One purchase or price keeps its öre; totals don't need them.
+  if (exact && minor % 100 !== 0) {
+    const plus = sign && minor > 0 ? "+" : "";
+    const value = (minor / 100).toLocaleString("sv-SE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return `${plus}${value} ${suffix}`;
+  }
+  const units = Math.round(minor / 100);
   const plus = sign && units > 0 ? "+" : "";
   if (compact && Math.abs(units) >= MILLION) {
     const millions = (units / MILLION).toLocaleString("sv-SE", {

@@ -6,6 +6,7 @@ import {
 } from "@bessel/ui/components/tabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-kit";
+import { HideAmountsButton } from "@/lib/privacy";
 import { HoldingsTab } from "./-holdings-tab";
 import { TradesTab } from "./-trades-tab";
 
@@ -22,7 +23,9 @@ function Investments() {
       <PageHeader
         title="Investments"
         summary="What you hold at Avanza and every trade behind it, synced from Avanza."
-      />
+      >
+        <HideAmountsButton />
+      </PageHeader>
       <TabsList className="h-8 rounded-lg border border-white/[0.07] bg-white/[0.04] p-0.5 group-data-[orientation=horizontal]/tabs:h-8">
         <TabsTrigger value="holdings" className={TRIGGER_CLASS}>
           Holdings

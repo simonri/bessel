@@ -46,16 +46,19 @@ export function Amount({
   currency = "SEK",
   compact,
   sign,
+  exact,
   className,
 }: {
   value: number;
   currency?: string;
   compact?: boolean;
   sign?: boolean;
+  /** Keeps öre, for a single purchase or price. */
+  exact?: boolean;
   className?: string;
 }) {
   const isHidden = useAmountsHidden();
-  const text = formatKr(value, currency, { compact, sign });
+  const text = formatKr(value, currency, { compact, sign, exact });
   if (!isHidden) {
     return (
       <span className={cn("whitespace-nowrap tabular-nums", className)}>

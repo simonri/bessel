@@ -75,6 +75,10 @@ function mount(actions = {}) {
 
 afterEach(cleanup);
 
+/** Matches an element by all its text, for sentences with an amount inside. */
+const withText = (text: string) => (_: string, element: Element | null) =>
+  element?.textContent?.replace(/\s+/g, " ") === text;
+
 describe("versusUsual", () => {
   it("says how far a month is from the usual one", () => {
     expect(versusUsual(1200, 1000)).toBe("20% more than usual");
@@ -95,11 +99,13 @@ describe("MonthSummary", () => {
     });
     const handlers = mount();
 
-    expect(await screen.findByText("30 000 SEK")).toBeTruthy();
+    expect(await screen.findByText("30 000 kr")).toBeTruthy();
     expect(screen.getByText("20% more than usual")).toBeTruthy();
     expect(screen.getByText("Saved")).toBeTruthy();
-    expect(screen.getByText("18 000 SEK")).toBeTruthy();
-    expect(screen.getByText("Usually saves 20 000 SEK")).toBeTruthy();
+    expect(screen.getByText("18 000 kr")).toBeTruthy();
+    expect(
+      screen.getAllByText(withText("Usually saves 20 000 kr")).length,
+    ).toBeGreaterThan(0);
 
     fireEvent.click(
       screen.getByText("7 moves between your own accounts left out"),
@@ -138,7 +144,7 @@ describe("MonthSummary", () => {
     mount();
 
     expect(await screen.findByText("Overspent")).toBeTruthy();
-    expect(screen.getByText("11 000 SEK")).toBeTruthy();
+    expect(screen.getByText("11 000 kr")).toBeTruthy();
   });
 
   it("doesn't hold a month still running up against whole ones", async () => {
@@ -168,7 +174,9 @@ describe("MonthSummary", () => {
     );
 
     expect(await screen.findAllByText("So far this month")).toHaveLength(2);
-    expect(screen.getByText("Usually overspends 5 000 SEK")).toBeTruthy();
+    expect(
+      screen.getAllByText(withText("Usually overspends 5 000 kr")).length,
+    ).toBeGreaterThan(0);
   });
 
   it("keeps each currency apart", async () => {
@@ -188,9 +196,9 @@ describe("MonthSummary", () => {
     });
     mount();
 
-    expect(await screen.findByText("30 000 SEK")).toBeTruthy();
+    expect(await screen.findByText("30 000 kr")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "EUR" }));
     expect(screen.getByText("500 EUR")).toBeTruthy();
-    expect(screen.queryByText("30 000 SEK")).toBeNull();
+    expect(screen.queryByText("30 000 kr")).toBeNull();
   });
 });

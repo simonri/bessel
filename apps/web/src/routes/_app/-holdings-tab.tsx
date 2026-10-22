@@ -18,21 +18,19 @@ import {
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import type { DataColumnDef } from "@/lib/data-table";
-import { formatAmount, formatMoney, formatQuantity } from "@/lib/money";
+import { formatQuantity } from "@/lib/money";
+import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
 const NUMERIC_CELL = "text-right tabular-nums text-white/70";
 const LARGEST = 8;
 
-function whole(minor: number, currency: string): string {
-  return formatMoney(Math.round(minor / 100) * 100, currency).replace(
-    /,00(?= )/,
-    "",
-  );
+function whole(minor: number, currency: string) {
+  return <Amount value={minor} currency={currency} />;
 }
 
-function signed(minor: number, currency: string): string {
-  return `${minor >= 0 ? "+" : "-"}${whole(Math.abs(minor), currency)}`;
+function signed(minor: number, currency: string) {
+  return <Amount value={minor} currency={currency} sign />;
 }
 
 function percent(part: number, of: number): string | null {
@@ -156,7 +154,7 @@ function positionColumns(
       cell: ({ row }) => (
         <div className="text-right font-medium tabular-nums text-white/85">
           {row.original.current_value != null
-            ? formatMoney(row.original.current_value, row.original.currency)
+            ? whole(row.original.current_value, row.original.currency)
             : "—"}
         </div>
       ),
@@ -183,8 +181,7 @@ function positionColumns(
           return <div className="text-right text-white/30">—</div>;
         return (
           <div className={cn("text-right tabular-nums", gainClass(gain_loss))}>
-            {gain_loss >= 0 ? "+" : ""}
-            {formatAmount(gain_loss)}
+            {signed(gain_loss, row.original.currency)}
             {gain_loss_pct != null && (
               <span className="ml-1.5 type-caption opacity-80">
                 {gain_loss_pct >= 0 ? "+" : ""}

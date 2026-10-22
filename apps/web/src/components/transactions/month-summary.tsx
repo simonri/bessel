@@ -15,7 +15,8 @@ import {
 } from "recharts";
 import { BarRow, Panel, SectionLabel, StatTile } from "@/components/ui-kit";
 import { client } from "@/lib/client";
-import { formatMoney } from "@/lib/money";
+import { formatAxisKr } from "@/lib/money";
+import { Amount, useAmountsHidden } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
 const INCOME = "var(--color-income)";
@@ -29,11 +30,8 @@ export interface MonthSummaryActions {
   onShowTransfers: () => void;
 }
 
-function whole(minor: number, currency: string): string {
-  return formatMoney(Math.round(minor / 100) * 100, currency).replace(
-    /,00(?= )/,
-    "",
-  );
+function whole(minor: number, currency: string) {
+  return <Amount value={minor} currency={currency} />;
 }
 
 /** "12% more than usual", against the average of the six months before. */
@@ -44,10 +42,12 @@ export function versusUsual(value: number, usual: number): string | null {
   return `${Math.abs(change)}% ${change > 0 ? "more" : "less"} than usual`;
 }
 
-function usualNet(net: number, currency: string): string {
-  return net >= 0
-    ? `Usually saves ${whole(net, currency)}`
-    : `Usually overspends ${whole(-net, currency)}`;
+function usualNet(net: number, currency: string) {
+  return net >= 0 ? (
+    <>Usually saves {whole(net, currency)}</>
+  ) : (
+    <>Usually overspends {whole(-net, currency)}</>
+  );
 }
 
 function MonthBars({
@@ -64,6 +64,7 @@ function MonthBars({
       m.year === summary.months.at(-1)?.year &&
       m.month === summary.months.at(-1)?.month,
   }));
+  const hidden = useAmountsHidden();
   return (
     <div className="h-44 w-full">
       <ResponsiveContainer>
@@ -85,10 +86,10 @@ function MonthBars({
             tickMargin={6}
           />
           <YAxis
-            tickFormatter={(v: number) => `${Math.round(v / 100_000)}k`}
+            tickFormatter={(v: number) => (hidden ? "" : formatAxisKr(v))}
             tickLine={false}
             axisLine={false}
-            width={36}
+            width={hidden ? 8 : 36}
             tick={TICK}
           />
           <Tooltip

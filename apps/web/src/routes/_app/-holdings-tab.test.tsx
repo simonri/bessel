@@ -37,14 +37,14 @@ describe("AccountCard", () => {
     );
 
     expect(screen.getByText("Company")).toBeTruthy();
-    expect(screen.getByText("9 161 SEK")).toBeTruthy();
-    expect(screen.getByText("8 000 SEK")).toBeTruthy();
-    expect(screen.getByText("+1 161 SEK").parentElement?.textContent).toContain(
+    expect(screen.getByText("9 161 kr")).toBeTruthy();
+    expect(screen.getByText("8 000 kr")).toBeTruthy();
+    expect(screen.getByText("+1 161 kr").parentElement?.textContent).toContain(
       "+14.5%",
     );
-    expect(screen.getByText("+1 000 SEK")).toBeTruthy();
-    expect(screen.getByText("50 SEK").parentElement?.textContent).toContain(
-      "161 SEK all time",
+    expect(screen.getByText("+1 000 kr")).toBeTruthy();
+    expect(screen.getByText("50 kr").parentElement?.textContent).toContain(
+      "161 kr all time",
     );
   });
 });
@@ -73,7 +73,7 @@ describe("AccountCard with more taken out", () => {
     );
 
     expect(screen.getByText("Taken out")).toBeTruthy();
-    expect(screen.getByText("77 796 SEK")).toBeTruthy();
+    expect(screen.getByText("77 796 kr")).toBeTruthy();
     expect(screen.queryByText("Put in")).toBeNull();
   });
 });

@@ -72,12 +72,12 @@ import { VirtualDataTable } from "@/components/virtual-data-table";
 import { client } from "@/lib/client";
 import type { DataColumnDef } from "@/lib/data-table";
 import { apiDate } from "@/lib/local-day";
-import { formatAmount } from "@/lib/money";
 import {
   mutationFamily,
   restoreItemFields,
   settleWhenIdle,
 } from "@/lib/optimistic";
+import { Amount, HideAmountsButton } from "@/lib/privacy";
 import { useRouteFilters } from "@/lib/route-filters";
 
 // ─── Route + URL search params ────────────────────────────────────────────────
@@ -618,8 +618,7 @@ function Transactions() {
         size: 120,
         header: () => <div className="text-right">Amount</div>,
         cell: ({ row }) => {
-          const amount = row.original.amount;
-          const sign = row.original.direction === "debit" ? "−" : "+";
+          const { amount, currency, direction } = row.original;
           return (
             <div
               className={`text-right text-13 font-medium tabular-nums ${
@@ -628,8 +627,12 @@ function Transactions() {
                   : "text-white/80"
               }`}
             >
-              {sign}
-              {formatAmount(amount)}
+              <Amount
+                value={direction === "debit" ? -amount : amount}
+                currency={currency}
+                sign
+                exact
+              />
             </div>
           );
         },
@@ -688,6 +691,7 @@ function Transactions() {
             nextDisabled={isCurrentMonth}
           />
         )}
+        <HideAmountsButton />
         <ImportDialog />
       </PageHeader>
 

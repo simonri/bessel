@@ -31,6 +31,17 @@ describe("formatKr", () => {
   });
 });
 
+describe("formatKr exact", () => {
+  it("keeps öre only when there are any", () => {
+    expect(plain(formatKr(8950, "SEK", { exact: true }))).toBe("89,50 kr");
+    expect(plain(formatKr(-8950, "SEK", { exact: true, sign: true }))).toBe(
+      "-89,50 kr",
+    );
+    expect(plain(formatKr(9000, "SEK", { exact: true }))).toBe("90 kr");
+    expect(plain(formatKr(8950))).toBe("90 kr");
+  });
+});
+
 describe("formatAxisKr", () => {
   it("uses k for thousands and mn for millions", () => {
     expect(plain(formatAxisKr(95000))).toBe("950");

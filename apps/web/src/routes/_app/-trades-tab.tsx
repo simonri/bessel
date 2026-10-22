@@ -9,7 +9,8 @@ import { DataTable } from "@/components/data-table";
 import { EmptyState, PeriodNav, placeholderKeys } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import type { DataColumnDef } from "@/lib/data-table";
-import { formatAmount, formatQuantity } from "@/lib/money";
+import { formatQuantity } from "@/lib/money";
+import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
 export function TradesTab() {
@@ -89,7 +90,11 @@ export function TradesTab() {
         size: 120,
         cell: ({ row }) => (
           <div className="text-right tabular-nums text-white/70">
-            {formatAmount(row.original.price_per_unit)}
+            <Amount
+              value={row.original.price_per_unit}
+              currency={row.original.currency}
+              exact
+            />
           </div>
         ),
       },
@@ -102,7 +107,11 @@ export function TradesTab() {
             (row.original.quantity * row.original.price_per_unit) / 1_000_000;
           return (
             <div className="text-right font-medium tabular-nums text-white/85">
-              {formatAmount(total)}
+              <Amount
+                value={Math.round(total)}
+                currency={row.original.currency}
+                exact
+              />
             </div>
           );
         },
