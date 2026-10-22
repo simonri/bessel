@@ -8,7 +8,7 @@ import {
 } from "@bessel/ui/components/dropdown-menu";
 import { format, isToday, isYesterday } from "date-fns";
 import { ArrowLeftRight, MoreHorizontal, Trash2 } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
 import { IconButton, Panel } from "@/components/ui-kit";
 import { Amount } from "@/lib/privacy";
@@ -199,7 +199,11 @@ const TransactionRow = memo(function TransactionRow({
           selecting && "flex",
         )}
       />
-      <CategoryIcon category={category} transfer={!!transaction.transfer_id} />
+      <TransactionIcon
+        logo={transaction.logo_url}
+        category={category}
+        transfer={!!transaction.transfer_id}
+      />
       <button
         type="button"
         onClick={() => handlers.onOpen(transaction)}
@@ -257,13 +261,30 @@ const TransactionRow = memo(function TransactionRow({
   );
 });
 
-function CategoryIcon({
+/** The merchant's logo when the source gave one, otherwise the category's colour and initial. */
+export function TransactionIcon({
+  logo,
   category,
   transfer,
 }: {
+  logo?: string | null;
   category: CategorySchema | undefined;
   transfer: boolean;
 }) {
+  const [broken, setBroken] = useState(false);
+  if (logo && !broken) {
+    return (
+      <span className="flex size-8 shrink-0 overflow-hidden rounded-full bg-white">
+        <img
+          src={logo}
+          alt=""
+          loading="lazy"
+          className="size-full object-cover"
+          onError={() => setBroken(true)}
+        />
+      </span>
+    );
+  }
   if (transfer) {
     return (
       <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white/50">

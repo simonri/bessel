@@ -126,7 +126,23 @@ describe("TransactionList", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("opens a transaction when its description is clicked", () => {
+  it("shows the merchant's logo, and the category's initial if it doesn't load", () => {
+    mount([
+      tx({ id: "a", description: "Hallon", logo_url: "https://assets.klarnacdn.net/image/a/b" }),
+      tx({ id: "b", description: "ICA Nära" }),
+    ]);
+
+    const [logo] = Array.from(document.querySelectorAll("img"));
+    expect(logo.getAttribute("src")).toBe("https://assets.klarnacdn.net/image/a/b");
+    expect(document.querySelectorAll("img")).toHaveLength(1);
+
+    fireEvent.error(logo);
+
+    expect(document.querySelectorAll("img")).toHaveLength(0);
+    expect(screen.getAllByText("M")).toHaveLength(2);
+  });
+
+    it("opens a transaction when its description is clicked", () => {
     const transaction = tx({});
     const { on } = mount([transaction]);
 

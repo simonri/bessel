@@ -58,6 +58,7 @@ class TransactionService:
         "dedup_hash": tx.dedup_hash,
         "description": tx.description or None,
         "transaction_type": tx.transaction_type,
+        "logo_url": tx.logo_url,
         "bank_account_id": bank_account_id,
         "raw_id": raw_transactions[i].id,
         "user_id": user_id,

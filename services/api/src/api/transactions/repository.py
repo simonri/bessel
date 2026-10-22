@@ -159,7 +159,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .order_by(Transaction.bank_account_id, Transaction.transaction_date.desc())
       .distinct(Transaction.bank_account_id)
     )
-    return dict((await self.session.execute(statement)).tuples().all())
+    return dict((await self.session.execute(statement)).all())
 
   async def count_left_out_as_transfers(self, user_id: UUID, *, start: date, end: date) -> int:
     statement = select(func.count()).where(

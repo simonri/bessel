@@ -29,6 +29,7 @@ def item(
   plus: bool = False,
   struck: bool = False,
   avatar: str | None = None,
+  logo: str | None = None,
 ) -> dict[str, Any]:
   """A purchase as Klarna's app API lists it (fake ids and amounts, real field names)."""
   return {
@@ -39,13 +40,14 @@ def item(
     "isPending": False,
     "subtitle": [{"text": "12:00", "icon": None}, {"text": plan, "icon": "klarnacard"}],
     "amount": {"currentAmount": amount, "currency": "SEK", "hasPlus": plus, "isAmountLineThrough": struck},
-    "avatar": {"avatarType": avatar},
+    "avatar": {"avatarType": avatar, "logoUrl": {"x2": {"url": logo}} if logo else None},
   }
 
 
-def payment(unique_id: str, title: str, amount: int, paid: str, *, section: str = "completed-subsection-2026-10") -> dict[str, Any]:
+def payment(unique_id: str, title: str, amount: int, paid: str, *, section: str = "completed-subsection-2026-10", logo: str | None = None) -> dict[str, Any]:
   """A completed payment as Klarna's payments page lists it (fake ids and amounts, real field names)."""
   return {
+    "icon": {"type": "icon", "value": {"icon": {"type": "remote", "value": {"url": logo}}}} if logo else None,
     "title": {"value": title},
     "subtitle": {"value": "Paid", "state": "success"},
     "metadata": {"unique_id": unique_id, "section_id": section, "calendar_date": paid, "amount": {"amount": str(amount), "currency": "SEK"}},
@@ -288,3 +290,37 @@ class TestPayLaterReminder:
     state = (await session.execute(select(KlarnaPayLater).where(KlarnaPayLater.bank_account_id == account.id))).scalar_one()
     assert state.stale_notified_at is None and state.last_imported_at is not None and state.last_imported_at > long_ago
     assert await warn_stale(session, now=utc_now()) == 0
+
+
+MERCHANT_LOGO = "https://assets.klarnacdn.net/rs:fit:100:100:1:1/bg:255:255:255/image/6a271667/8e39"
+
+
+class TestMerchantLogos:
+  @pytest.mark.asyncio
+  async def test_a_purchase_and_its_payment_keep_the_merchants_logo_but_never_klarnas_own_icons(
+    self, client: AsyncClient, session: AsyncSession, account: BankAccount, fake: FakeKlarna
+  ) -> None:
+    fake.items.extend(
+      [
+        item("1", "Hallon", "Pay in 30 days", 10900, logo=MERCHANT_LOGO),
+        item("2", "Adidas", "Pay in 30 days", 59900, avatar="KLARNA_CARD", logo="https://x.klarnacdn.net/klapp/assets/you-card/icon-round-klarna-card-100.png"),
+        item("3", "Webhallen", "Pay in 30 days", 51400, logo="https://example.com/image/logo.png"),
+        item("4", "Ikea", "Pay in 30 days", 99900),
+        item("5", "Elgiganten", "Pay in 30 days", 29900, logo="https://assets.klarnacdn.net/klapp/assets/placeholder.png"),
+      ]
+    )
+    fake.payments.append(payment("completed:pay-later:krn:1", "Hallon", 10900, "2026-10-19", logo=MERCHANT_LOGO))
+
+    await _import(client, account)
+
+    rows = await session.execute(select(Transaction.description, Transaction.logo_url).where(Transaction.bank_account_id == account.id))
+    assert dict(rows.all()) == {
+      "Hallon": MERCHANT_LOGO,
+      "Payment for Hallon": MERCHANT_LOGO,
+      "Adidas": None,
+      "Webhallen": None,
+      "Ikea": None,
+      "Elgiganten": None,
+    }
+    listed = (await client.get("/v1/transactions", params={"bank_account_id": str(account.id), "limit": 10})).json()["items"]
+    assert {t["description"]: t["logo_url"] for t in listed}["Hallon"] == MERCHANT_LOGO

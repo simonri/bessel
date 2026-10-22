@@ -12,6 +12,7 @@ import { CategoryCell } from "@/components/category-cell";
 import {
   signedAmount,
   type TransactionHandlers,
+  TransactionIcon,
 } from "@/components/transactions/transaction-list";
 import { SoftButton } from "@/components/ui-kit";
 import { Amount } from "@/lib/privacy";
@@ -68,13 +69,20 @@ function Body({
   const business = transaction.is_business ?? false;
   return (
     <div className="flex min-h-full flex-col">
-      <header className="border-b border-white/[0.06] px-5 pt-5 pr-12 pb-4">
-        <SheetTitle className="type-heading text-white/90">
-          {transaction.description ?? "No description"}
-        </SheetTitle>
-        <SheetDescription className="type-caption text-white/45">
-          {format(transaction.transaction_date, "EEEE d MMMM yyyy")}
-        </SheetDescription>
+      <header className="flex items-center gap-3 border-b border-white/[0.06] px-5 pt-5 pr-12 pb-4">
+        <TransactionIcon
+          logo={transaction.logo_url}
+          category={categories.find((c) => c.id === transaction.category_id)}
+          transfer={!!transaction.transfer_id}
+        />
+        <div className="min-w-0">
+          <SheetTitle className="truncate type-heading text-white/90">
+            {transaction.description ?? "No description"}
+          </SheetTitle>
+          <SheetDescription className="type-caption text-white/45">
+            {format(transaction.transaction_date, "EEEE d MMMM yyyy")}
+          </SheetDescription>
+        </div>
       </header>
 
       <div className="space-y-6 px-5 py-5">

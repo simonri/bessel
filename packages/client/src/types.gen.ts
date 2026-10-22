@@ -5820,6 +5820,12 @@ export type TransactionSchema = {
    */
   transaction_type: string | null;
   /**
+   * Logo Url
+   *
+   * The merchant's logo, when the source provides it.
+   */
+  logo_url?: string | null;
+  /**
    * Dedup Hash
    */
   dedup_hash: string;
@@ -5964,6 +5970,12 @@ export type TransactionUpdateResponse = {
    * Transaction Type
    */
   transaction_type: string | null;
+  /**
+   * Logo Url
+   *
+   * The merchant's logo, when the source provides it.
+   */
+  logo_url?: string | null;
   /**
    * Dedup Hash
    */

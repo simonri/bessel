@@ -30,6 +30,7 @@ class TransactionUpdateResponse:
       dedup_hash (str):
       bank_account_id (str):
       raw_id (None | str):
+      logo_url (None | str | Unset): The merchant's logo, when the source provides it.
       is_business (bool | Unset): Whether this is a business transaction. Default: False.
       transfer_id (None | str | Unset): Shared with the other side of a move between the user's own accounts; such
           pairs count as neither income nor spending.
@@ -50,6 +51,7 @@ class TransactionUpdateResponse:
   dedup_hash: str
   bank_account_id: str
   raw_id: None | str
+  logo_url: None | str | Unset = UNSET
   is_business: bool | Unset = False
   transfer_id: None | str | Unset = UNSET
   same_description_count: int | Unset = 0
@@ -90,6 +92,12 @@ class TransactionUpdateResponse:
     raw_id: None | str
     raw_id = self.raw_id
 
+    logo_url: None | str | Unset
+    if isinstance(self.logo_url, Unset):
+      logo_url = UNSET
+    else:
+      logo_url = self.logo_url
+
     is_business = self.is_business
 
     transfer_id: None | str | Unset
@@ -119,6 +127,8 @@ class TransactionUpdateResponse:
         "raw_id": raw_id,
       }
     )
+    if logo_url is not UNSET:
+      field_dict["logo_url"] = logo_url
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
     if transfer_id is not UNSET:
@@ -190,6 +200,15 @@ class TransactionUpdateResponse:
 
     raw_id = _parse_raw_id(d.pop("raw_id"))
 
+    def _parse_logo_url(data: object) -> None | str | Unset:
+      if data is None:
+        return data
+      if isinstance(data, Unset):
+        return data
+      return cast(None | str | Unset, data)
+
+    logo_url = _parse_logo_url(d.pop("logo_url", UNSET))
+
     is_business = d.pop("is_business", UNSET)
 
     def _parse_transfer_id(data: object) -> None | str | Unset:
@@ -217,6 +236,7 @@ class TransactionUpdateResponse:
       dedup_hash=dedup_hash,
       bank_account_id=bank_account_id,
       raw_id=raw_id,
+      logo_url=logo_url,
       is_business=is_business,
       transfer_id=transfer_id,
       same_description_count=same_description_count,

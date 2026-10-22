@@ -102,6 +102,8 @@ fragment button on TransactionStateActionButton {
   key props { text serializedPayload variant }
 }
 """
+# Where Klarna serves merchants' logos; its own app icons live elsewhere (x.klarnacdn.net/klapp).
+MERCHANT_LOGOS = "https://assets.klarnacdn.net/"
 
 
 def _cookie_value(cookie_str: str, key: str) -> str | None:
@@ -224,6 +226,16 @@ def is_pay_later(item: dict[str, Any]) -> bool:
   return item_plan is not None and item_plan.lower() not in PAID_AT_PURCHASE
 
 
+def merchant_logo(item: dict[str, Any]) -> str | None:
+  """The merchant's logo on Klarna's image CDN; a Klarna card purchase shows Klarna's own card icon instead, which isn't one."""
+  avatar_logo = ((item.get("avatar") or {}).get("logoUrl") or {}).get("x2") or {}
+  icon = (((item.get("icon") or {}).get("value") or {}).get("icon") or {}).get("value") or {}
+  for url in (avatar_logo.get("url"), icon.get("url") if isinstance(icon, dict) else None):
+    if isinstance(url, str) and url.startswith(MERCHANT_LOGOS) and "/image/" in url:
+      return url
+  return None
+
+
 def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   """Map a single Klarna item to ParsedTransaction. Returns None if the item should be skipped."""
   # Skip rejected/failed authorisations — these never settled
@@ -259,6 +271,7 @@ def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
     dedup_hash=dedup_hash(unique_id),
     description=title,
     raw_data=item,
+    logo_url=merchant_logo(item),
   )
 
 
@@ -304,6 +317,7 @@ def payment_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
     dedup_hash=hashlib.sha256(f"klarna-payment:{unique_id}".encode()).hexdigest(),
     description=f"Payment for {title}",
     raw_data=item,
+    logo_url=merchant_logo(item),
   )
 
 

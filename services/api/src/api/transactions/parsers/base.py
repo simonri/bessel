@@ -17,6 +17,8 @@ class ParsedTransaction:
   raw_data: dict[str, Any]
   # The source's own kind of movement, such as Avanza's "DEPOSIT" or "DIVIDEND".
   transaction_type: str | None = None
+  # The merchant's logo as the source shows it.
+  logo_url: str | None = None
 
 
 def compute_dedup_hash(

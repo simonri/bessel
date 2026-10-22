@@ -9196,6 +9196,18 @@ export const TransactionSchemaSchema = {
       ],
       title: "Transaction Type",
     },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+      description: "The merchant's logo, when the source provides it.",
+    },
     dedup_hash: {
       type: "string",
       title: "Dedup Hash",
@@ -9417,6 +9429,18 @@ export const TransactionUpdateResponseSchema = {
         },
       ],
       title: "Transaction Type",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+      description: "The merchant's logo, when the source provides it.",
     },
     dedup_hash: {
       type: "string",

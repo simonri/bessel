@@ -28,6 +28,8 @@ class Transaction(RecordModel):
   dedup_hash: Mapped[str] = mapped_column(String(70), nullable=False)
   description: Mapped[str | None] = mapped_column(Text, nullable=True)
   transaction_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+  # The merchant's own logo, only when the source says which it is (Klarna does); never guessed from the text.
+  logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
   is_business: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
   # Shared by both sides of money moving between the user's own accounts; such pairs count as neither income nor spending.
   transfer_id: Mapped[UUID | None] = mapped_column(Uuid, nullable=True, index=True)

@@ -14,6 +14,7 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   description: str | None
   category_id: UUID4 | None
   transaction_type: str | None
+  logo_url: str | None = Field(default=None, description="The merchant's logo, when the source provides it.")
   dedup_hash: str
   bank_account_id: UUID4
   raw_id: UUID4 | None
