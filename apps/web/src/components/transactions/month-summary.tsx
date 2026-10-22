@@ -44,6 +44,12 @@ export function versusUsual(value: number, usual: number): string | null {
   return `${Math.abs(change)}% ${change > 0 ? "more" : "less"} than usual`;
 }
 
+function usualNet(net: number, currency: string): string {
+  return net >= 0
+    ? `Usually saves ${whole(net, currency)}`
+    : `Usually overspends ${whole(-net, currency)}`;
+}
+
 function MonthBars({
   summary,
   onPickMonth,
@@ -234,6 +240,9 @@ export function MonthSummary({
     );
   }
   if (data.currencies.length === 0) return null;
+  const now = new Date();
+  // A month still running can't be held up against whole ones yet.
+  const ongoing = year === now.getFullYear() && month === now.getMonth() + 1;
   const summary =
     data.currencies.find((c) => c.currency === picked) ?? data.currencies[0];
   const net = summary.net;
@@ -266,16 +275,20 @@ export function MonthSummary({
           label="Money in"
           value={whole(summary.income, summary.currency)}
           hint={
-            versusUsual(summary.income, summary.average_income) ??
-            "Salary, Swish and other income"
+            ongoing
+              ? "So far this month"
+              : (versusUsual(summary.income, summary.average_income) ??
+                "Salary, Swish and other income")
           }
         />
         <StatTile
           label="Money out"
           value={whole(summary.spending, summary.currency)}
           hint={
-            versusUsual(summary.spending, summary.average_spending) ??
-            "Spending, less refunds"
+            ongoing
+              ? "So far this month"
+              : (versusUsual(summary.spending, summary.average_spending) ??
+                "Spending, less refunds")
           }
         />
         <StatTile
@@ -285,7 +298,10 @@ export function MonthSummary({
               {whole(Math.abs(net), summary.currency)}
             </span>
           }
-          hint={`Usually ${whole(summary.average_income - summary.average_spending, summary.currency)}`}
+          hint={usualNet(
+            summary.average_income - summary.average_spending,
+            summary.currency,
+          )}
         />
       </div>
 

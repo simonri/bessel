@@ -78,6 +78,10 @@ class TestMonthSummary:
     # Money back for a purchase lowers spending instead of counting as income.
     await ledger.add(checking, date(2026, 9, 14), 10000, CREDIT, "ICA Kvantum", category=food)
     await ledger.add(checking, day, 10900, DEBIT, "Hallon")
+    # The same text charged in another account doesn't make this one a refund.
+    savings = await ledger.account("Sparkonto")
+    await ledger.add(savings, day, 30000, DEBIT, "Överföring 9159")
+    await ledger.add(checking, day, 30000, CREDIT, "Överföring 9159")
     await ledger.add(checking, day, 2000000, DEBIT, "Överföring", transfer=True)
     await ledger.add(checking, day, 700000, DEBIT, "Swish till Klarna", category=moved)
     await ledger.add(company, day, 999900, DEBIT, "Server rent")
@@ -86,11 +90,11 @@ class TestMonthSummary:
     summary = await _summary(client)
 
     [sek] = summary["currencies"]
-    assert (sek["income"], sek["spending"], sek["net"]) == (3000000, 90900, 2909100)
-    assert [(c["name"], c["total"], c["count"]) for c in sek["categories"]] == [("Food", 80000, 3), ("Uncategorized", 10900, 1)]
+    assert (sek["income"], sek["spending"], sek["net"]) == (3030000, 120900, 2909100)
+    assert [(c["name"], c["total"], c["count"]) for c in sek["categories"]] == [("Food", 80000, 3), ("Uncategorized", 40900, 2)]
     assert sek["categories"][1]["category_id"] is None
-    assert [(m["description"], m["total"]) for m in sek["merchants"]] == [("ICA Kvantum", 80000), ("Hallon", 10900)]
-    assert (summary["uncategorized"], summary["transfers"]) == (2, 1)
+    assert [(m["description"], m["total"]) for m in sek["merchants"]] == [("ICA Kvantum", 80000), ("Överföring 9159", 30000), ("Hallon", 10900)]
+    assert (summary["uncategorized"], summary["transfers"]) == (4, 1)
 
   @pytest.mark.asyncio
   async def test_compares_with_the_month_before_and_the_six_before_that(self, client: AsyncClient, ledger: _Ledger) -> None:

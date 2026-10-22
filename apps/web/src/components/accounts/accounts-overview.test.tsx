@@ -44,7 +44,7 @@ function account(overrides: Partial<AccountOverview>): AccountOverview {
 afterEach(cleanup);
 
 describe("cashHistory", () => {
-  it("adds up personal cash per month, leaving out the company, investments and other currencies", () => {
+  it("adds up personal cash per month, leaving out the company, investments, debt and other currencies", () => {
     const sep = new Date("2026-09-01T00:00:00");
     const oct = new Date("2026-10-01T00:00:00");
     const history = [
@@ -56,6 +56,7 @@ describe("cashHistory", () => {
       account({ id: "2", history: [{ month: oct, balance: 50 }] }),
       account({ id: "3", is_business: true, history }),
       account({ id: "4", group: "investments", history }),
+      account({ id: "6", group: "credit", history }),
       account({ id: "5", currency: "EUR", history }),
     ];
 

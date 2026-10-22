@@ -159,7 +159,9 @@ class AccountsOverview:
       if last is None:
         problem = "No transactions yet. Import an export, or connect the bank."
       elif now.date() - last > MANUAL_STALE_AFTER:
-        problem = f"Imported by hand, nothing since {last:%-d %b %Y}. Import the latest export, or connect the bank."
+        # A company account usually can't connect through Enable Banking, so don't suggest it.
+        connect = "" if account.is_business else ", or connect the bank"
+        problem = f"Imported by hand, nothing since {last:%-d %b %Y}. Import the latest export{connect}."
       else:
         problem = None
       found[account.id] = (AccountSource(kind="manual", label="Imported by hand", synced_at=None, problem=problem), None, None)

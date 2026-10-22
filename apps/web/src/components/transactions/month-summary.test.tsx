@@ -99,6 +99,7 @@ describe("MonthSummary", () => {
     expect(screen.getByText("20% more than usual")).toBeTruthy();
     expect(screen.getByText("Saved")).toBeTruthy();
     expect(screen.getByText("18 000 SEK")).toBeTruthy();
+    expect(screen.getByText("Usually saves 20 000 SEK")).toBeTruthy();
 
     fireEvent.click(
       screen.getByText("7 moves between your own accounts left out"),
@@ -138,6 +139,36 @@ describe("MonthSummary", () => {
 
     expect(await screen.findByText("Overspent")).toBeTruthy();
     expect(screen.getByText("11 000 SEK")).toBeTruthy();
+  });
+
+  it("doesn't hold a month still running up against whole ones", async () => {
+    const now = new Date();
+    api.summary.mockResolvedValue({
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      currencies: [
+        { ...SEK, average_income: 9000000, average_spending: 9500000 },
+      ],
+      uncategorized: 0,
+      transfers: 0,
+    });
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MonthSummary
+          year={now.getFullYear()}
+          month={now.getMonth() + 1}
+          actions={{
+            onPickMonth: vi.fn(),
+            onPickCategory: vi.fn(),
+            onPickMerchant: vi.fn(),
+            onShowTransfers: vi.fn(),
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findAllByText("So far this month")).toHaveLength(2);
+    expect(screen.getByText("Usually overspends 5 000 SEK")).toBeTruthy();
   });
 
   it("keeps each currency apart", async () => {

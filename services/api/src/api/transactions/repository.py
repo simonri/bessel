@@ -57,6 +57,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     charged = aliased(Transaction)
     refund = (Transaction.direction == TransactionDirection.credit) & exists().where(
       charged.user_id == Transaction.user_id,
+      # Money back lands where it was charged; a generic text like "Överföring" elsewhere isn't a refund.
+      charged.bank_account_id == Transaction.bank_account_id,
       charged.direction == TransactionDirection.debit,
       charged.description == Transaction.description,
       charged.deleted_at.is_(None),

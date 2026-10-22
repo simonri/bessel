@@ -138,6 +138,8 @@ class TestSources:
     now = utc_now()
     skandia, avanza_af = await accounts.account("Skandia"), await accounts.account("Avanza AF", subtype="af")
     pay_later, marginalen = await accounts.account("Klarna Pay later", subtype="credit_card"), await accounts.account("Marginalen")
+    company = await accounts.account("Company bank", business=True)
+    await accounts.add(company, now.date() - timedelta(days=60), 100)
     await accounts.account("Empty")
     await accounts.add(marginalen, now.date() - timedelta(days=60), 100)
     connection = BankConnection(
@@ -164,13 +166,15 @@ class TestSources:
       "Klarna Pay later": ("klarna", "Klarna pay later"),
       "Marginalen": ("manual", "Imported by hand"),
       "Empty": ("manual", "Imported by hand"),
+      "Company bank": ("manual", "Imported by hand"),
     }
     assert by_name["Skandia"]["source"]["problem"] == "Skandia says 523.61 SEK, Bessel 528.61 SEK."
     assert (by_name["Skandia"]["bank_balance"], by_name["Skandia"]["balance_drift"]) == (52361, -500)
     assert by_name["Avanza AF"]["source"]["problem"].startswith("Hasn't synced since")
     assert by_name["Avanza AF"]["bank_balance"] == 8635
     assert (by_name["Klarna Pay later"]["source"]["problem"], by_name["Klarna Pay later"]["bank_balance"]) == (None, -10900)
-    assert by_name["Marginalen"]["source"]["problem"].startswith("Imported by hand, nothing since")
+    assert by_name["Marginalen"]["source"]["problem"].endswith("Import the latest export, or connect the bank.")
+    assert by_name["Company bank"]["source"]["problem"].endswith("Import the latest export.")
     assert by_name["Empty"]["source"]["problem"] == "No transactions yet. Import an export, or connect the bank."
 
   @pytest.mark.asyncio

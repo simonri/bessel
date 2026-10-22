@@ -676,7 +676,8 @@ function Transactions() {
         <ImportDialog />
       </PageHeader>
 
-      {!searching && (
+      {/* The summary covers all your own accounts, so it'd mislead next to one account's list. */}
+      {!searching && !filters.bank_account_id?.length && (
         <MonthSummary year={year} month={month} actions={summaryActions} />
       )}
 

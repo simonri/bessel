@@ -90,7 +90,8 @@ export function cashHistory(
   const byMonth = new Map<string, number>();
   for (const account of accounts) {
     if (account.is_business || account.currency !== currency) continue;
-    if (account.group === "investments") continue;
+    // A pay later or card balance is debt, and its starting balance covers payments from before Bessel's history.
+    if (account.group !== "cash") continue;
     for (const point of account.history) {
       const month = format(point.month, "yyyy-MM-01");
       byMonth.set(month, (byMonth.get(month) ?? 0) + point.balance);
