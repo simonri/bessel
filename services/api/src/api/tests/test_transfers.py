@@ -95,6 +95,34 @@ class TestPairing:
           user_id=user.id,
         )
       )
+    # Debits from two accounts into one could have gone either way round.
+    for index, (bank_account, direction) in enumerate(
+      ((a, TransactionDirection.debit), (c, TransactionDirection.debit), (b, TransactionDirection.credit), (b, TransactionDirection.credit))
+    ):
+      await save_fixture(
+        Transaction(
+          amount=8000,
+          currency="SEK",
+          transaction_date=DAY,
+          direction=direction,
+          dedup_hash=f"eight-{index}",
+          bank_account_id=bank_account.id,
+          user_id=user.id,
+        )
+      )
+    # One debit against two credits in the same account is just as unclear.
+    for index, (bank_account, direction) in enumerate(((a, TransactionDirection.debit), (b, TransactionDirection.credit), (b, TransactionDirection.credit))):
+      await save_fixture(
+        Transaction(
+          amount=7000,
+          currency="SEK",
+          transaction_date=DAY,
+          direction=direction,
+          dedup_hash=f"seven-{index}",
+          bank_account_id=bank_account.id,
+          user_id=user.id,
+        )
+      )
     await match_transfers(session, user.id)
     # Same account, too far apart, or another currency are not transfers.
     await _import(session, a, 2000, TransactionDirection.debit)
@@ -107,6 +135,45 @@ class TestPairing:
     await _import(session, b, 5000, TransactionDirection.credit)
 
     assert (await session.execute(select(Transaction.id).where(Transaction.transfer_id.is_not(None)))).all() == []
+
+  @pytest.mark.asyncio
+  async def test_a_chain_through_an_account_and_repeated_top_ups_are_paired(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
+    savings, checking, klarna = [await _account(save_fixture, user, name) for name in ("Sparkonto", "Allt i Ett", "Klarna")]
+    rows = [
+      # Savings to checking, then straight on to Klarna, all 10,000 kr on one day.
+      (savings, 1000000, TransactionDirection.debit, DAY),
+      (checking, 1000000, TransactionDirection.credit, DAY),
+      (checking, 1000000, TransactionDirection.debit, DAY),
+      (klarna, 1000000, TransactionDirection.credit, DAY),
+      # Two identical top-ups from checking to Klarna.
+      (checking, 100000, TransactionDirection.debit, DAY),
+      (checking, 100000, TransactionDirection.debit, DAY + timedelta(days=1)),
+      (klarna, 100000, TransactionDirection.credit, DAY),
+      (klarna, 100000, TransactionDirection.credit, DAY + timedelta(days=1)),
+    ]
+    for index, (bank_account, amount, direction, day) in enumerate(rows):
+      await save_fixture(
+        Transaction(
+          amount=amount, currency="SEK", transaction_date=day, direction=direction, dedup_hash=f"row-{index}", bank_account_id=bank_account.id, user_id=user.id
+        )
+      )
+
+    assert await match_transfers(session, user.id) == 4
+
+    paired = await session.execute(
+      select(BankAccount.name, Transaction.direction, Transaction.transfer_id, Transaction.transaction_date)
+      .join(BankAccount, BankAccount.id == Transaction.bank_account_id)
+      .where(Transaction.amount == 1000000)
+    )
+    sides = {(name, direction.value): transfer_id for name, direction, transfer_id, _ in paired}
+    assert sides[("Sparkonto", "debit")] == sides[("Allt i Ett", "credit")]
+    assert sides[("Allt i Ett", "debit")] == sides[("Klarna", "credit")]
+    assert sides[("Sparkonto", "debit")] != sides[("Allt i Ett", "debit")]
+    top_ups = (await session.execute(select(Transaction.transaction_date, Transaction.transfer_id).where(Transaction.amount == 100000))).all()
+    by_day: dict[date, set] = {}
+    for day, transfer_id in top_ups:
+      by_day.setdefault(day, set()).add(transfer_id)
+    assert all(len(ids) == 1 for ids in by_day.values()) and len({next(iter(ids)) for ids in by_day.values()}) == 2
 
   @pytest.mark.asyncio
   async def test_a_categorized_transaction_is_left_alone(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
