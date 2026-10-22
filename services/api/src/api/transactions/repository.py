@@ -7,6 +7,7 @@ from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
 from api.models.bank_profile import BankProfile
 from api.models.category import Category
+from api.models.document import TransactionDocument
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
@@ -201,6 +202,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     date_to: date | None = None,
     is_business: bool | None = None,
     transfers: bool | None = None,
+    has_documents: bool | None = None,
   ) -> Select[Transaction]:
     statement = self.get_base_statement().where(Transaction.user_id == user_id)
     if bank_account_ids:
@@ -227,6 +229,9 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       statement = statement.where(Transaction.is_business == is_business)
     if transfers is not None:
       statement = statement.where(Transaction.transfer_id.is_not(None) if transfers else Transaction.transfer_id.is_(None))
+    if has_documents is not None:
+      documented = exists().where(TransactionDocument.transaction_id == Transaction.id)
+      statement = statement.where(documented if has_documents else ~documented)
     return statement
 
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:

@@ -120,10 +120,15 @@ class Settings(BaseSettings):
   WORKER_MAX_RETRIES: int = 20
   WORKER_MIN_BACKOFF_MILLISECONDS: int = 2_000
 
-  # Local file storage for task image attachments. In production this is a
-  # mounted volume (see docker-compose.prod.yml) so uploads survive container
-  # redeploys.
-  TASK_ATTACHMENTS_DIR: str = Field(default="./data/task_attachments")
+  # Uploaded files (task images, invoices) go to an S3-compatible bucket,
+  # Cloudflare R2 in production; without one, development and tests use a
+  # local folder. Production refuses uploads until the bucket is set up, since
+  # a container's own disk is lost on every deploy.
+  STORAGE_ENDPOINT_URL: str = ""
+  STORAGE_BUCKET: str = ""
+  STORAGE_ACCESS_KEY_ID: str = ""
+  STORAGE_SECRET_ACCESS_KEY: str = ""
+  FILES_DIR: str = Field(default="./data")
 
   # Oldest iOS build (CFBundleVersion) still served; older ones get 426 and an
   # update screen. 0 serves every build. Clients that don't send a build, like
@@ -164,6 +169,9 @@ class Settings(BaseSettings):
 
   def enable_banking_redirect_url(self) -> str:
     return self.ENABLE_BANKING_REDIRECT_URL or self.generate_frontend_url("bank-connections/callback")
+
+  def storage_configured(self) -> bool:
+    return all((self.STORAGE_ENDPOINT_URL, self.STORAGE_BUCKET, self.STORAGE_ACCESS_KEY_ID, self.STORAGE_SECRET_ACCESS_KEY))
 
   def enable_banking_configured(self) -> bool:
     return bool(self.ENABLE_BANKING_APP_ID and (self.ENABLE_BANKING_PRIVATE_KEY or self.ENABLE_BANKING_PRIVATE_KEY_PATH))

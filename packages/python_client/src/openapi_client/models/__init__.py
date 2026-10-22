@@ -46,6 +46,7 @@ from .bank_connection_account_update import BankConnectionAccountUpdate
 from .bank_connection_list_response import BankConnectionListResponse
 from .bank_connection_schema import BankConnectionSchema
 from .bank_option import BankOption
+from .body_add_transaction_document_v1_transactions_transaction_id_documents_post import BodyAddTransactionDocumentV1TransactionsTransactionIdDocumentsPost
 from .body_import_location_history_v1_location_history_import_post import BodyImportLocationHistoryV1LocationHistoryImportPost
 from .body_import_transactions_v1_transactions_import_post import BodyImportTransactionsV1TransactionsImportPost
 from .body_upload_task_attachment_v1_tasks_task_id_attachments_post import BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost
@@ -82,6 +83,7 @@ from .crypto_price_schema import CryptoPriceSchema
 from .currency_summary import CurrencySummary
 from .device_schema import DeviceSchema
 from .device_update import DeviceUpdate
+from .document_schema import DocumentSchema
 from .edit_scope import EditScope
 from .energy_day_summary import EnergyDaySummary
 from .event_create import EventCreate
@@ -293,6 +295,7 @@ __all__ = (
   "BankConnectionListResponse",
   "BankConnectionSchema",
   "BankOption",
+  "BodyAddTransactionDocumentV1TransactionsTransactionIdDocumentsPost",
   "BodyImportLocationHistoryV1LocationHistoryImportPost",
   "BodyImportTransactionsV1TransactionsImportPost",
   "BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost",
@@ -329,6 +332,7 @@ __all__ = (
   "CurrencySummary",
   "DeviceSchema",
   "DeviceUpdate",
+  "DocumentSchema",
   "EditScope",
   "EnergyDaySummary",
   "EventCreate",

@@ -33,6 +33,7 @@ class TransactionUpdateResponse:
       raw_id (None | str):
       investment_kind (InvestmentKind | None): For a broker's movement, what it is, such as a buy or a tax.
       logo_url (None | str | Unset): The merchant's logo, when the source provides it.
+      document_count (int | Unset): Invoices and receipts kept with it. Default: 0.
       is_business (bool | Unset): Whether this is a business transaction. Default: False.
       transfer_id (None | str | Unset): Shared with the other side of a move between the user's own accounts; such
           pairs count as neither income nor spending.
@@ -55,6 +56,7 @@ class TransactionUpdateResponse:
   raw_id: None | str
   investment_kind: InvestmentKind | None
   logo_url: None | str | Unset = UNSET
+  document_count: int | Unset = 0
   is_business: bool | Unset = False
   transfer_id: None | str | Unset = UNSET
   same_description_count: int | Unset = 0
@@ -107,6 +109,8 @@ class TransactionUpdateResponse:
     else:
       logo_url = self.logo_url
 
+    document_count = self.document_count
+
     is_business = self.is_business
 
     transfer_id: None | str | Unset
@@ -139,6 +143,8 @@ class TransactionUpdateResponse:
     )
     if logo_url is not UNSET:
       field_dict["logo_url"] = logo_url
+    if document_count is not UNSET:
+      field_dict["document_count"] = document_count
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
     if transfer_id is not UNSET:
@@ -234,6 +240,8 @@ class TransactionUpdateResponse:
 
     logo_url = _parse_logo_url(d.pop("logo_url", UNSET))
 
+    document_count = d.pop("document_count", UNSET)
+
     is_business = d.pop("is_business", UNSET)
 
     def _parse_transfer_id(data: object) -> None | str | Unset:
@@ -263,6 +271,7 @@ class TransactionUpdateResponse:
       raw_id=raw_id,
       investment_kind=investment_kind,
       logo_url=logo_url,
+      document_count=document_count,
       is_business=is_business,
       transfer_id=transfer_id,
       same_description_count=same_description_count,

@@ -10,6 +10,7 @@ import {
   type TDataShape,
 } from "./client/index.js";
 import {
+  addTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponseTransformer,
   completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
   completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
@@ -66,6 +67,7 @@ import {
   listTimeEntriesV1TimeEntriesGetResponseTransformer,
   listTimeProjectsV1TimeProjectsGetResponseTransformer,
   listTradesV1InvestmentsTradesGetResponseTransformer,
+  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponseTransformer,
   listTransactionsV1TransactionsGetResponseTransformer,
   markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
   putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer,
@@ -89,6 +91,9 @@ import {
   upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
 } from "./transformers.gen.js";
 import type {
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData,
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors,
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
@@ -204,6 +209,15 @@ import type {
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
+  DocumentPageV1DocumentsDocumentIdPagesPageGetData,
+  DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
+  DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses,
+  DownloadDocumentV1DocumentsDocumentIdFileGetData,
+  DownloadDocumentV1DocumentsDocumentIdFileGetErrors,
+  DownloadDocumentV1DocumentsDocumentIdFileGetResponses,
   GetAccountsOverviewV1BankAccountsOverviewGetData,
   GetAccountsOverviewV1BankAccountsOverviewGetResponses,
   GetActivitySummaryV1ActivitySummaryGetData,
@@ -353,6 +367,9 @@ import type {
   ListTradesV1InvestmentsTradesGetData,
   ListTradesV1InvestmentsTradesGetErrors,
   ListTradesV1InvestmentsTradesGetResponses,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetErrors,
   ListTransactionsV1TransactionsGetResponses,
@@ -367,6 +384,9 @@ import type {
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostErrors,
   ReopenTaskV1TasksTaskIdReopenPostResponses,
@@ -3902,6 +3922,176 @@ export const monthlyFlowV1TransactionsMonthlyFlowGet = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/monthly-flow",
+    ...options,
+  });
+
+/**
+ * List Transaction Documents
+ *
+ * The invoices and receipts kept with a transaction, oldest first.
+ */
+export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses,
+    ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/{transaction_id}/documents",
+    ...options,
+  });
+
+/**
+ * Add Transaction Document
+ *
+ * Keeps an invoice or receipt, a PDF or a photo, with the transaction.
+ */
+export const addTransactionDocumentV1TransactionsTransactionIdDocumentsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData,
+    ThrowOnError
+  >,
+): RequestResult<
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses,
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses,
+    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer:
+      addTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/{transaction_id}/documents",
+    ...options,
+    headers: {
+      "Content-Type": null,
+      ...options.headers,
+    },
+  });
+
+/**
+ * Remove Transaction Document
+ *
+ * Takes the document off the transaction; it's deleted once no transaction has it.
+ */
+export const removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
+      ThrowOnError
+    >,
+  ): RequestResult<
+    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
+    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
+    ThrowOnError
+  > =>
+    (options.client ?? client).delete<
+      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
+      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
+      ThrowOnError
+    >({
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/v1/transactions/{transaction_id}/documents/{document_id}",
+      ...options,
+    });
+
+/**
+ * Download Document
+ *
+ * The file as it was uploaded.
+ */
+export const downloadDocumentV1DocumentsDocumentIdFileGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DownloadDocumentV1DocumentsDocumentIdFileGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DownloadDocumentV1DocumentsDocumentIdFileGetResponses,
+  DownloadDocumentV1DocumentsDocumentIdFileGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    DownloadDocumentV1DocumentsDocumentIdFileGetResponses,
+    DownloadDocumentV1DocumentsDocumentIdFileGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/documents/{document_id}/file",
+    ...options,
+  });
+
+/**
+ * Document Page Preview
+ *
+ * One page as an image, numbered from 1.
+ */
+export const documentPageV1DocumentsDocumentIdPagesPageGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DocumentPageV1DocumentsDocumentIdPagesPageGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
+  DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
+    DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/documents/{document_id}/pages/{page}",
+    ...options,
+  });
+
+/**
+ * Document Thumbnail
+ *
+ * A small image of the first page.
+ */
+export const documentThumbnailV1DocumentsDocumentIdThumbnailGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
+    ThrowOnError
+  >,
+): RequestResult<
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses,
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses,
+    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/documents/{document_id}/thumbnail",
     ...options,
   });
 

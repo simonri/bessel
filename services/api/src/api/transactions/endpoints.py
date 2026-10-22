@@ -7,6 +7,7 @@ from api.bank_accounts.repository import BankAccountRepository
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
+from api.documents.repository import DocumentRepository
 from api.exceptions import ResourceNotFound, ValidationError
 from api.models.transaction import Transaction
 from api.postgres import DBSession
@@ -70,6 +71,7 @@ async def list_transactions(
   date_to: Annotated[date | None, Query(description="End date (inclusive).")] = None,
   is_business: Annotated[bool | None, Query(description="Filter by business flag.")] = None,
   transfers: Annotated[bool | None, Query(description="True for only moves between the user's own accounts, false to leave them out.")] = None,
+  has_documents: Annotated[bool | None, Query(description="True for only those with an invoice or receipt, false for those without one.")] = None,
 ) -> TransactionListResponse:
   """List transactions."""
   repo = TransactionRepository.from_session(session)
@@ -84,6 +86,7 @@ async def list_transactions(
     date_to=date_to,
     is_business=is_business,
     transfers=transfers,
+    has_documents=has_documents,
   )
 
   statement = apply_sorting(statement, Transaction, sorting)
@@ -91,8 +94,9 @@ async def list_transactions(
   statement = statement.order_by(Transaction.id)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
+  documents = await DocumentRepository.from_session(session).counts_for_transactions([item.id for item in items])
   return TransactionListResponse.from_paginated_results(
-    [TransactionSchema.model_validate(item) for item in items],
+    [TransactionSchema.model_validate(item).model_copy(update={"document_count": documents.get(item.id, 0)}) for item in items],
     total_count,
     pagination,
   )

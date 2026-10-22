@@ -16,6 +16,7 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   category_id: UUID4 | None
   transaction_type: str | None
   logo_url: str | None = Field(default=None, description="The merchant's logo, when the source provides it.")
+  document_count: int = Field(default=0, description="Invoices and receipts kept with it.")
   dedup_hash: str
   bank_account_id: UUID4
   raw_id: UUID4 | None

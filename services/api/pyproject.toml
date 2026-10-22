@@ -48,6 +48,9 @@ dependencies = [
   "cryptography>=46.0.4",
   "mcp>=2.3.0,<3",
   "pyotp>=2.9,<3",
+  "pypdfium2>=5.14.0",
+  "pillow>=13.0.0",
+  "pillow-heif>=1.8.1",
 ]
 
 [dependency-groups]

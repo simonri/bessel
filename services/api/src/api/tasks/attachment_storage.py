@@ -1,30 +1,20 @@
-from pathlib import Path
 from uuid import UUID
 
-import anyio
-
-from api.settings import settings
+from api.common.file_storage import file_storage
 
 
-def _attachments_dir() -> Path:
-  path = Path(settings.TASK_ATTACHMENTS_DIR)
-  path.mkdir(parents=True, exist_ok=True)
-  return path
+def attachment_key(attachment_id: UUID) -> str:
+  # The attachment's own id names its file: unique by construction, so uploads never overwrite each other.
+  return f"task_attachments/{attachment_id}"
 
 
-def attachment_file_path(attachment_id: UUID) -> Path:
-  # The attachment's own id doubles as its on-disk filename — always unique
-  # by construction, so two uploads can never collide or overwrite each other.
-  return _attachments_dir() / str(attachment_id)
+async def save_attachment_file(attachment_id: UUID, content: bytes, content_type: str) -> None:
+  await file_storage().put(attachment_key(attachment_id), content, content_type)
 
 
-async def save_attachment_file(attachment_id: UUID, content: bytes) -> None:
-  await anyio.to_thread.run_sync(attachment_file_path(attachment_id).write_bytes, content)
-
-
-async def read_attachment_file(attachment_id: UUID) -> bytes:
-  return await anyio.to_thread.run_sync(attachment_file_path(attachment_id).read_bytes)
+async def read_attachment_file(attachment_id: UUID) -> bytes | None:
+  return await file_storage().get(attachment_key(attachment_id))
 
 
 async def delete_attachment_file(attachment_id: UUID) -> None:
-  await anyio.to_thread.run_sync(lambda: attachment_file_path(attachment_id).unlink(missing_ok=True))
+  await file_storage().delete(attachment_key(attachment_id))

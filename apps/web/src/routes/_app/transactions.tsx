@@ -97,6 +97,10 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
     direction: typeof raw.direction === "string" ? raw.direction : undefined,
     is_business:
       raw.is_business === "true" || raw.is_business === true ? true : undefined,
+    missing_documents:
+      raw.missing_documents === "true" || raw.missing_documents === true
+        ? true
+        : undefined,
     search: typeof raw.search === "string" ? raw.search : undefined,
     transfers:
       raw.transfers === "hide" || raw.transfers === "only"
@@ -208,6 +212,7 @@ function Transactions() {
         uncategorized: filters.uncategorized,
         direction: filters.direction,
         is_business: filters.is_business,
+        has_documents: filters.missing_documents ? false : undefined,
         search: filters.search,
         transfers:
           filters.transfers === "only"

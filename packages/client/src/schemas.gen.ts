@@ -1675,6 +1675,22 @@ export const BankOptionSchema = {
   title: "BankOption",
 } as const;
 
+export const Body_add_transaction_document_v1_transactions__transaction_id__documents_postSchema =
+  {
+    properties: {
+      file: {
+        type: "string",
+        contentMediaType: "application/octet-stream",
+        title: "File",
+        format: "binary",
+      },
+    },
+    type: "object",
+    required: ["file"],
+    title:
+      "Body_add_transaction_document_v1_transactions__transaction_id__documents_post",
+  } as const;
+
 export const Body_import_location_history_v1_location_history_import_postSchema =
   {
     properties: {
@@ -2941,6 +2957,66 @@ export const DeviceUpdateSchema = {
   type: "object",
   required: ["name"],
   title: "DeviceUpdate",
+} as const;
+
+export const DocumentSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    filename: {
+      type: "string",
+      title: "Filename",
+      description: "The name the file was uploaded with.",
+    },
+    content_type: {
+      type: "string",
+      title: "Content Type",
+      description: "application/pdf or an image type.",
+    },
+    size_bytes: {
+      type: "integer",
+      title: "Size Bytes",
+    },
+    page_count: {
+      type: "integer",
+      title: "Page Count",
+      description: "Pages with a preview image; a photo has one.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "filename",
+    "content_type",
+    "size_bytes",
+    "page_count",
+  ],
+  title: "DocumentSchema",
 } as const;
 
 export const EditScopeSchema = {
@@ -9258,6 +9334,12 @@ export const TransactionSchemaSchema = {
       title: "Logo Url",
       description: "The merchant's logo, when the source provides it.",
     },
+    document_count: {
+      type: "integer",
+      title: "Document Count",
+      description: "Invoices and receipts kept with it.",
+      default: 0,
+    },
     dedup_hash: {
       type: "string",
       title: "Dedup Hash",
@@ -9505,6 +9587,12 @@ export const TransactionUpdateResponseSchema = {
       ],
       title: "Logo Url",
       description: "The merchant's logo, when the source provides it.",
+    },
+    document_count: {
+      type: "integer",
+      title: "Document Count",
+      description: "Invoices and receipts kept with it.",
+      default: 0,
     },
     dedup_hash: {
       type: "string",
@@ -9914,6 +10002,12 @@ export const TransactionSchemaWritableSchema = {
       title: "Logo Url",
       description: "The merchant's logo, when the source provides it.",
     },
+    document_count: {
+      type: "integer",
+      title: "Document Count",
+      description: "Invoices and receipts kept with it.",
+      default: 0,
+    },
     dedup_hash: {
       type: "string",
       title: "Dedup Hash",
@@ -10064,6 +10158,12 @@ export const TransactionUpdateResponseWritableSchema = {
       ],
       title: "Logo Url",
       description: "The merchant's logo, when the source provides it.",
+    },
+    document_count: {
+      type: "integer",
+      title: "Document Count",
+      description: "Invoices and receipts kept with it.",
+      default: 0,
     },
     dedup_hash: {
       type: "string",

@@ -1158,6 +1158,17 @@ export type BankOption = {
 };
 
 /**
+ * Body_add_transaction_document_v1_transactions__transaction_id__documents_post
+ */
+export type BodyAddTransactionDocumentV1TransactionsTransactionIdDocumentsPost =
+  {
+    /**
+     * File
+     */
+    file: Blob | File;
+  };
+
+/**
  * Body_import_location_history_v1_location_history_import_post
  */
 export type BodyImportLocationHistoryV1LocationHistoryImportPost = {
@@ -2010,6 +2021,52 @@ export type DeviceUpdate = {
    * Name
    */
   name: string;
+};
+
+/**
+ * DocumentSchema
+ */
+export type DocumentSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Filename
+   *
+   * The name the file was uploaded with.
+   */
+  filename: string;
+  /**
+   * Content Type
+   *
+   * application/pdf or an image type.
+   */
+  content_type: string;
+  /**
+   * Size Bytes
+   */
+  size_bytes: number;
+  /**
+   * Page Count
+   *
+   * Pages with a preview image; a photo has one.
+   */
+  page_count: number;
 };
 
 /**
@@ -5864,6 +5921,12 @@ export type TransactionSchema = {
    */
   logo_url?: string | null;
   /**
+   * Document Count
+   *
+   * Invoices and receipts kept with it.
+   */
+  document_count?: number;
+  /**
    * Dedup Hash
    */
   dedup_hash: string;
@@ -6018,6 +6081,12 @@ export type TransactionUpdateResponse = {
    * The merchant's logo, when the source provides it.
    */
   logo_url?: string | null;
+  /**
+   * Document Count
+   *
+   * Invoices and receipts kept with it.
+   */
+  document_count?: number;
   /**
    * Dedup Hash
    */
@@ -6285,6 +6354,12 @@ export type TransactionSchemaWritable = {
    */
   logo_url?: string | null;
   /**
+   * Document Count
+   *
+   * Invoices and receipts kept with it.
+   */
+  document_count?: number;
+  /**
    * Dedup Hash
    */
   dedup_hash: string;
@@ -6365,6 +6440,12 @@ export type TransactionUpdateResponseWritable = {
    * The merchant's logo, when the source provides it.
    */
   logo_url?: string | null;
+  /**
+   * Document Count
+   *
+   * Invoices and receipts kept with it.
+   */
+  document_count?: number;
   /**
    * Dedup Hash
    */
@@ -10369,6 +10450,12 @@ export type ListTransactionsV1TransactionsGetData = {
      */
     transfers?: boolean | null;
     /**
+     * Has Documents
+     *
+     * True for only those with an invoice or receipt, false for those without one.
+     */
+    has_documents?: boolean | null;
+    /**
      * Page
      *
      * Page number, defaults to 1.
@@ -10684,6 +10771,208 @@ export type MonthlyFlowV1TransactionsMonthlyFlowGetResponses = {
 
 export type MonthlyFlowV1TransactionsMonthlyFlowGetResponse =
   MonthlyFlowV1TransactionsMonthlyFlowGetResponses[keyof MonthlyFlowV1TransactionsMonthlyFlowGetResponses];
+
+export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Transaction Id
+       */
+      transaction_id: string;
+    };
+    query?: never;
+    url: "/v1/transactions/{transaction_id}/documents";
+  };
+
+export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetError =
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors[keyof ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors];
+
+export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses =
+  {
+    /**
+     * Response List Transaction Documents V1 Transactions  Transaction Id  Documents Get
+     *
+     * Successful Response
+     */
+    200: Array<DocumentSchema>;
+  };
+
+export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse =
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses[keyof ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses];
+
+export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData =
+  {
+    body: BodyAddTransactionDocumentV1TransactionsTransactionIdDocumentsPost;
+    path: {
+      /**
+       * Transaction Id
+       */
+      transaction_id: string;
+    };
+    query?: never;
+    url: "/v1/transactions/{transaction_id}/documents";
+  };
+
+export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError =
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors[keyof AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors];
+
+export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses =
+  {
+    /**
+     * Successful Response
+     */
+    201: DocumentSchema;
+  };
+
+export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse =
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses[keyof AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses];
+
+export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Transaction Id
+       */
+      transaction_id: string;
+      /**
+       * Document Id
+       */
+      document_id: string;
+    };
+    query?: never;
+    url: "/v1/transactions/{transaction_id}/documents/{document_id}";
+  };
+
+export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError =
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors[keyof RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors];
+
+export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void;
+  };
+
+export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse =
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses[keyof RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses];
+
+export type DownloadDocumentV1DocumentsDocumentIdFileGetData = {
+  body?: never;
+  path: {
+    /**
+     * Document Id
+     */
+    document_id: string;
+  };
+  query?: never;
+  url: "/v1/documents/{document_id}/file";
+};
+
+export type DownloadDocumentV1DocumentsDocumentIdFileGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DownloadDocumentV1DocumentsDocumentIdFileGetError =
+  DownloadDocumentV1DocumentsDocumentIdFileGetErrors[keyof DownloadDocumentV1DocumentsDocumentIdFileGetErrors];
+
+export type DownloadDocumentV1DocumentsDocumentIdFileGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type DocumentPageV1DocumentsDocumentIdPagesPageGetData = {
+  body?: never;
+  path: {
+    /**
+     * Document Id
+     */
+    document_id: string;
+    /**
+     * Page
+     */
+    page: number;
+  };
+  query?: never;
+  url: "/v1/documents/{document_id}/pages/{page}";
+};
+
+export type DocumentPageV1DocumentsDocumentIdPagesPageGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DocumentPageV1DocumentsDocumentIdPagesPageGetError =
+  DocumentPageV1DocumentsDocumentIdPagesPageGetErrors[keyof DocumentPageV1DocumentsDocumentIdPagesPageGetErrors];
+
+export type DocumentPageV1DocumentsDocumentIdPagesPageGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData = {
+  body?: never;
+  path: {
+    /**
+     * Document Id
+     */
+    document_id: string;
+  };
+  query?: never;
+  url: "/v1/documents/{document_id}/thumbnail";
+};
+
+export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError =
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors[keyof DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors];
+
+export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
 
 export type GetWeatherForecastV1WeatherGetData = {
   body?: never;

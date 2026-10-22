@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from pathlib import Path
 from uuid import uuid4
 
@@ -146,13 +145,6 @@ A_PNG_BYTES = bytes.fromhex(
 
 
 class TestTaskAttachments:
-  @pytest.fixture(autouse=True)
-  def _isolated_attachments_dir(self, tmp_path: Path) -> Iterator[None]:
-    original = settings.TASK_ATTACHMENTS_DIR
-    settings.TASK_ATTACHMENTS_DIR = str(tmp_path)
-    yield
-    settings.TASK_ATTACHMENTS_DIR = original
-
   @pytest.mark.asyncio
   async def test_upload_get_and_delete_round_trip(self, client: AsyncClient) -> None:
     task = (await client.post("/v1/tasks", json={"title": "A"})).json()
@@ -166,7 +158,7 @@ class TestTaskAttachments:
     assert attachment["filename"] == "screenshot.png"
     assert attachment["content_type"] == "image/png"
     assert attachment["size_bytes"] == len(A_PNG_BYTES)
-    assert Path(settings.TASK_ATTACHMENTS_DIR, attachment["id"]).read_bytes() == A_PNG_BYTES
+    assert Path(settings.FILES_DIR, "task_attachments", attachment["id"]).read_bytes() == A_PNG_BYTES
 
     fetched_task = (await client.get(f"/v1/tasks/{task['id']}")).json()
     assert [a["id"] for a in fetched_task["attachments"]] == [attachment["id"]]
@@ -178,7 +170,7 @@ class TestTaskAttachments:
 
     delete_resp = await client.delete(f"/v1/tasks/{task['id']}/attachments/{attachment['id']}")
     assert delete_resp.status_code == 204
-    assert not Path(settings.TASK_ATTACHMENTS_DIR, attachment["id"]).exists()
+    assert not Path(settings.FILES_DIR, "task_attachments", attachment["id"]).exists()
 
     fetched_task = (await client.get(f"/v1/tasks/{task['id']}")).json()
     assert fetched_task["attachments"] == []
@@ -213,4 +205,4 @@ class TestTaskAttachments:
 
     delete_resp = await client.delete(f"/v1/tasks/{task['id']}")
     assert delete_resp.status_code == 204
-    assert not Path(settings.TASK_ATTACHMENTS_DIR, upload["id"]).exists()
+    assert not Path(settings.FILES_DIR, "task_attachments", upload["id"]).exists()

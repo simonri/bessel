@@ -10,6 +10,7 @@ import {
 
 import { client } from "../client.gen.js";
 import {
+  addTransactionDocumentV1TransactionsTransactionIdDocumentsPost,
   authorizeBankConnectionV1BankConnectionsAuthorizePost,
   authorizeGoogleV1CalendarsGoogleAuthorizePost,
   bulkUpdateTransactionsV1TransactionsBulkPatch,
@@ -49,6 +50,9 @@ import {
   disconnectAvanzaV1AvanzaDelete,
   disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
+  documentPageV1DocumentsDocumentIdPagesPageGet,
+  documentThumbnailV1DocumentsDocumentIdThumbnailGet,
+  downloadDocumentV1DocumentsDocumentIdFileGet,
   getAccountsOverviewV1BankAccountsOverviewGet,
   getActivitySummaryV1ActivitySummaryGet,
   getAgentUsageDailyV1AgentUsageDailyGet,
@@ -105,12 +109,14 @@ import {
   listTimeEntriesV1TimeEntriesGet,
   listTimeProjectsV1TimeProjectsGet,
   listTradesV1InvestmentsTradesGet,
+  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet,
   listTransactionsV1TransactionsGet,
   markAllNotificationsReadV1NotificationsReadAllPost,
   markNotificationReadV1NotificationsNotificationIdReadPost,
   monthlyFlowV1TransactionsMonthlyFlowGet,
   type Options,
   putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut,
+  removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete,
   reopenTaskV1TasksTaskIdReopenPost,
   reorderTasksV1TasksReorderPatch,
   respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
@@ -149,6 +155,9 @@ import {
   upsertGymExerciseV1GymExercisesExerciseIdPut,
 } from "../sdk.gen.js";
 import type {
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData,
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError,
+  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
@@ -264,6 +273,12 @@ import type {
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
+  DocumentPageV1DocumentsDocumentIdPagesPageGetData,
+  DocumentPageV1DocumentsDocumentIdPagesPageGetError,
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
+  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError,
+  DownloadDocumentV1DocumentsDocumentIdFileGetData,
+  DownloadDocumentV1DocumentsDocumentIdFileGetError,
   GetAccountsOverviewV1BankAccountsOverviewGetData,
   GetAccountsOverviewV1BankAccountsOverviewGetResponse,
   GetActivitySummaryV1ActivitySummaryGetData,
@@ -411,6 +426,9 @@ import type {
   ListTradesV1InvestmentsTradesGetData,
   ListTradesV1InvestmentsTradesGetError,
   ListTradesV1InvestmentsTradesGetResponse,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetError,
+  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse,
   ListTransactionsV1TransactionsGetData,
   ListTransactionsV1TransactionsGetError,
   ListTransactionsV1TransactionsGetResponse,
@@ -425,6 +443,9 @@ import type {
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
   PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
+  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
   ReopenTaskV1TasksTaskIdReopenPostData,
   ReopenTaskV1TasksTaskIdReopenPostError,
   ReopenTaskV1TasksTaskIdReopenPostResponse,
@@ -4975,6 +4996,275 @@ export const monthlyFlowV1TransactionsMonthlyFlowGetOptions = (
       return data;
     },
     queryKey: monthlyFlowV1TransactionsMonthlyFlowGetQueryKey(options),
+  });
+
+export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey =
+  (
+    options: Options<ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData>,
+  ) =>
+    createQueryKey(
+      "listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet",
+      options,
+    );
+
+/**
+ * List Transaction Documents
+ *
+ * The invoices and receipts kept with a transaction, oldest first.
+ */
+export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetOptions =
+  (
+    options: Options<ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData>,
+  ) =>
+    queryOptions<
+      ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse,
+      ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetError,
+      ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse,
+      ReturnType<
+        typeof listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet(
+            {
+              ...options,
+              ...queryKey[0],
+              signal,
+              throwOnError: true,
+            },
+          );
+        return data;
+      },
+      queryKey:
+        listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey(
+          options,
+        ),
+    });
+
+/**
+ * Add Transaction Document
+ *
+ * Keeps an invoice or receipt, a PDF or a photo, with the transaction.
+ */
+export const addTransactionDocumentV1TransactionsTransactionIdDocumentsPostMutation =
+  (
+    options?: Partial<
+      Options<AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData>
+    >,
+  ): UseMutationOptions<
+    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
+    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError,
+    Options<AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
+      AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError,
+      Options<AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await addTransactionDocumentV1TransactionsTransactionIdDocumentsPost({
+            ...options,
+            ...fnOptions,
+            throwOnError: true,
+          });
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+/**
+ * Remove Transaction Document
+ *
+ * Takes the document off the transaction; it's deleted once no transaction has it.
+ */
+export const removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteMutation =
+  (
+    options?: Partial<
+      Options<RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData>
+    >,
+  ): UseMutationOptions<
+    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
+    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
+    Options<RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
+      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
+      Options<RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            },
+          );
+        return data;
+      },
+    };
+    return mutationOptions;
+  };
+
+export const downloadDocumentV1DocumentsDocumentIdFileGetQueryKey = (
+  options: Options<DownloadDocumentV1DocumentsDocumentIdFileGetData>,
+) => createQueryKey("downloadDocumentV1DocumentsDocumentIdFileGet", options);
+
+/**
+ * Download Document
+ *
+ * The file as it was uploaded.
+ */
+export const downloadDocumentV1DocumentsDocumentIdFileGetOptions = (
+  options: Options<DownloadDocumentV1DocumentsDocumentIdFileGetData>,
+) =>
+  queryOptions<
+    unknown,
+    DownloadDocumentV1DocumentsDocumentIdFileGetError,
+    unknown,
+    ReturnType<typeof downloadDocumentV1DocumentsDocumentIdFileGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await downloadDocumentV1DocumentsDocumentIdFileGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: downloadDocumentV1DocumentsDocumentIdFileGetQueryKey(options),
+  });
+
+export const documentPageV1DocumentsDocumentIdPagesPageGetQueryKey = (
+  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
+) => createQueryKey("documentPageV1DocumentsDocumentIdPagesPageGet", options);
+
+/**
+ * Document Page Preview
+ *
+ * One page as an image, numbered from 1.
+ */
+export const documentPageV1DocumentsDocumentIdPagesPageGetOptions = (
+  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
+) =>
+  queryOptions<
+    unknown,
+    DocumentPageV1DocumentsDocumentIdPagesPageGetError,
+    unknown,
+    ReturnType<typeof documentPageV1DocumentsDocumentIdPagesPageGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await documentPageV1DocumentsDocumentIdPagesPageGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: documentPageV1DocumentsDocumentIdPagesPageGetQueryKey(options),
+  });
+
+export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteQueryKey = (
+  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
+): QueryKey<Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>> =>
+  createQueryKey(
+    "documentPageV1DocumentsDocumentIdPagesPageGet",
+    options,
+    true,
+  );
+
+/**
+ * Document Page Preview
+ *
+ * One page as an image, numbered from 1.
+ */
+export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteOptions = (
+  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
+) => {
+  const opts = infiniteQueryOptions<
+    unknown,
+    DocumentPageV1DocumentsDocumentIdPagesPageGetError,
+    InfiniteData<unknown>,
+    QueryKey<Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<
+            Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>
+          >[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                path: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await documentPageV1DocumentsDocumentIdPagesPageGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey:
+        documentPageV1DocumentsDocumentIdPagesPageGetInfiniteQueryKey(options),
+    },
+  );
+  return opts as Omit<typeof opts, "initialData">;
+};
+
+export const documentThumbnailV1DocumentsDocumentIdThumbnailGetQueryKey = (
+  options: Options<DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData>,
+) =>
+  createQueryKey("documentThumbnailV1DocumentsDocumentIdThumbnailGet", options);
+
+/**
+ * Document Thumbnail
+ *
+ * A small image of the first page.
+ */
+export const documentThumbnailV1DocumentsDocumentIdThumbnailGetOptions = (
+  options: Options<DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData>,
+) =>
+  queryOptions<
+    unknown,
+    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError,
+    unknown,
+    ReturnType<
+      typeof documentThumbnailV1DocumentsDocumentIdThumbnailGetQueryKey
+    >
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await documentThumbnailV1DocumentsDocumentIdThumbnailGet(
+        {
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        },
+      );
+      return data;
+    },
+    queryKey:
+      documentThumbnailV1DocumentsDocumentIdThumbnailGetQueryKey(options),
   });
 
 export const getWeatherForecastV1WeatherGetQueryKey = (

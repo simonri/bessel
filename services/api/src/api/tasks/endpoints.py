@@ -191,9 +191,8 @@ async def upload_task_attachment(
     ),
     flush=True,
   )
-  # Written only after the row is flushed, so the attachment's (now assigned)
-  # id is what names the file on disk.
-  await save_attachment_file(attachment.id, content)
+  # Written only after the row is flushed, so the attachment's (now assigned) id names the file.
+  await save_attachment_file(attachment.id, content, content_type)
   return TaskAttachmentSchema.model_validate(attachment)
 
 
@@ -225,6 +224,8 @@ async def get_task_attachment_file(
 ) -> Response:
   attachment = await _get_owned_attachment(session, task_id, attachment_id, current_user.id)
   content = await read_attachment_file(attachment_id)
+  if content is None:
+    raise ResourceNotFound("The file is missing.")
   return Response(
     content=content,
     media_type=attachment.content_type,

@@ -14,6 +14,7 @@ from .category import Category
 from .category_rule import CategoryRule
 from .counter import Counter, CounterReset
 from .device import Device
+from .document import Document, TransactionDocument
 from .gym import GymExercise, GymTopSet
 from .healthkit_daily_metric import HealthKitDailyMetric
 from .healthkit_sleep_sample import HealthKitSleepSample
@@ -60,6 +61,7 @@ __all__ = [
   "Counter",
   "CounterReset",
   "Device",
+  "Document",
   "GymExercise",
   "GymTopSet",
   "HealthKitDailyMetric",
@@ -85,5 +87,6 @@ __all__ = [
   "TimeProject",
   "Trade",
   "Transaction",
+  "TransactionDocument",
   "WeatherCache",
 ]

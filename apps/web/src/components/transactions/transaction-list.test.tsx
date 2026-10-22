@@ -15,6 +15,12 @@ vi.mock("@/components/category-cell", () => ({
   ),
 }));
 
+vi.mock("./transaction-documents", () => ({
+  TransactionDocuments: ({ transactionId }: { transactionId: string }) => (
+    <span>documents of {transactionId}</span>
+  ),
+}));
+
 const { TransactionList, groupByDay } = await import("./transaction-list");
 const { TransactionPanel } = await import("./transaction-panel");
 
@@ -197,6 +203,20 @@ describe("TransactionList", () => {
   });
 });
 
+describe("TransactionList paperclip", () => {
+  it("shows which rows already have an invoice or receipt", () => {
+    mount([
+      tx({ id: "a", description: "Kept", document_count: 2 }),
+      tx({ id: "b", description: "Missing", document_count: 0 }),
+    ]);
+
+    expect(
+      screen.getByLabelText("Has 2 invoices or receipts").closest("li"),
+    ).toBe(screen.getByText("Kept").closest("li"));
+    expect(screen.queryAllByLabelText(/invoice or receipt/)).toHaveLength(0);
+  });
+});
+
 describe("TransactionPanel", () => {
   function mountPanel(transaction: TransactionSchema) {
     const on = handlers();
@@ -223,6 +243,7 @@ describe("TransactionPanel", () => {
     expect(on.onDelete).toHaveBeenCalledWith(["t1"]);
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByText("category picker food")).toBeTruthy();
+    expect(screen.getByText("documents of t1")).toBeTruthy();
   });
 
   it("says what a broker's movement is instead of asking for a category", () => {

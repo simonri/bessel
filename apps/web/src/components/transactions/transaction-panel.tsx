@@ -9,6 +9,7 @@ import { Switch } from "@bessel/ui/components/switch";
 import { format } from "date-fns";
 import type { ReactNode } from "react";
 import { CategoryCell } from "@/components/category-cell";
+import { TransactionDocuments } from "@/components/transactions/transaction-documents";
 import {
   filedAs,
   signedAmount,
@@ -134,6 +135,8 @@ function Body({
             />
           </Detail>
         </dl>
+
+        <TransactionDocuments transactionId={transaction.id} />
 
         {transaction.transfer_id && (
           <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3.5">

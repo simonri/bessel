@@ -43,3 +43,15 @@ def detect_image_type(content: bytes) -> str | None:
   if content[4:8] == b"ftyp":
     return _ISO_BMFF_BRANDS.get(content[8:12])
   return None
+
+
+DOCUMENT_TYPES = ("application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif")
+
+
+def detect_document_type(content: bytes) -> str | None:
+  """A PDF or a photo of a receipt, judged by the file's own bytes."""
+  # The PDF header may follow a few bytes of junk, which readers tolerate.
+  if b"%PDF-" in content[:1024]:
+    return "application/pdf"
+  image_type = detect_image_type(content)
+  return image_type if image_type in DOCUMENT_TYPES else None

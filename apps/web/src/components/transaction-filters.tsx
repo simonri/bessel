@@ -11,6 +11,7 @@ import {
   ArrowLeftRight,
   Briefcase,
   ChevronDown,
+  Paperclip,
   Search,
   X,
 } from "lucide-react";
@@ -23,6 +24,8 @@ export interface TransactionFilters {
   uncategorized?: boolean;
   direction?: string;
   is_business?: boolean;
+  /** Only rows with no invoice or receipt kept yet. */
+  missing_documents?: boolean;
   search?: string;
   /** Moves between the user's own accounts: shown by default, or hidden, or the only rows. */
   transfers?: "hide" | "only";
@@ -44,6 +47,7 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
     filters.uncategorized ||
     filters.direction ||
     filters.is_business !== undefined ||
+    filters.missing_documents ||
     filters.search ||
     filters.transfers
   );
@@ -290,6 +294,30 @@ function BusinessToggle({
   );
 }
 
+function MissingDocumentsToggle({
+  value,
+  onChange,
+}: {
+  value: boolean | undefined;
+  onChange: (v: boolean | undefined) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(value ? undefined : true)}
+      title="Only rows with no invoice or receipt yet"
+      className={cn(
+        CHIP_CLASS,
+        "px-2.5",
+        value ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
+      )}
+    >
+      <Paperclip className={cn("size-3.5", value && "text-primary-300")} />
+      No receipt
+    </button>
+  );
+}
+
 // ─── Transfers toggle ────────────────────────────────────────────────────────
 
 const TRANSFER_STEPS: Record<string, TransactionFilters["transfers"]> = {
@@ -443,6 +471,13 @@ export function TransactionFiltersBar({
         <BusinessToggle
           value={filters.is_business}
           onChange={(v) => onFiltersChange({ ...filters, is_business: v })}
+        />
+
+        <MissingDocumentsToggle
+          value={filters.missing_documents}
+          onChange={(v) =>
+            onFiltersChange({ ...filters, missing_documents: v })
+          }
         />
 
         <TransfersToggle

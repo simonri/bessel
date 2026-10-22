@@ -8,7 +8,6 @@ through any write. TestCoverage fails when an API route isn't covered here.
 import json
 from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime, timedelta
-from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 from uuid import UUID, uuid4
@@ -160,6 +159,12 @@ AUDITED: set[str] = {
   "GET /v1/transactions/summary",
   "GET /v1/bank-accounts/overview",
   "GET /v1/bank-accounts/net-worth",
+  "GET /v1/transactions/{transaction_id}/documents",
+  "POST /v1/transactions/{transaction_id}/documents",
+  "DELETE /v1/transactions/{transaction_id}/documents/{document_id}",
+  "GET /v1/documents/{document_id}/file",
+  "GET /v1/documents/{document_id}/pages/{page}",
+  "GET /v1/documents/{document_id}/thumbnail",
   "GET /v1/investments/accounts",
   "GET /v1/categories/rules",
   "POST /v1/categories/rules",
@@ -213,13 +218,6 @@ class TestCoverage:
 
 
 class TestTasks:
-  @pytest.fixture(autouse=True)
-  def _isolated_attachments_dir(self, tmp_path: Path) -> Any:
-    original = settings.TASK_ATTACHMENTS_DIR
-    settings.TASK_ATTACHMENTS_DIR = str(tmp_path)
-    yield
-    settings.TASK_ATTACHMENTS_DIR = original
-
   @pytest.mark.asyncio
   async def test_other_user_cannot_read_or_change_tasks(self, client: AsyncClient, other_client: AsyncClient) -> None:
     task = await _create(client, "/v1/tasks", {"title": "A's secret task", "position": 1.0})

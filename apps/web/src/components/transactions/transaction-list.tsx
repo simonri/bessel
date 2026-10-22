@@ -20,6 +20,7 @@ import {
   type LucideIcon,
   Minus,
   MoreHorizontal,
+  Paperclip,
   Percent,
   Plus,
   Receipt,
@@ -262,6 +263,16 @@ const TransactionRow = memo(function TransactionRow({
             <span className="shrink-0 rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 type-badge text-primary-300">
               Company
             </span>
+          )}
+          {!!transaction.document_count && (
+            <Paperclip
+              className="size-3.5 shrink-0 text-white/40"
+              aria-label={
+                transaction.document_count === 1
+                  ? "Has an invoice or receipt"
+                  : `Has ${transaction.document_count} invoices or receipts`
+              }
+            />
           )}
         </span>
         <span className="block truncate type-caption text-white/45">

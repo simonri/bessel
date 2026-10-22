@@ -10,6 +10,7 @@ from api.categories.endpoints import router as categories_router
 from api.counters.endpoints import router as counters_router
 from api.devices.endpoints import router as devices_router
 from api.diagnostics.endpoints import router as diagnostics_router
+from api.documents.endpoints import router as documents_router
 from api.gym.endpoints import router as gym_router
 from api.healthkit.endpoints import router as healthkit_router
 from api.ingest_tokens.endpoints import router as ingest_tokens_router
@@ -55,5 +56,6 @@ router.include_router(tasks_router)
 router.include_router(time_tracking_router)
 router.include_router(timeline_router)
 router.include_router(transactions_router)
+router.include_router(documents_router)
 router.include_router(weather_router)
 router.include_router(klarna_router)

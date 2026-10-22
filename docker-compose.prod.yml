@@ -119,6 +119,11 @@ services:
       # JSON list of user ids allowed to store an Avanza login.
       BESSEL_AVANZA_USER_IDS: ${BESSEL_AVANZA_USER_IDS:-[]}
       BESSEL_SENTRY_DSN: ${BESSEL_SENTRY_DSN:-}
+      # Uploaded files (task images, invoices) live in Cloudflare R2; without these, uploads are refused.
+      BESSEL_STORAGE_ENDPOINT_URL: ${BESSEL_STORAGE_ENDPOINT_URL:-}
+      BESSEL_STORAGE_BUCKET: ${BESSEL_STORAGE_BUCKET:-}
+      BESSEL_STORAGE_ACCESS_KEY_ID: ${BESSEL_STORAGE_ACCESS_KEY_ID:-}
+      BESSEL_STORAGE_SECRET_ACCESS_KEY: ${BESSEL_STORAGE_SECRET_ACCESS_KEY:-}
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -183,6 +188,11 @@ services:
       BESSEL_ENABLE_BANKING_APP_ID: ${BESSEL_ENABLE_BANKING_APP_ID:-}
       BESSEL_ENABLE_BANKING_PRIVATE_KEY: ${BESSEL_ENABLE_BANKING_PRIVATE_KEY:-}
       BESSEL_SENTRY_DSN: ${BESSEL_SENTRY_DSN:-}
+      # Uploaded files (task images, invoices) live in Cloudflare R2; without these, uploads are refused.
+      BESSEL_STORAGE_ENDPOINT_URL: ${BESSEL_STORAGE_ENDPOINT_URL:-}
+      BESSEL_STORAGE_BUCKET: ${BESSEL_STORAGE_BUCKET:-}
+      BESSEL_STORAGE_ACCESS_KEY_ID: ${BESSEL_STORAGE_ACCESS_KEY_ID:-}
+      BESSEL_STORAGE_SECRET_ACCESS_KEY: ${BESSEL_STORAGE_SECRET_ACCESS_KEY:-}
     networks:
       - metron-internal
 
