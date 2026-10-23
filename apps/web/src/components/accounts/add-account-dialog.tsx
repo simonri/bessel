@@ -2,15 +2,19 @@ import type {
   AvanzaAccountSchema,
   BankAccountSchema,
   BankConnectionAccountSchema,
+  MontroseAccountSchema,
 } from "@bessel/client";
 import {
   createBankAccountV1BankAccountsPostMutation,
   getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
   getAvanzaV1AvanzaGetOptions,
   getAvanzaV1AvanzaGetQueryKey,
+  getMontroseV1MontroseGetOptions,
+  getMontroseV1MontroseGetQueryKey,
   getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
   linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation,
   linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchMutation,
+  linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation,
   listBankAccountsV1BankAccountsGetOptions,
   listBankAccountsV1BankAccountsGetQueryKey,
   listBankConnectionsV1BankConnectionsGetOptions,
@@ -51,7 +55,7 @@ import { cn } from "@/lib/utils";
 interface Provider {
   name: string;
   logo: string | null;
-  kind: "bank" | "avanza" | "klarna";
+  kind: "bank" | "avanza" | "montrose" | "klarna";
   hint: string;
 }
 
@@ -60,7 +64,8 @@ export type AddStep =
   | { step: "safety"; provider: Provider }
   | { step: "details"; via: "upload" | "manual" | "klarna" }
   | { step: "pick"; source: "bank"; bankName: string }
-  | { step: "pick"; source: "avanza" };
+  | { step: "pick"; source: "avanza" }
+  | { step: "pick"; source: "montrose" };
 
 const KLARNA_LOGO = "https://enablebanking.com/brands/SE/Klarna/";
 
@@ -78,11 +83,22 @@ const AVANZA_SUBTYPES: Record<string, string> = {
   SPARKONTO: "savings",
 };
 
+const MONTROSE_SUBTYPES: Record<string, string> = {
+  ISK: "isk",
+  KF: "kf",
+  Depot: "brokerage",
+  SPAR: "savings",
+  Credit: "loan",
+};
+
 function useProviders(): Provider[] {
   const { data: banks } = useQuery(
     listBankConnectionsV1BankConnectionsGetOptions({ client }),
   );
   const { data: avanza } = useQuery(getAvanzaV1AvanzaGetOptions({ client }));
+  const { data: montrose } = useQuery(
+    getMontroseV1MontroseGetOptions({ client }),
+  );
   const providers: Provider[] = [];
   if (banks?.available) {
     for (const bank of banks.bank_options) {
@@ -100,6 +116,14 @@ function useProviders(): Provider[] {
       logo: null,
       kind: "avanza",
       hint: "Stocks and funds",
+    });
+  }
+  if (montrose && !montrose.connection) {
+    providers.push({
+      name: "Montrose",
+      logo: null,
+      kind: "montrose",
+      hint: "Approve with BankID",
     });
   }
   providers.push({
@@ -296,8 +320,10 @@ function Safety({
   onBack: () => void;
   onClose: () => void;
 }) {
-  const { connectBank, connectAvanza, busy } = useAccountActions();
+  const { connectBank, connectAvanza, connectMontrose, busy } =
+    useAccountActions();
   const avanza = provider.kind === "avanza";
+  const montrose = provider.kind === "montrose";
   return (
     <>
       <div className="px-6 pt-6">
@@ -311,7 +337,9 @@ function Safety({
         description={
           avanza
             ? "Bessel signs in to Avanza with your login to read your accounts."
-            : `You approve it at ${provider.name}. It takes about a minute.`
+            : montrose
+              ? "You log in with BankID at Montrose and approve that Bessel reads your accounts."
+              : `You approve it at ${provider.name}. It takes about a minute.`
         }
       />
       <ul className="space-y-3 px-6">
@@ -323,6 +351,21 @@ function Safety({
             </Assurance>
             <Assurance icon={<ShieldCheck />}>
               Bessel never places orders or moves money.
+            </Assurance>
+          </>
+        ) : montrose ? (
+          <>
+            <Assurance icon={<ShieldCheck />}>
+              Read-only: Bessel sees holdings and transactions. Montrose's
+              connection can't move money or place orders.
+            </Assurance>
+            <Assurance icon={<Fingerprint />}>
+              You approve with BankID at Montrose - Bessel never sees your
+              login.
+            </Assurance>
+            <Assurance icon={<Lock />}>
+              Access lasts 90 days, then you approve again. You can remove it
+              any time, here or at Montrose.
             </Assurance>
           </>
         ) : (
@@ -349,6 +392,8 @@ function Safety({
             if (avanza) {
               onClose();
               connectAvanza();
+            } else if (montrose) {
+              connectMontrose();
             } else {
               connectBank(provider.name);
             }
@@ -370,6 +415,7 @@ function useInvalidateAccounts() {
       listBankAccountsV1BankAccountsGetQueryKey({ client }),
       listBankConnectionsV1BankConnectionsGetQueryKey({ client }),
       getAvanzaV1AvanzaGetQueryKey({ client }),
+      getMontroseV1MontroseGetQueryKey({ client }),
     ]) {
       void queryClient.invalidateQueries({ queryKey });
     }
@@ -578,6 +624,16 @@ function avanzaCandidate(account: AvanzaAccountSchema): Candidate {
   };
 }
 
+function montroseCandidate(account: MontroseAccountSchema): Candidate {
+  return {
+    id: account.id,
+    name: account.name,
+    detail: account.account_number,
+    currency: "SEK",
+    subtype: MONTROSE_SUBTYPES[account.account_type] ?? "brokerage",
+  };
+}
+
 /** After approving: which of the bank's accounts to bring in, as new accounts or into ones already in Bessel. */
 function Pick({
   state,
@@ -591,22 +647,34 @@ function Pick({
     listBankConnectionsV1BankConnectionsGetOptions({ client }),
   );
   const { data: avanza } = useQuery(getAvanzaV1AvanzaGetOptions({ client }));
+  const { data: montrose } = useQuery(
+    getMontroseV1MontroseGetOptions({ client }),
+  );
   const { data: existing } = useQuery(
     listBankAccountsV1BankAccountsGetOptions({
       client,
       query: { limit: 100, page: 1, sorting: ["name"] },
     }),
   );
-  const name = state.source === "bank" ? state.bankName : "Avanza";
+  const name =
+    state.source === "bank"
+      ? state.bankName
+      : state.source === "montrose"
+        ? "Montrose"
+        : "Avanza";
   const candidates: Candidate[] =
     state.source === "bank"
       ? (banks?.connections
           .find((c) => c.bank_name === state.bankName)
           ?.accounts.filter((a) => a.shared && !a.bank_account_id)
           .map((a) => bankCandidate(a, state.bankName)) ?? [])
-      : (avanza?.connection?.accounts
-          .filter((a) => !a.bank_account_id)
-          .map(avanzaCandidate) ?? []);
+      : state.source === "montrose"
+        ? (montrose?.connection?.accounts
+            .filter((a) => !a.bank_account_id)
+            .map(montroseCandidate) ?? [])
+        : (avanza?.connection?.accounts
+            .filter((a) => !a.bank_account_id)
+            .map(avanzaCandidate) ?? []);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const choice = (id: string) => choices[id] ?? NEW;
   const create = useMutation(
@@ -619,6 +687,9 @@ function Pick({
   );
   const linkAvanza = useMutation(
     linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation({ client }),
+  );
+  const linkMontrose = useMutation(
+    linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation({ client }),
   );
   const [saving, setSaving] = useState(false);
   const chosen = candidates.filter((c) => choice(c.id) !== SKIP);
@@ -645,6 +716,8 @@ function Pick({
         };
         if (state.source === "bank") {
           await linkBank.mutateAsync({ client, ...link });
+        } else if (state.source === "montrose") {
+          await linkMontrose.mutateAsync({ client, ...link });
         } else {
           await linkAvanza.mutateAsync({ client, ...link });
         }

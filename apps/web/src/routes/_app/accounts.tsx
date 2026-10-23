@@ -3,6 +3,7 @@ import {
   deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
   getAccountsOverviewV1BankAccountsOverviewGetOptions,
   getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
+  getMontroseV1MontroseGetOptions,
   getNetWorthHistoryV1BankAccountsNetWorthGetOptions,
   getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
   listBankAccountsV1BankAccountsGetQueryKey,
@@ -34,6 +35,7 @@ import {
   type AddStep,
 } from "@/components/accounts/add-account-dialog";
 import { NetWorthCard } from "@/components/accounts/net-worth-card";
+import { MONTROSE_CONNECTED_KEY } from "@/components/montrose/montrose-callback";
 import {
   PageHeader,
   PrimaryButton,
@@ -62,7 +64,7 @@ function Accounts() {
     setAdding(
       source.kind === "bank"
         ? { step: "pick", source: "bank", bankName: source.bankName }
-        : { step: "pick", source: "avanza" },
+        : { step: "pick", source: source.kind },
     );
   }, []);
   return (
@@ -128,6 +130,25 @@ function AccountsPage({
       });
     }
   }, [connections, onAdding]);
+
+  // Back from Montrose's BankID login: the same, for its accounts.
+  const { data: montrose } = useQuery(
+    getMontroseV1MontroseGetOptions({ client }),
+  );
+  useEffect(() => {
+    if (!montrose) return;
+    let connected = false;
+    try {
+      connected = sessionStorage.getItem(MONTROSE_CONNECTED_KEY) !== null;
+      sessionStorage.removeItem(MONTROSE_CONNECTED_KEY);
+    } catch {}
+    if (
+      connected &&
+      montrose.connection?.accounts.some((a) => !a.bank_account_id)
+    ) {
+      onAdding({ step: "pick", source: "montrose" });
+    }
+  }, [montrose, onAdding]);
 
   const deleteMutation = useMutation({
     ...deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation({ client }),

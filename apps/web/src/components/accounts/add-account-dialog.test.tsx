@@ -20,6 +20,22 @@ const linkBank = vi.fn(
   }) => ({}),
 );
 
+const linkMontrose = vi.fn(
+  async (_: {
+    path: { account_id: string };
+    body: { bank_account_id: string };
+  }) => ({}),
+);
+const connectMontrose = vi.fn();
+const montrose = vi.hoisted(() => ({
+  status: { connection: null } as { connection: unknown },
+  fetched: 0,
+  async fetch() {
+    this.fetched += 1;
+    return this.status;
+  },
+}));
+
 function query(key: string, data: unknown) {
   return () => ({ queryKey: [key], queryFn: async () => data });
 }
@@ -27,7 +43,7 @@ function query(key: string, data: unknown) {
 vi.mock("@bessel/client", () => ({
   listBankConnectionsV1BankConnectionsGetOptions: query("connections", {
     available: true,
-    banks: [],
+    bank_options: [],
     connections: [
       {
         id: "c1",
@@ -73,6 +89,14 @@ vi.mock("@bessel/client", () => ({
     available: false,
     connection: null,
   }),
+  getMontroseV1MontroseGetOptions: () => ({
+    queryKey: ["montrose"],
+    queryFn: () => montrose.fetch(),
+  }),
+  linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation: () => ({
+    mutationFn: linkMontrose,
+  }),
+  getMontroseV1MontroseGetQueryKey: () => ["montrose"],
   listBankAccountsV1BankAccountsGetOptions: query("accounts", {
     items: [{ id: "b1", name: "Buffert", currency: "SEK" }],
   }),
@@ -93,6 +117,7 @@ vi.mock("@/components/accounts/account-actions", () => ({
     upload: vi.fn(),
     connectBank: vi.fn(),
     connectAvanza: vi.fn(),
+    connectMontrose,
     busy: false,
   }),
 }));
@@ -104,6 +129,111 @@ afterEach(() => {
   cleanup();
   create.mockClear();
   linkBank.mockClear();
+  linkMontrose.mockClear();
+  connectMontrose.mockClear();
+  montrose.status = { connection: null };
+});
+
+function mount(state: Parameters<typeof AddAccountDialog>[0]["state"]) {
+  const onStateChange = vi.fn();
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <AddAccountDialog state={state} onStateChange={onStateChange} />
+    </QueryClientProvider>,
+  );
+  return onStateChange;
+}
+
+describe("Montrose", () => {
+  it("is offered until it's connected, and goes to its BankID login", async () => {
+    const onStateChange = mount({ step: "choose" });
+
+    fireEvent.click(await screen.findByRole("button", { name: /Montrose/ }));
+    const [next] = onStateChange.mock.calls.at(-1) ?? [];
+    expect(next).toMatchObject({
+      step: "safety",
+      provider: { kind: "montrose" },
+    });
+    cleanup();
+
+    mount(next);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to Montrose" }),
+    );
+    expect(connectMontrose).toHaveBeenCalledOnce();
+    cleanup();
+
+    montrose.status = { connection: { accounts: [] } };
+    const before = montrose.fetched;
+    mount({ step: "choose" });
+    await waitFor(() => expect(montrose.fetched).toBeGreaterThan(before));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByRole("button", { name: /Klarna/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Montrose/ })).toBeNull();
+  });
+
+  it("brings its accounts in by type, into new or existing accounts", async () => {
+    montrose.status = {
+      connection: {
+        accounts: [
+          {
+            id: "m1",
+            name: "Mitt ISK",
+            account_number: "1234-567",
+            account_type: "ISK",
+            bank_account_id: null,
+          },
+          {
+            id: "m2",
+            name: "Pension",
+            account_number: "7654-321",
+            account_type: "KF",
+            bank_account_id: null,
+          },
+          {
+            id: "m3",
+            name: "Depå",
+            account_number: "1111-222",
+            account_type: "Depot",
+            bank_account_id: null,
+          },
+          {
+            id: "m4",
+            name: "Linked",
+            account_number: "9",
+            account_type: "ISK",
+            bank_account_id: "b8",
+          },
+        ],
+      },
+    };
+    const onStateChange = mount({ step: "pick", source: "montrose" });
+
+    await screen.findByText("Mitt ISK");
+    expect(screen.getByText("1234-567")).toBeTruthy();
+    expect(screen.queryByText("Linked")).toBeNull();
+    fireEvent.change(screen.getByLabelText("What to do with Pension"), {
+      target: { value: "b1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add 3 accounts" }));
+
+    await waitFor(() => expect(onStateChange).toHaveBeenCalledWith(null));
+    expect(create.mock.calls.map(([v]) => v.body)).toEqual([
+      { name: "Mitt ISK", currency: "SEK", subtype: "isk" },
+      { name: "Depå", currency: "SEK", subtype: "brokerage" },
+    ]);
+    expect(
+      linkMontrose.mock.calls.map(([v]) => [
+        v.path.account_id,
+        v.body.bank_account_id,
+      ]),
+    ).toEqual([
+      ["m1", "new-Mitt ISK"],
+      ["m2", "b1"],
+      ["m3", "new-Depå"],
+    ]);
+    expect(linkBank).not.toHaveBeenCalled();
+  });
 });
 
 describe("choosing accounts after approving a bank", () => {

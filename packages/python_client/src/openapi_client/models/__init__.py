@@ -157,6 +157,12 @@ from .me_update import MeUpdate
 from .monthly_flow import MonthlyFlow
 from .monthly_flow_response import MonthlyFlowResponse
 from .monthly_spending_response import MonthlySpendingResponse
+from .montrose_account_schema import MontroseAccountSchema
+from .montrose_account_update import MontroseAccountUpdate
+from .montrose_authorize_response import MontroseAuthorizeResponse
+from .montrose_callback_request import MontroseCallbackRequest
+from .montrose_connection_schema import MontroseConnectionSchema
+from .montrose_status_response import MontroseStatusResponse
 from .move_day_summary import MoveDaySummary
 from .name_all_request import NameAllRequest
 from .name_all_response import NameAllResponse
@@ -407,6 +413,12 @@ __all__ = (
   "MonthlyFlow",
   "MonthlyFlowResponse",
   "MonthlySpendingResponse",
+  "MontroseAccountSchema",
+  "MontroseAccountUpdate",
+  "MontroseAuthorizeResponse",
+  "MontroseCallbackRequest",
+  "MontroseConnectionSchema",
+  "MontroseStatusResponse",
   "MoveDaySummary",
   "NameAllRequest",
   "NameAllResponse",

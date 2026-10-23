@@ -51,11 +51,11 @@ class AccountProblem(Schema):
 
 
 class AccountSource(Schema):
-  kind: Literal["bank", "avanza", "klarna", "manual"] = Field(description="Where the account's transactions come from.")
+  kind: Literal["bank", "avanza", "montrose", "klarna", "manual"] = Field(description="Where the account's transactions come from.")
   label: str = Field(description="The source as the user knows it, such as 'Skandia' or 'Imported by hand'.")
   logo: str | None = Field(default=None, description="The bank's logo image URL, when one is known.")
   synced_at: datetime | None = Field(description="The last sync or import that worked.")
-  access_until: datetime | None = Field(default=None, description="When the bank's read-only approval ends, for connected banks.")
+  access_until: datetime | None = Field(default=None, description="When the read-only approval ends, for connected banks and Montrose.")
   import_bank: str | None = Field(default=None, description="For accounts imported by hand, the bank of the latest export file, such as 'marginalen'.")
   issue: AccountProblem | None = Field(description="What needs the user's attention, if anything.")
   problem: str | None = Field(description="The issue in words, for app versions from before `issue`.")

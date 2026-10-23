@@ -27,7 +27,8 @@ class AccountSource:
       issue (AccountProblem | None): What needs the user's attention, if anything.
       problem (None | str): The issue in words, for app versions from before `issue`.
       logo (None | str | Unset): The bank's logo image URL, when one is known.
-      access_until (datetime.datetime | None | Unset): When the bank's read-only approval ends, for connected banks.
+      access_until (datetime.datetime | None | Unset): When the read-only approval ends, for connected banks and
+          Montrose.
       import_bank (None | str | Unset): For accounts imported by hand, the bank of the latest export file, such as
           'marginalen'.
   """

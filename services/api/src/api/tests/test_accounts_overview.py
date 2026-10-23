@@ -9,6 +9,7 @@ from api.models.bank_account import BankAccount
 from api.models.bank_connection import BankConnection, BankConnectionAccount
 from api.models.import_batch import ImportBatch
 from api.models.klarna import KlarnaPayLater
+from api.models.montrose import MontroseAccount, MontroseConnection
 from api.models.raw_transaction import RawTransaction
 from api.models.security import AssetType, Security
 from api.models.transaction import Transaction, TransactionDirection
@@ -307,6 +308,36 @@ class TestSources:
     [account] = (await _overview(client))["accounts"]
 
     assert account["source"]["issue"]["kind"] == "sign_in"
+
+  @pytest.mark.asyncio
+  async def test_montrose_accounts_name_their_source_and_ask_for_bankid_when_the_consent_ends(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts
+  ) -> None:
+    isk = await accounts.account("Montrose ISK", subtype="isk")
+    kf = await accounts.account("Montrose KF", subtype="kf")
+    consented = utc_now() - timedelta(days=80)
+    montrose = MontroseConnection(
+      user_id=user.id,
+      encrypted_client=encrypt("{}"),
+      encrypted_tokens=encrypt("{}"),
+      access_expires_at=utc_now(),
+      consented_at=consented,
+      last_synced_at=utc_now(),
+    )
+    await save_fixture(montrose)
+    await save_fixture(MontroseAccount(connection_id=montrose.id, external_id="a", account_number="1", name="ISK", account_type="ISK", bank_account_id=isk.id))
+    await save_fixture(MontroseAccount(connection_id=montrose.id, external_id="b", account_number="2", name="KF", account_type="KF", bank_account_id=kf.id))
+
+    ending = {a["name"]: a["source"] for a in (await _overview(client))["accounts"]}
+    montrose.rejected_at = utc_now()
+    await save_fixture(montrose)
+    rejected = {a["name"]: a["source"] for a in (await _overview(client))["accounts"]}
+
+    assert (ending["Montrose ISK"]["kind"], ending["Montrose ISK"]["label"]) == ("montrose", "Montrose")
+    assert ending["Montrose KF"]["issue"]["kind"] == "renew_soon"
+    assert ending["Montrose KF"]["issue"]["day"] == (consented + timedelta(days=90)).date().isoformat()
+    assert rejected["Montrose ISK"]["issue"]["kind"] == "sign_in"
+    assert rejected["Montrose ISK"]["problem"] == "Montrose needs a new BankID login to keep syncing."
 
   @pytest.mark.asyncio
   async def test_pay_later_owing_more_than_klarna_says_is_flagged(

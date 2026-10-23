@@ -160,7 +160,7 @@ export type AccountSource = {
    *
    * Where the account's transactions come from.
    */
-  kind: "bank" | "avanza" | "klarna" | "manual";
+  kind: "bank" | "avanza" | "montrose" | "klarna" | "manual";
   /**
    * Label
    *
@@ -182,7 +182,7 @@ export type AccountSource = {
   /**
    * Access Until
    *
-   * When the bank's read-only approval ends, for connected banks.
+   * When the read-only approval ends, for connected banks and Montrose.
    */
   access_until?: Date | null;
   /**
@@ -3854,6 +3854,125 @@ export type MonthlySpendingResponse = {
 };
 
 /**
+ * MontroseAccountSchema
+ */
+export type MontroseAccountSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Account Number
+   */
+  account_number: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Account Type
+   *
+   * Montrose's account type, e.g. 'ISK', 'KF' or 'DEPCR'.
+   */
+  account_type: string;
+  /**
+   * Bank Account Id
+   *
+   * The Bessel account it imports into; nothing is imported until one is chosen.
+   */
+  bank_account_id: string | null;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+};
+
+/**
+ * MontroseAccountUpdate
+ */
+export type MontroseAccountUpdate = {
+  /**
+   * Bank Account Id
+   *
+   * The Bessel account to import into, or null to stop importing.
+   */
+  bank_account_id: string | null;
+};
+
+/**
+ * MontroseAuthorizeResponse
+ */
+export type MontroseAuthorizeResponse = {
+  /**
+   * Url
+   *
+   * Montrose's BankID login, which sends the user back to Bessel's callback page.
+   */
+  url: string;
+};
+
+/**
+ * MontroseCallbackRequest
+ */
+export type MontroseCallbackRequest = {
+  /**
+   * Code
+   */
+  code: string;
+  /**
+   * State
+   */
+  state: string;
+  /**
+   * Iss
+   *
+   * The issuer Montrose names on the redirect, checked against its own.
+   */
+  iss?: string | null;
+};
+
+/**
+ * MontroseConnectionSchema
+ */
+export type MontroseConnectionSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Rejected
+   *
+   * Montrose no longer accepts the consent; syncing waits for a new BankID login.
+   */
+  rejected: boolean;
+  /**
+   * Consent Expires At
+   *
+   * When the BankID consent runs out and has to be given again.
+   */
+  consent_expires_at: Date;
+  /**
+   * Last Synced At
+   */
+  last_synced_at: Date | null;
+  /**
+   * Sync Error
+   */
+  sync_error: string | null;
+  /**
+   * Accounts
+   */
+  accounts: Array<MontroseAccountSchema>;
+};
+
+/**
+ * MontroseStatusResponse
+ */
+export type MontroseStatusResponse = {
+  connection: MontroseConnectionSchema | null;
+};
+
+/**
  * MoveDaySummary
  */
 export type MoveDaySummary = {
@@ -7468,6 +7587,130 @@ export type SyncAvanzaV1AvanzaSyncPostData = {
 };
 
 export type SyncAvanzaV1AvanzaSyncPostResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown;
+};
+
+export type DisconnectMontroseV1MontroseDeleteData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/montrose";
+};
+
+export type DisconnectMontroseV1MontroseDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DisconnectMontroseV1MontroseDeleteResponse =
+  DisconnectMontroseV1MontroseDeleteResponses[keyof DisconnectMontroseV1MontroseDeleteResponses];
+
+export type GetMontroseV1MontroseGetData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/montrose";
+};
+
+export type GetMontroseV1MontroseGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: MontroseStatusResponse;
+};
+
+export type GetMontroseV1MontroseGetResponse =
+  GetMontroseV1MontroseGetResponses[keyof GetMontroseV1MontroseGetResponses];
+
+export type AuthorizeMontroseV1MontroseAuthorizePostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/montrose/authorize";
+};
+
+export type AuthorizeMontroseV1MontroseAuthorizePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: MontroseAuthorizeResponse;
+};
+
+export type AuthorizeMontroseV1MontroseAuthorizePostResponse =
+  AuthorizeMontroseV1MontroseAuthorizePostResponses[keyof AuthorizeMontroseV1MontroseAuthorizePostResponses];
+
+export type CompleteMontroseV1MontroseCallbackPostData = {
+  body: MontroseCallbackRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/montrose/callback";
+};
+
+export type CompleteMontroseV1MontroseCallbackPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CompleteMontroseV1MontroseCallbackPostError =
+  CompleteMontroseV1MontroseCallbackPostErrors[keyof CompleteMontroseV1MontroseCallbackPostErrors];
+
+export type CompleteMontroseV1MontroseCallbackPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: MontroseConnectionSchema;
+};
+
+export type CompleteMontroseV1MontroseCallbackPostResponse =
+  CompleteMontroseV1MontroseCallbackPostResponses[keyof CompleteMontroseV1MontroseCallbackPostResponses];
+
+export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchData = {
+  body: MontroseAccountUpdate;
+  path: {
+    /**
+     * Account Id
+     */
+    account_id: string;
+  };
+  query?: never;
+  url: "/v1/montrose/accounts/{account_id}";
+};
+
+export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchError =
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors[keyof LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors];
+
+export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses = {
+  /**
+   * Successful Response
+   */
+  200: MontroseConnectionSchema;
+};
+
+export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse =
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses[keyof LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses];
+
+export type SyncMontroseV1MontroseSyncPostData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/montrose/sync";
+};
+
+export type SyncMontroseV1MontroseSyncPostResponses = {
   /**
    * Successful Response
    */

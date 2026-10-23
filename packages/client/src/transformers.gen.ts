@@ -4,6 +4,7 @@ import type {
   AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
   CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
+  CompleteMontroseV1MontroseCallbackPostResponse,
   CompleteTaskV1TasksTaskIdCompletePostResponse,
   ConnectAvanzaV1AvanzaConnectPostResponse,
   ConnectIcloudV1CalendarsIcloudPostResponse,
@@ -28,6 +29,7 @@ import type {
   GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
   GetLocationHistoryDayV1LocationHistoryDayGetResponse,
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
+  GetMontroseV1MontroseGetResponse,
   GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
   GetPlaceV1PlacesPlaceIdGetResponse,
   GetRecipeV1RecipesRecipeIdGetResponse,
@@ -36,6 +38,7 @@ import type {
   ImportLocationHistoryV1LocationHistoryImportPostResponse,
   LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
   ListBankAccountsV1BankAccountsGetResponse,
   ListBankConnectionsV1BankConnectionsGetResponse,
   ListCalendarAccountsV1CalendarsAccountsGetResponse,
@@ -281,6 +284,55 @@ export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer 
     data: any,
   ): Promise<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse> => {
     data = avanzaConnectionSchemaSchemaResponseTransformer(data);
+    return data;
+  };
+
+const montroseAccountSchemaSchemaResponseTransformer = (data: any) => {
+  if (data.last_synced_at) {
+    data.last_synced_at = new Date(data.last_synced_at);
+  }
+  return data;
+};
+
+const montroseConnectionSchemaSchemaResponseTransformer = (data: any) => {
+  data.consent_expires_at = new Date(data.consent_expires_at);
+  if (data.last_synced_at) {
+    data.last_synced_at = new Date(data.last_synced_at);
+  }
+  data.accounts = data.accounts.map((item: any) =>
+    montroseAccountSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const montroseStatusResponseSchemaResponseTransformer = (data: any) => {
+  if (data.connection) {
+    data.connection = montroseConnectionSchemaSchemaResponseTransformer(
+      data.connection,
+    );
+  }
+  return data;
+};
+
+export const getMontroseV1MontroseGetResponseTransformer = async (
+  data: any,
+): Promise<GetMontroseV1MontroseGetResponse> => {
+  data = montroseStatusResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const completeMontroseV1MontroseCallbackPostResponseTransformer = async (
+  data: any,
+): Promise<CompleteMontroseV1MontroseCallbackPostResponse> => {
+  data = montroseConnectionSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const linkMontroseAccountV1MontroseAccountsAccountIdPatchResponseTransformer =
+  async (
+    data: any,
+  ): Promise<LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse> => {
+    data = montroseConnectionSchemaSchemaResponseTransformer(data);
     return data;
   };
 

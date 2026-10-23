@@ -17,6 +17,7 @@ from api.ingest_tokens.endpoints import router as ingest_tokens_router
 from api.investments.endpoints import router as investments_router
 from api.klarna.endpoints import router as klarna_router
 from api.location_history.endpoints import router as location_history_router
+from api.montrose.endpoints import router as montrose_router
 from api.notifications.endpoints import router as notifications_router
 from api.open_banking.endpoints import router as open_banking_router
 from api.places.endpoints import router as places_router
@@ -36,6 +37,7 @@ router.include_router(activity_router)
 router.include_router(agent_usage_router)
 router.include_router(bank_accounts_router)
 router.include_router(avanza_router)
+router.include_router(montrose_router)
 router.include_router(calendars_router)
 router.include_router(open_banking_router)
 router.include_router(categories_router)

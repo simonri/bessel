@@ -54,6 +54,12 @@ AUDITED: set[str] = {
   "PATCH /v1/avanza/accounts/{account_id}",
   "POST /v1/avanza/sync",
   "DELETE /v1/avanza",
+  # Montrose's are in test_montrose.py::TestIsolation.
+  "GET /v1/montrose",
+  "POST /v1/montrose/callback",
+  "PATCH /v1/montrose/accounts/{account_id}",
+  "POST /v1/montrose/sync",
+  "DELETE /v1/montrose",
   "GET /v1/bank-accounts",
   "POST /v1/bank-accounts",
   "DELETE /v1/bank-accounts/{bank_account_id}",
@@ -189,6 +195,7 @@ EXEMPT: dict[str, str] = {
   "POST /v1/calendars/google/authorize": "Starts the caller's own connection flow",
   "POST /v1/bank-connections/authorize": "Starts the caller's own connection flow",
   "POST /v1/avanza/connect": "Creates or updates the caller's own connection only",
+  "POST /v1/montrose/authorize": "Starts the caller's own connection flow",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
   "GET /v1/klarna/transactions": "Proxies the caller's own Klarna credentials; reads no Bessel data",
 }

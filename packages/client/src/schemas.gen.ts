@@ -243,7 +243,7 @@ export const AccountSourceSchema = {
   properties: {
     kind: {
       type: "string",
-      enum: ["bank", "avanza", "klarna", "manual"],
+      enum: ["bank", "avanza", "montrose", "klarna", "manual"],
       title: "Kind",
       description: "Where the account's transactions come from.",
     },
@@ -290,7 +290,7 @@ export const AccountSourceSchema = {
       ],
       title: "Access Until",
       description:
-        "When the bank's read-only approval ends, for connected banks.",
+        "When the read-only approval ends, for connected banks and Montrose.",
     },
     import_bank: {
       anyOf: [
@@ -5871,6 +5871,216 @@ export const MonthlySpendingResponseSchema = {
   type: "object",
   required: ["year", "month", "items"],
   title: "MonthlySpendingResponse",
+} as const;
+
+export const MontroseAccountSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    account_number: {
+      type: "string",
+      title: "Account Number",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    account_type: {
+      type: "string",
+      title: "Account Type",
+      description: "Montrose's account type, e.g. 'ISK', 'KF' or 'DEPCR'.",
+    },
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The Bessel account it imports into; nothing is imported until one is chosen.",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "account_number",
+    "name",
+    "account_type",
+    "bank_account_id",
+    "last_synced_at",
+  ],
+  title: "MontroseAccountSchema",
+} as const;
+
+export const MontroseAccountUpdateSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The Bessel account to import into, or null to stop importing.",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id"],
+  title: "MontroseAccountUpdate",
+} as const;
+
+export const MontroseAuthorizeResponseSchema = {
+  properties: {
+    url: {
+      type: "string",
+      title: "Url",
+      description:
+        "Montrose's BankID login, which sends the user back to Bessel's callback page.",
+    },
+  },
+  type: "object",
+  required: ["url"],
+  title: "MontroseAuthorizeResponse",
+} as const;
+
+export const MontroseCallbackRequestSchema = {
+  properties: {
+    code: {
+      type: "string",
+      maxLength: 2048,
+      minLength: 1,
+      title: "Code",
+    },
+    state: {
+      type: "string",
+      maxLength: 8192,
+      minLength: 1,
+      title: "State",
+    },
+    iss: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Iss",
+      description:
+        "The issuer Montrose names on the redirect, checked against its own.",
+    },
+  },
+  type: "object",
+  required: ["code", "state"],
+  title: "MontroseCallbackRequest",
+} as const;
+
+export const MontroseConnectionSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    rejected: {
+      type: "boolean",
+      title: "Rejected",
+      description:
+        "Montrose no longer accepts the consent; syncing waits for a new BankID login.",
+    },
+    consent_expires_at: {
+      type: "string",
+      format: "date-time",
+      title: "Consent Expires At",
+      description:
+        "When the BankID consent runs out and has to be given again.",
+    },
+    last_synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Synced At",
+    },
+    sync_error: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync Error",
+    },
+    accounts: {
+      items: {
+        $ref: "#/components/schemas/MontroseAccountSchema",
+      },
+      type: "array",
+      title: "Accounts",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "rejected",
+    "consent_expires_at",
+    "last_synced_at",
+    "sync_error",
+    "accounts",
+  ],
+  title: "MontroseConnectionSchema",
+} as const;
+
+export const MontroseStatusResponseSchema = {
+  properties: {
+    connection: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/MontroseConnectionSchema",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["connection"],
+  title: "MontroseStatusResponse",
 } as const;
 
 export const MoveDaySummarySchema = {

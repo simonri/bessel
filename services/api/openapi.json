@@ -1084,6 +1084,205 @@
         ]
       }
     },
+    "/v1/montrose": {
+      "get": {
+        "tags": [
+          "montrose"
+        ],
+        "summary": "Get Montrose Connection",
+        "operationId": "get_montrose_v1_montrose_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MontroseStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "montrose"
+        ],
+        "summary": "Disconnect Montrose",
+        "description": "Forgets the consent and its tokens. Imported transactions stay.",
+        "operationId": "disconnect_montrose_v1_montrose_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/montrose/authorize": {
+      "post": {
+        "tags": [
+          "montrose"
+        ],
+        "summary": "Start Montrose Connection",
+        "description": "Starts the BankID consent; Montrose sends the user back to Bessel's callback page.",
+        "operationId": "authorize_montrose_v1_montrose_authorize_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MontroseAuthorizeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/montrose/callback": {
+      "post": {
+        "tags": [
+          "montrose"
+        ],
+        "summary": "Complete Montrose Connection",
+        "operationId": "complete_montrose_v1_montrose_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MontroseCallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MontroseConnectionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/montrose/accounts/{account_id}": {
+      "patch": {
+        "tags": [
+          "montrose"
+        ],
+        "summary": "Link Montrose Account",
+        "operationId": "link_montrose_account_v1_montrose_accounts__account_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MontroseAccountUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MontroseConnectionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/montrose/sync": {
+      "post": {
+        "tags": [
+          "montrose"
+        ],
+        "summary": "Sync Montrose",
+        "operationId": "sync_montrose_v1_montrose_sync_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/calendars/accounts": {
       "get": {
         "tags": [
@@ -7973,6 +8172,7 @@
             "enum": [
               "bank",
               "avanza",
+              "montrose",
               "klarna",
               "manual"
             ],
@@ -8020,7 +8220,7 @@
               }
             ],
             "title": "Access Until",
-            "description": "When the bank's read-only approval ends, for connected banks."
+            "description": "When the read-only approval ends, for connected banks and Montrose."
           },
           "import_bank": {
             "anyOf": [
@@ -13712,6 +13912,213 @@
           "items"
         ],
         "title": "MonthlySpendingResponse"
+      },
+      "MontroseAccountSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "account_number": {
+            "type": "string",
+            "title": "Account Number"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "account_type": {
+            "type": "string",
+            "title": "Account Type",
+            "description": "Montrose's account type, e.g. 'ISK', 'KF' or 'DEPCR'."
+          },
+          "bank_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Account Id",
+            "description": "The Bessel account it imports into; nothing is imported until one is chosen."
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "account_number",
+          "name",
+          "account_type",
+          "bank_account_id",
+          "last_synced_at"
+        ],
+        "title": "MontroseAccountSchema"
+      },
+      "MontroseAccountUpdate": {
+        "properties": {
+          "bank_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Account Id",
+            "description": "The Bessel account to import into, or null to stop importing."
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_account_id"
+        ],
+        "title": "MontroseAccountUpdate"
+      },
+      "MontroseAuthorizeResponse": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Montrose's BankID login, which sends the user back to Bessel's callback page."
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "MontroseAuthorizeResponse"
+      },
+      "MontroseCallbackRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Code"
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "State"
+          },
+          "iss": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iss",
+            "description": "The issuer Montrose names on the redirect, checked against its own."
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "MontroseCallbackRequest"
+      },
+      "MontroseConnectionSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "rejected": {
+            "type": "boolean",
+            "title": "Rejected",
+            "description": "Montrose no longer accepts the consent; syncing waits for a new BankID login."
+          },
+          "consent_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Consent Expires At",
+            "description": "When the BankID consent runs out and has to be given again."
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "sync_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Error"
+          },
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/MontroseAccountSchema"
+            },
+            "type": "array",
+            "title": "Accounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rejected",
+          "consent_expires_at",
+          "last_synced_at",
+          "sync_error",
+          "accounts"
+        ],
+        "title": "MontroseConnectionSchema"
+      },
+      "MontroseStatusResponse": {
+        "properties": {
+          "connection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MontroseConnectionSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "connection"
+        ],
+        "title": "MontroseStatusResponse"
       },
       "MoveDaySummary": {
         "properties": {

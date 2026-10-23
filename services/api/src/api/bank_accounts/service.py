@@ -24,6 +24,8 @@ from api.bank_accounts.schemas import (
 )
 from api.klarna.repository import KlarnaPayLaterRepository
 from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
+from api.montrose.repository import MontroseConnectionRepository
+from api.montrose.service import consent_expires_at
 from api.open_banking.enable_banking import bank_logo
 from api.open_banking.repository import BankConnectionRepository
 from api.postgres import AsyncSession
@@ -60,6 +62,8 @@ def _in_words(issue: AccountProblem, label: str, *, bessel_balance: int, currenc
       return f"Hasn't synced since {day}."
     case "renew_soon":
       return f"The {label} approval ends {day}. Renew it to keep importing."
+    case "sign_in" if label == "Montrose":
+      return "Montrose needs a new BankID login to keep syncing."
     case "sign_in":
       return "Avanza didn't accept the login. Save new credentials to resume syncing."
     case "balance_mismatch" if label == "Klarna pay later":
@@ -204,6 +208,25 @@ class AccountsOverview:
       found[linked.bank_account_id] = (
         AccountSource(kind="avanza", label="Avanza", synced_at=avanza.last_synced_at, issue=problem, problem=None),
         linked.cash_balance,
+        None,
+      )
+    montrose = await MontroseConnectionRepository.from_session(session).get_for_user(user_id)
+    for linked in montrose.accounts if montrose else []:
+      if linked.bank_account_id is None or montrose is None:
+        continue
+      expires = consent_expires_at(montrose)
+      problem = None
+      if montrose.rejected_at:
+        problem = AccountProblem(kind="sign_in")
+      elif montrose.sync_error:
+        problem = AccountProblem(kind="sync_failed", detail=montrose.sync_error)
+      elif montrose.last_synced_at and now - montrose.last_synced_at > STALE_AFTER:
+        problem = AccountProblem(kind="stale", day=montrose.last_synced_at.date())
+      elif expires - now < RENEW_WARNING:
+        problem = AccountProblem(kind="renew_soon", day=expires.date())
+      found[linked.bank_account_id] = (
+        AccountSource(kind="montrose", label="Montrose", synced_at=montrose.last_synced_at, access_until=expires, issue=problem, problem=None),
+        None,
         None,
       )
     for pay_later in await KlarnaPayLaterRepository.from_session(session).list_for_user(user_id):

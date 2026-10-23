@@ -13,6 +13,7 @@ import {
   addTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponseTransformer,
   completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
   completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
+  completeMontroseV1MontroseCallbackPostResponseTransformer,
   completeTaskV1TasksTaskIdCompletePostResponseTransformer,
   connectAvanzaV1AvanzaConnectPostResponseTransformer,
   connectIcloudV1CalendarsIcloudPostResponseTransformer,
@@ -37,6 +38,7 @@ import {
   getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer,
   getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
   getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
+  getMontroseV1MontroseGetResponseTransformer,
   getNetWorthHistoryV1BankAccountsNetWorthGetResponseTransformer,
   getPlaceV1PlacesPlaceIdGetResponseTransformer,
   getRecipeV1RecipesRecipeIdGetResponseTransformer,
@@ -45,6 +47,7 @@ import {
   importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
   linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer,
   linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponseTransformer,
+  linkMontroseAccountV1MontroseAccountsAccountIdPatchResponseTransformer,
   listBankAccountsV1BankAccountsGetResponseTransformer,
   listBankConnectionsV1BankConnectionsGetResponseTransformer,
   listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
@@ -100,6 +103,8 @@ import type {
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
+  AuthorizeMontroseV1MontroseAuthorizePostData,
+  AuthorizeMontroseV1MontroseAuthorizePostResponses,
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
   BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
   BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
@@ -112,6 +117,9 @@ import type {
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
+  CompleteMontroseV1MontroseCallbackPostData,
+  CompleteMontroseV1MontroseCallbackPostErrors,
+  CompleteMontroseV1MontroseCallbackPostResponses,
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostErrors,
   CompleteTaskV1TasksTaskIdCompletePostResponses,
@@ -210,6 +218,8 @@ import type {
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
+  DisconnectMontroseV1MontroseDeleteData,
+  DisconnectMontroseV1MontroseDeleteResponses,
   DocumentPageV1DocumentsDocumentIdPagesPageGetData,
   DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
   DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
@@ -263,6 +273,8 @@ import type {
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponses,
+  GetMontroseV1MontroseGetData,
+  GetMontroseV1MontroseGetResponses,
   GetNetWorthHistoryV1BankAccountsNetWorthGetData,
   GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
   GetPlaceV1PlacesPlaceIdGetData,
@@ -309,6 +321,9 @@ import type {
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchData,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses,
   ListActivitySourcesV1ActivitySourcesGetData,
   ListActivitySourcesV1ActivitySourcesGetResponses,
   ListBankAccountsV1BankAccountsGetData,
@@ -441,6 +456,8 @@ import type {
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
+  SyncMontroseV1MontroseSyncPostData,
+  SyncMontroseV1MontroseSyncPostResponses,
   TransactionSummaryV1TransactionsSummaryGetData,
   TransactionSummaryV1TransactionsSummaryGetErrors,
   TransactionSummaryV1TransactionsSummaryGetResponses,
@@ -1077,6 +1094,152 @@ export const syncAvanzaV1AvanzaSyncPost = <
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/avanza/sync",
+    ...options,
+  });
+
+/**
+ * Disconnect Montrose
+ *
+ * Forgets the consent and its tokens. Imported transactions stay.
+ */
+export const disconnectMontroseV1MontroseDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<DisconnectMontroseV1MontroseDeleteData, ThrowOnError>,
+): RequestResult<
+  DisconnectMontroseV1MontroseDeleteResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).delete<
+    DisconnectMontroseV1MontroseDeleteResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/montrose",
+    ...options,
+  });
+
+/**
+ * Get Montrose Connection
+ */
+export const getMontroseV1MontroseGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMontroseV1MontroseGetData, ThrowOnError>,
+): RequestResult<GetMontroseV1MontroseGetResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetMontroseV1MontroseGetResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: getMontroseV1MontroseGetResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/montrose",
+    ...options,
+  });
+
+/**
+ * Start Montrose Connection
+ *
+ * Starts the BankID consent; Montrose sends the user back to Bessel's callback page.
+ */
+export const authorizeMontroseV1MontroseAuthorizePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<AuthorizeMontroseV1MontroseAuthorizePostData, ThrowOnError>,
+): RequestResult<
+  AuthorizeMontroseV1MontroseAuthorizePostResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    AuthorizeMontroseV1MontroseAuthorizePostResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/montrose/authorize",
+    ...options,
+  });
+
+/**
+ * Complete Montrose Connection
+ */
+export const completeMontroseV1MontroseCallbackPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CompleteMontroseV1MontroseCallbackPostData, ThrowOnError>,
+): RequestResult<
+  CompleteMontroseV1MontroseCallbackPostResponses,
+  CompleteMontroseV1MontroseCallbackPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CompleteMontroseV1MontroseCallbackPostResponses,
+    CompleteMontroseV1MontroseCallbackPostErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      completeMontroseV1MontroseCallbackPostResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/montrose/callback",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Link Montrose Account
+ */
+export const linkMontroseAccountV1MontroseAccountsAccountIdPatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    LinkMontroseAccountV1MontroseAccountsAccountIdPatchData,
+    ThrowOnError
+  >,
+): RequestResult<
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses,
+    LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer:
+      linkMontroseAccountV1MontroseAccountsAccountIdPatchResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/montrose/accounts/{account_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Sync Montrose
+ */
+export const syncMontroseV1MontroseSyncPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<SyncMontroseV1MontroseSyncPostData, ThrowOnError>,
+): RequestResult<
+  SyncMontroseV1MontroseSyncPostResponses,
+  unknown,
+  ThrowOnError
+> =>
+  (options?.client ?? client).post<
+    SyncMontroseV1MontroseSyncPostResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/montrose/sync",
     ...options,
   });
 

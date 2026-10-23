@@ -13,10 +13,12 @@ import {
   addTransactionDocumentV1TransactionsTransactionIdDocumentsPost,
   authorizeBankConnectionV1BankConnectionsAuthorizePost,
   authorizeGoogleV1CalendarsGoogleAuthorizePost,
+  authorizeMontroseV1MontroseAuthorizePost,
   bulkUpdateTransactionsV1TransactionsBulkPatch,
   categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
   completeBankConnectionV1BankConnectionsCallbackPost,
   completeGoogleConnectV1CalendarsGoogleCallbackPost,
+  completeMontroseV1MontroseCallbackPost,
   completeTaskV1TasksTaskIdCompletePost,
   connectAvanzaV1AvanzaConnectPost,
   connectIcloudV1CalendarsIcloudPost,
@@ -50,6 +52,7 @@ import {
   disconnectAvanzaV1AvanzaDelete,
   disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
   disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
+  disconnectMontroseV1MontroseDelete,
   documentPageV1DocumentsDocumentIdPagesPageGet,
   documentThumbnailV1DocumentsDocumentIdThumbnailGet,
   downloadDocumentV1DocumentsDocumentIdFileGet,
@@ -70,6 +73,7 @@ import {
   getLocationHistoryDayV1LocationHistoryDayGet,
   getLocationHistorySummaryV1LocationHistorySummaryGet,
   getMeV1AuthMeGet,
+  getMontroseV1MontroseGet,
   getNetWorthHistoryV1BankAccountsNetWorthGet,
   getPlaceV1PlacesPlaceIdGet,
   getRecipeV1RecipesRecipeIdGet,
@@ -86,6 +90,7 @@ import {
   ingestActivityBatchV1ActivityBatchPost,
   linkAvanzaAccountV1AvanzaAccountsAccountIdPatch,
   linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch,
+  linkMontroseAccountV1MontroseAccountsAccountIdPatch,
   listActivitySourcesV1ActivitySourcesGet,
   listBankAccountsV1BankAccountsGet,
   listBankConnectionsV1BankConnectionsGet,
@@ -135,6 +140,7 @@ import {
   syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost,
   syncHealthkitSleepV1HealthkitSleepSyncPost,
   syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
+  syncMontroseV1MontroseSyncPost,
   transactionSummaryV1TransactionsSummaryGet,
   undoCompleteTaskV1TasksTaskIdUndoCompletePost,
   undoResetV1CountersCounterIdResetsResetIdDelete,
@@ -165,6 +171,8 @@ import type {
   AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
   AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse,
+  AuthorizeMontroseV1MontroseAuthorizePostData,
+  AuthorizeMontroseV1MontroseAuthorizePostResponse,
   BulkUpdateTransactionsV1TransactionsBulkPatchData,
   BulkUpdateTransactionsV1TransactionsBulkPatchError,
   BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
@@ -177,6 +185,9 @@ import type {
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
   CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
+  CompleteMontroseV1MontroseCallbackPostData,
+  CompleteMontroseV1MontroseCallbackPostError,
+  CompleteMontroseV1MontroseCallbackPostResponse,
   CompleteTaskV1TasksTaskIdCompletePostData,
   CompleteTaskV1TasksTaskIdCompletePostError,
   CompleteTaskV1TasksTaskIdCompletePostResponse,
@@ -275,6 +286,8 @@ import type {
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
   DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
+  DisconnectMontroseV1MontroseDeleteData,
+  DisconnectMontroseV1MontroseDeleteResponse,
   DocumentPageV1DocumentsDocumentIdPagesPageGetData,
   DocumentPageV1DocumentsDocumentIdPagesPageGetError,
   DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
@@ -325,6 +338,8 @@ import type {
   GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
   GetMeV1AuthMeGetData,
   GetMeV1AuthMeGetResponse,
+  GetMontroseV1MontroseGetData,
+  GetMontroseV1MontroseGetResponse,
   GetNetWorthHistoryV1BankAccountsNetWorthGetData,
   GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
   GetPlaceV1PlacesPlaceIdGetData,
@@ -369,6 +384,9 @@ import type {
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
   LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchData,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchError,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
   ListActivitySourcesV1ActivitySourcesGetData,
   ListActivitySourcesV1ActivitySourcesGetResponse,
   ListBankAccountsV1BankAccountsGetData,
@@ -498,6 +516,7 @@ import type {
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
   SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
+  SyncMontroseV1MontroseSyncPostData,
   TransactionSummaryV1TransactionsSummaryGetData,
   TransactionSummaryV1TransactionsSummaryGetError,
   TransactionSummaryV1TransactionsSummaryGetResponse,
@@ -1339,6 +1358,176 @@ export const syncAvanzaV1AvanzaSyncPostMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await syncAvanzaV1AvanzaSyncPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Disconnect Montrose
+ *
+ * Forgets the consent and its tokens. Imported transactions stay.
+ */
+export const disconnectMontroseV1MontroseDeleteMutation = (
+  options?: Partial<Options<DisconnectMontroseV1MontroseDeleteData>>,
+): UseMutationOptions<
+  DisconnectMontroseV1MontroseDeleteResponse,
+  DefaultError,
+  Options<DisconnectMontroseV1MontroseDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DisconnectMontroseV1MontroseDeleteResponse,
+    DefaultError,
+    Options<DisconnectMontroseV1MontroseDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await disconnectMontroseV1MontroseDelete({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getMontroseV1MontroseGetQueryKey = (
+  options?: Options<GetMontroseV1MontroseGetData>,
+) => createQueryKey("getMontroseV1MontroseGet", options);
+
+/**
+ * Get Montrose Connection
+ */
+export const getMontroseV1MontroseGetOptions = (
+  options?: Options<GetMontroseV1MontroseGetData>,
+) =>
+  queryOptions<
+    GetMontroseV1MontroseGetResponse,
+    DefaultError,
+    GetMontroseV1MontroseGetResponse,
+    ReturnType<typeof getMontroseV1MontroseGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMontroseV1MontroseGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMontroseV1MontroseGetQueryKey(options),
+  });
+
+/**
+ * Start Montrose Connection
+ *
+ * Starts the BankID consent; Montrose sends the user back to Bessel's callback page.
+ */
+export const authorizeMontroseV1MontroseAuthorizePostMutation = (
+  options?: Partial<Options<AuthorizeMontroseV1MontroseAuthorizePostData>>,
+): UseMutationOptions<
+  AuthorizeMontroseV1MontroseAuthorizePostResponse,
+  DefaultError,
+  Options<AuthorizeMontroseV1MontroseAuthorizePostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AuthorizeMontroseV1MontroseAuthorizePostResponse,
+    DefaultError,
+    Options<AuthorizeMontroseV1MontroseAuthorizePostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await authorizeMontroseV1MontroseAuthorizePost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Complete Montrose Connection
+ */
+export const completeMontroseV1MontroseCallbackPostMutation = (
+  options?: Partial<Options<CompleteMontroseV1MontroseCallbackPostData>>,
+): UseMutationOptions<
+  CompleteMontroseV1MontroseCallbackPostResponse,
+  CompleteMontroseV1MontroseCallbackPostError,
+  Options<CompleteMontroseV1MontroseCallbackPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CompleteMontroseV1MontroseCallbackPostResponse,
+    CompleteMontroseV1MontroseCallbackPostError,
+    Options<CompleteMontroseV1MontroseCallbackPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await completeMontroseV1MontroseCallbackPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Link Montrose Account
+ */
+export const linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation = (
+  options?: Partial<
+    Options<LinkMontroseAccountV1MontroseAccountsAccountIdPatchData>
+  >,
+): UseMutationOptions<
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
+  LinkMontroseAccountV1MontroseAccountsAccountIdPatchError,
+  Options<LinkMontroseAccountV1MontroseAccountsAccountIdPatchData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
+    LinkMontroseAccountV1MontroseAccountsAccountIdPatchError,
+    Options<LinkMontroseAccountV1MontroseAccountsAccountIdPatchData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } =
+        await linkMontroseAccountV1MontroseAccountsAccountIdPatch({
+          ...options,
+          ...fnOptions,
+          throwOnError: true,
+        });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Sync Montrose
+ */
+export const syncMontroseV1MontroseSyncPostMutation = (
+  options?: Partial<Options<SyncMontroseV1MontroseSyncPostData>>,
+): UseMutationOptions<
+  unknown,
+  DefaultError,
+  Options<SyncMontroseV1MontroseSyncPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DefaultError,
+    Options<SyncMontroseV1MontroseSyncPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncMontroseV1MontroseSyncPost({
         ...options,
         ...fnOptions,
         throwOnError: true,

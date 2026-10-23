@@ -1,15 +1,18 @@
 import type { AccountOverview, AvanzaConnectionSchema } from "@bessel/client";
 import {
   authorizeBankConnectionV1BankConnectionsAuthorizePostMutation,
+  authorizeMontroseV1MontroseAuthorizePostMutation,
   connectAvanzaV1AvanzaConnectPostMutation,
   getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
   getAvanzaV1AvanzaGetQueryKey,
+  getMontroseV1MontroseGetQueryKey,
   getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
   listBankConnectionsV1BankConnectionsGetOptions,
   listBankConnectionsV1BankConnectionsGetQueryKey,
   listTransactionsV1TransactionsGetQueryKey,
   syncAvanzaV1AvanzaSyncPostMutation,
   syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation,
+  syncMontroseV1MontroseSyncPostMutation,
 } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,12 +41,15 @@ export const CONNECTING_BANK_KEY = "bessel:connecting-bank";
 
 export type PickSource =
   | { kind: "bank"; bankName: string }
-  | { kind: "avanza" };
+  | { kind: "avanza" }
+  | { kind: "montrose" };
 
 interface AccountActions {
   run: (action: FixAction, account: AccountOverview) => void;
   connectBank: (bankName: string) => void;
   connectAvanza: () => void;
+  /** Off to Montrose's BankID login; it comes back to the callback page. */
+  connectMontrose: () => void;
   upload: (preset?: ImportPreset) => void;
   /** Choose which of a connection's accounts to bring in. */
   pick: (source: PickSource) => void;
@@ -89,6 +95,7 @@ export function AccountActionsProvider({
       getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
       listBankConnectionsV1BankConnectionsGetQueryKey({ client }),
       getAvanzaV1AvanzaGetQueryKey({ client }),
+      getMontroseV1MontroseGetQueryKey({ client }),
       listTransactionsV1TransactionsGetQueryKey({ client }),
     ]) {
       void queryClient.invalidateQueries({ queryKey });
@@ -108,6 +115,23 @@ export function AccountActionsProvider({
     },
     onError: (error) =>
       toast.error(errorDetail(error, "Couldn't open the bank's approval")),
+  });
+  const authorizeMontrose = useMutation({
+    ...authorizeMontroseV1MontroseAuthorizePostMutation({ client }),
+    onSuccess: ({ url }) => {
+      if (window.electron) void window.electron.shell.openExternal(url);
+      else window.location.assign(url);
+    },
+    onError: (error) =>
+      toast.error(errorDetail(error, "Couldn't open Montrose's login")),
+  });
+  const syncMontrose = useMutation({
+    ...syncMontroseV1MontroseSyncPostMutation({ client }),
+    onSuccess: () => {
+      toast.success("Updating - this takes a minute");
+      refresh();
+    },
+    onError: (error) => toast.error(errorDetail(error, "Couldn't update")),
   });
   const syncBank = useMutation({
     ...syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation({
@@ -138,16 +162,26 @@ export function AccountActionsProvider({
     [authorize],
   );
 
+  const connectMontrose = useCallback(
+    () => authorizeMontrose.mutate({ client }),
+    [authorizeMontrose],
+  );
+
   const run = useCallback(
     (action: FixAction, account: AccountOverview) => {
       const { source } = account;
       switch (action) {
         case "renew":
-          connectBank(source.label);
+          if (source.kind === "montrose") connectMontrose();
+          else connectBank(source.label);
           return;
         case "sync": {
           if (source.kind === "avanza") {
             syncAvanza.mutate({ client });
+            return;
+          }
+          if (source.kind === "montrose") {
+            syncMontrose.mutate({ client });
             return;
           }
           const connection = connections?.connections.find(
@@ -162,7 +196,8 @@ export function AccountActionsProvider({
           return;
         }
         case "sign_in":
-          setAvanzaLogin(true);
+          if (source.kind === "montrose") connectMontrose();
+          else setAvanzaLogin(true);
           return;
         case "upload":
           setImporting({
@@ -178,7 +213,15 @@ export function AccountActionsProvider({
           return;
       }
     },
-    [connectBank, connections, onReview, syncAvanza, syncBank],
+    [
+      connectBank,
+      connectMontrose,
+      connections,
+      onReview,
+      syncAvanza,
+      syncBank,
+      syncMontrose,
+    ],
   );
 
   const submitAvanzaLogin = async (login: AvanzaLogin) => {
@@ -205,19 +248,28 @@ export function AccountActionsProvider({
       run,
       connectBank,
       connectAvanza: () => setAvanzaLogin(true),
+      connectMontrose,
       upload: (preset) => setImporting(preset ?? {}),
       pick: onPick,
       pollUntil,
-      busy: authorize.isPending || syncBank.isPending || syncAvanza.isPending,
+      busy:
+        authorize.isPending ||
+        authorizeMontrose.isPending ||
+        syncBank.isPending ||
+        syncAvanza.isPending ||
+        syncMontrose.isPending,
     }),
     [
       run,
       connectBank,
+      connectMontrose,
       onPick,
       pollUntil,
       authorize.isPending,
+      authorizeMontrose.isPending,
       syncBank.isPending,
       syncAvanza.isPending,
+      syncMontrose.isPending,
     ],
   );
 

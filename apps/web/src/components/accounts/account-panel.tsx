@@ -2,8 +2,10 @@ import type { AccountOverview, BankAccountUpdate } from "@bessel/client";
 import {
   disconnectAvanzaV1AvanzaDeleteMutation,
   disconnectBankConnectionV1BankConnectionsConnectionIdDeleteMutation,
+  disconnectMontroseV1MontroseDeleteMutation,
   getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
   getAvanzaV1AvanzaGetOptions,
+  getMontroseV1MontroseGetOptions,
   getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
   listBankAccountsV1BankAccountsGetQueryKey,
   listBankConnectionsV1BankConnectionsGetOptions,
@@ -440,6 +442,10 @@ function Connection({ account }: { account: AccountOverview }) {
     ...getAvanzaV1AvanzaGetOptions({ client }),
     enabled: source.kind === "avanza",
   });
+  const { data: montrose } = useQuery({
+    ...getMontroseV1MontroseGetOptions({ client }),
+    enabled: source.kind === "montrose",
+  });
   const notBroughtIn =
     source.kind === "bank"
       ? (connection?.accounts.filter((a) => a.shared && !a.bank_account_id)
@@ -447,7 +453,10 @@ function Connection({ account }: { account: AccountOverview }) {
       : source.kind === "avanza"
         ? (avanza?.connection?.accounts.filter((a) => !a.bank_account_id)
             .length ?? 0)
-        : 0;
+        : source.kind === "montrose"
+          ? (montrose?.connection?.accounts.filter((a) => !a.bank_account_id)
+              .length ?? 0)
+          : 0;
   const afterDisconnect = () => {
     setDisconnecting(false);
     void queryClient.invalidateQueries({
@@ -465,6 +474,11 @@ function Connection({ account }: { account: AccountOverview }) {
   });
   const disconnectAvanza = useMutation({
     ...disconnectAvanzaV1AvanzaDeleteMutation({ client }),
+    onSuccess: afterDisconnect,
+    onError: (error) => toast.error(errorDetail(error, "Couldn't disconnect")),
+  });
+  const disconnectMontrose = useMutation({
+    ...disconnectMontroseV1MontroseDeleteMutation({ client }),
     onSuccess: afterDisconnect,
     onError: (error) => toast.error(errorDetail(error, "Couldn't disconnect")),
   });
@@ -510,6 +524,25 @@ function Connection({ account }: { account: AccountOverview }) {
           </SoftButton>
           <SoftButton onClick={() => run("sign_in", account)}>
             Change login
+          </SoftButton>
+        </div>
+      </>
+    );
+  } else if (source.kind === "montrose") {
+    body = (
+      <>
+        <p className="text-13 text-white/80">Connected to Montrose</p>
+        <p className="mt-0.5 type-caption text-white/45">
+          {source.access_until
+            ? `Read-only access until ${format(source.access_until, "d MMM yyyy")}, then approve again with BankID.`
+            : "Read-only access, approved with BankID."}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <SoftButton onClick={() => run("sync", account)} disabled={busy}>
+            Update now
+          </SoftButton>
+          <SoftButton onClick={() => run("renew", account)} disabled={busy}>
+            Renew access
           </SoftButton>
         </div>
       </>
@@ -561,8 +594,8 @@ function Connection({ account }: { account: AccountOverview }) {
           type="button"
           onClick={() =>
             pick(
-              source.kind === "avanza"
-                ? { kind: "avanza" }
+              source.kind === "avanza" || source.kind === "montrose"
+                ? { kind: source.kind }
                 : { kind: "bank", bankName: source.label },
             )
           }
@@ -572,7 +605,9 @@ function Connection({ account }: { account: AccountOverview }) {
           {source.label} - choose
         </button>
       )}
-      {(source.kind === "avanza" || (source.kind === "bank" && connection)) && (
+      {(source.kind === "avanza" ||
+        source.kind === "montrose" ||
+        (source.kind === "bank" && connection)) && (
         <button
           type="button"
           onClick={() => setDisconnecting(true)}
@@ -589,9 +624,15 @@ function Connection({ account }: { account: AccountOverview }) {
         description="Bessel stops importing from it. Everything already imported stays."
         confirmLabel="Disconnect"
         pendingLabel="Disconnecting…"
-        isPending={disconnectBank.isPending || disconnectAvanza.isPending}
+        isPending={
+          disconnectBank.isPending ||
+          disconnectAvanza.isPending ||
+          disconnectMontrose.isPending
+        }
         onConfirm={() => {
           if (source.kind === "avanza") disconnectAvanza.mutate({ client });
+          else if (source.kind === "montrose")
+            disconnectMontrose.mutate({ client });
           else if (connection)
             disconnectBank.mutate({
               client,
