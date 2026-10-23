@@ -7,7 +7,13 @@ import {
 } from "@bessel/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { SoftButton, TextInput } from "@/components/ui-kit";
 import { errorDetail } from "@/lib/api-error";
@@ -199,7 +205,11 @@ export function NameSuggestions({
               onClick={() =>
                 nameAll.mutate({
                   client,
-                  body: { description: suggestion.description, name },
+                  body: {
+                    description: suggestion.description,
+                    name,
+                    replacing: suggestion.replacing,
+                  },
                 })
               }
             >
@@ -216,6 +226,9 @@ export function NameSuggestions({
 export function NoteField({ transaction }: { transaction: TransactionSchema }) {
   const refresh = useRefresh();
   const [draft, setDraft] = useState(transaction.note ?? "");
+  // Read when the panel closes, which can take the field away before it loses focus.
+  const latest = useRef({ draft, saved: transaction.note ?? null });
+  latest.current.draft = draft;
   const update = useMutation({
     ...updateTransactionV1TransactionsTransactionIdPatchMutation({ client }),
     meta: { errorToast: false },
@@ -224,13 +237,16 @@ export function NoteField({ transaction }: { transaction: TransactionSchema }) {
       toast.error(errorDetail(error, "Couldn't save the note")),
   });
   const save = () => {
-    if ((draft.trim() || null) === (transaction.note ?? null)) return;
+    const note = latest.current.draft.trim() || null;
+    if (note === latest.current.saved) return;
+    latest.current.saved = note;
     update.mutate({
       client,
       path: { transaction_id: transaction.id },
-      body: { note: draft },
+      body: { note: latest.current.draft },
     });
   };
+  useEffect(() => save, []);
   return (
     <label className="block">
       <span className="mb-1.5 block type-section text-white/55">Note</span>

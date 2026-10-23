@@ -4048,6 +4048,12 @@ export type NameAllRequest = {
    * Name
    */
   name: string;
+  /**
+   * Replacing
+   *
+   * A name given by hand that these transactions should give up, from the suggestion.
+   */
+  replacing?: string | null;
 };
 
 /**
@@ -4078,6 +4084,12 @@ export type NameSuggestion = {
    * How many transactions have it.
    */
   count: number;
+  /**
+   * Replacing
+   *
+   * The name its transactions have now, which naming it takes over; send it back when naming.
+   */
+  replacing?: string | null;
 };
 
 /**

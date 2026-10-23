@@ -6215,6 +6215,20 @@ export const NameAllRequestSchema = {
       maxLength: 120,
       title: "Name",
     },
+    replacing: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 120,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Replacing",
+      description:
+        "A name given by hand that these transactions should give up, from the suggestion.",
+    },
   },
   type: "object",
   required: ["description", "name"],
@@ -6245,6 +6259,19 @@ export const NameSuggestionSchema = {
       type: "integer",
       title: "Count",
       description: "How many transactions have it.",
+    },
+    replacing: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Replacing",
+      description:
+        "The name its transactions have now, which naming it takes over; send it back when naming.",
     },
   },
   type: "object",

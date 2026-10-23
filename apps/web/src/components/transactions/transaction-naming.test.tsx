@@ -16,7 +16,10 @@ const api = vi.hoisted(() => ({
   named: [] as unknown[],
   updated: [] as unknown[],
   suggestions: [] as NameSuggestion[],
+  renamedCounts: {} as Record<string, number>,
 }));
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sonner", () => ({ toast }));
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
@@ -34,9 +37,9 @@ vi.mock("@bessel/client", async (importOriginal) => ({
     },
   }),
   nameTransactionsV1TransactionsNamesPostMutation: () => ({
-    mutationFn: async (variables: { body: unknown }) => {
+    mutationFn: async (variables: { body: { description: string } }) => {
       api.named.push(variables.body);
-      return { renamed: 3 };
+      return { renamed: api.renamedCounts[variables.body.description] ?? 0 };
     },
   }),
   updateTransactionV1TransactionsTransactionIdPatchMutation: () => ({
@@ -95,6 +98,8 @@ beforeEach(() => {
   api.named = [];
   api.updated = [];
   api.suggestions = [];
+  api.renamedCounts = {};
+  toast.success.mockReset();
 });
 
 afterEach(cleanup);
@@ -187,7 +192,11 @@ describe("NameHeading", () => {
 });
 
 describe("NameSuggestions", () => {
-  it("names everything with a suggested bank text and says which one is done", async () => {
+  it("names everything with a suggested bank text, giving up the name it replaces, and says how many", async () => {
+    api.renamedCounts = {
+      "ANTHROPIC* CLAUDE SUB": 1,
+      "CLAUDE.AI SUBSCRIPTION": 3,
+    };
     const onDone = vi.fn();
     render(
       withQueries(
@@ -195,8 +204,12 @@ describe("NameSuggestions", () => {
           name="Claude"
           description="ANTHROPIC* CLAUDE SUB"
           suggestions={[
-            { description: "ANTHROPIC* CLAUDE SUB", count: 2 },
-            { description: "CLAUDE.AI SUBSCRIPTION", count: 3 },
+            { description: "ANTHROPIC* CLAUDE SUB", count: 1, replacing: "AI" },
+            {
+              description: "CLAUDE.AI SUBSCRIPTION",
+              count: 3,
+              replacing: null,
+            },
           ]}
           onDone={onDone}
         />,
@@ -204,16 +217,30 @@ describe("NameSuggestions", () => {
     );
 
     expect(
-      screen.getByText("2 more with this bank text, and later ones"),
-    ).toBeTruthy();
-    expect(screen.getByText("3 transactions, and later ones")).toBeTruthy();
-    fireEvent.click(screen.getAllByRole("button", { name: "Rename" })[1]);
-
+      screen.getByText("1 more with this bank text, and later ones"),
+    ).toBeInstanceOf(HTMLElement);
+    expect(screen.getByText("3 transactions, and later ones")).toBeInstanceOf(
+      HTMLElement,
+    );
+    const [own, other] = screen.getAllByRole("button", { name: "Rename" });
+    fireEvent.click(other);
     await waitFor(() =>
       expect(onDone).toHaveBeenCalledWith("CLAUDE.AI SUBSCRIPTION"),
     );
+    fireEvent.click(own);
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(2));
+
     expect(api.named).toEqual([
-      { description: "CLAUDE.AI SUBSCRIPTION", name: "Claude" },
+      {
+        description: "CLAUDE.AI SUBSCRIPTION",
+        name: "Claude",
+        replacing: null,
+      },
+      { description: "ANTHROPIC* CLAUDE SUB", name: "Claude", replacing: "AI" },
+    ]);
+    expect(toast.success.mock.calls.map(([text]) => text)).toEqual([
+      "Renamed 3 transactions",
+      "Renamed 1 transaction",
     ]);
   });
 
@@ -238,6 +265,8 @@ describe("NoteField", () => {
     const field = screen.getByLabelText("Note");
 
     fireEvent.blur(field);
+    fireEvent.change(field, { target: { value: "  Old " } });
+    fireEvent.blur(field);
     fireEvent.change(field, { target: { value: "Max plan for Bessel" } });
     fireEvent.blur(field);
 
@@ -247,6 +276,30 @@ describe("NoteField", () => {
         path: { transaction_id: "t1" },
         body: { note: "Max plan for Bessel" },
       },
+    ]);
+  });
+
+  it("saves what was typed when the panel closes before the field loses focus, and only once", async () => {
+    const typed = render(
+      withQueries(<NoteField transaction={tx({ note: null })} />),
+    );
+    fireEvent.change(screen.getByLabelText("Note"), {
+      target: { value: "Lunch with Erik" },
+    });
+    typed.unmount();
+
+    const saved = render(
+      withQueries(<NoteField transaction={tx({ id: "t2", note: null })} />),
+    );
+    const field = screen.getByLabelText("Note");
+    fireEvent.change(field, { target: { value: "Taxi" } });
+    fireEvent.blur(field);
+    saved.unmount();
+
+    await waitFor(() => expect(api.updated).toHaveLength(2));
+    expect(api.updated).toEqual([
+      { path: { transaction_id: "t1" }, body: { note: "Lunch with Erik" } },
+      { path: { transaction_id: "t2" }, body: { note: "Taxi" } },
     ]);
   });
 });

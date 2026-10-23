@@ -55,6 +55,8 @@ class Transaction(RecordModel):
   name: Mapped[str | None] = mapped_column(String(120), nullable=True)
   # Set when a naming rule gave the name rather than the user.
   name_rule_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("transaction_name_rules.id", ondelete="SET NULL"), nullable=True)
+  # Set when the user went back to the bank's text: naming its group later leaves this one as it is.
+  name_cleared: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
   note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
   raw_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("raw_transactions.id", onupdate="CASCADE"), nullable=True)

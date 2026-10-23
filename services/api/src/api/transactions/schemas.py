@@ -58,6 +58,7 @@ class TransactionRename(Schema):
 class NameSuggestion(Schema):
   description: str = Field(description="Bank text that would get the same name.")
   count: int = Field(description="How many transactions have it.")
+  replacing: str | None = Field(default=None, description="The name its transactions have now, which naming it takes over; send it back when naming.")
 
 
 class TransactionRenameResponse(TransactionSchema):
@@ -69,6 +70,7 @@ class TransactionRenameResponse(TransactionSchema):
 class NameAllRequest(Schema):
   description: str = Field(min_length=1, description="Exact bank text to name, now and in later imports.")
   name: Annotated[str, BeforeValidator(_blank_as_none), Field(max_length=120)]
+  replacing: Name = Field(default=None, description="A name given by hand that these transactions should give up, from the suggestion.")
 
 
 class NameAllResponse(Schema):

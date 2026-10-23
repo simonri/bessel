@@ -68,6 +68,7 @@ import {
 } from "@/lib/optimistic";
 import { HideAmountsButton } from "@/lib/privacy";
 import { useRouteFilters } from "@/lib/route-filters";
+import { useKeptOpen } from "@/lib/use-kept-open";
 
 // ─── Route + URL search params ────────────────────────────────────────────────
 
@@ -478,7 +479,7 @@ function Transactions() {
   const transactions = data?.items ?? [];
   const totalCount = data?.pagination.total_count ?? 0;
   const selectedCount = selected.size;
-  const open = transactions.find((t) => t.id === openId) ?? null;
+  const open = useKeptOpen(transactions, openId);
   const monthLabel = format(firstDay, "MMMM yyyy");
   const shown = Math.min(totalCount, MONTH_LIMIT);
 

@@ -243,7 +243,7 @@ async def rename_transaction(
 )
 async def name_transactions(body: NameAllRequest, session: DBSession, current_user: CurrentDBUser) -> NameAllResponse:
   """Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay."""
-  renamed = await name_all(session, current_user.id, description=body.description, name=body.name)
+  renamed = await name_all(session, current_user.id, description=body.description, name=body.name, replacing=body.replacing)
   return NameAllResponse(renamed=renamed)
 
 

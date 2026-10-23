@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from uuid import uuid4
 
 import pytest
@@ -81,8 +81,8 @@ class TestRename:
     body = response.json()
     assert (body["name"], body["description"]) == ("Claude Max", "ANTHROPIC* CLAUDE SUB")
     assert body["suggestions"] == [
-      {"description": "ANTHROPIC* CLAUDE SUB", "count": 2},
-      {"description": "CLAUDE.AI SUBSCRIPTION", "count": 3},
+      {"description": "ANTHROPIC* CLAUDE SUB", "count": 2, "replacing": None},
+      {"description": "CLAUDE.AI SUBSCRIPTION", "count": 3, "replacing": None},
     ]
     assert [name for description, name in await _names(session, account) if description == "ANTHROPIC* CLAUDE SUB"] == [None, None, "Claude Max", "My own name"]
 
@@ -185,7 +185,10 @@ class TestNameAll:
     again = await rename(second, "Claude Max")
     await accept(again, "Claude Max")
 
-    assert again == [{"description": "ANTHROPIC* CLAUDE SUB", "count": 2}, {"description": "CLAUDE.AI SUBSCRIPTION", "count": 2}]
+    assert again == [
+      {"description": "ANTHROPIC* CLAUDE SUB", "count": 2, "replacing": "Claude"},
+      {"description": "CLAUDE.AI SUBSCRIPTION", "count": 2, "replacing": "Claude"},
+    ]
     assert await _names(session, account) == [
       ("ANTHROPIC* CLAUDE SUB", "Claude Max"),
       ("ANTHROPIC* CLAUDE SUB", "Claude Max"),
@@ -196,20 +199,138 @@ class TestNameAll:
     ]
 
   @pytest.mark.asyncio
-  async def test_later_imports_arrive_named_and_a_name_cleared_by_hand_stays_cleared(
+  async def test_later_imports_arrive_named_after_the_exact_bank_text(
     self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
   ) -> None:
-    earlier = await _add(save_fixture, account, "CLOUDFLARE")
+    await _add(save_fixture, account, "CLOUDFLARE")
     await client.post("/v1/transactions/names", json={"description": "CLOUDFLARE", "name": "Cloudflare"})
-    await client.put(f"/v1/transactions/{earlier.id}/name", json={"name": None})
 
     await _import(session, account, "CLOUDFLARE", "CLOUDFLARE INC", "Pressbyrån")
 
     assert await _names(session, account) == [
-      ("CLOUDFLARE", None),
+      ("CLOUDFLARE", "Cloudflare"),
       ("CLOUDFLARE", "Cloudflare"),
       ("CLOUDFLARE INC", None),
       ("Pressbyrån", None),
+    ]
+
+  @pytest.mark.asyncio
+  async def test_the_bank_text_chosen_over_a_name_stays_when_the_group_is_renamed_and_on_import(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    cleared, _ = await _add(save_fixture, account, "CLOUDFLARE"), await _add(save_fixture, account, "CLOUDFLARE")
+    await client.post("/v1/transactions/names", json={"description": "CLOUDFLARE", "name": "Cloudflare"})
+    await client.put(f"/v1/transactions/{cleared.id}/name", json={"name": None})
+
+    renamed = await client.post("/v1/transactions/names", json={"description": "CLOUDFLARE", "name": "CF"})
+    await _import(session, account, "CLOUDFLARE")
+
+    assert renamed.json() == {"renamed": 1}
+    assert await _names(session, account) == [("CLOUDFLARE", None), ("CLOUDFLARE", "CF"), ("CLOUDFLARE", "CF")]
+
+  @pytest.mark.asyncio
+  async def test_the_bank_text_chosen_over_a_name_is_not_suggested_for_another_name(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    cleared = await _add(save_fixture, account, "CLOUDFLARE INC", name="Cloudflare Inc")
+    await _add(save_fixture, account, "CLOUDFLARE R2")
+    this = await _add(save_fixture, account, "CLOUDFLARE")
+    await client.put(f"/v1/transactions/{cleared.id}/name", json={"name": None})
+
+    body = (await client.put(f"/v1/transactions/{this.id}/name", json={"name": "Cloudflare"})).json()
+
+    assert [s["description"] for s in body["suggestions"]] == ["CLOUDFLARE R2"]
+
+  @pytest.mark.asyncio
+  async def test_naming_one_again_by_hand_brings_it_back_into_its_group(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    cleared = await _add(save_fixture, account, "CLOUDFLARE")
+    await client.post("/v1/transactions/names", json={"description": "CLOUDFLARE", "name": "Cloudflare"})
+    await client.put(f"/v1/transactions/{cleared.id}/name", json={"name": None})
+    await client.put(f"/v1/transactions/{cleared.id}/name", json={"name": "Cloudflare"})
+
+    await client.post("/v1/transactions/names", json={"description": "CLOUDFLARE", "name": "CF"})
+
+    assert await _names(session, account) == [("CLOUDFLARE", "CF")]
+
+  @pytest.mark.asyncio
+  async def test_a_group_named_only_by_hand_takes_the_new_name_through_its_suggestions(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    clicked = await _add(save_fixture, account, "ESPRESSO HOUSE 12", name="Fika")
+    await _add(save_fixture, account, "ESPRESSO HOUSE 12", name="Fika")
+    await _add(save_fixture, account, "WAYNES COFFEE", name="Fika")
+    await _add(save_fixture, account, "WAYNES COFFEE", name="Lunch")
+
+    suggestions = (await client.put(f"/v1/transactions/{clicked.id}/name", json={"name": "Coffee"})).json()["suggestions"]
+    accepted = [
+      (await client.post("/v1/transactions/names", json={"name": "Coffee", **{k: s[k] for k in ("description", "replacing")}})).json() for s in suggestions
+    ]
+
+    assert suggestions == [
+      {"description": "ESPRESSO HOUSE 12", "count": 1, "replacing": "Fika"},
+      {"description": "WAYNES COFFEE", "count": 1, "replacing": "Fika"},
+    ]
+    assert accepted == [{"renamed": 2}, {"renamed": 1}]
+    assert await _names(session, account) == [
+      ("ESPRESSO HOUSE 12", "Coffee"),
+      ("ESPRESSO HOUSE 12", "Coffee"),
+      ("WAYNES COFFEE", "Coffee"),
+      ("WAYNES COFFEE", "Lunch"),
+    ]
+
+  @pytest.mark.asyncio
+  async def test_naming_a_bank_text_after_itself_takes_its_rule_away_and_is_never_suggested(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    for _ in range(2):
+      await _add(save_fixture, account, "ICA Nära")
+    other = await _add(save_fixture, account, "ICA MAXI 123")
+    await client.post("/v1/transactions/names", json={"description": "ICA Nära", "name": "ICA"})
+
+    taken_away = await client.post("/v1/transactions/names", json={"description": "ICA Nära", "name": "ICA Nära"})
+    await _import(session, account, "ICA Nära")
+    suggested = (await client.put(f"/v1/transactions/{other.id}/name", json={"name": "ICA Nära"})).json()["suggestions"]
+
+    assert taken_away.json() == {"renamed": 2}
+    assert await _names(session, account) == [("ICA MAXI 123", "ICA Nära"), ("ICA Nära", None), ("ICA Nära", None), ("ICA Nära", None)]
+    assert "ICA Nära" not in [s["description"] for s in suggested]
+
+
+class TestSuggestionScope:
+  @pytest.mark.asyncio
+  async def test_another_users_and_deleted_transactions_are_never_suggested(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, other_user: User
+  ) -> None:
+    theirs = BankAccount(name="B", currency="SEK", base_balance=0, subtype="checking", user_id=other_user.id)
+    await save_fixture(theirs)
+    this = await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB")
+    await _add(save_fixture, account, "ANTHROPIC* CLAUDE SUB", deleted_at=datetime(2026, 10, 1, tzinfo=UTC))
+    await _add(save_fixture, account, "CLAUDE.AI DELETED", deleted_at=datetime(2026, 10, 1, tzinfo=UTC))
+    await _add(save_fixture, theirs, "ANTHROPIC* CLAUDE SUB")
+    await _add(save_fixture, theirs, "CLAUDE.AI THEIRS")
+    await _add(save_fixture, account, "CLAUDE.AI MINE")
+
+    body = (await client.put(f"/v1/transactions/{this.id}/name", json={"name": "Claude"})).json()
+
+    assert body["suggestions"] == [{"description": "CLAUDE.AI MINE", "count": 1, "replacing": None}]
+
+  @pytest.mark.asyncio
+  async def test_at_most_five_suggestions_come_the_most_frequent_first(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+    this = await _add(save_fixture, account, "CLAUDE")
+    for index, count in enumerate([1, 4, 2, 6, 3, 5]):
+      for _ in range(count):
+        await _add(save_fixture, account, f"CLAUDE {index}")
+
+    body = (await client.put(f"/v1/transactions/{this.id}/name", json={"name": "Claude"})).json()
+
+    assert [(s["description"], s["count"]) for s in body["suggestions"]] == [
+      ("CLAUDE 3", 6),
+      ("CLAUDE 5", 5),
+      ("CLAUDE 1", 4),
+      ("CLAUDE 4", 3),
+      ("CLAUDE 2", 2),
     ]
 
 

@@ -21,15 +21,18 @@ async def rename(session: AsyncSession, transaction: Transaction, name: str | No
     name = None
   repository = TransactionRepository.from_session(session)
   previous = transaction.name
-  await repository.update(transaction, update_dict={"name": name, "name_rule_id": None}, flush=True)
+  # Going back to the bank's text from a name is a choice that later group renames respect.
+  cleared = name is None and (previous is not None or transaction.name_cleared)
+  await repository.update(transaction, update_dict={"name": name, "name_rule_id": None, "name_cleared": cleared}, flush=True)
   if name is None or not transaction.description:
     return []
 
   suggestions = []
   rule = await TransactionNameRuleRepository.from_session(session).get_for_description(transaction.user_id, transaction.description)
-  same = await repository.count_to_rename(transaction.user_id, description=transaction.description, name=name, adopt=[rule.name] if rule else [])
+  adopt = [n for n in (rule.name if rule else None, previous) if n]
+  same = await repository.count_to_rename(transaction.user_id, description=transaction.description, name=name, adopt=adopt)
   if same:
-    suggestions.append(NameSuggestion(description=transaction.description, count=same))
+    suggestions.append(NameSuggestion(description=transaction.description, count=same, replacing=previous))
   words = [word for word in re.findall(r"\w+", name.casefold()) if len(word) >= MIN_SUGGESTION_WORD and word not in IGNORED_WORDS]
   for description, count in await repository.descriptions_to_suggest(
     transaction.user_id,
@@ -38,21 +41,30 @@ async def rename(session: AsyncSession, transaction: Transaction, name: str | No
     exclude=transaction.description,
     limit=MAX_SUGGESTIONS,
   ):
-    suggestions.append(NameSuggestion(description=description, count=count))
+    if description != name:
+      suggestions.append(NameSuggestion(description=description, count=count, replacing=previous))
   return suggestions
 
 
-async def name_all(session: AsyncSession, user_id: UUID, *, description: str, name: str) -> int:
-  """Names every transaction with this bank text, now and in later imports; returns how many it named."""
+async def name_all(session: AsyncSession, user_id: UUID, *, description: str, name: str, replacing: str | None = None) -> int:
+  """Names every transaction with this bank text, now and in later imports; returns how many it named. Rows named
+  `replacing` by hand give that name up. Naming the bank text after itself takes away the names a rule gave instead."""
   rules = TransactionNameRuleRepository.from_session(session)
+  transactions = TransactionRepository.from_session(session)
   rule = await rules.get_for_description(user_id, description)
+  if name == description:
+    if rule is None:
+      return 0
+    cleared = await transactions.clear_names_by_rule(rule)
+    await rules.delete(rule, flush=True)
+    return cleared
   if rule is None:
     previous = None
     rule = await rules.create(TransactionNameRule(user_id=user_id, description=description, name=name), flush=True)
   else:
     previous = rule.name
     await rules.update(rule, update_dict={"name": name})
-  return await TransactionRepository.from_session(session).name_by_rule(rule, adopt=[n for n in (name, previous) if n])
+  return await transactions.name_by_rule(rule, adopt=[n for n in (name, previous, replacing) if n])
 
 
 async def names_for_import(session: AsyncSession, user_id: UUID) -> dict[str, TransactionNameRule]:

@@ -262,6 +262,18 @@ describe("TransactionPanel", () => {
     expect(screen.getByText("documents of t1")).toBeTruthy();
   });
 
+  it("leaves a field on Escape without closing, and closes on Escape outside one", () => {
+    const { onOpenChange } = mountPanel(tx({}));
+
+    fireEvent.keyDown(screen.getByLabelText("Note"), { key: "Escape" });
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(screen.getByRole("switch", { name: "Company expense" }), {
+      key: "Escape",
+    });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("says what a broker's movement is instead of asking for a category", () => {
     mountPanel(tx({ investment_kind: "fee", description: "Riskpremie" }));
 

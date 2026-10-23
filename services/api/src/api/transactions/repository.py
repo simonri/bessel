@@ -61,8 +61,12 @@ def _counted_in_reports[*Ts](statement: Select[*Ts]) -> Select[*Ts]:
 
 def _renamable(adopt: Sequence[str]) -> ColumnElement[bool]:
   """What naming a bank text may change: rows without a name, named by a rule, or named by hand with one of `adopt`,
-  such as the one renamed first, whose name the rule then took on. Any other name the user gave stays."""
-  return or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None), Transaction.name.in_(adopt))
+  such as the one renamed first, whose name the rule then took on. Any other name the user gave stays, and so does
+  the bank's text where the user chose it over a name."""
+  return and_(
+    Transaction.name_cleared.is_(False),
+    or_(Transaction.name.is_(None), Transaction.name_rule_id.is_not(None), Transaction.name.in_(adopt)),
+  )
 
 
 class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Transaction, UUID]):
@@ -360,7 +364,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.deleted_at.is_(None),
         Transaction.description.is_not(None),
         Transaction.description != exclude,
-        or_(Transaction.name.in_(named), and_(Transaction.name.is_(None), or_(false(), *mentions))),
+        or_(Transaction.name.in_(named), and_(Transaction.name.is_(None), Transaction.name_cleared.is_(False), or_(false(), *mentions))),
       )
       .group_by(Transaction.description)
       .order_by(func.count().desc(), Transaction.description)
@@ -381,6 +385,10 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .values(name=rule.name, name_rule_id=rule.id)
     )
     return await self.execute_for_rowcount(statement)
+
+  async def clear_names_by_rule(self, rule: TransactionNameRule) -> int:
+    """Takes the rule's name off every transaction it named."""
+    return await self.execute_for_rowcount(update(Transaction).where(Transaction.name_rule_id == rule.id).values(name=None, name_rule_id=None))
 
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
