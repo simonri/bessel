@@ -34,7 +34,8 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   dedup_hash: str
   bank_account_id: UUID4
   raw_id: UUID4 | None
-  is_business: bool = Field(default=False, description="Whether this is a business transaction.")
+  is_business: bool = Field(default=False, description="Marked as a business transaction, such as a company cost paid privately.")
+  company_account: bool = Field(default=False, description="On an account of the user's company, so company money whatever is_business says.")
   transfer_id: UUID4 | None = Field(
     default=None, description="Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
   )

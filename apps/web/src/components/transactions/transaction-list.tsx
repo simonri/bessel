@@ -105,11 +105,16 @@ export function groupByDay(transactions: TransactionSchema[]): DayGroup[] {
   return groups;
 }
 
+/** The company's money: anything on its accounts, and its costs marked by hand. */
+export function isCompanyMoney(transaction: TransactionSchema): boolean {
+  return !!(transaction.company_account || transaction.is_business);
+}
+
 /** Each day's own money: moves between your accounts and company money left out, like the month's figures. */
 function dayTotal(transactions: TransactionSchema[]): Map<string, number> {
   const totals = new Map<string, number>();
   for (const t of transactions) {
-    if (t.transfer_id || t.is_business) continue;
+    if (t.transfer_id || isCompanyMoney(t)) continue;
     totals.set(t.currency, (totals.get(t.currency) ?? 0) + signedAmount(t));
   }
   return totals;
@@ -260,7 +265,7 @@ const TransactionRow = memo(function TransactionRow({
           <span className="truncate text-13 font-medium text-white/85">
             {description}
           </span>
-          {transaction.is_business && (
+          {isCompanyMoney(transaction) && (
             <span className="shrink-0 rounded-md border border-primary-500/25 bg-primary-500/10 px-1.5 type-badge text-primary-300">
               Company
             </span>
@@ -395,11 +400,13 @@ export function RowMenu({
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => handlers.onToggleBusiness(transaction.id, !business)}
-        >
-          {business ? "Not a company expense" : "Company expense"}
-        </DropdownMenuItem>
+        {!transaction.company_account && (
+          <DropdownMenuItem
+            onClick={() => handlers.onToggleBusiness(transaction.id, !business)}
+          >
+            {business ? "Not a company expense" : "Company expense"}
+          </DropdownMenuItem>
+        )}
         {transaction.transfer_id && (
           <DropdownMenuItem onClick={() => handlers.onUnpair(transaction.id)}>
             Not a transfer

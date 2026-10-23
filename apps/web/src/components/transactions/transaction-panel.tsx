@@ -162,10 +162,15 @@ function Body({
           </Detail>
           <Detail
             label="Company expense"
-            hint="Your company's cost, kept out of your own spending."
+            hint={
+              transaction.company_account
+                ? "On your company's account, so it's always the company's."
+                : "Your company's cost, kept out of your own spending."
+            }
           >
             <Switch
-              checked={business}
+              checked={business || !!transaction.company_account}
+              disabled={!!transaction.company_account}
               onCheckedChange={(on) =>
                 handlers.onToggleBusiness(transaction.id, on)
               }

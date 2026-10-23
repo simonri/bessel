@@ -36,7 +36,10 @@ class TransactionSchema:
       note (None | str | Unset): The user's own words about this one transaction.
       logo_url (None | str | Unset): The merchant's logo, when the source provides it.
       document_count (int | Unset): Invoices and receipts kept with it. Default: 0.
-      is_business (bool | Unset): Whether this is a business transaction. Default: False.
+      is_business (bool | Unset): Marked as a business transaction, such as a company cost paid privately. Default:
+          False.
+      company_account (bool | Unset): On an account of the user's company, so company money whatever is_business says.
+          Default: False.
       transfer_id (None | str | Unset): Shared with the other side of a move between the user's own accounts; such
           pairs count as neither income nor spending.
   """
@@ -60,6 +63,7 @@ class TransactionSchema:
   logo_url: None | str | Unset = UNSET
   document_count: int | Unset = 0
   is_business: bool | Unset = False
+  company_account: bool | Unset = False
   transfer_id: None | str | Unset = UNSET
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -126,6 +130,8 @@ class TransactionSchema:
 
     is_business = self.is_business
 
+    company_account = self.company_account
+
     transfer_id: None | str | Unset
     if isinstance(self.transfer_id, Unset):
       transfer_id = UNSET
@@ -162,6 +168,8 @@ class TransactionSchema:
       field_dict["document_count"] = document_count
     if is_business is not UNSET:
       field_dict["is_business"] = is_business
+    if company_account is not UNSET:
+      field_dict["company_account"] = company_account
     if transfer_id is not UNSET:
       field_dict["transfer_id"] = transfer_id
 
@@ -275,6 +283,8 @@ class TransactionSchema:
 
     is_business = d.pop("is_business", UNSET)
 
+    company_account = d.pop("company_account", UNSET)
+
     def _parse_transfer_id(data: object) -> None | str | Unset:
       if data is None:
         return data
@@ -304,6 +314,7 @@ class TransactionSchema:
       logo_url=logo_url,
       document_count=document_count,
       is_business=is_business,
+      company_account=company_account,
       transfer_id=transfer_id,
     )
 

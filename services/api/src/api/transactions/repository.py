@@ -247,7 +247,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if date_to:
       statement = statement.where(Transaction.transaction_date <= date_to)
     if is_business is not None:
-      statement = statement.where(Transaction.is_business == is_business)
+      company = or_(Transaction.is_business.is_(True), Transaction.bank_account_id.in_(select(BankAccount.id).where(BankAccount.is_business.is_(True))))
+      statement = statement.where(company if is_business else ~company)
     if transfers is not None:
       statement = statement.where(Transaction.transfer_id.is_not(None) if transfers else Transaction.transfer_id.is_(None))
     return statement

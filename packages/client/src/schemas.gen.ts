@@ -9710,7 +9710,15 @@ export const TransactionRenameResponseSchema = {
     is_business: {
       type: "boolean",
       title: "Is Business",
-      description: "Whether this is a business transaction.",
+      description:
+        "Marked as a business transaction, such as a company cost paid privately.",
+      default: false,
+    },
+    company_account: {
+      type: "boolean",
+      title: "Company Account",
+      description:
+        "On an account of the user's company, so company money whatever is_business says.",
       default: false,
     },
     transfer_id: {
@@ -9916,7 +9924,15 @@ export const TransactionSchemaSchema = {
     is_business: {
       type: "boolean",
       title: "Is Business",
-      description: "Whether this is a business transaction.",
+      description:
+        "Marked as a business transaction, such as a company cost paid privately.",
+      default: false,
+    },
+    company_account: {
+      type: "boolean",
+      title: "Company Account",
+      description:
+        "On an account of the user's company, so company money whatever is_business says.",
       default: false,
     },
     transfer_id: {
@@ -10208,7 +10224,15 @@ export const TransactionUpdateResponseSchema = {
     is_business: {
       type: "boolean",
       title: "Is Business",
-      description: "Whether this is a business transaction.",
+      description:
+        "Marked as a business transaction, such as a company cost paid privately.",
+      default: false,
+    },
+    company_account: {
+      type: "boolean",
+      title: "Company Account",
+      description:
+        "On an account of the user's company, so company money whatever is_business says.",
       default: false,
     },
     transfer_id: {
@@ -10707,7 +10731,15 @@ export const TransactionRenameResponseWritableSchema = {
     is_business: {
       type: "boolean",
       title: "Is Business",
-      description: "Whether this is a business transaction.",
+      description:
+        "Marked as a business transaction, such as a company cost paid privately.",
+      default: false,
+    },
+    company_account: {
+      type: "boolean",
+      title: "Company Account",
+      description:
+        "On an account of the user's company, so company money whatever is_business says.",
       default: false,
     },
     transfer_id: {
@@ -10899,7 +10931,15 @@ export const TransactionSchemaWritableSchema = {
     is_business: {
       type: "boolean",
       title: "Is Business",
-      description: "Whether this is a business transaction.",
+      description:
+        "Marked as a business transaction, such as a company cost paid privately.",
+      default: false,
+    },
+    company_account: {
+      type: "boolean",
+      title: "Company Account",
+      description:
+        "On an account of the user's company, so company money whatever is_business says.",
       default: false,
     },
     transfer_id: {
@@ -11081,7 +11121,15 @@ export const TransactionUpdateResponseWritableSchema = {
     is_business: {
       type: "boolean",
       title: "Is Business",
-      description: "Whether this is a business transaction.",
+      description:
+        "Marked as a business transaction, such as a company cost paid privately.",
+      default: false,
+    },
+    company_account: {
+      type: "boolean",
+      title: "Company Account",
+      description:
+        "On an account of the user's company, so company money whatever is_business says.",
       default: false,
     },
     transfer_id: {

@@ -107,12 +107,53 @@ describe("TransactionList", () => {
       tx({ id: "b", amount: 50000, direction: "credit" }),
       tx({ id: "c", amount: 99900, transfer_id: "x" }),
       tx({ id: "d", amount: 77700, is_business: true }),
+      tx({ id: "e", amount: 33300, company_account: true }),
     ]);
 
     const day = screen.getByRole("region", { name: "Tue 20 Oct" });
     expect(
       plain(day.querySelector("h3")?.parentElement?.textContent ?? null),
     ).toBe("Tue 20 Oct+400 kr");
+  });
+
+  it("badges company money, whether on a company account or marked by hand", () => {
+    mount([
+      tx({ id: "a", description: "Hetzner", company_account: true }),
+      tx({ id: "b", description: "Cloudflare", is_business: true }),
+      tx({ id: "c", description: "ICA" }),
+    ]);
+
+    const badged = (name: string) =>
+      within(
+        screen.getByRole("button", { name: new RegExp(`^${name}`) }),
+      ).queryByText("Company") !== null;
+    expect(["Hetzner", "Cloudflare", "ICA"].map(badged)).toEqual([
+      true,
+      true,
+      false,
+    ]);
+  });
+
+  it("offers to mark a company expense only off the company's accounts", () => {
+    mount([
+      tx({ id: "a", description: "Hetzner", company_account: true }),
+      tx({ id: "b", description: "ICA" }),
+    ]);
+
+    const items = (name: string) => {
+      fireEvent.keyDown(
+        screen.getByRole("button", { name: `More for ${name}` }),
+        { key: "Enter" },
+      );
+      const labels = screen
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent);
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+      return labels;
+    };
+    expect(items("ICA")).toContain("Company expense");
+    expect(items("Hetzner")).not.toContain("Company expense");
+    expect(items("Hetzner")).toContain("Delete");
   });
 
   it("shows amounts with their sign and öre, and transfers without a category", () => {
@@ -260,6 +301,22 @@ describe("TransactionPanel", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByText("category picker food")).toBeTruthy();
     expect(screen.getByText("documents of t1")).toBeTruthy();
+  });
+
+  it("keeps a company account's transaction a company expense", () => {
+    const { on } = mountPanel(tx({ company_account: true }));
+
+    const toggle = screen.getByRole("switch", { name: "Company expense" });
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    expect(toggle.hasAttribute("disabled")).toBe(true);
+    expect(on.onToggleBusiness).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        "On your company's account, so it's always the company's.",
+      ),
+    ).not.toBeNull();
   });
 
   it("leaves a field on Escape without closing, and closes on Escape outside one", () => {

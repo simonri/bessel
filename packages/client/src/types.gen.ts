@@ -6156,9 +6156,15 @@ export type TransactionRenameResponse = {
   /**
    * Is Business
    *
-   * Whether this is a business transaction.
+   * Marked as a business transaction, such as a company cost paid privately.
    */
   is_business?: boolean;
+  /**
+   * Company Account
+   *
+   * On an account of the user's company, so company money whatever is_business says.
+   */
+  company_account?: boolean;
   /**
    * Transfer Id
    *
@@ -6267,9 +6273,15 @@ export type TransactionSchema = {
   /**
    * Is Business
    *
-   * Whether this is a business transaction.
+   * Marked as a business transaction, such as a company cost paid privately.
    */
   is_business?: boolean;
+  /**
+   * Company Account
+   *
+   * On an account of the user's company, so company money whatever is_business says.
+   */
+  company_account?: boolean;
   /**
    * Transfer Id
    *
@@ -6448,9 +6460,15 @@ export type TransactionUpdateResponse = {
   /**
    * Is Business
    *
-   * Whether this is a business transaction.
+   * Marked as a business transaction, such as a company cost paid privately.
    */
   is_business?: boolean;
+  /**
+   * Company Account
+   *
+   * On an account of the user's company, so company money whatever is_business says.
+   */
+  company_account?: boolean;
   /**
    * Transfer Id
    *
@@ -6780,9 +6798,15 @@ export type TransactionRenameResponseWritable = {
   /**
    * Is Business
    *
-   * Whether this is a business transaction.
+   * Marked as a business transaction, such as a company cost paid privately.
    */
   is_business?: boolean;
+  /**
+   * Company Account
+   *
+   * On an account of the user's company, so company money whatever is_business says.
+   */
+  company_account?: boolean;
   /**
    * Transfer Id
    *
@@ -6887,9 +6911,15 @@ export type TransactionSchemaWritable = {
   /**
    * Is Business
    *
-   * Whether this is a business transaction.
+   * Marked as a business transaction, such as a company cost paid privately.
    */
   is_business?: boolean;
+  /**
+   * Company Account
+   *
+   * On an account of the user's company, so company money whatever is_business says.
+   */
+  company_account?: boolean;
   /**
    * Transfer Id
    *
@@ -6988,9 +7018,15 @@ export type TransactionUpdateResponseWritable = {
   /**
    * Is Business
    *
-   * Whether this is a business transaction.
+   * Marked as a business transaction, such as a company cost paid privately.
    */
   is_business?: boolean;
+  /**
+   * Company Account
+   *
+   * On an account of the user's company, so company money whatever is_business says.
+   */
+  company_account?: boolean;
   /**
    * Transfer Id
    *

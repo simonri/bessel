@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import date
 from enum import StrEnum
 from typing import Annotated
@@ -44,10 +45,19 @@ from fastapi import APIRouter, Depends, Query, UploadFile
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 
+async def _schemas(session: AsyncSession, transactions: Sequence[Transaction]) -> list[TransactionSchema]:
+  """The transactions as the list shows them, with how many invoices and receipts each has and whether it's company money."""
+  documents = await DocumentRepository.from_session(session).counts_for_transactions([t.id for t in transactions])
+  company = await BankAccountRepository.from_session(session).company_ids(list({t.bank_account_id for t in transactions}))
+  return [
+    TransactionSchema.model_validate(t).model_copy(update={"document_count": documents.get(t.id, 0), "company_account": t.bank_account_id in company})
+    for t in transactions
+  ]
+
+
 async def _schema(session: AsyncSession, transaction: Transaction) -> TransactionSchema:
-  """The transaction as the list shows it, with how many invoices and receipts it has."""
-  documents = await DocumentRepository.from_session(session).counts_for_transactions([transaction.id])
-  return TransactionSchema.model_validate(transaction).model_copy(update={"document_count": documents.get(transaction.id, 0)})
+  [schema] = await _schemas(session, [transaction])
+  return schema
 
 
 MAX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024
@@ -109,12 +119,7 @@ async def list_transactions(
   statement = statement.order_by(Transaction.id)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
-  documents = await DocumentRepository.from_session(session).counts_for_transactions([item.id for item in items])
-  return TransactionListResponse.from_paginated_results(
-    [TransactionSchema.model_validate(item).model_copy(update={"document_count": documents.get(item.id, 0)}) for item in items],
-    total_count,
-    pagination,
-  )
+  return TransactionListResponse.from_paginated_results(await _schemas(session, items), total_count, pagination)
 
 
 @router.post(
