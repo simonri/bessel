@@ -78,6 +78,20 @@ class SecurityCatalogRepository(RepositoryBase[Security], RepositoryIDMixin[Secu
       security.name = name
     return security
 
+  async def get_or_create_by_name(self, *, name: str, ticker: str | None, currency: str) -> Security:
+    """For a broker that names a security but gives no ISIN (Montrose): the one already known by that name,
+    then by ticker and currency, else a new stock."""
+    by_name = await self.get_one_or_none(select(Security).where(func.lower(Security.name) == name.lower()).order_by(Security.isin.is_(None)).limit(1))
+    if by_name is not None:
+      return by_name
+    if ticker:
+      by_ticker = await self.get_one_or_none(
+        select(Security).where(Security.ticker == ticker, Security.currency == currency).order_by(Security.isin.is_(None)).limit(1)
+      )
+      if by_ticker is not None:
+        return by_ticker
+    return await self.create(Security(name=name, ticker=ticker or None, asset_type=AssetType.stock, currency=currency), flush=True)
+
 
 class ImportedTradeRepository(RepositoryBase[Trade], RepositoryIDMixin[Trade, UUID]):
   model = Trade

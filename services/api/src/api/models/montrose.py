@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, ForeignKey, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import TIMESTAMP, BigInteger, ForeignKey, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
@@ -44,6 +44,8 @@ class MontroseAccount(RecordModel):
   name: Mapped[str] = mapped_column(String(255), nullable=False)
   account_type: Mapped[str] = mapped_column(String(32), nullable=False)
   bank_account_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("bank_accounts.id", ondelete="SET NULL"), nullable=True, unique=True)
+  # Cash in the account as Montrose reports it, to check the imported history adds up.
+  cash_balance: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
   connection: Mapped[MontroseConnection] = relationship(back_populates="accounts", lazy="raise")

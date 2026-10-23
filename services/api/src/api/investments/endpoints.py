@@ -10,6 +10,7 @@ from api.exceptions import ResourceNotFound, ServiceUnavailableError
 from api.investments.repository import TradeRepository
 from api.investments.schemas import CryptoPriceSchema, HoldingsResponse, InvestmentAccountsResponse, TradeListResponse, TradeSchema
 from api.investments.service import investment_service
+from api.montrose.repository import MontroseAccountRepository
 from api.postgres import DBSession
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
@@ -65,7 +66,10 @@ async def get_holdings(
   session: DBSession,
   current_user: CurrentDBUser,
 ) -> HoldingsResponse:
-  synced = await AvanzaAccountRepository.from_session(session).linked_bank_account_ids(current_user.id)
+  synced = [
+    *await AvanzaAccountRepository.from_session(session).linked_bank_account_ids(current_user.id),
+    *await MontroseAccountRepository.from_session(session).linked_bank_account_ids(current_user.id),
+  ]
   snapshots = await HoldingSnapshotRepository.from_session(session).latest_for_accounts(synced)
   holdings = await investment_service.holdings(TradeRepository.from_session(session), current_user.id, synced_bank_account_ids=synced, snapshots=snapshots)
   return HoldingsResponse(items=holdings)

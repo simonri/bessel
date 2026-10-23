@@ -45,6 +45,14 @@ class MontroseAccountRepository(RepositoryBase[MontroseAccount], RepositoryIDMix
       raise ResourceNotFound("Montrose account not found")
     return account
 
+  async def linked_bank_account_ids(self, user_id: UUID) -> list[UUID]:
+    statement = (
+      select(MontroseAccount.bank_account_id)
+      .join(MontroseConnection, MontroseConnection.id == MontroseAccount.connection_id)
+      .where(MontroseConnection.user_id == user_id, MontroseAccount.bank_account_id.is_not(None))
+    )
+    return [bank_account_id for bank_account_id in (await self.session.execute(statement)).scalars() if bank_account_id is not None]
+
   async def is_linked_elsewhere(self, bank_account_id: UUID, account: MontroseAccount) -> bool:
     statement = select(MontroseAccount.id).where(MontroseAccount.bank_account_id == bank_account_id, MontroseAccount.id != account.id)
     return (await self.session.execute(statement)).first() is not None

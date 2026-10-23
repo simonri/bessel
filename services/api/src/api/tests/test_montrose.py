@@ -14,6 +14,9 @@ import pytest
 from api.common.encryption import decrypt, encrypt
 from api.models.bank_account import BankAccount
 from api.models.montrose import MontroseAccount, MontroseConnection
+from api.models.security import AssetType, Security
+from api.models.trade import Trade, TradeType
+from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.montrose import client as montrose_client
 from api.montrose import service
@@ -50,6 +53,12 @@ class FakeMontrose:
   answer_as_event_stream: bool = False
   fail_with: int | None = None
   tool_calls: list[str] = field(default_factory=list)
+  transactions: list[dict[str, Any]] = field(default_factory=list)
+  holdings: list[dict[str, Any]] = field(default_factory=list)
+  instruments: dict[int, dict[str, Any]] = field(default_factory=dict)
+  # Montrose pages transactions; a smaller page here makes the paging show.
+  page_size: int = 2
+  transaction_requests: list[dict[str, Any]] = field(default_factory=list)
 
   def transport(self) -> httpx.MockTransport:
     return httpx.MockTransport(self._handle)
@@ -103,8 +112,25 @@ class FakeMontrose:
       return httpx.Response(400, json={"error": "no session"})
     name = message["params"]["name"]
     self.tool_calls.append(name)
+    arguments = message["params"].get("arguments") or {}
     if name == "get_user_accounts":
       return self._reply(message, {"content": [{"type": "text", "text": json.dumps(self.accounts)}], "structuredContent": {"result": self.accounts}})
+    if name == "get_transactions":
+      self.transaction_requests.append(arguments)
+      rows = [
+        t for t in self.transactions if t["accountId"] in (arguments.get("accountIds") or [t["accountId"]]) and t["tradeDate"] >= (arguments.get("from") or "")
+      ]
+      start = int(arguments.get("cursor") or 0)
+      size = min(arguments.get("pageSize") or 50, self.page_size)
+      more = start + size < len(rows)
+      page = {"transactions": rows[start : start + size], "pagination": {"nextCursor": str(start + size) if more else None, "totalCount": len(rows)}}
+      # No output schema for this tool: Montrose answers with JSON as text only.
+      return self._reply(message, {"content": [{"type": "text", "text": json.dumps(page)}]})
+    if name == "get_holdings":
+      return self._reply(message, {"content": [{"type": "text", "text": json.dumps(self.holdings)}], "structuredContent": {"result": self.holdings}})
+    if name == "search_instruments":
+      found = [self.instruments[arguments["orderbookId"]]] if arguments.get("orderbookId") in self.instruments else []
+      return self._reply(message, {"content": [{"type": "text", "text": json.dumps(found)}], "structuredContent": {"result": found}})
     return self._reply(message, {"content": [{"type": "text", "text": "unknown tool"}], "isError": True})
 
   def _reply(self, message: dict[str, Any], result: dict[str, Any], headers: dict[str, str] | None = None) -> httpx.Response:
@@ -393,3 +419,225 @@ class TestIsolation:
     assert (await other_client.delete("/v1/montrose")).status_code == 404
     assert (await client.patch(f"/v1/montrose/accounts/{account_id}", json={"bank_account_id": others["id"]})).status_code == 404
     assert (await client.get("/v1/montrose")).json()["connection"]["id"] == connected["id"]
+
+
+def _row(
+  row_id: int,
+  category: str,
+  day: str,
+  amount: float,
+  *,
+  currency: str = "SEK",
+  quantity: float = 0,
+  price: float = 0,
+  price_currency: str = "SEK",
+  orderbook: int = 0,
+  text: str = "",
+  account: dict[str, Any] = ISK,
+  canceled: bool = False,
+) -> dict[str, Any]:
+  return {
+    "id": row_id,
+    "accountId": account["accountId"],
+    "accountNumber": int(account["accountNumber"].replace("-", "")),
+    "category": category,
+    "code": "X",
+    "tradeDate": day,
+    "settlementDate": day,
+    "accountDate": day,
+    "quantity": quantity,
+    "price": price,
+    "priceCurrency": price_currency,
+    "amount": amount,
+    "currency": currency,
+    "instrumentId": "00000000-0000-0000-0000-000000000000",
+    "orderbookId": orderbook,
+    "text": text,
+    "isCanceled": canceled,
+  }
+
+
+# Like the real account: shares moved in from Avanza, a deposit, a round trip in Safello, Strategy A sold in dollars, then a rights issue.
+HISTORY = [
+  _row(
+    1, "SecuritiesTransferIn", "2025-03-31", 40060.97, currency="", quantity=14, price=285.2, price_currency="USD", orderbook=2122, text="Överfört från Avanza"
+  ),
+  _row(2, "Deposit", "2025-04-03", 2358.32, text="INS VIA SEB"),
+  _row(3, "Buy", "2025-04-15", -1155, quantity=221, price=5.22, orderbook=1617),
+  _row(4, "Sell", "2025-06-09", 1302, quantity=-221, price=5.9, orderbook=1617),
+  _row(5, "Sell", "2025-06-09", 51761.59, quantity=-14, price=385.96, price_currency="USD", orderbook=2122),
+  _row(6, "Other", "2026-06-11", 277, currency="", quantity=277, price=1, orderbook=6664, text="Nyemission avskiljning TREASURY CAPITAL"),
+  _row(7, "Deposit", "2026-06-12", 999, canceled=True),
+  _row(8, "Withdrawal", "2026-06-20", -500),
+  _row(9, "Deposit", "2026-06-01", 5000, account=KF),
+]
+CASH = 2358.32 - 1155 + 1302 + 51761.59 - 500
+HOLDINGS = [
+  {
+    "accountId": ISK["accountId"],
+    "accountNumber": ISK["accountNumber"],
+    "accountName": "",
+    "accountType": "ISK",
+    "currency": "SEK",
+    "summary": {"totalMarketValue": 36564, "availableForPurchase": CASH, "totalValue": 36564 + CASH, "currency": "SEK"},
+    "currencyPositions": [{"currencyCode": "SEK", "balance": CASH, "accruedInterest": 0, "availableForPurchase": CASH}],
+    "positions": [
+      {
+        "instrumentName": "Treasury Capital",
+        "ticker": "BTC B",
+        "orderbookId": 6664,
+        "quantity": 277,
+        "marketValue": {"accountCurrency": 36564},
+        "unrealizedResult": {"accountCurrency": -48230},
+        "instrumentCurrency": "SEK",
+      },
+      {
+        "instrumentName": "Treasury Capital SR 2",
+        "ticker": "",
+        "orderbookId": 0,
+        "quantity": 277,
+        "marketValue": {"accountCurrency": None},
+        "unrealizedResult": {"accountCurrency": None},
+        "instrumentCurrency": "SEK",
+      },
+    ],
+  },
+  {
+    "accountId": KF["accountId"],
+    "accountNumber": KF["accountNumber"],
+    "accountName": "",
+    "accountType": "KF",
+    "currency": "SEK",
+    "summary": {"totalMarketValue": 0, "availableForPurchase": 5000, "totalValue": 5000, "currency": "SEK"},
+    "currencyPositions": [{"currencyCode": "SEK", "balance": 5000, "accruedInterest": 0, "availableForPurchase": 5000}],
+    "positions": [],
+  },
+]
+INSTRUMENTS = {
+  1617: {"orderbookId": 1617, "ticker": "SFL", "name": "Safello Group"},
+  2122: {"orderbookId": 2122, "ticker": "MSTR", "name": "Strategy A"},
+  6664: {"orderbookId": 6664, "ticker": "BTC B", "name": "B Treasury Capital B"},
+}
+
+
+@pytest.fixture
+def history(montrose: FakeMontrose) -> FakeMontrose:
+  montrose.accounts = [ISK, KF]
+  montrose.transactions, montrose.holdings, montrose.instruments = list(HISTORY), HOLDINGS, INSTRUMENTS
+  return montrose
+
+
+async def _linked(client: AsyncClient, save_fixture: SaveFixture, montrose: FakeMontrose, user: User) -> tuple[UUID, BankAccount]:
+  connected = await _connect(client, montrose)
+  bank_account = await _bank_account(save_fixture, user)
+  isk = next(a for a in connected["accounts"] if a["account_type"] == "ISK")
+  await client.patch(f"/v1/montrose/accounts/{isk['id']}", json={"bank_account_id": str(bank_account.id)})
+  return UUID(connected["id"]), bank_account
+
+
+async def _cash(session: AsyncSession, bank_account: BankAccount) -> list[tuple[str, int, TransactionDirection, str | None, str | None]]:
+  rows = await session.execute(
+    select(Transaction.transaction_date, Transaction.amount, Transaction.direction, Transaction.description, Transaction.transaction_type)
+    .where(Transaction.bank_account_id == bank_account.id)
+    .order_by(Transaction.transaction_date, Transaction.amount)
+  )
+  return [(day.isoformat(), amount, direction, description, kind) for day, amount, direction, description, kind in rows]
+
+
+class TestImport:
+  @pytest.mark.asyncio
+  async def test_a_linked_account_brings_in_its_cash_trades_and_holdings(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    strategy = Security(name="Strategy A", isin="US5949724083", asset_type=AssetType.stock, currency="USD")
+    await save_fixture(strategy)
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+
+    await montrose_service.sync(session_maker, connection_id)
+
+    credit, debit = TransactionDirection.credit, TransactionDirection.debit
+    assert await _cash(session, bank_account) == [
+      ("2025-04-03", 235832, credit, "INS VIA SEB", "DEPOSIT"),
+      ("2025-04-15", 115500, debit, "Köp Safello Group", "BUY"),
+      ("2025-06-09", 130200, credit, "Sälj Safello Group", "SELL"),
+      ("2025-06-09", 5176159, credit, "Sälj Strategy A", "SELL"),
+      ("2026-06-20", 50000, debit, "Uttag", "WITHDRAW"),
+    ]
+    trades = (
+      await session.execute(select(Trade, Security.name).join(Security).where(Trade.bank_account_id == bank_account.id).order_by(Trade.external_id))
+    ).all()
+    assert [(t.trade_type, t.trade_date.isoformat(), t.quantity, t.price_per_unit, t.currency, name) for t, name in trades] == [
+      (TradeType.buy, "2025-04-15", 221_000_000, 522, "SEK", "Safello Group"),
+      (TradeType.sell, "2025-06-09", 221_000_000, 590, "SEK", "Safello Group"),
+      (TradeType.sell, "2025-06-09", 14_000_000, 38596, "USD", "Strategy A"),
+    ]
+    assert trades[2][0].security_id == strategy.id
+    holdings = (await client.get("/v1/investments/holdings")).json()["items"]
+    assert [(h["security_name"], h["quantity"], h["current_value"], h["cost_basis"]) for h in holdings] == [("Treasury Capital", 277_000_000, 3656400, 8479400)]
+    [account] = [a for a in (await client.get("/v1/bank-accounts/overview")).json()["accounts"] if a["id"] == str(bank_account.id)]
+    assert (account["bank_balance"], account["current_balance"], account["holdings_value"]) == (round(CASH * 100), round(CASH * 100), 3656400)
+
+  @pytest.mark.asyncio
+  async def test_syncing_again_adds_nothing_twice_and_reads_from_two_weeks_before_the_last_sync(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+    await montrose_service.sync(session_maker, connection_id)
+    first = await _cash(session, bank_account)
+    history.transactions.append(_row(10, "Dividend", "2026-10-22", 12.5, orderbook=6664))
+    monkeypatch.setattr(service, "utc_now", lambda: NOW + timedelta(days=1))
+
+    await montrose_service.sync(session_maker, connection_id)
+
+    assert await _cash(session, bank_account) == [*first, ("2026-10-22", 1250, TransactionDirection.credit, "Utdelning Treasury Capital", "DIVIDEND")]
+    assert [r["from"] for r in history.transaction_requests if not r.get("cursor")] == ["2000-01-01", (NOW - timedelta(days=14)).date().isoformat()]
+    assert all(r["accountIds"] == [ISK["accountId"]] for r in history.transaction_requests)
+    assert len((await session.execute(select(Trade).where(Trade.bank_account_id == bank_account.id))).all()) == 3
+
+  @pytest.mark.asyncio
+  async def test_each_montrose_account_fills_only_its_own_bessel_account(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    connection_id, isk_account = await _linked(client, save_fixture, history, user)
+    kf_account = await _bank_account(save_fixture, user, name="Montrose KF")
+    kf = next(a for a in (await client.get("/v1/montrose")).json()["connection"]["accounts"] if a["account_type"] == "KF")
+    await client.patch(f"/v1/montrose/accounts/{kf['id']}", json={"bank_account_id": str(kf_account.id)})
+
+    await montrose_service.sync(session_maker, connection_id)
+
+    assert await _cash(session, kf_account) == [("2026-06-01", 500000, TransactionDirection.credit, "Insättning", "DEPOSIT")]
+    assert len(await _cash(session, isk_account)) == 5
+
+  @pytest.mark.asyncio
+  async def test_nothing_is_read_for_accounts_that_arent_brought_in(
+    self, client: AsyncClient, session: AsyncSession, session_maker: SessionMaker, history: FakeMontrose, user: User
+  ) -> None:
+    connection_id = UUID((await _connect(client, history))["id"])
+    history.tool_calls.clear()
+
+    await montrose_service.sync(session_maker, connection_id)
+
+    assert history.tool_calls == ["get_user_accounts"]
+    assert (await _stored(session, user)).sync_error is None

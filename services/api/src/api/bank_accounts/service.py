@@ -229,7 +229,7 @@ class AccountsOverview:
         AccountSource(
           kind="montrose", label="Montrose", logo=MONTROSE_LOGO, synced_at=montrose.last_synced_at, access_until=expires, issue=problem, problem=None
         ),
-        None,
+        linked.cash_balance,
         None,
       )
     for pay_later in await KlarnaPayLaterRepository.from_session(session).list_for_user(user_id):
