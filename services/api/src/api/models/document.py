@@ -17,7 +17,7 @@ class Document(RecordModel):
   size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
   # The same file uploaded twice is one document, linked wherever it belongs.
   sha256: Mapped[str] = mapped_column(String(64), nullable=False)
-  # Pages with a preview; a photo has one.
+  # All of the document's pages; previews exist for the first MAX_PREVIEW_PAGES. A photo has one.
   page_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
   __table_args__ = (UniqueConstraint("user_id", "sha256"),)

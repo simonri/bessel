@@ -1,28 +1,33 @@
 import io
 from datetime import date
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pypdfium2
 import pytest
 import pytest_asyncio
 from api.common import file_storage as storage_module
 from api.documents import endpoints as document_endpoints
+from api.documents import previews as previews_module
 from api.documents import service as document_service_module
+from api.documents.repository import DocumentRepository
 from api.models.bank_account import BankAccount
+from api.models.document import Document
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.settings import Environment, settings
 from api.tests.fixtures.database import SaveFixture
+from botocore.exceptions import ClientError
+from botocore.response import StreamingBody
 from botocore.stub import Stubber
 from httpx import AsyncClient
 from PIL import Image
 
 
-def a_pdf(pages: int = 2) -> bytes:
+def a_pdf(pages: int = 2, *, width: float = 595, height: float = 842) -> bytes:
   pdf = pypdfium2.PdfDocument.new()
   for _ in range(pages):
-    pdf.new_page(595, 842)
+    pdf.new_page(width, height)
   out = io.BytesIO()
   pdf.save(out)
   pdf.close()
@@ -187,16 +192,109 @@ class TestTransactionDocuments:
     assert [t["description"] for t in missing] == ["ICA"]
 
   @pytest.mark.asyncio
-  async def test_size_and_storage_limits(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, monkeypatch: pytest.MonkeyPatch) -> None:
+  async def test_a_file_over_the_size_limit_is_turned_away(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
     transaction = await _transaction(save_fixture, account)
-    monkeypatch.setattr(document_endpoints, "MAX_DOCUMENT_BYTES", 100)
-    too_big = await client.post(f"/v1/transactions/{transaction.id}/documents", files={"file": ("big.pdf", a_pdf(1), "application/pdf")})
-    monkeypatch.setattr(document_endpoints, "MAX_DOCUMENT_BYTES", 20 * 1024 * 1024)
-    monkeypatch.setattr(document_service_module, "MAX_DOCUMENT_STORAGE_PER_USER_BYTES", len(a_pdf(1)) + 10)
-    await _upload(client, transaction.id, a_pdf(1))
-    full = await client.post(f"/v1/transactions/{transaction.id}/documents", files={"file": ("more.pdf", a_pdf(2), "application/pdf")})
+    monkeypatch.setattr(document_endpoints, "MAX_DOCUMENT_BYTES", len(a_pdf(1)) - 1)
 
-    assert (too_big.status_code, full.status_code) == (413, 413)
+    response = await client.post(f"/v1/transactions/{transaction.id}/documents", files={"file": ("big.pdf", a_pdf(1), "application/pdf")})
+
+    assert (response.status_code, response.json()["detail"]) == (413, "The file is too large (max 20 MB).")
+
+  @pytest.mark.asyncio
+  async def test_storage_fills_up_to_the_byte_and_a_file_already_kept_never_counts_twice(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    first, second = await _transaction(save_fixture, account, "Elgiganten"), await _transaction(save_fixture, account, "ICA")
+    one, two = a_pdf(1), a_pdf(2)
+    monkeypatch.setattr(document_service_module, "MAX_DOCUMENT_STORAGE_PER_USER_BYTES", len(one) + len(two))
+
+    await _upload(client, first.id, one)
+    exactly_full = await client.post(f"/v1/transactions/{first.id}/documents", files={"file": ("two.pdf", two, "application/pdf")})
+    over = await client.post(f"/v1/transactions/{first.id}/documents", files={"file": ("three.pdf", a_pdf(3), "application/pdf")})
+    kept_again = await client.post(f"/v1/transactions/{second.id}/documents", files={"file": ("one.pdf", one, "application/pdf")})
+
+    assert exactly_full.status_code == 201
+    assert (over.status_code, over.json()["detail"]) == (413, "Storage for invoices and receipts is full (2 GB).")
+    assert kept_again.status_code == 201
+
+  @pytest.mark.asyncio
+  async def test_a_long_pdf_keeps_its_page_count_with_previews_of_the_first_twenty(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    transaction = await _transaction(save_fixture, account)
+
+    document = await _upload(client, transaction.id, a_pdf(21))
+
+    assert (document["page_count"], document["preview_pages"]) == (21, 20)
+    assert _stored(document["id"]) == sorted(["original", "thumbnail.webp", *(f"page-{n}.webp" for n in range(1, 21))])
+
+  @pytest.mark.asyncio
+  async def test_a_page_too_tall_to_draw_whole_is_drawn_smaller(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+    transaction = await _transaction(save_fixture, account)
+
+    document = await _upload(client, transaction.id, a_pdf(1, width=10, height=14400))
+
+    preview = Image.open(io.BytesIO((await client.get(f"/v1/documents/{document['id']}/pages/1")).content))
+    assert preview.height <= previews_module.MAX_PAGE_SIDE
+    assert preview.width * preview.height <= previews_module.MAX_PAGE_PIXELS
+
+  @pytest.mark.asyncio
+  async def test_the_same_file_uploaded_at_the_same_moment_is_linked_not_refused(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    first, second = await _transaction(save_fixture, account, "Klarna 1/2"), await _transaction(save_fixture, account, "Klarna 2/2")
+    pdf = a_pdf(1)
+    kept = await _upload(client, first.id, pdf)
+    found = DocumentRepository.get_by_checksum
+    misses = iter([True])
+
+    # The other request's row isn't there yet when this one looks, only when it inserts.
+    async def racing(self: DocumentRepository, user_id: UUID, sha256: str) -> Document | None:
+      return None if next(misses, False) else await found(self, user_id, sha256)
+
+    monkeypatch.setattr(DocumentRepository, "get_by_checksum", racing)
+    response = await client.post(f"/v1/transactions/{second.id}/documents", files={"file": ("same.pdf", pdf, "application/pdf")})
+
+    assert (response.status_code, response.json()["id"]) == (201, kept["id"])
+    assert [d["id"] for d in (await client.get(f"/v1/transactions/{second.id}/documents")).json()] == [kept["id"]]
+
+  @pytest.mark.asyncio
+  async def test_deleting_transactions_deletes_documents_left_without_one_and_keeps_shared_ones(
+    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
+  ) -> None:
+    only, shared_a, shared_b = [await _transaction(save_fixture, account, name) for name in ("Elgiganten", "Klarna 1/2", "Klarna 2/2")]
+    alone = await _upload(client, only.id, a_pdf(1))
+    both = a_pdf(2)
+    shared = await _upload(client, shared_a.id, both)
+    await _upload(client, shared_b.id, both)
+
+    response = await client.request("DELETE", "/v1/transactions", json={"ids": [str(only.id), str(shared_a.id)]})
+
+    assert response.status_code == 204
+    assert (_stored(alone["id"]), (await client.get(f"/v1/documents/{alone['id']}/file")).status_code) == ([], 404)
+    assert _stored(shared["id"]) == ["original", "page-1.webp", "page-2.webp", "thumbnail.webp"]
+
+  @pytest.mark.asyncio
+  async def test_deleting_an_account_deletes_its_documents(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+    transaction = await _transaction(save_fixture, account)
+    document = await _upload(client, transaction.id, a_pdf(1))
+
+    response = await client.delete(f"/v1/bank-accounts/{account.id}")
+
+    assert response.status_code == 204
+    assert (_stored(document["id"]), (await client.get(f"/v1/documents/{document['id']}/file")).status_code) == ([], 404)
+
+  @pytest.mark.asyncio
+  async def test_an_edited_transaction_still_counts_its_documents(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+    transaction = await _transaction(save_fixture, account)
+    await _upload(client, transaction.id, a_pdf(1))
+
+    noted = await client.patch(f"/v1/transactions/{transaction.id}", json={"note": "Lampan"})
+    renamed = await client.put(f"/v1/transactions/{transaction.id}/name", json={"name": "Elgiganten Kungens kurva"})
+
+    assert (noted.json()["document_count"], renamed.json()["document_count"]) == (1, 1)
 
   @pytest.mark.asyncio
   async def test_another_user_can_neither_see_nor_change_them(
@@ -217,6 +315,23 @@ class TestTransactionDocuments:
     assert [r.status_code for r in responses] == [404] * 6
     assert _stored(document["id"]) == ["original", "page-1.webp", "thumbnail.webp"]
 
+  @pytest.mark.asyncio
+  async def test_the_same_file_from_another_user_is_their_own_document(
+    self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, account: BankAccount, other_user: User
+  ) -> None:
+    transaction = await _transaction(save_fixture, account)
+    theirs = BankAccount(name="B", currency="SEK", base_balance=0, subtype="checking", user_id=other_user.id)
+    await save_fixture(theirs)
+    their_transaction = await _transaction(save_fixture, theirs)
+    pdf = a_pdf(1)
+    mine = await _upload(client, transaction.id, pdf, "mine.pdf")
+
+    their = await _upload(other_client, their_transaction.id, pdf, "theirs.pdf")
+
+    assert their["id"] != mine["id"]
+    assert their["filename"] == "theirs.pdf"
+    assert [d["filename"] for d in (await client.get(f"/v1/transactions/{transaction.id}/documents")).json()] == ["mine.pdf"]
+
 
 class TestFileStorage:
   @pytest.mark.asyncio
@@ -233,7 +348,9 @@ class TestFileStorage:
     await storage.delete("left-behind")
     assert (tmp_path / "left-behind").exists()
 
-  def test_a_configured_bucket_is_used_anywhere(self, monkeypatch: pytest.MonkeyPatch) -> None:
+  @pytest.mark.parametrize("env", [Environment.production, Environment.development])
+  def test_a_configured_bucket_is_used_in_production_and_development(self, monkeypatch: pytest.MonkeyPatch, env: Environment) -> None:
+    monkeypatch.setattr(settings, "ENV", env)
     for name, value in {
       "STORAGE_ENDPOINT_URL": "https://account.r2.cloudflarestorage.com",
       "STORAGE_BUCKET": "bessel",
@@ -258,7 +375,21 @@ class TestFileStorage:
     bucket = storage_module.S3FileStorage(endpoint_url="https://r2.example.com", bucket="bessel", access_key_id="k", secret_access_key="s")
     with Stubber(bucket.client) as stub:
       stub.add_response("put_object", {}, {"Bucket": "bessel", "Key": "documents/1/original", "Body": b"%PDF-", "ContentType": "application/pdf"})
-      stub.add_client_error("get_object", service_error_code="NoSuchKey", http_status_code=404)
+      stub.add_response("get_object", {"Body": StreamingBody(io.BytesIO(b"%PDF-"), 5)}, {"Bucket": "bessel", "Key": "documents/1/original"})
+      stub.add_client_error(
+        "get_object", service_error_code="NoSuchKey", http_status_code=404, expected_params={"Bucket": "bessel", "Key": "documents/1/missing"}
+      )
+      stub.add_response("delete_object", {}, {"Bucket": "bessel", "Key": "documents/1/original"})
       await bucket.put("documents/1/original", b"%PDF-", "application/pdf")
+      assert await bucket.get("documents/1/original") == b"%PDF-"
       assert await bucket.get("documents/1/missing") is None
+      await bucket.delete("documents/1/original")
       stub.assert_no_pending_responses()
+
+  @pytest.mark.asyncio
+  async def test_a_bucket_error_other_than_a_missing_file_is_raised(self) -> None:
+    bucket = storage_module.S3FileStorage(endpoint_url="https://r2.example.com", bucket="bessel", access_key_id="k", secret_access_key="s")
+    with Stubber(bucket.client) as stub:
+      stub.add_client_error("get_object", service_error_code="AccessDenied", http_status_code=403)
+      with pytest.raises(ClientError, match="AccessDenied"):
+        await bucket.get("documents/1/original")

@@ -3003,7 +3003,14 @@ export const DocumentSchemaSchema = {
     page_count: {
       type: "integer",
       title: "Page Count",
-      description: "Pages with a preview image; a photo has one.",
+      description: "The document's pages; a photo has one.",
+    },
+    preview_pages: {
+      type: "integer",
+      title: "Preview Pages",
+      description:
+        "How many of the pages have a preview image, from the first.",
+      readOnly: true,
     },
   },
   type: "object",
@@ -3015,6 +3022,7 @@ export const DocumentSchemaSchema = {
     "content_type",
     "size_bytes",
     "page_count",
+    "preview_pages",
   ],
   title: "DocumentSchema",
 } as const;
@@ -10447,6 +10455,66 @@ export const BankConnectionSchemaWritableSchema = {
     "accounts",
   ],
   title: "BankConnectionSchema",
+} as const;
+
+export const DocumentSchemaWritableSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    filename: {
+      type: "string",
+      title: "Filename",
+      description: "The name the file was uploaded with.",
+    },
+    content_type: {
+      type: "string",
+      title: "Content Type",
+      description: "application/pdf or an image type.",
+    },
+    size_bytes: {
+      type: "integer",
+      title: "Size Bytes",
+    },
+    page_count: {
+      type: "integer",
+      title: "Page Count",
+      description: "The document's pages; a photo has one.",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "filename",
+    "content_type",
+    "size_bytes",
+    "page_count",
+  ],
+  title: "DocumentSchema",
 } as const;
 
 export const TransactionListResponseWritableSchema = {

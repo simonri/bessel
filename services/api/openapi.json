@@ -11012,7 +11012,13 @@
           "page_count": {
             "type": "integer",
             "title": "Page Count",
-            "description": "Pages with a preview image; a photo has one."
+            "description": "The document's pages; a photo has one."
+          },
+          "preview_pages": {
+            "type": "integer",
+            "title": "Preview Pages",
+            "description": "How many of the pages have a preview image, from the first.",
+            "readOnly": true
           }
         },
         "type": "object",
@@ -11023,7 +11029,8 @@
           "filename",
           "content_type",
           "size_bytes",
-          "page_count"
+          "page_count",
+          "preview_pages"
         ],
         "title": "DocumentSchema"
       },

@@ -681,6 +681,7 @@ export {
   type DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
   type DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
   type DocumentSchema,
+  type DocumentSchemaWritable,
   type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
   type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError,
   type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,

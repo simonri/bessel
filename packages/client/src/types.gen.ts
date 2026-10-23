@@ -2064,9 +2064,15 @@ export type DocumentSchema = {
   /**
    * Page Count
    *
-   * Pages with a preview image; a photo has one.
+   * The document's pages; a photo has one.
    */
   page_count: number;
+  /**
+   * Preview Pages
+   *
+   * How many of the pages have a preview image, from the first.
+   */
+  readonly preview_pages: number;
 };
 
 /**
@@ -6613,6 +6619,52 @@ export type BankConnectionSchemaWritable = {
    * Accounts
    */
   accounts: Array<BankConnectionAccountSchema>;
+};
+
+/**
+ * DocumentSchema
+ */
+export type DocumentSchemaWritable = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Filename
+   *
+   * The name the file was uploaded with.
+   */
+  filename: string;
+  /**
+   * Content Type
+   *
+   * application/pdf or an image type.
+   */
+  content_type: string;
+  /**
+   * Size Bytes
+   */
+  size_bytes: number;
+  /**
+   * Page Count
+   *
+   * The document's pages; a photo has one.
+   */
+  page_count: number;
 };
 
 /**

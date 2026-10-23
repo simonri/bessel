@@ -11,12 +11,18 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
-  documents: [] as DocumentSchema[],
+  documents: [] as unknown[],
   added: [] as { path: unknown; file: File }[],
   removed: [] as unknown[],
   fetched: [] as string[],
+  // File names whose upload the API turns down.
+  refuse: new Set<string>(),
+  // Pages whose preview the API can't find.
+  missingPages: new Set<number>(),
 }));
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
+vi.mock("sonner", () => ({ toast }));
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
   listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetOptions:
@@ -24,12 +30,16 @@ vi.mock("@bessel/client", async (importOriginal) => ({
       queryKey: ["documents", options.path.transaction_id],
       queryFn: async () => api.documents,
     }),
+  listTransactionsV1TransactionsGetQueryKey: () => [{ _id: "transactions" }],
   addTransactionDocumentV1TransactionsTransactionIdDocumentsPostMutation:
     () => ({
       mutationFn: async (variables: {
         path: unknown;
         body: { file: File };
       }) => {
+        if (api.refuse.has(variables.body.file.name)) {
+          throw { detail: "Only PDFs and photos can be added." };
+        }
         api.added.push({ path: variables.path, file: variables.body.file });
       },
     }),
@@ -49,7 +59,11 @@ vi.mock("@bessel/client", async (importOriginal) => ({
     path: { document_id: string; page: number };
   }) => {
     api.fetched.push(`page ${options.path.document_id} ${options.path.page}`);
-    return { data: new Blob(["x"]) };
+    return {
+      data: api.missingPages.has(options.path.page)
+        ? { detail: "The file is missing." }
+        : new Blob(["x"]),
+    };
   },
 }));
 vi.mock("@/lib/client", () => ({ client: { getConfig: () => ({}) } }));
@@ -65,6 +79,7 @@ function doc(overrides: Partial<DocumentSchema>): DocumentSchema {
     content_type: "application/pdf",
     size_bytes: 1000,
     page_count: 1,
+    preview_pages: 1,
     created_at: new Date("2026-10-22"),
     modified_at: null,
     ...overrides,
@@ -73,12 +88,22 @@ function doc(overrides: Partial<DocumentSchema>): DocumentSchema {
 
 const file = (name: string, type: string) => new File(["x"], name, { type });
 
-function mount() {
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <TransactionDocuments transactionId="t1" />
+function mount(transactionId = "t1") {
+  const queryClient = new QueryClient();
+  const invalidated = vi.spyOn(queryClient, "invalidateQueries");
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <TransactionDocuments transactionId={transactionId} />
     </QueryClientProvider>,
   );
+  return { ...view, invalidated };
+}
+
+function paste(files: File[]) {
+  const event = new Event("paste", { cancelable: true });
+  Object.assign(event, { clipboardData: { files } });
+  window.dispatchEvent(event);
+  return event;
 }
 
 beforeEach(() => {
@@ -86,6 +111,10 @@ beforeEach(() => {
   api.added = [];
   api.removed = [];
   api.fetched = [];
+  api.refuse = new Set();
+  api.missingPages = new Set();
+  toast.success.mockReset();
+  toast.error.mockReset();
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();
 });
@@ -111,9 +140,9 @@ describe("keptFiles", () => {
 });
 
 describe("TransactionDocuments", () => {
-  it("uploads each chosen file to this transaction", async () => {
-    mount();
-    expect(await screen.findByText(/Drop a PDF or photo here/)).toBeTruthy();
+  it("uploads each chosen file to this transaction and refreshes the list's counts", async () => {
+    const { invalidated } = mount();
+    await screen.findByText(/Drop a PDF or photo here/);
 
     fireEvent.change(screen.getByLabelText("Add invoices or receipts"), {
       target: {
@@ -122,8 +151,45 @@ describe("TransactionDocuments", () => {
     });
 
     await waitFor(() => expect(api.added).toHaveLength(2));
-    expect(api.added.map((a) => a.file.name)).toEqual(["a.pdf", "b.png"]);
-    expect(api.added[0].path).toEqual({ transaction_id: "t1" });
+    expect(api.added).toEqual([
+      {
+        path: { transaction_id: "t1" },
+        file: expect.objectContaining({ name: "a.pdf" }),
+      },
+      {
+        path: { transaction_id: "t1" },
+        file: expect.objectContaining({ name: "b.png" }),
+      },
+    ]);
+    await waitFor(() =>
+      expect(invalidated).toHaveBeenCalledWith({
+        queryKey: [{ _id: "transactions" }],
+      }),
+    );
+  });
+
+  it("says which file was turned down and keeps going with the rest", async () => {
+    api.refuse.add("notes.pdf");
+    mount();
+
+    fireEvent.change(screen.getByLabelText("Add invoices or receipts"), {
+      target: {
+        files: [
+          file("notes.pdf", "application/pdf"),
+          file("kvitto.jpg", "image/jpeg"),
+        ],
+      },
+    });
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Only PDFs and photos can be added.",
+      ),
+    );
+    expect(api.added.map((a) => a.file.name)).toEqual(["kvitto.jpg"]);
+    await waitFor(() =>
+      expect(screen.queryAllByLabelText("Uploading")).toHaveLength(0),
+    );
   });
 
   it("takes only documents from a drop", async () => {
@@ -145,12 +211,31 @@ describe("TransactionDocuments", () => {
     expect(api.added[0].file.name).toBe("c.pdf");
   });
 
-  it("shows every page in the viewer and removes the document from this transaction", async () => {
-    api.documents = [doc({ id: "d1", page_count: 2 })];
+  it("takes a pasted screenshot for the open transaction only, and stops listening once closed", async () => {
+    const { unmount } = mount("t1");
+
+    const withFile = paste([file("skärmbild.png", "image/png")]);
+    const withText = paste([]);
+
+    await waitFor(() => expect(api.added).toHaveLength(1));
+    expect(api.added[0].path).toEqual({ transaction_id: "t1" });
+    expect([withFile.defaultPrevented, withText.defaultPrevented]).toEqual([
+      true,
+      false,
+    ]);
+
+    unmount();
+    paste([file("later.png", "image/png")]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(api.added).toHaveLength(1);
+  });
+
+  it("shows every previewed page in the viewer and removes the document from this transaction", async () => {
+    api.documents = [doc({ id: "d1", page_count: 2, preview_pages: 2 })];
     mount();
 
     fireEvent.click(await screen.findByTitle("faktura.pdf"));
-    expect(await screen.findByText("PDF - 2 pages")).toBeTruthy();
+    await screen.findByText("PDF - 2 pages");
     await waitFor(() =>
       expect(api.fetched).toEqual(
         expect.arrayContaining(["thumbnail d1", "page d1 1", "page d1 2"]),
@@ -171,5 +256,34 @@ describe("TransactionDocuments", () => {
         { transaction_id: "t1", document_id: "d1" },
       ]),
     );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("says when only the first pages have previews", async () => {
+    api.documents = [doc({ page_count: 45, preview_pages: 20 })];
+    mount();
+
+    fireEvent.click(await screen.findByTitle("faktura.pdf"));
+
+    await screen.findByText("PDF - 45 pages");
+    expect(screen.getByText(/Showing the first 20 of 45 pages/)).toBeInstanceOf(
+      HTMLElement,
+    );
+    await waitFor(() => expect(api.fetched).toContain("page d1 20"));
+    expect(api.fetched).not.toContain("page d1 21");
+  });
+
+  it("says a page couldn't be shown instead of loading forever", async () => {
+    api.documents = [doc({ page_count: 2, preview_pages: 2 })];
+    api.missingPages.add(2);
+    mount();
+
+    fireEvent.click(await screen.findByTitle("faktura.pdf"));
+
+    await screen.findByText(
+      "Page 2 couldn't be shown. Download the file to see it.",
+    );
+    expect(screen.queryByText(/Page 1 couldn't be shown/)).toBeNull();
+    expect(screen.getByAltText("Page 1")).toBeInstanceOf(HTMLImageElement);
   });
 });

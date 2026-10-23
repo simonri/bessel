@@ -20,7 +20,8 @@ class DocumentSchema:
       filename (str): The name the file was uploaded with.
       content_type (str): application/pdf or an image type.
       size_bytes (int):
-      page_count (int): Pages with a preview image; a photo has one.
+      page_count (int): The document's pages; a photo has one.
+      preview_pages (int): How many of the pages have a preview image, from the first.
   """
 
   created_at: datetime.datetime
@@ -30,6 +31,7 @@ class DocumentSchema:
   content_type: str
   size_bytes: int
   page_count: int
+  preview_pages: int
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
@@ -51,6 +53,8 @@ class DocumentSchema:
 
     page_count = self.page_count
 
+    preview_pages = self.preview_pages
+
     field_dict: dict[str, Any] = {}
     field_dict.update(self.additional_properties)
     field_dict.update(
@@ -62,6 +66,7 @@ class DocumentSchema:
         "content_type": content_type,
         "size_bytes": size_bytes,
         "page_count": page_count,
+        "preview_pages": preview_pages,
       }
     )
 
@@ -97,6 +102,8 @@ class DocumentSchema:
 
     page_count = d.pop("page_count")
 
+    preview_pages = d.pop("preview_pages")
+
     document_schema = cls(
       created_at=created_at,
       modified_at=modified_at,
@@ -105,6 +112,7 @@ class DocumentSchema:
       content_type=content_type,
       size_bytes=size_bytes,
       page_count=page_count,
+      preview_pages=preview_pages,
     )
 
     document_schema.additional_properties = d

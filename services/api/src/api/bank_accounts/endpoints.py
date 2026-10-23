@@ -17,6 +17,7 @@ from api.bank_accounts.service import accounts_overview, net_worth_history
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
+from api.documents.service import document_service
 from api.models.bank_account import BankAccount
 from api.postgres import AsyncSession, DBSession
 from api.transactions.repository import TransactionRepository
@@ -162,3 +163,4 @@ async def delete_bank_account(
   account = await repo.get_owned_or_404(bank_account_id, current_user.id, not_found_message="Bank account not found")
   await TransactionRepository.from_session(session).delete_for_bank_account(bank_account_id)
   await repo.delete(account)
+  await document_service.prune(session, current_user.id)

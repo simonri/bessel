@@ -8,9 +8,10 @@ from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
 from api.documents.repository import DocumentRepository
+from api.documents.service import document_service
 from api.exceptions import ResourceNotFound, ValidationError
 from api.models.transaction import Transaction
-from api.postgres import DBSession
+from api.postgres import AsyncSession, DBSession
 from api.transactions.names import name_all, rename
 from api.transactions.parsers.csv_parser import parse_csv
 from api.transactions.parsers.xlsx_parser import parse_xlsx
@@ -41,6 +42,13 @@ from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query, UploadFile
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
+
+
+async def _schema(session: AsyncSession, transaction: Transaction) -> TransactionSchema:
+  """The transaction as the list shows it, with how many invoices and receipts it has."""
+  documents = await DocumentRepository.from_session(session).counts_for_transactions([transaction.id])
+  return TransactionSchema.model_validate(transaction).model_copy(update={"document_count": documents.get(transaction.id, 0)})
+
 
 MAX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024
 
@@ -206,7 +214,7 @@ async def update_transaction(
     )
 
   return TransactionUpdateResponse(
-    **TransactionSchema.model_validate(transaction).model_dump(),
+    **(await _schema(session, transaction)).model_dump(),
     same_description_count=same_description_count,
   )
 
@@ -225,7 +233,7 @@ async def rename_transaction(
   """Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name."""
   transaction = await TransactionRepository.from_session(session).get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
   suggestions = await rename(session, transaction, body.name)
-  return TransactionRenameResponse(**TransactionSchema.model_validate(transaction).model_dump(), suggestions=suggestions)
+  return TransactionRenameResponse(**(await _schema(session, transaction)).model_dump(), suggestions=suggestions)
 
 
 @router.post(
@@ -284,6 +292,7 @@ async def delete_transactions(
   deleted = await repo.delete_by_ids(user_id=current_user.id, ids=body.ids)
   if deleted == 0:
     raise ResourceNotFound("No transactions found")
+  await document_service.prune(session, current_user.id)
 
 
 @router.get(

@@ -156,7 +156,10 @@ export function TransactionDocuments({
           // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have nothing else to tell them apart.
           <li key={`uploading-${i}`}>
             <div className="flex aspect-[3/4] items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.03]">
-              <Spinner className="size-4 text-white/50" />
+              <Spinner
+                className="size-4 text-white/50"
+                aria-label="Uploading"
+              />
             </div>
           </li>
         ))}
@@ -232,7 +235,7 @@ function Thumbnail({
   onOpen: () => void;
 }) {
   const hidden = useAmountsHidden();
-  const url = useBlobUrl(document.id, () =>
+  const { url } = useBlobUrl(document.id, () =>
     documentThumbnailV1DocumentsDocumentIdThumbnailGet({
       client,
       path: { document_id: document.id },
@@ -330,10 +333,17 @@ function DocumentViewer({
               </SoftButton>
             </div>
             <div className="space-y-3 overflow-y-auto bg-black/30 p-4">
-              {Array.from({ length: document.page_count }, (_, i) => i + 1).map(
-                (page) => (
-                  <Page key={page} documentId={document.id} page={page} />
-                ),
+              {Array.from(
+                { length: document.preview_pages },
+                (_, i) => i + 1,
+              ).map((page) => (
+                <Page key={page} documentId={document.id} page={page} />
+              ))}
+              {document.page_count > document.preview_pages && (
+                <p className="py-2 text-center type-caption text-white/50">
+                  Showing the first {document.preview_pages} of{" "}
+                  {document.page_count} pages. Download it for the rest.
+                </p>
               )}
             </div>
             <ConfirmDeleteDialog
@@ -359,7 +369,7 @@ function DocumentViewer({
 
 function Page({ documentId, page }: { documentId: string; page: number }) {
   const hidden = useAmountsHidden();
-  const url = useBlobUrl(`${documentId}-${page}`, () =>
+  const { url, failed } = useBlobUrl(`${documentId}-${page}`, () =>
     documentPageV1DocumentsDocumentIdPagesPageGet({
       client,
       path: { document_id: documentId, page },
@@ -369,7 +379,16 @@ function Page({ documentId, page }: { documentId: string; page: number }) {
   if (!url) {
     return (
       <div className="flex aspect-[3/4] items-center justify-center rounded-md bg-white/[0.04]">
-        <Spinner className="size-5 text-white/40" />
+        {failed ? (
+          <p className="px-6 text-center type-caption text-white/50">
+            Page {page} couldn't be shown. Download the file to see it.
+          </p>
+        ) : (
+          <Spinner
+            className="size-5 text-white/40"
+            aria-label={`Loading page ${page}`}
+          />
+        )}
       </div>
     );
   }
