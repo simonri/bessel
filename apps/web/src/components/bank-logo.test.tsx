@@ -19,8 +19,7 @@ describe("BankLogo", () => {
     );
 
     expect(img?.getAttribute("src")).toBe("/brands/klarna.png");
-    expect(img?.className).toContain("object-cover");
-    expect(tile.className).not.toContain("bg-white");
+    expect(tile.dataset.variant).toBe("brand");
   });
 
   it("puts any other bank's listed logo on a white tile", () => {
@@ -32,8 +31,7 @@ describe("BankLogo", () => {
     expect(img?.getAttribute("src")).toBe(
       "https://enablebanking.com/brands/SE/Nordea/",
     );
-    expect(img?.className).toContain("object-contain");
-    expect(tile.className).toContain("bg-white");
+    expect(tile.dataset.variant).toBe("listed");
   });
 
   it("falls back to the listed logo, then to initials, when images don't load", () => {
@@ -46,9 +44,13 @@ describe("BankLogo", () => {
     expect(listed?.getAttribute("src")).toBe(
       "https://enablebanking.com/brands/SE/Skandia/",
     );
+    expect(tile.dataset.variant).toBe("listed");
 
     fireEvent.error(listed as HTMLImageElement);
-    expect(tile.ownerDocument.body.textContent).toBe("SK");
+    const initials = tile.ownerDocument.body.firstElementChild
+      ?.firstElementChild as HTMLElement;
+    expect(initials.dataset.variant).toBe("initials");
+    expect(initials.textContent).toBe("SK");
   });
 
   it("knows the brands by their first word, whatever the case", () => {

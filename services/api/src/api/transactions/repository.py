@@ -390,6 +390,19 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     """Takes the rule's name off every transaction it named."""
     return await self.execute_for_rowcount(update(Transaction).where(Transaction.name_rule_id == rule.id).values(name=None, name_rule_id=None))
 
+  async def delete_imported(self, bank_account_id: UUID, dedup_hashes: Sequence[str]) -> None:
+    """Takes back imported rows the source has since cancelled."""
+    if dedup_hashes:
+      await self.session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id, Transaction.dedup_hash.in_(dedup_hashes)))
+
+  async def move_imported(self, from_account_id: UUID, to_account_id: UUID, *, hash_prefix: str) -> None:
+    """Hands a source's imported rows to another account, for a source account linked somewhere new."""
+    await self.session.execute(
+      update(Transaction)
+      .where(Transaction.bank_account_id == from_account_id, Transaction.dedup_hash.startswith(hash_prefix, autoescape=True))
+      .values(bank_account_id=to_account_id)
+    )
+
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
     return await self.execute_for_rowcount(stmt)

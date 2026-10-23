@@ -46,6 +46,10 @@ class MontroseAccount(RecordModel):
   bank_account_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("bank_accounts.id", ondelete="SET NULL"), nullable=True, unique=True)
   # Cash in the account as Montrose reports it, to check the imported history adds up.
   cash_balance: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+  # Montrose's cash minus Bessel's balance at the last sync; anything but 0 means a movement is missing.
+  balance_drift: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+  # The Bessel account holding what was imported, which moves along when the account is linked elsewhere.
+  imported_into_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("bank_accounts.id", ondelete="SET NULL"), nullable=True)
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
   connection: Mapped[MontroseConnection] = relationship(back_populates="accounts", lazy="raise")

@@ -209,6 +209,13 @@ describe("Montrose", () => {
             bank_account_id: null,
           },
           {
+            id: "m5",
+            name: "Fonder",
+            account_type: "Fondkonto",
+            account_number: "3333-444",
+            bank_account_id: null,
+          },
+          {
             id: "m4",
             name: "Linked",
             account_number: "9",
@@ -223,15 +230,16 @@ describe("Montrose", () => {
     await screen.findByText("Mitt ISK");
     expect(screen.getByText("1234-567")).toBeTruthy();
     expect(screen.queryByText("Linked")).toBeNull();
-    fireEvent.change(screen.getByLabelText("What to do with Pension"), {
+    fireEvent.change(screen.getByLabelText("What to do with Depå"), {
       target: { value: "b1" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Add 3 accounts" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add 4 accounts" }));
 
     await waitFor(() => expect(onStateChange).toHaveBeenCalledWith(null));
     expect(create.mock.calls.map(([v]) => v.body)).toEqual([
       { name: "Mitt ISK", currency: "SEK", subtype: "isk" },
-      { name: "Depå", currency: "SEK", subtype: "brokerage" },
+      { name: "Pension", currency: "SEK", subtype: "kf" },
+      { name: "Fonder", currency: "SEK", subtype: "brokerage" },
     ]);
     expect(
       linkMontrose.mock.calls.map(([v]) => [
@@ -240,8 +248,9 @@ describe("Montrose", () => {
       ]),
     ).toEqual([
       ["m1", "new-Mitt ISK"],
-      ["m2", "b1"],
-      ["m3", "new-Depå"],
+      ["m2", "new-Pension"],
+      ["m3", "b1"],
+      ["m5", "new-Fonder"],
     ]);
     expect(linkBank).not.toHaveBeenCalled();
   });

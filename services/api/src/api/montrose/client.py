@@ -90,7 +90,8 @@ def authorize_url(client: RegisteredClient, *, redirect_uri: str, state: str, co
   return f"{BASE_URL}/authorize?{urlencode(query)}"
 
 
-async def _token(http: httpx.AsyncClient, client: RegisteredClient, grant: dict[str, str]) -> Tokens:
+async def _token(http: httpx.AsyncClient, client: RegisteredClient, grant: dict[str, str], *, refresh_token: str | None = None) -> Tokens:
+  """A token reply. One without a refresh token keeps using `refresh_token`, as OAuth allows on refresh."""
   response = await http.post(
     "/token",
     data={**grant, "client_id": client.client_id, "client_secret": client.client_secret, "resource": RESOURCE},
@@ -98,9 +99,10 @@ async def _token(http: httpx.AsyncClient, client: RegisteredClient, grant: dict[
   body = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
   if response.status_code in (400, 401) and body.get("error") in ("invalid_grant", "invalid_client", "unauthorized_client"):
     raise MontroseAuthError(body["error"])
-  if response.status_code >= 300 or "access_token" not in body:
+  refresh_token = body.get("refresh_token") or refresh_token
+  if response.status_code >= 300 or "access_token" not in body or not refresh_token:
     raise MontroseError(f"Token request failed ({response.status_code}).")
-  return Tokens(access_token=body["access_token"], refresh_token=body["refresh_token"], expires_in=int(body.get("expires_in", 900)))
+  return Tokens(access_token=body["access_token"], refresh_token=refresh_token, expires_in=int(body.get("expires_in", 900)))
 
 
 async def exchange_code(http: httpx.AsyncClient, client: RegisteredClient, *, code: str, code_verifier: str, redirect_uri: str) -> Tokens:
@@ -108,7 +110,7 @@ async def exchange_code(http: httpx.AsyncClient, client: RegisteredClient, *, co
 
 
 async def refresh(http: httpx.AsyncClient, client: RegisteredClient, *, refresh_token: str) -> Tokens:
-  return await _token(http, client, {"grant_type": "refresh_token", "refresh_token": refresh_token})
+  return await _token(http, client, {"grant_type": "refresh_token", "refresh_token": refresh_token}, refresh_token=refresh_token)
 
 
 def _json_rpc_result(response: httpx.Response) -> dict[str, Any]:

@@ -35,7 +35,7 @@ import {
   type AddStep,
 } from "@/components/accounts/add-account-dialog";
 import { NetWorthCard } from "@/components/accounts/net-worth-card";
-import { MONTROSE_CONNECTED_KEY } from "@/components/montrose/montrose-callback";
+import { takeMontroseToChoose } from "@/components/montrose/montrose-callback";
 import {
   PageHeader,
   PrimaryButton,
@@ -136,16 +136,7 @@ function AccountsPage({
     getMontroseV1MontroseGetOptions({ client }),
   );
   useEffect(() => {
-    if (!montrose) return;
-    let connected = false;
-    try {
-      connected = sessionStorage.getItem(MONTROSE_CONNECTED_KEY) !== null;
-      sessionStorage.removeItem(MONTROSE_CONNECTED_KEY);
-    } catch {}
-    if (
-      connected &&
-      montrose.connection?.accounts.some((a) => !a.bank_account_id)
-    ) {
+    if (montrose && takeMontroseToChoose(montrose)) {
       onAdding({ step: "pick", source: "montrose" });
     }
   }, [montrose, onAdding]);

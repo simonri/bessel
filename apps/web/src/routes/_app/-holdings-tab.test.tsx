@@ -6,7 +6,7 @@ import type {
 } from "@bessel/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const year = new Date().getFullYear();
 
@@ -93,17 +93,18 @@ vi.mock("@bessel/client", () => ({
   }),
   getAccountsOverviewV1BankAccountsOverviewGetOptions: () => ({
     queryKey: ["overview"],
-    queryFn: async () => ({
-      accounts: [
-        {
-          id: "isk",
-          source: { kind: "montrose", label: "Montrose", logo: null },
-        },
-        { id: "af", source: { kind: "avanza", label: "Avanza", logo: null } },
-      ],
-    }),
+    queryFn: async () => ({ accounts: overview.accounts }),
   }),
 }));
+
+const OVERVIEW = [
+  { id: "isk", source: { kind: "montrose", label: "Montrose", logo: null } },
+  { id: "af", source: { kind: "avanza", label: "Avanza", logo: null } },
+];
+const overview = vi.hoisted(() => ({ accounts: [] as unknown[] }));
+beforeEach(() => {
+  overview.accounts = OVERVIEW;
+});
 
 const { HoldingsTab, allocation, investmentTotals } = await import(
   "./-holdings-tab"
@@ -262,6 +263,23 @@ describe("HoldingsTab", () => {
     expect(af.querySelector("img")?.getAttribute("src")).toBe(
       "/brands/avanza.png",
     );
+  });
+
+  it("shows an account's initials when the overview doesn't know it", async () => {
+    overview.accounts = OVERVIEW.filter((a) => a.id !== "af");
+    mount();
+
+    const isk = await screen.findByRole("button", { name: /^ISK/ });
+    await vi.waitFor(() =>
+      expect(isk.querySelector("img")?.getAttribute("src")).toBe(
+        "/brands/montrose.png",
+      ),
+    );
+    const logo = screen
+      .getByRole("button", { name: /^AF/ })
+      .querySelector("[data-variant]") as HTMLElement;
+    expect(logo.dataset.variant).toBe("initials");
+    expect(logo.textContent).toBe("AF");
   });
 
   it("says taken out when more came out of an account than went in", async () => {

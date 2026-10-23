@@ -1,5 +1,8 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { completeMontroseV1MontroseCallbackPost } from "@bessel/client";
+import {
+  completeMontroseV1MontroseCallbackPost,
+  type MontroseStatusResponse,
+} from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -7,6 +10,22 @@ import { client } from "@/lib/client";
 
 /** Set when Montrose was just connected, so the accounts page offers to choose its accounts. */
 export const MONTROSE_CONNECTED_KEY = "bessel:montrose-connected";
+
+/**
+ * Whether the user is just back from connecting Montrose with accounts still
+ * to bring in. The mark is used up either way, so it's offered once.
+ */
+export function takeMontroseToChoose(status: MontroseStatusResponse): boolean {
+  let connected = false;
+  try {
+    connected = sessionStorage.getItem(MONTROSE_CONNECTED_KEY) !== null;
+    sessionStorage.removeItem(MONTROSE_CONNECTED_KEY);
+  } catch {}
+  return (
+    connected &&
+    (status.connection?.accounts.some((a) => !a.bank_account_id) ?? false)
+  );
+}
 
 const DENIED_MESSAGE = "Access wasn't approved. Start again from Bessel.";
 const FALLBACK_MESSAGE =

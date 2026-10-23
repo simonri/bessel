@@ -225,12 +225,14 @@ class AccountsOverview:
         problem = AccountProblem(kind="stale", day=montrose.last_synced_at.date())
       elif expires - now < RENEW_WARNING:
         problem = AccountProblem(kind="renew_soon", day=expires.date())
+      elif linked.balance_drift and linked.cash_balance is not None:
+        problem = AccountProblem(kind="balance_mismatch", source_balance=linked.cash_balance)
       found[linked.bank_account_id] = (
         AccountSource(
           kind="montrose", label="Montrose", logo=MONTROSE_LOGO, synced_at=montrose.last_synced_at, access_until=expires, issue=problem, problem=None
         ),
         linked.cash_balance,
-        None,
+        linked.balance_drift,
       )
     for pay_later in await KlarnaPayLaterRepository.from_session(session).list_for_user(user_id):
       owed = -pay_later.owed if pay_later.owed is not None else None

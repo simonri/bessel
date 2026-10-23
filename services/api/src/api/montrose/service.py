@@ -11,6 +11,7 @@ from uuid import UUID
 
 import httpx
 import structlog
+from sqlalchemy import func, select
 
 from api.avanza.repository import HoldingSnapshotRepository, ImportedTradeRepository, SecurityCatalogRepository
 from api.common.encryption import InvalidToken, decrypt, encrypt
@@ -27,6 +28,7 @@ from api.montrose.repository import MontroseAccountRepository, MontroseConnectio
 from api.postgres import AsyncSession
 from api.settings import settings
 from api.transactions.parsers.base import ParsedTransaction
+from api.transactions.repository import TransactionRepository
 from api.transactions.service import transaction_service
 from api.worker import enqueue_job
 
@@ -45,6 +47,9 @@ REFRESH_MARGIN = timedelta(minutes=1)
 LOGO = "https://cdn.prod.website-files.com/665d843245a09dc69c336e03/667abad232482d4a92203115_webclip.png"
 # Montrose leaves the name empty unless the user named the account; these read like its own labels.
 TYPE_NAMES = {"ISK": "ISK", "KF": "KF", "Depot": "Depå", "SPAR": "Sparkonto", "Credit": "Kredit"}
+IMPORT_FAILED = "Couldn't import what Montrose sent. Bessel tries again at the next sync."
+# Two syncs of one connection at once would each replace the other's holdings; the second one waits its turn out.
+SYNC_LOCK_NAMESPACE = 0x6D74
 REJECTED = "Montrose no longer accepts Bessel's access. Log in with BankID again to resume syncing."
 UNREACHABLE = "Couldn't reach Montrose. Bessel tries again at the next sync."
 # Every sync reads this far back again, for rows that settle late.
@@ -55,6 +60,7 @@ PAGE_SIZE = 50
 # A guard against a cursor that never ends; at 50 rows a page this is 50,000 transactions.
 MAX_PAGES = 1000
 HASH_PREFIX = "mt:"
+TRADE_PREFIX = "montrose:"
 
 
 class MontroseStateError(Exception):
@@ -221,7 +227,7 @@ class MontroseService:
       else:
         existing.account_number, existing.name, existing.account_type = account.account_number, account.name, account.account_type
 
-  async def access_token(self, session_maker: SessionMaker, connection_id: UUID, *, now: datetime) -> str:
+  async def access_token(self, session_maker: SessionMaker, connection_id: UUID, *, now: datetime, force_refresh: bool = False) -> str:
     """A usable access token. When it's about to run out it is refreshed and saved at once, under a row lock:
     Montrose may rotate the refresh token, and losing the new one ends the consent."""
     rejected = False
@@ -230,7 +236,7 @@ class MontroseService:
       if connection is None or connection.rejected_at is not None:
         raise MontroseAuthError("not connected")
       tokens = json.loads(decrypt(connection.encrypted_tokens))
-      if connection.access_expires_at - now > REFRESH_MARGIN:
+      if not force_refresh and connection.access_expires_at - now > REFRESH_MARGIN:
         return tokens["access_token"]
       try:
         async with montrose.http_client() as http:
@@ -251,11 +257,17 @@ class MontroseService:
     return connection.last_synced_at is None or now - connection.last_synced_at >= SYNC_COOLDOWN
 
   async def link_account(self, session: AsyncSession, account: MontroseAccount, bank_account: BankAccount | None) -> None:
-    """Points the Montrose account at a Bessel account; the next sync imports its whole history."""
+    """Points the Montrose account at a Bessel account. What was imported before moves along with it, and the next
+    sync reads its whole history again for anything missing."""
     if (bank_account.id if bank_account else None) == account.bank_account_id:
       return
     if bank_account is not None and await MontroseAccountRepository.from_session(session).is_linked_elsewhere(bank_account.id, account):
       raise MontroseConflictError("That Bessel account already imports another Montrose account.")
+    if bank_account is not None and account.imported_into_id is not None and account.imported_into_id != bank_account.id:
+      await TransactionRepository.from_session(session).move_imported(account.imported_into_id, bank_account.id, hash_prefix=HASH_PREFIX)
+      await ImportedTradeRepository.from_session(session).move(account.imported_into_id, bank_account.id, external_prefix=TRADE_PREFIX)
+      await HoldingSnapshotRepository.from_session(session).move(account.imported_into_id, bank_account.id)
+      account.imported_into_id = bank_account.id
     account.bank_account_id = bank_account.id if bank_account else None
     account.last_synced_at = None
 
@@ -270,9 +282,16 @@ class MontroseService:
       if account.bank_account_id is not None
     ]
 
-  async def import_account(self, session: AsyncSession, user_id: UUID, account: LinkedAccount, fetched: Fetched, *, today: date) -> int:
-    """Cash movements into the account's transactions, buys and sells into trades, and today's positions."""
+  async def import_account(self, session: AsyncSession, user_id: UUID, account: LinkedAccount, fetched: Fetched, *, currency: str, today: date) -> int:
+    """Cash movements in the account's currency into its transactions, buys and sells into trades, and today's
+    positions. Montrose's rows in other currencies are the other side of an exchange or money held in that currency,
+    which the account's balance doesn't count."""
     movements = [m for m in fetched.movements if m.account_id == account.external_id and m.day >= account.date_from]
+    canceled = [m for m in movements if m.canceled]
+    await TransactionRepository.from_session(session).delete_imported(
+      account.bank_account_id, [cash_hash(account.external_id, m.external_id) for m in canceled]
+    )
+    await ImportedTradeRepository.from_session(session).delete_external(user_id, [f"{TRADE_PREFIX}{m.external_id}" for m in canceled])
 
     def instrument_name(movement: parsing.Movement) -> str | None:
       instrument = fetched.instruments.get(movement.orderbook_id)
@@ -290,7 +309,7 @@ class MontroseService:
         transaction_type=m.transaction_type,
       )
       for m in movements
-      if m.moves_cash
+      if m.moves_cash and m.currency == currency
     ]
     created, _ = await transaction_service.import_transactions(
       session,
@@ -320,7 +339,7 @@ class MontroseService:
           "price_per_unit": _minor(m.price),
           "currency": m.price_currency or m.currency,
           "notes": None,
-          "external_id": f"montrose:{m.external_id}",
+          "external_id": f"{TRADE_PREFIX}{m.external_id}",
         }
       )
     await ImportedTradeRepository.from_session(session).insert_ignoring_duplicates(trades)
@@ -350,19 +369,38 @@ class MontroseService:
 
   async def sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
     """Refreshes the consent and imports every linked account: its cash movements, trades and today's holdings."""
+    async with session_maker() as guard:
+      if not await guard.scalar(select(func.pg_try_advisory_xact_lock(SYNC_LOCK_NAMESPACE, func.hashtext(str(connection_id))))):
+        log.info("montrose_sync_already_running", connection_id=str(connection_id))
+        return
+      await self._sync(session_maker, connection_id)
+
+  async def _fetch(self, session_maker: SessionMaker, connection_id: UUID, linked: list[LinkedAccount], *, now: datetime) -> Fetched:
+    """What Montrose has for the linked accounts. A token turned away mid-way, say one that ran out during a long
+    first import, is refreshed once before the consent counts as ended."""
+    date_from = min((a.date_from for a in linked), default=now.date())
+    account_ids = [a.external_id for a in linked]
+
+    async def with_token(token: str) -> Fetched:
+      async with montrose.http_client() as http:
+        session = McpSession(http, token)
+        await session.initialize()
+        return await fetch(session, account_ids=account_ids, date_from=date_from)
+
+    try:
+      return await with_token(await self.access_token(session_maker, connection_id, now=now))
+    except MontroseAuthError:
+      return await with_token(await self.access_token(session_maker, connection_id, now=now, force_refresh=True))
+
+  async def _sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
     started = utc_now()
-    today = started.date()
     async with session_maker() as session:
       connection = await MontroseConnectionRepository.from_session(session).get_with_accounts(connection_id)
       if connection is None or connection.rejected_at is not None:
         return
       user_id, linked = connection.user_id, self.linked(connection)
     try:
-      token = await self.access_token(session_maker, connection_id, now=started)
-      async with montrose.http_client() as http:
-        session = McpSession(http, token)
-        await session.initialize()
-        fetched = await fetch(session, account_ids=[a.external_id for a in linked], date_from=min((a.date_from for a in linked), default=today))
+      fetched = await self._fetch(session_maker, connection_id, linked, now=started)
     except MontroseAuthError:
       await self._record(session_maker, connection_id, error=REJECTED, rejected_at=started)
       return
@@ -372,22 +410,43 @@ class MontroseService:
       await self._record(session_maker, connection_id, error=UNREACHABLE)
       return
 
+    try:
+      created = await self._import(session_maker, connection_id, user_id, linked, fetched, started=started)
+    except Exception as e:
+      # Rolled back; recorded so it shows instead of every sync failing quietly.
+      log.exception("montrose_import_failed", connection_id=str(connection_id), error=type(e).__name__)
+      await self._record(session_maker, connection_id, error=IMPORT_FAILED)
+      return
+    log.info("montrose_synced", connection_id=str(connection_id), created=created)
+
+  async def _import(
+    self, session_maker: SessionMaker, connection_id: UUID, user_id: UUID, linked: list[LinkedAccount], fetched: Fetched, *, started: datetime
+  ) -> int:
     async with session_maker() as session:
       connection = await MontroseConnectionRepository.from_session(session).get_with_accounts(connection_id)
       if connection is None:
-        return
+        return 0
       self._merge_accounts(connection, fetched.accounts)
       by_external_id = {account.external_id: account for account in connection.accounts}
-      cash = {h.account_id: h.cash for h in fetched.holdings}
+      holdings = {h.account_id: h for h in fetched.holdings}
+      transactions = TransactionRepository.from_session(session)
       created = 0
       for account in linked:
-        created += await self.import_account(session, user_id, account, fetched, today=today)
+        bank_account = await session.get(BankAccount, account.bank_account_id)
+        if bank_account is None:
+          continue
+        reported = holdings.get(account.external_id)
+        created += await self.import_account(session, user_id, account, fetched, currency=bank_account.currency, today=started.date())
         stored = by_external_id.get(account.external_id)
-        if stored is not None:
-          stored.last_synced_at = started
-          stored.cash_balance = _minor(cash[account.external_id]) if account.external_id in cash else stored.cash_balance
+        if stored is None:
+          continue
+        stored.last_synced_at, stored.imported_into_id = started, account.bank_account_id
+        if reported is not None and reported.currency == bank_account.currency:
+          stored.cash_balance = _minor(reported.cash)
+          balances = await transactions.net_balances_by_account([bank_account.id])
+          stored.balance_drift = stored.cash_balance - (bank_account.base_balance + balances.get(bank_account.id, 0))
       connection.last_synced_at, connection.sync_error = started, None
-    log.info("montrose_synced", connection_id=str(connection_id), created=created)
+    return created
 
   async def _record(self, session_maker: SessionMaker, connection_id: UUID, *, error: str, rejected_at: datetime | None = None) -> None:
     async with session_maker() as session:

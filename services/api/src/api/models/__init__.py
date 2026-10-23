@@ -1,7 +1,7 @@
 from .activity_event import ActivityEvent
 from .agent_usage_daily import AgentUsageDaily
 from .agent_usage_status import AgentUsageStatus
-from .avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot
+from .avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot, HoldingSnapshotDay
 from .bank_account import BankAccount
 from .bank_connection import BankConnection, BankConnectionAccount
 from .bank_profile import BankProfile
@@ -54,6 +54,7 @@ __all__ = [
   "AvanzaConnection",
   "BankConnection",
   "HoldingSnapshot",
+  "HoldingSnapshotDay",
   "BankConnectionAccount",
   "CalendarAccount",
   "CalendarEvent",

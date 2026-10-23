@@ -14,6 +14,8 @@ from api.models.raw_transaction import RawTransaction
 from api.models.security import AssetType, Security
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
+from api.montrose.service import LOGO as MONTROSE_LOGO
+from api.postgres import AsyncSession
 from api.settings import settings
 from api.tests.fixtures.database import SaveFixture
 from cryptography.fernet import Fernet
@@ -311,10 +313,23 @@ class TestSources:
 
   @pytest.mark.asyncio
   async def test_montrose_accounts_name_their_source_and_ask_for_bankid_when_the_consent_ends(
-    self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, user: User, accounts: _Accounts
   ) -> None:
     isk = await accounts.account("Montrose ISK", subtype="isk")
     kf = await accounts.account("Montrose KF", subtype="kf")
+    montrose = MontroseConnection(
+      user_id=user.id,
+      encrypted_client=encrypt("{}"),
+      encrypted_tokens=encrypt("{}"),
+      access_expires_at=utc_now(),
+      consented_at=utc_now(),
+      last_synced_at=utc_now(),
+    )
+    await save_fixture(montrose)
+    await save_fixture(MontroseAccount(connection_id=montrose.id, external_id="a", account_number="1", name="ISK", account_type="ISK", bank_account_id=isk.id))
+    healthy = {a["name"]: a["source"] for a in (await _overview(client))["accounts"]}
+    await session.delete(montrose)
+    await session.flush()
     consented = utc_now() - timedelta(days=80)
     montrose = MontroseConnection(
       user_id=user.id,
@@ -333,8 +348,9 @@ class TestSources:
     await save_fixture(montrose)
     rejected = {a["name"]: a["source"] for a in (await _overview(client))["accounts"]}
 
+    assert healthy["Montrose ISK"]["issue"] is None
     assert (ending["Montrose ISK"]["kind"], ending["Montrose ISK"]["label"]) == ("montrose", "Montrose")
-    assert ending["Montrose ISK"]["logo"].startswith("https://cdn.prod.website-files.com/")
+    assert ending["Montrose ISK"]["logo"] == MONTROSE_LOGO
     assert ending["Montrose KF"]["issue"]["kind"] == "renew_soon"
     assert ending["Montrose KF"]["issue"]["day"] == (consented + timedelta(days=90)).date().isoformat()
     assert rejected["Montrose ISK"]["issue"]["kind"] == "sign_in"

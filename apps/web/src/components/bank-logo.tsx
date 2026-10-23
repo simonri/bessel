@@ -53,6 +53,7 @@ export function BankLogo({
     const full = src === icon;
     return (
       <span
+        data-variant={full ? "brand" : "listed"}
         className={cn(
           "flex shrink-0 items-center justify-center overflow-hidden",
           // A faint edge over the icon, so a dark one doesn't melt into the page.
@@ -76,6 +77,7 @@ export function BankLogo({
   return (
     <span
       aria-hidden
+      data-variant="initials"
       className={cn(
         "flex shrink-0 items-center justify-center bg-white/[0.08] font-semibold text-white/70",
         SIZES[size],

@@ -69,3 +69,14 @@ class HoldingSnapshot(RecordModel):
   currency: Mapped[str] = mapped_column(String(3), nullable=False)
 
   __table_args__ = (UniqueConstraint("bank_account_id", "security_id", "snapshot_date"),)
+
+
+class HoldingSnapshotDay(RecordModel):
+  """A day the broker reported the account's positions, even none: the latest one says what's held now."""
+
+  __tablename__ = "holding_snapshot_days"
+
+  bank_account_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+  snapshot_date: Mapped[date] = mapped_column(Date, nullable=False)
+
+  __table_args__ = (UniqueConstraint("bank_account_id", "snapshot_date"),)

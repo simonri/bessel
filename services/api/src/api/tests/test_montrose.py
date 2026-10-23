@@ -4,14 +4,17 @@ import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 from uuid import UUID
 
 import httpx
 import pytest
+from api.avanza.repository import SecurityCatalogRepository
+from api.common.db.postgres import create_async_engine
 from api.common.encryption import decrypt, encrypt
+from api.models.avanza import HoldingSnapshot
 from api.models.bank_account import BankAccount
 from api.models.montrose import MontroseAccount, MontroseConnection
 from api.models.security import AssetType, Security
@@ -19,17 +22,17 @@ from api.models.trade import Trade, TradeType
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
 from api.montrose import client as montrose_client
-from api.montrose import service
+from api.montrose import parsing, service
 from api.montrose.client import MontroseAuthError
 from api.montrose.repository import MontroseConnectionRepository
 from api.montrose.service import REJECTED, UNREACHABLE, SessionMaker, montrose_service
 from api.postgres import AsyncSession
 from api.settings import settings
-from api.tests.fixtures.database import SaveFixture
+from api.tests.fixtures.database import SaveFixture, get_database_url
 from api.worker._enqueue import JobQueueManager
 from cryptography.fernet import Fernet
 from httpx import AsyncClient
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 NOW = datetime(2026, 10, 23, 8, 0, tzinfo=UTC)
 ISK = {"accountId": "3fa85f64-5717-4562-b3fc-2c963f66afa6", "accountNumber": "1234-567", "accountName": "Mitt ISK", "accountType": "ISK", "credit": None}
@@ -48,10 +51,14 @@ class FakeMontrose:
   issued: int = 0
   refreshes: int = 0
   reject_refresh: bool = False
+  # A refresh that leaves the refresh token as it was, answering without one.
+  keep_refresh_token: bool = False
   # Montrose's reported bug: the refresh succeeds, then the new access token is turned away.
   reject_new_tokens: bool = False
   answer_as_event_stream: bool = False
   fail_with: int | None = None
+  # Turns away the next MCP call's token once, as when it runs out during a long import.
+  turn_away_next_call: bool = False
   tool_calls: list[str] = field(default_factory=list)
   transactions: list[dict[str, Any]] = field(default_factory=list)
   holdings: list[dict[str, Any]] = field(default_factory=list)
@@ -95,11 +102,16 @@ class FakeMontrose:
       if self.reject_refresh or form["refresh_token"] != self.refresh_token:
         return httpx.Response(400, json={"error": "invalid_grant"})
       self.refreshes += 1
+      if self.keep_refresh_token:
+        self.issued += 1
+        self.access_token = f"access-{self.issued}"
+        return httpx.Response(200, json={"access_token": self.access_token, "token_type": "bearer", "expires_in": 900})
       tokens = self._issue()
       if self.reject_new_tokens:
         self.access_token = "nothing-works"
       return httpx.Response(200, json=tokens)
-    if request.headers.get("Authorization") != f"Bearer {self.access_token}":
+    if request.headers.get("Authorization") != f"Bearer {self.access_token}" or self.turn_away_next_call:
+      self.turn_away_next_call = False
       return httpx.Response(401, json={"error": "invalid_token"})
     if self.fail_with:
       return httpx.Response(self.fail_with, text="account 1234-567 is unavailable")
@@ -160,9 +172,11 @@ def montrose(monkeypatch: pytest.MonkeyPatch) -> FakeMontrose:
 
 @pytest.fixture
 def session_maker(session: AsyncSession) -> SessionMaker:
+  # Like the worker's: what a block did is kept when it ends, and undone when it raises.
   @asynccontextmanager
   async def maker() -> AsyncIterator[AsyncSession]:
-    yield session
+    async with session.begin_nested():
+      yield session
     await session.flush()
 
   return maker
@@ -301,6 +315,22 @@ class TestAccessToken:
     stored = await _stored(session, user)
     assert json.loads(decrypt(stored.encrypted_tokens))["refresh_token"] == "refresh-3"
     assert stored.access_expires_at == NOW + timedelta(minutes=30, seconds=900)
+
+  @pytest.mark.asyncio
+  async def test_a_refresh_answered_without_a_refresh_token_keeps_the_one_it_has(
+    self, client: AsyncClient, session: AsyncSession, session_maker: SessionMaker, montrose: FakeMontrose, user: User
+  ) -> None:
+    connection_id = UUID((await _connect(client, montrose))["id"])
+    montrose.keep_refresh_token = True
+
+    first = await montrose_service.access_token(session_maker, connection_id, now=NOW + timedelta(minutes=15))
+    second = await montrose_service.access_token(session_maker, connection_id, now=NOW + timedelta(minutes=31))
+
+    assert (first, second) == ("access-2", "access-3")
+    assert montrose.refreshes == 2
+    stored = await _stored(session, user)
+    assert json.loads(decrypt(stored.encrypted_tokens)) == {"access_token": "access-3", "refresh_token": "refresh-1"}
+    assert stored.rejected_at is None
 
   @pytest.mark.asyncio
   async def test_a_refresh_montrose_turns_down_stops_syncing_until_the_next_bankid_login(
@@ -641,3 +671,281 @@ class TestImport:
 
     assert history.tool_calls == ["get_user_accounts"]
     assert (await _stored(session, user)).sync_error is None
+
+
+async def _sync(session_maker: SessionMaker, connection_id: UUID, monkeypatch: pytest.MonkeyPatch, *, at: datetime) -> None:
+  monkeypatch.setattr(service, "utc_now", lambda: at)
+  await montrose_service.sync(session_maker, connection_id)
+
+
+async def _stored_account(session: AsyncSession, user: User, account_type: str = "ISK") -> MontroseAccount:
+  connection = await _stored(session, user)
+  await session.refresh(connection, ["accounts"])
+  return next(a for a in connection.accounts if a.account_type == account_type)
+
+
+class TestImportCorrections:
+  @pytest.mark.asyncio
+  async def test_relinking_moves_what_was_imported_to_the_new_account(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    connection_id, first = await _linked(client, save_fixture, history, user)
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+    before = await _cash(session, first)
+    second = await _bank_account(save_fixture, user, name="Montrose ISK 2")
+    isk = await _stored_account(session, user)
+
+    await client.patch(f"/v1/montrose/accounts/{isk.id}", json={"bank_account_id": str(second.id)})
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(hours=1))
+
+    assert (await _cash(session, first), await _cash(session, second)) == ([], before)
+    left_behind = (await session.execute(select(HoldingSnapshot).where(HoldingSnapshot.bank_account_id == first.id))).all()
+    assert left_behind == []
+    trades = (await session.execute(select(Trade.bank_account_id).where(Trade.user_id == user.id))).scalars().all()
+    assert set(trades) == {second.id} and len(trades) == 3
+    holdings = (await client.get("/v1/investments/holdings")).json()["items"]
+    assert [(h["bank_account_id"], h["security_name"]) for h in holdings] == [(str(second.id), "Treasury Capital")]
+
+  @pytest.mark.asyncio
+  async def test_only_money_in_the_accounts_currency_counts_so_the_balance_matches_montrose(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    history.transactions = [
+      _row(1, "Deposit", "2026-01-02", 10000),
+      _row(2, "CurrencyExchange", "2026-01-03", -1000),
+      _row(3, "CurrencyExchange", "2026-01-03", 95, currency="USD"),
+      _row(4, "Dividend", "2026-02-01", 4.5, currency="USD", orderbook=2122),
+    ]
+    history.holdings = [
+      {
+        **HOLDINGS[0],
+        "positions": [],
+        "currencyPositions": [
+          {"currencyCode": "SEK", "balance": 9000, "accruedInterest": 0, "availableForPurchase": 9000},
+          {"currencyCode": "USD", "balance": 99.5, "accruedInterest": 0, "availableForPurchase": 99.5},
+        ],
+      }
+    ]
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+
+    assert [(day, amount, direction) for day, amount, direction, _, _ in await _cash(session, bank_account)] == [
+      ("2026-01-02", 1000000, TransactionDirection.credit),
+      ("2026-01-03", 100000, TransactionDirection.debit),
+    ]
+    [account] = [a for a in (await client.get("/v1/bank-accounts/overview")).json()["accounts"] if a["id"] == str(bank_account.id)]
+    assert (account["current_balance"], account["bank_balance"], account["balance_drift"], account["source"]["issue"]) == (900000, 900000, 0, None)
+
+  @pytest.mark.asyncio
+  async def test_a_cash_balance_bessel_cant_account_for_is_flagged(
+    self,
+    client: AsyncClient,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    history.transactions = [_row(1, "Deposit", "2026-01-02", 10000)]
+    history.holdings = [{**HOLDINGS[0], "positions": [], "currencyPositions": [{"currencyCode": "SEK", "balance": 10250, "accruedInterest": 0}]}]
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+
+    [account] = [a for a in (await client.get("/v1/bank-accounts/overview")).json()["accounts"] if a["id"] == str(bank_account.id)]
+    assert (account["balance_drift"], account["source"]["issue"]["kind"], account["source"]["issue"]["source_balance"]) == (25000, "balance_mismatch", 1025000)
+
+  @pytest.mark.asyncio
+  async def test_positions_sold_since_the_last_sync_stop_showing(
+    self,
+    client: AsyncClient,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+    held = (await client.get("/v1/investments/holdings")).json()["items"]
+    history.holdings = [{**HOLDINGS[0], "positions": []}, HOLDINGS[1]]
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(days=1))
+
+    assert [h["security_name"] for h in held] == ["Treasury Capital"]
+    assert (await client.get("/v1/investments/holdings")).json()["items"] == []
+    [account] = [a for a in (await client.get("/v1/bank-accounts/overview")).json()["accounts"] if a["id"] == str(bank_account.id)]
+    assert account["holdings_value"] == 0
+
+  @pytest.mark.asyncio
+  async def test_a_row_montrose_cancels_after_it_was_imported_is_taken_back(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    history.transactions = [_row(1, "Deposit", "2026-10-20", 2000), _row(2, "Buy", "2026-10-21", -1155, quantity=221, price=5.22, orderbook=1617)]
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+    history.transactions = [{**row, "isCanceled": True} for row in history.transactions]
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(hours=1))
+
+    assert await _cash(session, bank_account) == []
+    assert (await session.execute(select(Trade).where(Trade.bank_account_id == bank_account.id))).all() == []
+
+  @pytest.mark.asyncio
+  async def test_only_real_buys_and_sells_become_trades(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    history.transactions = [
+      _row(1, "Buy", "2026-01-02", -100, quantity=10, price=10, orderbook=1617),
+      _row(2, "Buy", "2026-01-03", -100, quantity=10, price=10, orderbook=1617, canceled=True),
+      _row(3, "Buy", "2026-01-04", 0, quantity=0, price=10, orderbook=1617),
+      _row(4, "Sell", "2026-01-05", 0, quantity=-5, price=0, orderbook=1617),
+      _row(5, "Dividend", "2026-01-06", 5, quantity=10, price=0.5, orderbook=1617),
+    ]
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+
+    trades = (await session.execute(select(Trade.trade_date).where(Trade.bank_account_id == bank_account.id))).scalars().all()
+    assert [d.isoformat() for d in trades] == ["2026-01-02"]
+
+  @pytest.mark.asyncio
+  async def test_rows_from_before_an_accounts_window_are_left_alone(
+    self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, history: FakeMontrose, user: User, job_queue_manager: JobQueueManager
+  ) -> None:
+    bank_account = await _bank_account(save_fixture, user)
+    fetched = service.Fetched(
+      accounts=[], movements=parsing.movements([_row(1, "Deposit", "2026-01-02", 10), _row(2, "Deposit", "2026-02-02", 20)]), holdings=[], instruments={}
+    )
+    linked = service.LinkedAccount(external_id=ISK["accountId"], bank_account_id=bank_account.id, date_from=date(2026, 2, 1))
+
+    await montrose_service.import_account(session, user.id, linked, fetched, currency="SEK", today=NOW.date())
+
+    assert [day for day, *_ in await _cash(session, bank_account)] == ["2026-02-02"]
+
+
+class TestSyncFailures:
+  @pytest.mark.asyncio
+  async def test_a_sync_while_another_runs_for_the_same_connection_does_nothing(
+    self, client: AsyncClient, session: AsyncSession, session_maker: SessionMaker, montrose: FakeMontrose, user: User, worker_id: str
+  ) -> None:
+    connection_id = UUID((await _connect(client, montrose))["id"])
+    montrose.tool_calls.clear()
+    engine = create_async_engine(dsn=get_database_url(worker_id), application_name=f"test_{worker_id}", pool_size=1, pool_recycle=-1)
+    try:
+      async with engine.connect() as running, running.begin():
+        await running.execute(select(func.pg_advisory_xact_lock(service.SYNC_LOCK_NAMESPACE, func.hashtext(str(connection_id)))))
+
+        await montrose_service.sync(session_maker, connection_id)
+
+        assert (montrose.tool_calls, montrose.refreshes, (await _stored(session, user)).last_synced_at) == ([], 0, None)
+    finally:
+      await engine.dispose()
+
+    await montrose_service.sync(session_maker, connection_id)
+
+    assert (await _stored(session, user)).last_synced_at == NOW
+    assert montrose.tool_calls != []
+
+  @pytest.mark.asyncio
+  async def test_a_token_turned_away_mid_sync_is_refreshed_once_before_the_consent_counts_as_ended(
+    self, client: AsyncClient, session: AsyncSession, session_maker: SessionMaker, montrose: FakeMontrose, user: User, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    connection_id = UUID((await _connect(client, montrose))["id"])
+    montrose.turn_away_next_call = True
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(minutes=5))
+
+    stored = await _stored(session, user)
+    assert (stored.rejected_at, stored.sync_error, montrose.refreshes) == (None, None, 1)
+
+  @pytest.mark.asyncio
+  async def test_a_refreshed_token_is_kept_even_when_the_sync_then_fails(
+    self, client: AsyncClient, session: AsyncSession, session_maker: SessionMaker, montrose: FakeMontrose, user: User, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    connection_id = UUID((await _connect(client, montrose))["id"])
+    montrose.fail_with = 503
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(hours=1))
+
+    stored = await _stored(session, user)
+    assert json.loads(decrypt(stored.encrypted_tokens)) == {"access_token": "access-2", "refresh_token": "refresh-2"}
+    assert (stored.sync_error, stored.rejected_at) == (UNREACHABLE, None)
+
+  @pytest.mark.asyncio
+  async def test_an_import_that_fails_is_undone_and_reported(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+
+    async def broken(*_: object, **__: object) -> int:
+      await session.execute(update(BankAccount).where(BankAccount.id == bank_account.id).values(name="half-done"))
+      raise ValueError("unexpected row")
+
+    monkeypatch.setattr(montrose_service, "import_account", broken)
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+
+    stored = await _stored(session, user)
+    name = (await session.execute(select(BankAccount.name).where(BankAccount.id == bank_account.id))).scalar_one()
+    assert (stored.sync_error, stored.last_synced_at, stored.rejected_at) == (service.IMPORT_FAILED, None, None)
+    assert name == "Montrose ISK"
+
+
+class TestSecurities:
+  @pytest.mark.asyncio
+  async def test_a_security_is_matched_by_name_in_its_currency_then_by_ticker(self, session: AsyncSession, save_fixture: SaveFixture) -> None:
+    sek = Security(name="Strategy A", ticker="MSTR", asset_type=AssetType.stock, currency="SEK")
+    usd = Security(name="MicroStrategy", ticker="MSTR", isin="US5949724083", asset_type=AssetType.stock, currency="USD")
+    for security in (sek, usd):
+      await save_fixture(security)
+    securities = SecurityCatalogRepository.from_session(session)
+
+    by_name = await securities.get_or_create_by_name(name="strategy a", ticker="", currency="SEK")
+    by_ticker = await securities.get_or_create_by_name(name="Strategy A", ticker="MSTR", currency="USD")
+    new = await securities.get_or_create_by_name(name="Strategy A", ticker="", currency="EUR")
+
+    assert (by_name.id, by_ticker.id) == (sek.id, usd.id)
+    assert (new.id not in (sek.id, usd.id), new.currency, new.ticker) == (True, "EUR", None)
