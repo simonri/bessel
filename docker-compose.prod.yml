@@ -140,7 +140,7 @@ services:
       # cert resolver since the default DNS-01 Cloudflare token on this box isn't
       # scoped to this zone
       # `/mcp` is the remote MCP server Claude connects to; the well-known path is its OAuth protected resource metadata.
-      - "traefik.http.routers.bessel-api-public.rule=Host(`api.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`) || Path(`/mcp`) || Path(`/.well-known/oauth-protected-resource/mcp`))"
+      - "traefik.http.routers.bessel-api-public.rule=Host(`api.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`) || Path(`/mcp`) || Path(`/.well-known/oauth-protected-resource/mcp`) || Path(`/favicon.ico`))"
       - "traefik.http.routers.bessel-api-public.entrypoints=websecure"
       - "traefik.http.routers.bessel-api-public.tls.certresolver=letsencrypt-http"
       - "traefik.http.routers.bessel-api-public.service=metron-api"
