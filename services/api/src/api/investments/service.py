@@ -3,12 +3,13 @@ from uuid import UUID
 
 from sqlalchemy import Row
 
-from api.avanza.repository import HoldingSnapshotRepository
+from api.avanza.repository import AvanzaAccountRepository, HoldingSnapshotRepository
 from api.bank_accounts.repository import BankAccountRepository
 from api.investments.kinds import InvestmentKind, investment_kind
 from api.investments.repository import TradeRepository
 from api.investments.schemas import HoldingSchema, InvestmentAccountSummary, YearAmount
 from api.models.bank_account import INVESTMENT_SUBTYPES
+from api.montrose.repository import MontroseAccountRepository
 from api.postgres import AsyncSession
 from api.transactions.repository import TransactionRepository
 
@@ -88,6 +89,15 @@ class InvestmentService:
         )
       )
     return holdings
+
+  async def current_holdings(self, session: AsyncSession, user_id: UUID) -> list[HoldingSchema]:
+    """What the user holds now, from the brokers' latest positions where they sync and from trades elsewhere."""
+    synced = [
+      *await AvanzaAccountRepository.from_session(session).linked_bank_account_ids(user_id),
+      *await MontroseAccountRepository.from_session(session).linked_bank_account_ids(user_id),
+    ]
+    snapshots = await HoldingSnapshotRepository.from_session(session).latest_for_accounts(synced)
+    return await self.holdings(TradeRepository.from_session(session), user_id, synced_bank_account_ids=synced, snapshots=snapshots)
 
   async def accounts(self, session: AsyncSession, user_id: UUID) -> list[InvestmentAccountSummary]:
     """Each investment account: what it's worth, what was put in and what it made."""

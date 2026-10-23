@@ -21,3 +21,10 @@ Real requests the Bessel MCP server should handle well. Run them against a test 
 | 15 | How did I sleep this week, and how much did I work out? | `get_sleep(start="7 days ago")`, `list_workouts(start="7 days ago")` | Per-night totals and the workouts in range |
 | 16 | How long did I code today? | `get_computer_activity` | Per-app breakdown for today |
 | 17 | Delete my old tasks | (none) | Explains that Bessel's MCP can't delete; offers to cancel them with `update_tasks(status="cancelled")` |
+| 18 | Add a dentist appointment on Friday at 14:00 | `list_calendars`, then `add_calendar_events` after confirming | Personal calendar, 14:00–15:00 local time, busy; asks which calendar only if it's unclear |
+| 19 | Put the company's tax deadlines for next year in my calendar | `list_calendars`, one `add_calendar_events` batch | Confirms the list first; all-day and free; running it again adds nothing new |
+| 20 | How much did I spend on food last month? | `get_month_summary(month="last month")` | The food category's total in kronor, compared with the six-month average |
+| 21 | What needs attention in my accounts? | `get_finances_overview` | Lists only accounts with `needs_attention`, such as a bank approval to renew |
+| 22 | What did my company spend on servers this year? | `search_transactions(company=true, text=…, start=…)` | Company money only, summed per currency |
+| 23 | How are my investments doing? | `get_investments` | Value, growth and dividends per account, and the biggest positions, the user's and the company's apart |
+| 24 | Give me a summary of my week | `get_task_overview`/`find_completed_tasks`, `get_calendar_events`, `get_sleep`, `search_transactions(start="7 days ago")` | Ties work, plans, sleep and spending together without inventing numbers |

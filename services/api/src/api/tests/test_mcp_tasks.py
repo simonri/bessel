@@ -308,5 +308,7 @@ class TestPrompts:
     async with connect() as client:
       prompts = {p.name for p in (await client.list_prompts()).prompts}
       daily = await client.get_prompt("daily-plan")
+      weekly = await client.get_prompt("weekly-review")
     assert {"daily-plan", "weekly-review"} <= prompts
     assert "get_task_overview" in daily.messages[0].content.text  # type: ignore[union-attr]
+    assert "get_finances_overview" in weekly.messages[0].content.text  # type: ignore[union-attr]

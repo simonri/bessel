@@ -10,6 +10,7 @@ import pytest
 from api.mcp.auth import Auth0TokenVerifier
 from api.mcp.server import build_routes, build_server
 from api.postgres import AsyncSession
+from api.redis import create_redis
 from api.settings import settings
 from api.tests.fixtures.base import OTHER_USER_INFO, TEST_USER_INFO
 from mcp import Client
@@ -49,13 +50,18 @@ def serve(session: AsyncSession, mocker: MockerFixture) -> ServeFixture:
     server = build_server()
     routes_app = Starlette(routes=build_routes(server))
 
+    redis = create_redis("script")
+
     async def app(scope: Scope, receive: Receive, send: Send) -> None:
       if scope["type"] == "http":
-        scope.setdefault("state", {})["async_session"] = session
+        scope.setdefault("state", {}).update(async_session=session, redis=redis)
       await routes_app(scope, receive, send)
 
-    async with server.session_manager.run():
-      yield app
+    try:
+      async with server.session_manager.run():
+        yield app
+    finally:
+      await redis.aclose()
 
   return _serve
 

@@ -146,10 +146,14 @@ class TestTools:
         assert tool.annotations.read_only_hint is True, tool.name
 
   @pytest.mark.asyncio
-  async def test_exposes_no_money_or_investment_data(self, connect: ConnectFixture) -> None:
+  async def test_money_is_only_ever_read(self, connect: ConnectFixture) -> None:
     async with connect() as client:
-      names = {tool.name for tool in (await client.list_tools()).tools}
-    assert not {n for n in names if any(word in n for word in ("transaction", "spending", "cash", "invest", "holding"))}
+      tools = (await client.list_tools()).tools
+    money = [t for t in tools if any(word in t.name for word in ("finance", "month_summary", "transaction", "invest", "account", "spending", "holding"))]
+    assert sorted(t.name for t in money) == ["get_finances_overview", "get_investments", "get_month_summary", "search_transactions"]
+    for tool in money:
+      assert tool.annotations is not None
+      assert tool.annotations.read_only_hint is True, tool.name
 
   @pytest.mark.asyncio
   async def test_first_call_creates_the_user(self, connect: ConnectFixture, session: AsyncSession) -> None:
@@ -170,6 +174,12 @@ ISOLATION_TESTED = {
   "start_task",
   "get_calendar_events",
   "find_free_time",
+  "list_calendars",
+  "add_calendar_events",
+  "get_finances_overview",
+  "get_month_summary",
+  "search_transactions",
+  "get_investments",
   "search_recipes",
   "get_recipe",
   "add_recipe",

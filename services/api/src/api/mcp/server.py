@@ -12,12 +12,16 @@ from api.mcp.tools import TOOLS
 from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
-The user's Bessel life dashboard: tasks, calendar, recipes, sleep, workouts and \
-computer activity. Tasks and recipes can be created and updated; nothing can be deleted.
+The user's Bessel life dashboard: tasks, calendar, money and investments, recipes, \
+sleep, workouts and computer activity. Tasks and recipes can be created and updated, \
+and calendar events added; money is read-only, and nothing can be deleted.
 
 Days can be written as YYYY-MM-DD or relative ("today", "fri", "next week"), and \
-default to the user's own timezone. Durations are in seconds. Start a planning or \
-review conversation with get_task_overview.\
+default to the user's own timezone. Durations are in seconds. Money is in currency \
+units (1299.5 SEK), never öre or cents, and currencies are never added together. \
+The user also owns an aktiebolag: its accounts and costs are marked as the company's \
+and kept out of the user's personal spending. Start a planning or review \
+conversation with get_task_overview, and a money one with get_finances_overview.\
 """
 
 

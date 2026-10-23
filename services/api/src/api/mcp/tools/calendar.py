@@ -1,25 +1,31 @@
 import re
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Annotated
 from uuid import UUID
 
 from mcp.server.mcpserver import Context
 from mcp.server.mcpserver.exceptions import ToolError
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from api.calendars.availability import busy_intervals, daily_availability
+from api.calendars.editing import calendar_edit_service
 from api.calendars.providers import AttendeeResponse
 from api.calendars.repository import CalendarEventRepository, CalendarPersonRepository, CalendarRepository
+from api.calendars.schemas import EventCreate
 from api.calendars.service import calendar_service
 from api.common.schemas import Schema
 from api.common.utils import utc_now
-from api.mcp.context import user_session
+from api.mcp.context import request_redis, user_session
 from api.mcp.dates import Day, TimezoneParam, local_window, parse_day, resolve_timezone, today_in
-from api.mcp.tools.common import ToolSpec, read
+from api.mcp.tools.common import ToolSpec, read, write
+from api.models.calendar import Calendar
+from api.models.calendar_account import CalendarAccount
 
 MAX_CALENDAR_DAYS = 62
 MAX_FREE_TIME_DAYS = 31
 DEFAULT_FREE_TIME_DAYS = 7
+MAX_NEW_EVENTS = 50
+DEFAULT_EVENT_MINUTES = 60
 _CLOCK = re.compile(r"^(\d{1,2}):([0-5]\d)$")
 
 
@@ -203,7 +209,144 @@ async def find_free_time(
   )
 
 
+class CalendarInfo(Schema):
+  name: str
+  account: str = Field(description="The Google or iCloud account it belongs to.")
+  can_add_events: bool
+  hidden: bool = Field(description="Hidden in Bessel; its events still show in get_calendar_events.")
+
+
+class Calendars(Schema):
+  calendars: list[CalendarInfo]
+
+
+async def list_calendars(ctx: Context) -> Calendars:
+  """The user's calendars and which of them events can be added to. Use it to pick the calendar for add_calendar_events."""
+  async with user_session(ctx) as (session, user):
+    rows = await CalendarRepository.from_session(session).list_with_accounts_for_user(user.id)
+  return Calendars(
+    calendars=[
+      CalendarInfo(name=calendar.name, account=account.email, can_add_events=account.can_write and calendar.writable, hidden=calendar.hidden)
+      for calendar, account in rows
+    ]
+  )
+
+
+class NewEvent(Schema):
+  calendar: str = Field(description="The calendar's name, as in list_calendars.")
+  title: Annotated[str, Field(min_length=1, max_length=1024)]
+  day: Day
+  start_time: str | None = Field(default=None, description="Local HH:MM. Leave out for an all-day event.")
+  end_time: str | None = Field(default=None, description=f"Local HH:MM, later the same day. Defaults to {DEFAULT_EVENT_MINUTES} minutes after start_time.")
+  last_day: Day | None = Field(default=None, description="For an all-day event over several days, its last day.")
+  description: str | None = Field(default=None, max_length=8192)
+  location: str | None = Field(default=None, max_length=1024)
+  busy: bool | None = Field(default=None, description="Whether it blocks time. Defaults to busy for timed events and free for all-day ones.")
+
+
+class AddedEvent(Schema):
+  calendar: str
+  title: str
+  start: datetime | date
+
+
+class AddedEvents(Schema):
+  added: list[AddedEvent]
+  already_there: list[AddedEvent] = Field(description="Events skipped because the calendar has one with the same title and start.")
+
+
+def _calendar_named(name: str, rows: list[tuple[Calendar, CalendarAccount]]) -> tuple[Calendar, CalendarAccount]:
+  wanted = name.strip().casefold()
+  matches = [(c, a) for c, a in rows if c.name.casefold() == wanted]
+  writable = [(c, a) for c, a in matches if a.can_write and c.writable]
+  if len(writable) == 1:
+    return writable[0]
+  if len(writable) > 1:
+    raise ToolError(f"Several calendars are called {name!r}, in {', '.join(a.email for _, a in writable)}.")
+  if matches:
+    raise ToolError(f"Events can't be added to {name!r}: it's read-only, or its account needs reconnecting in Bessel.")
+  names = ", ".join(sorted({c.name for c, a in rows if a.can_write and c.writable})) or "none"
+  raise ToolError(f"No calendar called {name!r}. Calendars events can be added to: {names}.")
+
+
+def _timing(event: NewEvent, today: date) -> dict:
+  day = parse_day(event.day, today)
+  if event.start_time is None:
+    if event.end_time is not None:
+      raise ToolError(f"{event.title!r}: end_time needs a start_time.")
+    last = parse_day(event.last_day, today) if event.last_day else day
+    if last < day:
+      raise ToolError(f"{event.title!r}: last_day is before day.")
+    return {"start": {"date": day.isoformat()}, "end": {"date": (last + timedelta(days=1)).isoformat()}}
+  if event.last_day is not None:
+    raise ToolError(f"{event.title!r}: last_day is only for all-day events; a timed event ends on its own day.")
+  start = _parse_clock(event.start_time, "start_time")
+  end = _parse_clock(event.end_time, "end_time") if event.end_time else start + DEFAULT_EVENT_MINUTES
+  if end <= start or end > 24 * 60:
+    raise ToolError(f"{event.title!r}: the end must be later the same day than the start.")
+  moment = datetime.combine(day, time())
+  return {
+    "start": {"date_time": f"{moment + timedelta(minutes=start):%Y-%m-%dT%H:%M}"},
+    "end": {"date_time": f"{moment + timedelta(minutes=end):%Y-%m-%dT%H:%M}"},
+  }
+
+
+async def add_calendar_events(
+  ctx: Context,
+  events: Annotated[list[NewEvent], Field(min_length=1, max_length=MAX_NEW_EVENTS)],
+  timezone: TimezoneParam = None,
+) -> AddedEvents:
+  """Adds events to the user's calendars, such as an appointment they mention or deadlines for a plan.
+
+  Every event is checked before any is added, and one the calendar already has (same title and start) is skipped,
+  so calling again after an error is safe. Guests are never invited. Nothing can be deleted afterwards, so confirm
+  the events with the user first.
+  """
+  async with user_session(ctx) as (session, user):
+    tz = resolve_timezone(user, timezone)
+    today = today_in(tz)
+    rows = await CalendarRepository.from_session(session).list_with_accounts_for_user(user.id)
+    planned = []
+    for event in events:
+      calendar, _ = _calendar_named(event.calendar, rows)
+      try:
+        body = EventCreate.model_validate(
+          {
+            "title": event.title,
+            "description": event.description,
+            "location": event.location,
+            "busy": event.busy if event.busy is not None else event.start_time is not None,
+            "time_zone": tz.key,
+            "notify_guests": False,
+            "timing": {**_timing(event, today), "time_zone": tz.key},
+          }
+        )
+      except ValidationError as e:
+        raise ToolError(f"{event.title!r}: {e.errors()[0]['msg']}") from e
+      planned.append((calendar, body, body.timing.to_timing().start))
+
+    repository = CalendarEventRepository.from_session(session)
+    existing: dict[UUID, set[tuple[datetime | date, str]]] = {}
+    for calendar_id in {calendar.id for calendar, _, _ in planned}:
+      existing[calendar_id] = await repository.titles_starting(calendar_id, [start for c, _, start in planned if c.id == calendar_id])
+
+    redis = request_redis(ctx)
+    added, skipped = [], []
+    for calendar, body, start in planned:
+      result = AddedEvent(calendar=calendar.name, title=(body.title or "").strip(), start=start)
+      key = (start.astimezone(UTC) if isinstance(start, datetime) else start, result.title.casefold())
+      if key in existing[calendar.id]:
+        skipped.append(result)
+        continue
+      await calendar_edit_service.create_event(session, redis, user.id, calendar.id, body)
+      existing[calendar.id].add(key)
+      added.append(result)
+  return AddedEvents(added=added, already_there=skipped)
+
+
 TOOLS: list[ToolSpec] = [
   read(get_calendar_events, "Calendar events"),
   read(find_free_time, "Find free time"),
+  read(list_calendars, "Calendars"),
+  write(add_calendar_events, "Add calendar events", idempotent=True),
 ]

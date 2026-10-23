@@ -9,7 +9,19 @@ from starlette.requests import Request
 from api.exceptions import BesselError
 from api.models.user import User
 from api.postgres import AsyncSession
+from api.redis import Redis
 from api.users.service import user_service
+
+
+def _request(ctx: Context) -> Request:
+  request = ctx.request_context.request
+  if not isinstance(request, Request):
+    raise RuntimeError("MCP tools are only served over HTTP")
+  return request
+
+
+def request_redis(ctx: Context) -> Redis:
+  return _request(ctx).state.redis
 
 
 @asynccontextmanager
@@ -23,9 +35,7 @@ async def user_session(ctx: Context) -> AsyncIterator[tuple[AsyncSession, User]]
   re-raised as `ToolError` so their message reaches the model, while anything
   else stays opaque.
   """
-  request = ctx.request_context.request
-  if not isinstance(request, Request):
-    raise RuntimeError("MCP tools are only served over HTTP")
+  request = _request(ctx)
   auth_user = request.scope.get("user")
   if not isinstance(auth_user, AuthenticatedUser) or auth_user.access_token.subject is None:
     raise ToolError("Not authenticated")

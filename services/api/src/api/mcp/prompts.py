@@ -33,7 +33,9 @@ def weekly_review() -> str:
     2. Call get_task_overview and list what's overdue or has slipped, and what's coming up next week.
     3. For each overdue task, suggest one of: a new day, a lower priority, or cancelling it. Check \
 get_calendar_events for next week so new days are realistic.
-    4. Ask me which suggestions to apply, then apply them with update_tasks.""")
+    4. Call get_finances_overview and search_transactions for the last 7 days. Mention anything that needs \
+attention, such as a bank approval to renew or transactions without a category, and any spending that stands out.
+    5. Ask me which suggestions to apply, then apply them with update_tasks.""")
 
 
 PROMPTS: list[PromptSpec] = [

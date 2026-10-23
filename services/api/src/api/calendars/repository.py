@@ -104,6 +104,15 @@ class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, U
       raise ResourceNotFound("Calendar not found")
     return row[0], row[1]
 
+  async def list_with_accounts_for_user(self, user_id: UUID) -> list[tuple[Calendar, CalendarAccount]]:
+    statement = (
+      select(Calendar, CalendarAccount)
+      .join(CalendarAccount, Calendar.account_id == CalendarAccount.id)
+      .where(CalendarAccount.user_id == user_id, Calendar.deleted_at.is_(None))
+      .order_by(CalendarAccount.email, Calendar.name)
+    )
+    return [(calendar, account) for calendar, account in (await self.session.execute(statement)).tuples()]
+
   async def names_for_user(self, user_id: UUID) -> dict[UUID, str]:
     statement = select(Calendar.id, Calendar.name).join(CalendarAccount, Calendar.account_id == CalendarAccount.id).where(CalendarAccount.user_id == user_id)
     return dict((await self.session.execute(statement)).tuples().all())
@@ -230,6 +239,17 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
     if row is None:
       raise ResourceNotFound("Event not found")
     return row[0], row[1], row[2]
+
+  async def titles_starting(self, calendar_id: UUID, starts: Sequence[datetime | date]) -> set[tuple[datetime | date, str]]:
+    """(start, lowercased title) of the calendar's events starting at any of `starts`: all-day ones by day, timed ones by instant."""
+    days = [s for s in starts if not isinstance(s, datetime)]
+    instants = [s for s in starts if isinstance(s, datetime)]
+    statement = select(CalendarEvent.start_date, CalendarEvent.start_at, CalendarEvent.title).where(
+      CalendarEvent.calendar_id == calendar_id,
+      CalendarEvent.deleted_at.is_(None),
+      or_(CalendarEvent.start_date.in_(days), CalendarEvent.start_at.in_(instants)),
+    )
+    return {(start_at or start_date, title.casefold()) for start_date, start_at, title in (await self.session.execute(statement)).tuples()}
 
   async def find_written(self, calendar_id: UUID, provider_id: str, near: datetime | date | None) -> CalendarEvent | None:
     """The synced row for an event or series the provider just wrote, closest to `near`."""
