@@ -29,6 +29,7 @@ from api.montrose.service import REJECTED, UNREACHABLE, SessionMaker, montrose_s
 from api.postgres import AsyncSession
 from api.settings import settings
 from api.tests.fixtures.database import SaveFixture, get_database_url
+from api.tests.test_documents import a_pdf
 from api.worker._enqueue import JobQueueManager
 from cryptography.fernet import Fernet
 from httpx import AsyncClient
@@ -797,6 +798,25 @@ class TestImportCorrections:
     assert account["holdings_value"] == 0
 
   @pytest.mark.asyncio
+  async def test_an_account_missing_from_montroses_holdings_keeps_its_last_positions(
+    self,
+    client: AsyncClient,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    job_queue_manager: JobQueueManager,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    connection_id, _ = await _linked(client, save_fixture, history, user)
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+    history.holdings = [HOLDINGS[1]]
+
+    await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(days=1))
+
+    assert [h["security_name"] for h in (await client.get("/v1/investments/holdings")).json()["items"]] == ["Treasury Capital"]
+
+  @pytest.mark.asyncio
   async def test_a_row_montrose_cancels_after_it_was_imported_is_taken_back(
     self,
     client: AsyncClient,
@@ -811,12 +831,16 @@ class TestImportCorrections:
     history.transactions = [_row(1, "Deposit", "2026-10-20", 2000), _row(2, "Buy", "2026-10-21", -1155, quantity=221, price=5.22, orderbook=1617)]
     connection_id, bank_account = await _linked(client, save_fixture, history, user)
     await _sync(session_maker, connection_id, monkeypatch, at=NOW)
+    deposit = await session.scalar(select(Transaction.id).where(Transaction.bank_account_id == bank_account.id, Transaction.amount == 200_000))
+    uploaded = await client.post(f"/v1/transactions/{deposit}/documents", files={"file": ("kvitto.pdf", a_pdf(1), "application/pdf")})
+    assert uploaded.status_code == 201, uploaded.text
     history.transactions = [{**row, "isCanceled": True} for row in history.transactions]
 
     await _sync(session_maker, connection_id, monkeypatch, at=NOW + timedelta(hours=1))
 
     assert await _cash(session, bank_account) == []
     assert (await session.execute(select(Trade).where(Trade.bank_account_id == bank_account.id))).all() == []
+    assert (await client.get(f"/v1/documents/{uploaded.json()['id']}/file")).status_code == 404
 
   @pytest.mark.asyncio
   async def test_only_real_buys_and_sells_become_trades(

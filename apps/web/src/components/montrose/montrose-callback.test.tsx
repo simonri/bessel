@@ -143,4 +143,15 @@ describe("offering Montrose's accounts after connecting", () => {
   it("doesn't offer without having just connected", () => {
     expect(takeMontroseToChoose(status([null]))).toBe(false);
   });
+
+  it("doesn't offer when the connection is gone", () => {
+    sessionStorage.setItem(MONTROSE_CONNECTED_KEY, "1");
+
+    expect(
+      takeMontroseToChoose({
+        logo: "",
+        connection: null,
+      } as MontroseStatusResponse),
+    ).toBe(false);
+  });
 });

@@ -16,6 +16,7 @@ from sqlalchemy import func, select
 from api.avanza.repository import HoldingSnapshotRepository, ImportedTradeRepository, SecurityCatalogRepository
 from api.common.encryption import InvalidToken, decrypt, encrypt
 from api.common.utils import utc_now
+from api.documents.service import document_service
 from api.logging import Logger
 from api.models.bank_account import BankAccount
 from api.models.montrose import MontroseAccount, MontroseConnection
@@ -344,26 +345,27 @@ class MontroseService:
       )
     await ImportedTradeRepository.from_session(session).insert_ignoring_duplicates(trades)
 
+    # An account Montrose left out of its holdings keeps the last positions it did report.
+    reported = next((h for h in fetched.holdings if h.account_id == account.external_id), None)
+    if reported is None:
+      return created
     snapshot = []
-    for holdings in fetched.holdings:
-      if holdings.account_id != account.external_id:
+    for p in reported.positions:
+      if p.value is None or p.quantity == 0:
         continue
-      for p in holdings.positions:
-        if p.value is None or p.quantity == 0:
-          continue
-        security = await securities.get_or_create_by_name(name=p.name, ticker=p.ticker, currency=p.currency)
-        snapshot.append(
-          {
-            "user_id": user_id,
-            "bank_account_id": account.bank_account_id,
-            "security_id": security.id,
-            "snapshot_date": today,
-            "quantity": _micro(p.quantity),
-            "value": _minor(p.value),
-            "acquired_value": _minor(p.acquired_value if p.acquired_value is not None else p.value),
-            "currency": holdings.currency,
-          }
-        )
+      security = await securities.get_or_create_by_name(name=p.name, ticker=p.ticker, currency=p.currency)
+      snapshot.append(
+        {
+          "user_id": user_id,
+          "bank_account_id": account.bank_account_id,
+          "security_id": security.id,
+          "snapshot_date": today,
+          "quantity": _micro(p.quantity),
+          "value": _minor(p.value),
+          "acquired_value": _minor(p.acquired_value if p.acquired_value is not None else p.value),
+          "currency": reported.currency,
+        }
+      )
     await HoldingSnapshotRepository.from_session(session).replace_day(account.bank_account_id, today, snapshot)
     return created
 
@@ -445,6 +447,8 @@ class MontroseService:
           stored.cash_balance = _minor(reported.cash)
           balances = await transactions.net_balances_by_account([bank_account.id])
           stored.balance_drift = stored.cash_balance - (bank_account.base_balance + balances.get(bank_account.id, 0))
+      # Last, as it deletes files: cancelled rows may have carried an invoice.
+      await document_service.prune(session, user_id)
       connection.last_synced_at, connection.sync_error = started, None
     return created
 
