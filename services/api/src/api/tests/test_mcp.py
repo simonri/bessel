@@ -30,6 +30,19 @@ class TestTransport:
     assert f'resource_metadata="{BASE_URL}/.well-known/oauth-protected-resource/mcp"' in resp.headers["www-authenticate"]
 
   @pytest.mark.asyncio
+  async def test_the_api_host_icon_is_the_web_apps(self) -> None:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=bessel_app), base_url=BASE_URL) as client:
+      resp = await client.get("/favicon.ico")
+    assert (resp.status_code, resp.headers["location"]) == (307, f"{settings.FRONTEND_BASE_URL}/favicon.ico")
+
+  @pytest.mark.asyncio
+  async def test_the_server_shows_a_square_icon(self, connect: ConnectFixture) -> None:
+    async with connect() as client:
+      info = client.server_info
+    assert info is not None and info.icons is not None
+    assert [(i.src, i.mime_type, i.sizes) for i in info.icons] == [(f"{settings.FRONTEND_BASE_URL}/icon.png", "image/png", ["512x512"])]
+
+  @pytest.mark.asyncio
   async def test_resource_metadata_names_this_server_and_auth0(self) -> None:
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=bessel_app), base_url=BASE_URL) as client:
       resp = await client.get("/.well-known/oauth-protected-resource/mcp")

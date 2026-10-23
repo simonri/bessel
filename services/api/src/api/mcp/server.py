@@ -3,6 +3,7 @@ from urllib.parse import urlsplit
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
+from mcp.types import Icon
 from pydantic import AnyHttpUrl
 from starlette.routing import Route
 
@@ -33,6 +34,8 @@ def build_server() -> MCPServer:
     title="Bessel",
     instructions=INSTRUCTIONS,
     website_url=settings.FRONTEND_BASE_URL,
+    # A full square: clients round it themselves, and transparent corners show as a light edge.
+    icons=[Icon(src=settings.generate_frontend_url("icon.png"), mime_type="image/png", sizes=["512x512"])],
     token_verifier=Auth0TokenVerifier(),
     auth=AuthSettings(
       issuer_url=AnyHttpUrl(f"https://{settings.AUTH0_DOMAIN}/"),
