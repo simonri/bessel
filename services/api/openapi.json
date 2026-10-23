@@ -14103,6 +14103,11 @@
       },
       "MontroseStatusResponse": {
         "properties": {
+          "logo": {
+            "type": "string",
+            "title": "Logo",
+            "description": "Montrose's logo image URL."
+          },
           "connection": {
             "anyOf": [
               {
@@ -14116,6 +14121,7 @@
         },
         "type": "object",
         "required": [
+          "logo",
           "connection"
         ],
         "title": "MontroseStatusResponse"

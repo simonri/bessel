@@ -3969,6 +3969,12 @@ export type MontroseConnectionSchema = {
  * MontroseStatusResponse
  */
 export type MontroseStatusResponse = {
+  /**
+   * Logo
+   *
+   * Montrose's logo image URL.
+   */
+  logo: string;
   connection: MontroseConnectionSchema | null;
 };
 

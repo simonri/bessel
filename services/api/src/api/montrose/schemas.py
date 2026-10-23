@@ -25,6 +25,7 @@ class MontroseConnectionSchema(Schema):
 
 
 class MontroseStatusResponse(Schema):
+  logo: str = Field(description="Montrose's logo image URL.")
   connection: MontroseConnectionSchema | None
 
 

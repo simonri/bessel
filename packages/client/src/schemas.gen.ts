@@ -6067,6 +6067,11 @@ export const MontroseConnectionSchemaSchema = {
 
 export const MontroseStatusResponseSchema = {
   properties: {
+    logo: {
+      type: "string",
+      title: "Logo",
+      description: "Montrose's logo image URL.",
+    },
     connection: {
       anyOf: [
         {
@@ -6079,7 +6084,7 @@ export const MontroseStatusResponseSchema = {
     },
   },
   type: "object",
-  required: ["connection"],
+  required: ["logo", "connection"],
   title: "MontroseStatusResponse",
 } as const;
 

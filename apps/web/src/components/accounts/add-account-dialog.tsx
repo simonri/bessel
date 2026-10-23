@@ -121,7 +121,7 @@ function useProviders(): Provider[] {
   if (montrose && !montrose.connection) {
     providers.push({
       name: "Montrose",
-      logo: null,
+      logo: montrose.logo,
       kind: "montrose",
       hint: "Approve with BankID",
     });

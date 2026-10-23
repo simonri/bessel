@@ -17,14 +17,18 @@ T = TypeVar("T", bound="MontroseStatusResponse")
 class MontroseStatusResponse:
   """
   Attributes:
+      logo (str): Montrose's logo image URL.
       connection (MontroseConnectionSchema | None):
   """
 
+  logo: str
   connection: MontroseConnectionSchema | None
   additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
   def to_dict(self) -> dict[str, Any]:
     from ..models.montrose_connection_schema import MontroseConnectionSchema
+
+    logo = self.logo
 
     connection: dict[str, Any] | None
     if isinstance(self.connection, MontroseConnectionSchema):
@@ -36,6 +40,7 @@ class MontroseStatusResponse:
     field_dict.update(self.additional_properties)
     field_dict.update(
       {
+        "logo": logo,
         "connection": connection,
       }
     )
@@ -47,6 +52,7 @@ class MontroseStatusResponse:
     from ..models.montrose_connection_schema import MontroseConnectionSchema
 
     d = dict(src_dict)
+    logo = d.pop("logo")
 
     def _parse_connection(data: object) -> MontroseConnectionSchema | None:
       if data is None:
@@ -64,6 +70,7 @@ class MontroseStatusResponse:
     connection = _parse_connection(d.pop("connection"))
 
     montrose_status_response = cls(
+      logo=logo,
       connection=connection,
     )
 

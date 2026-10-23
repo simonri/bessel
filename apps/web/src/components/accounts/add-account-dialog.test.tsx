@@ -28,7 +28,10 @@ const linkMontrose = vi.fn(
 );
 const connectMontrose = vi.fn();
 const montrose = vi.hoisted(() => ({
-  status: { connection: null } as { connection: unknown },
+  status: { logo: "https://logo.example/montrose.png", connection: null } as {
+    logo: string;
+    connection: unknown;
+  },
   fetched: 0,
   async fetch() {
     this.fetched += 1;
@@ -131,7 +134,10 @@ afterEach(() => {
   linkBank.mockClear();
   linkMontrose.mockClear();
   connectMontrose.mockClear();
-  montrose.status = { connection: null };
+  montrose.status = {
+    logo: "https://logo.example/montrose.png",
+    connection: null,
+  };
 });
 
 function mount(state: Parameters<typeof AddAccountDialog>[0]["state"]) {
@@ -148,7 +154,11 @@ describe("Montrose", () => {
   it("is offered until it's connected, and goes to its BankID login", async () => {
     const onStateChange = mount({ step: "choose" });
 
-    fireEvent.click(await screen.findByRole("button", { name: /Montrose/ }));
+    const tile = await screen.findByRole("button", { name: /Montrose/ });
+    expect(tile.querySelector("img")?.getAttribute("src")).toBe(
+      "https://logo.example/montrose.png",
+    );
+    fireEvent.click(tile);
     const [next] = onStateChange.mock.calls.at(-1) ?? [];
     expect(next).toMatchObject({
       step: "safety",
@@ -163,7 +173,7 @@ describe("Montrose", () => {
     expect(connectMontrose).toHaveBeenCalledOnce();
     cleanup();
 
-    montrose.status = { connection: { accounts: [] } };
+    montrose.status = { ...montrose.status, connection: { accounts: [] } };
     const before = montrose.fetched;
     mount({ step: "choose" });
     await waitFor(() => expect(montrose.fetched).toBeGreaterThan(before));
@@ -174,6 +184,7 @@ describe("Montrose", () => {
 
   it("brings its accounts in by type, into new or existing accounts", async () => {
     montrose.status = {
+      ...montrose.status,
       connection: {
         accounts: [
           {

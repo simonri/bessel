@@ -33,6 +33,10 @@ STATE_TTL_SECONDS = 15 * 60
 CONSENT_LIFETIME = timedelta(days=90)
 # An access token this close to running out is refreshed before use.
 REFRESH_MARGIN = timedelta(minutes=1)
+# Montrose's own app icon, from its website.
+LOGO = "https://cdn.prod.website-files.com/665d843245a09dc69c336e03/667abad232482d4a92203115_webclip.png"
+# Montrose leaves the name empty unless the user named the account; these read like its own labels.
+TYPE_NAMES = {"ISK": "ISK", "KF": "KF", "Depot": "Depå", "SPAR": "Sparkonto", "Credit": "Kredit"}
 REJECTED = "Montrose no longer accepts Bessel's access. Log in with BankID again to resume syncing."
 UNREACHABLE = "Couldn't reach Montrose. Bessel tries again at the next sync."
 
@@ -57,10 +61,15 @@ def redirect_uri() -> str:
   return settings.generate_frontend_url("montrose/callback")
 
 
+def _name(row: dict[str, Any]) -> str:
+  given = str(row.get("accountName") or "").strip()
+  account_type = str(row["accountType"])
+  return given or f"Montrose - {TYPE_NAMES.get(account_type, account_type)}"
+
+
 def parse_accounts(rows: Any) -> list[Account]:
   return [
-    Account(external_id=str(row["accountId"]), account_number=str(row["accountNumber"]), name=str(row["accountName"]), account_type=str(row["accountType"]))
-    for row in rows
+    Account(external_id=str(row["accountId"]), account_number=str(row["accountNumber"]), name=_name(row), account_type=str(row["accountType"])) for row in rows
   ]
 
 

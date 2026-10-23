@@ -25,6 +25,7 @@ from api.bank_accounts.schemas import (
 from api.klarna.repository import KlarnaPayLaterRepository
 from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
 from api.montrose.repository import MontroseConnectionRepository
+from api.montrose.service import LOGO as MONTROSE_LOGO
 from api.montrose.service import consent_expires_at
 from api.open_banking.enable_banking import bank_logo
 from api.open_banking.repository import BankConnectionRepository
@@ -225,7 +226,9 @@ class AccountsOverview:
       elif expires - now < RENEW_WARNING:
         problem = AccountProblem(kind="renew_soon", day=expires.date())
       found[linked.bank_account_id] = (
-        AccountSource(kind="montrose", label="Montrose", synced_at=montrose.last_synced_at, access_until=expires, issue=problem, problem=None),
+        AccountSource(
+          kind="montrose", label="Montrose", logo=MONTROSE_LOGO, synced_at=montrose.last_synced_at, access_until=expires, issue=problem, problem=None
+        ),
         None,
         None,
       )

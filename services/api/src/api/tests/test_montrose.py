@@ -241,6 +241,24 @@ class TestConnecting:
     assert [job[:2] for job in job_queue_manager._enqueued_jobs] == [("sync_montrose_connection", (first["id"],))]
 
 
+class TestAccountNames:
+  @pytest.mark.asyncio
+  async def test_an_account_montrose_leaves_unnamed_is_named_after_its_type(self, client: AsyncClient, montrose: FakeMontrose) -> None:
+    montrose.accounts = [
+      {**ISK, "accountName": ""},
+      {**KF, "accountName": "  "},
+      {**ISK, "accountId": "d", "accountType": "Depot", "accountName": None},
+      {**ISK, "accountId": "x", "accountType": "Margin", "accountName": ""},
+      {**ISK, "accountId": "n", "accountName": "Barnens ISK"},
+    ]
+
+    connected = await _connect(client, montrose)
+    status = (await client.get("/v1/montrose")).json()
+
+    assert [a["name"] for a in connected["accounts"]] == ["Montrose - ISK", "Montrose - KF", "Montrose - Depå", "Montrose - Margin", "Barnens ISK"]
+    assert status["logo"] == service.LOGO
+
+
 class TestAccessToken:
   @pytest.mark.asyncio
   async def test_a_fresh_token_is_used_as_is_and_an_old_one_is_refreshed_and_saved_with_its_new_refresh_token(
@@ -354,7 +372,7 @@ class TestAccounts:
     disconnected = await client.delete("/v1/montrose")
 
     assert (too_soon.status_code, allowed.status_code, disconnected.status_code) == (429, 202, 204)
-    assert (await client.get("/v1/montrose")).json() == {"connection": None}
+    assert (await client.get("/v1/montrose")).json()["connection"] is None
     assert (await session.execute(select(func.count()).select_from(MontroseAccount))).scalar_one() == 0
 
 

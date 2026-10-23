@@ -334,6 +334,7 @@ class TestSources:
     rejected = {a["name"]: a["source"] for a in (await _overview(client))["accounts"]}
 
     assert (ending["Montrose ISK"]["kind"], ending["Montrose ISK"]["label"]) == ("montrose", "Montrose")
+    assert ending["Montrose ISK"]["logo"].startswith("https://cdn.prod.website-files.com/")
     assert ending["Montrose KF"]["issue"]["kind"] == "renew_soon"
     assert ending["Montrose KF"]["issue"]["day"] == (consented + timedelta(days=90)).date().isoformat()
     assert rejected["Montrose ISK"]["issue"]["kind"] == "sign_in"

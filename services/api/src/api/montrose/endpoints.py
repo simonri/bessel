@@ -12,7 +12,7 @@ from api.models.montrose import MontroseConnection
 from api.montrose.client import MontroseAuthError, MontroseError
 from api.montrose.repository import MontroseAccountRepository, MontroseConnectionRepository
 from api.montrose.schemas import MontroseAccountUpdate, MontroseAuthorizeResponse, MontroseCallbackRequest, MontroseConnectionSchema, MontroseStatusResponse
-from api.montrose.service import MontroseConflictError, MontroseStateError, consent_expires_at, montrose_service
+from api.montrose.service import LOGO, MontroseConflictError, MontroseStateError, consent_expires_at, montrose_service
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
 
@@ -44,7 +44,7 @@ async def _owned(connections: MontroseConnectionRepository, user_id: UUID) -> Mo
 @router.get("", summary="Get Montrose Connection", response_model=MontroseStatusResponse)
 async def get_montrose(session: DBSession, current_user: CurrentDBUser) -> MontroseStatusResponse:
   connection = await MontroseConnectionRepository.from_session(session).get_for_user(current_user.id)
-  return MontroseStatusResponse(connection=_schema(connection) if connection else None)
+  return MontroseStatusResponse(logo=LOGO, connection=_schema(connection) if connection else None)
 
 
 @router.post("/authorize", summary="Start Montrose Connection", response_model=MontroseAuthorizeResponse)
