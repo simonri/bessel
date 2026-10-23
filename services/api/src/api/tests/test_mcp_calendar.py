@@ -13,11 +13,11 @@ from api.tests.fixtures.mcp import ConnectFixture, mcp_call, mcp_call_error
 MONDAY = date(2030, 1, 7)
 
 
-async def save_calendar(save_fixture: SaveFixture, user: User, *, hidden: bool = False) -> Calendar:
-  email = f"{'hidden' if hidden else 'me'}@example.com"
+async def save_calendar(save_fixture: SaveFixture, user: User, *, hidden: bool = False, name: str = "Personal") -> Calendar:
+  email = f"{'hidden' if hidden else 'me'}-{len(name)}@example.com"
   account = CalendarAccount(user_id=user.id, provider=CalendarProvider.google, email=email, encrypted_credentials="unused")
   await save_fixture(account)
-  calendar = Calendar(account_id=account.id, external_id="primary", name="Personal", color="#16a765", hidden=hidden)
+  calendar = Calendar(account_id=account.id, external_id="primary", name=name, color="#16a765", hidden=hidden)
   await save_fixture(calendar)
   return calendar
 
@@ -35,8 +35,9 @@ def slots(result: dict[str, Any]) -> list[tuple[str, str, int]]:
 
 class TestCalendar:
   @pytest.mark.asyncio
-  async def test_events_in_local_days(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+  async def test_events_in_local_days_with_the_calendar_each_is_in(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
     calendar = await save_calendar(save_fixture, user)
+    holidays = await save_calendar(save_fixture, user, name="Helgdagar i Sverige")
     # 23:30 UTC on Oct 4 is already Oct 5 in Stockholm.
     late = CalendarEvent(
       calendar_id=calendar.id,
@@ -46,14 +47,17 @@ class TestCalendar:
       start_at=datetime(2026, 10, 4, 23, 30, tzinfo=UTC),
       end_at=datetime(2026, 10, 5, 0, 30, tzinfo=UTC),
     )
-    holiday = CalendarEvent(calendar_id=calendar.id, external_id="hol", title="Holiday", all_day=True, start_date=date(2026, 10, 5), end_date=date(2026, 10, 6))
+    holiday = CalendarEvent(calendar_id=holidays.id, external_id="hol", title="Holiday", all_day=True, start_date=date(2026, 10, 5), end_date=date(2026, 10, 6))
     yesterday = CalendarEvent(calendar_id=calendar.id, external_id="old", title="Old", all_day=True, start_date=date(2026, 10, 4), end_date=date(2026, 10, 5))
     for event in (late, holiday, yesterday):
       await save_fixture(event)
 
     args = {"start": "2026-10-05", "end": "2026-10-05", "timezone": "Europe/Stockholm"}
     events = (await mcp_call(connect, "get_calendar_events", args))["events"]
-    assert [(e["title"], e["start"]) for e in events] == [("Holiday", "2026-10-05"), ("Dentist", "2026-10-04T23:30:00Z")]
+    assert [(e["title"], e["start"], e["calendar"]) for e in events] == [
+      ("Holiday", "2026-10-05", "Helgdagar i Sverige"),
+      ("Dentist", "2026-10-04T23:30:00Z", "Personal"),
+    ]
     assert (await mcp_call(connect, "get_calendar_events", args, token="token-b"))["events"] == []
 
   @pytest.mark.asyncio

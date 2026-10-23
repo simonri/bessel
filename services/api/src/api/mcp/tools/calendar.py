@@ -9,7 +9,7 @@ from pydantic import Field
 
 from api.calendars.availability import busy_intervals, daily_availability
 from api.calendars.providers import AttendeeResponse
-from api.calendars.repository import CalendarEventRepository, CalendarPersonRepository
+from api.calendars.repository import CalendarEventRepository, CalendarPersonRepository, CalendarRepository
 from api.calendars.service import calendar_service
 from api.common.schemas import Schema
 from api.common.utils import utc_now
@@ -33,6 +33,7 @@ class CalendarAttendee(Schema):
 class CalendarEvent(Schema):
   id: UUID
   title: str
+  calendar: str = Field(description="The calendar it's in, such as a work, family or holidays calendar.")
   all_day: bool
   start: datetime | date = Field(description="Start time, or start date for all-day events.")
   end: datetime | date = Field(description="End time, or the exclusive end date for all-day events.")
@@ -61,6 +62,7 @@ async def get_calendar_events(ctx: Context, start: Day = "today", end: Day = "to
     window_start, window_end = local_window(start_day, end_day, tz, max_days=MAX_CALENDAR_DAYS)
     rows = await CalendarEventRepository.from_session(session).list_in_range(user.id, window_start, window_end)
     events = await calendar_service.event_schemas(CalendarPersonRepository.from_session(session), user.id, rows)
+    calendars = await CalendarRepository.from_session(session).names_for_user(user.id)
 
   result: list[CalendarEvent] = []
   for event in events:
@@ -78,6 +80,7 @@ async def get_calendar_events(ctx: Context, start: Day = "today", end: Day = "to
       CalendarEvent(
         id=event.id,
         title=event.title,
+        calendar=calendars.get(event.calendar_id, ""),
         all_day=event.all_day,
         start=event_start,
         end=event_end,

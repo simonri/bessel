@@ -104,6 +104,10 @@ class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, U
       raise ResourceNotFound("Calendar not found")
     return row[0], row[1]
 
+  async def names_for_user(self, user_id: UUID) -> dict[UUID, str]:
+    statement = select(Calendar.id, Calendar.name).join(CalendarAccount, Calendar.account_id == CalendarAccount.id).where(CalendarAccount.user_id == user_id)
+    return dict((await self.session.execute(statement)).tuples().all())
+
   async def list_for_account(self, account: CalendarAccount) -> Sequence[Calendar]:
     return await self.get_all(self.get_base_statement().where(Calendar.account_id == account.id).order_by(Calendar.created_at))
 
