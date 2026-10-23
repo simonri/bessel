@@ -22,9 +22,13 @@ from cryptography.fernet import Fernet
 TODAY = date(2026, 10, 23)
 
 
+@pytest.fixture(autouse=True)
+def encryption_key(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(settings, "CREDENTIALS_ENCRYPTION_KEY", Fernet.generate_key().decode())
+
+
 @pytest.fixture
 def google(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeGoogleCalendar]:
-  monkeypatch.setattr(settings, "CREDENTIALS_ENCRYPTION_KEY", Fernet.generate_key().decode())
   monkeypatch.setattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "id")
   monkeypatch.setattr(settings, "GOOGLE_OAUTH_CLIENT_SECRET", "secret")
   monkeypatch.setattr(calendar_tools, "today_in", lambda tz: TODAY)
