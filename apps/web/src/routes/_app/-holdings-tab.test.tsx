@@ -91,6 +91,18 @@ vi.mock("@bessel/client", () => ({
     queryKey: ["accounts"],
     queryFn: async () => ({ items: ACCOUNTS }),
   }),
+  getAccountsOverviewV1BankAccountsOverviewGetOptions: () => ({
+    queryKey: ["overview"],
+    queryFn: async () => ({
+      accounts: [
+        {
+          id: "isk",
+          source: { kind: "montrose", label: "Montrose", logo: null },
+        },
+        { id: "af", source: { kind: "avanza", label: "Avanza", logo: null } },
+      ],
+    }),
+  }),
 }));
 
 const { HoldingsTab, allocation, investmentTotals } = await import(
@@ -235,6 +247,21 @@ describe("HoldingsTab", () => {
     expect(plain(overview?.textContent ?? null)).toContain("6 500 kr");
     expect(plain(overview?.textContent ?? null)).not.toContain("6 586 kr");
     expect(screen.getAllByText(/^6\s500 kr$/).length).toBeGreaterThan(0);
+  });
+
+  it("shows where each account comes from, not one broker for all", async () => {
+    mount();
+
+    const isk = await screen.findByRole("button", { name: /^ISK/ });
+    const af = screen.getByRole("button", { name: /^AF/ });
+    await vi.waitFor(() =>
+      expect(isk.querySelector("img")?.getAttribute("src")).toBe(
+        "/brands/montrose.png",
+      ),
+    );
+    expect(af.querySelector("img")?.getAttribute("src")).toBe(
+      "/brands/avanza.png",
+    );
   });
 
   it("says taken out when more came out of an account than went in", async () => {

@@ -156,7 +156,7 @@ describe("Montrose", () => {
 
     const tile = await screen.findByRole("button", { name: /Montrose/ });
     expect(tile.querySelector("img")?.getAttribute("src")).toBe(
-      "https://logo.example/montrose.png",
+      "/brands/montrose.png",
     );
     fireEvent.click(tile);
     const [next] = onStateChange.mock.calls.at(-1) ?? [];

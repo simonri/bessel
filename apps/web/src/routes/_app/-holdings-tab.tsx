@@ -1,5 +1,10 @@
-import type { HoldingSchema, InvestmentAccountSummary } from "@bessel/client";
+import type {
+  AccountOverview,
+  HoldingSchema,
+  InvestmentAccountSummary,
+} from "@bessel/client";
 import {
+  getAccountsOverviewV1BankAccountsOverviewGetOptions,
   getHoldingsV1InvestmentsHoldingsGetOptions,
   getInvestmentAccountsV1InvestmentsAccountsGetOptions,
 } from "@bessel/client";
@@ -8,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowUpRight, TrendingUp } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
+import { AccountLogo } from "@/components/accounts/accounts-overview";
 import { BankLogo } from "@/components/bank-logo";
 import { EmptyState, Panel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
@@ -252,6 +258,21 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Where the account comes from, as on the accounts page. */
+function PickerLogo({
+  account,
+  name,
+}: {
+  account: AccountOverview | undefined;
+  name: string;
+}) {
+  return account ? (
+    <AccountLogo account={account} size="sm" />
+  ) : (
+    <BankLogo name={name} size="sm" />
+  );
+}
+
 function AccountPicker({
   accounts,
   scope,
@@ -261,6 +282,9 @@ function AccountPicker({
   scope: string | null;
   onScope: (id: string | null) => void;
 }) {
+  const { data: overview } = useQuery(
+    getAccountsOverviewV1BankAccountsOverviewGetOptions({ client }),
+  );
   return (
     <Panel className="divide-y-0 p-3">
       <p className="px-2 pt-2 pb-1 type-label text-white/55">Accounts</p>
@@ -278,7 +302,12 @@ function AccountPicker({
                   picked ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
                 )}
               >
-                <BankLogo name="Avanza" size="sm" />
+                <PickerLogo
+                  account={overview?.accounts.find(
+                    (a) => a.id === account.bank_account_id,
+                  )}
+                  name={account.name}
+                />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate text-13 font-medium text-white/85">

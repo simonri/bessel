@@ -22,7 +22,7 @@ function Investments() {
     <Tabs defaultValue="holdings" className="@container flex flex-col gap-4">
       <PageHeader
         title="Investments"
-        summary="What you hold at Avanza, and what you bought and sold"
+        summary="What you hold, and what you bought and sold"
       >
         <HideAmountsButton />
       </PageHeader>

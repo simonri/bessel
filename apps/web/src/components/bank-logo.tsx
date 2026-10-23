@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Brands without a logo URL still get their own colour, so they're told apart at a glance.
-const BRAND_COLORS: Record<string, string> = {
-  avanza: "#00c281",
-  klarna: "#ffa8cd",
-  montrose: "#1f3a5f",
+// Each brand's own square app icon, kept with the app: banks' listed logos are
+// wide wordmarks that turn tiny in a square tile.
+const BRAND_ICONS: Record<string, string> = {
+  avanza: "/brands/avanza.png",
+  klarna: "/brands/klarna.png",
+  marginalen: "/brands/marginalen.png",
+  montrose: "/brands/montrose.png",
+  skandia: "/brands/skandia.png",
 };
 
 const SIZES = {
@@ -21,7 +24,15 @@ function initials(name: string): string {
     .slice(0, 2);
 }
 
-/** A bank's logo on a white tile, or its initials when there's no logo. */
+/** The brand's icon for a known brand ("Klarna pay later" is Klarna's). */
+export function brandIcon(name: string): string | undefined {
+  return BRAND_ICONS[name.trim().split(/\s+/)[0]?.toLowerCase() ?? ""];
+}
+
+/**
+ * A bank's logo: a known brand's own icon filling the tile, any other bank's
+ * listed logo on a white tile, or its initials when there's neither.
+ */
 export function BankLogo({
   name,
   logo,
@@ -33,23 +44,31 @@ export function BankLogo({
   size?: keyof typeof SIZES;
   className?: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  const brand = BRAND_COLORS[name.toLowerCase()];
-  if (logo && !failed) {
+  const [failed, setFailed] = useState<readonly string[]>([]);
+  const icon = brandIcon(name);
+  const src = [icon, logo].find(
+    (candidate) => candidate && !failed.includes(candidate),
+  );
+  if (src) {
+    const full = src === icon;
     return (
       <span
         className={cn(
-          "flex shrink-0 items-center justify-center overflow-hidden bg-white p-0.5",
+          "flex shrink-0 items-center justify-center overflow-hidden",
+          // A faint edge over the icon, so a dark one doesn't melt into the page.
+          full
+            ? "relative after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-white/10 after:ring-inset"
+            : "bg-white p-0.5",
           SIZES[size],
           className,
         )}
       >
         <img
-          src={logo}
+          src={src}
           alt=""
-          className="size-full object-contain"
+          className={cn("size-full", full ? "object-cover" : "object-contain")}
           loading="lazy"
-          onError={() => setFailed(true)}
+          onError={() => setFailed((current) => [...current, src])}
         />
       </span>
     );
@@ -58,12 +77,10 @@ export function BankLogo({
     <span
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center font-semibold",
-        brand ? "text-black/80" : "bg-white/[0.08] text-white/70",
+        "flex shrink-0 items-center justify-center bg-white/[0.08] font-semibold text-white/70",
         SIZES[size],
         className,
       )}
-      style={brand ? { backgroundColor: brand } : undefined}
     >
       {initials(name)}
     </span>
