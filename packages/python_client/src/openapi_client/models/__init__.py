@@ -255,8 +255,10 @@ from .transaction_update import TransactionUpdate
 from .transaction_update_response import TransactionUpdateResponse
 from .validation_error import ValidationError
 from .validation_error_context import ValidationErrorContext
-from .weather_day_schema import WeatherDaySchema
-from .weather_forecast_response import WeatherForecastResponse
+from .weather_day import WeatherDay
+from .weather_forecast import WeatherForecast
+from .weather_hour import WeatherHour
+from .weather_now import WeatherNow
 from .year_amount import YearAmount
 
 __all__ = (
@@ -511,7 +513,9 @@ __all__ = (
   "TransactionUpdateResponse",
   "ValidationError",
   "ValidationErrorContext",
-  "WeatherDaySchema",
-  "WeatherForecastResponse",
+  "WeatherDay",
+  "WeatherForecast",
+  "WeatherHour",
+  "WeatherNow",
   "YearAmount",
 )

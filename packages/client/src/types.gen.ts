@@ -6516,63 +6516,210 @@ export type ValidationError = {
 };
 
 /**
- * WeatherDaySchema
+ * WeatherDay
  */
-export type WeatherDaySchema = {
+export type WeatherDay = {
   /**
    * Date
    *
-   * Date of the weather data.
+   * Local day.
    */
   date: Date;
   /**
-   * Temperature Max
-   *
-   * Maximum temperature in Celsius.
-   */
-  temperature_max: number;
-  /**
    * Temperature Min
    *
-   * Minimum temperature in Celsius.
+   * °C.
    */
   temperature_min: number;
   /**
-   * Apparent Temperature Max
+   * Temperature Max
    *
-   * Maximum feels-like temperature in Celsius.
+   * °C.
    */
-  apparent_temperature_max: number;
+  temperature_max: number;
+  /**
+   * Condition
+   *
+   * How the day looks around midday.
+   */
+  condition: string | null;
+  /**
+   * Precipitation
+   *
+   * mm over the day.
+   */
+  precipitation: number;
   /**
    * Precipitation Probability Max
    *
-   * Maximum precipitation probability in percent.
+   * %.
    */
-  precipitation_probability_max: number;
+  precipitation_probability_max: number | null;
   /**
-   * Weather Code
+   * Thunder Probability Max
    *
-   * WMO weather interpretation code.
+   * %; only known for the first days.
    */
-  weather_code: number;
+  thunder_probability_max: number | null;
   /**
-   * Weather Label
+   * Wind Speed Max
    *
-   * Human-readable weather condition.
+   * m/s.
    */
-  weather_label: string;
+  wind_speed_max: number;
+  /**
+   * Wind Gust Max
+   *
+   * m/s.
+   */
+  wind_gust_max: number | null;
 };
 
 /**
- * WeatherForecastResponse
+ * WeatherForecast
  */
-export type WeatherForecastResponse = {
+export type WeatherForecast = {
+  /**
+   * Location
+   *
+   * The place the forecast is for, as found from the name given.
+   */
+  location: string | null;
+  /**
+   * Latitude
+   */
+  latitude: number;
+  /**
+   * Longitude
+   */
+  longitude: number;
+  /**
+   * Timezone
+   */
+  timezone: string;
+  /**
+   * Updated At
+   *
+   * When Yr last updated this forecast.
+   */
+  updated_at: Date;
+  now: WeatherNow;
+  /**
+   * Hours
+   *
+   * The next hours, one by one.
+   */
+  hours: Array<WeatherHour>;
   /**
    * Days
    *
-   * 10-day weather forecast.
+   * Day by day, starting today.
    */
-  days: Array<WeatherDaySchema>;
+  days: Array<WeatherDay>;
+  /**
+   * Attribution
+   */
+  attribution?: string;
+};
+
+/**
+ * WeatherHour
+ */
+export type WeatherHour = {
+  /**
+   * Time
+   *
+   * Local start of the hour.
+   */
+  time: Date;
+  /**
+   * Temperature
+   *
+   * °C.
+   */
+  temperature: number;
+  /**
+   * Condition
+   */
+  condition: string | null;
+  /**
+   * Precipitation
+   *
+   * mm during the hour.
+   */
+  precipitation: number | null;
+  /**
+   * Precipitation Probability
+   *
+   * %.
+   */
+  precipitation_probability: number | null;
+  /**
+   * Wind Speed
+   *
+   * m/s.
+   */
+  wind_speed: number;
+};
+
+/**
+ * WeatherNow
+ */
+export type WeatherNow = {
+  /**
+   * Time
+   *
+   * Local time of the reading.
+   */
+  time: Date;
+  /**
+   * Temperature
+   *
+   * °C.
+   */
+  temperature: number;
+  /**
+   * Feels Like
+   *
+   * °C.
+   */
+  feels_like: number | null;
+  /**
+   * Condition
+   *
+   * E.g. 'Partly cloudy' or 'Light rain showers'.
+   */
+  condition: string | null;
+  /**
+   * Precipitation Next Hour
+   *
+   * mm.
+   */
+  precipitation_next_hour: number | null;
+  /**
+   * Wind Speed
+   *
+   * m/s.
+   */
+  wind_speed: number;
+  /**
+   * Wind Gust
+   *
+   * m/s.
+   */
+  wind_gust: number | null;
+  /**
+   * Wind From Direction
+   *
+   * Degrees, 0 = from the north.
+   */
+  wind_from_direction: number;
+  /**
+   * Humidity
+   *
+   * %.
+   */
+  humidity: number;
 };
 
 /**
@@ -11736,6 +11883,24 @@ export type GetWeatherForecastV1WeatherGetData = {
      * Longitude.
      */
     lon: number;
+    /**
+     * Days
+     *
+     * How many days, starting today.
+     */
+    days?: number;
+    /**
+     * Hours
+     *
+     * How many of the next hours, one by one.
+     */
+    hours?: number;
+    /**
+     * Timezone
+     *
+     * IANA zone the days and times are in; defaults to the user's own.
+     */
+    timezone?: string | null;
   };
   url: "/v1/weather";
 };
@@ -11754,7 +11919,7 @@ export type GetWeatherForecastV1WeatherGetResponses = {
   /**
    * Successful Response
    */
-  200: WeatherForecastResponse;
+  200: WeatherForecast;
 };
 
 export type GetWeatherForecastV1WeatherGetResponse =

@@ -193,6 +193,8 @@ ISOLATION_TESTED = {
   "get_month_summary",
   "search_transactions",
   "get_investments",
+  # Public data: test_weather checks each caller gets it in their own timezone.
+  "get_weather",
   "search_recipes",
   "get_recipe",
   "add_recipe",

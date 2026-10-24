@@ -40,7 +40,6 @@ from .trade import Trade
 from .transaction import Transaction
 from .transaction_name_rule import TransactionNameRule
 from .user import User
-from .weather_cache import WeatherCache
 
 __all__ = [
   "ActivityEvent",
@@ -94,5 +93,4 @@ __all__ = [
   "Transaction",
   "TransactionNameRule",
   "TransactionDocument",
-  "WeatherCache",
 ]

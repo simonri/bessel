@@ -10327,72 +10327,327 @@ export const ValidationErrorSchema = {
   title: "ValidationError",
 } as const;
 
-export const WeatherDaySchemaSchema = {
+export const WeatherDaySchema = {
   properties: {
     date: {
       type: "string",
       format: "date",
       title: "Date",
-      description: "Date of the weather data.",
-    },
-    temperature_max: {
-      type: "number",
-      title: "Temperature Max",
-      description: "Maximum temperature in Celsius.",
+      description: "Local day.",
     },
     temperature_min: {
       type: "number",
       title: "Temperature Min",
-      description: "Minimum temperature in Celsius.",
+      description: "°C.",
     },
-    apparent_temperature_max: {
+    temperature_max: {
       type: "number",
-      title: "Apparent Temperature Max",
-      description: "Maximum feels-like temperature in Celsius.",
+      title: "Temperature Max",
+      description: "°C.",
+    },
+    condition: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Condition",
+      description: "How the day looks around midday.",
+    },
+    precipitation: {
+      type: "number",
+      title: "Precipitation",
+      description: "mm over the day.",
     },
     precipitation_probability_max: {
-      type: "integer",
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
       title: "Precipitation Probability Max",
-      description: "Maximum precipitation probability in percent.",
+      description: "%.",
     },
-    weather_code: {
-      type: "integer",
-      title: "Weather Code",
-      description: "WMO weather interpretation code.",
+    thunder_probability_max: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Thunder Probability Max",
+      description: "%; only known for the first days.",
     },
-    weather_label: {
-      type: "string",
-      title: "Weather Label",
-      description: "Human-readable weather condition.",
+    wind_speed_max: {
+      type: "number",
+      title: "Wind Speed Max",
+      description: "m/s.",
+    },
+    wind_gust_max: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wind Gust Max",
+      description: "m/s.",
     },
   },
   type: "object",
   required: [
     "date",
-    "temperature_max",
     "temperature_min",
-    "apparent_temperature_max",
+    "temperature_max",
+    "condition",
+    "precipitation",
     "precipitation_probability_max",
-    "weather_code",
-    "weather_label",
+    "thunder_probability_max",
+    "wind_speed_max",
+    "wind_gust_max",
   ],
-  title: "WeatherDaySchema",
+  title: "WeatherDay",
 } as const;
 
-export const WeatherForecastResponseSchema = {
+export const WeatherForecastSchema = {
   properties: {
+    location: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Location",
+      description:
+        "The place the forecast is for, as found from the name given.",
+    },
+    latitude: {
+      type: "number",
+      title: "Latitude",
+    },
+    longitude: {
+      type: "number",
+      title: "Longitude",
+    },
+    timezone: {
+      type: "string",
+      title: "Timezone",
+    },
+    updated_at: {
+      type: "string",
+      format: "date-time",
+      title: "Updated At",
+      description: "When Yr last updated this forecast.",
+    },
+    now: {
+      $ref: "#/components/schemas/WeatherNow",
+    },
+    hours: {
+      items: {
+        $ref: "#/components/schemas/WeatherHour",
+      },
+      type: "array",
+      title: "Hours",
+      description: "The next hours, one by one.",
+    },
     days: {
       items: {
-        $ref: "#/components/schemas/WeatherDaySchema",
+        $ref: "#/components/schemas/WeatherDay",
       },
       type: "array",
       title: "Days",
-      description: "10-day weather forecast.",
+      description: "Day by day, starting today.",
+    },
+    attribution: {
+      type: "string",
+      title: "Attribution",
+      default:
+        "Weather data from MET Norway (yr.no), CC BY 4.0. Place lookup © OpenStreetMap contributors.",
     },
   },
   type: "object",
-  required: ["days"],
-  title: "WeatherForecastResponse",
+  required: [
+    "location",
+    "latitude",
+    "longitude",
+    "timezone",
+    "updated_at",
+    "now",
+    "hours",
+    "days",
+  ],
+  title: "WeatherForecast",
+} as const;
+
+export const WeatherHourSchema = {
+  properties: {
+    time: {
+      type: "string",
+      format: "date-time",
+      title: "Time",
+      description: "Local start of the hour.",
+    },
+    temperature: {
+      type: "number",
+      title: "Temperature",
+      description: "°C.",
+    },
+    condition: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Condition",
+    },
+    precipitation: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Precipitation",
+      description: "mm during the hour.",
+    },
+    precipitation_probability: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Precipitation Probability",
+      description: "%.",
+    },
+    wind_speed: {
+      type: "number",
+      title: "Wind Speed",
+      description: "m/s.",
+    },
+  },
+  type: "object",
+  required: [
+    "time",
+    "temperature",
+    "condition",
+    "precipitation",
+    "precipitation_probability",
+    "wind_speed",
+  ],
+  title: "WeatherHour",
+} as const;
+
+export const WeatherNowSchema = {
+  properties: {
+    time: {
+      type: "string",
+      format: "date-time",
+      title: "Time",
+      description: "Local time of the reading.",
+    },
+    temperature: {
+      type: "number",
+      title: "Temperature",
+      description: "°C.",
+    },
+    feels_like: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Feels Like",
+      description: "°C.",
+    },
+    condition: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Condition",
+      description: "E.g. 'Partly cloudy' or 'Light rain showers'.",
+    },
+    precipitation_next_hour: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Precipitation Next Hour",
+      description: "mm.",
+    },
+    wind_speed: {
+      type: "number",
+      title: "Wind Speed",
+      description: "m/s.",
+    },
+    wind_gust: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wind Gust",
+      description: "m/s.",
+    },
+    wind_from_direction: {
+      type: "number",
+      title: "Wind From Direction",
+      description: "Degrees, 0 = from the north.",
+    },
+    humidity: {
+      type: "number",
+      title: "Humidity",
+      description: "%.",
+    },
+  },
+  type: "object",
+  required: [
+    "time",
+    "temperature",
+    "feels_like",
+    "condition",
+    "precipitation_next_hour",
+    "wind_speed",
+    "wind_gust",
+    "wind_from_direction",
+    "humidity",
+  ],
+  title: "WeatherNow",
 } as const;
 
 export const YearAmountSchema = {

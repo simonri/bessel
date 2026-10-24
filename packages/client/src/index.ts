@@ -1313,8 +1313,10 @@ export {
   type UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
   type UpsertGymExerciseV1GymExercisesExerciseIdPutResponses,
   type ValidationError,
-  type WeatherDaySchema,
-  type WeatherForecastResponse,
+  type WeatherDay,
+  type WeatherForecast,
+  type WeatherHour,
+  type WeatherNow,
   type YearAmount,
 } from "./types.gen.js";
 export { client } from "./client.gen";

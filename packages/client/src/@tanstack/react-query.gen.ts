@@ -5531,6 +5531,8 @@ export const getWeatherForecastV1WeatherGetQueryKey = (
 
 /**
  * Get Weather Forecast
+ *
+ * Yr's forecast for a point: the weather now, the next hours and day by day.
  */
 export const getWeatherForecastV1WeatherGetOptions = (
   options: Options<GetWeatherForecastV1WeatherGetData>,

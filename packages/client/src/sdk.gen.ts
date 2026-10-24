@@ -4328,6 +4328,8 @@ export const documentThumbnailV1DocumentsDocumentIdThumbnailGet = <
 
 /**
  * Get Weather Forecast
+ *
+ * Yr's forecast for a point: the weather now, the next hours and day by day.
  */
 export const getWeatherForecastV1WeatherGet = <
   ThrowOnError extends boolean = false,

@@ -1369,14 +1369,29 @@ export const addTransactionDocumentV1TransactionsTransactionIdDocumentsPostRespo
     return data;
   };
 
-const weatherDaySchemaSchemaResponseTransformer = (data: any) => {
+const weatherNowSchemaResponseTransformer = (data: any) => {
+  data.time = new Date(data.time);
+  return data;
+};
+
+const weatherHourSchemaResponseTransformer = (data: any) => {
+  data.time = new Date(data.time);
+  return data;
+};
+
+const weatherDaySchemaResponseTransformer = (data: any) => {
   data.date = new Date(data.date);
   return data;
 };
 
-const weatherForecastResponseSchemaResponseTransformer = (data: any) => {
+const weatherForecastSchemaResponseTransformer = (data: any) => {
+  data.updated_at = new Date(data.updated_at);
+  data.now = weatherNowSchemaResponseTransformer(data.now);
+  data.hours = data.hours.map((item: any) =>
+    weatherHourSchemaResponseTransformer(item),
+  );
   data.days = data.days.map((item: any) =>
-    weatherDaySchemaSchemaResponseTransformer(item),
+    weatherDaySchemaResponseTransformer(item),
   );
   return data;
 };
@@ -1384,6 +1399,6 @@ const weatherForecastResponseSchemaResponseTransformer = (data: any) => {
 export const getWeatherForecastV1WeatherGetResponseTransformer = async (
   data: any,
 ): Promise<GetWeatherForecastV1WeatherGetResponse> => {
-  data = weatherForecastResponseSchemaResponseTransformer(data);
+  data = weatherForecastSchemaResponseTransformer(data);
   return data;
 };

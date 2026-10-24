@@ -14,7 +14,7 @@ from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
 The user's Bessel life dashboard: tasks, calendar, money and investments, recipes, \
-sleep, workouts and computer activity. Tasks and recipes can be created and updated, \
+sleep, workouts, computer activity, and the weather anywhere (from Yr). Tasks and recipes can be created and updated, \
 and calendar events added; money is read-only, and nothing can be deleted.
 
 Days can be written as YYYY-MM-DD or relative ("today", "fri", "next week"), and \

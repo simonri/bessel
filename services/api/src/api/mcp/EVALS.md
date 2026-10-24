@@ -28,3 +28,5 @@ Real requests the Bessel MCP server should handle well. Run them against a test 
 | 22 | What did my company spend on servers this year? | `search_transactions(company=true, text=…, start=…)` | Company money only, summed per currency |
 | 23 | How are my investments doing? | `get_investments` | Value, growth and dividends per account, and the biggest positions, the user's and the company's apart |
 | 24 | Give me a summary of my week | `get_task_overview`/`find_completed_tasks`, `get_calendar_events`, `get_sleep`, `search_transactions(start="7 days ago")` | Ties work, plans, sleep and spending together without inventing numbers |
+| 25 | Will it rain in Västerås this afternoon? | `get_weather(place="Västerås", hours=…)` | Hour by hour for the afternoon in local time, credits Yr |
+| 26 | Is Saturday good for a long run? | `get_weather(days=…)`, `get_calendar_events` | Saturday's temperature, rain and wind, fitted around what's in the calendar |

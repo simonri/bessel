@@ -4,51 +4,49 @@ from pydantic import Field
 
 from api.common.schemas import Schema
 
-WMO_WEATHER_LABELS: dict[int, str] = {
-  0: "Clear sky",
-  1: "Mainly clear",
-  2: "Partly cloudy",
-  3: "Overcast",
-  45: "Foggy",
-  48: "Depositing rime fog",
-  51: "Light drizzle",
-  53: "Moderate drizzle",
-  55: "Dense drizzle",
-  56: "Light freezing drizzle",
-  57: "Dense freezing drizzle",
-  61: "Slight rain",
-  63: "Moderate rain",
-  65: "Heavy rain",
-  66: "Light freezing rain",
-  67: "Heavy freezing rain",
-  71: "Slight snowfall",
-  73: "Moderate snowfall",
-  75: "Heavy snowfall",
-  77: "Snow grains",
-  80: "Slight rain showers",
-  81: "Moderate rain showers",
-  82: "Violent rain showers",
-  85: "Slight snow showers",
-  86: "Heavy snow showers",
-  95: "Thunderstorm",
-  96: "Thunderstorm with slight hail",
-  99: "Thunderstorm with heavy hail",
-}
+ATTRIBUTION = "Weather data from MET Norway (yr.no), CC BY 4.0. Place lookup © OpenStreetMap contributors."
 
 
-def weather_label_from_code(code: int) -> str:
-  return WMO_WEATHER_LABELS.get(code, "Unknown")
+class WeatherNow(Schema):
+  time: datetime.datetime = Field(description="Local time of the reading.")
+  temperature: float = Field(description="°C.")
+  feels_like: float | None = Field(description="°C.")
+  condition: str | None = Field(description="E.g. 'Partly cloudy' or 'Light rain showers'.")
+  precipitation_next_hour: float | None = Field(description="mm.")
+  wind_speed: float = Field(description="m/s.")
+  wind_gust: float | None = Field(description="m/s.")
+  wind_from_direction: float = Field(description="Degrees, 0 = from the north.")
+  humidity: float = Field(description="%.")
 
 
-class WeatherDaySchema(Schema):
-  date: datetime.date = Field(description="Date of the weather data.")
-  temperature_max: float = Field(description="Maximum temperature in Celsius.")
-  temperature_min: float = Field(description="Minimum temperature in Celsius.")
-  apparent_temperature_max: float = Field(description="Maximum feels-like temperature in Celsius.")
-  precipitation_probability_max: int = Field(description="Maximum precipitation probability in percent.")
-  weather_code: int = Field(description="WMO weather interpretation code.")
-  weather_label: str = Field(description="Human-readable weather condition.")
+class WeatherHour(Schema):
+  time: datetime.datetime = Field(description="Local start of the hour.")
+  temperature: float = Field(description="°C.")
+  condition: str | None
+  precipitation: float | None = Field(description="mm during the hour.")
+  precipitation_probability: float | None = Field(description="%.")
+  wind_speed: float = Field(description="m/s.")
 
 
-class WeatherForecastResponse(Schema):
-  days: list[WeatherDaySchema] = Field(description="10-day weather forecast.")
+class WeatherDay(Schema):
+  date: datetime.date = Field(description="Local day.")
+  temperature_min: float = Field(description="°C.")
+  temperature_max: float = Field(description="°C.")
+  condition: str | None = Field(description="How the day looks around midday.")
+  precipitation: float = Field(description="mm over the day.")
+  precipitation_probability_max: float | None = Field(description="%.")
+  thunder_probability_max: float | None = Field(description="%; only known for the first days.")
+  wind_speed_max: float = Field(description="m/s.")
+  wind_gust_max: float | None = Field(description="m/s.")
+
+
+class WeatherForecast(Schema):
+  location: str | None = Field(description="The place the forecast is for, as found from the name given.")
+  latitude: float
+  longitude: float
+  timezone: str
+  updated_at: datetime.datetime = Field(description="When Yr last updated this forecast.")
+  now: WeatherNow
+  hours: list[WeatherHour] = Field(description="The next hours, one by one.")
+  days: list[WeatherDay] = Field(description="Day by day, starting today.")
+  attribution: str = Field(default=ATTRIBUTION)
