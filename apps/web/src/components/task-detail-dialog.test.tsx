@@ -189,8 +189,9 @@ describe("TaskDetailDialogController", () => {
   it("opens links in the description in a new tab without starting an edit", async () => {
     await mount(makeTask({ description: "Spec at https://x.se/spec." }));
 
-    const link = screen.getByRole("link", { name: "https://x.se/spec" });
+    const link = screen.getByRole("link", { name: "x.se/spec" });
     expect(link.getAttribute("href")).toBe("https://x.se/spec");
+    expect(link.getAttribute("title")).toBe("https://x.se/spec");
     expect(link.getAttribute("target")).toBe("_blank");
 
     fireEvent.click(link);

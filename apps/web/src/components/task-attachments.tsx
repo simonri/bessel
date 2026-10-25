@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
-import { linkify } from "@/lib/linkify";
+import { linkify, shortLink } from "@/lib/linkify";
 
 // A pasted image that hasn't been uploaded yet — only exists for a task
 // that isn't saved yet, so there's no task_id to upload to until creation
@@ -270,10 +270,11 @@ export function LinkifiedText({ text }: { text: string }) {
             href={part.href}
             target="_blank"
             rel="noopener noreferrer"
+            title={part.href}
             onClick={(e) => e.stopPropagation()}
             className="text-sky-300 underline decoration-sky-300/40 underline-offset-2 transition-colors hover:text-sky-200 hover:decoration-sky-200"
           >
-            {part.text}
+            {shortLink(part.href)}
           </a>
         ),
       )}

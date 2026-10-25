@@ -35,3 +35,32 @@ export function linkify(text: string): TextPart[] {
   if (last < text.length) parts.push({ type: "text", text: text.slice(last) });
   return parts;
 }
+
+const MAX_LABEL = 48;
+
+/** A link as people read it: host and path without the scheme or "www.", a long one cut down, keeping its last segment where that fits. */
+export function shortLink(href: string): string {
+  if (/^mailto:/i.test(href)) return href.slice("mailto:".length);
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return href;
+  }
+  const host = url.host.replace(/^www\./, "");
+  const label = host + readable(`${url.pathname}${url.search}${url.hash}`);
+  if (label.length <= MAX_LABEL) return label;
+  const last = readable(url.pathname.replace(/\/$/, "").split("/").pop() ?? "");
+  const tail = `${host}/…/${last}${url.search || url.hash ? "…" : ""}`;
+  if (last && tail.length <= MAX_LABEL) return tail;
+  return `${label.slice(0, MAX_LABEL - 1)}…`;
+}
+
+function readable(path: string): string {
+  const trimmed = path.replace(/\/$/, "");
+  try {
+    return decodeURI(trimmed);
+  } catch {
+    return trimmed;
+  }
+}
