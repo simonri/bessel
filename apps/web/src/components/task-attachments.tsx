@@ -1,10 +1,17 @@
 import type { TaskAttachmentSchema } from "@bessel/client";
-import { getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet } from "@bessel/client";
+import {
+  getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
+  uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation,
+} from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
+import { useMutation } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
+import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
+import { linkify } from "@/lib/linkify";
 
 // A pasted image that hasn't been uploaded yet — only exists for a task
 // that isn't saved yet, so there's no task_id to upload to until creation
@@ -77,6 +84,73 @@ export function parseDescriptionSegments(
   if (lastIndex < description.length)
     segments.push({ type: "text", text: description.slice(lastIndex) });
   return segments;
+}
+
+/**
+ * Pasting images into a saved task's description: each shows at once as a `pending:` marker at the cursor and is
+ * swapped for the real one when its upload is done. `settled` resolves once every upload has, so a save never
+ * stores a pending marker.
+ */
+export function useImagePaste({
+  taskId,
+  textareaRef,
+  getText,
+  setText,
+}: {
+  taskId: string;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  getText: () => string;
+  setText: (update: (text: string) => string) => void;
+}) {
+  const cache = useTaskCacheHelpers();
+  const upload = useMutation({
+    ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
+    meta: { errorToast: false },
+  });
+  const inFlight = useRef(new Set<Promise<void>>());
+  const [uploading, setUploading] = useState(0);
+
+  const onPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = extractPastedImages(e);
+    if (files.length === 0) return;
+    e.preventDefault();
+    let position = textareaRef.current?.selectionStart ?? getText().length;
+    for (const file of files) {
+      const tempId = `pending:${crypto.randomUUID()}`;
+      const marker = attachmentMarker(tempId, file.name);
+      const at = position;
+      setText((text) => text.slice(0, at) + marker + text.slice(at));
+      position += marker.length;
+      setUploading((n) => n + 1);
+      const done: Promise<void> = upload
+        .mutateAsync({ client, path: { task_id: taskId }, body: { file } })
+        .then(
+          (attachment) => {
+            setText((text) => replaceMarkerId(text, tempId, attachment.id));
+            cache.invalidateAll();
+          },
+          () => {
+            toast.error(`Couldn't attach ${file.name}`);
+            setText((text) => removeMarker(text, tempId, file.name));
+          },
+        )
+        .finally(() => {
+          inFlight.current.delete(done);
+          setUploading((n) => n - 1);
+        });
+      inFlight.current.add(done);
+    }
+    const cursor = position;
+    requestAnimationFrame(() =>
+      textareaRef.current?.setSelectionRange(cursor, cursor),
+    );
+  };
+
+  return {
+    onPaste,
+    uploading: uploading > 0,
+    settled: () => Promise.all([...inFlight.current]).then(() => undefined),
+  };
 }
 
 // Auth on this app is a Bearer token attached by a fetch interceptor, so a
@@ -182,6 +256,31 @@ export function InlineAttachmentBadge({
   );
 }
 
+/** Text with its web and email addresses as links, which open in a new tab (the desktop app hands them to the browser). */
+export function LinkifiedText({ text }: { text: string }) {
+  return (
+    <span>
+      {linkify(text).map((part, i) =>
+        part.type === "text" ? (
+          part.text
+        ) : (
+          <a
+            // biome-ignore lint/suspicious/noArrayIndexKey: parts are a fixed split of `text`
+            key={i}
+            href={part.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-sky-300 underline decoration-sky-300/40 underline-offset-2 transition-colors hover:text-sky-200 hover:decoration-sky-200"
+          >
+            {part.text}
+          </a>
+        ),
+      )}
+    </span>
+  );
+}
+
 // Renders a description's text with every `![name](attachment:id)` marker
 // replaced by an inline thumbnail badge in place — the image shows up right
 // where it was pasted, not collected in a separate list. Any attachment the
@@ -218,7 +317,8 @@ export function DescriptionWithAttachments({
           seg.type === "text"
             ? seg.text.length
             : seg.filename.length + seg.attachmentId.length + 15;
-        if (seg.type === "text") return <span key={key}>{seg.text}</span>;
+        if (seg.type === "text")
+          return <LinkifiedText key={key} text={seg.text} />;
         const attachment = byId.get(seg.attachmentId);
         if (!attachment) return null;
         return (

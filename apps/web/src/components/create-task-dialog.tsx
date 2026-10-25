@@ -1,4 +1,3 @@
-import type { TaskSchema } from "@bessel/client";
 import {
   createTaskV1TasksPostMutation,
   listProjectsV1ProjectsGetOptions,
@@ -30,8 +29,7 @@ import {
 } from "@bessel/ui/components/select";
 import { Textarea } from "@bessel/ui/components/textarea";
 import { useForm } from "@tanstack/react-form";
-import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -44,8 +42,6 @@ import {
 } from "@/components/task-attachments";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
-
-const ATTACHMENT_UPLOAD_KEY = ["task-attachment-upload"];
 
 const PRIORITIES = [
   { value: "0", label: "None" },
@@ -124,48 +120,25 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
   );
 }
 
-function taskToFormValues(task?: TaskSchema) {
-  if (!task) {
-    return {
-      title: "",
-      description: "",
-      dueDate: "",
-      priority: "0",
-      project: "",
-      frequency: "none",
-      rruleDayOfWeek: "",
-      rruleDayOfMonth: "",
-    };
-  }
-  const d = task.due_date
-    ? task.due_date instanceof Date
-      ? task.due_date
-      : new Date(String(task.due_date))
-    : null;
-  return {
-    title: task.title ?? "",
-    description: task.description ?? "",
-    dueDate: d ? format(d, "yyyy-MM-dd") : "",
-    priority: String(task.priority ?? 0),
-    project: task.project ?? "",
-    frequency: task.is_recurring ? (task.rrule_frequency ?? "none") : "none",
-    rruleDayOfWeek:
-      task.rrule_day_of_week != null ? String(task.rrule_day_of_week) : "",
-    rruleDayOfMonth:
-      task.rrule_day_of_month != null ? String(task.rrule_day_of_month) : "",
-  };
-}
+const EMPTY_FORM = {
+  title: "",
+  description: "",
+  dueDate: "",
+  priority: "0",
+  project: "",
+  frequency: "none",
+  rruleDayOfWeek: "",
+  rruleDayOfMonth: "",
+};
 
+/** The full form for a new task; an existing one is edited in place in the task modal. */
 export function TaskFormDialog({
-  task,
   open,
   onOpenChange,
 }: {
-  task?: TaskSchema;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const isEditing = !!task;
   const cache = useTaskCacheHelpers();
 
   const { data: projectsData = [] } = useQuery({
@@ -173,7 +146,7 @@ export function TaskFormDialog({
   });
   const projects = projectsData.map((p) => p.name);
 
-  // Images pasted before the task exists yet (create mode) — held locally
+  // Images pasted before the task exists — held locally
   // and uploaded once createMutation returns a real task_id to attach to.
   const [pendingFiles, setPendingFiles] = useState<PendingAttachment[]>([]);
   const pendingFilesRef = useRef(pendingFiles);
@@ -192,20 +165,13 @@ export function TaskFormDialog({
 
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
-  // Both report failures per call, where they know which file or task it was.
-  // Several uploads can run at once (one per pasted image), so each call
-  // handles its own result through its promise; per-call callbacks would
-  // only fire for the latest one.
+  // Reports failures per call, where it knows which file it was.
   const uploadAttachmentMutation = useMutation({
     ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
-    mutationKey: ATTACHMENT_UPLOAD_KEY,
     meta: { errorToast: false },
   });
-  const uploadsInFlight = useIsMutating({ mutationKey: ATTACHMENT_UPLOAD_KEY });
-  // Fires silently in the background right after a paste-triggered upload
-  // resolves, to persist the description's marker swap (pending -> real id)
-  // immediately — distinct from `updateMutation` below, which is the
-  // user-facing Save action and closes the dialog on success.
+
+  // Saves the description's marker swap (pending -> real id) once the new task's images are uploaded.
   const patchDescriptionMutation = useMutation({
     ...updateTaskV1TasksTaskIdPatchMutation({ client }),
     meta: { errorToast: false },
@@ -248,95 +214,40 @@ export function TaskFormDialog({
       insertMarkerAt(insertPos, marker);
       insertPos += marker.length;
 
-      if (isEditing) {
-        uploadAttachmentMutation
-          .mutateAsync({ client, path: { task_id: task.id }, body: { file } })
-          .then(
-            (attachment) => {
-              const updated = replaceMarkerId(
-                form.state.values.description,
-                tempId,
-                attachment.id,
-              );
-              form.setFieldValue("description", updated);
-              patchDescriptionMutation
-                .mutateAsync({
-                  client,
-                  path: { task_id: task.id },
-                  body: { description: updated },
-                })
-                .catch(() =>
-                  toast.error(`Couldn't save the reference to ${file.name}`),
-                );
-            },
-            () => {
-              toast.error(`Failed to attach ${file.name}`);
-              form.setFieldValue("description", (prev) =>
-                removeMarker(prev, tempId, file.name),
-              );
-            },
-          );
-      } else {
-        setPendingFiles((prev) => [
-          ...prev,
-          { file, previewUrl: URL.createObjectURL(file), tempId },
-        ]);
-      }
+      setPendingFiles((prev) => [
+        ...prev,
+        { file, previewUrl: URL.createObjectURL(file), tempId },
+      ]);
     }
   };
 
   const form = useForm({
-    defaultValues: taskToFormValues(task),
+    defaultValues: EMPTY_FORM,
     onSubmit: ({ value }) => {
       const isRecurring = value.frequency !== "none";
       const freq = value.frequency as "daily" | "weekly" | "monthly" | "yearly";
 
-      if (isEditing) {
-        updateMutation.mutate({
-          client,
-          path: { task_id: task.id },
-          body: {
-            title: value.title.trim(),
-            description: value.description.trim() || null,
-            due_date: value.dueDate ? new Date(value.dueDate) : null,
-            priority: Number(value.priority),
-            project: value.project.trim() || null,
-            is_recurring: isRecurring,
-            rrule_frequency: isRecurring ? freq : null,
-            rrule_interval: isRecurring ? (task.rrule_interval ?? 1) : null,
-            rrule_day_of_week:
-              value.frequency === "weekly" && value.rruleDayOfWeek
-                ? Number(value.rruleDayOfWeek)
-                : null,
-            rrule_day_of_month:
-              value.frequency === "monthly" && value.rruleDayOfMonth
-                ? Number(value.rruleDayOfMonth)
-                : null,
-          },
-        });
-      } else {
-        createMutation.mutate({
-          client,
-          body: {
-            title: value.title.trim(),
-            description: value.description.trim() || undefined,
-            due_date: value.dueDate ? new Date(value.dueDate) : undefined,
-            priority: Number(value.priority),
-            project: value.project.trim() || undefined,
-            is_recurring: isRecurring,
-            rrule_frequency: isRecurring ? freq : undefined,
-            rrule_interval: isRecurring ? 1 : undefined,
-            rrule_day_of_week:
-              value.frequency === "weekly" && value.rruleDayOfWeek
-                ? Number(value.rruleDayOfWeek)
-                : undefined,
-            rrule_day_of_month:
-              value.frequency === "monthly" && value.rruleDayOfMonth
-                ? Number(value.rruleDayOfMonth)
-                : undefined,
-          },
-        });
-      }
+      createMutation.mutate({
+        client,
+        body: {
+          title: value.title.trim(),
+          description: value.description.trim() || undefined,
+          due_date: value.dueDate ? new Date(value.dueDate) : undefined,
+          priority: Number(value.priority),
+          project: value.project.trim() || undefined,
+          is_recurring: isRecurring,
+          rrule_frequency: isRecurring ? freq : undefined,
+          rrule_interval: isRecurring ? 1 : undefined,
+          rrule_day_of_week:
+            value.frequency === "weekly" && value.rruleDayOfWeek
+              ? Number(value.rruleDayOfWeek)
+              : undefined,
+          rrule_day_of_month:
+            value.frequency === "monthly" && value.rruleDayOfMonth
+              ? Number(value.rruleDayOfMonth)
+              : undefined,
+        },
+      });
     },
   });
 
@@ -386,20 +297,7 @@ export function TaskFormDialog({
     onError: () => toast.error("Failed to create task"),
   });
 
-  const updateMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
-    onSuccess: () => {
-      cache.invalidateAll();
-      toast.success("Task updated");
-      form.reset();
-      onOpenChange(false);
-    },
-    onError: () => toast.error("Failed to update task"),
-  });
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  // A save sent mid-upload would store the description's `pending:` marker.
-  const isUploading = isEditing && uploadsInFlight > 0;
+  const isPending = createMutation.isPending;
 
   const handleClose = () => {
     form.reset();
@@ -413,12 +311,8 @@ export function TaskFormDialog({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the task details below."
-              : "Add a new task to your board."}
-          </DialogDescription>
+          <DialogTitle>New task</DialogTitle>
+          <DialogDescription>Add a new task to your board.</DialogDescription>
         </DialogHeader>
 
         <form
@@ -606,10 +500,9 @@ export function TaskFormDialog({
             )}
           </form.Subscribe>
 
-          {(createMutation.isError || updateMutation.isError) && (
+          {createMutation.isError && (
             <p className="text-13 text-destructive">
-              {isEditing ? "Failed to update task." : "Failed to create task."}{" "}
-              Please try again.
+              Failed to create task. Please try again.
             </p>
           )}
 
@@ -619,17 +512,8 @@ export function TaskFormDialog({
             </Button>
             <form.Subscribe selector={(state) => [state.values.title] as const}>
               {([title]) => (
-                <Button
-                  type="submit"
-                  disabled={isPending || isUploading || !title.trim()}
-                >
-                  {isPending
-                    ? isEditing
-                      ? "Saving…"
-                      : "Creating…"
-                    : isEditing
-                      ? "Save"
-                      : "Create Task"}
+                <Button type="submit" disabled={isPending || !title.trim()}>
+                  {isPending ? "Creating…" : "Create task"}
                 </Button>
               )}
             </form.Subscribe>
