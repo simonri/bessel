@@ -80,46 +80,52 @@ export function TasksPage() {
   const routines = tasks.filter(isRepeatingTask).length;
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-5">
+    <div className="flex h-full min-h-0 w-full flex-col gap-5">
       <PageHeader
         title="Your tasks"
         summary={total === null ? null : tasksSentence(counts)}
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile
-          label="Open"
-          value={total ?? "-"}
-          hint={
-            routines > 0
-              ? `${plural(routines, "routine")} among them`
-              : undefined
-          }
-        />
-        <StatTile
-          label="Due today"
-          value={counts.dueToday + counts.doing}
-          hint={counts.doing > 0 ? `${counts.doing} in progress` : undefined}
-        />
-        <StatTile label="From earlier" value={counts.overdue} />
-        <StatTile
-          label="Done today"
-          value={progress.doneToday}
-          hint={`${progress.doneThisWeek} this week`}
-        />
-      </div>
+      {/* Board fills the width; the numbers sit in a fixed column on the right, or above it on narrow screens. */}
+      <div className="flex min-h-0 flex-1 flex-col-reverse gap-5 lg:flex-row">
+        <section className="flex min-h-[32rem] min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06]">
+          <Suspense
+            fallback={
+              <div className="flex flex-1 items-center justify-center">
+                <Spinner className="size-5 text-white/50" />
+              </div>
+            }
+          >
+            <TasksBoard />
+          </Suspense>
+        </section>
 
-      <section className="flex min-h-[32rem] flex-1 flex-col overflow-hidden rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06]">
-        <Suspense
-          fallback={
-            <div className="flex flex-1 items-center justify-center">
-              <Spinner className="size-5 text-white/50" />
-            </div>
-          }
+        <aside
+          aria-label="Task numbers"
+          className="grid grid-cols-2 content-start gap-3 sm:grid-cols-4 lg:w-72 lg:shrink-0 lg:grid-cols-1"
         >
-          <TasksBoard />
-        </Suspense>
-      </section>
+          <StatTile
+            label="Open"
+            value={total ?? "-"}
+            hint={
+              routines > 0
+                ? `${plural(routines, "routine")} among them`
+                : undefined
+            }
+          />
+          <StatTile
+            label="Due today"
+            value={counts.dueToday + counts.doing}
+            hint={counts.doing > 0 ? `${counts.doing} in progress` : undefined}
+          />
+          <StatTile label="From earlier" value={counts.overdue} />
+          <StatTile
+            label="Done today"
+            value={progress.doneToday}
+            hint={`${progress.doneThisWeek} this week`}
+          />
+        </aside>
+      </div>
     </div>
   );
 }
