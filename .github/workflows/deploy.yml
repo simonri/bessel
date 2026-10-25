@@ -65,12 +65,10 @@ jobs:
           filters: |
             api:
               - 'services/api/**'
-              - 'packages/python_client/**'
               - 'pyproject.toml'
               - 'uv.lock'
             worker:
               - 'services/api/**'
-              - 'packages/python_client/**'
               - 'pyproject.toml'
               - 'uv.lock'
             web:

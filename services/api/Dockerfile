@@ -16,13 +16,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-COPY packages/python_client/ ./packages/python_client/
 COPY services/api/ ./services/api/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv venv /opt/venv && \
     . /opt/venv/bin/activate && \
-    uv pip install ./packages/python_client ./services/api
+    uv pip install ./services/api
 
 # --- Runtime ---
 FROM python:3.12-slim-bookworm
@@ -40,13 +39,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH="/app/services/api/src:/app/packages/python_client/src"
+    PYTHONPATH="/app/services/api/src"
 
 COPY --from=builder --chown=appuser:appgroup /opt/venv /opt/venv
 
 WORKDIR /app
 
-COPY --chown=appuser:appgroup packages/python_client/src/ ./packages/python_client/src/
 COPY --chown=appuser:appgroup services/api/src/ ./services/api/src/
 COPY --chown=appuser:appgroup services/api/alembic.ini ./services/api/
 COPY --chown=appuser:appgroup services/api/migrations/ ./services/api/migrations/

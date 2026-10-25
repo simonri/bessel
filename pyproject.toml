@@ -2,10 +2,10 @@
 name = "bessel"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["asyncpg>=0.31.0", "mypy-boto3-s3>=1.42.3", "openapi-python-client>=0.28.0"]
+dependencies = ["asyncpg>=0.31.0", "mypy-boto3-s3>=1.42.3"]
 
 [tool.uv.workspace]
-members = ["services/*", "packages/python_client"]
+members = ["services/*"]
 exclude = ["**/__pycache__", "**/.venv", "**/.pytest_cache", "**/.mypy_cache", "**/.ruff_cache"]
 
 # ============================================

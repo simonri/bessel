@@ -22,7 +22,6 @@
       "!apps/ios/**/*.xcassets",
       "!services/api/openapi.json",
       "!packages/client/src",
-      "!packages/python_client",
       "!apps/web/src/components/world-climate/climate-data.json"
     ],
     "maxSize": 2097152

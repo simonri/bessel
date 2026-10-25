@@ -236,6 +236,7 @@ export {
   uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation,
   upsertGymExerciseV1GymExercisesExerciseIdPutMutation,
 } from "./@tanstack/react-query.gen.js";
+export { client, type CreateClientConfig } from "./client.gen.js";
 export {
   addTransactionDocumentV1TransactionsTransactionIdDocumentsPost,
   authorizeBankConnectionV1BankConnectionsAuthorizePost,
@@ -1319,4 +1320,3 @@ export {
   type WeatherNow,
   type YearAmount,
 } from "./types.gen.js";
-export { client } from "./client.gen";

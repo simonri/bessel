@@ -1,9 +1,0 @@
-from enum import StrEnum
-
-
-class TradeType(StrEnum):
-  BUY = "buy"
-  SELL = "sell"
-
-  def __str__(self) -> str:
-    return str(self.value)

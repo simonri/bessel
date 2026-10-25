@@ -1,31 +1,11 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Regenerates the OpenAPI spec from the API's code and the TypeScript client from the spec.
+set -euo pipefail
 
-echo "Exporting OpenAPI spec from API service..."
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-cd services/api
-uv run python export_openapi.py
-cd ../..
+echo "Exporting the OpenAPI spec..."
+(cd "$ROOT/services/api" && uv run --frozen python export_openapi.py)
 
-echo "Regenerating Python API client..."
-
-rm -rf packages/python_client/src/openapi_client
-mkdir -p packages/python_client/src/openapi_client
-
-uvx openapi-python-client generate \
-  --path services/api/openapi.json \
-  --output-path packages/python_client/src/openapi_client \
-  --overwrite \
-  --meta none
-
-echo "Regenerating TypeScript API client..."
-
-cd packages/client
-npx @hey-api/openapi-ts -i ../../services/api/openapi.json
-
-# Add client export (not included by generator)
-echo 'export { client } from "./client.gen";' >> src/index.ts
-
-cd ../..
-
-echo "Client generation complete!"
+echo "Generating the TypeScript client..."
+(cd "$ROOT/packages/client" && pnpm exec openapi-ts)

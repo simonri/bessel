@@ -38,8 +38,8 @@ OPENAPI_PARAMETERS: OpenAPIParameters = {
 def _mark_binary_uploads(node: Any) -> None:
   """Add `format: binary` to file fields FastAPI describes only by contentMediaType.
 
-  FastAPI emits the OpenAPI 3.1 form for UploadFile, which openapi-python-client
-  doesn't recognize — it would generate the field as `str` and send it as text/plain.
+  FastAPI emits only the OpenAPI 3.1 form for UploadFile; generators that predate it
+  read such a field as text unless it also says `format: binary`.
   """
   if isinstance(node, dict):
     if node.get("type") == "string" and node.get("contentMediaType") == "application/octet-stream":

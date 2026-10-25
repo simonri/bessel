@@ -38,7 +38,7 @@ pnpm build                 # Build production bundle
 ### Client Generation
 
 ```bash
-# From repo root — exports OpenAPI spec then regenerates TS + Python clients
+# From repo root — exports the OpenAPI spec, then regenerates the TypeScript client
 make clients
 ```
 
