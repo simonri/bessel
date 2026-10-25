@@ -1,17 +1,16 @@
 import Foundation
 
-enum TaskStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
-    case todo
-    case inProgress = "in_progress"
-    /// Finished work (often an agent's) waiting for the user to check it.
-    case inReview = "in_review"
-    case done
-    case cancelled
-    /// A status added on the server after this build; such tasks aren't listed.
-    case unknown
+// The API's task types, generated from its spec (Bessel/API/Generated).
+typealias TaskStatus = API.TaskStatus
+typealias TaskItem = API.TaskSchema
+typealias TaskCreate = API.TaskCreate
+typealias TaskUpdate = API.TaskUpdate
+typealias TaskReorderItem = API.TaskReorderItem
+typealias TaskCompleteResponse = API.TaskCompleteResponse
+typealias TaskListResponse = API.TaskListResponse
+typealias Project = API.ProjectSchema
 
-    static let allCases: [TaskStatus] = [.todo, .inProgress, .inReview, .done, .cancelled]
-
+extension TaskStatus: Identifiable {
     var id: String { rawValue }
 
     var label: String {
@@ -26,102 +25,22 @@ enum TaskStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
     }
 }
 
-struct TaskItem: Codable, Identifiable, Hashable {
-    let id: UUID
-    let createdAt: Date
-    let modifiedAt: Date?
-    var title: String
-    var description: String?
-    var status: TaskStatus
-    var priority: Int
-    var dueDate: Date?
-    var completedAt: Date?
-    var project: String?
-    var tags: [String]?
-    var position: Double
-    var isRecurring: Bool
-    var rruleFrequency: String?
-    var rruleInterval: Int?
-    var rruleDayOfWeek: Int?
-    var rruleDayOfMonth: Int?
-    var parentTaskId: UUID?
-}
+extension TaskItem: Identifiable {}
+extension Project: Identifiable {}
 
-struct TaskCreate: Encodable {
-    var title: String
-    var description: String?
-    var status: TaskStatus
-    var priority: Int
-    var dueDate: Date?
-    var project: String?
-
-    enum CodingKeys: String, CodingKey {
-        case title, description, status, priority, project
-        case dueDate = "due_date"
-    }
-}
-
-/// Partial update. Clearable fields encode explicit nulls so the backend's
-/// exclude_unset PATCH semantics actually clear them.
-struct TaskUpdate: Encodable {
-    var title: String
-    var description: String?
-    var status: TaskStatus
-    var priority: Int
-    var dueDate: Date?
-    var project: String?
-
-    enum CodingKeys: String, CodingKey {
-        case title, description, status, priority, project
-        case dueDate = "due_date"
-    }
-
-    /// The task as it is, with only its status changed.
+extension TaskUpdate {
+    /// The task as it is, with only its status changed. The fields it sends are
+    /// replaced as a whole, so a cleared one goes as an explicit null.
     static func status(_ status: TaskStatus, for task: TaskItem) -> TaskUpdate {
         TaskUpdate(
             title: task.title,
-            description: task.description,
+            description: .some(task.description),
             status: status,
             priority: task.priority,
-            dueDate: task.dueDate,
-            project: task.project
+            dueDate: .some(task.dueDate),
+            project: .some(task.project)
         )
     }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(title, forKey: .title)
-        try container.encode(status, forKey: .status)
-        try container.encode(priority, forKey: .priority)
-        try container.encode(description, forKey: .description)
-        try container.encode(dueDate, forKey: .dueDate)
-        try container.encode(project, forKey: .project)
-    }
-}
-
-struct TaskReorderItem: Encodable {
-    let id: UUID
-    let position: Double
-}
-
-struct TaskCompleteResponse: Decodable {
-    let completedTask: TaskItem
-    let nextTask: TaskItem?
-}
-
-struct TaskListResponse: Decodable {
-    @Lossy var items: [TaskItem]
-    let pagination: Pagination
-
-    struct Pagination: Decodable {
-        let totalCount: Int
-        let maxPage: Int
-    }
-}
-
-struct Project: Decodable, Identifiable {
-    let id: UUID
-    let name: String
 }
 
 extension TaskItem {
@@ -153,12 +72,13 @@ extension TaskItem {
     var recurrenceLabel: String? {
         guard isRecurring, let frequency = rruleFrequency else { return nil }
         let interval = rruleInterval ?? 1
-        let unit: String = switch frequency {
-        case "daily": "day"
-        case "weekly": "week"
-        case "monthly": "month"
-        case "yearly": "year"
-        default: frequency
+        let unit: String
+        switch frequency {
+        case .daily: unit = "day"
+        case .weekly: unit = "week"
+        case .monthly: unit = "month"
+        case .yearly: unit = "year"
+        case .unknown: return nil
         }
         return interval == 1 ? "Every \(unit)" : "Every \(interval) \(unit)s"
     }

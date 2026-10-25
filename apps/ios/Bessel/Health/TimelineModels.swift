@@ -2,34 +2,18 @@ import Foundation
 import Observation
 
 /// /v1/timeline: the day's sleep and screen time as segments.
-struct TimelineResponse: Decodable {
-    let startTs: Int
-    let endTs: Int
-    @Lossy var lanes: [Lane]
+typealias TimelineResponse = API.TimelineResponse
 
-    struct Lane: Decodable {
-        let key: String
-        let totalSecs: Int
-        @Lossy var segments: [Segment]
-    }
-
-    struct Segment: Decodable {
-        let startTs: Int
-        let endTs: Int
-        let label: String?
-    }
+extension TimelineResponse {
+    typealias Lane = API.TimelineLane
+    typealias Segment = API.TimelineSegment
 }
 
 /// /v1/location-history/day: places visited, from an imported Google Timeline.
-struct LocationDayResponse: Decodable {
-    @Lossy var visits: [Visit]
+typealias LocationDayResponse = API.LocationDay
 
-    struct Visit: Decodable {
-        let startAt: Date
-        let endAt: Date
-        let name: String?
-        let semanticType: String?
-    }
+extension LocationDayResponse {
+    typealias Visit = API.LocationVisit
 }
 
 /// One lane of the day ribbon, mirroring apps/web components/timeline/day-summary.ts.
@@ -175,7 +159,7 @@ final class DayTimeline {
     }
 
     private static func activityLane(_ lane: TimelineResponse.Lane) -> RibbonLane? {
-        guard let key = RibbonLane.Key(rawValue: lane.key), key != .places else { return nil }
+        guard let key = RibbonLane.Key(rawValue: lane.key.rawValue), key != .places else { return nil }
         // Most days have no workout; no empty row for them.
         if key == .workouts { return lane.segments.isEmpty ? nil : workoutLane(lane) }
         var sessions: [(start: Int, end: Int)] = []
@@ -205,7 +189,7 @@ final class DayTimeline {
             RibbonLane.Block(
                 start: Date(timeIntervalSince1970: TimeInterval(segment.startTs)),
                 end: Date(timeIntervalSince1970: TimeInterval(segment.endTs)),
-                name: HealthKitWorkoutItem.activityLabel(segment.label ?? ""),
+                name: HealthKitWorkoutItem.activityLabel(segment.label),
                 hue: hue
             )
         }

@@ -274,7 +274,7 @@ struct EventEditorView: View {
             return
         }
         guard let existing else { return }
-        if existing.recurring, !changes(for: existing).isEmpty || movesCalendar {
+        if existing.recurring, hasChanges(existing) || movesCalendar {
             askingScope = true
         } else {
             saveExisting(scope: .this)
@@ -282,24 +282,19 @@ struct EventEditorView: View {
     }
 
     private func create(in calendarID: UUID) {
-        var fields: [String: JSONValue] = [
-            "title": .string(title.trimmingCharacters(in: .whitespacesAndNewlines)),
-            "timing": timing.json(timeZone: store.timeZone),
-            "location": .optionalString(location.trimmingCharacters(in: .whitespacesAndNewlines)),
-            "description": .optionalString(notes.trimmingCharacters(in: .whitespacesAndNewlines)),
-            "busy": .bool(busy),
-            "notify_guests": .bool(isGoogle && !guests.isEmpty && notifyGuests),
-        ]
-        if let recurrence = repeatPreset?.recurrence(start: timing.start) {
-            fields["recurrence"] = recurrence.json
-        }
-        if isGoogle, !guests.isEmpty {
-            fields["attendees"] = .array(guests.map(JSONValue.string))
-        }
-        if isGoogle, addMeet {
-            fields["add_conference"] = .bool(true)
-        }
-        run { try await store.create(in: calendarID, fields: fields) }
+        let event = API.EventCreate(
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            timing: timing.input(timeZone: store.timeZone),
+            location: location.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty,
+            description: notes.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty,
+            attendees: isGoogle && !guests.isEmpty ? guests : nil,
+            recurrence: repeatPreset?.recurrence(start: timing.start),
+            busy: busy,
+            addConference: isGoogle && addMeet ? true : nil,
+            timeZone: store.timeZone,
+            notifyGuests: isGoogle && !guests.isEmpty && notifyGuests
+        )
+        run { try await store.create(in: calendarID, event: event) }
     }
 
     private var movesCalendar: Bool {
@@ -320,40 +315,44 @@ struct EventEditorView: View {
         return EditScope.allCases
     }
 
-    /// Only the fields that differ from the event as loaded.
-    private func changes(for event: CalendarEvent) -> [String: JSONValue] {
-        var fields: [String: JSONValue] = [:]
+    /// Only the fields that differ from the event as loaded; the rest stay unset and aren't sent.
+    private func changes(for event: CalendarEvent) -> API.EventUpdate {
+        var changes = API.EventUpdate(timeZone: store.timeZone)
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedTitle != event.title { fields["title"] = .string(trimmedTitle) }
+        if trimmedTitle != event.title { changes.title = .some(trimmedTitle) }
         let newTiming = timing
         if newTiming != EventTiming(allDay: event.allDay, start: event.start, end: event.end) {
-            fields["timing"] = newTiming.json(timeZone: store.timeZone)
+            changes.timing = .some(newTiming.input(timeZone: store.timeZone))
         }
         let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedLocation != (event.location ?? "") { fields["location"] = .optionalString(trimmedLocation) }
+        if trimmedLocation != (event.location ?? "") { changes.location = .some(trimmedLocation.nonEmpty) }
         let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedNotes != (event.description ?? "") { fields["description"] = .optionalString(trimmedNotes) }
-        if busy != event.busy { fields["busy"] = .bool(busy) }
+        if trimmedNotes != (event.description ?? "") { changes.description = .some(trimmedNotes.nonEmpty) }
+        if busy != event.busy { changes.busy = .some(busy) }
         if recurrenceChanged, let repeatPreset {
-            fields["recurrence"] = repeatPreset.recurrence(start: newTiming.start)?.json ?? .null
+            changes.recurrence = .some(repeatPreset.recurrence(start: newTiming.start))
         }
         if isGoogle, Set(guests) != Set(event.attendees.map { $0.email.lowercased() }) {
-            fields["attendees"] = .array(guests.map(JSONValue.string))
+            changes.attendees = .some(guests)
         }
-        if isGoogle, addMeet { fields["add_conference"] = .bool(true) }
-        return fields
+        if isGoogle, addMeet { changes.addConference = .some(true) }
+        return changes
+    }
+
+    private func hasChanges(_ event: CalendarEvent) -> Bool {
+        changes(for: event) != API.EventUpdate(timeZone: store.timeZone)
     }
 
     private func saveExisting(scope: EditScope) {
         guard let existing else { return }
-        let fields = changes(for: existing)
-        guard !fields.isEmpty || movesCalendar else {
+        let edits = changes(for: existing)
+        guard hasChanges(existing) || movesCalendar else {
             dismiss()
             return
         }
         let notify = isGoogle && !guests.isEmpty && notifyGuests
         let destination = movesCalendar ? calendarID : nil
-        run { try await store.update(existing, fields: fields, scope: scope, notifyGuests: notify, moveTo: destination) }
+        run { try await store.update(existing, changes: edits, scope: scope, notifyGuests: notify, moveTo: destination) }
     }
 
     private func run(_ work: @escaping () async throws -> Void) {

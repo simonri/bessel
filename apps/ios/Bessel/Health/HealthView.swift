@@ -494,7 +494,7 @@ struct MoveWeekBars: View {
                     Circle()
                         .fill(day.workoutMinutes > 0 ? Theme.pastelSolid(HealthRing.move.hue) : .clear)
                         .frame(width: 5, height: 5)
-                    Text(day.day?.formatted(.dateTime.weekday(.narrow)) ?? "")
+                    Text(day.date.formatted(.dateTime.weekday(.narrow)))
                         .font(.caption2.weight(isLast ? .bold : .regular))
                         .foregroundStyle(isLast ? Theme.foreground : Theme.faintForeground)
                 }
@@ -506,7 +506,7 @@ struct MoveWeekBars: View {
     }
 
     private func accessibility(_ day: HealthSummary.WeekDay) -> String {
-        let name = day.day?.formatted(.dateTime.weekday(.wide)) ?? day.date
+        let name = day.date.formatted(.dateTime.weekday(.wide))
         let workout = day.workoutMinutes > 0 ? ", worked out \(HealthFormat.duration(day.workoutMinutes * 60))" : ""
         return "\(name): movement \(day.moveScore.map(String.init) ?? "not recorded")\(workout)"
     }

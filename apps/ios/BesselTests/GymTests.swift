@@ -9,19 +9,19 @@ final class GymChangeTests: XCTestCase {
     }
 
     func testLoggingADayReplacesThatDayAndMovesTheBest() {
-        var list = [exercise(sets: [GymSet(performedOn: "2026-10-01", weightKg: 60)])]
+        var list = [exercise(sets: [GymSet(day: "2026-10-01", weightKg: 60)])]
 
         GymChange.saveSet(exerciseID: bench, day: "2026-10-08", weightKg: 62.5).apply(to: &list)
         GymChange.saveSet(exerciseID: bench, day: "2026-10-08", weightKg: 65).apply(to: &list)
 
         XCTAssertEqual(list[0].recentSets.map(\.weightKg), [60, 65])
-        XCTAssertEqual(list[0].lastSet, GymSet(performedOn: "2026-10-08", weightKg: 65))
+        XCTAssertEqual(list[0].lastSet, GymSet(day: "2026-10-08", weightKg: 65))
         XCTAssertEqual(list[0].bestSet?.weightKg, 65)
     }
 
     func testAnOlderBestOutsideTheRecentSetsStands() {
-        let old = GymSet(performedOn: "2026-01-01", weightKg: 80)
-        var list = [exercise(sets: [GymSet(performedOn: "2026-10-01", weightKg: 60)], best: old)]
+        let old = GymSet(day: "2026-01-01", weightKg: 80)
+        var list = [exercise(sets: [GymSet(day: "2026-10-01", weightKg: 60)], best: old)]
 
         GymChange.saveSet(exerciseID: bench, day: "2026-10-08", weightKg: 70).apply(to: &list)
 
@@ -29,12 +29,12 @@ final class GymChangeTests: XCTestCase {
     }
 
     func testRemovingTheBestDayFallsBackToTheNextHeaviest() {
-        var list = [exercise(sets: [GymSet(performedOn: "2026-10-01", weightKg: 60), GymSet(performedOn: "2026-10-08", weightKg: 70)])]
+        var list = [exercise(sets: [GymSet(day: "2026-10-01", weightKg: 60), GymSet(day: "2026-10-08", weightKg: 70)])]
 
         GymChange.deleteSet(exerciseID: bench, day: "2026-10-08").apply(to: &list)
 
-        XCTAssertEqual(list[0].bestSet, GymSet(performedOn: "2026-10-01", weightKg: 60))
-        XCTAssertEqual(list[0].lastSet, GymSet(performedOn: "2026-10-01", weightKg: 60))
+        XCTAssertEqual(list[0].bestSet, GymSet(day: "2026-10-01", weightKg: 60))
+        XCTAssertEqual(list[0].lastSet, GymSet(day: "2026-10-01", weightKg: 60))
     }
 
     func testAddingRenamingAndDeletingExercises() {
@@ -89,13 +89,13 @@ final class GymStoreTests: XCTestCase {
         await store.load()
 
         XCTAssertEqual(store.exercises.map(\.name), ["Squat"])
-        XCTAssertEqual(store.exercises.first?.lastSet, GymSet(performedOn: "2026-10-08", weightKg: 80))
+        XCTAssertEqual(store.exercises.first?.lastSet, GymSet(day: "2026-10-08", weightKg: 80))
     }
 
     func testSentChangesStayShownAfterTheyLeaveTheQueue() async {
         let store = makeStore()
         MockURLProtocol.responder = { request in
-            let body = request.url!.path.contains("/sets/") ? #"{"performed_on":"2026-10-08","weight_kg":80}"# : #"{"id":"\#(UUID())"}"#
+            let body = request.url!.path.contains("/sets/") ? #"{"performed_on":"2026-10-08","weight_kg":80}"# : #"{"id":"\#(UUID())","name":"Squat","muscles":[],"created_at":"2026-10-01T08:00:00Z"}"#
             return (200, [:], Data(body.utf8))
         }
         let squat = store.addExercise(named: "Squat")!
@@ -170,7 +170,7 @@ final class GymOutboxTests: XCTestCase {
         outbox.enqueue(.saveExercise(id: id, name: "Squat", muscles: nil))
         outbox.enqueue(.saveSet(exerciseID: id, day: "2026-10-08", weightKg: 80))
         MockURLProtocol.responder = { request in
-            let body = request.url!.path.hasSuffix("2026-10-08") ? #"{"performed_on":"2026-10-08","weight_kg":80}"# : #"{"id":"\#(id)"}"#
+            let body = request.url!.path.hasSuffix("2026-10-08") ? #"{"performed_on":"2026-10-08","weight_kg":80}"# : #"{"id":"\#(id)","name":"Squat","muscles":[],"created_at":"2026-10-01T08:00:00Z"}"#
             return (200, [:], Data(body.utf8))
         }
         var reached: [GymChange] = []

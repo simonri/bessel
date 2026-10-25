@@ -345,7 +345,7 @@ struct LogTopSetSheet: View {
                         muscles(exercise)
                         ProgressCard(sets: history, best: exercise.bestSet)
                         HistoryCard(sets: history) { set in
-                            store.deleteSet(of: exercise, on: set.performedOn)
+                            store.deleteSet(of: exercise, on: set.dayKey)
                             history.removeAll { $0.performedOn == set.performedOn }
                         }
                     }
@@ -494,8 +494,8 @@ struct LogTopSetSheet: View {
         guard let value = GymFormat.parse(weightText), value >= 0 else { return }
         editingWeight = false
         let isNewBest = store.logTopSet(exercise, weightKg: value)
-        history.removeAll { $0.performedOn == today }
-        history.append(GymSet(performedOn: today, weightKg: (value * 100).rounded() / 100))
+        history.removeAll { $0.dayKey == today }
+        history.append(GymSet(day: today, weightKg: (value * 100).rounded() / 100))
         savedTrigger += 1
         guard isNewBest else {
             dismiss()
@@ -547,7 +547,7 @@ private struct ProgressCard: View {
     let best: GymSet?
 
     private var points: [(date: Date, weight: Double)] {
-        sets.compactMap { set in set.day.map { ($0, set.weightKg) } }
+        sets.map { ($0.performedOn, $0.weightKg) }
     }
 
     var body: some View {
@@ -601,7 +601,8 @@ private struct ProgressCard: View {
 
     /// "+7.5 kg since Aug 4"
     private var change: String? {
-        guard let first = sets.first, let last = sets.last, first != last, let since = first.day else { return nil }
+        guard let first = sets.first, let last = sets.last, first != last else { return nil }
+        let since = first.performedOn
         let diff = last.weightKg - first.weightKg
         let sign = diff > 0 ? "+" : diff < 0 ? "−" : "±"
         return "\(sign)\(GymFormat.number(abs(diff))) kg since \(since.formatted(.dateTime.month(.abbreviated).day()))"
@@ -626,7 +627,7 @@ private struct HistoryCard: View {
                             Theme.border.frame(height: 0.5).padding(.leading, 16)
                         }
                         HStack {
-                            Text(set.day?.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()) ?? set.performedOn)
+                            Text(set.performedOn.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
                                 .foregroundStyle(Theme.mutedForeground)
                             Spacer()
                             Text(GymFormat.weight(set.weightKg))

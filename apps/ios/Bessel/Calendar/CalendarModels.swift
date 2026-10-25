@@ -2,87 +2,34 @@ import SwiftUI
 
 // MARK: - Reading
 
-struct CalendarAccountListResponse: Decodable {
-    @Lossy var accounts: [CalendarAccount]
+// The API's calendar types, generated from its spec (Bessel/API/Generated).
+typealias CalendarAccountListResponse = API.CalendarAccountListResponse
+typealias CalendarAccount = API.CalendarAccountSchema
+typealias CalendarInfo = API.CalendarSchema
+typealias CalendarEventListResponse = API.CalendarEventListResponse
+typealias EventWriteResponse = API.EventWriteResponse
+typealias CalendarAttendee = API.CalendarEventAttendee
+typealias EventRecurrence = API.RecurrenceSchema
+/// One event from /v1/calendars/events. All-day events carry calendar days
+/// (`startDate`, `endDate`) read at local midnight, so they never shift with time zones.
+typealias CalendarEvent = API.CalendarEventSchema
+
+extension CalendarAccount: Identifiable {
+    var isGoogle: Bool { provider == .google }
 }
 
-struct CalendarAccount: Codable, Identifiable, Hashable {
-    let id: UUID
-    let provider: String
-    let email: String
-    let canWrite: Bool
-    @Lossy var calendars: [CalendarInfo]
-
-    var isGoogle: Bool { provider == "google" }
-}
-
-struct CalendarInfo: Codable, Identifiable, Hashable {
-    let id: UUID
-    let name: String
-    let color: String
-    var hidden: Bool
-    let writable: Bool
-    let primary: Bool
-
+extension CalendarInfo: Identifiable {
     var swiftColor: Color { Color(hexString: color) ?? .gray }
 }
 
-struct CalendarEventListResponse: Decodable {
-    @Lossy var events: [CalendarEvent]
-}
-
-struct EventWriteResponse: Decodable {
-    let event: CalendarEvent?
-}
-
-struct CalendarAttendee: Codable, Hashable {
-    let email: String
-    let name: String?
-    let response: String
-    let isSelf: Bool
-    let isOrganizer: Bool
-}
-
-struct EventRecurrence: Codable, Hashable {
-    var frequency: String
-    var interval: Int = 1
-    var byWeekday: [String] = []
-    var count: Int?
-    var until: String?
-}
-
-/// One event from /v1/calendars/events. All-day dates stay strings: they are
-/// calendar days, not instants, and must not shift with time zones.
-struct CalendarEvent: Codable, Identifiable, Hashable {
-    let id: UUID
-    var calendarId: UUID
-    var title: String
-    var location: String?
-    var allDay: Bool
-    var startAt: Date?
-    var endAt: Date?
-    var startDate: String?
-    var endDate: String?
-    var description: String?
-    let creatorName: String?
-    let creatorEmail: String?
-    var attendees: [CalendarAttendee]
-    var myResponse: String?
-    let conferenceUrl: String?
-    let htmlLink: String?
-    var busy: Bool
-    let recurring: Bool
-    let editable: Bool
-    var colorId: String?
-    let recurrence: EventRecurrence?
-
+extension CalendarEvent: Identifiable {
     /// Start and (exclusive) end as instants; all-day events at local midnight.
     var start: Date {
-        allDay ? (startDate.flatMap(DateParsing.dateOnly.date(from:)) ?? .distantPast) : (startAt ?? .distantPast)
+        allDay ? (startDate ?? .distantPast) : (startAt ?? .distantPast)
     }
 
     var end: Date {
-        allDay ? (endDate.flatMap(DateParsing.dateOnly.date(from:)) ?? start) : (endAt ?? start)
+        allDay ? (endDate ?? start) : (endAt ?? start)
     }
 
     var displayTitle: String { title.isEmpty ? "(No title)" : title }
@@ -147,18 +94,16 @@ extension Color {
 // MARK: - Writing
 
 /// Which occurrences of a repeating event a change applies to.
-enum EditScope: String, CaseIterable, Identifiable {
-    case this
-    case following
-    case all
+typealias EditScope = API.EditScope
 
+extension EditScope: Identifiable {
     var id: String { rawValue }
 
     var label: String {
         switch self {
         case .this: "This event"
         case .following: "This and following events"
-        case .all: "All events"
+        case .all, .unknown: "All events"
         }
     }
 }
@@ -170,17 +115,13 @@ struct EventTiming: Equatable {
     var start: Date
     var end: Date
 
-    func json(timeZone: String) -> JSONValue {
-        func moment(_ date: Date) -> JSONValue {
+    func input(timeZone: String) -> API.EventTimingInput {
+        func moment(_ date: Date) -> API.EventTimeInput {
             allDay
-                ? .object(["date": .string(DateParsing.dateOnly.string(from: date))])
-                : .object(["date_time": .string(Self.wallClock.string(from: date))])
+                ? API.EventTimeInput(date: DateParsing.dateOnly.string(from: date))
+                : API.EventTimeInput(dateTime: Self.wallClock.string(from: date))
         }
-        return .object([
-            "start": moment(start),
-            "end": moment(end),
-            "time_zone": .string(timeZone),
-        ])
+        return API.EventTimingInput(start: moment(start), end: moment(end), timeZone: timeZone)
     }
 
     private static let wallClock: DateFormatter = {
@@ -235,21 +176,7 @@ enum RepeatPreset: String, CaseIterable, Identifiable {
     }
 }
 
-extension EventRecurrence {
-    var json: JSONValue {
-        .object([
-            "frequency": .string(frequency),
-            "interval": .number(Double(interval)),
-            "by_weekday": .array(byWeekday.map(JSONValue.string)),
-            "count": count.map { .number(Double($0)) } ?? .null,
-            "until": until.map(JSONValue.string) ?? .null,
-        ])
-    }
-}
-
-extension JSONValue {
-    static func optionalString(_ value: String?) -> JSONValue {
-        guard let value, !value.isEmpty else { return .null }
-        return .string(value)
-    }
+extension String {
+    /// nil for an empty string, which the API reads as "no value".
+    var nonEmpty: String? { isEmpty ? nil : self }
 }

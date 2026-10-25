@@ -1,13 +1,18 @@
 import Foundation
 
+// The API's gym types, generated from its spec (Bessel/API/Generated).
 /// A muscle group an exercise works; one exercise can work several.
-enum GymMuscle: String, Codable, CaseIterable, Identifiable, LenientEnum {
-    case chest, back, shoulders, biceps, triceps, forearms, core, glutes, quads, hamstrings, calves
-    /// One added on the server after this build; not offered or shown.
-    case unknown
+typealias GymMuscle = API.GymMuscle
+/// The heaviest set of an exercise on one day. Only the weight: no reps.
+typealias GymSet = API.GymTopSetSchema
+typealias GymExercise = API.GymExerciseSummary
+typealias GymExerciseListResponse = API.GymExerciseListResponse
+typealias GymSetListResponse = API.GymTopSetListResponse
+/// `muscles` left out, the server keeps what the exercise has.
+typealias GymExerciseUpsert = API.GymExerciseUpsert
+typealias GymSetUpsert = API.GymTopSetUpsert
 
-    static let allCases: [GymMuscle] = [.chest, .back, .shoulders, .biceps, .triceps, .forearms, .core, .glutes, .quads, .hamstrings, .calves]
-
+extension GymMuscle: Identifiable {
     var id: String { rawValue }
 
     var label: String {
@@ -21,27 +26,19 @@ enum GymMuscle: String, Codable, CaseIterable, Identifiable, LenientEnum {
     }
 }
 
-/// The heaviest set of an exercise on one day. Only the weight: no reps.
-struct GymSet: Codable, Equatable, Hashable {
-    /// The local day, "yyyy-MM-dd".
-    let performedOn: String
-    var weightKg: Double
+extension GymSet {
+    /// A set on the local day `day` ("yyyy-MM-dd").
+    init(day: String, weightKg: Double) {
+        self.init(performedOn: DateParsing.dateOnly.date(from: day) ?? .distantPast, weightKg: weightKg)
+    }
 
-    var day: Date? { DateParsing.dateOnly.date(from: performedOn) }
+    /// The local day as "yyyy-MM-dd", the key sets are stored under.
+    var dayKey: String { DateParsing.dateOnly.string(from: performedOn) }
 }
 
-struct GymExercise: Codable, Identifiable, Equatable {
-    let id: UUID
-    var name: String
-    var muscles: [GymMuscle]
-    let createdAt: Date
-    var lastSet: GymSet?
-    var bestSet: GymSet?
-    /// Up to the last ten top sets, oldest first.
-    var recentSets: [GymSet]
-
+extension GymExercise: Identifiable {
     func set(on day: String) -> GymSet? {
-        recentSets.first { $0.performedOn == day }
+        recentSets.first { $0.dayKey == day }
     }
 
     /// "Chest · Triceps"
@@ -52,29 +49,7 @@ struct GymExercise: Codable, Identifiable, Equatable {
 
     /// When it was last trained, or added; the list puts the latest first.
     var lastActive: Date {
-        lastSet?.day ?? createdAt
-    }
-}
-
-struct GymExerciseListResponse: Decodable {
-    @Lossy var exercises: [GymExercise]
-}
-
-struct GymSetListResponse: Decodable {
-    @Lossy var sets: [GymSet]
-}
-
-struct GymExerciseUpsert: Encodable {
-    let name: String
-    /// Left out, the server keeps what the exercise has.
-    let muscles: [GymMuscle]?
-}
-
-struct GymSetUpsert: Encodable {
-    let weightKg: Double
-
-    enum CodingKeys: String, CodingKey {
-        case weightKg = "weight_kg"
+        lastSet?.performedOn ?? createdAt
     }
 }
 
@@ -103,8 +78,8 @@ enum GymChange: Codable, Equatable {
         case let .saveSet(exerciseID, day, weightKg):
             guard let index = exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
             var exercise = exercises[index]
-            exercise.recentSets.removeAll { $0.performedOn == day }
-            exercise.recentSets.append(GymSet(performedOn: day, weightKg: weightKg))
+            exercise.recentSets.removeAll { $0.dayKey == day }
+            exercise.recentSets.append(GymSet(day: day, weightKg: weightKg))
             exercise.recentSets.sort { $0.performedOn < $1.performedOn }
             exercise.lastSet = exercise.recentSets.last
             exercise.bestSet = Self.best(of: exercise.recentSets, beyond: exercise.bestSet, replacing: day)
@@ -112,7 +87,7 @@ enum GymChange: Codable, Equatable {
         case let .deleteSet(exerciseID, day):
             guard let index = exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
             var exercise = exercises[index]
-            exercise.recentSets.removeAll { $0.performedOn == day }
+            exercise.recentSets.removeAll { $0.dayKey == day }
             exercise.lastSet = exercise.recentSets.last
             exercise.bestSet = Self.best(of: exercise.recentSets, beyond: exercise.bestSet, replacing: day)
             exercises[index] = exercise
@@ -123,7 +98,7 @@ enum GymChange: Codable, Equatable {
     /// that's heavier and isn't the day being changed. Ties go to the latest.
     private static func best(of sets: [GymSet], beyond known: GymSet?, replacing day: String) -> GymSet? {
         var candidates = sets
-        if let known, known.performedOn != day, !sets.contains(where: { $0.performedOn == known.performedOn }) {
+        if let known, known.dayKey != day, !sets.contains(where: { $0.performedOn == known.performedOn }) {
             candidates.append(known)
         }
         return candidates.max { ($0.weightKg, $0.performedOn) < ($1.weightKg, $1.performedOn) }
@@ -151,7 +126,7 @@ enum GymFormat {
 
     /// "Today", "Yesterday", "Tue" this week, else "Sep 14".
     static func day(_ set: GymSet) -> String {
-        guard let date = set.day else { return set.performedOn }
+        let date = set.performedOn
         let calendar = Calendar.current
         if calendar.isDateInToday(date) { return "Today" }
         if calendar.isDateInYesterday(date) { return "Yesterday" }

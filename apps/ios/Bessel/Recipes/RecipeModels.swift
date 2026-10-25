@@ -1,179 +1,68 @@
 import Foundation
 
-enum RecipeType: String, Codable, CaseIterable, Identifiable, LenientEnum {
-    case main
-    case dessert
-    case other
+// The API's recipe types, generated from its spec (Bessel/API/Generated).
+typealias RecipeType = API.RecipeType
+typealias RecipeItem = API.RecipeSchema
+typealias RecipeBody = API.RecipeBody
+typealias RecipeCreate = API.RecipeCreate
+/// Partial update. Only set fields are sent, and never `content`: sending
+/// markdown would make the API drop the structured body the web built.
+typealias RecipeUpdate = API.RecipeUpdate
+typealias RecipeImportRequest = API.RecipeImportRequest
+typealias RecipeImportResult = API.RecipeImportResult
+typealias RecipeListResponse = API.RecipeListResponse
 
-    /// Kinds added on the server after this build file under Other.
-    static var unknown: RecipeType { .other }
+extension RecipeBody {
+    typealias IngredientGroup = API.RecipeIngredientGroup
+    typealias Ingredient = API.RecipeIngredient
+    typealias Callout = API.RecipeCallout
+    typealias Step = API.RecipeStep
+    typealias Section = API.RecipeSection
+}
 
+extension RecipeType: Identifiable {
     var id: String { rawValue }
 
+    /// Kinds added on the server after this build file under Other, and are
+    /// saved as Other: the server wouldn't take back a value it no longer has.
+    var known: RecipeType { self == .unknown ? .other : self }
+
     var label: String {
-        switch self {
+        switch known {
         case .main: "Main"
         case .dessert: "Dessert"
-        case .other: "Other"
+        default: "Other"
         }
     }
 
     var plural: String {
-        switch self {
+        switch known {
         case .main: "Mains"
         case .dessert: "Desserts"
-        case .other: "Other"
+        default: "Other"
         }
     }
 
     /// Same emoji and hues as the web cookbook (apps/web recipe-style.ts).
     var emoji: String {
-        switch self {
+        switch known {
         case .main: "🍝"
         case .dessert: "🧁"
-        case .other: "🥗"
+        default: "🥗"
         }
     }
 
     var hue: Double {
-        switch self {
+        switch known {
         case .main: 45
         case .dessert: 0
-        case .other: 160
+        default: 160
         }
     }
 }
 
-struct RecipeItem: Codable, Identifiable, Hashable {
-    let id: UUID
-    let createdAt: Date
-    let modifiedAt: Date?
-    var title: String
-    var content: String
-    var recipeType: RecipeType
-    /// Always present: the API derives it from `content` when no structure was saved.
-    var body: RecipeBody
-    var structured: Bool
-
+extension RecipeItem: Identifiable {
     var ingredientCount: Int { body.ingredientGroups.map(\.items.count).reduce(0, +) }
-}
-
-/// The structured shape of a recipe, mirroring services/api recipes/body.py.
-struct RecipeBody: Codable, Hashable {
-    var intro: String?
-    var yieldText: String?
-    var totalMinutes: Int?
-    var activeMinutes: Int?
-    var ingredientGroups: [IngredientGroup] = []
-    var steps: [Step] = []
-    var sections: [Section] = []
-
-    struct IngredientGroup: Codable, Hashable {
-        var title: String?
-        var items: [Ingredient] = []
-    }
-
-    struct Ingredient: Codable, Hashable {
-        var amount: Double?
-        var unit: String?
-        var name: String
-        var note: String?
-    }
-
-    struct Callout: Codable, Hashable {
-        var kind: String = "tip"
-        var label: String?
-        var text: String
-    }
-
-    struct Step: Codable, Hashable {
-        var title: String?
-        var text: String = ""
-        var timeLabel: String?
-        var callouts: [Callout] = []
-    }
-
-    struct Section: Codable, Hashable {
-        var title: String
-        var text: String = ""
-    }
-}
-
-// Decoding is synthesized (the shared decoder converts snake_case keys);
-// encoding spells the API's snake_case keys out, since the shared encoder
-// leaves keys alone.
-extension RecipeBody {
-    private enum EncodingKeys: String, CodingKey {
-        case intro, steps, sections
-        case yieldText = "yield_text"
-        case totalMinutes = "total_minutes"
-        case activeMinutes = "active_minutes"
-        case ingredientGroups = "ingredient_groups"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(intro, forKey: .intro)
-        try container.encode(yieldText, forKey: .yieldText)
-        try container.encode(totalMinutes, forKey: .totalMinutes)
-        try container.encode(activeMinutes, forKey: .activeMinutes)
-        try container.encode(ingredientGroups, forKey: .ingredientGroups)
-        try container.encode(steps, forKey: .steps)
-        try container.encode(sections, forKey: .sections)
-    }
-}
-
-extension RecipeBody.Step {
-    private enum EncodingKeys: String, CodingKey {
-        case title, text, callouts
-        case timeLabel = "time_label"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(title, forKey: .title)
-        try container.encode(text, forKey: .text)
-        try container.encode(timeLabel, forKey: .timeLabel)
-        try container.encode(callouts, forKey: .callouts)
-    }
-}
-
-struct RecipeCreate: Encodable {
-    var title: String
-    var recipeType: RecipeType
-    var body: RecipeBody
-
-    enum CodingKeys: String, CodingKey {
-        case title, body
-        case recipeType = "recipe_type"
-    }
-}
-
-/// Partial update. Only set fields are sent, and never `content`: sending
-/// markdown would make the API drop the structured body the web built.
-struct RecipeUpdate: Encodable {
-    var title: String?
-    var recipeType: RecipeType?
-    var body: RecipeBody?
-
-    enum CodingKeys: String, CodingKey {
-        case title, body
-        case recipeType = "recipe_type"
-    }
-}
-
-struct RecipeImportRequest: Encodable {
-    let text: String
-}
-
-struct RecipeImportResult: Decodable {
-    let title: String
-    let recipeType: RecipeType
-    let body: RecipeBody
-}
-
-struct RecipeListResponse: Decodable {
-    @Lossy var items: [RecipeItem]
 }
 
 /// Ingredient lines as text and back, matching the API's own parser

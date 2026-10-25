@@ -85,10 +85,10 @@ final class GymStore {
             for change in outbox.changes where change.exerciseID == exercise.id {
                 switch change {
                 case let .saveSet(_, day, weightKg):
-                    sets.removeAll { $0.performedOn == day }
-                    sets.append(GymSet(performedOn: day, weightKg: weightKg))
+                    sets.removeAll { $0.dayKey == day }
+                    sets.append(GymSet(day: day, weightKg: weightKg))
                 case let .deleteSet(_, day):
-                    sets.removeAll { $0.performedOn == day }
+                    sets.removeAll { $0.dayKey == day }
                 default:
                     break
                 }
@@ -158,7 +158,7 @@ final class GymStore {
     @discardableResult
     func logTopSet(_ exercise: GymExercise, weightKg: Double, on day: String = GymStore.today()) -> Bool {
         let previousBest = self.exercise(exercise.id)?.bestSet
-        let isNewBest = previousBest.map { weightKg > $0.weightKg && $0.performedOn != day } ?? false
+        let isNewBest = previousBest.map { weightKg > $0.weightKg && $0.dayKey != day } ?? false
         make(.saveSet(exerciseID: exercise.id, day: day, weightKg: (weightKg * 100).rounded() / 100))
         return isNewBest
     }

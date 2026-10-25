@@ -126,7 +126,7 @@ struct PlacesView: View {
                         if place.status == .wantToGo {
                             Button {
                                 Task {
-                                    await store.update(place, with: PlaceVisitUpdate(status: .visited, rating: nil, visitedAt: .now, review: place.review))
+                                    await store.update(place, with: PlaceUpdate.visit(status: .visited, rating: nil, visitedAt: .now, review: place.review))
                                 }
                                 toasts.show("Moved to Been there ✨")
                             } label: {
@@ -256,7 +256,7 @@ struct PlaceDetailView: View {
                             visitCard(place)
                         } else {
                             Button {
-                                Task { await store.update(place, with: PlaceVisitUpdate(status: .visited, rating: nil, visitedAt: .now, review: place.review)) }
+                                Task { await store.update(place, with: PlaceUpdate.visit(status: .visited, rating: nil, visitedAt: .now, review: place.review)) }
                             } label: {
                                 Label("I've been here", systemImage: "checkmark.circle.fill")
                                     .font(.body.weight(.semibold))
@@ -289,7 +289,7 @@ struct PlaceDetailView: View {
                         Menu {
                             if place.status == .visited {
                                 Button {
-                                    Task { await store.update(place, with: PlaceVisitUpdate(status: .wantToGo, rating: nil, visitedAt: nil, review: place.review)) }
+                                    Task { await store.update(place, with: PlaceUpdate.visit(status: .wantToGo, rating: nil, visitedAt: nil, review: place.review)) }
                                 } label: {
                                     Label("Move to Want to go", systemImage: "arrow.uturn.backward")
                                 }
@@ -394,7 +394,7 @@ struct PlaceDetailView: View {
                     Button {
                         let rating = place.rating == star ? nil : star
                         Task {
-                            await store.update(place, with: PlaceVisitUpdate(status: .visited, rating: rating, visitedAt: place.visitedAt, review: trimmedReview))
+                            await store.update(place, with: PlaceUpdate.visit(status: .visited, rating: rating, visitedAt: place.visitedAt, review: trimmedReview))
                         }
                     } label: {
                         Image(systemName: star <= (place.rating ?? 0) ? "star.fill" : "star")
@@ -426,7 +426,7 @@ struct PlaceDetailView: View {
     private func saveReview(_ place: PlaceItem) {
         guard place.status == .visited, trimmedReview != place.review else { return }
         Task {
-            await store.update(place, with: PlaceVisitUpdate(status: place.status, rating: place.rating, visitedAt: place.visitedAt, review: trimmedReview))
+            await store.update(place, with: PlaceUpdate.visit(status: place.status, rating: place.rating, visitedAt: place.visitedAt, review: trimmedReview))
         }
     }
 }

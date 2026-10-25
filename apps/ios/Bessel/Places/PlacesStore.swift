@@ -76,7 +76,7 @@ final class PlacesStore {
         return created
     }
 
-    func update(_ place: PlaceItem, with update: PlaceVisitUpdate) async {
+    func update(_ place: PlaceItem, with update: PlaceUpdate) async {
         loads.invalidate()
         do {
             let updated: PlaceItem = try await changes.run(place.id) { [client] in

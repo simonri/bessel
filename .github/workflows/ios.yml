@@ -1,0 +1,61 @@
+name: iOS
+
+# Builds the app and runs its tests on a simulator, so a change to the app or
+# to the API models it's generated from can't break the Mac's weekly
+# deploy.sh refresh (which keeps the phone's 7-day signature alive).
+on:
+  push:
+    paths:
+      - "apps/ios/**"
+      - "services/api/openapi.json"
+      - "scripts/generate_swift_models.py"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generated models match the spec
+        working-directory: .
+        run: |
+          python3 scripts/generate_swift_models.py
+          git diff --exit-code --stat -- apps/ios/Bessel/API/Generated \
+            || { echo "::error::Run 'make clients' and commit the regenerated Swift models."; exit 1; }
+
+      - name: Configure
+        run: |
+          cp Config/Dev.example.xcconfig Config/Dev.xcconfig
+          cp Config/Prod.example.xcconfig Config/Prod.xcconfig
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick a simulator
+        id: simulator
+        run: |
+          id=$(xcrun simctl list devices available --json \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for k in sorted(d, reverse=True) if "iOS" in k for x in d[k] if x["name"].startswith("iPhone")))')
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Build and test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Bessel.xcodeproj \
+            -scheme Bessel \
+            -configuration Debug \
+            -destination "id=${{ steps.simulator.outputs.id }}" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify --renderer github-actions

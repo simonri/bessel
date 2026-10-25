@@ -38,7 +38,7 @@ pnpm build                 # Build production bundle
 ### Client Generation
 
 ```bash
-# From repo root — exports the OpenAPI spec, then regenerates the TypeScript client
+# From repo root — exports the OpenAPI spec, then regenerates the TypeScript client and the iOS app's Swift models
 make clients
 make check-clients         # What CI runs: fails if the committed spec or client is stale
 ```

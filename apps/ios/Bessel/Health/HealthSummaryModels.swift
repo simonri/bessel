@@ -2,75 +2,29 @@ import SwiftUI
 
 /// One day from /v1/healthkit/summary: sleep, movement and energy, each scored
 /// against the person's own usual, plus the week around it.
-struct HealthSummary: Codable, Equatable {
-    let date: String
-    let isToday: Bool
-    let sleep: Sleep?
-    let move: Move?
-    let energy: Energy?
-    let insight: String
-    let bedtimeStreak: Int
-    @Lossy var week: [WeekDay]
+typealias HealthSummary = API.HealthSummaryResponse
 
-    struct Sleep: Codable, Equatable {
-        let score: Int
-        let label: String
-        let asleepSecs: Int
-        let usualAsleepSecs: Int?
-        let sleepOnset: String?
-        let wakeTime: String?
-        let deepSecs: Int
-        let coreSecs: Int
-        let remSecs: Int
-        let awakeSecs: Int
-        /// The night's stages in order, from the one source the night is counted from.
-        @Lossy var segments: [Segment]
-
-        struct Segment: Codable, Equatable {
-            let stage: String
-            let start: Date
-            let end: Date
-        }
-
-        var onset: Date? { sleepOnset.flatMap(DateParsing.parse) }
-        var wake: Date? { wakeTime.flatMap(DateParsing.parse) }
-        /// Deep, core and REM recorded separately (a Watch); an iPhone alone only knows "asleep".
-        var hasStages: Bool { deepSecs + coreSecs + remSecs > 0 }
-    }
-
-    struct Move: Codable, Equatable {
-        let score: Int?
-        let label: String
-        let isPartialDay: Bool
-        let steps: Int?
-        let usualSteps: Int?
-        let activeEnergyKcal: Double?
-        let usualActiveEnergyKcal: Double?
-        let exerciseMinutes: Double?
-        let workoutCount: Int
-        let workoutMinutes: Double
-    }
-
-    struct Energy: Codable, Equatable {
-        let score: Int?
-        let label: String
-        let restingHeartRate: Double?
-        let usualRestingHeartRate: Double?
-        let hrvMs: Double?
-        let usualHrvMs: Double?
-    }
-
-    struct WeekDay: Codable, Equatable, Identifiable {
-        let date: String
-        let asleepSecs: Int?
-        let moveScore: Int?
-        let workoutMinutes: Double
-
-        var id: String { date }
-        var day: Date? { DateParsing.dateOnly.date(from: date) }
-    }
+extension HealthSummary {
+    typealias Sleep = API.SleepDaySummary
+    typealias Move = API.MoveDaySummary
+    typealias Energy = API.EnergyDaySummary
+    typealias WeekDay = API.HealthWeekDay
 
     var isEmpty: Bool { sleep == nil && move == nil && energy == nil }
+}
+
+extension HealthSummary.Sleep {
+    /// The night's stages in order, from the one source the night is counted from.
+    typealias Segment = API.SleepStageSegment
+
+    var onset: Date? { sleepOnset.flatMap(DateParsing.parse) }
+    var wake: Date? { wakeTime.flatMap(DateParsing.parse) }
+    /// Deep, core and REM recorded separately (a Watch); an iPhone alone only knows "asleep".
+    var hasStages: Bool { deepSecs + coreSecs + remSecs > 0 }
+}
+
+extension HealthSummary.WeekDay: Identifiable {
+    var id: Date { date }
 }
 
 /// The three rings, each with its own soft colour.

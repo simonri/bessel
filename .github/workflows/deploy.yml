@@ -80,6 +80,7 @@ jobs:
               - 'pnpm-lock.yaml'
             contract:
               - 'scripts/generate_clients.sh'
+              - 'scripts/generate_swift_models.py'
               - 'scripts/check_clients.sh'
               - 'scripts/check_api_compat.sh'
               - '.github/workflows/deploy.yml'

@@ -1,123 +1,14 @@
 import Foundation
 
-/// JSON-safe value for HealthKit's heterogeneous metadata/statistics dictionaries.
-enum JSONValue: Encodable {
-    case string(String)
-    case number(Double)
-    case bool(Bool)
-    case null
-    case array([JSONValue])
-    case object([String: JSONValue])
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        switch self {
-        case .string(let value): try container.encode(value)
-        case .number(let value): try container.encode(value)
-        case .bool(let value): try container.encode(value)
-        case .null: try container.encodeNil()
-        case .array(let value): try container.encode(value)
-        case .object(let value): try container.encode(value)
-        }
-    }
-}
-
+// The API's HealthKit types, generated from its spec (Bessel/API/Generated).
 /// One HKWorkout, mirrored field-by-field for POST /v1/healthkit/workouts/sync.
-/// Dates are pre-formatted ISO 8601 strings because the shared `JSONEncoder.api`
-/// encodes `Date` as plain YYYY-MM-DD (a due-date convention we must not inherit).
-struct HealthKitWorkoutUpload: Encodable {
-    let healthkitUuid: UUID
-    let workoutActivityType: Int
-    let workoutActivityTypeName: String
-    let startDate: String
-    let endDate: String
-    let duration: Double
-    let totalEnergyBurned: Double?
-    let totalDistance: Double?
-    let sourceName: String
-    let sourceBundleId: String
-    let sourceVersion: String?
-    let deviceName: String?
-    let workoutMetadata: [String: JSONValue]?
-    let statistics: [String: JSONValue]?
+typealias HealthKitWorkoutUpload = API.HealthKitWorkoutUpload
+typealias HealthKitDailyMetricUpload = API.HealthKitDailyMetricUpload
+typealias DailyMetricsSyncRequest = API.HealthKitDailyMetricsSyncRequest
+typealias DailyMetricsSyncResponse = API.HealthKitDailyMetricsSyncResponse
+typealias WorkoutSyncRequest = API.HealthKitWorkoutSyncRequest
+typealias WorkoutSyncResponse = API.HealthKitWorkoutSyncResponse
+typealias HealthKitWorkoutItem = API.HealthKitWorkoutSchema
+typealias WorkoutListResponse = API.HealthKitWorkoutListResponse
 
-    enum CodingKeys: String, CodingKey {
-        case healthkitUuid = "healthkit_uuid"
-        case workoutActivityType = "workout_activity_type"
-        case workoutActivityTypeName = "workout_activity_type_name"
-        case startDate = "start_date"
-        case endDate = "end_date"
-        case duration
-        case totalEnergyBurned = "total_energy_burned"
-        case totalDistance = "total_distance"
-        case sourceName = "source_name"
-        case sourceBundleId = "source_bundle_id"
-        case sourceVersion = "source_version"
-        case deviceName = "device_name"
-        case workoutMetadata = "workout_metadata"
-        case statistics
-    }
-}
-
-struct HealthKitDailyMetricUpload: Encodable, Equatable {
-    let date: String
-    let steps: Int?
-    let activeEnergyKcal: Double?
-    let exerciseMinutes: Double?
-    let restingHeartRate: Double?
-    let hrvMs: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case date, steps
-        case activeEnergyKcal = "active_energy_kcal"
-        case exerciseMinutes = "exercise_minutes"
-        case restingHeartRate = "resting_heart_rate"
-        case hrvMs = "hrv_ms"
-    }
-}
-
-struct DailyMetricsSyncRequest: Encodable {
-    let days: [HealthKitDailyMetricUpload]
-}
-
-struct DailyMetricsSyncResponse: Decodable {
-    let synced: Int
-}
-
-struct WorkoutSyncRequest: Encodable {
-    let workouts: [HealthKitWorkoutUpload]
-    let deletedUuids: [UUID]
-
-    enum CodingKeys: String, CodingKey {
-        case workouts
-        case deletedUuids = "deleted_uuids"
-    }
-}
-
-struct WorkoutSyncResponse: Decodable {
-    let synced: Int
-    let deleted: Int
-}
-
-struct HealthKitWorkoutItem: Codable, Identifiable, Hashable {
-    let id: UUID
-    let healthkitUuid: UUID
-    let workoutActivityType: Int
-    let workoutActivityTypeName: String
-    let startDate: Date
-    let endDate: Date
-    let duration: Double
-    let totalEnergyBurned: Double?
-    let totalDistance: Double?
-    let sourceName: String
-}
-
-struct WorkoutListResponse: Decodable {
-    @Lossy var items: [HealthKitWorkoutItem]
-    let pagination: Pagination
-
-    struct Pagination: Decodable {
-        let totalCount: Int
-        let maxPage: Int
-    }
-}
+extension HealthKitWorkoutItem: Identifiable {}

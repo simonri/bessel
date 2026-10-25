@@ -252,13 +252,14 @@ struct TaskFormView: View {
             let result = value.trimmingCharacters(in: .whitespacesAndNewlines)
             return result.isEmpty ? nil : result
         }
+        // Sent as a whole: a field emptied in the form goes as an explicit null.
         let update = TaskUpdate(
             title: trimmed(title) ?? task.title,
-            description: trimmed(taskDescription),
+            description: .some(trimmed(taskDescription)),
             status: status,
             priority: priority,
-            dueDate: dueDate,
-            project: trimmed(project)
+            dueDate: .some(dueDate),
+            project: .some(trimmed(project))
         )
         isSaving = true
         errorMessage = nil

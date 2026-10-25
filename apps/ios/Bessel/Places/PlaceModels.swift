@@ -1,13 +1,13 @@
 import Foundation
 
-enum PlaceStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
-    case wantToGo = "want_to_go"
-    case visited
-    /// A status added on the server after this build; such places aren't listed.
-    case unknown
+// The API's place types, generated from its spec (Bessel/API/Generated).
+typealias PlaceStatus = API.PlaceStatus
+typealias PlaceItem = API.PlaceSchema
+typealias PlaceListResponse = API.PlaceListResponse
+typealias PlaceCreate = API.PlaceCreate
+typealias PlaceUpdate = API.PlaceUpdate
 
-    static let allCases: [PlaceStatus] = [.wantToGo, .visited]
-
+extension PlaceStatus: Identifiable {
     var id: String { rawValue }
 
     var label: String {
@@ -19,63 +19,18 @@ enum PlaceStatus: String, Codable, CaseIterable, Identifiable, LenientEnum {
     }
 }
 
-struct PlaceItem: Codable, Identifiable, Hashable {
-    let id: UUID
-    let createdAt: Date
-    var name: String
-    var address: String?
-    var country: String?
-    var latitude: Double
-    var longitude: Double
-    var status: PlaceStatus
-    var rating: Int?
-    var visitedAt: Date?
-    var review: String?
-    var category: String?
-    var website: String?
-    var phone: String?
-
+extension PlaceItem: Identifiable {
     /// "Copenhagen" out of "Refshalevej 96, Copenhagen".
     var city: String? {
         address?.split(separator: ",").last.map { $0.trimmingCharacters(in: .whitespaces) }
     }
 }
 
-struct PlaceListResponse: Decodable {
-    @Lossy var items: [PlaceItem]
-}
-
-struct PlaceCreate: Encodable {
-    var name: String
-    var address: String?
-    var country: String?
-    var latitude: Double
-    var longitude: Double
-    var status: PlaceStatus
-    var category: String?
-    var website: String?
-    var phone: String?
-}
-
-/// The personal part of a place. Always sent whole, with explicit nulls, so
-/// moving a place back to "Want to go" clears its rating and visit date.
-struct PlaceVisitUpdate: Encodable {
-    var status: PlaceStatus
-    var rating: Int?
-    var visitedAt: Date?
-    var review: String?
-
-    enum CodingKeys: String, CodingKey {
-        case status, rating, review
-        case visitedAt = "visited_at"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(status, forKey: .status)
-        try container.encode(rating, forKey: .rating)
-        try container.encode(visitedAt, forKey: .visitedAt)
-        try container.encode(review, forKey: .review)
+extension PlaceUpdate {
+    /// The personal part of a place. Always sent whole, with explicit nulls, so
+    /// moving a place back to "Want to go" clears its rating and visit date.
+    static func visit(status: PlaceStatus, rating: Int?, visitedAt: Date?, review: String?) -> PlaceUpdate {
+        PlaceUpdate(status: status, rating: .some(rating), visitedAt: .some(visitedAt), review: .some(review))
     }
 }
 

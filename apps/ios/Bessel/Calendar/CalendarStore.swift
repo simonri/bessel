@@ -189,12 +189,12 @@ final class CalendarStore {
 
     // MARK: - Writing
 
-    /// Creates an event. `fields` are the editor's values as API JSON.
-    func create(in calendarID: UUID, fields: [String: JSONValue]) async throws {
+    /// Creates an event from the editor's values.
+    func create(in calendarID: UUID, event: API.EventCreate) async throws {
         loads.invalidate()
-        var body = fields
-        body["time_zone"] = .string(timeZone)
-        let response: EventWriteResponse = try await client.post("/v1/calendars/\(calendarID)/events", body: JSONValue.object(body))
+        var body = event
+        body.timeZone = timeZone
+        let response: EventWriteResponse = try await client.post("/v1/calendars/\(calendarID)/events", body: body)
         UserDefaults.standard.set(calendarID.uuidString, forKey: Self.defaultCalendarKey)
         if let event = response.event {
             events.append(event)
@@ -202,22 +202,22 @@ final class CalendarStore {
         await loadEvents()
     }
 
-    /// Sends only the changed `fields`. `moveTo` moves it to another calendar.
+    /// Sends only the fields set in `changes`. `moveTo` moves it to another calendar.
     func update(
         _ event: CalendarEvent,
-        fields: [String: JSONValue],
+        changes: API.EventUpdate,
         scope: EditScope,
         notifyGuests: Bool,
         moveTo calendarID: UUID? = nil
     ) async throws {
-        var body = fields
-        body["scope"] = .string(scope.rawValue)
-        body["calendar_id"] = calendarID.map { .string($0.uuidString) } ?? .null
-        body["time_zone"] = .string(timeZone)
-        body["notify_guests"] = .bool(notifyGuests)
+        var body = changes
+        body.scope = scope
+        body.calendarId = .some(calendarID)
+        body.timeZone = timeZone
+        body.notifyGuests = notifyGuests
         loads.invalidate()
-        let response: EventWriteResponse = try await changes.run(event.id) { [client] in
-            try await client.patch("/v1/calendars/events/\(event.id)", body: JSONValue.object(body))
+        let response: EventWriteResponse = try await self.changes.run(event.id) { [client] in
+            try await client.patch("/v1/calendars/events/\(event.id)", body: body)
         }
         if let updated = response.event, let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index] = updated
@@ -230,7 +230,7 @@ final class CalendarStore {
             events[index].colorId = colorID
         }
         do {
-            try await update(event, fields: ["color_id": colorID.map(JSONValue.string) ?? .null], scope: .this, notifyGuests: false)
+            try await update(event, changes: API.EventUpdate(colorId: .some(colorID), timeZone: timeZone), scope: .this, notifyGuests: false)
         } catch {
             report(error)
             await loadEvents()
@@ -262,7 +262,7 @@ final class CalendarStore {
         if let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index].myResponse = response
         }
-        let body = JSONValue.object(["response": .string(response), "scope": .string(scope.rawValue)])
+        let body = API.EventReplyUpdate(response: response, scope: scope)
         do {
             let _: EventWriteResponse = try await changes.run(event.id) { [client] in
                 try await client.put("/v1/calendars/events/\(event.id)/response", body: body)
@@ -277,7 +277,7 @@ final class CalendarStore {
     func setHidden(_ calendar: CalendarInfo, hidden: Bool) async {
         mutateCalendar(calendar.id) { $0.hidden = hidden }
         do {
-            let _: CalendarInfo = try await client.patch("/v1/calendars/\(calendar.id)", body: JSONValue.object(["hidden": .bool(hidden)]))
+            let _: CalendarInfo = try await client.patch("/v1/calendars/\(calendar.id)", body: API.CalendarUpdate(hidden: hidden))
         } catch {
             mutateCalendar(calendar.id) { $0.hidden = !hidden }
             report(error)
@@ -286,12 +286,13 @@ final class CalendarStore {
 
     private func mutateCalendar(_ id: UUID, _ change: (inout CalendarInfo) -> Void) {
         accounts = accounts.map { account in
-            let calendars = account.calendars.map { calendar in
+            var account = account
+            account.calendars = account.calendars.map { calendar in
                 var calendar = calendar
                 if calendar.id == id { change(&calendar) }
                 return calendar
             }
-            return CalendarAccount(id: account.id, provider: account.provider, email: account.email, canWrite: account.canWrite, calendars: calendars)
+            return account
         }
     }
 

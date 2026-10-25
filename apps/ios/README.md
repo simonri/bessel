@@ -143,8 +143,15 @@ Manual refresh any time (both apps):
   in the Keychain; the API client attaches `Authorization: Bearer` and force-
   refreshes once on 401, mirroring the web client interceptor.
 - `Bessel/API` — thin `URLSession` client for the FastAPI backend (`/v1/...`).
-- `Bessel/Tasks` — models mirroring `services/api/src/api/tasks/schemas.py`,
-  an observable store, and the Board / Done / All views (complete, reopen,
+  `API/Generated/APIModels.swift` holds every request and response type,
+  generated from `services/api/openapi.json` by `make clients`
+  (`scripts/generate_swift_models.py`); never edit it by hand. Each feature
+  names the types it uses with typealiases (`TaskItem = API.TaskSchema`) and
+  adds its own behaviour in extensions. The models read values a build
+  doesn't know (enums fall back to `.unknown`, lists skip items they can't
+  decode), and PATCH bodies hold double optionals: nil leaves a field out,
+  `.some(nil)` sends an explicit null.
+- `Bessel/Tasks` — an observable store and the Board / Done / All views (complete, reopen,
   create, edit, delete, reorder, project filter, done-list paging).
 - `Bessel/Support/Theme.swift` — the web dark palette
   (`packages/ui/src/styles/globals.css` `.dark`) converted oklch → sRGB.

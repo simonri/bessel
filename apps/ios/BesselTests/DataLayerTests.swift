@@ -17,7 +17,10 @@ final class LenientDecodingTests: XCTestCase {
 
         XCTAssertEqual(statuses, [.todo, .inReview, .unknown])
         XCTAssertFalse(TaskStatus.allCases.contains(.unknown))
-        XCTAssertEqual(try JSONDecoder.api.decode(RecipeType.self, from: Data(#""side""#.utf8)), .other)
+        let side = try JSONDecoder.api.decode(RecipeType.self, from: Data(#""side""#.utf8))
+        XCTAssertEqual(side, .unknown)
+        XCTAssertEqual(side.known, .other)
+        XCTAssertEqual(side.label, "Other")
     }
 }
 

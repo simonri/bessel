@@ -62,7 +62,7 @@ struct RecipeEditorView: View {
         let body = recipe?.body ?? draft?.body ?? RecipeBody()
         original = body
         _title = State(initialValue: recipe?.title ?? draft?.title ?? "")
-        _type = State(initialValue: recipe?.recipeType ?? draft?.recipeType ?? .main)
+        _type = State(initialValue: (recipe?.recipeType ?? draft?.recipeType)?.known ?? .main)
         _totalMinutes = State(initialValue: body.totalMinutes.map(String.init) ?? "")
         _yieldText = State(initialValue: body.yieldText ?? "")
         let groupDrafts = body.ingredientGroups.map(GroupDraft.init)
@@ -225,10 +225,11 @@ struct RecipeEditorView: View {
             defer { isSaving = false }
             do {
                 if let recipe {
+                    // nil leaves a field as it is.
                     let update = RecipeUpdate(
-                        title: trimmedTitle == recipe.title ? nil : trimmedTitle,
-                        recipeType: type == recipe.recipeType ? nil : type,
-                        body: body == recipe.body && recipe.structured ? nil : body
+                        title: trimmedTitle == recipe.title ? nil : .some(trimmedTitle),
+                        recipeType: type == recipe.recipeType ? nil : .some(type),
+                        body: body == recipe.body && recipe.structured ? nil : .some(body)
                     )
                     if update.title != nil || update.recipeType != nil || update.body != nil {
                         try await store.update(recipe, with: update)
@@ -347,14 +348,6 @@ struct RecipePasteView: View {
     }
 }
 
-extension RecipeImportResult: Hashable, Identifiable {
+extension RecipeImportResult: Identifiable {
     var id: String { title }
-
-    static func == (lhs: RecipeImportResult, rhs: RecipeImportResult) -> Bool {
-        lhs.title == rhs.title && lhs.body == rhs.body
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(title)
-    }
 }

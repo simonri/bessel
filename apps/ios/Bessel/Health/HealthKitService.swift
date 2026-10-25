@@ -51,7 +51,7 @@ final class HealthKitService {
         let dates = Set(stepsByDay.keys).union(energyByDay.keys).union(exerciseByDay.keys).union(restingByDay.keys).union(hrvByDay.keys)
         return dates.sorted().map { day in
             HealthKitDailyMetricUpload(
-                date: DateParsing.dateOnly.string(from: day),
+                date: day,
                 steps: stepsByDay[day].map { Int($0.rounded()) },
                 activeEnergyKcal: energyByDay[day],
                 exerciseMinutes: exerciseByDay[day],
@@ -127,8 +127,8 @@ final class HealthKitService {
             healthkitUuid: workout.uuid,
             workoutActivityType: Int(workout.workoutActivityType.rawValue),
             workoutActivityTypeName: workout.workoutActivityType.name,
-            startDate: isoFormatter.string(from: workout.startDate),
-            endDate: isoFormatter.string(from: workout.endDate),
+            startDate: workout.startDate,
+            endDate: workout.endDate,
             duration: workout.duration,
             totalEnergyBurned: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?
                 .sumQuantity()?.doubleValue(for: .kilocalorie()),
@@ -171,13 +171,13 @@ final class HealthKitService {
         .meterUnit(with: .kilo).unitDivided(by: .hour()),
     ]
 
-    private static func jsonStatistics(_ statistics: [HKQuantityType: HKStatistics]) -> [String: JSONValue]? {
-        var result: [String: JSONValue] = [:]
+    private static func jsonStatistics(_ statistics: [HKQuantityType: HKStatistics]) -> [String: API.JSONValue]? {
+        var result: [String: API.JSONValue] = [:]
         for (quantityType, stats) in statistics {
             guard let unit = fallbackUnits.first(where: { stats.sumQuantity()?.is(compatibleWith: $0) ?? stats.averageQuantity()?.is(compatibleWith: $0) ?? false }) else {
                 continue
             }
-            var entry: [String: JSONValue] = ["unit": .string(unit.unitString)]
+            var entry: [String: API.JSONValue] = ["unit": .string(unit.unitString)]
             if quantityType.aggregationStyle == .cumulative {
                 if let sum = stats.sumQuantity()?.doubleValue(for: unit) {
                     entry["sum"] = .number(sum)
@@ -205,8 +205,8 @@ final class HealthKitService {
             healthkitUuid: sample.uuid,
             sleepValue: sample.value,
             sleepValueName: HKCategoryValueSleepAnalysis(rawValue: sample.value)?.name ?? "unknown",
-            startDate: isoFormatter.string(from: sample.startDate),
-            endDate: isoFormatter.string(from: sample.endDate),
+            startDate: sample.startDate,
+            endDate: sample.endDate,
             sourceName: sample.sourceRevision.source.name,
             sourceBundleId: sample.sourceRevision.source.bundleIdentifier,
             sourceVersion: sample.sourceRevision.version,
@@ -215,9 +215,9 @@ final class HealthKitService {
         )
     }
 
-    private static func jsonMetadata(_ metadata: [String: Any]?) -> [String: JSONValue]? {
+    private static func jsonMetadata(_ metadata: [String: Any]?) -> [String: API.JSONValue]? {
         guard let metadata else { return nil }
-        var result: [String: JSONValue] = [:]
+        var result: [String: API.JSONValue] = [:]
         for (key, value) in metadata {
             switch value {
             case let number as NSNumber:

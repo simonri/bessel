@@ -38,7 +38,7 @@ final class HealthStore {
         self.cache = cache
         lastSyncedAt = WorkoutSyncAnchor.lastSyncedAt
         // Last time's page only helps if it was today's.
-        if let snapshot = cache?.load(Snapshot.self, key: Self.cacheKey), snapshot.summary.date == Self.dateString(day) {
+        if let snapshot = cache?.load(Snapshot.self, key: Self.cacheKey), Self.dateString(snapshot.summary.date) == Self.dateString(day) {
             summary = snapshot.summary
             recentWorkouts = snapshot.recentWorkouts
             hasLoaded = true

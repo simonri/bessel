@@ -39,6 +39,14 @@ extension Lossy: Encodable where Element: Encodable {
     }
 }
 
+extension KeyedDecodingContainer {
+    /// A lossy list that's missing or null reads as empty, as in a response
+    /// cached by a build that didn't know the field yet.
+    func decode<Element>(_ type: Lossy<Element>.Type, forKey key: Key) throws -> Lossy<Element> {
+        try decodeIfPresent(type, forKey: key) ?? Lossy(wrappedValue: [])
+    }
+}
+
 extension Lossy: Equatable where Element: Equatable {}
 extension Lossy: Hashable where Element: Hashable {}
 
