@@ -14,6 +14,7 @@ from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.transaction_name_rule import TransactionNameRule
 from sqlalchemy import ColumnElement, Row, Select, and_, case, delete, exists, extract, false, func, or_, select, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import aliased
 
@@ -188,7 +189,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .join(ImportBatch, ImportBatch.id == RawTransaction.batch_id)
       .where(Transaction.bank_account_id.in_(account_ids), Transaction.deleted_at.is_(None))
       .order_by(Transaction.bank_account_id, Transaction.transaction_date.desc())
-      .distinct(Transaction.bank_account_id)
+      .ext(distinct_on(Transaction.bank_account_id))
     )
     return dict((await self.session.execute(statement)).all())
 

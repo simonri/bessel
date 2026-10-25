@@ -10,8 +10,8 @@ beforeEach(() => {
   // TanStack Virtual reads the scroll element's layout box. jsdom has no
   // layout engine, so give the tree a representative viewport.
   Object.defineProperties(HTMLElement.prototype, {
-    offsetHeight: { configurable: true, get: () => 480 },
-    offsetWidth: { configurable: true, get: () => 240 },
+    clientHeight: { configurable: true, get: () => 480 },
+    clientWidth: { configurable: true, get: () => 240 },
   });
 });
 

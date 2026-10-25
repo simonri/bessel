@@ -1,297 +1,297 @@
 {
- "withOrderbook": [
-  {
-   "account": {
-    "id": "1000002",
-    "type": "KAPITALFORSAKRING",
-    "name": "Konto",
-    "urlParameterId": "redacted",
-    "hasCredit": false
-   },
-   "instrument": {
-    "id": "981497",
-    "type": "STOCK",
-    "name": "Instrument 9",
-    "orderbook": {
-     "id": "912515",
-     "flagCode": "SE",
-     "name": "Instrument 9",
-     "type": "STOCK",
-     "tradeStatus": "BUYABLE_AND_SELLABLE",
-     "quote": {
-      "highest": {
-       "value": 133.0,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 1
+  "withOrderbook": [
+    {
+      "account": {
+        "id": "1000002",
+        "type": "KAPITALFORSAKRING",
+        "name": "Konto",
+        "urlParameterId": "redacted",
+        "hasCredit": false
       },
-      "lowest": {
-       "value": 131.0,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 1
+      "instrument": {
+        "id": "981497",
+        "type": "STOCK",
+        "name": "Instrument 9",
+        "orderbook": {
+          "id": "912515",
+          "flagCode": "SE",
+          "name": "Instrument 9",
+          "type": "STOCK",
+          "tradeStatus": "BUYABLE_AND_SELLABLE",
+          "quote": {
+            "highest": {
+              "value": 133.0,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 1
+            },
+            "lowest": {
+              "value": 131.0,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 1
+            },
+            "buy": {
+              "value": 128.5,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 1
+            },
+            "sell": {
+              "value": 132.5,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 1
+            },
+            "latest": {
+              "value": 133.0,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 1
+            },
+            "change": {
+              "value": 4.5,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 1
+            },
+            "changePercent": {
+              "value": 3.5,
+              "unit": "percentage",
+              "unitType": "PERCENTAGE",
+              "decimalPrecision": 2
+            },
+            "updated": "2026-10-21T18:00:02.019"
+          },
+          "turnover": {
+            "volume": {
+              "value": 8.0,
+              "unit": "",
+              "unitType": "UNITLESS",
+              "decimalPrecision": 8
+            },
+            "value": {
+              "value": 1062.0,
+              "unit": "SEK",
+              "unitType": "MONETARY",
+              "decimalPrecision": 8
+            }
+          },
+          "lastDeal": {
+            "date": "2026-10-21",
+            "time": "13:58:26+02:00"
+          }
+        },
+        "currency": "SEK",
+        "isin": "XS1000000008",
+        "volumeFactor": 1
       },
-      "buy": {
-       "value": 128.5,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 1
+      "lastTradingDayPerformance": {
+        "absolute": {
+          "value": 95292.0,
+          "unit": "SEK",
+          "unitType": "MONETARY",
+          "decimalPrecision": 1
+        },
+        "relative": {
+          "value": 3.5,
+          "unit": "percentage",
+          "unitType": "PERCENTAGE",
+          "decimalPrecision": 2
+        }
       },
-      "sell": {
-       "value": 132.5,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 1
-      },
-      "latest": {
-       "value": 133.0,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 1
-      },
-      "change": {
-       "value": 4.5,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 1
-      },
-      "changePercent": {
-       "value": 3.5,
-       "unit": "percentage",
-       "unitType": "PERCENTAGE",
-       "decimalPrecision": 2
-      },
-      "updated": "2026-10-21T18:00:02.019"
-     },
-     "turnover": {
+      "id": "p1",
+      "superInterestApproved": false,
       "volume": {
-       "value": 8.0,
-       "unit": "",
-       "unitType": "UNITLESS",
-       "decimalPrecision": 8
+        "value": 2.0,
+        "unit": "",
+        "unitType": "UNITLESS",
+        "decimalPrecision": 0
       },
       "value": {
-       "value": 1062.0,
-       "unit": "SEK",
-       "unitType": "MONETARY",
-       "decimalPrecision": 8
-      }
-     },
-     "lastDeal": {
-      "date": "2026-10-21",
-      "time": "13:58:26+02:00"
-     }
-    },
-    "currency": "SEK",
-    "isin": "XS1000000008",
-    "volumeFactor": 1
-   },
-   "lastTradingDayPerformance": {
-    "absolute": {
-     "value": 95292.0,
-     "unit": "SEK",
-     "unitType": "MONETARY",
-     "decimalPrecision": 1
-    },
-    "relative": {
-     "value": 3.5,
-     "unit": "percentage",
-     "unitType": "PERCENTAGE",
-     "decimalPrecision": 2
+        "value": 300.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "averageAcquiredPrice": {
+        "value": 125.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 6
+      },
+      "averageAcquiredPriceInstrumentCurrency": {
+        "value": 125.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 6
+      },
+      "acquiredValue": {
+        "value": 250.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 6
+      },
+      "collateralFactor": {
+        "value": 0.0,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 2
+      },
+      "holdingId": "h1"
     }
-   },
-   "id": "p1",
-   "superInterestApproved": false,
-   "volume": {
-    "value": 2.0,
-    "unit": "",
-    "unitType": "UNITLESS",
-    "decimalPrecision": 0
-   },
-   "value": {
-    "value": 300.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "averageAcquiredPrice": {
-    "value": 125.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 6
-   },
-   "averageAcquiredPriceInstrumentCurrency": {
-    "value": 125.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 6
-   },
-   "acquiredValue": {
-    "value": 250.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 6
-   },
-   "collateralFactor": {
-    "value": 0.0,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 2
-   },
-   "holdingId": "h1"
-  }
- ],
- "withoutOrderbook": [
-  {
-   "account": {
-    "id": "1000001",
-    "type": "AKTIEFONDKONTO",
-    "name": "Konto",
-    "urlParameterId": "redacted",
-    "hasCredit": false
-   },
-   "instrument": {
-    "id": null,
-    "type": "STOCK",
-    "name": "Instrument 12",
-    "orderbook": null,
-    "currency": "SEK",
-    "isin": "XS1000000011",
-    "volumeFactor": 1
-   },
-   "lastTradingDayPerformance": null,
-   "id": "p1",
-   "superInterestApproved": false,
-   "volume": {
-    "value": 2.0,
-    "unit": "",
-    "unitType": "UNITLESS",
-    "decimalPrecision": 0
-   },
-   "value": {
-    "value": 300.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "averageAcquiredPrice": {
-    "value": 125.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "averageAcquiredPriceInstrumentCurrency": {
-    "value": 125.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "acquiredValue": {
-    "value": 250.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "collateralFactor": {
-    "value": 0.0,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 2
-   },
-   "holdingId": "h1"
-  },
-  {
-   "account": {
-    "id": "1000002",
-    "type": "KAPITALFORSAKRING",
-    "name": "Konto",
-    "urlParameterId": "redacted",
-    "hasCredit": false
-   },
-   "instrument": {
-    "id": null,
-    "type": "STOCK",
-    "name": "Instrument 12",
-    "orderbook": null,
-    "currency": "SEK",
-    "isin": "XS1000000011",
-    "volumeFactor": 1
-   },
-   "lastTradingDayPerformance": null,
-   "id": "p2",
-   "superInterestApproved": false,
-   "volume": {
-    "value": 4.0,
-    "unit": "",
-    "unitType": "UNITLESS",
-    "decimalPrecision": 0
-   },
-   "value": {
-    "value": 600.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "averageAcquiredPrice": {
-    "value": 250.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "averageAcquiredPriceInstrumentCurrency": {
-    "value": 250.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "acquiredValue": {
-    "value": 500.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "collateralFactor": {
-    "value": 0.0,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 2
-   },
-   "holdingId": "h2"
-  }
- ],
- "cashPositions": [
-  {
-   "account": {
-    "id": "1000001",
-    "type": "AKTIEFONDKONTO",
-    "name": "Konto",
-    "urlParameterId": "redacted",
-    "hasCredit": false
-   },
-   "totalBalance": {
-    "value": -780.75,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "id": "1000001-SEK"
-  },
-  {
-   "account": {
-    "id": "1000002",
-    "type": "KAPITALFORSAKRING",
-    "name": "Konto",
-    "urlParameterId": "redacted",
-    "hasCredit": false
-   },
-   "totalBalance": {
-    "value": -570.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "id": "1000002-SEK"
-  }
- ],
- "withCreditAccount": false
+  ],
+  "withoutOrderbook": [
+    {
+      "account": {
+        "id": "1000001",
+        "type": "AKTIEFONDKONTO",
+        "name": "Konto",
+        "urlParameterId": "redacted",
+        "hasCredit": false
+      },
+      "instrument": {
+        "id": null,
+        "type": "STOCK",
+        "name": "Instrument 12",
+        "orderbook": null,
+        "currency": "SEK",
+        "isin": "XS1000000011",
+        "volumeFactor": 1
+      },
+      "lastTradingDayPerformance": null,
+      "id": "p1",
+      "superInterestApproved": false,
+      "volume": {
+        "value": 2.0,
+        "unit": "",
+        "unitType": "UNITLESS",
+        "decimalPrecision": 0
+      },
+      "value": {
+        "value": 300.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "averageAcquiredPrice": {
+        "value": 125.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "averageAcquiredPriceInstrumentCurrency": {
+        "value": 125.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "acquiredValue": {
+        "value": 250.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "collateralFactor": {
+        "value": 0.0,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 2
+      },
+      "holdingId": "h1"
+    },
+    {
+      "account": {
+        "id": "1000002",
+        "type": "KAPITALFORSAKRING",
+        "name": "Konto",
+        "urlParameterId": "redacted",
+        "hasCredit": false
+      },
+      "instrument": {
+        "id": null,
+        "type": "STOCK",
+        "name": "Instrument 12",
+        "orderbook": null,
+        "currency": "SEK",
+        "isin": "XS1000000011",
+        "volumeFactor": 1
+      },
+      "lastTradingDayPerformance": null,
+      "id": "p2",
+      "superInterestApproved": false,
+      "volume": {
+        "value": 4.0,
+        "unit": "",
+        "unitType": "UNITLESS",
+        "decimalPrecision": 0
+      },
+      "value": {
+        "value": 600.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "averageAcquiredPrice": {
+        "value": 250.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "averageAcquiredPriceInstrumentCurrency": {
+        "value": 250.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "acquiredValue": {
+        "value": 500.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "collateralFactor": {
+        "value": 0.0,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 2
+      },
+      "holdingId": "h2"
+    }
+  ],
+  "cashPositions": [
+    {
+      "account": {
+        "id": "1000001",
+        "type": "AKTIEFONDKONTO",
+        "name": "Konto",
+        "urlParameterId": "redacted",
+        "hasCredit": false
+      },
+      "totalBalance": {
+        "value": -780.75,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "id": "1000001-SEK"
+    },
+    {
+      "account": {
+        "id": "1000002",
+        "type": "KAPITALFORSAKRING",
+        "name": "Konto",
+        "urlParameterId": "redacted",
+        "hasCredit": false
+      },
+      "totalBalance": {
+        "value": -570.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "id": "1000002-SEK"
+    }
+  ],
+  "withCreditAccount": false
 }

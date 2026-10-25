@@ -111,11 +111,11 @@ class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, U
       .where(CalendarAccount.user_id == user_id, Calendar.deleted_at.is_(None))
       .order_by(CalendarAccount.email, Calendar.name)
     )
-    return [(calendar, account) for calendar, account in (await self.session.execute(statement)).tuples()]
+    return [(calendar, account) for calendar, account in (await self.session.execute(statement)).all()]
 
   async def names_for_user(self, user_id: UUID) -> dict[UUID, str]:
     statement = select(Calendar.id, Calendar.name).join(CalendarAccount, Calendar.account_id == CalendarAccount.id).where(CalendarAccount.user_id == user_id)
-    return dict((await self.session.execute(statement)).tuples().all())
+    return dict((await self.session.execute(statement)).all())
 
   async def list_for_account(self, account: CalendarAccount) -> Sequence[Calendar]:
     return await self.get_all(self.get_base_statement().where(Calendar.account_id == account.id).order_by(Calendar.created_at))
@@ -249,7 +249,7 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
       CalendarEvent.deleted_at.is_(None),
       or_(CalendarEvent.start_date.in_(days), CalendarEvent.start_at.in_(instants)),
     )
-    return {(start_at or start_date, title.casefold()) for start_date, start_at, title in (await self.session.execute(statement)).tuples()}
+    return {(start_at or start_date, title.casefold()) for start_date, start_at, title in (await self.session.execute(statement)).all()}
 
   async def find_written(self, calendar_id: UUID, provider_id: str, near: datetime | date | None) -> CalendarEvent | None:
     """The synced row for an event or series the provider just wrote, closest to `near`."""

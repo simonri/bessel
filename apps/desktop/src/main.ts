@@ -476,32 +476,53 @@ protocol.registerSchemesAsPrivileged([
 // ─── auth cache ───────────────────────────────────────────────────────────────
 let authCache: Record<string, string> = {};
 let authCachePath = "";
+let authCacheReady: Promise<void> = Promise.resolve();
+// Writes run one at a time, so an older cache can't land after a newer one.
+let authCacheWrites: Promise<void> = Promise.resolve();
 
-function isRealEncryptionAvailable(): boolean {
-  if (!safeStorage.isEncryptionAvailable()) return false;
+async function isRealEncryptionAvailable(): Promise<boolean> {
+  if (!(await safeStorage.isAsyncEncryptionAvailable())) return false;
   // getSelectedStorageBackend() only exists on Linux (it reports which keyring
   // was picked — kwallet, gnome-libsecret, or "basic_text", which is plaintext
   // obfuscation rather than real encryption). Calling it on mac/Windows throws
-  // a TypeError, since isEncryptionAvailable() already guarantees a real OS
+  // a TypeError, since isAsyncEncryptionAvailable() already guarantees a real OS
   // keychain/DPAPI backend there.
   if (process.platform !== "linux") return true;
   return safeStorage.getSelectedStorageBackend() !== "basic_text";
 }
 
-function loadAuthCache(): Record<string, string> {
-  if (!authCachePath || !isRealEncryptionAvailable()) return {};
-  if (!fs.existsSync(authCachePath)) return {};
+async function loadAuthCache(): Promise<void> {
+  if (!authCachePath || !(await isRealEncryptionAvailable())) return;
+  if (!fs.existsSync(authCachePath)) return;
+  let shouldReEncrypt = false;
   try {
-    const decrypted = safeStorage.decryptString(fs.readFileSync(authCachePath));
-    return JSON.parse(decrypted) as Record<string, string>;
+    const decrypted = await safeStorage.decryptStringAsync(
+      fs.readFileSync(authCachePath),
+    );
+    authCache = JSON.parse(decrypted.result) as Record<string, string>;
+    shouldReEncrypt = decrypted.shouldReEncrypt;
   } catch {
-    return {};
+    authCache = {};
+    return;
   }
+  // Re-encrypting with the newer key is best effort; the cache already loaded.
+  if (shouldReEncrypt)
+    await saveAuthCache().catch((err: Error) =>
+      appendLog(`auth cache re-encrypt failed: ${err.message}`),
+    );
 }
 
-function saveAuthCache(): void {
-  if (!authCachePath || !isRealEncryptionAvailable()) return;
-  const encrypted = safeStorage.encryptString(JSON.stringify(authCache));
+function saveAuthCache(): Promise<void> {
+  const snapshot = JSON.stringify(authCache);
+  authCacheWrites = authCacheWrites
+    .catch(() => {})
+    .then(() => writeAuthCache(snapshot));
+  return authCacheWrites;
+}
+
+async function writeAuthCache(plainText: string): Promise<void> {
+  if (!authCachePath || !(await isRealEncryptionAvailable())) return;
+  const encrypted = await safeStorage.encryptStringAsync(plainText);
   // tmp + rename so a crash mid-write can't leave a truncated cache behind.
   const tmp = `${authCachePath}.tmp`;
   try {
@@ -875,7 +896,7 @@ app.whenReady().then(() => {
   }
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
-  authCache = loadAuthCache();
+  authCacheReady = loadAuthCache();
   deviceInfo = loadOrCreateDeviceInfo();
   // Warm the macOS login-shell PATH lookup so the first terminal spawn
   // doesn't stall on it (rc-heavy shells can take a second to start).
@@ -988,19 +1009,27 @@ app.whenReady().then(() => {
     });
   });
 
+  ipcHandle("auth:get", async (_, key: string): Promise<string | null> => {
+    await authCacheReady;
+    return authCache[key] ?? null;
+  });
   ipcHandle(
-    "auth:get",
-    (_, key: string): string | null => authCache[key] ?? null,
+    "auth:set",
+    async (_, key: string, value: string): Promise<void> => {
+      await authCacheReady;
+      authCache[key] = value;
+      await saveAuthCache();
+    },
   );
-  ipcHandle("auth:set", (_, key: string, value: string): void => {
-    authCache[key] = value;
-    saveAuthCache();
-  });
-  ipcHandle("auth:remove", (_, key: string): void => {
+  ipcHandle("auth:remove", async (_, key: string): Promise<void> => {
+    await authCacheReady;
     delete authCache[key];
-    saveAuthCache();
+    await saveAuthCache();
   });
-  ipcHandle("auth:all-keys", (): string[] => Object.keys(authCache));
+  ipcHandle("auth:all-keys", async (): Promise<string[]> => {
+    await authCacheReady;
+    return Object.keys(authCache);
+  });
   ipcHandle("auth:start-login", (): Promise<number> => startAuthLogin());
 
   ipcOn("close-window", (event) => {

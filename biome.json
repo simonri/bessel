@@ -62,6 +62,9 @@
         "noInferrableTypes": "error",
         "noUselessElse": "error"
       },
+      "complexity": {
+        "useMathMinMax": "off"
+      },
       "correctness": {
         "useExhaustiveDependencies": "off"
       },
@@ -79,7 +82,25 @@
       "tailwindDirectives": true
     }
   },
+  "markdown": {
+    "formatter": { "enabled": false },
+    "linter": { "enabled": false }
+  },
+  "yaml": {
+    "formatter": { "enabled": false },
+    "linter": { "enabled": false }
+  },
   "overrides": [
+    {
+      "includes": ["**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noComponentHookFactories": "off"
+          }
+        }
+      }
+    },
     {
       "includes": ["packages/ui/src/components/**"],
       "linter": {

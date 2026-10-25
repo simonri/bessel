@@ -1,587 +1,587 @@
 {
- "categories": [],
- "accounts": [
-  {
-   "id": "1000001",
-   "categoryId": "003c449d-9b58-4a9a-ad99-1de8e32974b5",
-   "balance": {
-    "value": -780.75,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "profit": {
-    "absolute": {
-     "value": 0.0,
-     "unit": "SEK",
-     "unitType": "MONETARY",
-     "decimalPrecision": 4
-    },
-    "relative": {
-     "value": 0.0,
-     "unit": "percentage",
-     "unitType": "PERCENTAGE",
-     "decimalPrecision": 4
-    }
-   },
-   "type": "AKTIEFONDKONTO",
-   "totalValue": {
-    "value": -780.75,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "buyingPower": {
-    "value": -780.75,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 2
-   },
-   "buyingPowerWithoutCredit": {
-    "value": -780.75,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 2
-   },
-   "interestRates": {
-    "SEK": {
-     "deposit": {
-      "value": 0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 0
-     },
-     "loan": {
-      "value": 6.89,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    }
-   },
-   "depositInterestRate": {
-    "value": 0,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 0
-   },
-   "loanInterestRate": {
-    "value": 6.89,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 2
-   },
-   "credit": null,
-   "name": {
-    "defaultName": "Aktiefondkonto",
-    "userDefinedName": null
-   },
-   "status": "ACTIVE",
-   "errorStatus": "NO_ERROR",
-   "overmortgaged": null,
-   "currencyBalances": [
+  "categories": [],
+  "accounts": [
     {
-     "value": 86.35,
-     "unit": "SEK",
-     "unitType": "MONETARY",
-     "decimalPrecision": 2
-    }
-   ],
-   "overdrawn": [],
-   "performance": {
-    "ONE_WEEK": {
-     "absolute": {
-      "value": -2093.06,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -9.07,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
+      "id": "1000001",
+      "categoryId": "003c449d-9b58-4a9a-ad99-1de8e32974b5",
+      "balance": {
+        "value": -780.75,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "profit": {
+        "absolute": {
+          "value": 0.0,
+          "unit": "SEK",
+          "unitType": "MONETARY",
+          "decimalPrecision": 4
+        },
+        "relative": {
+          "value": 0.0,
+          "unit": "percentage",
+          "unitType": "PERCENTAGE",
+          "decimalPrecision": 4
+        }
+      },
+      "type": "AKTIEFONDKONTO",
+      "totalValue": {
+        "value": -780.75,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "buyingPower": {
+        "value": -780.75,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 2
+      },
+      "buyingPowerWithoutCredit": {
+        "value": -780.75,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 2
+      },
+      "interestRates": {
+        "SEK": {
+          "deposit": {
+            "value": 0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 0
+          },
+          "loan": {
+            "value": 6.89,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        }
+      },
+      "depositInterestRate": {
+        "value": 0,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 0
+      },
+      "loanInterestRate": {
+        "value": 6.89,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 2
+      },
+      "credit": null,
+      "name": {
+        "defaultName": "Aktiefondkonto",
+        "userDefinedName": null
+      },
+      "status": "ACTIVE",
+      "errorStatus": "NO_ERROR",
+      "overmortgaged": null,
+      "currencyBalances": [
+        {
+          "value": 86.35,
+          "unit": "SEK",
+          "unitType": "MONETARY",
+          "decimalPrecision": 2
+        }
+      ],
+      "overdrawn": [],
+      "performance": {
+        "ONE_WEEK": {
+          "absolute": {
+            "value": -2093.06,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -9.07,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THIS_YEAR": {
+          "absolute": {
+            "value": -8813.41,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -0.8,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ONE_MONTH": {
+          "absolute": {
+            "value": 1949.44,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 10.05,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THREE_MONTHS": {
+          "absolute": {
+            "value": 3982.4,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 23.5,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ONE_YEAR": {
+          "absolute": {
+            "value": -47008.59,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -35.04,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THREE_YEARS": {
+          "absolute": {
+            "value": 83672.28,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -7.96,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ALL_TIME": {
+          "absolute": {
+            "value": 77877.29,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -14.63,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        }
+      },
+      "settings": {
+        "IS_HIDDEN": false
+      },
+      "clearingAccountNumber": null,
+      "creditAccountClearingAccountNumber": null,
+      "discretionaryPortfolio": false,
+      "autoDistribution": false,
+      "urlParameterId": "redacted"
     },
-    "THIS_YEAR": {
-     "absolute": {
-      "value": -8813.41,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -0.8,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ONE_MONTH": {
-     "absolute": {
-      "value": 1949.44,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 10.05,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THREE_MONTHS": {
-     "absolute": {
-      "value": 3982.4,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 23.5,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ONE_YEAR": {
-     "absolute": {
-      "value": -47008.59,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -35.04,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THREE_YEARS": {
-     "absolute": {
-      "value": 83672.28,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -7.96,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ALL_TIME": {
-     "absolute": {
-      "value": 77877.29,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -14.63,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    }
-   },
-   "settings": {
-    "IS_HIDDEN": false
-   },
-   "clearingAccountNumber": null,
-   "creditAccountClearingAccountNumber": null,
-   "discretionaryPortfolio": false,
-   "autoDistribution": false,
-   "urlParameterId": "redacted"
-  },
-  {
-   "id": "1000002",
-   "categoryId": "SPARANDE",
-   "balance": {
-    "value": -570.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "profit": {
-    "absolute": {
-     "value": -854512.7139,
-     "unit": "SEK",
-     "unitType": "MONETARY",
-     "decimalPrecision": 4
-    },
-    "relative": {
-     "value": -23.28,
-     "unit": "percentage",
-     "unitType": "PERCENTAGE",
-     "decimalPrecision": 4
-    }
-   },
-   "type": "KAPITALFORSAKRING",
-   "totalValue": {
-    "value": -570.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 4
-   },
-   "buyingPower": {
-    "value": -570.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 2
-   },
-   "buyingPowerWithoutCredit": {
-    "value": -570.5,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 2
-   },
-   "interestRates": {
-    "SEK": {
-     "deposit": {
-      "value": 0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 0
-     },
-     "loan": {
-      "value": 6.89,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    }
-   },
-   "depositInterestRate": {
-    "value": 0,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 0
-   },
-   "loanInterestRate": {
-    "value": 6.89,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 2
-   },
-   "credit": null,
-   "name": {
-    "defaultName": "Kapitalforsakring",
-    "userDefinedName": null
-   },
-   "status": "ACTIVE",
-   "errorStatus": "NO_ERROR",
-   "overmortgaged": null,
-   "currencyBalances": [
     {
-     "value": 147220.14,
-     "unit": "SEK",
-     "unitType": "MONETARY",
-     "decimalPrecision": 2
+      "id": "1000002",
+      "categoryId": "SPARANDE",
+      "balance": {
+        "value": -570.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "profit": {
+        "absolute": {
+          "value": -854512.7139,
+          "unit": "SEK",
+          "unitType": "MONETARY",
+          "decimalPrecision": 4
+        },
+        "relative": {
+          "value": -23.28,
+          "unit": "percentage",
+          "unitType": "PERCENTAGE",
+          "decimalPrecision": 4
+        }
+      },
+      "type": "KAPITALFORSAKRING",
+      "totalValue": {
+        "value": -570.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 4
+      },
+      "buyingPower": {
+        "value": -570.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 2
+      },
+      "buyingPowerWithoutCredit": {
+        "value": -570.5,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 2
+      },
+      "interestRates": {
+        "SEK": {
+          "deposit": {
+            "value": 0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 0
+          },
+          "loan": {
+            "value": 6.89,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        }
+      },
+      "depositInterestRate": {
+        "value": 0,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 0
+      },
+      "loanInterestRate": {
+        "value": 6.89,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 2
+      },
+      "credit": null,
+      "name": {
+        "defaultName": "Kapitalforsakring",
+        "userDefinedName": null
+      },
+      "status": "ACTIVE",
+      "errorStatus": "NO_ERROR",
+      "overmortgaged": null,
+      "currencyBalances": [
+        {
+          "value": 147220.14,
+          "unit": "SEK",
+          "unitType": "MONETARY",
+          "decimalPrecision": 2
+        }
+      ],
+      "overdrawn": [],
+      "performance": {
+        "ONE_WEEK": {
+          "absolute": {
+            "value": -238459.2,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -7.71,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THIS_YEAR": {
+          "absolute": {
+            "value": 67489.05,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -2.24,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ONE_MONTH": {
+          "absolute": {
+            "value": 223714.14,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 8.55,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THREE_MONTHS": {
+          "absolute": {
+            "value": 611616.21,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 27.38,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ONE_YEAR": {
+          "absolute": {
+            "value": -466480.26,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -36.57,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THREE_YEARS": {
+          "absolute": {
+            "value": -853296.74,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -62.02,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ALL_TIME": {
+          "absolute": {
+            "value": -853296.74,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": -62.02,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        }
+      },
+      "settings": {
+        "IS_HIDDEN": false
+      },
+      "clearingAccountNumber": null,
+      "creditAccountClearingAccountNumber": null,
+      "discretionaryPortfolio": false,
+      "autoDistribution": false,
+      "urlParameterId": "redacted"
+    },
+    {
+      "id": "1000003",
+      "categoryId": "SPARANDE",
+      "balance": {
+        "value": 0.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "profit": {
+        "absolute": {
+          "value": 0,
+          "unit": "SEK",
+          "unitType": "MONETARY",
+          "decimalPrecision": 0
+        },
+        "relative": {
+          "value": 0,
+          "unit": "percentage",
+          "unitType": "PERCENTAGE",
+          "decimalPrecision": 0
+        }
+      },
+      "type": "KAPITALFORSAKRING",
+      "totalValue": {
+        "value": 0.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "buyingPower": {
+        "value": 0.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "buyingPowerWithoutCredit": {
+        "value": 0.0,
+        "unit": "SEK",
+        "unitType": "MONETARY",
+        "decimalPrecision": 0
+      },
+      "interestRates": {
+        "SEK": {
+          "deposit": {
+            "value": 0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 0
+          },
+          "loan": {
+            "value": 6.89,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        }
+      },
+      "depositInterestRate": {
+        "value": 0,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 0
+      },
+      "loanInterestRate": {
+        "value": 6.89,
+        "unit": "percentage",
+        "unitType": "PERCENTAGE",
+        "decimalPrecision": 2
+      },
+      "credit": null,
+      "name": {
+        "defaultName": "Kapitalforsakring",
+        "userDefinedName": null
+      },
+      "status": "INACTIVE",
+      "errorStatus": "NO_ERROR",
+      "overmortgaged": null,
+      "currencyBalances": [],
+      "overdrawn": [],
+      "performance": {
+        "ONE_WEEK": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THIS_YEAR": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ONE_MONTH": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THREE_MONTHS": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ONE_YEAR": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "THREE_YEARS": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        },
+        "ALL_TIME": {
+          "absolute": {
+            "value": 0.0,
+            "unit": "SEK",
+            "unitType": "MONETARY",
+            "decimalPrecision": 2
+          },
+          "relative": {
+            "value": 0.0,
+            "unit": "percentage",
+            "unitType": "PERCENTAGE",
+            "decimalPrecision": 2
+          }
+        }
+      },
+      "settings": {
+        "IS_HIDDEN": true
+      },
+      "clearingAccountNumber": null,
+      "creditAccountClearingAccountNumber": null,
+      "discretionaryPortfolio": false,
+      "autoDistribution": false,
+      "urlParameterId": "redacted"
     }
-   ],
-   "overdrawn": [],
-   "performance": {
-    "ONE_WEEK": {
-     "absolute": {
-      "value": -238459.2,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -7.71,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THIS_YEAR": {
-     "absolute": {
-      "value": 67489.05,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -2.24,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ONE_MONTH": {
-     "absolute": {
-      "value": 223714.14,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 8.55,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THREE_MONTHS": {
-     "absolute": {
-      "value": 611616.21,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 27.38,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ONE_YEAR": {
-     "absolute": {
-      "value": -466480.26,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -36.57,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THREE_YEARS": {
-     "absolute": {
-      "value": -853296.74,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -62.02,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ALL_TIME": {
-     "absolute": {
-      "value": -853296.74,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": -62.02,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    }
-   },
-   "settings": {
-    "IS_HIDDEN": false
-   },
-   "clearingAccountNumber": null,
-   "creditAccountClearingAccountNumber": null,
-   "discretionaryPortfolio": false,
-   "autoDistribution": false,
-   "urlParameterId": "redacted"
-  },
-  {
-   "id": "1000003",
-   "categoryId": "SPARANDE",
-   "balance": {
-    "value": 0.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "profit": {
-    "absolute": {
-     "value": 0,
-     "unit": "SEK",
-     "unitType": "MONETARY",
-     "decimalPrecision": 0
-    },
-    "relative": {
-     "value": 0,
-     "unit": "percentage",
-     "unitType": "PERCENTAGE",
-     "decimalPrecision": 0
-    }
-   },
-   "type": "KAPITALFORSAKRING",
-   "totalValue": {
-    "value": 0.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "buyingPower": {
-    "value": 0.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "buyingPowerWithoutCredit": {
-    "value": 0.0,
-    "unit": "SEK",
-    "unitType": "MONETARY",
-    "decimalPrecision": 0
-   },
-   "interestRates": {
-    "SEK": {
-     "deposit": {
-      "value": 0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 0
-     },
-     "loan": {
-      "value": 6.89,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    }
-   },
-   "depositInterestRate": {
-    "value": 0,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 0
-   },
-   "loanInterestRate": {
-    "value": 6.89,
-    "unit": "percentage",
-    "unitType": "PERCENTAGE",
-    "decimalPrecision": 2
-   },
-   "credit": null,
-   "name": {
-    "defaultName": "Kapitalforsakring",
-    "userDefinedName": null
-   },
-   "status": "INACTIVE",
-   "errorStatus": "NO_ERROR",
-   "overmortgaged": null,
-   "currencyBalances": [],
-   "overdrawn": [],
-   "performance": {
-    "ONE_WEEK": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THIS_YEAR": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ONE_MONTH": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THREE_MONTHS": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ONE_YEAR": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "THREE_YEARS": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    },
-    "ALL_TIME": {
-     "absolute": {
-      "value": 0.0,
-      "unit": "SEK",
-      "unitType": "MONETARY",
-      "decimalPrecision": 2
-     },
-     "relative": {
-      "value": 0.0,
-      "unit": "percentage",
-      "unitType": "PERCENTAGE",
-      "decimalPrecision": 2
-     }
-    }
-   },
-   "settings": {
-    "IS_HIDDEN": true
-   },
-   "clearingAccountNumber": null,
-   "creditAccountClearingAccountNumber": null,
-   "discretionaryPortfolio": false,
-   "autoDistribution": false,
-   "urlParameterId": "redacted"
-  }
- ],
- "loans": []
+  ],
+  "loans": []
 }
