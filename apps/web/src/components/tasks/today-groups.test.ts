@@ -48,6 +48,36 @@ describe("groupTasksByWhen", () => {
     ]);
   });
 
+  it("puts urgent tasks first in each group, then by priority, keeping the order among equals", () => {
+    const today = "2026-10-03" as unknown as Date;
+    const groups = groupTasksByWhen(
+      [
+        task("plain-1", { due_date: today }),
+        task("high", { due_date: today, priority: 3 }),
+        task("plain-2", { due_date: today, priority: 0 }),
+        task("urgent", { due_date: today, priority: 4 }),
+        task("late-5-low", {
+          due_date: "2026-09-28" as unknown as Date,
+          priority: 1,
+        }),
+        task("late-1-urgent", {
+          due_date: "2026-10-02" as unknown as Date,
+          priority: 4,
+        }),
+        task("late-3-low", {
+          due_date: "2026-09-30" as unknown as Date,
+          priority: 1,
+        }),
+      ],
+      NOW,
+    );
+
+    expect(groups.map((g) => [g.key, g.tasks.map((t) => t.id)])).toEqual([
+      ["overdue", ["late-1-urgent", "late-5-low", "late-3-low"]],
+      ["today", ["urgent", "high", "plain-1", "plain-2"]],
+    ]);
+  });
+
   it("treats Date due dates as local days", () => {
     const due = new Date(2026, 9, 3);
     expect(isDueTodayOrEarlier(task("x", { due_date: due }), NOW)).toBe(true);

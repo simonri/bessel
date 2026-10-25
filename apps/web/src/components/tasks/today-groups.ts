@@ -68,6 +68,10 @@ export function groupTasksByWhen(
     ?.sort(
       (a, b) => daysUntilDue(a.due_date!, now) - daysUntilDue(b.due_date!, now),
     );
+  // Urgent first within each group; the sort is stable, so equal priorities keep the order above.
+  for (const groupTasks of buckets.values()) {
+    groupTasks.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+  }
   return GROUPS.flatMap(({ key, label }) => {
     const groupTasks = buckets.get(key) ?? [];
     return groupTasks.length > 0 ? [{ key, label, tasks: groupTasks }] : [];
