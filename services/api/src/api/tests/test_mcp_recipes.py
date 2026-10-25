@@ -147,3 +147,105 @@ class TestAddRecipe:
     assert [r["id"] for r in (await mcp_call(connect, "search_recipes", token="token-b"))["recipes"]] == [added["id"]]
     assert added["id"] not in [r["id"] for r in (await mcp_call(connect, "search_recipes"))["recipes"]]
     assert await mcp_call_error(connect, "get_recipe", {"recipe_id": added["id"]}) == "Recipe not found."
+
+
+class TestUpdateRecipe:
+  @staticmethod
+  async def _added(connect: ConnectFixture, **overrides: Any) -> str:
+    return (await mcp_call(connect, "add_recipe", new_recipe(**overrides)))["id"]
+
+  @pytest.mark.asyncio
+  async def test_changes_only_what_is_given(self, connect: ConnectFixture) -> None:
+    recipe_id = await self._added(connect, intro="Quick and warming.", active_minutes=15)
+
+    updated = await mcp_call(connect, "update_recipe", {"recipe_id": recipe_id, "total_minutes": 50, "steps": [{"text": "Simmer the lentils for 30 minutes."}]})
+
+    assert updated == {"id": recipe_id, "title": "Weeknight dal", "changed": ["steps", "total_minutes"]}
+    recipe = await mcp_call(connect, "get_recipe", {"recipe_id": recipe_id})
+    body = recipe["body"]
+    assert (body["total_minutes"], body["active_minutes"], body["intro"], body["yield_text"]) == (50, 15, "Quick and warming.", "4 servings")
+    assert [s["text"] for s in body["steps"]] == ["Simmer the lentils for 30 minutes."]
+    assert [len(g["items"]) for g in body["ingredient_groups"]] == [2, 2]
+    assert recipe["recipe_type"] == "main"
+    assert "Simmer the lentils for 30 minutes." in recipe["content"]
+    assert "Fry the spices" not in recipe["content"]
+
+  @pytest.mark.asyncio
+  async def test_replaced_ingredients_are_parsed_like_new_ones(self, connect: ConnectFixture) -> None:
+    recipe_id = await self._added(connect)
+
+    updated = await mcp_call(
+      connect, "update_recipe", {"recipe_id": recipe_id, "ingredient_groups": [{"lines": ["3 dl red lentils", "2 onions (sliced)", " "]}]}
+    )
+
+    assert updated["changed"] == ["ingredient_groups"]
+    [group] = (await mcp_call(connect, "get_recipe", {"recipe_id": recipe_id}))["body"]["ingredient_groups"]
+    assert group["items"] == [
+      {"amount": 3.0, "unit": "dl", "name": "red lentils", "note": None},
+      {"amount": 2.0, "unit": None, "name": "onions", "note": "sliced"},
+    ]
+
+  @pytest.mark.asyncio
+  async def test_clears_optional_fields_and_retitles(self, connect: ConnectFixture) -> None:
+    recipe_id = await self._added(connect, active_minutes=15, sections=[{"title": "Storage", "text": "Keeps 3 days."}])
+
+    updated = await mcp_call(
+      connect, "update_recipe", {"recipe_id": recipe_id, "title": " Dal with tadka ", "recipe_type": "other", "clear": ["active_minutes", "sections"]}
+    )
+
+    assert updated == {"id": recipe_id, "title": "Dal with tadka", "changed": ["active_minutes", "recipe_type", "sections", "title"]}
+    recipe = await mcp_call(connect, "get_recipe", {"recipe_id": recipe_id})
+    assert (recipe["title"], recipe["recipe_type"], recipe["body"]["active_minutes"], recipe["body"]["sections"]) == ("Dal with tadka", "other", None, [])
+
+  @pytest.mark.asyncio
+  async def test_nothing_new_changes_nothing(self, connect: ConnectFixture) -> None:
+    recipe_id = await self._added(connect)
+
+    updated = await mcp_call(connect, "update_recipe", {"recipe_id": recipe_id, "title": "weeknight dal", "total_minutes": 40, "recipe_type": "main"})
+
+    assert updated["changed"] == ["title"]
+    assert (await mcp_call(connect, "update_recipe", {"recipe_id": recipe_id, "total_minutes": 40}))["changed"] == []
+
+  @pytest.mark.asyncio
+  async def test_a_recipe_kept_as_markdown_becomes_structured(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
+    pancakes = Recipe(title="Pancakes", content="## Ingredienser\n- 2 eggs\n- 3 dl milk\n\n## Gör så här\n1. Whisk.")
+    await save_owned(pancakes)
+
+    updated = await mcp_call(connect, "update_recipe", {"recipe_id": str(pancakes.id), "recipe_type": "dessert"})
+
+    assert updated["changed"] == ["recipe_type"]
+    recipe = await mcp_call(connect, "get_recipe", {"recipe_id": str(pancakes.id)})
+    assert (recipe["structured"], recipe["recipe_type"]) == (True, "dessert")
+    assert [i["name"] for i in recipe["body"]["ingredient_groups"][0]["items"]] == ["eggs", "milk"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize(
+    ("change", "expected"),
+    [
+      ({"title": "   "}, "The title can't be blank."),
+      ({"title": "Pancakes"}, "Another recipe is already called 'Pancakes'"),
+      ({"total_minutes": 0}, "total_minutes"),
+      ({"active_minutes": 10, "clear": ["active_minutes"]}, "active_minutes can't be both set and cleared."),
+      ({"ingredient_groups": [{"lines": ["x" * 301]}]}, "Couldn't read the ingredient line"),
+    ],
+  )
+  async def test_rejects_invalid_changes_and_keeps_the_recipe(
+    self, connect: ConnectFixture, save_owned: SaveFixture, change: dict[str, Any], expected: str
+  ) -> None:
+    await save_owned(Recipe(title="Pancakes", content=""))
+    recipe_id = await self._added(connect)
+
+    message = await mcp_call_error(connect, "update_recipe", {"recipe_id": recipe_id, **change})
+
+    assert expected in message
+    recipe = await mcp_call(connect, "get_recipe", {"recipe_id": recipe_id})
+    assert (recipe["title"], recipe["body"]["total_minutes"], recipe["body"]["active_minutes"]) == ("Weeknight dal", 40, None)
+
+  @pytest.mark.asyncio
+  async def test_another_user_cannot_change_it(self, connect: ConnectFixture) -> None:
+    recipe_id = await self._added(connect)
+
+    message = await mcp_call_error(connect, "update_recipe", {"recipe_id": recipe_id, "title": "Mine now"}, token="token-b")
+
+    assert message == "Recipe not found."
+    assert (await mcp_call(connect, "get_recipe", {"recipe_id": recipe_id}))["title"] == "Weeknight dal"

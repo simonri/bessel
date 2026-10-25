@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from mcp.server.mcpserver import Context
@@ -13,7 +13,9 @@ from api.models.recipe import Recipe, RecipeType
 from api.recipes.body import RecipeBody, RecipeIngredient, RecipeSection, RecipeStep, parse_ingredient_line
 from api.recipes.repository import CookStats, RecipeCookRepository, RecipeRepository
 from api.recipes.schemas import RecipeSchema
-from api.recipes.service import recipe_service
+from api.recipes.service import content_fields, recipe_service
+
+ClearableField = Literal["intro", "yield_text", "total_minutes", "active_minutes", "sections"]
 
 
 class RecipeSummary(Schema):
@@ -38,6 +40,12 @@ class AddedRecipe(Schema):
   ingredient_count: int = Field(description="Ingredient lines saved across all groups.")
 
 
+class UpdatedRecipe(Schema):
+  id: UUID
+  title: str
+  changed: list[str] = Field(description="The fields that now differ from before.")
+
+
 def _first_error(error: ValidationError) -> str:
   detail = error.errors()[0]
   location = ".".join(str(part) for part in detail["loc"])
@@ -49,6 +57,17 @@ def _ingredient(line: str) -> RecipeIngredient:
     return parse_ingredient_line(line)
   except ValidationError as e:
     raise ToolError(f"Couldn't read the ingredient line {line[:80]!r} ({_first_error(e)}). Shorten it or move details into the step text.") from e
+
+
+def _groups(ingredient_groups: list[IngredientGroupInput]) -> list[dict]:
+  return [{"title": group.title, "items": [_ingredient(line) for line in group.lines if line.strip()]} for group in ingredient_groups]
+
+
+def _body(fields: dict) -> RecipeBody:
+  try:
+    return RecipeBody.model_validate(fields)
+  except ValidationError as e:
+    raise ToolError(f"The recipe isn't valid: {_first_error(e)}.") from e
 
 
 async def search_recipes(
@@ -105,21 +124,17 @@ async def add_recipe(
   title = title.strip()
   if not title:
     raise ToolError("The title can't be blank.")
-  groups = [{"title": group.title, "items": [_ingredient(line) for line in group.lines if line.strip()]} for group in ingredient_groups]
-  try:
-    body = RecipeBody.model_validate(
-      {
-        "intro": intro,
-        "yield_text": yield_text,
-        "total_minutes": total_minutes,
-        "active_minutes": active_minutes,
-        "ingredient_groups": groups,
-        "steps": steps,
-        "sections": sections or [],
-      }
-    )
-  except ValidationError as e:
-    raise ToolError(f"The recipe isn't valid: {_first_error(e)}.") from e
+  body = _body(
+    {
+      "intro": intro,
+      "yield_text": yield_text,
+      "total_minutes": total_minutes,
+      "active_minutes": active_minutes,
+      "ingredient_groups": _groups(ingredient_groups),
+      "steps": steps,
+      "sections": sections or [],
+    }
+  )
 
   async with user_session(ctx) as (session, user):
     existing = await RecipeRepository.from_session(session).get_by_title(user.id, title)
@@ -132,8 +147,67 @@ async def add_recipe(
     return AddedRecipe(id=recipe.id, title=recipe.title, ingredient_count=sum(len(group.items) for group in body.ingredient_groups))
 
 
+async def update_recipe(
+  ctx: Context,
+  recipe_id: UUID,
+  title: Annotated[str | None, Field(min_length=1, max_length=500)] = None,
+  recipe_type: RecipeType | None = None,
+  intro: str | None = None,
+  yield_text: str | None = None,
+  total_minutes: int | None = None,
+  active_minutes: int | None = None,
+  ingredient_groups: Annotated[
+    list[IngredientGroupInput] | None, Field(description="Replaces all ingredients; give every group and line, as in add_recipe.")
+  ] = None,
+  steps: Annotated[list[RecipeStep] | None, Field(description="Replaces all steps; give every step in order.")] = None,
+  sections: Annotated[list[RecipeSection] | None, Field(description="Replaces all extra sections.")] = None,
+  clear: Annotated[list[ClearableField] | None, Field(description="Fields to empty, e.g. ['active_minutes'] when the recipe doesn't say.")] = None,
+) -> UpdatedRecipe:
+  """Change a saved recipe: fix an amount, rewrite a step, scale it, add a tip, retitle or recategorise it.
+
+  Give only what changes; everything else stays as it is. Ingredients, steps and sections are each replaced as a
+  whole list, so call get_recipe first and send the full list with your change in it. Nothing is ever deleted.
+  """
+  if title is not None and not title.strip():
+    raise ToolError("The title can't be blank.")
+  given = {"intro": intro, "yield_text": yield_text, "total_minutes": total_minutes, "active_minutes": active_minutes, "steps": steps, "sections": sections}
+  cleared = set(clear or [])
+  if conflicting := sorted(name for name in cleared if given[name] is not None):
+    raise ToolError(f"{', '.join(conflicting)} can't be both set and cleared.")
+  new_groups = _groups(ingredient_groups) if ingredient_groups is not None else None
+
+  async with user_session(ctx) as (session, user):
+    repository = RecipeRepository.from_session(session)
+    recipe = await repository.get_owned_or_404(recipe_id, user.id, not_found_message="Recipe not found.")
+    before = RecipeSchema.model_validate(recipe)
+    fields = before.body.model_dump(mode="json")
+    fields |= {name: value for name, value in given.items() if value is not None}
+    if new_groups is not None:
+      fields["ingredient_groups"] = new_groups
+    fields |= {name: ([] if name == "sections" else None) for name in cleared}
+    body = _body(fields)
+
+    update: dict = {}
+    new_title = title.strip() if title is not None else before.title
+    if new_title != before.title:
+      clash = await repository.get_by_title(user.id, new_title)
+      if clash is not None and clash.id != recipe.id:
+        raise ToolError(f"Another recipe is already called {clash.title!r} (id {clash.id}). Pick a more specific title.")
+      update["title"] = new_title
+    if recipe_type is not None and recipe_type != before.recipe_type:
+      update["recipe_type"] = recipe_type
+    old = before.body.model_dump(mode="json")
+    changed = sorted([*update, *(name for name, value in body.model_dump(mode="json").items() if value != old[name])])
+    if body != before.body or not before.structured:
+      update |= content_fields("", body)
+    if update:
+      recipe = await repository.update(recipe, update_dict=update)
+    return UpdatedRecipe(id=recipe.id, title=recipe.title, changed=changed)
+
+
 TOOLS: list[ToolSpec] = [
   read(search_recipes, "Search recipes"),
   read(get_recipe, "Get recipe"),
   write(add_recipe, "Add recipe"),
+  write(update_recipe, "Update recipe", idempotent=True),
 ]
