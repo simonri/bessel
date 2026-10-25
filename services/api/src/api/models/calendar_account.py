@@ -31,6 +31,8 @@ class CalendarAccount(RecordModel):
   can_write: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
   # Google: a People scope was granted, so names and photos can be looked up.
   can_read_people: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+  # Google: the read-write contacts scope was granted, so contacts can be edited from Bessel.
+  can_write_contacts: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
   # When names and photos were last fetched (only set when a fetch ran).
   people_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)

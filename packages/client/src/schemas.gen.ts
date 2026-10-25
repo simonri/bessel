@@ -2689,6 +2689,20 @@ export const ClientDiagnosticsUploadSchema = {
   title: "ClientDiagnosticsUpload",
 } as const;
 
+export const ContactAuthorizeResponseSchema = {
+  properties: {
+    url: {
+      type: "string",
+      title: "Url",
+      description:
+        "Google's page for allowing Bessel to edit this account's contacts.",
+    },
+  },
+  type: "object",
+  required: ["url"],
+  title: "ContactAuthorizeResponse",
+} as const;
+
 export const ContactBirthdaySchema = {
   properties: {
     month: {
@@ -2721,6 +2735,158 @@ export const ContactBirthdaySchema = {
   title: "ContactBirthday",
 } as const;
 
+export const ContactCreateSchema = {
+  properties: {
+    given_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Given Name",
+    },
+    family_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Family Name",
+    },
+    nickname: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Nickname",
+    },
+    organization: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Organization",
+    },
+    job_title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Job Title",
+    },
+    birthday: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/ContactBirthday",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 10000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+    phones: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Phones",
+    },
+    emails: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Emails",
+    },
+    addresses: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Addresses",
+    },
+    urls: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Urls",
+    },
+    source_id: {
+      type: "string",
+      format: "uuid",
+      title: "Source Id",
+      description: "The address book to add the person to.",
+    },
+  },
+  type: "object",
+  required: ["source_id"],
+  title: "ContactCreate",
+} as const;
+
 export const ContactListResponseSchema = {
   properties: {
     items: {
@@ -2737,6 +2903,32 @@ export const ContactListResponseSchema = {
   type: "object",
   required: ["items", "pagination"],
   title: "ContactListResponse",
+} as const;
+
+export const ContactMethodInputSchema = {
+  properties: {
+    label: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Label",
+    },
+    value: {
+      type: "string",
+      maxLength: 1000,
+      minLength: 1,
+      title: "Value",
+    },
+  },
+  type: "object",
+  required: ["value"],
+  title: "ContactMethodInput",
 } as const;
 
 export const ContactMethodSchemaSchema = {
@@ -2988,10 +3180,163 @@ export const ContactSourceSchemaSchema = {
       ],
       title: "Sync Error",
     },
+    can_edit: {
+      type: "boolean",
+      title: "Can Edit",
+      description:
+        "Google lets Bessel change these contacts; otherwise it can only read them.",
+    },
   },
   type: "object",
-  required: ["id", "email", "synced_at", "sync_error"],
+  required: ["id", "email", "synced_at", "sync_error", "can_edit"],
   title: "ContactSourceSchema",
+} as const;
+
+export const ContactUpdateSchema = {
+  properties: {
+    given_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Given Name",
+    },
+    family_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Family Name",
+    },
+    nickname: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Nickname",
+    },
+    organization: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Organization",
+    },
+    job_title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Job Title",
+    },
+    birthday: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/ContactBirthday",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 10000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+    },
+    phones: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Phones",
+    },
+    emails: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Emails",
+    },
+    addresses: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Addresses",
+    },
+    urls: {
+      anyOf: [
+        {
+          items: {
+            $ref: "#/components/schemas/ContactMethodInput",
+          },
+          type: "array",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Urls",
+    },
+  },
+  type: "object",
+  title: "ContactUpdate",
+  description:
+    "Fields to change; any left out stay as they are, and null clears one.",
 } as const;
 
 export const CounterCreateSchema = {

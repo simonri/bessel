@@ -553,15 +553,39 @@ enum API {
         var payloads: [[String: JSONValue]]
     }
 
+    struct ContactAuthorizeResponse: Codable, Hashable {
+        var url: String
+    }
+
     struct ContactBirthday: Codable, Hashable {
         var month: Int
         var day: Int
         var year: Int?
     }
 
+    struct ContactCreate: Codable, Hashable {
+        var givenName: String?
+        var familyName: String?
+        var nickname: String?
+        var organization: String?
+        var jobTitle: String?
+        var birthday: ContactBirthday?
+        var notes: String?
+        var phones: [ContactMethodInput]?
+        var emails: [ContactMethodInput]?
+        var addresses: [ContactMethodInput]?
+        var urls: [ContactMethodInput]?
+        var sourceId: UUID
+    }
+
     struct ContactListResponse: Codable, Hashable {
         @Lossy var items: [ContactSchema]
         var pagination: Pagination
+    }
+
+    struct ContactMethodInput: Codable, Hashable {
+        var label: String?
+        var value: String
     }
 
     struct ContactMethodSchema: Codable, Hashable {
@@ -595,6 +619,21 @@ enum API {
         var email: String
         var syncedAt: Date?
         var syncError: String?
+        var canEdit: Bool
+    }
+
+    struct ContactUpdate: Encodable, Hashable {
+        var givenName: String??
+        var familyName: String??
+        var nickname: String??
+        var organization: String??
+        var jobTitle: String??
+        var birthday: ContactBirthday??
+        var notes: String??
+        var phones: [ContactMethodInput]??
+        var emails: [ContactMethodInput]??
+        var addresses: [ContactMethodInput]??
+        var urls: [ContactMethodInput]??
     }
 
     struct CounterCreate: Codable, Hashable {
@@ -3982,6 +4021,26 @@ extension API.ClientDiagnosticsUpload {
     }
 }
 
+extension API.ContactAuthorizeResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case url
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.url = try container.decode(String.self, forKey: .url)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case url
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.url, forKey: .url)
+    }
+}
+
 extension API.ContactBirthday {
     private enum DecodingKeys: String, CodingKey {
         case month
@@ -4010,6 +4069,70 @@ extension API.ContactBirthday {
     }
 }
 
+extension API.ContactCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case givenName
+        case familyName
+        case nickname
+        case organization
+        case jobTitle
+        case birthday
+        case notes
+        case phones
+        case emails
+        case addresses
+        case urls
+        case sourceId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.givenName = try container.decodeIfPresent(String.self, forKey: .givenName)
+        self.familyName = try container.decodeIfPresent(String.self, forKey: .familyName)
+        self.nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
+        self.organization = try container.decodeIfPresent(String.self, forKey: .organization)
+        self.jobTitle = try container.decodeIfPresent(String.self, forKey: .jobTitle)
+        self.birthday = try container.decodeIfPresent(API.ContactBirthday.self, forKey: .birthday)
+        self.notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        self.phones = try container.decodeIfPresent([API.ContactMethodInput].self, forKey: .phones)
+        self.emails = try container.decodeIfPresent([API.ContactMethodInput].self, forKey: .emails)
+        self.addresses = try container.decodeIfPresent([API.ContactMethodInput].self, forKey: .addresses)
+        self.urls = try container.decodeIfPresent([API.ContactMethodInput].self, forKey: .urls)
+        self.sourceId = try container.decode(UUID.self, forKey: .sourceId)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case givenName = "given_name"
+        case familyName = "family_name"
+        case nickname
+        case organization
+        case jobTitle = "job_title"
+        case birthday
+        case notes
+        case phones
+        case emails
+        case addresses
+        case urls
+        case sourceId = "source_id"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.givenName, forKey: .givenName)
+        try container.encodeIfPresent(self.familyName, forKey: .familyName)
+        try container.encodeIfPresent(self.nickname, forKey: .nickname)
+        try container.encodeIfPresent(self.organization, forKey: .organization)
+        try container.encodeIfPresent(self.jobTitle, forKey: .jobTitle)
+        try container.encodeIfPresent(self.birthday, forKey: .birthday)
+        try container.encodeIfPresent(self.notes, forKey: .notes)
+        try container.encodeIfPresent(self.phones, forKey: .phones)
+        try container.encodeIfPresent(self.emails, forKey: .emails)
+        try container.encodeIfPresent(self.addresses, forKey: .addresses)
+        try container.encodeIfPresent(self.urls, forKey: .urls)
+        try container.encode(self.sourceId, forKey: .sourceId)
+    }
+}
+
 extension API.ContactListResponse {
     private enum DecodingKeys: String, CodingKey {
         case items
@@ -4031,6 +4154,30 @@ extension API.ContactListResponse {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.items, forKey: .items)
         try container.encode(self.pagination, forKey: .pagination)
+    }
+}
+
+extension API.ContactMethodInput {
+    private enum DecodingKeys: String, CodingKey {
+        case label
+        case value
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.label = try container.decodeIfPresent(String.self, forKey: .label)
+        self.value = try container.decode(String.self, forKey: .value)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case label
+        case value
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.label, forKey: .label)
+        try container.encode(self.value, forKey: .value)
     }
 }
 
@@ -4152,6 +4299,7 @@ extension API.ContactSourceSchema {
         case email
         case syncedAt
         case syncError
+        case canEdit
     }
 
     init(from decoder: Decoder) throws {
@@ -4160,6 +4308,7 @@ extension API.ContactSourceSchema {
         self.email = try container.decode(String.self, forKey: .email)
         self.syncedAt = try container.decodeIfPresent(Date.self, forKey: .syncedAt)
         self.syncError = try container.decodeIfPresent(String.self, forKey: .syncError)
+        self.canEdit = try container.decode(Bool.self, forKey: .canEdit)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4167,6 +4316,7 @@ extension API.ContactSourceSchema {
         case email
         case syncedAt = "synced_at"
         case syncError = "sync_error"
+        case canEdit = "can_edit"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4175,6 +4325,38 @@ extension API.ContactSourceSchema {
         try container.encode(self.email, forKey: .email)
         try container.encodeIfPresent(self.syncedAt.map(API.Instant.init), forKey: .syncedAt)
         try container.encodeIfPresent(self.syncError, forKey: .syncError)
+        try container.encode(self.canEdit, forKey: .canEdit)
+    }
+}
+
+extension API.ContactUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case givenName = "given_name"
+        case familyName = "family_name"
+        case nickname
+        case organization
+        case jobTitle = "job_title"
+        case birthday
+        case notes
+        case phones
+        case emails
+        case addresses
+        case urls
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.givenName { try container.encode(value, forKey: .givenName) }
+        if let value = self.familyName { try container.encode(value, forKey: .familyName) }
+        if let value = self.nickname { try container.encode(value, forKey: .nickname) }
+        if let value = self.organization { try container.encode(value, forKey: .organization) }
+        if let value = self.jobTitle { try container.encode(value, forKey: .jobTitle) }
+        if let value = self.birthday { try container.encode(value, forKey: .birthday) }
+        if let value = self.notes { try container.encode(value, forKey: .notes) }
+        if let value = self.phones { try container.encode(value, forKey: .phones) }
+        if let value = self.emails { try container.encode(value, forKey: .emails) }
+        if let value = self.addresses { try container.encode(value, forKey: .addresses) }
+        if let value = self.urls { try container.encode(value, forKey: .urls) }
     }
 }
 

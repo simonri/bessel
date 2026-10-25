@@ -43,8 +43,8 @@ class ContactSourceRepository(RepositoryBase[ContactSource], RepositoryIDMixin[C
     )
     return (await self.session.execute(statement)).scalars().all()
 
-  async def account_email(self, source: ContactSource) -> str:
-    return (await self.session.execute(select(CalendarAccount.email).where(CalendarAccount.id == source.account_id))).scalar_one()
+  async def account_for(self, source: ContactSource) -> CalendarAccount:
+    return (await self.session.execute(select(CalendarAccount).where(CalendarAccount.id == source.account_id))).scalar_one()
 
 
 class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID]):
@@ -76,6 +76,8 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
         if contact is not None and contact.deleted_at is None:
           contact.deleted_at = now
         continue
+      if contact is not None and person.etag is not None and person.etag == contact.replaced_etag:
+        continue
       if contact is None:
         contact = Contact(user_id=source.user_id, source_id=source.id, resource_name=person.resource_name, person={}, methods=[])
         self.session.add(contact)
@@ -88,6 +90,14 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
           contact.deleted_at = now
     await self.session.flush()
     return len(seen)
+
+  async def save_edited(self, source: ContactSource, person: ParsedPerson, *, replaced_etag: str | None) -> Contact:
+    """Stores the person as Google returned them from an edit."""
+    await self.apply(source, [person], full=False)
+    contact = (await self.session.execute(select(Contact).where(Contact.source_id == source.id, Contact.resource_name == person.resource_name))).scalar_one()
+    contact.replaced_etag = replaced_etag
+    await self.session.flush()
+    return contact
 
 
 def _copy(person: ParsedPerson, contact: Contact) -> None:

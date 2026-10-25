@@ -67,14 +67,16 @@ export function GoogleCalendarCallbackPage() {
       {outcome.status === "pending" ? (
         <div className="flex flex-col items-center gap-4">
           <Spinner className="size-6 text-white" />
-          <p className="text-13 text-white/50">Connecting Google Calendar…</p>
+          <p className="text-13 text-white/50">
+            Connecting your Google account…
+          </p>
         </div>
       ) : (
         <div className="flex max-w-md flex-col items-center gap-3 px-6 text-center">
           <p className="text-13 text-white/80">
             {outcome.status === "connected"
-              ? "Google Calendar connected"
-              : "Google Calendar not connected"}
+              ? "Google account connected"
+              : "Google account not connected"}
           </p>
           <p className="text-12 leading-relaxed text-white/50">
             {outcome.status === "connected"

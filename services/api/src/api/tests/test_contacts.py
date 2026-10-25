@@ -212,7 +212,7 @@ class TestSync:
     first = await repo.ensure_for_user(user.id)
     again = await repo.ensure_for_user(user.id)
 
-    assert [await repo.account_email(s) for s in first] == ["a@gmail.com"]
+    assert [(await repo.account_for(s)).email for s in first] == ["a@gmail.com"]
     assert [s.id for s in again] == [s.id for s in first]
 
 

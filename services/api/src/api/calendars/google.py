@@ -45,6 +45,8 @@ PEOPLE_SCOPES = (
   "https://www.googleapis.com/auth/contacts.other.readonly",
   "https://www.googleapis.com/auth/directory.readonly",
 )
+# Asked for separately, from the Contacts page, only when editing contacts is wanted.
+CONTACTS_WRITE_SCOPE = "https://www.googleapis.com/auth/contacts"
 SCOPES = " ".join(["openid", "email", READ_SCOPE, WRITE_SCOPE, *PEOPLE_SCOPES])
 PEOPLE_API_URL = "https://people.googleapis.com/v1"
 PEOPLE_FIELDS = "names,emailAddresses,photos"
@@ -62,12 +64,13 @@ def redirect_uri() -> str:
   return f"{settings.FRONTEND_BASE_URL}/oauth/google-calendar"
 
 
-def authorize_url(state: str) -> str:
+def authorize_url(state: str, *, scopes: str = SCOPES, login_hint: str | None = None) -> str:
   params = {
     "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
     "redirect_uri": redirect_uri(),
     "response_type": "code",
-    "scope": SCOPES,
+    "scope": scopes,
+    **({"login_hint": login_hint} if login_hint else {}),
     # offline + consent so Google issues a refresh token even on reconnect.
     "access_type": "offline",
     "prompt": "consent",
@@ -178,6 +181,7 @@ class GoogleGrant:
   can_write: bool
   # Any of the People scopes; each source is tried and skipped if not granted.
   can_read_people: bool = False
+  can_write_contacts: bool = False
 
 
 def _grant(data: dict[str, Any], refresh_token: str | None) -> GoogleGrant:
@@ -186,7 +190,8 @@ def _grant(data: dict[str, Any], refresh_token: str | None) -> GoogleGrant:
     access_token=data["access_token"],
     refresh_token=refresh_token,
     can_write=WRITE_SCOPE in granted,
-    can_read_people=bool(granted & set(PEOPLE_SCOPES)),
+    can_read_people=bool(granted & {*PEOPLE_SCOPES, CONTACTS_WRITE_SCOPE}),
+    can_write_contacts=CONTACTS_WRITE_SCOPE in granted,
   )
 
 

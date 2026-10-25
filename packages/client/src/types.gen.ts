@@ -1817,6 +1817,18 @@ export type ClientDiagnosticsUpload = {
 };
 
 /**
+ * ContactAuthorizeResponse
+ */
+export type ContactAuthorizeResponse = {
+  /**
+   * Url
+   *
+   * Google's page for allowing Bessel to edit this account's contacts.
+   */
+  url: string;
+};
+
+/**
  * ContactBirthday
  */
 export type ContactBirthday = {
@@ -1837,6 +1849,59 @@ export type ContactBirthday = {
 };
 
 /**
+ * ContactCreate
+ */
+export type ContactCreate = {
+  /**
+   * Given Name
+   */
+  given_name?: string | null;
+  /**
+   * Family Name
+   */
+  family_name?: string | null;
+  /**
+   * Nickname
+   */
+  nickname?: string | null;
+  /**
+   * Organization
+   */
+  organization?: string | null;
+  /**
+   * Job Title
+   */
+  job_title?: string | null;
+  birthday?: ContactBirthday | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+  /**
+   * Phones
+   */
+  phones?: Array<ContactMethodInput> | null;
+  /**
+   * Emails
+   */
+  emails?: Array<ContactMethodInput> | null;
+  /**
+   * Addresses
+   */
+  addresses?: Array<ContactMethodInput> | null;
+  /**
+   * Urls
+   */
+  urls?: Array<ContactMethodInput> | null;
+  /**
+   * Source Id
+   *
+   * The address book to add the person to.
+   */
+  source_id: string;
+};
+
+/**
  * ContactListResponse
  */
 export type ContactListResponse = {
@@ -1845,6 +1910,20 @@ export type ContactListResponse = {
    */
   items: Array<ContactSchema>;
   pagination: Pagination;
+};
+
+/**
+ * ContactMethodInput
+ */
+export type ContactMethodInput = {
+  /**
+   * Label
+   */
+  label?: string | null;
+  /**
+   * Value
+   */
+  value: string;
 };
 
 /**
@@ -1972,6 +2051,61 @@ export type ContactSourceSchema = {
    * Sync Error
    */
   sync_error: string | null;
+  /**
+   * Can Edit
+   *
+   * Google lets Bessel change these contacts; otherwise it can only read them.
+   */
+  can_edit: boolean;
+};
+
+/**
+ * ContactUpdate
+ *
+ * Fields to change; any left out stay as they are, and null clears one.
+ */
+export type ContactUpdate = {
+  /**
+   * Given Name
+   */
+  given_name?: string | null;
+  /**
+   * Family Name
+   */
+  family_name?: string | null;
+  /**
+   * Nickname
+   */
+  nickname?: string | null;
+  /**
+   * Organization
+   */
+  organization?: string | null;
+  /**
+   * Job Title
+   */
+  job_title?: string | null;
+  birthday?: ContactBirthday | null;
+  /**
+   * Notes
+   */
+  notes?: string | null;
+  /**
+   * Phones
+   */
+  phones?: Array<ContactMethodInput> | null;
+  /**
+   * Emails
+   */
+  emails?: Array<ContactMethodInput> | null;
+  /**
+   * Addresses
+   */
+  addresses?: Array<ContactMethodInput> | null;
+  /**
+   * Urls
+   */
+  urls?: Array<ContactMethodInput> | null;
 };
 
 /**
@@ -8569,6 +8703,32 @@ export type ListContactsResponses = {
 export type ListContactsResponse =
   ListContactsResponses[keyof ListContactsResponses];
 
+export type CreateContactData = {
+  body: ContactCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/contacts";
+};
+
+export type CreateContactErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateContactError = CreateContactErrors[keyof CreateContactErrors];
+
+export type CreateContactResponses = {
+  /**
+   * Successful Response
+   */
+  201: ContactSchema;
+};
+
+export type CreateContactResponse =
+  CreateContactResponses[keyof CreateContactResponses];
+
 export type ListContactSourcesData = {
   body?: never;
   path?: never;
@@ -8602,6 +8762,37 @@ export type SyncContactsResponses = {
   202: unknown;
 };
 
+export type DeleteContactData = {
+  body?: never;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}";
+};
+
+export type DeleteContactErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteContactError = DeleteContactErrors[keyof DeleteContactErrors];
+
+export type DeleteContactResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteContactResponse =
+  DeleteContactResponses[keyof DeleteContactResponses];
+
 export type GetContactData = {
   body?: never;
   path: {
@@ -8631,6 +8822,69 @@ export type GetContactResponses = {
 };
 
 export type GetContactResponse = GetContactResponses[keyof GetContactResponses];
+
+export type UpdateContactData = {
+  body: ContactUpdate;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}";
+};
+
+export type UpdateContactErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateContactError = UpdateContactErrors[keyof UpdateContactErrors];
+
+export type UpdateContactResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactSchema;
+};
+
+export type UpdateContactResponse =
+  UpdateContactResponses[keyof UpdateContactResponses];
+
+export type AuthorizeContactEditingData = {
+  body?: never;
+  path: {
+    /**
+     * Source Id
+     */
+    source_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/sources/{source_id}/authorize";
+};
+
+export type AuthorizeContactEditingErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type AuthorizeContactEditingError =
+  AuthorizeContactEditingErrors[keyof AuthorizeContactEditingErrors];
+
+export type AuthorizeContactEditingResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactAuthorizeResponse;
+};
+
+export type AuthorizeContactEditingResponse =
+  AuthorizeContactEditingResponses[keyof AuthorizeContactEditingResponses];
 
 export type ListBankConnectionsData = {
   body?: never;

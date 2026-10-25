@@ -34,7 +34,7 @@ class ParsedPerson:
   methods: list[ParsedMethod] = field(default_factory=list)
 
 
-def _primary(items: list[dict[str, Any]]) -> dict[str, Any] | None:
+def primary(items: list[dict[str, Any]]) -> dict[str, Any] | None:
   """The entry Google marks primary, else the first."""
   return next((i for i in items if i.get("metadata", {}).get("primary")), items[0] if items else None)
 
@@ -43,11 +43,11 @@ def _text(value: Any) -> str | None:
   return value.strip() or None if isinstance(value, str) else None
 
 
-def _label(item: dict[str, Any]) -> str | None:
+def label_of(item: dict[str, Any]) -> str | None:
   return _text(item.get("formattedType")) or _text(item.get("type"))
 
 
-def _address(item: dict[str, Any]) -> str | None:
+def address_text(item: dict[str, Any]) -> str | None:
   if formatted := _text(item.get("formattedValue")):
     return formatted
   parts = [item.get(k) for k in ("streetAddress", "extendedAddress", "postalCode", "city", "region", "country")]
@@ -60,23 +60,23 @@ def parse_person(person: dict[str, Any]) -> ParsedPerson:
   if base.deleted:
     return base
 
-  name = _primary(person.get("names", [])) or {}
-  organization = _primary(person.get("organizations", [])) or {}
-  nickname = _primary(person.get("nicknames", [])) or {}
-  birthday = (_primary(person.get("birthdays", [])) or {}).get("date") or {}
+  name = primary(person.get("names", [])) or {}
+  organization = primary(person.get("organizations", [])) or {}
+  nickname = primary(person.get("nicknames", [])) or {}
+  birthday = (primary(person.get("birthdays", [])) or {}).get("date") or {}
   photo = next((p.get("url") for p in person.get("photos", []) if p.get("url") and not p.get("default")), None)
-  biography = _primary(person.get("biographies", [])) or {}
+  biography = primary(person.get("biographies", [])) or {}
 
   methods: list[ParsedMethod] = []
   for kind, key, read in (
     (ContactMethodKind.phone, "phoneNumbers", lambda i: _text(i.get("value"))),
     (ContactMethodKind.email, "emailAddresses", lambda i: _text(i.get("value"))),
-    (ContactMethodKind.address, "addresses", _address),
+    (ContactMethodKind.address, "addresses", address_text),
     (ContactMethodKind.url, "urls", lambda i: _text(i.get("value"))),
   ):
     for item in person.get(key, []):
       if value := read(item):
-        methods.append(ParsedMethod(kind=kind, label=_label(item), value=value))
+        methods.append(ParsedMethod(kind=kind, label=label_of(item), value=value))
 
   given, family = _text(name.get("givenName")), _text(name.get("familyName"))
   display = (

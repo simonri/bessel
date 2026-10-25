@@ -86,3 +86,33 @@ class ContactSourceSchema(IDSchema):
   email: str = Field(description="The Google account the contacts come from.")
   synced_at: datetime | None
   sync_error: str | None
+  can_edit: bool = Field(description="Google lets Bessel change these contacts; otherwise it can only read them.")
+
+
+class ContactMethodInput(Schema):
+  label: str | None = Field(default=None, max_length=100)
+  value: str = Field(min_length=1, max_length=1000)
+
+
+class ContactUpdate(Schema):
+  """Fields to change; any left out stay as they are, and null clears one."""
+
+  given_name: str | None = Field(default=None, max_length=255)
+  family_name: str | None = Field(default=None, max_length=255)
+  nickname: str | None = Field(default=None, max_length=255)
+  organization: str | None = Field(default=None, max_length=500)
+  job_title: str | None = Field(default=None, max_length=500)
+  birthday: ContactBirthday | None = None
+  notes: str | None = Field(default=None, max_length=10000)
+  phones: list[ContactMethodInput] | None = None
+  emails: list[ContactMethodInput] | None = None
+  addresses: list[ContactMethodInput] | None = None
+  urls: list[ContactMethodInput] | None = None
+
+
+class ContactCreate(ContactUpdate):
+  source_id: UUID = Field(description="The address book to add the person to.")
+
+
+class ContactAuthorizeResponse(Schema):
+  url: str = Field(description="Google's page for allowing Bessel to edit this account's contacts.")

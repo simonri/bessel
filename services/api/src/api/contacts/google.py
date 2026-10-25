@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 
 from api.calendars.google import PEOPLE_API_URL
-from api.calendars.providers import ProviderAuthError, ProviderUnavailableError
+from api.calendars.providers import ProviderAuthError, ProviderNotFoundError, ProviderRejectedError, ProviderScopeError, ProviderUnavailableError
 
 # Every request in a sync, including its later pages and incremental runs, must repeat these exactly.
 PERSON_FIELDS = "metadata,names,nicknames,emailAddresses,phoneNumbers,addresses,birthdays,organizations,photos,biographies,urls"
@@ -60,6 +60,54 @@ class GoogleContactsClient:
         result.next_sync_token = data.get("nextSyncToken")
         return result
     raise ProviderUnavailableError("Google contacts kept paging")
+
+  async def get_person(self, access_token: str, resource_name: str) -> dict[str, Any]:
+    response = await self.http.get(f"{PEOPLE_API_URL}/{resource_name}", headers=_auth(access_token), params={"personFields": PERSON_FIELDS})
+    _raise_for_write(response)
+    return response.json()
+
+  async def update_contact(self, access_token: str, person: dict[str, Any], fields: list[str]) -> dict[str, Any]:
+    """Replaces `fields` of the person with what `person` holds; its etag must be the latest."""
+    response = await self.http.patch(
+      f"{PEOPLE_API_URL}/{person['resourceName']}:updateContact",
+      headers=_auth(access_token),
+      params={"updatePersonFields": ",".join(fields), "personFields": PERSON_FIELDS},
+      json=person,
+    )
+    _raise_for_write(response)
+    return response.json()
+
+  async def create_contact(self, access_token: str, person: dict[str, Any]) -> dict[str, Any]:
+    response = await self.http.post(f"{PEOPLE_API_URL}/people:createContact", headers=_auth(access_token), params={"personFields": PERSON_FIELDS}, json=person)
+    _raise_for_write(response)
+    return response.json()
+
+  async def delete_contact(self, access_token: str, resource_name: str) -> None:
+    response = await self.http.delete(f"{PEOPLE_API_URL}/{resource_name}:deleteContact", headers=_auth(access_token))
+    if response.status_code == 404:
+      return
+    _raise_for_write(response)
+
+
+class StaleEtag(Exception):
+  """The person changed in Google since Bessel last read it."""
+
+
+def _raise_for_write(response: httpx.Response) -> None:
+  if response.is_success:
+    return
+  if response.status_code == 400 and "failedprecondition" in response.text.lower().replace("_", ""):
+    raise StaleEtag
+  if response.status_code == 401:
+    raise ProviderAuthError("Google refused access to contacts")
+  if response.status_code == 403:
+    raise ProviderScopeError("Google hasn't allowed Bessel to change contacts")
+  if response.status_code == 404:
+    raise ProviderNotFoundError("That contact no longer exists in Google")
+  if response.status_code == 400:
+    message = response.json().get("error", {}).get("message", "Google refused the change") if response.content else "Google refused the change"
+    raise ProviderRejectedError(message)
+  raise ProviderUnavailableError(f"Google contacts answered {response.status_code}")
 
 
 def _is_expired_token(response: httpx.Response) -> bool:

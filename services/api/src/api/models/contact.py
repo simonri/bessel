@@ -39,6 +39,9 @@ class Contact(RecordModel):
   # Google's id for the person ("people/c123"), stable across edits.
   resource_name: Mapped[str] = mapped_column(String(255), nullable=False)
   etag: Mapped[str | None] = mapped_column(String(255), nullable=True)
+  # The etag Bessel's last edit replaced: Google's sync can lag behind a write
+  # and send the person as they were, which must not undo the edit.
+  replaced_etag: Mapped[str | None] = mapped_column(String(255), nullable=True)
   person: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
 
   display_name: Mapped[str] = mapped_column(String(500), nullable=False, default="")

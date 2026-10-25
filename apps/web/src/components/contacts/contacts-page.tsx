@@ -1,4 +1,8 @@
-import type { ContactMethodSchema, ContactSchema } from "@bessel/client";
+import type {
+  ContactMethodSchema,
+  ContactSchema,
+  ContactSourceSchema,
+} from "@bessel/client";
 import { formatDistanceToNow } from "date-fns";
 import {
   Cake,
@@ -6,15 +10,19 @@ import {
   Globe,
   Mail,
   MapPin,
+  Pencil,
   Phone,
+  Plus,
   RefreshCw,
   Search,
   StickyNote,
   Users,
 } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { IconButton } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
+import { ContactEditor } from "./contact-editor";
 import {
   describeBirthday,
   groupByLetter,
@@ -117,10 +125,14 @@ function MethodRows({
 
 function ContactDetail({
   contact,
-  sourceEmail,
+  source,
+  onEdit,
+  onAllowEditing,
 }: {
   contact: ContactSchema;
-  sourceEmail?: string;
+  source?: ContactSourceSchema;
+  onEdit: () => void;
+  onAllowEditing: () => void;
 }) {
   const subtitle = [contact.job_title, contact.organization]
     .filter(Boolean)
@@ -215,28 +227,64 @@ function ContactDetail({
           )}
       </div>
 
-      <footer className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-11 text-white/35">
-        {sourceEmail && <span>From {sourceEmail}</span>}
-        {contact.external_url && (
-          <a
-            href={contact.external_url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 hover:text-white/70"
+      <footer className="flex flex-col items-center gap-2 text-11 text-white/35">
+        {source?.can_edit ? (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="flex h-8 items-center gap-1.5 rounded-full bg-white/[0.06] px-3.5 text-12 font-medium text-white/80 ring-1 ring-white/10 hover:bg-white/[0.1]"
           >
-            Edit in Google Contacts
-            <ExternalLink className="size-3" />
-          </a>
+            <Pencil className="size-3.5" />
+            Edit
+          </button>
+        ) : (
+          source && (
+            <button
+              type="button"
+              onClick={onAllowEditing}
+              className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-12 font-medium text-primary-300 ring-1 ring-primary-400/30 hover:bg-primary-500/10"
+            >
+              <Pencil className="size-3.5" />
+              Allow editing from Bessel
+            </button>
+          )
         )}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          {source && <span>From {source.email}</span>}
+          {contact.external_url && (
+            <a
+              href={contact.external_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 hover:text-white/70"
+            >
+              Open in Google Contacts
+              <ExternalLink className="size-3" />
+            </a>
+          )}
+        </div>
       </footer>
     </div>
   );
 }
 
 export function ContactsPage() {
-  const { contacts, isLoading, sources, syncNow, syncing } = useContacts();
+  const {
+    contacts,
+    isLoading,
+    sources,
+    syncNow,
+    syncing,
+    saving,
+    updateContact,
+    createContact,
+    deleteContact,
+    allowEditing,
+  } = useContacts();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"view" | "edit" | "new">("view");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const filtered = useMemo(
     () => contacts.filter((c) => matchesContact(c, search)),
@@ -244,7 +292,12 @@ export function ContactsPage() {
   );
   const groups = useMemo(() => groupByLetter(filtered), [filtered]);
   const selected = contacts.find((c) => c.id === selectedId) ?? null;
-  const sourceEmail = (id: string) => sources.find((s) => s.id === id)?.email;
+  const sourceOf = (id: string) => sources.find((s) => s.id === id);
+  const editable = sources.find((s) => s.can_edit);
+  const open = (id: string | null) => {
+    setSelectedId(id);
+    setMode("view");
+  };
   const lastSynced = sources
     .map((s) => s.synced_at)
     .filter((d): d is Date => !!d)
@@ -274,6 +327,20 @@ export function ContactsPage() {
           >
             <RefreshCw className={cn(syncing && "animate-spin")} />
           </IconButton>
+          {editable && (
+            <button
+              type="button"
+              title="New contact"
+              aria-label="New contact"
+              onClick={() => {
+                setSelectedId(null);
+                setMode("new");
+              }}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white transition-[background-color,transform] duration-150 hover:bg-primary-400 active:scale-95"
+            >
+              <Plus className="size-4" />
+            </button>
+          )}
         </div>
         <p className="shrink-0 px-3.5 pb-2 text-11 text-white/35">
           {error ??
@@ -294,7 +361,7 @@ export function ContactsPage() {
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => setSelectedId(c.id)}
+                  onClick={() => open(c.id)}
                   className={cn(
                     "flex w-full min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors duration-150",
                     c.id === selectedId
@@ -326,10 +393,39 @@ export function ContactsPage() {
       </aside>
 
       <section className="min-w-0 flex-1 overflow-y-auto">
-        {selected ? (
+        {mode === "new" && editable ? (
+          <ContactEditor
+            key="new"
+            contact={null}
+            saving={saving}
+            onCancel={() => setMode("view")}
+            onSave={(changes) =>
+              void createContact(editable.id, changes).then(
+                (created) => open(created.id),
+                () => {},
+              )
+            }
+          />
+        ) : selected && mode === "edit" ? (
+          <ContactEditor
+            key={selected.id}
+            contact={selected}
+            saving={saving}
+            onCancel={() => setMode("view")}
+            onSave={(changes) =>
+              void updateContact(selected.id, changes).then(
+                () => setMode("view"),
+                () => {},
+              )
+            }
+            onDelete={() => setConfirmDelete(true)}
+          />
+        ) : selected ? (
           <ContactDetail
             contact={selected}
-            sourceEmail={sourceEmail(selected.source_id)}
+            source={sourceOf(selected.source_id)}
+            onEdit={() => setMode("edit")}
+            onAllowEditing={() => allowEditing(selected.source_id)}
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
@@ -352,6 +448,28 @@ export function ContactsPage() {
           </div>
         )}
       </section>
+
+      <ConfirmDeleteDialog
+        open={confirmDelete && !!selected}
+        onOpenChange={setConfirmDelete}
+        title="Delete this contact?"
+        description={
+          <>
+            {selected?.display_name || "This contact"} is deleted from Google
+            Contacts too, and so from your phone.
+          </>
+        }
+        onConfirm={() => {
+          if (!selected) return;
+          void deleteContact(selected.id).then(
+            () => {
+              setConfirmDelete(false);
+              open(null);
+            },
+            () => setConfirmDelete(false),
+          );
+        }}
+      />
     </div>
   );
 }

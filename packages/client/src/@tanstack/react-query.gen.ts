@@ -12,6 +12,7 @@ import { client } from "../client.gen.js";
 import {
   addTransactionDocument,
   authorizeBankConnection,
+  authorizeContactEditing,
   authorizeGoogle,
   authorizeMontrose,
   bulkUpdateTransactions,
@@ -25,6 +26,7 @@ import {
   createBankAccount,
   createCalendarEvent,
   createCategoryRule,
+  createContact,
   createCounter,
   createIngestToken,
   createNotification,
@@ -38,6 +40,7 @@ import {
   deleteBankAccount,
   deleteCalendarEvent,
   deleteCategoryRule,
+  deleteContact,
   deleteCounter,
   deleteDevice,
   deleteGymExercise,
@@ -155,6 +158,7 @@ import {
   updateBankAccount,
   updateCalendar,
   updateCalendarEvent,
+  updateContact,
   updateCounter,
   updateDevice,
   updateMe,
@@ -176,6 +180,9 @@ import type {
   AuthorizeBankConnectionData,
   AuthorizeBankConnectionError,
   AuthorizeBankConnectionResponse,
+  AuthorizeContactEditingData,
+  AuthorizeContactEditingError,
+  AuthorizeContactEditingResponse,
   AuthorizeGoogleData,
   AuthorizeGoogleResponse,
   AuthorizeMontroseData,
@@ -213,6 +220,9 @@ import type {
   CreateCategoryRuleData,
   CreateCategoryRuleError,
   CreateCategoryRuleResponse,
+  CreateContactData,
+  CreateContactError,
+  CreateContactResponse,
   CreateCounterData,
   CreateCounterError,
   CreateCounterResponse,
@@ -252,6 +262,9 @@ import type {
   DeleteCategoryRuleData,
   DeleteCategoryRuleError,
   DeleteCategoryRuleResponse,
+  DeleteContactData,
+  DeleteContactError,
+  DeleteContactResponse,
   DeleteCounterData,
   DeleteCounterError,
   DeleteCounterResponse,
@@ -563,6 +576,9 @@ import type {
   UpdateCalendarEventError,
   UpdateCalendarEventResponse,
   UpdateCalendarResponse,
+  UpdateContactData,
+  UpdateContactError,
+  UpdateContactResponse,
   UpdateCounterData,
   UpdateCounterError,
   UpdateCounterResponse,
@@ -1932,6 +1948,35 @@ export const listContactsInfiniteOptions = (
   return opts as Omit<typeof opts, "initialData">;
 };
 
+/**
+ * Create Contact
+ *
+ * Adds the person to the Google address book, from where it reaches the phone.
+ */
+export const createContactMutation = (
+  options?: Partial<Options<CreateContactData>>,
+): UseMutationOptions<
+  CreateContactResponse,
+  CreateContactError,
+  Options<CreateContactData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateContactResponse,
+    CreateContactError,
+    Options<CreateContactData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createContact({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listContactSourcesQueryKey = (
   options?: Options<ListContactSourcesData>,
 ) => createQueryKey("listContactSources", options);
@@ -1987,6 +2032,35 @@ export const syncContactsMutation = (
   return mutationOptions;
 };
 
+/**
+ * Delete Contact
+ *
+ * Deletes the person from Google, and so from the phone's synced contacts.
+ */
+export const deleteContactMutation = (
+  options?: Partial<Options<DeleteContactData>>,
+): UseMutationOptions<
+  DeleteContactResponse,
+  DeleteContactError,
+  Options<DeleteContactData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteContactResponse,
+    DeleteContactError,
+    Options<DeleteContactData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteContact({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getContactQueryKey = (options: Options<GetContactData>) =>
   createQueryKey("getContact", options);
 
@@ -2011,6 +2085,64 @@ export const getContactOptions = (options: Options<GetContactData>) =>
     },
     queryKey: getContactQueryKey(options),
   });
+
+/**
+ * Update Contact
+ *
+ * Changes the fields sent (null clears one) in Google; numbers and emails sent replace the list.
+ */
+export const updateContactMutation = (
+  options?: Partial<Options<UpdateContactData>>,
+): UseMutationOptions<
+  UpdateContactResponse,
+  UpdateContactError,
+  Options<UpdateContactData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateContactResponse,
+    UpdateContactError,
+    Options<UpdateContactData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateContact({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Allow Contact Editing
+ *
+ * Google's page for granting Bessel permission to change this account's contacts, on top of what it already allows.
+ */
+export const authorizeContactEditingMutation = (
+  options?: Partial<Options<AuthorizeContactEditingData>>,
+): UseMutationOptions<
+  AuthorizeContactEditingResponse,
+  AuthorizeContactEditingError,
+  Options<AuthorizeContactEditingData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AuthorizeContactEditingResponse,
+    AuthorizeContactEditingError,
+    Options<AuthorizeContactEditingData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await authorizeContactEditing({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listBankConnectionsQueryKey = (
   options?: Options<ListBankConnectionsData>,

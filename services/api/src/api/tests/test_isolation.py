@@ -146,6 +146,10 @@ AUDITED: set[str] = {
   "GET /v1/contacts/sources",
   "POST /v1/contacts/sync",
   "GET /v1/contacts/{contact_id}",
+  "POST /v1/contacts",
+  "PATCH /v1/contacts/{contact_id}",
+  "DELETE /v1/contacts/{contact_id}",
+  "POST /v1/contacts/sources/{source_id}/authorize",
   "GET /v1/recipes/{recipe_id}/cooks",
   "PUT /v1/recipes/{recipe_id}/cooks/{cooked_on}",
   "DELETE /v1/recipes/{recipe_id}/cooks/{cooked_on}",
@@ -329,6 +333,14 @@ class TestLocationHistory:
 
 
 class TestContacts:
+  @pytest_asyncio.fixture
+  async def _redis(self) -> AsyncIterator[None]:
+    redis = create_redis("script")
+    app.dependency_overrides[get_redis] = lambda: redis
+    yield
+    app.dependency_overrides.pop(get_redis)
+    await redis.aclose()
+
   @pytest.mark.asyncio
   async def test_other_user_cannot_see_or_sync_contacts(
     self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User, monkeypatch: pytest.MonkeyPatch
@@ -357,6 +369,26 @@ class TestContacts:
     assert queued == []
 
     assert [c["display_name"] for c in (await client.get("/v1/contacts")).json()["items"]] == ["A's friend"]
+
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_change_add_to_or_delete_contacts(
+    self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User, _redis: None
+  ) -> None:
+    account = CalendarAccount(
+      user_id=user.id, provider=CalendarProvider.google, email="a@example.com", encrypted_credentials="not-used", can_read_people=True, can_write_contacts=True
+    )
+    await save_fixture(account)
+    source = ContactSource(user_id=user.id, account_id=account.id)
+    await save_fixture(source)
+    contact = Contact(user_id=user.id, source_id=source.id, resource_name="people/c1", person={}, display_name="A's friend", methods=[])
+    await save_fixture(contact)
+
+    assert (await other_client.patch(f"/v1/contacts/{contact.id}", json={"nickname": "pwned"})).status_code == 404
+    assert (await other_client.delete(f"/v1/contacts/{contact.id}")).status_code == 404
+    assert (await other_client.post("/v1/contacts", json={"source_id": str(source.id), "given_name": "Planted"})).status_code == 404
+    assert (await other_client.post(f"/v1/contacts/sources/{source.id}/authorize")).status_code == 404
+
+    assert (await client.get(f"/v1/contacts/{contact.id}")).json()["nickname"] is None
 
 
 class TestRecipes:

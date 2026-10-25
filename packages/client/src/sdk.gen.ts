@@ -20,6 +20,7 @@ import {
   createBankAccountResponseTransformer,
   createCalendarEventResponseTransformer,
   createCategoryRuleResponseTransformer,
+  createContactResponseTransformer,
   createCounterResponseTransformer,
   createIngestTokenResponseTransformer,
   createNotificationResponseTransformer,
@@ -88,6 +89,7 @@ import {
   undoCompleteTaskResponseTransformer,
   updateBankAccountResponseTransformer,
   updateCalendarEventResponseTransformer,
+  updateContactResponseTransformer,
   updateCounterResponseTransformer,
   updateDeviceResponseTransformer,
   updatePlaceResponseTransformer,
@@ -107,6 +109,9 @@ import type {
   AuthorizeBankConnectionData,
   AuthorizeBankConnectionErrors,
   AuthorizeBankConnectionResponses,
+  AuthorizeContactEditingData,
+  AuthorizeContactEditingErrors,
+  AuthorizeContactEditingResponses,
   AuthorizeGoogleData,
   AuthorizeGoogleResponses,
   AuthorizeMontroseData,
@@ -144,6 +149,9 @@ import type {
   CreateCategoryRuleData,
   CreateCategoryRuleErrors,
   CreateCategoryRuleResponses,
+  CreateContactData,
+  CreateContactErrors,
+  CreateContactResponses,
   CreateCounterData,
   CreateCounterErrors,
   CreateCounterResponses,
@@ -183,6 +191,9 @@ import type {
   DeleteCategoryRuleData,
   DeleteCategoryRuleErrors,
   DeleteCategoryRuleResponses,
+  DeleteContactData,
+  DeleteContactErrors,
+  DeleteContactResponses,
   DeleteCounterData,
   DeleteCounterErrors,
   DeleteCounterResponses,
@@ -504,6 +515,9 @@ import type {
   UpdateCalendarEventErrors,
   UpdateCalendarEventResponses,
   UpdateCalendarResponses,
+  UpdateContactData,
+  UpdateContactErrors,
+  UpdateContactResponses,
   UpdateCounterData,
   UpdateCounterErrors,
   UpdateCounterResponses,
@@ -1399,6 +1413,29 @@ export const listContacts = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Create Contact
+ *
+ * Adds the person to the Google address book, from where it reaches the phone.
+ */
+export const createContact = <ThrowOnError extends boolean = false>(
+  options: Options<CreateContactData, ThrowOnError>,
+): RequestResult<CreateContactResponses, CreateContactErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateContactResponses,
+    CreateContactErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createContactResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * List Contact Sources
  *
  * The Google accounts contacts come from, with how their last sync went.
@@ -1436,6 +1473,24 @@ export const syncContacts = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Delete Contact
+ *
+ * Deletes the person from Google, and so from the phone's synced contacts.
+ */
+export const deleteContact = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteContactData, ThrowOnError>,
+): RequestResult<DeleteContactResponses, DeleteContactErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteContactResponses,
+    DeleteContactErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}",
+    ...options,
+  });
+
+/**
  * Get Contact
  */
 export const getContact = <ThrowOnError extends boolean = false>(
@@ -1449,6 +1504,51 @@ export const getContact = <ThrowOnError extends boolean = false>(
     responseTransformer: getContactResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/contacts/{contact_id}",
+    ...options,
+  });
+
+/**
+ * Update Contact
+ *
+ * Changes the fields sent (null clears one) in Google; numbers and emails sent replace the list.
+ */
+export const updateContact = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateContactData, ThrowOnError>,
+): RequestResult<UpdateContactResponses, UpdateContactErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateContactResponses,
+    UpdateContactErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateContactResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Allow Contact Editing
+ *
+ * Google's page for granting Bessel permission to change this account's contacts, on top of what it already allows.
+ */
+export const authorizeContactEditing = <ThrowOnError extends boolean = false>(
+  options: Options<AuthorizeContactEditingData, ThrowOnError>,
+): RequestResult<
+  AuthorizeContactEditingResponses,
+  AuthorizeContactEditingErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    AuthorizeContactEditingResponses,
+    AuthorizeContactEditingErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/sources/{source_id}/authorize",
     ...options,
   });
 

@@ -43,6 +43,7 @@ class AccountSnapshot:
   # Re-read on every sync so granting or revoking edit access in Google shows up.
   can_write: bool = True
   can_read_people: bool = False
+  can_write_contacts: bool = False
 
 
 def sync_window() -> tuple[datetime, datetime]:
@@ -61,10 +62,12 @@ def _google_client(http: httpx.AsyncClient) -> GoogleCalendarClient:
 
 
 class CalendarService:
-  def google_authorize_url(self, user_id: UUID) -> str:
+  def google_authorize_url(self, user_id: UUID, *, scopes: str | None = None, login_hint: str | None = None) -> str:
+    """Google's consent page. Without `scopes` it asks for everything calendar needs; the Contacts page asks
+    for just the contacts scope, which Google adds to what the account already granted."""
     require_google_config()
     state = encrypt(json.dumps({"user_id": str(user_id)}))
-    return authorize_url(state)
+    return authorize_url(state, **({"scopes": scopes} if scopes else {}), login_hint=login_hint)
 
   async def complete_google_connect(self, accounts: CalendarAccountRepository, user_id: UUID, *, code: str, state: str) -> CalendarAccount:
     try:
@@ -84,7 +87,11 @@ class CalendarService:
     account = await accounts.get_by_identity(user_id, CalendarProvider.google, email)
     if grant.refresh_token is None and account is None:
       raise OAuthCallbackError("Google didn't grant offline access. Remove Bessel at myaccount.google.com/permissions and try again.")
-    return await self._upsert_account(accounts, account, user_id, CalendarProvider.google, email, grant.refresh_token, can_write=grant.can_write)
+    account = await self._upsert_account(accounts, account, user_id, CalendarProvider.google, email, grant.refresh_token, can_write=grant.can_write)
+    account.can_read_people = grant.can_read_people
+    account.can_write_contacts = grant.can_write_contacts
+    await accounts.session.flush()
+    return account
 
   async def connect_icloud(self, accounts: CalendarAccountRepository, user_id: UUID, *, apple_id: str, app_password: str) -> CalendarAccount:
     try:
@@ -151,7 +158,7 @@ class CalendarService:
         grant = await google.refresh_access_token(secret)
         calendars = await google.list_calendars(grant.access_token)
         events = {c.external_id: await google.list_events(grant.access_token, c.external_id, start, end) for c in calendars}
-      return AccountSnapshot(calendars, events, can_write=grant.can_write, can_read_people=grant.can_read_people)
+      return AccountSnapshot(calendars, events, can_write=grant.can_write, can_read_people=grant.can_read_people, can_write_contacts=grant.can_write_contacts)
 
     async with provider_http.client() as http:
       icloud = ICloudCalendarClient(http, email, secret)
@@ -199,6 +206,7 @@ class CalendarService:
       await events.replace_for_calendar(calendar, snapshot.events.get(external_id, []))
     account.can_write = snapshot.can_write
     account.can_read_people = snapshot.can_read_people
+    account.can_write_contacts = snapshot.can_write_contacts
     account.last_synced_at = utc_now()
     account.sync_error = None
 

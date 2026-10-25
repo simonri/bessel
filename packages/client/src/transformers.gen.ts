@@ -11,6 +11,7 @@ import type {
   CreateBankAccountResponse,
   CreateCalendarEventResponse,
   CreateCategoryRuleResponse,
+  CreateContactResponse,
   CreateCounterResponse,
   CreateIngestTokenResponse,
   CreateNotificationResponse,
@@ -79,6 +80,7 @@ import type {
   UndoCompleteTaskResponse,
   UpdateBankAccountResponse,
   UpdateCalendarEventResponse,
+  UpdateContactResponse,
   UpdateCounterResponse,
   UpdateDeviceResponse,
   UpdatePlaceResponse,
@@ -450,6 +452,13 @@ export const listContactsResponseTransformer = async (
   return data;
 };
 
+export const createContactResponseTransformer = async (
+  data: any,
+): Promise<CreateContactResponse> => {
+  data = contactSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
 const contactSourceSchemaSchemaResponseTransformer = (data: any) => {
   if (data.synced_at) {
     data.synced_at = new Date(data.synced_at);
@@ -469,6 +478,13 @@ export const listContactSourcesResponseTransformer = async (
 export const getContactResponseTransformer = async (
   data: any,
 ): Promise<GetContactResponse> => {
+  data = contactSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateContactResponseTransformer = async (
+  data: any,
+): Promise<UpdateContactResponse> => {
   data = contactSchemaSchemaResponseTransformer(data);
   return data;
 };
