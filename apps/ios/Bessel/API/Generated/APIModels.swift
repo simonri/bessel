@@ -87,7 +87,7 @@ enum API {
         var subtype: String
         var isBusiness: Bool
         var includeInNetWorth: Bool
-        var currentBalance: Int
+        var currentBalance: Int = 0
         var group: String
         var source: AccountSource
         var bankBalance: Int?
@@ -316,7 +316,7 @@ enum API {
         var subtype: String
         var isBusiness: Bool
         var includeInNetWorth: Bool
-        var currentBalance: Int
+        var currentBalance: Int = 0
     }
 
     enum BankAccountSortProperty: String, Codable, Hashable, CaseIterable, LenientEnum {
@@ -420,7 +420,7 @@ enum API {
         var provider: CalendarProvider
         var email: String
         var canWrite: Bool
-        var canReadPeople: Bool
+        var canReadPeople: Bool = false
         var lastSyncedAt: Date?
         var syncError: String?
         @Lossy var calendars: [CalendarSchema]
@@ -430,8 +430,8 @@ enum API {
         var email: String
         var name: String?
         var response: String
-        var isSelf: Bool
-        var isOrganizer: Bool
+        var isSelf: Bool = false
+        var isOrganizer: Bool = false
         var photoUrl: String?
     }
 
@@ -1268,7 +1268,7 @@ enum API {
         var longitude: Double
         var googlePlaceId: String?
         var plusCode: String?
-        var status: PlaceStatus
+        var status: PlaceStatus = .wantToGo
         var rating: Int?
         var visitedAt: Date?
         var review: String?
@@ -1599,14 +1599,14 @@ enum API {
         var id: UUID
         var title: String
         var description: String?
-        var status: TaskStatus
-        var priority: Int
+        var status: TaskStatus = .todo
+        var priority: Int = 0
         var dueDate: Date?
         var completedAt: Date?
         var project: String?
         var tags: [String]?
-        var position: Double
-        var isRecurring: Bool
+        var position: Double = 0
+        var isRecurring: Bool = false
         var rruleFrequency: RruleFrequency?
         var rruleInterval: Int?
         var rruleDayOfWeek: Int?
@@ -1813,12 +1813,12 @@ enum API {
         var categoryId: UUID?
         var transactionType: String?
         var logoUrl: String?
-        var documentCount: Int
+        var documentCount: Int = 0
         var dedupHash: String
         var bankAccountId: UUID
         var rawId: UUID?
-        var isBusiness: Bool
-        var companyAccount: Bool
+        var isBusiness: Bool = false
+        var companyAccount: Bool = false
         var transferId: UUID?
         @Lossy var suggestions: [NameSuggestion]
         var investmentKind: InvestmentKind?
@@ -1838,12 +1838,12 @@ enum API {
         var categoryId: UUID?
         var transactionType: String?
         var logoUrl: String?
-        var documentCount: Int
+        var documentCount: Int = 0
         var dedupHash: String
         var bankAccountId: UUID
         var rawId: UUID?
-        var isBusiness: Bool
-        var companyAccount: Bool
+        var isBusiness: Bool = false
+        var companyAccount: Bool = false
         var transferId: UUID?
         var investmentKind: InvestmentKind?
     }
@@ -1890,14 +1890,14 @@ enum API {
         var categoryId: UUID?
         var transactionType: String?
         var logoUrl: String?
-        var documentCount: Int
+        var documentCount: Int = 0
         var dedupHash: String
         var bankAccountId: UUID
         var rawId: UUID?
-        var isBusiness: Bool
-        var companyAccount: Bool
+        var isBusiness: Bool = false
+        var companyAccount: Bool = false
         var transferId: UUID?
-        var sameDescriptionCount: Int
+        var sameDescriptionCount: Int = 0
         var investmentKind: InvestmentKind?
     }
 
@@ -1930,7 +1930,7 @@ enum API {
         var now: WeatherNow
         @Lossy var hours: [WeatherHour]
         @Lossy var days: [WeatherDay]
-        var attribution: String
+        var attribution: String = "Weather data from MET Norway (yr.no), CC BY 4.0. Place lookup © OpenStreetMap contributors."
     }
 
     struct WeatherHour: Codable, Hashable {
@@ -1994,7 +1994,7 @@ extension API.AccountOverview {
         self.subtype = try container.decode(String.self, forKey: .subtype)
         self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
         self.includeInNetWorth = try container.decode(Bool.self, forKey: .includeInNetWorth)
-        self.currentBalance = try container.decode(Int.self, forKey: .currentBalance)
+        self.currentBalance = try container.decodeIfPresent(Int.self, forKey: .currentBalance) ?? 0
         self.group = try container.decode(String.self, forKey: .group)
         self.source = try container.decode(API.AccountSource.self, forKey: .source)
         self.bankBalance = try container.decodeIfPresent(Int.self, forKey: .bankBalance)
@@ -2964,7 +2964,7 @@ extension API.BankAccountSchema {
         self.subtype = try container.decode(String.self, forKey: .subtype)
         self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
         self.includeInNetWorth = try container.decode(Bool.self, forKey: .includeInNetWorth)
-        self.currentBalance = try container.decode(Int.self, forKey: .currentBalance)
+        self.currentBalance = try container.decodeIfPresent(Int.self, forKey: .currentBalance) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -3378,7 +3378,7 @@ extension API.CalendarAccountSchema {
         self.provider = try container.decode(API.CalendarProvider.self, forKey: .provider)
         self.email = try container.decode(String.self, forKey: .email)
         self.canWrite = try container.decode(Bool.self, forKey: .canWrite)
-        self.canReadPeople = try container.decode(Bool.self, forKey: .canReadPeople)
+        self.canReadPeople = try container.decodeIfPresent(Bool.self, forKey: .canReadPeople) ?? false
         self.lastSyncedAt = try container.decodeIfPresent(Date.self, forKey: .lastSyncedAt)
         self.syncError = try container.decodeIfPresent(String.self, forKey: .syncError)
         self._calendars = try container.decode(Lossy<API.CalendarSchema>.self, forKey: .calendars)
@@ -3423,8 +3423,8 @@ extension API.CalendarEventAttendee {
         self.email = try container.decode(String.self, forKey: .email)
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.response = try container.decode(String.self, forKey: .response)
-        self.isSelf = try container.decode(Bool.self, forKey: .isSelf)
-        self.isOrganizer = try container.decode(Bool.self, forKey: .isOrganizer)
+        self.isSelf = try container.decodeIfPresent(Bool.self, forKey: .isSelf) ?? false
+        self.isOrganizer = try container.decodeIfPresent(Bool.self, forKey: .isOrganizer) ?? false
         self.photoUrl = try container.decodeIfPresent(String.self, forKey: .photoUrl)
     }
 
@@ -6897,7 +6897,7 @@ extension API.PlaceSchema {
         self.longitude = try container.decode(Double.self, forKey: .longitude)
         self.googlePlaceId = try container.decodeIfPresent(String.self, forKey: .googlePlaceId)
         self.plusCode = try container.decodeIfPresent(String.self, forKey: .plusCode)
-        self.status = try container.decode(API.PlaceStatus.self, forKey: .status)
+        self.status = try container.decodeIfPresent(API.PlaceStatus.self, forKey: .status) ?? .wantToGo
         self.rating = try container.decodeIfPresent(Int.self, forKey: .rating)
         self.visitedAt = try container.decodeIfPresent(Date.self, forKey: .visitedAt)
         self.review = try container.decodeIfPresent(String.self, forKey: .review)
@@ -8073,14 +8073,14 @@ extension API.TaskSchema {
         self.id = try container.decode(UUID.self, forKey: .id)
         self.title = try container.decode(String.self, forKey: .title)
         self.description = try container.decodeIfPresent(String.self, forKey: .description)
-        self.status = try container.decode(API.TaskStatus.self, forKey: .status)
-        self.priority = try container.decode(Int.self, forKey: .priority)
+        self.status = try container.decodeIfPresent(API.TaskStatus.self, forKey: .status) ?? .todo
+        self.priority = try container.decodeIfPresent(Int.self, forKey: .priority) ?? 0
         self.dueDate = try container.decodeIfPresent(Date.self, forKey: .dueDate)
         self.completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
         self.project = try container.decodeIfPresent(String.self, forKey: .project)
         self.tags = try container.decodeIfPresent([String].self, forKey: .tags)
-        self.position = try container.decode(Double.self, forKey: .position)
-        self.isRecurring = try container.decode(Bool.self, forKey: .isRecurring)
+        self.position = try container.decodeIfPresent(Double.self, forKey: .position) ?? 0
+        self.isRecurring = try container.decodeIfPresent(Bool.self, forKey: .isRecurring) ?? false
         self.rruleFrequency = try container.decodeIfPresent(API.RruleFrequency.self, forKey: .rruleFrequency)
         self.rruleInterval = try container.decodeIfPresent(Int.self, forKey: .rruleInterval)
         self.rruleDayOfWeek = try container.decodeIfPresent(Int.self, forKey: .rruleDayOfWeek)
@@ -8693,12 +8693,12 @@ extension API.TransactionRenameResponse {
         self.categoryId = try container.decodeIfPresent(UUID.self, forKey: .categoryId)
         self.transactionType = try container.decodeIfPresent(String.self, forKey: .transactionType)
         self.logoUrl = try container.decodeIfPresent(String.self, forKey: .logoUrl)
-        self.documentCount = try container.decode(Int.self, forKey: .documentCount)
+        self.documentCount = try container.decodeIfPresent(Int.self, forKey: .documentCount) ?? 0
         self.dedupHash = try container.decode(String.self, forKey: .dedupHash)
         self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
         self.rawId = try container.decodeIfPresent(UUID.self, forKey: .rawId)
-        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
-        self.companyAccount = try container.decode(Bool.self, forKey: .companyAccount)
+        self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
+        self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
         self._suggestions = try container.decode(Lossy<API.NameSuggestion>.self, forKey: .suggestions)
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
@@ -8796,12 +8796,12 @@ extension API.TransactionSchema {
         self.categoryId = try container.decodeIfPresent(UUID.self, forKey: .categoryId)
         self.transactionType = try container.decodeIfPresent(String.self, forKey: .transactionType)
         self.logoUrl = try container.decodeIfPresent(String.self, forKey: .logoUrl)
-        self.documentCount = try container.decode(Int.self, forKey: .documentCount)
+        self.documentCount = try container.decodeIfPresent(Int.self, forKey: .documentCount) ?? 0
         self.dedupHash = try container.decode(String.self, forKey: .dedupHash)
         self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
         self.rawId = try container.decodeIfPresent(UUID.self, forKey: .rawId)
-        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
-        self.companyAccount = try container.decode(Bool.self, forKey: .companyAccount)
+        self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
+        self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -8948,14 +8948,14 @@ extension API.TransactionUpdateResponse {
         self.categoryId = try container.decodeIfPresent(UUID.self, forKey: .categoryId)
         self.transactionType = try container.decodeIfPresent(String.self, forKey: .transactionType)
         self.logoUrl = try container.decodeIfPresent(String.self, forKey: .logoUrl)
-        self.documentCount = try container.decode(Int.self, forKey: .documentCount)
+        self.documentCount = try container.decodeIfPresent(Int.self, forKey: .documentCount) ?? 0
         self.dedupHash = try container.decode(String.self, forKey: .dedupHash)
         self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
         self.rawId = try container.decodeIfPresent(UUID.self, forKey: .rawId)
-        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
-        self.companyAccount = try container.decode(Bool.self, forKey: .companyAccount)
+        self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
+        self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
-        self.sameDescriptionCount = try container.decode(Int.self, forKey: .sameDescriptionCount)
+        self.sameDescriptionCount = try container.decodeIfPresent(Int.self, forKey: .sameDescriptionCount) ?? 0
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
 
@@ -9122,7 +9122,7 @@ extension API.WeatherForecast {
         self.now = try container.decode(API.WeatherNow.self, forKey: .now)
         self._hours = try container.decode(Lossy<API.WeatherHour>.self, forKey: .hours)
         self._days = try container.decode(Lossy<API.WeatherDay>.self, forKey: .days)
-        self.attribution = try container.decode(String.self, forKey: .attribution)
+        self.attribution = try container.decodeIfPresent(String.self, forKey: .attribution) ?? "Weather data from MET Norway (yr.no), CC BY 4.0. Place lookup © OpenStreetMap contributors."
     }
 
     private enum EncodingKeys: String, CodingKey {

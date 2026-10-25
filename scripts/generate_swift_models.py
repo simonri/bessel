@@ -46,6 +46,13 @@ def swift_camel(key: str) -> str:
   return first + "".join(part.capitalize() for part in rest)
 
 
+def swift_string(value: str) -> str:
+  """A Swift string literal. Non-ASCII characters stay as they are; control characters use \\u{...}."""
+  escapes = {"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r", "\t": "\\t"}
+  body = "".join(escapes.get(char, f"\\u{{{ord(char):x}}}" if ord(char) < 0x20 else char) for char in value)
+  return f'"{body}"'
+
+
 def identifier(name: str) -> str:
   return f"`{name}`" if name in SWIFT_KEYWORDS else name
 
@@ -186,7 +193,7 @@ class Generator:
       if isinstance(value, (int, float)):
         return repr(value)
       if isinstance(value, str):
-        return json.dumps(value)
+        return swift_string(value)
       if value == [] and swift.startswith("["):
         return "[]"
       return None
@@ -207,7 +214,8 @@ class Generator:
         swift, mode = f"{base}??", "double"
       elif nullable:
         swift, mode = f"{base}?", "optional"
-      elif absent and not patch and (default := self.default_literal(inner, base)) is not None:
+      elif not patch and (absent or "default" in inner) and (default := self.default_literal(inner, base)) is not None:
+        # Required fields with a default too: a response cached before the field existed still reads.
         swift, mode = base, "defaulted"
       elif absent:
         swift, mode = f"{base}?", "optional"
