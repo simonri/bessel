@@ -40,7 +40,10 @@ pnpm build                 # Build production bundle
 ```bash
 # From repo root — exports the OpenAPI spec, then regenerates the TypeScript client
 make clients
+make check-clients         # What CI runs: fails if the committed spec or client is stale
 ```
+
+Run `make clients` after any change to an endpoint or schema and commit the result; deploys are blocked until the spec and client match the API.
 
 ### Docker Services
 
