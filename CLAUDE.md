@@ -45,6 +45,8 @@ make check-clients         # What CI runs: fails if the committed spec or client
 
 Run `make clients` after any change to an endpoint or schema and commit the result; deploys are blocked until the spec and client match the API.
 
+Deploys are also blocked by changes that break clients already installed (old desktop builds bundle an older web app; the iOS app has its own models): removing a response field, adding a required input, narrowing an enum. Make the change backward compatible, or add a `Breaking-API: <reason>` trailer to the commit when the break is intended. Check locally with `scripts/check_api_compat.sh origin/master`.
+
 ### Docker Services
 
 ```bash

@@ -158,12 +158,18 @@ jobs:
     if: needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.worker == 'true' || needs.detect-changes.outputs.web == 'true'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: true
       - uses: ./.github/actions/setup-pnpm
       - run: uv sync --frozen
       - run: scripts/check_clients.sh
+      # Against the spec before this push; a manual deploy (often a rollback) has nothing to compare with.
+      - name: No breaking API changes
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: scripts/check_api_compat.sh "${{ github.event.before }}"
 
   # ============================================================================
   # Build API (also used by the worker service)
