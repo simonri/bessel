@@ -1107,11 +1107,9 @@ const taskSchemaSchemaResponseTransformer = (data: any) => {
   if (data.completed_at) {
     data.completed_at = new Date(data.completed_at);
   }
-  if (data.attachments) {
-    data.attachments = data.attachments.map((item: any) =>
-      taskAttachmentSchemaSchemaResponseTransformer(item),
-    );
-  }
+  data.attachments = data.attachments.map((item: any) =>
+    taskAttachmentSchemaSchemaResponseTransformer(item),
+  );
   return data;
 };
 

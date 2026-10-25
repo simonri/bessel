@@ -114,7 +114,9 @@ describe("displayName", () => {
 
 describe("NameHeading", () => {
   it("renames on Enter, once, and hands over what to suggest next", async () => {
-    api.suggestions = [{ description: "CLAUDE.AI SUBSCRIPTION", count: 3 }];
+    api.suggestions = [
+      { description: "CLAUDE.AI SUBSCRIPTION", count: 3, replacing: null },
+    ];
     const { onSuggestions } = heading(tx({}));
 
     fireEvent.click(

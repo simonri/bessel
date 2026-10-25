@@ -12,40 +12,40 @@ from typing import Literal
 
 from pydantic import Field
 
-from api.common.schemas import Schema
+from api.common.schemas import RoundTripSchema
 
 
-class RecipeIngredient(Schema):
+class RecipeIngredient(RoundTripSchema):
   amount: float | None = Field(default=None, ge=0, description="Quantity, e.g. 1.5 for 1½.")
   unit: str | None = Field(default=None, max_length=30)
   name: str = Field(min_length=1, max_length=300)
   note: str | None = Field(default=None, max_length=500, description="Preparation or alternatives, e.g. 'grovhackade'.")
 
 
-class RecipeIngredientGroup(Schema):
+class RecipeIngredientGroup(RoundTripSchema):
   title: str | None = Field(default=None, max_length=200)
   items: list[RecipeIngredient] = Field(default_factory=list, max_length=100)
 
 
-class RecipeCallout(Schema):
+class RecipeCallout(RoundTripSchema):
   kind: Literal["tip", "warning"] = "tip"
   label: str | None = Field(default=None, max_length=100, description="e.g. 'Proffstips'.")
   text: str = Field(max_length=2000)
 
 
-class RecipeStep(Schema):
+class RecipeStep(RoundTripSchema):
   title: str | None = Field(default=None, max_length=200)
   text: str = Field(default="", max_length=5000, description="Markdown.")
   time_label: str | None = Field(default=None, max_length=100, description="e.g. '5 min + 30 min i kyl'.")
   callouts: list[RecipeCallout] = Field(default_factory=list, max_length=10)
 
 
-class RecipeSection(Schema):
+class RecipeSection(RoundTripSchema):
   title: str = Field(max_length=200)
   text: str = Field(default="", max_length=10000, description="Markdown.")
 
 
-class RecipeBody(Schema):
+class RecipeBody(RoundTripSchema):
   intro: str | None = Field(default=None, max_length=2000)
   yield_text: str | None = Field(default=None, max_length=200, description="e.g. '3 burgare (6 puckar à ca 85 g)'.")
   total_minutes: int | None = Field(default=None, ge=1, le=10080)

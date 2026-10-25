@@ -32,6 +32,10 @@ const row: CalendarEventSchema = {
   recurring: false,
   visibility: null,
   editable: true,
+  my_response: null,
+  color_id: null,
+  rule: null,
+  recurrence: null,
 };
 
 describe("eventFieldsBody", () => {
@@ -138,12 +142,16 @@ describe("applyReply", () => {
           name: null,
           response: "accepted",
           is_organizer: true,
+          is_self: false,
+          photo_url: null,
         },
         {
           email: "me@x.com",
           name: null,
           response: "needs_action",
+          is_organizer: false,
           is_self: true,
+          photo_url: null,
         },
       ],
     };

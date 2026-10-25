@@ -8138,6 +8138,7 @@
           "subtype",
           "is_business",
           "include_in_net_worth",
+          "current_balance",
           "group",
           "source",
           "bank_balance",
@@ -8207,7 +8208,10 @@
         },
         "type": "object",
         "required": [
-          "kind"
+          "kind",
+          "day",
+          "source_balance",
+          "detail"
         ],
         "title": "AccountProblem",
         "description": "What needs the user's attention; the app words it, so amounts and dates stay in its own formats."
@@ -8309,7 +8313,10 @@
         "required": [
           "kind",
           "label",
+          "logo",
           "synced_at",
+          "access_until",
+          "import_bank",
           "issue",
           "problem"
         ],
@@ -9300,7 +9307,8 @@
           "base_balance",
           "subtype",
           "is_business",
-          "include_in_net_worth"
+          "include_in_net_worth",
+          "current_balance"
         ],
         "title": "BankAccountSchema"
       },
@@ -9933,6 +9941,7 @@
           "provider",
           "email",
           "can_write",
+          "can_read_people",
           "last_synced_at",
           "sync_error",
           "calendars"
@@ -9995,7 +10004,10 @@
         "required": [
           "email",
           "name",
-          "response"
+          "response",
+          "is_self",
+          "is_organizer",
+          "photo_url"
         ],
         "title": "CalendarEventAttendee"
       },
@@ -10263,11 +10275,15 @@
           "creator_name",
           "creator_email",
           "attendees",
+          "my_response",
           "conference_url",
           "html_link",
           "busy",
           "recurring",
           "editable",
+          "color_id",
+          "rule",
+          "recurrence",
           "visibility"
         ],
         "title": "CalendarEventSchema"
@@ -10639,7 +10655,8 @@
           "slug",
           "color",
           "excluded",
-          "income"
+          "income",
+          "parent_id"
         ],
         "title": "CategorySchema"
       },
@@ -10877,7 +10894,8 @@
         "required": [
           "coin_id",
           "currency",
-          "price"
+          "price",
+          "price_change_pct_24h"
         ],
         "title": "CryptoPriceSchema"
       },
@@ -11761,8 +11779,14 @@
           "place_id",
           "name",
           "address",
+          "country",
           "latitude",
-          "longitude"
+          "longitude",
+          "plus_code",
+          "category",
+          "photo_url",
+          "website",
+          "phone"
         ],
         "title": "GooglePlaceSearchResult"
       },
@@ -12960,6 +12984,7 @@
         "type": "object",
         "required": [
           "security_id",
+          "bank_account_id",
           "security_name",
           "ticker",
           "asset_type",
@@ -13874,7 +13899,9 @@
         },
         "type": "object",
         "required": [
-          "id"
+          "id",
+          "email",
+          "timezone"
         ],
         "title": "MeResponse"
       },
@@ -14360,7 +14387,8 @@
         "type": "object",
         "required": [
           "description",
-          "count"
+          "count",
+          "replacing"
         ],
         "title": "NameSuggestion"
       },
@@ -15070,8 +15098,21 @@
           "modified_at",
           "id",
           "name",
+          "address",
+          "country",
           "latitude",
-          "longitude"
+          "longitude",
+          "google_place_id",
+          "plus_code",
+          "status",
+          "rating",
+          "visited_at",
+          "review",
+          "category",
+          "tags",
+          "photo_url",
+          "website",
+          "phone"
         ],
         "title": "PlaceSchema"
       },
@@ -15395,7 +15436,9 @@
           "created_at",
           "modified_at",
           "id",
-          "name"
+          "name",
+          "path",
+          "ssh_host"
         ],
         "title": "ProjectSchema"
       },
@@ -16084,7 +16127,9 @@
         "type": "object",
         "required": [
           "date",
-          "asleep_secs"
+          "asleep_secs",
+          "sleep_onset",
+          "wake_time"
         ],
         "title": "SleepDailyEntry"
       },
@@ -16446,7 +16491,8 @@
         },
         "type": "object",
         "required": [
-          "completed_task"
+          "completed_task",
+          "next_task"
         ],
         "title": "TaskCompleteResponse"
       },
@@ -16855,7 +16901,22 @@
           "created_at",
           "modified_at",
           "id",
-          "title"
+          "title",
+          "description",
+          "status",
+          "priority",
+          "due_date",
+          "completed_at",
+          "project",
+          "tags",
+          "position",
+          "is_recurring",
+          "rrule_frequency",
+          "rrule_interval",
+          "rrule_day_of_week",
+          "rrule_day_of_month",
+          "parent_task_id",
+          "attachments"
         ],
         "title": "TaskSchema"
       },
@@ -17965,11 +18026,18 @@
           "transaction_date",
           "direction",
           "description",
+          "name",
+          "note",
           "category_id",
           "transaction_type",
+          "logo_url",
+          "document_count",
           "dedup_hash",
           "bank_account_id",
           "raw_id",
+          "is_business",
+          "company_account",
+          "transfer_id",
           "suggestions",
           "investment_kind"
         ],
@@ -18165,11 +18233,18 @@
           "transaction_date",
           "direction",
           "description",
+          "name",
+          "note",
           "category_id",
           "transaction_type",
+          "logo_url",
+          "document_count",
           "dedup_hash",
           "bank_account_id",
           "raw_id",
+          "is_business",
+          "company_account",
+          "transfer_id",
           "investment_kind"
         ],
         "title": "TransactionSchema"
@@ -18467,11 +18542,19 @@
           "transaction_date",
           "direction",
           "description",
+          "name",
+          "note",
           "category_id",
           "transaction_type",
+          "logo_url",
+          "document_count",
           "dedup_hash",
           "bank_account_id",
           "raw_id",
+          "is_business",
+          "company_account",
+          "transfer_id",
+          "same_description_count",
           "investment_kind"
         ],
         "title": "TransactionUpdateResponse"
@@ -18673,7 +18756,8 @@
           "updated_at",
           "now",
           "hours",
-          "days"
+          "days",
+          "attribution"
         ],
         "title": "WeatherForecast"
       },

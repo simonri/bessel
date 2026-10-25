@@ -9,7 +9,15 @@ from pydantic_core import core_schema
 
 
 class Schema(BaseModel):
-  model_config = ConfigDict(from_attributes=True)
+  # Responses always include fields that have defaults, so the spec marks them required there.
+  model_config = ConfigDict(from_attributes=True, json_schema_serialization_defaults_required=True)
+
+
+class RoundTripSchema(Schema):
+  """A schema both sent and returned. Its fields with defaults stay optional in the spec, so requests and
+  responses share one schema instead of splitting into `-Input` and `-Output` variants."""
+
+  model_config = ConfigDict(json_schema_serialization_defaults_required=False)
 
 
 class IDSchema(Schema):

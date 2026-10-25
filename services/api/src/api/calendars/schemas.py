@@ -8,7 +8,7 @@ from pydantic import EmailStr, Field, field_validator, model_validator
 from api.calendars.edits import EVENT_FIELDS, GOOGLE_COLOR_IDS, EditScope, EventChanges, EventTiming, Reply
 from api.calendars.providers import AttendeeResponse
 from api.calendars.recurrence import Frequency, Recurrence, from_rule, to_rule
-from api.common.schemas import Schema
+from api.common.schemas import RoundTripSchema, Schema
 from api.models.calendar_account import CalendarProvider
 
 Weekday = Literal["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
@@ -94,7 +94,7 @@ def _parse_local_time(value: str | None) -> datetime | None:
     raise ValueError(f"Invalid time: {value}") from e
 
 
-class RecurrenceSchema(Schema):
+class RecurrenceSchema(RoundTripSchema):
   frequency: Frequency
   interval: int = Field(default=1, ge=1, le=99)
   by_weekday: list[Weekday] = Field(default_factory=list, description="Weekly rules only; empty means the start date's weekday.")

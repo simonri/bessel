@@ -1,6 +1,13 @@
-import type { AccountOverview } from "@bessel/client";
+import type { AccountOverview, AccountProblem } from "@bessel/client";
 import { describe, expect, it } from "vitest";
 import { accountKind, problemCopy } from "./account-labels";
+
+/** A problem as the API sends it, with the fields this case doesn't use left null. */
+function problem(
+  fields: Pick<AccountProblem, "kind"> & Partial<AccountProblem>,
+): AccountProblem {
+  return { day: null, source_balance: null, detail: null, ...fields };
+}
 
 function account(
   source: Partial<AccountOverview["source"]> = {},
@@ -40,10 +47,10 @@ describe("accountKind", () => {
 
 describe("problemCopy", () => {
   it("asks for the latest file for an account imported by hand", () => {
-    const copy = problemCopy(account(), {
-      kind: "import_due",
-      day: new Date("2026-07-02T00:00:00"),
-    });
+    const copy = problemCopy(
+      account(),
+      problem({ kind: "import_due", day: new Date("2026-07-02T00:00:00") }),
+    );
     expect(copy).toEqual({
       title: "Nothing new since 2 Jul",
       action: "upload",
@@ -52,10 +59,10 @@ describe("problemCopy", () => {
   });
 
   it("asks Klarna to be imported again instead of a file", () => {
-    const copy = problemCopy(account({ kind: "klarna", label: "Klarna" }), {
-      kind: "import_due",
-      day: new Date("2026-07-02T00:00:00"),
-    });
+    const copy = problemCopy(
+      account({ kind: "klarna", label: "Klarna" }),
+      problem({ kind: "import_due", day: new Date("2026-07-02T00:00:00") }),
+    );
     expect([copy.action, copy.title]).toEqual([
       "import_klarna",
       "Last imported 2 Jul",
@@ -65,10 +72,12 @@ describe("problemCopy", () => {
   it("renews the bank's approval when it ends or left the account out", () => {
     const bank = account({ kind: "bank", label: "Skandia" });
     expect(
-      problemCopy(bank, { kind: "renew_soon", day: new Date("2026-10-31") })
-        .action,
+      problemCopy(
+        bank,
+        problem({ kind: "renew_soon", day: new Date("2026-10-31") }),
+      ).action,
     ).toBe("renew");
-    expect(problemCopy(bank, { kind: "not_shared" })).toEqual({
+    expect(problemCopy(bank, problem({ kind: "not_shared" }))).toEqual({
       title: "Left out when you last approved Skandia",
       action: "renew",
       actionLabel: "Renew access",
@@ -77,14 +86,16 @@ describe("problemCopy", () => {
 
   it("sends a bank balance mismatch to the account, and Klarna's to an import", () => {
     expect(
-      problemCopy(account({ kind: "bank", label: "Skandia" }), {
-        kind: "balance_mismatch",
-      }).action,
+      problemCopy(
+        account({ kind: "bank", label: "Skandia" }),
+        problem({ kind: "balance_mismatch" }),
+      ).action,
     ).toBe("review");
     expect(
-      problemCopy(account({ kind: "klarna", label: "Klarna" }), {
-        kind: "balance_mismatch",
-      }).action,
+      problemCopy(
+        account({ kind: "klarna", label: "Klarna" }),
+        problem({ kind: "balance_mismatch" }),
+      ).action,
     ).toBe("import_klarna");
   });
 });

@@ -67,7 +67,7 @@ export type AccountOverview = {
    *
    * Current balance in minor units (base_balance + credits - debits).
    */
-  current_balance?: number;
+  current_balance: number;
   /**
    * Group
    */
@@ -136,19 +136,19 @@ export type AccountProblem = {
    *
    * The last sync or import, or for renew_soon the day the approval ends.
    */
-  day?: Date | null;
+  day: Date | null;
   /**
    * Source Balance
    *
    * For balance_mismatch, the balance the source reports, in minor units.
    */
-  source_balance?: number | null;
+  source_balance: number | null;
   /**
    * Detail
    *
    * For sync_failed, what went wrong.
    */
-  detail?: string | null;
+  detail: string | null;
 };
 
 /**
@@ -172,7 +172,7 @@ export type AccountSource = {
    *
    * The bank's logo image URL, when one is known.
    */
-  logo?: string | null;
+  logo: string | null;
   /**
    * Synced At
    *
@@ -184,13 +184,13 @@ export type AccountSource = {
    *
    * When the read-only approval ends, for connected banks and Montrose.
    */
-  access_until?: Date | null;
+  access_until: Date | null;
   /**
    * Import Bank
    *
    * For accounts imported by hand, the bank of the latest export file, such as 'marginalen'.
    */
-  import_bank?: string | null;
+  import_bank: string | null;
   /**
    * What needs the user's attention, if anything.
    */
@@ -912,7 +912,7 @@ export type BankAccountSchema = {
    *
    * Current balance in minor units (base_balance + credits - debits).
    */
-  current_balance?: number;
+  current_balance: number;
 };
 
 /**
@@ -1303,7 +1303,7 @@ export type CalendarAccountSchema = {
    *
    * Google: contacts access was granted, so guests show real names and photos.
    */
-  can_read_people?: boolean;
+  can_read_people: boolean;
   /**
    * Last Synced At
    */
@@ -1341,19 +1341,19 @@ export type CalendarEventAttendee = {
    *
    * This is the account itself.
    */
-  is_self?: boolean;
+  is_self: boolean;
   /**
    * Is Organizer
    *
    * This guest organizes the event.
    */
-  is_organizer?: boolean;
+  is_organizer: boolean;
   /**
    * Photo Url
    *
    * Profile photo from the account's contacts or directory.
    */
-  photo_url?: string | null;
+  photo_url: string | null;
 };
 
 /**
@@ -1437,7 +1437,7 @@ export type CalendarEventSchema = {
    *
    * The account's own reply when it's a guest; null when not invited.
    */
-  my_response?: "accepted" | "declined" | "tentative" | "needs_action" | null;
+  my_response: "accepted" | "declined" | "tentative" | "needs_action" | null;
   /**
    * Conference Url
    *
@@ -1471,17 +1471,17 @@ export type CalendarEventSchema = {
    *
    * Google event colour id; null means the calendar's colour.
    */
-  color_id?: string | null;
+  color_id: string | null;
   /**
    * Rule
    *
    * The series' RRULE value, if it repeats.
    */
-  rule?: string | null;
+  rule: string | null;
   /**
    * `rule` in structured form; null when not repeating or not representable.
    */
-  recurrence?: RecurrenceSchema | null;
+  recurrence: RecurrenceSchema | null;
   /**
    * Visibility
    *
@@ -1751,7 +1751,7 @@ export type CategorySchema = {
    *
    * Parent category ID, null for top-level.
    */
-  parent_id?: string | null;
+  parent_id: string | null;
 };
 
 /**
@@ -1919,7 +1919,7 @@ export type CryptoPriceSchema = {
   /**
    * Price Change Pct 24H
    */
-  price_change_pct_24h?: number | null;
+  price_change_pct_24h: number | null;
 };
 
 /**
@@ -2416,7 +2416,7 @@ export type GooglePlaceSearchResult = {
    *
    * Country name.
    */
-  country?: string | null;
+  country: string | null;
   /**
    * Latitude
    *
@@ -2434,31 +2434,31 @@ export type GooglePlaceSearchResult = {
    *
    * Plus Code.
    */
-  plus_code?: string | null;
+  plus_code: string | null;
   /**
    * Category
    *
    * Primary type.
    */
-  category?: string | null;
+  category: string | null;
   /**
    * Photo Url
    *
    * Photo reference URL.
    */
-  photo_url?: string | null;
+  photo_url: string | null;
   /**
    * Website
    *
    * Website.
    */
-  website?: string | null;
+  website: string | null;
   /**
    * Phone
    *
    * Phone number.
    */
-  phone?: string | null;
+  phone: string | null;
 };
 
 /**
@@ -3149,7 +3149,7 @@ export type HoldingSchema = {
    *
    * The account holding it, for accounts a broker syncs.
    */
-  bank_account_id?: string | null;
+  bank_account_id: string | null;
   /**
    * Security Name
    */
@@ -3781,11 +3781,11 @@ export type MeResponse = {
   /**
    * Email
    */
-  email?: string | null;
+  email: string | null;
   /**
    * Timezone
    */
-  timezone?: string | null;
+  timezone: string | null;
 };
 
 /**
@@ -4088,7 +4088,7 @@ export type NameSuggestion = {
    *
    * The name its transactions have now, which naming it takes over; send it back when naming.
    */
-  replacing?: string | null;
+  replacing: string | null;
 };
 
 /**
@@ -4410,13 +4410,13 @@ export type PlaceSchema = {
    *
    * Full address.
    */
-  address?: string | null;
+  address: string | null;
   /**
    * Country
    *
    * Country name.
    */
-  country?: string | null;
+  country: string | null;
   /**
    * Latitude
    *
@@ -4434,65 +4434,65 @@ export type PlaceSchema = {
    *
    * Google Maps place ID.
    */
-  google_place_id?: string | null;
+  google_place_id: string | null;
   /**
    * Plus Code
    *
    * Google Plus Code.
    */
-  plus_code?: string | null;
+  plus_code: string | null;
   /**
    * Place status.
    */
-  status?: PlaceStatus;
+  status: PlaceStatus;
   /**
    * Rating
    *
    * Personal rating (1-5).
    */
-  rating?: number | null;
+  rating: number | null;
   /**
    * Visited At
    *
    * Date when the place was visited.
    */
-  visited_at?: Date | null;
+  visited_at: Date | null;
   /**
    * Review
    *
    * Personal review/notes.
    */
-  review?: string | null;
+  review: string | null;
   /**
    * Category
    *
    * Place category (e.g. restaurant, cafe).
    */
-  category?: string | null;
+  category: string | null;
   /**
    * Tags
    *
    * User-defined tags.
    */
-  tags?: Array<string> | null;
+  tags: Array<string> | null;
   /**
    * Photo Url
    *
    * Photo URL from Google.
    */
-  photo_url?: string | null;
+  photo_url: string | null;
   /**
    * Website
    *
    * Website URL.
    */
-  website?: string | null;
+  website: string | null;
   /**
    * Phone
    *
    * Phone number.
    */
-  phone?: string | null;
+  phone: string | null;
 };
 
 /**
@@ -4648,11 +4648,11 @@ export type ProjectSchema = {
   /**
    * Path
    */
-  path?: string | null;
+  path: string | null;
   /**
    * Ssh Host
    */
-  ssh_host?: string | null;
+  ssh_host: string | null;
 };
 
 /**
@@ -5063,13 +5063,13 @@ export type SleepDailyEntry = {
    *
    * Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode began. Null if no asleep segments were recorded.
    */
-  sleep_onset?: string | null;
+  sleep_onset: string | null;
   /**
    * Wake Time
    *
    * Local time (ISO 8601 with UTC offset) the night's longest unbroken sleep episode ended. Null if no asleep segments were recorded.
    */
-  wake_time?: string | null;
+  wake_time: string | null;
 };
 
 /**
@@ -5328,7 +5328,7 @@ export type TaskCompleteResponse = {
   /**
    * Next recurring instance, if applicable.
    */
-  next_task?: TaskSchema | null;
+  next_task: TaskSchema | null;
 };
 
 /**
@@ -5459,87 +5459,87 @@ export type TaskSchema = {
    *
    * Task description.
    */
-  description?: string | null;
+  description: string | null;
   /**
    * Task status.
    */
-  status?: TaskStatus;
+  status: TaskStatus;
   /**
    * Priority
    *
    * Priority (0=none, 1=low, 2=medium, 3=high, 4=urgent).
    */
-  priority?: number;
+  priority: number;
   /**
    * Due Date
    *
    * Due date.
    */
-  due_date?: Date | null;
+  due_date: Date | null;
   /**
    * Completed At
    *
    * Completion timestamp.
    */
-  completed_at?: Date | null;
+  completed_at: Date | null;
   /**
    * Project
    *
    * Project name.
    */
-  project?: string | null;
+  project: string | null;
   /**
    * Tags
    *
    * User-defined tags.
    */
-  tags?: Array<string> | null;
+  tags: Array<string> | null;
   /**
    * Position
    *
    * Position for ordering within a status column.
    */
-  position?: number;
+  position: number;
   /**
    * Is Recurring
    *
    * Whether this task recurs.
    */
-  is_recurring?: boolean;
+  is_recurring: boolean;
   /**
    * Recurrence frequency.
    */
-  rrule_frequency?: RruleFrequency | null;
+  rrule_frequency: RruleFrequency | null;
   /**
    * Rrule Interval
    *
    * Recurrence interval.
    */
-  rrule_interval?: number | null;
+  rrule_interval: number | null;
   /**
    * Rrule Day Of Week
    *
    * Day of week for weekly recurrence (0=Mon, 6=Sun).
    */
-  rrule_day_of_week?: number | null;
+  rrule_day_of_week: number | null;
   /**
    * Rrule Day Of Month
    *
    * Day of month for monthly recurrence (1-31).
    */
-  rrule_day_of_month?: number | null;
+  rrule_day_of_month: number | null;
   /**
    * Parent Task Id
    *
    * Parent task ID for recurring chain.
    */
-  parent_task_id?: string | null;
+  parent_task_id: string | null;
   /**
    * Attachments
    *
    * Image attachments.
    */
-  attachments?: Array<TaskAttachmentSchema>;
+  attachments: Array<TaskAttachmentSchema>;
 };
 
 /**
@@ -6113,13 +6113,13 @@ export type TransactionRenameResponse = {
    *
    * What the user calls it, shown in place of the bank's text.
    */
-  name?: string | null;
+  name: string | null;
   /**
    * Note
    *
    * The user's own words about this one transaction.
    */
-  note?: string | null;
+  note: string | null;
   /**
    * Category Id
    */
@@ -6133,13 +6133,13 @@ export type TransactionRenameResponse = {
    *
    * The merchant's logo, when the source provides it.
    */
-  logo_url?: string | null;
+  logo_url: string | null;
   /**
    * Document Count
    *
    * Invoices and receipts kept with it.
    */
-  document_count?: number;
+  document_count: number;
   /**
    * Dedup Hash
    */
@@ -6157,19 +6157,19 @@ export type TransactionRenameResponse = {
    *
    * Marked as a business transaction, such as a company cost paid privately.
    */
-  is_business?: boolean;
+  is_business: boolean;
   /**
    * Company Account
    *
    * On an account of the user's company, so company money whatever is_business says.
    */
-  company_account?: boolean;
+  company_account: boolean;
   /**
    * Transfer Id
    *
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
-  transfer_id?: string | null;
+  transfer_id: string | null;
   /**
    * Suggestions
    *
@@ -6230,13 +6230,13 @@ export type TransactionSchema = {
    *
    * What the user calls it, shown in place of the bank's text.
    */
-  name?: string | null;
+  name: string | null;
   /**
    * Note
    *
    * The user's own words about this one transaction.
    */
-  note?: string | null;
+  note: string | null;
   /**
    * Category Id
    */
@@ -6250,13 +6250,13 @@ export type TransactionSchema = {
    *
    * The merchant's logo, when the source provides it.
    */
-  logo_url?: string | null;
+  logo_url: string | null;
   /**
    * Document Count
    *
    * Invoices and receipts kept with it.
    */
-  document_count?: number;
+  document_count: number;
   /**
    * Dedup Hash
    */
@@ -6274,19 +6274,19 @@ export type TransactionSchema = {
    *
    * Marked as a business transaction, such as a company cost paid privately.
    */
-  is_business?: boolean;
+  is_business: boolean;
   /**
    * Company Account
    *
    * On an account of the user's company, so company money whatever is_business says.
    */
-  company_account?: boolean;
+  company_account: boolean;
   /**
    * Transfer Id
    *
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
-  transfer_id?: string | null;
+  transfer_id: string | null;
   /**
    * For a broker's movement, what it is, such as a buy or a tax.
    */
@@ -6417,13 +6417,13 @@ export type TransactionUpdateResponse = {
    *
    * What the user calls it, shown in place of the bank's text.
    */
-  name?: string | null;
+  name: string | null;
   /**
    * Note
    *
    * The user's own words about this one transaction.
    */
-  note?: string | null;
+  note: string | null;
   /**
    * Category Id
    */
@@ -6437,13 +6437,13 @@ export type TransactionUpdateResponse = {
    *
    * The merchant's logo, when the source provides it.
    */
-  logo_url?: string | null;
+  logo_url: string | null;
   /**
    * Document Count
    *
    * Invoices and receipts kept with it.
    */
-  document_count?: number;
+  document_count: number;
   /**
    * Dedup Hash
    */
@@ -6461,25 +6461,25 @@ export type TransactionUpdateResponse = {
    *
    * Marked as a business transaction, such as a company cost paid privately.
    */
-  is_business?: boolean;
+  is_business: boolean;
   /**
    * Company Account
    *
    * On an account of the user's company, so company money whatever is_business says.
    */
-  company_account?: boolean;
+  company_account: boolean;
   /**
    * Transfer Id
    *
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
-  transfer_id?: string | null;
+  transfer_id: string | null;
   /**
    * Same Description Count
    *
    * Number of other transactions with the same description not yet assigned this category.
    */
-  same_description_count?: number;
+  same_description_count: number;
   /**
    * For a broker's movement, what it is, such as a buy or a tax.
    */
@@ -6618,7 +6618,7 @@ export type WeatherForecast = {
   /**
    * Attribution
    */
-  attribution?: string;
+  attribution: string;
 };
 
 /**
@@ -6902,13 +6902,13 @@ export type TransactionRenameResponseWritable = {
    *
    * What the user calls it, shown in place of the bank's text.
    */
-  name?: string | null;
+  name: string | null;
   /**
    * Note
    *
    * The user's own words about this one transaction.
    */
-  note?: string | null;
+  note: string | null;
   /**
    * Category Id
    */
@@ -6922,13 +6922,13 @@ export type TransactionRenameResponseWritable = {
    *
    * The merchant's logo, when the source provides it.
    */
-  logo_url?: string | null;
+  logo_url: string | null;
   /**
    * Document Count
    *
    * Invoices and receipts kept with it.
    */
-  document_count?: number;
+  document_count: number;
   /**
    * Dedup Hash
    */
@@ -6946,19 +6946,19 @@ export type TransactionRenameResponseWritable = {
    *
    * Marked as a business transaction, such as a company cost paid privately.
    */
-  is_business?: boolean;
+  is_business: boolean;
   /**
    * Company Account
    *
    * On an account of the user's company, so company money whatever is_business says.
    */
-  company_account?: boolean;
+  company_account: boolean;
   /**
    * Transfer Id
    *
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
-  transfer_id?: string | null;
+  transfer_id: string | null;
   /**
    * Suggestions
    *
@@ -7015,13 +7015,13 @@ export type TransactionSchemaWritable = {
    *
    * What the user calls it, shown in place of the bank's text.
    */
-  name?: string | null;
+  name: string | null;
   /**
    * Note
    *
    * The user's own words about this one transaction.
    */
-  note?: string | null;
+  note: string | null;
   /**
    * Category Id
    */
@@ -7035,13 +7035,13 @@ export type TransactionSchemaWritable = {
    *
    * The merchant's logo, when the source provides it.
    */
-  logo_url?: string | null;
+  logo_url: string | null;
   /**
    * Document Count
    *
    * Invoices and receipts kept with it.
    */
-  document_count?: number;
+  document_count: number;
   /**
    * Dedup Hash
    */
@@ -7059,19 +7059,19 @@ export type TransactionSchemaWritable = {
    *
    * Marked as a business transaction, such as a company cost paid privately.
    */
-  is_business?: boolean;
+  is_business: boolean;
   /**
    * Company Account
    *
    * On an account of the user's company, so company money whatever is_business says.
    */
-  company_account?: boolean;
+  company_account: boolean;
   /**
    * Transfer Id
    *
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
-  transfer_id?: string | null;
+  transfer_id: string | null;
 };
 
 /**
@@ -7122,13 +7122,13 @@ export type TransactionUpdateResponseWritable = {
    *
    * What the user calls it, shown in place of the bank's text.
    */
-  name?: string | null;
+  name: string | null;
   /**
    * Note
    *
    * The user's own words about this one transaction.
    */
-  note?: string | null;
+  note: string | null;
   /**
    * Category Id
    */
@@ -7142,13 +7142,13 @@ export type TransactionUpdateResponseWritable = {
    *
    * The merchant's logo, when the source provides it.
    */
-  logo_url?: string | null;
+  logo_url: string | null;
   /**
    * Document Count
    *
    * Invoices and receipts kept with it.
    */
-  document_count?: number;
+  document_count: number;
   /**
    * Dedup Hash
    */
@@ -7166,25 +7166,25 @@ export type TransactionUpdateResponseWritable = {
    *
    * Marked as a business transaction, such as a company cost paid privately.
    */
-  is_business?: boolean;
+  is_business: boolean;
   /**
    * Company Account
    *
    * On an account of the user's company, so company money whatever is_business says.
    */
-  company_account?: boolean;
+  company_account: boolean;
   /**
    * Transfer Id
    *
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
-  transfer_id?: string | null;
+  transfer_id: string | null;
   /**
    * Same Description Count
    *
    * Number of other transactions with the same description not yet assigned this category.
    */
-  same_description_count?: number;
+  same_description_count: number;
 };
 
 export type HealthzData = {

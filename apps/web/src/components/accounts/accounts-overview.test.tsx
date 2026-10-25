@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
-import type { AccountOverview, OverviewTotal } from "@bessel/client";
+import type {
+  AccountOverview,
+  AccountProblem,
+  OverviewTotal,
+} from "@bessel/client";
 import {
   cleanup,
   fireEvent,
@@ -13,6 +17,13 @@ const run = vi.fn();
 vi.mock("@/components/accounts/account-actions", () => ({
   useAccountActions: () => ({ run, busy: false }),
 }));
+
+/** A problem as the API sends it, with the fields this case doesn't use left null. */
+function problem(
+  fields: Pick<AccountProblem, "kind"> & Partial<AccountProblem>,
+): AccountProblem {
+  return { day: null, source_balance: null, detail: null, ...fields };
+}
 
 const { AccountList, NeedsAttention, WhereItIs } = await import(
   "./accounts-overview"
@@ -122,8 +133,11 @@ describe("AccountList", () => {
       source: {
         kind: "manual",
         label: "Imported by hand",
+        logo: null,
         synced_at: null,
-        issue: { kind: "no_transactions" },
+        access_until: null,
+        import_bank: null,
+        issue: problem({ kind: "no_transactions" }),
         problem: "No transactions yet.",
       },
     });
@@ -148,10 +162,15 @@ describe("NeedsAttention", () => {
       source: {
         kind: "manual",
         label: "Imported by hand",
+        logo: null,
         synced_at: null,
+        access_until: null,
         import_bank: "marginalen",
         problem: "Imported by hand, nothing since 2 Jul 2026.",
-        issue: { kind: "import_due", day: new Date("2026-07-02T00:00:00") },
+        issue: problem({
+          kind: "import_due",
+          day: new Date("2026-07-02T00:00:00"),
+        }),
       },
     });
     render(<NeedsAttention accounts={[account({ id: "ok" }), stale]} />);
