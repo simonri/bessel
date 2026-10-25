@@ -1,7 +1,9 @@
+from collections.abc import Callable
 from typing import Any, TypedDict
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+from fastapi.routing import APIRoute
 
 from api.settings import Environment, settings
 
@@ -15,6 +17,12 @@ class OpenAPIParameters(TypedDict):
   redoc_url: str | None
   openapi_url: str | None
   servers: list[dict[str, Any]] | None
+  generate_unique_id_function: Callable[[APIRoute], str]
+
+
+def operation_id(route: APIRoute) -> str:
+  """The endpoint function's name, so generated clients call `updateTask` rather than `updateTaskV1TasksTaskIdPatch`."""
+  return route.name
 
 
 OPENAPI_PARAMETERS: OpenAPIParameters = {
@@ -32,6 +40,7 @@ OPENAPI_PARAMETERS: OpenAPIParameters = {
       "x-speakeasy-server-id": "production",
     },
   ],
+  "generate_unique_id_function": operation_id,
 }
 
 

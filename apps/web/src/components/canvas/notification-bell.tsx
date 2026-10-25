@@ -1,8 +1,8 @@
 import {
-  listNotificationsV1NotificationsGetOptions,
-  listNotificationsV1NotificationsGetQueryKey,
-  markAllNotificationsReadV1NotificationsReadAllPost,
-  markNotificationReadV1NotificationsNotificationIdReadPost,
+  listNotificationsOptions,
+  listNotificationsQueryKey,
+  markAllNotificationsRead,
+  markNotificationRead,
 } from "@bessel/client";
 import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +33,7 @@ export function NotificationBell() {
   const queryClient = useQueryClient();
 
   const { data } = useQuery({
-    ...listNotificationsV1NotificationsGetOptions({ client }),
+    ...listNotificationsOptions({ client }),
     refetchInterval: 30_000,
   });
 
@@ -42,26 +42,26 @@ export function NotificationBell() {
 
   const markRead = useMutation({
     mutationFn: (id: string) =>
-      markNotificationReadV1NotificationsNotificationIdReadPost({
+      markNotificationRead({
         client,
         path: { notification_id: id },
         throwOnError: true,
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({
-        queryKey: listNotificationsV1NotificationsGetQueryKey({ client }),
+        queryKey: listNotificationsQueryKey({ client }),
       }),
   });
 
   const markAllRead = useMutation({
     mutationFn: () =>
-      markAllNotificationsReadV1NotificationsReadAllPost({
+      markAllNotificationsRead({
         client,
         throwOnError: true,
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({
-        queryKey: listNotificationsV1NotificationsGetQueryKey({ client }),
+        queryKey: listNotificationsQueryKey({ client }),
       }),
   });
 

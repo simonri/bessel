@@ -44,7 +44,7 @@ function query(key: string, data: unknown) {
 }
 
 vi.mock("@bessel/client", () => ({
-  listBankConnectionsV1BankConnectionsGetOptions: query("connections", {
+  listBankConnectionsOptions: query("connections", {
     available: true,
     bank_options: [],
     connections: [
@@ -88,32 +88,31 @@ vi.mock("@bessel/client", () => ({
       },
     ],
   }),
-  getAvanzaV1AvanzaGetOptions: query("avanza", {
+  getAvanzaOptions: query("avanza", {
     available: false,
     connection: null,
   }),
-  getMontroseV1MontroseGetOptions: () => ({
+  getMontroseOptions: () => ({
     queryKey: ["montrose"],
     queryFn: () => montrose.fetch(),
   }),
-  linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation: () => ({
+  linkMontroseAccountMutation: () => ({
     mutationFn: linkMontrose,
   }),
-  getMontroseV1MontroseGetQueryKey: () => ["montrose"],
-  listBankAccountsV1BankAccountsGetOptions: query("accounts", {
+  getMontroseQueryKey: () => ["montrose"],
+  listBankAccountsOptions: query("accounts", {
     items: [{ id: "b1", name: "Buffert", currency: "SEK" }],
   }),
-  createBankAccountV1BankAccountsPostMutation: () => ({ mutationFn: create }),
-  linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchMutation:
-    () => ({ mutationFn: linkBank }),
-  linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation: () => ({
+  createBankAccountMutation: () => ({ mutationFn: create }),
+  linkBankConnectionAccountMutation: () => ({ mutationFn: linkBank }),
+  linkAvanzaAccountMutation: () => ({
     mutationFn: vi.fn(),
   }),
-  getAccountsOverviewV1BankAccountsOverviewGetQueryKey: () => ["overview"],
-  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey: () => ["net-worth"],
-  listBankAccountsV1BankAccountsGetQueryKey: () => ["accounts"],
-  listBankConnectionsV1BankConnectionsGetQueryKey: () => ["connections"],
-  getAvanzaV1AvanzaGetQueryKey: () => ["avanza"],
+  getAccountsOverviewQueryKey: () => ["overview"],
+  getNetWorthHistoryQueryKey: () => ["net-worth"],
+  listBankAccountsQueryKey: () => ["accounts"],
+  listBankConnectionsQueryKey: () => ["connections"],
+  getAvanzaQueryKey: () => ["avanza"],
 }));
 vi.mock("@/components/accounts/account-actions", () => ({
   useAccountActions: () => ({

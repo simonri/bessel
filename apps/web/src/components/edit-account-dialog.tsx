@@ -1,7 +1,7 @@
 import type { BankAccountSchema } from "@bessel/client";
 import {
-  listBankAccountsV1BankAccountsGetQueryKey,
-  updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
+  listBankAccountsQueryKey,
+  updateBankAccountMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import { Checkbox } from "@bessel/ui/components/checkbox";
@@ -36,10 +36,10 @@ export function EditAccountDialog({ account }: { account: BankAccountSchema }) {
   const nameRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const queryKey = listBankAccountsV1BankAccountsGetQueryKey({ client });
+  const queryKey = listBankAccountsQueryKey({ client });
 
   const mutation = useMutation({
-    ...updateBankAccountV1BankAccountsBankAccountIdPatchMutation({ client }),
+    ...updateBankAccountMutation({ client }),
     onMutate: async ({ path, body }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueriesData({ queryKey });

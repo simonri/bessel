@@ -12,7 +12,7 @@ const completeConnect = vi.hoisted(() => vi.fn());
 
 vi.mock("@auth0/auth0-react", () => ({ useAuth0: () => auth }));
 vi.mock("@bessel/client", () => ({
-  completeGoogleConnectV1CalendarsGoogleCallbackPost: completeConnect,
+  completeGoogleConnect: completeConnect,
 }));
 vi.mock("@/lib/client", () => ({ client: {} }));
 vi.mock("@tanstack/react-router", () => ({

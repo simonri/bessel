@@ -15,8 +15,8 @@ const api = vi.hoisted(() => ({
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
-  createTaskV1TasksPostMutation: () => ({ mutationFn: api.create }),
-  listProjectsV1ProjectsGetOptions: () => ({
+  createTaskMutation: () => ({ mutationFn: api.create }),
+  listProjectsOptions: () => ({
     queryKey: ["projects"],
     queryFn: async () => [{ id: "p1", name: "Uni" }],
   }),

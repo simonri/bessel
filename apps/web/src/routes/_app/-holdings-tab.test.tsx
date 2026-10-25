@@ -83,15 +83,15 @@ const HOLDINGS = [
 
 vi.mock("@tanstack/react-router", () => ({ Link: () => null }));
 vi.mock("@bessel/client", () => ({
-  getHoldingsV1InvestmentsHoldingsGetOptions: () => ({
+  getHoldingsOptions: () => ({
     queryKey: ["holdings"],
     queryFn: async () => ({ items: HOLDINGS }),
   }),
-  getInvestmentAccountsV1InvestmentsAccountsGetOptions: () => ({
+  getInvestmentAccountsOptions: () => ({
     queryKey: ["accounts"],
     queryFn: async () => ({ items: ACCOUNTS }),
   }),
-  getAccountsOverviewV1BankAccountsOverviewGetOptions: () => ({
+  getAccountsOverviewOptions: () => ({
     queryKey: ["overview"],
     queryFn: async () => ({ accounts: overview.accounts }),
   }),

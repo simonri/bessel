@@ -12,7 +12,7 @@ const complete = vi.hoisted(() => vi.fn());
 
 vi.mock("@auth0/auth0-react", () => ({ useAuth0: () => auth }));
 vi.mock("@bessel/client", () => ({
-  completeBankConnectionV1BankConnectionsCallbackPost: complete,
+  completeBankConnection: complete,
 }));
 vi.mock("@/lib/client", () => ({ client: {} }));
 vi.mock("@tanstack/react-router", () => ({

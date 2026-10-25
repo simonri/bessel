@@ -23,25 +23,24 @@ vi.mock("@bessel/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@bessel/client")>();
   return {
     ...actual,
-    getTaskV1TasksTaskIdGetOptions: (
-      options: Parameters<typeof actual.getTaskV1TasksTaskIdGetQueryKey>[0],
+    getTaskOptions: (
+      options: Parameters<typeof actual.getTaskQueryKey>[0],
     ) => ({
-      queryKey: actual.getTaskV1TasksTaskIdGetQueryKey(options),
+      queryKey: actual.getTaskQueryKey(options),
       queryFn: async () => api.task,
     }),
-    listProjectsV1ProjectsGetOptions: () => ({
+    listProjectsOptions: () => ({
       queryKey: ["projects"],
       queryFn: async () => [{ id: "p1", name: "Uni" }],
     }),
-    updateTaskV1TasksTaskIdPatchMutation: () => ({ mutationFn: api.update }),
-    completeTaskV1TasksTaskIdCompletePostMutation: () => ({
+    updateTaskMutation: () => ({ mutationFn: api.update }),
+    completeTaskMutation: () => ({
       mutationFn: api.complete,
     }),
-    reopenTaskV1TasksTaskIdReopenPostMutation: () => ({
+    reopenTaskMutation: () => ({
       mutationFn: api.reopen,
     }),
-    deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation:
-      () => ({ mutationFn: api.deleteAttachment }),
+    deleteTaskAttachmentMutation: () => ({ mutationFn: api.deleteAttachment }),
   };
 });
 

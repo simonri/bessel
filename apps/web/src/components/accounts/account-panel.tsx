@@ -1,16 +1,16 @@
 import type { AccountOverview, BankAccountUpdate } from "@bessel/client";
 import {
-  disconnectAvanzaV1AvanzaDeleteMutation,
-  disconnectBankConnectionV1BankConnectionsConnectionIdDeleteMutation,
-  disconnectMontroseV1MontroseDeleteMutation,
-  getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
-  getAvanzaV1AvanzaGetOptions,
-  getMontroseV1MontroseGetOptions,
-  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
-  listBankAccountsV1BankAccountsGetQueryKey,
-  listBankConnectionsV1BankConnectionsGetOptions,
-  listTransactionsV1TransactionsGetOptions,
-  updateBankAccountV1BankAccountsBankAccountIdPatchMutation,
+  disconnectAvanzaMutation,
+  disconnectBankConnectionMutation,
+  disconnectMontroseMutation,
+  getAccountsOverviewQueryKey,
+  getAvanzaOptions,
+  getMontroseOptions,
+  getNetWorthHistoryQueryKey,
+  listBankAccountsQueryKey,
+  listBankConnectionsOptions,
+  listTransactionsOptions,
+  updateBankAccountMutation,
 } from "@bessel/client";
 import { Input } from "@bessel/ui/components/input";
 import {
@@ -75,14 +75,14 @@ export function AccountPanel({
 function useUpdateAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    ...updateBankAccountV1BankAccountsBankAccountIdPatchMutation({ client }),
+    ...updateBankAccountMutation({ client }),
     onError: (error) =>
       toast.error(errorDetail(error, "Couldn't save the change")),
     onSettled: () => {
       for (const queryKey of [
-        getAccountsOverviewV1BankAccountsOverviewGetQueryKey({ client }),
-        getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
-        listBankAccountsV1BankAccountsGetQueryKey({ client }),
+        getAccountsOverviewQueryKey({ client }),
+        getNetWorthHistoryQueryKey({ client }),
+        listBankAccountsQueryKey({ client }),
       ]) {
         void queryClient.invalidateQueries({ queryKey });
       }
@@ -373,7 +373,7 @@ function ProblemBanner({ account }: { account: AccountOverview }) {
 
 function RecentTransactions({ account }: { account: AccountOverview }) {
   const { data } = useQuery(
-    listTransactionsV1TransactionsGetOptions({
+    listTransactionsOptions({
       client,
       query: {
         bank_account_id: [account.id],
@@ -432,18 +432,18 @@ function Connection({ account }: { account: AccountOverview }) {
   const [disconnecting, setDisconnecting] = useState(false);
   const queryClient = useQueryClient();
   const { data: connections } = useQuery({
-    ...listBankConnectionsV1BankConnectionsGetOptions({ client }),
+    ...listBankConnectionsOptions({ client }),
     enabled: source.kind === "bank",
   });
   const connection = connections?.connections.find(
     (c) => c.bank_name === source.label,
   );
   const { data: avanza } = useQuery({
-    ...getAvanzaV1AvanzaGetOptions({ client }),
+    ...getAvanzaOptions({ client }),
     enabled: source.kind === "avanza",
   });
   const { data: montrose } = useQuery({
-    ...getMontroseV1MontroseGetOptions({ client }),
+    ...getMontroseOptions({ client }),
     enabled: source.kind === "montrose",
   });
   const notBroughtIn =
@@ -460,25 +460,25 @@ function Connection({ account }: { account: AccountOverview }) {
   const afterDisconnect = () => {
     setDisconnecting(false);
     void queryClient.invalidateQueries({
-      queryKey: getAccountsOverviewV1BankAccountsOverviewGetQueryKey({
+      queryKey: getAccountsOverviewQueryKey({
         client,
       }),
     });
   };
   const disconnectBank = useMutation({
-    ...disconnectBankConnectionV1BankConnectionsConnectionIdDeleteMutation({
+    ...disconnectBankConnectionMutation({
       client,
     }),
     onSuccess: afterDisconnect,
     onError: (error) => toast.error(errorDetail(error, "Couldn't disconnect")),
   });
   const disconnectAvanza = useMutation({
-    ...disconnectAvanzaV1AvanzaDeleteMutation({ client }),
+    ...disconnectAvanzaMutation({ client }),
     onSuccess: afterDisconnect,
     onError: (error) => toast.error(errorDetail(error, "Couldn't disconnect")),
   });
   const disconnectMontrose = useMutation({
-    ...disconnectMontroseV1MontroseDeleteMutation({ client }),
+    ...disconnectMontroseMutation({ client }),
     onSuccess: afterDisconnect,
     onError: (error) => toast.error(errorDetail(error, "Couldn't disconnect")),
   });

@@ -1,8 +1,5 @@
 import type { PlaceSchema } from "@bessel/client";
-import {
-  listPlacesV1PlacesGetQueryKey,
-  updatePlaceV1PlacesPlaceIdPatchMutation,
-} from "@bessel/client";
+import { listPlacesQueryKey, updatePlaceMutation } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
   Dialog,
@@ -39,10 +36,10 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...updatePlaceV1PlacesPlaceIdPatchMutation({ client }),
+    ...updatePlaceMutation({ client }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: listPlacesV1PlacesGetQueryKey({ client }),
+        queryKey: listPlacesQueryKey({ client }),
       });
       toast.success("Place updated");
       setOpen(false);

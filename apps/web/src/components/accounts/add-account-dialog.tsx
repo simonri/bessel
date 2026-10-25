@@ -5,20 +5,20 @@ import type {
   MontroseAccountSchema,
 } from "@bessel/client";
 import {
-  createBankAccountV1BankAccountsPostMutation,
-  getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
-  getAvanzaV1AvanzaGetOptions,
-  getAvanzaV1AvanzaGetQueryKey,
-  getMontroseV1MontroseGetOptions,
-  getMontroseV1MontroseGetQueryKey,
-  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
-  linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation,
-  linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchMutation,
-  linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation,
-  listBankAccountsV1BankAccountsGetOptions,
-  listBankAccountsV1BankAccountsGetQueryKey,
-  listBankConnectionsV1BankConnectionsGetOptions,
-  listBankConnectionsV1BankConnectionsGetQueryKey,
+  createBankAccountMutation,
+  getAccountsOverviewQueryKey,
+  getAvanzaOptions,
+  getAvanzaQueryKey,
+  getMontroseOptions,
+  getMontroseQueryKey,
+  getNetWorthHistoryQueryKey,
+  linkAvanzaAccountMutation,
+  linkBankConnectionAccountMutation,
+  linkMontroseAccountMutation,
+  listBankAccountsOptions,
+  listBankAccountsQueryKey,
+  listBankConnectionsOptions,
+  listBankConnectionsQueryKey,
 } from "@bessel/client";
 import {
   Dialog,
@@ -92,13 +92,9 @@ const MONTROSE_SUBTYPES: Record<string, string> = {
 };
 
 function useProviders(): Provider[] {
-  const { data: banks } = useQuery(
-    listBankConnectionsV1BankConnectionsGetOptions({ client }),
-  );
-  const { data: avanza } = useQuery(getAvanzaV1AvanzaGetOptions({ client }));
-  const { data: montrose } = useQuery(
-    getMontroseV1MontroseGetOptions({ client }),
-  );
+  const { data: banks } = useQuery(listBankConnectionsOptions({ client }));
+  const { data: avanza } = useQuery(getAvanzaOptions({ client }));
+  const { data: montrose } = useQuery(getMontroseOptions({ client }));
   const providers: Provider[] = [];
   if (banks?.available) {
     for (const bank of banks.bank_options) {
@@ -410,12 +406,12 @@ function useInvalidateAccounts() {
   const queryClient = useQueryClient();
   return () => {
     for (const queryKey of [
-      getAccountsOverviewV1BankAccountsOverviewGetQueryKey({ client }),
-      getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
-      listBankAccountsV1BankAccountsGetQueryKey({ client }),
-      listBankConnectionsV1BankConnectionsGetQueryKey({ client }),
-      getAvanzaV1AvanzaGetQueryKey({ client }),
-      getMontroseV1MontroseGetQueryKey({ client }),
+      getAccountsOverviewQueryKey({ client }),
+      getNetWorthHistoryQueryKey({ client }),
+      listBankAccountsQueryKey({ client }),
+      listBankConnectionsQueryKey({ client }),
+      getAvanzaQueryKey({ client }),
+      getMontroseQueryKey({ client }),
     ]) {
       void queryClient.invalidateQueries({ queryKey });
     }
@@ -441,7 +437,7 @@ function Details({
   const [balance, setBalance] = useState("");
   const [company, setCompany] = useState(false);
   const create = useMutation({
-    ...createBankAccountV1BankAccountsPostMutation({ client }),
+    ...createBankAccountMutation({ client }),
     onError: (error) =>
       toast.error(errorDetail(error, "Couldn't add the account")),
   });
@@ -643,15 +639,11 @@ function Pick({
   onClose: () => void;
 }) {
   const invalidate = useInvalidateAccounts();
-  const { data: banks } = useQuery(
-    listBankConnectionsV1BankConnectionsGetOptions({ client }),
-  );
-  const { data: avanza } = useQuery(getAvanzaV1AvanzaGetOptions({ client }));
-  const { data: montrose } = useQuery(
-    getMontroseV1MontroseGetOptions({ client }),
-  );
+  const { data: banks } = useQuery(listBankConnectionsOptions({ client }));
+  const { data: avanza } = useQuery(getAvanzaOptions({ client }));
+  const { data: montrose } = useQuery(getMontroseOptions({ client }));
   const { data: existing } = useQuery(
-    listBankAccountsV1BankAccountsGetOptions({
+    listBankAccountsOptions({
       client,
       query: { limit: 100, page: 1, sorting: ["name"] },
     }),
@@ -677,20 +669,14 @@ function Pick({
             .map(avanzaCandidate) ?? []);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const choice = (id: string) => choices[id] ?? NEW;
-  const create = useMutation(
-    createBankAccountV1BankAccountsPostMutation({ client }),
-  );
+  const create = useMutation(createBankAccountMutation({ client }));
   const linkBank = useMutation(
-    linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchMutation({
+    linkBankConnectionAccountMutation({
       client,
     }),
   );
-  const linkAvanza = useMutation(
-    linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation({ client }),
-  );
-  const linkMontrose = useMutation(
-    linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation({ client }),
-  );
+  const linkAvanza = useMutation(linkAvanzaAccountMutation({ client }));
+  const linkMontrose = useMutation(linkMontroseAccountMutation({ client }));
   const [saving, setSaving] = useState(false);
   const chosen = candidates.filter((c) => choice(c.id) !== SKIP);
 

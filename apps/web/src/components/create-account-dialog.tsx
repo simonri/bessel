@@ -1,6 +1,6 @@
 import {
-  createBankAccountV1BankAccountsPostMutation,
-  listBankAccountsV1BankAccountsGetQueryKey,
+  createBankAccountMutation,
+  listBankAccountsQueryKey,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
@@ -35,10 +35,10 @@ export function CreateAccountDialog() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    ...createBankAccountV1BankAccountsPostMutation({ client }),
+    ...createBankAccountMutation({ client }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: listBankAccountsV1BankAccountsGetQueryKey({ client }),
+        queryKey: listBankAccountsQueryKey({ client }),
       });
       toast.success("Account created");
       handleClose();

@@ -3,7 +3,7 @@ import type {
   SummaryCategory,
   SummaryMerchant,
 } from "@bessel/client";
-import { transactionSummaryV1TransactionsSummaryGetOptions } from "@bessel/client";
+import { getTransactionSummaryOptions } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -429,7 +429,7 @@ export function MonthSummary({
   children: ReactNode;
 }) {
   const { data, isLoading } = useQuery({
-    ...transactionSummaryV1TransactionsSummaryGetOptions({
+    ...getTransactionSummaryOptions({
       client,
       query: { year, month },
     }),

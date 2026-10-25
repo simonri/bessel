@@ -23,7 +23,7 @@ vi.mock("sonner", () => ({ toast }));
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
-  renameTransactionV1TransactionsTransactionIdNamePutMutation: () => ({
+  renameTransactionMutation: () => ({
     mutationFn: async (variables: {
       path: { transaction_id: string };
       body: { name: string | null };
@@ -36,13 +36,13 @@ vi.mock("@bessel/client", async (importOriginal) => ({
       };
     },
   }),
-  nameTransactionsV1TransactionsNamesPostMutation: () => ({
+  nameTransactionsMutation: () => ({
     mutationFn: async (variables: { body: { description: string } }) => {
       api.named.push(variables.body);
       return { renamed: api.renamedCounts[variables.body.description] ?? 0 };
     },
   }),
-  updateTransactionV1TransactionsTransactionIdPatchMutation: () => ({
+  updateTransactionMutation: () => ({
     mutationFn: async (variables: {
       path: { transaction_id: string };
       body: { note: string };

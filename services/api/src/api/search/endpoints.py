@@ -11,7 +11,7 @@ router = APIRouter(prefix="/search", tags=["search"])
 
 
 @router.get("", summary="Search", response_model=SearchResponse)
-async def search(
+async def search_everything(
   session: DBSession,
   current_user: CurrentDBUser,
   q: Annotated[str, Query(min_length=2, max_length=100, description="Text to look for in titles, notes and names.")],

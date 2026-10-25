@@ -1,9 +1,9 @@
 import {
-  deleteProjectV1ProjectsProjectIdDeleteMutation,
-  listProjectsV1ProjectsGetQueryKey,
+  deleteProjectMutation,
+  listProjectsQueryKey,
   type ProjectSchema,
-  setProjectLocationV1ProjectsProjectIdLocationPutMutation,
-  updateProjectV1ProjectsProjectIdPatchMutation,
+  setProjectLocationMutation,
+  updateProjectMutation,
 } from "@bessel/client";
 import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -197,7 +197,7 @@ export function ProjectsDropdown() {
   const taskCache = useTaskCacheHelpers();
   const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: listProjectsV1ProjectsGetQueryKey({ client }),
+      queryKey: listProjectsQueryKey({ client }),
     });
   // Tasks name their project, so a rename or delete changes them too.
   const invalidateWithTasks = () => {
@@ -207,17 +207,17 @@ export function ProjectsDropdown() {
 
   // saveEdit reports these two together.
   const updateMutation = useMutation({
-    ...updateProjectV1ProjectsProjectIdPatchMutation(),
+    ...updateProjectMutation(),
     meta: { errorToast: false },
     onSettled: invalidateWithTasks,
   });
   const locationMutation = useMutation({
-    ...setProjectLocationV1ProjectsProjectIdLocationPutMutation(),
+    ...setProjectLocationMutation(),
     meta: { errorToast: false },
     onSettled: invalidate,
   });
   const deleteMutation = useMutation({
-    ...deleteProjectV1ProjectsProjectIdDeleteMutation(),
+    ...deleteProjectMutation(),
     onSuccess: invalidateWithTasks,
     onError: (error) =>
       toast.error(errorDetail(error, "Couldn't delete the project")),

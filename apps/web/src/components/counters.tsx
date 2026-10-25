@@ -1,14 +1,14 @@
 import type { CounterResetSchema, CounterSchema } from "@bessel/client";
 import {
-  createCounterV1CountersPostMutation,
-  createResetV1CountersCounterIdResetsPostMutation,
-  deleteCounterV1CountersCounterIdDeleteMutation,
-  listCountersV1CountersGetOptions,
-  listCountersV1CountersGetQueryKey,
-  listResetsV1CountersCounterIdResetsGetOptions,
-  listResetsV1CountersCounterIdResetsGetQueryKey,
-  undoResetV1CountersCounterIdResetsResetIdDeleteMutation,
-  updateCounterV1CountersCounterIdPatchMutation,
+  createCounterMutation,
+  createResetMutation,
+  deleteCounterMutation,
+  listCountersOptions,
+  listCountersQueryKey,
+  listResetsOptions,
+  listResetsQueryKey,
+  undoResetMutation,
+  updateCounterMutation,
 } from "@bessel/client";
 import {
   Dialog,
@@ -62,17 +62,15 @@ export function Counters() {
   const addInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const countersKey = listCountersV1CountersGetQueryKey({ client });
+  const countersKey = listCountersQueryKey({ client });
 
-  const { data: counters = [] } = useQuery(
-    listCountersV1CountersGetOptions({ client }),
-  );
+  const { data: counters = [] } = useQuery(listCountersOptions({ client }));
 
   const selected = counters.find((c) => c.id === selectedId) ?? null;
 
   const creatingRef = useRef(false);
   const createMutation = useMutation({
-    ...createCounterV1CountersPostMutation({ client }),
+    ...createCounterMutation({ client }),
     onSuccess: (counter) => {
       void queryClient.invalidateQueries({ queryKey: countersKey });
       setAddingName(null);
@@ -82,14 +80,14 @@ export function Counters() {
   });
 
   const updateMutation = useMutation({
-    ...updateCounterV1CountersCounterIdPatchMutation({ client }),
+    ...updateCounterMutation({ client }),
     onSuccess: () =>
       void queryClient.invalidateQueries({ queryKey: countersKey }),
     onError: () => toast.error("Failed to rename counter"),
   });
 
   const deleteMutation = useMutation({
-    ...deleteCounterV1CountersCounterIdDeleteMutation({ client }),
+    ...deleteCounterMutation({ client }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: countersKey });
       setSelectedId(null);
@@ -98,11 +96,11 @@ export function Counters() {
   });
 
   const resetMutation = useMutation({
-    ...createResetV1CountersCounterIdResetsPostMutation({ client }),
+    ...createResetMutation({ client }),
     onSuccess: (reset, variables) => {
       void queryClient.invalidateQueries({ queryKey: countersKey });
       void queryClient.invalidateQueries({
-        queryKey: listResetsV1CountersCounterIdResetsGetQueryKey({
+        queryKey: listResetsQueryKey({
           client,
           path: { counter_id: variables.path.counter_id },
         }),
@@ -125,11 +123,11 @@ export function Counters() {
   });
 
   const undoMutation = useMutation({
-    ...undoResetV1CountersCounterIdResetsResetIdDeleteMutation({ client }),
+    ...undoResetMutation({ client }),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: countersKey });
       void queryClient.invalidateQueries({
-        queryKey: listResetsV1CountersCounterIdResetsGetQueryKey({
+        queryKey: listResetsQueryKey({
           client,
           path: { counter_id: variables.path.counter_id },
         }),
@@ -310,7 +308,7 @@ function CounterDetailDialog({
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data: resets = [] } = useQuery(
-    listResetsV1CountersCounterIdResetsGetOptions({
+    listResetsOptions({
       client,
       path: { counter_id: counter.id },
     }),

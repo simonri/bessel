@@ -1,6 +1,6 @@
 import {
-  listCalendarAccountsV1CalendarsAccountsGetOptions,
-  listCalendarEventsV1CalendarsEventsGetOptions,
+  listCalendarAccountsOptions,
+  listCalendarEventsOptions,
 } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -94,12 +94,12 @@ export function EventReminders() {
   );
 
   const { data: accounts } = useQuery({
-    ...listCalendarAccountsV1CalendarsAccountsGetOptions({ client }),
+    ...listCalendarAccountsOptions({ client }),
     enabled,
   });
   const hasAccounts = (accounts?.accounts.length ?? 0) > 0;
   const { data } = useQuery({
-    ...listCalendarEventsV1CalendarsEventsGetOptions({
+    ...listCalendarEventsOptions({
       client,
       query: {
         start_ts: Math.floor(from / 1000),

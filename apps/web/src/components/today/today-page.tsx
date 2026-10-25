@@ -1,9 +1,9 @@
 import {
-  getActivitySummaryV1ActivitySummaryGetOptions,
-  getDailySleepV1HealthkitSleepDailyGetOptions,
-  listActivitySourcesV1ActivitySourcesGetOptions,
-  listCalendarEventsV1CalendarsEventsGetOptions,
-  listTasksV1TasksGetOptions,
+  getActivitySummaryOptions,
+  getDailySleepOptions,
+  listActivitySourcesOptions,
+  listCalendarEventsOptions,
+  listTasksOptions,
   type TaskSchema,
   TaskStatus,
 } from "@bessel/client";
@@ -79,7 +79,7 @@ function useUpcomingEvents(now: Date) {
   // while the minute clock ticks.
   const hour = 3600;
   const { data } = useQuery(
-    listCalendarEventsV1CalendarsEventsGetOptions({
+    listCalendarEventsOptions({
       client,
       query: {
         start_ts: Math.floor(startTs / hour) * hour,
@@ -166,7 +166,7 @@ function TaskList({
 
 function TasksBlock({ now }: { now: Date }) {
   const { data } = useQuery(
-    listTasksV1TasksGetOptions({
+    listTasksOptions({
       client,
       query: {
         page: 1,
@@ -228,7 +228,7 @@ function SleepBlock({ now }: { now: Date }) {
   const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [startTs, endTs] = localNightBounds(now);
   const { data } = useQuery(
-    getDailySleepV1HealthkitSleepDailyGetOptions({
+    getDailySleepOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs, tz_name: tzName },
     }),
@@ -243,16 +243,14 @@ function SleepBlock({ now }: { now: Date }) {
 }
 
 function ScreenTimeBlock({ now }: { now: Date }) {
-  const { data: sources } = useQuery(
-    listActivitySourcesV1ActivitySourcesGetOptions({ client }),
-  );
+  const { data: sources } = useQuery(listActivitySourcesOptions({ client }));
   const source = sources?.sources[0];
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startTs = Math.floor(dayStart.getTime() / 1000);
   // Whole minutes keep the query key steady between clock ticks.
   const endTs = Math.floor(now.getTime() / 60_000) * 60;
   const { data } = useQuery({
-    ...getActivitySummaryV1ActivitySummaryGetOptions({
+    ...getActivitySummaryOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs, source: source ?? "" },
     }),

@@ -1,7 +1,7 @@
 import type { CategorySchema, TransactionSchema } from "@bessel/client";
 import {
-  listTransactionsV1TransactionsGetQueryKey,
-  updateTransactionV1TransactionsTransactionIdPatchMutation,
+  listTransactionsQueryKey,
+  updateTransactionMutation,
 } from "@bessel/client";
 import {
   Combobox,
@@ -95,10 +95,10 @@ export function CategoryCell({
     [grouped, search],
   );
 
-  const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
+  const queryKey = listTransactionsQueryKey({ client });
 
   const mutation = useMutation({
-    ...updateTransactionV1TransactionsTransactionIdPatchMutation({ client }),
+    ...updateTransactionMutation({ client }),
     ...transactionWrites,
     onMutate: async ({ body }) => {
       await queryClient.cancelQueries({ queryKey });

@@ -1,7 +1,4 @@
-import {
-  listProjectsV1ProjectsGetOptions,
-  type ProjectSchema,
-} from "@bessel/client";
+import { listProjectsOptions, type ProjectSchema } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -92,9 +89,7 @@ export function GitStatus() {
   // polls there, or every hidden git widget spawns subprocesses forever.
   const visible = useWindowVisible();
 
-  const { data: allProjects } = useQuery(
-    listProjectsV1ProjectsGetOptions({ client }),
-  );
+  const { data: allProjects } = useQuery(listProjectsOptions({ client }));
   // ssh-backed projects are a separate, pre-existing limitation (no remote git
   // support yet) — unrelated to whether this device has a local path set.
   const localProjects = (allProjects ?? []).filter((p) => !p.ssh_host);

@@ -1,11 +1,11 @@
 import {
-  getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
-  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
-  importKlarnaTransactionsV1KlarnaImportPostMutation,
-  importTransactionsV1TransactionsImportPostMutation,
-  listBankAccountsV1BankAccountsGetOptions,
-  listBankAccountsV1BankAccountsGetQueryKey,
-  listTransactionsV1TransactionsGetQueryKey,
+  getAccountsOverviewQueryKey,
+  getNetWorthHistoryQueryKey,
+  importKlarnaTransactionsMutation,
+  importTransactionsMutation,
+  listBankAccountsOptions,
+  listBankAccountsQueryKey,
+  listTransactionsQueryKey,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
@@ -68,7 +68,7 @@ export function ImportDialog({
   const queryClient = useQueryClient();
 
   const { data: accountsData } = useQuery(
-    listBankAccountsV1BankAccountsGetOptions({
+    listBankAccountsOptions({
       client,
       query: { limit: 100, sorting: ["name"] },
     }),
@@ -77,20 +77,20 @@ export function ImportDialog({
 
   const invalidateImported = () => {
     void queryClient.invalidateQueries({
-      queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
+      queryKey: listTransactionsQueryKey({ client }),
     });
     // Account balances are derived from their transactions.
     for (const queryKey of [
-      listBankAccountsV1BankAccountsGetQueryKey({ client }),
-      getAccountsOverviewV1BankAccountsOverviewGetQueryKey({ client }),
-      getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
+      listBankAccountsQueryKey({ client }),
+      getAccountsOverviewQueryKey({ client }),
+      getNetWorthHistoryQueryKey({ client }),
     ]) {
       void queryClient.invalidateQueries({ queryKey });
     }
   };
 
   const fileMutation = useMutation({
-    ...importTransactionsV1TransactionsImportPostMutation({ client }),
+    ...importTransactionsMutation({ client }),
     onSuccess: (data) => {
       setResult([
         `${data.created} transactions imported`,
@@ -103,7 +103,7 @@ export function ImportDialog({
   });
 
   const klarnaMutation = useMutation({
-    ...importKlarnaTransactionsV1KlarnaImportPostMutation({ client }),
+    ...importKlarnaTransactionsMutation({ client }),
     onSuccess: (data) => {
       setResult([
         `${data.created} pay later purchases imported`,

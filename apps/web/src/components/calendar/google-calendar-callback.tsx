@@ -1,5 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { completeGoogleConnectV1CalendarsGoogleCallbackPost } from "@bessel/client";
+import { completeGoogleConnect } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -45,7 +45,7 @@ export function GoogleCalendarCallbackPage() {
       return;
     }
 
-    completeGoogleConnectV1CalendarsGoogleCallbackPost({
+    completeGoogleConnect({
       client,
       body: { code, state },
       throwOnError: true,

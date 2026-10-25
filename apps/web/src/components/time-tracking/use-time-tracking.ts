@@ -1,23 +1,23 @@
 import {
-  createTimeEntryV1TimeEntriesPost,
-  createTimeProjectV1TimeProjectsPost,
-  deleteTimeEntryV1TimeEntriesEntryIdDelete,
-  getDailySleepV1HealthkitSleepDailyGetOptions,
-  getTimelineV1TimelineGetOptions,
-  getTimeSummaryV1TimeSummaryGetOptions,
-  getTimeSummaryV1TimeSummaryGetQueryKey,
-  listTimeEntriesV1TimeEntriesGetOptions,
-  listTimeEntriesV1TimeEntriesGetQueryKey,
-  listTimeProjectsV1TimeProjectsGetOptions,
-  listTimeProjectsV1TimeProjectsGetQueryKey,
+  createTimeEntry,
+  createTimeProject,
+  deleteTimeEntry,
+  getDailySleepOptions,
+  getTimelineOptions,
+  getTimeSummaryOptions,
+  getTimeSummaryQueryKey,
+  listTimeEntriesOptions,
+  listTimeEntriesQueryKey,
+  listTimeProjectsOptions,
+  listTimeProjectsQueryKey,
   type TimeEntryCreate,
   type TimeEntrySchema,
   type TimeEntryUpdate,
   type TimeProjectCreate,
   type TimeProjectSchema,
   type TimeProjectUpdate,
-  updateTimeEntryV1TimeEntriesEntryIdPatch,
-  updateTimeProjectV1TimeProjectsProjectIdPatch,
+  updateTimeEntry,
+  updateTimeProject,
 } from "@bessel/client";
 import {
   keepPreviousData,
@@ -37,7 +37,7 @@ const MAX_SLEEP_WINDOW_SECS = 7 * 86_400;
 export function useHasRecentSleep(timeZone: string): boolean {
   const [now] = useState(() => Math.floor(Date.now() / 1000));
   const { data } = useQuery(
-    getDailySleepV1HealthkitSleepDailyGetOptions({
+    getDailySleepOptions({
       client,
       query: {
         start_ts: now - SLEEP_LOOKBACK_SECS,
@@ -61,7 +61,7 @@ export function useSleepBands(
     startTs + MAX_SLEEP_WINDOW_SECS,
   );
   const { data } = useQuery({
-    ...getTimelineV1TimelineGetOptions({
+    ...getTimelineOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs },
     }),
@@ -76,12 +76,12 @@ export function useSleepBands(
 }
 
 export function useTimeProjects(): TimeProjectSchema[] | undefined {
-  return useQuery(listTimeProjectsV1TimeProjectsGetOptions({ client })).data;
+  return useQuery(listTimeProjectsOptions({ client })).data;
 }
 
 export function useTimeEntries(start: Date, end: Date) {
   return useQuery({
-    ...listTimeEntriesV1TimeEntriesGetOptions({
+    ...listTimeEntriesOptions({
       client,
       query: { start, end },
     }),
@@ -91,7 +91,7 @@ export function useTimeEntries(start: Date, end: Date) {
 
 export function useTimeSummary(year: number, timeZone: string) {
   return useQuery({
-    ...getTimeSummaryV1TimeSummaryGetOptions({
+    ...getTimeSummaryOptions({
       client,
       query: { year, tz_name: timeZone },
     }),
@@ -106,18 +106,18 @@ function familyKey<T extends { query?: unknown }>(key: [T]) {
 }
 
 const entriesFamily = familyKey(
-  listTimeEntriesV1TimeEntriesGetQueryKey({
+  listTimeEntriesQueryKey({
     client,
     query: { start: new Date(0), end: new Date(0) },
   }),
 );
 const summaryFamily = familyKey(
-  getTimeSummaryV1TimeSummaryGetQueryKey({
+  getTimeSummaryQueryKey({
     client,
     query: { year: 0, tz_name: "" },
   }),
 );
-const projectsKey = listTimeProjectsV1TimeProjectsGetQueryKey({ client });
+const projectsKey = listTimeProjectsQueryKey({ client });
 
 let tempIds = 0;
 
@@ -175,7 +175,7 @@ export function useTimeWrites() {
       (entries) => [...entries, temp],
       async () =>
         (
-          await createTimeEntryV1TimeEntriesPost({
+          await createTimeEntry({
             client,
             body,
             throwOnError: true,
@@ -200,7 +200,7 @@ export function useTimeWrites() {
         ),
       async () =>
         (
-          await updateTimeEntryV1TimeEntriesEntryIdPatch({
+          await updateTimeEntry({
             client,
             path: { entry_id: entry.id },
             body,
@@ -214,7 +214,7 @@ export function useTimeWrites() {
     optimistic(
       (entries) => entries.filter((e) => e.id !== entry.id),
       () =>
-        deleteTimeEntryV1TimeEntriesEntryIdDelete({
+        deleteTimeEntry({
           client,
           path: { entry_id: entry.id },
           throwOnError: true,
@@ -238,7 +238,7 @@ export function useTimeWrites() {
 
   const createProject = (body: TimeProjectCreate) =>
     projectWrite(async () => {
-      const { data } = await createTimeProjectV1TimeProjectsPost({
+      const { data } = await createTimeProject({
         client,
         body,
         throwOnError: true,
@@ -253,7 +253,7 @@ export function useTimeWrites() {
     projectWrite(
       async () =>
         (
-          await updateTimeProjectV1TimeProjectsProjectIdPatch({
+          await updateTimeProject({
             client,
             path: { project_id: project.id },
             body,

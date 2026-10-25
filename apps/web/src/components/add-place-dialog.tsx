@@ -1,8 +1,8 @@
 import type { GooglePlaceSearchResult } from "@bessel/client";
 import {
-  createPlaceV1PlacesPostMutation,
-  listPlacesV1PlacesGetQueryKey,
-  searchGooglePlacesV1PlacesSearchGetOptions,
+  createPlaceMutation,
+  listPlacesQueryKey,
+  searchGooglePlacesOptions,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
@@ -34,7 +34,7 @@ export function AddPlaceDialog() {
   const queryClient = useQueryClient();
 
   const { data: searchResults, isLoading: isSearching } = useQuery({
-    ...searchGooglePlacesV1PlacesSearchGetOptions({
+    ...searchGooglePlacesOptions({
       client,
       query: { query: searchQuery },
     }),
@@ -42,10 +42,10 @@ export function AddPlaceDialog() {
   });
 
   const mutation = useMutation({
-    ...createPlaceV1PlacesPostMutation({ client }),
+    ...createPlaceMutation({ client }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: listPlacesV1PlacesGetQueryKey({ client }),
+        queryKey: listPlacesQueryKey({ client }),
       });
       toast.success("Place added");
       handleClose();

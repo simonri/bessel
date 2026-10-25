@@ -1,16 +1,16 @@
 import type { TransactionSchema } from "@bessel/client";
 import {
-  bulkUpdateTransactionsV1TransactionsBulkPatchMutation,
-  categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation,
-  createCategoryRuleV1CategoriesRulesPostMutation,
-  deleteTransactionsV1TransactionsDeleteMutation,
-  listBankAccountsV1BankAccountsGetOptions,
-  listBankAccountsV1BankAccountsGetQueryKey,
-  listCategoriesV1CategoriesGetOptions,
-  listTransactionsV1TransactionsGetOptions,
-  listTransactionsV1TransactionsGetQueryKey,
-  unpairTransferV1TransactionsTransactionIdTransferDeleteMutation,
-  updateTransactionV1TransactionsTransactionIdPatchMutation,
+  bulkUpdateTransactionsMutation,
+  categorizeByDescriptionMutation,
+  createCategoryRuleMutation,
+  deleteTransactionsMutation,
+  listBankAccountsOptions,
+  listBankAccountsQueryKey,
+  listCategoriesOptions,
+  listTransactionsOptions,
+  listTransactionsQueryKey,
+  unpairTransferMutation,
+  updateTransactionMutation,
 } from "@bessel/client";
 import {
   AlertDialog,
@@ -202,7 +202,7 @@ function Transactions() {
   );
 
   const { data, isLoading } = useQuery({
-    ...listTransactionsV1TransactionsGetOptions({
+    ...listTransactionsOptions({
       client,
       query: {
         limit: MONTH_LIMIT,
@@ -229,7 +229,7 @@ function Transactions() {
   });
 
   const { data: categoriesData } = useQuery(
-    listCategoriesV1CategoriesGetOptions({
+    listCategoriesOptions({
       client,
       query: { limit: 200 },
     }),
@@ -240,7 +240,7 @@ function Transactions() {
   );
 
   const { data: accountsData } = useQuery(
-    listBankAccountsV1BankAccountsGetOptions({
+    listBankAccountsOptions({
       client,
       query: { limit: 100 },
     }),
@@ -253,8 +253,8 @@ function Transactions() {
     return map;
   }, [accountsData]);
 
-  const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
-  const bankAccountsKey = listBankAccountsV1BankAccountsGetQueryKey({ client });
+  const queryKey = listTransactionsQueryKey({ client });
+  const bankAccountsKey = listBankAccountsQueryKey({ client });
 
   const settle = () =>
     settleWhenIdle(queryClient, transactionWrites.mutationKey, () => {
@@ -267,7 +267,7 @@ function Transactions() {
 
   // A failed delete brings its rows back with the refetch in settle().
   const deleteMutation = useMutation({
-    ...deleteTransactionsV1TransactionsDeleteMutation({ client }),
+    ...deleteTransactionsMutation({ client }),
     ...transactionWrites,
     onMutate: async ({ body }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -294,7 +294,7 @@ function Transactions() {
   });
 
   const bulkUpdateMutation = useMutation({
-    ...bulkUpdateTransactionsV1TransactionsBulkPatchMutation({ client }),
+    ...bulkUpdateTransactionsMutation({ client }),
     ...transactionWrites,
     onMutate: async ({ body }) => {
       const previous = await snapshot();
@@ -324,9 +324,7 @@ function Transactions() {
   });
 
   const bulkCategorizeMutation = useMutation({
-    ...categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation(
-      { client },
-    ),
+    ...categorizeByDescriptionMutation({ client }),
     ...transactionWrites,
     onMutate: async ({ body }) => {
       const previous = await snapshot();
@@ -360,7 +358,7 @@ function Transactions() {
   });
 
   const toggleBusinessMutation = useMutation({
-    ...updateTransactionV1TransactionsTransactionIdPatchMutation({ client }),
+    ...updateTransactionMutation({ client }),
     ...transactionWrites,
     onMutate: async ({ path, body }) => {
       const previous = await snapshot();
@@ -401,7 +399,7 @@ function Transactions() {
   );
 
   const unpairMutation = useMutation({
-    ...unpairTransferV1TransactionsTransactionIdTransferDeleteMutation({
+    ...unpairTransferMutation({
       client,
     }),
     ...transactionWrites,
@@ -433,7 +431,7 @@ function Transactions() {
   // Remembered as a rule, so later imports with the same text arrive sorted.
   const [rememberRule, setRememberRule] = useState(true);
   const createRuleMutation = useMutation({
-    ...createCategoryRuleV1CategoriesRulesPostMutation({ client }),
+    ...createCategoryRuleMutation({ client }),
     onSuccess: () =>
       toast.success("New ones like this will be sorted automatically"),
     onError: () => toast.error("Couldn't save the rule"),

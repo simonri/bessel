@@ -16,7 +16,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
-  structureRecipeTextV1RecipesImportPostMutation: () => ({
+  structureRecipeTextMutation: () => ({
     mutationFn: (variables: unknown) => {
       api.calls.push(variables);
       return api.respond();

@@ -1,4 +1,4 @@
-import { updateMeV1AuthMePatchMutation } from "@bessel/client";
+import { updateMeMutation } from "@bessel/client";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { client } from "@/lib/client";
@@ -7,7 +7,7 @@ import { client } from "@/lib/client";
  *  so agents using Bessel's MCP server can work in the user's local days. */
 export function useReportTimezone(stored: string | null | undefined) {
   const { mutate } = useMutation({
-    ...updateMeV1AuthMePatchMutation({ client }),
+    ...updateMeMutation({ client }),
     meta: { errorToast: false },
   });
 

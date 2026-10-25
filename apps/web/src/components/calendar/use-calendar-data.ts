@@ -1,14 +1,14 @@
 import {
-  authorizeGoogleV1CalendarsGoogleAuthorizePostMutation,
+  authorizeGoogleMutation,
   type CalendarAccountListResponse,
   type CalendarEventSchema,
-  connectIcloudV1CalendarsIcloudPostMutation,
-  disconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteMutation,
-  listCalendarAccountsV1CalendarsAccountsGetOptions,
-  listCalendarAccountsV1CalendarsAccountsGetQueryKey,
-  listCalendarEventsV1CalendarsEventsGetOptions,
-  syncCalendarAccountV1CalendarsAccountsAccountIdSyncPostMutation,
-  updateCalendarV1CalendarsCalendarIdPatchMutation,
+  connectIcloudMutation,
+  disconnectCalendarAccountMutation,
+  listCalendarAccountsOptions,
+  listCalendarAccountsQueryKey,
+  listCalendarEventsOptions,
+  syncCalendarAccountMutation,
+  updateCalendarMutation,
 } from "@bessel/client";
 import {
   keepPreviousData,
@@ -76,7 +76,7 @@ export function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export const EVENTS_QUERY_ID = "listCalendarEventsV1CalendarsEventsGet";
+export const EVENTS_QUERY_ID = "listCalendarEvents";
 
 export function isEventsQuery(queryKey: readonly unknown[]): boolean {
   return (queryKey[0] as { _id?: string } | undefined)?._id === EVENTS_QUERY_ID;
@@ -103,8 +103,7 @@ export function refreshEvents(queryClient: QueryClient) {
   if (!eventWritesInFlight(queryClient)) invalidateEvents(queryClient);
 }
 
-export const accountsQueryKey = () =>
-  listCalendarAccountsV1CalendarsAccountsGetQueryKey({ client });
+export const accountsQueryKey = () => listCalendarAccountsQueryKey({ client });
 
 function toAccounts(data: CalendarAccountListResponse | undefined) {
   const accounts: CalendarAccount[] = [];
@@ -186,7 +185,7 @@ export function useCalendarData(range: {
   const queryClient = useQueryClient();
 
   const { data: accountsData } = useQuery({
-    ...listCalendarAccountsV1CalendarsAccountsGetOptions({ client }),
+    ...listCalendarAccountsOptions({ client }),
     refetchInterval: (query) => {
       const pending =
         query.state.data?.accounts.some(
@@ -202,7 +201,7 @@ export function useCalendarData(range: {
   const startTs = Math.floor(range.start.getTime() / 1000);
   const endTs = Math.floor(range.end.getTime() / 1000);
   const { data: eventsData } = useQuery({
-    ...listCalendarEventsV1CalendarsEventsGetOptions({
+    ...listCalendarEventsOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs },
     }),
@@ -263,7 +262,7 @@ export function useCalendarActions(): CalendarActions {
     queryClient.invalidateQueries({ queryKey: accountsQueryKey() });
 
   const updateCalendar = useMutation({
-    ...updateCalendarV1CalendarsCalendarIdPatchMutation({ client }),
+    ...updateCalendarMutation({ client }),
     onMutate: async ({ path, body }) => {
       await queryClient.cancelQueries({ queryKey: accountsQueryKey() });
       const previous = queryClient.getQueryData<CalendarAccountListResponse>(
@@ -292,18 +291,18 @@ export function useCalendarActions(): CalendarActions {
 
   // Both report failures where they're called.
   const authorizeGoogle = useMutation({
-    ...authorizeGoogleV1CalendarsGoogleAuthorizePostMutation({ client }),
+    ...authorizeGoogleMutation({ client }),
     meta: { errorToast: false },
   });
   const connectICloud = useMutation({
-    ...connectIcloudV1CalendarsIcloudPostMutation({ client }),
+    ...connectIcloudMutation({ client }),
     meta: { errorToast: false },
     onSuccess: () => {
       startConnectPolling(queryClient);
     },
   });
   const syncAccount = useMutation({
-    ...syncCalendarAccountV1CalendarsAccountsAccountIdSyncPostMutation({
+    ...syncCalendarAccountMutation({
       client,
     }),
     onSuccess: () => {
@@ -313,7 +312,7 @@ export function useCalendarActions(): CalendarActions {
     onError: () => toast.error("Couldn't start a sync"),
   });
   const disconnect = useMutation({
-    ...disconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteMutation({
+    ...disconnectCalendarAccountMutation({
       client,
     }),
     onSuccess: () => {

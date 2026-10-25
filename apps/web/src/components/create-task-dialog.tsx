@@ -1,8 +1,8 @@
 import {
-  createTaskV1TasksPostMutation,
-  listProjectsV1ProjectsGetOptions,
-  updateTaskV1TasksTaskIdPatchMutation,
-  uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation,
+  createTaskMutation,
+  listProjectsOptions,
+  updateTaskMutation,
+  uploadTaskAttachmentMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
@@ -142,7 +142,7 @@ export function TaskFormDialog({
   const cache = useTaskCacheHelpers();
 
   const { data: projectsData = [] } = useQuery({
-    ...listProjectsV1ProjectsGetOptions({ client }),
+    ...listProjectsOptions({ client }),
   });
   const projects = projectsData.map((p) => p.name);
 
@@ -167,13 +167,13 @@ export function TaskFormDialog({
 
   // Reports failures per call, where it knows which file it was.
   const uploadAttachmentMutation = useMutation({
-    ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
+    ...uploadTaskAttachmentMutation({ client }),
     meta: { errorToast: false },
   });
 
   // Saves the description's marker swap (pending -> real id) once the new task's images are uploaded.
   const patchDescriptionMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    ...updateTaskMutation({ client }),
     meta: { errorToast: false },
     onSettled: () => cache.invalidateAll(),
   });
@@ -252,7 +252,7 @@ export function TaskFormDialog({
   });
 
   const createMutation = useMutation({
-    ...createTaskV1TasksPostMutation({ client }),
+    ...createTaskMutation({ client }),
     onSuccess: async (newTask) => {
       let description = newTask.description ?? "";
       for (const pending of pendingFiles) {

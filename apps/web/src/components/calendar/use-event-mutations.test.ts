@@ -158,7 +158,7 @@ describe("applyReply", () => {
 });
 
 describe("restoreEvent", () => {
-  const eventsKey = [{ _id: "listCalendarEventsV1CalendarsEventsGet" }];
+  const eventsKey = [{ _id: "listCalendarEvents" }];
 
   it("puts back only the failed event, where it was", () => {
     const queryClient = new QueryClient();

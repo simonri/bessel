@@ -1675,38 +1675,7 @@ export const BankOptionSchema = {
   title: "BankOption",
 } as const;
 
-export const Body_add_transaction_document_v1_transactions__transaction_id__documents_postSchema =
-  {
-    properties: {
-      file: {
-        type: "string",
-        contentMediaType: "application/octet-stream",
-        title: "File",
-        format: "binary",
-      },
-    },
-    type: "object",
-    required: ["file"],
-    title:
-      "Body_add_transaction_document_v1_transactions__transaction_id__documents_post",
-  } as const;
-
-export const Body_import_location_history_v1_location_history_import_postSchema =
-  {
-    properties: {
-      file: {
-        type: "string",
-        contentMediaType: "application/octet-stream",
-        title: "File",
-        format: "binary",
-      },
-    },
-    type: "object",
-    required: ["file"],
-    title: "Body_import_location_history_v1_location_history_import_post",
-  } as const;
-
-export const Body_import_transactions_v1_transactions_import_postSchema = {
+export const Body_add_transaction_documentSchema = {
   properties: {
     file: {
       type: "string",
@@ -1717,23 +1686,50 @@ export const Body_import_transactions_v1_transactions_import_postSchema = {
   },
   type: "object",
   required: ["file"],
-  title: "Body_import_transactions_v1_transactions_import_post",
+  title: "Body_add_transaction_document",
 } as const;
 
-export const Body_upload_task_attachment_v1_tasks__task_id__attachments_postSchema =
-  {
-    properties: {
-      file: {
-        type: "string",
-        contentMediaType: "application/octet-stream",
-        title: "File",
-        format: "binary",
-      },
+export const Body_import_location_historySchema = {
+  properties: {
+    file: {
+      type: "string",
+      contentMediaType: "application/octet-stream",
+      title: "File",
+      format: "binary",
     },
-    type: "object",
-    required: ["file"],
-    title: "Body_upload_task_attachment_v1_tasks__task_id__attachments_post",
-  } as const;
+  },
+  type: "object",
+  required: ["file"],
+  title: "Body_import_location_history",
+} as const;
+
+export const Body_import_transactionsSchema = {
+  properties: {
+    file: {
+      type: "string",
+      contentMediaType: "application/octet-stream",
+      title: "File",
+      format: "binary",
+    },
+  },
+  type: "object",
+  required: ["file"],
+  title: "Body_import_transactions",
+} as const;
+
+export const Body_upload_task_attachmentSchema = {
+  properties: {
+    file: {
+      type: "string",
+      contentMediaType: "application/octet-stream",
+      title: "File",
+      format: "binary",
+    },
+  },
+  type: "object",
+  required: ["file"],
+  title: "Body_upload_task_attachment",
+} as const;
 
 export const BulkCategorizeRequestSchema = {
   properties: {

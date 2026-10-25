@@ -25,37 +25,31 @@ const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
-  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetOptions:
-    (options: { path: { transaction_id: string } }) => ({
-      queryKey: ["documents", options.path.transaction_id],
-      queryFn: async () => api.documents,
-    }),
-  listTransactionsV1TransactionsGetQueryKey: () => [{ _id: "transactions" }],
-  addTransactionDocumentV1TransactionsTransactionIdDocumentsPostMutation:
-    () => ({
-      mutationFn: async (variables: {
-        path: unknown;
-        body: { file: File };
-      }) => {
-        if (api.refuse.has(variables.body.file.name)) {
-          throw { detail: "Only PDFs and photos can be added." };
-        }
-        api.added.push({ path: variables.path, file: variables.body.file });
-      },
-    }),
-  removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteMutation:
-    () => ({
-      mutationFn: async (variables: { path: unknown }) => {
-        api.removed.push(variables.path);
-      },
-    }),
-  documentThumbnailV1DocumentsDocumentIdThumbnailGet: async (options: {
-    path: { document_id: string };
-  }) => {
+  listTransactionDocumentsOptions: (options: {
+    path: { transaction_id: string };
+  }) => ({
+    queryKey: ["documents", options.path.transaction_id],
+    queryFn: async () => api.documents,
+  }),
+  listTransactionsQueryKey: () => [{ _id: "transactions" }],
+  addTransactionDocumentMutation: () => ({
+    mutationFn: async (variables: { path: unknown; body: { file: File } }) => {
+      if (api.refuse.has(variables.body.file.name)) {
+        throw { detail: "Only PDFs and photos can be added." };
+      }
+      api.added.push({ path: variables.path, file: variables.body.file });
+    },
+  }),
+  removeTransactionDocumentMutation: () => ({
+    mutationFn: async (variables: { path: unknown }) => {
+      api.removed.push(variables.path);
+    },
+  }),
+  documentThumbnail: async (options: { path: { document_id: string } }) => {
     api.fetched.push(`thumbnail ${options.path.document_id}`);
     return { data: new Blob(["x"]) };
   },
-  documentPageV1DocumentsDocumentIdPagesPageGet: async (options: {
+  documentPage: async (options: {
     path: { document_id: string; page: number };
   }) => {
     api.fetched.push(`page ${options.path.document_id} ${options.path.page}`);

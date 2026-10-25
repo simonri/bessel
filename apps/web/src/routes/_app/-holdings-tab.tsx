@@ -4,9 +4,9 @@ import type {
   InvestmentAccountSummary,
 } from "@bessel/client";
 import {
-  getAccountsOverviewV1BankAccountsOverviewGetOptions,
-  getHoldingsV1InvestmentsHoldingsGetOptions,
-  getInvestmentAccountsV1InvestmentsAccountsGetOptions,
+  getAccountsOverviewOptions,
+  getHoldingsOptions,
+  getInvestmentAccountsOptions,
 } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
@@ -282,9 +282,7 @@ function AccountPicker({
   scope: string | null;
   onScope: (id: string | null) => void;
 }) {
-  const { data: overview } = useQuery(
-    getAccountsOverviewV1BankAccountsOverviewGetOptions({ client }),
-  );
+  const { data: overview } = useQuery(getAccountsOverviewOptions({ client }));
   return (
     <Panel className="divide-y-0 p-3">
       <p className="px-2 pt-2 pb-1 type-label text-white/55">Accounts</p>
@@ -413,10 +411,10 @@ function HoldingList({
 
 export function HoldingsTab() {
   const { data: holdingsData, isLoading: holdingsLoading } = useQuery(
-    getHoldingsV1InvestmentsHoldingsGetOptions({ client }),
+    getHoldingsOptions({ client }),
   );
   const { data: accountsData, isLoading: accountsLoading } = useQuery(
-    getInvestmentAccountsV1InvestmentsAccountsGetOptions({ client }),
+    getInvestmentAccountsOptions({ client }),
   );
   const [scope, setScope] = useState<string | null>(null);
 

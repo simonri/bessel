@@ -1,5 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { getMeV1AuthMeGetOptions } from "@bessel/client";
+import { getMeOptions } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -22,7 +22,7 @@ function AppLayout() {
   const navigate = useNavigate();
 
   const { data: me, isLoading: isUserLoading } = useQuery({
-    ...getMeV1AuthMeGetOptions({ client }),
+    ...getMeOptions({ client }),
     enabled: isAuthenticated,
   });
   useReportTimezone(me ? (me.timezone ?? null) : undefined);

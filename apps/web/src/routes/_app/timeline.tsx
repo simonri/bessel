@@ -1,7 +1,7 @@
 import {
-  getLocationHistoryDayV1LocationHistoryDayGetOptions,
-  getTimelineV1TimelineGetOptions,
-  listActivitySourcesV1ActivitySourcesGetOptions,
+  getLocationHistoryDayOptions,
+  getTimelineOptions,
+  listActivitySourcesOptions,
 } from "@bessel/client";
 import {
   Select,
@@ -45,13 +45,13 @@ function TimelinePage() {
   const isToday = isSameDay(date, today);
 
   const { data: sourcesData } = useQuery({
-    ...listActivitySourcesV1ActivitySourcesGetOptions({ client }),
+    ...listActivitySourcesOptions({ client }),
   });
   const sources = sourcesData?.sources ?? [];
 
   const [startTs, endTs] = localDayBounds(date, DAY_START_HOUR);
   const { data: timeline, isLoading } = useQuery({
-    ...getTimelineV1TimelineGetOptions({
+    ...getTimelineOptions({
       client,
       query: {
         start_ts: startTs,
@@ -69,14 +69,14 @@ function TimelinePage() {
   const locationDate = useMemo(() => dayParam(dayKey), [dayKey]);
   const nextLocationDate = useMemo(() => dayParam(nextDayKey), [nextDayKey]);
   const { data: locationDay } = useQuery({
-    ...getLocationHistoryDayV1LocationHistoryDayGetOptions({
+    ...getLocationHistoryDayOptions({
       client,
       query: { date: locationDate },
     }),
     retry: false,
   });
   const { data: nextLocationDay } = useQuery({
-    ...getLocationHistoryDayV1LocationHistoryDayGetOptions({
+    ...getLocationHistoryDayOptions({
       client,
       query: { date: nextLocationDate },
     }),

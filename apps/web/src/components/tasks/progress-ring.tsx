@@ -1,8 +1,4 @@
-import {
-  listTasksV1TasksGetOptions,
-  type TaskSchema,
-  TaskStatus,
-} from "@bessel/client";
+import { listTasksOptions, type TaskSchema, TaskStatus } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/client";
 import { isRepeatingTask } from "@/lib/task-format";
@@ -83,7 +79,7 @@ function isSameLocalDay(a: Date, b: Date): boolean {
 /** Today's progress: what got done vs. what was in play for today. */
 export function useTaskProgress(openTasks: TaskSchema[]) {
   const { data } = useQuery(
-    listTasksV1TasksGetOptions({
+    listTasksOptions({
       client,
       query: {
         page: 1,

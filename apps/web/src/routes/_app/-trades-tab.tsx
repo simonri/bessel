@@ -1,5 +1,5 @@
 import type { TradeSchema } from "@bessel/client";
-import { listTradesV1InvestmentsTradesGetOptions } from "@bessel/client";
+import { listTradesOptions } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -46,7 +46,7 @@ export function groupByMonth(
 export function TradesTab() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useQuery({
-    ...listTradesV1InvestmentsTradesGetOptions({
+    ...listTradesOptions({
       client,
       query: { page, limit: PAGE_SIZE },
     }),

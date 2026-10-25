@@ -13,7 +13,7 @@ const api = vi.hoisted(() => ({ summary: vi.fn() }));
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
-  transactionSummaryV1TransactionsSummaryGetOptions: () => ({
+  getTransactionSummaryOptions: () => ({
     queryKey: ["summary"],
     queryFn: api.summary,
   }),

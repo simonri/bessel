@@ -1,7 +1,4 @@
-import {
-  listProjectsV1ProjectsGetOptions,
-  type ProjectSchema,
-} from "@bessel/client";
+import { listProjectsOptions, type ProjectSchema } from "@bessel/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -195,9 +192,7 @@ function TemplateEditor({
   saveRef: React.MutableRefObject<(() => void) | null>;
 }) {
   const [draft, setDraft] = useState(template);
-  const { data: projectsData = [] } = useQuery(
-    listProjectsV1ProjectsGetOptions({ client }),
-  );
+  const { data: projectsData = [] } = useQuery(listProjectsOptions({ client }));
   const projects = projectsData.filter(
     (p): p is ProjectWithPath => p.path != null,
   );

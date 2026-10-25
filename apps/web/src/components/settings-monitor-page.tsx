@@ -7,7 +7,7 @@ import {
   StatusDot,
 } from "@/components/settings-ui";
 import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
-import { createIngestToken } from "@/lib/ingest-token";
+import { mintIngestToken } from "@/lib/ingest-token";
 
 type MonitorStatusResult = {
   installed: boolean;
@@ -160,7 +160,7 @@ export function MonitorPage() {
           onInstall={() =>
             run(async () =>
               window.electron!.monitor.install(
-                await createIngestToken("monitor"),
+                await mintIngestToken("monitor"),
               ),
             )
           }
@@ -176,7 +176,7 @@ export function MonitorPage() {
           onClick={() =>
             run(async () =>
               window.electron!.monitor.install(
-                await createIngestToken("monitor"),
+                await mintIngestToken("monitor"),
               ),
             )
           }

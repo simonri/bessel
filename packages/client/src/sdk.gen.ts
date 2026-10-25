@@ -10,514 +10,514 @@ import {
   type TDataShape,
 } from "./client/index.js";
 import {
-  addTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponseTransformer,
-  completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
-  completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
-  completeMontroseV1MontroseCallbackPostResponseTransformer,
-  completeTaskV1TasksTaskIdCompletePostResponseTransformer,
-  connectAvanzaV1AvanzaConnectPostResponseTransformer,
-  connectIcloudV1CalendarsIcloudPostResponseTransformer,
-  createBankAccountV1BankAccountsPostResponseTransformer,
-  createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
-  createCategoryRuleV1CategoriesRulesPostResponseTransformer,
-  createCounterV1CountersPostResponseTransformer,
-  createIngestTokenV1IngestTokensPostResponseTransformer,
-  createNotificationV1NotificationsPostResponseTransformer,
-  createPlaceV1PlacesPostResponseTransformer,
-  createProjectV1ProjectsPostResponseTransformer,
-  createRecipeV1RecipesPostResponseTransformer,
-  createResetV1CountersCounterIdResetsPostResponseTransformer,
-  createTaskV1TasksPostResponseTransformer,
-  createTimeEntryV1TimeEntriesPostResponseTransformer,
-  createTimeProjectV1TimeProjectsPostResponseTransformer,
-  getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer,
-  getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
-  getAvanzaV1AvanzaGetResponseTransformer,
-  getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
-  getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
-  getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer,
-  getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
-  getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
-  getMontroseV1MontroseGetResponseTransformer,
-  getNetWorthHistoryV1BankAccountsNetWorthGetResponseTransformer,
-  getPlaceV1PlacesPlaceIdGetResponseTransformer,
-  getRecipeV1RecipesRecipeIdGetResponseTransformer,
-  getTaskV1TasksTaskIdGetResponseTransformer,
-  getWeatherForecastV1WeatherGetResponseTransformer,
-  importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
-  linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer,
-  linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponseTransformer,
-  linkMontroseAccountV1MontroseAccountsAccountIdPatchResponseTransformer,
-  listBankAccountsV1BankAccountsGetResponseTransformer,
-  listBankConnectionsV1BankConnectionsGetResponseTransformer,
-  listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
-  listCalendarEventsV1CalendarsEventsGetResponseTransformer,
-  listCategoriesV1CategoriesGetResponseTransformer,
-  listCategoryRulesV1CategoriesRulesGetResponseTransformer,
-  listCountersV1CountersGetResponseTransformer,
-  listDevicesV1DevicesGetResponseTransformer,
-  listGymExercisesV1GymExercisesGetResponseTransformer,
-  listGymTopSetsV1GymExercisesExerciseIdSetsGetResponseTransformer,
-  listHealthkitSleepV1HealthkitSleepGetResponseTransformer,
-  listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
-  listIngestTokensV1IngestTokensGetResponseTransformer,
-  listNotificationsV1NotificationsGetResponseTransformer,
-  listPlacesV1PlacesGetResponseTransformer,
-  listProjectsV1ProjectsGetResponseTransformer,
-  listRecipesV1RecipesGetResponseTransformer,
-  listResetsV1CountersCounterIdResetsGetResponseTransformer,
-  listTasksV1TasksGetResponseTransformer,
-  listTimeEntriesV1TimeEntriesGetResponseTransformer,
-  listTimeProjectsV1TimeProjectsGetResponseTransformer,
-  listTradesV1InvestmentsTradesGetResponseTransformer,
-  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponseTransformer,
-  listTransactionsV1TransactionsGetResponseTransformer,
-  markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
-  putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer,
-  renameTransactionV1TransactionsTransactionIdNamePutResponseTransformer,
-  reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
-  respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
-  searchV1SearchGetResponseTransformer,
-  setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
-  undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
-  updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
-  updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
-  updateCounterV1CountersCounterIdPatchResponseTransformer,
-  updateDeviceV1DevicesDeviceIdPatchResponseTransformer,
-  updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
-  updateProjectV1ProjectsProjectIdPatchResponseTransformer,
-  updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
-  updateTaskV1TasksTaskIdPatchResponseTransformer,
-  updateTimeEntryV1TimeEntriesEntryIdPatchResponseTransformer,
-  updateTimeProjectV1TimeProjectsProjectIdPatchResponseTransformer,
-  updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
-  uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
-  upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
+  addTransactionDocumentResponseTransformer,
+  completeBankConnectionResponseTransformer,
+  completeGoogleConnectResponseTransformer,
+  completeMontroseResponseTransformer,
+  completeTaskResponseTransformer,
+  connectAvanzaResponseTransformer,
+  connectIcloudResponseTransformer,
+  createBankAccountResponseTransformer,
+  createCalendarEventResponseTransformer,
+  createCategoryRuleResponseTransformer,
+  createCounterResponseTransformer,
+  createIngestTokenResponseTransformer,
+  createNotificationResponseTransformer,
+  createPlaceResponseTransformer,
+  createProjectResponseTransformer,
+  createRecipeResponseTransformer,
+  createResetResponseTransformer,
+  createTaskResponseTransformer,
+  createTimeEntryResponseTransformer,
+  createTimeProjectResponseTransformer,
+  getAccountsOverviewResponseTransformer,
+  getAgentUsageStatusResponseTransformer,
+  getAvanzaResponseTransformer,
+  getBankAccountResponseTransformer,
+  getHealthSummaryResponseTransformer,
+  getInvestmentAccountsResponseTransformer,
+  getLocationHistoryDayResponseTransformer,
+  getLocationHistorySummaryResponseTransformer,
+  getMontroseResponseTransformer,
+  getNetWorthHistoryResponseTransformer,
+  getPlaceResponseTransformer,
+  getRecipeResponseTransformer,
+  getTaskResponseTransformer,
+  getWeatherForecastResponseTransformer,
+  importLocationHistoryResponseTransformer,
+  linkAvanzaAccountResponseTransformer,
+  linkBankConnectionAccountResponseTransformer,
+  linkMontroseAccountResponseTransformer,
+  listBankAccountsResponseTransformer,
+  listBankConnectionsResponseTransformer,
+  listCalendarAccountsResponseTransformer,
+  listCalendarEventsResponseTransformer,
+  listCategoriesResponseTransformer,
+  listCategoryRulesResponseTransformer,
+  listCountersResponseTransformer,
+  listDevicesResponseTransformer,
+  listGymExercisesResponseTransformer,
+  listGymTopSetsResponseTransformer,
+  listHealthkitSleepResponseTransformer,
+  listHealthkitWorkoutsResponseTransformer,
+  listIngestTokensResponseTransformer,
+  listNotificationsResponseTransformer,
+  listPlacesResponseTransformer,
+  listProjectsResponseTransformer,
+  listRecipesResponseTransformer,
+  listResetsResponseTransformer,
+  listTasksResponseTransformer,
+  listTimeEntriesResponseTransformer,
+  listTimeProjectsResponseTransformer,
+  listTradesResponseTransformer,
+  listTransactionDocumentsResponseTransformer,
+  listTransactionsResponseTransformer,
+  markNotificationReadResponseTransformer,
+  putGymTopSetResponseTransformer,
+  renameTransactionResponseTransformer,
+  reopenTaskResponseTransformer,
+  respondToCalendarEventResponseTransformer,
+  searchEverythingResponseTransformer,
+  setProjectLocationResponseTransformer,
+  undoCompleteTaskResponseTransformer,
+  updateBankAccountResponseTransformer,
+  updateCalendarEventResponseTransformer,
+  updateCounterResponseTransformer,
+  updateDeviceResponseTransformer,
+  updatePlaceResponseTransformer,
+  updateProjectResponseTransformer,
+  updateRecipeResponseTransformer,
+  updateTaskResponseTransformer,
+  updateTimeEntryResponseTransformer,
+  updateTimeProjectResponseTransformer,
+  updateTransactionResponseTransformer,
+  uploadTaskAttachmentResponseTransformer,
+  upsertGymExerciseResponseTransformer,
 } from "./transformers.gen.js";
 import type {
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData,
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors,
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
-  AuthorizeMontroseV1MontroseAuthorizePostData,
-  AuthorizeMontroseV1MontroseAuthorizePostResponses,
-  BulkUpdateTransactionsV1TransactionsBulkPatchData,
-  BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
-  CompleteBankConnectionV1BankConnectionsCallbackPostData,
-  CompleteBankConnectionV1BankConnectionsCallbackPostErrors,
-  CompleteBankConnectionV1BankConnectionsCallbackPostResponses,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
-  CompleteMontroseV1MontroseCallbackPostData,
-  CompleteMontroseV1MontroseCallbackPostErrors,
-  CompleteMontroseV1MontroseCallbackPostResponses,
-  CompleteTaskV1TasksTaskIdCompletePostData,
-  CompleteTaskV1TasksTaskIdCompletePostErrors,
-  CompleteTaskV1TasksTaskIdCompletePostResponses,
-  ConnectAvanzaV1AvanzaConnectPostData,
-  ConnectAvanzaV1AvanzaConnectPostErrors,
-  ConnectAvanzaV1AvanzaConnectPostResponses,
-  ConnectIcloudV1CalendarsIcloudPostData,
-  ConnectIcloudV1CalendarsIcloudPostErrors,
-  ConnectIcloudV1CalendarsIcloudPostResponses,
-  CreateBankAccountV1BankAccountsPostData,
-  CreateBankAccountV1BankAccountsPostErrors,
-  CreateBankAccountV1BankAccountsPostResponses,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses,
-  CreateCategoryRuleV1CategoriesRulesPostData,
-  CreateCategoryRuleV1CategoriesRulesPostErrors,
-  CreateCategoryRuleV1CategoriesRulesPostResponses,
-  CreateCounterV1CountersPostData,
-  CreateCounterV1CountersPostErrors,
-  CreateCounterV1CountersPostResponses,
-  CreateIngestTokenV1IngestTokensPostData,
-  CreateIngestTokenV1IngestTokensPostErrors,
-  CreateIngestTokenV1IngestTokensPostResponses,
-  CreateNotificationV1NotificationsPostData,
-  CreateNotificationV1NotificationsPostErrors,
-  CreateNotificationV1NotificationsPostResponses,
-  CreatePlaceV1PlacesPostData,
-  CreatePlaceV1PlacesPostErrors,
-  CreatePlaceV1PlacesPostResponses,
-  CreateProjectV1ProjectsPostData,
-  CreateProjectV1ProjectsPostErrors,
-  CreateProjectV1ProjectsPostResponses,
-  CreateRecipeV1RecipesPostData,
-  CreateRecipeV1RecipesPostErrors,
-  CreateRecipeV1RecipesPostResponses,
-  CreateResetV1CountersCounterIdResetsPostData,
-  CreateResetV1CountersCounterIdResetsPostErrors,
-  CreateResetV1CountersCounterIdResetsPostResponses,
-  CreateTaskV1TasksPostData,
-  CreateTaskV1TasksPostErrors,
-  CreateTaskV1TasksPostResponses,
-  CreateTimeEntryV1TimeEntriesPostData,
-  CreateTimeEntryV1TimeEntriesPostErrors,
-  CreateTimeEntryV1TimeEntriesPostResponses,
-  CreateTimeProjectV1TimeProjectsPostData,
-  CreateTimeProjectV1TimeProjectsPostErrors,
-  CreateTimeProjectV1TimeProjectsPostResponses,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses,
-  DeleteCounterV1CountersCounterIdDeleteData,
-  DeleteCounterV1CountersCounterIdDeleteErrors,
-  DeleteCounterV1CountersCounterIdDeleteResponses,
-  DeleteDeviceV1DevicesDeviceIdDeleteData,
-  DeleteDeviceV1DevicesDeviceIdDeleteErrors,
-  DeleteDeviceV1DevicesDeviceIdDeleteResponses,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteData,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses,
-  DeletePlaceV1PlacesPlaceIdDeleteData,
-  DeletePlaceV1PlacesPlaceIdDeleteErrors,
-  DeletePlaceV1PlacesPlaceIdDeleteResponses,
-  DeleteProjectV1ProjectsProjectIdDeleteData,
-  DeleteProjectV1ProjectsProjectIdDeleteErrors,
-  DeleteProjectV1ProjectsProjectIdDeleteResponses,
-  DeleteRecipeV1RecipesRecipeIdDeleteData,
-  DeleteRecipeV1RecipesRecipeIdDeleteErrors,
-  DeleteRecipeV1RecipesRecipeIdDeleteResponses,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses,
-  DeleteTaskV1TasksTaskIdDeleteData,
-  DeleteTaskV1TasksTaskIdDeleteErrors,
-  DeleteTaskV1TasksTaskIdDeleteResponses,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteData,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses,
-  DeleteTransactionsV1TransactionsDeleteData,
-  DeleteTransactionsV1TransactionsDeleteErrors,
-  DeleteTransactionsV1TransactionsDeleteResponses,
-  DisconnectAvanzaV1AvanzaDeleteData,
-  DisconnectAvanzaV1AvanzaDeleteResponses,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
-  DisconnectMontroseV1MontroseDeleteData,
-  DisconnectMontroseV1MontroseDeleteResponses,
-  DocumentPageV1DocumentsDocumentIdPagesPageGetData,
-  DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
-  DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses,
-  DownloadDocumentV1DocumentsDocumentIdFileGetData,
-  DownloadDocumentV1DocumentsDocumentIdFileGetErrors,
-  DownloadDocumentV1DocumentsDocumentIdFileGetResponses,
-  GetAccountsOverviewV1BankAccountsOverviewGetData,
-  GetAccountsOverviewV1BankAccountsOverviewGetResponses,
-  GetActivitySummaryV1ActivitySummaryGetData,
-  GetActivitySummaryV1ActivitySummaryGetErrors,
-  GetActivitySummaryV1ActivitySummaryGetResponses,
-  GetAgentUsageDailyV1AgentUsageDailyGetData,
-  GetAgentUsageDailyV1AgentUsageDailyGetErrors,
-  GetAgentUsageDailyV1AgentUsageDailyGetResponses,
-  GetAgentUsageStatusV1AgentUsageStatusGetData,
-  GetAgentUsageStatusV1AgentUsageStatusGetResponses,
-  GetAvanzaV1AvanzaGetData,
-  GetAvanzaV1AvanzaGetResponses,
-  GetBankAccountV1BankAccountsBankAccountIdGetData,
-  GetBankAccountV1BankAccountsBankAccountIdGetErrors,
-  GetBankAccountV1BankAccountsBankAccountIdGetResponses,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
-  GetDailyActivityV1ActivityDailyGetData,
-  GetDailyActivityV1ActivityDailyGetErrors,
-  GetDailyActivityV1ActivityDailyGetResponses,
-  GetDailySleepV1HealthkitSleepDailyGetData,
-  GetDailySleepV1HealthkitSleepDailyGetErrors,
-  GetDailySleepV1HealthkitSleepDailyGetResponses,
-  GetHealthSummaryV1HealthkitSummaryGetData,
-  GetHealthSummaryV1HealthkitSummaryGetErrors,
-  GetHealthSummaryV1HealthkitSummaryGetResponses,
-  GetHoldingsV1InvestmentsHoldingsGetData,
-  GetHoldingsV1InvestmentsHoldingsGetResponses,
-  GetIntradayActivityV1ActivityIntradayGetData,
-  GetIntradayActivityV1ActivityIntradayGetErrors,
-  GetIntradayActivityV1ActivityIntradayGetResponses,
-  GetInvestmentAccountsV1InvestmentsAccountsGetData,
-  GetInvestmentAccountsV1InvestmentsAccountsGetResponses,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetData,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
-  GetLocationHistoryDayV1LocationHistoryDayGetData,
-  GetLocationHistoryDayV1LocationHistoryDayGetErrors,
-  GetLocationHistoryDayV1LocationHistoryDayGetResponses,
-  GetLocationHistorySummaryV1LocationHistorySummaryGetData,
-  GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
-  GetMeV1AuthMeGetData,
-  GetMeV1AuthMeGetResponses,
-  GetMontroseV1MontroseGetData,
-  GetMontroseV1MontroseGetResponses,
-  GetNetWorthHistoryV1BankAccountsNetWorthGetData,
-  GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
-  GetPlaceV1PlacesPlaceIdGetData,
-  GetPlaceV1PlacesPlaceIdGetErrors,
-  GetPlaceV1PlacesPlaceIdGetResponses,
-  GetRecipeV1RecipesRecipeIdGetData,
-  GetRecipeV1RecipesRecipeIdGetErrors,
-  GetRecipeV1RecipesRecipeIdGetResponses,
-  GetSleepSummaryV1HealthkitSleepSummaryGetData,
-  GetSleepSummaryV1HealthkitSleepSummaryGetErrors,
-  GetSleepSummaryV1HealthkitSleepSummaryGetResponses,
-  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData,
-  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors,
-  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses,
-  GetTaskV1TasksTaskIdGetData,
-  GetTaskV1TasksTaskIdGetErrors,
-  GetTaskV1TasksTaskIdGetResponses,
-  GetTimelineV1TimelineGetData,
-  GetTimelineV1TimelineGetErrors,
-  GetTimelineV1TimelineGetResponses,
-  GetTimeSummaryV1TimeSummaryGetData,
-  GetTimeSummaryV1TimeSummaryGetErrors,
-  GetTimeSummaryV1TimeSummaryGetResponses,
-  GetWeatherForecastV1WeatherGetData,
-  GetWeatherForecastV1WeatherGetErrors,
-  GetWeatherForecastV1WeatherGetResponses,
-  HealthzHealthzGetData,
-  HealthzHealthzGetResponses,
-  ImportKlarnaTransactionsV1KlarnaImportPostData,
-  ImportKlarnaTransactionsV1KlarnaImportPostErrors,
-  ImportKlarnaTransactionsV1KlarnaImportPostResponses,
-  ImportLocationHistoryV1LocationHistoryImportPostData,
-  ImportLocationHistoryV1LocationHistoryImportPostErrors,
-  ImportLocationHistoryV1LocationHistoryImportPostResponses,
-  ImportTransactionsV1TransactionsImportPostData,
-  ImportTransactionsV1TransactionsImportPostErrors,
-  ImportTransactionsV1TransactionsImportPostResponses,
-  IngestActivityBatchV1ActivityBatchPostData,
-  IngestActivityBatchV1ActivityBatchPostErrors,
-  IngestActivityBatchV1ActivityBatchPostResponses,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses,
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchData,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses,
-  ListActivitySourcesV1ActivitySourcesGetData,
-  ListActivitySourcesV1ActivitySourcesGetResponses,
-  ListBankAccountsV1BankAccountsGetData,
-  ListBankAccountsV1BankAccountsGetErrors,
-  ListBankAccountsV1BankAccountsGetResponses,
-  ListBankConnectionsV1BankConnectionsGetData,
-  ListBankConnectionsV1BankConnectionsGetResponses,
-  ListCalendarAccountsV1CalendarsAccountsGetData,
-  ListCalendarAccountsV1CalendarsAccountsGetResponses,
-  ListCalendarEventsV1CalendarsEventsGetData,
-  ListCalendarEventsV1CalendarsEventsGetErrors,
-  ListCalendarEventsV1CalendarsEventsGetResponses,
-  ListCategoriesV1CategoriesGetData,
-  ListCategoriesV1CategoriesGetErrors,
-  ListCategoriesV1CategoriesGetResponses,
-  ListCategoryRulesV1CategoriesRulesGetData,
-  ListCategoryRulesV1CategoriesRulesGetResponses,
-  ListCountersV1CountersGetData,
-  ListCountersV1CountersGetResponses,
-  ListDevicesV1DevicesGetData,
-  ListDevicesV1DevicesGetResponses,
-  ListGymExercisesV1GymExercisesGetData,
-  ListGymExercisesV1GymExercisesGetResponses,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetData,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses,
-  ListHealthkitSleepV1HealthkitSleepGetData,
-  ListHealthkitSleepV1HealthkitSleepGetErrors,
-  ListHealthkitSleepV1HealthkitSleepGetResponses,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
-  ListIngestTokensV1IngestTokensGetData,
-  ListIngestTokensV1IngestTokensGetResponses,
-  ListNotificationsV1NotificationsGetData,
-  ListNotificationsV1NotificationsGetResponses,
-  ListPlacesV1PlacesGetData,
-  ListPlacesV1PlacesGetErrors,
-  ListPlacesV1PlacesGetResponses,
-  ListProjectsV1ProjectsGetData,
-  ListProjectsV1ProjectsGetErrors,
-  ListProjectsV1ProjectsGetResponses,
-  ListRecipesV1RecipesGetData,
-  ListRecipesV1RecipesGetErrors,
-  ListRecipesV1RecipesGetResponses,
-  ListResetsV1CountersCounterIdResetsGetData,
-  ListResetsV1CountersCounterIdResetsGetErrors,
-  ListResetsV1CountersCounterIdResetsGetResponses,
-  ListTasksV1TasksGetData,
-  ListTasksV1TasksGetErrors,
-  ListTasksV1TasksGetResponses,
-  ListTimeEntriesV1TimeEntriesGetData,
-  ListTimeEntriesV1TimeEntriesGetErrors,
-  ListTimeEntriesV1TimeEntriesGetResponses,
-  ListTimeProjectsV1TimeProjectsGetData,
-  ListTimeProjectsV1TimeProjectsGetResponses,
-  ListTradesV1InvestmentsTradesGetData,
-  ListTradesV1InvestmentsTradesGetErrors,
-  ListTradesV1InvestmentsTradesGetResponses,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses,
-  ListTransactionsV1TransactionsGetData,
-  ListTransactionsV1TransactionsGetErrors,
-  ListTransactionsV1TransactionsGetResponses,
-  MarkAllNotificationsReadV1NotificationsReadAllPostData,
-  MarkAllNotificationsReadV1NotificationsReadAllPostResponses,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostData,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostErrors,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostResponses,
-  MonthlyFlowV1TransactionsMonthlyFlowGetData,
-  MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
-  MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
-  NameTransactionsV1TransactionsNamesPostData,
-  NameTransactionsV1TransactionsNamesPostErrors,
-  NameTransactionsV1TransactionsNamesPostResponses,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
-  RenameTransactionV1TransactionsTransactionIdNamePutData,
-  RenameTransactionV1TransactionsTransactionIdNamePutErrors,
-  RenameTransactionV1TransactionsTransactionIdNamePutResponses,
-  ReopenTaskV1TasksTaskIdReopenPostData,
-  ReopenTaskV1TasksTaskIdReopenPostErrors,
-  ReopenTaskV1TasksTaskIdReopenPostResponses,
-  ReorderTasksV1TasksReorderPatchData,
-  ReorderTasksV1TasksReorderPatchErrors,
-  ReorderTasksV1TasksReorderPatchResponses,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses,
-  SearchGooglePlacesV1PlacesSearchGetData,
-  SearchGooglePlacesV1PlacesSearchGetErrors,
-  SearchGooglePlacesV1PlacesSearchGetResponses,
-  SearchV1SearchGetData,
-  SearchV1SearchGetErrors,
-  SearchV1SearchGetResponses,
-  SetProjectLocationV1ProjectsProjectIdLocationPutData,
-  SetProjectLocationV1ProjectsProjectIdLocationPutErrors,
-  SetProjectLocationV1ProjectsProjectIdLocationPutResponses,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
-  StructureRecipeTextV1RecipesImportPostData,
-  StructureRecipeTextV1RecipesImportPostErrors,
-  StructureRecipeTextV1RecipesImportPostResponses,
-  SyncAgentUsageV1AgentUsageSyncPostData,
-  SyncAgentUsageV1AgentUsageSyncPostErrors,
-  SyncAgentUsageV1AgentUsageSyncPostResponses,
-  SyncAvanzaV1AvanzaSyncPostData,
-  SyncAvanzaV1AvanzaSyncPostResponses,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostData,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
-  SyncMontroseV1MontroseSyncPostData,
-  SyncMontroseV1MontroseSyncPostResponses,
-  TransactionSummaryV1TransactionsSummaryGetData,
-  TransactionSummaryV1TransactionsSummaryGetErrors,
-  TransactionSummaryV1TransactionsSummaryGetResponses,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteData,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteData,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchData,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses,
-  UpdateCalendarV1CalendarsCalendarIdPatchData,
-  UpdateCalendarV1CalendarsCalendarIdPatchErrors,
-  UpdateCalendarV1CalendarsCalendarIdPatchResponses,
-  UpdateCounterV1CountersCounterIdPatchData,
-  UpdateCounterV1CountersCounterIdPatchErrors,
-  UpdateCounterV1CountersCounterIdPatchResponses,
-  UpdateDeviceV1DevicesDeviceIdPatchData,
-  UpdateDeviceV1DevicesDeviceIdPatchErrors,
-  UpdateDeviceV1DevicesDeviceIdPatchResponses,
-  UpdateMeV1AuthMePatchData,
-  UpdateMeV1AuthMePatchErrors,
-  UpdateMeV1AuthMePatchResponses,
-  UpdatePlaceV1PlacesPlaceIdPatchData,
-  UpdatePlaceV1PlacesPlaceIdPatchErrors,
-  UpdatePlaceV1PlacesPlaceIdPatchResponses,
-  UpdateProjectV1ProjectsProjectIdPatchData,
-  UpdateProjectV1ProjectsProjectIdPatchErrors,
-  UpdateProjectV1ProjectsProjectIdPatchResponses,
-  UpdateRecipeV1RecipesRecipeIdPatchData,
-  UpdateRecipeV1RecipesRecipeIdPatchErrors,
-  UpdateRecipeV1RecipesRecipeIdPatchResponses,
-  UpdateTaskV1TasksTaskIdPatchData,
-  UpdateTaskV1TasksTaskIdPatchErrors,
-  UpdateTaskV1TasksTaskIdPatchResponses,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchData,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses,
-  UpdateTransactionV1TransactionsTransactionIdPatchData,
-  UpdateTransactionV1TransactionsTransactionIdPatchErrors,
-  UpdateTransactionV1TransactionsTransactionIdPatchResponses,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostData,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostErrors,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostResponses,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutData,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutErrors,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutResponses,
+  AddTransactionDocumentData,
+  AddTransactionDocumentErrors,
+  AddTransactionDocumentResponses,
+  AuthorizeBankConnectionData,
+  AuthorizeBankConnectionErrors,
+  AuthorizeBankConnectionResponses,
+  AuthorizeGoogleData,
+  AuthorizeGoogleResponses,
+  AuthorizeMontroseData,
+  AuthorizeMontroseResponses,
+  BulkUpdateTransactionsData,
+  BulkUpdateTransactionsErrors,
+  BulkUpdateTransactionsResponses,
+  CategorizeByDescriptionData,
+  CategorizeByDescriptionErrors,
+  CategorizeByDescriptionResponses,
+  CompleteBankConnectionData,
+  CompleteBankConnectionErrors,
+  CompleteBankConnectionResponses,
+  CompleteGoogleConnectData,
+  CompleteGoogleConnectErrors,
+  CompleteGoogleConnectResponses,
+  CompleteMontroseData,
+  CompleteMontroseErrors,
+  CompleteMontroseResponses,
+  CompleteTaskData,
+  CompleteTaskErrors,
+  CompleteTaskResponses,
+  ConnectAvanzaData,
+  ConnectAvanzaErrors,
+  ConnectAvanzaResponses,
+  ConnectIcloudData,
+  ConnectIcloudErrors,
+  ConnectIcloudResponses,
+  CreateBankAccountData,
+  CreateBankAccountErrors,
+  CreateBankAccountResponses,
+  CreateCalendarEventData,
+  CreateCalendarEventErrors,
+  CreateCalendarEventResponses,
+  CreateCategoryRuleData,
+  CreateCategoryRuleErrors,
+  CreateCategoryRuleResponses,
+  CreateCounterData,
+  CreateCounterErrors,
+  CreateCounterResponses,
+  CreateIngestTokenData,
+  CreateIngestTokenErrors,
+  CreateIngestTokenResponses,
+  CreateNotificationData,
+  CreateNotificationErrors,
+  CreateNotificationResponses,
+  CreatePlaceData,
+  CreatePlaceErrors,
+  CreatePlaceResponses,
+  CreateProjectData,
+  CreateProjectErrors,
+  CreateProjectResponses,
+  CreateRecipeData,
+  CreateRecipeErrors,
+  CreateRecipeResponses,
+  CreateResetData,
+  CreateResetErrors,
+  CreateResetResponses,
+  CreateTaskData,
+  CreateTaskErrors,
+  CreateTaskResponses,
+  CreateTimeEntryData,
+  CreateTimeEntryErrors,
+  CreateTimeEntryResponses,
+  CreateTimeProjectData,
+  CreateTimeProjectErrors,
+  CreateTimeProjectResponses,
+  DeleteBankAccountData,
+  DeleteBankAccountErrors,
+  DeleteBankAccountResponses,
+  DeleteCalendarEventData,
+  DeleteCalendarEventErrors,
+  DeleteCalendarEventResponses,
+  DeleteCategoryRuleData,
+  DeleteCategoryRuleErrors,
+  DeleteCategoryRuleResponses,
+  DeleteCounterData,
+  DeleteCounterErrors,
+  DeleteCounterResponses,
+  DeleteDeviceData,
+  DeleteDeviceErrors,
+  DeleteDeviceResponses,
+  DeleteGymExerciseData,
+  DeleteGymExerciseErrors,
+  DeleteGymExerciseResponses,
+  DeleteGymTopSetData,
+  DeleteGymTopSetErrors,
+  DeleteGymTopSetResponses,
+  DeletePlaceData,
+  DeletePlaceErrors,
+  DeletePlaceResponses,
+  DeleteProjectData,
+  DeleteProjectErrors,
+  DeleteProjectResponses,
+  DeleteRecipeData,
+  DeleteRecipeErrors,
+  DeleteRecipeResponses,
+  DeleteTaskAttachmentData,
+  DeleteTaskAttachmentErrors,
+  DeleteTaskAttachmentResponses,
+  DeleteTaskData,
+  DeleteTaskErrors,
+  DeleteTaskResponses,
+  DeleteTimeEntryData,
+  DeleteTimeEntryErrors,
+  DeleteTimeEntryResponses,
+  DeleteTransactionsData,
+  DeleteTransactionsErrors,
+  DeleteTransactionsResponses,
+  DisconnectAvanzaData,
+  DisconnectAvanzaResponses,
+  DisconnectBankConnectionData,
+  DisconnectBankConnectionErrors,
+  DisconnectBankConnectionResponses,
+  DisconnectCalendarAccountData,
+  DisconnectCalendarAccountErrors,
+  DisconnectCalendarAccountResponses,
+  DisconnectMontroseData,
+  DisconnectMontroseResponses,
+  DocumentPageData,
+  DocumentPageErrors,
+  DocumentPageResponses,
+  DocumentThumbnailData,
+  DocumentThumbnailErrors,
+  DocumentThumbnailResponses,
+  DownloadDocumentData,
+  DownloadDocumentErrors,
+  DownloadDocumentResponses,
+  GetAccountsOverviewData,
+  GetAccountsOverviewResponses,
+  GetActivitySummaryData,
+  GetActivitySummaryErrors,
+  GetActivitySummaryResponses,
+  GetAgentUsageDailyData,
+  GetAgentUsageDailyErrors,
+  GetAgentUsageDailyResponses,
+  GetAgentUsageStatusData,
+  GetAgentUsageStatusResponses,
+  GetAvanzaData,
+  GetAvanzaResponses,
+  GetBankAccountData,
+  GetBankAccountErrors,
+  GetBankAccountResponses,
+  GetCryptoPriceData,
+  GetCryptoPriceErrors,
+  GetCryptoPriceResponses,
+  GetDailyActivityData,
+  GetDailyActivityErrors,
+  GetDailyActivityResponses,
+  GetDailySleepData,
+  GetDailySleepErrors,
+  GetDailySleepResponses,
+  GetHealthSummaryData,
+  GetHealthSummaryErrors,
+  GetHealthSummaryResponses,
+  GetHoldingsData,
+  GetHoldingsResponses,
+  GetIntradayActivityData,
+  GetIntradayActivityErrors,
+  GetIntradayActivityResponses,
+  GetInvestmentAccountsData,
+  GetInvestmentAccountsResponses,
+  GetKlarnaTransactionsData,
+  GetKlarnaTransactionsErrors,
+  GetKlarnaTransactionsResponses,
+  GetLocationHistoryDayData,
+  GetLocationHistoryDayErrors,
+  GetLocationHistoryDayResponses,
+  GetLocationHistorySummaryData,
+  GetLocationHistorySummaryResponses,
+  GetMeData,
+  GetMeResponses,
+  GetMonthlyFlowData,
+  GetMonthlyFlowErrors,
+  GetMonthlyFlowResponses,
+  GetMontroseData,
+  GetMontroseResponses,
+  GetNetWorthHistoryData,
+  GetNetWorthHistoryResponses,
+  GetPlaceData,
+  GetPlaceErrors,
+  GetPlaceResponses,
+  GetRecipeData,
+  GetRecipeErrors,
+  GetRecipeResponses,
+  GetSleepSummaryData,
+  GetSleepSummaryErrors,
+  GetSleepSummaryResponses,
+  GetTaskAttachmentFileData,
+  GetTaskAttachmentFileErrors,
+  GetTaskAttachmentFileResponses,
+  GetTaskData,
+  GetTaskErrors,
+  GetTaskResponses,
+  GetTimelineData,
+  GetTimelineErrors,
+  GetTimelineResponses,
+  GetTimeSummaryData,
+  GetTimeSummaryErrors,
+  GetTimeSummaryResponses,
+  GetTransactionSummaryData,
+  GetTransactionSummaryErrors,
+  GetTransactionSummaryResponses,
+  GetWeatherForecastData,
+  GetWeatherForecastErrors,
+  GetWeatherForecastResponses,
+  HealthzData,
+  HealthzResponses,
+  ImportKlarnaTransactionsData,
+  ImportKlarnaTransactionsErrors,
+  ImportKlarnaTransactionsResponses,
+  ImportLocationHistoryData,
+  ImportLocationHistoryErrors,
+  ImportLocationHistoryResponses,
+  ImportTransactionsData,
+  ImportTransactionsErrors,
+  ImportTransactionsResponses,
+  IngestActivityBatchData,
+  IngestActivityBatchErrors,
+  IngestActivityBatchResponses,
+  LinkAvanzaAccountData,
+  LinkAvanzaAccountErrors,
+  LinkAvanzaAccountResponses,
+  LinkBankConnectionAccountData,
+  LinkBankConnectionAccountErrors,
+  LinkBankConnectionAccountResponses,
+  LinkMontroseAccountData,
+  LinkMontroseAccountErrors,
+  LinkMontroseAccountResponses,
+  ListActivitySourcesData,
+  ListActivitySourcesResponses,
+  ListBankAccountsData,
+  ListBankAccountsErrors,
+  ListBankAccountsResponses,
+  ListBankConnectionsData,
+  ListBankConnectionsResponses,
+  ListCalendarAccountsData,
+  ListCalendarAccountsResponses,
+  ListCalendarEventsData,
+  ListCalendarEventsErrors,
+  ListCalendarEventsResponses,
+  ListCategoriesData,
+  ListCategoriesErrors,
+  ListCategoriesResponses,
+  ListCategoryRulesData,
+  ListCategoryRulesResponses,
+  ListCountersData,
+  ListCountersResponses,
+  ListDevicesData,
+  ListDevicesResponses,
+  ListGymExercisesData,
+  ListGymExercisesResponses,
+  ListGymTopSetsData,
+  ListGymTopSetsErrors,
+  ListGymTopSetsResponses,
+  ListHealthkitSleepData,
+  ListHealthkitSleepErrors,
+  ListHealthkitSleepResponses,
+  ListHealthkitWorkoutsData,
+  ListHealthkitWorkoutsErrors,
+  ListHealthkitWorkoutsResponses,
+  ListIngestTokensData,
+  ListIngestTokensResponses,
+  ListNotificationsData,
+  ListNotificationsResponses,
+  ListPlacesData,
+  ListPlacesErrors,
+  ListPlacesResponses,
+  ListProjectsData,
+  ListProjectsErrors,
+  ListProjectsResponses,
+  ListRecipesData,
+  ListRecipesErrors,
+  ListRecipesResponses,
+  ListResetsData,
+  ListResetsErrors,
+  ListResetsResponses,
+  ListTasksData,
+  ListTasksErrors,
+  ListTasksResponses,
+  ListTimeEntriesData,
+  ListTimeEntriesErrors,
+  ListTimeEntriesResponses,
+  ListTimeProjectsData,
+  ListTimeProjectsResponses,
+  ListTradesData,
+  ListTradesErrors,
+  ListTradesResponses,
+  ListTransactionDocumentsData,
+  ListTransactionDocumentsErrors,
+  ListTransactionDocumentsResponses,
+  ListTransactionsData,
+  ListTransactionsErrors,
+  ListTransactionsResponses,
+  MarkAllNotificationsReadData,
+  MarkAllNotificationsReadResponses,
+  MarkNotificationReadData,
+  MarkNotificationReadErrors,
+  MarkNotificationReadResponses,
+  NameTransactionsData,
+  NameTransactionsErrors,
+  NameTransactionsResponses,
+  PutGymTopSetData,
+  PutGymTopSetErrors,
+  PutGymTopSetResponses,
+  RemoveTransactionDocumentData,
+  RemoveTransactionDocumentErrors,
+  RemoveTransactionDocumentResponses,
+  RenameTransactionData,
+  RenameTransactionErrors,
+  RenameTransactionResponses,
+  ReopenTaskData,
+  ReopenTaskErrors,
+  ReopenTaskResponses,
+  ReorderTasksData,
+  ReorderTasksErrors,
+  ReorderTasksResponses,
+  RespondToCalendarEventData,
+  RespondToCalendarEventErrors,
+  RespondToCalendarEventResponses,
+  RevokeIngestTokenData,
+  RevokeIngestTokenErrors,
+  RevokeIngestTokenResponses,
+  SearchEverythingData,
+  SearchEverythingErrors,
+  SearchEverythingResponses,
+  SearchGooglePlacesData,
+  SearchGooglePlacesErrors,
+  SearchGooglePlacesResponses,
+  SetProjectLocationData,
+  SetProjectLocationErrors,
+  SetProjectLocationResponses,
+  SpendingByCategoryData,
+  SpendingByCategoryErrors,
+  SpendingByCategoryResponses,
+  StructureRecipeTextData,
+  StructureRecipeTextErrors,
+  StructureRecipeTextResponses,
+  SyncAgentUsageData,
+  SyncAgentUsageErrors,
+  SyncAgentUsageResponses,
+  SyncAvanzaData,
+  SyncAvanzaResponses,
+  SyncBankConnectionData,
+  SyncBankConnectionErrors,
+  SyncBankConnectionResponses,
+  SyncCalendarAccountData,
+  SyncCalendarAccountErrors,
+  SyncCalendarAccountResponses,
+  SyncHealthkitDailyMetricsData,
+  SyncHealthkitDailyMetricsErrors,
+  SyncHealthkitDailyMetricsResponses,
+  SyncHealthkitSleepData,
+  SyncHealthkitSleepErrors,
+  SyncHealthkitSleepResponses,
+  SyncHealthkitWorkoutsData,
+  SyncHealthkitWorkoutsErrors,
+  SyncHealthkitWorkoutsResponses,
+  SyncMontroseData,
+  SyncMontroseResponses,
+  UndoCompleteTaskData,
+  UndoCompleteTaskErrors,
+  UndoCompleteTaskResponses,
+  UndoResetData,
+  UndoResetErrors,
+  UndoResetResponses,
+  UnpairTransferData,
+  UnpairTransferErrors,
+  UnpairTransferResponses,
+  UpdateBankAccountData,
+  UpdateBankAccountErrors,
+  UpdateBankAccountResponses,
+  UpdateCalendarData,
+  UpdateCalendarErrors,
+  UpdateCalendarEventData,
+  UpdateCalendarEventErrors,
+  UpdateCalendarEventResponses,
+  UpdateCalendarResponses,
+  UpdateCounterData,
+  UpdateCounterErrors,
+  UpdateCounterResponses,
+  UpdateDeviceData,
+  UpdateDeviceErrors,
+  UpdateDeviceResponses,
+  UpdateMeData,
+  UpdateMeErrors,
+  UpdateMeResponses,
+  UpdatePlaceData,
+  UpdatePlaceErrors,
+  UpdatePlaceResponses,
+  UpdateProjectData,
+  UpdateProjectErrors,
+  UpdateProjectResponses,
+  UpdateRecipeData,
+  UpdateRecipeErrors,
+  UpdateRecipeResponses,
+  UpdateTaskData,
+  UpdateTaskErrors,
+  UpdateTaskResponses,
+  UpdateTimeEntryData,
+  UpdateTimeEntryErrors,
+  UpdateTimeEntryResponses,
+  UpdateTimeProjectData,
+  UpdateTimeProjectErrors,
+  UpdateTimeProjectResponses,
+  UpdateTransactionData,
+  UpdateTransactionErrors,
+  UpdateTransactionResponses,
+  UploadClientDiagnosticsData,
+  UploadClientDiagnosticsErrors,
+  UploadClientDiagnosticsResponses,
+  UploadTaskAttachmentData,
+  UploadTaskAttachmentErrors,
+  UploadTaskAttachmentResponses,
+  UpsertGymExerciseData,
+  UpsertGymExerciseErrors,
+  UpsertGymExerciseResponses,
 } from "./types.gen.js";
 
 export type Options<
@@ -541,26 +541,21 @@ export type Options<
 /**
  * Healthz
  */
-export const healthzHealthzGet = <ThrowOnError extends boolean = false>(
-  options?: Options<HealthzHealthzGetData, ThrowOnError>,
-): RequestResult<HealthzHealthzGetResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<
-    HealthzHealthzGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/healthz", ...options });
+export const healthz = <ThrowOnError extends boolean = false>(
+  options?: Options<HealthzData, ThrowOnError>,
+): RequestResult<HealthzResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<HealthzResponses, unknown, ThrowOnError>({
+    url: "/healthz",
+    ...options,
+  });
 
 /**
  * Get Current User
  */
-export const getMeV1AuthMeGet = <ThrowOnError extends boolean = false>(
-  options?: Options<GetMeV1AuthMeGetData, ThrowOnError>,
-): RequestResult<GetMeV1AuthMeGetResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<
-    GetMeV1AuthMeGetResponses,
-    unknown,
-    ThrowOnError
-  >({
+export const getMe = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMeData, ThrowOnError>,
+): RequestResult<GetMeResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetMeResponses, unknown, ThrowOnError>({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/auth/me",
     ...options,
@@ -569,16 +564,12 @@ export const getMeV1AuthMeGet = <ThrowOnError extends boolean = false>(
 /**
  * Update Current User
  */
-export const updateMeV1AuthMePatch = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateMeV1AuthMePatchData, ThrowOnError>,
-): RequestResult<
-  UpdateMeV1AuthMePatchResponses,
-  UpdateMeV1AuthMePatchErrors,
-  ThrowOnError
-> =>
+export const updateMe = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateMeData, ThrowOnError>,
+): RequestResult<UpdateMeResponses, UpdateMeErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateMeV1AuthMePatchResponses,
-    UpdateMeV1AuthMePatchErrors,
+    UpdateMeResponses,
+    UpdateMeErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -593,18 +584,16 @@ export const updateMeV1AuthMePatch = <ThrowOnError extends boolean = false>(
 /**
  * Ingest Activity Events
  */
-export const ingestActivityBatchV1ActivityBatchPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<IngestActivityBatchV1ActivityBatchPostData, ThrowOnError>,
+export const ingestActivityBatch = <ThrowOnError extends boolean = false>(
+  options: Options<IngestActivityBatchData, ThrowOnError>,
 ): RequestResult<
-  IngestActivityBatchV1ActivityBatchPostResponses,
-  IngestActivityBatchV1ActivityBatchPostErrors,
+  IngestActivityBatchResponses,
+  IngestActivityBatchErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    IngestActivityBatchV1ActivityBatchPostResponses,
-    IngestActivityBatchV1ActivityBatchPostErrors,
+    IngestActivityBatchResponses,
+    IngestActivityBatchErrors,
     ThrowOnError
   >({
     url: "/v1/activity/batch",
@@ -618,17 +607,11 @@ export const ingestActivityBatchV1ActivityBatchPost = <
 /**
  * List Activity Sources
  */
-export const listActivitySourcesV1ActivitySourcesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListActivitySourcesV1ActivitySourcesGetData, ThrowOnError>,
-): RequestResult<
-  ListActivitySourcesV1ActivitySourcesGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listActivitySources = <ThrowOnError extends boolean = false>(
+  options?: Options<ListActivitySourcesData, ThrowOnError>,
+): RequestResult<ListActivitySourcesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListActivitySourcesV1ActivitySourcesGetResponses,
+    ListActivitySourcesResponses,
     unknown,
     ThrowOnError
   >({
@@ -640,18 +623,16 @@ export const listActivitySourcesV1ActivitySourcesGet = <
 /**
  * Get Activity Summary
  */
-export const getActivitySummaryV1ActivitySummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetActivitySummaryV1ActivitySummaryGetData, ThrowOnError>,
+export const getActivitySummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetActivitySummaryData, ThrowOnError>,
 ): RequestResult<
-  GetActivitySummaryV1ActivitySummaryGetResponses,
-  GetActivitySummaryV1ActivitySummaryGetErrors,
+  GetActivitySummaryResponses,
+  GetActivitySummaryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetActivitySummaryV1ActivitySummaryGetResponses,
-    GetActivitySummaryV1ActivitySummaryGetErrors,
+    GetActivitySummaryResponses,
+    GetActivitySummaryErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -662,18 +643,16 @@ export const getActivitySummaryV1ActivitySummaryGet = <
 /**
  * Get Daily Activity Totals
  */
-export const getDailyActivityV1ActivityDailyGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetDailyActivityV1ActivityDailyGetData, ThrowOnError>,
+export const getDailyActivity = <ThrowOnError extends boolean = false>(
+  options: Options<GetDailyActivityData, ThrowOnError>,
 ): RequestResult<
-  GetDailyActivityV1ActivityDailyGetResponses,
-  GetDailyActivityV1ActivityDailyGetErrors,
+  GetDailyActivityResponses,
+  GetDailyActivityErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetDailyActivityV1ActivityDailyGetResponses,
-    GetDailyActivityV1ActivityDailyGetErrors,
+    GetDailyActivityResponses,
+    GetDailyActivityErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -684,18 +663,16 @@ export const getDailyActivityV1ActivityDailyGet = <
 /**
  * Get Intraday Activity
  */
-export const getIntradayActivityV1ActivityIntradayGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetIntradayActivityV1ActivityIntradayGetData, ThrowOnError>,
+export const getIntradayActivity = <ThrowOnError extends boolean = false>(
+  options: Options<GetIntradayActivityData, ThrowOnError>,
 ): RequestResult<
-  GetIntradayActivityV1ActivityIntradayGetResponses,
-  GetIntradayActivityV1ActivityIntradayGetErrors,
+  GetIntradayActivityResponses,
+  GetIntradayActivityErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetIntradayActivityV1ActivityIntradayGetResponses,
-    GetIntradayActivityV1ActivityIntradayGetErrors,
+    GetIntradayActivityResponses,
+    GetIntradayActivityErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -708,18 +685,12 @@ export const getIntradayActivityV1ActivityIntradayGet = <
  *
  * Uploaded by the desktop app, which reads Claude Code's usage on its machine.
  */
-export const syncAgentUsageV1AgentUsageSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<SyncAgentUsageV1AgentUsageSyncPostData, ThrowOnError>,
-): RequestResult<
-  SyncAgentUsageV1AgentUsageSyncPostResponses,
-  SyncAgentUsageV1AgentUsageSyncPostErrors,
-  ThrowOnError
-> =>
+export const syncAgentUsage = <ThrowOnError extends boolean = false>(
+  options: Options<SyncAgentUsageData, ThrowOnError>,
+): RequestResult<SyncAgentUsageResponses, SyncAgentUsageErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    SyncAgentUsageV1AgentUsageSyncPostResponses,
-    SyncAgentUsageV1AgentUsageSyncPostErrors,
+    SyncAgentUsageResponses,
+    SyncAgentUsageErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -734,22 +705,15 @@ export const syncAgentUsageV1AgentUsageSyncPost = <
 /**
  * Get Agent Usage Status
  */
-export const getAgentUsageStatusV1AgentUsageStatusGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<GetAgentUsageStatusV1AgentUsageStatusGetData, ThrowOnError>,
-): RequestResult<
-  GetAgentUsageStatusV1AgentUsageStatusGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const getAgentUsageStatus = <ThrowOnError extends boolean = false>(
+  options?: Options<GetAgentUsageStatusData, ThrowOnError>,
+): RequestResult<GetAgentUsageStatusResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    GetAgentUsageStatusV1AgentUsageStatusGetResponses,
+    GetAgentUsageStatusResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      getAgentUsageStatusV1AgentUsageStatusGetResponseTransformer,
+    responseTransformer: getAgentUsageStatusResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/agent-usage/status",
     ...options,
@@ -758,18 +722,16 @@ export const getAgentUsageStatusV1AgentUsageStatusGet = <
 /**
  * Get Agent Usage Daily Totals
  */
-export const getAgentUsageDailyV1AgentUsageDailyGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetAgentUsageDailyV1AgentUsageDailyGetData, ThrowOnError>,
+export const getAgentUsageDaily = <ThrowOnError extends boolean = false>(
+  options: Options<GetAgentUsageDailyData, ThrowOnError>,
 ): RequestResult<
-  GetAgentUsageDailyV1AgentUsageDailyGetResponses,
-  GetAgentUsageDailyV1AgentUsageDailyGetErrors,
+  GetAgentUsageDailyResponses,
+  GetAgentUsageDailyErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetAgentUsageDailyV1AgentUsageDailyGetResponses,
-    GetAgentUsageDailyV1AgentUsageDailyGetErrors,
+    GetAgentUsageDailyResponses,
+    GetAgentUsageDailyErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -782,21 +744,19 @@ export const getAgentUsageDailyV1AgentUsageDailyGet = <
  *
  * List all bank accounts.
  */
-export const listBankAccountsV1BankAccountsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListBankAccountsV1BankAccountsGetData, ThrowOnError>,
+export const listBankAccounts = <ThrowOnError extends boolean = false>(
+  options?: Options<ListBankAccountsData, ThrowOnError>,
 ): RequestResult<
-  ListBankAccountsV1BankAccountsGetResponses,
-  ListBankAccountsV1BankAccountsGetErrors,
+  ListBankAccountsResponses,
+  ListBankAccountsErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
-    ListBankAccountsV1BankAccountsGetResponses,
-    ListBankAccountsV1BankAccountsGetErrors,
+    ListBankAccountsResponses,
+    ListBankAccountsErrors,
     ThrowOnError
   >({
-    responseTransformer: listBankAccountsV1BankAccountsGetResponseTransformer,
+    responseTransformer: listBankAccountsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts",
     ...options,
@@ -807,21 +767,19 @@ export const listBankAccountsV1BankAccountsGet = <
  *
  * Create a new bank account.
  */
-export const createBankAccountV1BankAccountsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateBankAccountV1BankAccountsPostData, ThrowOnError>,
+export const createBankAccount = <ThrowOnError extends boolean = false>(
+  options: Options<CreateBankAccountData, ThrowOnError>,
 ): RequestResult<
-  CreateBankAccountV1BankAccountsPostResponses,
-  CreateBankAccountV1BankAccountsPostErrors,
+  CreateBankAccountResponses,
+  CreateBankAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateBankAccountV1BankAccountsPostResponses,
-    CreateBankAccountV1BankAccountsPostErrors,
+    CreateBankAccountResponses,
+    CreateBankAccountErrors,
     ThrowOnError
   >({
-    responseTransformer: createBankAccountV1BankAccountsPostResponseTransformer,
+    responseTransformer: createBankAccountResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts",
     ...options,
@@ -836,25 +794,15 @@ export const createBankAccountV1BankAccountsPost = <
  *
  * Every account with its balance, history and where its data comes from, plus totals per owner and currency.
  */
-export const getAccountsOverviewV1BankAccountsOverviewGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    GetAccountsOverviewV1BankAccountsOverviewGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  GetAccountsOverviewV1BankAccountsOverviewGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const getAccountsOverview = <ThrowOnError extends boolean = false>(
+  options?: Options<GetAccountsOverviewData, ThrowOnError>,
+): RequestResult<GetAccountsOverviewResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    GetAccountsOverviewV1BankAccountsOverviewGetResponses,
+    GetAccountsOverviewResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      getAccountsOverviewV1BankAccountsOverviewGetResponseTransformer,
+    responseTransformer: getAccountsOverviewResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/overview",
     ...options,
@@ -865,25 +813,15 @@ export const getAccountsOverviewV1BankAccountsOverviewGet = <
  *
  * Net worth on every day it changed, per currency, from the first transaction to today.
  */
-export const getNetWorthHistoryV1BankAccountsNetWorthGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    GetNetWorthHistoryV1BankAccountsNetWorthGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const getNetWorthHistory = <ThrowOnError extends boolean = false>(
+  options?: Options<GetNetWorthHistoryData, ThrowOnError>,
+): RequestResult<GetNetWorthHistoryResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    GetNetWorthHistoryV1BankAccountsNetWorthGetResponses,
+    GetNetWorthHistoryResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      getNetWorthHistoryV1BankAccountsNetWorthGetResponseTransformer,
+    responseTransformer: getNetWorthHistoryResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/net-worth",
     ...options,
@@ -894,21 +832,16 @@ export const getNetWorthHistoryV1BankAccountsNetWorthGet = <
  *
  * Delete a bank account and all its transactions.
  */
-export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
-    ThrowOnError
-  >,
+export const deleteBankAccount = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteBankAccountData, ThrowOnError>,
 ): RequestResult<
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
+  DeleteBankAccountResponses,
+  DeleteBankAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses,
-    DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors,
+    DeleteBankAccountResponses,
+    DeleteBankAccountErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -921,25 +854,15 @@ export const deleteBankAccountV1BankAccountsBankAccountIdDelete = <
  *
  * Get a bank account by ID.
  */
-export const getBankAccountV1BankAccountsBankAccountIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetBankAccountV1BankAccountsBankAccountIdGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  GetBankAccountV1BankAccountsBankAccountIdGetResponses,
-  GetBankAccountV1BankAccountsBankAccountIdGetErrors,
-  ThrowOnError
-> =>
+export const getBankAccount = <ThrowOnError extends boolean = false>(
+  options: Options<GetBankAccountData, ThrowOnError>,
+): RequestResult<GetBankAccountResponses, GetBankAccountErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetBankAccountV1BankAccountsBankAccountIdGetResponses,
-    GetBankAccountV1BankAccountsBankAccountIdGetErrors,
+    GetBankAccountResponses,
+    GetBankAccountErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      getBankAccountV1BankAccountsBankAccountIdGetResponseTransformer,
+    responseTransformer: getBankAccountResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/{bank_account_id}",
     ...options,
@@ -950,25 +873,19 @@ export const getBankAccountV1BankAccountsBankAccountIdGet = <
  *
  * Update a bank account.
  */
-export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
-    ThrowOnError
-  >,
+export const updateBankAccount = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateBankAccountData, ThrowOnError>,
 ): RequestResult<
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
+  UpdateBankAccountResponses,
+  UpdateBankAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses,
-    UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors,
+    UpdateBankAccountResponses,
+    UpdateBankAccountErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateBankAccountV1BankAccountsBankAccountIdPatchResponseTransformer,
+    responseTransformer: updateBankAccountResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-accounts/{bank_account_id}",
     ...options,
@@ -983,17 +900,11 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatch = <
  *
  * Deletes the stored login. Imported transactions, trades and positions stay.
  */
-export const disconnectAvanzaV1AvanzaDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<DisconnectAvanzaV1AvanzaDeleteData, ThrowOnError>,
-): RequestResult<
-  DisconnectAvanzaV1AvanzaDeleteResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const disconnectAvanza = <ThrowOnError extends boolean = false>(
+  options?: Options<DisconnectAvanzaData, ThrowOnError>,
+): RequestResult<DisconnectAvanzaResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).delete<
-    DisconnectAvanzaV1AvanzaDeleteResponses,
+    DisconnectAvanzaResponses,
     unknown,
     ThrowOnError
   >({
@@ -1005,15 +916,11 @@ export const disconnectAvanzaV1AvanzaDelete = <
 /**
  * Get Avanza Connection
  */
-export const getAvanzaV1AvanzaGet = <ThrowOnError extends boolean = false>(
-  options?: Options<GetAvanzaV1AvanzaGetData, ThrowOnError>,
-): RequestResult<GetAvanzaV1AvanzaGetResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<
-    GetAvanzaV1AvanzaGetResponses,
-    unknown,
-    ThrowOnError
-  >({
-    responseTransformer: getAvanzaV1AvanzaGetResponseTransformer,
+export const getAvanza = <ThrowOnError extends boolean = false>(
+  options?: Options<GetAvanzaData, ThrowOnError>,
+): RequestResult<GetAvanzaResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetAvanzaResponses, unknown, ThrowOnError>({
+    responseTransformer: getAvanzaResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/avanza",
     ...options,
@@ -1024,21 +931,15 @@ export const getAvanzaV1AvanzaGet = <ThrowOnError extends boolean = false>(
  *
  * Checks the login with Avanza and stores it encrypted; also how new credentials are saved.
  */
-export const connectAvanzaV1AvanzaConnectPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ConnectAvanzaV1AvanzaConnectPostData, ThrowOnError>,
-): RequestResult<
-  ConnectAvanzaV1AvanzaConnectPostResponses,
-  ConnectAvanzaV1AvanzaConnectPostErrors,
-  ThrowOnError
-> =>
+export const connectAvanza = <ThrowOnError extends boolean = false>(
+  options: Options<ConnectAvanzaData, ThrowOnError>,
+): RequestResult<ConnectAvanzaResponses, ConnectAvanzaErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    ConnectAvanzaV1AvanzaConnectPostResponses,
-    ConnectAvanzaV1AvanzaConnectPostErrors,
+    ConnectAvanzaResponses,
+    ConnectAvanzaErrors,
     ThrowOnError
   >({
-    responseTransformer: connectAvanzaV1AvanzaConnectPostResponseTransformer,
+    responseTransformer: connectAvanzaResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/avanza/connect",
     ...options,
@@ -1051,25 +952,19 @@ export const connectAvanzaV1AvanzaConnectPost = <
 /**
  * Link Avanza Account
  */
-export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
-    ThrowOnError
-  >,
+export const linkAvanzaAccount = <ThrowOnError extends boolean = false>(
+  options: Options<LinkAvanzaAccountData, ThrowOnError>,
 ): RequestResult<
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,
+  LinkAvanzaAccountResponses,
+  LinkAvanzaAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses,
-    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors,
+    LinkAvanzaAccountResponses,
+    LinkAvanzaAccountErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      linkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponseTransformer,
+    responseTransformer: linkAvanzaAccountResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/avanza/accounts/{account_id}",
     ...options,
@@ -1082,16 +977,10 @@ export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatch = <
 /**
  * Sync Avanza
  */
-export const syncAvanzaV1AvanzaSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<SyncAvanzaV1AvanzaSyncPostData, ThrowOnError>,
-): RequestResult<SyncAvanzaV1AvanzaSyncPostResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).post<
-    SyncAvanzaV1AvanzaSyncPostResponses,
-    unknown,
-    ThrowOnError
-  >({
+export const syncAvanza = <ThrowOnError extends boolean = false>(
+  options?: Options<SyncAvanzaData, ThrowOnError>,
+): RequestResult<SyncAvanzaResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).post<SyncAvanzaResponses, unknown, ThrowOnError>({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/avanza/sync",
     ...options,
@@ -1102,17 +991,11 @@ export const syncAvanzaV1AvanzaSyncPost = <
  *
  * Forgets the consent and its tokens. Imported transactions stay.
  */
-export const disconnectMontroseV1MontroseDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<DisconnectMontroseV1MontroseDeleteData, ThrowOnError>,
-): RequestResult<
-  DisconnectMontroseV1MontroseDeleteResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const disconnectMontrose = <ThrowOnError extends boolean = false>(
+  options?: Options<DisconnectMontroseData, ThrowOnError>,
+): RequestResult<DisconnectMontroseResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).delete<
-    DisconnectMontroseV1MontroseDeleteResponses,
+    DisconnectMontroseResponses,
     unknown,
     ThrowOnError
   >({
@@ -1124,15 +1007,11 @@ export const disconnectMontroseV1MontroseDelete = <
 /**
  * Get Montrose Connection
  */
-export const getMontroseV1MontroseGet = <ThrowOnError extends boolean = false>(
-  options?: Options<GetMontroseV1MontroseGetData, ThrowOnError>,
-): RequestResult<GetMontroseV1MontroseGetResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<
-    GetMontroseV1MontroseGetResponses,
-    unknown,
-    ThrowOnError
-  >({
-    responseTransformer: getMontroseV1MontroseGetResponseTransformer,
+export const getMontrose = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMontroseData, ThrowOnError>,
+): RequestResult<GetMontroseResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetMontroseResponses, unknown, ThrowOnError>({
+    responseTransformer: getMontroseResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/montrose",
     ...options,
@@ -1143,17 +1022,11 @@ export const getMontroseV1MontroseGet = <ThrowOnError extends boolean = false>(
  *
  * Starts the BankID consent; Montrose sends the user back to Bessel's callback page.
  */
-export const authorizeMontroseV1MontroseAuthorizePost = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<AuthorizeMontroseV1MontroseAuthorizePostData, ThrowOnError>,
-): RequestResult<
-  AuthorizeMontroseV1MontroseAuthorizePostResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const authorizeMontrose = <ThrowOnError extends boolean = false>(
+  options?: Options<AuthorizeMontroseData, ThrowOnError>,
+): RequestResult<AuthorizeMontroseResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).post<
-    AuthorizeMontroseV1MontroseAuthorizePostResponses,
+    AuthorizeMontroseResponses,
     unknown,
     ThrowOnError
   >({
@@ -1165,22 +1038,19 @@ export const authorizeMontroseV1MontroseAuthorizePost = <
 /**
  * Complete Montrose Connection
  */
-export const completeMontroseV1MontroseCallbackPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CompleteMontroseV1MontroseCallbackPostData, ThrowOnError>,
+export const completeMontrose = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteMontroseData, ThrowOnError>,
 ): RequestResult<
-  CompleteMontroseV1MontroseCallbackPostResponses,
-  CompleteMontroseV1MontroseCallbackPostErrors,
+  CompleteMontroseResponses,
+  CompleteMontroseErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CompleteMontroseV1MontroseCallbackPostResponses,
-    CompleteMontroseV1MontroseCallbackPostErrors,
+    CompleteMontroseResponses,
+    CompleteMontroseErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      completeMontroseV1MontroseCallbackPostResponseTransformer,
+    responseTransformer: completeMontroseResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/montrose/callback",
     ...options,
@@ -1193,25 +1063,19 @@ export const completeMontroseV1MontroseCallbackPost = <
 /**
  * Link Montrose Account
  */
-export const linkMontroseAccountV1MontroseAccountsAccountIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    LinkMontroseAccountV1MontroseAccountsAccountIdPatchData,
-    ThrowOnError
-  >,
+export const linkMontroseAccount = <ThrowOnError extends boolean = false>(
+  options: Options<LinkMontroseAccountData, ThrowOnError>,
 ): RequestResult<
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors,
+  LinkMontroseAccountResponses,
+  LinkMontroseAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses,
-    LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors,
+    LinkMontroseAccountResponses,
+    LinkMontroseAccountErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      linkMontroseAccountV1MontroseAccountsAccountIdPatchResponseTransformer,
+    responseTransformer: linkMontroseAccountResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/montrose/accounts/{account_id}",
     ...options,
@@ -1224,17 +1088,11 @@ export const linkMontroseAccountV1MontroseAccountsAccountIdPatch = <
 /**
  * Sync Montrose
  */
-export const syncMontroseV1MontroseSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<SyncMontroseV1MontroseSyncPostData, ThrowOnError>,
-): RequestResult<
-  SyncMontroseV1MontroseSyncPostResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const syncMontrose = <ThrowOnError extends boolean = false>(
+  options?: Options<SyncMontroseData, ThrowOnError>,
+): RequestResult<SyncMontroseResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).post<
-    SyncMontroseV1MontroseSyncPostResponses,
+    SyncMontroseResponses,
     unknown,
     ThrowOnError
   >({
@@ -1246,25 +1104,15 @@ export const syncMontroseV1MontroseSyncPost = <
 /**
  * List Calendar Accounts
  */
-export const listCalendarAccountsV1CalendarsAccountsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    ListCalendarAccountsV1CalendarsAccountsGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  ListCalendarAccountsV1CalendarsAccountsGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listCalendarAccounts = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCalendarAccountsData, ThrowOnError>,
+): RequestResult<ListCalendarAccountsResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListCalendarAccountsV1CalendarsAccountsGetResponses,
+    ListCalendarAccountsResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      listCalendarAccountsV1CalendarsAccountsGetResponseTransformer,
+    responseTransformer: listCalendarAccountsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/accounts",
     ...options,
@@ -1273,20 +1121,11 @@ export const listCalendarAccountsV1CalendarsAccountsGet = <
 /**
  * Start Google Calendar Connection
  */
-export const authorizeGoogleV1CalendarsGoogleAuthorizePost = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
-    ThrowOnError
-  >,
-): RequestResult<
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const authorizeGoogle = <ThrowOnError extends boolean = false>(
+  options?: Options<AuthorizeGoogleData, ThrowOnError>,
+): RequestResult<AuthorizeGoogleResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).post<
-    AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses,
+    AuthorizeGoogleResponses,
     unknown,
     ThrowOnError
   >({
@@ -1298,25 +1137,19 @@ export const authorizeGoogleV1CalendarsGoogleAuthorizePost = <
 /**
  * Complete Google Calendar Connection
  */
-export const completeGoogleConnectV1CalendarsGoogleCallbackPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
-    ThrowOnError
-  >,
+export const completeGoogleConnect = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteGoogleConnectData, ThrowOnError>,
 ): RequestResult<
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
+  CompleteGoogleConnectResponses,
+  CompleteGoogleConnectErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses,
-    CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors,
+    CompleteGoogleConnectResponses,
+    CompleteGoogleConnectErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      completeGoogleConnectV1CalendarsGoogleCallbackPostResponseTransformer,
+    responseTransformer: completeGoogleConnectResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/google/callback",
     ...options,
@@ -1329,21 +1162,15 @@ export const completeGoogleConnectV1CalendarsGoogleCallbackPost = <
 /**
  * Connect iCloud Calendar
  */
-export const connectIcloudV1CalendarsIcloudPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ConnectIcloudV1CalendarsIcloudPostData, ThrowOnError>,
-): RequestResult<
-  ConnectIcloudV1CalendarsIcloudPostResponses,
-  ConnectIcloudV1CalendarsIcloudPostErrors,
-  ThrowOnError
-> =>
+export const connectIcloud = <ThrowOnError extends boolean = false>(
+  options: Options<ConnectIcloudData, ThrowOnError>,
+): RequestResult<ConnectIcloudResponses, ConnectIcloudErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    ConnectIcloudV1CalendarsIcloudPostResponses,
-    ConnectIcloudV1CalendarsIcloudPostErrors,
+    ConnectIcloudResponses,
+    ConnectIcloudErrors,
     ThrowOnError
   >({
-    responseTransformer: connectIcloudV1CalendarsIcloudPostResponseTransformer,
+    responseTransformer: connectIcloudResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/icloud",
     ...options,
@@ -1356,21 +1183,16 @@ export const connectIcloudV1CalendarsIcloudPost = <
 /**
  * Disconnect Calendar Account
  */
-export const disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
-    ThrowOnError
-  >,
+export const disconnectCalendarAccount = <ThrowOnError extends boolean = false>(
+  options: Options<DisconnectCalendarAccountData, ThrowOnError>,
 ): RequestResult<
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
+  DisconnectCalendarAccountResponses,
+  DisconnectCalendarAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses,
-    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors,
+    DisconnectCalendarAccountResponses,
+    DisconnectCalendarAccountErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1381,21 +1203,16 @@ export const disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete = <
 /**
  * Sync Calendar Account
  */
-export const syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
-    ThrowOnError
-  >,
+export const syncCalendarAccount = <ThrowOnError extends boolean = false>(
+  options: Options<SyncCalendarAccountData, ThrowOnError>,
 ): RequestResult<
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
+  SyncCalendarAccountResponses,
+  SyncCalendarAccountErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses,
-    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors,
+    SyncCalendarAccountResponses,
+    SyncCalendarAccountErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1406,18 +1223,12 @@ export const syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost = <
 /**
  * Update Calendar
  */
-export const updateCalendarV1CalendarsCalendarIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateCalendarV1CalendarsCalendarIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdateCalendarV1CalendarsCalendarIdPatchResponses,
-  UpdateCalendarV1CalendarsCalendarIdPatchErrors,
-  ThrowOnError
-> =>
+export const updateCalendar = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCalendarData, ThrowOnError>,
+): RequestResult<UpdateCalendarResponses, UpdateCalendarErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateCalendarV1CalendarsCalendarIdPatchResponses,
-    UpdateCalendarV1CalendarsCalendarIdPatchErrors,
+    UpdateCalendarResponses,
+    UpdateCalendarErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1432,22 +1243,19 @@ export const updateCalendarV1CalendarsCalendarIdPatch = <
 /**
  * List Calendar Events
  */
-export const listCalendarEventsV1CalendarsEventsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ListCalendarEventsV1CalendarsEventsGetData, ThrowOnError>,
+export const listCalendarEvents = <ThrowOnError extends boolean = false>(
+  options: Options<ListCalendarEventsData, ThrowOnError>,
 ): RequestResult<
-  ListCalendarEventsV1CalendarsEventsGetResponses,
-  ListCalendarEventsV1CalendarsEventsGetErrors,
+  ListCalendarEventsResponses,
+  ListCalendarEventsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    ListCalendarEventsV1CalendarsEventsGetResponses,
-    ListCalendarEventsV1CalendarsEventsGetErrors,
+    ListCalendarEventsResponses,
+    ListCalendarEventsErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listCalendarEventsV1CalendarsEventsGetResponseTransformer,
+    responseTransformer: listCalendarEventsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/events",
     ...options,
@@ -1456,25 +1264,19 @@ export const listCalendarEventsV1CalendarsEventsGet = <
 /**
  * Create Calendar Event
  */
-export const createCalendarEventV1CalendarsCalendarIdEventsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
-    ThrowOnError
-  >,
+export const createCalendarEvent = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCalendarEventData, ThrowOnError>,
 ): RequestResult<
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors,
+  CreateCalendarEventResponses,
+  CreateCalendarEventErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses,
-    CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors,
+    CreateCalendarEventResponses,
+    CreateCalendarEventErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createCalendarEventV1CalendarsCalendarIdEventsPostResponseTransformer,
+    responseTransformer: createCalendarEventResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/{calendar_id}/events",
     ...options,
@@ -1487,21 +1289,16 @@ export const createCalendarEventV1CalendarsCalendarIdEventsPost = <
 /**
  * Delete Calendar Event
  */
-export const deleteCalendarEventV1CalendarsEventsEventIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
-    ThrowOnError
-  >,
+export const deleteCalendarEvent = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCalendarEventData, ThrowOnError>,
 ): RequestResult<
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors,
+  DeleteCalendarEventResponses,
+  DeleteCalendarEventErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses,
-    DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors,
+    DeleteCalendarEventResponses,
+    DeleteCalendarEventErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1512,25 +1309,19 @@ export const deleteCalendarEventV1CalendarsEventsEventIdDelete = <
 /**
  * Update Calendar Event
  */
-export const updateCalendarEventV1CalendarsEventsEventIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateCalendarEventV1CalendarsEventsEventIdPatchData,
-    ThrowOnError
-  >,
+export const updateCalendarEvent = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCalendarEventData, ThrowOnError>,
 ): RequestResult<
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors,
+  UpdateCalendarEventResponses,
+  UpdateCalendarEventErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses,
-    UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors,
+    UpdateCalendarEventResponses,
+    UpdateCalendarEventErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateCalendarEventV1CalendarsEventsEventIdPatchResponseTransformer,
+    responseTransformer: updateCalendarEventResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/events/{event_id}",
     ...options,
@@ -1543,25 +1334,19 @@ export const updateCalendarEventV1CalendarsEventsEventIdPatch = <
 /**
  * Answer Calendar Invitation
  */
-export const respondToCalendarEventV1CalendarsEventsEventIdResponsePut = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData,
-    ThrowOnError
-  >,
+export const respondToCalendarEvent = <ThrowOnError extends boolean = false>(
+  options: Options<RespondToCalendarEventData, ThrowOnError>,
 ): RequestResult<
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors,
+  RespondToCalendarEventResponses,
+  RespondToCalendarEventErrors,
   ThrowOnError
 > =>
   (options.client ?? client).put<
-    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses,
-    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors,
+    RespondToCalendarEventResponses,
+    RespondToCalendarEventErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      respondToCalendarEventV1CalendarsEventsEventIdResponsePutResponseTransformer,
+    responseTransformer: respondToCalendarEventResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/calendars/events/{event_id}/response",
     ...options,
@@ -1574,22 +1359,15 @@ export const respondToCalendarEventV1CalendarsEventsEventIdResponsePut = <
 /**
  * List Bank Connections
  */
-export const listBankConnectionsV1BankConnectionsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListBankConnectionsV1BankConnectionsGetData, ThrowOnError>,
-): RequestResult<
-  ListBankConnectionsV1BankConnectionsGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listBankConnections = <ThrowOnError extends boolean = false>(
+  options?: Options<ListBankConnectionsData, ThrowOnError>,
+): RequestResult<ListBankConnectionsResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListBankConnectionsV1BankConnectionsGetResponses,
+    ListBankConnectionsResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      listBankConnectionsV1BankConnectionsGetResponseTransformer,
+    responseTransformer: listBankConnectionsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-connections",
     ...options,
@@ -1598,21 +1376,16 @@ export const listBankConnectionsV1BankConnectionsGet = <
 /**
  * Start Bank Connection
  */
-export const authorizeBankConnectionV1BankConnectionsAuthorizePost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
-    ThrowOnError
-  >,
+export const authorizeBankConnection = <ThrowOnError extends boolean = false>(
+  options: Options<AuthorizeBankConnectionData, ThrowOnError>,
 ): RequestResult<
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
+  AuthorizeBankConnectionResponses,
+  AuthorizeBankConnectionErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses,
-    AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors,
+    AuthorizeBankConnectionResponses,
+    AuthorizeBankConnectionErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1627,25 +1400,19 @@ export const authorizeBankConnectionV1BankConnectionsAuthorizePost = <
 /**
  * Complete Bank Connection
  */
-export const completeBankConnectionV1BankConnectionsCallbackPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    CompleteBankConnectionV1BankConnectionsCallbackPostData,
-    ThrowOnError
-  >,
+export const completeBankConnection = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteBankConnectionData, ThrowOnError>,
 ): RequestResult<
-  CompleteBankConnectionV1BankConnectionsCallbackPostResponses,
-  CompleteBankConnectionV1BankConnectionsCallbackPostErrors,
+  CompleteBankConnectionResponses,
+  CompleteBankConnectionErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CompleteBankConnectionV1BankConnectionsCallbackPostResponses,
-    CompleteBankConnectionV1BankConnectionsCallbackPostErrors,
+    CompleteBankConnectionResponses,
+    CompleteBankConnectionErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      completeBankConnectionV1BankConnectionsCallbackPostResponseTransformer,
+    responseTransformer: completeBankConnectionResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/bank-connections/callback",
     ...options,
@@ -1658,51 +1425,41 @@ export const completeBankConnectionV1BankConnectionsCallbackPost = <
 /**
  * Link Bank Connection Account
  */
-export const linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
-      ThrowOnError
-    >,
-  ): RequestResult<
-    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
-    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
+export const linkBankConnectionAccount = <ThrowOnError extends boolean = false>(
+  options: Options<LinkBankConnectionAccountData, ThrowOnError>,
+): RequestResult<
+  LinkBankConnectionAccountResponses,
+  LinkBankConnectionAccountErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    LinkBankConnectionAccountResponses,
+    LinkBankConnectionAccountErrors,
     ThrowOnError
-  > =>
-    (options.client ?? client).patch<
-      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses,
-      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors,
-      ThrowOnError
-    >({
-      responseTransformer:
-        linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponseTransformer,
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/v1/bank-connections/accounts/{account_id}",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
+  >({
+    responseTransformer: linkBankConnectionAccountResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/bank-connections/accounts/{account_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
 /**
  * Sync Bank Connection
  */
-export const syncBankConnectionV1BankConnectionsConnectionIdSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
-    ThrowOnError
-  >,
+export const syncBankConnection = <ThrowOnError extends boolean = false>(
+  options: Options<SyncBankConnectionData, ThrowOnError>,
 ): RequestResult<
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
+  SyncBankConnectionResponses,
+  SyncBankConnectionErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses,
-    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors,
+    SyncBankConnectionResponses,
+    SyncBankConnectionErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1713,21 +1470,16 @@ export const syncBankConnectionV1BankConnectionsConnectionIdSyncPost = <
 /**
  * Disconnect Bank Connection
  */
-export const disconnectBankConnectionV1BankConnectionsConnectionIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
-    ThrowOnError
-  >,
+export const disconnectBankConnection = <ThrowOnError extends boolean = false>(
+  options: Options<DisconnectBankConnectionData, ThrowOnError>,
 ): RequestResult<
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
+  DisconnectBankConnectionResponses,
+  DisconnectBankConnectionErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses,
-    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors,
+    DisconnectBankConnectionResponses,
+    DisconnectBankConnectionErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1740,21 +1492,15 @@ export const disconnectBankConnectionV1BankConnectionsConnectionIdDelete = <
  *
  * List all categories.
  */
-export const listCategoriesV1CategoriesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListCategoriesV1CategoriesGetData, ThrowOnError>,
-): RequestResult<
-  ListCategoriesV1CategoriesGetResponses,
-  ListCategoriesV1CategoriesGetErrors,
-  ThrowOnError
-> =>
+export const listCategories = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCategoriesData, ThrowOnError>,
+): RequestResult<ListCategoriesResponses, ListCategoriesErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListCategoriesV1CategoriesGetResponses,
-    ListCategoriesV1CategoriesGetErrors,
+    ListCategoriesResponses,
+    ListCategoriesErrors,
     ThrowOnError
   >({
-    responseTransformer: listCategoriesV1CategoriesGetResponseTransformer,
+    responseTransformer: listCategoriesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/categories",
     ...options,
@@ -1763,22 +1509,15 @@ export const listCategoriesV1CategoriesGet = <
 /**
  * List Category Rules
  */
-export const listCategoryRulesV1CategoriesRulesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListCategoryRulesV1CategoriesRulesGetData, ThrowOnError>,
-): RequestResult<
-  ListCategoryRulesV1CategoriesRulesGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listCategoryRules = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCategoryRulesData, ThrowOnError>,
+): RequestResult<ListCategoryRulesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListCategoryRulesV1CategoriesRulesGetResponses,
+    ListCategoryRulesResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      listCategoryRulesV1CategoriesRulesGetResponseTransformer,
+    responseTransformer: listCategoryRulesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/categories/rules",
     ...options,
@@ -1789,22 +1528,19 @@ export const listCategoryRulesV1CategoriesRulesGet = <
  *
  * Sorts future imports whose description contains the text into the category, and by default the ones already here.
  */
-export const createCategoryRuleV1CategoriesRulesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateCategoryRuleV1CategoriesRulesPostData, ThrowOnError>,
+export const createCategoryRule = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCategoryRuleData, ThrowOnError>,
 ): RequestResult<
-  CreateCategoryRuleV1CategoriesRulesPostResponses,
-  CreateCategoryRuleV1CategoriesRulesPostErrors,
+  CreateCategoryRuleResponses,
+  CreateCategoryRuleErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateCategoryRuleV1CategoriesRulesPostResponses,
-    CreateCategoryRuleV1CategoriesRulesPostErrors,
+    CreateCategoryRuleResponses,
+    CreateCategoryRuleErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createCategoryRuleV1CategoriesRulesPostResponseTransformer,
+    responseTransformer: createCategoryRuleResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/categories/rules",
     ...options,
@@ -1819,21 +1555,16 @@ export const createCategoryRuleV1CategoriesRulesPost = <
  *
  * Stops sorting new imports by it; transactions it already sorted keep their category.
  */
-export const deleteCategoryRuleV1CategoriesRulesRuleIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData,
-    ThrowOnError
-  >,
+export const deleteCategoryRule = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCategoryRuleData, ThrowOnError>,
 ): RequestResult<
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors,
+  DeleteCategoryRuleResponses,
+  DeleteCategoryRuleErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses,
-    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors,
+    DeleteCategoryRuleResponses,
+    DeleteCategoryRuleErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1844,38 +1575,30 @@ export const deleteCategoryRuleV1CategoriesRulesRuleIdDelete = <
 /**
  * List Counters
  */
-export const listCountersV1CountersGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListCountersV1CountersGetData, ThrowOnError>,
-): RequestResult<ListCountersV1CountersGetResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<
-    ListCountersV1CountersGetResponses,
-    unknown,
-    ThrowOnError
-  >({
-    responseTransformer: listCountersV1CountersGetResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/counters",
-    ...options,
-  });
+export const listCounters = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCountersData, ThrowOnError>,
+): RequestResult<ListCountersResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<ListCountersResponses, unknown, ThrowOnError>(
+    {
+      responseTransformer: listCountersResponseTransformer,
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/v1/counters",
+      ...options,
+    },
+  );
 
 /**
  * Create Counter
  */
-export const createCounterV1CountersPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateCounterV1CountersPostData, ThrowOnError>,
-): RequestResult<
-  CreateCounterV1CountersPostResponses,
-  CreateCounterV1CountersPostErrors,
-  ThrowOnError
-> =>
+export const createCounter = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCounterData, ThrowOnError>,
+): RequestResult<CreateCounterResponses, CreateCounterErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CreateCounterV1CountersPostResponses,
-    CreateCounterV1CountersPostErrors,
+    CreateCounterResponses,
+    CreateCounterErrors,
     ThrowOnError
   >({
-    responseTransformer: createCounterV1CountersPostResponseTransformer,
+    responseTransformer: createCounterResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters",
     ...options,
@@ -1888,18 +1611,12 @@ export const createCounterV1CountersPost = <
 /**
  * Delete Counter
  */
-export const deleteCounterV1CountersCounterIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteCounterV1CountersCounterIdDeleteData, ThrowOnError>,
-): RequestResult<
-  DeleteCounterV1CountersCounterIdDeleteResponses,
-  DeleteCounterV1CountersCounterIdDeleteErrors,
-  ThrowOnError
-> =>
+export const deleteCounter = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCounterData, ThrowOnError>,
+): RequestResult<DeleteCounterResponses, DeleteCounterErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    DeleteCounterV1CountersCounterIdDeleteResponses,
-    DeleteCounterV1CountersCounterIdDeleteErrors,
+    DeleteCounterResponses,
+    DeleteCounterErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -1910,22 +1627,15 @@ export const deleteCounterV1CountersCounterIdDelete = <
 /**
  * Update Counter
  */
-export const updateCounterV1CountersCounterIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateCounterV1CountersCounterIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdateCounterV1CountersCounterIdPatchResponses,
-  UpdateCounterV1CountersCounterIdPatchErrors,
-  ThrowOnError
-> =>
+export const updateCounter = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCounterData, ThrowOnError>,
+): RequestResult<UpdateCounterResponses, UpdateCounterErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateCounterV1CountersCounterIdPatchResponses,
-    UpdateCounterV1CountersCounterIdPatchErrors,
+    UpdateCounterResponses,
+    UpdateCounterErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateCounterV1CountersCounterIdPatchResponseTransformer,
+    responseTransformer: updateCounterResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}",
     ...options,
@@ -1938,22 +1648,15 @@ export const updateCounterV1CountersCounterIdPatch = <
 /**
  * List Resets
  */
-export const listResetsV1CountersCounterIdResetsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ListResetsV1CountersCounterIdResetsGetData, ThrowOnError>,
-): RequestResult<
-  ListResetsV1CountersCounterIdResetsGetResponses,
-  ListResetsV1CountersCounterIdResetsGetErrors,
-  ThrowOnError
-> =>
+export const listResets = <ThrowOnError extends boolean = false>(
+  options: Options<ListResetsData, ThrowOnError>,
+): RequestResult<ListResetsResponses, ListResetsErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    ListResetsV1CountersCounterIdResetsGetResponses,
-    ListResetsV1CountersCounterIdResetsGetErrors,
+    ListResetsResponses,
+    ListResetsErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listResetsV1CountersCounterIdResetsGetResponseTransformer,
+    responseTransformer: listResetsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets",
     ...options,
@@ -1962,22 +1665,15 @@ export const listResetsV1CountersCounterIdResetsGet = <
 /**
  * Record Reset
  */
-export const createResetV1CountersCounterIdResetsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateResetV1CountersCounterIdResetsPostData, ThrowOnError>,
-): RequestResult<
-  CreateResetV1CountersCounterIdResetsPostResponses,
-  CreateResetV1CountersCounterIdResetsPostErrors,
-  ThrowOnError
-> =>
+export const createReset = <ThrowOnError extends boolean = false>(
+  options: Options<CreateResetData, ThrowOnError>,
+): RequestResult<CreateResetResponses, CreateResetErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CreateResetV1CountersCounterIdResetsPostResponses,
-    CreateResetV1CountersCounterIdResetsPostErrors,
+    CreateResetResponses,
+    CreateResetErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createResetV1CountersCounterIdResetsPostResponseTransformer,
+    responseTransformer: createResetResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets",
     ...options,
@@ -1986,21 +1682,12 @@ export const createResetV1CountersCounterIdResetsPost = <
 /**
  * Undo Reset
  */
-export const undoResetV1CountersCounterIdResetsResetIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UndoResetV1CountersCounterIdResetsResetIdDeleteData,
-    ThrowOnError
-  >,
-): RequestResult<
-  UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
-  ThrowOnError
-> =>
+export const undoReset = <ThrowOnError extends boolean = false>(
+  options: Options<UndoResetData, ThrowOnError>,
+): RequestResult<UndoResetResponses, UndoResetErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    UndoResetV1CountersCounterIdResetsResetIdDeleteResponses,
-    UndoResetV1CountersCounterIdResetsResetIdDeleteErrors,
+    UndoResetResponses,
+    UndoResetErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2011,15 +1698,11 @@ export const undoResetV1CountersCounterIdResetsResetIdDelete = <
 /**
  * List Devices
  */
-export const listDevicesV1DevicesGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListDevicesV1DevicesGetData, ThrowOnError>,
-): RequestResult<ListDevicesV1DevicesGetResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).get<
-    ListDevicesV1DevicesGetResponses,
-    unknown,
-    ThrowOnError
-  >({
-    responseTransformer: listDevicesV1DevicesGetResponseTransformer,
+export const listDevices = <ThrowOnError extends boolean = false>(
+  options?: Options<ListDevicesData, ThrowOnError>,
+): RequestResult<ListDevicesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<ListDevicesResponses, unknown, ThrowOnError>({
+    responseTransformer: listDevicesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/devices",
     ...options,
@@ -2028,18 +1711,12 @@ export const listDevicesV1DevicesGet = <ThrowOnError extends boolean = false>(
 /**
  * Delete Device
  */
-export const deleteDeviceV1DevicesDeviceIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteDeviceV1DevicesDeviceIdDeleteData, ThrowOnError>,
-): RequestResult<
-  DeleteDeviceV1DevicesDeviceIdDeleteResponses,
-  DeleteDeviceV1DevicesDeviceIdDeleteErrors,
-  ThrowOnError
-> =>
+export const deleteDevice = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteDeviceData, ThrowOnError>,
+): RequestResult<DeleteDeviceResponses, DeleteDeviceErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    DeleteDeviceV1DevicesDeviceIdDeleteResponses,
-    DeleteDeviceV1DevicesDeviceIdDeleteErrors,
+    DeleteDeviceResponses,
+    DeleteDeviceErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2050,21 +1727,15 @@ export const deleteDeviceV1DevicesDeviceIdDelete = <
 /**
  * Rename Device
  */
-export const updateDeviceV1DevicesDeviceIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateDeviceV1DevicesDeviceIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdateDeviceV1DevicesDeviceIdPatchResponses,
-  UpdateDeviceV1DevicesDeviceIdPatchErrors,
-  ThrowOnError
-> =>
+export const updateDevice = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateDeviceData, ThrowOnError>,
+): RequestResult<UpdateDeviceResponses, UpdateDeviceErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateDeviceV1DevicesDeviceIdPatchResponses,
-    UpdateDeviceV1DevicesDeviceIdPatchErrors,
+    UpdateDeviceResponses,
+    UpdateDeviceErrors,
     ThrowOnError
   >({
-    responseTransformer: updateDeviceV1DevicesDeviceIdPatchResponseTransformer,
+    responseTransformer: updateDeviceResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/devices/{device_id}",
     ...options,
@@ -2080,21 +1751,16 @@ export const updateDeviceV1DevicesDeviceIdPatch = <
  * Crash and hang reports from the apps, logged so they can be found next to
  * the server's own logs for the same build.
  */
-export const uploadClientDiagnosticsV1ClientDiagnosticsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UploadClientDiagnosticsV1ClientDiagnosticsPostData,
-    ThrowOnError
-  >,
+export const uploadClientDiagnostics = <ThrowOnError extends boolean = false>(
+  options: Options<UploadClientDiagnosticsData, ThrowOnError>,
 ): RequestResult<
-  UploadClientDiagnosticsV1ClientDiagnosticsPostResponses,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostErrors,
+  UploadClientDiagnosticsResponses,
+  UploadClientDiagnosticsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    UploadClientDiagnosticsV1ClientDiagnosticsPostResponses,
-    UploadClientDiagnosticsV1ClientDiagnosticsPostErrors,
+    UploadClientDiagnosticsResponses,
+    UploadClientDiagnosticsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2109,21 +1775,15 @@ export const uploadClientDiagnosticsV1ClientDiagnosticsPost = <
 /**
  * List Gym Exercises
  */
-export const listGymExercisesV1GymExercisesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListGymExercisesV1GymExercisesGetData, ThrowOnError>,
-): RequestResult<
-  ListGymExercisesV1GymExercisesGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listGymExercises = <ThrowOnError extends boolean = false>(
+  options?: Options<ListGymExercisesData, ThrowOnError>,
+): RequestResult<ListGymExercisesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListGymExercisesV1GymExercisesGetResponses,
+    ListGymExercisesResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer: listGymExercisesV1GymExercisesGetResponseTransformer,
+    responseTransformer: listGymExercisesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/gym/exercises",
     ...options,
@@ -2132,21 +1792,16 @@ export const listGymExercisesV1GymExercisesGet = <
 /**
  * Delete Gym Exercise
  */
-export const deleteGymExerciseV1GymExercisesExerciseIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteGymExerciseV1GymExercisesExerciseIdDeleteData,
-    ThrowOnError
-  >,
+export const deleteGymExercise = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteGymExerciseData, ThrowOnError>,
 ): RequestResult<
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors,
+  DeleteGymExerciseResponses,
+  DeleteGymExerciseErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses,
-    DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors,
+    DeleteGymExerciseResponses,
+    DeleteGymExerciseErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2159,25 +1814,19 @@ export const deleteGymExerciseV1GymExercisesExerciseIdDelete = <
  *
  * The id is chosen by the app, so creating twice is the same as creating once.
  */
-export const upsertGymExerciseV1GymExercisesExerciseIdPut = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpsertGymExerciseV1GymExercisesExerciseIdPutData,
-    ThrowOnError
-  >,
+export const upsertGymExercise = <ThrowOnError extends boolean = false>(
+  options: Options<UpsertGymExerciseData, ThrowOnError>,
 ): RequestResult<
-  UpsertGymExerciseV1GymExercisesExerciseIdPutResponses,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutErrors,
+  UpsertGymExerciseResponses,
+  UpsertGymExerciseErrors,
   ThrowOnError
 > =>
   (options.client ?? client).put<
-    UpsertGymExerciseV1GymExercisesExerciseIdPutResponses,
-    UpsertGymExerciseV1GymExercisesExerciseIdPutErrors,
+    UpsertGymExerciseResponses,
+    UpsertGymExerciseErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      upsertGymExerciseV1GymExercisesExerciseIdPutResponseTransformer,
+    responseTransformer: upsertGymExerciseResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/gym/exercises/{exercise_id}",
     ...options,
@@ -2190,25 +1839,15 @@ export const upsertGymExerciseV1GymExercisesExerciseIdPut = <
 /**
  * List Gym Top Sets
  */
-export const listGymTopSetsV1GymExercisesExerciseIdSetsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ListGymTopSetsV1GymExercisesExerciseIdSetsGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors,
-  ThrowOnError
-> =>
+export const listGymTopSets = <ThrowOnError extends boolean = false>(
+  options: Options<ListGymTopSetsData, ThrowOnError>,
+): RequestResult<ListGymTopSetsResponses, ListGymTopSetsErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses,
-    ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors,
+    ListGymTopSetsResponses,
+    ListGymTopSetsErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listGymTopSetsV1GymExercisesExerciseIdSetsGetResponseTransformer,
+    responseTransformer: listGymTopSetsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/gym/exercises/{exercise_id}/sets",
     ...options,
@@ -2217,21 +1856,16 @@ export const listGymTopSetsV1GymExercisesExerciseIdSetsGet = <
 /**
  * Delete Gym Top Set
  */
-export const deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData,
-    ThrowOnError
-  >,
+export const deleteGymTopSet = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteGymTopSetData, ThrowOnError>,
 ): RequestResult<
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors,
+  DeleteGymTopSetResponses,
+  DeleteGymTopSetErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses,
-    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors,
+    DeleteGymTopSetResponses,
+    DeleteGymTopSetErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2245,25 +1879,15 @@ export const deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete = <
  * The day's top set for the exercise, replacing one already logged. The day
  * is the app's local date, so a set sent late still lands on the day it was lifted.
  */
-export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
-    ThrowOnError
-  >,
-): RequestResult<
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
-  ThrowOnError
-> =>
+export const putGymTopSet = <ThrowOnError extends boolean = false>(
+  options: Options<PutGymTopSetData, ThrowOnError>,
+): RequestResult<PutGymTopSetResponses, PutGymTopSetErrors, ThrowOnError> =>
   (options.client ?? client).put<
-    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses,
-    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors,
+    PutGymTopSetResponses,
+    PutGymTopSetErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponseTransformer,
+    responseTransformer: putGymTopSetResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}",
     ...options,
@@ -2276,21 +1900,16 @@ export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut = <
 /**
  * Sync HealthKit Workouts
  */
-export const syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
-    ThrowOnError
-  >,
+export const syncHealthkitWorkouts = <ThrowOnError extends boolean = false>(
+  options: Options<SyncHealthkitWorkoutsData, ThrowOnError>,
 ): RequestResult<
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
+  SyncHealthkitWorkoutsResponses,
+  SyncHealthkitWorkoutsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses,
-    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors,
+    SyncHealthkitWorkoutsResponses,
+    SyncHealthkitWorkoutsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2305,25 +1924,19 @@ export const syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost = <
 /**
  * List HealthKit Workouts
  */
-export const listHealthkitWorkoutsV1HealthkitWorkoutsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
-    ThrowOnError
-  >,
+export const listHealthkitWorkouts = <ThrowOnError extends boolean = false>(
+  options?: Options<ListHealthkitWorkoutsData, ThrowOnError>,
 ): RequestResult<
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
+  ListHealthkitWorkoutsResponses,
+  ListHealthkitWorkoutsErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses,
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors,
+    ListHealthkitWorkoutsResponses,
+    ListHealthkitWorkoutsErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listHealthkitWorkoutsV1HealthkitWorkoutsGetResponseTransformer,
+    responseTransformer: listHealthkitWorkoutsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/healthkit/workouts",
     ...options,
@@ -2332,21 +1945,16 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGet = <
 /**
  * Sync HealthKit Sleep Samples
  */
-export const syncHealthkitSleepV1HealthkitSleepSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SyncHealthkitSleepV1HealthkitSleepSyncPostData,
-    ThrowOnError
-  >,
+export const syncHealthkitSleep = <ThrowOnError extends boolean = false>(
+  options: Options<SyncHealthkitSleepData, ThrowOnError>,
 ): RequestResult<
-  SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
+  SyncHealthkitSleepResponses,
+  SyncHealthkitSleepErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    SyncHealthkitSleepV1HealthkitSleepSyncPostResponses,
-    SyncHealthkitSleepV1HealthkitSleepSyncPostErrors,
+    SyncHealthkitSleepResponses,
+    SyncHealthkitSleepErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2361,22 +1969,19 @@ export const syncHealthkitSleepV1HealthkitSleepSyncPost = <
 /**
  * List HealthKit Sleep Samples
  */
-export const listHealthkitSleepV1HealthkitSleepGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData, ThrowOnError>,
+export const listHealthkitSleep = <ThrowOnError extends boolean = false>(
+  options?: Options<ListHealthkitSleepData, ThrowOnError>,
 ): RequestResult<
-  ListHealthkitSleepV1HealthkitSleepGetResponses,
-  ListHealthkitSleepV1HealthkitSleepGetErrors,
+  ListHealthkitSleepResponses,
+  ListHealthkitSleepErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
-    ListHealthkitSleepV1HealthkitSleepGetResponses,
-    ListHealthkitSleepV1HealthkitSleepGetErrors,
+    ListHealthkitSleepResponses,
+    ListHealthkitSleepErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listHealthkitSleepV1HealthkitSleepGetResponseTransformer,
+    responseTransformer: listHealthkitSleepResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/healthkit/sleep",
     ...options,
@@ -2385,18 +1990,12 @@ export const listHealthkitSleepV1HealthkitSleepGet = <
 /**
  * Get Nightly Sleep Totals
  */
-export const getDailySleepV1HealthkitSleepDailyGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetDailySleepV1HealthkitSleepDailyGetData, ThrowOnError>,
-): RequestResult<
-  GetDailySleepV1HealthkitSleepDailyGetResponses,
-  GetDailySleepV1HealthkitSleepDailyGetErrors,
-  ThrowOnError
-> =>
+export const getDailySleep = <ThrowOnError extends boolean = false>(
+  options: Options<GetDailySleepData, ThrowOnError>,
+): RequestResult<GetDailySleepResponses, GetDailySleepErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetDailySleepV1HealthkitSleepDailyGetResponses,
-    GetDailySleepV1HealthkitSleepDailyGetErrors,
+    GetDailySleepResponses,
+    GetDailySleepErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2407,18 +2006,16 @@ export const getDailySleepV1HealthkitSleepDailyGet = <
 /**
  * Get Sleep Stage Summary
  */
-export const getSleepSummaryV1HealthkitSleepSummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetSleepSummaryV1HealthkitSleepSummaryGetData, ThrowOnError>,
+export const getSleepSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetSleepSummaryData, ThrowOnError>,
 ): RequestResult<
-  GetSleepSummaryV1HealthkitSleepSummaryGetResponses,
-  GetSleepSummaryV1HealthkitSleepSummaryGetErrors,
+  GetSleepSummaryResponses,
+  GetSleepSummaryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetSleepSummaryV1HealthkitSleepSummaryGetResponses,
-    GetSleepSummaryV1HealthkitSleepSummaryGetErrors,
+    GetSleepSummaryResponses,
+    GetSleepSummaryErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2429,21 +2026,16 @@ export const getSleepSummaryV1HealthkitSleepSummaryGet = <
 /**
  * Sync HealthKit Daily Metrics
  */
-export const syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
-    ThrowOnError
-  >,
+export const syncHealthkitDailyMetrics = <ThrowOnError extends boolean = false>(
+  options: Options<SyncHealthkitDailyMetricsData, ThrowOnError>,
 ): RequestResult<
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors,
+  SyncHealthkitDailyMetricsResponses,
+  SyncHealthkitDailyMetricsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses,
-    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors,
+    SyncHealthkitDailyMetricsResponses,
+    SyncHealthkitDailyMetricsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2458,22 +2050,19 @@ export const syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost = <
 /**
  * Get Health Day Summary
  */
-export const getHealthSummaryV1HealthkitSummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetHealthSummaryV1HealthkitSummaryGetData, ThrowOnError>,
+export const getHealthSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetHealthSummaryData, ThrowOnError>,
 ): RequestResult<
-  GetHealthSummaryV1HealthkitSummaryGetResponses,
-  GetHealthSummaryV1HealthkitSummaryGetErrors,
+  GetHealthSummaryResponses,
+  GetHealthSummaryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetHealthSummaryV1HealthkitSummaryGetResponses,
-    GetHealthSummaryV1HealthkitSummaryGetErrors,
+    GetHealthSummaryResponses,
+    GetHealthSummaryErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      getHealthSummaryV1HealthkitSummaryGetResponseTransformer,
+    responseTransformer: getHealthSummaryResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/healthkit/summary",
     ...options,
@@ -2482,21 +2071,15 @@ export const getHealthSummaryV1HealthkitSummaryGet = <
 /**
  * List Ingest Tokens
  */
-export const listIngestTokensV1IngestTokensGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListIngestTokensV1IngestTokensGetData, ThrowOnError>,
-): RequestResult<
-  ListIngestTokensV1IngestTokensGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listIngestTokens = <ThrowOnError extends boolean = false>(
+  options?: Options<ListIngestTokensData, ThrowOnError>,
+): RequestResult<ListIngestTokensResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListIngestTokensV1IngestTokensGetResponses,
+    ListIngestTokensResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer: listIngestTokensV1IngestTokensGetResponseTransformer,
+    responseTransformer: listIngestTokensResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/ingest-tokens",
     ...options,
@@ -2505,21 +2088,19 @@ export const listIngestTokensV1IngestTokensGet = <
 /**
  * Create Ingest Token
  */
-export const createIngestTokenV1IngestTokensPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateIngestTokenV1IngestTokensPostData, ThrowOnError>,
+export const createIngestToken = <ThrowOnError extends boolean = false>(
+  options: Options<CreateIngestTokenData, ThrowOnError>,
 ): RequestResult<
-  CreateIngestTokenV1IngestTokensPostResponses,
-  CreateIngestTokenV1IngestTokensPostErrors,
+  CreateIngestTokenResponses,
+  CreateIngestTokenErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateIngestTokenV1IngestTokensPostResponses,
-    CreateIngestTokenV1IngestTokensPostErrors,
+    CreateIngestTokenResponses,
+    CreateIngestTokenErrors,
     ThrowOnError
   >({
-    responseTransformer: createIngestTokenV1IngestTokensPostResponseTransformer,
+    responseTransformer: createIngestTokenResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/ingest-tokens",
     ...options,
@@ -2532,21 +2113,16 @@ export const createIngestTokenV1IngestTokensPost = <
 /**
  * Revoke Ingest Token
  */
-export const revokeIngestTokenV1IngestTokensTokenIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
-    ThrowOnError
-  >,
+export const revokeIngestToken = <ThrowOnError extends boolean = false>(
+  options: Options<RevokeIngestTokenData, ThrowOnError>,
 ): RequestResult<
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors,
+  RevokeIngestTokenResponses,
+  RevokeIngestTokenErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses,
-    RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors,
+    RevokeIngestTokenResponses,
+    RevokeIngestTokenErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2557,21 +2133,15 @@ export const revokeIngestTokenV1IngestTokensTokenIdDelete = <
 /**
  * List Trades
  */
-export const listTradesV1InvestmentsTradesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListTradesV1InvestmentsTradesGetData, ThrowOnError>,
-): RequestResult<
-  ListTradesV1InvestmentsTradesGetResponses,
-  ListTradesV1InvestmentsTradesGetErrors,
-  ThrowOnError
-> =>
+export const listTrades = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTradesData, ThrowOnError>,
+): RequestResult<ListTradesResponses, ListTradesErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListTradesV1InvestmentsTradesGetResponses,
-    ListTradesV1InvestmentsTradesGetErrors,
+    ListTradesResponses,
+    ListTradesErrors,
     ThrowOnError
   >({
-    responseTransformer: listTradesV1InvestmentsTradesGetResponseTransformer,
+    responseTransformer: listTradesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/trades",
     ...options,
@@ -2582,25 +2152,15 @@ export const listTradesV1InvestmentsTradesGet = <
  *
  * Each investment account's value, the money put in and taken out, what it made, and its dividends.
  */
-export const getInvestmentAccountsV1InvestmentsAccountsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    GetInvestmentAccountsV1InvestmentsAccountsGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  GetInvestmentAccountsV1InvestmentsAccountsGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const getInvestmentAccounts = <ThrowOnError extends boolean = false>(
+  options?: Options<GetInvestmentAccountsData, ThrowOnError>,
+): RequestResult<GetInvestmentAccountsResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    GetInvestmentAccountsV1InvestmentsAccountsGetResponses,
+    GetInvestmentAccountsResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      getInvestmentAccountsV1InvestmentsAccountsGetResponseTransformer,
+    responseTransformer: getInvestmentAccountsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/accounts",
     ...options,
@@ -2609,20 +2169,10 @@ export const getInvestmentAccountsV1InvestmentsAccountsGet = <
 /**
  * Get Holdings
  */
-export const getHoldingsV1InvestmentsHoldingsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<GetHoldingsV1InvestmentsHoldingsGetData, ThrowOnError>,
-): RequestResult<
-  GetHoldingsV1InvestmentsHoldingsGetResponses,
-  unknown,
-  ThrowOnError
-> =>
-  (options?.client ?? client).get<
-    GetHoldingsV1InvestmentsHoldingsGetResponses,
-    unknown,
-    ThrowOnError
-  >({
+export const getHoldings = <ThrowOnError extends boolean = false>(
+  options?: Options<GetHoldingsData, ThrowOnError>,
+): RequestResult<GetHoldingsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetHoldingsResponses, unknown, ThrowOnError>({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/holdings",
     ...options,
@@ -2631,21 +2181,12 @@ export const getHoldingsV1InvestmentsHoldingsGet = <
 /**
  * Get Crypto Price
  */
-export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
-  ThrowOnError
-> =>
+export const getCryptoPrice = <ThrowOnError extends boolean = false>(
+  options: Options<GetCryptoPriceData, ThrowOnError>,
+): RequestResult<GetCryptoPriceResponses, GetCryptoPriceErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses,
-    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors,
+    GetCryptoPriceResponses,
+    GetCryptoPriceErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2662,26 +2203,20 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet = <
  * are updated, and ones the phone no longer has within the export's span are
  * removed. An export older than what's stored never overrides it.
  */
-export const importLocationHistoryV1LocationHistoryImportPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ImportLocationHistoryV1LocationHistoryImportPostData,
-    ThrowOnError
-  >,
+export const importLocationHistory = <ThrowOnError extends boolean = false>(
+  options: Options<ImportLocationHistoryData, ThrowOnError>,
 ): RequestResult<
-  ImportLocationHistoryV1LocationHistoryImportPostResponses,
-  ImportLocationHistoryV1LocationHistoryImportPostErrors,
+  ImportLocationHistoryResponses,
+  ImportLocationHistoryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    ImportLocationHistoryV1LocationHistoryImportPostResponses,
-    ImportLocationHistoryV1LocationHistoryImportPostErrors,
+    ImportLocationHistoryResponses,
+    ImportLocationHistoryErrors,
     ThrowOnError
   >({
     ...formDataBodySerializer,
-    responseTransformer:
-      importLocationHistoryV1LocationHistoryImportPostResponseTransformer,
+    responseTransformer: importLocationHistoryResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/location-history/import",
     ...options,
@@ -2694,25 +2229,15 @@ export const importLocationHistoryV1LocationHistoryImportPost = <
 /**
  * Get Location History Summary
  */
-export const getLocationHistorySummaryV1LocationHistorySummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    GetLocationHistorySummaryV1LocationHistorySummaryGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const getLocationHistorySummary = <ThrowOnError extends boolean = false>(
+  options?: Options<GetLocationHistorySummaryData, ThrowOnError>,
+): RequestResult<GetLocationHistorySummaryResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    GetLocationHistorySummaryV1LocationHistorySummaryGetResponses,
+    GetLocationHistorySummaryResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer:
-      getLocationHistorySummaryV1LocationHistorySummaryGetResponseTransformer,
+    responseTransformer: getLocationHistorySummaryResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/location-history/summary",
     ...options,
@@ -2721,25 +2246,19 @@ export const getLocationHistorySummaryV1LocationHistorySummaryGet = <
 /**
  * Get Location History Day
  */
-export const getLocationHistoryDayV1LocationHistoryDayGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetLocationHistoryDayV1LocationHistoryDayGetData,
-    ThrowOnError
-  >,
+export const getLocationHistoryDay = <ThrowOnError extends boolean = false>(
+  options: Options<GetLocationHistoryDayData, ThrowOnError>,
 ): RequestResult<
-  GetLocationHistoryDayV1LocationHistoryDayGetResponses,
-  GetLocationHistoryDayV1LocationHistoryDayGetErrors,
+  GetLocationHistoryDayResponses,
+  GetLocationHistoryDayErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetLocationHistoryDayV1LocationHistoryDayGetResponses,
-    GetLocationHistoryDayV1LocationHistoryDayGetErrors,
+    GetLocationHistoryDayResponses,
+    GetLocationHistoryDayErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      getLocationHistoryDayV1LocationHistoryDayGetResponseTransformer,
+    responseTransformer: getLocationHistoryDayResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/location-history/day",
     ...options,
@@ -2748,21 +2267,15 @@ export const getLocationHistoryDayV1LocationHistoryDayGet = <
 /**
  * List Notifications
  */
-export const listNotificationsV1NotificationsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListNotificationsV1NotificationsGetData, ThrowOnError>,
-): RequestResult<
-  ListNotificationsV1NotificationsGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listNotifications = <ThrowOnError extends boolean = false>(
+  options?: Options<ListNotificationsData, ThrowOnError>,
+): RequestResult<ListNotificationsResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListNotificationsV1NotificationsGetResponses,
+    ListNotificationsResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer: listNotificationsV1NotificationsGetResponseTransformer,
+    responseTransformer: listNotificationsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/notifications",
     ...options,
@@ -2771,22 +2284,19 @@ export const listNotificationsV1NotificationsGet = <
 /**
  * Create Notification
  */
-export const createNotificationV1NotificationsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateNotificationV1NotificationsPostData, ThrowOnError>,
+export const createNotification = <ThrowOnError extends boolean = false>(
+  options: Options<CreateNotificationData, ThrowOnError>,
 ): RequestResult<
-  CreateNotificationV1NotificationsPostResponses,
-  CreateNotificationV1NotificationsPostErrors,
+  CreateNotificationResponses,
+  CreateNotificationErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateNotificationV1NotificationsPostResponses,
-    CreateNotificationV1NotificationsPostErrors,
+    CreateNotificationResponses,
+    CreateNotificationErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      createNotificationV1NotificationsPostResponseTransformer,
+    responseTransformer: createNotificationResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/notifications",
     ...options,
@@ -2799,25 +2309,19 @@ export const createNotificationV1NotificationsPost = <
 /**
  * Mark Notification Read
  */
-export const markNotificationReadV1NotificationsNotificationIdReadPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    MarkNotificationReadV1NotificationsNotificationIdReadPostData,
-    ThrowOnError
-  >,
+export const markNotificationRead = <ThrowOnError extends boolean = false>(
+  options: Options<MarkNotificationReadData, ThrowOnError>,
 ): RequestResult<
-  MarkNotificationReadV1NotificationsNotificationIdReadPostResponses,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostErrors,
+  MarkNotificationReadResponses,
+  MarkNotificationReadErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    MarkNotificationReadV1NotificationsNotificationIdReadPostResponses,
-    MarkNotificationReadV1NotificationsNotificationIdReadPostErrors,
+    MarkNotificationReadResponses,
+    MarkNotificationReadErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      markNotificationReadV1NotificationsNotificationIdReadPostResponseTransformer,
+    responseTransformer: markNotificationReadResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/notifications/{notification_id}/read",
     ...options,
@@ -2826,20 +2330,11 @@ export const markNotificationReadV1NotificationsNotificationIdReadPost = <
 /**
  * Mark All Notifications Read
  */
-export const markAllNotificationsReadV1NotificationsReadAllPost = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    MarkAllNotificationsReadV1NotificationsReadAllPostData,
-    ThrowOnError
-  >,
-): RequestResult<
-  MarkAllNotificationsReadV1NotificationsReadAllPostResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const markAllNotificationsRead = <ThrowOnError extends boolean = false>(
+  options?: Options<MarkAllNotificationsReadData, ThrowOnError>,
+): RequestResult<MarkAllNotificationsReadResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).post<
-    MarkAllNotificationsReadV1NotificationsReadAllPostResponses,
+    MarkAllNotificationsReadResponses,
     unknown,
     ThrowOnError
   >({
@@ -2851,19 +2346,15 @@ export const markAllNotificationsReadV1NotificationsReadAllPost = <
 /**
  * List Places
  */
-export const listPlacesV1PlacesGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListPlacesV1PlacesGetData, ThrowOnError>,
-): RequestResult<
-  ListPlacesV1PlacesGetResponses,
-  ListPlacesV1PlacesGetErrors,
-  ThrowOnError
-> =>
+export const listPlaces = <ThrowOnError extends boolean = false>(
+  options?: Options<ListPlacesData, ThrowOnError>,
+): RequestResult<ListPlacesResponses, ListPlacesErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListPlacesV1PlacesGetResponses,
-    ListPlacesV1PlacesGetErrors,
+    ListPlacesResponses,
+    ListPlacesErrors,
     ThrowOnError
   >({
-    responseTransformer: listPlacesV1PlacesGetResponseTransformer,
+    responseTransformer: listPlacesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places",
     ...options,
@@ -2872,19 +2363,15 @@ export const listPlacesV1PlacesGet = <ThrowOnError extends boolean = false>(
 /**
  * Create Place
  */
-export const createPlaceV1PlacesPost = <ThrowOnError extends boolean = false>(
-  options: Options<CreatePlaceV1PlacesPostData, ThrowOnError>,
-): RequestResult<
-  CreatePlaceV1PlacesPostResponses,
-  CreatePlaceV1PlacesPostErrors,
-  ThrowOnError
-> =>
+export const createPlace = <ThrowOnError extends boolean = false>(
+  options: Options<CreatePlaceData, ThrowOnError>,
+): RequestResult<CreatePlaceResponses, CreatePlaceErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CreatePlaceV1PlacesPostResponses,
-    CreatePlaceV1PlacesPostErrors,
+    CreatePlaceResponses,
+    CreatePlaceErrors,
     ThrowOnError
   >({
-    responseTransformer: createPlaceV1PlacesPostResponseTransformer,
+    responseTransformer: createPlaceResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places",
     ...options,
@@ -2897,18 +2384,16 @@ export const createPlaceV1PlacesPost = <ThrowOnError extends boolean = false>(
 /**
  * Search Google Places
  */
-export const searchGooglePlacesV1PlacesSearchGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<SearchGooglePlacesV1PlacesSearchGetData, ThrowOnError>,
+export const searchGooglePlaces = <ThrowOnError extends boolean = false>(
+  options: Options<SearchGooglePlacesData, ThrowOnError>,
 ): RequestResult<
-  SearchGooglePlacesV1PlacesSearchGetResponses,
-  SearchGooglePlacesV1PlacesSearchGetErrors,
+  SearchGooglePlacesResponses,
+  SearchGooglePlacesErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    SearchGooglePlacesV1PlacesSearchGetResponses,
-    SearchGooglePlacesV1PlacesSearchGetErrors,
+    SearchGooglePlacesResponses,
+    SearchGooglePlacesErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2919,18 +2404,12 @@ export const searchGooglePlacesV1PlacesSearchGet = <
 /**
  * Delete Place
  */
-export const deletePlaceV1PlacesPlaceIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeletePlaceV1PlacesPlaceIdDeleteData, ThrowOnError>,
-): RequestResult<
-  DeletePlaceV1PlacesPlaceIdDeleteResponses,
-  DeletePlaceV1PlacesPlaceIdDeleteErrors,
-  ThrowOnError
-> =>
+export const deletePlace = <ThrowOnError extends boolean = false>(
+  options: Options<DeletePlaceData, ThrowOnError>,
+): RequestResult<DeletePlaceResponses, DeletePlaceErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    DeletePlaceV1PlacesPlaceIdDeleteResponses,
-    DeletePlaceV1PlacesPlaceIdDeleteErrors,
+    DeletePlaceResponses,
+    DeletePlaceErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -2941,21 +2420,15 @@ export const deletePlaceV1PlacesPlaceIdDelete = <
 /**
  * Get Place
  */
-export const getPlaceV1PlacesPlaceIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetPlaceV1PlacesPlaceIdGetData, ThrowOnError>,
-): RequestResult<
-  GetPlaceV1PlacesPlaceIdGetResponses,
-  GetPlaceV1PlacesPlaceIdGetErrors,
-  ThrowOnError
-> =>
+export const getPlace = <ThrowOnError extends boolean = false>(
+  options: Options<GetPlaceData, ThrowOnError>,
+): RequestResult<GetPlaceResponses, GetPlaceErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetPlaceV1PlacesPlaceIdGetResponses,
-    GetPlaceV1PlacesPlaceIdGetErrors,
+    GetPlaceResponses,
+    GetPlaceErrors,
     ThrowOnError
   >({
-    responseTransformer: getPlaceV1PlacesPlaceIdGetResponseTransformer,
+    responseTransformer: getPlaceResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places/{place_id}",
     ...options,
@@ -2964,21 +2437,15 @@ export const getPlaceV1PlacesPlaceIdGet = <
 /**
  * Update Place
  */
-export const updatePlaceV1PlacesPlaceIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdatePlaceV1PlacesPlaceIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdatePlaceV1PlacesPlaceIdPatchResponses,
-  UpdatePlaceV1PlacesPlaceIdPatchErrors,
-  ThrowOnError
-> =>
+export const updatePlace = <ThrowOnError extends boolean = false>(
+  options: Options<UpdatePlaceData, ThrowOnError>,
+): RequestResult<UpdatePlaceResponses, UpdatePlaceErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdatePlaceV1PlacesPlaceIdPatchResponses,
-    UpdatePlaceV1PlacesPlaceIdPatchErrors,
+    UpdatePlaceResponses,
+    UpdatePlaceErrors,
     ThrowOnError
   >({
-    responseTransformer: updatePlaceV1PlacesPlaceIdPatchResponseTransformer,
+    responseTransformer: updatePlaceResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/places/{place_id}",
     ...options,
@@ -2991,19 +2458,15 @@ export const updatePlaceV1PlacesPlaceIdPatch = <
 /**
  * List Projects
  */
-export const listProjectsV1ProjectsGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListProjectsV1ProjectsGetData, ThrowOnError>,
-): RequestResult<
-  ListProjectsV1ProjectsGetResponses,
-  ListProjectsV1ProjectsGetErrors,
-  ThrowOnError
-> =>
+export const listProjects = <ThrowOnError extends boolean = false>(
+  options?: Options<ListProjectsData, ThrowOnError>,
+): RequestResult<ListProjectsResponses, ListProjectsErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListProjectsV1ProjectsGetResponses,
-    ListProjectsV1ProjectsGetErrors,
+    ListProjectsResponses,
+    ListProjectsErrors,
     ThrowOnError
   >({
-    responseTransformer: listProjectsV1ProjectsGetResponseTransformer,
+    responseTransformer: listProjectsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects",
     ...options,
@@ -3012,21 +2475,15 @@ export const listProjectsV1ProjectsGet = <ThrowOnError extends boolean = false>(
 /**
  * Create Project
  */
-export const createProjectV1ProjectsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateProjectV1ProjectsPostData, ThrowOnError>,
-): RequestResult<
-  CreateProjectV1ProjectsPostResponses,
-  CreateProjectV1ProjectsPostErrors,
-  ThrowOnError
-> =>
+export const createProject = <ThrowOnError extends boolean = false>(
+  options: Options<CreateProjectData, ThrowOnError>,
+): RequestResult<CreateProjectResponses, CreateProjectErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CreateProjectV1ProjectsPostResponses,
-    CreateProjectV1ProjectsPostErrors,
+    CreateProjectResponses,
+    CreateProjectErrors,
     ThrowOnError
   >({
-    responseTransformer: createProjectV1ProjectsPostResponseTransformer,
+    responseTransformer: createProjectResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects",
     ...options,
@@ -3039,18 +2496,12 @@ export const createProjectV1ProjectsPost = <
 /**
  * Delete Project
  */
-export const deleteProjectV1ProjectsProjectIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteProjectV1ProjectsProjectIdDeleteData, ThrowOnError>,
-): RequestResult<
-  DeleteProjectV1ProjectsProjectIdDeleteResponses,
-  DeleteProjectV1ProjectsProjectIdDeleteErrors,
-  ThrowOnError
-> =>
+export const deleteProject = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteProjectData, ThrowOnError>,
+): RequestResult<DeleteProjectResponses, DeleteProjectErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    DeleteProjectV1ProjectsProjectIdDeleteResponses,
-    DeleteProjectV1ProjectsProjectIdDeleteErrors,
+    DeleteProjectResponses,
+    DeleteProjectErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3061,22 +2512,15 @@ export const deleteProjectV1ProjectsProjectIdDelete = <
 /**
  * Update Project
  */
-export const updateProjectV1ProjectsProjectIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateProjectV1ProjectsProjectIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdateProjectV1ProjectsProjectIdPatchResponses,
-  UpdateProjectV1ProjectsProjectIdPatchErrors,
-  ThrowOnError
-> =>
+export const updateProject = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateProjectData, ThrowOnError>,
+): RequestResult<UpdateProjectResponses, UpdateProjectErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateProjectV1ProjectsProjectIdPatchResponses,
-    UpdateProjectV1ProjectsProjectIdPatchErrors,
+    UpdateProjectResponses,
+    UpdateProjectErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateProjectV1ProjectsProjectIdPatchResponseTransformer,
+    responseTransformer: updateProjectResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects/{project_id}",
     ...options,
@@ -3089,25 +2533,19 @@ export const updateProjectV1ProjectsProjectIdPatch = <
 /**
  * Set Project Location For This Device
  */
-export const setProjectLocationV1ProjectsProjectIdLocationPut = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SetProjectLocationV1ProjectsProjectIdLocationPutData,
-    ThrowOnError
-  >,
+export const setProjectLocation = <ThrowOnError extends boolean = false>(
+  options: Options<SetProjectLocationData, ThrowOnError>,
 ): RequestResult<
-  SetProjectLocationV1ProjectsProjectIdLocationPutResponses,
-  SetProjectLocationV1ProjectsProjectIdLocationPutErrors,
+  SetProjectLocationResponses,
+  SetProjectLocationErrors,
   ThrowOnError
 > =>
   (options.client ?? client).put<
-    SetProjectLocationV1ProjectsProjectIdLocationPutResponses,
-    SetProjectLocationV1ProjectsProjectIdLocationPutErrors,
+    SetProjectLocationResponses,
+    SetProjectLocationErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      setProjectLocationV1ProjectsProjectIdLocationPutResponseTransformer,
+    responseTransformer: setProjectLocationResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/projects/{project_id}/location",
     ...options,
@@ -3120,19 +2558,15 @@ export const setProjectLocationV1ProjectsProjectIdLocationPut = <
 /**
  * List Recipes
  */
-export const listRecipesV1RecipesGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListRecipesV1RecipesGetData, ThrowOnError>,
-): RequestResult<
-  ListRecipesV1RecipesGetResponses,
-  ListRecipesV1RecipesGetErrors,
-  ThrowOnError
-> =>
+export const listRecipes = <ThrowOnError extends boolean = false>(
+  options?: Options<ListRecipesData, ThrowOnError>,
+): RequestResult<ListRecipesResponses, ListRecipesErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListRecipesV1RecipesGetResponses,
-    ListRecipesV1RecipesGetErrors,
+    ListRecipesResponses,
+    ListRecipesErrors,
     ThrowOnError
   >({
-    responseTransformer: listRecipesV1RecipesGetResponseTransformer,
+    responseTransformer: listRecipesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes",
     ...options,
@@ -3141,19 +2575,15 @@ export const listRecipesV1RecipesGet = <ThrowOnError extends boolean = false>(
 /**
  * Create Recipe
  */
-export const createRecipeV1RecipesPost = <ThrowOnError extends boolean = false>(
-  options: Options<CreateRecipeV1RecipesPostData, ThrowOnError>,
-): RequestResult<
-  CreateRecipeV1RecipesPostResponses,
-  CreateRecipeV1RecipesPostErrors,
-  ThrowOnError
-> =>
+export const createRecipe = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRecipeData, ThrowOnError>,
+): RequestResult<CreateRecipeResponses, CreateRecipeErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CreateRecipeV1RecipesPostResponses,
-    CreateRecipeV1RecipesPostErrors,
+    CreateRecipeResponses,
+    CreateRecipeErrors,
     ThrowOnError
   >({
-    responseTransformer: createRecipeV1RecipesPostResponseTransformer,
+    responseTransformer: createRecipeResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes",
     ...options,
@@ -3168,18 +2598,16 @@ export const createRecipeV1RecipesPost = <ThrowOnError extends boolean = false>(
  *
  * Turn free-form recipe text into the structured format with an LLM. Nothing is saved.
  */
-export const structureRecipeTextV1RecipesImportPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<StructureRecipeTextV1RecipesImportPostData, ThrowOnError>,
+export const structureRecipeText = <ThrowOnError extends boolean = false>(
+  options: Options<StructureRecipeTextData, ThrowOnError>,
 ): RequestResult<
-  StructureRecipeTextV1RecipesImportPostResponses,
-  StructureRecipeTextV1RecipesImportPostErrors,
+  StructureRecipeTextResponses,
+  StructureRecipeTextErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    StructureRecipeTextV1RecipesImportPostResponses,
-    StructureRecipeTextV1RecipesImportPostErrors,
+    StructureRecipeTextResponses,
+    StructureRecipeTextErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3194,18 +2622,12 @@ export const structureRecipeTextV1RecipesImportPost = <
 /**
  * Delete Recipe
  */
-export const deleteRecipeV1RecipesRecipeIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteRecipeV1RecipesRecipeIdDeleteData, ThrowOnError>,
-): RequestResult<
-  DeleteRecipeV1RecipesRecipeIdDeleteResponses,
-  DeleteRecipeV1RecipesRecipeIdDeleteErrors,
-  ThrowOnError
-> =>
+export const deleteRecipe = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteRecipeData, ThrowOnError>,
+): RequestResult<DeleteRecipeResponses, DeleteRecipeErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    DeleteRecipeV1RecipesRecipeIdDeleteResponses,
-    DeleteRecipeV1RecipesRecipeIdDeleteErrors,
+    DeleteRecipeResponses,
+    DeleteRecipeErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3216,21 +2638,15 @@ export const deleteRecipeV1RecipesRecipeIdDelete = <
 /**
  * Get Recipe
  */
-export const getRecipeV1RecipesRecipeIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetRecipeV1RecipesRecipeIdGetData, ThrowOnError>,
-): RequestResult<
-  GetRecipeV1RecipesRecipeIdGetResponses,
-  GetRecipeV1RecipesRecipeIdGetErrors,
-  ThrowOnError
-> =>
+export const getRecipe = <ThrowOnError extends boolean = false>(
+  options: Options<GetRecipeData, ThrowOnError>,
+): RequestResult<GetRecipeResponses, GetRecipeErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetRecipeV1RecipesRecipeIdGetResponses,
-    GetRecipeV1RecipesRecipeIdGetErrors,
+    GetRecipeResponses,
+    GetRecipeErrors,
     ThrowOnError
   >({
-    responseTransformer: getRecipeV1RecipesRecipeIdGetResponseTransformer,
+    responseTransformer: getRecipeResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes/{recipe_id}",
     ...options,
@@ -3239,21 +2655,15 @@ export const getRecipeV1RecipesRecipeIdGet = <
 /**
  * Update Recipe
  */
-export const updateRecipeV1RecipesRecipeIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateRecipeV1RecipesRecipeIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdateRecipeV1RecipesRecipeIdPatchResponses,
-  UpdateRecipeV1RecipesRecipeIdPatchErrors,
-  ThrowOnError
-> =>
+export const updateRecipe = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateRecipeData, ThrowOnError>,
+): RequestResult<UpdateRecipeResponses, UpdateRecipeErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateRecipeV1RecipesRecipeIdPatchResponses,
-    UpdateRecipeV1RecipesRecipeIdPatchErrors,
+    UpdateRecipeResponses,
+    UpdateRecipeErrors,
     ThrowOnError
   >({
-    responseTransformer: updateRecipeV1RecipesRecipeIdPatchResponseTransformer,
+    responseTransformer: updateRecipeResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes/{recipe_id}",
     ...options,
@@ -3268,19 +2678,19 @@ export const updateRecipeV1RecipesRecipeIdPatch = <
  *
  * Tasks, recipes, calendar events and saved places matching `q`, for the command palette.
  */
-export const searchV1SearchGet = <ThrowOnError extends boolean = false>(
-  options: Options<SearchV1SearchGetData, ThrowOnError>,
+export const searchEverything = <ThrowOnError extends boolean = false>(
+  options: Options<SearchEverythingData, ThrowOnError>,
 ): RequestResult<
-  SearchV1SearchGetResponses,
-  SearchV1SearchGetErrors,
+  SearchEverythingResponses,
+  SearchEverythingErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    SearchV1SearchGetResponses,
-    SearchV1SearchGetErrors,
+    SearchEverythingResponses,
+    SearchEverythingErrors,
     ThrowOnError
   >({
-    responseTransformer: searchV1SearchGetResponseTransformer,
+    responseTransformer: searchEverythingResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/search",
     ...options,
@@ -3289,19 +2699,15 @@ export const searchV1SearchGet = <ThrowOnError extends boolean = false>(
 /**
  * List Tasks
  */
-export const listTasksV1TasksGet = <ThrowOnError extends boolean = false>(
-  options?: Options<ListTasksV1TasksGetData, ThrowOnError>,
-): RequestResult<
-  ListTasksV1TasksGetResponses,
-  ListTasksV1TasksGetErrors,
-  ThrowOnError
-> =>
+export const listTasks = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTasksData, ThrowOnError>,
+): RequestResult<ListTasksResponses, ListTasksErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListTasksV1TasksGetResponses,
-    ListTasksV1TasksGetErrors,
+    ListTasksResponses,
+    ListTasksErrors,
     ThrowOnError
   >({
-    responseTransformer: listTasksV1TasksGetResponseTransformer,
+    responseTransformer: listTasksResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks",
     ...options,
@@ -3310,19 +2716,15 @@ export const listTasksV1TasksGet = <ThrowOnError extends boolean = false>(
 /**
  * Create Task
  */
-export const createTaskV1TasksPost = <ThrowOnError extends boolean = false>(
-  options: Options<CreateTaskV1TasksPostData, ThrowOnError>,
-): RequestResult<
-  CreateTaskV1TasksPostResponses,
-  CreateTaskV1TasksPostErrors,
-  ThrowOnError
-> =>
+export const createTask = <ThrowOnError extends boolean = false>(
+  options: Options<CreateTaskData, ThrowOnError>,
+): RequestResult<CreateTaskResponses, CreateTaskErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CreateTaskV1TasksPostResponses,
-    CreateTaskV1TasksPostErrors,
+    CreateTaskResponses,
+    CreateTaskErrors,
     ThrowOnError
   >({
-    responseTransformer: createTaskV1TasksPostResponseTransformer,
+    responseTransformer: createTaskResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks",
     ...options,
@@ -3335,18 +2737,12 @@ export const createTaskV1TasksPost = <ThrowOnError extends boolean = false>(
 /**
  * Reorder Tasks
  */
-export const reorderTasksV1TasksReorderPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ReorderTasksV1TasksReorderPatchData, ThrowOnError>,
-): RequestResult<
-  ReorderTasksV1TasksReorderPatchResponses,
-  ReorderTasksV1TasksReorderPatchErrors,
-  ThrowOnError
-> =>
+export const reorderTasks = <ThrowOnError extends boolean = false>(
+  options: Options<ReorderTasksData, ThrowOnError>,
+): RequestResult<ReorderTasksResponses, ReorderTasksErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    ReorderTasksV1TasksReorderPatchResponses,
-    ReorderTasksV1TasksReorderPatchErrors,
+    ReorderTasksResponses,
+    ReorderTasksErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3361,18 +2757,12 @@ export const reorderTasksV1TasksReorderPatch = <
 /**
  * Delete Task
  */
-export const deleteTaskV1TasksTaskIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteTaskV1TasksTaskIdDeleteData, ThrowOnError>,
-): RequestResult<
-  DeleteTaskV1TasksTaskIdDeleteResponses,
-  DeleteTaskV1TasksTaskIdDeleteErrors,
-  ThrowOnError
-> =>
+export const deleteTask = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTaskData, ThrowOnError>,
+): RequestResult<DeleteTaskResponses, DeleteTaskErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    DeleteTaskV1TasksTaskIdDeleteResponses,
-    DeleteTaskV1TasksTaskIdDeleteErrors,
+    DeleteTaskResponses,
+    DeleteTaskErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3383,42 +2773,30 @@ export const deleteTaskV1TasksTaskIdDelete = <
 /**
  * Get Task
  */
-export const getTaskV1TasksTaskIdGet = <ThrowOnError extends boolean = false>(
-  options: Options<GetTaskV1TasksTaskIdGetData, ThrowOnError>,
-): RequestResult<
-  GetTaskV1TasksTaskIdGetResponses,
-  GetTaskV1TasksTaskIdGetErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).get<
-    GetTaskV1TasksTaskIdGetResponses,
-    GetTaskV1TasksTaskIdGetErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getTaskV1TasksTaskIdGetResponseTransformer,
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/tasks/{task_id}",
-    ...options,
-  });
+export const getTask = <ThrowOnError extends boolean = false>(
+  options: Options<GetTaskData, ThrowOnError>,
+): RequestResult<GetTaskResponses, GetTaskErrors, ThrowOnError> =>
+  (options.client ?? client).get<GetTaskResponses, GetTaskErrors, ThrowOnError>(
+    {
+      responseTransformer: getTaskResponseTransformer,
+      security: [{ scheme: "bearer", type: "http" }],
+      url: "/v1/tasks/{task_id}",
+      ...options,
+    },
+  );
 
 /**
  * Update Task
  */
-export const updateTaskV1TasksTaskIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateTaskV1TasksTaskIdPatchData, ThrowOnError>,
-): RequestResult<
-  UpdateTaskV1TasksTaskIdPatchResponses,
-  UpdateTaskV1TasksTaskIdPatchErrors,
-  ThrowOnError
-> =>
+export const updateTask = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTaskData, ThrowOnError>,
+): RequestResult<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError> =>
   (options.client ?? client).patch<
-    UpdateTaskV1TasksTaskIdPatchResponses,
-    UpdateTaskV1TasksTaskIdPatchErrors,
+    UpdateTaskResponses,
+    UpdateTaskErrors,
     ThrowOnError
   >({
-    responseTransformer: updateTaskV1TasksTaskIdPatchResponseTransformer,
+    responseTransformer: updateTaskResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}",
     ...options,
@@ -3431,26 +2809,20 @@ export const updateTaskV1TasksTaskIdPatch = <
 /**
  * Upload Task Attachment
  */
-export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
-    ThrowOnError
-  >,
+export const uploadTaskAttachment = <ThrowOnError extends boolean = false>(
+  options: Options<UploadTaskAttachmentData, ThrowOnError>,
 ): RequestResult<
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
+  UploadTaskAttachmentResponses,
+  UploadTaskAttachmentErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses,
-    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors,
+    UploadTaskAttachmentResponses,
+    UploadTaskAttachmentErrors,
     ThrowOnError
   >({
     ...formDataBodySerializer,
-    responseTransformer:
-      uploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponseTransformer,
+    responseTransformer: uploadTaskAttachmentResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/attachments",
     ...options,
@@ -3463,21 +2835,16 @@ export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPost = <
 /**
  * Delete Task Attachment
  */
-export const deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
-    ThrowOnError
-  >,
+export const deleteTaskAttachment = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTaskAttachmentData, ThrowOnError>,
 ): RequestResult<
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors,
+  DeleteTaskAttachmentResponses,
+  DeleteTaskAttachmentErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses,
-    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors,
+    DeleteTaskAttachmentResponses,
+    DeleteTaskAttachmentErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3488,46 +2855,35 @@ export const deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete = <
 /**
  * Get Task Attachment File
  */
-export const getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData,
-      ThrowOnError
-    >,
-  ): RequestResult<
-    GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses,
-    GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors,
+export const getTaskAttachmentFile = <ThrowOnError extends boolean = false>(
+  options: Options<GetTaskAttachmentFileData, ThrowOnError>,
+): RequestResult<
+  GetTaskAttachmentFileResponses,
+  GetTaskAttachmentFileErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetTaskAttachmentFileResponses,
+    GetTaskAttachmentFileErrors,
     ThrowOnError
-  > =>
-    (options.client ?? client).get<
-      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses,
-      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/v1/tasks/{task_id}/attachments/{attachment_id}/file",
-      ...options,
-    });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/tasks/{task_id}/attachments/{attachment_id}/file",
+    ...options,
+  });
 
 /**
  * Complete Task
  */
-export const completeTaskV1TasksTaskIdCompletePost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CompleteTaskV1TasksTaskIdCompletePostData, ThrowOnError>,
-): RequestResult<
-  CompleteTaskV1TasksTaskIdCompletePostResponses,
-  CompleteTaskV1TasksTaskIdCompletePostErrors,
-  ThrowOnError
-> =>
+export const completeTask = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteTaskData, ThrowOnError>,
+): RequestResult<CompleteTaskResponses, CompleteTaskErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    CompleteTaskV1TasksTaskIdCompletePostResponses,
-    CompleteTaskV1TasksTaskIdCompletePostErrors,
+    CompleteTaskResponses,
+    CompleteTaskErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      completeTaskV1TasksTaskIdCompletePostResponseTransformer,
+    responseTransformer: completeTaskResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/complete",
     ...options,
@@ -3536,21 +2892,15 @@ export const completeTaskV1TasksTaskIdCompletePost = <
 /**
  * Reopen Task
  */
-export const reopenTaskV1TasksTaskIdReopenPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ReopenTaskV1TasksTaskIdReopenPostData, ThrowOnError>,
-): RequestResult<
-  ReopenTaskV1TasksTaskIdReopenPostResponses,
-  ReopenTaskV1TasksTaskIdReopenPostErrors,
-  ThrowOnError
-> =>
+export const reopenTask = <ThrowOnError extends boolean = false>(
+  options: Options<ReopenTaskData, ThrowOnError>,
+): RequestResult<ReopenTaskResponses, ReopenTaskErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    ReopenTaskV1TasksTaskIdReopenPostResponses,
-    ReopenTaskV1TasksTaskIdReopenPostErrors,
+    ReopenTaskResponses,
+    ReopenTaskErrors,
     ThrowOnError
   >({
-    responseTransformer: reopenTaskV1TasksTaskIdReopenPostResponseTransformer,
+    responseTransformer: reopenTaskResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/reopen",
     ...options,
@@ -3562,25 +2912,19 @@ export const reopenTaskV1TasksTaskIdReopenPost = <
  * Reopen a task and remove the next occurrence completing it spawned, in one
  * transaction, so an Undo can't leave a routine both reopened and repeated.
  */
-export const undoCompleteTaskV1TasksTaskIdUndoCompletePost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
-    ThrowOnError
-  >,
+export const undoCompleteTask = <ThrowOnError extends boolean = false>(
+  options: Options<UndoCompleteTaskData, ThrowOnError>,
 ): RequestResult<
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors,
+  UndoCompleteTaskResponses,
+  UndoCompleteTaskErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses,
-    UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors,
+    UndoCompleteTaskResponses,
+    UndoCompleteTaskErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      undoCompleteTaskV1TasksTaskIdUndoCompletePostResponseTransformer,
+    responseTransformer: undoCompleteTaskResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/tasks/{task_id}/undo-complete",
     ...options,
@@ -3589,21 +2933,15 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePost = <
 /**
  * List Time Projects
  */
-export const listTimeProjectsV1TimeProjectsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListTimeProjectsV1TimeProjectsGetData, ThrowOnError>,
-): RequestResult<
-  ListTimeProjectsV1TimeProjectsGetResponses,
-  unknown,
-  ThrowOnError
-> =>
+export const listTimeProjects = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTimeProjectsData, ThrowOnError>,
+): RequestResult<ListTimeProjectsResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
-    ListTimeProjectsV1TimeProjectsGetResponses,
+    ListTimeProjectsResponses,
     unknown,
     ThrowOnError
   >({
-    responseTransformer: listTimeProjectsV1TimeProjectsGetResponseTransformer,
+    responseTransformer: listTimeProjectsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/time/projects",
     ...options,
@@ -3612,21 +2950,19 @@ export const listTimeProjectsV1TimeProjectsGet = <
 /**
  * Create Time Project
  */
-export const createTimeProjectV1TimeProjectsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateTimeProjectV1TimeProjectsPostData, ThrowOnError>,
+export const createTimeProject = <ThrowOnError extends boolean = false>(
+  options: Options<CreateTimeProjectData, ThrowOnError>,
 ): RequestResult<
-  CreateTimeProjectV1TimeProjectsPostResponses,
-  CreateTimeProjectV1TimeProjectsPostErrors,
+  CreateTimeProjectResponses,
+  CreateTimeProjectErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateTimeProjectV1TimeProjectsPostResponses,
-    CreateTimeProjectV1TimeProjectsPostErrors,
+    CreateTimeProjectResponses,
+    CreateTimeProjectErrors,
     ThrowOnError
   >({
-    responseTransformer: createTimeProjectV1TimeProjectsPostResponseTransformer,
+    responseTransformer: createTimeProjectResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/time/projects",
     ...options,
@@ -3639,25 +2975,19 @@ export const createTimeProjectV1TimeProjectsPost = <
 /**
  * Update Time Project
  */
-export const updateTimeProjectV1TimeProjectsProjectIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
-    ThrowOnError
-  >,
+export const updateTimeProject = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTimeProjectData, ThrowOnError>,
 ): RequestResult<
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors,
+  UpdateTimeProjectResponses,
+  UpdateTimeProjectErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses,
-    UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors,
+    UpdateTimeProjectResponses,
+    UpdateTimeProjectErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateTimeProjectV1TimeProjectsProjectIdPatchResponseTransformer,
+    responseTransformer: updateTimeProjectResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/time/projects/{project_id}",
     ...options,
@@ -3670,21 +3000,19 @@ export const updateTimeProjectV1TimeProjectsProjectIdPatch = <
 /**
  * List Time Entries
  */
-export const listTimeEntriesV1TimeEntriesGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ListTimeEntriesV1TimeEntriesGetData, ThrowOnError>,
+export const listTimeEntries = <ThrowOnError extends boolean = false>(
+  options: Options<ListTimeEntriesData, ThrowOnError>,
 ): RequestResult<
-  ListTimeEntriesV1TimeEntriesGetResponses,
-  ListTimeEntriesV1TimeEntriesGetErrors,
+  ListTimeEntriesResponses,
+  ListTimeEntriesErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    ListTimeEntriesV1TimeEntriesGetResponses,
-    ListTimeEntriesV1TimeEntriesGetErrors,
+    ListTimeEntriesResponses,
+    ListTimeEntriesErrors,
     ThrowOnError
   >({
-    responseTransformer: listTimeEntriesV1TimeEntriesGetResponseTransformer,
+    responseTransformer: listTimeEntriesResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/time/entries",
     ...options,
@@ -3693,21 +3021,19 @@ export const listTimeEntriesV1TimeEntriesGet = <
 /**
  * Create Time Entry
  */
-export const createTimeEntryV1TimeEntriesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateTimeEntryV1TimeEntriesPostData, ThrowOnError>,
+export const createTimeEntry = <ThrowOnError extends boolean = false>(
+  options: Options<CreateTimeEntryData, ThrowOnError>,
 ): RequestResult<
-  CreateTimeEntryV1TimeEntriesPostResponses,
-  CreateTimeEntryV1TimeEntriesPostErrors,
+  CreateTimeEntryResponses,
+  CreateTimeEntryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    CreateTimeEntryV1TimeEntriesPostResponses,
-    CreateTimeEntryV1TimeEntriesPostErrors,
+    CreateTimeEntryResponses,
+    CreateTimeEntryErrors,
     ThrowOnError
   >({
-    responseTransformer: createTimeEntryV1TimeEntriesPostResponseTransformer,
+    responseTransformer: createTimeEntryResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/time/entries",
     ...options,
@@ -3720,18 +3046,16 @@ export const createTimeEntryV1TimeEntriesPost = <
 /**
  * Delete Time Entry
  */
-export const deleteTimeEntryV1TimeEntriesEntryIdDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData, ThrowOnError>,
+export const deleteTimeEntry = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTimeEntryData, ThrowOnError>,
 ): RequestResult<
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors,
+  DeleteTimeEntryResponses,
+  DeleteTimeEntryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses,
-    DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors,
+    DeleteTimeEntryResponses,
+    DeleteTimeEntryErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3742,22 +3066,19 @@ export const deleteTimeEntryV1TimeEntriesEntryIdDelete = <
 /**
  * Update Time Entry
  */
-export const updateTimeEntryV1TimeEntriesEntryIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData, ThrowOnError>,
+export const updateTimeEntry = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTimeEntryData, ThrowOnError>,
 ): RequestResult<
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors,
+  UpdateTimeEntryResponses,
+  UpdateTimeEntryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses,
-    UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors,
+    UpdateTimeEntryResponses,
+    UpdateTimeEntryErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateTimeEntryV1TimeEntriesEntryIdPatchResponseTransformer,
+    responseTransformer: updateTimeEntryResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/time/entries/{entry_id}",
     ...options,
@@ -3770,18 +3091,12 @@ export const updateTimeEntryV1TimeEntriesEntryIdPatch = <
 /**
  * Get Monthly Time Totals
  */
-export const getTimeSummaryV1TimeSummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetTimeSummaryV1TimeSummaryGetData, ThrowOnError>,
-): RequestResult<
-  GetTimeSummaryV1TimeSummaryGetResponses,
-  GetTimeSummaryV1TimeSummaryGetErrors,
-  ThrowOnError
-> =>
+export const getTimeSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetTimeSummaryData, ThrowOnError>,
+): RequestResult<GetTimeSummaryResponses, GetTimeSummaryErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetTimeSummaryV1TimeSummaryGetResponses,
-    GetTimeSummaryV1TimeSummaryGetErrors,
+    GetTimeSummaryResponses,
+    GetTimeSummaryErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3792,16 +3107,12 @@ export const getTimeSummaryV1TimeSummaryGet = <
 /**
  * Get Timeline
  */
-export const getTimelineV1TimelineGet = <ThrowOnError extends boolean = false>(
-  options: Options<GetTimelineV1TimelineGetData, ThrowOnError>,
-): RequestResult<
-  GetTimelineV1TimelineGetResponses,
-  GetTimelineV1TimelineGetErrors,
-  ThrowOnError
-> =>
+export const getTimeline = <ThrowOnError extends boolean = false>(
+  options: Options<GetTimelineData, ThrowOnError>,
+): RequestResult<GetTimelineResponses, GetTimelineErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    GetTimelineV1TimelineGetResponses,
-    GetTimelineV1TimelineGetErrors,
+    GetTimelineResponses,
+    GetTimelineErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3814,18 +3125,16 @@ export const getTimelineV1TimelineGet = <ThrowOnError extends boolean = false>(
  *
  * Delete transactions by IDs.
  */
-export const deleteTransactionsV1TransactionsDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<DeleteTransactionsV1TransactionsDeleteData, ThrowOnError>,
+export const deleteTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteTransactionsData, ThrowOnError>,
 ): RequestResult<
-  DeleteTransactionsV1TransactionsDeleteResponses,
-  DeleteTransactionsV1TransactionsDeleteErrors,
+  DeleteTransactionsResponses,
+  DeleteTransactionsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).delete<
-    DeleteTransactionsV1TransactionsDeleteResponses,
-    DeleteTransactionsV1TransactionsDeleteErrors,
+    DeleteTransactionsResponses,
+    DeleteTransactionsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3842,21 +3151,19 @@ export const deleteTransactionsV1TransactionsDelete = <
  *
  * List transactions.
  */
-export const listTransactionsV1TransactionsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<ListTransactionsV1TransactionsGetData, ThrowOnError>,
+export const listTransactions = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTransactionsData, ThrowOnError>,
 ): RequestResult<
-  ListTransactionsV1TransactionsGetResponses,
-  ListTransactionsV1TransactionsGetErrors,
+  ListTransactionsResponses,
+  ListTransactionsErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
-    ListTransactionsV1TransactionsGetResponses,
-    ListTransactionsV1TransactionsGetErrors,
+    ListTransactionsResponses,
+    ListTransactionsErrors,
     ThrowOnError
   >({
-    responseTransformer: listTransactionsV1TransactionsGetResponseTransformer,
+    responseTransformer: listTransactionsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions",
     ...options,
@@ -3869,21 +3176,16 @@ export const listTransactionsV1TransactionsGet = <
  *
  * Duplicate transactions (by dedup hash) are automatically skipped.
  */
-export const importTransactionsV1TransactionsImportPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ImportTransactionsV1TransactionsImportPostData,
-    ThrowOnError
-  >,
+export const importTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ImportTransactionsData, ThrowOnError>,
 ): RequestResult<
-  ImportTransactionsV1TransactionsImportPostResponses,
-  ImportTransactionsV1TransactionsImportPostErrors,
+  ImportTransactionsResponses,
+  ImportTransactionsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    ImportTransactionsV1TransactionsImportPostResponses,
-    ImportTransactionsV1TransactionsImportPostErrors,
+    ImportTransactionsResponses,
+    ImportTransactionsErrors,
     ThrowOnError
   >({
     ...formDataBodySerializer,
@@ -3901,21 +3203,16 @@ export const importTransactionsV1TransactionsImportPost = <
  *
  * Update category for a list of transactions by ID.
  */
-export const bulkUpdateTransactionsV1TransactionsBulkPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    BulkUpdateTransactionsV1TransactionsBulkPatchData,
-    ThrowOnError
-  >,
+export const bulkUpdateTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<BulkUpdateTransactionsData, ThrowOnError>,
 ): RequestResult<
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
-  BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
+  BulkUpdateTransactionsResponses,
+  BulkUpdateTransactionsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    BulkUpdateTransactionsV1TransactionsBulkPatchResponses,
-    BulkUpdateTransactionsV1TransactionsBulkPatchErrors,
+    BulkUpdateTransactionsResponses,
+    BulkUpdateTransactionsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -3932,25 +3229,19 @@ export const bulkUpdateTransactionsV1TransactionsBulkPatch = <
  *
  * Update a transaction.
  */
-export const updateTransactionV1TransactionsTransactionIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UpdateTransactionV1TransactionsTransactionIdPatchData,
-    ThrowOnError
-  >,
+export const updateTransaction = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateTransactionData, ThrowOnError>,
 ): RequestResult<
-  UpdateTransactionV1TransactionsTransactionIdPatchResponses,
-  UpdateTransactionV1TransactionsTransactionIdPatchErrors,
+  UpdateTransactionResponses,
+  UpdateTransactionErrors,
   ThrowOnError
 > =>
   (options.client ?? client).patch<
-    UpdateTransactionV1TransactionsTransactionIdPatchResponses,
-    UpdateTransactionV1TransactionsTransactionIdPatchErrors,
+    UpdateTransactionResponses,
+    UpdateTransactionErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      updateTransactionV1TransactionsTransactionIdPatchResponseTransformer,
+    responseTransformer: updateTransactionResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}",
     ...options,
@@ -3965,25 +3256,19 @@ export const updateTransactionV1TransactionsTransactionIdPatch = <
  *
  * Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name.
  */
-export const renameTransactionV1TransactionsTransactionIdNamePut = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    RenameTransactionV1TransactionsTransactionIdNamePutData,
-    ThrowOnError
-  >,
+export const renameTransaction = <ThrowOnError extends boolean = false>(
+  options: Options<RenameTransactionData, ThrowOnError>,
 ): RequestResult<
-  RenameTransactionV1TransactionsTransactionIdNamePutResponses,
-  RenameTransactionV1TransactionsTransactionIdNamePutErrors,
+  RenameTransactionResponses,
+  RenameTransactionErrors,
   ThrowOnError
 > =>
   (options.client ?? client).put<
-    RenameTransactionV1TransactionsTransactionIdNamePutResponses,
-    RenameTransactionV1TransactionsTransactionIdNamePutErrors,
+    RenameTransactionResponses,
+    RenameTransactionErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      renameTransactionV1TransactionsTransactionIdNamePutResponseTransformer,
+    responseTransformer: renameTransactionResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}/name",
     ...options,
@@ -3998,18 +3283,16 @@ export const renameTransactionV1TransactionsTransactionIdNamePut = <
  *
  * Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay.
  */
-export const nameTransactionsV1TransactionsNamesPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<NameTransactionsV1TransactionsNamesPostData, ThrowOnError>,
+export const nameTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<NameTransactionsData, ThrowOnError>,
 ): RequestResult<
-  NameTransactionsV1TransactionsNamesPostResponses,
-  NameTransactionsV1TransactionsNamesPostErrors,
+  NameTransactionsResponses,
+  NameTransactionsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    NameTransactionsV1TransactionsNamesPostResponses,
-    NameTransactionsV1TransactionsNamesPostErrors,
+    NameTransactionsResponses,
+    NameTransactionsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4026,21 +3309,12 @@ export const nameTransactionsV1TransactionsNamesPost = <
  *
  * Counts both sides of a paired transfer as income and spending again, and never pairs them again.
  */
-export const unpairTransferV1TransactionsTransactionIdTransferDelete = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    UnpairTransferV1TransactionsTransactionIdTransferDeleteData,
-    ThrowOnError
-  >,
-): RequestResult<
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors,
-  ThrowOnError
-> =>
+export const unpairTransfer = <ThrowOnError extends boolean = false>(
+  options: Options<UnpairTransferData, ThrowOnError>,
+): RequestResult<UnpairTransferResponses, UnpairTransferErrors, ThrowOnError> =>
   (options.client ?? client).delete<
-    UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses,
-    UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors,
+    UnpairTransferResponses,
+    UnpairTransferErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4053,51 +3327,42 @@ export const unpairTransferV1TransactionsTransactionIdTransferDelete = <
  *
  * Set category for all transactions matching the given description.
  */
-export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
-      ThrowOnError
-    >,
-  ): RequestResult<
-    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
-    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
+export const categorizeByDescription = <ThrowOnError extends boolean = false>(
+  options: Options<CategorizeByDescriptionData, ThrowOnError>,
+): RequestResult<
+  CategorizeByDescriptionResponses,
+  CategorizeByDescriptionErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CategorizeByDescriptionResponses,
+    CategorizeByDescriptionErrors,
     ThrowOnError
-  > =>
-    (options.client ?? client).post<
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses,
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/v1/transactions/categorize-by-description",
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/categorize-by-description",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
 
 /**
  * Monthly Spending by Category
  *
  * Aggregate debit spending per category for a given month.
  */
-export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
-    ThrowOnError
-  >,
+export const spendingByCategory = <ThrowOnError extends boolean = false>(
+  options: Options<SpendingByCategoryData, ThrowOnError>,
 ): RequestResult<
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
+  SpendingByCategoryResponses,
+  SpendingByCategoryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses,
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors,
+    SpendingByCategoryResponses,
+    SpendingByCategoryErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4110,21 +3375,16 @@ export const spendingByCategoryV1TransactionsSpendingByCategoryGet = <
  *
  * The user's own income and spending for a month, with the year before it for comparison.
  */
-export const transactionSummaryV1TransactionsSummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    TransactionSummaryV1TransactionsSummaryGetData,
-    ThrowOnError
-  >,
+export const getTransactionSummary = <ThrowOnError extends boolean = false>(
+  options: Options<GetTransactionSummaryData, ThrowOnError>,
 ): RequestResult<
-  TransactionSummaryV1TransactionsSummaryGetResponses,
-  TransactionSummaryV1TransactionsSummaryGetErrors,
+  GetTransactionSummaryResponses,
+  GetTransactionSummaryErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    TransactionSummaryV1TransactionsSummaryGetResponses,
-    TransactionSummaryV1TransactionsSummaryGetErrors,
+    GetTransactionSummaryResponses,
+    GetTransactionSummaryErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4137,18 +3397,12 @@ export const transactionSummaryV1TransactionsSummaryGet = <
  *
  * Return income and expenses aggregated per month.
  */
-export const monthlyFlowV1TransactionsMonthlyFlowGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<MonthlyFlowV1TransactionsMonthlyFlowGetData, ThrowOnError>,
-): RequestResult<
-  MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
-  MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
-  ThrowOnError
-> =>
+export const getMonthlyFlow = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMonthlyFlowData, ThrowOnError>,
+): RequestResult<GetMonthlyFlowResponses, GetMonthlyFlowErrors, ThrowOnError> =>
   (options?.client ?? client).get<
-    MonthlyFlowV1TransactionsMonthlyFlowGetResponses,
-    MonthlyFlowV1TransactionsMonthlyFlowGetErrors,
+    GetMonthlyFlowResponses,
+    GetMonthlyFlowErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4161,25 +3415,19 @@ export const monthlyFlowV1TransactionsMonthlyFlowGet = <
  *
  * The invoices and receipts kept with a transaction, oldest first.
  */
-export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData,
-    ThrowOnError
-  >,
+export const listTransactionDocuments = <ThrowOnError extends boolean = false>(
+  options: Options<ListTransactionDocumentsData, ThrowOnError>,
 ): RequestResult<
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors,
+  ListTransactionDocumentsResponses,
+  ListTransactionDocumentsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses,
-    ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors,
+    ListTransactionDocumentsResponses,
+    ListTransactionDocumentsErrors,
     ThrowOnError
   >({
-    responseTransformer:
-      listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponseTransformer,
+    responseTransformer: listTransactionDocumentsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}/documents",
     ...options,
@@ -4190,26 +3438,20 @@ export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet = <
  *
  * Keeps an invoice or receipt, a PDF or a photo, with the transaction.
  */
-export const addTransactionDocumentV1TransactionsTransactionIdDocumentsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData,
-    ThrowOnError
-  >,
+export const addTransactionDocument = <ThrowOnError extends boolean = false>(
+  options: Options<AddTransactionDocumentData, ThrowOnError>,
 ): RequestResult<
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses,
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors,
+  AddTransactionDocumentResponses,
+  AddTransactionDocumentErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses,
-    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors,
+    AddTransactionDocumentResponses,
+    AddTransactionDocumentErrors,
     ThrowOnError
   >({
     ...formDataBodySerializer,
-    responseTransformer:
-      addTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponseTransformer,
+    responseTransformer: addTransactionDocumentResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/{transaction_id}/documents",
     ...options,
@@ -4224,47 +3466,38 @@ export const addTransactionDocumentV1TransactionsTransactionIdDocumentsPost = <
  *
  * Takes the document off the transaction; it's deleted once no transaction has it.
  */
-export const removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
-      ThrowOnError
-    >,
-  ): RequestResult<
-    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
-    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
+export const removeTransactionDocument = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveTransactionDocumentData, ThrowOnError>,
+): RequestResult<
+  RemoveTransactionDocumentResponses,
+  RemoveTransactionDocumentErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    RemoveTransactionDocumentResponses,
+    RemoveTransactionDocumentErrors,
     ThrowOnError
-  > =>
-    (options.client ?? client).delete<
-      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses,
-      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors,
-      ThrowOnError
-    >({
-      security: [{ scheme: "bearer", type: "http" }],
-      url: "/v1/transactions/{transaction_id}/documents/{document_id}",
-      ...options,
-    });
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/{transaction_id}/documents/{document_id}",
+    ...options,
+  });
 
 /**
  * Download Document
  *
  * The file as it was uploaded.
  */
-export const downloadDocumentV1DocumentsDocumentIdFileGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DownloadDocumentV1DocumentsDocumentIdFileGetData,
-    ThrowOnError
-  >,
+export const downloadDocument = <ThrowOnError extends boolean = false>(
+  options: Options<DownloadDocumentData, ThrowOnError>,
 ): RequestResult<
-  DownloadDocumentV1DocumentsDocumentIdFileGetResponses,
-  DownloadDocumentV1DocumentsDocumentIdFileGetErrors,
+  DownloadDocumentResponses,
+  DownloadDocumentErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    DownloadDocumentV1DocumentsDocumentIdFileGetResponses,
-    DownloadDocumentV1DocumentsDocumentIdFileGetErrors,
+    DownloadDocumentResponses,
+    DownloadDocumentErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4277,21 +3510,12 @@ export const downloadDocumentV1DocumentsDocumentIdFileGet = <
  *
  * One page as an image, numbered from 1.
  */
-export const documentPageV1DocumentsDocumentIdPagesPageGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DocumentPageV1DocumentsDocumentIdPagesPageGetData,
-    ThrowOnError
-  >,
-): RequestResult<
-  DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
-  DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
-  ThrowOnError
-> =>
+export const documentPage = <ThrowOnError extends boolean = false>(
+  options: Options<DocumentPageData, ThrowOnError>,
+): RequestResult<DocumentPageResponses, DocumentPageErrors, ThrowOnError> =>
   (options.client ?? client).get<
-    DocumentPageV1DocumentsDocumentIdPagesPageGetResponses,
-    DocumentPageV1DocumentsDocumentIdPagesPageGetErrors,
+    DocumentPageResponses,
+    DocumentPageErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4304,21 +3528,16 @@ export const documentPageV1DocumentsDocumentIdPagesPageGet = <
  *
  * A small image of the first page.
  */
-export const documentThumbnailV1DocumentsDocumentIdThumbnailGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
-    ThrowOnError
-  >,
+export const documentThumbnail = <ThrowOnError extends boolean = false>(
+  options: Options<DocumentThumbnailData, ThrowOnError>,
 ): RequestResult<
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses,
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,
+  DocumentThumbnailResponses,
+  DocumentThumbnailErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses,
-    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors,
+    DocumentThumbnailResponses,
+    DocumentThumbnailErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4331,21 +3550,19 @@ export const documentThumbnailV1DocumentsDocumentIdThumbnailGet = <
  *
  * Yr's forecast for a point: the weather now, the next hours and day by day.
  */
-export const getWeatherForecastV1WeatherGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetWeatherForecastV1WeatherGetData, ThrowOnError>,
+export const getWeatherForecast = <ThrowOnError extends boolean = false>(
+  options: Options<GetWeatherForecastData, ThrowOnError>,
 ): RequestResult<
-  GetWeatherForecastV1WeatherGetResponses,
-  GetWeatherForecastV1WeatherGetErrors,
+  GetWeatherForecastResponses,
+  GetWeatherForecastErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetWeatherForecastV1WeatherGetResponses,
-    GetWeatherForecastV1WeatherGetErrors,
+    GetWeatherForecastResponses,
+    GetWeatherForecastErrors,
     ThrowOnError
   >({
-    responseTransformer: getWeatherForecastV1WeatherGetResponseTransformer,
+    responseTransformer: getWeatherForecastResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/weather",
     ...options,
@@ -4356,21 +3573,16 @@ export const getWeatherForecastV1WeatherGet = <
  *
  * Fetch Klarna transactions and return raw GraphQL response.
  */
-export const getKlarnaTransactionsV1KlarnaTransactionsGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    GetKlarnaTransactionsV1KlarnaTransactionsGetData,
-    ThrowOnError
-  >,
+export const getKlarnaTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<GetKlarnaTransactionsData, ThrowOnError>,
 ): RequestResult<
-  GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
+  GetKlarnaTransactionsResponses,
+  GetKlarnaTransactionsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).get<
-    GetKlarnaTransactionsV1KlarnaTransactionsGetResponses,
-    GetKlarnaTransactionsV1KlarnaTransactionsGetErrors,
+    GetKlarnaTransactionsResponses,
+    GetKlarnaTransactionsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],
@@ -4384,21 +3596,16 @@ export const getKlarnaTransactionsV1KlarnaTransactionsGet = <
  * Fetch Klarna purchases and import the pay later ones into Bessel.
  * Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
  */
-export const importKlarnaTransactionsV1KlarnaImportPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ImportKlarnaTransactionsV1KlarnaImportPostData,
-    ThrowOnError
-  >,
+export const importKlarnaTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ImportKlarnaTransactionsData, ThrowOnError>,
 ): RequestResult<
-  ImportKlarnaTransactionsV1KlarnaImportPostResponses,
-  ImportKlarnaTransactionsV1KlarnaImportPostErrors,
+  ImportKlarnaTransactionsResponses,
+  ImportKlarnaTransactionsErrors,
   ThrowOnError
 > =>
   (options.client ?? client).post<
-    ImportKlarnaTransactionsV1KlarnaImportPostResponses,
-    ImportKlarnaTransactionsV1KlarnaImportPostErrors,
+    ImportKlarnaTransactionsResponses,
+    ImportKlarnaTransactionsErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],

@@ -1,7 +1,7 @@
 import type { TaskAttachmentSchema } from "@bessel/client";
 import {
-  getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
-  uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation,
+  getTaskAttachmentFile,
+  uploadTaskAttachmentMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import { useMutation } from "@tanstack/react-query";
@@ -104,7 +104,7 @@ export function useImagePaste({
 }) {
   const cache = useTaskCacheHelpers();
   const upload = useMutation({
-    ...uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation({ client }),
+    ...uploadTaskAttachmentMutation({ client }),
     meta: { errorToast: false },
   });
   const inFlight = useRef(new Set<Promise<void>>());
@@ -164,7 +164,7 @@ function useAttachmentImageUrl(
   useEffect(() => {
     let objectUrl: string | null = null;
     let cancelled = false;
-    getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet({
+    getTaskAttachmentFile({
       client,
       path: { task_id: attachment.task_id, attachment_id: attachment.id },
       parseAs: "blob",

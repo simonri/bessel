@@ -1,15 +1,15 @@
 import type { AccountOverview } from "@bessel/client";
 import {
-  deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation,
-  getAccountsOverviewV1BankAccountsOverviewGetOptions,
-  getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
-  getMontroseV1MontroseGetOptions,
-  getNetWorthHistoryV1BankAccountsNetWorthGetOptions,
-  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
-  listBankAccountsV1BankAccountsGetQueryKey,
-  listBankConnectionsV1BankConnectionsGetOptions,
-  listTradesV1InvestmentsTradesGetQueryKey,
-  listTransactionsV1TransactionsGetQueryKey,
+  deleteBankAccountMutation,
+  getAccountsOverviewOptions,
+  getAccountsOverviewQueryKey,
+  getMontroseOptions,
+  getNetWorthHistoryOptions,
+  getNetWorthHistoryQueryKey,
+  listBankAccountsQueryKey,
+  listBankConnectionsOptions,
+  listTradesQueryKey,
+  listTransactionsQueryKey,
 } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -98,11 +98,11 @@ function AccountsPage({
   const queryClient = useQueryClient();
   const refetchInterval = () => (Date.now() < pollUntil ? SYNC_POLL_MS : false);
   const { data, isLoading } = useQuery({
-    ...getAccountsOverviewV1BankAccountsOverviewGetOptions({ client }),
+    ...getAccountsOverviewOptions({ client }),
     refetchInterval,
   });
   const { data: history } = useQuery({
-    ...getNetWorthHistoryV1BankAccountsNetWorthGetOptions({ client }),
+    ...getNetWorthHistoryOptions({ client }),
     refetchInterval,
   });
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
@@ -110,7 +110,7 @@ function AccountsPage({
   // Back from a bank's approval page: choose which of its accounts to bring
   // in, if it has any not in Bessel yet. A renewal usually has none.
   const { data: connections } = useQuery(
-    listBankConnectionsV1BankConnectionsGetOptions({ client }),
+    listBankConnectionsOptions({ client }),
   );
   useEffect(() => {
     if (!connections) return;
@@ -132,9 +132,7 @@ function AccountsPage({
   }, [connections, onAdding]);
 
   // Back from Montrose's BankID login: the same, for its accounts.
-  const { data: montrose } = useQuery(
-    getMontroseV1MontroseGetOptions({ client }),
-  );
+  const { data: montrose } = useQuery(getMontroseOptions({ client }));
   useEffect(() => {
     if (montrose && takeMontroseToChoose(montrose)) {
       onAdding({ step: "pick", source: "montrose" });
@@ -142,19 +140,19 @@ function AccountsPage({
   }, [montrose, onAdding]);
 
   const deleteMutation = useMutation({
-    ...deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation({ client }),
+    ...deleteBankAccountMutation({ client }),
     onError: (error, { path }) => {
       setRemoved((current) => without(current, path.bank_account_id));
       toast.error(errorDetail(error, "Couldn't remove the account"));
     },
     onSettled: () => {
       for (const queryKey of [
-        getAccountsOverviewV1BankAccountsOverviewGetQueryKey({ client }),
-        getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
-        listBankAccountsV1BankAccountsGetQueryKey({ client }),
+        getAccountsOverviewQueryKey({ client }),
+        getNetWorthHistoryQueryKey({ client }),
+        listBankAccountsQueryKey({ client }),
         // Removing an account deletes its transactions and trades with it.
-        listTransactionsV1TransactionsGetQueryKey({ client }),
-        listTradesV1InvestmentsTradesGetQueryKey({ client }),
+        listTransactionsQueryKey({ client }),
+        listTradesQueryKey({ client }),
       ]) {
         void queryClient.invalidateQueries({ queryKey });
       }

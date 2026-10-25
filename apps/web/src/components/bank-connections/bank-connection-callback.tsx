@@ -1,5 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { completeBankConnectionV1BankConnectionsCallbackPost } from "@bessel/client";
+import { completeBankConnection } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -46,7 +46,7 @@ export function BankConnectionCallbackPage() {
       return;
     }
 
-    completeBankConnectionV1BankConnectionsCallbackPost({
+    completeBankConnection({
       client,
       body: { code, state },
       throwOnError: true,

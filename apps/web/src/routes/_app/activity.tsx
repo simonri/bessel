@@ -1,9 +1,9 @@
 import {
-  getActivitySummaryV1ActivitySummaryGetOptions,
-  getDailyActivityV1ActivityDailyGetOptions,
-  getIntradayActivityV1ActivityIntradayGetOptions,
-  listActivitySourcesV1ActivitySourcesGetOptions,
-  listTasksV1TasksGetOptions,
+  getActivitySummaryOptions,
+  getDailyActivityOptions,
+  getIntradayActivityOptions,
+  listActivitySourcesOptions,
+  listTasksOptions,
   TaskStatus,
 } from "@bessel/client";
 import {
@@ -68,7 +68,7 @@ function ActivityPage() {
   const isCurrentDay = isSameDay(date, today);
 
   const { data: sourcesData } = useQuery({
-    ...listActivitySourcesV1ActivitySourcesGetOptions({ client }),
+    ...listActivitySourcesOptions({ client }),
   });
   const sources = sourcesData?.sources ?? [];
   const activeSource = source ?? sources[0] ?? null;
@@ -76,7 +76,7 @@ function ActivityPage() {
   // Daily detail for selected date
   const [startTs, endTs] = localDayBounds(date);
   const { data: summary, isLoading } = useQuery({
-    ...getActivitySummaryV1ActivitySummaryGetOptions({
+    ...getActivitySummaryOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs, source: activeSource! },
     }),
@@ -85,7 +85,7 @@ function ActivityPage() {
   });
 
   const { data: intradayData } = useQuery({
-    ...getIntradayActivityV1ActivityIntradayGetOptions({
+    ...getIntradayActivityOptions({
       client,
       query: {
         start_ts: startTs,
@@ -99,7 +99,7 @@ function ActivityPage() {
   });
 
   const { data: completedTasksData } = useQuery({
-    ...listTasksV1TasksGetOptions({
+    ...listTasksOptions({
       client,
       query: {
         status: [TaskStatus.DONE],
@@ -116,7 +116,7 @@ function ActivityPage() {
   const [yearRangeStart, yearRangeEnd] = yearGridRange(today);
 
   const { data: yearDailyData } = useQuery({
-    ...getDailyActivityV1ActivityDailyGetOptions({
+    ...getDailyActivityOptions({
       client,
       query: {
         start_ts: yearRangeStart,

@@ -1,11 +1,11 @@
 import type { TaskSchema } from "@bessel/client";
 import {
-  listProjectsV1ProjectsGetOptions,
-  listTasksV1TasksGetOptions,
-  listTasksV1TasksGetQueryKey,
-  reorderTasksV1TasksReorderPatchMutation,
+  listProjectsOptions,
+  listTasksOptions,
+  listTasksQueryKey,
+  reorderTasksMutation,
   TaskStatus,
-  updateTaskV1TasksTaskIdPatchMutation,
+  updateTaskMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
@@ -162,9 +162,7 @@ function Tasks() {
         ? ["position" as "-created_at"]
         : ["-created_at" as const];
 
-  const { data: projectsData } = useQuery(
-    listProjectsV1ProjectsGetOptions({ client }),
-  );
+  const { data: projectsData } = useQuery(listProjectsOptions({ client }));
   const projects = projectsData ?? [];
 
   // A renamed or deleted project leaves nothing to filter by.
@@ -200,7 +198,7 @@ function Tasks() {
   }, [projects.length]);
 
   const { data, isLoading } = useQuery({
-    ...listTasksV1TasksGetOptions({
+    ...listTasksOptions({
       client,
       query: {
         page,
@@ -213,7 +211,7 @@ function Tasks() {
     placeholderData: keepPreviousData,
   });
 
-  const queryKey = listTasksV1TasksGetQueryKey({ client });
+  const queryKey = listTasksQueryKey({ client });
   const cache = useTaskCacheHelpers();
 
   const statusActions = useTaskStatusActions();
@@ -221,7 +219,7 @@ function Tasks() {
   // Kept as a bespoke inline patch (rather than cache.patchTask) because a
   // position change needs the whole column re-sorted, not just one item swapped.
   const updateMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    ...updateTaskMutation({ client }),
     ...taskMutationOptions,
     onMutate: async ({ path, body }) => {
       const previous = await cache.cancelAndGet(path.task_id);
@@ -254,7 +252,7 @@ function Tasks() {
   // Touches many tasks at once; a failure is put right by the refetch in
   // settle() rather than by restoring a snapshot over other in-flight edits.
   const reorderMutation = useMutation({
-    ...reorderTasksV1TasksReorderPatchMutation({ client }),
+    ...reorderTasksMutation({ client }),
     ...taskMutationOptions,
     onMutate: async ({ body }) => {
       await cache.cancel();

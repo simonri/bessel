@@ -1,18 +1,18 @@
 import type { AccountOverview, AvanzaConnectionSchema } from "@bessel/client";
 import {
-  authorizeBankConnectionV1BankConnectionsAuthorizePostMutation,
-  authorizeMontroseV1MontroseAuthorizePostMutation,
-  connectAvanzaV1AvanzaConnectPostMutation,
-  getAccountsOverviewV1BankAccountsOverviewGetQueryKey,
-  getAvanzaV1AvanzaGetQueryKey,
-  getMontroseV1MontroseGetQueryKey,
-  getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey,
-  listBankConnectionsV1BankConnectionsGetOptions,
-  listBankConnectionsV1BankConnectionsGetQueryKey,
-  listTransactionsV1TransactionsGetQueryKey,
-  syncAvanzaV1AvanzaSyncPostMutation,
-  syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation,
-  syncMontroseV1MontroseSyncPostMutation,
+  authorizeBankConnectionMutation,
+  authorizeMontroseMutation,
+  connectAvanzaMutation,
+  getAccountsOverviewQueryKey,
+  getAvanzaQueryKey,
+  getMontroseQueryKey,
+  getNetWorthHistoryQueryKey,
+  listBankConnectionsOptions,
+  listBankConnectionsQueryKey,
+  listTransactionsQueryKey,
+  syncAvanzaMutation,
+  syncBankConnectionMutation,
+  syncMontroseMutation,
 } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -85,25 +85,25 @@ export function AccountActionsProvider({
   const [importing, setImporting] = useState<ImportPreset | null>(null);
   const [avanzaLogin, setAvanzaLogin] = useState(false);
   const { data: connections } = useQuery(
-    listBankConnectionsV1BankConnectionsGetOptions({ client }),
+    listBankConnectionsOptions({ client }),
   );
 
   const refresh = useCallback(() => {
     setPollUntil(Date.now() + SYNC_POLL_WINDOW_MS);
     for (const queryKey of [
-      getAccountsOverviewV1BankAccountsOverviewGetQueryKey({ client }),
-      getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey({ client }),
-      listBankConnectionsV1BankConnectionsGetQueryKey({ client }),
-      getAvanzaV1AvanzaGetQueryKey({ client }),
-      getMontroseV1MontroseGetQueryKey({ client }),
-      listTransactionsV1TransactionsGetQueryKey({ client }),
+      getAccountsOverviewQueryKey({ client }),
+      getNetWorthHistoryQueryKey({ client }),
+      listBankConnectionsQueryKey({ client }),
+      getAvanzaQueryKey({ client }),
+      getMontroseQueryKey({ client }),
+      listTransactionsQueryKey({ client }),
     ]) {
       void queryClient.invalidateQueries({ queryKey });
     }
   }, [queryClient]);
 
   const authorize = useMutation({
-    ...authorizeBankConnectionV1BankConnectionsAuthorizePostMutation({
+    ...authorizeBankConnectionMutation({
       client,
     }),
     onSuccess: ({ url }, { body }) => {
@@ -117,7 +117,7 @@ export function AccountActionsProvider({
       toast.error(errorDetail(error, "Couldn't open the bank's approval")),
   });
   const authorizeMontrose = useMutation({
-    ...authorizeMontroseV1MontroseAuthorizePostMutation({ client }),
+    ...authorizeMontroseMutation({ client }),
     onSuccess: ({ url }) => {
       if (window.electron) void window.electron.shell.openExternal(url);
       else window.location.assign(url);
@@ -126,7 +126,7 @@ export function AccountActionsProvider({
       toast.error(errorDetail(error, "Couldn't open Montrose's login")),
   });
   const syncMontrose = useMutation({
-    ...syncMontroseV1MontroseSyncPostMutation({ client }),
+    ...syncMontroseMutation({ client }),
     onSuccess: () => {
       toast.success("Updating - this takes a minute");
       refresh();
@@ -134,7 +134,7 @@ export function AccountActionsProvider({
     onError: (error) => toast.error(errorDetail(error, "Couldn't update")),
   });
   const syncBank = useMutation({
-    ...syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation({
+    ...syncBankConnectionMutation({
       client,
     }),
     onSuccess: () => {
@@ -144,7 +144,7 @@ export function AccountActionsProvider({
     onError: (error) => toast.error(errorDetail(error, "Couldn't update")),
   });
   const syncAvanza = useMutation({
-    ...syncAvanzaV1AvanzaSyncPostMutation({ client }),
+    ...syncAvanzaMutation({ client }),
     onSuccess: () => {
       toast.success("Updating - this takes a minute");
       refresh();
@@ -152,7 +152,7 @@ export function AccountActionsProvider({
     onError: (error) => toast.error(errorDetail(error, "Couldn't update")),
   });
   const connectAvanzaLogin = useMutation({
-    ...connectAvanzaV1AvanzaConnectPostMutation({ client }),
+    ...connectAvanzaMutation({ client }),
     onSuccess: refresh,
   });
 

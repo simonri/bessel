@@ -1,8 +1,8 @@
 import {
-  getDailySleepV1HealthkitSleepDailyGetOptions,
-  getHealthSummaryV1HealthkitSummaryGetOptions,
-  getSleepSummaryV1HealthkitSleepSummaryGetOptions,
-  getTimelineV1TimelineGetOptions,
+  getDailySleepOptions,
+  getHealthSummaryOptions,
+  getSleepSummaryOptions,
+  getTimelineOptions,
 } from "@bessel/client";
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -45,7 +45,7 @@ function SleepPage() {
 
   const [startTs, endTs] = localNightBounds(date);
   const { data: summary, isLoading } = useQuery({
-    ...getSleepSummaryV1HealthkitSleepSummaryGetOptions({
+    ...getSleepSummaryOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs, tz_name: tzName },
     }),
@@ -55,7 +55,7 @@ function SleepPage() {
   // The timeline's sleep lane carries every stage segment of the night,
   // which is what the hypnogram draws.
   const { data: nightTimeline } = useQuery({
-    ...getTimelineV1TimelineGetOptions({
+    ...getTimelineOptions({
       client,
       query: { start_ts: startTs, end_ts: endTs },
     }),
@@ -65,7 +65,7 @@ function SleepPage() {
   // The night picked is the one that ended on `date`, which is also the day
   // the summary scores.
   const { data: daySummary } = useQuery({
-    ...getHealthSummaryV1HealthkitSummaryGetOptions({
+    ...getHealthSummaryOptions({
       client,
       query: { date: dayParam(dateKey), tz_name: tzName },
     }),
@@ -80,7 +80,7 @@ function SleepPage() {
     [date],
   );
   const { data: recent } = useQuery({
-    ...getDailySleepV1HealthkitSleepDailyGetOptions({
+    ...getDailySleepOptions({
       client,
       query: {
         start_ts: localNightBounds(rhythmDays[0])[0],
@@ -93,7 +93,7 @@ function SleepPage() {
 
   const [yearRangeStart, yearRangeEnd] = yearGridRange(today);
   const { data: yearDailyData } = useQuery({
-    ...getDailySleepV1HealthkitSleepDailyGetOptions({
+    ...getDailySleepOptions({
       client,
       query: {
         start_ts: yearRangeStart,

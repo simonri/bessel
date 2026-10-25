@@ -1,6 +1,6 @@
 import {
-  getAgentUsageDailyV1AgentUsageDailyGetOptions,
-  getAgentUsageStatusV1AgentUsageStatusGetOptions,
+  getAgentUsageDailyOptions,
+  getAgentUsageStatusOptions,
 } from "@bessel/client";
 import { Popover, PopoverTrigger } from "@bessel/ui/components/popover";
 import {
@@ -72,7 +72,7 @@ export function AgentUsageDropdown() {
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
   const { data: status, isLoading: statusLoading } = useQuery({
-    ...getAgentUsageStatusV1AgentUsageStatusGetOptions({ client }),
+    ...getAgentUsageStatusOptions({ client }),
     refetchInterval: 60_000,
   });
 
@@ -86,7 +86,7 @@ export function AgentUsageDropdown() {
     [today, todayStr],
   );
   const { data: daily, isLoading: dailyLoading } = useQuery({
-    ...getAgentUsageDailyV1AgentUsageDailyGetOptions({
+    ...getAgentUsageDailyOptions({
       client,
       query: range,
     }),

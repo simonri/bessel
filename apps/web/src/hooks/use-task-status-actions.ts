@@ -1,9 +1,9 @@
 import {
-  completeTaskV1TasksTaskIdCompletePostMutation,
-  reopenTaskV1TasksTaskIdReopenPostMutation,
+  completeTaskMutation,
+  reopenTaskMutation,
   type TaskSchema,
-  undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation,
-  updateTaskV1TasksTaskIdPatchMutation,
+  undoCompleteTaskMutation,
+  updateTaskMutation,
 } from "@bessel/client";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -43,24 +43,24 @@ export function useTaskStatusActions() {
   });
 
   const completeMutation = useMutation({
-    ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
+    ...completeTaskMutation({ client }),
     ...statusMutation(
       { status: "done", completed_at: new Date() },
       "Action failed",
     ),
   });
   const reopenMutation = useMutation({
-    ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
+    ...reopenTaskMutation({ client }),
     ...statusMutation({ status: "todo", completed_at: null }, "Action failed"),
   });
   // Unlike reopen, also removes the next occurrence completing a repeating
   // task spawned.
   const undoCompleteMutation = useMutation({
-    ...undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation({ client }),
+    ...undoCompleteTaskMutation({ client }),
     ...statusMutation({ status: "todo", completed_at: null }, "Couldn't undo"),
   });
   const startMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    ...updateTaskMutation({ client }),
     ...statusMutation({ status: "in_progress" }, "Couldn't start the task"),
   });
 

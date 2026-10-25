@@ -1,4 +1,4 @@
-import { listTasksV1TasksGetOptions, TaskStatus } from "@bessel/client";
+import { listTasksOptions, TaskStatus } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
@@ -48,7 +48,7 @@ export function tasksSentence({
 
 function useOpenTasks() {
   const { data } = useQuery(
-    listTasksV1TasksGetOptions({
+    listTasksOptions({
       client,
       query: {
         page: 1,

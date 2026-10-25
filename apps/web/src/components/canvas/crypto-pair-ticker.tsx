@@ -1,4 +1,4 @@
-import { getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions } from "@bessel/client";
+import { getCryptoPriceOptions } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { client } from "@/lib/client";
@@ -60,7 +60,7 @@ export function CryptoPairTicker({ pair }: { pair: string }) {
   const parsed = parsePair(pair);
 
   const { data } = useQuery({
-    ...getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions({
+    ...getCryptoPriceOptions({
       client,
       path: { coin_id: parsed?.coinId ?? "" },
       query: { currency: parsed?.currency ?? "usd" },

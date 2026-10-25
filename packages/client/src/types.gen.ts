@@ -1158,20 +1158,9 @@ export type BankOption = {
 };
 
 /**
- * Body_add_transaction_document_v1_transactions__transaction_id__documents_post
+ * Body_add_transaction_document
  */
-export type BodyAddTransactionDocumentV1TransactionsTransactionIdDocumentsPost =
-  {
-    /**
-     * File
-     */
-    file: Blob | File;
-  };
-
-/**
- * Body_import_location_history_v1_location_history_import_post
- */
-export type BodyImportLocationHistoryV1LocationHistoryImportPost = {
+export type BodyAddTransactionDocument = {
   /**
    * File
    */
@@ -1179,9 +1168,9 @@ export type BodyImportLocationHistoryV1LocationHistoryImportPost = {
 };
 
 /**
- * Body_import_transactions_v1_transactions_import_post
+ * Body_import_location_history
  */
-export type BodyImportTransactionsV1TransactionsImportPost = {
+export type BodyImportLocationHistory = {
   /**
    * File
    */
@@ -1189,9 +1178,19 @@ export type BodyImportTransactionsV1TransactionsImportPost = {
 };
 
 /**
- * Body_upload_task_attachment_v1_tasks__task_id__attachments_post
+ * Body_import_transactions
  */
-export type BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost = {
+export type BodyImportTransactions = {
+  /**
+   * File
+   */
+  file: Blob | File;
+};
+
+/**
+ * Body_upload_task_attachment
+ */
+export type BodyUploadTaskAttachment = {
   /**
    * File
    */
@@ -7188,65 +7187,62 @@ export type TransactionUpdateResponseWritable = {
   same_description_count?: number;
 };
 
-export type HealthzHealthzGetData = {
+export type HealthzData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/healthz";
 };
 
-export type HealthzHealthzGetResponses = {
+export type HealthzResponses = {
   /**
    * Successful Response
    */
   200: unknown;
 };
 
-export type GetMeV1AuthMeGetData = {
+export type GetMeData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/auth/me";
 };
 
-export type GetMeV1AuthMeGetResponses = {
+export type GetMeResponses = {
   /**
    * Successful Response
    */
   200: MeResponse;
 };
 
-export type GetMeV1AuthMeGetResponse =
-  GetMeV1AuthMeGetResponses[keyof GetMeV1AuthMeGetResponses];
+export type GetMeResponse = GetMeResponses[keyof GetMeResponses];
 
-export type UpdateMeV1AuthMePatchData = {
+export type UpdateMeData = {
   body: MeUpdate;
   path?: never;
   query?: never;
   url: "/v1/auth/me";
 };
 
-export type UpdateMeV1AuthMePatchErrors = {
+export type UpdateMeErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateMeV1AuthMePatchError =
-  UpdateMeV1AuthMePatchErrors[keyof UpdateMeV1AuthMePatchErrors];
+export type UpdateMeError = UpdateMeErrors[keyof UpdateMeErrors];
 
-export type UpdateMeV1AuthMePatchResponses = {
+export type UpdateMeResponses = {
   /**
    * Successful Response
    */
   200: MeResponse;
 };
 
-export type UpdateMeV1AuthMePatchResponse =
-  UpdateMeV1AuthMePatchResponses[keyof UpdateMeV1AuthMePatchResponses];
+export type UpdateMeResponse = UpdateMeResponses[keyof UpdateMeResponses];
 
-export type IngestActivityBatchV1ActivityBatchPostData = {
+export type IngestActivityBatchData = {
   body: ActivityBatchRequest;
   headers?: {
     /**
@@ -7259,44 +7255,44 @@ export type IngestActivityBatchV1ActivityBatchPostData = {
   url: "/v1/activity/batch";
 };
 
-export type IngestActivityBatchV1ActivityBatchPostErrors = {
+export type IngestActivityBatchErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type IngestActivityBatchV1ActivityBatchPostError =
-  IngestActivityBatchV1ActivityBatchPostErrors[keyof IngestActivityBatchV1ActivityBatchPostErrors];
+export type IngestActivityBatchError =
+  IngestActivityBatchErrors[keyof IngestActivityBatchErrors];
 
-export type IngestActivityBatchV1ActivityBatchPostResponses = {
+export type IngestActivityBatchResponses = {
   /**
    * Successful Response
    */
   200: ActivityBatchResponse;
 };
 
-export type IngestActivityBatchV1ActivityBatchPostResponse =
-  IngestActivityBatchV1ActivityBatchPostResponses[keyof IngestActivityBatchV1ActivityBatchPostResponses];
+export type IngestActivityBatchResponse =
+  IngestActivityBatchResponses[keyof IngestActivityBatchResponses];
 
-export type ListActivitySourcesV1ActivitySourcesGetData = {
+export type ListActivitySourcesData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/activity/sources";
 };
 
-export type ListActivitySourcesV1ActivitySourcesGetResponses = {
+export type ListActivitySourcesResponses = {
   /**
    * Successful Response
    */
   200: ActivitySourcesResponse;
 };
 
-export type ListActivitySourcesV1ActivitySourcesGetResponse =
-  ListActivitySourcesV1ActivitySourcesGetResponses[keyof ListActivitySourcesV1ActivitySourcesGetResponses];
+export type ListActivitySourcesResponse =
+  ListActivitySourcesResponses[keyof ListActivitySourcesResponses];
 
-export type GetActivitySummaryV1ActivitySummaryGetData = {
+export type GetActivitySummaryData = {
   body?: never;
   path?: never;
   query: {
@@ -7322,27 +7318,27 @@ export type GetActivitySummaryV1ActivitySummaryGetData = {
   url: "/v1/activity/summary";
 };
 
-export type GetActivitySummaryV1ActivitySummaryGetErrors = {
+export type GetActivitySummaryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetActivitySummaryV1ActivitySummaryGetError =
-  GetActivitySummaryV1ActivitySummaryGetErrors[keyof GetActivitySummaryV1ActivitySummaryGetErrors];
+export type GetActivitySummaryError =
+  GetActivitySummaryErrors[keyof GetActivitySummaryErrors];
 
-export type GetActivitySummaryV1ActivitySummaryGetResponses = {
+export type GetActivitySummaryResponses = {
   /**
    * Successful Response
    */
   200: ActivitySummaryResponse;
 };
 
-export type GetActivitySummaryV1ActivitySummaryGetResponse =
-  GetActivitySummaryV1ActivitySummaryGetResponses[keyof GetActivitySummaryV1ActivitySummaryGetResponses];
+export type GetActivitySummaryResponse =
+  GetActivitySummaryResponses[keyof GetActivitySummaryResponses];
 
-export type GetDailyActivityV1ActivityDailyGetData = {
+export type GetDailyActivityData = {
   body?: never;
   path?: never;
   query: {
@@ -7380,27 +7376,27 @@ export type GetDailyActivityV1ActivityDailyGetData = {
   url: "/v1/activity/daily";
 };
 
-export type GetDailyActivityV1ActivityDailyGetErrors = {
+export type GetDailyActivityErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetDailyActivityV1ActivityDailyGetError =
-  GetDailyActivityV1ActivityDailyGetErrors[keyof GetDailyActivityV1ActivityDailyGetErrors];
+export type GetDailyActivityError =
+  GetDailyActivityErrors[keyof GetDailyActivityErrors];
 
-export type GetDailyActivityV1ActivityDailyGetResponses = {
+export type GetDailyActivityResponses = {
   /**
    * Successful Response
    */
   200: ActivityDailyResponse;
 };
 
-export type GetDailyActivityV1ActivityDailyGetResponse =
-  GetDailyActivityV1ActivityDailyGetResponses[keyof GetDailyActivityV1ActivityDailyGetResponses];
+export type GetDailyActivityResponse =
+  GetDailyActivityResponses[keyof GetDailyActivityResponses];
 
-export type GetIntradayActivityV1ActivityIntradayGetData = {
+export type GetIntradayActivityData = {
   body?: never;
   path?: never;
   query: {
@@ -7432,71 +7428,71 @@ export type GetIntradayActivityV1ActivityIntradayGetData = {
   url: "/v1/activity/intraday";
 };
 
-export type GetIntradayActivityV1ActivityIntradayGetErrors = {
+export type GetIntradayActivityErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetIntradayActivityV1ActivityIntradayGetError =
-  GetIntradayActivityV1ActivityIntradayGetErrors[keyof GetIntradayActivityV1ActivityIntradayGetErrors];
+export type GetIntradayActivityError =
+  GetIntradayActivityErrors[keyof GetIntradayActivityErrors];
 
-export type GetIntradayActivityV1ActivityIntradayGetResponses = {
+export type GetIntradayActivityResponses = {
   /**
    * Successful Response
    */
   200: ActivityIntradayResponse;
 };
 
-export type GetIntradayActivityV1ActivityIntradayGetResponse =
-  GetIntradayActivityV1ActivityIntradayGetResponses[keyof GetIntradayActivityV1ActivityIntradayGetResponses];
+export type GetIntradayActivityResponse =
+  GetIntradayActivityResponses[keyof GetIntradayActivityResponses];
 
-export type SyncAgentUsageV1AgentUsageSyncPostData = {
+export type SyncAgentUsageData = {
   body: AgentUsageSyncRequest;
   path?: never;
   query?: never;
   url: "/v1/agent-usage/sync";
 };
 
-export type SyncAgentUsageV1AgentUsageSyncPostErrors = {
+export type SyncAgentUsageErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SyncAgentUsageV1AgentUsageSyncPostError =
-  SyncAgentUsageV1AgentUsageSyncPostErrors[keyof SyncAgentUsageV1AgentUsageSyncPostErrors];
+export type SyncAgentUsageError =
+  SyncAgentUsageErrors[keyof SyncAgentUsageErrors];
 
-export type SyncAgentUsageV1AgentUsageSyncPostResponses = {
+export type SyncAgentUsageResponses = {
   /**
    * Successful Response
    */
   200: AgentUsageSyncResponse;
 };
 
-export type SyncAgentUsageV1AgentUsageSyncPostResponse =
-  SyncAgentUsageV1AgentUsageSyncPostResponses[keyof SyncAgentUsageV1AgentUsageSyncPostResponses];
+export type SyncAgentUsageResponse =
+  SyncAgentUsageResponses[keyof SyncAgentUsageResponses];
 
-export type GetAgentUsageStatusV1AgentUsageStatusGetData = {
+export type GetAgentUsageStatusData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/agent-usage/status";
 };
 
-export type GetAgentUsageStatusV1AgentUsageStatusGetResponses = {
+export type GetAgentUsageStatusResponses = {
   /**
    * Successful Response
    */
   200: AgentUsageStatusResponse;
 };
 
-export type GetAgentUsageStatusV1AgentUsageStatusGetResponse =
-  GetAgentUsageStatusV1AgentUsageStatusGetResponses[keyof GetAgentUsageStatusV1AgentUsageStatusGetResponses];
+export type GetAgentUsageStatusResponse =
+  GetAgentUsageStatusResponses[keyof GetAgentUsageStatusResponses];
 
-export type GetAgentUsageDailyV1AgentUsageDailyGetData = {
+export type GetAgentUsageDailyData = {
   body?: never;
   path?: never;
   query: {
@@ -7516,27 +7512,27 @@ export type GetAgentUsageDailyV1AgentUsageDailyGetData = {
   url: "/v1/agent-usage/daily";
 };
 
-export type GetAgentUsageDailyV1AgentUsageDailyGetErrors = {
+export type GetAgentUsageDailyErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetAgentUsageDailyV1AgentUsageDailyGetError =
-  GetAgentUsageDailyV1AgentUsageDailyGetErrors[keyof GetAgentUsageDailyV1AgentUsageDailyGetErrors];
+export type GetAgentUsageDailyError =
+  GetAgentUsageDailyErrors[keyof GetAgentUsageDailyErrors];
 
-export type GetAgentUsageDailyV1AgentUsageDailyGetResponses = {
+export type GetAgentUsageDailyResponses = {
   /**
    * Successful Response
    */
   200: AgentUsageDailyResponse;
 };
 
-export type GetAgentUsageDailyV1AgentUsageDailyGetResponse =
-  GetAgentUsageDailyV1AgentUsageDailyGetResponses[keyof GetAgentUsageDailyV1AgentUsageDailyGetResponses];
+export type GetAgentUsageDailyResponse =
+  GetAgentUsageDailyResponses[keyof GetAgentUsageDailyResponses];
 
-export type ListBankAccountsV1BankAccountsGetData = {
+export type ListBankAccountsData = {
   body?: never;
   path?: never;
   query?: {
@@ -7562,88 +7558,88 @@ export type ListBankAccountsV1BankAccountsGetData = {
   url: "/v1/bank-accounts";
 };
 
-export type ListBankAccountsV1BankAccountsGetErrors = {
+export type ListBankAccountsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListBankAccountsV1BankAccountsGetError =
-  ListBankAccountsV1BankAccountsGetErrors[keyof ListBankAccountsV1BankAccountsGetErrors];
+export type ListBankAccountsError =
+  ListBankAccountsErrors[keyof ListBankAccountsErrors];
 
-export type ListBankAccountsV1BankAccountsGetResponses = {
+export type ListBankAccountsResponses = {
   /**
    * Successful Response
    */
   200: BankAccountListResponse;
 };
 
-export type ListBankAccountsV1BankAccountsGetResponse =
-  ListBankAccountsV1BankAccountsGetResponses[keyof ListBankAccountsV1BankAccountsGetResponses];
+export type ListBankAccountsResponse =
+  ListBankAccountsResponses[keyof ListBankAccountsResponses];
 
-export type CreateBankAccountV1BankAccountsPostData = {
+export type CreateBankAccountData = {
   body: BankAccountCreate;
   path?: never;
   query?: never;
   url: "/v1/bank-accounts";
 };
 
-export type CreateBankAccountV1BankAccountsPostErrors = {
+export type CreateBankAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateBankAccountV1BankAccountsPostError =
-  CreateBankAccountV1BankAccountsPostErrors[keyof CreateBankAccountV1BankAccountsPostErrors];
+export type CreateBankAccountError =
+  CreateBankAccountErrors[keyof CreateBankAccountErrors];
 
-export type CreateBankAccountV1BankAccountsPostResponses = {
+export type CreateBankAccountResponses = {
   /**
    * Successful Response
    */
   201: BankAccountSchema;
 };
 
-export type CreateBankAccountV1BankAccountsPostResponse =
-  CreateBankAccountV1BankAccountsPostResponses[keyof CreateBankAccountV1BankAccountsPostResponses];
+export type CreateBankAccountResponse =
+  CreateBankAccountResponses[keyof CreateBankAccountResponses];
 
-export type GetAccountsOverviewV1BankAccountsOverviewGetData = {
+export type GetAccountsOverviewData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/bank-accounts/overview";
 };
 
-export type GetAccountsOverviewV1BankAccountsOverviewGetResponses = {
+export type GetAccountsOverviewResponses = {
   /**
    * Successful Response
    */
   200: AccountsOverviewResponse;
 };
 
-export type GetAccountsOverviewV1BankAccountsOverviewGetResponse =
-  GetAccountsOverviewV1BankAccountsOverviewGetResponses[keyof GetAccountsOverviewV1BankAccountsOverviewGetResponses];
+export type GetAccountsOverviewResponse =
+  GetAccountsOverviewResponses[keyof GetAccountsOverviewResponses];
 
-export type GetNetWorthHistoryV1BankAccountsNetWorthGetData = {
+export type GetNetWorthHistoryData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/bank-accounts/net-worth";
 };
 
-export type GetNetWorthHistoryV1BankAccountsNetWorthGetResponses = {
+export type GetNetWorthHistoryResponses = {
   /**
    * Successful Response
    */
   200: NetWorthHistoryResponse;
 };
 
-export type GetNetWorthHistoryV1BankAccountsNetWorthGetResponse =
-  GetNetWorthHistoryV1BankAccountsNetWorthGetResponses[keyof GetNetWorthHistoryV1BankAccountsNetWorthGetResponses];
+export type GetNetWorthHistoryResponse =
+  GetNetWorthHistoryResponses[keyof GetNetWorthHistoryResponses];
 
-export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteData = {
+export type DeleteBankAccountData = {
   body?: never;
   path: {
     /**
@@ -7655,27 +7651,27 @@ export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteData = {
   url: "/v1/bank-accounts/{bank_account_id}";
 };
 
-export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors = {
+export type DeleteBankAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteError =
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors[keyof DeleteBankAccountV1BankAccountsBankAccountIdDeleteErrors];
+export type DeleteBankAccountError =
+  DeleteBankAccountErrors[keyof DeleteBankAccountErrors];
 
-export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses = {
+export type DeleteBankAccountResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse =
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses[keyof DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponses];
+export type DeleteBankAccountResponse =
+  DeleteBankAccountResponses[keyof DeleteBankAccountResponses];
 
-export type GetBankAccountV1BankAccountsBankAccountIdGetData = {
+export type GetBankAccountData = {
   body?: never;
   path: {
     /**
@@ -7687,27 +7683,27 @@ export type GetBankAccountV1BankAccountsBankAccountIdGetData = {
   url: "/v1/bank-accounts/{bank_account_id}";
 };
 
-export type GetBankAccountV1BankAccountsBankAccountIdGetErrors = {
+export type GetBankAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetBankAccountV1BankAccountsBankAccountIdGetError =
-  GetBankAccountV1BankAccountsBankAccountIdGetErrors[keyof GetBankAccountV1BankAccountsBankAccountIdGetErrors];
+export type GetBankAccountError =
+  GetBankAccountErrors[keyof GetBankAccountErrors];
 
-export type GetBankAccountV1BankAccountsBankAccountIdGetResponses = {
+export type GetBankAccountResponses = {
   /**
    * Successful Response
    */
   200: BankAccountSchema;
 };
 
-export type GetBankAccountV1BankAccountsBankAccountIdGetResponse =
-  GetBankAccountV1BankAccountsBankAccountIdGetResponses[keyof GetBankAccountV1BankAccountsBankAccountIdGetResponses];
+export type GetBankAccountResponse =
+  GetBankAccountResponses[keyof GetBankAccountResponses];
 
-export type UpdateBankAccountV1BankAccountsBankAccountIdPatchData = {
+export type UpdateBankAccountData = {
   body: BankAccountUpdate;
   path: {
     /**
@@ -7719,88 +7715,86 @@ export type UpdateBankAccountV1BankAccountsBankAccountIdPatchData = {
   url: "/v1/bank-accounts/{bank_account_id}";
 };
 
-export type UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors = {
+export type UpdateBankAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateBankAccountV1BankAccountsBankAccountIdPatchError =
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchErrors];
+export type UpdateBankAccountError =
+  UpdateBankAccountErrors[keyof UpdateBankAccountErrors];
 
-export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses = {
+export type UpdateBankAccountResponses = {
   /**
    * Successful Response
    */
   200: BankAccountSchema;
 };
 
-export type UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse =
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses[keyof UpdateBankAccountV1BankAccountsBankAccountIdPatchResponses];
+export type UpdateBankAccountResponse =
+  UpdateBankAccountResponses[keyof UpdateBankAccountResponses];
 
-export type DisconnectAvanzaV1AvanzaDeleteData = {
+export type DisconnectAvanzaData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/avanza";
 };
 
-export type DisconnectAvanzaV1AvanzaDeleteResponses = {
+export type DisconnectAvanzaResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DisconnectAvanzaV1AvanzaDeleteResponse =
-  DisconnectAvanzaV1AvanzaDeleteResponses[keyof DisconnectAvanzaV1AvanzaDeleteResponses];
+export type DisconnectAvanzaResponse =
+  DisconnectAvanzaResponses[keyof DisconnectAvanzaResponses];
 
-export type GetAvanzaV1AvanzaGetData = {
+export type GetAvanzaData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/avanza";
 };
 
-export type GetAvanzaV1AvanzaGetResponses = {
+export type GetAvanzaResponses = {
   /**
    * Successful Response
    */
   200: AvanzaStatusResponse;
 };
 
-export type GetAvanzaV1AvanzaGetResponse =
-  GetAvanzaV1AvanzaGetResponses[keyof GetAvanzaV1AvanzaGetResponses];
+export type GetAvanzaResponse = GetAvanzaResponses[keyof GetAvanzaResponses];
 
-export type ConnectAvanzaV1AvanzaConnectPostData = {
+export type ConnectAvanzaData = {
   body: AvanzaConnectRequest;
   path?: never;
   query?: never;
   url: "/v1/avanza/connect";
 };
 
-export type ConnectAvanzaV1AvanzaConnectPostErrors = {
+export type ConnectAvanzaErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ConnectAvanzaV1AvanzaConnectPostError =
-  ConnectAvanzaV1AvanzaConnectPostErrors[keyof ConnectAvanzaV1AvanzaConnectPostErrors];
+export type ConnectAvanzaError = ConnectAvanzaErrors[keyof ConnectAvanzaErrors];
 
-export type ConnectAvanzaV1AvanzaConnectPostResponses = {
+export type ConnectAvanzaResponses = {
   /**
    * Successful Response
    */
   201: AvanzaConnectionSchema;
 };
 
-export type ConnectAvanzaV1AvanzaConnectPostResponse =
-  ConnectAvanzaV1AvanzaConnectPostResponses[keyof ConnectAvanzaV1AvanzaConnectPostResponses];
+export type ConnectAvanzaResponse =
+  ConnectAvanzaResponses[keyof ConnectAvanzaResponses];
 
-export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData = {
+export type LinkAvanzaAccountData = {
   body: AvanzaAccountUpdate;
   path: {
     /**
@@ -7812,119 +7806,119 @@ export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData = {
   url: "/v1/avanza/accounts/{account_id}";
 };
 
-export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors = {
+export type LinkAvanzaAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError =
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors[keyof LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchErrors];
+export type LinkAvanzaAccountError =
+  LinkAvanzaAccountErrors[keyof LinkAvanzaAccountErrors];
 
-export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses = {
+export type LinkAvanzaAccountResponses = {
   /**
    * Successful Response
    */
   200: AvanzaConnectionSchema;
 };
 
-export type LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse =
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses[keyof LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponses];
+export type LinkAvanzaAccountResponse =
+  LinkAvanzaAccountResponses[keyof LinkAvanzaAccountResponses];
 
-export type SyncAvanzaV1AvanzaSyncPostData = {
+export type SyncAvanzaData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/avanza/sync";
 };
 
-export type SyncAvanzaV1AvanzaSyncPostResponses = {
+export type SyncAvanzaResponses = {
   /**
    * Successful Response
    */
   202: unknown;
 };
 
-export type DisconnectMontroseV1MontroseDeleteData = {
+export type DisconnectMontroseData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/montrose";
 };
 
-export type DisconnectMontroseV1MontroseDeleteResponses = {
+export type DisconnectMontroseResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DisconnectMontroseV1MontroseDeleteResponse =
-  DisconnectMontroseV1MontroseDeleteResponses[keyof DisconnectMontroseV1MontroseDeleteResponses];
+export type DisconnectMontroseResponse =
+  DisconnectMontroseResponses[keyof DisconnectMontroseResponses];
 
-export type GetMontroseV1MontroseGetData = {
+export type GetMontroseData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/montrose";
 };
 
-export type GetMontroseV1MontroseGetResponses = {
+export type GetMontroseResponses = {
   /**
    * Successful Response
    */
   200: MontroseStatusResponse;
 };
 
-export type GetMontroseV1MontroseGetResponse =
-  GetMontroseV1MontroseGetResponses[keyof GetMontroseV1MontroseGetResponses];
+export type GetMontroseResponse =
+  GetMontroseResponses[keyof GetMontroseResponses];
 
-export type AuthorizeMontroseV1MontroseAuthorizePostData = {
+export type AuthorizeMontroseData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/montrose/authorize";
 };
 
-export type AuthorizeMontroseV1MontroseAuthorizePostResponses = {
+export type AuthorizeMontroseResponses = {
   /**
    * Successful Response
    */
   200: MontroseAuthorizeResponse;
 };
 
-export type AuthorizeMontroseV1MontroseAuthorizePostResponse =
-  AuthorizeMontroseV1MontroseAuthorizePostResponses[keyof AuthorizeMontroseV1MontroseAuthorizePostResponses];
+export type AuthorizeMontroseResponse =
+  AuthorizeMontroseResponses[keyof AuthorizeMontroseResponses];
 
-export type CompleteMontroseV1MontroseCallbackPostData = {
+export type CompleteMontroseData = {
   body: MontroseCallbackRequest;
   path?: never;
   query?: never;
   url: "/v1/montrose/callback";
 };
 
-export type CompleteMontroseV1MontroseCallbackPostErrors = {
+export type CompleteMontroseErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CompleteMontroseV1MontroseCallbackPostError =
-  CompleteMontroseV1MontroseCallbackPostErrors[keyof CompleteMontroseV1MontroseCallbackPostErrors];
+export type CompleteMontroseError =
+  CompleteMontroseErrors[keyof CompleteMontroseErrors];
 
-export type CompleteMontroseV1MontroseCallbackPostResponses = {
+export type CompleteMontroseResponses = {
   /**
    * Successful Response
    */
   201: MontroseConnectionSchema;
 };
 
-export type CompleteMontroseV1MontroseCallbackPostResponse =
-  CompleteMontroseV1MontroseCallbackPostResponses[keyof CompleteMontroseV1MontroseCallbackPostResponses];
+export type CompleteMontroseResponse =
+  CompleteMontroseResponses[keyof CompleteMontroseResponses];
 
-export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchData = {
+export type LinkMontroseAccountData = {
   body: MontroseAccountUpdate;
   path: {
     /**
@@ -7936,129 +7930,128 @@ export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchData = {
   url: "/v1/montrose/accounts/{account_id}";
 };
 
-export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors = {
+export type LinkMontroseAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchError =
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors[keyof LinkMontroseAccountV1MontroseAccountsAccountIdPatchErrors];
+export type LinkMontroseAccountError =
+  LinkMontroseAccountErrors[keyof LinkMontroseAccountErrors];
 
-export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses = {
+export type LinkMontroseAccountResponses = {
   /**
    * Successful Response
    */
   200: MontroseConnectionSchema;
 };
 
-export type LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse =
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses[keyof LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponses];
+export type LinkMontroseAccountResponse =
+  LinkMontroseAccountResponses[keyof LinkMontroseAccountResponses];
 
-export type SyncMontroseV1MontroseSyncPostData = {
+export type SyncMontroseData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/montrose/sync";
 };
 
-export type SyncMontroseV1MontroseSyncPostResponses = {
+export type SyncMontroseResponses = {
   /**
    * Successful Response
    */
   202: unknown;
 };
 
-export type ListCalendarAccountsV1CalendarsAccountsGetData = {
+export type ListCalendarAccountsData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/calendars/accounts";
 };
 
-export type ListCalendarAccountsV1CalendarsAccountsGetResponses = {
+export type ListCalendarAccountsResponses = {
   /**
    * Successful Response
    */
   200: CalendarAccountListResponse;
 };
 
-export type ListCalendarAccountsV1CalendarsAccountsGetResponse =
-  ListCalendarAccountsV1CalendarsAccountsGetResponses[keyof ListCalendarAccountsV1CalendarsAccountsGetResponses];
+export type ListCalendarAccountsResponse =
+  ListCalendarAccountsResponses[keyof ListCalendarAccountsResponses];
 
-export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostData = {
+export type AuthorizeGoogleData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/calendars/google/authorize";
 };
 
-export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses = {
+export type AuthorizeGoogleResponses = {
   /**
    * Successful Response
    */
   200: GoogleAuthorizeResponse;
 };
 
-export type AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse =
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses[keyof AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponses];
+export type AuthorizeGoogleResponse =
+  AuthorizeGoogleResponses[keyof AuthorizeGoogleResponses];
 
-export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostData = {
+export type CompleteGoogleConnectData = {
   body: GoogleCallbackRequest;
   path?: never;
   query?: never;
   url: "/v1/calendars/google/callback";
 };
 
-export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors = {
+export type CompleteGoogleConnectErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostError =
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors[keyof CompleteGoogleConnectV1CalendarsGoogleCallbackPostErrors];
+export type CompleteGoogleConnectError =
+  CompleteGoogleConnectErrors[keyof CompleteGoogleConnectErrors];
 
-export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses = {
+export type CompleteGoogleConnectResponses = {
   /**
    * Successful Response
    */
   201: CalendarAccountSchema;
 };
 
-export type CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse =
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses[keyof CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponses];
+export type CompleteGoogleConnectResponse =
+  CompleteGoogleConnectResponses[keyof CompleteGoogleConnectResponses];
 
-export type ConnectIcloudV1CalendarsIcloudPostData = {
+export type ConnectIcloudData = {
   body: ICloudConnectRequest;
   path?: never;
   query?: never;
   url: "/v1/calendars/icloud";
 };
 
-export type ConnectIcloudV1CalendarsIcloudPostErrors = {
+export type ConnectIcloudErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ConnectIcloudV1CalendarsIcloudPostError =
-  ConnectIcloudV1CalendarsIcloudPostErrors[keyof ConnectIcloudV1CalendarsIcloudPostErrors];
+export type ConnectIcloudError = ConnectIcloudErrors[keyof ConnectIcloudErrors];
 
-export type ConnectIcloudV1CalendarsIcloudPostResponses = {
+export type ConnectIcloudResponses = {
   /**
    * Successful Response
    */
   201: CalendarAccountSchema;
 };
 
-export type ConnectIcloudV1CalendarsIcloudPostResponse =
-  ConnectIcloudV1CalendarsIcloudPostResponses[keyof ConnectIcloudV1CalendarsIcloudPostResponses];
+export type ConnectIcloudResponse =
+  ConnectIcloudResponses[keyof ConnectIcloudResponses];
 
-export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData = {
+export type DisconnectCalendarAccountData = {
   body?: never;
   path: {
     /**
@@ -8070,29 +8063,27 @@ export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData = {
   url: "/v1/calendars/accounts/{account_id}";
 };
 
-export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors =
-  {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-  };
+export type DisconnectCalendarAccountErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError =
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors[keyof DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteErrors];
+export type DisconnectCalendarAccountError =
+  DisconnectCalendarAccountErrors[keyof DisconnectCalendarAccountErrors];
 
-export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses =
-  {
-    /**
-     * Successful Response
-     */
-    204: void;
-  };
+export type DisconnectCalendarAccountResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
 
-export type DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse =
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses[keyof DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponses];
+export type DisconnectCalendarAccountResponse =
+  DisconnectCalendarAccountResponses[keyof DisconnectCalendarAccountResponses];
 
-export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData = {
+export type SyncCalendarAccountData = {
   body?: never;
   path: {
     /**
@@ -8104,24 +8095,24 @@ export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData = {
   url: "/v1/calendars/accounts/{account_id}/sync";
 };
 
-export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors = {
+export type SyncCalendarAccountErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError =
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors[keyof SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostErrors];
+export type SyncCalendarAccountError =
+  SyncCalendarAccountErrors[keyof SyncCalendarAccountErrors];
 
-export type SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostResponses = {
+export type SyncCalendarAccountResponses = {
   /**
    * Successful Response
    */
   202: unknown;
 };
 
-export type UpdateCalendarV1CalendarsCalendarIdPatchData = {
+export type UpdateCalendarData = {
   body: CalendarUpdate;
   path: {
     /**
@@ -8133,27 +8124,27 @@ export type UpdateCalendarV1CalendarsCalendarIdPatchData = {
   url: "/v1/calendars/{calendar_id}";
 };
 
-export type UpdateCalendarV1CalendarsCalendarIdPatchErrors = {
+export type UpdateCalendarErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateCalendarV1CalendarsCalendarIdPatchError =
-  UpdateCalendarV1CalendarsCalendarIdPatchErrors[keyof UpdateCalendarV1CalendarsCalendarIdPatchErrors];
+export type UpdateCalendarError =
+  UpdateCalendarErrors[keyof UpdateCalendarErrors];
 
-export type UpdateCalendarV1CalendarsCalendarIdPatchResponses = {
+export type UpdateCalendarResponses = {
   /**
    * Successful Response
    */
   200: CalendarSchema;
 };
 
-export type UpdateCalendarV1CalendarsCalendarIdPatchResponse =
-  UpdateCalendarV1CalendarsCalendarIdPatchResponses[keyof UpdateCalendarV1CalendarsCalendarIdPatchResponses];
+export type UpdateCalendarResponse =
+  UpdateCalendarResponses[keyof UpdateCalendarResponses];
 
-export type ListCalendarEventsV1CalendarsEventsGetData = {
+export type ListCalendarEventsData = {
   body?: never;
   path?: never;
   query: {
@@ -8173,27 +8164,27 @@ export type ListCalendarEventsV1CalendarsEventsGetData = {
   url: "/v1/calendars/events";
 };
 
-export type ListCalendarEventsV1CalendarsEventsGetErrors = {
+export type ListCalendarEventsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListCalendarEventsV1CalendarsEventsGetError =
-  ListCalendarEventsV1CalendarsEventsGetErrors[keyof ListCalendarEventsV1CalendarsEventsGetErrors];
+export type ListCalendarEventsError =
+  ListCalendarEventsErrors[keyof ListCalendarEventsErrors];
 
-export type ListCalendarEventsV1CalendarsEventsGetResponses = {
+export type ListCalendarEventsResponses = {
   /**
    * Successful Response
    */
   200: CalendarEventListResponse;
 };
 
-export type ListCalendarEventsV1CalendarsEventsGetResponse =
-  ListCalendarEventsV1CalendarsEventsGetResponses[keyof ListCalendarEventsV1CalendarsEventsGetResponses];
+export type ListCalendarEventsResponse =
+  ListCalendarEventsResponses[keyof ListCalendarEventsResponses];
 
-export type CreateCalendarEventV1CalendarsCalendarIdEventsPostData = {
+export type CreateCalendarEventData = {
   body: EventCreate;
   path: {
     /**
@@ -8205,27 +8196,27 @@ export type CreateCalendarEventV1CalendarsCalendarIdEventsPostData = {
   url: "/v1/calendars/{calendar_id}/events";
 };
 
-export type CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors = {
+export type CreateCalendarEventErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateCalendarEventV1CalendarsCalendarIdEventsPostError =
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors[keyof CreateCalendarEventV1CalendarsCalendarIdEventsPostErrors];
+export type CreateCalendarEventError =
+  CreateCalendarEventErrors[keyof CreateCalendarEventErrors];
 
-export type CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses = {
+export type CreateCalendarEventResponses = {
   /**
    * Successful Response
    */
   201: EventWriteResponse;
 };
 
-export type CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse =
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses[keyof CreateCalendarEventV1CalendarsCalendarIdEventsPostResponses];
+export type CreateCalendarEventResponse =
+  CreateCalendarEventResponses[keyof CreateCalendarEventResponses];
 
-export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteData = {
+export type DeleteCalendarEventData = {
   body?: never;
   path: {
     /**
@@ -8254,27 +8245,27 @@ export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteData = {
   url: "/v1/calendars/events/{event_id}";
 };
 
-export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors = {
+export type DeleteCalendarEventErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteError =
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors[keyof DeleteCalendarEventV1CalendarsEventsEventIdDeleteErrors];
+export type DeleteCalendarEventError =
+  DeleteCalendarEventErrors[keyof DeleteCalendarEventErrors];
 
-export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses = {
+export type DeleteCalendarEventResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse =
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses[keyof DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponses];
+export type DeleteCalendarEventResponse =
+  DeleteCalendarEventResponses[keyof DeleteCalendarEventResponses];
 
-export type UpdateCalendarEventV1CalendarsEventsEventIdPatchData = {
+export type UpdateCalendarEventData = {
   body: EventUpdate;
   path: {
     /**
@@ -8286,27 +8277,27 @@ export type UpdateCalendarEventV1CalendarsEventsEventIdPatchData = {
   url: "/v1/calendars/events/{event_id}";
 };
 
-export type UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors = {
+export type UpdateCalendarEventErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateCalendarEventV1CalendarsEventsEventIdPatchError =
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors[keyof UpdateCalendarEventV1CalendarsEventsEventIdPatchErrors];
+export type UpdateCalendarEventError =
+  UpdateCalendarEventErrors[keyof UpdateCalendarEventErrors];
 
-export type UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses = {
+export type UpdateCalendarEventResponses = {
   /**
    * Successful Response
    */
   200: EventWriteResponse;
 };
 
-export type UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse =
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses[keyof UpdateCalendarEventV1CalendarsEventsEventIdPatchResponses];
+export type UpdateCalendarEventResponse =
+  UpdateCalendarEventResponses[keyof UpdateCalendarEventResponses];
 
-export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData = {
+export type RespondToCalendarEventData = {
   body: EventReplyUpdate;
   path: {
     /**
@@ -8318,134 +8309,130 @@ export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData = {
   url: "/v1/calendars/events/{event_id}/response";
 };
 
-export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors = {
+export type RespondToCalendarEventErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError =
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors[keyof RespondToCalendarEventV1CalendarsEventsEventIdResponsePutErrors];
+export type RespondToCalendarEventError =
+  RespondToCalendarEventErrors[keyof RespondToCalendarEventErrors];
 
-export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: EventWriteResponse;
-  };
+export type RespondToCalendarEventResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventWriteResponse;
+};
 
-export type RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse =
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses[keyof RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponses];
+export type RespondToCalendarEventResponse =
+  RespondToCalendarEventResponses[keyof RespondToCalendarEventResponses];
 
-export type ListBankConnectionsV1BankConnectionsGetData = {
+export type ListBankConnectionsData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/bank-connections";
 };
 
-export type ListBankConnectionsV1BankConnectionsGetResponses = {
+export type ListBankConnectionsResponses = {
   /**
    * Successful Response
    */
   200: BankConnectionListResponse;
 };
 
-export type ListBankConnectionsV1BankConnectionsGetResponse =
-  ListBankConnectionsV1BankConnectionsGetResponses[keyof ListBankConnectionsV1BankConnectionsGetResponses];
+export type ListBankConnectionsResponse =
+  ListBankConnectionsResponses[keyof ListBankConnectionsResponses];
 
-export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostData = {
+export type AuthorizeBankConnectionData = {
   body: BankAuthorizeRequest;
   path?: never;
   query?: never;
   url: "/v1/bank-connections/authorize";
 };
 
-export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors = {
+export type AuthorizeBankConnectionErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostError =
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors[keyof AuthorizeBankConnectionV1BankConnectionsAuthorizePostErrors];
+export type AuthorizeBankConnectionError =
+  AuthorizeBankConnectionErrors[keyof AuthorizeBankConnectionErrors];
 
-export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses = {
+export type AuthorizeBankConnectionResponses = {
   /**
    * Successful Response
    */
   200: BankAuthorizeResponse;
 };
 
-export type AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse =
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses[keyof AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponses];
+export type AuthorizeBankConnectionResponse =
+  AuthorizeBankConnectionResponses[keyof AuthorizeBankConnectionResponses];
 
-export type CompleteBankConnectionV1BankConnectionsCallbackPostData = {
+export type CompleteBankConnectionData = {
   body: BankCallbackRequest;
   path?: never;
   query?: never;
   url: "/v1/bank-connections/callback";
 };
 
-export type CompleteBankConnectionV1BankConnectionsCallbackPostErrors = {
+export type CompleteBankConnectionErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CompleteBankConnectionV1BankConnectionsCallbackPostError =
-  CompleteBankConnectionV1BankConnectionsCallbackPostErrors[keyof CompleteBankConnectionV1BankConnectionsCallbackPostErrors];
+export type CompleteBankConnectionError =
+  CompleteBankConnectionErrors[keyof CompleteBankConnectionErrors];
 
-export type CompleteBankConnectionV1BankConnectionsCallbackPostResponses = {
+export type CompleteBankConnectionResponses = {
   /**
    * Successful Response
    */
   201: BankConnectionSchema;
 };
 
-export type CompleteBankConnectionV1BankConnectionsCallbackPostResponse =
-  CompleteBankConnectionV1BankConnectionsCallbackPostResponses[keyof CompleteBankConnectionV1BankConnectionsCallbackPostResponses];
+export type CompleteBankConnectionResponse =
+  CompleteBankConnectionResponses[keyof CompleteBankConnectionResponses];
 
-export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData =
-  {
-    body: BankConnectionAccountUpdate;
-    path: {
-      /**
-       * Account Id
-       */
-      account_id: string;
-    };
-    query?: never;
-    url: "/v1/bank-connections/accounts/{account_id}";
-  };
-
-export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors =
-  {
+export type LinkBankConnectionAccountData = {
+  body: BankConnectionAccountUpdate;
+  path: {
     /**
-     * Validation Error
+     * Account Id
      */
-    422: HttpValidationError;
+    account_id: string;
   };
+  query?: never;
+  url: "/v1/bank-connections/accounts/{account_id}";
+};
 
-export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError =
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors[keyof LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchErrors];
+export type LinkBankConnectionAccountErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: BankConnectionSchema;
-  };
+export type LinkBankConnectionAccountError =
+  LinkBankConnectionAccountErrors[keyof LinkBankConnectionAccountErrors];
 
-export type LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse =
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses[keyof LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponses];
+export type LinkBankConnectionAccountResponses = {
+  /**
+   * Successful Response
+   */
+  200: BankConnectionSchema;
+};
 
-export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData = {
+export type LinkBankConnectionAccountResponse =
+  LinkBankConnectionAccountResponses[keyof LinkBankConnectionAccountResponses];
+
+export type SyncBankConnectionData = {
   body?: never;
   path: {
     /**
@@ -8457,24 +8444,24 @@ export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData = {
   url: "/v1/bank-connections/{connection_id}/sync";
 };
 
-export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors = {
+export type SyncBankConnectionErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError =
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors[keyof SyncBankConnectionV1BankConnectionsConnectionIdSyncPostErrors];
+export type SyncBankConnectionError =
+  SyncBankConnectionErrors[keyof SyncBankConnectionErrors];
 
-export type SyncBankConnectionV1BankConnectionsConnectionIdSyncPostResponses = {
+export type SyncBankConnectionResponses = {
   /**
    * Successful Response
    */
   202: unknown;
 };
 
-export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData = {
+export type DisconnectBankConnectionData = {
   body?: never;
   path: {
     /**
@@ -8486,29 +8473,27 @@ export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData = {
   url: "/v1/bank-connections/{connection_id}";
 };
 
-export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors =
-  {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-  };
+export type DisconnectBankConnectionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError =
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors[keyof DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteErrors];
+export type DisconnectBankConnectionError =
+  DisconnectBankConnectionErrors[keyof DisconnectBankConnectionErrors];
 
-export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses =
-  {
-    /**
-     * Successful Response
-     */
-    204: void;
-  };
+export type DisconnectBankConnectionResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
 
-export type DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse =
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses[keyof DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponses];
+export type DisconnectBankConnectionResponse =
+  DisconnectBankConnectionResponses[keyof DisconnectBankConnectionResponses];
 
-export type ListCategoriesV1CategoriesGetData = {
+export type ListCategoriesData = {
   body?: never;
   path?: never;
   query?: {
@@ -8528,71 +8513,71 @@ export type ListCategoriesV1CategoriesGetData = {
   url: "/v1/categories";
 };
 
-export type ListCategoriesV1CategoriesGetErrors = {
+export type ListCategoriesErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListCategoriesV1CategoriesGetError =
-  ListCategoriesV1CategoriesGetErrors[keyof ListCategoriesV1CategoriesGetErrors];
+export type ListCategoriesError =
+  ListCategoriesErrors[keyof ListCategoriesErrors];
 
-export type ListCategoriesV1CategoriesGetResponses = {
+export type ListCategoriesResponses = {
   /**
    * Successful Response
    */
   200: CategoryListResponse;
 };
 
-export type ListCategoriesV1CategoriesGetResponse =
-  ListCategoriesV1CategoriesGetResponses[keyof ListCategoriesV1CategoriesGetResponses];
+export type ListCategoriesResponse =
+  ListCategoriesResponses[keyof ListCategoriesResponses];
 
-export type ListCategoryRulesV1CategoriesRulesGetData = {
+export type ListCategoryRulesData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/categories/rules";
 };
 
-export type ListCategoryRulesV1CategoriesRulesGetResponses = {
+export type ListCategoryRulesResponses = {
   /**
    * Successful Response
    */
   200: CategoryRuleListResponse;
 };
 
-export type ListCategoryRulesV1CategoriesRulesGetResponse =
-  ListCategoryRulesV1CategoriesRulesGetResponses[keyof ListCategoryRulesV1CategoriesRulesGetResponses];
+export type ListCategoryRulesResponse =
+  ListCategoryRulesResponses[keyof ListCategoryRulesResponses];
 
-export type CreateCategoryRuleV1CategoriesRulesPostData = {
+export type CreateCategoryRuleData = {
   body: CategoryRuleCreate;
   path?: never;
   query?: never;
   url: "/v1/categories/rules";
 };
 
-export type CreateCategoryRuleV1CategoriesRulesPostErrors = {
+export type CreateCategoryRuleErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateCategoryRuleV1CategoriesRulesPostError =
-  CreateCategoryRuleV1CategoriesRulesPostErrors[keyof CreateCategoryRuleV1CategoriesRulesPostErrors];
+export type CreateCategoryRuleError =
+  CreateCategoryRuleErrors[keyof CreateCategoryRuleErrors];
 
-export type CreateCategoryRuleV1CategoriesRulesPostResponses = {
+export type CreateCategoryRuleResponses = {
   /**
    * Successful Response
    */
   201: CategoryRuleCreated;
 };
 
-export type CreateCategoryRuleV1CategoriesRulesPostResponse =
-  CreateCategoryRuleV1CategoriesRulesPostResponses[keyof CreateCategoryRuleV1CategoriesRulesPostResponses];
+export type CreateCategoryRuleResponse =
+  CreateCategoryRuleResponses[keyof CreateCategoryRuleResponses];
 
-export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData = {
+export type DeleteCategoryRuleData = {
   body?: never;
   path: {
     /**
@@ -8604,73 +8589,72 @@ export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData = {
   url: "/v1/categories/rules/{rule_id}";
 };
 
-export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors = {
+export type DeleteCategoryRuleErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError =
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors[keyof DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteErrors];
+export type DeleteCategoryRuleError =
+  DeleteCategoryRuleErrors[keyof DeleteCategoryRuleErrors];
 
-export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses = {
+export type DeleteCategoryRuleResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse =
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses[keyof DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponses];
+export type DeleteCategoryRuleResponse =
+  DeleteCategoryRuleResponses[keyof DeleteCategoryRuleResponses];
 
-export type ListCountersV1CountersGetData = {
+export type ListCountersData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/counters";
 };
 
-export type ListCountersV1CountersGetResponses = {
+export type ListCountersResponses = {
   /**
-   * Response List Counters V1 Counters Get
+   * Response List Counters
    *
    * Successful Response
    */
   200: Array<CounterSchema>;
 };
 
-export type ListCountersV1CountersGetResponse =
-  ListCountersV1CountersGetResponses[keyof ListCountersV1CountersGetResponses];
+export type ListCountersResponse =
+  ListCountersResponses[keyof ListCountersResponses];
 
-export type CreateCounterV1CountersPostData = {
+export type CreateCounterData = {
   body: CounterCreate;
   path?: never;
   query?: never;
   url: "/v1/counters";
 };
 
-export type CreateCounterV1CountersPostErrors = {
+export type CreateCounterErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateCounterV1CountersPostError =
-  CreateCounterV1CountersPostErrors[keyof CreateCounterV1CountersPostErrors];
+export type CreateCounterError = CreateCounterErrors[keyof CreateCounterErrors];
 
-export type CreateCounterV1CountersPostResponses = {
+export type CreateCounterResponses = {
   /**
    * Successful Response
    */
   201: CounterSchema;
 };
 
-export type CreateCounterV1CountersPostResponse =
-  CreateCounterV1CountersPostResponses[keyof CreateCounterV1CountersPostResponses];
+export type CreateCounterResponse =
+  CreateCounterResponses[keyof CreateCounterResponses];
 
-export type DeleteCounterV1CountersCounterIdDeleteData = {
+export type DeleteCounterData = {
   body?: never;
   path: {
     /**
@@ -8682,27 +8666,26 @@ export type DeleteCounterV1CountersCounterIdDeleteData = {
   url: "/v1/counters/{counter_id}";
 };
 
-export type DeleteCounterV1CountersCounterIdDeleteErrors = {
+export type DeleteCounterErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteCounterV1CountersCounterIdDeleteError =
-  DeleteCounterV1CountersCounterIdDeleteErrors[keyof DeleteCounterV1CountersCounterIdDeleteErrors];
+export type DeleteCounterError = DeleteCounterErrors[keyof DeleteCounterErrors];
 
-export type DeleteCounterV1CountersCounterIdDeleteResponses = {
+export type DeleteCounterResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteCounterV1CountersCounterIdDeleteResponse =
-  DeleteCounterV1CountersCounterIdDeleteResponses[keyof DeleteCounterV1CountersCounterIdDeleteResponses];
+export type DeleteCounterResponse =
+  DeleteCounterResponses[keyof DeleteCounterResponses];
 
-export type UpdateCounterV1CountersCounterIdPatchData = {
+export type UpdateCounterData = {
   body: CounterUpdate;
   path: {
     /**
@@ -8714,27 +8697,26 @@ export type UpdateCounterV1CountersCounterIdPatchData = {
   url: "/v1/counters/{counter_id}";
 };
 
-export type UpdateCounterV1CountersCounterIdPatchErrors = {
+export type UpdateCounterErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateCounterV1CountersCounterIdPatchError =
-  UpdateCounterV1CountersCounterIdPatchErrors[keyof UpdateCounterV1CountersCounterIdPatchErrors];
+export type UpdateCounterError = UpdateCounterErrors[keyof UpdateCounterErrors];
 
-export type UpdateCounterV1CountersCounterIdPatchResponses = {
+export type UpdateCounterResponses = {
   /**
    * Successful Response
    */
   200: CounterSchema;
 };
 
-export type UpdateCounterV1CountersCounterIdPatchResponse =
-  UpdateCounterV1CountersCounterIdPatchResponses[keyof UpdateCounterV1CountersCounterIdPatchResponses];
+export type UpdateCounterResponse =
+  UpdateCounterResponses[keyof UpdateCounterResponses];
 
-export type ListResetsV1CountersCounterIdResetsGetData = {
+export type ListResetsData = {
   body?: never;
   path: {
     /**
@@ -8746,29 +8728,27 @@ export type ListResetsV1CountersCounterIdResetsGetData = {
   url: "/v1/counters/{counter_id}/resets";
 };
 
-export type ListResetsV1CountersCounterIdResetsGetErrors = {
+export type ListResetsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListResetsV1CountersCounterIdResetsGetError =
-  ListResetsV1CountersCounterIdResetsGetErrors[keyof ListResetsV1CountersCounterIdResetsGetErrors];
+export type ListResetsError = ListResetsErrors[keyof ListResetsErrors];
 
-export type ListResetsV1CountersCounterIdResetsGetResponses = {
+export type ListResetsResponses = {
   /**
-   * Response List Resets V1 Counters  Counter Id  Resets Get
+   * Response List Resets
    *
    * Successful Response
    */
   200: Array<CounterResetSchema>;
 };
 
-export type ListResetsV1CountersCounterIdResetsGetResponse =
-  ListResetsV1CountersCounterIdResetsGetResponses[keyof ListResetsV1CountersCounterIdResetsGetResponses];
+export type ListResetsResponse = ListResetsResponses[keyof ListResetsResponses];
 
-export type CreateResetV1CountersCounterIdResetsPostData = {
+export type CreateResetData = {
   body?: never;
   path: {
     /**
@@ -8780,27 +8760,26 @@ export type CreateResetV1CountersCounterIdResetsPostData = {
   url: "/v1/counters/{counter_id}/resets";
 };
 
-export type CreateResetV1CountersCounterIdResetsPostErrors = {
+export type CreateResetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateResetV1CountersCounterIdResetsPostError =
-  CreateResetV1CountersCounterIdResetsPostErrors[keyof CreateResetV1CountersCounterIdResetsPostErrors];
+export type CreateResetError = CreateResetErrors[keyof CreateResetErrors];
 
-export type CreateResetV1CountersCounterIdResetsPostResponses = {
+export type CreateResetResponses = {
   /**
    * Successful Response
    */
   201: CounterResetSchema;
 };
 
-export type CreateResetV1CountersCounterIdResetsPostResponse =
-  CreateResetV1CountersCounterIdResetsPostResponses[keyof CreateResetV1CountersCounterIdResetsPostResponses];
+export type CreateResetResponse =
+  CreateResetResponses[keyof CreateResetResponses];
 
-export type UndoResetV1CountersCounterIdResetsResetIdDeleteData = {
+export type UndoResetData = {
   body?: never;
   path: {
     /**
@@ -8816,46 +8795,44 @@ export type UndoResetV1CountersCounterIdResetsResetIdDeleteData = {
   url: "/v1/counters/{counter_id}/resets/{reset_id}";
 };
 
-export type UndoResetV1CountersCounterIdResetsResetIdDeleteErrors = {
+export type UndoResetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UndoResetV1CountersCounterIdResetsResetIdDeleteError =
-  UndoResetV1CountersCounterIdResetsResetIdDeleteErrors[keyof UndoResetV1CountersCounterIdResetsResetIdDeleteErrors];
+export type UndoResetError = UndoResetErrors[keyof UndoResetErrors];
 
-export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponses = {
+export type UndoResetResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type UndoResetV1CountersCounterIdResetsResetIdDeleteResponse =
-  UndoResetV1CountersCounterIdResetsResetIdDeleteResponses[keyof UndoResetV1CountersCounterIdResetsResetIdDeleteResponses];
+export type UndoResetResponse = UndoResetResponses[keyof UndoResetResponses];
 
-export type ListDevicesV1DevicesGetData = {
+export type ListDevicesData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/devices";
 };
 
-export type ListDevicesV1DevicesGetResponses = {
+export type ListDevicesResponses = {
   /**
-   * Response List Devices V1 Devices Get
+   * Response List Devices
    *
    * Successful Response
    */
   200: Array<DeviceSchema>;
 };
 
-export type ListDevicesV1DevicesGetResponse =
-  ListDevicesV1DevicesGetResponses[keyof ListDevicesV1DevicesGetResponses];
+export type ListDevicesResponse =
+  ListDevicesResponses[keyof ListDevicesResponses];
 
-export type DeleteDeviceV1DevicesDeviceIdDeleteData = {
+export type DeleteDeviceData = {
   body?: never;
   path: {
     /**
@@ -8867,27 +8844,26 @@ export type DeleteDeviceV1DevicesDeviceIdDeleteData = {
   url: "/v1/devices/{device_id}";
 };
 
-export type DeleteDeviceV1DevicesDeviceIdDeleteErrors = {
+export type DeleteDeviceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteDeviceV1DevicesDeviceIdDeleteError =
-  DeleteDeviceV1DevicesDeviceIdDeleteErrors[keyof DeleteDeviceV1DevicesDeviceIdDeleteErrors];
+export type DeleteDeviceError = DeleteDeviceErrors[keyof DeleteDeviceErrors];
 
-export type DeleteDeviceV1DevicesDeviceIdDeleteResponses = {
+export type DeleteDeviceResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteDeviceV1DevicesDeviceIdDeleteResponse =
-  DeleteDeviceV1DevicesDeviceIdDeleteResponses[keyof DeleteDeviceV1DevicesDeviceIdDeleteResponses];
+export type DeleteDeviceResponse =
+  DeleteDeviceResponses[keyof DeleteDeviceResponses];
 
-export type UpdateDeviceV1DevicesDeviceIdPatchData = {
+export type UpdateDeviceData = {
   body: DeviceUpdate;
   path: {
     /**
@@ -8899,68 +8875,67 @@ export type UpdateDeviceV1DevicesDeviceIdPatchData = {
   url: "/v1/devices/{device_id}";
 };
 
-export type UpdateDeviceV1DevicesDeviceIdPatchErrors = {
+export type UpdateDeviceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateDeviceV1DevicesDeviceIdPatchError =
-  UpdateDeviceV1DevicesDeviceIdPatchErrors[keyof UpdateDeviceV1DevicesDeviceIdPatchErrors];
+export type UpdateDeviceError = UpdateDeviceErrors[keyof UpdateDeviceErrors];
 
-export type UpdateDeviceV1DevicesDeviceIdPatchResponses = {
+export type UpdateDeviceResponses = {
   /**
    * Successful Response
    */
   200: DeviceSchema;
 };
 
-export type UpdateDeviceV1DevicesDeviceIdPatchResponse =
-  UpdateDeviceV1DevicesDeviceIdPatchResponses[keyof UpdateDeviceV1DevicesDeviceIdPatchResponses];
+export type UpdateDeviceResponse =
+  UpdateDeviceResponses[keyof UpdateDeviceResponses];
 
-export type UploadClientDiagnosticsV1ClientDiagnosticsPostData = {
+export type UploadClientDiagnosticsData = {
   body: ClientDiagnosticsUpload;
   path?: never;
   query?: never;
   url: "/v1/client-diagnostics";
 };
 
-export type UploadClientDiagnosticsV1ClientDiagnosticsPostErrors = {
+export type UploadClientDiagnosticsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UploadClientDiagnosticsV1ClientDiagnosticsPostError =
-  UploadClientDiagnosticsV1ClientDiagnosticsPostErrors[keyof UploadClientDiagnosticsV1ClientDiagnosticsPostErrors];
+export type UploadClientDiagnosticsError =
+  UploadClientDiagnosticsErrors[keyof UploadClientDiagnosticsErrors];
 
-export type UploadClientDiagnosticsV1ClientDiagnosticsPostResponses = {
+export type UploadClientDiagnosticsResponses = {
   /**
    * Successful Response
    */
   202: unknown;
 };
 
-export type ListGymExercisesV1GymExercisesGetData = {
+export type ListGymExercisesData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/gym/exercises";
 };
 
-export type ListGymExercisesV1GymExercisesGetResponses = {
+export type ListGymExercisesResponses = {
   /**
    * Successful Response
    */
   200: GymExerciseListResponse;
 };
 
-export type ListGymExercisesV1GymExercisesGetResponse =
-  ListGymExercisesV1GymExercisesGetResponses[keyof ListGymExercisesV1GymExercisesGetResponses];
+export type ListGymExercisesResponse =
+  ListGymExercisesResponses[keyof ListGymExercisesResponses];
 
-export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteData = {
+export type DeleteGymExerciseData = {
   body?: never;
   path: {
     /**
@@ -8972,27 +8947,27 @@ export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteData = {
   url: "/v1/gym/exercises/{exercise_id}";
 };
 
-export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors = {
+export type DeleteGymExerciseErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteError =
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors[keyof DeleteGymExerciseV1GymExercisesExerciseIdDeleteErrors];
+export type DeleteGymExerciseError =
+  DeleteGymExerciseErrors[keyof DeleteGymExerciseErrors];
 
-export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses = {
+export type DeleteGymExerciseResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse =
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses[keyof DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponses];
+export type DeleteGymExerciseResponse =
+  DeleteGymExerciseResponses[keyof DeleteGymExerciseResponses];
 
-export type UpsertGymExerciseV1GymExercisesExerciseIdPutData = {
+export type UpsertGymExerciseData = {
   body: GymExerciseUpsert;
   path: {
     /**
@@ -9004,27 +8979,27 @@ export type UpsertGymExerciseV1GymExercisesExerciseIdPutData = {
   url: "/v1/gym/exercises/{exercise_id}";
 };
 
-export type UpsertGymExerciseV1GymExercisesExerciseIdPutErrors = {
+export type UpsertGymExerciseErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpsertGymExerciseV1GymExercisesExerciseIdPutError =
-  UpsertGymExerciseV1GymExercisesExerciseIdPutErrors[keyof UpsertGymExerciseV1GymExercisesExerciseIdPutErrors];
+export type UpsertGymExerciseError =
+  UpsertGymExerciseErrors[keyof UpsertGymExerciseErrors];
 
-export type UpsertGymExerciseV1GymExercisesExerciseIdPutResponses = {
+export type UpsertGymExerciseResponses = {
   /**
    * Successful Response
    */
   200: GymExerciseSchema;
 };
 
-export type UpsertGymExerciseV1GymExercisesExerciseIdPutResponse =
-  UpsertGymExerciseV1GymExercisesExerciseIdPutResponses[keyof UpsertGymExerciseV1GymExercisesExerciseIdPutResponses];
+export type UpsertGymExerciseResponse =
+  UpsertGymExerciseResponses[keyof UpsertGymExerciseResponses];
 
-export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetData = {
+export type ListGymTopSetsData = {
   body?: never;
   path: {
     /**
@@ -9036,27 +9011,27 @@ export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetData = {
   url: "/v1/gym/exercises/{exercise_id}/sets";
 };
 
-export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors = {
+export type ListGymTopSetsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetError =
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors[keyof ListGymTopSetsV1GymExercisesExerciseIdSetsGetErrors];
+export type ListGymTopSetsError =
+  ListGymTopSetsErrors[keyof ListGymTopSetsErrors];
 
-export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses = {
+export type ListGymTopSetsResponses = {
   /**
    * Successful Response
    */
   200: GymTopSetListResponse;
 };
 
-export type ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse =
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses[keyof ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponses];
+export type ListGymTopSetsResponse =
+  ListGymTopSetsResponses[keyof ListGymTopSetsResponses];
 
-export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData = {
+export type DeleteGymTopSetData = {
   body?: never;
   path: {
     /**
@@ -9072,29 +9047,27 @@ export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData = {
   url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}";
 };
 
-export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors =
-  {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-  };
+export type DeleteGymTopSetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError =
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors[keyof DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteErrors];
+export type DeleteGymTopSetError =
+  DeleteGymTopSetErrors[keyof DeleteGymTopSetErrors];
 
-export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses =
-  {
-    /**
-     * Successful Response
-     */
-    204: void;
-  };
+export type DeleteGymTopSetResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
 
-export type DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse =
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses[keyof DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponses];
+export type DeleteGymTopSetResponse =
+  DeleteGymTopSetResponses[keyof DeleteGymTopSetResponses];
 
-export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData = {
+export type PutGymTopSetData = {
   body: GymTopSetUpsert;
   path: {
     /**
@@ -9110,54 +9083,53 @@ export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData = {
   url: "/v1/gym/exercises/{exercise_id}/sets/{performed_on}";
 };
 
-export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors = {
+export type PutGymTopSetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError =
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors[keyof PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutErrors];
+export type PutGymTopSetError = PutGymTopSetErrors[keyof PutGymTopSetErrors];
 
-export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses = {
+export type PutGymTopSetResponses = {
   /**
    * Successful Response
    */
   200: GymTopSetSchema;
 };
 
-export type PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse =
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses[keyof PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponses];
+export type PutGymTopSetResponse =
+  PutGymTopSetResponses[keyof PutGymTopSetResponses];
 
-export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData = {
+export type SyncHealthkitWorkoutsData = {
   body: HealthKitWorkoutSyncRequest;
   path?: never;
   query?: never;
   url: "/v1/healthkit/workouts/sync";
 };
 
-export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors = {
+export type SyncHealthkitWorkoutsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError =
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors[keyof SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostErrors];
+export type SyncHealthkitWorkoutsError =
+  SyncHealthkitWorkoutsErrors[keyof SyncHealthkitWorkoutsErrors];
 
-export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses = {
+export type SyncHealthkitWorkoutsResponses = {
   /**
    * Successful Response
    */
   200: HealthKitWorkoutSyncResponse;
 };
 
-export type SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse =
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses[keyof SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponses];
+export type SyncHealthkitWorkoutsResponse =
+  SyncHealthkitWorkoutsResponses[keyof SyncHealthkitWorkoutsResponses];
 
-export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetData = {
+export type ListHealthkitWorkoutsData = {
   body?: never;
   path?: never;
   query?: {
@@ -9177,54 +9149,54 @@ export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetData = {
   url: "/v1/healthkit/workouts";
 };
 
-export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors = {
+export type ListHealthkitWorkoutsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetError =
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors[keyof ListHealthkitWorkoutsV1HealthkitWorkoutsGetErrors];
+export type ListHealthkitWorkoutsError =
+  ListHealthkitWorkoutsErrors[keyof ListHealthkitWorkoutsErrors];
 
-export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses = {
+export type ListHealthkitWorkoutsResponses = {
   /**
    * Successful Response
    */
   200: HealthKitWorkoutListResponse;
 };
 
-export type ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse =
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses[keyof ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponses];
+export type ListHealthkitWorkoutsResponse =
+  ListHealthkitWorkoutsResponses[keyof ListHealthkitWorkoutsResponses];
 
-export type SyncHealthkitSleepV1HealthkitSleepSyncPostData = {
+export type SyncHealthkitSleepData = {
   body: HealthKitSleepSyncRequest;
   path?: never;
   query?: never;
   url: "/v1/healthkit/sleep/sync";
 };
 
-export type SyncHealthkitSleepV1HealthkitSleepSyncPostErrors = {
+export type SyncHealthkitSleepErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SyncHealthkitSleepV1HealthkitSleepSyncPostError =
-  SyncHealthkitSleepV1HealthkitSleepSyncPostErrors[keyof SyncHealthkitSleepV1HealthkitSleepSyncPostErrors];
+export type SyncHealthkitSleepError =
+  SyncHealthkitSleepErrors[keyof SyncHealthkitSleepErrors];
 
-export type SyncHealthkitSleepV1HealthkitSleepSyncPostResponses = {
+export type SyncHealthkitSleepResponses = {
   /**
    * Successful Response
    */
   200: HealthKitSleepSyncResponse;
 };
 
-export type SyncHealthkitSleepV1HealthkitSleepSyncPostResponse =
-  SyncHealthkitSleepV1HealthkitSleepSyncPostResponses[keyof SyncHealthkitSleepV1HealthkitSleepSyncPostResponses];
+export type SyncHealthkitSleepResponse =
+  SyncHealthkitSleepResponses[keyof SyncHealthkitSleepResponses];
 
-export type ListHealthkitSleepV1HealthkitSleepGetData = {
+export type ListHealthkitSleepData = {
   body?: never;
   path?: never;
   query?: {
@@ -9256,27 +9228,27 @@ export type ListHealthkitSleepV1HealthkitSleepGetData = {
   url: "/v1/healthkit/sleep";
 };
 
-export type ListHealthkitSleepV1HealthkitSleepGetErrors = {
+export type ListHealthkitSleepErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListHealthkitSleepV1HealthkitSleepGetError =
-  ListHealthkitSleepV1HealthkitSleepGetErrors[keyof ListHealthkitSleepV1HealthkitSleepGetErrors];
+export type ListHealthkitSleepError =
+  ListHealthkitSleepErrors[keyof ListHealthkitSleepErrors];
 
-export type ListHealthkitSleepV1HealthkitSleepGetResponses = {
+export type ListHealthkitSleepResponses = {
   /**
    * Successful Response
    */
   200: HealthKitSleepListResponse;
 };
 
-export type ListHealthkitSleepV1HealthkitSleepGetResponse =
-  ListHealthkitSleepV1HealthkitSleepGetResponses[keyof ListHealthkitSleepV1HealthkitSleepGetResponses];
+export type ListHealthkitSleepResponse =
+  ListHealthkitSleepResponses[keyof ListHealthkitSleepResponses];
 
-export type GetDailySleepV1HealthkitSleepDailyGetData = {
+export type GetDailySleepData = {
   body?: never;
   path?: never;
   query: {
@@ -9308,27 +9280,26 @@ export type GetDailySleepV1HealthkitSleepDailyGetData = {
   url: "/v1/healthkit/sleep/daily";
 };
 
-export type GetDailySleepV1HealthkitSleepDailyGetErrors = {
+export type GetDailySleepErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetDailySleepV1HealthkitSleepDailyGetError =
-  GetDailySleepV1HealthkitSleepDailyGetErrors[keyof GetDailySleepV1HealthkitSleepDailyGetErrors];
+export type GetDailySleepError = GetDailySleepErrors[keyof GetDailySleepErrors];
 
-export type GetDailySleepV1HealthkitSleepDailyGetResponses = {
+export type GetDailySleepResponses = {
   /**
    * Successful Response
    */
   200: SleepDailyResponse;
 };
 
-export type GetDailySleepV1HealthkitSleepDailyGetResponse =
-  GetDailySleepV1HealthkitSleepDailyGetResponses[keyof GetDailySleepV1HealthkitSleepDailyGetResponses];
+export type GetDailySleepResponse =
+  GetDailySleepResponses[keyof GetDailySleepResponses];
 
-export type GetSleepSummaryV1HealthkitSleepSummaryGetData = {
+export type GetSleepSummaryData = {
   body?: never;
   path?: never;
   query: {
@@ -9354,55 +9325,54 @@ export type GetSleepSummaryV1HealthkitSleepSummaryGetData = {
   url: "/v1/healthkit/sleep/summary";
 };
 
-export type GetSleepSummaryV1HealthkitSleepSummaryGetErrors = {
+export type GetSleepSummaryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetSleepSummaryV1HealthkitSleepSummaryGetError =
-  GetSleepSummaryV1HealthkitSleepSummaryGetErrors[keyof GetSleepSummaryV1HealthkitSleepSummaryGetErrors];
+export type GetSleepSummaryError =
+  GetSleepSummaryErrors[keyof GetSleepSummaryErrors];
 
-export type GetSleepSummaryV1HealthkitSleepSummaryGetResponses = {
+export type GetSleepSummaryResponses = {
   /**
    * Successful Response
    */
   200: SleepSummaryResponse;
 };
 
-export type GetSleepSummaryV1HealthkitSleepSummaryGetResponse =
-  GetSleepSummaryV1HealthkitSleepSummaryGetResponses[keyof GetSleepSummaryV1HealthkitSleepSummaryGetResponses];
+export type GetSleepSummaryResponse =
+  GetSleepSummaryResponses[keyof GetSleepSummaryResponses];
 
-export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData = {
+export type SyncHealthkitDailyMetricsData = {
   body: HealthKitDailyMetricsSyncRequest;
   path?: never;
   query?: never;
   url: "/v1/healthkit/daily-metrics/sync";
 };
 
-export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors = {
+export type SyncHealthkitDailyMetricsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError =
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors[keyof SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostErrors];
+export type SyncHealthkitDailyMetricsError =
+  SyncHealthkitDailyMetricsErrors[keyof SyncHealthkitDailyMetricsErrors];
 
-export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: HealthKitDailyMetricsSyncResponse;
-  };
+export type SyncHealthkitDailyMetricsResponses = {
+  /**
+   * Successful Response
+   */
+  200: HealthKitDailyMetricsSyncResponse;
+};
 
-export type SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse =
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses[keyof SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponses];
+export type SyncHealthkitDailyMetricsResponse =
+  SyncHealthkitDailyMetricsResponses[keyof SyncHealthkitDailyMetricsResponses];
 
-export type GetHealthSummaryV1HealthkitSummaryGetData = {
+export type GetHealthSummaryData = {
   body?: never;
   path?: never;
   query: {
@@ -9422,73 +9392,73 @@ export type GetHealthSummaryV1HealthkitSummaryGetData = {
   url: "/v1/healthkit/summary";
 };
 
-export type GetHealthSummaryV1HealthkitSummaryGetErrors = {
+export type GetHealthSummaryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetHealthSummaryV1HealthkitSummaryGetError =
-  GetHealthSummaryV1HealthkitSummaryGetErrors[keyof GetHealthSummaryV1HealthkitSummaryGetErrors];
+export type GetHealthSummaryError =
+  GetHealthSummaryErrors[keyof GetHealthSummaryErrors];
 
-export type GetHealthSummaryV1HealthkitSummaryGetResponses = {
+export type GetHealthSummaryResponses = {
   /**
    * Successful Response
    */
   200: HealthSummaryResponse;
 };
 
-export type GetHealthSummaryV1HealthkitSummaryGetResponse =
-  GetHealthSummaryV1HealthkitSummaryGetResponses[keyof GetHealthSummaryV1HealthkitSummaryGetResponses];
+export type GetHealthSummaryResponse =
+  GetHealthSummaryResponses[keyof GetHealthSummaryResponses];
 
-export type ListIngestTokensV1IngestTokensGetData = {
+export type ListIngestTokensData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/ingest-tokens";
 };
 
-export type ListIngestTokensV1IngestTokensGetResponses = {
+export type ListIngestTokensResponses = {
   /**
-   * Response List Ingest Tokens V1 Ingest Tokens Get
+   * Response List Ingest Tokens
    *
    * Successful Response
    */
   200: Array<IngestTokenSchema>;
 };
 
-export type ListIngestTokensV1IngestTokensGetResponse =
-  ListIngestTokensV1IngestTokensGetResponses[keyof ListIngestTokensV1IngestTokensGetResponses];
+export type ListIngestTokensResponse =
+  ListIngestTokensResponses[keyof ListIngestTokensResponses];
 
-export type CreateIngestTokenV1IngestTokensPostData = {
+export type CreateIngestTokenData = {
   body: IngestTokenCreate;
   path?: never;
   query?: never;
   url: "/v1/ingest-tokens";
 };
 
-export type CreateIngestTokenV1IngestTokensPostErrors = {
+export type CreateIngestTokenErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateIngestTokenV1IngestTokensPostError =
-  CreateIngestTokenV1IngestTokensPostErrors[keyof CreateIngestTokenV1IngestTokensPostErrors];
+export type CreateIngestTokenError =
+  CreateIngestTokenErrors[keyof CreateIngestTokenErrors];
 
-export type CreateIngestTokenV1IngestTokensPostResponses = {
+export type CreateIngestTokenResponses = {
   /**
    * Successful Response
    */
   201: IngestTokenCreated;
 };
 
-export type CreateIngestTokenV1IngestTokensPostResponse =
-  CreateIngestTokenV1IngestTokensPostResponses[keyof CreateIngestTokenV1IngestTokensPostResponses];
+export type CreateIngestTokenResponse =
+  CreateIngestTokenResponses[keyof CreateIngestTokenResponses];
 
-export type RevokeIngestTokenV1IngestTokensTokenIdDeleteData = {
+export type RevokeIngestTokenData = {
   body?: never;
   path: {
     /**
@@ -9500,27 +9470,27 @@ export type RevokeIngestTokenV1IngestTokensTokenIdDeleteData = {
   url: "/v1/ingest-tokens/{token_id}";
 };
 
-export type RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors = {
+export type RevokeIngestTokenErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type RevokeIngestTokenV1IngestTokensTokenIdDeleteError =
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors[keyof RevokeIngestTokenV1IngestTokensTokenIdDeleteErrors];
+export type RevokeIngestTokenError =
+  RevokeIngestTokenErrors[keyof RevokeIngestTokenErrors];
 
-export type RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses = {
+export type RevokeIngestTokenResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse =
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses[keyof RevokeIngestTokenV1IngestTokensTokenIdDeleteResponses];
+export type RevokeIngestTokenResponse =
+  RevokeIngestTokenResponses[keyof RevokeIngestTokenResponses];
 
-export type ListTradesV1InvestmentsTradesGetData = {
+export type ListTradesData = {
   body?: never;
   path?: never;
   query?: {
@@ -9548,61 +9518,59 @@ export type ListTradesV1InvestmentsTradesGetData = {
   url: "/v1/investments/trades";
 };
 
-export type ListTradesV1InvestmentsTradesGetErrors = {
+export type ListTradesErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListTradesV1InvestmentsTradesGetError =
-  ListTradesV1InvestmentsTradesGetErrors[keyof ListTradesV1InvestmentsTradesGetErrors];
+export type ListTradesError = ListTradesErrors[keyof ListTradesErrors];
 
-export type ListTradesV1InvestmentsTradesGetResponses = {
+export type ListTradesResponses = {
   /**
    * Successful Response
    */
   200: TradeListResponse;
 };
 
-export type ListTradesV1InvestmentsTradesGetResponse =
-  ListTradesV1InvestmentsTradesGetResponses[keyof ListTradesV1InvestmentsTradesGetResponses];
+export type ListTradesResponse = ListTradesResponses[keyof ListTradesResponses];
 
-export type GetInvestmentAccountsV1InvestmentsAccountsGetData = {
+export type GetInvestmentAccountsData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/investments/accounts";
 };
 
-export type GetInvestmentAccountsV1InvestmentsAccountsGetResponses = {
+export type GetInvestmentAccountsResponses = {
   /**
    * Successful Response
    */
   200: InvestmentAccountsResponse;
 };
 
-export type GetInvestmentAccountsV1InvestmentsAccountsGetResponse =
-  GetInvestmentAccountsV1InvestmentsAccountsGetResponses[keyof GetInvestmentAccountsV1InvestmentsAccountsGetResponses];
+export type GetInvestmentAccountsResponse =
+  GetInvestmentAccountsResponses[keyof GetInvestmentAccountsResponses];
 
-export type GetHoldingsV1InvestmentsHoldingsGetData = {
+export type GetHoldingsData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/investments/holdings";
 };
 
-export type GetHoldingsV1InvestmentsHoldingsGetResponses = {
+export type GetHoldingsResponses = {
   /**
    * Successful Response
    */
   200: HoldingsResponse;
 };
 
-export type GetHoldingsV1InvestmentsHoldingsGetResponse =
-  GetHoldingsV1InvestmentsHoldingsGetResponses[keyof GetHoldingsV1InvestmentsHoldingsGetResponses];
+export type GetHoldingsResponse =
+  GetHoldingsResponses[keyof GetHoldingsResponses];
 
-export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData = {
+export type GetCryptoPriceData = {
   body?: never;
   path: {
     /**
@@ -9619,28 +9587,28 @@ export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData = {
   url: "/v1/investments/crypto/price/{coin_id}";
 };
 
-export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors = {
+export type GetCryptoPriceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError =
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors[keyof GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetErrors];
+export type GetCryptoPriceError =
+  GetCryptoPriceErrors[keyof GetCryptoPriceErrors];
 
-export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses = {
+export type GetCryptoPriceResponses = {
   /**
    * Successful Response
    */
   200: CryptoPriceSchema;
 };
 
-export type GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse =
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses[keyof GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponses];
+export type GetCryptoPriceResponse =
+  GetCryptoPriceResponses[keyof GetCryptoPriceResponses];
 
-export type ImportLocationHistoryV1LocationHistoryImportPostData = {
-  body: BodyImportLocationHistoryV1LocationHistoryImportPost;
+export type ImportLocationHistoryData = {
+  body: BodyImportLocationHistory;
   path?: never;
   query?: {
     /**
@@ -9653,44 +9621,44 @@ export type ImportLocationHistoryV1LocationHistoryImportPostData = {
   url: "/v1/location-history/import";
 };
 
-export type ImportLocationHistoryV1LocationHistoryImportPostErrors = {
+export type ImportLocationHistoryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ImportLocationHistoryV1LocationHistoryImportPostError =
-  ImportLocationHistoryV1LocationHistoryImportPostErrors[keyof ImportLocationHistoryV1LocationHistoryImportPostErrors];
+export type ImportLocationHistoryError =
+  ImportLocationHistoryErrors[keyof ImportLocationHistoryErrors];
 
-export type ImportLocationHistoryV1LocationHistoryImportPostResponses = {
+export type ImportLocationHistoryResponses = {
   /**
    * Successful Response
    */
   200: LocationImportSchema;
 };
 
-export type ImportLocationHistoryV1LocationHistoryImportPostResponse =
-  ImportLocationHistoryV1LocationHistoryImportPostResponses[keyof ImportLocationHistoryV1LocationHistoryImportPostResponses];
+export type ImportLocationHistoryResponse =
+  ImportLocationHistoryResponses[keyof ImportLocationHistoryResponses];
 
-export type GetLocationHistorySummaryV1LocationHistorySummaryGetData = {
+export type GetLocationHistorySummaryData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/location-history/summary";
 };
 
-export type GetLocationHistorySummaryV1LocationHistorySummaryGetResponses = {
+export type GetLocationHistorySummaryResponses = {
   /**
    * Successful Response
    */
   200: LocationHistorySummary;
 };
 
-export type GetLocationHistorySummaryV1LocationHistorySummaryGetResponse =
-  GetLocationHistorySummaryV1LocationHistorySummaryGetResponses[keyof GetLocationHistorySummaryV1LocationHistorySummaryGetResponses];
+export type GetLocationHistorySummaryResponse =
+  GetLocationHistorySummaryResponses[keyof GetLocationHistorySummaryResponses];
 
-export type GetLocationHistoryDayV1LocationHistoryDayGetData = {
+export type GetLocationHistoryDayData = {
   body?: never;
   path?: never;
   query: {
@@ -9704,71 +9672,71 @@ export type GetLocationHistoryDayV1LocationHistoryDayGetData = {
   url: "/v1/location-history/day";
 };
 
-export type GetLocationHistoryDayV1LocationHistoryDayGetErrors = {
+export type GetLocationHistoryDayErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetLocationHistoryDayV1LocationHistoryDayGetError =
-  GetLocationHistoryDayV1LocationHistoryDayGetErrors[keyof GetLocationHistoryDayV1LocationHistoryDayGetErrors];
+export type GetLocationHistoryDayError =
+  GetLocationHistoryDayErrors[keyof GetLocationHistoryDayErrors];
 
-export type GetLocationHistoryDayV1LocationHistoryDayGetResponses = {
+export type GetLocationHistoryDayResponses = {
   /**
    * Successful Response
    */
   200: LocationDay;
 };
 
-export type GetLocationHistoryDayV1LocationHistoryDayGetResponse =
-  GetLocationHistoryDayV1LocationHistoryDayGetResponses[keyof GetLocationHistoryDayV1LocationHistoryDayGetResponses];
+export type GetLocationHistoryDayResponse =
+  GetLocationHistoryDayResponses[keyof GetLocationHistoryDayResponses];
 
-export type ListNotificationsV1NotificationsGetData = {
+export type ListNotificationsData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/notifications";
 };
 
-export type ListNotificationsV1NotificationsGetResponses = {
+export type ListNotificationsResponses = {
   /**
    * Successful Response
    */
   200: NotificationsListResponse;
 };
 
-export type ListNotificationsV1NotificationsGetResponse =
-  ListNotificationsV1NotificationsGetResponses[keyof ListNotificationsV1NotificationsGetResponses];
+export type ListNotificationsResponse =
+  ListNotificationsResponses[keyof ListNotificationsResponses];
 
-export type CreateNotificationV1NotificationsPostData = {
+export type CreateNotificationData = {
   body: NotificationCreate;
   path?: never;
   query?: never;
   url: "/v1/notifications";
 };
 
-export type CreateNotificationV1NotificationsPostErrors = {
+export type CreateNotificationErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateNotificationV1NotificationsPostError =
-  CreateNotificationV1NotificationsPostErrors[keyof CreateNotificationV1NotificationsPostErrors];
+export type CreateNotificationError =
+  CreateNotificationErrors[keyof CreateNotificationErrors];
 
-export type CreateNotificationV1NotificationsPostResponses = {
+export type CreateNotificationResponses = {
   /**
    * Successful Response
    */
   201: NotificationResponse;
 };
 
-export type CreateNotificationV1NotificationsPostResponse =
-  CreateNotificationV1NotificationsPostResponses[keyof CreateNotificationV1NotificationsPostResponses];
+export type CreateNotificationResponse =
+  CreateNotificationResponses[keyof CreateNotificationResponses];
 
-export type MarkNotificationReadV1NotificationsNotificationIdReadPostData = {
+export type MarkNotificationReadData = {
   body?: never;
   path: {
     /**
@@ -9780,37 +9748,36 @@ export type MarkNotificationReadV1NotificationsNotificationIdReadPostData = {
   url: "/v1/notifications/{notification_id}/read";
 };
 
-export type MarkNotificationReadV1NotificationsNotificationIdReadPostErrors = {
+export type MarkNotificationReadErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type MarkNotificationReadV1NotificationsNotificationIdReadPostError =
-  MarkNotificationReadV1NotificationsNotificationIdReadPostErrors[keyof MarkNotificationReadV1NotificationsNotificationIdReadPostErrors];
+export type MarkNotificationReadError =
+  MarkNotificationReadErrors[keyof MarkNotificationReadErrors];
 
-export type MarkNotificationReadV1NotificationsNotificationIdReadPostResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: NotificationResponse;
-  };
+export type MarkNotificationReadResponses = {
+  /**
+   * Successful Response
+   */
+  200: NotificationResponse;
+};
 
-export type MarkNotificationReadV1NotificationsNotificationIdReadPostResponse =
-  MarkNotificationReadV1NotificationsNotificationIdReadPostResponses[keyof MarkNotificationReadV1NotificationsNotificationIdReadPostResponses];
+export type MarkNotificationReadResponse =
+  MarkNotificationReadResponses[keyof MarkNotificationReadResponses];
 
-export type MarkAllNotificationsReadV1NotificationsReadAllPostData = {
+export type MarkAllNotificationsReadData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/notifications/read-all";
 };
 
-export type MarkAllNotificationsReadV1NotificationsReadAllPostResponses = {
+export type MarkAllNotificationsReadResponses = {
   /**
-   * Response Mark All Notifications Read V1 Notifications Read All Post
+   * Response Mark All Notifications Read
    *
    * Successful Response
    */
@@ -9819,10 +9786,10 @@ export type MarkAllNotificationsReadV1NotificationsReadAllPostResponses = {
   };
 };
 
-export type MarkAllNotificationsReadV1NotificationsReadAllPostResponse =
-  MarkAllNotificationsReadV1NotificationsReadAllPostResponses[keyof MarkAllNotificationsReadV1NotificationsReadAllPostResponses];
+export type MarkAllNotificationsReadResponse =
+  MarkAllNotificationsReadResponses[keyof MarkAllNotificationsReadResponses];
 
-export type ListPlacesV1PlacesGetData = {
+export type ListPlacesData = {
   body?: never;
   path?: never;
   query?: {
@@ -9854,54 +9821,51 @@ export type ListPlacesV1PlacesGetData = {
   url: "/v1/places";
 };
 
-export type ListPlacesV1PlacesGetErrors = {
+export type ListPlacesErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListPlacesV1PlacesGetError =
-  ListPlacesV1PlacesGetErrors[keyof ListPlacesV1PlacesGetErrors];
+export type ListPlacesError = ListPlacesErrors[keyof ListPlacesErrors];
 
-export type ListPlacesV1PlacesGetResponses = {
+export type ListPlacesResponses = {
   /**
    * Successful Response
    */
   200: PlaceListResponse;
 };
 
-export type ListPlacesV1PlacesGetResponse =
-  ListPlacesV1PlacesGetResponses[keyof ListPlacesV1PlacesGetResponses];
+export type ListPlacesResponse = ListPlacesResponses[keyof ListPlacesResponses];
 
-export type CreatePlaceV1PlacesPostData = {
+export type CreatePlaceData = {
   body: PlaceCreate;
   path?: never;
   query?: never;
   url: "/v1/places";
 };
 
-export type CreatePlaceV1PlacesPostErrors = {
+export type CreatePlaceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreatePlaceV1PlacesPostError =
-  CreatePlaceV1PlacesPostErrors[keyof CreatePlaceV1PlacesPostErrors];
+export type CreatePlaceError = CreatePlaceErrors[keyof CreatePlaceErrors];
 
-export type CreatePlaceV1PlacesPostResponses = {
+export type CreatePlaceResponses = {
   /**
    * Successful Response
    */
   201: PlaceSchema;
 };
 
-export type CreatePlaceV1PlacesPostResponse =
-  CreatePlaceV1PlacesPostResponses[keyof CreatePlaceV1PlacesPostResponses];
+export type CreatePlaceResponse =
+  CreatePlaceResponses[keyof CreatePlaceResponses];
 
-export type SearchGooglePlacesV1PlacesSearchGetData = {
+export type SearchGooglePlacesData = {
   body?: never;
   path?: never;
   query: {
@@ -9915,27 +9879,27 @@ export type SearchGooglePlacesV1PlacesSearchGetData = {
   url: "/v1/places/search";
 };
 
-export type SearchGooglePlacesV1PlacesSearchGetErrors = {
+export type SearchGooglePlacesErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SearchGooglePlacesV1PlacesSearchGetError =
-  SearchGooglePlacesV1PlacesSearchGetErrors[keyof SearchGooglePlacesV1PlacesSearchGetErrors];
+export type SearchGooglePlacesError =
+  SearchGooglePlacesErrors[keyof SearchGooglePlacesErrors];
 
-export type SearchGooglePlacesV1PlacesSearchGetResponses = {
+export type SearchGooglePlacesResponses = {
   /**
    * Successful Response
    */
   200: GooglePlaceSearchResponse;
 };
 
-export type SearchGooglePlacesV1PlacesSearchGetResponse =
-  SearchGooglePlacesV1PlacesSearchGetResponses[keyof SearchGooglePlacesV1PlacesSearchGetResponses];
+export type SearchGooglePlacesResponse =
+  SearchGooglePlacesResponses[keyof SearchGooglePlacesResponses];
 
-export type DeletePlaceV1PlacesPlaceIdDeleteData = {
+export type DeletePlaceData = {
   body?: never;
   path: {
     /**
@@ -9947,27 +9911,26 @@ export type DeletePlaceV1PlacesPlaceIdDeleteData = {
   url: "/v1/places/{place_id}";
 };
 
-export type DeletePlaceV1PlacesPlaceIdDeleteErrors = {
+export type DeletePlaceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeletePlaceV1PlacesPlaceIdDeleteError =
-  DeletePlaceV1PlacesPlaceIdDeleteErrors[keyof DeletePlaceV1PlacesPlaceIdDeleteErrors];
+export type DeletePlaceError = DeletePlaceErrors[keyof DeletePlaceErrors];
 
-export type DeletePlaceV1PlacesPlaceIdDeleteResponses = {
+export type DeletePlaceResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeletePlaceV1PlacesPlaceIdDeleteResponse =
-  DeletePlaceV1PlacesPlaceIdDeleteResponses[keyof DeletePlaceV1PlacesPlaceIdDeleteResponses];
+export type DeletePlaceResponse =
+  DeletePlaceResponses[keyof DeletePlaceResponses];
 
-export type GetPlaceV1PlacesPlaceIdGetData = {
+export type GetPlaceData = {
   body?: never;
   path: {
     /**
@@ -9979,27 +9942,25 @@ export type GetPlaceV1PlacesPlaceIdGetData = {
   url: "/v1/places/{place_id}";
 };
 
-export type GetPlaceV1PlacesPlaceIdGetErrors = {
+export type GetPlaceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetPlaceV1PlacesPlaceIdGetError =
-  GetPlaceV1PlacesPlaceIdGetErrors[keyof GetPlaceV1PlacesPlaceIdGetErrors];
+export type GetPlaceError = GetPlaceErrors[keyof GetPlaceErrors];
 
-export type GetPlaceV1PlacesPlaceIdGetResponses = {
+export type GetPlaceResponses = {
   /**
    * Successful Response
    */
   200: PlaceSchema;
 };
 
-export type GetPlaceV1PlacesPlaceIdGetResponse =
-  GetPlaceV1PlacesPlaceIdGetResponses[keyof GetPlaceV1PlacesPlaceIdGetResponses];
+export type GetPlaceResponse = GetPlaceResponses[keyof GetPlaceResponses];
 
-export type UpdatePlaceV1PlacesPlaceIdPatchData = {
+export type UpdatePlaceData = {
   body: PlaceUpdate;
   path: {
     /**
@@ -10011,27 +9972,26 @@ export type UpdatePlaceV1PlacesPlaceIdPatchData = {
   url: "/v1/places/{place_id}";
 };
 
-export type UpdatePlaceV1PlacesPlaceIdPatchErrors = {
+export type UpdatePlaceErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdatePlaceV1PlacesPlaceIdPatchError =
-  UpdatePlaceV1PlacesPlaceIdPatchErrors[keyof UpdatePlaceV1PlacesPlaceIdPatchErrors];
+export type UpdatePlaceError = UpdatePlaceErrors[keyof UpdatePlaceErrors];
 
-export type UpdatePlaceV1PlacesPlaceIdPatchResponses = {
+export type UpdatePlaceResponses = {
   /**
    * Successful Response
    */
   200: PlaceSchema;
 };
 
-export type UpdatePlaceV1PlacesPlaceIdPatchResponse =
-  UpdatePlaceV1PlacesPlaceIdPatchResponses[keyof UpdatePlaceV1PlacesPlaceIdPatchResponses];
+export type UpdatePlaceResponse =
+  UpdatePlaceResponses[keyof UpdatePlaceResponses];
 
-export type ListProjectsV1ProjectsGetData = {
+export type ListProjectsData = {
   body?: never;
   headers?: {
     /**
@@ -10048,29 +10008,28 @@ export type ListProjectsV1ProjectsGetData = {
   url: "/v1/projects";
 };
 
-export type ListProjectsV1ProjectsGetErrors = {
+export type ListProjectsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListProjectsV1ProjectsGetError =
-  ListProjectsV1ProjectsGetErrors[keyof ListProjectsV1ProjectsGetErrors];
+export type ListProjectsError = ListProjectsErrors[keyof ListProjectsErrors];
 
-export type ListProjectsV1ProjectsGetResponses = {
+export type ListProjectsResponses = {
   /**
-   * Response List Projects V1 Projects Get
+   * Response List Projects
    *
    * Successful Response
    */
   200: Array<ProjectSchema>;
 };
 
-export type ListProjectsV1ProjectsGetResponse =
-  ListProjectsV1ProjectsGetResponses[keyof ListProjectsV1ProjectsGetResponses];
+export type ListProjectsResponse =
+  ListProjectsResponses[keyof ListProjectsResponses];
 
-export type CreateProjectV1ProjectsPostData = {
+export type CreateProjectData = {
   body: ProjectCreate;
   headers?: {
     /**
@@ -10087,27 +10046,26 @@ export type CreateProjectV1ProjectsPostData = {
   url: "/v1/projects";
 };
 
-export type CreateProjectV1ProjectsPostErrors = {
+export type CreateProjectErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateProjectV1ProjectsPostError =
-  CreateProjectV1ProjectsPostErrors[keyof CreateProjectV1ProjectsPostErrors];
+export type CreateProjectError = CreateProjectErrors[keyof CreateProjectErrors];
 
-export type CreateProjectV1ProjectsPostResponses = {
+export type CreateProjectResponses = {
   /**
    * Successful Response
    */
   201: ProjectSchema;
 };
 
-export type CreateProjectV1ProjectsPostResponse =
-  CreateProjectV1ProjectsPostResponses[keyof CreateProjectV1ProjectsPostResponses];
+export type CreateProjectResponse =
+  CreateProjectResponses[keyof CreateProjectResponses];
 
-export type DeleteProjectV1ProjectsProjectIdDeleteData = {
+export type DeleteProjectData = {
   body?: never;
   path: {
     /**
@@ -10119,27 +10077,26 @@ export type DeleteProjectV1ProjectsProjectIdDeleteData = {
   url: "/v1/projects/{project_id}";
 };
 
-export type DeleteProjectV1ProjectsProjectIdDeleteErrors = {
+export type DeleteProjectErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteProjectV1ProjectsProjectIdDeleteError =
-  DeleteProjectV1ProjectsProjectIdDeleteErrors[keyof DeleteProjectV1ProjectsProjectIdDeleteErrors];
+export type DeleteProjectError = DeleteProjectErrors[keyof DeleteProjectErrors];
 
-export type DeleteProjectV1ProjectsProjectIdDeleteResponses = {
+export type DeleteProjectResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteProjectV1ProjectsProjectIdDeleteResponse =
-  DeleteProjectV1ProjectsProjectIdDeleteResponses[keyof DeleteProjectV1ProjectsProjectIdDeleteResponses];
+export type DeleteProjectResponse =
+  DeleteProjectResponses[keyof DeleteProjectResponses];
 
-export type UpdateProjectV1ProjectsProjectIdPatchData = {
+export type UpdateProjectData = {
   body: ProjectUpdate;
   headers?: {
     /**
@@ -10161,27 +10118,26 @@ export type UpdateProjectV1ProjectsProjectIdPatchData = {
   url: "/v1/projects/{project_id}";
 };
 
-export type UpdateProjectV1ProjectsProjectIdPatchErrors = {
+export type UpdateProjectErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateProjectV1ProjectsProjectIdPatchError =
-  UpdateProjectV1ProjectsProjectIdPatchErrors[keyof UpdateProjectV1ProjectsProjectIdPatchErrors];
+export type UpdateProjectError = UpdateProjectErrors[keyof UpdateProjectErrors];
 
-export type UpdateProjectV1ProjectsProjectIdPatchResponses = {
+export type UpdateProjectResponses = {
   /**
    * Successful Response
    */
   200: ProjectSchema;
 };
 
-export type UpdateProjectV1ProjectsProjectIdPatchResponse =
-  UpdateProjectV1ProjectsProjectIdPatchResponses[keyof UpdateProjectV1ProjectsProjectIdPatchResponses];
+export type UpdateProjectResponse =
+  UpdateProjectResponses[keyof UpdateProjectResponses];
 
-export type SetProjectLocationV1ProjectsProjectIdLocationPutData = {
+export type SetProjectLocationData = {
   body: ProjectLocationUpdate;
   headers?: {
     /**
@@ -10203,27 +10159,27 @@ export type SetProjectLocationV1ProjectsProjectIdLocationPutData = {
   url: "/v1/projects/{project_id}/location";
 };
 
-export type SetProjectLocationV1ProjectsProjectIdLocationPutErrors = {
+export type SetProjectLocationErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SetProjectLocationV1ProjectsProjectIdLocationPutError =
-  SetProjectLocationV1ProjectsProjectIdLocationPutErrors[keyof SetProjectLocationV1ProjectsProjectIdLocationPutErrors];
+export type SetProjectLocationError =
+  SetProjectLocationErrors[keyof SetProjectLocationErrors];
 
-export type SetProjectLocationV1ProjectsProjectIdLocationPutResponses = {
+export type SetProjectLocationResponses = {
   /**
    * Successful Response
    */
   200: ProjectSchema;
 };
 
-export type SetProjectLocationV1ProjectsProjectIdLocationPutResponse =
-  SetProjectLocationV1ProjectsProjectIdLocationPutResponses[keyof SetProjectLocationV1ProjectsProjectIdLocationPutResponses];
+export type SetProjectLocationResponse =
+  SetProjectLocationResponses[keyof SetProjectLocationResponses];
 
-export type ListRecipesV1RecipesGetData = {
+export type ListRecipesData = {
   body?: never;
   path?: never;
   query?: {
@@ -10255,81 +10211,79 @@ export type ListRecipesV1RecipesGetData = {
   url: "/v1/recipes";
 };
 
-export type ListRecipesV1RecipesGetErrors = {
+export type ListRecipesErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListRecipesV1RecipesGetError =
-  ListRecipesV1RecipesGetErrors[keyof ListRecipesV1RecipesGetErrors];
+export type ListRecipesError = ListRecipesErrors[keyof ListRecipesErrors];
 
-export type ListRecipesV1RecipesGetResponses = {
+export type ListRecipesResponses = {
   /**
    * Successful Response
    */
   200: RecipeListResponse;
 };
 
-export type ListRecipesV1RecipesGetResponse =
-  ListRecipesV1RecipesGetResponses[keyof ListRecipesV1RecipesGetResponses];
+export type ListRecipesResponse =
+  ListRecipesResponses[keyof ListRecipesResponses];
 
-export type CreateRecipeV1RecipesPostData = {
+export type CreateRecipeData = {
   body: RecipeCreate;
   path?: never;
   query?: never;
   url: "/v1/recipes";
 };
 
-export type CreateRecipeV1RecipesPostErrors = {
+export type CreateRecipeErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateRecipeV1RecipesPostError =
-  CreateRecipeV1RecipesPostErrors[keyof CreateRecipeV1RecipesPostErrors];
+export type CreateRecipeError = CreateRecipeErrors[keyof CreateRecipeErrors];
 
-export type CreateRecipeV1RecipesPostResponses = {
+export type CreateRecipeResponses = {
   /**
    * Successful Response
    */
   201: RecipeSchema;
 };
 
-export type CreateRecipeV1RecipesPostResponse =
-  CreateRecipeV1RecipesPostResponses[keyof CreateRecipeV1RecipesPostResponses];
+export type CreateRecipeResponse =
+  CreateRecipeResponses[keyof CreateRecipeResponses];
 
-export type StructureRecipeTextV1RecipesImportPostData = {
+export type StructureRecipeTextData = {
   body: RecipeImportRequest;
   path?: never;
   query?: never;
   url: "/v1/recipes/import";
 };
 
-export type StructureRecipeTextV1RecipesImportPostErrors = {
+export type StructureRecipeTextErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type StructureRecipeTextV1RecipesImportPostError =
-  StructureRecipeTextV1RecipesImportPostErrors[keyof StructureRecipeTextV1RecipesImportPostErrors];
+export type StructureRecipeTextError =
+  StructureRecipeTextErrors[keyof StructureRecipeTextErrors];
 
-export type StructureRecipeTextV1RecipesImportPostResponses = {
+export type StructureRecipeTextResponses = {
   /**
    * Successful Response
    */
   200: RecipeImportResult;
 };
 
-export type StructureRecipeTextV1RecipesImportPostResponse =
-  StructureRecipeTextV1RecipesImportPostResponses[keyof StructureRecipeTextV1RecipesImportPostResponses];
+export type StructureRecipeTextResponse =
+  StructureRecipeTextResponses[keyof StructureRecipeTextResponses];
 
-export type DeleteRecipeV1RecipesRecipeIdDeleteData = {
+export type DeleteRecipeData = {
   body?: never;
   path: {
     /**
@@ -10341,27 +10295,26 @@ export type DeleteRecipeV1RecipesRecipeIdDeleteData = {
   url: "/v1/recipes/{recipe_id}";
 };
 
-export type DeleteRecipeV1RecipesRecipeIdDeleteErrors = {
+export type DeleteRecipeErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteRecipeV1RecipesRecipeIdDeleteError =
-  DeleteRecipeV1RecipesRecipeIdDeleteErrors[keyof DeleteRecipeV1RecipesRecipeIdDeleteErrors];
+export type DeleteRecipeError = DeleteRecipeErrors[keyof DeleteRecipeErrors];
 
-export type DeleteRecipeV1RecipesRecipeIdDeleteResponses = {
+export type DeleteRecipeResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteRecipeV1RecipesRecipeIdDeleteResponse =
-  DeleteRecipeV1RecipesRecipeIdDeleteResponses[keyof DeleteRecipeV1RecipesRecipeIdDeleteResponses];
+export type DeleteRecipeResponse =
+  DeleteRecipeResponses[keyof DeleteRecipeResponses];
 
-export type GetRecipeV1RecipesRecipeIdGetData = {
+export type GetRecipeData = {
   body?: never;
   path: {
     /**
@@ -10373,27 +10326,25 @@ export type GetRecipeV1RecipesRecipeIdGetData = {
   url: "/v1/recipes/{recipe_id}";
 };
 
-export type GetRecipeV1RecipesRecipeIdGetErrors = {
+export type GetRecipeErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetRecipeV1RecipesRecipeIdGetError =
-  GetRecipeV1RecipesRecipeIdGetErrors[keyof GetRecipeV1RecipesRecipeIdGetErrors];
+export type GetRecipeError = GetRecipeErrors[keyof GetRecipeErrors];
 
-export type GetRecipeV1RecipesRecipeIdGetResponses = {
+export type GetRecipeResponses = {
   /**
    * Successful Response
    */
   200: RecipeSchema;
 };
 
-export type GetRecipeV1RecipesRecipeIdGetResponse =
-  GetRecipeV1RecipesRecipeIdGetResponses[keyof GetRecipeV1RecipesRecipeIdGetResponses];
+export type GetRecipeResponse = GetRecipeResponses[keyof GetRecipeResponses];
 
-export type UpdateRecipeV1RecipesRecipeIdPatchData = {
+export type UpdateRecipeData = {
   body: RecipeUpdate;
   path: {
     /**
@@ -10405,27 +10356,26 @@ export type UpdateRecipeV1RecipesRecipeIdPatchData = {
   url: "/v1/recipes/{recipe_id}";
 };
 
-export type UpdateRecipeV1RecipesRecipeIdPatchErrors = {
+export type UpdateRecipeErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateRecipeV1RecipesRecipeIdPatchError =
-  UpdateRecipeV1RecipesRecipeIdPatchErrors[keyof UpdateRecipeV1RecipesRecipeIdPatchErrors];
+export type UpdateRecipeError = UpdateRecipeErrors[keyof UpdateRecipeErrors];
 
-export type UpdateRecipeV1RecipesRecipeIdPatchResponses = {
+export type UpdateRecipeResponses = {
   /**
    * Successful Response
    */
   200: RecipeSchema;
 };
 
-export type UpdateRecipeV1RecipesRecipeIdPatchResponse =
-  UpdateRecipeV1RecipesRecipeIdPatchResponses[keyof UpdateRecipeV1RecipesRecipeIdPatchResponses];
+export type UpdateRecipeResponse =
+  UpdateRecipeResponses[keyof UpdateRecipeResponses];
 
-export type SearchV1SearchGetData = {
+export type SearchEverythingData = {
   body?: never;
   path?: never;
   query: {
@@ -10445,27 +10395,27 @@ export type SearchV1SearchGetData = {
   url: "/v1/search";
 };
 
-export type SearchV1SearchGetErrors = {
+export type SearchEverythingErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SearchV1SearchGetError =
-  SearchV1SearchGetErrors[keyof SearchV1SearchGetErrors];
+export type SearchEverythingError =
+  SearchEverythingErrors[keyof SearchEverythingErrors];
 
-export type SearchV1SearchGetResponses = {
+export type SearchEverythingResponses = {
   /**
    * Successful Response
    */
   200: SearchResponse;
 };
 
-export type SearchV1SearchGetResponse =
-  SearchV1SearchGetResponses[keyof SearchV1SearchGetResponses];
+export type SearchEverythingResponse =
+  SearchEverythingResponses[keyof SearchEverythingResponses];
 
-export type ListTasksV1TasksGetData = {
+export type ListTasksData = {
   body?: never;
   path?: never;
   query?: {
@@ -10527,54 +10477,50 @@ export type ListTasksV1TasksGetData = {
   url: "/v1/tasks";
 };
 
-export type ListTasksV1TasksGetErrors = {
+export type ListTasksErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListTasksV1TasksGetError =
-  ListTasksV1TasksGetErrors[keyof ListTasksV1TasksGetErrors];
+export type ListTasksError = ListTasksErrors[keyof ListTasksErrors];
 
-export type ListTasksV1TasksGetResponses = {
+export type ListTasksResponses = {
   /**
    * Successful Response
    */
   200: TaskListResponse;
 };
 
-export type ListTasksV1TasksGetResponse =
-  ListTasksV1TasksGetResponses[keyof ListTasksV1TasksGetResponses];
+export type ListTasksResponse = ListTasksResponses[keyof ListTasksResponses];
 
-export type CreateTaskV1TasksPostData = {
+export type CreateTaskData = {
   body: TaskCreate;
   path?: never;
   query?: never;
   url: "/v1/tasks";
 };
 
-export type CreateTaskV1TasksPostErrors = {
+export type CreateTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateTaskV1TasksPostError =
-  CreateTaskV1TasksPostErrors[keyof CreateTaskV1TasksPostErrors];
+export type CreateTaskError = CreateTaskErrors[keyof CreateTaskErrors];
 
-export type CreateTaskV1TasksPostResponses = {
+export type CreateTaskResponses = {
   /**
    * Successful Response
    */
   201: TaskSchema;
 };
 
-export type CreateTaskV1TasksPostResponse =
-  CreateTaskV1TasksPostResponses[keyof CreateTaskV1TasksPostResponses];
+export type CreateTaskResponse = CreateTaskResponses[keyof CreateTaskResponses];
 
-export type ReorderTasksV1TasksReorderPatchData = {
+export type ReorderTasksData = {
   /**
    * Body
    */
@@ -10584,27 +10530,26 @@ export type ReorderTasksV1TasksReorderPatchData = {
   url: "/v1/tasks/reorder";
 };
 
-export type ReorderTasksV1TasksReorderPatchErrors = {
+export type ReorderTasksErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ReorderTasksV1TasksReorderPatchError =
-  ReorderTasksV1TasksReorderPatchErrors[keyof ReorderTasksV1TasksReorderPatchErrors];
+export type ReorderTasksError = ReorderTasksErrors[keyof ReorderTasksErrors];
 
-export type ReorderTasksV1TasksReorderPatchResponses = {
+export type ReorderTasksResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type ReorderTasksV1TasksReorderPatchResponse =
-  ReorderTasksV1TasksReorderPatchResponses[keyof ReorderTasksV1TasksReorderPatchResponses];
+export type ReorderTasksResponse =
+  ReorderTasksResponses[keyof ReorderTasksResponses];
 
-export type DeleteTaskV1TasksTaskIdDeleteData = {
+export type DeleteTaskData = {
   body?: never;
   path: {
     /**
@@ -10616,27 +10561,25 @@ export type DeleteTaskV1TasksTaskIdDeleteData = {
   url: "/v1/tasks/{task_id}";
 };
 
-export type DeleteTaskV1TasksTaskIdDeleteErrors = {
+export type DeleteTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteTaskV1TasksTaskIdDeleteError =
-  DeleteTaskV1TasksTaskIdDeleteErrors[keyof DeleteTaskV1TasksTaskIdDeleteErrors];
+export type DeleteTaskError = DeleteTaskErrors[keyof DeleteTaskErrors];
 
-export type DeleteTaskV1TasksTaskIdDeleteResponses = {
+export type DeleteTaskResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteTaskV1TasksTaskIdDeleteResponse =
-  DeleteTaskV1TasksTaskIdDeleteResponses[keyof DeleteTaskV1TasksTaskIdDeleteResponses];
+export type DeleteTaskResponse = DeleteTaskResponses[keyof DeleteTaskResponses];
 
-export type GetTaskV1TasksTaskIdGetData = {
+export type GetTaskData = {
   body?: never;
   path: {
     /**
@@ -10648,27 +10591,25 @@ export type GetTaskV1TasksTaskIdGetData = {
   url: "/v1/tasks/{task_id}";
 };
 
-export type GetTaskV1TasksTaskIdGetErrors = {
+export type GetTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetTaskV1TasksTaskIdGetError =
-  GetTaskV1TasksTaskIdGetErrors[keyof GetTaskV1TasksTaskIdGetErrors];
+export type GetTaskError = GetTaskErrors[keyof GetTaskErrors];
 
-export type GetTaskV1TasksTaskIdGetResponses = {
+export type GetTaskResponses = {
   /**
    * Successful Response
    */
   200: TaskSchema;
 };
 
-export type GetTaskV1TasksTaskIdGetResponse =
-  GetTaskV1TasksTaskIdGetResponses[keyof GetTaskV1TasksTaskIdGetResponses];
+export type GetTaskResponse = GetTaskResponses[keyof GetTaskResponses];
 
-export type UpdateTaskV1TasksTaskIdPatchData = {
+export type UpdateTaskData = {
   body: TaskUpdate;
   path: {
     /**
@@ -10680,28 +10621,26 @@ export type UpdateTaskV1TasksTaskIdPatchData = {
   url: "/v1/tasks/{task_id}";
 };
 
-export type UpdateTaskV1TasksTaskIdPatchErrors = {
+export type UpdateTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateTaskV1TasksTaskIdPatchError =
-  UpdateTaskV1TasksTaskIdPatchErrors[keyof UpdateTaskV1TasksTaskIdPatchErrors];
+export type UpdateTaskError = UpdateTaskErrors[keyof UpdateTaskErrors];
 
-export type UpdateTaskV1TasksTaskIdPatchResponses = {
+export type UpdateTaskResponses = {
   /**
    * Successful Response
    */
   200: TaskSchema;
 };
 
-export type UpdateTaskV1TasksTaskIdPatchResponse =
-  UpdateTaskV1TasksTaskIdPatchResponses[keyof UpdateTaskV1TasksTaskIdPatchResponses];
+export type UpdateTaskResponse = UpdateTaskResponses[keyof UpdateTaskResponses];
 
-export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData = {
-  body: BodyUploadTaskAttachmentV1TasksTaskIdAttachmentsPost;
+export type UploadTaskAttachmentData = {
+  body: BodyUploadTaskAttachment;
   path: {
     /**
      * Task Id
@@ -10712,102 +10651,96 @@ export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData = {
   url: "/v1/tasks/{task_id}/attachments";
 };
 
-export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors = {
+export type UploadTaskAttachmentErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError =
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors[keyof UploadTaskAttachmentV1TasksTaskIdAttachmentsPostErrors];
+export type UploadTaskAttachmentError =
+  UploadTaskAttachmentErrors[keyof UploadTaskAttachmentErrors];
 
-export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses = {
+export type UploadTaskAttachmentResponses = {
   /**
    * Successful Response
    */
   201: TaskAttachmentSchema;
 };
 
-export type UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse =
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses[keyof UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponses];
+export type UploadTaskAttachmentResponse =
+  UploadTaskAttachmentResponses[keyof UploadTaskAttachmentResponses];
 
-export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Task Id
-       */
-      task_id: string;
-      /**
-       * Attachment Id
-       */
-      attachment_id: string;
-    };
-    query?: never;
-    url: "/v1/tasks/{task_id}/attachments/{attachment_id}";
-  };
-
-export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors =
-  {
+export type DeleteTaskAttachmentData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Task Id
      */
-    422: HttpValidationError;
-  };
-
-export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError =
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors[keyof DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteErrors];
-
-export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses =
-  {
+    task_id: string;
     /**
-     * Successful Response
+     * Attachment Id
      */
-    204: void;
+    attachment_id: string;
   };
+  query?: never;
+  url: "/v1/tasks/{task_id}/attachments/{attachment_id}";
+};
 
-export type DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse =
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses[keyof DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponses];
+export type DeleteTaskAttachmentErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Task Id
-       */
-      task_id: string;
-      /**
-       * Attachment Id
-       */
-      attachment_id: string;
-    };
-    query?: never;
-    url: "/v1/tasks/{task_id}/attachments/{attachment_id}/file";
-  };
+export type DeleteTaskAttachmentError =
+  DeleteTaskAttachmentErrors[keyof DeleteTaskAttachmentErrors];
 
-export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors =
-  {
+export type DeleteTaskAttachmentResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteTaskAttachmentResponse =
+  DeleteTaskAttachmentResponses[keyof DeleteTaskAttachmentResponses];
+
+export type GetTaskAttachmentFileData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Task Id
      */
-    422: HttpValidationError;
-  };
-
-export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetError =
-  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors[keyof GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetErrors];
-
-export type GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetResponses =
-  {
+    task_id: string;
     /**
-     * Successful Response
+     * Attachment Id
      */
-    200: unknown;
+    attachment_id: string;
   };
+  query?: never;
+  url: "/v1/tasks/{task_id}/attachments/{attachment_id}/file";
+};
 
-export type CompleteTaskV1TasksTaskIdCompletePostData = {
+export type GetTaskAttachmentFileErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTaskAttachmentFileError =
+  GetTaskAttachmentFileErrors[keyof GetTaskAttachmentFileErrors];
+
+export type GetTaskAttachmentFileResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type CompleteTaskData = {
   body?: never;
   path: {
     /**
@@ -10819,27 +10752,26 @@ export type CompleteTaskV1TasksTaskIdCompletePostData = {
   url: "/v1/tasks/{task_id}/complete";
 };
 
-export type CompleteTaskV1TasksTaskIdCompletePostErrors = {
+export type CompleteTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CompleteTaskV1TasksTaskIdCompletePostError =
-  CompleteTaskV1TasksTaskIdCompletePostErrors[keyof CompleteTaskV1TasksTaskIdCompletePostErrors];
+export type CompleteTaskError = CompleteTaskErrors[keyof CompleteTaskErrors];
 
-export type CompleteTaskV1TasksTaskIdCompletePostResponses = {
+export type CompleteTaskResponses = {
   /**
    * Successful Response
    */
   200: TaskCompleteResponse;
 };
 
-export type CompleteTaskV1TasksTaskIdCompletePostResponse =
-  CompleteTaskV1TasksTaskIdCompletePostResponses[keyof CompleteTaskV1TasksTaskIdCompletePostResponses];
+export type CompleteTaskResponse =
+  CompleteTaskResponses[keyof CompleteTaskResponses];
 
-export type ReopenTaskV1TasksTaskIdReopenPostData = {
+export type ReopenTaskData = {
   body?: never;
   path: {
     /**
@@ -10851,27 +10783,25 @@ export type ReopenTaskV1TasksTaskIdReopenPostData = {
   url: "/v1/tasks/{task_id}/reopen";
 };
 
-export type ReopenTaskV1TasksTaskIdReopenPostErrors = {
+export type ReopenTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ReopenTaskV1TasksTaskIdReopenPostError =
-  ReopenTaskV1TasksTaskIdReopenPostErrors[keyof ReopenTaskV1TasksTaskIdReopenPostErrors];
+export type ReopenTaskError = ReopenTaskErrors[keyof ReopenTaskErrors];
 
-export type ReopenTaskV1TasksTaskIdReopenPostResponses = {
+export type ReopenTaskResponses = {
   /**
    * Successful Response
    */
   200: TaskSchema;
 };
 
-export type ReopenTaskV1TasksTaskIdReopenPostResponse =
-  ReopenTaskV1TasksTaskIdReopenPostResponses[keyof ReopenTaskV1TasksTaskIdReopenPostResponses];
+export type ReopenTaskResponse = ReopenTaskResponses[keyof ReopenTaskResponses];
 
-export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostData = {
+export type UndoCompleteTaskData = {
   body?: never;
   path: {
     /**
@@ -10883,73 +10813,73 @@ export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostData = {
   url: "/v1/tasks/{task_id}/undo-complete";
 };
 
-export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors = {
+export type UndoCompleteTaskErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostError =
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors[keyof UndoCompleteTaskV1TasksTaskIdUndoCompletePostErrors];
+export type UndoCompleteTaskError =
+  UndoCompleteTaskErrors[keyof UndoCompleteTaskErrors];
 
-export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses = {
+export type UndoCompleteTaskResponses = {
   /**
    * Successful Response
    */
   200: TaskSchema;
 };
 
-export type UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse =
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses[keyof UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponses];
+export type UndoCompleteTaskResponse =
+  UndoCompleteTaskResponses[keyof UndoCompleteTaskResponses];
 
-export type ListTimeProjectsV1TimeProjectsGetData = {
+export type ListTimeProjectsData = {
   body?: never;
   path?: never;
   query?: never;
   url: "/v1/time/projects";
 };
 
-export type ListTimeProjectsV1TimeProjectsGetResponses = {
+export type ListTimeProjectsResponses = {
   /**
-   * Response List Time Projects V1 Time Projects Get
+   * Response List Time Projects
    *
    * Successful Response
    */
   200: Array<TimeProjectSchema>;
 };
 
-export type ListTimeProjectsV1TimeProjectsGetResponse =
-  ListTimeProjectsV1TimeProjectsGetResponses[keyof ListTimeProjectsV1TimeProjectsGetResponses];
+export type ListTimeProjectsResponse =
+  ListTimeProjectsResponses[keyof ListTimeProjectsResponses];
 
-export type CreateTimeProjectV1TimeProjectsPostData = {
+export type CreateTimeProjectData = {
   body: TimeProjectCreate;
   path?: never;
   query?: never;
   url: "/v1/time/projects";
 };
 
-export type CreateTimeProjectV1TimeProjectsPostErrors = {
+export type CreateTimeProjectErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateTimeProjectV1TimeProjectsPostError =
-  CreateTimeProjectV1TimeProjectsPostErrors[keyof CreateTimeProjectV1TimeProjectsPostErrors];
+export type CreateTimeProjectError =
+  CreateTimeProjectErrors[keyof CreateTimeProjectErrors];
 
-export type CreateTimeProjectV1TimeProjectsPostResponses = {
+export type CreateTimeProjectResponses = {
   /**
    * Successful Response
    */
   201: TimeProjectSchema;
 };
 
-export type CreateTimeProjectV1TimeProjectsPostResponse =
-  CreateTimeProjectV1TimeProjectsPostResponses[keyof CreateTimeProjectV1TimeProjectsPostResponses];
+export type CreateTimeProjectResponse =
+  CreateTimeProjectResponses[keyof CreateTimeProjectResponses];
 
-export type UpdateTimeProjectV1TimeProjectsProjectIdPatchData = {
+export type UpdateTimeProjectData = {
   body: TimeProjectUpdate;
   path: {
     /**
@@ -10961,27 +10891,27 @@ export type UpdateTimeProjectV1TimeProjectsProjectIdPatchData = {
   url: "/v1/time/projects/{project_id}";
 };
 
-export type UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors = {
+export type UpdateTimeProjectErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateTimeProjectV1TimeProjectsProjectIdPatchError =
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors[keyof UpdateTimeProjectV1TimeProjectsProjectIdPatchErrors];
+export type UpdateTimeProjectError =
+  UpdateTimeProjectErrors[keyof UpdateTimeProjectErrors];
 
-export type UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses = {
+export type UpdateTimeProjectResponses = {
   /**
    * Successful Response
    */
   200: TimeProjectSchema;
 };
 
-export type UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse =
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses[keyof UpdateTimeProjectV1TimeProjectsProjectIdPatchResponses];
+export type UpdateTimeProjectResponse =
+  UpdateTimeProjectResponses[keyof UpdateTimeProjectResponses];
 
-export type ListTimeEntriesV1TimeEntriesGetData = {
+export type ListTimeEntriesData = {
   body?: never;
   path?: never;
   query: {
@@ -11001,56 +10931,56 @@ export type ListTimeEntriesV1TimeEntriesGetData = {
   url: "/v1/time/entries";
 };
 
-export type ListTimeEntriesV1TimeEntriesGetErrors = {
+export type ListTimeEntriesErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListTimeEntriesV1TimeEntriesGetError =
-  ListTimeEntriesV1TimeEntriesGetErrors[keyof ListTimeEntriesV1TimeEntriesGetErrors];
+export type ListTimeEntriesError =
+  ListTimeEntriesErrors[keyof ListTimeEntriesErrors];
 
-export type ListTimeEntriesV1TimeEntriesGetResponses = {
+export type ListTimeEntriesResponses = {
   /**
-   * Response List Time Entries V1 Time Entries Get
+   * Response List Time Entries
    *
    * Successful Response
    */
   200: Array<TimeEntrySchema>;
 };
 
-export type ListTimeEntriesV1TimeEntriesGetResponse =
-  ListTimeEntriesV1TimeEntriesGetResponses[keyof ListTimeEntriesV1TimeEntriesGetResponses];
+export type ListTimeEntriesResponse =
+  ListTimeEntriesResponses[keyof ListTimeEntriesResponses];
 
-export type CreateTimeEntryV1TimeEntriesPostData = {
+export type CreateTimeEntryData = {
   body: TimeEntryCreate;
   path?: never;
   query?: never;
   url: "/v1/time/entries";
 };
 
-export type CreateTimeEntryV1TimeEntriesPostErrors = {
+export type CreateTimeEntryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type CreateTimeEntryV1TimeEntriesPostError =
-  CreateTimeEntryV1TimeEntriesPostErrors[keyof CreateTimeEntryV1TimeEntriesPostErrors];
+export type CreateTimeEntryError =
+  CreateTimeEntryErrors[keyof CreateTimeEntryErrors];
 
-export type CreateTimeEntryV1TimeEntriesPostResponses = {
+export type CreateTimeEntryResponses = {
   /**
    * Successful Response
    */
   201: TimeEntrySchema;
 };
 
-export type CreateTimeEntryV1TimeEntriesPostResponse =
-  CreateTimeEntryV1TimeEntriesPostResponses[keyof CreateTimeEntryV1TimeEntriesPostResponses];
+export type CreateTimeEntryResponse =
+  CreateTimeEntryResponses[keyof CreateTimeEntryResponses];
 
-export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteData = {
+export type DeleteTimeEntryData = {
   body?: never;
   path: {
     /**
@@ -11062,27 +10992,27 @@ export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteData = {
   url: "/v1/time/entries/{entry_id}";
 };
 
-export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors = {
+export type DeleteTimeEntryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteError =
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors[keyof DeleteTimeEntryV1TimeEntriesEntryIdDeleteErrors];
+export type DeleteTimeEntryError =
+  DeleteTimeEntryErrors[keyof DeleteTimeEntryErrors];
 
-export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses = {
+export type DeleteTimeEntryResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse =
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses[keyof DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponses];
+export type DeleteTimeEntryResponse =
+  DeleteTimeEntryResponses[keyof DeleteTimeEntryResponses];
 
-export type UpdateTimeEntryV1TimeEntriesEntryIdPatchData = {
+export type UpdateTimeEntryData = {
   body: TimeEntryUpdate;
   path: {
     /**
@@ -11094,27 +11024,27 @@ export type UpdateTimeEntryV1TimeEntriesEntryIdPatchData = {
   url: "/v1/time/entries/{entry_id}";
 };
 
-export type UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors = {
+export type UpdateTimeEntryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateTimeEntryV1TimeEntriesEntryIdPatchError =
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors[keyof UpdateTimeEntryV1TimeEntriesEntryIdPatchErrors];
+export type UpdateTimeEntryError =
+  UpdateTimeEntryErrors[keyof UpdateTimeEntryErrors];
 
-export type UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses = {
+export type UpdateTimeEntryResponses = {
   /**
    * Successful Response
    */
   200: TimeEntrySchema;
 };
 
-export type UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse =
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses[keyof UpdateTimeEntryV1TimeEntriesEntryIdPatchResponses];
+export type UpdateTimeEntryResponse =
+  UpdateTimeEntryResponses[keyof UpdateTimeEntryResponses];
 
-export type GetTimeSummaryV1TimeSummaryGetData = {
+export type GetTimeSummaryData = {
   body?: never;
   path?: never;
   query: {
@@ -11132,27 +11062,27 @@ export type GetTimeSummaryV1TimeSummaryGetData = {
   url: "/v1/time/summary";
 };
 
-export type GetTimeSummaryV1TimeSummaryGetErrors = {
+export type GetTimeSummaryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetTimeSummaryV1TimeSummaryGetError =
-  GetTimeSummaryV1TimeSummaryGetErrors[keyof GetTimeSummaryV1TimeSummaryGetErrors];
+export type GetTimeSummaryError =
+  GetTimeSummaryErrors[keyof GetTimeSummaryErrors];
 
-export type GetTimeSummaryV1TimeSummaryGetResponses = {
+export type GetTimeSummaryResponses = {
   /**
    * Successful Response
    */
   200: TimeSummarySchema;
 };
 
-export type GetTimeSummaryV1TimeSummaryGetResponse =
-  GetTimeSummaryV1TimeSummaryGetResponses[keyof GetTimeSummaryV1TimeSummaryGetResponses];
+export type GetTimeSummaryResponse =
+  GetTimeSummaryResponses[keyof GetTimeSummaryResponses];
 
-export type GetTimelineV1TimelineGetData = {
+export type GetTimelineData = {
   body?: never;
   path?: never;
   query: {
@@ -11178,54 +11108,53 @@ export type GetTimelineV1TimelineGetData = {
   url: "/v1/timeline";
 };
 
-export type GetTimelineV1TimelineGetErrors = {
+export type GetTimelineErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetTimelineV1TimelineGetError =
-  GetTimelineV1TimelineGetErrors[keyof GetTimelineV1TimelineGetErrors];
+export type GetTimelineError = GetTimelineErrors[keyof GetTimelineErrors];
 
-export type GetTimelineV1TimelineGetResponses = {
+export type GetTimelineResponses = {
   /**
    * Successful Response
    */
   200: TimelineResponse;
 };
 
-export type GetTimelineV1TimelineGetResponse =
-  GetTimelineV1TimelineGetResponses[keyof GetTimelineV1TimelineGetResponses];
+export type GetTimelineResponse =
+  GetTimelineResponses[keyof GetTimelineResponses];
 
-export type DeleteTransactionsV1TransactionsDeleteData = {
+export type DeleteTransactionsData = {
   body: BulkDeleteRequest;
   path?: never;
   query?: never;
   url: "/v1/transactions";
 };
 
-export type DeleteTransactionsV1TransactionsDeleteErrors = {
+export type DeleteTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DeleteTransactionsV1TransactionsDeleteError =
-  DeleteTransactionsV1TransactionsDeleteErrors[keyof DeleteTransactionsV1TransactionsDeleteErrors];
+export type DeleteTransactionsError =
+  DeleteTransactionsErrors[keyof DeleteTransactionsErrors];
 
-export type DeleteTransactionsV1TransactionsDeleteResponses = {
+export type DeleteTransactionsResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type DeleteTransactionsV1TransactionsDeleteResponse =
-  DeleteTransactionsV1TransactionsDeleteResponses[keyof DeleteTransactionsV1TransactionsDeleteResponses];
+export type DeleteTransactionsResponse =
+  DeleteTransactionsResponses[keyof DeleteTransactionsResponses];
 
-export type ListTransactionsV1TransactionsGetData = {
+export type ListTransactionsData = {
   body?: never;
   path?: never;
   query?: {
@@ -11311,28 +11240,28 @@ export type ListTransactionsV1TransactionsGetData = {
   url: "/v1/transactions";
 };
 
-export type ListTransactionsV1TransactionsGetErrors = {
+export type ListTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ListTransactionsV1TransactionsGetError =
-  ListTransactionsV1TransactionsGetErrors[keyof ListTransactionsV1TransactionsGetErrors];
+export type ListTransactionsError =
+  ListTransactionsErrors[keyof ListTransactionsErrors];
 
-export type ListTransactionsV1TransactionsGetResponses = {
+export type ListTransactionsResponses = {
   /**
    * Successful Response
    */
   200: TransactionListResponse;
 };
 
-export type ListTransactionsV1TransactionsGetResponse =
-  ListTransactionsV1TransactionsGetResponses[keyof ListTransactionsV1TransactionsGetResponses];
+export type ListTransactionsResponse =
+  ListTransactionsResponses[keyof ListTransactionsResponses];
 
-export type ImportTransactionsV1TransactionsImportPostData = {
-  body: BodyImportTransactionsV1TransactionsImportPost;
+export type ImportTransactionsData = {
+  body: BodyImportTransactions;
   path?: never;
   query: {
     /**
@@ -11351,54 +11280,54 @@ export type ImportTransactionsV1TransactionsImportPostData = {
   url: "/v1/transactions/import";
 };
 
-export type ImportTransactionsV1TransactionsImportPostErrors = {
+export type ImportTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ImportTransactionsV1TransactionsImportPostError =
-  ImportTransactionsV1TransactionsImportPostErrors[keyof ImportTransactionsV1TransactionsImportPostErrors];
+export type ImportTransactionsError =
+  ImportTransactionsErrors[keyof ImportTransactionsErrors];
 
-export type ImportTransactionsV1TransactionsImportPostResponses = {
+export type ImportTransactionsResponses = {
   /**
    * Successful Response
    */
   200: ImportResponse;
 };
 
-export type ImportTransactionsV1TransactionsImportPostResponse =
-  ImportTransactionsV1TransactionsImportPostResponses[keyof ImportTransactionsV1TransactionsImportPostResponses];
+export type ImportTransactionsResponse =
+  ImportTransactionsResponses[keyof ImportTransactionsResponses];
 
-export type BulkUpdateTransactionsV1TransactionsBulkPatchData = {
+export type BulkUpdateTransactionsData = {
   body: BulkUpdateRequest;
   path?: never;
   query?: never;
   url: "/v1/transactions/bulk";
 };
 
-export type BulkUpdateTransactionsV1TransactionsBulkPatchErrors = {
+export type BulkUpdateTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type BulkUpdateTransactionsV1TransactionsBulkPatchError =
-  BulkUpdateTransactionsV1TransactionsBulkPatchErrors[keyof BulkUpdateTransactionsV1TransactionsBulkPatchErrors];
+export type BulkUpdateTransactionsError =
+  BulkUpdateTransactionsErrors[keyof BulkUpdateTransactionsErrors];
 
-export type BulkUpdateTransactionsV1TransactionsBulkPatchResponses = {
+export type BulkUpdateTransactionsResponses = {
   /**
    * Successful Response
    */
   200: BulkUpdateResponse;
 };
 
-export type BulkUpdateTransactionsV1TransactionsBulkPatchResponse =
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponses[keyof BulkUpdateTransactionsV1TransactionsBulkPatchResponses];
+export type BulkUpdateTransactionsResponse =
+  BulkUpdateTransactionsResponses[keyof BulkUpdateTransactionsResponses];
 
-export type UpdateTransactionV1TransactionsTransactionIdPatchData = {
+export type UpdateTransactionData = {
   body: TransactionUpdate;
   path: {
     /**
@@ -11410,27 +11339,27 @@ export type UpdateTransactionV1TransactionsTransactionIdPatchData = {
   url: "/v1/transactions/{transaction_id}";
 };
 
-export type UpdateTransactionV1TransactionsTransactionIdPatchErrors = {
+export type UpdateTransactionErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateTransactionV1TransactionsTransactionIdPatchError =
-  UpdateTransactionV1TransactionsTransactionIdPatchErrors[keyof UpdateTransactionV1TransactionsTransactionIdPatchErrors];
+export type UpdateTransactionError =
+  UpdateTransactionErrors[keyof UpdateTransactionErrors];
 
-export type UpdateTransactionV1TransactionsTransactionIdPatchResponses = {
+export type UpdateTransactionResponses = {
   /**
    * Successful Response
    */
   200: TransactionUpdateResponse;
 };
 
-export type UpdateTransactionV1TransactionsTransactionIdPatchResponse =
-  UpdateTransactionV1TransactionsTransactionIdPatchResponses[keyof UpdateTransactionV1TransactionsTransactionIdPatchResponses];
+export type UpdateTransactionResponse =
+  UpdateTransactionResponses[keyof UpdateTransactionResponses];
 
-export type RenameTransactionV1TransactionsTransactionIdNamePutData = {
+export type RenameTransactionData = {
   body: TransactionRename;
   path: {
     /**
@@ -11442,54 +11371,54 @@ export type RenameTransactionV1TransactionsTransactionIdNamePutData = {
   url: "/v1/transactions/{transaction_id}/name";
 };
 
-export type RenameTransactionV1TransactionsTransactionIdNamePutErrors = {
+export type RenameTransactionErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type RenameTransactionV1TransactionsTransactionIdNamePutError =
-  RenameTransactionV1TransactionsTransactionIdNamePutErrors[keyof RenameTransactionV1TransactionsTransactionIdNamePutErrors];
+export type RenameTransactionError =
+  RenameTransactionErrors[keyof RenameTransactionErrors];
 
-export type RenameTransactionV1TransactionsTransactionIdNamePutResponses = {
+export type RenameTransactionResponses = {
   /**
    * Successful Response
    */
   200: TransactionRenameResponse;
 };
 
-export type RenameTransactionV1TransactionsTransactionIdNamePutResponse =
-  RenameTransactionV1TransactionsTransactionIdNamePutResponses[keyof RenameTransactionV1TransactionsTransactionIdNamePutResponses];
+export type RenameTransactionResponse =
+  RenameTransactionResponses[keyof RenameTransactionResponses];
 
-export type NameTransactionsV1TransactionsNamesPostData = {
+export type NameTransactionsData = {
   body: NameAllRequest;
   path?: never;
   query?: never;
   url: "/v1/transactions/names";
 };
 
-export type NameTransactionsV1TransactionsNamesPostErrors = {
+export type NameTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type NameTransactionsV1TransactionsNamesPostError =
-  NameTransactionsV1TransactionsNamesPostErrors[keyof NameTransactionsV1TransactionsNamesPostErrors];
+export type NameTransactionsError =
+  NameTransactionsErrors[keyof NameTransactionsErrors];
 
-export type NameTransactionsV1TransactionsNamesPostResponses = {
+export type NameTransactionsResponses = {
   /**
    * Successful Response
    */
   200: NameAllResponse;
 };
 
-export type NameTransactionsV1TransactionsNamesPostResponse =
-  NameTransactionsV1TransactionsNamesPostResponses[keyof NameTransactionsV1TransactionsNamesPostResponses];
+export type NameTransactionsResponse =
+  NameTransactionsResponses[keyof NameTransactionsResponses];
 
-export type UnpairTransferV1TransactionsTransactionIdTransferDeleteData = {
+export type UnpairTransferData = {
   body?: never;
   path: {
     /**
@@ -11501,57 +11430,54 @@ export type UnpairTransferV1TransactionsTransactionIdTransferDeleteData = {
   url: "/v1/transactions/{transaction_id}/transfer";
 };
 
-export type UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors = {
+export type UnpairTransferErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UnpairTransferV1TransactionsTransactionIdTransferDeleteError =
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors[keyof UnpairTransferV1TransactionsTransactionIdTransferDeleteErrors];
+export type UnpairTransferError =
+  UnpairTransferErrors[keyof UnpairTransferErrors];
 
-export type UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses = {
+export type UnpairTransferResponses = {
   /**
    * Successful Response
    */
   204: void;
 };
 
-export type UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse =
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses[keyof UnpairTransferV1TransactionsTransactionIdTransferDeleteResponses];
+export type UnpairTransferResponse =
+  UnpairTransferResponses[keyof UnpairTransferResponses];
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData =
-  {
-    body: BulkCategorizeRequest;
-    path?: never;
-    query?: never;
-    url: "/v1/transactions/categorize-by-description";
-  };
+export type CategorizeByDescriptionData = {
+  body: BulkCategorizeRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/categorize-by-description";
+};
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors =
-  {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-  };
+export type CategorizeByDescriptionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError =
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostErrors];
+export type CategorizeByDescriptionError =
+  CategorizeByDescriptionErrors[keyof CategorizeByDescriptionErrors];
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: BulkCategorizeResponse;
-  };
+export type CategorizeByDescriptionResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkCategorizeResponse;
+};
 
-export type CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse =
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses[keyof CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponses];
+export type CategorizeByDescriptionResponse =
+  CategorizeByDescriptionResponses[keyof CategorizeByDescriptionResponses];
 
-export type SpendingByCategoryV1TransactionsSpendingByCategoryGetData = {
+export type SpendingByCategoryData = {
   body?: never;
   path?: never;
   query: {
@@ -11571,27 +11497,27 @@ export type SpendingByCategoryV1TransactionsSpendingByCategoryGetData = {
   url: "/v1/transactions/spending-by-category";
 };
 
-export type SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors = {
+export type SpendingByCategoryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type SpendingByCategoryV1TransactionsSpendingByCategoryGetError =
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors[keyof SpendingByCategoryV1TransactionsSpendingByCategoryGetErrors];
+export type SpendingByCategoryError =
+  SpendingByCategoryErrors[keyof SpendingByCategoryErrors];
 
-export type SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses = {
+export type SpendingByCategoryResponses = {
   /**
    * Successful Response
    */
   200: MonthlySpendingResponse;
 };
 
-export type SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse =
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses[keyof SpendingByCategoryV1TransactionsSpendingByCategoryGetResponses];
+export type SpendingByCategoryResponse =
+  SpendingByCategoryResponses[keyof SpendingByCategoryResponses];
 
-export type TransactionSummaryV1TransactionsSummaryGetData = {
+export type GetTransactionSummaryData = {
   body?: never;
   path?: never;
   query: {
@@ -11611,27 +11537,27 @@ export type TransactionSummaryV1TransactionsSummaryGetData = {
   url: "/v1/transactions/summary";
 };
 
-export type TransactionSummaryV1TransactionsSummaryGetErrors = {
+export type GetTransactionSummaryErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type TransactionSummaryV1TransactionsSummaryGetError =
-  TransactionSummaryV1TransactionsSummaryGetErrors[keyof TransactionSummaryV1TransactionsSummaryGetErrors];
+export type GetTransactionSummaryError =
+  GetTransactionSummaryErrors[keyof GetTransactionSummaryErrors];
 
-export type TransactionSummaryV1TransactionsSummaryGetResponses = {
+export type GetTransactionSummaryResponses = {
   /**
    * Successful Response
    */
   200: TransactionSummaryResponse;
 };
 
-export type TransactionSummaryV1TransactionsSummaryGetResponse =
-  TransactionSummaryV1TransactionsSummaryGetResponses[keyof TransactionSummaryV1TransactionsSummaryGetResponses];
+export type GetTransactionSummaryResponse =
+  GetTransactionSummaryResponses[keyof GetTransactionSummaryResponses];
 
-export type MonthlyFlowV1TransactionsMonthlyFlowGetData = {
+export type GetMonthlyFlowData = {
   body?: never;
   path?: never;
   query?: {
@@ -11645,138 +11571,129 @@ export type MonthlyFlowV1TransactionsMonthlyFlowGetData = {
   url: "/v1/transactions/monthly-flow";
 };
 
-export type MonthlyFlowV1TransactionsMonthlyFlowGetErrors = {
+export type GetMonthlyFlowErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type MonthlyFlowV1TransactionsMonthlyFlowGetError =
-  MonthlyFlowV1TransactionsMonthlyFlowGetErrors[keyof MonthlyFlowV1TransactionsMonthlyFlowGetErrors];
+export type GetMonthlyFlowError =
+  GetMonthlyFlowErrors[keyof GetMonthlyFlowErrors];
 
-export type MonthlyFlowV1TransactionsMonthlyFlowGetResponses = {
+export type GetMonthlyFlowResponses = {
   /**
    * Successful Response
    */
   200: MonthlyFlowResponse;
 };
 
-export type MonthlyFlowV1TransactionsMonthlyFlowGetResponse =
-  MonthlyFlowV1TransactionsMonthlyFlowGetResponses[keyof MonthlyFlowV1TransactionsMonthlyFlowGetResponses];
+export type GetMonthlyFlowResponse =
+  GetMonthlyFlowResponses[keyof GetMonthlyFlowResponses];
 
-export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Transaction Id
-       */
-      transaction_id: string;
-    };
-    query?: never;
-    url: "/v1/transactions/{transaction_id}/documents";
-  };
-
-export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors =
-  {
+export type ListTransactionDocumentsData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Transaction Id
      */
-    422: HttpValidationError;
+    transaction_id: string;
   };
+  query?: never;
+  url: "/v1/transactions/{transaction_id}/documents";
+};
 
-export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetError =
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors[keyof ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetErrors];
+export type ListTransactionDocumentsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses =
-  {
+export type ListTransactionDocumentsError =
+  ListTransactionDocumentsErrors[keyof ListTransactionDocumentsErrors];
+
+export type ListTransactionDocumentsResponses = {
+  /**
+   * Response List Transaction Documents
+   *
+   * Successful Response
+   */
+  200: Array<DocumentSchema>;
+};
+
+export type ListTransactionDocumentsResponse =
+  ListTransactionDocumentsResponses[keyof ListTransactionDocumentsResponses];
+
+export type AddTransactionDocumentData = {
+  body: BodyAddTransactionDocument;
+  path: {
     /**
-     * Response List Transaction Documents V1 Transactions  Transaction Id  Documents Get
-     *
-     * Successful Response
+     * Transaction Id
      */
-    200: Array<DocumentSchema>;
+    transaction_id: string;
   };
+  query?: never;
+  url: "/v1/transactions/{transaction_id}/documents";
+};
 
-export type ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse =
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses[keyof ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponses];
+export type AddTransactionDocumentErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData =
-  {
-    body: BodyAddTransactionDocumentV1TransactionsTransactionIdDocumentsPost;
-    path: {
-      /**
-       * Transaction Id
-       */
-      transaction_id: string;
-    };
-    query?: never;
-    url: "/v1/transactions/{transaction_id}/documents";
-  };
+export type AddTransactionDocumentError =
+  AddTransactionDocumentErrors[keyof AddTransactionDocumentErrors];
 
-export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors =
-  {
+export type AddTransactionDocumentResponses = {
+  /**
+   * Successful Response
+   */
+  201: DocumentSchema;
+};
+
+export type AddTransactionDocumentResponse =
+  AddTransactionDocumentResponses[keyof AddTransactionDocumentResponses];
+
+export type RemoveTransactionDocumentData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Transaction Id
      */
-    422: HttpValidationError;
-  };
-
-export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError =
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors[keyof AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostErrors];
-
-export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses =
-  {
+    transaction_id: string;
     /**
-     * Successful Response
+     * Document Id
      */
-    201: DocumentSchema;
+    document_id: string;
   };
+  query?: never;
+  url: "/v1/transactions/{transaction_id}/documents/{document_id}";
+};
 
-export type AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse =
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses[keyof AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponses];
+export type RemoveTransactionDocumentErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
-export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Transaction Id
-       */
-      transaction_id: string;
-      /**
-       * Document Id
-       */
-      document_id: string;
-    };
-    query?: never;
-    url: "/v1/transactions/{transaction_id}/documents/{document_id}";
-  };
+export type RemoveTransactionDocumentError =
+  RemoveTransactionDocumentErrors[keyof RemoveTransactionDocumentErrors];
 
-export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors =
-  {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-  };
+export type RemoveTransactionDocumentResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
 
-export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError =
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors[keyof RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteErrors];
+export type RemoveTransactionDocumentResponse =
+  RemoveTransactionDocumentResponses[keyof RemoveTransactionDocumentResponses];
 
-export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses =
-  {
-    /**
-     * Successful Response
-     */
-    204: void;
-  };
-
-export type RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse =
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses[keyof RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponses];
-
-export type DownloadDocumentV1DocumentsDocumentIdFileGetData = {
+export type DownloadDocumentData = {
   body?: never;
   path: {
     /**
@@ -11788,24 +11705,24 @@ export type DownloadDocumentV1DocumentsDocumentIdFileGetData = {
   url: "/v1/documents/{document_id}/file";
 };
 
-export type DownloadDocumentV1DocumentsDocumentIdFileGetErrors = {
+export type DownloadDocumentErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DownloadDocumentV1DocumentsDocumentIdFileGetError =
-  DownloadDocumentV1DocumentsDocumentIdFileGetErrors[keyof DownloadDocumentV1DocumentsDocumentIdFileGetErrors];
+export type DownloadDocumentError =
+  DownloadDocumentErrors[keyof DownloadDocumentErrors];
 
-export type DownloadDocumentV1DocumentsDocumentIdFileGetResponses = {
+export type DownloadDocumentResponses = {
   /**
    * Successful Response
    */
   200: unknown;
 };
 
-export type DocumentPageV1DocumentsDocumentIdPagesPageGetData = {
+export type DocumentPageData = {
   body?: never;
   path: {
     /**
@@ -11821,24 +11738,23 @@ export type DocumentPageV1DocumentsDocumentIdPagesPageGetData = {
   url: "/v1/documents/{document_id}/pages/{page}";
 };
 
-export type DocumentPageV1DocumentsDocumentIdPagesPageGetErrors = {
+export type DocumentPageErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DocumentPageV1DocumentsDocumentIdPagesPageGetError =
-  DocumentPageV1DocumentsDocumentIdPagesPageGetErrors[keyof DocumentPageV1DocumentsDocumentIdPagesPageGetErrors];
+export type DocumentPageError = DocumentPageErrors[keyof DocumentPageErrors];
 
-export type DocumentPageV1DocumentsDocumentIdPagesPageGetResponses = {
+export type DocumentPageResponses = {
   /**
    * Successful Response
    */
   200: unknown;
 };
 
-export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData = {
+export type DocumentThumbnailData = {
   body?: never;
   path: {
     /**
@@ -11850,24 +11766,24 @@ export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData = {
   url: "/v1/documents/{document_id}/thumbnail";
 };
 
-export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors = {
+export type DocumentThumbnailErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError =
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors[keyof DocumentThumbnailV1DocumentsDocumentIdThumbnailGetErrors];
+export type DocumentThumbnailError =
+  DocumentThumbnailErrors[keyof DocumentThumbnailErrors];
 
-export type DocumentThumbnailV1DocumentsDocumentIdThumbnailGetResponses = {
+export type DocumentThumbnailResponses = {
   /**
    * Successful Response
    */
   200: unknown;
 };
 
-export type GetWeatherForecastV1WeatherGetData = {
+export type GetWeatherForecastData = {
   body?: never;
   path?: never;
   query: {
@@ -11905,27 +11821,27 @@ export type GetWeatherForecastV1WeatherGetData = {
   url: "/v1/weather";
 };
 
-export type GetWeatherForecastV1WeatherGetErrors = {
+export type GetWeatherForecastErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetWeatherForecastV1WeatherGetError =
-  GetWeatherForecastV1WeatherGetErrors[keyof GetWeatherForecastV1WeatherGetErrors];
+export type GetWeatherForecastError =
+  GetWeatherForecastErrors[keyof GetWeatherForecastErrors];
 
-export type GetWeatherForecastV1WeatherGetResponses = {
+export type GetWeatherForecastResponses = {
   /**
    * Successful Response
    */
   200: WeatherForecast;
 };
 
-export type GetWeatherForecastV1WeatherGetResponse =
-  GetWeatherForecastV1WeatherGetResponses[keyof GetWeatherForecastV1WeatherGetResponses];
+export type GetWeatherForecastResponse =
+  GetWeatherForecastResponses[keyof GetWeatherForecastResponses];
 
-export type GetKlarnaTransactionsV1KlarnaTransactionsGetData = {
+export type GetKlarnaTransactionsData = {
   body?: never;
   headers: {
     /**
@@ -11946,19 +11862,19 @@ export type GetKlarnaTransactionsV1KlarnaTransactionsGetData = {
   url: "/v1/klarna/transactions";
 };
 
-export type GetKlarnaTransactionsV1KlarnaTransactionsGetErrors = {
+export type GetKlarnaTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type GetKlarnaTransactionsV1KlarnaTransactionsGetError =
-  GetKlarnaTransactionsV1KlarnaTransactionsGetErrors[keyof GetKlarnaTransactionsV1KlarnaTransactionsGetErrors];
+export type GetKlarnaTransactionsError =
+  GetKlarnaTransactionsErrors[keyof GetKlarnaTransactionsErrors];
 
-export type GetKlarnaTransactionsV1KlarnaTransactionsGetResponses = {
+export type GetKlarnaTransactionsResponses = {
   /**
-   * Response Get Klarna Transactions V1 Klarna Transactions Get
+   * Response Get Klarna Transactions
    *
    * Successful Response
    */
@@ -11967,32 +11883,32 @@ export type GetKlarnaTransactionsV1KlarnaTransactionsGetResponses = {
   };
 };
 
-export type GetKlarnaTransactionsV1KlarnaTransactionsGetResponse =
-  GetKlarnaTransactionsV1KlarnaTransactionsGetResponses[keyof GetKlarnaTransactionsV1KlarnaTransactionsGetResponses];
+export type GetKlarnaTransactionsResponse =
+  GetKlarnaTransactionsResponses[keyof GetKlarnaTransactionsResponses];
 
-export type ImportKlarnaTransactionsV1KlarnaImportPostData = {
+export type ImportKlarnaTransactionsData = {
   body: KlarnaImportRequest;
   path?: never;
   query?: never;
   url: "/v1/klarna/import";
 };
 
-export type ImportKlarnaTransactionsV1KlarnaImportPostErrors = {
+export type ImportKlarnaTransactionsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ImportKlarnaTransactionsV1KlarnaImportPostError =
-  ImportKlarnaTransactionsV1KlarnaImportPostErrors[keyof ImportKlarnaTransactionsV1KlarnaImportPostErrors];
+export type ImportKlarnaTransactionsError =
+  ImportKlarnaTransactionsErrors[keyof ImportKlarnaTransactionsErrors];
 
-export type ImportKlarnaTransactionsV1KlarnaImportPostResponses = {
+export type ImportKlarnaTransactionsResponses = {
   /**
    * Successful Response
    */
   200: KlarnaImportResponse;
 };
 
-export type ImportKlarnaTransactionsV1KlarnaImportPostResponse =
-  ImportKlarnaTransactionsV1KlarnaImportPostResponses[keyof ImportKlarnaTransactionsV1KlarnaImportPostResponses];
+export type ImportKlarnaTransactionsResponse =
+  ImportKlarnaTransactionsResponses[keyof ImportKlarnaTransactionsResponses];

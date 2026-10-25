@@ -1,12 +1,12 @@
 import type { TaskSchema, TaskUpdate } from "@bessel/client";
 import {
-  completeTaskV1TasksTaskIdCompletePostMutation,
-  deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation,
-  deleteTaskV1TasksTaskIdDeleteMutation,
-  getTaskV1TasksTaskIdGetOptions,
-  listProjectsV1ProjectsGetOptions,
-  reopenTaskV1TasksTaskIdReopenPostMutation,
-  updateTaskV1TasksTaskIdPatchMutation,
+  completeTaskMutation,
+  deleteTaskAttachmentMutation,
+  deleteTaskMutation,
+  getTaskOptions,
+  listProjectsOptions,
+  reopenTaskMutation,
+  updateTaskMutation,
 } from "@bessel/client";
 import { Button } from "@bessel/ui/components/button";
 import {
@@ -449,20 +449,20 @@ export function TaskDetailDialogController({
   const cache = useTaskCacheHelpers();
 
   const { data: task } = useQuery({
-    ...getTaskV1TasksTaskIdGetOptions({
+    ...getTaskOptions({
       client,
       path: { task_id: taskId ?? "" },
     }),
     enabled: taskId != null,
   });
   const { data: projectsData } = useQuery({
-    ...listProjectsV1ProjectsGetOptions({ client }),
+    ...listProjectsOptions({ client }),
     enabled: taskId != null,
   });
   const projects = (projectsData ?? []).map((p) => p.name);
 
   const completeMutation = useMutation({
-    ...completeTaskV1TasksTaskIdCompletePostMutation({ client }),
+    ...completeTaskMutation({ client }),
     ...taskMutationOptions,
     onMutate: async ({ path }) => {
       const previous = await cache.cancelAndGet(path.task_id);
@@ -482,7 +482,7 @@ export function TaskDetailDialogController({
   });
 
   const reopenMutation = useMutation({
-    ...reopenTaskV1TasksTaskIdReopenPostMutation({ client }),
+    ...reopenTaskMutation({ client }),
     ...taskMutationOptions,
     onMutate: async ({ path }) => {
       const previous = await cache.cancelAndGet(path.task_id);
@@ -501,7 +501,7 @@ export function TaskDetailDialogController({
   });
 
   const updateMutation = useMutation({
-    ...updateTaskV1TasksTaskIdPatchMutation({ client }),
+    ...updateTaskMutation({ client }),
     ...taskMutationOptions,
     onMutate: async ({ path, body }) => {
       const previous = await cache.cancelAndGet(path.task_id);
@@ -521,7 +521,7 @@ export function TaskDetailDialogController({
 
   // A failed delete brings the task back with the refetch in settle().
   const deleteMutation = useMutation({
-    ...deleteTaskV1TasksTaskIdDeleteMutation({ client }),
+    ...deleteTaskMutation({ client }),
     ...taskMutationOptions,
     onMutate: async ({ path }) => {
       await cache.cancel();
@@ -537,7 +537,7 @@ export function TaskDetailDialogController({
     string | null
   >(null);
   const deleteAttachmentMutation = useMutation({
-    ...deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation({
+    ...deleteTaskAttachmentMutation({
       client,
     }),
     ...taskMutationOptions,

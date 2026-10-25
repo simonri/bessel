@@ -1,14 +1,14 @@
 import {
-  createRecipeV1RecipesPostMutation,
-  deleteRecipeV1RecipesRecipeIdDeleteMutation,
-  listRecipesV1RecipesGetOptions,
-  listRecipesV1RecipesGetQueryKey,
+  createRecipeMutation,
+  deleteRecipeMutation,
+  listRecipesOptions,
+  listRecipesQueryKey,
   type RecipeBody,
   type RecipeImportResult,
   type RecipeSchema,
   type RecipeType,
-  structureRecipeTextV1RecipesImportPostMutation,
-  updateRecipeV1RecipesRecipeIdPatchMutation,
+  structureRecipeTextMutation,
+  updateRecipeMutation,
 } from "@bessel/client";
 import {
   DropdownMenu,
@@ -209,10 +209,10 @@ function Recipes() {
   } | null>(null);
   const queryClient = useQueryClient();
 
-  const queryKey = listRecipesV1RecipesGetQueryKey({ client });
+  const queryKey = listRecipesQueryKey({ client });
 
   const { data } = useQuery(
-    listRecipesV1RecipesGetOptions({
+    listRecipesOptions({
       client,
       query: { limit: 200, sorting: ["title"] },
     }),
@@ -247,7 +247,7 @@ function Recipes() {
   }, [selectedKey]);
 
   const createMutation = useMutation({
-    ...createRecipeV1RecipesPostMutation({ client }),
+    ...createRecipeMutation({ client }),
     onSuccess: (recipe) => {
       void queryClient.invalidateQueries({ queryKey });
       setSelectedId(recipe.id);
@@ -257,14 +257,14 @@ function Recipes() {
   });
 
   const updateMutation = useMutation({
-    ...updateRecipeV1RecipesRecipeIdPatchMutation({ client }),
+    ...updateRecipeMutation({ client }),
     ...recipeWrites,
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
     onError: () => toast.error("Failed to save recipe"),
   });
 
   const deleteMutation = useMutation({
-    ...deleteRecipeV1RecipesRecipeIdDeleteMutation({ client }),
+    ...deleteRecipeMutation({ client }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
       setSelectedId(null);
@@ -276,7 +276,7 @@ function Recipes() {
   // Hook-level callbacks, unlike per-call ones, still run after the page
   // unmounts, so a tidy finishing while you're elsewhere is still saved.
   const restoreMutation = useMutation({
-    ...updateRecipeV1RecipesRecipeIdPatchMutation({ client }),
+    ...updateRecipeMutation({ client }),
     ...recipeWrites,
     onSuccess: (restored) => {
       void queryClient.invalidateQueries({ queryKey });
@@ -287,7 +287,7 @@ function Recipes() {
 
   const tidyTarget = useRef<RecipeSchema | null>(null);
   const tidyMutation = useMutation({
-    ...structureRecipeTextV1RecipesImportPostMutation({ client }),
+    ...structureRecipeTextMutation({ client }),
     onSuccess: (result) => {
       const recipe = tidyTarget.current;
       if (!recipe) return;

@@ -1,10 +1,10 @@
 import type { PlaceSchema, PlaceStatus } from "@bessel/client";
 import {
-  deletePlaceV1PlacesPlaceIdDeleteMutation,
-  getPlaceV1PlacesPlaceIdGetOptions,
-  listPlacesV1PlacesGetOptions,
-  listPlacesV1PlacesGetQueryKey,
-  updatePlaceV1PlacesPlaceIdPatchMutation,
+  deletePlaceMutation,
+  getPlaceOptions,
+  listPlacesOptions,
+  listPlacesQueryKey,
+  updatePlaceMutation,
 } from "@bessel/client";
 import {
   Select,
@@ -126,7 +126,7 @@ function Travel() {
   const queryClient = useQueryClient();
 
   const { data: placesData, isLoading } = useQuery({
-    ...listPlacesV1PlacesGetOptions({
+    ...listPlacesOptions({
       client,
       query: {
         limit: PAGE_SIZE,
@@ -141,14 +141,14 @@ function Travel() {
   // Per-status totals for the tabs — limit=1 keeps the payloads negligible;
   // only pagination.total_count is read.
   const { data: visitedTotal } = useQuery({
-    ...listPlacesV1PlacesGetOptions({
+    ...listPlacesOptions({
       client,
       query: { limit: 1, status: "visited" },
     }),
     select: (d) => d.pagination.total_count,
   });
   const { data: wantTotal } = useQuery({
-    ...listPlacesV1PlacesGetOptions({
+    ...listPlacesOptions({
       client,
       query: { limit: 1, status: "want_to_go" },
     }),
@@ -163,7 +163,7 @@ function Travel() {
     want_to_go: wantTotal,
   };
 
-  const queryKey = listPlacesV1PlacesGetQueryKey({ client });
+  const queryKey = listPlacesQueryKey({ client });
 
   const settle = () =>
     settleWhenIdle(queryClient, placeWrites.mutationKey, () => {
@@ -172,7 +172,7 @@ function Travel() {
 
   // A failed delete brings the place back with the refetch in settle().
   const deleteMutation = useMutation({
-    ...deletePlaceV1PlacesPlaceIdDeleteMutation({ client }),
+    ...deletePlaceMutation({ client }),
     ...placeWrites,
     onMutate: async ({ path }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -197,7 +197,7 @@ function Travel() {
   });
 
   const markVisitedMutation = useMutation({
-    ...updatePlaceV1PlacesPlaceIdPatchMutation({ client }),
+    ...updatePlaceMutation({ client }),
     ...placeWrites,
     onMutate: async ({ path, body }) => {
       await queryClient.cancelQueries({ queryKey });
@@ -247,7 +247,7 @@ function Travel() {
   // Opened from search: the place may be on another page of the list.
   const target = usePageTarget("travel");
   const { data: targetPlace } = useQuery({
-    ...getPlaceV1PlacesPlaceIdGetOptions({
+    ...getPlaceOptions({
       client,
       path: { place_id: target?.id ?? "" },
     }),

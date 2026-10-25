@@ -1,13 +1,13 @@
 import type { DocumentSchema } from "@bessel/client";
 import {
-  addTransactionDocumentV1TransactionsTransactionIdDocumentsPostMutation,
-  documentPageV1DocumentsDocumentIdPagesPageGet,
-  documentThumbnailV1DocumentsDocumentIdThumbnailGet,
-  downloadDocumentV1DocumentsDocumentIdFileGet,
-  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetOptions,
-  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey,
-  listTransactionsV1TransactionsGetQueryKey,
-  removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteMutation,
+  addTransactionDocumentMutation,
+  documentPage,
+  documentThumbnail,
+  downloadDocument,
+  listTransactionDocumentsOptions,
+  listTransactionDocumentsQueryKey,
+  listTransactionsQueryKey,
+  removeTransactionDocumentMutation,
 } from "@bessel/client";
 import {
   Dialog,
@@ -49,13 +49,12 @@ export function TransactionDocuments({
 }) {
   const queryClient = useQueryClient();
   const path = { transaction_id: transactionId };
-  const queryKey =
-    listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey({
-      client,
-      path,
-    });
+  const queryKey = listTransactionDocumentsQueryKey({
+    client,
+    path,
+  });
   const { data: documents = [], isLoading } = useQuery(
-    listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetOptions({
+    listTransactionDocumentsOptions({
       client,
       path,
     }),
@@ -70,19 +69,17 @@ export function TransactionDocuments({
     void queryClient.invalidateQueries({ queryKey });
     // The list's paperclip and "no receipt" filter follow the count.
     void queryClient.invalidateQueries({
-      queryKey: listTransactionsV1TransactionsGetQueryKey({ client }),
+      queryKey: listTransactionsQueryKey({ client }),
     });
   };
   const add = useMutation({
-    ...addTransactionDocumentV1TransactionsTransactionIdDocumentsPostMutation({
+    ...addTransactionDocumentMutation({
       client,
     }),
     meta: { errorToast: false },
   });
   const remove = useMutation({
-    ...removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteMutation(
-      { client },
-    ),
+    ...removeTransactionDocumentMutation({ client }),
     onSuccess: () => {
       setOpen(null);
       toast.success("Removed");
@@ -236,7 +233,7 @@ function Thumbnail({
 }) {
   const hidden = useAmountsHidden();
   const { url } = useBlobUrl(document.id, () =>
-    documentThumbnailV1DocumentsDocumentIdThumbnailGet({
+    documentThumbnail({
       client,
       path: { document_id: document.id },
       parseAs: "blob",
@@ -287,7 +284,7 @@ function DocumentViewer({
   const [confirming, setConfirming] = useState(false);
   const download = async () => {
     if (!document) return;
-    const { data } = await downloadDocumentV1DocumentsDocumentIdFileGet({
+    const { data } = await downloadDocument({
       client,
       path: { document_id: document.id },
       parseAs: "blob",
@@ -370,7 +367,7 @@ function DocumentViewer({
 function Page({ documentId, page }: { documentId: string; page: number }) {
   const hidden = useAmountsHidden();
   const { url, failed } = useBlobUrl(`${documentId}-${page}`, () =>
-    documentPageV1DocumentsDocumentIdPagesPageGet({
+    documentPage({
       client,
       path: { document_id: documentId, page },
       parseAs: "blob",

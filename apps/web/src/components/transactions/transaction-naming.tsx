@@ -1,9 +1,9 @@
 import type { NameSuggestion, TransactionSchema } from "@bessel/client";
 import {
-  listTransactionsV1TransactionsGetQueryKey,
-  nameTransactionsV1TransactionsNamesPostMutation,
-  renameTransactionV1TransactionsTransactionIdNamePutMutation,
-  updateTransactionV1TransactionsTransactionIdPatchMutation,
+  listTransactionsQueryKey,
+  nameTransactionsMutation,
+  renameTransactionMutation,
+  updateTransactionMutation,
 } from "@bessel/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
@@ -28,7 +28,7 @@ export function displayName(transaction: TransactionSchema): string {
 function useRefresh() {
   const queryClient = useQueryClient();
   return (changed?: Partial<TransactionSchema> & { id: string }) => {
-    const queryKey = listTransactionsV1TransactionsGetQueryKey({ client });
+    const queryKey = listTransactionsQueryKey({ client });
     if (changed) {
       queryClient.setQueriesData({ queryKey }, (old: any) =>
         old?.items
@@ -45,7 +45,7 @@ function useRefresh() {
     void queryClient.invalidateQueries({
       predicate: (query) =>
         (query.queryKey[0] as { _id?: string } | undefined)?._id ===
-        "transactionSummaryV1TransactionsSummaryGet",
+        "getTransactionSummary",
     });
   };
 }
@@ -66,7 +66,7 @@ export function NameHeading({
   // Enter and Escape both leave the field, which saves, unless it was Escape.
   const cancelled = useRef(false);
   const rename = useMutation({
-    ...renameTransactionV1TransactionsTransactionIdNamePutMutation({ client }),
+    ...renameTransactionMutation({ client }),
     meta: { errorToast: false },
     onSuccess: (renamed) => {
       refresh({ id: renamed.id, name: renamed.name });
@@ -169,7 +169,7 @@ export function NameSuggestions({
 }) {
   const refresh = useRefresh();
   const nameAll = useMutation({
-    ...nameTransactionsV1TransactionsNamesPostMutation({ client }),
+    ...nameTransactionsMutation({ client }),
     meta: { errorToast: false },
     onSuccess: ({ renamed }, { body }) => {
       refresh();
@@ -230,7 +230,7 @@ export function NoteField({ transaction }: { transaction: TransactionSchema }) {
   const latest = useRef({ draft, saved: transaction.note ?? null });
   latest.current.draft = draft;
   const update = useMutation({
-    ...updateTransactionV1TransactionsTransactionIdPatchMutation({ client }),
+    ...updateTransactionMutation({ client }),
     meta: { errorToast: false },
     onSuccess: (updated) => refresh({ id: updated.id, note: updated.note }),
     onError: (error) =>

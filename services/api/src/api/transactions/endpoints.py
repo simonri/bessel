@@ -331,7 +331,7 @@ async def spending_by_category(
   summary="Month Summary",
   response_model=TransactionSummaryResponse,
 )
-async def transaction_summary(
+async def get_transaction_summary(
   session: DBSession,
   current_user: CurrentDBUser,
   year: int = Query(description="Year to summarize."),
@@ -346,7 +346,7 @@ async def transaction_summary(
   summary="Monthly Income & Expenses",
   response_model=MonthlyFlowResponse,
 )
-async def monthly_flow(
+async def get_monthly_flow(
   session: DBSession,
   current_user: CurrentDBUser,
   months: int = Query(6, description="Number of months to look back (including current)."),

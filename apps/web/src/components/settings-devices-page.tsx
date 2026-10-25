@@ -1,9 +1,9 @@
 import {
   type DeviceSchema,
-  deleteDeviceV1DevicesDeviceIdDeleteMutation,
-  listDevicesV1DevicesGetOptions,
-  listDevicesV1DevicesGetQueryKey,
-  updateDeviceV1DevicesDeviceIdPatchMutation,
+  deleteDeviceMutation,
+  listDevicesOptions,
+  listDevicesQueryKey,
+  updateDeviceMutation,
 } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
@@ -31,21 +31,19 @@ export function DevicesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
-  const { data: devices = [] } = useQuery(
-    listDevicesV1DevicesGetOptions({ client }),
-  );
+  const { data: devices = [] } = useQuery(listDevicesOptions({ client }));
 
   const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: listDevicesV1DevicesGetQueryKey({ client }),
+      queryKey: listDevicesQueryKey({ client }),
     });
 
   const renameMutation = useMutation({
-    ...updateDeviceV1DevicesDeviceIdPatchMutation(),
+    ...updateDeviceMutation(),
     onSuccess: invalidate,
   });
   const deleteMutation = useMutation({
-    ...deleteDeviceV1DevicesDeviceIdDeleteMutation(),
+    ...deleteDeviceMutation(),
     onSuccess: invalidate,
   });
 

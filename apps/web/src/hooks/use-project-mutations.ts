@@ -1,7 +1,7 @@
 import {
-  createProjectV1ProjectsPostMutation,
-  listProjectsV1ProjectsGetQueryKey,
-  setProjectLocationV1ProjectsProjectIdLocationPutMutation,
+  createProjectMutation,
+  listProjectsQueryKey,
+  setProjectLocationMutation,
 } from "@bessel/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/client";
@@ -10,17 +10,17 @@ export function useProjectMutations() {
   const queryClient = useQueryClient();
   const invalidate = () =>
     queryClient.invalidateQueries({
-      queryKey: listProjectsV1ProjectsGetQueryKey({ client }),
+      queryKey: listProjectsQueryKey({ client }),
     });
 
   // Callers report failures per call, naming the project.
   const createProject = useMutation({
-    ...createProjectV1ProjectsPostMutation(),
+    ...createProjectMutation(),
     meta: { errorToast: false },
     onSuccess: invalidate,
   });
   const setLocation = useMutation({
-    ...setProjectLocationV1ProjectsProjectIdLocationPutMutation(),
+    ...setProjectLocationMutation(),
     meta: { errorToast: false },
     onSuccess: invalidate,
   });

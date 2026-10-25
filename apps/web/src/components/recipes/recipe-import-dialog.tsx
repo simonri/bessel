@@ -1,6 +1,6 @@
 import {
   type RecipeImportResult,
-  structureRecipeTextV1RecipesImportPostMutation,
+  structureRecipeTextMutation,
 } from "@bessel/client";
 import {
   GlassDialog,
@@ -60,7 +60,7 @@ export function RecipeImportDialog({
 }) {
   const [text, setText] = useState("");
   const structure = useMutation({
-    ...structureRecipeTextV1RecipesImportPostMutation({ client }),
+    ...structureRecipeTextMutation({ client }),
     // Shown inline below the text instead.
     meta: { errorToast: false },
     onSuccess: (result) => {

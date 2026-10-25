@@ -1,4 +1,4 @@
-import { syncAgentUsageV1AgentUsageSyncPost } from "@bessel/client";
+import { syncAgentUsage } from "@bessel/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { client } from "@/lib/client";
@@ -24,7 +24,7 @@ export function AgentUsageReporter() {
       try {
         const snapshot = await api.collect();
         if (!snapshot.daily.length && !snapshot.rate_limits.length) return;
-        await syncAgentUsageV1AgentUsageSyncPost({
+        await syncAgentUsage({
           client,
           body: {
             daily: snapshot.daily.map((day) => ({

@@ -1,4 +1,4 @@
-import { getTaskV1TasksTaskIdGetOptions } from "@bessel/client";
+import { getTaskOptions } from "@bessel/client";
 import { Button, buttonVariants } from "@bessel/ui/components/button";
 import {
   DropdownMenu,
@@ -218,7 +218,7 @@ function AttachedTaskButton({ entry }: { entry: WindowEntry }) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: task, error } = useQuery({
-    ...getTaskV1TasksTaskIdGetOptions({
+    ...getTaskOptions({
       client,
       path: { task_id: attachedTaskId ?? "" },
     }),

@@ -1,8 +1,8 @@
 import {
-  getLocationHistoryDayV1LocationHistoryDayGetOptions,
-  getLocationHistorySummaryV1LocationHistorySummaryGetOptions,
-  getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey,
-  importLocationHistoryV1LocationHistoryImportPostMutation,
+  getLocationHistoryDayOptions,
+  getLocationHistorySummaryOptions,
+  getLocationHistorySummaryQueryKey,
+  importLocationHistoryMutation,
   type LocationActivity,
   type LocationImportSchema,
   type LocationVisit,
@@ -65,7 +65,7 @@ const LocationDayMap = lazy(() =>
   })),
 );
 
-const DAY_QUERY_ID = "getLocationHistoryDayV1LocationHistoryDayGet";
+const DAY_QUERY_ID = "getLocationHistoryDay";
 
 /** "4 places and 3 trips, 12.4 km in all." */
 function daySentence(stats: {
@@ -103,10 +103,10 @@ function useTimelineImport(onImported: () => void) {
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const mutation = useMutation({
-    ...importLocationHistoryV1LocationHistoryImportPostMutation({ client }),
+    ...importLocationHistoryMutation({ client }),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
-        queryKey: getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey({
+        queryKey: getLocationHistorySummaryQueryKey({
           client,
         }),
       });
@@ -152,7 +152,7 @@ function useTimelineImport(onImported: () => void) {
 
 function GoogleTimelinePage() {
   const { data: summary, isLoading } = useQuery(
-    getLocationHistorySummaryV1LocationHistorySummaryGetOptions({ client }),
+    getLocationHistorySummaryOptions({ client }),
   );
   const days = useMemo(() => summary?.days.map(isoDay) ?? [], [summary]);
   const [picked, setPicked] = useState<IsoDay | null>(null);
@@ -235,7 +235,7 @@ function TimelineDay({
 }) {
   const date = useMemo(() => dayParam(day), [day]);
   const { data, isFetching } = useQuery({
-    ...getLocationHistoryDayV1LocationHistoryDayGetOptions({
+    ...getLocationHistoryDayOptions({
       client,
       query: { date },
     }),

@@ -17,7 +17,7 @@
     "/healthz": {
       "get": {
         "summary": "Healthz",
-        "operationId": "healthz_healthz_get",
+        "operationId": "healthz",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -36,7 +36,7 @@
           "auth"
         ],
         "summary": "Get Current User",
-        "operationId": "get_me_v1_auth_me_get",
+        "operationId": "get_me",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -60,7 +60,7 @@
           "auth"
         ],
         "summary": "Update Current User",
-        "operationId": "update_me_v1_auth_me_patch",
+        "operationId": "update_me",
         "requestBody": {
           "content": {
             "application/json": {
@@ -106,7 +106,7 @@
           "activity"
         ],
         "summary": "Ingest Activity Events",
-        "operationId": "ingest_activity_batch_v1_activity_batch_post",
+        "operationId": "ingest_activity_batch",
         "parameters": [
           {
             "name": "x-api-key",
@@ -165,7 +165,7 @@
           "activity"
         ],
         "summary": "List Activity Sources",
-        "operationId": "list_activity_sources_v1_activity_sources_get",
+        "operationId": "list_activity_sources",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -191,7 +191,7 @@
           "activity"
         ],
         "summary": "Get Activity Summary",
-        "operationId": "get_activity_summary_v1_activity_summary_get",
+        "operationId": "get_activity_summary",
         "security": [
           {
             "HTTPBearer": []
@@ -262,7 +262,7 @@
           "activity"
         ],
         "summary": "Get Daily Activity Totals",
-        "operationId": "get_daily_activity_v1_activity_daily_get",
+        "operationId": "get_daily_activity",
         "security": [
           {
             "HTTPBearer": []
@@ -363,7 +363,7 @@
           "activity"
         ],
         "summary": "Get Intraday Activity",
-        "operationId": "get_intraday_activity_v1_activity_intraday_get",
+        "operationId": "get_intraday_activity",
         "security": [
           {
             "HTTPBearer": []
@@ -449,7 +449,7 @@
         ],
         "summary": "Sync Agent Usage",
         "description": "Uploaded by the desktop app, which reads Claude Code's usage on its machine.",
-        "operationId": "sync_agent_usage_v1_agent_usage_sync_post",
+        "operationId": "sync_agent_usage",
         "requestBody": {
           "content": {
             "application/json": {
@@ -495,7 +495,7 @@
           "agent-usage"
         ],
         "summary": "Get Agent Usage Status",
-        "operationId": "get_agent_usage_status_v1_agent_usage_status_get",
+        "operationId": "get_agent_usage_status",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -521,7 +521,7 @@
           "agent-usage"
         ],
         "summary": "Get Agent Usage Daily Totals",
-        "operationId": "get_agent_usage_daily_v1_agent_usage_daily_get",
+        "operationId": "get_agent_usage_daily",
         "security": [
           {
             "HTTPBearer": []
@@ -584,7 +584,7 @@
         ],
         "summary": "List Bank Accounts",
         "description": "List all bank accounts.",
-        "operationId": "list_bank_accounts_v1_bank_accounts_get",
+        "operationId": "list_bank_accounts",
         "security": [
           {
             "HTTPBearer": []
@@ -671,7 +671,7 @@
         ],
         "summary": "Create Bank Account",
         "description": "Create a new bank account.",
-        "operationId": "create_bank_account_v1_bank_accounts_post",
+        "operationId": "create_bank_account",
         "security": [
           {
             "HTTPBearer": []
@@ -718,7 +718,7 @@
         ],
         "summary": "Accounts Overview",
         "description": "Every account with its balance, history and where its data comes from, plus totals per owner and currency.",
-        "operationId": "get_accounts_overview_v1_bank_accounts_overview_get",
+        "operationId": "get_accounts_overview",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -745,7 +745,7 @@
         ],
         "summary": "Net Worth History",
         "description": "Net worth on every day it changed, per currency, from the first transaction to today.",
-        "operationId": "get_net_worth_history_v1_bank_accounts_net_worth_get",
+        "operationId": "get_net_worth_history",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -772,7 +772,7 @@
         ],
         "summary": "Get Bank Account",
         "description": "Get a bank account by ID.",
-        "operationId": "get_bank_account_v1_bank_accounts__bank_account_id__get",
+        "operationId": "get_bank_account",
         "security": [
           {
             "HTTPBearer": []
@@ -819,7 +819,7 @@
         ],
         "summary": "Update Bank Account",
         "description": "Update a bank account.",
-        "operationId": "update_bank_account_v1_bank_accounts__bank_account_id__patch",
+        "operationId": "update_bank_account",
         "security": [
           {
             "HTTPBearer": []
@@ -876,7 +876,7 @@
         ],
         "summary": "Delete Bank Account",
         "description": "Delete a bank account and all its transactions.",
-        "operationId": "delete_bank_account_v1_bank_accounts__bank_account_id__delete",
+        "operationId": "delete_bank_account",
         "security": [
           {
             "HTTPBearer": []
@@ -917,7 +917,7 @@
           "avanza"
         ],
         "summary": "Get Avanza Connection",
-        "operationId": "get_avanza_v1_avanza_get",
+        "operationId": "get_avanza",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -942,7 +942,7 @@
         ],
         "summary": "Disconnect Avanza",
         "description": "Deletes the stored login. Imported transactions, trades and positions stay.",
-        "operationId": "disconnect_avanza_v1_avanza_delete",
+        "operationId": "disconnect_avanza",
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -962,7 +962,7 @@
         ],
         "summary": "Connect Avanza",
         "description": "Checks the login with Avanza and stores it encrypted; also how new credentials are saved.",
-        "operationId": "connect_avanza_v1_avanza_connect_post",
+        "operationId": "connect_avanza",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1008,7 +1008,7 @@
           "avanza"
         ],
         "summary": "Link Avanza Account",
-        "operationId": "link_avanza_account_v1_avanza_accounts__account_id__patch",
+        "operationId": "link_avanza_account",
         "security": [
           {
             "HTTPBearer": []
@@ -1066,7 +1066,7 @@
           "avanza"
         ],
         "summary": "Sync Avanza",
-        "operationId": "sync_avanza_v1_avanza_sync_post",
+        "operationId": "sync_avanza",
         "responses": {
           "202": {
             "description": "Successful Response",
@@ -1090,7 +1090,7 @@
           "montrose"
         ],
         "summary": "Get Montrose Connection",
-        "operationId": "get_montrose_v1_montrose_get",
+        "operationId": "get_montrose",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1115,7 +1115,7 @@
         ],
         "summary": "Disconnect Montrose",
         "description": "Forgets the consent and its tokens. Imported transactions stay.",
-        "operationId": "disconnect_montrose_v1_montrose_delete",
+        "operationId": "disconnect_montrose",
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -1135,7 +1135,7 @@
         ],
         "summary": "Start Montrose Connection",
         "description": "Starts the BankID consent; Montrose sends the user back to Bessel's callback page.",
-        "operationId": "authorize_montrose_v1_montrose_authorize_post",
+        "operationId": "authorize_montrose",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1161,7 +1161,7 @@
           "montrose"
         ],
         "summary": "Complete Montrose Connection",
-        "operationId": "complete_montrose_v1_montrose_callback_post",
+        "operationId": "complete_montrose",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1207,7 +1207,7 @@
           "montrose"
         ],
         "summary": "Link Montrose Account",
-        "operationId": "link_montrose_account_v1_montrose_accounts__account_id__patch",
+        "operationId": "link_montrose_account",
         "security": [
           {
             "HTTPBearer": []
@@ -1265,7 +1265,7 @@
           "montrose"
         ],
         "summary": "Sync Montrose",
-        "operationId": "sync_montrose_v1_montrose_sync_post",
+        "operationId": "sync_montrose",
         "responses": {
           "202": {
             "description": "Successful Response",
@@ -1289,7 +1289,7 @@
           "calendars"
         ],
         "summary": "List Calendar Accounts",
-        "operationId": "list_calendar_accounts_v1_calendars_accounts_get",
+        "operationId": "list_calendar_accounts",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1315,7 +1315,7 @@
           "calendars"
         ],
         "summary": "Start Google Calendar Connection",
-        "operationId": "authorize_google_v1_calendars_google_authorize_post",
+        "operationId": "authorize_google",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1341,7 +1341,7 @@
           "calendars"
         ],
         "summary": "Complete Google Calendar Connection",
-        "operationId": "complete_google_connect_v1_calendars_google_callback_post",
+        "operationId": "complete_google_connect",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1387,7 +1387,7 @@
           "calendars"
         ],
         "summary": "Connect iCloud Calendar",
-        "operationId": "connect_icloud_v1_calendars_icloud_post",
+        "operationId": "connect_icloud",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1433,7 +1433,7 @@
           "calendars"
         ],
         "summary": "Disconnect Calendar Account",
-        "operationId": "disconnect_calendar_account_v1_calendars_accounts__account_id__delete",
+        "operationId": "disconnect_calendar_account",
         "security": [
           {
             "HTTPBearer": []
@@ -1474,7 +1474,7 @@
           "calendars"
         ],
         "summary": "Sync Calendar Account",
-        "operationId": "sync_calendar_account_v1_calendars_accounts__account_id__sync_post",
+        "operationId": "sync_calendar_account",
         "security": [
           {
             "HTTPBearer": []
@@ -1520,7 +1520,7 @@
           "calendars"
         ],
         "summary": "Update Calendar",
-        "operationId": "update_calendar_v1_calendars__calendar_id__patch",
+        "operationId": "update_calendar",
         "security": [
           {
             "HTTPBearer": []
@@ -1578,7 +1578,7 @@
           "calendars"
         ],
         "summary": "List Calendar Events",
-        "operationId": "list_calendar_events_v1_calendars_events_get",
+        "operationId": "list_calendar_events",
         "security": [
           {
             "HTTPBearer": []
@@ -1638,7 +1638,7 @@
           "calendars"
         ],
         "summary": "Create Calendar Event",
-        "operationId": "create_calendar_event_v1_calendars__calendar_id__events_post",
+        "operationId": "create_calendar_event",
         "security": [
           {
             "HTTPBearer": []
@@ -1696,7 +1696,7 @@
           "calendars"
         ],
         "summary": "Update Calendar Event",
-        "operationId": "update_calendar_event_v1_calendars_events__event_id__patch",
+        "operationId": "update_calendar_event",
         "security": [
           {
             "HTTPBearer": []
@@ -1752,7 +1752,7 @@
           "calendars"
         ],
         "summary": "Delete Calendar Event",
-        "operationId": "delete_calendar_event_v1_calendars_events__event_id__delete",
+        "operationId": "delete_calendar_event",
         "security": [
           {
             "HTTPBearer": []
@@ -1827,7 +1827,7 @@
           "calendars"
         ],
         "summary": "Answer Calendar Invitation",
-        "operationId": "respond_to_calendar_event_v1_calendars_events__event_id__response_put",
+        "operationId": "respond_to_calendar_event",
         "security": [
           {
             "HTTPBearer": []
@@ -1885,7 +1885,7 @@
           "bank-connections"
         ],
         "summary": "List Bank Connections",
-        "operationId": "list_bank_connections_v1_bank_connections_get",
+        "operationId": "list_bank_connections",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1911,7 +1911,7 @@
           "bank-connections"
         ],
         "summary": "Start Bank Connection",
-        "operationId": "authorize_bank_connection_v1_bank_connections_authorize_post",
+        "operationId": "authorize_bank_connection",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1957,7 +1957,7 @@
           "bank-connections"
         ],
         "summary": "Complete Bank Connection",
-        "operationId": "complete_bank_connection_v1_bank_connections_callback_post",
+        "operationId": "complete_bank_connection",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2003,7 +2003,7 @@
           "bank-connections"
         ],
         "summary": "Link Bank Connection Account",
-        "operationId": "link_bank_connection_account_v1_bank_connections_accounts__account_id__patch",
+        "operationId": "link_bank_connection_account",
         "security": [
           {
             "HTTPBearer": []
@@ -2061,7 +2061,7 @@
           "bank-connections"
         ],
         "summary": "Sync Bank Connection",
-        "operationId": "sync_bank_connection_v1_bank_connections__connection_id__sync_post",
+        "operationId": "sync_bank_connection",
         "security": [
           {
             "HTTPBearer": []
@@ -2107,7 +2107,7 @@
           "bank-connections"
         ],
         "summary": "Disconnect Bank Connection",
-        "operationId": "disconnect_bank_connection_v1_bank_connections__connection_id__delete",
+        "operationId": "disconnect_bank_connection",
         "security": [
           {
             "HTTPBearer": []
@@ -2149,7 +2149,7 @@
         ],
         "summary": "List Categories",
         "description": "List all categories.",
-        "operationId": "list_categories_v1_categories_get",
+        "operationId": "list_categories",
         "security": [
           {
             "HTTPBearer": []
@@ -2213,7 +2213,7 @@
           "categories"
         ],
         "summary": "List Category Rules",
-        "operationId": "list_category_rules_v1_categories_rules_get",
+        "operationId": "list_category_rules",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2238,7 +2238,7 @@
         ],
         "summary": "Create Category Rule",
         "description": "Sorts future imports whose description contains the text into the category, and by default the ones already here.",
-        "operationId": "create_category_rule_v1_categories_rules_post",
+        "operationId": "create_category_rule",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2285,7 +2285,7 @@
         ],
         "summary": "Delete Category Rule",
         "description": "Stops sorting new imports by it; transactions it already sorted keep their category.",
-        "operationId": "delete_category_rule_v1_categories_rules__rule_id__delete",
+        "operationId": "delete_category_rule",
         "security": [
           {
             "HTTPBearer": []
@@ -2326,7 +2326,7 @@
           "counters"
         ],
         "summary": "List Counters",
-        "operationId": "list_counters_v1_counters_get",
+        "operationId": "list_counters",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2337,7 +2337,7 @@
                     "$ref": "#/components/schemas/CounterSchema"
                   },
                   "type": "array",
-                  "title": "Response List Counters V1 Counters Get"
+                  "title": "Response List Counters"
                 }
               }
             }
@@ -2354,7 +2354,7 @@
           "counters"
         ],
         "summary": "Create Counter",
-        "operationId": "create_counter_v1_counters_post",
+        "operationId": "create_counter",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2400,7 +2400,7 @@
           "counters"
         ],
         "summary": "Update Counter",
-        "operationId": "update_counter_v1_counters__counter_id__patch",
+        "operationId": "update_counter",
         "security": [
           {
             "HTTPBearer": []
@@ -2456,7 +2456,7 @@
           "counters"
         ],
         "summary": "Delete Counter",
-        "operationId": "delete_counter_v1_counters__counter_id__delete",
+        "operationId": "delete_counter",
         "security": [
           {
             "HTTPBearer": []
@@ -2497,7 +2497,7 @@
           "counters"
         ],
         "summary": "Record Reset",
-        "operationId": "create_reset_v1_counters__counter_id__resets_post",
+        "operationId": "create_reset",
         "security": [
           {
             "HTTPBearer": []
@@ -2543,7 +2543,7 @@
           "counters"
         ],
         "summary": "List Resets",
-        "operationId": "list_resets_v1_counters__counter_id__resets_get",
+        "operationId": "list_resets",
         "security": [
           {
             "HTTPBearer": []
@@ -2571,7 +2571,7 @@
                   "items": {
                     "$ref": "#/components/schemas/CounterResetSchema"
                   },
-                  "title": "Response List Resets V1 Counters  Counter Id  Resets Get"
+                  "title": "Response List Resets"
                 }
               }
             }
@@ -2595,7 +2595,7 @@
           "counters"
         ],
         "summary": "Undo Reset",
-        "operationId": "undo_reset_v1_counters__counter_id__resets__reset_id__delete",
+        "operationId": "undo_reset",
         "security": [
           {
             "HTTPBearer": []
@@ -2646,7 +2646,7 @@
           "devices"
         ],
         "summary": "List Devices",
-        "operationId": "list_devices_v1_devices_get",
+        "operationId": "list_devices",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2657,7 +2657,7 @@
                     "$ref": "#/components/schemas/DeviceSchema"
                   },
                   "type": "array",
-                  "title": "Response List Devices V1 Devices Get"
+                  "title": "Response List Devices"
                 }
               }
             }
@@ -2676,7 +2676,7 @@
           "devices"
         ],
         "summary": "Rename Device",
-        "operationId": "update_device_v1_devices__device_id__patch",
+        "operationId": "update_device",
         "security": [
           {
             "HTTPBearer": []
@@ -2732,7 +2732,7 @@
           "devices"
         ],
         "summary": "Delete Device",
-        "operationId": "delete_device_v1_devices__device_id__delete",
+        "operationId": "delete_device",
         "security": [
           {
             "HTTPBearer": []
@@ -2774,7 +2774,7 @@
         ],
         "summary": "Upload Client Diagnostics",
         "description": "Crash and hang reports from the apps, logged so they can be found next to\nthe server's own logs for the same build.",
-        "operationId": "upload_client_diagnostics_v1_client_diagnostics_post",
+        "operationId": "upload_client_diagnostics",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2818,7 +2818,7 @@
           "gym"
         ],
         "summary": "List Gym Exercises",
-        "operationId": "list_gym_exercises_v1_gym_exercises_get",
+        "operationId": "list_gym_exercises",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2845,7 +2845,7 @@
         ],
         "summary": "Create or Rename Gym Exercise",
         "description": "The id is chosen by the app, so creating twice is the same as creating once.",
-        "operationId": "upsert_gym_exercise_v1_gym_exercises__exercise_id__put",
+        "operationId": "upsert_gym_exercise",
         "security": [
           {
             "HTTPBearer": []
@@ -2901,7 +2901,7 @@
           "gym"
         ],
         "summary": "Delete Gym Exercise",
-        "operationId": "delete_gym_exercise_v1_gym_exercises__exercise_id__delete",
+        "operationId": "delete_gym_exercise",
         "security": [
           {
             "HTTPBearer": []
@@ -2942,7 +2942,7 @@
           "gym"
         ],
         "summary": "List Gym Top Sets",
-        "operationId": "list_gym_top_sets_v1_gym_exercises__exercise_id__sets_get",
+        "operationId": "list_gym_top_sets",
         "security": [
           {
             "HTTPBearer": []
@@ -2991,7 +2991,7 @@
         ],
         "summary": "Set Gym Top Set",
         "description": "The day's top set for the exercise, replacing one already logged. The day\nis the app's local date, so a set sent late still lands on the day it was lifted.",
-        "operationId": "put_gym_top_set_v1_gym_exercises__exercise_id__sets__performed_on__put",
+        "operationId": "put_gym_top_set",
         "security": [
           {
             "HTTPBearer": []
@@ -3057,7 +3057,7 @@
           "gym"
         ],
         "summary": "Delete Gym Top Set",
-        "operationId": "delete_gym_top_set_v1_gym_exercises__exercise_id__sets__performed_on__delete",
+        "operationId": "delete_gym_top_set",
         "security": [
           {
             "HTTPBearer": []
@@ -3108,7 +3108,7 @@
           "healthkit"
         ],
         "summary": "Sync HealthKit Workouts",
-        "operationId": "sync_healthkit_workouts_v1_healthkit_workouts_sync_post",
+        "operationId": "sync_healthkit_workouts",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3154,7 +3154,7 @@
           "healthkit"
         ],
         "summary": "List HealthKit Workouts",
-        "operationId": "list_healthkit_workouts_v1_healthkit_workouts_get",
+        "operationId": "list_healthkit_workouts",
         "security": [
           {
             "HTTPBearer": []
@@ -3218,7 +3218,7 @@
           "healthkit"
         ],
         "summary": "Sync HealthKit Sleep Samples",
-        "operationId": "sync_healthkit_sleep_v1_healthkit_sleep_sync_post",
+        "operationId": "sync_healthkit_sleep",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3264,7 +3264,7 @@
           "healthkit"
         ],
         "summary": "List HealthKit Sleep Samples",
-        "operationId": "list_healthkit_sleep_v1_healthkit_sleep_get",
+        "operationId": "list_healthkit_sleep",
         "security": [
           {
             "HTTPBearer": []
@@ -3364,7 +3364,7 @@
           "healthkit"
         ],
         "summary": "Get Nightly Sleep Totals",
-        "operationId": "get_daily_sleep_v1_healthkit_sleep_daily_get",
+        "operationId": "get_daily_sleep",
         "security": [
           {
             "HTTPBearer": []
@@ -3454,7 +3454,7 @@
           "healthkit"
         ],
         "summary": "Get Sleep Stage Summary",
-        "operationId": "get_sleep_summary_v1_healthkit_sleep_summary_get",
+        "operationId": "get_sleep_summary",
         "security": [
           {
             "HTTPBearer": []
@@ -3532,7 +3532,7 @@
           "healthkit"
         ],
         "summary": "Sync HealthKit Daily Metrics",
-        "operationId": "sync_healthkit_daily_metrics_v1_healthkit_daily_metrics_sync_post",
+        "operationId": "sync_healthkit_daily_metrics",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3578,7 +3578,7 @@
           "healthkit"
         ],
         "summary": "Get Health Day Summary",
-        "operationId": "get_health_summary_v1_healthkit_summary_get",
+        "operationId": "get_health_summary",
         "security": [
           {
             "HTTPBearer": []
@@ -3639,7 +3639,7 @@
           "ingest-tokens"
         ],
         "summary": "List Ingest Tokens",
-        "operationId": "list_ingest_tokens_v1_ingest_tokens_get",
+        "operationId": "list_ingest_tokens",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3650,7 +3650,7 @@
                     "$ref": "#/components/schemas/IngestTokenSchema"
                   },
                   "type": "array",
-                  "title": "Response List Ingest Tokens V1 Ingest Tokens Get"
+                  "title": "Response List Ingest Tokens"
                 }
               }
             }
@@ -3667,7 +3667,7 @@
           "ingest-tokens"
         ],
         "summary": "Create Ingest Token",
-        "operationId": "create_ingest_token_v1_ingest_tokens_post",
+        "operationId": "create_ingest_token",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3713,7 +3713,7 @@
           "ingest-tokens"
         ],
         "summary": "Revoke Ingest Token",
-        "operationId": "revoke_ingest_token_v1_ingest_tokens__token_id__delete",
+        "operationId": "revoke_ingest_token",
         "security": [
           {
             "HTTPBearer": []
@@ -3754,7 +3754,7 @@
           "investments"
         ],
         "summary": "List Trades",
-        "operationId": "list_trades_v1_investments_trades_get",
+        "operationId": "list_trades",
         "security": [
           {
             "HTTPBearer": []
@@ -3853,7 +3853,7 @@
         ],
         "summary": "Investment Accounts",
         "description": "Each investment account's value, the money put in and taken out, what it made, and its dividends.",
-        "operationId": "get_investment_accounts_v1_investments_accounts_get",
+        "operationId": "get_investment_accounts",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3879,7 +3879,7 @@
           "investments"
         ],
         "summary": "Get Holdings",
-        "operationId": "get_holdings_v1_investments_holdings_get",
+        "operationId": "get_holdings",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3905,7 +3905,7 @@
           "investments"
         ],
         "summary": "Get Crypto Price",
-        "operationId": "get_crypto_price_v1_investments_crypto_price__coin_id__get",
+        "operationId": "get_crypto_price",
         "security": [
           {
             "HTTPBearer": []
@@ -3963,7 +3963,7 @@
         ],
         "summary": "Import Google Timeline",
         "description": "Import a Timeline.json from Google Maps' \"Export Timeline data\".\n\nSafe to repeat: segments already stored are left as they are, edited ones\nare updated, and ones the phone no longer has within the export's span are\nremoved. An export older than what's stored never overrides it.",
-        "operationId": "import_location_history_v1_location_history_import_post",
+        "operationId": "import_location_history",
         "security": [
           {
             "HTTPBearer": []
@@ -3995,7 +3995,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_import_location_history_v1_location_history_import_post"
+                "$ref": "#/components/schemas/Body_import_location_history"
               }
             }
           }
@@ -4030,7 +4030,7 @@
           "location-history"
         ],
         "summary": "Get Location History Summary",
-        "operationId": "get_location_history_summary_v1_location_history_summary_get",
+        "operationId": "get_location_history_summary",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4056,7 +4056,7 @@
           "location-history"
         ],
         "summary": "Get Location History Day",
-        "operationId": "get_location_history_day_v1_location_history_day_get",
+        "operationId": "get_location_history_day",
         "security": [
           {
             "HTTPBearer": []
@@ -4106,7 +4106,7 @@
           "notifications"
         ],
         "summary": "List Notifications",
-        "operationId": "list_notifications_v1_notifications_get",
+        "operationId": "list_notifications",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4130,7 +4130,7 @@
           "notifications"
         ],
         "summary": "Create Notification",
-        "operationId": "create_notification_v1_notifications_post",
+        "operationId": "create_notification",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4176,7 +4176,7 @@
           "notifications"
         ],
         "summary": "Mark Notification Read",
-        "operationId": "mark_notification_read_v1_notifications__notification_id__read_post",
+        "operationId": "mark_notification_read",
         "security": [
           {
             "HTTPBearer": []
@@ -4224,7 +4224,7 @@
           "notifications"
         ],
         "summary": "Mark All Notifications Read",
-        "operationId": "mark_all_notifications_read_v1_notifications_read_all_post",
+        "operationId": "mark_all_notifications_read",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4233,7 +4233,7 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "title": "Response Mark All Notifications Read V1 Notifications Read All Post"
+                  "title": "Response Mark All Notifications Read"
                 }
               }
             }
@@ -4252,7 +4252,7 @@
           "places"
         ],
         "summary": "List Places",
-        "operationId": "list_places_v1_places_get",
+        "operationId": "list_places",
         "security": [
           {
             "HTTPBearer": []
@@ -4356,7 +4356,7 @@
           "places"
         ],
         "summary": "Create Place",
-        "operationId": "create_place_v1_places_post",
+        "operationId": "create_place",
         "security": [
           {
             "HTTPBearer": []
@@ -4402,7 +4402,7 @@
           "places"
         ],
         "summary": "Search Google Places",
-        "operationId": "search_google_places_v1_places_search_get",
+        "operationId": "search_google_places",
         "security": [
           {
             "HTTPBearer": []
@@ -4451,7 +4451,7 @@
           "places"
         ],
         "summary": "Get Place",
-        "operationId": "get_place_v1_places__place_id__get",
+        "operationId": "get_place",
         "security": [
           {
             "HTTPBearer": []
@@ -4497,7 +4497,7 @@
           "places"
         ],
         "summary": "Update Place",
-        "operationId": "update_place_v1_places__place_id__patch",
+        "operationId": "update_place",
         "security": [
           {
             "HTTPBearer": []
@@ -4553,7 +4553,7 @@
           "places"
         ],
         "summary": "Delete Place",
-        "operationId": "delete_place_v1_places__place_id__delete",
+        "operationId": "delete_place",
         "security": [
           {
             "HTTPBearer": []
@@ -4594,7 +4594,7 @@
           "projects"
         ],
         "summary": "List Projects",
-        "operationId": "list_projects_v1_projects_get",
+        "operationId": "list_projects",
         "security": [
           {
             "HTTPBearer": []
@@ -4644,7 +4644,7 @@
                   "items": {
                     "$ref": "#/components/schemas/ProjectSchema"
                   },
-                  "title": "Response List Projects V1 Projects Get"
+                  "title": "Response List Projects"
                 }
               }
             }
@@ -4666,7 +4666,7 @@
           "projects"
         ],
         "summary": "Create Project",
-        "operationId": "create_project_v1_projects_post",
+        "operationId": "create_project",
         "security": [
           {
             "HTTPBearer": []
@@ -4746,7 +4746,7 @@
           "projects"
         ],
         "summary": "Update Project",
-        "operationId": "update_project_v1_projects__project_id__patch",
+        "operationId": "update_project",
         "security": [
           {
             "HTTPBearer": []
@@ -4834,7 +4834,7 @@
           "projects"
         ],
         "summary": "Delete Project",
-        "operationId": "delete_project_v1_projects__project_id__delete",
+        "operationId": "delete_project",
         "security": [
           {
             "HTTPBearer": []
@@ -4875,7 +4875,7 @@
           "projects"
         ],
         "summary": "Set Project Location For This Device",
-        "operationId": "set_project_location_v1_projects__project_id__location_put",
+        "operationId": "set_project_location",
         "security": [
           {
             "HTTPBearer": []
@@ -4965,7 +4965,7 @@
           "recipes"
         ],
         "summary": "List Recipes",
-        "operationId": "list_recipes_v1_recipes_get",
+        "operationId": "list_recipes",
         "security": [
           {
             "HTTPBearer": []
@@ -5069,7 +5069,7 @@
           "recipes"
         ],
         "summary": "Create Recipe",
-        "operationId": "create_recipe_v1_recipes_post",
+        "operationId": "create_recipe",
         "security": [
           {
             "HTTPBearer": []
@@ -5116,7 +5116,7 @@
         ],
         "summary": "Structure Recipe Text",
         "description": "Turn free-form recipe text into the structured format with an LLM. Nothing is saved.",
-        "operationId": "structure_recipe_text_v1_recipes_import_post",
+        "operationId": "structure_recipe_text",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5162,7 +5162,7 @@
           "recipes"
         ],
         "summary": "Get Recipe",
-        "operationId": "get_recipe_v1_recipes__recipe_id__get",
+        "operationId": "get_recipe",
         "security": [
           {
             "HTTPBearer": []
@@ -5208,7 +5208,7 @@
           "recipes"
         ],
         "summary": "Update Recipe",
-        "operationId": "update_recipe_v1_recipes__recipe_id__patch",
+        "operationId": "update_recipe",
         "security": [
           {
             "HTTPBearer": []
@@ -5264,7 +5264,7 @@
           "recipes"
         ],
         "summary": "Delete Recipe",
-        "operationId": "delete_recipe_v1_recipes__recipe_id__delete",
+        "operationId": "delete_recipe",
         "security": [
           {
             "HTTPBearer": []
@@ -5306,7 +5306,7 @@
         ],
         "summary": "Search",
         "description": "Tasks, recipes, calendar events and saved places matching `q`, for the command palette.",
-        "operationId": "search_v1_search_get",
+        "operationId": "search_everything",
         "security": [
           {
             "HTTPBearer": []
@@ -5371,7 +5371,7 @@
           "tasks"
         ],
         "summary": "List Tasks",
-        "operationId": "list_tasks_v1_tasks_get",
+        "operationId": "list_tasks",
         "security": [
           {
             "HTTPBearer": []
@@ -5570,7 +5570,7 @@
           "tasks"
         ],
         "summary": "Create Task",
-        "operationId": "create_task_v1_tasks_post",
+        "operationId": "create_task",
         "security": [
           {
             "HTTPBearer": []
@@ -5616,7 +5616,7 @@
           "tasks"
         ],
         "summary": "Reorder Tasks",
-        "operationId": "reorder_tasks_v1_tasks_reorder_patch",
+        "operationId": "reorder_tasks",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5659,7 +5659,7 @@
           "tasks"
         ],
         "summary": "Update Task",
-        "operationId": "update_task_v1_tasks__task_id__patch",
+        "operationId": "update_task",
         "security": [
           {
             "HTTPBearer": []
@@ -5715,7 +5715,7 @@
           "tasks"
         ],
         "summary": "Delete Task",
-        "operationId": "delete_task_v1_tasks__task_id__delete",
+        "operationId": "delete_task",
         "security": [
           {
             "HTTPBearer": []
@@ -5754,7 +5754,7 @@
           "tasks"
         ],
         "summary": "Get Task",
-        "operationId": "get_task_v1_tasks__task_id__get",
+        "operationId": "get_task",
         "security": [
           {
             "HTTPBearer": []
@@ -5802,7 +5802,7 @@
           "tasks"
         ],
         "summary": "Upload Task Attachment",
-        "operationId": "upload_task_attachment_v1_tasks__task_id__attachments_post",
+        "operationId": "upload_task_attachment",
         "security": [
           {
             "HTTPBearer": []
@@ -5825,7 +5825,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_task_attachment_v1_tasks__task_id__attachments_post"
+                "$ref": "#/components/schemas/Body_upload_task_attachment"
               }
             }
           }
@@ -5860,7 +5860,7 @@
           "tasks"
         ],
         "summary": "Delete Task Attachment",
-        "operationId": "delete_task_attachment_v1_tasks__task_id__attachments__attachment_id__delete",
+        "operationId": "delete_task_attachment",
         "security": [
           {
             "HTTPBearer": []
@@ -5911,7 +5911,7 @@
           "tasks"
         ],
         "summary": "Get Task Attachment File",
-        "operationId": "get_task_attachment_file_v1_tasks__task_id__attachments__attachment_id__file_get",
+        "operationId": "get_task_attachment_file",
         "security": [
           {
             "HTTPBearer": []
@@ -5967,7 +5967,7 @@
           "tasks"
         ],
         "summary": "Complete Task",
-        "operationId": "complete_task_v1_tasks__task_id__complete_post",
+        "operationId": "complete_task",
         "security": [
           {
             "HTTPBearer": []
@@ -6015,7 +6015,7 @@
           "tasks"
         ],
         "summary": "Reopen Task",
-        "operationId": "reopen_task_v1_tasks__task_id__reopen_post",
+        "operationId": "reopen_task",
         "security": [
           {
             "HTTPBearer": []
@@ -6064,7 +6064,7 @@
         ],
         "summary": "Undo Complete Task",
         "description": "Reopen a task and remove the next occurrence completing it spawned, in one\ntransaction, so an Undo can't leave a routine both reopened and repeated.",
-        "operationId": "undo_complete_task_v1_tasks__task_id__undo_complete_post",
+        "operationId": "undo_complete_task",
         "security": [
           {
             "HTTPBearer": []
@@ -6112,7 +6112,7 @@
           "time"
         ],
         "summary": "List Time Projects",
-        "operationId": "list_time_projects_v1_time_projects_get",
+        "operationId": "list_time_projects",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -6123,7 +6123,7 @@
                     "$ref": "#/components/schemas/TimeProjectSchema"
                   },
                   "type": "array",
-                  "title": "Response List Time Projects V1 Time Projects Get"
+                  "title": "Response List Time Projects"
                 }
               }
             }
@@ -6140,7 +6140,7 @@
           "time"
         ],
         "summary": "Create Time Project",
-        "operationId": "create_time_project_v1_time_projects_post",
+        "operationId": "create_time_project",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6186,7 +6186,7 @@
           "time"
         ],
         "summary": "Update Time Project",
-        "operationId": "update_time_project_v1_time_projects__project_id__patch",
+        "operationId": "update_time_project",
         "security": [
           {
             "HTTPBearer": []
@@ -6244,7 +6244,7 @@
           "time"
         ],
         "summary": "List Time Entries",
-        "operationId": "list_time_entries_v1_time_entries_get",
+        "operationId": "list_time_entries",
         "security": [
           {
             "HTTPBearer": []
@@ -6286,7 +6286,7 @@
                   "items": {
                     "$ref": "#/components/schemas/TimeEntrySchema"
                   },
-                  "title": "Response List Time Entries V1 Time Entries Get"
+                  "title": "Response List Time Entries"
                 }
               }
             }
@@ -6308,7 +6308,7 @@
           "time"
         ],
         "summary": "Create Time Entry",
-        "operationId": "create_time_entry_v1_time_entries_post",
+        "operationId": "create_time_entry",
         "security": [
           {
             "HTTPBearer": []
@@ -6354,7 +6354,7 @@
           "time"
         ],
         "summary": "Update Time Entry",
-        "operationId": "update_time_entry_v1_time_entries__entry_id__patch",
+        "operationId": "update_time_entry",
         "security": [
           {
             "HTTPBearer": []
@@ -6410,7 +6410,7 @@
           "time"
         ],
         "summary": "Delete Time Entry",
-        "operationId": "delete_time_entry_v1_time_entries__entry_id__delete",
+        "operationId": "delete_time_entry",
         "security": [
           {
             "HTTPBearer": []
@@ -6451,7 +6451,7 @@
           "time"
         ],
         "summary": "Get Monthly Time Totals",
-        "operationId": "get_time_summary_v1_time_summary_get",
+        "operationId": "get_time_summary",
         "security": [
           {
             "HTTPBearer": []
@@ -6511,7 +6511,7 @@
           "timeline"
         ],
         "summary": "Get Timeline",
-        "operationId": "get_timeline_v1_timeline_get",
+        "operationId": "get_timeline",
         "security": [
           {
             "HTTPBearer": []
@@ -6590,7 +6590,7 @@
         ],
         "summary": "List Transactions",
         "description": "List transactions.",
-        "operationId": "list_transactions_v1_transactions_get",
+        "operationId": "list_transactions",
         "security": [
           {
             "HTTPBearer": []
@@ -6855,7 +6855,7 @@
         ],
         "summary": "Delete Transactions",
         "description": "Delete transactions by IDs.",
-        "operationId": "delete_transactions_v1_transactions_delete",
+        "operationId": "delete_transactions",
         "security": [
           {
             "HTTPBearer": []
@@ -6895,7 +6895,7 @@
         ],
         "summary": "Import Transactions",
         "description": "Import transactions from a bank export (CSV or XLSX).\n\nDuplicate transactions (by dedup hash) are automatically skipped.",
-        "operationId": "import_transactions_v1_transactions_import_post",
+        "operationId": "import_transactions",
         "security": [
           {
             "HTTPBearer": []
@@ -6931,7 +6931,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_import_transactions_v1_transactions_import_post"
+                "$ref": "#/components/schemas/Body_import_transactions"
               }
             }
           }
@@ -6967,7 +6967,7 @@
         ],
         "summary": "Bulk Update Transactions",
         "description": "Update category for a list of transactions by ID.",
-        "operationId": "bulk_update_transactions_v1_transactions_bulk_patch",
+        "operationId": "bulk_update_transactions",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7014,7 +7014,7 @@
         ],
         "summary": "Update Transaction",
         "description": "Update a transaction.",
-        "operationId": "update_transaction_v1_transactions__transaction_id__patch",
+        "operationId": "update_transaction",
         "security": [
           {
             "HTTPBearer": []
@@ -7073,7 +7073,7 @@
         ],
         "summary": "Rename Transaction",
         "description": "Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name.",
-        "operationId": "rename_transaction_v1_transactions__transaction_id__name_put",
+        "operationId": "rename_transaction",
         "security": [
           {
             "HTTPBearer": []
@@ -7132,7 +7132,7 @@
         ],
         "summary": "Name Transactions by Bank Text",
         "description": "Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay.",
-        "operationId": "name_transactions_v1_transactions_names_post",
+        "operationId": "name_transactions",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7179,7 +7179,7 @@
         ],
         "summary": "Unpair Transfer",
         "description": "Counts both sides of a paired transfer as income and spending again, and never pairs them again.",
-        "operationId": "unpair_transfer_v1_transactions__transaction_id__transfer_delete",
+        "operationId": "unpair_transfer",
         "security": [
           {
             "HTTPBearer": []
@@ -7221,7 +7221,7 @@
         ],
         "summary": "Bulk Categorize by Description",
         "description": "Set category for all transactions matching the given description.",
-        "operationId": "categorize_by_description_v1_transactions_categorize_by_description_post",
+        "operationId": "categorize_by_description",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7268,7 +7268,7 @@
         ],
         "summary": "Monthly Spending by Category",
         "description": "Aggregate debit spending per category for a given month.",
-        "operationId": "spending_by_category_v1_transactions_spending_by_category_get",
+        "operationId": "spending_by_category",
         "security": [
           {
             "HTTPBearer": []
@@ -7329,7 +7329,7 @@
         ],
         "summary": "Month Summary",
         "description": "The user's own income and spending for a month, with the year before it for comparison.",
-        "operationId": "transaction_summary_v1_transactions_summary_get",
+        "operationId": "get_transaction_summary",
         "security": [
           {
             "HTTPBearer": []
@@ -7392,7 +7392,7 @@
         ],
         "summary": "Monthly Income & Expenses",
         "description": "Return income and expenses aggregated per month.",
-        "operationId": "monthly_flow_v1_transactions_monthly_flow_get",
+        "operationId": "get_monthly_flow",
         "security": [
           {
             "HTTPBearer": []
@@ -7443,7 +7443,7 @@
         ],
         "summary": "List Transaction Documents",
         "description": "The invoices and receipts kept with a transaction, oldest first.",
-        "operationId": "list_transaction_documents_v1_transactions__transaction_id__documents_get",
+        "operationId": "list_transaction_documents",
         "security": [
           {
             "HTTPBearer": []
@@ -7471,7 +7471,7 @@
                   "items": {
                     "$ref": "#/components/schemas/DocumentSchema"
                   },
-                  "title": "Response List Transaction Documents V1 Transactions  Transaction Id  Documents Get"
+                  "title": "Response List Transaction Documents"
                 }
               }
             }
@@ -7494,7 +7494,7 @@
         ],
         "summary": "Add Transaction Document",
         "description": "Keeps an invoice or receipt, a PDF or a photo, with the transaction.",
-        "operationId": "add_transaction_document_v1_transactions__transaction_id__documents_post",
+        "operationId": "add_transaction_document",
         "security": [
           {
             "HTTPBearer": []
@@ -7517,7 +7517,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_add_transaction_document_v1_transactions__transaction_id__documents_post"
+                "$ref": "#/components/schemas/Body_add_transaction_document"
               }
             }
           }
@@ -7553,7 +7553,7 @@
         ],
         "summary": "Remove Transaction Document",
         "description": "Takes the document off the transaction; it's deleted once no transaction has it.",
-        "operationId": "remove_transaction_document_v1_transactions__transaction_id__documents__document_id__delete",
+        "operationId": "remove_transaction_document",
         "security": [
           {
             "HTTPBearer": []
@@ -7605,7 +7605,7 @@
         ],
         "summary": "Download Document",
         "description": "The file as it was uploaded.",
-        "operationId": "download_document_v1_documents__document_id__file_get",
+        "operationId": "download_document",
         "security": [
           {
             "HTTPBearer": []
@@ -7652,7 +7652,7 @@
         ],
         "summary": "Document Page Preview",
         "description": "One page as an image, numbered from 1.",
-        "operationId": "document_page_v1_documents__document_id__pages__page__get",
+        "operationId": "document_page",
         "security": [
           {
             "HTTPBearer": []
@@ -7708,7 +7708,7 @@
         ],
         "summary": "Document Thumbnail",
         "description": "A small image of the first page.",
-        "operationId": "document_thumbnail_v1_documents__document_id__thumbnail_get",
+        "operationId": "document_thumbnail",
         "security": [
           {
             "HTTPBearer": []
@@ -7755,7 +7755,7 @@
         ],
         "summary": "Get Weather Forecast",
         "description": "Yr's forecast for a point: the weather now, the next hours and day by day.",
-        "operationId": "get_weather_forecast_v1_weather_get",
+        "operationId": "get_weather_forecast",
         "security": [
           {
             "HTTPBearer": []
@@ -7866,7 +7866,7 @@
         ],
         "summary": "Get Klarna Transactions",
         "description": "Fetch Klarna transactions and return raw GraphQL response.",
-        "operationId": "get_klarna_transactions_v1_klarna_transactions_get",
+        "operationId": "get_klarna_transactions",
         "security": [
           {
             "HTTPBearer": []
@@ -7911,7 +7911,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Get Klarna Transactions V1 Klarna Transactions Get"
+                  "title": "Response Get Klarna Transactions"
                 }
               }
             }
@@ -7936,7 +7936,7 @@
         ],
         "summary": "Import Klarna Transactions",
         "description": "Fetch Klarna purchases and import the pay later ones into Bessel.\nSkips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.",
-        "operationId": "import_klarna_transactions_v1_klarna_import_post",
+        "operationId": "import_klarna_transactions",
         "requestBody": {
           "content": {
             "application/json": {
@@ -9689,7 +9689,7 @@
         ],
         "title": "BankOption"
       },
-      "Body_add_transaction_document_v1_transactions__transaction_id__documents_post": {
+      "Body_add_transaction_document": {
         "properties": {
           "file": {
             "type": "string",
@@ -9702,9 +9702,9 @@
         "required": [
           "file"
         ],
-        "title": "Body_add_transaction_document_v1_transactions__transaction_id__documents_post"
+        "title": "Body_add_transaction_document"
       },
-      "Body_import_location_history_v1_location_history_import_post": {
+      "Body_import_location_history": {
         "properties": {
           "file": {
             "type": "string",
@@ -9717,9 +9717,9 @@
         "required": [
           "file"
         ],
-        "title": "Body_import_location_history_v1_location_history_import_post"
+        "title": "Body_import_location_history"
       },
-      "Body_import_transactions_v1_transactions_import_post": {
+      "Body_import_transactions": {
         "properties": {
           "file": {
             "type": "string",
@@ -9732,9 +9732,9 @@
         "required": [
           "file"
         ],
-        "title": "Body_import_transactions_v1_transactions_import_post"
+        "title": "Body_import_transactions"
       },
-      "Body_upload_task_attachment_v1_tasks__task_id__attachments_post": {
+      "Body_upload_task_attachment": {
         "properties": {
           "file": {
             "type": "string",
@@ -9747,7 +9747,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_upload_task_attachment_v1_tasks__task_id__attachments_post"
+        "title": "Body_upload_task_attachment"
       },
       "BulkCategorizeRequest": {
         "properties": {

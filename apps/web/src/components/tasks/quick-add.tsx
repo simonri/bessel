@@ -1,7 +1,4 @@
-import {
-  createTaskV1TasksPostMutation,
-  listProjectsV1ProjectsGetOptions,
-} from "@bessel/client";
+import { createTaskMutation, listProjectsOptions } from "@bessel/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Calendar, Flag, Hash, Maximize2, Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -52,9 +49,7 @@ export function QuickAddTask({
   const inputRef = useRef<HTMLInputElement>(null);
   const cache = useTaskCacheHelpers();
 
-  const { data: projects } = useQuery(
-    listProjectsV1ProjectsGetOptions({ client }),
-  );
+  const { data: projects } = useQuery(listProjectsOptions({ client }));
   const projectNames = useMemo(
     () => (projects ?? []).map((p) => p.name),
     [projects],
@@ -65,7 +60,7 @@ export function QuickAddTask({
   );
 
   const create = useMutation({
-    ...createTaskV1TasksPostMutation({ client }),
+    ...createTaskMutation({ client }),
     mutationKey: TASK_MUTATION_KEY,
     onError: () => toast.error("Couldn't add the task"),
     onSettled: () => cache.settle(),

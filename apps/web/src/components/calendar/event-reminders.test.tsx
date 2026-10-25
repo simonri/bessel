@@ -20,13 +20,13 @@ const api = vi.hoisted(() => ({
   calendars: [] as unknown[],
 }));
 vi.mock("@bessel/client", () => ({
-  listCalendarAccountsV1CalendarsAccountsGetOptions: () => ({
+  listCalendarAccountsOptions: () => ({
     queryKey: ["accounts"],
     queryFn: async () => ({
       accounts: [{ id: "a", calendars: api.calendars }],
     }),
   }),
-  listCalendarEventsV1CalendarsEventsGetOptions: () => ({
+  listCalendarEventsOptions: () => ({
     queryKey: ["events"],
     queryFn: async () => ({ events: api.events }),
   }),

@@ -15,7 +15,7 @@ const navigate = vi.hoisted(() => vi.fn());
 
 vi.mock("@auth0/auth0-react", () => ({ useAuth0: () => auth }));
 vi.mock("@bessel/client", () => ({
-  completeMontroseV1MontroseCallbackPost: complete,
+  completeMontrose: complete,
 }));
 vi.mock("@/lib/client", () => ({ client: {} }));
 vi.mock("@tanstack/react-router", () => ({

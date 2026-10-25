@@ -1,8 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import {
-  completeMontroseV1MontroseCallbackPost,
-  type MontroseStatusResponse,
-} from "@bessel/client";
+import { completeMontrose, type MontroseStatusResponse } from "@bessel/client";
 import { Spinner } from "@bessel/ui/components/spinner";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -64,7 +61,7 @@ export function MontroseCallbackPage() {
       return;
     }
 
-    completeMontroseV1MontroseCallbackPost({
+    completeMontrose({
       client,
       body: { code, state, iss: params.get("iss") },
       throwOnError: true,

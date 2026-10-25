@@ -1,7 +1,4 @@
-import {
-  listProjectsV1ProjectsGetOptions,
-  type ProjectSchema,
-} from "@bessel/client";
+import { listProjectsOptions, type ProjectSchema } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { client } from "@/lib/client";
@@ -29,7 +26,7 @@ function loadCachedProjects(): ProjectSchema[] | undefined {
  */
 export function useProjects() {
   const query = useQuery({
-    ...listProjectsV1ProjectsGetOptions({ client }),
+    ...listProjectsOptions({ client }),
     initialData: loadCachedProjects,
     // Cached data is a placeholder, not a fresh result — refetch immediately.
     initialDataUpdatedAt: 0,

@@ -87,7 +87,7 @@ describe("useCalendarChanges", () => {
     const eventInvalidations = () =>
       invalidate.mock.calls.filter(([filters]) =>
         filters?.predicate?.({
-          queryKey: [{ _id: "listCalendarEventsV1CalendarsEventsGet" }],
+          queryKey: [{ _id: "listCalendarEvents" }],
         } as never),
       ).length;
     return { hook, invalidate, eventInvalidations, queryClient };
@@ -110,9 +110,7 @@ describe("useCalendarChanges", () => {
 
     await waitFor(() => expect(eventInvalidations()).toBe(2));
     expect(invalidate).toHaveBeenCalledTimes(4);
-    expect(
-      isEventsQuery([{ _id: "listCalendarEventsV1CalendarsEventsGet" }]),
-    ).toBe(true);
+    expect(isEventsQuery([{ _id: "listCalendarEvents" }])).toBe(true);
   });
 
   it("reconnects after the stream drops and catches up on missed changes", async () => {

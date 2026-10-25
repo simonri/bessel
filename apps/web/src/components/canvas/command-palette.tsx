@@ -1,7 +1,7 @@
 import {
-  createTaskV1TasksPostMutation,
+  createTaskMutation,
   type ProjectSchema,
-  searchV1SearchGetOptions,
+  searchEverythingOptions,
 } from "@bessel/client";
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
@@ -224,7 +224,7 @@ function useDataHits(query: string): PaletteHit[] {
   const { settings } = useSettings();
   const vaultRoot = isDesktop ? settings.obsidianVaultPath : null;
   const { data } = useQuery({
-    ...searchV1SearchGetOptions({ client, query: { q, limit: 5 } }),
+    ...searchEverythingOptions({ client, query: { q, limit: 5 } }),
     enabled: q.length >= 2,
     placeholderData: keepPreviousData,
   });
@@ -413,7 +413,7 @@ function CommandPaletteContent({
   const projectNames = useProjects().data?.map((p) => p.name) ?? [];
   const cache = useTaskCacheHelpers();
   const createTask = useMutation({
-    ...createTaskV1TasksPostMutation({ client }),
+    ...createTaskMutation({ client }),
     mutationKey: TASK_MUTATION_KEY,
     onError: () => toast.error("Couldn't add the task"),
     onSettled: () => cache.settle(),

@@ -1,6 +1,6 @@
 import {
-  getTaskV1TasksTaskIdGetQueryKey,
-  listTasksV1TasksGetQueryKey,
+  getTaskQueryKey,
+  listTasksQueryKey,
   type TaskSchema,
 } from "@bessel/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,17 +39,17 @@ export function pickFields(
 // here so every call site invalidates both instead of silently drifting.
 export function useTaskCacheHelpers() {
   const queryClient = useQueryClient();
-  const listKey = listTasksV1TasksGetQueryKey({ client });
+  const listKey = listTasksQueryKey({ client });
   // The detail query key includes `path.task_id`; stripping it gives a broad
   // key that partial-matches every cached task's detail query at once.
-  const [{ path: _path, ...detailKeyBroad }] = getTaskV1TasksTaskIdGetQueryKey({
+  const [{ path: _path, ...detailKeyBroad }] = getTaskQueryKey({
     client,
     path: { task_id: "" },
   });
   const detailFamilyKey = [detailKeyBroad];
 
   const detailKey = (taskId: string) =>
-    getTaskV1TasksTaskIdGetQueryKey({ client, path: { task_id: taskId } });
+    getTaskQueryKey({ client, path: { task_id: taskId } });
 
   const patchTask = (
     taskId: string,

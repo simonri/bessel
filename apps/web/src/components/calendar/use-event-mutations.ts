@@ -1,13 +1,13 @@
 import {
   type CalendarEventListResponse,
   type CalendarEventSchema,
-  createCalendarEventV1CalendarsCalendarIdEventsPost,
-  deleteCalendarEventV1CalendarsEventsEventIdDelete,
+  createCalendarEvent,
+  deleteCalendarEvent,
   type EditScope,
   type EventUpdate,
   type RecurrenceSchema,
-  respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
-  updateCalendarEventV1CalendarsEventsEventIdPatch,
+  respondToCalendarEvent,
+  updateCalendarEvent,
 } from "@bessel/client";
 import {
   type QueryClient,
@@ -247,20 +247,18 @@ export function useEventMutations(timeZone: string) {
       notifyGuests,
       idempotencyKey,
     }: CreateVariables) => {
-      const { data } = await createCalendarEventV1CalendarsCalendarIdEventsPost(
-        {
-          client,
-          path: { calendar_id: calendarId },
-          body: {
-            ...eventFieldsBody(changes, timeZone),
-            timing: timingPayload(changes.timing as EventDraftTiming, timeZone),
-            time_zone: timeZone,
-            notify_guests: notifyGuests,
-          },
-          headers: { [IDEMPOTENCY_HEADER]: idempotencyKey },
-          throwOnError: true,
+      const { data } = await createCalendarEvent({
+        client,
+        path: { calendar_id: calendarId },
+        body: {
+          ...eventFieldsBody(changes, timeZone),
+          timing: timingPayload(changes.timing as EventDraftTiming, timeZone),
+          time_zone: timeZone,
+          notify_guests: notifyGuests,
         },
-      );
+        headers: { [IDEMPOTENCY_HEADER]: idempotencyKey },
+        throwOnError: true,
+      });
       return data;
     },
     retry: shouldRetryCreate,
@@ -276,7 +274,7 @@ export function useEventMutations(timeZone: string) {
       changes,
       options: { scope = "this", calendarId, notifyGuests = true },
     }: UpdateVariables) => {
-      const { data } = await updateCalendarEventV1CalendarsEventsEventIdPatch({
+      const { data } = await updateCalendarEvent({
         client,
         path: { event_id: event.id },
         body: {
@@ -310,13 +308,12 @@ export function useEventMutations(timeZone: string) {
   const reply = useMutation({
     ...EVENT_WRITES,
     mutationFn: async ({ event, answer, scope }: ReplyVariables) => {
-      const { data } =
-        await respondToCalendarEventV1CalendarsEventsEventIdResponsePut({
-          client,
-          path: { event_id: event.id },
-          body: { response: answer, scope },
-          throwOnError: true,
-        });
+      const { data } = await respondToCalendarEvent({
+        client,
+        path: { event_id: event.id },
+        body: { response: answer, scope },
+        throwOnError: true,
+      });
       return data;
     },
     onMutate: ({ event, answer }) =>
@@ -336,7 +333,7 @@ export function useEventMutations(timeZone: string) {
       event,
       options: { scope = "this", notifyGuests = true },
     }: DeleteVariables) => {
-      await deleteCalendarEventV1CalendarsEventsEventIdDelete({
+      await deleteCalendarEvent({
         client,
         path: { event_id: event.id },
         query: { scope, time_zone: timeZone, notify_guests: notifyGuests },

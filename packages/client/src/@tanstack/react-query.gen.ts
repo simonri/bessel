@@ -10,572 +10,572 @@ import {
 
 import { client } from "../client.gen.js";
 import {
-  addTransactionDocumentV1TransactionsTransactionIdDocumentsPost,
-  authorizeBankConnectionV1BankConnectionsAuthorizePost,
-  authorizeGoogleV1CalendarsGoogleAuthorizePost,
-  authorizeMontroseV1MontroseAuthorizePost,
-  bulkUpdateTransactionsV1TransactionsBulkPatch,
-  categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost,
-  completeBankConnectionV1BankConnectionsCallbackPost,
-  completeGoogleConnectV1CalendarsGoogleCallbackPost,
-  completeMontroseV1MontroseCallbackPost,
-  completeTaskV1TasksTaskIdCompletePost,
-  connectAvanzaV1AvanzaConnectPost,
-  connectIcloudV1CalendarsIcloudPost,
-  createBankAccountV1BankAccountsPost,
-  createCalendarEventV1CalendarsCalendarIdEventsPost,
-  createCategoryRuleV1CategoriesRulesPost,
-  createCounterV1CountersPost,
-  createIngestTokenV1IngestTokensPost,
-  createNotificationV1NotificationsPost,
-  createPlaceV1PlacesPost,
-  createProjectV1ProjectsPost,
-  createRecipeV1RecipesPost,
-  createResetV1CountersCounterIdResetsPost,
-  createTaskV1TasksPost,
-  createTimeEntryV1TimeEntriesPost,
-  createTimeProjectV1TimeProjectsPost,
-  deleteBankAccountV1BankAccountsBankAccountIdDelete,
-  deleteCalendarEventV1CalendarsEventsEventIdDelete,
-  deleteCategoryRuleV1CategoriesRulesRuleIdDelete,
-  deleteCounterV1CountersCounterIdDelete,
-  deleteDeviceV1DevicesDeviceIdDelete,
-  deleteGymExerciseV1GymExercisesExerciseIdDelete,
-  deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete,
-  deletePlaceV1PlacesPlaceIdDelete,
-  deleteProjectV1ProjectsProjectIdDelete,
-  deleteRecipeV1RecipesRecipeIdDelete,
-  deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete,
-  deleteTaskV1TasksTaskIdDelete,
-  deleteTimeEntryV1TimeEntriesEntryIdDelete,
-  deleteTransactionsV1TransactionsDelete,
-  disconnectAvanzaV1AvanzaDelete,
-  disconnectBankConnectionV1BankConnectionsConnectionIdDelete,
-  disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete,
-  disconnectMontroseV1MontroseDelete,
-  documentPageV1DocumentsDocumentIdPagesPageGet,
-  documentThumbnailV1DocumentsDocumentIdThumbnailGet,
-  downloadDocumentV1DocumentsDocumentIdFileGet,
-  getAccountsOverviewV1BankAccountsOverviewGet,
-  getActivitySummaryV1ActivitySummaryGet,
-  getAgentUsageDailyV1AgentUsageDailyGet,
-  getAgentUsageStatusV1AgentUsageStatusGet,
-  getAvanzaV1AvanzaGet,
-  getBankAccountV1BankAccountsBankAccountIdGet,
-  getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet,
-  getDailyActivityV1ActivityDailyGet,
-  getDailySleepV1HealthkitSleepDailyGet,
-  getHealthSummaryV1HealthkitSummaryGet,
-  getHoldingsV1InvestmentsHoldingsGet,
-  getIntradayActivityV1ActivityIntradayGet,
-  getInvestmentAccountsV1InvestmentsAccountsGet,
-  getKlarnaTransactionsV1KlarnaTransactionsGet,
-  getLocationHistoryDayV1LocationHistoryDayGet,
-  getLocationHistorySummaryV1LocationHistorySummaryGet,
-  getMeV1AuthMeGet,
-  getMontroseV1MontroseGet,
-  getNetWorthHistoryV1BankAccountsNetWorthGet,
-  getPlaceV1PlacesPlaceIdGet,
-  getRecipeV1RecipesRecipeIdGet,
-  getSleepSummaryV1HealthkitSleepSummaryGet,
-  getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet,
-  getTaskV1TasksTaskIdGet,
-  getTimelineV1TimelineGet,
-  getTimeSummaryV1TimeSummaryGet,
-  getWeatherForecastV1WeatherGet,
-  healthzHealthzGet,
-  importKlarnaTransactionsV1KlarnaImportPost,
-  importLocationHistoryV1LocationHistoryImportPost,
-  importTransactionsV1TransactionsImportPost,
-  ingestActivityBatchV1ActivityBatchPost,
-  linkAvanzaAccountV1AvanzaAccountsAccountIdPatch,
-  linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch,
-  linkMontroseAccountV1MontroseAccountsAccountIdPatch,
-  listActivitySourcesV1ActivitySourcesGet,
-  listBankAccountsV1BankAccountsGet,
-  listBankConnectionsV1BankConnectionsGet,
-  listCalendarAccountsV1CalendarsAccountsGet,
-  listCalendarEventsV1CalendarsEventsGet,
-  listCategoriesV1CategoriesGet,
-  listCategoryRulesV1CategoriesRulesGet,
-  listCountersV1CountersGet,
-  listDevicesV1DevicesGet,
-  listGymExercisesV1GymExercisesGet,
-  listGymTopSetsV1GymExercisesExerciseIdSetsGet,
-  listHealthkitSleepV1HealthkitSleepGet,
-  listHealthkitWorkoutsV1HealthkitWorkoutsGet,
-  listIngestTokensV1IngestTokensGet,
-  listNotificationsV1NotificationsGet,
-  listPlacesV1PlacesGet,
-  listProjectsV1ProjectsGet,
-  listRecipesV1RecipesGet,
-  listResetsV1CountersCounterIdResetsGet,
-  listTasksV1TasksGet,
-  listTimeEntriesV1TimeEntriesGet,
-  listTimeProjectsV1TimeProjectsGet,
-  listTradesV1InvestmentsTradesGet,
-  listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet,
-  listTransactionsV1TransactionsGet,
-  markAllNotificationsReadV1NotificationsReadAllPost,
-  markNotificationReadV1NotificationsNotificationIdReadPost,
-  monthlyFlowV1TransactionsMonthlyFlowGet,
-  nameTransactionsV1TransactionsNamesPost,
+  addTransactionDocument,
+  authorizeBankConnection,
+  authorizeGoogle,
+  authorizeMontrose,
+  bulkUpdateTransactions,
+  categorizeByDescription,
+  completeBankConnection,
+  completeGoogleConnect,
+  completeMontrose,
+  completeTask,
+  connectAvanza,
+  connectIcloud,
+  createBankAccount,
+  createCalendarEvent,
+  createCategoryRule,
+  createCounter,
+  createIngestToken,
+  createNotification,
+  createPlace,
+  createProject,
+  createRecipe,
+  createReset,
+  createTask,
+  createTimeEntry,
+  createTimeProject,
+  deleteBankAccount,
+  deleteCalendarEvent,
+  deleteCategoryRule,
+  deleteCounter,
+  deleteDevice,
+  deleteGymExercise,
+  deleteGymTopSet,
+  deletePlace,
+  deleteProject,
+  deleteRecipe,
+  deleteTask,
+  deleteTaskAttachment,
+  deleteTimeEntry,
+  deleteTransactions,
+  disconnectAvanza,
+  disconnectBankConnection,
+  disconnectCalendarAccount,
+  disconnectMontrose,
+  documentPage,
+  documentThumbnail,
+  downloadDocument,
+  getAccountsOverview,
+  getActivitySummary,
+  getAgentUsageDaily,
+  getAgentUsageStatus,
+  getAvanza,
+  getBankAccount,
+  getCryptoPrice,
+  getDailyActivity,
+  getDailySleep,
+  getHealthSummary,
+  getHoldings,
+  getIntradayActivity,
+  getInvestmentAccounts,
+  getKlarnaTransactions,
+  getLocationHistoryDay,
+  getLocationHistorySummary,
+  getMe,
+  getMonthlyFlow,
+  getMontrose,
+  getNetWorthHistory,
+  getPlace,
+  getRecipe,
+  getSleepSummary,
+  getTask,
+  getTaskAttachmentFile,
+  getTimeline,
+  getTimeSummary,
+  getTransactionSummary,
+  getWeatherForecast,
+  healthz,
+  importKlarnaTransactions,
+  importLocationHistory,
+  importTransactions,
+  ingestActivityBatch,
+  linkAvanzaAccount,
+  linkBankConnectionAccount,
+  linkMontroseAccount,
+  listActivitySources,
+  listBankAccounts,
+  listBankConnections,
+  listCalendarAccounts,
+  listCalendarEvents,
+  listCategories,
+  listCategoryRules,
+  listCounters,
+  listDevices,
+  listGymExercises,
+  listGymTopSets,
+  listHealthkitSleep,
+  listHealthkitWorkouts,
+  listIngestTokens,
+  listNotifications,
+  listPlaces,
+  listProjects,
+  listRecipes,
+  listResets,
+  listTasks,
+  listTimeEntries,
+  listTimeProjects,
+  listTrades,
+  listTransactionDocuments,
+  listTransactions,
+  markAllNotificationsRead,
+  markNotificationRead,
+  nameTransactions,
   type Options,
-  putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut,
-  removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete,
-  renameTransactionV1TransactionsTransactionIdNamePut,
-  reopenTaskV1TasksTaskIdReopenPost,
-  reorderTasksV1TasksReorderPatch,
-  respondToCalendarEventV1CalendarsEventsEventIdResponsePut,
-  revokeIngestTokenV1IngestTokensTokenIdDelete,
-  searchGooglePlacesV1PlacesSearchGet,
-  searchV1SearchGet,
-  setProjectLocationV1ProjectsProjectIdLocationPut,
-  spendingByCategoryV1TransactionsSpendingByCategoryGet,
-  structureRecipeTextV1RecipesImportPost,
-  syncAgentUsageV1AgentUsageSyncPost,
-  syncAvanzaV1AvanzaSyncPost,
-  syncBankConnectionV1BankConnectionsConnectionIdSyncPost,
-  syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost,
-  syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost,
-  syncHealthkitSleepV1HealthkitSleepSyncPost,
-  syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost,
-  syncMontroseV1MontroseSyncPost,
-  transactionSummaryV1TransactionsSummaryGet,
-  undoCompleteTaskV1TasksTaskIdUndoCompletePost,
-  undoResetV1CountersCounterIdResetsResetIdDelete,
-  unpairTransferV1TransactionsTransactionIdTransferDelete,
-  updateBankAccountV1BankAccountsBankAccountIdPatch,
-  updateCalendarEventV1CalendarsEventsEventIdPatch,
-  updateCalendarV1CalendarsCalendarIdPatch,
-  updateCounterV1CountersCounterIdPatch,
-  updateDeviceV1DevicesDeviceIdPatch,
-  updateMeV1AuthMePatch,
-  updatePlaceV1PlacesPlaceIdPatch,
-  updateProjectV1ProjectsProjectIdPatch,
-  updateRecipeV1RecipesRecipeIdPatch,
-  updateTaskV1TasksTaskIdPatch,
-  updateTimeEntryV1TimeEntriesEntryIdPatch,
-  updateTimeProjectV1TimeProjectsProjectIdPatch,
-  updateTransactionV1TransactionsTransactionIdPatch,
-  uploadClientDiagnosticsV1ClientDiagnosticsPost,
-  uploadTaskAttachmentV1TasksTaskIdAttachmentsPost,
-  upsertGymExerciseV1GymExercisesExerciseIdPut,
+  putGymTopSet,
+  removeTransactionDocument,
+  renameTransaction,
+  reopenTask,
+  reorderTasks,
+  respondToCalendarEvent,
+  revokeIngestToken,
+  searchEverything,
+  searchGooglePlaces,
+  setProjectLocation,
+  spendingByCategory,
+  structureRecipeText,
+  syncAgentUsage,
+  syncAvanza,
+  syncBankConnection,
+  syncCalendarAccount,
+  syncHealthkitDailyMetrics,
+  syncHealthkitSleep,
+  syncHealthkitWorkouts,
+  syncMontrose,
+  undoCompleteTask,
+  undoReset,
+  unpairTransfer,
+  updateBankAccount,
+  updateCalendar,
+  updateCalendarEvent,
+  updateCounter,
+  updateDevice,
+  updateMe,
+  updatePlace,
+  updateProject,
+  updateRecipe,
+  updateTask,
+  updateTimeEntry,
+  updateTimeProject,
+  updateTransaction,
+  uploadClientDiagnostics,
+  uploadTaskAttachment,
+  upsertGymExercise,
 } from "../sdk.gen.js";
 import type {
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData,
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError,
-  AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostData,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostData,
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse,
-  AuthorizeMontroseV1MontroseAuthorizePostData,
-  AuthorizeMontroseV1MontroseAuthorizePostResponse,
-  BulkUpdateTransactionsV1TransactionsBulkPatchData,
-  BulkUpdateTransactionsV1TransactionsBulkPatchError,
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData,
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
-  CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
-  CompleteBankConnectionV1BankConnectionsCallbackPostData,
-  CompleteBankConnectionV1BankConnectionsCallbackPostError,
-  CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostData,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
-  CompleteMontroseV1MontroseCallbackPostData,
-  CompleteMontroseV1MontroseCallbackPostError,
-  CompleteMontroseV1MontroseCallbackPostResponse,
-  CompleteTaskV1TasksTaskIdCompletePostData,
-  CompleteTaskV1TasksTaskIdCompletePostError,
-  CompleteTaskV1TasksTaskIdCompletePostResponse,
-  ConnectAvanzaV1AvanzaConnectPostData,
-  ConnectAvanzaV1AvanzaConnectPostError,
-  ConnectAvanzaV1AvanzaConnectPostResponse,
-  ConnectIcloudV1CalendarsIcloudPostData,
-  ConnectIcloudV1CalendarsIcloudPostError,
-  ConnectIcloudV1CalendarsIcloudPostResponse,
-  CreateBankAccountV1BankAccountsPostData,
-  CreateBankAccountV1BankAccountsPostError,
-  CreateBankAccountV1BankAccountsPostResponse,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostData,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
-  CreateCategoryRuleV1CategoriesRulesPostData,
-  CreateCategoryRuleV1CategoriesRulesPostError,
-  CreateCategoryRuleV1CategoriesRulesPostResponse,
-  CreateCounterV1CountersPostData,
-  CreateCounterV1CountersPostError,
-  CreateCounterV1CountersPostResponse,
-  CreateIngestTokenV1IngestTokensPostData,
-  CreateIngestTokenV1IngestTokensPostError,
-  CreateIngestTokenV1IngestTokensPostResponse,
-  CreateNotificationV1NotificationsPostData,
-  CreateNotificationV1NotificationsPostError,
-  CreateNotificationV1NotificationsPostResponse,
-  CreatePlaceV1PlacesPostData,
-  CreatePlaceV1PlacesPostError,
-  CreatePlaceV1PlacesPostResponse,
-  CreateProjectV1ProjectsPostData,
-  CreateProjectV1ProjectsPostError,
-  CreateProjectV1ProjectsPostResponse,
-  CreateRecipeV1RecipesPostData,
-  CreateRecipeV1RecipesPostError,
-  CreateRecipeV1RecipesPostResponse,
-  CreateResetV1CountersCounterIdResetsPostData,
-  CreateResetV1CountersCounterIdResetsPostError,
-  CreateResetV1CountersCounterIdResetsPostResponse,
-  CreateTaskV1TasksPostData,
-  CreateTaskV1TasksPostError,
-  CreateTaskV1TasksPostResponse,
-  CreateTimeEntryV1TimeEntriesPostData,
-  CreateTimeEntryV1TimeEntriesPostError,
-  CreateTimeEntryV1TimeEntriesPostResponse,
-  CreateTimeProjectV1TimeProjectsPostData,
-  CreateTimeProjectV1TimeProjectsPostError,
-  CreateTimeProjectV1TimeProjectsPostResponse,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteData,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteData,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse,
-  DeleteCounterV1CountersCounterIdDeleteData,
-  DeleteCounterV1CountersCounterIdDeleteError,
-  DeleteCounterV1CountersCounterIdDeleteResponse,
-  DeleteDeviceV1DevicesDeviceIdDeleteData,
-  DeleteDeviceV1DevicesDeviceIdDeleteError,
-  DeleteDeviceV1DevicesDeviceIdDeleteResponse,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteData,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteError,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError,
-  DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse,
-  DeletePlaceV1PlacesPlaceIdDeleteData,
-  DeletePlaceV1PlacesPlaceIdDeleteError,
-  DeletePlaceV1PlacesPlaceIdDeleteResponse,
-  DeleteProjectV1ProjectsProjectIdDeleteData,
-  DeleteProjectV1ProjectsProjectIdDeleteError,
-  DeleteProjectV1ProjectsProjectIdDeleteResponse,
-  DeleteRecipeV1RecipesRecipeIdDeleteData,
-  DeleteRecipeV1RecipesRecipeIdDeleteError,
-  DeleteRecipeV1RecipesRecipeIdDeleteResponse,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
-  DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
-  DeleteTaskV1TasksTaskIdDeleteData,
-  DeleteTaskV1TasksTaskIdDeleteError,
-  DeleteTaskV1TasksTaskIdDeleteResponse,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteData,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
-  DeleteTransactionsV1TransactionsDeleteData,
-  DeleteTransactionsV1TransactionsDeleteError,
-  DeleteTransactionsV1TransactionsDeleteResponse,
-  DisconnectAvanzaV1AvanzaDeleteData,
-  DisconnectAvanzaV1AvanzaDeleteResponse,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
-  DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
-  DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
-  DisconnectMontroseV1MontroseDeleteData,
-  DisconnectMontroseV1MontroseDeleteResponse,
-  DocumentPageV1DocumentsDocumentIdPagesPageGetData,
-  DocumentPageV1DocumentsDocumentIdPagesPageGetError,
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData,
-  DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError,
-  DownloadDocumentV1DocumentsDocumentIdFileGetData,
-  DownloadDocumentV1DocumentsDocumentIdFileGetError,
-  GetAccountsOverviewV1BankAccountsOverviewGetData,
-  GetAccountsOverviewV1BankAccountsOverviewGetResponse,
-  GetActivitySummaryV1ActivitySummaryGetData,
-  GetActivitySummaryV1ActivitySummaryGetError,
-  GetActivitySummaryV1ActivitySummaryGetResponse,
-  GetAgentUsageDailyV1AgentUsageDailyGetData,
-  GetAgentUsageDailyV1AgentUsageDailyGetError,
-  GetAgentUsageDailyV1AgentUsageDailyGetResponse,
-  GetAgentUsageStatusV1AgentUsageStatusGetData,
-  GetAgentUsageStatusV1AgentUsageStatusGetResponse,
-  GetAvanzaV1AvanzaGetData,
-  GetAvanzaV1AvanzaGetResponse,
-  GetBankAccountV1BankAccountsBankAccountIdGetData,
-  GetBankAccountV1BankAccountsBankAccountIdGetError,
-  GetBankAccountV1BankAccountsBankAccountIdGetResponse,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError,
-  GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
-  GetDailyActivityV1ActivityDailyGetData,
-  GetDailyActivityV1ActivityDailyGetError,
-  GetDailyActivityV1ActivityDailyGetResponse,
-  GetDailySleepV1HealthkitSleepDailyGetData,
-  GetDailySleepV1HealthkitSleepDailyGetError,
-  GetDailySleepV1HealthkitSleepDailyGetResponse,
-  GetHealthSummaryV1HealthkitSummaryGetData,
-  GetHealthSummaryV1HealthkitSummaryGetError,
-  GetHealthSummaryV1HealthkitSummaryGetResponse,
-  GetHoldingsV1InvestmentsHoldingsGetData,
-  GetHoldingsV1InvestmentsHoldingsGetResponse,
-  GetIntradayActivityV1ActivityIntradayGetData,
-  GetIntradayActivityV1ActivityIntradayGetError,
-  GetIntradayActivityV1ActivityIntradayGetResponse,
-  GetInvestmentAccountsV1InvestmentsAccountsGetData,
-  GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetData,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetError,
-  GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
-  GetLocationHistoryDayV1LocationHistoryDayGetData,
-  GetLocationHistoryDayV1LocationHistoryDayGetError,
-  GetLocationHistoryDayV1LocationHistoryDayGetResponse,
-  GetLocationHistorySummaryV1LocationHistorySummaryGetData,
-  GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
-  GetMeV1AuthMeGetData,
-  GetMeV1AuthMeGetResponse,
-  GetMontroseV1MontroseGetData,
-  GetMontroseV1MontroseGetResponse,
-  GetNetWorthHistoryV1BankAccountsNetWorthGetData,
-  GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
-  GetPlaceV1PlacesPlaceIdGetData,
-  GetPlaceV1PlacesPlaceIdGetError,
-  GetPlaceV1PlacesPlaceIdGetResponse,
-  GetRecipeV1RecipesRecipeIdGetData,
-  GetRecipeV1RecipesRecipeIdGetError,
-  GetRecipeV1RecipesRecipeIdGetResponse,
-  GetSleepSummaryV1HealthkitSleepSummaryGetData,
-  GetSleepSummaryV1HealthkitSleepSummaryGetError,
-  GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
-  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData,
-  GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetError,
-  GetTaskV1TasksTaskIdGetData,
-  GetTaskV1TasksTaskIdGetError,
-  GetTaskV1TasksTaskIdGetResponse,
-  GetTimelineV1TimelineGetData,
-  GetTimelineV1TimelineGetError,
-  GetTimelineV1TimelineGetResponse,
-  GetTimeSummaryV1TimeSummaryGetData,
-  GetTimeSummaryV1TimeSummaryGetError,
-  GetTimeSummaryV1TimeSummaryGetResponse,
-  GetWeatherForecastV1WeatherGetData,
-  GetWeatherForecastV1WeatherGetError,
-  GetWeatherForecastV1WeatherGetResponse,
-  HealthzHealthzGetData,
-  ImportKlarnaTransactionsV1KlarnaImportPostData,
-  ImportKlarnaTransactionsV1KlarnaImportPostError,
-  ImportKlarnaTransactionsV1KlarnaImportPostResponse,
-  ImportLocationHistoryV1LocationHistoryImportPostData,
-  ImportLocationHistoryV1LocationHistoryImportPostError,
-  ImportLocationHistoryV1LocationHistoryImportPostResponse,
-  ImportTransactionsV1TransactionsImportPostData,
-  ImportTransactionsV1TransactionsImportPostError,
-  ImportTransactionsV1TransactionsImportPostResponse,
-  IngestActivityBatchV1ActivityBatchPostData,
-  IngestActivityBatchV1ActivityBatchPostError,
-  IngestActivityBatchV1ActivityBatchPostResponse,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData,
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
-  LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchData,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchError,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
-  ListActivitySourcesV1ActivitySourcesGetData,
-  ListActivitySourcesV1ActivitySourcesGetResponse,
-  ListBankAccountsV1BankAccountsGetData,
-  ListBankAccountsV1BankAccountsGetError,
-  ListBankAccountsV1BankAccountsGetResponse,
-  ListBankConnectionsV1BankConnectionsGetData,
-  ListBankConnectionsV1BankConnectionsGetResponse,
-  ListCalendarAccountsV1CalendarsAccountsGetData,
-  ListCalendarAccountsV1CalendarsAccountsGetResponse,
-  ListCalendarEventsV1CalendarsEventsGetData,
-  ListCalendarEventsV1CalendarsEventsGetError,
-  ListCalendarEventsV1CalendarsEventsGetResponse,
-  ListCategoriesV1CategoriesGetData,
-  ListCategoriesV1CategoriesGetError,
-  ListCategoriesV1CategoriesGetResponse,
-  ListCategoryRulesV1CategoriesRulesGetData,
-  ListCategoryRulesV1CategoriesRulesGetResponse,
-  ListCountersV1CountersGetData,
-  ListCountersV1CountersGetResponse,
-  ListDevicesV1DevicesGetData,
-  ListDevicesV1DevicesGetResponse,
-  ListGymExercisesV1GymExercisesGetData,
-  ListGymExercisesV1GymExercisesGetResponse,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetData,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetError,
-  ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
-  ListHealthkitSleepV1HealthkitSleepGetData,
-  ListHealthkitSleepV1HealthkitSleepGetError,
-  ListHealthkitSleepV1HealthkitSleepGetResponse,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetData,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
-  ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
-  ListIngestTokensV1IngestTokensGetData,
-  ListIngestTokensV1IngestTokensGetResponse,
-  ListNotificationsV1NotificationsGetData,
-  ListNotificationsV1NotificationsGetResponse,
-  ListPlacesV1PlacesGetData,
-  ListPlacesV1PlacesGetError,
-  ListPlacesV1PlacesGetResponse,
-  ListProjectsV1ProjectsGetData,
-  ListProjectsV1ProjectsGetError,
-  ListProjectsV1ProjectsGetResponse,
-  ListRecipesV1RecipesGetData,
-  ListRecipesV1RecipesGetError,
-  ListRecipesV1RecipesGetResponse,
-  ListResetsV1CountersCounterIdResetsGetData,
-  ListResetsV1CountersCounterIdResetsGetError,
-  ListResetsV1CountersCounterIdResetsGetResponse,
-  ListTasksV1TasksGetData,
-  ListTasksV1TasksGetError,
-  ListTasksV1TasksGetResponse,
-  ListTimeEntriesV1TimeEntriesGetData,
-  ListTimeEntriesV1TimeEntriesGetError,
-  ListTimeEntriesV1TimeEntriesGetResponse,
-  ListTimeProjectsV1TimeProjectsGetData,
-  ListTimeProjectsV1TimeProjectsGetResponse,
-  ListTradesV1InvestmentsTradesGetData,
-  ListTradesV1InvestmentsTradesGetError,
-  ListTradesV1InvestmentsTradesGetResponse,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetError,
-  ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse,
-  ListTransactionsV1TransactionsGetData,
-  ListTransactionsV1TransactionsGetError,
-  ListTransactionsV1TransactionsGetResponse,
-  MarkAllNotificationsReadV1NotificationsReadAllPostData,
-  MarkAllNotificationsReadV1NotificationsReadAllPostResponse,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostData,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostError,
-  MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
-  MonthlyFlowV1TransactionsMonthlyFlowGetData,
-  MonthlyFlowV1TransactionsMonthlyFlowGetError,
-  MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
-  NameTransactionsV1TransactionsNamesPostData,
-  NameTransactionsV1TransactionsNamesPostError,
-  NameTransactionsV1TransactionsNamesPostResponse,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData,
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
-  RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
-  RenameTransactionV1TransactionsTransactionIdNamePutData,
-  RenameTransactionV1TransactionsTransactionIdNamePutError,
-  RenameTransactionV1TransactionsTransactionIdNamePutResponse,
-  ReopenTaskV1TasksTaskIdReopenPostData,
-  ReopenTaskV1TasksTaskIdReopenPostError,
-  ReopenTaskV1TasksTaskIdReopenPostResponse,
-  ReorderTasksV1TasksReorderPatchData,
-  ReorderTasksV1TasksReorderPatchError,
-  ReorderTasksV1TasksReorderPatchResponse,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError,
-  RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteData,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
-  SearchGooglePlacesV1PlacesSearchGetData,
-  SearchGooglePlacesV1PlacesSearchGetError,
-  SearchGooglePlacesV1PlacesSearchGetResponse,
-  SearchV1SearchGetData,
-  SearchV1SearchGetError,
-  SearchV1SearchGetResponse,
-  SetProjectLocationV1ProjectsProjectIdLocationPutData,
-  SetProjectLocationV1ProjectsProjectIdLocationPutError,
-  SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetData,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
-  SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
-  StructureRecipeTextV1RecipesImportPostData,
-  StructureRecipeTextV1RecipesImportPostError,
-  StructureRecipeTextV1RecipesImportPostResponse,
-  SyncAgentUsageV1AgentUsageSyncPostData,
-  SyncAgentUsageV1AgentUsageSyncPostError,
-  SyncAgentUsageV1AgentUsageSyncPostResponse,
-  SyncAvanzaV1AvanzaSyncPostData,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError,
-  SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostData,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostError,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
-  SyncMontroseV1MontroseSyncPostData,
-  TransactionSummaryV1TransactionsSummaryGetData,
-  TransactionSummaryV1TransactionsSummaryGetError,
-  TransactionSummaryV1TransactionsSummaryGetResponse,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostData,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteData,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteError,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteData,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteError,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchData,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchData,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchError,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
-  UpdateCalendarV1CalendarsCalendarIdPatchData,
-  UpdateCalendarV1CalendarsCalendarIdPatchError,
-  UpdateCalendarV1CalendarsCalendarIdPatchResponse,
-  UpdateCounterV1CountersCounterIdPatchData,
-  UpdateCounterV1CountersCounterIdPatchError,
-  UpdateCounterV1CountersCounterIdPatchResponse,
-  UpdateDeviceV1DevicesDeviceIdPatchData,
-  UpdateDeviceV1DevicesDeviceIdPatchError,
-  UpdateDeviceV1DevicesDeviceIdPatchResponse,
-  UpdateMeV1AuthMePatchData,
-  UpdateMeV1AuthMePatchError,
-  UpdateMeV1AuthMePatchResponse,
-  UpdatePlaceV1PlacesPlaceIdPatchData,
-  UpdatePlaceV1PlacesPlaceIdPatchError,
-  UpdatePlaceV1PlacesPlaceIdPatchResponse,
-  UpdateProjectV1ProjectsProjectIdPatchData,
-  UpdateProjectV1ProjectsProjectIdPatchError,
-  UpdateProjectV1ProjectsProjectIdPatchResponse,
-  UpdateRecipeV1RecipesRecipeIdPatchData,
-  UpdateRecipeV1RecipesRecipeIdPatchError,
-  UpdateRecipeV1RecipesRecipeIdPatchResponse,
-  UpdateTaskV1TasksTaskIdPatchData,
-  UpdateTaskV1TasksTaskIdPatchError,
-  UpdateTaskV1TasksTaskIdPatchResponse,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchData,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchError,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchData,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
-  UpdateTransactionV1TransactionsTransactionIdPatchData,
-  UpdateTransactionV1TransactionsTransactionIdPatchError,
-  UpdateTransactionV1TransactionsTransactionIdPatchResponse,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostData,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostError,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutData,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutError,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
+  AddTransactionDocumentData,
+  AddTransactionDocumentError,
+  AddTransactionDocumentResponse,
+  AuthorizeBankConnectionData,
+  AuthorizeBankConnectionError,
+  AuthorizeBankConnectionResponse,
+  AuthorizeGoogleData,
+  AuthorizeGoogleResponse,
+  AuthorizeMontroseData,
+  AuthorizeMontroseResponse,
+  BulkUpdateTransactionsData,
+  BulkUpdateTransactionsError,
+  BulkUpdateTransactionsResponse,
+  CategorizeByDescriptionData,
+  CategorizeByDescriptionError,
+  CategorizeByDescriptionResponse,
+  CompleteBankConnectionData,
+  CompleteBankConnectionError,
+  CompleteBankConnectionResponse,
+  CompleteGoogleConnectData,
+  CompleteGoogleConnectError,
+  CompleteGoogleConnectResponse,
+  CompleteMontroseData,
+  CompleteMontroseError,
+  CompleteMontroseResponse,
+  CompleteTaskData,
+  CompleteTaskError,
+  CompleteTaskResponse,
+  ConnectAvanzaData,
+  ConnectAvanzaError,
+  ConnectAvanzaResponse,
+  ConnectIcloudData,
+  ConnectIcloudError,
+  ConnectIcloudResponse,
+  CreateBankAccountData,
+  CreateBankAccountError,
+  CreateBankAccountResponse,
+  CreateCalendarEventData,
+  CreateCalendarEventError,
+  CreateCalendarEventResponse,
+  CreateCategoryRuleData,
+  CreateCategoryRuleError,
+  CreateCategoryRuleResponse,
+  CreateCounterData,
+  CreateCounterError,
+  CreateCounterResponse,
+  CreateIngestTokenData,
+  CreateIngestTokenError,
+  CreateIngestTokenResponse,
+  CreateNotificationData,
+  CreateNotificationError,
+  CreateNotificationResponse,
+  CreatePlaceData,
+  CreatePlaceError,
+  CreatePlaceResponse,
+  CreateProjectData,
+  CreateProjectError,
+  CreateProjectResponse,
+  CreateRecipeData,
+  CreateRecipeError,
+  CreateRecipeResponse,
+  CreateResetData,
+  CreateResetError,
+  CreateResetResponse,
+  CreateTaskData,
+  CreateTaskError,
+  CreateTaskResponse,
+  CreateTimeEntryData,
+  CreateTimeEntryError,
+  CreateTimeEntryResponse,
+  CreateTimeProjectData,
+  CreateTimeProjectError,
+  CreateTimeProjectResponse,
+  DeleteBankAccountData,
+  DeleteBankAccountError,
+  DeleteBankAccountResponse,
+  DeleteCalendarEventData,
+  DeleteCalendarEventError,
+  DeleteCalendarEventResponse,
+  DeleteCategoryRuleData,
+  DeleteCategoryRuleError,
+  DeleteCategoryRuleResponse,
+  DeleteCounterData,
+  DeleteCounterError,
+  DeleteCounterResponse,
+  DeleteDeviceData,
+  DeleteDeviceError,
+  DeleteDeviceResponse,
+  DeleteGymExerciseData,
+  DeleteGymExerciseError,
+  DeleteGymExerciseResponse,
+  DeleteGymTopSetData,
+  DeleteGymTopSetError,
+  DeleteGymTopSetResponse,
+  DeletePlaceData,
+  DeletePlaceError,
+  DeletePlaceResponse,
+  DeleteProjectData,
+  DeleteProjectError,
+  DeleteProjectResponse,
+  DeleteRecipeData,
+  DeleteRecipeError,
+  DeleteRecipeResponse,
+  DeleteTaskAttachmentData,
+  DeleteTaskAttachmentError,
+  DeleteTaskAttachmentResponse,
+  DeleteTaskData,
+  DeleteTaskError,
+  DeleteTaskResponse,
+  DeleteTimeEntryData,
+  DeleteTimeEntryError,
+  DeleteTimeEntryResponse,
+  DeleteTransactionsData,
+  DeleteTransactionsError,
+  DeleteTransactionsResponse,
+  DisconnectAvanzaData,
+  DisconnectAvanzaResponse,
+  DisconnectBankConnectionData,
+  DisconnectBankConnectionError,
+  DisconnectBankConnectionResponse,
+  DisconnectCalendarAccountData,
+  DisconnectCalendarAccountError,
+  DisconnectCalendarAccountResponse,
+  DisconnectMontroseData,
+  DisconnectMontroseResponse,
+  DocumentPageData,
+  DocumentPageError,
+  DocumentThumbnailData,
+  DocumentThumbnailError,
+  DownloadDocumentData,
+  DownloadDocumentError,
+  GetAccountsOverviewData,
+  GetAccountsOverviewResponse,
+  GetActivitySummaryData,
+  GetActivitySummaryError,
+  GetActivitySummaryResponse,
+  GetAgentUsageDailyData,
+  GetAgentUsageDailyError,
+  GetAgentUsageDailyResponse,
+  GetAgentUsageStatusData,
+  GetAgentUsageStatusResponse,
+  GetAvanzaData,
+  GetAvanzaResponse,
+  GetBankAccountData,
+  GetBankAccountError,
+  GetBankAccountResponse,
+  GetCryptoPriceData,
+  GetCryptoPriceError,
+  GetCryptoPriceResponse,
+  GetDailyActivityData,
+  GetDailyActivityError,
+  GetDailyActivityResponse,
+  GetDailySleepData,
+  GetDailySleepError,
+  GetDailySleepResponse,
+  GetHealthSummaryData,
+  GetHealthSummaryError,
+  GetHealthSummaryResponse,
+  GetHoldingsData,
+  GetHoldingsResponse,
+  GetIntradayActivityData,
+  GetIntradayActivityError,
+  GetIntradayActivityResponse,
+  GetInvestmentAccountsData,
+  GetInvestmentAccountsResponse,
+  GetKlarnaTransactionsData,
+  GetKlarnaTransactionsError,
+  GetKlarnaTransactionsResponse,
+  GetLocationHistoryDayData,
+  GetLocationHistoryDayError,
+  GetLocationHistoryDayResponse,
+  GetLocationHistorySummaryData,
+  GetLocationHistorySummaryResponse,
+  GetMeData,
+  GetMeResponse,
+  GetMonthlyFlowData,
+  GetMonthlyFlowError,
+  GetMonthlyFlowResponse,
+  GetMontroseData,
+  GetMontroseResponse,
+  GetNetWorthHistoryData,
+  GetNetWorthHistoryResponse,
+  GetPlaceData,
+  GetPlaceError,
+  GetPlaceResponse,
+  GetRecipeData,
+  GetRecipeError,
+  GetRecipeResponse,
+  GetSleepSummaryData,
+  GetSleepSummaryError,
+  GetSleepSummaryResponse,
+  GetTaskAttachmentFileData,
+  GetTaskAttachmentFileError,
+  GetTaskData,
+  GetTaskError,
+  GetTaskResponse,
+  GetTimelineData,
+  GetTimelineError,
+  GetTimelineResponse,
+  GetTimeSummaryData,
+  GetTimeSummaryError,
+  GetTimeSummaryResponse,
+  GetTransactionSummaryData,
+  GetTransactionSummaryError,
+  GetTransactionSummaryResponse,
+  GetWeatherForecastData,
+  GetWeatherForecastError,
+  GetWeatherForecastResponse,
+  HealthzData,
+  ImportKlarnaTransactionsData,
+  ImportKlarnaTransactionsError,
+  ImportKlarnaTransactionsResponse,
+  ImportLocationHistoryData,
+  ImportLocationHistoryError,
+  ImportLocationHistoryResponse,
+  ImportTransactionsData,
+  ImportTransactionsError,
+  ImportTransactionsResponse,
+  IngestActivityBatchData,
+  IngestActivityBatchError,
+  IngestActivityBatchResponse,
+  LinkAvanzaAccountData,
+  LinkAvanzaAccountError,
+  LinkAvanzaAccountResponse,
+  LinkBankConnectionAccountData,
+  LinkBankConnectionAccountError,
+  LinkBankConnectionAccountResponse,
+  LinkMontroseAccountData,
+  LinkMontroseAccountError,
+  LinkMontroseAccountResponse,
+  ListActivitySourcesData,
+  ListActivitySourcesResponse,
+  ListBankAccountsData,
+  ListBankAccountsError,
+  ListBankAccountsResponse,
+  ListBankConnectionsData,
+  ListBankConnectionsResponse,
+  ListCalendarAccountsData,
+  ListCalendarAccountsResponse,
+  ListCalendarEventsData,
+  ListCalendarEventsError,
+  ListCalendarEventsResponse,
+  ListCategoriesData,
+  ListCategoriesError,
+  ListCategoriesResponse,
+  ListCategoryRulesData,
+  ListCategoryRulesResponse,
+  ListCountersData,
+  ListCountersResponse,
+  ListDevicesData,
+  ListDevicesResponse,
+  ListGymExercisesData,
+  ListGymExercisesResponse,
+  ListGymTopSetsData,
+  ListGymTopSetsError,
+  ListGymTopSetsResponse,
+  ListHealthkitSleepData,
+  ListHealthkitSleepError,
+  ListHealthkitSleepResponse,
+  ListHealthkitWorkoutsData,
+  ListHealthkitWorkoutsError,
+  ListHealthkitWorkoutsResponse,
+  ListIngestTokensData,
+  ListIngestTokensResponse,
+  ListNotificationsData,
+  ListNotificationsResponse,
+  ListPlacesData,
+  ListPlacesError,
+  ListPlacesResponse,
+  ListProjectsData,
+  ListProjectsError,
+  ListProjectsResponse,
+  ListRecipesData,
+  ListRecipesError,
+  ListRecipesResponse,
+  ListResetsData,
+  ListResetsError,
+  ListResetsResponse,
+  ListTasksData,
+  ListTasksError,
+  ListTasksResponse,
+  ListTimeEntriesData,
+  ListTimeEntriesError,
+  ListTimeEntriesResponse,
+  ListTimeProjectsData,
+  ListTimeProjectsResponse,
+  ListTradesData,
+  ListTradesError,
+  ListTradesResponse,
+  ListTransactionDocumentsData,
+  ListTransactionDocumentsError,
+  ListTransactionDocumentsResponse,
+  ListTransactionsData,
+  ListTransactionsError,
+  ListTransactionsResponse,
+  MarkAllNotificationsReadData,
+  MarkAllNotificationsReadResponse,
+  MarkNotificationReadData,
+  MarkNotificationReadError,
+  MarkNotificationReadResponse,
+  NameTransactionsData,
+  NameTransactionsError,
+  NameTransactionsResponse,
+  PutGymTopSetData,
+  PutGymTopSetError,
+  PutGymTopSetResponse,
+  RemoveTransactionDocumentData,
+  RemoveTransactionDocumentError,
+  RemoveTransactionDocumentResponse,
+  RenameTransactionData,
+  RenameTransactionError,
+  RenameTransactionResponse,
+  ReopenTaskData,
+  ReopenTaskError,
+  ReopenTaskResponse,
+  ReorderTasksData,
+  ReorderTasksError,
+  ReorderTasksResponse,
+  RespondToCalendarEventData,
+  RespondToCalendarEventError,
+  RespondToCalendarEventResponse,
+  RevokeIngestTokenData,
+  RevokeIngestTokenError,
+  RevokeIngestTokenResponse,
+  SearchEverythingData,
+  SearchEverythingError,
+  SearchEverythingResponse,
+  SearchGooglePlacesData,
+  SearchGooglePlacesError,
+  SearchGooglePlacesResponse,
+  SetProjectLocationData,
+  SetProjectLocationError,
+  SetProjectLocationResponse,
+  SpendingByCategoryData,
+  SpendingByCategoryError,
+  SpendingByCategoryResponse,
+  StructureRecipeTextData,
+  StructureRecipeTextError,
+  StructureRecipeTextResponse,
+  SyncAgentUsageData,
+  SyncAgentUsageError,
+  SyncAgentUsageResponse,
+  SyncAvanzaData,
+  SyncBankConnectionData,
+  SyncBankConnectionError,
+  SyncCalendarAccountData,
+  SyncCalendarAccountError,
+  SyncHealthkitDailyMetricsData,
+  SyncHealthkitDailyMetricsError,
+  SyncHealthkitDailyMetricsResponse,
+  SyncHealthkitSleepData,
+  SyncHealthkitSleepError,
+  SyncHealthkitSleepResponse,
+  SyncHealthkitWorkoutsData,
+  SyncHealthkitWorkoutsError,
+  SyncHealthkitWorkoutsResponse,
+  SyncMontroseData,
+  UndoCompleteTaskData,
+  UndoCompleteTaskError,
+  UndoCompleteTaskResponse,
+  UndoResetData,
+  UndoResetError,
+  UndoResetResponse,
+  UnpairTransferData,
+  UnpairTransferError,
+  UnpairTransferResponse,
+  UpdateBankAccountData,
+  UpdateBankAccountError,
+  UpdateBankAccountResponse,
+  UpdateCalendarData,
+  UpdateCalendarError,
+  UpdateCalendarEventData,
+  UpdateCalendarEventError,
+  UpdateCalendarEventResponse,
+  UpdateCalendarResponse,
+  UpdateCounterData,
+  UpdateCounterError,
+  UpdateCounterResponse,
+  UpdateDeviceData,
+  UpdateDeviceError,
+  UpdateDeviceResponse,
+  UpdateMeData,
+  UpdateMeError,
+  UpdateMeResponse,
+  UpdatePlaceData,
+  UpdatePlaceError,
+  UpdatePlaceResponse,
+  UpdateProjectData,
+  UpdateProjectError,
+  UpdateProjectResponse,
+  UpdateRecipeData,
+  UpdateRecipeError,
+  UpdateRecipeResponse,
+  UpdateTaskData,
+  UpdateTaskError,
+  UpdateTaskResponse,
+  UpdateTimeEntryData,
+  UpdateTimeEntryError,
+  UpdateTimeEntryResponse,
+  UpdateTimeProjectData,
+  UpdateTimeProjectError,
+  UpdateTimeProjectResponse,
+  UpdateTransactionData,
+  UpdateTransactionError,
+  UpdateTransactionResponse,
+  UploadClientDiagnosticsData,
+  UploadClientDiagnosticsError,
+  UploadTaskAttachmentData,
+  UploadTaskAttachmentError,
+  UploadTaskAttachmentResponse,
+  UpsertGymExerciseData,
+  UpsertGymExerciseError,
+  UpsertGymExerciseResponse,
 } from "../types.gen.js";
 
 export type QueryKey<TOptions extends Options> = [
@@ -618,24 +618,21 @@ const createQueryKey = <TOptions extends Options>(
   return [params];
 };
 
-export const healthzHealthzGetQueryKey = (
-  options?: Options<HealthzHealthzGetData>,
-) => createQueryKey("healthzHealthzGet", options);
+export const healthzQueryKey = (options?: Options<HealthzData>) =>
+  createQueryKey("healthz", options);
 
 /**
  * Healthz
  */
-export const healthzHealthzGetOptions = (
-  options?: Options<HealthzHealthzGetData>,
-) =>
+export const healthzOptions = (options?: Options<HealthzData>) =>
   queryOptions<
     unknown,
     DefaultError,
     unknown,
-    ReturnType<typeof healthzHealthzGetQueryKey>
+    ReturnType<typeof healthzQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await healthzHealthzGet({
+      const { data } = await healthz({
         ...options,
         ...queryKey[0],
         signal,
@@ -643,27 +640,24 @@ export const healthzHealthzGetOptions = (
       });
       return data;
     },
-    queryKey: healthzHealthzGetQueryKey(options),
+    queryKey: healthzQueryKey(options),
   });
 
-export const getMeV1AuthMeGetQueryKey = (
-  options?: Options<GetMeV1AuthMeGetData>,
-) => createQueryKey("getMeV1AuthMeGet", options);
+export const getMeQueryKey = (options?: Options<GetMeData>) =>
+  createQueryKey("getMe", options);
 
 /**
  * Get Current User
  */
-export const getMeV1AuthMeGetOptions = (
-  options?: Options<GetMeV1AuthMeGetData>,
-) =>
+export const getMeOptions = (options?: Options<GetMeData>) =>
   queryOptions<
-    GetMeV1AuthMeGetResponse,
+    GetMeResponse,
     DefaultError,
-    GetMeV1AuthMeGetResponse,
-    ReturnType<typeof getMeV1AuthMeGetQueryKey>
+    GetMeResponse,
+    ReturnType<typeof getMeQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getMeV1AuthMeGet({
+      const { data } = await getMe({
         ...options,
         ...queryKey[0],
         signal,
@@ -671,26 +665,26 @@ export const getMeV1AuthMeGetOptions = (
       });
       return data;
     },
-    queryKey: getMeV1AuthMeGetQueryKey(options),
+    queryKey: getMeQueryKey(options),
   });
 
 /**
  * Update Current User
  */
-export const updateMeV1AuthMePatchMutation = (
-  options?: Partial<Options<UpdateMeV1AuthMePatchData>>,
+export const updateMeMutation = (
+  options?: Partial<Options<UpdateMeData>>,
 ): UseMutationOptions<
-  UpdateMeV1AuthMePatchResponse,
-  UpdateMeV1AuthMePatchError,
-  Options<UpdateMeV1AuthMePatchData>
+  UpdateMeResponse,
+  UpdateMeError,
+  Options<UpdateMeData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateMeV1AuthMePatchResponse,
-    UpdateMeV1AuthMePatchError,
-    Options<UpdateMeV1AuthMePatchData>
+    UpdateMeResponse,
+    UpdateMeError,
+    Options<UpdateMeData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateMeV1AuthMePatch({
+      const { data } = await updateMe({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -704,20 +698,20 @@ export const updateMeV1AuthMePatchMutation = (
 /**
  * Ingest Activity Events
  */
-export const ingestActivityBatchV1ActivityBatchPostMutation = (
-  options?: Partial<Options<IngestActivityBatchV1ActivityBatchPostData>>,
+export const ingestActivityBatchMutation = (
+  options?: Partial<Options<IngestActivityBatchData>>,
 ): UseMutationOptions<
-  IngestActivityBatchV1ActivityBatchPostResponse,
-  IngestActivityBatchV1ActivityBatchPostError,
-  Options<IngestActivityBatchV1ActivityBatchPostData>
+  IngestActivityBatchResponse,
+  IngestActivityBatchError,
+  Options<IngestActivityBatchData>
 > => {
   const mutationOptions: UseMutationOptions<
-    IngestActivityBatchV1ActivityBatchPostResponse,
-    IngestActivityBatchV1ActivityBatchPostError,
-    Options<IngestActivityBatchV1ActivityBatchPostData>
+    IngestActivityBatchResponse,
+    IngestActivityBatchError,
+    Options<IngestActivityBatchData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await ingestActivityBatchV1ActivityBatchPost({
+      const { data } = await ingestActivityBatch({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -728,24 +722,24 @@ export const ingestActivityBatchV1ActivityBatchPostMutation = (
   return mutationOptions;
 };
 
-export const listActivitySourcesV1ActivitySourcesGetQueryKey = (
-  options?: Options<ListActivitySourcesV1ActivitySourcesGetData>,
-) => createQueryKey("listActivitySourcesV1ActivitySourcesGet", options);
+export const listActivitySourcesQueryKey = (
+  options?: Options<ListActivitySourcesData>,
+) => createQueryKey("listActivitySources", options);
 
 /**
  * List Activity Sources
  */
-export const listActivitySourcesV1ActivitySourcesGetOptions = (
-  options?: Options<ListActivitySourcesV1ActivitySourcesGetData>,
+export const listActivitySourcesOptions = (
+  options?: Options<ListActivitySourcesData>,
 ) =>
   queryOptions<
-    ListActivitySourcesV1ActivitySourcesGetResponse,
+    ListActivitySourcesResponse,
     DefaultError,
-    ListActivitySourcesV1ActivitySourcesGetResponse,
-    ReturnType<typeof listActivitySourcesV1ActivitySourcesGetQueryKey>
+    ListActivitySourcesResponse,
+    ReturnType<typeof listActivitySourcesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listActivitySourcesV1ActivitySourcesGet({
+      const { data } = await listActivitySources({
         ...options,
         ...queryKey[0],
         signal,
@@ -753,27 +747,27 @@ export const listActivitySourcesV1ActivitySourcesGetOptions = (
       });
       return data;
     },
-    queryKey: listActivitySourcesV1ActivitySourcesGetQueryKey(options),
+    queryKey: listActivitySourcesQueryKey(options),
   });
 
-export const getActivitySummaryV1ActivitySummaryGetQueryKey = (
-  options: Options<GetActivitySummaryV1ActivitySummaryGetData>,
-) => createQueryKey("getActivitySummaryV1ActivitySummaryGet", options);
+export const getActivitySummaryQueryKey = (
+  options: Options<GetActivitySummaryData>,
+) => createQueryKey("getActivitySummary", options);
 
 /**
  * Get Activity Summary
  */
-export const getActivitySummaryV1ActivitySummaryGetOptions = (
-  options: Options<GetActivitySummaryV1ActivitySummaryGetData>,
+export const getActivitySummaryOptions = (
+  options: Options<GetActivitySummaryData>,
 ) =>
   queryOptions<
-    GetActivitySummaryV1ActivitySummaryGetResponse,
-    GetActivitySummaryV1ActivitySummaryGetError,
-    GetActivitySummaryV1ActivitySummaryGetResponse,
-    ReturnType<typeof getActivitySummaryV1ActivitySummaryGetQueryKey>
+    GetActivitySummaryResponse,
+    GetActivitySummaryError,
+    GetActivitySummaryResponse,
+    ReturnType<typeof getActivitySummaryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getActivitySummaryV1ActivitySummaryGet({
+      const { data } = await getActivitySummary({
         ...options,
         ...queryKey[0],
         signal,
@@ -781,27 +775,27 @@ export const getActivitySummaryV1ActivitySummaryGetOptions = (
       });
       return data;
     },
-    queryKey: getActivitySummaryV1ActivitySummaryGetQueryKey(options),
+    queryKey: getActivitySummaryQueryKey(options),
   });
 
-export const getDailyActivityV1ActivityDailyGetQueryKey = (
-  options: Options<GetDailyActivityV1ActivityDailyGetData>,
-) => createQueryKey("getDailyActivityV1ActivityDailyGet", options);
+export const getDailyActivityQueryKey = (
+  options: Options<GetDailyActivityData>,
+) => createQueryKey("getDailyActivity", options);
 
 /**
  * Get Daily Activity Totals
  */
-export const getDailyActivityV1ActivityDailyGetOptions = (
-  options: Options<GetDailyActivityV1ActivityDailyGetData>,
+export const getDailyActivityOptions = (
+  options: Options<GetDailyActivityData>,
 ) =>
   queryOptions<
-    GetDailyActivityV1ActivityDailyGetResponse,
-    GetDailyActivityV1ActivityDailyGetError,
-    GetDailyActivityV1ActivityDailyGetResponse,
-    ReturnType<typeof getDailyActivityV1ActivityDailyGetQueryKey>
+    GetDailyActivityResponse,
+    GetDailyActivityError,
+    GetDailyActivityResponse,
+    ReturnType<typeof getDailyActivityQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getDailyActivityV1ActivityDailyGet({
+      const { data } = await getDailyActivity({
         ...options,
         ...queryKey[0],
         signal,
@@ -809,27 +803,27 @@ export const getDailyActivityV1ActivityDailyGetOptions = (
       });
       return data;
     },
-    queryKey: getDailyActivityV1ActivityDailyGetQueryKey(options),
+    queryKey: getDailyActivityQueryKey(options),
   });
 
-export const getIntradayActivityV1ActivityIntradayGetQueryKey = (
-  options: Options<GetIntradayActivityV1ActivityIntradayGetData>,
-) => createQueryKey("getIntradayActivityV1ActivityIntradayGet", options);
+export const getIntradayActivityQueryKey = (
+  options: Options<GetIntradayActivityData>,
+) => createQueryKey("getIntradayActivity", options);
 
 /**
  * Get Intraday Activity
  */
-export const getIntradayActivityV1ActivityIntradayGetOptions = (
-  options: Options<GetIntradayActivityV1ActivityIntradayGetData>,
+export const getIntradayActivityOptions = (
+  options: Options<GetIntradayActivityData>,
 ) =>
   queryOptions<
-    GetIntradayActivityV1ActivityIntradayGetResponse,
-    GetIntradayActivityV1ActivityIntradayGetError,
-    GetIntradayActivityV1ActivityIntradayGetResponse,
-    ReturnType<typeof getIntradayActivityV1ActivityIntradayGetQueryKey>
+    GetIntradayActivityResponse,
+    GetIntradayActivityError,
+    GetIntradayActivityResponse,
+    ReturnType<typeof getIntradayActivityQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getIntradayActivityV1ActivityIntradayGet({
+      const { data } = await getIntradayActivity({
         ...options,
         ...queryKey[0],
         signal,
@@ -837,7 +831,7 @@ export const getIntradayActivityV1ActivityIntradayGetOptions = (
       });
       return data;
     },
-    queryKey: getIntradayActivityV1ActivityIntradayGetQueryKey(options),
+    queryKey: getIntradayActivityQueryKey(options),
   });
 
 /**
@@ -845,20 +839,20 @@ export const getIntradayActivityV1ActivityIntradayGetOptions = (
  *
  * Uploaded by the desktop app, which reads Claude Code's usage on its machine.
  */
-export const syncAgentUsageV1AgentUsageSyncPostMutation = (
-  options?: Partial<Options<SyncAgentUsageV1AgentUsageSyncPostData>>,
+export const syncAgentUsageMutation = (
+  options?: Partial<Options<SyncAgentUsageData>>,
 ): UseMutationOptions<
-  SyncAgentUsageV1AgentUsageSyncPostResponse,
-  SyncAgentUsageV1AgentUsageSyncPostError,
-  Options<SyncAgentUsageV1AgentUsageSyncPostData>
+  SyncAgentUsageResponse,
+  SyncAgentUsageError,
+  Options<SyncAgentUsageData>
 > => {
   const mutationOptions: UseMutationOptions<
-    SyncAgentUsageV1AgentUsageSyncPostResponse,
-    SyncAgentUsageV1AgentUsageSyncPostError,
-    Options<SyncAgentUsageV1AgentUsageSyncPostData>
+    SyncAgentUsageResponse,
+    SyncAgentUsageError,
+    Options<SyncAgentUsageData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await syncAgentUsageV1AgentUsageSyncPost({
+      const { data } = await syncAgentUsage({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -869,24 +863,24 @@ export const syncAgentUsageV1AgentUsageSyncPostMutation = (
   return mutationOptions;
 };
 
-export const getAgentUsageStatusV1AgentUsageStatusGetQueryKey = (
-  options?: Options<GetAgentUsageStatusV1AgentUsageStatusGetData>,
-) => createQueryKey("getAgentUsageStatusV1AgentUsageStatusGet", options);
+export const getAgentUsageStatusQueryKey = (
+  options?: Options<GetAgentUsageStatusData>,
+) => createQueryKey("getAgentUsageStatus", options);
 
 /**
  * Get Agent Usage Status
  */
-export const getAgentUsageStatusV1AgentUsageStatusGetOptions = (
-  options?: Options<GetAgentUsageStatusV1AgentUsageStatusGetData>,
+export const getAgentUsageStatusOptions = (
+  options?: Options<GetAgentUsageStatusData>,
 ) =>
   queryOptions<
-    GetAgentUsageStatusV1AgentUsageStatusGetResponse,
+    GetAgentUsageStatusResponse,
     DefaultError,
-    GetAgentUsageStatusV1AgentUsageStatusGetResponse,
-    ReturnType<typeof getAgentUsageStatusV1AgentUsageStatusGetQueryKey>
+    GetAgentUsageStatusResponse,
+    ReturnType<typeof getAgentUsageStatusQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAgentUsageStatusV1AgentUsageStatusGet({
+      const { data } = await getAgentUsageStatus({
         ...options,
         ...queryKey[0],
         signal,
@@ -894,27 +888,27 @@ export const getAgentUsageStatusV1AgentUsageStatusGetOptions = (
       });
       return data;
     },
-    queryKey: getAgentUsageStatusV1AgentUsageStatusGetQueryKey(options),
+    queryKey: getAgentUsageStatusQueryKey(options),
   });
 
-export const getAgentUsageDailyV1AgentUsageDailyGetQueryKey = (
-  options: Options<GetAgentUsageDailyV1AgentUsageDailyGetData>,
-) => createQueryKey("getAgentUsageDailyV1AgentUsageDailyGet", options);
+export const getAgentUsageDailyQueryKey = (
+  options: Options<GetAgentUsageDailyData>,
+) => createQueryKey("getAgentUsageDaily", options);
 
 /**
  * Get Agent Usage Daily Totals
  */
-export const getAgentUsageDailyV1AgentUsageDailyGetOptions = (
-  options: Options<GetAgentUsageDailyV1AgentUsageDailyGetData>,
+export const getAgentUsageDailyOptions = (
+  options: Options<GetAgentUsageDailyData>,
 ) =>
   queryOptions<
-    GetAgentUsageDailyV1AgentUsageDailyGetResponse,
-    GetAgentUsageDailyV1AgentUsageDailyGetError,
-    GetAgentUsageDailyV1AgentUsageDailyGetResponse,
-    ReturnType<typeof getAgentUsageDailyV1AgentUsageDailyGetQueryKey>
+    GetAgentUsageDailyResponse,
+    GetAgentUsageDailyError,
+    GetAgentUsageDailyResponse,
+    ReturnType<typeof getAgentUsageDailyQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAgentUsageDailyV1AgentUsageDailyGet({
+      const { data } = await getAgentUsageDaily({
         ...options,
         ...queryKey[0],
         signal,
@@ -922,29 +916,29 @@ export const getAgentUsageDailyV1AgentUsageDailyGetOptions = (
       });
       return data;
     },
-    queryKey: getAgentUsageDailyV1AgentUsageDailyGetQueryKey(options),
+    queryKey: getAgentUsageDailyQueryKey(options),
   });
 
-export const listBankAccountsV1BankAccountsGetQueryKey = (
-  options?: Options<ListBankAccountsV1BankAccountsGetData>,
-) => createQueryKey("listBankAccountsV1BankAccountsGet", options);
+export const listBankAccountsQueryKey = (
+  options?: Options<ListBankAccountsData>,
+) => createQueryKey("listBankAccounts", options);
 
 /**
  * List Bank Accounts
  *
  * List all bank accounts.
  */
-export const listBankAccountsV1BankAccountsGetOptions = (
-  options?: Options<ListBankAccountsV1BankAccountsGetData>,
+export const listBankAccountsOptions = (
+  options?: Options<ListBankAccountsData>,
 ) =>
   queryOptions<
-    ListBankAccountsV1BankAccountsGetResponse,
-    ListBankAccountsV1BankAccountsGetError,
-    ListBankAccountsV1BankAccountsGetResponse,
-    ReturnType<typeof listBankAccountsV1BankAccountsGetQueryKey>
+    ListBankAccountsResponse,
+    ListBankAccountsError,
+    ListBankAccountsResponse,
+    ReturnType<typeof listBankAccountsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listBankAccountsV1BankAccountsGet({
+      const { data } = await listBankAccounts({
         ...options,
         ...queryKey[0],
         signal,
@@ -952,7 +946,7 @@ export const listBankAccountsV1BankAccountsGetOptions = (
       });
       return data;
     },
-    queryKey: listBankAccountsV1BankAccountsGetQueryKey(options),
+    queryKey: listBankAccountsQueryKey(options),
   });
 
 const createInfiniteParams = <
@@ -989,27 +983,27 @@ const createInfiniteParams = <
   return params as unknown as typeof page;
 };
 
-export const listBankAccountsV1BankAccountsGetInfiniteQueryKey = (
-  options?: Options<ListBankAccountsV1BankAccountsGetData>,
-): QueryKey<Options<ListBankAccountsV1BankAccountsGetData>> =>
-  createQueryKey("listBankAccountsV1BankAccountsGet", options, true);
+export const listBankAccountsInfiniteQueryKey = (
+  options?: Options<ListBankAccountsData>,
+): QueryKey<Options<ListBankAccountsData>> =>
+  createQueryKey("listBankAccounts", options, true);
 
 /**
  * List Bank Accounts
  *
  * List all bank accounts.
  */
-export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
-  options?: Options<ListBankAccountsV1BankAccountsGetData>,
+export const listBankAccountsInfiniteOptions = (
+  options?: Options<ListBankAccountsData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListBankAccountsV1BankAccountsGetResponse,
-    ListBankAccountsV1BankAccountsGetError,
-    InfiniteData<ListBankAccountsV1BankAccountsGetResponse>,
-    QueryKey<Options<ListBankAccountsV1BankAccountsGetData>>,
+    ListBankAccountsResponse,
+    ListBankAccountsError,
+    InfiniteData<ListBankAccountsResponse>,
+    QueryKey<Options<ListBankAccountsData>>,
     | number
     | Pick<
-        QueryKey<Options<ListBankAccountsV1BankAccountsGetData>>[0],
+        QueryKey<Options<ListBankAccountsData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -1018,7 +1012,7 @@ export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListBankAccountsV1BankAccountsGetData>>[0],
+          QueryKey<Options<ListBankAccountsData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -1029,7 +1023,7 @@ export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listBankAccountsV1BankAccountsGet({
+        const { data } = await listBankAccounts({
           ...options,
           ...params,
           signal,
@@ -1037,7 +1031,7 @@ export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listBankAccountsV1BankAccountsGetInfiniteQueryKey(options),
+      queryKey: listBankAccountsInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -1048,20 +1042,20 @@ export const listBankAccountsV1BankAccountsGetInfiniteOptions = (
  *
  * Create a new bank account.
  */
-export const createBankAccountV1BankAccountsPostMutation = (
-  options?: Partial<Options<CreateBankAccountV1BankAccountsPostData>>,
+export const createBankAccountMutation = (
+  options?: Partial<Options<CreateBankAccountData>>,
 ): UseMutationOptions<
-  CreateBankAccountV1BankAccountsPostResponse,
-  CreateBankAccountV1BankAccountsPostError,
-  Options<CreateBankAccountV1BankAccountsPostData>
+  CreateBankAccountResponse,
+  CreateBankAccountError,
+  Options<CreateBankAccountData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateBankAccountV1BankAccountsPostResponse,
-    CreateBankAccountV1BankAccountsPostError,
-    Options<CreateBankAccountV1BankAccountsPostData>
+    CreateBankAccountResponse,
+    CreateBankAccountError,
+    Options<CreateBankAccountData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createBankAccountV1BankAccountsPost({
+      const { data } = await createBankAccount({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1072,26 +1066,26 @@ export const createBankAccountV1BankAccountsPostMutation = (
   return mutationOptions;
 };
 
-export const getAccountsOverviewV1BankAccountsOverviewGetQueryKey = (
-  options?: Options<GetAccountsOverviewV1BankAccountsOverviewGetData>,
-) => createQueryKey("getAccountsOverviewV1BankAccountsOverviewGet", options);
+export const getAccountsOverviewQueryKey = (
+  options?: Options<GetAccountsOverviewData>,
+) => createQueryKey("getAccountsOverview", options);
 
 /**
  * Accounts Overview
  *
  * Every account with its balance, history and where its data comes from, plus totals per owner and currency.
  */
-export const getAccountsOverviewV1BankAccountsOverviewGetOptions = (
-  options?: Options<GetAccountsOverviewV1BankAccountsOverviewGetData>,
+export const getAccountsOverviewOptions = (
+  options?: Options<GetAccountsOverviewData>,
 ) =>
   queryOptions<
-    GetAccountsOverviewV1BankAccountsOverviewGetResponse,
+    GetAccountsOverviewResponse,
     DefaultError,
-    GetAccountsOverviewV1BankAccountsOverviewGetResponse,
-    ReturnType<typeof getAccountsOverviewV1BankAccountsOverviewGetQueryKey>
+    GetAccountsOverviewResponse,
+    ReturnType<typeof getAccountsOverviewQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAccountsOverviewV1BankAccountsOverviewGet({
+      const { data } = await getAccountsOverview({
         ...options,
         ...queryKey[0],
         signal,
@@ -1099,29 +1093,29 @@ export const getAccountsOverviewV1BankAccountsOverviewGetOptions = (
       });
       return data;
     },
-    queryKey: getAccountsOverviewV1BankAccountsOverviewGetQueryKey(options),
+    queryKey: getAccountsOverviewQueryKey(options),
   });
 
-export const getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey = (
-  options?: Options<GetNetWorthHistoryV1BankAccountsNetWorthGetData>,
-) => createQueryKey("getNetWorthHistoryV1BankAccountsNetWorthGet", options);
+export const getNetWorthHistoryQueryKey = (
+  options?: Options<GetNetWorthHistoryData>,
+) => createQueryKey("getNetWorthHistory", options);
 
 /**
  * Net Worth History
  *
  * Net worth on every day it changed, per currency, from the first transaction to today.
  */
-export const getNetWorthHistoryV1BankAccountsNetWorthGetOptions = (
-  options?: Options<GetNetWorthHistoryV1BankAccountsNetWorthGetData>,
+export const getNetWorthHistoryOptions = (
+  options?: Options<GetNetWorthHistoryData>,
 ) =>
   queryOptions<
-    GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
+    GetNetWorthHistoryResponse,
     DefaultError,
-    GetNetWorthHistoryV1BankAccountsNetWorthGetResponse,
-    ReturnType<typeof getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey>
+    GetNetWorthHistoryResponse,
+    ReturnType<typeof getNetWorthHistoryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getNetWorthHistoryV1BankAccountsNetWorthGet({
+      const { data } = await getNetWorthHistory({
         ...options,
         ...queryKey[0],
         signal,
@@ -1129,7 +1123,7 @@ export const getNetWorthHistoryV1BankAccountsNetWorthGetOptions = (
       });
       return data;
     },
-    queryKey: getNetWorthHistoryV1BankAccountsNetWorthGetQueryKey(options),
+    queryKey: getNetWorthHistoryQueryKey(options),
   });
 
 /**
@@ -1137,54 +1131,47 @@ export const getNetWorthHistoryV1BankAccountsNetWorthGetOptions = (
  *
  * Delete a bank account and all its transactions.
  */
-export const deleteBankAccountV1BankAccountsBankAccountIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
-  >,
+export const deleteBankAccountMutation = (
+  options?: Partial<Options<DeleteBankAccountData>>,
 ): UseMutationOptions<
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
-  DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
-  Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
+  DeleteBankAccountResponse,
+  DeleteBankAccountError,
+  Options<DeleteBankAccountData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteBankAccountV1BankAccountsBankAccountIdDeleteResponse,
-    DeleteBankAccountV1BankAccountsBankAccountIdDeleteError,
-    Options<DeleteBankAccountV1BankAccountsBankAccountIdDeleteData>
+    DeleteBankAccountResponse,
+    DeleteBankAccountError,
+    Options<DeleteBankAccountData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteBankAccountV1BankAccountsBankAccountIdDelete(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
+      const { data } = await deleteBankAccount({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
   return mutationOptions;
 };
 
-export const getBankAccountV1BankAccountsBankAccountIdGetQueryKey = (
-  options: Options<GetBankAccountV1BankAccountsBankAccountIdGetData>,
-) => createQueryKey("getBankAccountV1BankAccountsBankAccountIdGet", options);
+export const getBankAccountQueryKey = (options: Options<GetBankAccountData>) =>
+  createQueryKey("getBankAccount", options);
 
 /**
  * Get Bank Account
  *
  * Get a bank account by ID.
  */
-export const getBankAccountV1BankAccountsBankAccountIdGetOptions = (
-  options: Options<GetBankAccountV1BankAccountsBankAccountIdGetData>,
-) =>
+export const getBankAccountOptions = (options: Options<GetBankAccountData>) =>
   queryOptions<
-    GetBankAccountV1BankAccountsBankAccountIdGetResponse,
-    GetBankAccountV1BankAccountsBankAccountIdGetError,
-    GetBankAccountV1BankAccountsBankAccountIdGetResponse,
-    ReturnType<typeof getBankAccountV1BankAccountsBankAccountIdGetQueryKey>
+    GetBankAccountResponse,
+    GetBankAccountError,
+    GetBankAccountResponse,
+    ReturnType<typeof getBankAccountQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getBankAccountV1BankAccountsBankAccountIdGet({
+      const { data } = await getBankAccount({
         ...options,
         ...queryKey[0],
         signal,
@@ -1192,7 +1179,7 @@ export const getBankAccountV1BankAccountsBankAccountIdGetOptions = (
       });
       return data;
     },
-    queryKey: getBankAccountV1BankAccountsBankAccountIdGetQueryKey(options),
+    queryKey: getBankAccountQueryKey(options),
   });
 
 /**
@@ -1200,22 +1187,20 @@ export const getBankAccountV1BankAccountsBankAccountIdGetOptions = (
  *
  * Update a bank account.
  */
-export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
-  >,
+export const updateBankAccountMutation = (
+  options?: Partial<Options<UpdateBankAccountData>>,
 ): UseMutationOptions<
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
-  UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
-  Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
+  UpdateBankAccountResponse,
+  UpdateBankAccountError,
+  Options<UpdateBankAccountData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateBankAccountV1BankAccountsBankAccountIdPatchResponse,
-    UpdateBankAccountV1BankAccountsBankAccountIdPatchError,
-    Options<UpdateBankAccountV1BankAccountsBankAccountIdPatchData>
+    UpdateBankAccountResponse,
+    UpdateBankAccountError,
+    Options<UpdateBankAccountData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateBankAccountV1BankAccountsBankAccountIdPatch({
+      const { data } = await updateBankAccount({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1231,20 +1216,20 @@ export const updateBankAccountV1BankAccountsBankAccountIdPatchMutation = (
  *
  * Deletes the stored login. Imported transactions, trades and positions stay.
  */
-export const disconnectAvanzaV1AvanzaDeleteMutation = (
-  options?: Partial<Options<DisconnectAvanzaV1AvanzaDeleteData>>,
+export const disconnectAvanzaMutation = (
+  options?: Partial<Options<DisconnectAvanzaData>>,
 ): UseMutationOptions<
-  DisconnectAvanzaV1AvanzaDeleteResponse,
+  DisconnectAvanzaResponse,
   DefaultError,
-  Options<DisconnectAvanzaV1AvanzaDeleteData>
+  Options<DisconnectAvanzaData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DisconnectAvanzaV1AvanzaDeleteResponse,
+    DisconnectAvanzaResponse,
     DefaultError,
-    Options<DisconnectAvanzaV1AvanzaDeleteData>
+    Options<DisconnectAvanzaData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await disconnectAvanzaV1AvanzaDelete({
+      const { data } = await disconnectAvanza({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1255,24 +1240,21 @@ export const disconnectAvanzaV1AvanzaDeleteMutation = (
   return mutationOptions;
 };
 
-export const getAvanzaV1AvanzaGetQueryKey = (
-  options?: Options<GetAvanzaV1AvanzaGetData>,
-) => createQueryKey("getAvanzaV1AvanzaGet", options);
+export const getAvanzaQueryKey = (options?: Options<GetAvanzaData>) =>
+  createQueryKey("getAvanza", options);
 
 /**
  * Get Avanza Connection
  */
-export const getAvanzaV1AvanzaGetOptions = (
-  options?: Options<GetAvanzaV1AvanzaGetData>,
-) =>
+export const getAvanzaOptions = (options?: Options<GetAvanzaData>) =>
   queryOptions<
-    GetAvanzaV1AvanzaGetResponse,
+    GetAvanzaResponse,
     DefaultError,
-    GetAvanzaV1AvanzaGetResponse,
-    ReturnType<typeof getAvanzaV1AvanzaGetQueryKey>
+    GetAvanzaResponse,
+    ReturnType<typeof getAvanzaQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAvanzaV1AvanzaGet({
+      const { data } = await getAvanza({
         ...options,
         ...queryKey[0],
         signal,
@@ -1280,7 +1262,7 @@ export const getAvanzaV1AvanzaGetOptions = (
       });
       return data;
     },
-    queryKey: getAvanzaV1AvanzaGetQueryKey(options),
+    queryKey: getAvanzaQueryKey(options),
   });
 
 /**
@@ -1288,20 +1270,20 @@ export const getAvanzaV1AvanzaGetOptions = (
  *
  * Checks the login with Avanza and stores it encrypted; also how new credentials are saved.
  */
-export const connectAvanzaV1AvanzaConnectPostMutation = (
-  options?: Partial<Options<ConnectAvanzaV1AvanzaConnectPostData>>,
+export const connectAvanzaMutation = (
+  options?: Partial<Options<ConnectAvanzaData>>,
 ): UseMutationOptions<
-  ConnectAvanzaV1AvanzaConnectPostResponse,
-  ConnectAvanzaV1AvanzaConnectPostError,
-  Options<ConnectAvanzaV1AvanzaConnectPostData>
+  ConnectAvanzaResponse,
+  ConnectAvanzaError,
+  Options<ConnectAvanzaData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ConnectAvanzaV1AvanzaConnectPostResponse,
-    ConnectAvanzaV1AvanzaConnectPostError,
-    Options<ConnectAvanzaV1AvanzaConnectPostData>
+    ConnectAvanzaResponse,
+    ConnectAvanzaError,
+    Options<ConnectAvanzaData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await connectAvanzaV1AvanzaConnectPost({
+      const { data } = await connectAvanza({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1315,22 +1297,20 @@ export const connectAvanzaV1AvanzaConnectPostMutation = (
 /**
  * Link Avanza Account
  */
-export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation = (
-  options?: Partial<
-    Options<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData>
-  >,
+export const linkAvanzaAccountMutation = (
+  options?: Partial<Options<LinkAvanzaAccountData>>,
 ): UseMutationOptions<
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
-  LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
-  Options<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData>
+  LinkAvanzaAccountResponse,
+  LinkAvanzaAccountError,
+  Options<LinkAvanzaAccountData>
 > => {
   const mutationOptions: UseMutationOptions<
-    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchResponse,
-    LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchError,
-    Options<LinkAvanzaAccountV1AvanzaAccountsAccountIdPatchData>
+    LinkAvanzaAccountResponse,
+    LinkAvanzaAccountError,
+    Options<LinkAvanzaAccountData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await linkAvanzaAccountV1AvanzaAccountsAccountIdPatch({
+      const { data } = await linkAvanzaAccount({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1344,20 +1324,16 @@ export const linkAvanzaAccountV1AvanzaAccountsAccountIdPatchMutation = (
 /**
  * Sync Avanza
  */
-export const syncAvanzaV1AvanzaSyncPostMutation = (
-  options?: Partial<Options<SyncAvanzaV1AvanzaSyncPostData>>,
-): UseMutationOptions<
-  unknown,
-  DefaultError,
-  Options<SyncAvanzaV1AvanzaSyncPostData>
-> => {
+export const syncAvanzaMutation = (
+  options?: Partial<Options<SyncAvanzaData>>,
+): UseMutationOptions<unknown, DefaultError, Options<SyncAvanzaData>> => {
   const mutationOptions: UseMutationOptions<
     unknown,
     DefaultError,
-    Options<SyncAvanzaV1AvanzaSyncPostData>
+    Options<SyncAvanzaData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await syncAvanzaV1AvanzaSyncPost({
+      const { data } = await syncAvanza({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1373,20 +1349,20 @@ export const syncAvanzaV1AvanzaSyncPostMutation = (
  *
  * Forgets the consent and its tokens. Imported transactions stay.
  */
-export const disconnectMontroseV1MontroseDeleteMutation = (
-  options?: Partial<Options<DisconnectMontroseV1MontroseDeleteData>>,
+export const disconnectMontroseMutation = (
+  options?: Partial<Options<DisconnectMontroseData>>,
 ): UseMutationOptions<
-  DisconnectMontroseV1MontroseDeleteResponse,
+  DisconnectMontroseResponse,
   DefaultError,
-  Options<DisconnectMontroseV1MontroseDeleteData>
+  Options<DisconnectMontroseData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DisconnectMontroseV1MontroseDeleteResponse,
+    DisconnectMontroseResponse,
     DefaultError,
-    Options<DisconnectMontroseV1MontroseDeleteData>
+    Options<DisconnectMontroseData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await disconnectMontroseV1MontroseDelete({
+      const { data } = await disconnectMontrose({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1397,24 +1373,21 @@ export const disconnectMontroseV1MontroseDeleteMutation = (
   return mutationOptions;
 };
 
-export const getMontroseV1MontroseGetQueryKey = (
-  options?: Options<GetMontroseV1MontroseGetData>,
-) => createQueryKey("getMontroseV1MontroseGet", options);
+export const getMontroseQueryKey = (options?: Options<GetMontroseData>) =>
+  createQueryKey("getMontrose", options);
 
 /**
  * Get Montrose Connection
  */
-export const getMontroseV1MontroseGetOptions = (
-  options?: Options<GetMontroseV1MontroseGetData>,
-) =>
+export const getMontroseOptions = (options?: Options<GetMontroseData>) =>
   queryOptions<
-    GetMontroseV1MontroseGetResponse,
+    GetMontroseResponse,
     DefaultError,
-    GetMontroseV1MontroseGetResponse,
-    ReturnType<typeof getMontroseV1MontroseGetQueryKey>
+    GetMontroseResponse,
+    ReturnType<typeof getMontroseQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getMontroseV1MontroseGet({
+      const { data } = await getMontrose({
         ...options,
         ...queryKey[0],
         signal,
@@ -1422,7 +1395,7 @@ export const getMontroseV1MontroseGetOptions = (
       });
       return data;
     },
-    queryKey: getMontroseV1MontroseGetQueryKey(options),
+    queryKey: getMontroseQueryKey(options),
   });
 
 /**
@@ -1430,20 +1403,20 @@ export const getMontroseV1MontroseGetOptions = (
  *
  * Starts the BankID consent; Montrose sends the user back to Bessel's callback page.
  */
-export const authorizeMontroseV1MontroseAuthorizePostMutation = (
-  options?: Partial<Options<AuthorizeMontroseV1MontroseAuthorizePostData>>,
+export const authorizeMontroseMutation = (
+  options?: Partial<Options<AuthorizeMontroseData>>,
 ): UseMutationOptions<
-  AuthorizeMontroseV1MontroseAuthorizePostResponse,
+  AuthorizeMontroseResponse,
   DefaultError,
-  Options<AuthorizeMontroseV1MontroseAuthorizePostData>
+  Options<AuthorizeMontroseData>
 > => {
   const mutationOptions: UseMutationOptions<
-    AuthorizeMontroseV1MontroseAuthorizePostResponse,
+    AuthorizeMontroseResponse,
     DefaultError,
-    Options<AuthorizeMontroseV1MontroseAuthorizePostData>
+    Options<AuthorizeMontroseData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await authorizeMontroseV1MontroseAuthorizePost({
+      const { data } = await authorizeMontrose({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1457,20 +1430,20 @@ export const authorizeMontroseV1MontroseAuthorizePostMutation = (
 /**
  * Complete Montrose Connection
  */
-export const completeMontroseV1MontroseCallbackPostMutation = (
-  options?: Partial<Options<CompleteMontroseV1MontroseCallbackPostData>>,
+export const completeMontroseMutation = (
+  options?: Partial<Options<CompleteMontroseData>>,
 ): UseMutationOptions<
-  CompleteMontroseV1MontroseCallbackPostResponse,
-  CompleteMontroseV1MontroseCallbackPostError,
-  Options<CompleteMontroseV1MontroseCallbackPostData>
+  CompleteMontroseResponse,
+  CompleteMontroseError,
+  Options<CompleteMontroseData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CompleteMontroseV1MontroseCallbackPostResponse,
-    CompleteMontroseV1MontroseCallbackPostError,
-    Options<CompleteMontroseV1MontroseCallbackPostData>
+    CompleteMontroseResponse,
+    CompleteMontroseError,
+    Options<CompleteMontroseData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await completeMontroseV1MontroseCallbackPost({
+      const { data } = await completeMontrose({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1484,50 +1457,20 @@ export const completeMontroseV1MontroseCallbackPostMutation = (
 /**
  * Link Montrose Account
  */
-export const linkMontroseAccountV1MontroseAccountsAccountIdPatchMutation = (
-  options?: Partial<
-    Options<LinkMontroseAccountV1MontroseAccountsAccountIdPatchData>
-  >,
+export const linkMontroseAccountMutation = (
+  options?: Partial<Options<LinkMontroseAccountData>>,
 ): UseMutationOptions<
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
-  LinkMontroseAccountV1MontroseAccountsAccountIdPatchError,
-  Options<LinkMontroseAccountV1MontroseAccountsAccountIdPatchData>
+  LinkMontroseAccountResponse,
+  LinkMontroseAccountError,
+  Options<LinkMontroseAccountData>
 > => {
   const mutationOptions: UseMutationOptions<
-    LinkMontroseAccountV1MontroseAccountsAccountIdPatchResponse,
-    LinkMontroseAccountV1MontroseAccountsAccountIdPatchError,
-    Options<LinkMontroseAccountV1MontroseAccountsAccountIdPatchData>
+    LinkMontroseAccountResponse,
+    LinkMontroseAccountError,
+    Options<LinkMontroseAccountData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await linkMontroseAccountV1MontroseAccountsAccountIdPatch({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Sync Montrose
- */
-export const syncMontroseV1MontroseSyncPostMutation = (
-  options?: Partial<Options<SyncMontroseV1MontroseSyncPostData>>,
-): UseMutationOptions<
-  unknown,
-  DefaultError,
-  Options<SyncMontroseV1MontroseSyncPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    unknown,
-    DefaultError,
-    Options<SyncMontroseV1MontroseSyncPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await syncMontroseV1MontroseSyncPost({
+      const { data } = await linkMontroseAccount({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1538,24 +1481,47 @@ export const syncMontroseV1MontroseSyncPostMutation = (
   return mutationOptions;
 };
 
-export const listCalendarAccountsV1CalendarsAccountsGetQueryKey = (
-  options?: Options<ListCalendarAccountsV1CalendarsAccountsGetData>,
-) => createQueryKey("listCalendarAccountsV1CalendarsAccountsGet", options);
+/**
+ * Sync Montrose
+ */
+export const syncMontroseMutation = (
+  options?: Partial<Options<SyncMontroseData>>,
+): UseMutationOptions<unknown, DefaultError, Options<SyncMontroseData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DefaultError,
+    Options<SyncMontroseData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncMontrose({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listCalendarAccountsQueryKey = (
+  options?: Options<ListCalendarAccountsData>,
+) => createQueryKey("listCalendarAccounts", options);
 
 /**
  * List Calendar Accounts
  */
-export const listCalendarAccountsV1CalendarsAccountsGetOptions = (
-  options?: Options<ListCalendarAccountsV1CalendarsAccountsGetData>,
+export const listCalendarAccountsOptions = (
+  options?: Options<ListCalendarAccountsData>,
 ) =>
   queryOptions<
-    ListCalendarAccountsV1CalendarsAccountsGetResponse,
+    ListCalendarAccountsResponse,
     DefaultError,
-    ListCalendarAccountsV1CalendarsAccountsGetResponse,
-    ReturnType<typeof listCalendarAccountsV1CalendarsAccountsGetQueryKey>
+    ListCalendarAccountsResponse,
+    ReturnType<typeof listCalendarAccountsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listCalendarAccountsV1CalendarsAccountsGet({
+      const { data } = await listCalendarAccounts({
         ...options,
         ...queryKey[0],
         signal,
@@ -1563,26 +1529,26 @@ export const listCalendarAccountsV1CalendarsAccountsGetOptions = (
       });
       return data;
     },
-    queryKey: listCalendarAccountsV1CalendarsAccountsGetQueryKey(options),
+    queryKey: listCalendarAccountsQueryKey(options),
   });
 
 /**
  * Start Google Calendar Connection
  */
-export const authorizeGoogleV1CalendarsGoogleAuthorizePostMutation = (
-  options?: Partial<Options<AuthorizeGoogleV1CalendarsGoogleAuthorizePostData>>,
+export const authorizeGoogleMutation = (
+  options?: Partial<Options<AuthorizeGoogleData>>,
 ): UseMutationOptions<
-  AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse,
+  AuthorizeGoogleResponse,
   DefaultError,
-  Options<AuthorizeGoogleV1CalendarsGoogleAuthorizePostData>
+  Options<AuthorizeGoogleData>
 > => {
   const mutationOptions: UseMutationOptions<
-    AuthorizeGoogleV1CalendarsGoogleAuthorizePostResponse,
+    AuthorizeGoogleResponse,
     DefaultError,
-    Options<AuthorizeGoogleV1CalendarsGoogleAuthorizePostData>
+    Options<AuthorizeGoogleData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await authorizeGoogleV1CalendarsGoogleAuthorizePost({
+      const { data } = await authorizeGoogle({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1596,28 +1562,24 @@ export const authorizeGoogleV1CalendarsGoogleAuthorizePostMutation = (
 /**
  * Complete Google Calendar Connection
  */
-export const completeGoogleConnectV1CalendarsGoogleCallbackPostMutation = (
-  options?: Partial<
-    Options<CompleteGoogleConnectV1CalendarsGoogleCallbackPostData>
-  >,
+export const completeGoogleConnectMutation = (
+  options?: Partial<Options<CompleteGoogleConnectData>>,
 ): UseMutationOptions<
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
-  CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
-  Options<CompleteGoogleConnectV1CalendarsGoogleCallbackPostData>
+  CompleteGoogleConnectResponse,
+  CompleteGoogleConnectError,
+  Options<CompleteGoogleConnectData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CompleteGoogleConnectV1CalendarsGoogleCallbackPostResponse,
-    CompleteGoogleConnectV1CalendarsGoogleCallbackPostError,
-    Options<CompleteGoogleConnectV1CalendarsGoogleCallbackPostData>
+    CompleteGoogleConnectResponse,
+    CompleteGoogleConnectError,
+    Options<CompleteGoogleConnectData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await completeGoogleConnectV1CalendarsGoogleCallbackPost(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
+      const { data } = await completeGoogleConnect({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -1627,20 +1589,20 @@ export const completeGoogleConnectV1CalendarsGoogleCallbackPostMutation = (
 /**
  * Connect iCloud Calendar
  */
-export const connectIcloudV1CalendarsIcloudPostMutation = (
-  options?: Partial<Options<ConnectIcloudV1CalendarsIcloudPostData>>,
+export const connectIcloudMutation = (
+  options?: Partial<Options<ConnectIcloudData>>,
 ): UseMutationOptions<
-  ConnectIcloudV1CalendarsIcloudPostResponse,
-  ConnectIcloudV1CalendarsIcloudPostError,
-  Options<ConnectIcloudV1CalendarsIcloudPostData>
+  ConnectIcloudResponse,
+  ConnectIcloudError,
+  Options<ConnectIcloudData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ConnectIcloudV1CalendarsIcloudPostResponse,
-    ConnectIcloudV1CalendarsIcloudPostError,
-    Options<ConnectIcloudV1CalendarsIcloudPostData>
+    ConnectIcloudResponse,
+    ConnectIcloudError,
+    Options<ConnectIcloudData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await connectIcloudV1CalendarsIcloudPost({
+      const { data } = await connectIcloud({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1654,81 +1616,20 @@ export const connectIcloudV1CalendarsIcloudPostMutation = (
 /**
  * Disconnect Calendar Account
  */
-export const disconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteMutation =
-  (
-    options?: Partial<
-      Options<DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData>
-    >,
-  ): UseMutationOptions<
-    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
-    DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
-    Options<DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteResponse,
-      DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteError,
-      Options<DisconnectCalendarAccountV1CalendarsAccountsAccountIdDeleteData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await disconnectCalendarAccountV1CalendarsAccountsAccountIdDelete({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
-  };
-
-/**
- * Sync Calendar Account
- */
-export const syncCalendarAccountV1CalendarsAccountsAccountIdSyncPostMutation = (
-  options?: Partial<
-    Options<SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData>
-  >,
+export const disconnectCalendarAccountMutation = (
+  options?: Partial<Options<DisconnectCalendarAccountData>>,
 ): UseMutationOptions<
-  unknown,
-  SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError,
-  Options<SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData>
+  DisconnectCalendarAccountResponse,
+  DisconnectCalendarAccountError,
+  Options<DisconnectCalendarAccountData>
 > => {
   const mutationOptions: UseMutationOptions<
-    unknown,
-    SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostError,
-    Options<SyncCalendarAccountV1CalendarsAccountsAccountIdSyncPostData>
+    DisconnectCalendarAccountResponse,
+    DisconnectCalendarAccountError,
+    Options<DisconnectCalendarAccountData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await syncCalendarAccountV1CalendarsAccountsAccountIdSyncPost({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update Calendar
- */
-export const updateCalendarV1CalendarsCalendarIdPatchMutation = (
-  options?: Partial<Options<UpdateCalendarV1CalendarsCalendarIdPatchData>>,
-): UseMutationOptions<
-  UpdateCalendarV1CalendarsCalendarIdPatchResponse,
-  UpdateCalendarV1CalendarsCalendarIdPatchError,
-  Options<UpdateCalendarV1CalendarsCalendarIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateCalendarV1CalendarsCalendarIdPatchResponse,
-    UpdateCalendarV1CalendarsCalendarIdPatchError,
-    Options<UpdateCalendarV1CalendarsCalendarIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await updateCalendarV1CalendarsCalendarIdPatch({
+      const { data } = await disconnectCalendarAccount({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1739,24 +1640,78 @@ export const updateCalendarV1CalendarsCalendarIdPatchMutation = (
   return mutationOptions;
 };
 
-export const listCalendarEventsV1CalendarsEventsGetQueryKey = (
-  options: Options<ListCalendarEventsV1CalendarsEventsGetData>,
-) => createQueryKey("listCalendarEventsV1CalendarsEventsGet", options);
+/**
+ * Sync Calendar Account
+ */
+export const syncCalendarAccountMutation = (
+  options?: Partial<Options<SyncCalendarAccountData>>,
+): UseMutationOptions<
+  unknown,
+  SyncCalendarAccountError,
+  Options<SyncCalendarAccountData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    SyncCalendarAccountError,
+    Options<SyncCalendarAccountData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncCalendarAccount({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Calendar
+ */
+export const updateCalendarMutation = (
+  options?: Partial<Options<UpdateCalendarData>>,
+): UseMutationOptions<
+  UpdateCalendarResponse,
+  UpdateCalendarError,
+  Options<UpdateCalendarData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCalendarResponse,
+    UpdateCalendarError,
+    Options<UpdateCalendarData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCalendar({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listCalendarEventsQueryKey = (
+  options: Options<ListCalendarEventsData>,
+) => createQueryKey("listCalendarEvents", options);
 
 /**
  * List Calendar Events
  */
-export const listCalendarEventsV1CalendarsEventsGetOptions = (
-  options: Options<ListCalendarEventsV1CalendarsEventsGetData>,
+export const listCalendarEventsOptions = (
+  options: Options<ListCalendarEventsData>,
 ) =>
   queryOptions<
-    ListCalendarEventsV1CalendarsEventsGetResponse,
-    ListCalendarEventsV1CalendarsEventsGetError,
-    ListCalendarEventsV1CalendarsEventsGetResponse,
-    ReturnType<typeof listCalendarEventsV1CalendarsEventsGetQueryKey>
+    ListCalendarEventsResponse,
+    ListCalendarEventsError,
+    ListCalendarEventsResponse,
+    ReturnType<typeof listCalendarEventsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listCalendarEventsV1CalendarsEventsGet({
+      const { data } = await listCalendarEvents({
         ...options,
         ...queryKey[0],
         signal,
@@ -1764,34 +1719,30 @@ export const listCalendarEventsV1CalendarsEventsGetOptions = (
       });
       return data;
     },
-    queryKey: listCalendarEventsV1CalendarsEventsGetQueryKey(options),
+    queryKey: listCalendarEventsQueryKey(options),
   });
 
 /**
  * Create Calendar Event
  */
-export const createCalendarEventV1CalendarsCalendarIdEventsPostMutation = (
-  options?: Partial<
-    Options<CreateCalendarEventV1CalendarsCalendarIdEventsPostData>
-  >,
+export const createCalendarEventMutation = (
+  options?: Partial<Options<CreateCalendarEventData>>,
 ): UseMutationOptions<
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
-  CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
-  Options<CreateCalendarEventV1CalendarsCalendarIdEventsPostData>
+  CreateCalendarEventResponse,
+  CreateCalendarEventError,
+  Options<CreateCalendarEventData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateCalendarEventV1CalendarsCalendarIdEventsPostResponse,
-    CreateCalendarEventV1CalendarsCalendarIdEventsPostError,
-    Options<CreateCalendarEventV1CalendarsCalendarIdEventsPostData>
+    CreateCalendarEventResponse,
+    CreateCalendarEventError,
+    Options<CreateCalendarEventData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createCalendarEventV1CalendarsCalendarIdEventsPost(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
+      const { data } = await createCalendarEvent({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -1801,22 +1752,20 @@ export const createCalendarEventV1CalendarsCalendarIdEventsPostMutation = (
 /**
  * Delete Calendar Event
  */
-export const deleteCalendarEventV1CalendarsEventsEventIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteCalendarEventV1CalendarsEventsEventIdDeleteData>
-  >,
+export const deleteCalendarEventMutation = (
+  options?: Partial<Options<DeleteCalendarEventData>>,
 ): UseMutationOptions<
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
-  DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
-  Options<DeleteCalendarEventV1CalendarsEventsEventIdDeleteData>
+  DeleteCalendarEventResponse,
+  DeleteCalendarEventError,
+  Options<DeleteCalendarEventData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteCalendarEventV1CalendarsEventsEventIdDeleteResponse,
-    DeleteCalendarEventV1CalendarsEventsEventIdDeleteError,
-    Options<DeleteCalendarEventV1CalendarsEventsEventIdDeleteData>
+    DeleteCalendarEventResponse,
+    DeleteCalendarEventError,
+    Options<DeleteCalendarEventData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteCalendarEventV1CalendarsEventsEventIdDelete({
+      const { data } = await deleteCalendarEvent({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1830,22 +1779,20 @@ export const deleteCalendarEventV1CalendarsEventsEventIdDeleteMutation = (
 /**
  * Update Calendar Event
  */
-export const updateCalendarEventV1CalendarsEventsEventIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateCalendarEventV1CalendarsEventsEventIdPatchData>
-  >,
+export const updateCalendarEventMutation = (
+  options?: Partial<Options<UpdateCalendarEventData>>,
 ): UseMutationOptions<
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
-  UpdateCalendarEventV1CalendarsEventsEventIdPatchError,
-  Options<UpdateCalendarEventV1CalendarsEventsEventIdPatchData>
+  UpdateCalendarEventResponse,
+  UpdateCalendarEventError,
+  Options<UpdateCalendarEventData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateCalendarEventV1CalendarsEventsEventIdPatchResponse,
-    UpdateCalendarEventV1CalendarsEventsEventIdPatchError,
-    Options<UpdateCalendarEventV1CalendarsEventsEventIdPatchData>
+    UpdateCalendarEventResponse,
+    UpdateCalendarEventError,
+    Options<UpdateCalendarEventData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateCalendarEventV1CalendarsEventsEventIdPatch({
+      const { data } = await updateCalendarEvent({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1859,52 +1806,48 @@ export const updateCalendarEventV1CalendarsEventsEventIdPatchMutation = (
 /**
  * Answer Calendar Invitation
  */
-export const respondToCalendarEventV1CalendarsEventsEventIdResponsePutMutation =
-  (
-    options?: Partial<
-      Options<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData>
-    >,
-  ): UseMutationOptions<
-    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
-    RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError,
-    Options<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      RespondToCalendarEventV1CalendarsEventsEventIdResponsePutResponse,
-      RespondToCalendarEventV1CalendarsEventsEventIdResponsePutError,
-      Options<RespondToCalendarEventV1CalendarsEventsEventIdResponsePutData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await respondToCalendarEventV1CalendarsEventsEventIdResponsePut({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+export const respondToCalendarEventMutation = (
+  options?: Partial<Options<RespondToCalendarEventData>>,
+): UseMutationOptions<
+  RespondToCalendarEventResponse,
+  RespondToCalendarEventError,
+  Options<RespondToCalendarEventData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RespondToCalendarEventResponse,
+    RespondToCalendarEventError,
+    Options<RespondToCalendarEventData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await respondToCalendarEvent({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
-export const listBankConnectionsV1BankConnectionsGetQueryKey = (
-  options?: Options<ListBankConnectionsV1BankConnectionsGetData>,
-) => createQueryKey("listBankConnectionsV1BankConnectionsGet", options);
+export const listBankConnectionsQueryKey = (
+  options?: Options<ListBankConnectionsData>,
+) => createQueryKey("listBankConnections", options);
 
 /**
  * List Bank Connections
  */
-export const listBankConnectionsV1BankConnectionsGetOptions = (
-  options?: Options<ListBankConnectionsV1BankConnectionsGetData>,
+export const listBankConnectionsOptions = (
+  options?: Options<ListBankConnectionsData>,
 ) =>
   queryOptions<
-    ListBankConnectionsV1BankConnectionsGetResponse,
+    ListBankConnectionsResponse,
     DefaultError,
-    ListBankConnectionsV1BankConnectionsGetResponse,
-    ReturnType<typeof listBankConnectionsV1BankConnectionsGetQueryKey>
+    ListBankConnectionsResponse,
+    ReturnType<typeof listBankConnectionsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listBankConnectionsV1BankConnectionsGet({
+      const { data } = await listBankConnections({
         ...options,
         ...queryKey[0],
         signal,
@@ -1912,33 +1855,30 @@ export const listBankConnectionsV1BankConnectionsGetOptions = (
       });
       return data;
     },
-    queryKey: listBankConnectionsV1BankConnectionsGetQueryKey(options),
+    queryKey: listBankConnectionsQueryKey(options),
   });
 
 /**
  * Start Bank Connection
  */
-export const authorizeBankConnectionV1BankConnectionsAuthorizePostMutation = (
-  options?: Partial<
-    Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
-  >,
+export const authorizeBankConnectionMutation = (
+  options?: Partial<Options<AuthorizeBankConnectionData>>,
 ): UseMutationOptions<
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
-  AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
-  Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
+  AuthorizeBankConnectionResponse,
+  AuthorizeBankConnectionError,
+  Options<AuthorizeBankConnectionData>
 > => {
   const mutationOptions: UseMutationOptions<
-    AuthorizeBankConnectionV1BankConnectionsAuthorizePostResponse,
-    AuthorizeBankConnectionV1BankConnectionsAuthorizePostError,
-    Options<AuthorizeBankConnectionV1BankConnectionsAuthorizePostData>
+    AuthorizeBankConnectionResponse,
+    AuthorizeBankConnectionError,
+    Options<AuthorizeBankConnectionData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await authorizeBankConnectionV1BankConnectionsAuthorizePost({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await authorizeBankConnection({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -1948,27 +1888,24 @@ export const authorizeBankConnectionV1BankConnectionsAuthorizePostMutation = (
 /**
  * Complete Bank Connection
  */
-export const completeBankConnectionV1BankConnectionsCallbackPostMutation = (
-  options?: Partial<
-    Options<CompleteBankConnectionV1BankConnectionsCallbackPostData>
-  >,
+export const completeBankConnectionMutation = (
+  options?: Partial<Options<CompleteBankConnectionData>>,
 ): UseMutationOptions<
-  CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
-  CompleteBankConnectionV1BankConnectionsCallbackPostError,
-  Options<CompleteBankConnectionV1BankConnectionsCallbackPostData>
+  CompleteBankConnectionResponse,
+  CompleteBankConnectionError,
+  Options<CompleteBankConnectionData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CompleteBankConnectionV1BankConnectionsCallbackPostResponse,
-    CompleteBankConnectionV1BankConnectionsCallbackPostError,
-    Options<CompleteBankConnectionV1BankConnectionsCallbackPostData>
+    CompleteBankConnectionResponse,
+    CompleteBankConnectionError,
+    Options<CompleteBankConnectionData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await completeBankConnectionV1BankConnectionsCallbackPost({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await completeBankConnection({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -1978,60 +1915,51 @@ export const completeBankConnectionV1BankConnectionsCallbackPostMutation = (
 /**
  * Link Bank Connection Account
  */
-export const linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchMutation =
-  (
-    options?: Partial<
-      Options<LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData>
-    >,
-  ): UseMutationOptions<
-    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
-    LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
-    Options<LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchResponse,
-      LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchError,
-      Options<LinkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatchData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await linkBankConnectionAccountV1BankConnectionsAccountsAccountIdPatch(
-            {
-              ...options,
-              ...fnOptions,
-              throwOnError: true,
-            },
-          );
-        return data;
-      },
-    };
-    return mutationOptions;
+export const linkBankConnectionAccountMutation = (
+  options?: Partial<Options<LinkBankConnectionAccountData>>,
+): UseMutationOptions<
+  LinkBankConnectionAccountResponse,
+  LinkBankConnectionAccountError,
+  Options<LinkBankConnectionAccountData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LinkBankConnectionAccountResponse,
+    LinkBankConnectionAccountError,
+    Options<LinkBankConnectionAccountData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await linkBankConnectionAccount({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
 /**
  * Sync Bank Connection
  */
-export const syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation = (
-  options?: Partial<
-    Options<SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData>
-  >,
+export const syncBankConnectionMutation = (
+  options?: Partial<Options<SyncBankConnectionData>>,
 ): UseMutationOptions<
   unknown,
-  SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
-  Options<SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData>
+  SyncBankConnectionError,
+  Options<SyncBankConnectionData>
 > => {
   const mutationOptions: UseMutationOptions<
     unknown,
-    SyncBankConnectionV1BankConnectionsConnectionIdSyncPostError,
-    Options<SyncBankConnectionV1BankConnectionsConnectionIdSyncPostData>
+    SyncBankConnectionError,
+    Options<SyncBankConnectionData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await syncBankConnectionV1BankConnectionsConnectionIdSyncPost({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await syncBankConnection({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -2041,54 +1969,47 @@ export const syncBankConnectionV1BankConnectionsConnectionIdSyncPostMutation = (
 /**
  * Disconnect Bank Connection
  */
-export const disconnectBankConnectionV1BankConnectionsConnectionIdDeleteMutation =
-  (
-    options?: Partial<
-      Options<DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData>
-    >,
-  ): UseMutationOptions<
-    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
-    DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
-    Options<DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteResponse,
-      DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteError,
-      Options<DisconnectBankConnectionV1BankConnectionsConnectionIdDeleteData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await disconnectBankConnectionV1BankConnectionsConnectionIdDelete({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+export const disconnectBankConnectionMutation = (
+  options?: Partial<Options<DisconnectBankConnectionData>>,
+): UseMutationOptions<
+  DisconnectBankConnectionResponse,
+  DisconnectBankConnectionError,
+  Options<DisconnectBankConnectionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DisconnectBankConnectionResponse,
+    DisconnectBankConnectionError,
+    Options<DisconnectBankConnectionData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await disconnectBankConnection({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
-export const listCategoriesV1CategoriesGetQueryKey = (
-  options?: Options<ListCategoriesV1CategoriesGetData>,
-) => createQueryKey("listCategoriesV1CategoriesGet", options);
+export const listCategoriesQueryKey = (options?: Options<ListCategoriesData>) =>
+  createQueryKey("listCategories", options);
 
 /**
  * List Categories
  *
  * List all categories.
  */
-export const listCategoriesV1CategoriesGetOptions = (
-  options?: Options<ListCategoriesV1CategoriesGetData>,
-) =>
+export const listCategoriesOptions = (options?: Options<ListCategoriesData>) =>
   queryOptions<
-    ListCategoriesV1CategoriesGetResponse,
-    ListCategoriesV1CategoriesGetError,
-    ListCategoriesV1CategoriesGetResponse,
-    ReturnType<typeof listCategoriesV1CategoriesGetQueryKey>
+    ListCategoriesResponse,
+    ListCategoriesError,
+    ListCategoriesResponse,
+    ReturnType<typeof listCategoriesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listCategoriesV1CategoriesGet({
+      const { data } = await listCategories({
         ...options,
         ...queryKey[0],
         signal,
@@ -2096,30 +2017,30 @@ export const listCategoriesV1CategoriesGetOptions = (
       });
       return data;
     },
-    queryKey: listCategoriesV1CategoriesGetQueryKey(options),
+    queryKey: listCategoriesQueryKey(options),
   });
 
-export const listCategoriesV1CategoriesGetInfiniteQueryKey = (
-  options?: Options<ListCategoriesV1CategoriesGetData>,
-): QueryKey<Options<ListCategoriesV1CategoriesGetData>> =>
-  createQueryKey("listCategoriesV1CategoriesGet", options, true);
+export const listCategoriesInfiniteQueryKey = (
+  options?: Options<ListCategoriesData>,
+): QueryKey<Options<ListCategoriesData>> =>
+  createQueryKey("listCategories", options, true);
 
 /**
  * List Categories
  *
  * List all categories.
  */
-export const listCategoriesV1CategoriesGetInfiniteOptions = (
-  options?: Options<ListCategoriesV1CategoriesGetData>,
+export const listCategoriesInfiniteOptions = (
+  options?: Options<ListCategoriesData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListCategoriesV1CategoriesGetResponse,
-    ListCategoriesV1CategoriesGetError,
-    InfiniteData<ListCategoriesV1CategoriesGetResponse>,
-    QueryKey<Options<ListCategoriesV1CategoriesGetData>>,
+    ListCategoriesResponse,
+    ListCategoriesError,
+    InfiniteData<ListCategoriesResponse>,
+    QueryKey<Options<ListCategoriesData>>,
     | number
     | Pick<
-        QueryKey<Options<ListCategoriesV1CategoriesGetData>>[0],
+        QueryKey<Options<ListCategoriesData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -2128,7 +2049,7 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListCategoriesV1CategoriesGetData>>[0],
+          QueryKey<Options<ListCategoriesData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -2139,7 +2060,7 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listCategoriesV1CategoriesGet({
+        const { data } = await listCategories({
           ...options,
           ...params,
           signal,
@@ -2147,30 +2068,30 @@ export const listCategoriesV1CategoriesGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listCategoriesV1CategoriesGetInfiniteQueryKey(options),
+      queryKey: listCategoriesInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
 };
 
-export const listCategoryRulesV1CategoriesRulesGetQueryKey = (
-  options?: Options<ListCategoryRulesV1CategoriesRulesGetData>,
-) => createQueryKey("listCategoryRulesV1CategoriesRulesGet", options);
+export const listCategoryRulesQueryKey = (
+  options?: Options<ListCategoryRulesData>,
+) => createQueryKey("listCategoryRules", options);
 
 /**
  * List Category Rules
  */
-export const listCategoryRulesV1CategoriesRulesGetOptions = (
-  options?: Options<ListCategoryRulesV1CategoriesRulesGetData>,
+export const listCategoryRulesOptions = (
+  options?: Options<ListCategoryRulesData>,
 ) =>
   queryOptions<
-    ListCategoryRulesV1CategoriesRulesGetResponse,
+    ListCategoryRulesResponse,
     DefaultError,
-    ListCategoryRulesV1CategoriesRulesGetResponse,
-    ReturnType<typeof listCategoryRulesV1CategoriesRulesGetQueryKey>
+    ListCategoryRulesResponse,
+    ReturnType<typeof listCategoryRulesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listCategoryRulesV1CategoriesRulesGet({
+      const { data } = await listCategoryRules({
         ...options,
         ...queryKey[0],
         signal,
@@ -2178,7 +2099,7 @@ export const listCategoryRulesV1CategoriesRulesGetOptions = (
       });
       return data;
     },
-    queryKey: listCategoryRulesV1CategoriesRulesGetQueryKey(options),
+    queryKey: listCategoryRulesQueryKey(options),
   });
 
 /**
@@ -2186,20 +2107,20 @@ export const listCategoryRulesV1CategoriesRulesGetOptions = (
  *
  * Sorts future imports whose description contains the text into the category, and by default the ones already here.
  */
-export const createCategoryRuleV1CategoriesRulesPostMutation = (
-  options?: Partial<Options<CreateCategoryRuleV1CategoriesRulesPostData>>,
+export const createCategoryRuleMutation = (
+  options?: Partial<Options<CreateCategoryRuleData>>,
 ): UseMutationOptions<
-  CreateCategoryRuleV1CategoriesRulesPostResponse,
-  CreateCategoryRuleV1CategoriesRulesPostError,
-  Options<CreateCategoryRuleV1CategoriesRulesPostData>
+  CreateCategoryRuleResponse,
+  CreateCategoryRuleError,
+  Options<CreateCategoryRuleData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateCategoryRuleV1CategoriesRulesPostResponse,
-    CreateCategoryRuleV1CategoriesRulesPostError,
-    Options<CreateCategoryRuleV1CategoriesRulesPostData>
+    CreateCategoryRuleResponse,
+    CreateCategoryRuleError,
+    Options<CreateCategoryRuleData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createCategoryRuleV1CategoriesRulesPost({
+      const { data } = await createCategoryRule({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2215,22 +2136,20 @@ export const createCategoryRuleV1CategoriesRulesPostMutation = (
  *
  * Stops sorting new imports by it; transactions it already sorted keep their category.
  */
-export const deleteCategoryRuleV1CategoriesRulesRuleIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData>
-  >,
+export const deleteCategoryRuleMutation = (
+  options?: Partial<Options<DeleteCategoryRuleData>>,
 ): UseMutationOptions<
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse,
-  DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError,
-  Options<DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData>
+  DeleteCategoryRuleResponse,
+  DeleteCategoryRuleError,
+  Options<DeleteCategoryRuleData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteResponse,
-    DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteError,
-    Options<DeleteCategoryRuleV1CategoriesRulesRuleIdDeleteData>
+    DeleteCategoryRuleResponse,
+    DeleteCategoryRuleError,
+    Options<DeleteCategoryRuleData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteCategoryRuleV1CategoriesRulesRuleIdDelete({
+      const { data } = await deleteCategoryRule({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2241,24 +2160,21 @@ export const deleteCategoryRuleV1CategoriesRulesRuleIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const listCountersV1CountersGetQueryKey = (
-  options?: Options<ListCountersV1CountersGetData>,
-) => createQueryKey("listCountersV1CountersGet", options);
+export const listCountersQueryKey = (options?: Options<ListCountersData>) =>
+  createQueryKey("listCounters", options);
 
 /**
  * List Counters
  */
-export const listCountersV1CountersGetOptions = (
-  options?: Options<ListCountersV1CountersGetData>,
-) =>
+export const listCountersOptions = (options?: Options<ListCountersData>) =>
   queryOptions<
-    ListCountersV1CountersGetResponse,
+    ListCountersResponse,
     DefaultError,
-    ListCountersV1CountersGetResponse,
-    ReturnType<typeof listCountersV1CountersGetQueryKey>
+    ListCountersResponse,
+    ReturnType<typeof listCountersQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listCountersV1CountersGet({
+      const { data } = await listCounters({
         ...options,
         ...queryKey[0],
         signal,
@@ -2266,26 +2182,26 @@ export const listCountersV1CountersGetOptions = (
       });
       return data;
     },
-    queryKey: listCountersV1CountersGetQueryKey(options),
+    queryKey: listCountersQueryKey(options),
   });
 
 /**
  * Create Counter
  */
-export const createCounterV1CountersPostMutation = (
-  options?: Partial<Options<CreateCounterV1CountersPostData>>,
+export const createCounterMutation = (
+  options?: Partial<Options<CreateCounterData>>,
 ): UseMutationOptions<
-  CreateCounterV1CountersPostResponse,
-  CreateCounterV1CountersPostError,
-  Options<CreateCounterV1CountersPostData>
+  CreateCounterResponse,
+  CreateCounterError,
+  Options<CreateCounterData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateCounterV1CountersPostResponse,
-    CreateCounterV1CountersPostError,
-    Options<CreateCounterV1CountersPostData>
+    CreateCounterResponse,
+    CreateCounterError,
+    Options<CreateCounterData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createCounterV1CountersPost({
+      const { data } = await createCounter({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2299,20 +2215,20 @@ export const createCounterV1CountersPostMutation = (
 /**
  * Delete Counter
  */
-export const deleteCounterV1CountersCounterIdDeleteMutation = (
-  options?: Partial<Options<DeleteCounterV1CountersCounterIdDeleteData>>,
+export const deleteCounterMutation = (
+  options?: Partial<Options<DeleteCounterData>>,
 ): UseMutationOptions<
-  DeleteCounterV1CountersCounterIdDeleteResponse,
-  DeleteCounterV1CountersCounterIdDeleteError,
-  Options<DeleteCounterV1CountersCounterIdDeleteData>
+  DeleteCounterResponse,
+  DeleteCounterError,
+  Options<DeleteCounterData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteCounterV1CountersCounterIdDeleteResponse,
-    DeleteCounterV1CountersCounterIdDeleteError,
-    Options<DeleteCounterV1CountersCounterIdDeleteData>
+    DeleteCounterResponse,
+    DeleteCounterError,
+    Options<DeleteCounterData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteCounterV1CountersCounterIdDelete({
+      const { data } = await deleteCounter({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2326,20 +2242,20 @@ export const deleteCounterV1CountersCounterIdDeleteMutation = (
 /**
  * Update Counter
  */
-export const updateCounterV1CountersCounterIdPatchMutation = (
-  options?: Partial<Options<UpdateCounterV1CountersCounterIdPatchData>>,
+export const updateCounterMutation = (
+  options?: Partial<Options<UpdateCounterData>>,
 ): UseMutationOptions<
-  UpdateCounterV1CountersCounterIdPatchResponse,
-  UpdateCounterV1CountersCounterIdPatchError,
-  Options<UpdateCounterV1CountersCounterIdPatchData>
+  UpdateCounterResponse,
+  UpdateCounterError,
+  Options<UpdateCounterData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateCounterV1CountersCounterIdPatchResponse,
-    UpdateCounterV1CountersCounterIdPatchError,
-    Options<UpdateCounterV1CountersCounterIdPatchData>
+    UpdateCounterResponse,
+    UpdateCounterError,
+    Options<UpdateCounterData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateCounterV1CountersCounterIdPatch({
+      const { data } = await updateCounter({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2350,24 +2266,21 @@ export const updateCounterV1CountersCounterIdPatchMutation = (
   return mutationOptions;
 };
 
-export const listResetsV1CountersCounterIdResetsGetQueryKey = (
-  options: Options<ListResetsV1CountersCounterIdResetsGetData>,
-) => createQueryKey("listResetsV1CountersCounterIdResetsGet", options);
+export const listResetsQueryKey = (options: Options<ListResetsData>) =>
+  createQueryKey("listResets", options);
 
 /**
  * List Resets
  */
-export const listResetsV1CountersCounterIdResetsGetOptions = (
-  options: Options<ListResetsV1CountersCounterIdResetsGetData>,
-) =>
+export const listResetsOptions = (options: Options<ListResetsData>) =>
   queryOptions<
-    ListResetsV1CountersCounterIdResetsGetResponse,
-    ListResetsV1CountersCounterIdResetsGetError,
-    ListResetsV1CountersCounterIdResetsGetResponse,
-    ReturnType<typeof listResetsV1CountersCounterIdResetsGetQueryKey>
+    ListResetsResponse,
+    ListResetsError,
+    ListResetsResponse,
+    ReturnType<typeof listResetsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listResetsV1CountersCounterIdResetsGet({
+      const { data } = await listResets({
         ...options,
         ...queryKey[0],
         signal,
@@ -2375,26 +2288,26 @@ export const listResetsV1CountersCounterIdResetsGetOptions = (
       });
       return data;
     },
-    queryKey: listResetsV1CountersCounterIdResetsGetQueryKey(options),
+    queryKey: listResetsQueryKey(options),
   });
 
 /**
  * Record Reset
  */
-export const createResetV1CountersCounterIdResetsPostMutation = (
-  options?: Partial<Options<CreateResetV1CountersCounterIdResetsPostData>>,
+export const createResetMutation = (
+  options?: Partial<Options<CreateResetData>>,
 ): UseMutationOptions<
-  CreateResetV1CountersCounterIdResetsPostResponse,
-  CreateResetV1CountersCounterIdResetsPostError,
-  Options<CreateResetV1CountersCounterIdResetsPostData>
+  CreateResetResponse,
+  CreateResetError,
+  Options<CreateResetData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateResetV1CountersCounterIdResetsPostResponse,
-    CreateResetV1CountersCounterIdResetsPostError,
-    Options<CreateResetV1CountersCounterIdResetsPostData>
+    CreateResetResponse,
+    CreateResetError,
+    Options<CreateResetData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createResetV1CountersCounterIdResetsPost({
+      const { data } = await createReset({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2408,22 +2321,20 @@ export const createResetV1CountersCounterIdResetsPostMutation = (
 /**
  * Undo Reset
  */
-export const undoResetV1CountersCounterIdResetsResetIdDeleteMutation = (
-  options?: Partial<
-    Options<UndoResetV1CountersCounterIdResetsResetIdDeleteData>
-  >,
+export const undoResetMutation = (
+  options?: Partial<Options<UndoResetData>>,
 ): UseMutationOptions<
-  UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
-  UndoResetV1CountersCounterIdResetsResetIdDeleteError,
-  Options<UndoResetV1CountersCounterIdResetsResetIdDeleteData>
+  UndoResetResponse,
+  UndoResetError,
+  Options<UndoResetData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UndoResetV1CountersCounterIdResetsResetIdDeleteResponse,
-    UndoResetV1CountersCounterIdResetsResetIdDeleteError,
-    Options<UndoResetV1CountersCounterIdResetsResetIdDeleteData>
+    UndoResetResponse,
+    UndoResetError,
+    Options<UndoResetData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await undoResetV1CountersCounterIdResetsResetIdDelete({
+      const { data } = await undoReset({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2434,24 +2345,21 @@ export const undoResetV1CountersCounterIdResetsResetIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const listDevicesV1DevicesGetQueryKey = (
-  options?: Options<ListDevicesV1DevicesGetData>,
-) => createQueryKey("listDevicesV1DevicesGet", options);
+export const listDevicesQueryKey = (options?: Options<ListDevicesData>) =>
+  createQueryKey("listDevices", options);
 
 /**
  * List Devices
  */
-export const listDevicesV1DevicesGetOptions = (
-  options?: Options<ListDevicesV1DevicesGetData>,
-) =>
+export const listDevicesOptions = (options?: Options<ListDevicesData>) =>
   queryOptions<
-    ListDevicesV1DevicesGetResponse,
+    ListDevicesResponse,
     DefaultError,
-    ListDevicesV1DevicesGetResponse,
-    ReturnType<typeof listDevicesV1DevicesGetQueryKey>
+    ListDevicesResponse,
+    ReturnType<typeof listDevicesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listDevicesV1DevicesGet({
+      const { data } = await listDevices({
         ...options,
         ...queryKey[0],
         signal,
@@ -2459,26 +2367,26 @@ export const listDevicesV1DevicesGetOptions = (
       });
       return data;
     },
-    queryKey: listDevicesV1DevicesGetQueryKey(options),
+    queryKey: listDevicesQueryKey(options),
   });
 
 /**
  * Delete Device
  */
-export const deleteDeviceV1DevicesDeviceIdDeleteMutation = (
-  options?: Partial<Options<DeleteDeviceV1DevicesDeviceIdDeleteData>>,
+export const deleteDeviceMutation = (
+  options?: Partial<Options<DeleteDeviceData>>,
 ): UseMutationOptions<
-  DeleteDeviceV1DevicesDeviceIdDeleteResponse,
-  DeleteDeviceV1DevicesDeviceIdDeleteError,
-  Options<DeleteDeviceV1DevicesDeviceIdDeleteData>
+  DeleteDeviceResponse,
+  DeleteDeviceError,
+  Options<DeleteDeviceData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteDeviceV1DevicesDeviceIdDeleteResponse,
-    DeleteDeviceV1DevicesDeviceIdDeleteError,
-    Options<DeleteDeviceV1DevicesDeviceIdDeleteData>
+    DeleteDeviceResponse,
+    DeleteDeviceError,
+    Options<DeleteDeviceData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteDeviceV1DevicesDeviceIdDelete({
+      const { data } = await deleteDevice({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2492,20 +2400,20 @@ export const deleteDeviceV1DevicesDeviceIdDeleteMutation = (
 /**
  * Rename Device
  */
-export const updateDeviceV1DevicesDeviceIdPatchMutation = (
-  options?: Partial<Options<UpdateDeviceV1DevicesDeviceIdPatchData>>,
+export const updateDeviceMutation = (
+  options?: Partial<Options<UpdateDeviceData>>,
 ): UseMutationOptions<
-  UpdateDeviceV1DevicesDeviceIdPatchResponse,
-  UpdateDeviceV1DevicesDeviceIdPatchError,
-  Options<UpdateDeviceV1DevicesDeviceIdPatchData>
+  UpdateDeviceResponse,
+  UpdateDeviceError,
+  Options<UpdateDeviceData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateDeviceV1DevicesDeviceIdPatchResponse,
-    UpdateDeviceV1DevicesDeviceIdPatchError,
-    Options<UpdateDeviceV1DevicesDeviceIdPatchData>
+    UpdateDeviceResponse,
+    UpdateDeviceError,
+    Options<UpdateDeviceData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateDeviceV1DevicesDeviceIdPatch({
+      const { data } = await updateDevice({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2522,22 +2430,20 @@ export const updateDeviceV1DevicesDeviceIdPatchMutation = (
  * Crash and hang reports from the apps, logged so they can be found next to
  * the server's own logs for the same build.
  */
-export const uploadClientDiagnosticsV1ClientDiagnosticsPostMutation = (
-  options?: Partial<
-    Options<UploadClientDiagnosticsV1ClientDiagnosticsPostData>
-  >,
+export const uploadClientDiagnosticsMutation = (
+  options?: Partial<Options<UploadClientDiagnosticsData>>,
 ): UseMutationOptions<
   unknown,
-  UploadClientDiagnosticsV1ClientDiagnosticsPostError,
-  Options<UploadClientDiagnosticsV1ClientDiagnosticsPostData>
+  UploadClientDiagnosticsError,
+  Options<UploadClientDiagnosticsData>
 > => {
   const mutationOptions: UseMutationOptions<
     unknown,
-    UploadClientDiagnosticsV1ClientDiagnosticsPostError,
-    Options<UploadClientDiagnosticsV1ClientDiagnosticsPostData>
+    UploadClientDiagnosticsError,
+    Options<UploadClientDiagnosticsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await uploadClientDiagnosticsV1ClientDiagnosticsPost({
+      const { data } = await uploadClientDiagnostics({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2548,24 +2454,24 @@ export const uploadClientDiagnosticsV1ClientDiagnosticsPostMutation = (
   return mutationOptions;
 };
 
-export const listGymExercisesV1GymExercisesGetQueryKey = (
-  options?: Options<ListGymExercisesV1GymExercisesGetData>,
-) => createQueryKey("listGymExercisesV1GymExercisesGet", options);
+export const listGymExercisesQueryKey = (
+  options?: Options<ListGymExercisesData>,
+) => createQueryKey("listGymExercises", options);
 
 /**
  * List Gym Exercises
  */
-export const listGymExercisesV1GymExercisesGetOptions = (
-  options?: Options<ListGymExercisesV1GymExercisesGetData>,
+export const listGymExercisesOptions = (
+  options?: Options<ListGymExercisesData>,
 ) =>
   queryOptions<
-    ListGymExercisesV1GymExercisesGetResponse,
+    ListGymExercisesResponse,
     DefaultError,
-    ListGymExercisesV1GymExercisesGetResponse,
-    ReturnType<typeof listGymExercisesV1GymExercisesGetQueryKey>
+    ListGymExercisesResponse,
+    ReturnType<typeof listGymExercisesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listGymExercisesV1GymExercisesGet({
+      const { data } = await listGymExercises({
         ...options,
         ...queryKey[0],
         signal,
@@ -2573,28 +2479,26 @@ export const listGymExercisesV1GymExercisesGetOptions = (
       });
       return data;
     },
-    queryKey: listGymExercisesV1GymExercisesGetQueryKey(options),
+    queryKey: listGymExercisesQueryKey(options),
   });
 
 /**
  * Delete Gym Exercise
  */
-export const deleteGymExerciseV1GymExercisesExerciseIdDeleteMutation = (
-  options?: Partial<
-    Options<DeleteGymExerciseV1GymExercisesExerciseIdDeleteData>
-  >,
+export const deleteGymExerciseMutation = (
+  options?: Partial<Options<DeleteGymExerciseData>>,
 ): UseMutationOptions<
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse,
-  DeleteGymExerciseV1GymExercisesExerciseIdDeleteError,
-  Options<DeleteGymExerciseV1GymExercisesExerciseIdDeleteData>
+  DeleteGymExerciseResponse,
+  DeleteGymExerciseError,
+  Options<DeleteGymExerciseData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteGymExerciseV1GymExercisesExerciseIdDeleteResponse,
-    DeleteGymExerciseV1GymExercisesExerciseIdDeleteError,
-    Options<DeleteGymExerciseV1GymExercisesExerciseIdDeleteData>
+    DeleteGymExerciseResponse,
+    DeleteGymExerciseError,
+    Options<DeleteGymExerciseData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteGymExerciseV1GymExercisesExerciseIdDelete({
+      const { data } = await deleteGymExercise({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2610,20 +2514,20 @@ export const deleteGymExerciseV1GymExercisesExerciseIdDeleteMutation = (
  *
  * The id is chosen by the app, so creating twice is the same as creating once.
  */
-export const upsertGymExerciseV1GymExercisesExerciseIdPutMutation = (
-  options?: Partial<Options<UpsertGymExerciseV1GymExercisesExerciseIdPutData>>,
+export const upsertGymExerciseMutation = (
+  options?: Partial<Options<UpsertGymExerciseData>>,
 ): UseMutationOptions<
-  UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
-  UpsertGymExerciseV1GymExercisesExerciseIdPutError,
-  Options<UpsertGymExerciseV1GymExercisesExerciseIdPutData>
+  UpsertGymExerciseResponse,
+  UpsertGymExerciseError,
+  Options<UpsertGymExerciseData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpsertGymExerciseV1GymExercisesExerciseIdPutResponse,
-    UpsertGymExerciseV1GymExercisesExerciseIdPutError,
-    Options<UpsertGymExerciseV1GymExercisesExerciseIdPutData>
+    UpsertGymExerciseResponse,
+    UpsertGymExerciseError,
+    Options<UpsertGymExerciseData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await upsertGymExerciseV1GymExercisesExerciseIdPut({
+      const { data } = await upsertGymExercise({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2634,24 +2538,21 @@ export const upsertGymExerciseV1GymExercisesExerciseIdPutMutation = (
   return mutationOptions;
 };
 
-export const listGymTopSetsV1GymExercisesExerciseIdSetsGetQueryKey = (
-  options: Options<ListGymTopSetsV1GymExercisesExerciseIdSetsGetData>,
-) => createQueryKey("listGymTopSetsV1GymExercisesExerciseIdSetsGet", options);
+export const listGymTopSetsQueryKey = (options: Options<ListGymTopSetsData>) =>
+  createQueryKey("listGymTopSets", options);
 
 /**
  * List Gym Top Sets
  */
-export const listGymTopSetsV1GymExercisesExerciseIdSetsGetOptions = (
-  options: Options<ListGymTopSetsV1GymExercisesExerciseIdSetsGetData>,
-) =>
+export const listGymTopSetsOptions = (options: Options<ListGymTopSetsData>) =>
   queryOptions<
-    ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
-    ListGymTopSetsV1GymExercisesExerciseIdSetsGetError,
-    ListGymTopSetsV1GymExercisesExerciseIdSetsGetResponse,
-    ReturnType<typeof listGymTopSetsV1GymExercisesExerciseIdSetsGetQueryKey>
+    ListGymTopSetsResponse,
+    ListGymTopSetsError,
+    ListGymTopSetsResponse,
+    ReturnType<typeof listGymTopSetsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listGymTopSetsV1GymExercisesExerciseIdSetsGet({
+      const { data } = await listGymTopSets({
         ...options,
         ...queryKey[0],
         signal,
@@ -2659,39 +2560,35 @@ export const listGymTopSetsV1GymExercisesExerciseIdSetsGetOptions = (
       });
       return data;
     },
-    queryKey: listGymTopSetsV1GymExercisesExerciseIdSetsGetQueryKey(options),
+    queryKey: listGymTopSetsQueryKey(options),
   });
 
 /**
  * Delete Gym Top Set
  */
-export const deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteMutation =
-  (
-    options?: Partial<
-      Options<DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData>
-    >,
-  ): UseMutationOptions<
-    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse,
-    DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError,
-    Options<DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteResponse,
-      DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteError,
-      Options<DeleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDelete({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+export const deleteGymTopSetMutation = (
+  options?: Partial<Options<DeleteGymTopSetData>>,
+): UseMutationOptions<
+  DeleteGymTopSetResponse,
+  DeleteGymTopSetError,
+  Options<DeleteGymTopSetData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteGymTopSetResponse,
+    DeleteGymTopSetError,
+    Options<DeleteGymTopSetData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteGymTopSet({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
 /**
  * Set Gym Top Set
@@ -2699,27 +2596,24 @@ export const deleteGymTopSetV1GymExercisesExerciseIdSetsPerformedOnDeleteMutatio
  * The day's top set for the exercise, replacing one already logged. The day
  * is the app's local date, so a set sent late still lands on the day it was lifted.
  */
-export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutMutation = (
-  options?: Partial<
-    Options<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData>
-  >,
+export const putGymTopSetMutation = (
+  options?: Partial<Options<PutGymTopSetData>>,
 ): UseMutationOptions<
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
-  PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
-  Options<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData>
+  PutGymTopSetResponse,
+  PutGymTopSetError,
+  Options<PutGymTopSetData>
 > => {
   const mutationOptions: UseMutationOptions<
-    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutResponse,
-    PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutError,
-    Options<PutGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutData>
+    PutGymTopSetResponse,
+    PutGymTopSetError,
+    Options<PutGymTopSetData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPut({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await putGymTopSet({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -2729,22 +2623,20 @@ export const putGymTopSetV1GymExercisesExerciseIdSetsPerformedOnPutMutation = (
 /**
  * Sync HealthKit Workouts
  */
-export const syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostMutation = (
-  options?: Partial<
-    Options<SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData>
-  >,
+export const syncHealthkitWorkoutsMutation = (
+  options?: Partial<Options<SyncHealthkitWorkoutsData>>,
 ): UseMutationOptions<
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
-  SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
-  Options<SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData>
+  SyncHealthkitWorkoutsResponse,
+  SyncHealthkitWorkoutsError,
+  Options<SyncHealthkitWorkoutsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostResponse,
-    SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostError,
-    Options<SyncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostData>
+    SyncHealthkitWorkoutsResponse,
+    SyncHealthkitWorkoutsError,
+    Options<SyncHealthkitWorkoutsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPost({
+      const { data } = await syncHealthkitWorkouts({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2755,24 +2647,24 @@ export const syncHealthkitWorkoutsV1HealthkitWorkoutsSyncPostMutation = (
   return mutationOptions;
 };
 
-export const listHealthkitWorkoutsV1HealthkitWorkoutsGetQueryKey = (
-  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
-) => createQueryKey("listHealthkitWorkoutsV1HealthkitWorkoutsGet", options);
+export const listHealthkitWorkoutsQueryKey = (
+  options?: Options<ListHealthkitWorkoutsData>,
+) => createQueryKey("listHealthkitWorkouts", options);
 
 /**
  * List HealthKit Workouts
  */
-export const listHealthkitWorkoutsV1HealthkitWorkoutsGetOptions = (
-  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
+export const listHealthkitWorkoutsOptions = (
+  options?: Options<ListHealthkitWorkoutsData>,
 ) =>
   queryOptions<
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
-    ReturnType<typeof listHealthkitWorkoutsV1HealthkitWorkoutsGetQueryKey>
+    ListHealthkitWorkoutsResponse,
+    ListHealthkitWorkoutsError,
+    ListHealthkitWorkoutsResponse,
+    ReturnType<typeof listHealthkitWorkoutsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listHealthkitWorkoutsV1HealthkitWorkoutsGet({
+      const { data } = await listHealthkitWorkouts({
         ...options,
         ...queryKey[0],
         signal,
@@ -2780,28 +2672,28 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetOptions = (
       });
       return data;
     },
-    queryKey: listHealthkitWorkoutsV1HealthkitWorkoutsGetQueryKey(options),
+    queryKey: listHealthkitWorkoutsQueryKey(options),
   });
 
-export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey = (
-  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
-): QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>> =>
-  createQueryKey("listHealthkitWorkoutsV1HealthkitWorkoutsGet", options, true);
+export const listHealthkitWorkoutsInfiniteQueryKey = (
+  options?: Options<ListHealthkitWorkoutsData>,
+): QueryKey<Options<ListHealthkitWorkoutsData>> =>
+  createQueryKey("listHealthkitWorkouts", options, true);
 
 /**
  * List HealthKit Workouts
  */
-export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
-  options?: Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>,
+export const listHealthkitWorkoutsInfiniteOptions = (
+  options?: Options<ListHealthkitWorkoutsData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse,
-    ListHealthkitWorkoutsV1HealthkitWorkoutsGetError,
-    InfiniteData<ListHealthkitWorkoutsV1HealthkitWorkoutsGetResponse>,
-    QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>>,
+    ListHealthkitWorkoutsResponse,
+    ListHealthkitWorkoutsError,
+    InfiniteData<ListHealthkitWorkoutsResponse>,
+    QueryKey<Options<ListHealthkitWorkoutsData>>,
     | number
     | Pick<
-        QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>>[0],
+        QueryKey<Options<ListHealthkitWorkoutsData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -2810,7 +2702,7 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListHealthkitWorkoutsV1HealthkitWorkoutsGetData>>[0],
+          QueryKey<Options<ListHealthkitWorkoutsData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -2821,7 +2713,7 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listHealthkitWorkoutsV1HealthkitWorkoutsGet({
+        const { data } = await listHealthkitWorkouts({
           ...options,
           ...params,
           signal,
@@ -2829,8 +2721,7 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey:
-        listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteQueryKey(options),
+      queryKey: listHealthkitWorkoutsInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -2839,20 +2730,20 @@ export const listHealthkitWorkoutsV1HealthkitWorkoutsGetInfiniteOptions = (
 /**
  * Sync HealthKit Sleep Samples
  */
-export const syncHealthkitSleepV1HealthkitSleepSyncPostMutation = (
-  options?: Partial<Options<SyncHealthkitSleepV1HealthkitSleepSyncPostData>>,
+export const syncHealthkitSleepMutation = (
+  options?: Partial<Options<SyncHealthkitSleepData>>,
 ): UseMutationOptions<
-  SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
-  SyncHealthkitSleepV1HealthkitSleepSyncPostError,
-  Options<SyncHealthkitSleepV1HealthkitSleepSyncPostData>
+  SyncHealthkitSleepResponse,
+  SyncHealthkitSleepError,
+  Options<SyncHealthkitSleepData>
 > => {
   const mutationOptions: UseMutationOptions<
-    SyncHealthkitSleepV1HealthkitSleepSyncPostResponse,
-    SyncHealthkitSleepV1HealthkitSleepSyncPostError,
-    Options<SyncHealthkitSleepV1HealthkitSleepSyncPostData>
+    SyncHealthkitSleepResponse,
+    SyncHealthkitSleepError,
+    Options<SyncHealthkitSleepData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await syncHealthkitSleepV1HealthkitSleepSyncPost({
+      const { data } = await syncHealthkitSleep({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -2863,24 +2754,24 @@ export const syncHealthkitSleepV1HealthkitSleepSyncPostMutation = (
   return mutationOptions;
 };
 
-export const listHealthkitSleepV1HealthkitSleepGetQueryKey = (
-  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
-) => createQueryKey("listHealthkitSleepV1HealthkitSleepGet", options);
+export const listHealthkitSleepQueryKey = (
+  options?: Options<ListHealthkitSleepData>,
+) => createQueryKey("listHealthkitSleep", options);
 
 /**
  * List HealthKit Sleep Samples
  */
-export const listHealthkitSleepV1HealthkitSleepGetOptions = (
-  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
+export const listHealthkitSleepOptions = (
+  options?: Options<ListHealthkitSleepData>,
 ) =>
   queryOptions<
-    ListHealthkitSleepV1HealthkitSleepGetResponse,
-    ListHealthkitSleepV1HealthkitSleepGetError,
-    ListHealthkitSleepV1HealthkitSleepGetResponse,
-    ReturnType<typeof listHealthkitSleepV1HealthkitSleepGetQueryKey>
+    ListHealthkitSleepResponse,
+    ListHealthkitSleepError,
+    ListHealthkitSleepResponse,
+    ReturnType<typeof listHealthkitSleepQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listHealthkitSleepV1HealthkitSleepGet({
+      const { data } = await listHealthkitSleep({
         ...options,
         ...queryKey[0],
         signal,
@@ -2888,28 +2779,28 @@ export const listHealthkitSleepV1HealthkitSleepGetOptions = (
       });
       return data;
     },
-    queryKey: listHealthkitSleepV1HealthkitSleepGetQueryKey(options),
+    queryKey: listHealthkitSleepQueryKey(options),
   });
 
-export const listHealthkitSleepV1HealthkitSleepGetInfiniteQueryKey = (
-  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
-): QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>> =>
-  createQueryKey("listHealthkitSleepV1HealthkitSleepGet", options, true);
+export const listHealthkitSleepInfiniteQueryKey = (
+  options?: Options<ListHealthkitSleepData>,
+): QueryKey<Options<ListHealthkitSleepData>> =>
+  createQueryKey("listHealthkitSleep", options, true);
 
 /**
  * List HealthKit Sleep Samples
  */
-export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
-  options?: Options<ListHealthkitSleepV1HealthkitSleepGetData>,
+export const listHealthkitSleepInfiniteOptions = (
+  options?: Options<ListHealthkitSleepData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListHealthkitSleepV1HealthkitSleepGetResponse,
-    ListHealthkitSleepV1HealthkitSleepGetError,
-    InfiniteData<ListHealthkitSleepV1HealthkitSleepGetResponse>,
-    QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>>,
+    ListHealthkitSleepResponse,
+    ListHealthkitSleepError,
+    InfiniteData<ListHealthkitSleepResponse>,
+    QueryKey<Options<ListHealthkitSleepData>>,
     | number
     | Pick<
-        QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>>[0],
+        QueryKey<Options<ListHealthkitSleepData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -2918,7 +2809,7 @@ export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListHealthkitSleepV1HealthkitSleepGetData>>[0],
+          QueryKey<Options<ListHealthkitSleepData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -2929,7 +2820,7 @@ export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listHealthkitSleepV1HealthkitSleepGet({
+        const { data } = await listHealthkitSleep({
           ...options,
           ...params,
           signal,
@@ -2937,30 +2828,27 @@ export const listHealthkitSleepV1HealthkitSleepGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listHealthkitSleepV1HealthkitSleepGetInfiniteQueryKey(options),
+      queryKey: listHealthkitSleepInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
 };
 
-export const getDailySleepV1HealthkitSleepDailyGetQueryKey = (
-  options: Options<GetDailySleepV1HealthkitSleepDailyGetData>,
-) => createQueryKey("getDailySleepV1HealthkitSleepDailyGet", options);
+export const getDailySleepQueryKey = (options: Options<GetDailySleepData>) =>
+  createQueryKey("getDailySleep", options);
 
 /**
  * Get Nightly Sleep Totals
  */
-export const getDailySleepV1HealthkitSleepDailyGetOptions = (
-  options: Options<GetDailySleepV1HealthkitSleepDailyGetData>,
-) =>
+export const getDailySleepOptions = (options: Options<GetDailySleepData>) =>
   queryOptions<
-    GetDailySleepV1HealthkitSleepDailyGetResponse,
-    GetDailySleepV1HealthkitSleepDailyGetError,
-    GetDailySleepV1HealthkitSleepDailyGetResponse,
-    ReturnType<typeof getDailySleepV1HealthkitSleepDailyGetQueryKey>
+    GetDailySleepResponse,
+    GetDailySleepError,
+    GetDailySleepResponse,
+    ReturnType<typeof getDailySleepQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getDailySleepV1HealthkitSleepDailyGet({
+      const { data } = await getDailySleep({
         ...options,
         ...queryKey[0],
         signal,
@@ -2968,27 +2856,25 @@ export const getDailySleepV1HealthkitSleepDailyGetOptions = (
       });
       return data;
     },
-    queryKey: getDailySleepV1HealthkitSleepDailyGetQueryKey(options),
+    queryKey: getDailySleepQueryKey(options),
   });
 
-export const getSleepSummaryV1HealthkitSleepSummaryGetQueryKey = (
-  options: Options<GetSleepSummaryV1HealthkitSleepSummaryGetData>,
-) => createQueryKey("getSleepSummaryV1HealthkitSleepSummaryGet", options);
+export const getSleepSummaryQueryKey = (
+  options: Options<GetSleepSummaryData>,
+) => createQueryKey("getSleepSummary", options);
 
 /**
  * Get Sleep Stage Summary
  */
-export const getSleepSummaryV1HealthkitSleepSummaryGetOptions = (
-  options: Options<GetSleepSummaryV1HealthkitSleepSummaryGetData>,
-) =>
+export const getSleepSummaryOptions = (options: Options<GetSleepSummaryData>) =>
   queryOptions<
-    GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
-    GetSleepSummaryV1HealthkitSleepSummaryGetError,
-    GetSleepSummaryV1HealthkitSleepSummaryGetResponse,
-    ReturnType<typeof getSleepSummaryV1HealthkitSleepSummaryGetQueryKey>
+    GetSleepSummaryResponse,
+    GetSleepSummaryError,
+    GetSleepSummaryResponse,
+    ReturnType<typeof getSleepSummaryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getSleepSummaryV1HealthkitSleepSummaryGet({
+      const { data } = await getSleepSummary({
         ...options,
         ...queryKey[0],
         signal,
@@ -2996,58 +2882,54 @@ export const getSleepSummaryV1HealthkitSleepSummaryGetOptions = (
       });
       return data;
     },
-    queryKey: getSleepSummaryV1HealthkitSleepSummaryGetQueryKey(options),
+    queryKey: getSleepSummaryQueryKey(options),
   });
 
 /**
  * Sync HealthKit Daily Metrics
  */
-export const syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostMutation =
-  (
-    options?: Partial<
-      Options<SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData>
-    >,
-  ): UseMutationOptions<
-    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse,
-    SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError,
-    Options<SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostResponse,
-      SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostError,
-      Options<SyncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await syncHealthkitDailyMetricsV1HealthkitDailyMetricsSyncPost({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+export const syncHealthkitDailyMetricsMutation = (
+  options?: Partial<Options<SyncHealthkitDailyMetricsData>>,
+): UseMutationOptions<
+  SyncHealthkitDailyMetricsResponse,
+  SyncHealthkitDailyMetricsError,
+  Options<SyncHealthkitDailyMetricsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SyncHealthkitDailyMetricsResponse,
+    SyncHealthkitDailyMetricsError,
+    Options<SyncHealthkitDailyMetricsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncHealthkitDailyMetrics({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
-export const getHealthSummaryV1HealthkitSummaryGetQueryKey = (
-  options: Options<GetHealthSummaryV1HealthkitSummaryGetData>,
-) => createQueryKey("getHealthSummaryV1HealthkitSummaryGet", options);
+export const getHealthSummaryQueryKey = (
+  options: Options<GetHealthSummaryData>,
+) => createQueryKey("getHealthSummary", options);
 
 /**
  * Get Health Day Summary
  */
-export const getHealthSummaryV1HealthkitSummaryGetOptions = (
-  options: Options<GetHealthSummaryV1HealthkitSummaryGetData>,
+export const getHealthSummaryOptions = (
+  options: Options<GetHealthSummaryData>,
 ) =>
   queryOptions<
-    GetHealthSummaryV1HealthkitSummaryGetResponse,
-    GetHealthSummaryV1HealthkitSummaryGetError,
-    GetHealthSummaryV1HealthkitSummaryGetResponse,
-    ReturnType<typeof getHealthSummaryV1HealthkitSummaryGetQueryKey>
+    GetHealthSummaryResponse,
+    GetHealthSummaryError,
+    GetHealthSummaryResponse,
+    ReturnType<typeof getHealthSummaryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getHealthSummaryV1HealthkitSummaryGet({
+      const { data } = await getHealthSummary({
         ...options,
         ...queryKey[0],
         signal,
@@ -3055,27 +2937,27 @@ export const getHealthSummaryV1HealthkitSummaryGetOptions = (
       });
       return data;
     },
-    queryKey: getHealthSummaryV1HealthkitSummaryGetQueryKey(options),
+    queryKey: getHealthSummaryQueryKey(options),
   });
 
-export const listIngestTokensV1IngestTokensGetQueryKey = (
-  options?: Options<ListIngestTokensV1IngestTokensGetData>,
-) => createQueryKey("listIngestTokensV1IngestTokensGet", options);
+export const listIngestTokensQueryKey = (
+  options?: Options<ListIngestTokensData>,
+) => createQueryKey("listIngestTokens", options);
 
 /**
  * List Ingest Tokens
  */
-export const listIngestTokensV1IngestTokensGetOptions = (
-  options?: Options<ListIngestTokensV1IngestTokensGetData>,
+export const listIngestTokensOptions = (
+  options?: Options<ListIngestTokensData>,
 ) =>
   queryOptions<
-    ListIngestTokensV1IngestTokensGetResponse,
+    ListIngestTokensResponse,
     DefaultError,
-    ListIngestTokensV1IngestTokensGetResponse,
-    ReturnType<typeof listIngestTokensV1IngestTokensGetQueryKey>
+    ListIngestTokensResponse,
+    ReturnType<typeof listIngestTokensQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listIngestTokensV1IngestTokensGet({
+      const { data } = await listIngestTokens({
         ...options,
         ...queryKey[0],
         signal,
@@ -3083,26 +2965,26 @@ export const listIngestTokensV1IngestTokensGetOptions = (
       });
       return data;
     },
-    queryKey: listIngestTokensV1IngestTokensGetQueryKey(options),
+    queryKey: listIngestTokensQueryKey(options),
   });
 
 /**
  * Create Ingest Token
  */
-export const createIngestTokenV1IngestTokensPostMutation = (
-  options?: Partial<Options<CreateIngestTokenV1IngestTokensPostData>>,
+export const createIngestTokenMutation = (
+  options?: Partial<Options<CreateIngestTokenData>>,
 ): UseMutationOptions<
-  CreateIngestTokenV1IngestTokensPostResponse,
-  CreateIngestTokenV1IngestTokensPostError,
-  Options<CreateIngestTokenV1IngestTokensPostData>
+  CreateIngestTokenResponse,
+  CreateIngestTokenError,
+  Options<CreateIngestTokenData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateIngestTokenV1IngestTokensPostResponse,
-    CreateIngestTokenV1IngestTokensPostError,
-    Options<CreateIngestTokenV1IngestTokensPostData>
+    CreateIngestTokenResponse,
+    CreateIngestTokenError,
+    Options<CreateIngestTokenData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createIngestTokenV1IngestTokensPost({
+      const { data } = await createIngestToken({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3116,20 +2998,20 @@ export const createIngestTokenV1IngestTokensPostMutation = (
 /**
  * Revoke Ingest Token
  */
-export const revokeIngestTokenV1IngestTokensTokenIdDeleteMutation = (
-  options?: Partial<Options<RevokeIngestTokenV1IngestTokensTokenIdDeleteData>>,
+export const revokeIngestTokenMutation = (
+  options?: Partial<Options<RevokeIngestTokenData>>,
 ): UseMutationOptions<
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
-  RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
-  Options<RevokeIngestTokenV1IngestTokensTokenIdDeleteData>
+  RevokeIngestTokenResponse,
+  RevokeIngestTokenError,
+  Options<RevokeIngestTokenData>
 > => {
   const mutationOptions: UseMutationOptions<
-    RevokeIngestTokenV1IngestTokensTokenIdDeleteResponse,
-    RevokeIngestTokenV1IngestTokensTokenIdDeleteError,
-    Options<RevokeIngestTokenV1IngestTokensTokenIdDeleteData>
+    RevokeIngestTokenResponse,
+    RevokeIngestTokenError,
+    Options<RevokeIngestTokenData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await revokeIngestTokenV1IngestTokensTokenIdDelete({
+      const { data } = await revokeIngestToken({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3140,24 +3022,21 @@ export const revokeIngestTokenV1IngestTokensTokenIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const listTradesV1InvestmentsTradesGetQueryKey = (
-  options?: Options<ListTradesV1InvestmentsTradesGetData>,
-) => createQueryKey("listTradesV1InvestmentsTradesGet", options);
+export const listTradesQueryKey = (options?: Options<ListTradesData>) =>
+  createQueryKey("listTrades", options);
 
 /**
  * List Trades
  */
-export const listTradesV1InvestmentsTradesGetOptions = (
-  options?: Options<ListTradesV1InvestmentsTradesGetData>,
-) =>
+export const listTradesOptions = (options?: Options<ListTradesData>) =>
   queryOptions<
-    ListTradesV1InvestmentsTradesGetResponse,
-    ListTradesV1InvestmentsTradesGetError,
-    ListTradesV1InvestmentsTradesGetResponse,
-    ReturnType<typeof listTradesV1InvestmentsTradesGetQueryKey>
+    ListTradesResponse,
+    ListTradesError,
+    ListTradesResponse,
+    ReturnType<typeof listTradesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTradesV1InvestmentsTradesGet({
+      const { data } = await listTrades({
         ...options,
         ...queryKey[0],
         signal,
@@ -3165,28 +3044,28 @@ export const listTradesV1InvestmentsTradesGetOptions = (
       });
       return data;
     },
-    queryKey: listTradesV1InvestmentsTradesGetQueryKey(options),
+    queryKey: listTradesQueryKey(options),
   });
 
-export const listTradesV1InvestmentsTradesGetInfiniteQueryKey = (
-  options?: Options<ListTradesV1InvestmentsTradesGetData>,
-): QueryKey<Options<ListTradesV1InvestmentsTradesGetData>> =>
-  createQueryKey("listTradesV1InvestmentsTradesGet", options, true);
+export const listTradesInfiniteQueryKey = (
+  options?: Options<ListTradesData>,
+): QueryKey<Options<ListTradesData>> =>
+  createQueryKey("listTrades", options, true);
 
 /**
  * List Trades
  */
-export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
-  options?: Options<ListTradesV1InvestmentsTradesGetData>,
+export const listTradesInfiniteOptions = (
+  options?: Options<ListTradesData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListTradesV1InvestmentsTradesGetResponse,
-    ListTradesV1InvestmentsTradesGetError,
-    InfiniteData<ListTradesV1InvestmentsTradesGetResponse>,
-    QueryKey<Options<ListTradesV1InvestmentsTradesGetData>>,
+    ListTradesResponse,
+    ListTradesError,
+    InfiniteData<ListTradesResponse>,
+    QueryKey<Options<ListTradesData>>,
     | number
     | Pick<
-        QueryKey<Options<ListTradesV1InvestmentsTradesGetData>>[0],
+        QueryKey<Options<ListTradesData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -3195,7 +3074,7 @@ export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListTradesV1InvestmentsTradesGetData>>[0],
+          QueryKey<Options<ListTradesData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -3206,7 +3085,7 @@ export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listTradesV1InvestmentsTradesGet({
+        const { data } = await listTrades({
           ...options,
           ...params,
           signal,
@@ -3214,32 +3093,32 @@ export const listTradesV1InvestmentsTradesGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listTradesV1InvestmentsTradesGetInfiniteQueryKey(options),
+      queryKey: listTradesInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
 };
 
-export const getInvestmentAccountsV1InvestmentsAccountsGetQueryKey = (
-  options?: Options<GetInvestmentAccountsV1InvestmentsAccountsGetData>,
-) => createQueryKey("getInvestmentAccountsV1InvestmentsAccountsGet", options);
+export const getInvestmentAccountsQueryKey = (
+  options?: Options<GetInvestmentAccountsData>,
+) => createQueryKey("getInvestmentAccounts", options);
 
 /**
  * Investment Accounts
  *
  * Each investment account's value, the money put in and taken out, what it made, and its dividends.
  */
-export const getInvestmentAccountsV1InvestmentsAccountsGetOptions = (
-  options?: Options<GetInvestmentAccountsV1InvestmentsAccountsGetData>,
+export const getInvestmentAccountsOptions = (
+  options?: Options<GetInvestmentAccountsData>,
 ) =>
   queryOptions<
-    GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
+    GetInvestmentAccountsResponse,
     DefaultError,
-    GetInvestmentAccountsV1InvestmentsAccountsGetResponse,
-    ReturnType<typeof getInvestmentAccountsV1InvestmentsAccountsGetQueryKey>
+    GetInvestmentAccountsResponse,
+    ReturnType<typeof getInvestmentAccountsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getInvestmentAccountsV1InvestmentsAccountsGet({
+      const { data } = await getInvestmentAccounts({
         ...options,
         ...queryKey[0],
         signal,
@@ -3247,27 +3126,24 @@ export const getInvestmentAccountsV1InvestmentsAccountsGetOptions = (
       });
       return data;
     },
-    queryKey: getInvestmentAccountsV1InvestmentsAccountsGetQueryKey(options),
+    queryKey: getInvestmentAccountsQueryKey(options),
   });
 
-export const getHoldingsV1InvestmentsHoldingsGetQueryKey = (
-  options?: Options<GetHoldingsV1InvestmentsHoldingsGetData>,
-) => createQueryKey("getHoldingsV1InvestmentsHoldingsGet", options);
+export const getHoldingsQueryKey = (options?: Options<GetHoldingsData>) =>
+  createQueryKey("getHoldings", options);
 
 /**
  * Get Holdings
  */
-export const getHoldingsV1InvestmentsHoldingsGetOptions = (
-  options?: Options<GetHoldingsV1InvestmentsHoldingsGetData>,
-) =>
+export const getHoldingsOptions = (options?: Options<GetHoldingsData>) =>
   queryOptions<
-    GetHoldingsV1InvestmentsHoldingsGetResponse,
+    GetHoldingsResponse,
     DefaultError,
-    GetHoldingsV1InvestmentsHoldingsGetResponse,
-    ReturnType<typeof getHoldingsV1InvestmentsHoldingsGetQueryKey>
+    GetHoldingsResponse,
+    ReturnType<typeof getHoldingsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getHoldingsV1InvestmentsHoldingsGet({
+      const { data } = await getHoldings({
         ...options,
         ...queryKey[0],
         signal,
@@ -3275,27 +3151,24 @@ export const getHoldingsV1InvestmentsHoldingsGetOptions = (
       });
       return data;
     },
-    queryKey: getHoldingsV1InvestmentsHoldingsGetQueryKey(options),
+    queryKey: getHoldingsQueryKey(options),
   });
 
-export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey = (
-  options: Options<GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData>,
-) => createQueryKey("getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet", options);
+export const getCryptoPriceQueryKey = (options: Options<GetCryptoPriceData>) =>
+  createQueryKey("getCryptoPrice", options);
 
 /**
  * Get Crypto Price
  */
-export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
-  options: Options<GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetData>,
-) =>
+export const getCryptoPriceOptions = (options: Options<GetCryptoPriceData>) =>
   queryOptions<
-    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
-    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetError,
-    GetCryptoPriceV1InvestmentsCryptoPriceCoinIdGetResponse,
-    ReturnType<typeof getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey>
+    GetCryptoPriceResponse,
+    GetCryptoPriceError,
+    GetCryptoPriceResponse,
+    ReturnType<typeof getCryptoPriceQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getCryptoPriceV1InvestmentsCryptoPriceCoinIdGet({
+      const { data } = await getCryptoPrice({
         ...options,
         ...queryKey[0],
         signal,
@@ -3303,7 +3176,7 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
       });
       return data;
     },
-    queryKey: getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetQueryKey(options),
+    queryKey: getCryptoPriceQueryKey(options),
   });
 
 /**
@@ -3315,22 +3188,20 @@ export const getCryptoPriceV1InvestmentsCryptoPriceCoinIdGetOptions = (
  * are updated, and ones the phone no longer has within the export's span are
  * removed. An export older than what's stored never overrides it.
  */
-export const importLocationHistoryV1LocationHistoryImportPostMutation = (
-  options?: Partial<
-    Options<ImportLocationHistoryV1LocationHistoryImportPostData>
-  >,
+export const importLocationHistoryMutation = (
+  options?: Partial<Options<ImportLocationHistoryData>>,
 ): UseMutationOptions<
-  ImportLocationHistoryV1LocationHistoryImportPostResponse,
-  ImportLocationHistoryV1LocationHistoryImportPostError,
-  Options<ImportLocationHistoryV1LocationHistoryImportPostData>
+  ImportLocationHistoryResponse,
+  ImportLocationHistoryError,
+  Options<ImportLocationHistoryData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ImportLocationHistoryV1LocationHistoryImportPostResponse,
-    ImportLocationHistoryV1LocationHistoryImportPostError,
-    Options<ImportLocationHistoryV1LocationHistoryImportPostData>
+    ImportLocationHistoryResponse,
+    ImportLocationHistoryError,
+    Options<ImportLocationHistoryData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await importLocationHistoryV1LocationHistoryImportPost({
+      const { data } = await importLocationHistory({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3341,60 +3212,52 @@ export const importLocationHistoryV1LocationHistoryImportPostMutation = (
   return mutationOptions;
 };
 
-export const getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey = (
-  options?: Options<GetLocationHistorySummaryV1LocationHistorySummaryGetData>,
-) =>
-  createQueryKey(
-    "getLocationHistorySummaryV1LocationHistorySummaryGet",
-    options,
-  );
+export const getLocationHistorySummaryQueryKey = (
+  options?: Options<GetLocationHistorySummaryData>,
+) => createQueryKey("getLocationHistorySummary", options);
 
 /**
  * Get Location History Summary
  */
-export const getLocationHistorySummaryV1LocationHistorySummaryGetOptions = (
-  options?: Options<GetLocationHistorySummaryV1LocationHistorySummaryGetData>,
+export const getLocationHistorySummaryOptions = (
+  options?: Options<GetLocationHistorySummaryData>,
 ) =>
   queryOptions<
-    GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
+    GetLocationHistorySummaryResponse,
     DefaultError,
-    GetLocationHistorySummaryV1LocationHistorySummaryGetResponse,
-    ReturnType<
-      typeof getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey
-    >
+    GetLocationHistorySummaryResponse,
+    ReturnType<typeof getLocationHistorySummaryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } =
-        await getLocationHistorySummaryV1LocationHistorySummaryGet({
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        });
+      const { data } = await getLocationHistorySummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
       return data;
     },
-    queryKey:
-      getLocationHistorySummaryV1LocationHistorySummaryGetQueryKey(options),
+    queryKey: getLocationHistorySummaryQueryKey(options),
   });
 
-export const getLocationHistoryDayV1LocationHistoryDayGetQueryKey = (
-  options: Options<GetLocationHistoryDayV1LocationHistoryDayGetData>,
-) => createQueryKey("getLocationHistoryDayV1LocationHistoryDayGet", options);
+export const getLocationHistoryDayQueryKey = (
+  options: Options<GetLocationHistoryDayData>,
+) => createQueryKey("getLocationHistoryDay", options);
 
 /**
  * Get Location History Day
  */
-export const getLocationHistoryDayV1LocationHistoryDayGetOptions = (
-  options: Options<GetLocationHistoryDayV1LocationHistoryDayGetData>,
+export const getLocationHistoryDayOptions = (
+  options: Options<GetLocationHistoryDayData>,
 ) =>
   queryOptions<
-    GetLocationHistoryDayV1LocationHistoryDayGetResponse,
-    GetLocationHistoryDayV1LocationHistoryDayGetError,
-    GetLocationHistoryDayV1LocationHistoryDayGetResponse,
-    ReturnType<typeof getLocationHistoryDayV1LocationHistoryDayGetQueryKey>
+    GetLocationHistoryDayResponse,
+    GetLocationHistoryDayError,
+    GetLocationHistoryDayResponse,
+    ReturnType<typeof getLocationHistoryDayQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getLocationHistoryDayV1LocationHistoryDayGet({
+      const { data } = await getLocationHistoryDay({
         ...options,
         ...queryKey[0],
         signal,
@@ -3402,27 +3265,27 @@ export const getLocationHistoryDayV1LocationHistoryDayGetOptions = (
       });
       return data;
     },
-    queryKey: getLocationHistoryDayV1LocationHistoryDayGetQueryKey(options),
+    queryKey: getLocationHistoryDayQueryKey(options),
   });
 
-export const listNotificationsV1NotificationsGetQueryKey = (
-  options?: Options<ListNotificationsV1NotificationsGetData>,
-) => createQueryKey("listNotificationsV1NotificationsGet", options);
+export const listNotificationsQueryKey = (
+  options?: Options<ListNotificationsData>,
+) => createQueryKey("listNotifications", options);
 
 /**
  * List Notifications
  */
-export const listNotificationsV1NotificationsGetOptions = (
-  options?: Options<ListNotificationsV1NotificationsGetData>,
+export const listNotificationsOptions = (
+  options?: Options<ListNotificationsData>,
 ) =>
   queryOptions<
-    ListNotificationsV1NotificationsGetResponse,
+    ListNotificationsResponse,
     DefaultError,
-    ListNotificationsV1NotificationsGetResponse,
-    ReturnType<typeof listNotificationsV1NotificationsGetQueryKey>
+    ListNotificationsResponse,
+    ReturnType<typeof listNotificationsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listNotificationsV1NotificationsGet({
+      const { data } = await listNotifications({
         ...options,
         ...queryKey[0],
         signal,
@@ -3430,26 +3293,26 @@ export const listNotificationsV1NotificationsGetOptions = (
       });
       return data;
     },
-    queryKey: listNotificationsV1NotificationsGetQueryKey(options),
+    queryKey: listNotificationsQueryKey(options),
   });
 
 /**
  * Create Notification
  */
-export const createNotificationV1NotificationsPostMutation = (
-  options?: Partial<Options<CreateNotificationV1NotificationsPostData>>,
+export const createNotificationMutation = (
+  options?: Partial<Options<CreateNotificationData>>,
 ): UseMutationOptions<
-  CreateNotificationV1NotificationsPostResponse,
-  CreateNotificationV1NotificationsPostError,
-  Options<CreateNotificationV1NotificationsPostData>
+  CreateNotificationResponse,
+  CreateNotificationError,
+  Options<CreateNotificationData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateNotificationV1NotificationsPostResponse,
-    CreateNotificationV1NotificationsPostError,
-    Options<CreateNotificationV1NotificationsPostData>
+    CreateNotificationResponse,
+    CreateNotificationError,
+    Options<CreateNotificationData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createNotificationV1NotificationsPost({
+      const { data } = await createNotification({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3463,83 +3326,72 @@ export const createNotificationV1NotificationsPostMutation = (
 /**
  * Mark Notification Read
  */
-export const markNotificationReadV1NotificationsNotificationIdReadPostMutation =
-  (
-    options?: Partial<
-      Options<MarkNotificationReadV1NotificationsNotificationIdReadPostData>
-    >,
-  ): UseMutationOptions<
-    MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
-    MarkNotificationReadV1NotificationsNotificationIdReadPostError,
-    Options<MarkNotificationReadV1NotificationsNotificationIdReadPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      MarkNotificationReadV1NotificationsNotificationIdReadPostResponse,
-      MarkNotificationReadV1NotificationsNotificationIdReadPostError,
-      Options<MarkNotificationReadV1NotificationsNotificationIdReadPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await markNotificationReadV1NotificationsNotificationIdReadPost({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
-  };
-
-/**
- * Mark All Notifications Read
- */
-export const markAllNotificationsReadV1NotificationsReadAllPostMutation = (
-  options?: Partial<
-    Options<MarkAllNotificationsReadV1NotificationsReadAllPostData>
-  >,
+export const markNotificationReadMutation = (
+  options?: Partial<Options<MarkNotificationReadData>>,
 ): UseMutationOptions<
-  MarkAllNotificationsReadV1NotificationsReadAllPostResponse,
-  DefaultError,
-  Options<MarkAllNotificationsReadV1NotificationsReadAllPostData>
+  MarkNotificationReadResponse,
+  MarkNotificationReadError,
+  Options<MarkNotificationReadData>
 > => {
   const mutationOptions: UseMutationOptions<
-    MarkAllNotificationsReadV1NotificationsReadAllPostResponse,
-    DefaultError,
-    Options<MarkAllNotificationsReadV1NotificationsReadAllPostData>
+    MarkNotificationReadResponse,
+    MarkNotificationReadError,
+    Options<MarkNotificationReadData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await markAllNotificationsReadV1NotificationsReadAllPost(
-        {
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        },
-      );
+      const { data } = await markNotificationRead({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
   return mutationOptions;
 };
 
-export const listPlacesV1PlacesGetQueryKey = (
-  options?: Options<ListPlacesV1PlacesGetData>,
-) => createQueryKey("listPlacesV1PlacesGet", options);
+/**
+ * Mark All Notifications Read
+ */
+export const markAllNotificationsReadMutation = (
+  options?: Partial<Options<MarkAllNotificationsReadData>>,
+): UseMutationOptions<
+  MarkAllNotificationsReadResponse,
+  DefaultError,
+  Options<MarkAllNotificationsReadData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MarkAllNotificationsReadResponse,
+    DefaultError,
+    Options<MarkAllNotificationsReadData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await markAllNotificationsRead({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listPlacesQueryKey = (options?: Options<ListPlacesData>) =>
+  createQueryKey("listPlaces", options);
 
 /**
  * List Places
  */
-export const listPlacesV1PlacesGetOptions = (
-  options?: Options<ListPlacesV1PlacesGetData>,
-) =>
+export const listPlacesOptions = (options?: Options<ListPlacesData>) =>
   queryOptions<
-    ListPlacesV1PlacesGetResponse,
-    ListPlacesV1PlacesGetError,
-    ListPlacesV1PlacesGetResponse,
-    ReturnType<typeof listPlacesV1PlacesGetQueryKey>
+    ListPlacesResponse,
+    ListPlacesError,
+    ListPlacesResponse,
+    ReturnType<typeof listPlacesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listPlacesV1PlacesGet({
+      const { data } = await listPlaces({
         ...options,
         ...queryKey[0],
         signal,
@@ -3547,28 +3399,28 @@ export const listPlacesV1PlacesGetOptions = (
       });
       return data;
     },
-    queryKey: listPlacesV1PlacesGetQueryKey(options),
+    queryKey: listPlacesQueryKey(options),
   });
 
-export const listPlacesV1PlacesGetInfiniteQueryKey = (
-  options?: Options<ListPlacesV1PlacesGetData>,
-): QueryKey<Options<ListPlacesV1PlacesGetData>> =>
-  createQueryKey("listPlacesV1PlacesGet", options, true);
+export const listPlacesInfiniteQueryKey = (
+  options?: Options<ListPlacesData>,
+): QueryKey<Options<ListPlacesData>> =>
+  createQueryKey("listPlaces", options, true);
 
 /**
  * List Places
  */
-export const listPlacesV1PlacesGetInfiniteOptions = (
-  options?: Options<ListPlacesV1PlacesGetData>,
+export const listPlacesInfiniteOptions = (
+  options?: Options<ListPlacesData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListPlacesV1PlacesGetResponse,
-    ListPlacesV1PlacesGetError,
-    InfiniteData<ListPlacesV1PlacesGetResponse>,
-    QueryKey<Options<ListPlacesV1PlacesGetData>>,
+    ListPlacesResponse,
+    ListPlacesError,
+    InfiniteData<ListPlacesResponse>,
+    QueryKey<Options<ListPlacesData>>,
     | number
     | Pick<
-        QueryKey<Options<ListPlacesV1PlacesGetData>>[0],
+        QueryKey<Options<ListPlacesData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -3577,7 +3429,7 @@ export const listPlacesV1PlacesGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListPlacesV1PlacesGetData>>[0],
+          QueryKey<Options<ListPlacesData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -3588,7 +3440,7 @@ export const listPlacesV1PlacesGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listPlacesV1PlacesGet({
+        const { data } = await listPlaces({
           ...options,
           ...params,
           signal,
@@ -3596,7 +3448,7 @@ export const listPlacesV1PlacesGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listPlacesV1PlacesGetInfiniteQueryKey(options),
+      queryKey: listPlacesInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -3605,20 +3457,20 @@ export const listPlacesV1PlacesGetInfiniteOptions = (
 /**
  * Create Place
  */
-export const createPlaceV1PlacesPostMutation = (
-  options?: Partial<Options<CreatePlaceV1PlacesPostData>>,
+export const createPlaceMutation = (
+  options?: Partial<Options<CreatePlaceData>>,
 ): UseMutationOptions<
-  CreatePlaceV1PlacesPostResponse,
-  CreatePlaceV1PlacesPostError,
-  Options<CreatePlaceV1PlacesPostData>
+  CreatePlaceResponse,
+  CreatePlaceError,
+  Options<CreatePlaceData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreatePlaceV1PlacesPostResponse,
-    CreatePlaceV1PlacesPostError,
-    Options<CreatePlaceV1PlacesPostData>
+    CreatePlaceResponse,
+    CreatePlaceError,
+    Options<CreatePlaceData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createPlaceV1PlacesPost({
+      const { data } = await createPlace({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3629,24 +3481,24 @@ export const createPlaceV1PlacesPostMutation = (
   return mutationOptions;
 };
 
-export const searchGooglePlacesV1PlacesSearchGetQueryKey = (
-  options: Options<SearchGooglePlacesV1PlacesSearchGetData>,
-) => createQueryKey("searchGooglePlacesV1PlacesSearchGet", options);
+export const searchGooglePlacesQueryKey = (
+  options: Options<SearchGooglePlacesData>,
+) => createQueryKey("searchGooglePlaces", options);
 
 /**
  * Search Google Places
  */
-export const searchGooglePlacesV1PlacesSearchGetOptions = (
-  options: Options<SearchGooglePlacesV1PlacesSearchGetData>,
+export const searchGooglePlacesOptions = (
+  options: Options<SearchGooglePlacesData>,
 ) =>
   queryOptions<
-    SearchGooglePlacesV1PlacesSearchGetResponse,
-    SearchGooglePlacesV1PlacesSearchGetError,
-    SearchGooglePlacesV1PlacesSearchGetResponse,
-    ReturnType<typeof searchGooglePlacesV1PlacesSearchGetQueryKey>
+    SearchGooglePlacesResponse,
+    SearchGooglePlacesError,
+    SearchGooglePlacesResponse,
+    ReturnType<typeof searchGooglePlacesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchGooglePlacesV1PlacesSearchGet({
+      const { data } = await searchGooglePlaces({
         ...options,
         ...queryKey[0],
         signal,
@@ -3654,26 +3506,26 @@ export const searchGooglePlacesV1PlacesSearchGetOptions = (
       });
       return data;
     },
-    queryKey: searchGooglePlacesV1PlacesSearchGetQueryKey(options),
+    queryKey: searchGooglePlacesQueryKey(options),
   });
 
 /**
  * Delete Place
  */
-export const deletePlaceV1PlacesPlaceIdDeleteMutation = (
-  options?: Partial<Options<DeletePlaceV1PlacesPlaceIdDeleteData>>,
+export const deletePlaceMutation = (
+  options?: Partial<Options<DeletePlaceData>>,
 ): UseMutationOptions<
-  DeletePlaceV1PlacesPlaceIdDeleteResponse,
-  DeletePlaceV1PlacesPlaceIdDeleteError,
-  Options<DeletePlaceV1PlacesPlaceIdDeleteData>
+  DeletePlaceResponse,
+  DeletePlaceError,
+  Options<DeletePlaceData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeletePlaceV1PlacesPlaceIdDeleteResponse,
-    DeletePlaceV1PlacesPlaceIdDeleteError,
-    Options<DeletePlaceV1PlacesPlaceIdDeleteData>
+    DeletePlaceResponse,
+    DeletePlaceError,
+    Options<DeletePlaceData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deletePlaceV1PlacesPlaceIdDelete({
+      const { data } = await deletePlace({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3684,24 +3536,21 @@ export const deletePlaceV1PlacesPlaceIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const getPlaceV1PlacesPlaceIdGetQueryKey = (
-  options: Options<GetPlaceV1PlacesPlaceIdGetData>,
-) => createQueryKey("getPlaceV1PlacesPlaceIdGet", options);
+export const getPlaceQueryKey = (options: Options<GetPlaceData>) =>
+  createQueryKey("getPlace", options);
 
 /**
  * Get Place
  */
-export const getPlaceV1PlacesPlaceIdGetOptions = (
-  options: Options<GetPlaceV1PlacesPlaceIdGetData>,
-) =>
+export const getPlaceOptions = (options: Options<GetPlaceData>) =>
   queryOptions<
-    GetPlaceV1PlacesPlaceIdGetResponse,
-    GetPlaceV1PlacesPlaceIdGetError,
-    GetPlaceV1PlacesPlaceIdGetResponse,
-    ReturnType<typeof getPlaceV1PlacesPlaceIdGetQueryKey>
+    GetPlaceResponse,
+    GetPlaceError,
+    GetPlaceResponse,
+    ReturnType<typeof getPlaceQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getPlaceV1PlacesPlaceIdGet({
+      const { data } = await getPlace({
         ...options,
         ...queryKey[0],
         signal,
@@ -3709,26 +3558,26 @@ export const getPlaceV1PlacesPlaceIdGetOptions = (
       });
       return data;
     },
-    queryKey: getPlaceV1PlacesPlaceIdGetQueryKey(options),
+    queryKey: getPlaceQueryKey(options),
   });
 
 /**
  * Update Place
  */
-export const updatePlaceV1PlacesPlaceIdPatchMutation = (
-  options?: Partial<Options<UpdatePlaceV1PlacesPlaceIdPatchData>>,
+export const updatePlaceMutation = (
+  options?: Partial<Options<UpdatePlaceData>>,
 ): UseMutationOptions<
-  UpdatePlaceV1PlacesPlaceIdPatchResponse,
-  UpdatePlaceV1PlacesPlaceIdPatchError,
-  Options<UpdatePlaceV1PlacesPlaceIdPatchData>
+  UpdatePlaceResponse,
+  UpdatePlaceError,
+  Options<UpdatePlaceData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdatePlaceV1PlacesPlaceIdPatchResponse,
-    UpdatePlaceV1PlacesPlaceIdPatchError,
-    Options<UpdatePlaceV1PlacesPlaceIdPatchData>
+    UpdatePlaceResponse,
+    UpdatePlaceError,
+    Options<UpdatePlaceData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updatePlaceV1PlacesPlaceIdPatch({
+      const { data } = await updatePlace({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3739,24 +3588,21 @@ export const updatePlaceV1PlacesPlaceIdPatchMutation = (
   return mutationOptions;
 };
 
-export const listProjectsV1ProjectsGetQueryKey = (
-  options?: Options<ListProjectsV1ProjectsGetData>,
-) => createQueryKey("listProjectsV1ProjectsGet", options);
+export const listProjectsQueryKey = (options?: Options<ListProjectsData>) =>
+  createQueryKey("listProjects", options);
 
 /**
  * List Projects
  */
-export const listProjectsV1ProjectsGetOptions = (
-  options?: Options<ListProjectsV1ProjectsGetData>,
-) =>
+export const listProjectsOptions = (options?: Options<ListProjectsData>) =>
   queryOptions<
-    ListProjectsV1ProjectsGetResponse,
-    ListProjectsV1ProjectsGetError,
-    ListProjectsV1ProjectsGetResponse,
-    ReturnType<typeof listProjectsV1ProjectsGetQueryKey>
+    ListProjectsResponse,
+    ListProjectsError,
+    ListProjectsResponse,
+    ReturnType<typeof listProjectsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listProjectsV1ProjectsGet({
+      const { data } = await listProjects({
         ...options,
         ...queryKey[0],
         signal,
@@ -3764,26 +3610,26 @@ export const listProjectsV1ProjectsGetOptions = (
       });
       return data;
     },
-    queryKey: listProjectsV1ProjectsGetQueryKey(options),
+    queryKey: listProjectsQueryKey(options),
   });
 
 /**
  * Create Project
  */
-export const createProjectV1ProjectsPostMutation = (
-  options?: Partial<Options<CreateProjectV1ProjectsPostData>>,
+export const createProjectMutation = (
+  options?: Partial<Options<CreateProjectData>>,
 ): UseMutationOptions<
-  CreateProjectV1ProjectsPostResponse,
-  CreateProjectV1ProjectsPostError,
-  Options<CreateProjectV1ProjectsPostData>
+  CreateProjectResponse,
+  CreateProjectError,
+  Options<CreateProjectData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateProjectV1ProjectsPostResponse,
-    CreateProjectV1ProjectsPostError,
-    Options<CreateProjectV1ProjectsPostData>
+    CreateProjectResponse,
+    CreateProjectError,
+    Options<CreateProjectData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createProjectV1ProjectsPost({
+      const { data } = await createProject({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3797,20 +3643,20 @@ export const createProjectV1ProjectsPostMutation = (
 /**
  * Delete Project
  */
-export const deleteProjectV1ProjectsProjectIdDeleteMutation = (
-  options?: Partial<Options<DeleteProjectV1ProjectsProjectIdDeleteData>>,
+export const deleteProjectMutation = (
+  options?: Partial<Options<DeleteProjectData>>,
 ): UseMutationOptions<
-  DeleteProjectV1ProjectsProjectIdDeleteResponse,
-  DeleteProjectV1ProjectsProjectIdDeleteError,
-  Options<DeleteProjectV1ProjectsProjectIdDeleteData>
+  DeleteProjectResponse,
+  DeleteProjectError,
+  Options<DeleteProjectData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteProjectV1ProjectsProjectIdDeleteResponse,
-    DeleteProjectV1ProjectsProjectIdDeleteError,
-    Options<DeleteProjectV1ProjectsProjectIdDeleteData>
+    DeleteProjectResponse,
+    DeleteProjectError,
+    Options<DeleteProjectData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteProjectV1ProjectsProjectIdDelete({
+      const { data } = await deleteProject({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3824,20 +3670,20 @@ export const deleteProjectV1ProjectsProjectIdDeleteMutation = (
 /**
  * Update Project
  */
-export const updateProjectV1ProjectsProjectIdPatchMutation = (
-  options?: Partial<Options<UpdateProjectV1ProjectsProjectIdPatchData>>,
+export const updateProjectMutation = (
+  options?: Partial<Options<UpdateProjectData>>,
 ): UseMutationOptions<
-  UpdateProjectV1ProjectsProjectIdPatchResponse,
-  UpdateProjectV1ProjectsProjectIdPatchError,
-  Options<UpdateProjectV1ProjectsProjectIdPatchData>
+  UpdateProjectResponse,
+  UpdateProjectError,
+  Options<UpdateProjectData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateProjectV1ProjectsProjectIdPatchResponse,
-    UpdateProjectV1ProjectsProjectIdPatchError,
-    Options<UpdateProjectV1ProjectsProjectIdPatchData>
+    UpdateProjectResponse,
+    UpdateProjectError,
+    Options<UpdateProjectData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateProjectV1ProjectsProjectIdPatch({
+      const { data } = await updateProject({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3851,22 +3697,20 @@ export const updateProjectV1ProjectsProjectIdPatchMutation = (
 /**
  * Set Project Location For This Device
  */
-export const setProjectLocationV1ProjectsProjectIdLocationPutMutation = (
-  options?: Partial<
-    Options<SetProjectLocationV1ProjectsProjectIdLocationPutData>
-  >,
+export const setProjectLocationMutation = (
+  options?: Partial<Options<SetProjectLocationData>>,
 ): UseMutationOptions<
-  SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
-  SetProjectLocationV1ProjectsProjectIdLocationPutError,
-  Options<SetProjectLocationV1ProjectsProjectIdLocationPutData>
+  SetProjectLocationResponse,
+  SetProjectLocationError,
+  Options<SetProjectLocationData>
 > => {
   const mutationOptions: UseMutationOptions<
-    SetProjectLocationV1ProjectsProjectIdLocationPutResponse,
-    SetProjectLocationV1ProjectsProjectIdLocationPutError,
-    Options<SetProjectLocationV1ProjectsProjectIdLocationPutData>
+    SetProjectLocationResponse,
+    SetProjectLocationError,
+    Options<SetProjectLocationData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await setProjectLocationV1ProjectsProjectIdLocationPut({
+      const { data } = await setProjectLocation({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3877,24 +3721,21 @@ export const setProjectLocationV1ProjectsProjectIdLocationPutMutation = (
   return mutationOptions;
 };
 
-export const listRecipesV1RecipesGetQueryKey = (
-  options?: Options<ListRecipesV1RecipesGetData>,
-) => createQueryKey("listRecipesV1RecipesGet", options);
+export const listRecipesQueryKey = (options?: Options<ListRecipesData>) =>
+  createQueryKey("listRecipes", options);
 
 /**
  * List Recipes
  */
-export const listRecipesV1RecipesGetOptions = (
-  options?: Options<ListRecipesV1RecipesGetData>,
-) =>
+export const listRecipesOptions = (options?: Options<ListRecipesData>) =>
   queryOptions<
-    ListRecipesV1RecipesGetResponse,
-    ListRecipesV1RecipesGetError,
-    ListRecipesV1RecipesGetResponse,
-    ReturnType<typeof listRecipesV1RecipesGetQueryKey>
+    ListRecipesResponse,
+    ListRecipesError,
+    ListRecipesResponse,
+    ReturnType<typeof listRecipesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listRecipesV1RecipesGet({
+      const { data } = await listRecipes({
         ...options,
         ...queryKey[0],
         signal,
@@ -3902,28 +3743,28 @@ export const listRecipesV1RecipesGetOptions = (
       });
       return data;
     },
-    queryKey: listRecipesV1RecipesGetQueryKey(options),
+    queryKey: listRecipesQueryKey(options),
   });
 
-export const listRecipesV1RecipesGetInfiniteQueryKey = (
-  options?: Options<ListRecipesV1RecipesGetData>,
-): QueryKey<Options<ListRecipesV1RecipesGetData>> =>
-  createQueryKey("listRecipesV1RecipesGet", options, true);
+export const listRecipesInfiniteQueryKey = (
+  options?: Options<ListRecipesData>,
+): QueryKey<Options<ListRecipesData>> =>
+  createQueryKey("listRecipes", options, true);
 
 /**
  * List Recipes
  */
-export const listRecipesV1RecipesGetInfiniteOptions = (
-  options?: Options<ListRecipesV1RecipesGetData>,
+export const listRecipesInfiniteOptions = (
+  options?: Options<ListRecipesData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListRecipesV1RecipesGetResponse,
-    ListRecipesV1RecipesGetError,
-    InfiniteData<ListRecipesV1RecipesGetResponse>,
-    QueryKey<Options<ListRecipesV1RecipesGetData>>,
+    ListRecipesResponse,
+    ListRecipesError,
+    InfiniteData<ListRecipesResponse>,
+    QueryKey<Options<ListRecipesData>>,
     | number
     | Pick<
-        QueryKey<Options<ListRecipesV1RecipesGetData>>[0],
+        QueryKey<Options<ListRecipesData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -3932,7 +3773,7 @@ export const listRecipesV1RecipesGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListRecipesV1RecipesGetData>>[0],
+          QueryKey<Options<ListRecipesData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -3943,7 +3784,7 @@ export const listRecipesV1RecipesGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listRecipesV1RecipesGet({
+        const { data } = await listRecipes({
           ...options,
           ...params,
           signal,
@@ -3951,7 +3792,7 @@ export const listRecipesV1RecipesGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listRecipesV1RecipesGetInfiniteQueryKey(options),
+      queryKey: listRecipesInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -3960,20 +3801,20 @@ export const listRecipesV1RecipesGetInfiniteOptions = (
 /**
  * Create Recipe
  */
-export const createRecipeV1RecipesPostMutation = (
-  options?: Partial<Options<CreateRecipeV1RecipesPostData>>,
+export const createRecipeMutation = (
+  options?: Partial<Options<CreateRecipeData>>,
 ): UseMutationOptions<
-  CreateRecipeV1RecipesPostResponse,
-  CreateRecipeV1RecipesPostError,
-  Options<CreateRecipeV1RecipesPostData>
+  CreateRecipeResponse,
+  CreateRecipeError,
+  Options<CreateRecipeData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateRecipeV1RecipesPostResponse,
-    CreateRecipeV1RecipesPostError,
-    Options<CreateRecipeV1RecipesPostData>
+    CreateRecipeResponse,
+    CreateRecipeError,
+    Options<CreateRecipeData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createRecipeV1RecipesPost({
+      const { data } = await createRecipe({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -3989,20 +3830,20 @@ export const createRecipeV1RecipesPostMutation = (
  *
  * Turn free-form recipe text into the structured format with an LLM. Nothing is saved.
  */
-export const structureRecipeTextV1RecipesImportPostMutation = (
-  options?: Partial<Options<StructureRecipeTextV1RecipesImportPostData>>,
+export const structureRecipeTextMutation = (
+  options?: Partial<Options<StructureRecipeTextData>>,
 ): UseMutationOptions<
-  StructureRecipeTextV1RecipesImportPostResponse,
-  StructureRecipeTextV1RecipesImportPostError,
-  Options<StructureRecipeTextV1RecipesImportPostData>
+  StructureRecipeTextResponse,
+  StructureRecipeTextError,
+  Options<StructureRecipeTextData>
 > => {
   const mutationOptions: UseMutationOptions<
-    StructureRecipeTextV1RecipesImportPostResponse,
-    StructureRecipeTextV1RecipesImportPostError,
-    Options<StructureRecipeTextV1RecipesImportPostData>
+    StructureRecipeTextResponse,
+    StructureRecipeTextError,
+    Options<StructureRecipeTextData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await structureRecipeTextV1RecipesImportPost({
+      const { data } = await structureRecipeText({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4016,20 +3857,20 @@ export const structureRecipeTextV1RecipesImportPostMutation = (
 /**
  * Delete Recipe
  */
-export const deleteRecipeV1RecipesRecipeIdDeleteMutation = (
-  options?: Partial<Options<DeleteRecipeV1RecipesRecipeIdDeleteData>>,
+export const deleteRecipeMutation = (
+  options?: Partial<Options<DeleteRecipeData>>,
 ): UseMutationOptions<
-  DeleteRecipeV1RecipesRecipeIdDeleteResponse,
-  DeleteRecipeV1RecipesRecipeIdDeleteError,
-  Options<DeleteRecipeV1RecipesRecipeIdDeleteData>
+  DeleteRecipeResponse,
+  DeleteRecipeError,
+  Options<DeleteRecipeData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteRecipeV1RecipesRecipeIdDeleteResponse,
-    DeleteRecipeV1RecipesRecipeIdDeleteError,
-    Options<DeleteRecipeV1RecipesRecipeIdDeleteData>
+    DeleteRecipeResponse,
+    DeleteRecipeError,
+    Options<DeleteRecipeData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteRecipeV1RecipesRecipeIdDelete({
+      const { data } = await deleteRecipe({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4040,24 +3881,21 @@ export const deleteRecipeV1RecipesRecipeIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const getRecipeV1RecipesRecipeIdGetQueryKey = (
-  options: Options<GetRecipeV1RecipesRecipeIdGetData>,
-) => createQueryKey("getRecipeV1RecipesRecipeIdGet", options);
+export const getRecipeQueryKey = (options: Options<GetRecipeData>) =>
+  createQueryKey("getRecipe", options);
 
 /**
  * Get Recipe
  */
-export const getRecipeV1RecipesRecipeIdGetOptions = (
-  options: Options<GetRecipeV1RecipesRecipeIdGetData>,
-) =>
+export const getRecipeOptions = (options: Options<GetRecipeData>) =>
   queryOptions<
-    GetRecipeV1RecipesRecipeIdGetResponse,
-    GetRecipeV1RecipesRecipeIdGetError,
-    GetRecipeV1RecipesRecipeIdGetResponse,
-    ReturnType<typeof getRecipeV1RecipesRecipeIdGetQueryKey>
+    GetRecipeResponse,
+    GetRecipeError,
+    GetRecipeResponse,
+    ReturnType<typeof getRecipeQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getRecipeV1RecipesRecipeIdGet({
+      const { data } = await getRecipe({
         ...options,
         ...queryKey[0],
         signal,
@@ -4065,26 +3903,26 @@ export const getRecipeV1RecipesRecipeIdGetOptions = (
       });
       return data;
     },
-    queryKey: getRecipeV1RecipesRecipeIdGetQueryKey(options),
+    queryKey: getRecipeQueryKey(options),
   });
 
 /**
  * Update Recipe
  */
-export const updateRecipeV1RecipesRecipeIdPatchMutation = (
-  options?: Partial<Options<UpdateRecipeV1RecipesRecipeIdPatchData>>,
+export const updateRecipeMutation = (
+  options?: Partial<Options<UpdateRecipeData>>,
 ): UseMutationOptions<
-  UpdateRecipeV1RecipesRecipeIdPatchResponse,
-  UpdateRecipeV1RecipesRecipeIdPatchError,
-  Options<UpdateRecipeV1RecipesRecipeIdPatchData>
+  UpdateRecipeResponse,
+  UpdateRecipeError,
+  Options<UpdateRecipeData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateRecipeV1RecipesRecipeIdPatchResponse,
-    UpdateRecipeV1RecipesRecipeIdPatchError,
-    Options<UpdateRecipeV1RecipesRecipeIdPatchData>
+    UpdateRecipeResponse,
+    UpdateRecipeError,
+    Options<UpdateRecipeData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateRecipeV1RecipesRecipeIdPatch({
+      const { data } = await updateRecipe({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4095,26 +3933,26 @@ export const updateRecipeV1RecipesRecipeIdPatchMutation = (
   return mutationOptions;
 };
 
-export const searchV1SearchGetQueryKey = (
-  options: Options<SearchV1SearchGetData>,
-) => createQueryKey("searchV1SearchGet", options);
+export const searchEverythingQueryKey = (
+  options: Options<SearchEverythingData>,
+) => createQueryKey("searchEverything", options);
 
 /**
  * Search
  *
  * Tasks, recipes, calendar events and saved places matching `q`, for the command palette.
  */
-export const searchV1SearchGetOptions = (
-  options: Options<SearchV1SearchGetData>,
+export const searchEverythingOptions = (
+  options: Options<SearchEverythingData>,
 ) =>
   queryOptions<
-    SearchV1SearchGetResponse,
-    SearchV1SearchGetError,
-    SearchV1SearchGetResponse,
-    ReturnType<typeof searchV1SearchGetQueryKey>
+    SearchEverythingResponse,
+    SearchEverythingError,
+    SearchEverythingResponse,
+    ReturnType<typeof searchEverythingQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await searchV1SearchGet({
+      const { data } = await searchEverything({
         ...options,
         ...queryKey[0],
         signal,
@@ -4122,27 +3960,24 @@ export const searchV1SearchGetOptions = (
       });
       return data;
     },
-    queryKey: searchV1SearchGetQueryKey(options),
+    queryKey: searchEverythingQueryKey(options),
   });
 
-export const listTasksV1TasksGetQueryKey = (
-  options?: Options<ListTasksV1TasksGetData>,
-) => createQueryKey("listTasksV1TasksGet", options);
+export const listTasksQueryKey = (options?: Options<ListTasksData>) =>
+  createQueryKey("listTasks", options);
 
 /**
  * List Tasks
  */
-export const listTasksV1TasksGetOptions = (
-  options?: Options<ListTasksV1TasksGetData>,
-) =>
+export const listTasksOptions = (options?: Options<ListTasksData>) =>
   queryOptions<
-    ListTasksV1TasksGetResponse,
-    ListTasksV1TasksGetError,
-    ListTasksV1TasksGetResponse,
-    ReturnType<typeof listTasksV1TasksGetQueryKey>
+    ListTasksResponse,
+    ListTasksError,
+    ListTasksResponse,
+    ReturnType<typeof listTasksQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTasksV1TasksGet({
+      const { data } = await listTasks({
         ...options,
         ...queryKey[0],
         signal,
@@ -4150,28 +3985,26 @@ export const listTasksV1TasksGetOptions = (
       });
       return data;
     },
-    queryKey: listTasksV1TasksGetQueryKey(options),
+    queryKey: listTasksQueryKey(options),
   });
 
-export const listTasksV1TasksGetInfiniteQueryKey = (
-  options?: Options<ListTasksV1TasksGetData>,
-): QueryKey<Options<ListTasksV1TasksGetData>> =>
-  createQueryKey("listTasksV1TasksGet", options, true);
+export const listTasksInfiniteQueryKey = (
+  options?: Options<ListTasksData>,
+): QueryKey<Options<ListTasksData>> =>
+  createQueryKey("listTasks", options, true);
 
 /**
  * List Tasks
  */
-export const listTasksV1TasksGetInfiniteOptions = (
-  options?: Options<ListTasksV1TasksGetData>,
-) => {
+export const listTasksInfiniteOptions = (options?: Options<ListTasksData>) => {
   const opts = infiniteQueryOptions<
-    ListTasksV1TasksGetResponse,
-    ListTasksV1TasksGetError,
-    InfiniteData<ListTasksV1TasksGetResponse>,
-    QueryKey<Options<ListTasksV1TasksGetData>>,
+    ListTasksResponse,
+    ListTasksError,
+    InfiniteData<ListTasksResponse>,
+    QueryKey<Options<ListTasksData>>,
     | number
     | Pick<
-        QueryKey<Options<ListTasksV1TasksGetData>>[0],
+        QueryKey<Options<ListTasksData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -4180,7 +4013,7 @@ export const listTasksV1TasksGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListTasksV1TasksGetData>>[0],
+          QueryKey<Options<ListTasksData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -4191,7 +4024,7 @@ export const listTasksV1TasksGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listTasksV1TasksGet({
+        const { data } = await listTasks({
           ...options,
           ...params,
           signal,
@@ -4199,7 +4032,7 @@ export const listTasksV1TasksGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listTasksV1TasksGetInfiniteQueryKey(options),
+      queryKey: listTasksInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -4208,20 +4041,20 @@ export const listTasksV1TasksGetInfiniteOptions = (
 /**
  * Create Task
  */
-export const createTaskV1TasksPostMutation = (
-  options?: Partial<Options<CreateTaskV1TasksPostData>>,
+export const createTaskMutation = (
+  options?: Partial<Options<CreateTaskData>>,
 ): UseMutationOptions<
-  CreateTaskV1TasksPostResponse,
-  CreateTaskV1TasksPostError,
-  Options<CreateTaskV1TasksPostData>
+  CreateTaskResponse,
+  CreateTaskError,
+  Options<CreateTaskData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateTaskV1TasksPostResponse,
-    CreateTaskV1TasksPostError,
-    Options<CreateTaskV1TasksPostData>
+    CreateTaskResponse,
+    CreateTaskError,
+    Options<CreateTaskData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createTaskV1TasksPost({
+      const { data } = await createTask({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4235,20 +4068,20 @@ export const createTaskV1TasksPostMutation = (
 /**
  * Reorder Tasks
  */
-export const reorderTasksV1TasksReorderPatchMutation = (
-  options?: Partial<Options<ReorderTasksV1TasksReorderPatchData>>,
+export const reorderTasksMutation = (
+  options?: Partial<Options<ReorderTasksData>>,
 ): UseMutationOptions<
-  ReorderTasksV1TasksReorderPatchResponse,
-  ReorderTasksV1TasksReorderPatchError,
-  Options<ReorderTasksV1TasksReorderPatchData>
+  ReorderTasksResponse,
+  ReorderTasksError,
+  Options<ReorderTasksData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ReorderTasksV1TasksReorderPatchResponse,
-    ReorderTasksV1TasksReorderPatchError,
-    Options<ReorderTasksV1TasksReorderPatchData>
+    ReorderTasksResponse,
+    ReorderTasksError,
+    Options<ReorderTasksData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await reorderTasksV1TasksReorderPatch({
+      const { data } = await reorderTasks({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4262,20 +4095,20 @@ export const reorderTasksV1TasksReorderPatchMutation = (
 /**
  * Delete Task
  */
-export const deleteTaskV1TasksTaskIdDeleteMutation = (
-  options?: Partial<Options<DeleteTaskV1TasksTaskIdDeleteData>>,
+export const deleteTaskMutation = (
+  options?: Partial<Options<DeleteTaskData>>,
 ): UseMutationOptions<
-  DeleteTaskV1TasksTaskIdDeleteResponse,
-  DeleteTaskV1TasksTaskIdDeleteError,
-  Options<DeleteTaskV1TasksTaskIdDeleteData>
+  DeleteTaskResponse,
+  DeleteTaskError,
+  Options<DeleteTaskData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteTaskV1TasksTaskIdDeleteResponse,
-    DeleteTaskV1TasksTaskIdDeleteError,
-    Options<DeleteTaskV1TasksTaskIdDeleteData>
+    DeleteTaskResponse,
+    DeleteTaskError,
+    Options<DeleteTaskData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteTaskV1TasksTaskIdDelete({
+      const { data } = await deleteTask({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4286,24 +4119,21 @@ export const deleteTaskV1TasksTaskIdDeleteMutation = (
   return mutationOptions;
 };
 
-export const getTaskV1TasksTaskIdGetQueryKey = (
-  options: Options<GetTaskV1TasksTaskIdGetData>,
-) => createQueryKey("getTaskV1TasksTaskIdGet", options);
+export const getTaskQueryKey = (options: Options<GetTaskData>) =>
+  createQueryKey("getTask", options);
 
 /**
  * Get Task
  */
-export const getTaskV1TasksTaskIdGetOptions = (
-  options: Options<GetTaskV1TasksTaskIdGetData>,
-) =>
+export const getTaskOptions = (options: Options<GetTaskData>) =>
   queryOptions<
-    GetTaskV1TasksTaskIdGetResponse,
-    GetTaskV1TasksTaskIdGetError,
-    GetTaskV1TasksTaskIdGetResponse,
-    ReturnType<typeof getTaskV1TasksTaskIdGetQueryKey>
+    GetTaskResponse,
+    GetTaskError,
+    GetTaskResponse,
+    ReturnType<typeof getTaskQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getTaskV1TasksTaskIdGet({
+      const { data } = await getTask({
         ...options,
         ...queryKey[0],
         signal,
@@ -4311,26 +4141,26 @@ export const getTaskV1TasksTaskIdGetOptions = (
       });
       return data;
     },
-    queryKey: getTaskV1TasksTaskIdGetQueryKey(options),
+    queryKey: getTaskQueryKey(options),
   });
 
 /**
  * Update Task
  */
-export const updateTaskV1TasksTaskIdPatchMutation = (
-  options?: Partial<Options<UpdateTaskV1TasksTaskIdPatchData>>,
+export const updateTaskMutation = (
+  options?: Partial<Options<UpdateTaskData>>,
 ): UseMutationOptions<
-  UpdateTaskV1TasksTaskIdPatchResponse,
-  UpdateTaskV1TasksTaskIdPatchError,
-  Options<UpdateTaskV1TasksTaskIdPatchData>
+  UpdateTaskResponse,
+  UpdateTaskError,
+  Options<UpdateTaskData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateTaskV1TasksTaskIdPatchResponse,
-    UpdateTaskV1TasksTaskIdPatchError,
-    Options<UpdateTaskV1TasksTaskIdPatchData>
+    UpdateTaskResponse,
+    UpdateTaskError,
+    Options<UpdateTaskData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateTaskV1TasksTaskIdPatch({
+      const { data } = await updateTask({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4344,22 +4174,20 @@ export const updateTaskV1TasksTaskIdPatchMutation = (
 /**
  * Upload Task Attachment
  */
-export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation = (
-  options?: Partial<
-    Options<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData>
-  >,
+export const uploadTaskAttachmentMutation = (
+  options?: Partial<Options<UploadTaskAttachmentData>>,
 ): UseMutationOptions<
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
-  UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
-  Options<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData>
+  UploadTaskAttachmentResponse,
+  UploadTaskAttachmentError,
+  Options<UploadTaskAttachmentData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostResponse,
-    UploadTaskAttachmentV1TasksTaskIdAttachmentsPostError,
-    Options<UploadTaskAttachmentV1TasksTaskIdAttachmentsPostData>
+    UploadTaskAttachmentResponse,
+    UploadTaskAttachmentError,
+    Options<UploadTaskAttachmentData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await uploadTaskAttachmentV1TasksTaskIdAttachmentsPost({
+      const { data } = await uploadTaskAttachment({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4373,93 +4201,75 @@ export const uploadTaskAttachmentV1TasksTaskIdAttachmentsPostMutation = (
 /**
  * Delete Task Attachment
  */
-export const deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteMutation =
-  (
-    options?: Partial<
-      Options<DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData>
-    >,
-  ): UseMutationOptions<
-    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
-    DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
-    Options<DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteResponse,
-      DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteError,
-      Options<DeleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDeleteData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await deleteTaskAttachmentV1TasksTaskIdAttachmentsAttachmentIdDelete({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+export const deleteTaskAttachmentMutation = (
+  options?: Partial<Options<DeleteTaskAttachmentData>>,
+): UseMutationOptions<
+  DeleteTaskAttachmentResponse,
+  DeleteTaskAttachmentError,
+  Options<DeleteTaskAttachmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteTaskAttachmentResponse,
+    DeleteTaskAttachmentError,
+    Options<DeleteTaskAttachmentData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteTaskAttachment({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
-export const getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetQueryKey =
-  (
-    options: Options<GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData>,
-  ) =>
-    createQueryKey(
-      "getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet",
-      options,
-    );
+export const getTaskAttachmentFileQueryKey = (
+  options: Options<GetTaskAttachmentFileData>,
+) => createQueryKey("getTaskAttachmentFile", options);
 
 /**
  * Get Task Attachment File
  */
-export const getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetOptions =
-  (
-    options: Options<GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetData>,
-  ) =>
-    queryOptions<
-      unknown,
-      GetTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetError,
-      unknown,
-      ReturnType<
-        typeof getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetQueryKey
-      >
-    >({
-      queryFn: async ({ queryKey, signal }) => {
-        const { data } =
-          await getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGet(
-            {
-              ...options,
-              ...queryKey[0],
-              signal,
-              throwOnError: true,
-            },
-          );
-        return data;
-      },
-      queryKey:
-        getTaskAttachmentFileV1TasksTaskIdAttachmentsAttachmentIdFileGetQueryKey(
-          options,
-        ),
-    });
+export const getTaskAttachmentFileOptions = (
+  options: Options<GetTaskAttachmentFileData>,
+) =>
+  queryOptions<
+    unknown,
+    GetTaskAttachmentFileError,
+    unknown,
+    ReturnType<typeof getTaskAttachmentFileQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTaskAttachmentFile({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTaskAttachmentFileQueryKey(options),
+  });
 
 /**
  * Complete Task
  */
-export const completeTaskV1TasksTaskIdCompletePostMutation = (
-  options?: Partial<Options<CompleteTaskV1TasksTaskIdCompletePostData>>,
+export const completeTaskMutation = (
+  options?: Partial<Options<CompleteTaskData>>,
 ): UseMutationOptions<
-  CompleteTaskV1TasksTaskIdCompletePostResponse,
-  CompleteTaskV1TasksTaskIdCompletePostError,
-  Options<CompleteTaskV1TasksTaskIdCompletePostData>
+  CompleteTaskResponse,
+  CompleteTaskError,
+  Options<CompleteTaskData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CompleteTaskV1TasksTaskIdCompletePostResponse,
-    CompleteTaskV1TasksTaskIdCompletePostError,
-    Options<CompleteTaskV1TasksTaskIdCompletePostData>
+    CompleteTaskResponse,
+    CompleteTaskError,
+    Options<CompleteTaskData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await completeTaskV1TasksTaskIdCompletePost({
+      const { data } = await completeTask({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4473,20 +4283,20 @@ export const completeTaskV1TasksTaskIdCompletePostMutation = (
 /**
  * Reopen Task
  */
-export const reopenTaskV1TasksTaskIdReopenPostMutation = (
-  options?: Partial<Options<ReopenTaskV1TasksTaskIdReopenPostData>>,
+export const reopenTaskMutation = (
+  options?: Partial<Options<ReopenTaskData>>,
 ): UseMutationOptions<
-  ReopenTaskV1TasksTaskIdReopenPostResponse,
-  ReopenTaskV1TasksTaskIdReopenPostError,
-  Options<ReopenTaskV1TasksTaskIdReopenPostData>
+  ReopenTaskResponse,
+  ReopenTaskError,
+  Options<ReopenTaskData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ReopenTaskV1TasksTaskIdReopenPostResponse,
-    ReopenTaskV1TasksTaskIdReopenPostError,
-    Options<ReopenTaskV1TasksTaskIdReopenPostData>
+    ReopenTaskResponse,
+    ReopenTaskError,
+    Options<ReopenTaskData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await reopenTaskV1TasksTaskIdReopenPost({
+      const { data } = await reopenTask({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4503,20 +4313,20 @@ export const reopenTaskV1TasksTaskIdReopenPostMutation = (
  * Reopen a task and remove the next occurrence completing it spawned, in one
  * transaction, so an Undo can't leave a routine both reopened and repeated.
  */
-export const undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation = (
-  options?: Partial<Options<UndoCompleteTaskV1TasksTaskIdUndoCompletePostData>>,
+export const undoCompleteTaskMutation = (
+  options?: Partial<Options<UndoCompleteTaskData>>,
 ): UseMutationOptions<
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
-  UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
-  Options<UndoCompleteTaskV1TasksTaskIdUndoCompletePostData>
+  UndoCompleteTaskResponse,
+  UndoCompleteTaskError,
+  Options<UndoCompleteTaskData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UndoCompleteTaskV1TasksTaskIdUndoCompletePostResponse,
-    UndoCompleteTaskV1TasksTaskIdUndoCompletePostError,
-    Options<UndoCompleteTaskV1TasksTaskIdUndoCompletePostData>
+    UndoCompleteTaskResponse,
+    UndoCompleteTaskError,
+    Options<UndoCompleteTaskData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await undoCompleteTaskV1TasksTaskIdUndoCompletePost({
+      const { data } = await undoCompleteTask({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4527,24 +4337,24 @@ export const undoCompleteTaskV1TasksTaskIdUndoCompletePostMutation = (
   return mutationOptions;
 };
 
-export const listTimeProjectsV1TimeProjectsGetQueryKey = (
-  options?: Options<ListTimeProjectsV1TimeProjectsGetData>,
-) => createQueryKey("listTimeProjectsV1TimeProjectsGet", options);
+export const listTimeProjectsQueryKey = (
+  options?: Options<ListTimeProjectsData>,
+) => createQueryKey("listTimeProjects", options);
 
 /**
  * List Time Projects
  */
-export const listTimeProjectsV1TimeProjectsGetOptions = (
-  options?: Options<ListTimeProjectsV1TimeProjectsGetData>,
+export const listTimeProjectsOptions = (
+  options?: Options<ListTimeProjectsData>,
 ) =>
   queryOptions<
-    ListTimeProjectsV1TimeProjectsGetResponse,
+    ListTimeProjectsResponse,
     DefaultError,
-    ListTimeProjectsV1TimeProjectsGetResponse,
-    ReturnType<typeof listTimeProjectsV1TimeProjectsGetQueryKey>
+    ListTimeProjectsResponse,
+    ReturnType<typeof listTimeProjectsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTimeProjectsV1TimeProjectsGet({
+      const { data } = await listTimeProjects({
         ...options,
         ...queryKey[0],
         signal,
@@ -4552,26 +4362,26 @@ export const listTimeProjectsV1TimeProjectsGetOptions = (
       });
       return data;
     },
-    queryKey: listTimeProjectsV1TimeProjectsGetQueryKey(options),
+    queryKey: listTimeProjectsQueryKey(options),
   });
 
 /**
  * Create Time Project
  */
-export const createTimeProjectV1TimeProjectsPostMutation = (
-  options?: Partial<Options<CreateTimeProjectV1TimeProjectsPostData>>,
+export const createTimeProjectMutation = (
+  options?: Partial<Options<CreateTimeProjectData>>,
 ): UseMutationOptions<
-  CreateTimeProjectV1TimeProjectsPostResponse,
-  CreateTimeProjectV1TimeProjectsPostError,
-  Options<CreateTimeProjectV1TimeProjectsPostData>
+  CreateTimeProjectResponse,
+  CreateTimeProjectError,
+  Options<CreateTimeProjectData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateTimeProjectV1TimeProjectsPostResponse,
-    CreateTimeProjectV1TimeProjectsPostError,
-    Options<CreateTimeProjectV1TimeProjectsPostData>
+    CreateTimeProjectResponse,
+    CreateTimeProjectError,
+    Options<CreateTimeProjectData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createTimeProjectV1TimeProjectsPost({
+      const { data } = await createTimeProject({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4585,20 +4395,20 @@ export const createTimeProjectV1TimeProjectsPostMutation = (
 /**
  * Update Time Project
  */
-export const updateTimeProjectV1TimeProjectsProjectIdPatchMutation = (
-  options?: Partial<Options<UpdateTimeProjectV1TimeProjectsProjectIdPatchData>>,
+export const updateTimeProjectMutation = (
+  options?: Partial<Options<UpdateTimeProjectData>>,
 ): UseMutationOptions<
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
-  UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
-  Options<UpdateTimeProjectV1TimeProjectsProjectIdPatchData>
+  UpdateTimeProjectResponse,
+  UpdateTimeProjectError,
+  Options<UpdateTimeProjectData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateTimeProjectV1TimeProjectsProjectIdPatchResponse,
-    UpdateTimeProjectV1TimeProjectsProjectIdPatchError,
-    Options<UpdateTimeProjectV1TimeProjectsProjectIdPatchData>
+    UpdateTimeProjectResponse,
+    UpdateTimeProjectError,
+    Options<UpdateTimeProjectData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateTimeProjectV1TimeProjectsProjectIdPatch({
+      const { data } = await updateTimeProject({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4609,24 +4419,22 @@ export const updateTimeProjectV1TimeProjectsProjectIdPatchMutation = (
   return mutationOptions;
 };
 
-export const listTimeEntriesV1TimeEntriesGetQueryKey = (
-  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
-) => createQueryKey("listTimeEntriesV1TimeEntriesGet", options);
+export const listTimeEntriesQueryKey = (
+  options: Options<ListTimeEntriesData>,
+) => createQueryKey("listTimeEntries", options);
 
 /**
  * List Time Entries
  */
-export const listTimeEntriesV1TimeEntriesGetOptions = (
-  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
-) =>
+export const listTimeEntriesOptions = (options: Options<ListTimeEntriesData>) =>
   queryOptions<
-    ListTimeEntriesV1TimeEntriesGetResponse,
-    ListTimeEntriesV1TimeEntriesGetError,
-    ListTimeEntriesV1TimeEntriesGetResponse,
-    ReturnType<typeof listTimeEntriesV1TimeEntriesGetQueryKey>
+    ListTimeEntriesResponse,
+    ListTimeEntriesError,
+    ListTimeEntriesResponse,
+    ReturnType<typeof listTimeEntriesQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTimeEntriesV1TimeEntriesGet({
+      const { data } = await listTimeEntries({
         ...options,
         ...queryKey[0],
         signal,
@@ -4634,28 +4442,28 @@ export const listTimeEntriesV1TimeEntriesGetOptions = (
       });
       return data;
     },
-    queryKey: listTimeEntriesV1TimeEntriesGetQueryKey(options),
+    queryKey: listTimeEntriesQueryKey(options),
   });
 
-export const listTimeEntriesV1TimeEntriesGetInfiniteQueryKey = (
-  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
-): QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>> =>
-  createQueryKey("listTimeEntriesV1TimeEntriesGet", options, true);
+export const listTimeEntriesInfiniteQueryKey = (
+  options: Options<ListTimeEntriesData>,
+): QueryKey<Options<ListTimeEntriesData>> =>
+  createQueryKey("listTimeEntries", options, true);
 
 /**
  * List Time Entries
  */
-export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
-  options: Options<ListTimeEntriesV1TimeEntriesGetData>,
+export const listTimeEntriesInfiniteOptions = (
+  options: Options<ListTimeEntriesData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListTimeEntriesV1TimeEntriesGetResponse,
-    ListTimeEntriesV1TimeEntriesGetError,
-    InfiniteData<ListTimeEntriesV1TimeEntriesGetResponse>,
-    QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>>,
+    ListTimeEntriesResponse,
+    ListTimeEntriesError,
+    InfiniteData<ListTimeEntriesResponse>,
+    QueryKey<Options<ListTimeEntriesData>>,
     | Date
     | Pick<
-        QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>>[0],
+        QueryKey<Options<ListTimeEntriesData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -4664,7 +4472,7 @@ export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListTimeEntriesV1TimeEntriesGetData>>[0],
+          QueryKey<Options<ListTimeEntriesData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -4675,7 +4483,7 @@ export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listTimeEntriesV1TimeEntriesGet({
+        const { data } = await listTimeEntries({
           ...options,
           ...params,
           signal,
@@ -4683,7 +4491,7 @@ export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listTimeEntriesV1TimeEntriesGetInfiniteQueryKey(options),
+      queryKey: listTimeEntriesInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -4692,20 +4500,20 @@ export const listTimeEntriesV1TimeEntriesGetInfiniteOptions = (
 /**
  * Create Time Entry
  */
-export const createTimeEntryV1TimeEntriesPostMutation = (
-  options?: Partial<Options<CreateTimeEntryV1TimeEntriesPostData>>,
+export const createTimeEntryMutation = (
+  options?: Partial<Options<CreateTimeEntryData>>,
 ): UseMutationOptions<
-  CreateTimeEntryV1TimeEntriesPostResponse,
-  CreateTimeEntryV1TimeEntriesPostError,
-  Options<CreateTimeEntryV1TimeEntriesPostData>
+  CreateTimeEntryResponse,
+  CreateTimeEntryError,
+  Options<CreateTimeEntryData>
 > => {
   const mutationOptions: UseMutationOptions<
-    CreateTimeEntryV1TimeEntriesPostResponse,
-    CreateTimeEntryV1TimeEntriesPostError,
-    Options<CreateTimeEntryV1TimeEntriesPostData>
+    CreateTimeEntryResponse,
+    CreateTimeEntryError,
+    Options<CreateTimeEntryData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await createTimeEntryV1TimeEntriesPost({
+      const { data } = await createTimeEntry({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4719,20 +4527,20 @@ export const createTimeEntryV1TimeEntriesPostMutation = (
 /**
  * Delete Time Entry
  */
-export const deleteTimeEntryV1TimeEntriesEntryIdDeleteMutation = (
-  options?: Partial<Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData>>,
+export const deleteTimeEntryMutation = (
+  options?: Partial<Options<DeleteTimeEntryData>>,
 ): UseMutationOptions<
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
-  DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
-  Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData>
+  DeleteTimeEntryResponse,
+  DeleteTimeEntryError,
+  Options<DeleteTimeEntryData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteTimeEntryV1TimeEntriesEntryIdDeleteResponse,
-    DeleteTimeEntryV1TimeEntriesEntryIdDeleteError,
-    Options<DeleteTimeEntryV1TimeEntriesEntryIdDeleteData>
+    DeleteTimeEntryResponse,
+    DeleteTimeEntryError,
+    Options<DeleteTimeEntryData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteTimeEntryV1TimeEntriesEntryIdDelete({
+      const { data } = await deleteTimeEntry({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4746,20 +4554,20 @@ export const deleteTimeEntryV1TimeEntriesEntryIdDeleteMutation = (
 /**
  * Update Time Entry
  */
-export const updateTimeEntryV1TimeEntriesEntryIdPatchMutation = (
-  options?: Partial<Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData>>,
+export const updateTimeEntryMutation = (
+  options?: Partial<Options<UpdateTimeEntryData>>,
 ): UseMutationOptions<
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
-  UpdateTimeEntryV1TimeEntriesEntryIdPatchError,
-  Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData>
+  UpdateTimeEntryResponse,
+  UpdateTimeEntryError,
+  Options<UpdateTimeEntryData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateTimeEntryV1TimeEntriesEntryIdPatchResponse,
-    UpdateTimeEntryV1TimeEntriesEntryIdPatchError,
-    Options<UpdateTimeEntryV1TimeEntriesEntryIdPatchData>
+    UpdateTimeEntryResponse,
+    UpdateTimeEntryError,
+    Options<UpdateTimeEntryData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateTimeEntryV1TimeEntriesEntryIdPatch({
+      const { data } = await updateTimeEntry({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4770,24 +4578,21 @@ export const updateTimeEntryV1TimeEntriesEntryIdPatchMutation = (
   return mutationOptions;
 };
 
-export const getTimeSummaryV1TimeSummaryGetQueryKey = (
-  options: Options<GetTimeSummaryV1TimeSummaryGetData>,
-) => createQueryKey("getTimeSummaryV1TimeSummaryGet", options);
+export const getTimeSummaryQueryKey = (options: Options<GetTimeSummaryData>) =>
+  createQueryKey("getTimeSummary", options);
 
 /**
  * Get Monthly Time Totals
  */
-export const getTimeSummaryV1TimeSummaryGetOptions = (
-  options: Options<GetTimeSummaryV1TimeSummaryGetData>,
-) =>
+export const getTimeSummaryOptions = (options: Options<GetTimeSummaryData>) =>
   queryOptions<
-    GetTimeSummaryV1TimeSummaryGetResponse,
-    GetTimeSummaryV1TimeSummaryGetError,
-    GetTimeSummaryV1TimeSummaryGetResponse,
-    ReturnType<typeof getTimeSummaryV1TimeSummaryGetQueryKey>
+    GetTimeSummaryResponse,
+    GetTimeSummaryError,
+    GetTimeSummaryResponse,
+    ReturnType<typeof getTimeSummaryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getTimeSummaryV1TimeSummaryGet({
+      const { data } = await getTimeSummary({
         ...options,
         ...queryKey[0],
         signal,
@@ -4795,27 +4600,24 @@ export const getTimeSummaryV1TimeSummaryGetOptions = (
       });
       return data;
     },
-    queryKey: getTimeSummaryV1TimeSummaryGetQueryKey(options),
+    queryKey: getTimeSummaryQueryKey(options),
   });
 
-export const getTimelineV1TimelineGetQueryKey = (
-  options: Options<GetTimelineV1TimelineGetData>,
-) => createQueryKey("getTimelineV1TimelineGet", options);
+export const getTimelineQueryKey = (options: Options<GetTimelineData>) =>
+  createQueryKey("getTimeline", options);
 
 /**
  * Get Timeline
  */
-export const getTimelineV1TimelineGetOptions = (
-  options: Options<GetTimelineV1TimelineGetData>,
-) =>
+export const getTimelineOptions = (options: Options<GetTimelineData>) =>
   queryOptions<
-    GetTimelineV1TimelineGetResponse,
-    GetTimelineV1TimelineGetError,
-    GetTimelineV1TimelineGetResponse,
-    ReturnType<typeof getTimelineV1TimelineGetQueryKey>
+    GetTimelineResponse,
+    GetTimelineError,
+    GetTimelineResponse,
+    ReturnType<typeof getTimelineQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getTimelineV1TimelineGet({
+      const { data } = await getTimeline({
         ...options,
         ...queryKey[0],
         signal,
@@ -4823,7 +4625,7 @@ export const getTimelineV1TimelineGetOptions = (
       });
       return data;
     },
-    queryKey: getTimelineV1TimelineGetQueryKey(options),
+    queryKey: getTimelineQueryKey(options),
   });
 
 /**
@@ -4831,20 +4633,20 @@ export const getTimelineV1TimelineGetOptions = (
  *
  * Delete transactions by IDs.
  */
-export const deleteTransactionsV1TransactionsDeleteMutation = (
-  options?: Partial<Options<DeleteTransactionsV1TransactionsDeleteData>>,
+export const deleteTransactionsMutation = (
+  options?: Partial<Options<DeleteTransactionsData>>,
 ): UseMutationOptions<
-  DeleteTransactionsV1TransactionsDeleteResponse,
-  DeleteTransactionsV1TransactionsDeleteError,
-  Options<DeleteTransactionsV1TransactionsDeleteData>
+  DeleteTransactionsResponse,
+  DeleteTransactionsError,
+  Options<DeleteTransactionsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    DeleteTransactionsV1TransactionsDeleteResponse,
-    DeleteTransactionsV1TransactionsDeleteError,
-    Options<DeleteTransactionsV1TransactionsDeleteData>
+    DeleteTransactionsResponse,
+    DeleteTransactionsError,
+    Options<DeleteTransactionsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await deleteTransactionsV1TransactionsDelete({
+      const { data } = await deleteTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4855,26 +4657,26 @@ export const deleteTransactionsV1TransactionsDeleteMutation = (
   return mutationOptions;
 };
 
-export const listTransactionsV1TransactionsGetQueryKey = (
-  options?: Options<ListTransactionsV1TransactionsGetData>,
-) => createQueryKey("listTransactionsV1TransactionsGet", options);
+export const listTransactionsQueryKey = (
+  options?: Options<ListTransactionsData>,
+) => createQueryKey("listTransactions", options);
 
 /**
  * List Transactions
  *
  * List transactions.
  */
-export const listTransactionsV1TransactionsGetOptions = (
-  options?: Options<ListTransactionsV1TransactionsGetData>,
+export const listTransactionsOptions = (
+  options?: Options<ListTransactionsData>,
 ) =>
   queryOptions<
-    ListTransactionsV1TransactionsGetResponse,
-    ListTransactionsV1TransactionsGetError,
-    ListTransactionsV1TransactionsGetResponse,
-    ReturnType<typeof listTransactionsV1TransactionsGetQueryKey>
+    ListTransactionsResponse,
+    ListTransactionsError,
+    ListTransactionsResponse,
+    ReturnType<typeof listTransactionsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTransactionsV1TransactionsGet({
+      const { data } = await listTransactions({
         ...options,
         ...queryKey[0],
         signal,
@@ -4882,30 +4684,30 @@ export const listTransactionsV1TransactionsGetOptions = (
       });
       return data;
     },
-    queryKey: listTransactionsV1TransactionsGetQueryKey(options),
+    queryKey: listTransactionsQueryKey(options),
   });
 
-export const listTransactionsV1TransactionsGetInfiniteQueryKey = (
-  options?: Options<ListTransactionsV1TransactionsGetData>,
-): QueryKey<Options<ListTransactionsV1TransactionsGetData>> =>
-  createQueryKey("listTransactionsV1TransactionsGet", options, true);
+export const listTransactionsInfiniteQueryKey = (
+  options?: Options<ListTransactionsData>,
+): QueryKey<Options<ListTransactionsData>> =>
+  createQueryKey("listTransactions", options, true);
 
 /**
  * List Transactions
  *
  * List transactions.
  */
-export const listTransactionsV1TransactionsGetInfiniteOptions = (
-  options?: Options<ListTransactionsV1TransactionsGetData>,
+export const listTransactionsInfiniteOptions = (
+  options?: Options<ListTransactionsData>,
 ) => {
   const opts = infiniteQueryOptions<
-    ListTransactionsV1TransactionsGetResponse,
-    ListTransactionsV1TransactionsGetError,
-    InfiniteData<ListTransactionsV1TransactionsGetResponse>,
-    QueryKey<Options<ListTransactionsV1TransactionsGetData>>,
+    ListTransactionsResponse,
+    ListTransactionsError,
+    InfiniteData<ListTransactionsResponse>,
+    QueryKey<Options<ListTransactionsData>>,
     | number
     | Pick<
-        QueryKey<Options<ListTransactionsV1TransactionsGetData>>[0],
+        QueryKey<Options<ListTransactionsData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -4914,7 +4716,7 @@ export const listTransactionsV1TransactionsGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<Options<ListTransactionsV1TransactionsGetData>>[0],
+          QueryKey<Options<ListTransactionsData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -4925,7 +4727,7 @@ export const listTransactionsV1TransactionsGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await listTransactionsV1TransactionsGet({
+        const { data } = await listTransactions({
           ...options,
           ...params,
           signal,
@@ -4933,7 +4735,7 @@ export const listTransactionsV1TransactionsGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey: listTransactionsV1TransactionsGetInfiniteQueryKey(options),
+      queryKey: listTransactionsInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
@@ -4946,20 +4748,20 @@ export const listTransactionsV1TransactionsGetInfiniteOptions = (
  *
  * Duplicate transactions (by dedup hash) are automatically skipped.
  */
-export const importTransactionsV1TransactionsImportPostMutation = (
-  options?: Partial<Options<ImportTransactionsV1TransactionsImportPostData>>,
+export const importTransactionsMutation = (
+  options?: Partial<Options<ImportTransactionsData>>,
 ): UseMutationOptions<
-  ImportTransactionsV1TransactionsImportPostResponse,
-  ImportTransactionsV1TransactionsImportPostError,
-  Options<ImportTransactionsV1TransactionsImportPostData>
+  ImportTransactionsResponse,
+  ImportTransactionsError,
+  Options<ImportTransactionsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ImportTransactionsV1TransactionsImportPostResponse,
-    ImportTransactionsV1TransactionsImportPostError,
-    Options<ImportTransactionsV1TransactionsImportPostData>
+    ImportTransactionsResponse,
+    ImportTransactionsError,
+    Options<ImportTransactionsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await importTransactionsV1TransactionsImportPost({
+      const { data } = await importTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4975,20 +4777,20 @@ export const importTransactionsV1TransactionsImportPostMutation = (
  *
  * Update category for a list of transactions by ID.
  */
-export const bulkUpdateTransactionsV1TransactionsBulkPatchMutation = (
-  options?: Partial<Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>>,
+export const bulkUpdateTransactionsMutation = (
+  options?: Partial<Options<BulkUpdateTransactionsData>>,
 ): UseMutationOptions<
-  BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
-  BulkUpdateTransactionsV1TransactionsBulkPatchError,
-  Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
+  BulkUpdateTransactionsResponse,
+  BulkUpdateTransactionsError,
+  Options<BulkUpdateTransactionsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    BulkUpdateTransactionsV1TransactionsBulkPatchResponse,
-    BulkUpdateTransactionsV1TransactionsBulkPatchError,
-    Options<BulkUpdateTransactionsV1TransactionsBulkPatchData>
+    BulkUpdateTransactionsResponse,
+    BulkUpdateTransactionsError,
+    Options<BulkUpdateTransactionsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await bulkUpdateTransactionsV1TransactionsBulkPatch({
+      const { data } = await bulkUpdateTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -5004,22 +4806,20 @@ export const bulkUpdateTransactionsV1TransactionsBulkPatchMutation = (
  *
  * Update a transaction.
  */
-export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
-  options?: Partial<
-    Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
-  >,
+export const updateTransactionMutation = (
+  options?: Partial<Options<UpdateTransactionData>>,
 ): UseMutationOptions<
-  UpdateTransactionV1TransactionsTransactionIdPatchResponse,
-  UpdateTransactionV1TransactionsTransactionIdPatchError,
-  Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
+  UpdateTransactionResponse,
+  UpdateTransactionError,
+  Options<UpdateTransactionData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateTransactionV1TransactionsTransactionIdPatchResponse,
-    UpdateTransactionV1TransactionsTransactionIdPatchError,
-    Options<UpdateTransactionV1TransactionsTransactionIdPatchData>
+    UpdateTransactionResponse,
+    UpdateTransactionError,
+    Options<UpdateTransactionData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateTransactionV1TransactionsTransactionIdPatch({
+      const { data } = await updateTransaction({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -5035,27 +4835,24 @@ export const updateTransactionV1TransactionsTransactionIdPatchMutation = (
  *
  * Names this transaction only; the bank's text stays as it was. Suggests others that likely want the same name.
  */
-export const renameTransactionV1TransactionsTransactionIdNamePutMutation = (
-  options?: Partial<
-    Options<RenameTransactionV1TransactionsTransactionIdNamePutData>
-  >,
+export const renameTransactionMutation = (
+  options?: Partial<Options<RenameTransactionData>>,
 ): UseMutationOptions<
-  RenameTransactionV1TransactionsTransactionIdNamePutResponse,
-  RenameTransactionV1TransactionsTransactionIdNamePutError,
-  Options<RenameTransactionV1TransactionsTransactionIdNamePutData>
+  RenameTransactionResponse,
+  RenameTransactionError,
+  Options<RenameTransactionData>
 > => {
   const mutationOptions: UseMutationOptions<
-    RenameTransactionV1TransactionsTransactionIdNamePutResponse,
-    RenameTransactionV1TransactionsTransactionIdNamePutError,
-    Options<RenameTransactionV1TransactionsTransactionIdNamePutData>
+    RenameTransactionResponse,
+    RenameTransactionError,
+    Options<RenameTransactionData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await renameTransactionV1TransactionsTransactionIdNamePut({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await renameTransaction({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -5067,20 +4864,20 @@ export const renameTransactionV1TransactionsTransactionIdNamePutMutation = (
  *
  * Names every transaction with exactly this bank text, and those imported later; names the user gave one by one stay.
  */
-export const nameTransactionsV1TransactionsNamesPostMutation = (
-  options?: Partial<Options<NameTransactionsV1TransactionsNamesPostData>>,
+export const nameTransactionsMutation = (
+  options?: Partial<Options<NameTransactionsData>>,
 ): UseMutationOptions<
-  NameTransactionsV1TransactionsNamesPostResponse,
-  NameTransactionsV1TransactionsNamesPostError,
-  Options<NameTransactionsV1TransactionsNamesPostData>
+  NameTransactionsResponse,
+  NameTransactionsError,
+  Options<NameTransactionsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    NameTransactionsV1TransactionsNamesPostResponse,
-    NameTransactionsV1TransactionsNamesPostError,
-    Options<NameTransactionsV1TransactionsNamesPostData>
+    NameTransactionsResponse,
+    NameTransactionsError,
+    Options<NameTransactionsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await nameTransactionsV1TransactionsNamesPost({
+      const { data } = await nameTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -5096,27 +4893,24 @@ export const nameTransactionsV1TransactionsNamesPostMutation = (
  *
  * Counts both sides of a paired transfer as income and spending again, and never pairs them again.
  */
-export const unpairTransferV1TransactionsTransactionIdTransferDeleteMutation = (
-  options?: Partial<
-    Options<UnpairTransferV1TransactionsTransactionIdTransferDeleteData>
-  >,
+export const unpairTransferMutation = (
+  options?: Partial<Options<UnpairTransferData>>,
 ): UseMutationOptions<
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse,
-  UnpairTransferV1TransactionsTransactionIdTransferDeleteError,
-  Options<UnpairTransferV1TransactionsTransactionIdTransferDeleteData>
+  UnpairTransferResponse,
+  UnpairTransferError,
+  Options<UnpairTransferData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UnpairTransferV1TransactionsTransactionIdTransferDeleteResponse,
-    UnpairTransferV1TransactionsTransactionIdTransferDeleteError,
-    Options<UnpairTransferV1TransactionsTransactionIdTransferDeleteData>
+    UnpairTransferResponse,
+    UnpairTransferError,
+    Options<UnpairTransferData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } =
-        await unpairTransferV1TransactionsTransactionIdTransferDelete({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        });
+      const { data } = await unpairTransfer({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
       return data;
     },
   };
@@ -5128,94 +4922,80 @@ export const unpairTransferV1TransactionsTransactionIdTransferDeleteMutation = (
  *
  * Set category for all transactions matching the given description.
  */
-export const categorizeByDescriptionV1TransactionsCategorizeByDescriptionPostMutation =
-  (
-    options?: Partial<
-      Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
-    >,
-  ): UseMutationOptions<
-    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
-    CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
-    Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostResponse,
-      CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostError,
-      Options<CategorizeByDescriptionV1TransactionsCategorizeByDescriptionPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await categorizeByDescriptionV1TransactionsCategorizeByDescriptionPost(
-            {
-              ...options,
-              ...fnOptions,
-              throwOnError: true,
-            },
-          );
-        return data;
-      },
-    };
-    return mutationOptions;
+export const categorizeByDescriptionMutation = (
+  options?: Partial<Options<CategorizeByDescriptionData>>,
+): UseMutationOptions<
+  CategorizeByDescriptionResponse,
+  CategorizeByDescriptionError,
+  Options<CategorizeByDescriptionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CategorizeByDescriptionResponse,
+    CategorizeByDescriptionError,
+    Options<CategorizeByDescriptionData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await categorizeByDescription({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
-export const spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey = (
-  options: Options<SpendingByCategoryV1TransactionsSpendingByCategoryGetData>,
-) =>
-  createQueryKey(
-    "spendingByCategoryV1TransactionsSpendingByCategoryGet",
-    options,
-  );
+export const spendingByCategoryQueryKey = (
+  options: Options<SpendingByCategoryData>,
+) => createQueryKey("spendingByCategory", options);
 
 /**
  * Monthly Spending by Category
  *
  * Aggregate debit spending per category for a given month.
  */
-export const spendingByCategoryV1TransactionsSpendingByCategoryGetOptions = (
-  options: Options<SpendingByCategoryV1TransactionsSpendingByCategoryGetData>,
+export const spendingByCategoryOptions = (
+  options: Options<SpendingByCategoryData>,
 ) =>
   queryOptions<
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetError,
-    SpendingByCategoryV1TransactionsSpendingByCategoryGetResponse,
-    ReturnType<
-      typeof spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey
-    >
+    SpendingByCategoryResponse,
+    SpendingByCategoryError,
+    SpendingByCategoryResponse,
+    ReturnType<typeof spendingByCategoryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } =
-        await spendingByCategoryV1TransactionsSpendingByCategoryGet({
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        });
+      const { data } = await spendingByCategory({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
       return data;
     },
-    queryKey:
-      spendingByCategoryV1TransactionsSpendingByCategoryGetQueryKey(options),
+    queryKey: spendingByCategoryQueryKey(options),
   });
 
-export const transactionSummaryV1TransactionsSummaryGetQueryKey = (
-  options: Options<TransactionSummaryV1TransactionsSummaryGetData>,
-) => createQueryKey("transactionSummaryV1TransactionsSummaryGet", options);
+export const getTransactionSummaryQueryKey = (
+  options: Options<GetTransactionSummaryData>,
+) => createQueryKey("getTransactionSummary", options);
 
 /**
  * Month Summary
  *
  * The user's own income and spending for a month, with the year before it for comparison.
  */
-export const transactionSummaryV1TransactionsSummaryGetOptions = (
-  options: Options<TransactionSummaryV1TransactionsSummaryGetData>,
+export const getTransactionSummaryOptions = (
+  options: Options<GetTransactionSummaryData>,
 ) =>
   queryOptions<
-    TransactionSummaryV1TransactionsSummaryGetResponse,
-    TransactionSummaryV1TransactionsSummaryGetError,
-    TransactionSummaryV1TransactionsSummaryGetResponse,
-    ReturnType<typeof transactionSummaryV1TransactionsSummaryGetQueryKey>
+    GetTransactionSummaryResponse,
+    GetTransactionSummaryError,
+    GetTransactionSummaryResponse,
+    ReturnType<typeof getTransactionSummaryQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await transactionSummaryV1TransactionsSummaryGet({
+      const { data } = await getTransactionSummary({
         ...options,
         ...queryKey[0],
         signal,
@@ -5223,29 +5003,26 @@ export const transactionSummaryV1TransactionsSummaryGetOptions = (
       });
       return data;
     },
-    queryKey: transactionSummaryV1TransactionsSummaryGetQueryKey(options),
+    queryKey: getTransactionSummaryQueryKey(options),
   });
 
-export const monthlyFlowV1TransactionsMonthlyFlowGetQueryKey = (
-  options?: Options<MonthlyFlowV1TransactionsMonthlyFlowGetData>,
-) => createQueryKey("monthlyFlowV1TransactionsMonthlyFlowGet", options);
+export const getMonthlyFlowQueryKey = (options?: Options<GetMonthlyFlowData>) =>
+  createQueryKey("getMonthlyFlow", options);
 
 /**
  * Monthly Income & Expenses
  *
  * Return income and expenses aggregated per month.
  */
-export const monthlyFlowV1TransactionsMonthlyFlowGetOptions = (
-  options?: Options<MonthlyFlowV1TransactionsMonthlyFlowGetData>,
-) =>
+export const getMonthlyFlowOptions = (options?: Options<GetMonthlyFlowData>) =>
   queryOptions<
-    MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
-    MonthlyFlowV1TransactionsMonthlyFlowGetError,
-    MonthlyFlowV1TransactionsMonthlyFlowGetResponse,
-    ReturnType<typeof monthlyFlowV1TransactionsMonthlyFlowGetQueryKey>
+    GetMonthlyFlowResponse,
+    GetMonthlyFlowError,
+    GetMonthlyFlowResponse,
+    ReturnType<typeof getMonthlyFlowQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await monthlyFlowV1TransactionsMonthlyFlowGet({
+      const { data } = await getMonthlyFlow({
         ...options,
         ...queryKey[0],
         signal,
@@ -5253,141 +5030,117 @@ export const monthlyFlowV1TransactionsMonthlyFlowGetOptions = (
       });
       return data;
     },
-    queryKey: monthlyFlowV1TransactionsMonthlyFlowGetQueryKey(options),
+    queryKey: getMonthlyFlowQueryKey(options),
   });
 
-export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey =
-  (
-    options: Options<ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData>,
-  ) =>
-    createQueryKey(
-      "listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet",
-      options,
-    );
+export const listTransactionDocumentsQueryKey = (
+  options: Options<ListTransactionDocumentsData>,
+) => createQueryKey("listTransactionDocuments", options);
 
 /**
  * List Transaction Documents
  *
  * The invoices and receipts kept with a transaction, oldest first.
  */
-export const listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetOptions =
-  (
-    options: Options<ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetData>,
-  ) =>
-    queryOptions<
-      ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse,
-      ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetError,
-      ListTransactionDocumentsV1TransactionsTransactionIdDocumentsGetResponse,
-      ReturnType<
-        typeof listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey
-      >
-    >({
-      queryFn: async ({ queryKey, signal }) => {
-        const { data } =
-          await listTransactionDocumentsV1TransactionsTransactionIdDocumentsGet(
-            {
-              ...options,
-              ...queryKey[0],
-              signal,
-              throwOnError: true,
-            },
-          );
-        return data;
-      },
-      queryKey:
-        listTransactionDocumentsV1TransactionsTransactionIdDocumentsGetQueryKey(
-          options,
-        ),
-    });
+export const listTransactionDocumentsOptions = (
+  options: Options<ListTransactionDocumentsData>,
+) =>
+  queryOptions<
+    ListTransactionDocumentsResponse,
+    ListTransactionDocumentsError,
+    ListTransactionDocumentsResponse,
+    ReturnType<typeof listTransactionDocumentsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTransactionDocuments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTransactionDocumentsQueryKey(options),
+  });
 
 /**
  * Add Transaction Document
  *
  * Keeps an invoice or receipt, a PDF or a photo, with the transaction.
  */
-export const addTransactionDocumentV1TransactionsTransactionIdDocumentsPostMutation =
-  (
-    options?: Partial<
-      Options<AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData>
-    >,
-  ): UseMutationOptions<
-    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
-    AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError,
-    Options<AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostResponse,
-      AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostError,
-      Options<AddTransactionDocumentV1TransactionsTransactionIdDocumentsPostData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await addTransactionDocumentV1TransactionsTransactionIdDocumentsPost({
-            ...options,
-            ...fnOptions,
-            throwOnError: true,
-          });
-        return data;
-      },
-    };
-    return mutationOptions;
+export const addTransactionDocumentMutation = (
+  options?: Partial<Options<AddTransactionDocumentData>>,
+): UseMutationOptions<
+  AddTransactionDocumentResponse,
+  AddTransactionDocumentError,
+  Options<AddTransactionDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddTransactionDocumentResponse,
+    AddTransactionDocumentError,
+    Options<AddTransactionDocumentData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await addTransactionDocument({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
 /**
  * Remove Transaction Document
  *
  * Takes the document off the transaction; it's deleted once no transaction has it.
  */
-export const removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteMutation =
-  (
-    options?: Partial<
-      Options<RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData>
-    >,
-  ): UseMutationOptions<
-    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
-    RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
-    Options<RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData>
-  > => {
-    const mutationOptions: UseMutationOptions<
-      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteResponse,
-      RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteError,
-      Options<RemoveTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDeleteData>
-    > = {
-      mutationFn: async (fnOptions) => {
-        const { data } =
-          await removeTransactionDocumentV1TransactionsTransactionIdDocumentsDocumentIdDelete(
-            {
-              ...options,
-              ...fnOptions,
-              throwOnError: true,
-            },
-          );
-        return data;
-      },
-    };
-    return mutationOptions;
+export const removeTransactionDocumentMutation = (
+  options?: Partial<Options<RemoveTransactionDocumentData>>,
+): UseMutationOptions<
+  RemoveTransactionDocumentResponse,
+  RemoveTransactionDocumentError,
+  Options<RemoveTransactionDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveTransactionDocumentResponse,
+    RemoveTransactionDocumentError,
+    Options<RemoveTransactionDocumentData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await removeTransactionDocument({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
   };
+  return mutationOptions;
+};
 
-export const downloadDocumentV1DocumentsDocumentIdFileGetQueryKey = (
-  options: Options<DownloadDocumentV1DocumentsDocumentIdFileGetData>,
-) => createQueryKey("downloadDocumentV1DocumentsDocumentIdFileGet", options);
+export const downloadDocumentQueryKey = (
+  options: Options<DownloadDocumentData>,
+) => createQueryKey("downloadDocument", options);
 
 /**
  * Download Document
  *
  * The file as it was uploaded.
  */
-export const downloadDocumentV1DocumentsDocumentIdFileGetOptions = (
-  options: Options<DownloadDocumentV1DocumentsDocumentIdFileGetData>,
+export const downloadDocumentOptions = (
+  options: Options<DownloadDocumentData>,
 ) =>
   queryOptions<
     unknown,
-    DownloadDocumentV1DocumentsDocumentIdFileGetError,
+    DownloadDocumentError,
     unknown,
-    ReturnType<typeof downloadDocumentV1DocumentsDocumentIdFileGetQueryKey>
+    ReturnType<typeof downloadDocumentQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await downloadDocumentV1DocumentsDocumentIdFileGet({
+      const { data } = await downloadDocument({
         ...options,
         ...queryKey[0],
         signal,
@@ -5395,29 +5148,26 @@ export const downloadDocumentV1DocumentsDocumentIdFileGetOptions = (
       });
       return data;
     },
-    queryKey: downloadDocumentV1DocumentsDocumentIdFileGetQueryKey(options),
+    queryKey: downloadDocumentQueryKey(options),
   });
 
-export const documentPageV1DocumentsDocumentIdPagesPageGetQueryKey = (
-  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
-) => createQueryKey("documentPageV1DocumentsDocumentIdPagesPageGet", options);
+export const documentPageQueryKey = (options: Options<DocumentPageData>) =>
+  createQueryKey("documentPage", options);
 
 /**
  * Document Page Preview
  *
  * One page as an image, numbered from 1.
  */
-export const documentPageV1DocumentsDocumentIdPagesPageGetOptions = (
-  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
-) =>
+export const documentPageOptions = (options: Options<DocumentPageData>) =>
   queryOptions<
     unknown,
-    DocumentPageV1DocumentsDocumentIdPagesPageGetError,
+    DocumentPageError,
     unknown,
-    ReturnType<typeof documentPageV1DocumentsDocumentIdPagesPageGetQueryKey>
+    ReturnType<typeof documentPageQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await documentPageV1DocumentsDocumentIdPagesPageGet({
+      const { data } = await documentPage({
         ...options,
         ...queryKey[0],
         signal,
@@ -5425,34 +5175,30 @@ export const documentPageV1DocumentsDocumentIdPagesPageGetOptions = (
       });
       return data;
     },
-    queryKey: documentPageV1DocumentsDocumentIdPagesPageGetQueryKey(options),
+    queryKey: documentPageQueryKey(options),
   });
 
-export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteQueryKey = (
-  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
-): QueryKey<Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>> =>
-  createQueryKey(
-    "documentPageV1DocumentsDocumentIdPagesPageGet",
-    options,
-    true,
-  );
+export const documentPageInfiniteQueryKey = (
+  options: Options<DocumentPageData>,
+): QueryKey<Options<DocumentPageData>> =>
+  createQueryKey("documentPage", options, true);
 
 /**
  * Document Page Preview
  *
  * One page as an image, numbered from 1.
  */
-export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteOptions = (
-  options: Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>,
+export const documentPageInfiniteOptions = (
+  options: Options<DocumentPageData>,
 ) => {
   const opts = infiniteQueryOptions<
     unknown,
-    DocumentPageV1DocumentsDocumentIdPagesPageGetError,
+    DocumentPageError,
     InfiniteData<unknown>,
-    QueryKey<Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>>,
+    QueryKey<Options<DocumentPageData>>,
     | number
     | Pick<
-        QueryKey<Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>>[0],
+        QueryKey<Options<DocumentPageData>>[0],
         "body" | "headers" | "path" | "query"
       >
   >(
@@ -5461,9 +5207,7 @@ export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteOptions = (
       queryFn: async ({ pageParam, queryKey, signal }) => {
         // @ts-ignore
         const page: Pick<
-          QueryKey<
-            Options<DocumentPageV1DocumentsDocumentIdPagesPageGetData>
-          >[0],
+          QueryKey<Options<DocumentPageData>>[0],
           "body" | "headers" | "path" | "query"
         > =
           typeof pageParam === "object"
@@ -5474,7 +5218,7 @@ export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteOptions = (
                 },
               };
         const params = createInfiniteParams(queryKey, page);
-        const { data } = await documentPageV1DocumentsDocumentIdPagesPageGet({
+        const { data } = await documentPage({
           ...options,
           ...params,
           signal,
@@ -5482,69 +5226,62 @@ export const documentPageV1DocumentsDocumentIdPagesPageGetInfiniteOptions = (
         });
         return data;
       },
-      queryKey:
-        documentPageV1DocumentsDocumentIdPagesPageGetInfiniteQueryKey(options),
+      queryKey: documentPageInfiniteQueryKey(options),
     },
   );
   return opts as Omit<typeof opts, "initialData">;
 };
 
-export const documentThumbnailV1DocumentsDocumentIdThumbnailGetQueryKey = (
-  options: Options<DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData>,
-) =>
-  createQueryKey("documentThumbnailV1DocumentsDocumentIdThumbnailGet", options);
+export const documentThumbnailQueryKey = (
+  options: Options<DocumentThumbnailData>,
+) => createQueryKey("documentThumbnail", options);
 
 /**
  * Document Thumbnail
  *
  * A small image of the first page.
  */
-export const documentThumbnailV1DocumentsDocumentIdThumbnailGetOptions = (
-  options: Options<DocumentThumbnailV1DocumentsDocumentIdThumbnailGetData>,
+export const documentThumbnailOptions = (
+  options: Options<DocumentThumbnailData>,
 ) =>
   queryOptions<
     unknown,
-    DocumentThumbnailV1DocumentsDocumentIdThumbnailGetError,
+    DocumentThumbnailError,
     unknown,
-    ReturnType<
-      typeof documentThumbnailV1DocumentsDocumentIdThumbnailGetQueryKey
-    >
+    ReturnType<typeof documentThumbnailQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await documentThumbnailV1DocumentsDocumentIdThumbnailGet(
-        {
-          ...options,
-          ...queryKey[0],
-          signal,
-          throwOnError: true,
-        },
-      );
+      const { data } = await documentThumbnail({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
       return data;
     },
-    queryKey:
-      documentThumbnailV1DocumentsDocumentIdThumbnailGetQueryKey(options),
+    queryKey: documentThumbnailQueryKey(options),
   });
 
-export const getWeatherForecastV1WeatherGetQueryKey = (
-  options: Options<GetWeatherForecastV1WeatherGetData>,
-) => createQueryKey("getWeatherForecastV1WeatherGet", options);
+export const getWeatherForecastQueryKey = (
+  options: Options<GetWeatherForecastData>,
+) => createQueryKey("getWeatherForecast", options);
 
 /**
  * Get Weather Forecast
  *
  * Yr's forecast for a point: the weather now, the next hours and day by day.
  */
-export const getWeatherForecastV1WeatherGetOptions = (
-  options: Options<GetWeatherForecastV1WeatherGetData>,
+export const getWeatherForecastOptions = (
+  options: Options<GetWeatherForecastData>,
 ) =>
   queryOptions<
-    GetWeatherForecastV1WeatherGetResponse,
-    GetWeatherForecastV1WeatherGetError,
-    GetWeatherForecastV1WeatherGetResponse,
-    ReturnType<typeof getWeatherForecastV1WeatherGetQueryKey>
+    GetWeatherForecastResponse,
+    GetWeatherForecastError,
+    GetWeatherForecastResponse,
+    ReturnType<typeof getWeatherForecastQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getWeatherForecastV1WeatherGet({
+      const { data } = await getWeatherForecast({
         ...options,
         ...queryKey[0],
         signal,
@@ -5552,29 +5289,29 @@ export const getWeatherForecastV1WeatherGetOptions = (
       });
       return data;
     },
-    queryKey: getWeatherForecastV1WeatherGetQueryKey(options),
+    queryKey: getWeatherForecastQueryKey(options),
   });
 
-export const getKlarnaTransactionsV1KlarnaTransactionsGetQueryKey = (
-  options: Options<GetKlarnaTransactionsV1KlarnaTransactionsGetData>,
-) => createQueryKey("getKlarnaTransactionsV1KlarnaTransactionsGet", options);
+export const getKlarnaTransactionsQueryKey = (
+  options: Options<GetKlarnaTransactionsData>,
+) => createQueryKey("getKlarnaTransactions", options);
 
 /**
  * Get Klarna Transactions
  *
  * Fetch Klarna transactions and return raw GraphQL response.
  */
-export const getKlarnaTransactionsV1KlarnaTransactionsGetOptions = (
-  options: Options<GetKlarnaTransactionsV1KlarnaTransactionsGetData>,
+export const getKlarnaTransactionsOptions = (
+  options: Options<GetKlarnaTransactionsData>,
 ) =>
   queryOptions<
-    GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
-    GetKlarnaTransactionsV1KlarnaTransactionsGetError,
-    GetKlarnaTransactionsV1KlarnaTransactionsGetResponse,
-    ReturnType<typeof getKlarnaTransactionsV1KlarnaTransactionsGetQueryKey>
+    GetKlarnaTransactionsResponse,
+    GetKlarnaTransactionsError,
+    GetKlarnaTransactionsResponse,
+    ReturnType<typeof getKlarnaTransactionsQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getKlarnaTransactionsV1KlarnaTransactionsGet({
+      const { data } = await getKlarnaTransactions({
         ...options,
         ...queryKey[0],
         signal,
@@ -5582,7 +5319,7 @@ export const getKlarnaTransactionsV1KlarnaTransactionsGetOptions = (
       });
       return data;
     },
-    queryKey: getKlarnaTransactionsV1KlarnaTransactionsGetQueryKey(options),
+    queryKey: getKlarnaTransactionsQueryKey(options),
   });
 
 /**
@@ -5591,20 +5328,20 @@ export const getKlarnaTransactionsV1KlarnaTransactionsGetOptions = (
  * Fetch Klarna purchases and import the pay later ones into Bessel.
  * Skips rejected (isAmountLineThrough) and pending purchases, and ones paid at purchase.
  */
-export const importKlarnaTransactionsV1KlarnaImportPostMutation = (
-  options?: Partial<Options<ImportKlarnaTransactionsV1KlarnaImportPostData>>,
+export const importKlarnaTransactionsMutation = (
+  options?: Partial<Options<ImportKlarnaTransactionsData>>,
 ): UseMutationOptions<
-  ImportKlarnaTransactionsV1KlarnaImportPostResponse,
-  ImportKlarnaTransactionsV1KlarnaImportPostError,
-  Options<ImportKlarnaTransactionsV1KlarnaImportPostData>
+  ImportKlarnaTransactionsResponse,
+  ImportKlarnaTransactionsError,
+  Options<ImportKlarnaTransactionsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ImportKlarnaTransactionsV1KlarnaImportPostResponse,
-    ImportKlarnaTransactionsV1KlarnaImportPostError,
-    Options<ImportKlarnaTransactionsV1KlarnaImportPostData>
+    ImportKlarnaTransactionsResponse,
+    ImportKlarnaTransactionsError,
+    Options<ImportKlarnaTransactionsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await importKlarnaTransactionsV1KlarnaImportPost({
+      const { data } = await importKlarnaTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,
