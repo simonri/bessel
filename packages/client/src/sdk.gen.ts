@@ -64,6 +64,7 @@ import {
   listNotificationsResponseTransformer,
   listPlacesResponseTransformer,
   listProjectsResponseTransformer,
+  listRecipeCooksResponseTransformer,
   listRecipesResponseTransformer,
   listResetsResponseTransformer,
   listTasksResponseTransformer,
@@ -72,8 +73,10 @@ import {
   listTradesResponseTransformer,
   listTransactionDocumentsResponseTransformer,
   listTransactionsResponseTransformer,
+  logRecipeCookedResponseTransformer,
   markNotificationReadResponseTransformer,
   putGymTopSetResponseTransformer,
+  removeRecipeCookedResponseTransformer,
   renameTransactionResponseTransformer,
   reopenTaskResponseTransformer,
   respondToCalendarEventResponseTransformer,
@@ -372,6 +375,9 @@ import type {
   ListProjectsData,
   ListProjectsErrors,
   ListProjectsResponses,
+  ListRecipeCooksData,
+  ListRecipeCooksErrors,
+  ListRecipeCooksResponses,
   ListRecipesData,
   ListRecipesErrors,
   ListRecipesResponses,
@@ -395,6 +401,9 @@ import type {
   ListTransactionsData,
   ListTransactionsErrors,
   ListTransactionsResponses,
+  LogRecipeCookedData,
+  LogRecipeCookedErrors,
+  LogRecipeCookedResponses,
   MarkAllNotificationsReadData,
   MarkAllNotificationsReadResponses,
   MarkNotificationReadData,
@@ -406,6 +415,9 @@ import type {
   PutGymTopSetData,
   PutGymTopSetErrors,
   PutGymTopSetResponses,
+  RemoveRecipeCookedData,
+  RemoveRecipeCookedErrors,
+  RemoveRecipeCookedResponses,
   RemoveTransactionDocumentData,
   RemoveTransactionDocumentErrors,
   RemoveTransactionDocumentResponses,
@@ -2671,6 +2683,71 @@ export const updateRecipe = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * List Recipe Cooks
+ */
+export const listRecipeCooks = <ThrowOnError extends boolean = false>(
+  options: Options<ListRecipeCooksData, ThrowOnError>,
+): RequestResult<
+  ListRecipeCooksResponses,
+  ListRecipeCooksErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ListRecipeCooksResponses,
+    ListRecipeCooksErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listRecipeCooksResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recipes/{recipe_id}/cooks",
+    ...options,
+  });
+
+/**
+ * Remove Recipe Cooked
+ */
+export const removeRecipeCooked = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveRecipeCookedData, ThrowOnError>,
+): RequestResult<
+  RemoveRecipeCookedResponses,
+  RemoveRecipeCookedErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    RemoveRecipeCookedResponses,
+    RemoveRecipeCookedErrors,
+    ThrowOnError
+  >({
+    responseTransformer: removeRecipeCookedResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recipes/{recipe_id}/cooks/{cooked_on}",
+    ...options,
+  });
+
+/**
+ * Log Recipe Cooked
+ *
+ * Logs that the recipe was cooked on the app's local day. Logging a day twice changes nothing.
+ */
+export const logRecipeCooked = <ThrowOnError extends boolean = false>(
+  options: Options<LogRecipeCookedData, ThrowOnError>,
+): RequestResult<
+  LogRecipeCookedResponses,
+  LogRecipeCookedErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    LogRecipeCookedResponses,
+    LogRecipeCookedErrors,
+    ThrowOnError
+  >({
+    responseTransformer: logRecipeCookedResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recipes/{recipe_id}/cooks/{cooked_on}",
+    ...options,
   });
 
 /**

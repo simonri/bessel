@@ -1,7 +1,8 @@
+from datetime import date
 from typing import Any
 
 import pytest
-from api.models.recipe import Recipe
+from api.models.recipe import Recipe, RecipeCook
 from api.recipes.body import RecipeBody, RecipeIngredient, RecipeIngredientGroup, RecipeStep
 from api.tests.fixtures.database import SaveFixture
 from api.tests.fixtures.mcp import ConnectFixture, mcp_call, mcp_call_error
@@ -38,9 +39,13 @@ class TestRecipes:
     assert found["total_count"] == 1
     assert found["recipes"] == [{"id": str(pancakes.id), "title": "Pancakes", "recipe_type": "other"}]
 
+    await save_owned(RecipeCook(recipe_id=pancakes.id, cooked_on=date(2026, 9, 20)))
+    await save_owned(RecipeCook(recipe_id=pancakes.id, cooked_on=date(2026, 10, 8)))
+
     recipe = await mcp_call(connect, "get_recipe", {"recipe_id": str(pancakes.id)})
     assert recipe["title"] == "Pancakes"
     assert "2 eggs" in recipe["content"]
+    assert (recipe["last_cooked_on"], recipe["cook_count"]) == ("2026-10-08", 2)
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_see_recipes(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:

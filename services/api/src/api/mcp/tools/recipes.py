@@ -11,7 +11,7 @@ from api.mcp.context import user_session
 from api.mcp.tools.common import ToolSpec, read, write
 from api.models.recipe import Recipe, RecipeType
 from api.recipes.body import RecipeBody, RecipeIngredient, RecipeSection, RecipeStep, parse_ingredient_line
-from api.recipes.repository import RecipeRepository
+from api.recipes.repository import CookStats, RecipeCookRepository, RecipeRepository
 from api.recipes.schemas import RecipeSchema
 from api.recipes.service import recipe_service
 
@@ -81,7 +81,8 @@ async def get_recipe(ctx: Context, recipe_id: UUID) -> RecipeSchema:
   """One recipe with its ingredients and steps."""
   async with user_session(ctx) as (session, user):
     recipe = await RecipeRepository.from_session(session).get_owned_or_404(recipe_id, user.id, not_found_message="Recipe not found.")
-    return RecipeSchema.model_validate(recipe)
+    stats = await RecipeCookRepository.from_session(session).stats([recipe.id])
+    return RecipeSchema.from_recipe(recipe, stats.get(recipe.id, CookStats()))
 
 
 async def add_recipe(

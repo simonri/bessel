@@ -1,4 +1,5 @@
-from typing import Any
+from datetime import date
+from typing import Any, Self
 
 from pydantic import Field, model_validator
 
@@ -6,6 +7,7 @@ from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
 from api.models.recipe import Recipe, RecipeType
 from api.recipes.body import RecipeBody, parse_markdown
+from api.recipes.repository import CookStats
 
 
 class RecipeSchema(IDSchema, TimestampedSchema):
@@ -14,6 +16,12 @@ class RecipeSchema(IDSchema, TimestampedSchema):
   recipe_type: RecipeType
   body: RecipeBody
   structured: bool = Field(description="False when `body` was derived from markdown on the fly rather than saved.")
+  last_cooked_on: date | None = Field(default=None, description="The latest day it was cooked, in the user's own time zone.")
+  cook_count: int = Field(default=0, description="How many days it has been cooked.")
+
+  @classmethod
+  def from_recipe(cls, recipe: Recipe, cooks: CookStats) -> Self:
+    return cls.model_validate(recipe).model_copy(update={"last_cooked_on": cooks.last_cooked_on, "cook_count": cooks.cook_count})
 
   @model_validator(mode="before")
   @classmethod
@@ -59,3 +67,12 @@ class RecipeImportResult(Schema):
 
 class RecipeListResponse(ListResource[RecipeSchema]):
   pass
+
+
+class RecipeCookResult(Schema):
+  recipe: RecipeSchema
+  created: bool = Field(description="False when the day was already logged, so there's nothing for this request to undo.")
+
+
+class RecipeCookHistory(Schema):
+  days: list[date] = Field(description="Every day the recipe was cooked, latest first.")

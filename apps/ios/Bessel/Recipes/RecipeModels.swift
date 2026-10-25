@@ -11,6 +11,8 @@ typealias RecipeUpdate = API.RecipeUpdate
 typealias RecipeImportRequest = API.RecipeImportRequest
 typealias RecipeImportResult = API.RecipeImportResult
 typealias RecipeListResponse = API.RecipeListResponse
+typealias RecipeCookResult = API.RecipeCookResult
+typealias RecipeCookHistory = API.RecipeCookHistory
 
 extension RecipeBody {
     typealias IngredientGroup = API.RecipeIngredientGroup
@@ -63,6 +65,56 @@ extension RecipeType: Identifiable {
 
 extension RecipeItem: Identifiable {
     var ingredientCount: Int { body.ingredientGroups.map(\.items.count).reduce(0, +) }
+
+    /// Whole days since it was last cooked, or nil when it never was.
+    func daysSinceCooked(today: Date = .now, calendar: Calendar = .current) -> Int? {
+        guard let lastCookedOn else { return nil }
+        return calendar.dateComponents([.day], from: calendar.startOfDay(for: lastCookedOn), to: calendar.startOfDay(for: today)).day
+    }
+
+    /// "Cooked today", "Cooked 5 days ago", "Cooked 3 weeks ago" or "Not cooked yet",
+    /// worded as on the web (apps/web recipe-meta.ts cookedLabel).
+    func cookedLabel(today: Date = .now) -> String {
+        guard let days = daysSinceCooked(today: today) else { return "Not cooked yet" }
+        switch days {
+        case ..<1: return "Cooked today"
+        case 1: return "Cooked yesterday"
+        case ..<14: return "Cooked \(days) days ago"
+        case ..<60: return "Cooked \(days / 7) weeks ago"
+        case ..<365: return "Cooked \(days / 30) months ago"
+        default: return "Cooked over a year ago"
+        }
+    }
+
+    func wasCooked(on day: Date, calendar: Calendar = .current) -> Bool {
+        lastCookedOn.map { calendar.isDate($0, inSameDayAs: day) } ?? false
+    }
+}
+
+/// How the recipe list is ordered.
+enum RecipeSort: String, CaseIterable, Identifiable {
+    case title
+    /// The ones made longest ago first; never-made ones last.
+    case cooked
+
+    var id: String { rawValue }
+
+    func sorted(_ recipes: [RecipeItem]) -> [RecipeItem] {
+        let byTitle: (RecipeItem, RecipeItem) -> Bool = { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        switch self {
+        case .title:
+            return recipes.sorted(by: byTitle)
+        case .cooked:
+            return recipes.sorted { a, b in
+                switch (a.lastCookedOn, b.lastCookedOn) {
+                case let (x?, y?) where x != y: return x < y
+                case (nil, _?): return false
+                case (_?, nil): return true
+                default: return byTitle(a, b)
+                }
+            }
+        }
+    }
 }
 
 /// Ingredient lines as text and back, matching the API's own parser

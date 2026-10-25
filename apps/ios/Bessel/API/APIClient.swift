@@ -110,8 +110,13 @@ final class APIClient {
         _ = try await sendRaw(Request(method: "PATCH", path: path, body: try encodeBody(body)))
     }
 
-    func put<T: Decodable>(_ path: String, body: some Encodable) async throws -> T {
+    func put<T: Decodable>(_ path: String, body: (some Encodable)? = Optional<Int>.none) async throws -> T {
         try await send(Request(method: "PUT", path: path, body: try encodeBody(body)))
+    }
+
+    /// A delete that answers with what's left, such as a recipe after one of its days is removed.
+    func delete<T: Decodable>(_ path: String) async throws -> T {
+        try await send(Request(method: "DELETE", path: path))
     }
 
     func deleteNoContent(_ path: String, query: [URLQueryItem] = []) async throws {

@@ -19,10 +19,14 @@ final class RecipesStore {
     @ObservationIgnored private let changes = SerialQueues<UUID>()
     private static let cacheKey = "recipes.v1"
 
-    init(services: AppServices) {
-        client = services.client
-        outbox = services.outbox
-        cache = services.cache
+    convenience init(services: AppServices) {
+        self.init(client: services.client, outbox: services.outbox, cache: services.cache)
+    }
+
+    init(client: APIClient, outbox: DeleteOutbox, cache: ResponseCache) {
+        self.client = client
+        self.outbox = outbox
+        self.cache = cache
         if let saved = cache.load([RecipeItem].self, key: Self.cacheKey) {
             recipes = saved.filter { !outbox.pendingIDs.contains($0.id) }
             hasLoaded = true
@@ -76,6 +80,61 @@ final class RecipesStore {
         if let index = recipes.firstIndex(where: { $0.id == updated.id }) {
             recipes[index] = updated
         }
+    }
+
+    /// Logs the recipe as cooked on `day` (today unless picked). Undo is offered
+    /// only for a day this call added: one already logged, say from the desktop a
+    /// moment ago, isn't this tap's to take back.
+    func logCooked(_ recipe: RecipeItem, on day: Date = .now, toasts: ToastCenter) async {
+        loads.invalidate()
+        do {
+            let result: RecipeCookResult = try await changes.run(recipe.id) { [client] in
+                try await client.put(Self.cookPath(recipe, day))
+            }
+            replace(result.recipe)
+            let isToday = Calendar.current.isDateInToday(day)
+            let named = isToday ? "today" : day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+            if result.created {
+                toasts.show("Logged as cooked \(isToday ? named : "on \(named)")") { [weak self] in
+                    Task { await self?.removeCooked(recipe, on: day) }
+                }
+            } else {
+                toasts.show("Already logged for \(named)")
+            }
+        } catch {
+            errorMessage = error.userMessage
+        }
+    }
+
+    func removeCooked(_ recipe: RecipeItem, on day: Date) async {
+        loads.invalidate()
+        do {
+            let updated: RecipeItem = try await changes.run(recipe.id) { [client] in
+                try await client.delete(Self.cookPath(recipe, day))
+            }
+            replace(updated)
+        } catch let error as APIError where error.statusCode == 404 {
+            // Already off the list.
+        } catch {
+            errorMessage = error.userMessage
+        }
+    }
+
+    /// Every day the recipe was cooked, latest first.
+    func cookHistory(_ recipe: RecipeItem) async throws -> [Date] {
+        let history: RecipeCookHistory = try await client.get("/v1/recipes/\(recipe.id)/cooks")
+        return history.days
+    }
+
+    private static func cookPath(_ recipe: RecipeItem, _ day: Date) -> String {
+        "/v1/recipes/\(recipe.id)/cooks/\(DateParsing.dateOnly.string(from: day))"
+    }
+
+    private func replace(_ recipe: RecipeItem) {
+        if let index = recipes.firstIndex(where: { $0.id == recipe.id }) {
+            withAnimation(.snappy) { recipes[index] = recipe }
+        }
+        cache.save(recipes, as: Self.cacheKey)
     }
 
     /// Turns pasted text from anywhere into a structured recipe draft. A model

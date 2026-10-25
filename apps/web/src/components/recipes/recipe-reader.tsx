@@ -228,10 +228,16 @@ export function RecipeReader({
   title,
   type,
   body,
+  cooked,
+  footer,
 }: {
   title: string;
   type: RecipeType;
   body: RecipeBody;
+  /** When it was last cooked, beside the recipe's details. */
+  cooked?: ReactNode;
+  /** After the steps: what to do once it's made. */
+  footer?: ReactNode;
 }) {
   const meta = RECIPE_TYPE_META[type];
   const summary = describeRecipe(body);
@@ -288,6 +294,7 @@ export function RecipeReader({
             {!body.yield_text && !body.total_minutes && summary && (
               <span className="text-11 text-white/50">{summary}</span>
             )}
+            {cooked}
           </div>
         </div>
       </div>
@@ -361,6 +368,7 @@ export function RecipeReader({
           ))}
         </>
       )}
+      {footer}
     </div>
   );
 }

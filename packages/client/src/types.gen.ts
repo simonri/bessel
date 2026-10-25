@@ -4722,6 +4722,31 @@ export type RecipeCallout = {
 };
 
 /**
+ * RecipeCookHistory
+ */
+export type RecipeCookHistory = {
+  /**
+   * Days
+   *
+   * Every day the recipe was cooked, latest first.
+   */
+  days: Array<Date>;
+};
+
+/**
+ * RecipeCookResult
+ */
+export type RecipeCookResult = {
+  recipe: RecipeSchema;
+  /**
+   * Created
+   *
+   * False when the day was already logged, so there's nothing for this request to undo.
+   */
+  created: boolean;
+};
+
+/**
  * RecipeCreate
  */
 export type RecipeCreate = {
@@ -4864,6 +4889,18 @@ export type RecipeSchema = {
    * False when `body` was derived from markdown on the fly rather than saved.
    */
   structured: boolean;
+  /**
+   * Last Cooked On
+   *
+   * The latest day it was cooked, in the user's own time zone.
+   */
+  last_cooked_on: Date | null;
+  /**
+   * Cook Count
+   *
+   * How many days it has been cooked.
+   */
+  cook_count: number;
 };
 
 /**
@@ -10374,6 +10411,110 @@ export type UpdateRecipeResponses = {
 
 export type UpdateRecipeResponse =
   UpdateRecipeResponses[keyof UpdateRecipeResponses];
+
+export type ListRecipeCooksData = {
+  body?: never;
+  path: {
+    /**
+     * Recipe Id
+     */
+    recipe_id: string;
+  };
+  query?: never;
+  url: "/v1/recipes/{recipe_id}/cooks";
+};
+
+export type ListRecipeCooksErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListRecipeCooksError =
+  ListRecipeCooksErrors[keyof ListRecipeCooksErrors];
+
+export type ListRecipeCooksResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeCookHistory;
+};
+
+export type ListRecipeCooksResponse =
+  ListRecipeCooksResponses[keyof ListRecipeCooksResponses];
+
+export type RemoveRecipeCookedData = {
+  body?: never;
+  path: {
+    /**
+     * Recipe Id
+     */
+    recipe_id: string;
+    /**
+     * Cooked On
+     */
+    cooked_on: Date;
+  };
+  query?: never;
+  url: "/v1/recipes/{recipe_id}/cooks/{cooked_on}";
+};
+
+export type RemoveRecipeCookedErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type RemoveRecipeCookedError =
+  RemoveRecipeCookedErrors[keyof RemoveRecipeCookedErrors];
+
+export type RemoveRecipeCookedResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeSchema;
+};
+
+export type RemoveRecipeCookedResponse =
+  RemoveRecipeCookedResponses[keyof RemoveRecipeCookedResponses];
+
+export type LogRecipeCookedData = {
+  body?: never;
+  path: {
+    /**
+     * Recipe Id
+     */
+    recipe_id: string;
+    /**
+     * Cooked On
+     */
+    cooked_on: Date;
+  };
+  query?: never;
+  url: "/v1/recipes/{recipe_id}/cooks/{cooked_on}";
+};
+
+export type LogRecipeCookedErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type LogRecipeCookedError =
+  LogRecipeCookedErrors[keyof LogRecipeCookedErrors];
+
+export type LogRecipeCookedResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecipeCookResult;
+};
+
+export type LogRecipeCookedResponse =
+  LogRecipeCookedResponses[keyof LogRecipeCookedResponses];
 
 export type SearchEverythingData = {
   body?: never;

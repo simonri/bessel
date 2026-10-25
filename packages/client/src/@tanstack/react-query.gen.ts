@@ -110,6 +110,7 @@ import {
   listNotifications,
   listPlaces,
   listProjects,
+  listRecipeCooks,
   listRecipes,
   listResets,
   listTasks,
@@ -118,11 +119,13 @@ import {
   listTrades,
   listTransactionDocuments,
   listTransactions,
+  logRecipeCooked,
   markAllNotificationsRead,
   markNotificationRead,
   nameTransactions,
   type Options,
   putGymTopSet,
+  removeRecipeCooked,
   removeTransactionDocument,
   renameTransaction,
   reopenTask,
@@ -435,6 +438,9 @@ import type {
   ListProjectsData,
   ListProjectsError,
   ListProjectsResponse,
+  ListRecipeCooksData,
+  ListRecipeCooksError,
+  ListRecipeCooksResponse,
   ListRecipesData,
   ListRecipesError,
   ListRecipesResponse,
@@ -458,6 +464,9 @@ import type {
   ListTransactionsData,
   ListTransactionsError,
   ListTransactionsResponse,
+  LogRecipeCookedData,
+  LogRecipeCookedError,
+  LogRecipeCookedResponse,
   MarkAllNotificationsReadData,
   MarkAllNotificationsReadResponse,
   MarkNotificationReadData,
@@ -469,6 +478,9 @@ import type {
   PutGymTopSetData,
   PutGymTopSetError,
   PutGymTopSetResponse,
+  RemoveRecipeCookedData,
+  RemoveRecipeCookedError,
+  RemoveRecipeCookedResponse,
   RemoveTransactionDocumentData,
   RemoveTransactionDocumentError,
   RemoveTransactionDocumentResponse,
@@ -3923,6 +3935,88 @@ export const updateRecipeMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await updateRecipe({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listRecipeCooksQueryKey = (
+  options: Options<ListRecipeCooksData>,
+) => createQueryKey("listRecipeCooks", options);
+
+/**
+ * List Recipe Cooks
+ */
+export const listRecipeCooksOptions = (options: Options<ListRecipeCooksData>) =>
+  queryOptions<
+    ListRecipeCooksResponse,
+    ListRecipeCooksError,
+    ListRecipeCooksResponse,
+    ReturnType<typeof listRecipeCooksQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRecipeCooks({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRecipeCooksQueryKey(options),
+  });
+
+/**
+ * Remove Recipe Cooked
+ */
+export const removeRecipeCookedMutation = (
+  options?: Partial<Options<RemoveRecipeCookedData>>,
+): UseMutationOptions<
+  RemoveRecipeCookedResponse,
+  RemoveRecipeCookedError,
+  Options<RemoveRecipeCookedData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveRecipeCookedResponse,
+    RemoveRecipeCookedError,
+    Options<RemoveRecipeCookedData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await removeRecipeCooked({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Log Recipe Cooked
+ *
+ * Logs that the recipe was cooked on the app's local day. Logging a day twice changes nothing.
+ */
+export const logRecipeCookedMutation = (
+  options?: Partial<Options<LogRecipeCookedData>>,
+): UseMutationOptions<
+  LogRecipeCookedResponse,
+  LogRecipeCookedError,
+  Options<LogRecipeCookedData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LogRecipeCookedResponse,
+    LogRecipeCookedError,
+    Options<LogRecipeCookedData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await logRecipeCooked({
         ...options,
         ...fnOptions,
         throwOnError: true,

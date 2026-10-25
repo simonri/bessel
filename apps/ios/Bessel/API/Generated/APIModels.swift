@@ -1358,6 +1358,15 @@ enum API {
         var text: String
     }
 
+    struct RecipeCookHistory: Codable, Hashable {
+        var days: [Date]
+    }
+
+    struct RecipeCookResult: Codable, Hashable {
+        var recipe: RecipeSchema
+        var created: Bool
+    }
+
     struct RecipeCreate: Codable, Hashable {
         var title: String
         var content: String = ""
@@ -1406,6 +1415,8 @@ enum API {
         var recipeType: RecipeType
         var body: RecipeBody
         var structured: Bool
+        var lastCookedOn: Date?
+        var cookCount: Int = 0
     }
 
     struct RecipeSection: Codable, Hashable {
@@ -7166,6 +7177,50 @@ extension API.RecipeCallout {
     }
 }
 
+extension API.RecipeCookHistory {
+    private enum DecodingKeys: String, CodingKey {
+        case days
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.days = try container.decode([Date].self, forKey: .days)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case days
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.days.map(API.Day.init), forKey: .days)
+    }
+}
+
+extension API.RecipeCookResult {
+    private enum DecodingKeys: String, CodingKey {
+        case recipe
+        case created
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.recipe = try container.decode(API.RecipeSchema.self, forKey: .recipe)
+        self.created = try container.decode(Bool.self, forKey: .created)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case recipe
+        case created
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.recipe, forKey: .recipe)
+        try container.encode(self.created, forKey: .created)
+    }
+}
+
 extension API.RecipeCreate {
     private enum DecodingKeys: String, CodingKey {
         case title
@@ -7360,6 +7415,8 @@ extension API.RecipeSchema {
         case recipeType
         case body
         case structured
+        case lastCookedOn
+        case cookCount
     }
 
     init(from decoder: Decoder) throws {
@@ -7372,6 +7429,8 @@ extension API.RecipeSchema {
         self.recipeType = try container.decode(API.RecipeType.self, forKey: .recipeType)
         self.body = try container.decode(API.RecipeBody.self, forKey: .body)
         self.structured = try container.decode(Bool.self, forKey: .structured)
+        self.lastCookedOn = try container.decodeIfPresent(Date.self, forKey: .lastCookedOn)
+        self.cookCount = try container.decodeIfPresent(Int.self, forKey: .cookCount) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -7383,6 +7442,8 @@ extension API.RecipeSchema {
         case recipeType = "recipe_type"
         case body
         case structured
+        case lastCookedOn = "last_cooked_on"
+        case cookCount = "cook_count"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -7395,6 +7456,8 @@ extension API.RecipeSchema {
         try container.encode(self.recipeType, forKey: .recipeType)
         try container.encode(self.body, forKey: .body)
         try container.encode(self.structured, forKey: .structured)
+        try container.encodeIfPresent(self.lastCookedOn.map(API.Day.init), forKey: .lastCookedOn)
+        try container.encode(self.cookCount, forKey: .cookCount)
     }
 }
 

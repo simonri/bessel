@@ -19,8 +19,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  ArrowDownAZ,
   ChefHat,
   FilePen,
+  History,
   LayoutGrid,
   Pencil,
   Plus,
@@ -31,6 +33,7 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { CookedButton, CookedMenu } from "@/components/recipes/recipe-cooked";
 import {
   cleanRecipeBody,
   emptyRecipeBody,
@@ -41,7 +44,13 @@ import {
   IMPORT_FALLBACK_ERROR,
   RecipeImportDialog,
 } from "@/components/recipes/recipe-import-dialog";
-import { matchesRecipe } from "@/components/recipes/recipe-meta";
+import {
+  cookedShort,
+  lastCookedDay,
+  matchesRecipe,
+  type RecipeSort,
+  sortRecipes,
+} from "@/components/recipes/recipe-meta";
 import { RecipeReader } from "@/components/recipes/recipe-reader";
 import {
   RECIPE_TYPE_META,
@@ -49,9 +58,11 @@ import {
   typeTint,
 } from "@/components/recipes/recipe-style";
 import { RecipeTidyBanner } from "@/components/recipes/recipe-tidy-banner";
+import { useRecipeCooks } from "@/components/recipes/use-recipe-cooks";
 import { IconButton } from "@/components/ui-kit";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
+import { useLocalDay } from "@/lib/local-day";
 import { mutationFamily } from "@/lib/optimistic";
 import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { cn } from "@/lib/utils";
@@ -195,6 +206,9 @@ function NewRecipeMenu({
 function Recipes() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<RecipeType | null>(null);
+  const [sort, setSort] = useState<RecipeSort>("title");
+  const today = useLocalDay();
+  const cooks = useRecipeCooks(today);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [draft, setDraft] = useState<RecipeDraft | null>(null);
@@ -220,10 +234,13 @@ function Recipes() {
 
   const recipes = data?.items ?? [];
   const query = search.trim();
-  const filtered = recipes.filter(
-    (r) =>
-      (!typeFilter || r.recipe_type === typeFilter) &&
-      (!query || matchesRecipe(r, query)),
+  const filtered = sortRecipes(
+    recipes.filter(
+      (r) =>
+        (!typeFilter || r.recipe_type === typeFilter) &&
+        (!query || matchesRecipe(r, query)),
+    ),
+    sort,
   );
 
   const selected = recipes.find((r) => r.id === selectedId) ?? null;
@@ -457,6 +474,27 @@ function Recipes() {
               className="h-8 w-full rounded-full bg-white/[0.05] pr-3 pl-8 text-12 text-white/85 ring-1 ring-white/[0.06] outline-none transition-[box-shadow,background-color] placeholder:text-white/30 focus:bg-white/[0.07] focus:ring-primary-400/40"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setSort(sort === "title" ? "cooked" : "title")}
+            title={
+              sort === "title"
+                ? "Sorted by name - show the ones not made in a while first"
+                : "Not made in a while first - sort by name"
+            }
+            aria-label={
+              sort === "title" ? "Sort by last cooked" : "Sort by name"
+            }
+            aria-pressed={sort === "cooked"}
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full transition-colors [&_svg]:size-3.5",
+              sort === "cooked"
+                ? "bg-white/[0.1] text-white/85"
+                : "text-white/45 hover:bg-white/[0.05] hover:text-white/75",
+            )}
+          >
+            {sort === "title" ? <ArrowDownAZ /> : <History />}
+          </button>
           <NewRecipeMenu
             onBlank={createRecipe}
             onPaste={() => setImportOpen(true)}
@@ -517,6 +555,9 @@ function Recipes() {
                   <span className="min-w-0 flex-1 truncate">
                     {r.title || "Untitled"}
                   </span>
+                  <span className="shrink-0 text-11 text-white/30 tabular-nums">
+                    {cookedShort(lastCookedDay(r), today)}
+                  </span>
                 </button>
               );
             })
@@ -530,6 +571,7 @@ function Recipes() {
             recipes={filtered}
             totalCount={recipes.length}
             filtered={filtered.length !== recipes.length}
+            today={today}
             onOpen={openRecipe}
             onCreate={createRecipe}
             onImport={() => setImportOpen(true)}
@@ -637,6 +679,22 @@ function Recipes() {
                     title={draft.title}
                     type={draft.recipe_type}
                     body={draft.body}
+                    cooked={
+                      <CookedMenu
+                        recipe={selected}
+                        today={today}
+                        onLog={(day) => cooks.logCooked(selected, day)}
+                        onRemove={(day) => cooks.removeCooked(selected, day)}
+                      />
+                    }
+                    footer={
+                      <CookedButton
+                        recipe={selected}
+                        today={today}
+                        pending={cooks.pending}
+                        onLog={(day) => cooks.logCooked(selected, day)}
+                      />
+                    }
                   />
                 )}
               </div>

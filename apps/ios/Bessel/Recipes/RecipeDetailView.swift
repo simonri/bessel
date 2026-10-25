@@ -10,6 +10,7 @@ struct RecipeDetailView: View {
     @State private var ticked: Set<String> = []
     @State private var editing = false
     @State private var cooking = false
+    @State private var showingHistory = false
 
     var body: some View {
         Group {
@@ -20,7 +21,12 @@ struct RecipeDetailView: View {
                         RecipeEditorView(store: store, recipe: recipe) { _ in }
                     }
                     .fullScreenCover(isPresented: $cooking) {
-                        CookingModeView(recipe: recipe, ticked: $ticked)
+                        CookingModeView(recipe: recipe, ticked: $ticked) {
+                            Task { await store.logCooked(recipe, toasts: toasts) }
+                        }
+                    }
+                    .sheet(isPresented: $showingHistory) {
+                        CookHistorySheet(store: store, recipe: recipe)
                     }
             } else {
                 EmptyState(emoji: "🍽️", title: "This recipe is gone")
@@ -55,6 +61,7 @@ struct RecipeDetailView: View {
                     MarkdownText(recipe.content)
                         .card()
                 }
+                cookedCard(recipe)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 32)
@@ -82,12 +89,47 @@ struct RecipeDetailView: View {
                     Chip(text: yield, hue: 165, systemImage: "person.2")
                 }
             }
+            Button { showingHistory = true } label: {
+                Chip(text: cookedSummary(recipe), hue: 285, systemImage: "clock.arrow.circlepath")
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Shows the days you cooked it")
             if let intro = recipe.body.intro, !intro.isEmpty {
                 MarkdownText(intro)
                     .foregroundStyle(Theme.mutedForeground)
             }
         }
         .padding(.top, 8)
+    }
+
+    private func cookedSummary(_ recipe: RecipeItem) -> String {
+        let label = recipe.cookedLabel()
+        return recipe.cookCount > 1 ? "\(label) - \(recipe.cookCount) times" : label
+    }
+
+    // MARK: - Cooked
+
+    /// The end of the recipe: one tap logs today.
+    private func cookedCard(_ recipe: RecipeItem) -> some View {
+        let done = recipe.wasCooked(on: .now)
+        return VStack(spacing: 8) {
+            Button {
+                Task { await store.logCooked(recipe, toasts: toasts) }
+            } label: {
+                Label(done ? "Cooked today" : "I cooked this", systemImage: done ? "checkmark" : "frying.pan")
+                    .font(.body.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.primary)
+            .controlSize(.large)
+            .disabled(done)
+            Text(done ? "Logged - it shows as cooked in your recipes" : "Keeps track of what you haven't made in a while")
+                .font(.caption)
+                .foregroundStyle(Theme.mutedForeground)
+        }
+        .card()
+        .haptic(.success, trigger: done) { _, isDone in isDone }
     }
 
     // MARK: - Ingredients
@@ -180,6 +222,16 @@ struct RecipeDetailView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                if !recipe.wasCooked(on: .now) {
+                    Button {
+                        Task { await store.logCooked(recipe, toasts: toasts) }
+                    } label: {
+                        Label("Cooked today", systemImage: "frying.pan")
+                    }
+                }
+                Button { showingHistory = true } label: {
+                    Label("Cooked on…", systemImage: "clock.arrow.circlepath")
+                }
                 ShareLink(item: recipe.content.isEmpty ? recipe.title : recipe.content) {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }

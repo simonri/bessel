@@ -5299,6 +5299,169 @@
         }
       }
     },
+    "/v1/recipes/{recipe_id}/cooks": {
+      "get": {
+        "tags": [
+          "recipes"
+        ],
+        "summary": "List Recipe Cooks",
+        "operationId": "list_recipe_cooks",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recipe Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeCookHistory"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/recipes/{recipe_id}/cooks/{cooked_on}": {
+      "put": {
+        "tags": [
+          "recipes"
+        ],
+        "summary": "Log Recipe Cooked",
+        "description": "Logs that the recipe was cooked on the app's local day. Logging a day twice changes nothing.",
+        "operationId": "log_recipe_cooked",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recipe Id"
+            }
+          },
+          {
+            "name": "cooked_on",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Cooked On"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeCookResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "recipes"
+        ],
+        "summary": "Remove Recipe Cooked",
+        "operationId": "remove_recipe_cooked",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recipe Id"
+            }
+          },
+          {
+            "name": "cooked_on",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Cooked On"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/search": {
       "get": {
         "tags": [
@@ -15577,6 +15740,42 @@
         ],
         "title": "RecipeCallout"
       },
+      "RecipeCookHistory": {
+        "properties": {
+          "days": {
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
+            "type": "array",
+            "title": "Days",
+            "description": "Every day the recipe was cooked, latest first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "days"
+        ],
+        "title": "RecipeCookHistory"
+      },
+      "RecipeCookResult": {
+        "properties": {
+          "recipe": {
+            "$ref": "#/components/schemas/RecipeSchema"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created",
+            "description": "False when the day was already logged, so there's nothing for this request to undo."
+          }
+        },
+        "type": "object",
+        "required": [
+          "recipe",
+          "created"
+        ],
+        "title": "RecipeCookResult"
+      },
       "RecipeCreate": {
         "properties": {
           "title": {
@@ -15807,6 +16006,25 @@
             "type": "boolean",
             "title": "Structured",
             "description": "False when `body` was derived from markdown on the fly rather than saved."
+          },
+          "last_cooked_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Cooked On",
+            "description": "The latest day it was cooked, in the user's own time zone."
+          },
+          "cook_count": {
+            "type": "integer",
+            "title": "Cook Count",
+            "description": "How many days it has been cooked.",
+            "default": 0
           }
         },
         "type": "object",
@@ -15818,7 +16036,9 @@
           "content",
           "recipe_type",
           "body",
-          "structured"
+          "structured",
+          "last_cooked_on",
+          "cook_count"
         ],
         "title": "RecipeSchema"
       },

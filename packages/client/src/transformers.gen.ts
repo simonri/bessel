@@ -55,6 +55,7 @@ import type {
   ListNotificationsResponse,
   ListPlacesResponse,
   ListProjectsResponse,
+  ListRecipeCooksResponse,
   ListRecipesResponse,
   ListResetsResponse,
   ListTasksResponse,
@@ -63,8 +64,10 @@ import type {
   ListTradesResponse,
   ListTransactionDocumentsResponse,
   ListTransactionsResponse,
+  LogRecipeCookedResponse,
   MarkNotificationReadResponse,
   PutGymTopSetResponse,
+  RemoveRecipeCookedResponse,
   RenameTransactionResponse,
   ReopenTaskResponse,
   RespondToCalendarEventResponse,
@@ -1026,6 +1029,9 @@ const recipeSchemaSchemaResponseTransformer = (data: any) => {
   if (data.modified_at) {
     data.modified_at = new Date(data.modified_at);
   }
+  if (data.last_cooked_on) {
+    data.last_cooked_on = new Date(data.last_cooked_on);
+  }
   return data;
 };
 
@@ -1061,6 +1067,37 @@ export const updateRecipeResponseTransformer = async (
   data: any,
 ): Promise<UpdateRecipeResponse> => {
   data = recipeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const recipeCookHistorySchemaResponseTransformer = (data: any) => {
+  data.days = data.days.map((item: any) => new Date(item));
+  return data;
+};
+
+export const listRecipeCooksResponseTransformer = async (
+  data: any,
+): Promise<ListRecipeCooksResponse> => {
+  data = recipeCookHistorySchemaResponseTransformer(data);
+  return data;
+};
+
+export const removeRecipeCookedResponseTransformer = async (
+  data: any,
+): Promise<RemoveRecipeCookedResponse> => {
+  data = recipeSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const recipeCookResultSchemaResponseTransformer = (data: any) => {
+  data.recipe = recipeSchemaSchemaResponseTransformer(data.recipe);
+  return data;
+};
+
+export const logRecipeCookedResponseTransformer = async (
+  data: any,
+): Promise<LogRecipeCookedResponse> => {
+  data = recipeCookResultSchemaResponseTransformer(data);
   return data;
 };
 

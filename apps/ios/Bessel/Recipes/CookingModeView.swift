@@ -5,6 +5,8 @@ import SwiftUI
 struct CookingModeView: View {
     let recipe: RecipeItem
     @Binding var ticked: Set<String>
+    /// The last step's button: logs the recipe as cooked today.
+    let onCooked: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var stepIndex = 0
@@ -95,12 +97,13 @@ struct CookingModeView: View {
 
             Button {
                 if isLastStep {
+                    onCooked()
                     dismiss()
                 } else {
                     withAnimation(.snappy) { stepIndex += 1 }
                 }
             } label: {
-                Label(isLastStep ? "Finish" : "Next", systemImage: isLastStep ? "checkmark" : "chevron.right")
+                Label(isLastStep ? "Cooked it" : "Next", systemImage: isLastStep ? "checkmark" : "chevron.right")
                     .labelStyle(TrailingIconLabelStyle())
                     .frame(maxWidth: .infinity)
             }

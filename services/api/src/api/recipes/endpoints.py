@@ -1,3 +1,4 @@
+from datetime import date
 from enum import StrEnum
 from typing import Annotated
 from uuid import UUID
@@ -9,8 +10,17 @@ from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.models.recipe import Recipe
 from api.postgres import DBSession
 from api.recipes.importer import import_recipe
-from api.recipes.repository import RecipeRepository
-from api.recipes.schemas import RecipeCreate, RecipeImportRequest, RecipeImportResult, RecipeListResponse, RecipeSchema, RecipeUpdate
+from api.recipes.repository import CookStats, RecipeCookRepository, RecipeRepository
+from api.recipes.schemas import (
+  RecipeCookHistory,
+  RecipeCookResult,
+  RecipeCreate,
+  RecipeImportRequest,
+  RecipeImportResult,
+  RecipeListResponse,
+  RecipeSchema,
+  RecipeUpdate,
+)
 from api.recipes.service import content_fields, recipe_service
 from api.users.dependencies import CurrentDBUser
 
@@ -26,6 +36,14 @@ class RecipeSortProperty(StrEnum):
 sorting_getter = SortingGetter(RecipeSortProperty, default_sorting=["title"])
 
 
+def with_cooks(recipe: Recipe, stats: dict[UUID, CookStats]) -> RecipeSchema:
+  return RecipeSchema.from_recipe(recipe, stats.get(recipe.id, CookStats()))
+
+
+async def recipe_with_cooks(session: DBSession, recipe: Recipe) -> RecipeSchema:
+  return with_cooks(recipe, await RecipeCookRepository.from_session(session).stats([recipe.id]))
+
+
 @router.get("", summary="List Recipes", response_model=RecipeListResponse)
 async def list_recipes(
   session: DBSession,
@@ -38,7 +56,8 @@ async def list_recipes(
   statement = apply_sorting(repo.get_filtered_statement(current_user.id, search=search), Recipe, sorting)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
-  return RecipeListResponse.from_paginated_results([RecipeSchema.model_validate(item) for item in items], total_count, pagination)
+  stats = await RecipeCookRepository.from_session(session).stats([item.id for item in items])
+  return RecipeListResponse.from_paginated_results([with_cooks(item, stats) for item in items], total_count, pagination)
 
 
 @router.post("", summary="Create Recipe", response_model=RecipeSchema, status_code=201)
@@ -48,7 +67,7 @@ async def create_recipe(
   body: RecipeCreate,
 ) -> RecipeSchema:
   recipe = await recipe_service.create(session, current_user, title=body.title, recipe_type=body.recipe_type, content=body.content, body=body.body)
-  return RecipeSchema.model_validate(recipe)
+  return RecipeSchema.from_recipe(recipe, CookStats())
 
 
 @router.post("/import", summary="Structure Recipe Text", response_model=RecipeImportResult)
@@ -65,7 +84,7 @@ async def get_recipe(
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
-  return RecipeSchema.model_validate(recipe)
+  return await recipe_with_cooks(session, recipe)
 
 
 @router.patch("/{recipe_id}", summary="Update Recipe", response_model=RecipeSchema)
@@ -85,7 +104,7 @@ async def update_recipe(
     # structure is now stale, so the markdown becomes the source again.
     update_data |= content_fields(body.content, None)
   recipe = await repo.update(recipe, update_dict=update_data)
-  return RecipeSchema.model_validate(recipe)
+  return await recipe_with_cooks(session, recipe)
 
 
 @router.delete("/{recipe_id}", summary="Delete Recipe", status_code=204)
@@ -97,3 +116,24 @@ async def delete_recipe(
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
   await repo.delete(recipe)
+
+
+@router.get("/{recipe_id}/cooks", summary="List Recipe Cooks", response_model=RecipeCookHistory)
+async def list_recipe_cooks(session: DBSession, current_user: CurrentDBUser, recipe_id: UUID) -> RecipeCookHistory:
+  recipe = await RecipeRepository.from_session(session).get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
+  return RecipeCookHistory(days=list(await RecipeCookRepository.from_session(session).days(recipe)))
+
+
+@router.put("/{recipe_id}/cooks/{cooked_on}", summary="Log Recipe Cooked", response_model=RecipeCookResult)
+async def log_recipe_cooked(session: DBSession, current_user: CurrentDBUser, recipe_id: UUID, cooked_on: date) -> RecipeCookResult:
+  """Logs that the recipe was cooked on the app's local day. Logging a day twice changes nothing."""
+  recipe = await RecipeRepository.from_session(session).get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
+  created = await recipe_service.log_cook(RecipeCookRepository.from_session(session), recipe, cooked_on)
+  return RecipeCookResult(recipe=await recipe_with_cooks(session, recipe), created=created)
+
+
+@router.delete("/{recipe_id}/cooks/{cooked_on}", summary="Remove Recipe Cooked", response_model=RecipeSchema)
+async def remove_recipe_cooked(session: DBSession, current_user: CurrentDBUser, recipe_id: UUID, cooked_on: date) -> RecipeSchema:
+  recipe = await RecipeRepository.from_session(session).get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
+  await recipe_service.remove_cook(RecipeCookRepository.from_session(session), recipe, cooked_on)
+  return await recipe_with_cooks(session, recipe)

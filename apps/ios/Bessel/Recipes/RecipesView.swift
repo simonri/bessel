@@ -7,6 +7,7 @@ struct RecipesView: View {
     @State private var store: RecipesStore
     @State private var search = ""
     @State private var typeFilter: RecipeType?
+    @State private var sort: RecipeSort = .title
     @State private var path: [UUID] = []
     @State private var sheet: RecipeSheet?
     @State private var composing = false
@@ -22,14 +23,14 @@ struct RecipesView: View {
     }
 
     private var filtered: [RecipeItem] {
-        store.recipes.filter { recipe in
+        sort.sorted(store.recipes.filter { recipe in
             if let typeFilter, recipe.recipeType != typeFilter { return false }
             guard !search.isEmpty else { return true }
             return recipe.title.localizedCaseInsensitiveContains(search)
                 || recipe.body.ingredientGroups.contains { group in
                     group.items.contains { $0.name.localizedCaseInsensitiveContains(search) }
                 }
-        }
+        })
     }
 
     var body: some View {
@@ -48,6 +49,13 @@ struct RecipesView: View {
                                     }
                                     .buttonStyle(.plain)
                                     .contextMenu {
+                                        if !recipe.wasCooked(on: .now) {
+                                            Button {
+                                                Task { await store.logCooked(recipe, toasts: toasts) }
+                                            } label: {
+                                                Label("Cooked today", systemImage: "frying.pan")
+                                            }
+                                        }
                                         Button(role: .destructive) {
                                             store.delete(recipe, toasts: toasts)
                                         } label: {
@@ -205,6 +213,9 @@ struct RecipesView: View {
                     withAnimation(.snappy) { typeFilter = typeFilter == type ? nil : type }
                 }
             }
+            FilterPill(title: "🕰️ Not made lately", isSelected: sort == .cooked) {
+                withAnimation(.snappy) { sort = sort == .cooked ? .title : .cooked }
+            }
             if filtered.count > 1 {
                 FilterPill(title: "🎲 Surprise me", isSelected: false) {
                     if let pick = filtered.randomElement() { path.append(pick.id) }
@@ -263,6 +274,12 @@ private struct RecipeCard: View {
                     Text(meta)
                         .font(.caption)
                         .foregroundStyle(Theme.mutedForeground)
+                        .lineLimit(1)
+                }
+                if recipe.lastCookedOn != nil {
+                    Text(recipe.cookedLabel())
+                        .font(.caption)
+                        .foregroundStyle(Theme.faintForeground)
                         .lineLimit(1)
                 }
             }

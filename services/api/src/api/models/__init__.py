@@ -30,7 +30,7 @@ from .place import Place
 from .project import Project
 from .project_device_config import ProjectDeviceConfig
 from .raw_transaction import RawTransaction
-from .recipe import Recipe
+from .recipe import Recipe, RecipeCook
 from .security import Security
 from .security_price import SecurityPrice
 from .task import Task
@@ -83,6 +83,7 @@ __all__ = [
   "ProjectDeviceConfig",
   "RawTransaction",
   "Recipe",
+  "RecipeCook",
   "Security",
   "SecurityPrice",
   "Task",

@@ -1,8 +1,9 @@
+from datetime import date
 from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String, Text, Uuid
+from sqlalchemy import Date, ForeignKey, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,3 +26,15 @@ class Recipe(RecordModel):
   body: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
   recipe_type: Mapped[str] = mapped_column(String(20), nullable=False, default=RecipeType.other.value)
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+
+
+class RecipeCook(RecordModel):
+  """A day the user cooked a recipe; at most one per recipe and day."""
+
+  __tablename__ = "recipe_cooks"
+
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+  recipe_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False)
+  cooked_on: Mapped[date] = mapped_column(Date, nullable=False)
+
+  __table_args__ = (UniqueConstraint("recipe_id", "cooked_on", name="recipe_cooks_recipe_id_cooked_on_key"),)

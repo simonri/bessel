@@ -141,6 +141,9 @@ AUDITED: set[str] = {
   "DELETE /v1/recipes/{recipe_id}",
   "GET /v1/recipes/{recipe_id}",
   "PATCH /v1/recipes/{recipe_id}",
+  "GET /v1/recipes/{recipe_id}/cooks",
+  "PUT /v1/recipes/{recipe_id}/cooks/{cooked_on}",
+  "DELETE /v1/recipes/{recipe_id}/cooks/{cooked_on}",
   "GET /v1/search",
   "GET /v1/tasks",
   "POST /v1/tasks",
@@ -331,6 +334,18 @@ class TestRecipes:
     assert (await other_client.delete(f"/v1/recipes/{recipe['id']}")).status_code == 404
 
     assert (await client.get(f"/v1/recipes/{recipe['id']}")).json()["title"] == "A's recipe"
+
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_or_change_when_a_recipe_was_cooked(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    recipe = await _create(client, "/v1/recipes", {"title": "A's recipe"})
+    cooks = f"/v1/recipes/{recipe['id']}/cooks"
+    assert (await client.put(f"{cooks}/2026-10-08")).status_code == 200
+
+    assert (await other_client.get(cooks)).status_code == 404
+    assert (await other_client.put(f"{cooks}/2026-10-09")).status_code == 404
+    assert (await other_client.delete(f"{cooks}/2026-10-08")).status_code == 404
+
+    assert (await client.get(cooks)).json()["days"] == ["2026-10-08"]
 
 
 class TestCounters:

@@ -7461,6 +7461,40 @@ export const RecipeCalloutSchema = {
   title: "RecipeCallout",
 } as const;
 
+export const RecipeCookHistorySchema = {
+  properties: {
+    days: {
+      items: {
+        type: "string",
+        format: "date",
+      },
+      type: "array",
+      title: "Days",
+      description: "Every day the recipe was cooked, latest first.",
+    },
+  },
+  type: "object",
+  required: ["days"],
+  title: "RecipeCookHistory",
+} as const;
+
+export const RecipeCookResultSchema = {
+  properties: {
+    recipe: {
+      $ref: "#/components/schemas/RecipeSchema",
+    },
+    created: {
+      type: "boolean",
+      title: "Created",
+      description:
+        "False when the day was already logged, so there's nothing for this request to undo.",
+    },
+  },
+  type: "object",
+  required: ["recipe", "created"],
+  title: "RecipeCookResult",
+} as const;
+
 export const RecipeCreateSchema = {
   properties: {
     title: {
@@ -7685,6 +7719,25 @@ export const RecipeSchemaSchema = {
       description:
         "False when `body` was derived from markdown on the fly rather than saved.",
     },
+    last_cooked_on: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Last Cooked On",
+      description: "The latest day it was cooked, in the user's own time zone.",
+    },
+    cook_count: {
+      type: "integer",
+      title: "Cook Count",
+      description: "How many days it has been cooked.",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -7696,6 +7749,8 @@ export const RecipeSchemaSchema = {
     "recipe_type",
     "body",
     "structured",
+    "last_cooked_on",
+    "cook_count",
   ],
   title: "RecipeSchema",
 } as const;

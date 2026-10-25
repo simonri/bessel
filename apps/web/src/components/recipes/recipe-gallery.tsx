@@ -1,18 +1,21 @@
 import type { RecipeSchema } from "@bessel/client";
 import { Plus, Shuffle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { describeRecipe } from "./recipe-meta";
+import { cookedLabel, describeRecipe, lastCookedDay } from "./recipe-meta";
 import { RECIPE_TYPE_META, typeGradient } from "./recipe-style";
 
 function RecipeCard({
   recipe,
+  today,
   onOpen,
 }: {
   recipe: RecipeSchema;
+  today: string;
   onOpen: () => void;
 }) {
   const meta = RECIPE_TYPE_META[recipe.recipe_type];
   const summary = describeRecipe(recipe.body);
+  const last = lastCookedDay(recipe);
   return (
     <button
       type="button"
@@ -37,6 +40,11 @@ function RecipeCard({
         <span className="truncate text-11 text-white/45">
           {summary ?? meta.label}
         </span>
+        {last && (
+          <span className="truncate text-11 text-white/35">
+            {cookedLabel(last, today)}
+          </span>
+        )}
       </div>
     </button>
   );
@@ -47,6 +55,7 @@ export function RecipeGallery({
   recipes,
   totalCount,
   filtered,
+  today,
   onOpen,
   onCreate,
   onImport,
@@ -54,6 +63,7 @@ export function RecipeGallery({
   recipes: RecipeSchema[];
   totalCount: number;
   filtered: boolean;
+  today: string;
   onOpen: (recipe: RecipeSchema) => void;
   onCreate: () => void;
   onImport: () => void;
@@ -143,7 +153,12 @@ export function RecipeGallery({
             )}
           >
             {recipes.map((r) => (
-              <RecipeCard key={r.id} recipe={r} onOpen={() => onOpen(r)} />
+              <RecipeCard
+                key={r.id}
+                recipe={r}
+                today={today}
+                onOpen={() => onOpen(r)}
+              />
             ))}
           </div>
         )}
