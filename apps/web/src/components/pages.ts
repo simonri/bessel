@@ -22,6 +22,7 @@ export type PageKey =
   | "activity"
   | "sleep"
   | "recipes"
+  | "contacts"
   | "transactions"
   | "accounts"
   | "investments"
@@ -74,6 +75,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   activity: fromModule("activity"),
   sleep: fromModule("sleep"),
   recipes: fromModule("recipes"),
+  contacts: fromModule("contacts"),
   transactions: fromModule("transactions"),
   accounts: fromModule("accounts"),
   investments: fromModule("investments"),
@@ -95,6 +97,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "canvas",
   "travel",
   "calendar",
+  "contacts",
   "tasks",
   "time",
   "timeline",

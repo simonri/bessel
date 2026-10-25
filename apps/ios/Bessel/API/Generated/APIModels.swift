@@ -553,6 +553,50 @@ enum API {
         var payloads: [[String: JSONValue]]
     }
 
+    struct ContactBirthday: Codable, Hashable {
+        var month: Int
+        var day: Int
+        var year: Int?
+    }
+
+    struct ContactListResponse: Codable, Hashable {
+        @Lossy var items: [ContactSchema]
+        var pagination: Pagination
+    }
+
+    struct ContactMethodSchema: Codable, Hashable {
+        var label: String?
+        var value: String
+    }
+
+    struct ContactSchema: Codable, Hashable {
+        var createdAt: Date
+        var modifiedAt: Date?
+        var id: UUID
+        var sourceId: UUID
+        var displayName: String
+        var givenName: String?
+        var familyName: String?
+        var nickname: String?
+        var organization: String?
+        var jobTitle: String?
+        var birthday: ContactBirthday?
+        var photoUrl: String?
+        var notes: String?
+        var externalUrl: String?
+        @Lossy var phones: [ContactMethodSchema]
+        @Lossy var emails: [ContactMethodSchema]
+        @Lossy var addresses: [ContactMethodSchema]
+        @Lossy var urls: [ContactMethodSchema]
+    }
+
+    struct ContactSourceSchema: Codable, Hashable {
+        var id: UUID
+        var email: String
+        var syncedAt: Date?
+        var syncError: String?
+    }
+
     struct CounterCreate: Codable, Hashable {
         var name: String
     }
@@ -3935,6 +3979,202 @@ extension API.ClientDiagnosticsUpload {
         try container.encode(self.version, forKey: .version)
         try container.encode(self.build, forKey: .build)
         try container.encode(self.payloads, forKey: .payloads)
+    }
+}
+
+extension API.ContactBirthday {
+    private enum DecodingKeys: String, CodingKey {
+        case month
+        case day
+        case year
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.month = try container.decode(Int.self, forKey: .month)
+        self.day = try container.decode(Int.self, forKey: .day)
+        self.year = try container.decodeIfPresent(Int.self, forKey: .year)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case month
+        case day
+        case year
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.month, forKey: .month)
+        try container.encode(self.day, forKey: .day)
+        try container.encodeIfPresent(self.year, forKey: .year)
+    }
+}
+
+extension API.ContactListResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case items
+        case pagination
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._items = try container.decode(Lossy<API.ContactSchema>.self, forKey: .items)
+        self.pagination = try container.decode(API.Pagination.self, forKey: .pagination)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case items
+        case pagination
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.items, forKey: .items)
+        try container.encode(self.pagination, forKey: .pagination)
+    }
+}
+
+extension API.ContactMethodSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case label
+        case value
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.label = try container.decodeIfPresent(String.self, forKey: .label)
+        self.value = try container.decode(String.self, forKey: .value)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case label
+        case value
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.label, forKey: .label)
+        try container.encode(self.value, forKey: .value)
+    }
+}
+
+extension API.ContactSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case createdAt
+        case modifiedAt
+        case id
+        case sourceId
+        case displayName
+        case givenName
+        case familyName
+        case nickname
+        case organization
+        case jobTitle
+        case birthday
+        case photoUrl
+        case notes
+        case externalUrl
+        case phones
+        case emails
+        case addresses
+        case urls
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.sourceId = try container.decode(UUID.self, forKey: .sourceId)
+        self.displayName = try container.decode(String.self, forKey: .displayName)
+        self.givenName = try container.decodeIfPresent(String.self, forKey: .givenName)
+        self.familyName = try container.decodeIfPresent(String.self, forKey: .familyName)
+        self.nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
+        self.organization = try container.decodeIfPresent(String.self, forKey: .organization)
+        self.jobTitle = try container.decodeIfPresent(String.self, forKey: .jobTitle)
+        self.birthday = try container.decodeIfPresent(API.ContactBirthday.self, forKey: .birthday)
+        self.photoUrl = try container.decodeIfPresent(String.self, forKey: .photoUrl)
+        self.notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        self.externalUrl = try container.decodeIfPresent(String.self, forKey: .externalUrl)
+        self._phones = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .phones)
+        self._emails = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .emails)
+        self._addresses = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .addresses)
+        self._urls = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .urls)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case createdAt = "created_at"
+        case modifiedAt = "modified_at"
+        case id
+        case sourceId = "source_id"
+        case displayName = "display_name"
+        case givenName = "given_name"
+        case familyName = "family_name"
+        case nickname
+        case organization
+        case jobTitle = "job_title"
+        case birthday
+        case photoUrl = "photo_url"
+        case notes
+        case externalUrl = "external_url"
+        case phones
+        case emails
+        case addresses
+        case urls
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Instant(self.createdAt), forKey: .createdAt)
+        try container.encodeIfPresent(self.modifiedAt.map(API.Instant.init), forKey: .modifiedAt)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.sourceId, forKey: .sourceId)
+        try container.encode(self.displayName, forKey: .displayName)
+        try container.encodeIfPresent(self.givenName, forKey: .givenName)
+        try container.encodeIfPresent(self.familyName, forKey: .familyName)
+        try container.encodeIfPresent(self.nickname, forKey: .nickname)
+        try container.encodeIfPresent(self.organization, forKey: .organization)
+        try container.encodeIfPresent(self.jobTitle, forKey: .jobTitle)
+        try container.encodeIfPresent(self.birthday, forKey: .birthday)
+        try container.encodeIfPresent(self.photoUrl, forKey: .photoUrl)
+        try container.encodeIfPresent(self.notes, forKey: .notes)
+        try container.encodeIfPresent(self.externalUrl, forKey: .externalUrl)
+        try container.encode(self.phones, forKey: .phones)
+        try container.encode(self.emails, forKey: .emails)
+        try container.encode(self.addresses, forKey: .addresses)
+        try container.encode(self.urls, forKey: .urls)
+    }
+}
+
+extension API.ContactSourceSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case email
+        case syncedAt
+        case syncError
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.email = try container.decode(String.self, forKey: .email)
+        self.syncedAt = try container.decodeIfPresent(Date.self, forKey: .syncedAt)
+        self.syncError = try container.decodeIfPresent(String.self, forKey: .syncError)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case email
+        case syncedAt = "synced_at"
+        case syncError = "sync_error"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.email, forKey: .email)
+        try container.encodeIfPresent(self.syncedAt.map(API.Instant.init), forKey: .syncedAt)
+        try container.encodeIfPresent(self.syncError, forKey: .syncError)
     }
 }
 

@@ -25,6 +25,7 @@ import type {
   GetAgentUsageStatusResponse,
   GetAvanzaResponse,
   GetBankAccountResponse,
+  GetContactResponse,
   GetHealthSummaryResponse,
   GetInvestmentAccountsResponse,
   GetLocationHistoryDayResponse,
@@ -45,6 +46,8 @@ import type {
   ListCalendarEventsResponse,
   ListCategoriesResponse,
   ListCategoryRulesResponse,
+  ListContactSourcesResponse,
+  ListContactsResponse,
   ListCountersResponse,
   ListDevicesResponse,
   ListGymExercisesResponse,
@@ -422,6 +425,51 @@ export const respondToCalendarEventResponseTransformer = async (
   data: any,
 ): Promise<RespondToCalendarEventResponse> => {
   data = eventWriteResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const contactSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  return data;
+};
+
+const contactListResponseSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    contactSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listContactsResponseTransformer = async (
+  data: any,
+): Promise<ListContactsResponse> => {
+  data = contactListResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const contactSourceSchemaSchemaResponseTransformer = (data: any) => {
+  if (data.synced_at) {
+    data.synced_at = new Date(data.synced_at);
+  }
+  return data;
+};
+
+export const listContactSourcesResponseTransformer = async (
+  data: any,
+): Promise<ListContactSourcesResponse> => {
+  data = data.map((item: any) =>
+    contactSourceSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getContactResponseTransformer = async (
+  data: any,
+): Promise<GetContactResponse> => {
+  data = contactSchemaSchemaResponseTransformer(data);
   return data;
 };
 

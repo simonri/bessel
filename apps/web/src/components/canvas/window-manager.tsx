@@ -36,6 +36,7 @@ export type ModuleKey =
   | "time"
   | "climate"
   | "recipes"
+  | "contacts"
   | "claudeCode"
   | "codex"
   | "grok"

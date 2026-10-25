@@ -34,6 +34,7 @@ import {
   getAgentUsageStatusResponseTransformer,
   getAvanzaResponseTransformer,
   getBankAccountResponseTransformer,
+  getContactResponseTransformer,
   getHealthSummaryResponseTransformer,
   getInvestmentAccountsResponseTransformer,
   getLocationHistoryDayResponseTransformer,
@@ -54,6 +55,8 @@ import {
   listCalendarEventsResponseTransformer,
   listCategoriesResponseTransformer,
   listCategoryRulesResponseTransformer,
+  listContactSourcesResponseTransformer,
+  listContactsResponseTransformer,
   listCountersResponseTransformer,
   listDevicesResponseTransformer,
   listGymExercisesResponseTransformer,
@@ -247,6 +250,9 @@ import type {
   GetBankAccountData,
   GetBankAccountErrors,
   GetBankAccountResponses,
+  GetContactData,
+  GetContactErrors,
+  GetContactResponses,
   GetCryptoPriceData,
   GetCryptoPriceErrors,
   GetCryptoPriceResponses,
@@ -350,6 +356,11 @@ import type {
   ListCategoriesResponses,
   ListCategoryRulesData,
   ListCategoryRulesResponses,
+  ListContactsData,
+  ListContactsErrors,
+  ListContactSourcesData,
+  ListContactSourcesResponses,
+  ListContactsResponses,
   ListCountersData,
   ListCountersResponses,
   ListDevicesData,
@@ -462,6 +473,8 @@ import type {
   SyncCalendarAccountData,
   SyncCalendarAccountErrors,
   SyncCalendarAccountResponses,
+  SyncContactsData,
+  SyncContactsResponses,
   SyncHealthkitDailyMetricsData,
   SyncHealthkitDailyMetricsErrors,
   SyncHealthkitDailyMetricsResponses,
@@ -1366,6 +1379,77 @@ export const respondToCalendarEvent = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * List Contacts
+ */
+export const listContacts = <ThrowOnError extends boolean = false>(
+  options?: Options<ListContactsData, ThrowOnError>,
+): RequestResult<ListContactsResponses, ListContactsErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListContactsResponses,
+    ListContactsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listContactsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts",
+    ...options,
+  });
+
+/**
+ * List Contact Sources
+ *
+ * The Google accounts contacts come from, with how their last sync went.
+ */
+export const listContactSources = <ThrowOnError extends boolean = false>(
+  options?: Options<ListContactSourcesData, ThrowOnError>,
+): RequestResult<ListContactSourcesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListContactSourcesResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listContactSourcesResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/sources",
+    ...options,
+  });
+
+/**
+ * Sync Contacts
+ *
+ * Fetches what changed in the user's address books now rather than at the next scheduled sync.
+ */
+export const syncContacts = <ThrowOnError extends boolean = false>(
+  options?: Options<SyncContactsData, ThrowOnError>,
+): RequestResult<SyncContactsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).post<
+    SyncContactsResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/sync",
+    ...options,
+  });
+
+/**
+ * Get Contact
+ */
+export const getContact = <ThrowOnError extends boolean = false>(
+  options: Options<GetContactData, ThrowOnError>,
+): RequestResult<GetContactResponses, GetContactErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetContactResponses,
+    GetContactErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getContactResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}",
+    ...options,
   });
 
 /**

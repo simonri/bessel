@@ -62,6 +62,7 @@ import {
   getAgentUsageStatus,
   getAvanza,
   getBankAccount,
+  getContact,
   getCryptoPrice,
   getDailyActivity,
   getDailySleep,
@@ -100,6 +101,8 @@ import {
   listCalendarEvents,
   listCategories,
   listCategoryRules,
+  listContacts,
+  listContactSources,
   listCounters,
   listDevices,
   listGymExercises,
@@ -141,6 +144,7 @@ import {
   syncAvanza,
   syncBankConnection,
   syncCalendarAccount,
+  syncContacts,
   syncHealthkitDailyMetrics,
   syncHealthkitSleep,
   syncHealthkitWorkouts,
@@ -312,6 +316,9 @@ import type {
   GetBankAccountData,
   GetBankAccountError,
   GetBankAccountResponse,
+  GetContactData,
+  GetContactError,
+  GetContactResponse,
   GetCryptoPriceData,
   GetCryptoPriceError,
   GetCryptoPriceResponse,
@@ -413,6 +420,11 @@ import type {
   ListCategoriesResponse,
   ListCategoryRulesData,
   ListCategoryRulesResponse,
+  ListContactsData,
+  ListContactsError,
+  ListContactSourcesData,
+  ListContactSourcesResponse,
+  ListContactsResponse,
   ListCountersData,
   ListCountersResponse,
   ListDevicesData,
@@ -522,6 +534,7 @@ import type {
   SyncBankConnectionError,
   SyncCalendarAccountData,
   SyncCalendarAccountError,
+  SyncContactsData,
   SyncHealthkitDailyMetricsData,
   SyncHealthkitDailyMetricsError,
   SyncHealthkitDailyMetricsResponse,
@@ -1841,6 +1854,163 @@ export const respondToCalendarEventMutation = (
   };
   return mutationOptions;
 };
+
+export const listContactsQueryKey = (options?: Options<ListContactsData>) =>
+  createQueryKey("listContacts", options);
+
+/**
+ * List Contacts
+ */
+export const listContactsOptions = (options?: Options<ListContactsData>) =>
+  queryOptions<
+    ListContactsResponse,
+    ListContactsError,
+    ListContactsResponse,
+    ReturnType<typeof listContactsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listContacts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listContactsQueryKey(options),
+  });
+
+export const listContactsInfiniteQueryKey = (
+  options?: Options<ListContactsData>,
+): QueryKey<Options<ListContactsData>> =>
+  createQueryKey("listContacts", options, true);
+
+/**
+ * List Contacts
+ */
+export const listContactsInfiniteOptions = (
+  options?: Options<ListContactsData>,
+) => {
+  const opts = infiniteQueryOptions<
+    ListContactsResponse,
+    ListContactsError,
+    InfiniteData<ListContactsResponse>,
+    QueryKey<Options<ListContactsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListContactsData>>[0],
+        "body" | "headers" | "path" | "query"
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListContactsData>>[0],
+          "body" | "headers" | "path" | "query"
+        > =
+          typeof pageParam === "object"
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listContacts({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listContactsInfiniteQueryKey(options),
+    },
+  );
+  return opts as Omit<typeof opts, "initialData">;
+};
+
+export const listContactSourcesQueryKey = (
+  options?: Options<ListContactSourcesData>,
+) => createQueryKey("listContactSources", options);
+
+/**
+ * List Contact Sources
+ *
+ * The Google accounts contacts come from, with how their last sync went.
+ */
+export const listContactSourcesOptions = (
+  options?: Options<ListContactSourcesData>,
+) =>
+  queryOptions<
+    ListContactSourcesResponse,
+    DefaultError,
+    ListContactSourcesResponse,
+    ReturnType<typeof listContactSourcesQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listContactSources({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listContactSourcesQueryKey(options),
+  });
+
+/**
+ * Sync Contacts
+ *
+ * Fetches what changed in the user's address books now rather than at the next scheduled sync.
+ */
+export const syncContactsMutation = (
+  options?: Partial<Options<SyncContactsData>>,
+): UseMutationOptions<unknown, DefaultError, Options<SyncContactsData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DefaultError,
+    Options<SyncContactsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await syncContacts({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getContactQueryKey = (options: Options<GetContactData>) =>
+  createQueryKey("getContact", options);
+
+/**
+ * Get Contact
+ */
+export const getContactOptions = (options: Options<GetContactData>) =>
+  queryOptions<
+    GetContactResponse,
+    GetContactError,
+    GetContactResponse,
+    ReturnType<typeof getContactQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getContact({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getContactQueryKey(options),
+  });
 
 export const listBankConnectionsQueryKey = (
   options?: Options<ListBankConnectionsData>,

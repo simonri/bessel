@@ -177,6 +177,8 @@ class TestTools:
 # Tools whose tests above check that a second user sees none of the first user's data.
 ISOLATION_TESTED = {
   "get_task_overview",
+  "find_contacts",
+  "get_contact",
   "find_tasks",
   "find_completed_tasks",
   "get_task",

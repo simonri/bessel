@@ -2689,6 +2689,311 @@ export const ClientDiagnosticsUploadSchema = {
   title: "ClientDiagnosticsUpload",
 } as const;
 
+export const ContactBirthdaySchema = {
+  properties: {
+    month: {
+      type: "integer",
+      maximum: 12,
+      minimum: 1,
+      title: "Month",
+    },
+    day: {
+      type: "integer",
+      maximum: 31,
+      minimum: 1,
+      title: "Day",
+    },
+    year: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Year",
+      description: "Often unknown.",
+    },
+  },
+  type: "object",
+  required: ["month", "day", "year"],
+  title: "ContactBirthday",
+} as const;
+
+export const ContactListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/ContactSchema",
+      },
+      type: "array",
+      title: "Items",
+    },
+    pagination: {
+      $ref: "#/components/schemas/Pagination",
+    },
+  },
+  type: "object",
+  required: ["items", "pagination"],
+  title: "ContactListResponse",
+} as const;
+
+export const ContactMethodSchemaSchema = {
+  properties: {
+    label: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Label",
+      description: "As the address book names it, e.g. 'Mobile' or 'Work'.",
+    },
+    value: {
+      type: "string",
+      title: "Value",
+    },
+  },
+  type: "object",
+  required: ["label", "value"],
+  title: "ContactMethodSchema",
+} as const;
+
+export const ContactSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    source_id: {
+      type: "string",
+      format: "uuid",
+      title: "Source Id",
+    },
+    display_name: {
+      type: "string",
+      title: "Display Name",
+    },
+    given_name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Given Name",
+    },
+    family_name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Family Name",
+    },
+    nickname: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Nickname",
+    },
+    organization: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Organization",
+    },
+    job_title: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Job Title",
+    },
+    birthday: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/ContactBirthday",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    photo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Photo Url",
+    },
+    notes: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Notes",
+      description: "The address book's own notes for the person.",
+    },
+    external_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "External Url",
+      description: "The person in Google Contacts, where they can be edited.",
+    },
+    phones: {
+      items: {
+        $ref: "#/components/schemas/ContactMethodSchema",
+      },
+      type: "array",
+      title: "Phones",
+    },
+    emails: {
+      items: {
+        $ref: "#/components/schemas/ContactMethodSchema",
+      },
+      type: "array",
+      title: "Emails",
+    },
+    addresses: {
+      items: {
+        $ref: "#/components/schemas/ContactMethodSchema",
+      },
+      type: "array",
+      title: "Addresses",
+    },
+    urls: {
+      items: {
+        $ref: "#/components/schemas/ContactMethodSchema",
+      },
+      type: "array",
+      title: "Urls",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "source_id",
+    "display_name",
+    "given_name",
+    "family_name",
+    "nickname",
+    "organization",
+    "job_title",
+    "birthday",
+    "photo_url",
+    "notes",
+    "external_url",
+    "phones",
+    "emails",
+    "addresses",
+    "urls",
+  ],
+  title: "ContactSchema",
+} as const;
+
+export const ContactSourceSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    email: {
+      type: "string",
+      title: "Email",
+      description: "The Google account the contacts come from.",
+    },
+    synced_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Synced At",
+    },
+    sync_error: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync Error",
+    },
+  },
+  type: "object",
+  required: ["id", "email", "synced_at", "sync_error"],
+  title: "ContactSourceSchema",
+} as const;
+
 export const CounterCreateSchema = {
   properties: {
     name: {

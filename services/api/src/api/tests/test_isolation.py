@@ -22,6 +22,7 @@ from api.models.calendar import Calendar
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
 from api.models.category import Category
+from api.models.contact import Contact, ContactMethod, ContactMethodKind, ContactSource
 from api.models.security import AssetType, Security
 from api.models.trade import Trade, TradeType
 from api.models.transaction import Transaction, TransactionDirection
@@ -141,6 +142,10 @@ AUDITED: set[str] = {
   "DELETE /v1/recipes/{recipe_id}",
   "GET /v1/recipes/{recipe_id}",
   "PATCH /v1/recipes/{recipe_id}",
+  "GET /v1/contacts",
+  "GET /v1/contacts/sources",
+  "POST /v1/contacts/sync",
+  "GET /v1/contacts/{contact_id}",
   "GET /v1/recipes/{recipe_id}/cooks",
   "PUT /v1/recipes/{recipe_id}/cooks/{cooked_on}",
   "DELETE /v1/recipes/{recipe_id}/cooks/{cooked_on}",
@@ -321,6 +326,37 @@ class TestLocationHistory:
 
     assert [v["place_id"] for v in (await client.get("/v1/location-history/day", params={"date": "2026-09-01"})).json()["visits"]] == ["a-home"]
     assert (await client.get("/v1/location-history/summary")).json()["days"] == ["2026-09-01", "2026-09-02", "2026-09-03"]
+
+
+class TestContacts:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_or_sync_contacts(
+    self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    account = CalendarAccount(user_id=user.id, provider=CalendarProvider.google, email="a@example.com", encrypted_credentials="not-used", can_read_people=True)
+    await save_fixture(account)
+    source = ContactSource(user_id=user.id, account_id=account.id)
+    await save_fixture(source)
+    contact = Contact(
+      user_id=user.id,
+      source_id=source.id,
+      resource_name="people/c1",
+      person={},
+      display_name="A's friend",
+      methods=[ContactMethod(kind=ContactMethodKind.phone, value="+46701234567")],
+    )
+    await save_fixture(contact)
+    queued: list[UUID] = []
+    monkeypatch.setattr("api.contacts.endpoints.request_sync", queued.append)
+
+    assert (await other_client.get("/v1/contacts")).json()["items"] == []
+    assert (await other_client.get("/v1/contacts", params={"search": "4670"})).json()["items"] == []
+    assert (await other_client.get(f"/v1/contacts/{contact.id}")).status_code == 404
+    assert (await other_client.get("/v1/contacts/sources")).json() == []
+    assert (await other_client.post("/v1/contacts/sync")).status_code == 202
+    assert queued == []
+
+    assert [c["display_name"] for c in (await client.get("/v1/contacts")).json()["items"]] == ["A's friend"]
 
 
 class TestRecipes:

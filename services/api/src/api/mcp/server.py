@@ -13,9 +13,9 @@ from api.mcp.tools import TOOLS
 from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
-The user's Bessel life dashboard: tasks, calendar, money and investments, recipes, \
+The user's Bessel life dashboard: tasks, calendar, contacts, money and investments, recipes, \
 sleep, workouts, computer activity, and the weather anywhere (from Yr). Tasks and recipes can be created and updated, \
-and calendar events added; money is read-only, and nothing can be deleted.
+and calendar events added; contacts and money are read-only, and nothing can be deleted.
 
 Days can be written as YYYY-MM-DD or relative ("today", "fri", "next week"), and \
 default to the user's own timezone. Durations are in seconds. Money is in currency \

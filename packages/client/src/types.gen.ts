@@ -1817,6 +1817,164 @@ export type ClientDiagnosticsUpload = {
 };
 
 /**
+ * ContactBirthday
+ */
+export type ContactBirthday = {
+  /**
+   * Month
+   */
+  month: number;
+  /**
+   * Day
+   */
+  day: number;
+  /**
+   * Year
+   *
+   * Often unknown.
+   */
+  year: number | null;
+};
+
+/**
+ * ContactListResponse
+ */
+export type ContactListResponse = {
+  /**
+   * Items
+   */
+  items: Array<ContactSchema>;
+  pagination: Pagination;
+};
+
+/**
+ * ContactMethodSchema
+ */
+export type ContactMethodSchema = {
+  /**
+   * Label
+   *
+   * As the address book names it, e.g. 'Mobile' or 'Work'.
+   */
+  label: string | null;
+  /**
+   * Value
+   */
+  value: string;
+};
+
+/**
+ * ContactSchema
+ */
+export type ContactSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Source Id
+   */
+  source_id: string;
+  /**
+   * Display Name
+   */
+  display_name: string;
+  /**
+   * Given Name
+   */
+  given_name: string | null;
+  /**
+   * Family Name
+   */
+  family_name: string | null;
+  /**
+   * Nickname
+   */
+  nickname: string | null;
+  /**
+   * Organization
+   */
+  organization: string | null;
+  /**
+   * Job Title
+   */
+  job_title: string | null;
+  birthday: ContactBirthday | null;
+  /**
+   * Photo Url
+   */
+  photo_url: string | null;
+  /**
+   * Notes
+   *
+   * The address book's own notes for the person.
+   */
+  notes: string | null;
+  /**
+   * External Url
+   *
+   * The person in Google Contacts, where they can be edited.
+   */
+  external_url: string | null;
+  /**
+   * Phones
+   */
+  phones: Array<ContactMethodSchema>;
+  /**
+   * Emails
+   */
+  emails: Array<ContactMethodSchema>;
+  /**
+   * Addresses
+   */
+  addresses: Array<ContactMethodSchema>;
+  /**
+   * Urls
+   */
+  urls: Array<ContactMethodSchema>;
+};
+
+/**
+ * ContactSourceSchema
+ */
+export type ContactSourceSchema = {
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Email
+   *
+   * The Google account the contacts come from.
+   */
+  email: string;
+  /**
+   * Synced At
+   */
+  synced_at: Date | null;
+  /**
+   * Sync Error
+   */
+  sync_error: string | null;
+};
+
+/**
  * CounterCreate
  */
 export type CounterCreate = {
@@ -8365,6 +8523,114 @@ export type RespondToCalendarEventResponses = {
 
 export type RespondToCalendarEventResponse =
   RespondToCalendarEventResponses[keyof RespondToCalendarEventResponses];
+
+export type ListContactsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Search
+     *
+     * Matches names, companies, phone numbers and emails.
+     */
+    search?: string | null;
+    /**
+     * Page
+     *
+     * Page number, defaults to 1.
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * Size of a page, defaults to 10. Maximum is 100.
+     */
+    limit?: number;
+  };
+  url: "/v1/contacts";
+};
+
+export type ListContactsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListContactsError = ListContactsErrors[keyof ListContactsErrors];
+
+export type ListContactsResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactListResponse;
+};
+
+export type ListContactsResponse =
+  ListContactsResponses[keyof ListContactsResponses];
+
+export type ListContactSourcesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/contacts/sources";
+};
+
+export type ListContactSourcesResponses = {
+  /**
+   * Response List Contact Sources
+   *
+   * Successful Response
+   */
+  200: Array<ContactSourceSchema>;
+};
+
+export type ListContactSourcesResponse =
+  ListContactSourcesResponses[keyof ListContactSourcesResponses];
+
+export type SyncContactsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/contacts/sync";
+};
+
+export type SyncContactsResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown;
+};
+
+export type GetContactData = {
+  body?: never;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}";
+};
+
+export type GetContactErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetContactError = GetContactErrors[keyof GetContactErrors];
+
+export type GetContactResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactSchema;
+};
+
+export type GetContactResponse = GetContactResponses[keyof GetContactResponses];
 
 export type ListBankConnectionsData = {
   body?: never;

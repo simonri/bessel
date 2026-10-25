@@ -7,6 +7,7 @@ from api.avanza.endpoints import router as avanza_router
 from api.bank_accounts.endpoints import router as bank_accounts_router
 from api.calendars.endpoints import router as calendars_router
 from api.categories.endpoints import router as categories_router
+from api.contacts.endpoints import router as contacts_router
 from api.counters.endpoints import router as counters_router
 from api.devices.endpoints import router as devices_router
 from api.diagnostics.endpoints import router as diagnostics_router
@@ -39,6 +40,7 @@ router.include_router(bank_accounts_router)
 router.include_router(avanza_router)
 router.include_router(montrose_router)
 router.include_router(calendars_router)
+router.include_router(contacts_router)
 router.include_router(open_banking_router)
 router.include_router(categories_router)
 router.include_router(counters_router)

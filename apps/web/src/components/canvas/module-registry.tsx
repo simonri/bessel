@@ -6,6 +6,7 @@ import {
   ChartGantt,
   CheckSquare,
   ChefHat,
+  Contact,
   GitBranch,
   Globe,
   Landmark,
@@ -175,6 +176,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/recipes").then((m) => ({
         default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...COMPACT_SIZE,
+  },
+  contacts: {
+    title: "Contacts",
+    icon: Contact,
+    component: lazy(() =>
+      import("@/components/contacts/contacts-page").then((m) => ({
+        default: m.ContactsPage,
       })),
     ),
     ...COMPACT_SIZE,
