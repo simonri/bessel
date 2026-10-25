@@ -162,6 +162,7 @@ def encryption_key(monkeypatch: pytest.MonkeyPatch) -> None:
 def frozen_now(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(service, "utc_now", lambda: NOW)
   monkeypatch.setattr("api.montrose.endpoints.utc_now", lambda: NOW)
+  monkeypatch.setattr("api.bank_accounts.endpoints.utc_now", lambda: NOW)
 
 
 @pytest.fixture
