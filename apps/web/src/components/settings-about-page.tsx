@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
+import { SettingsRow, SettingsSection } from "@/components/settings-ui";
+import { SoftButton } from "@/components/ui-kit";
 
 export function AboutPage() {
   const [version, setVersion] = useState<string | null>(null);
@@ -32,43 +33,36 @@ export function AboutPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <SectionLabel>Application</SectionLabel>
-        <Panel>
-          <PanelRow label="Version">
-            <span className="font-mono text-13 text-white/80">
-              {version ?? "—"}
-            </span>
-          </PanelRow>
-          <PanelRow
-            label={
-              status === "idle" ? (
-                <span className="text-white/40">Not checked yet</span>
-              ) : status === "checking" ? (
-                <span className="text-white/50">Checking…</span>
-              ) : status === "up-to-date" ? (
-                <span className="text-emerald-400">Up to date</span>
-              ) : status === "available" ? (
-                <span className="text-primary-400">
-                  Update available
-                  {availableVersion ? `: v${availableVersion}` : ""}
-                </span>
-              ) : (
-                <span className="text-red-400">
-                  Could not check for updates
-                </span>
-              )
-            }
-          >
-            <SoftButton
-              onClick={checkForUpdate}
-              disabled={status === "checking"}
-            >
-              {status === "checking" ? "Checking…" : "Check for updates"}
-            </SoftButton>
-          </PanelRow>
-        </Panel>
-      </div>
+      <SettingsSection title="Application">
+        <SettingsRow label="Version">
+          <span className="font-mono text-13 text-white/80">
+            {version ?? "—"}
+          </span>
+        </SettingsRow>
+        <SettingsRow
+          label="Updates"
+          description={
+            status === "idle" ? (
+              <span className="text-white/40">Not checked yet</span>
+            ) : status === "checking" ? (
+              <span className="text-white/50">Checking…</span>
+            ) : status === "up-to-date" ? (
+              <span className="text-emerald-400">Up to date</span>
+            ) : status === "available" ? (
+              <span className="text-primary-400">
+                Update available
+                {availableVersion ? `: v${availableVersion}` : ""}
+              </span>
+            ) : (
+              <span className="text-red-400">Could not check for updates</span>
+            )
+          }
+        >
+          <SoftButton onClick={checkForUpdate} disabled={status === "checking"}>
+            {status === "checking" ? "Checking…" : "Check for updates"}
+          </SoftButton>
+        </SettingsRow>
+      </SettingsSection>
     </div>
   );
 }

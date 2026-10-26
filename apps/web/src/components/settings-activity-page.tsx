@@ -1,11 +1,7 @@
-import { Plus, X } from "lucide-react";
+import { ArrowRight, Plus, X } from "lucide-react";
 import { useState } from "react";
-import {
-  EmptyState,
-  IconButton,
-  SectionLabel,
-  TextInput,
-} from "@/components/ui-kit";
+import { SettingsRow, SettingsSection } from "@/components/settings-ui";
+import { IconButton, SoftButton, TextInput } from "@/components/ui-kit";
 import { type ActivityMapping, useSettings } from "@/hooks/use-settings";
 
 // Rows carry an id for React only; settings store plain mappings.
@@ -35,52 +31,46 @@ export function ActivityPage() {
     save(mappings.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
 
   return (
-    <div>
-      <SectionLabel>App name mappings</SectionLabel>
-
-      <div className="space-y-2">
-        {mappings.length > 0 && (
-          <div className="flex gap-2 px-1 pr-9">
-            <span className="flex-1 text-11 text-white/40">Raw name</span>
-            <span className="flex-1 text-11 text-white/40">Display label</span>
-          </div>
-        )}
-
-        {mappings.map((m) => (
-          <div key={m.id} className="flex min-w-0 items-center gap-2">
-            <TextInput
-              value={m.from}
-              onChange={(e) => change(m.id, "from", e.target.value)}
-              placeholder="com.google.Chrome"
-              className="flex-1"
-            />
-            <TextInput
-              value={m.to}
-              onChange={(e) => change(m.id, "to", e.target.value)}
-              placeholder="Chrome"
-              className="flex-1"
-            />
-            <IconButton
-              destructive
-              onClick={() => remove(m.id)}
-              title="Remove mapping"
-            >
-              <X />
-            </IconButton>
-          </div>
-        ))}
-
-        {mappings.length === 0 && <EmptyState>No mappings yet</EmptyState>}
-
-        <button
-          type="button"
-          onClick={add}
-          className="flex items-center gap-1.5 pt-1 text-12 font-medium text-primary-400/80 transition-colors duration-150 hover:text-primary-300"
-        >
-          <Plus className="size-3.5" />
+    <SettingsSection title="Screen time">
+      <SettingsRow
+        label="App names"
+        description={
+          mappings.length
+            ? "The name an app reports, and what Bessel shows instead"
+            : "Show an app under a friendlier name"
+        }
+      >
+        <SoftButton onClick={add}>
+          <Plus />
           Add mapping
-        </button>
-      </div>
-    </div>
+        </SoftButton>
+      </SettingsRow>
+      {mappings.map((m) => (
+        <div key={m.id} className="flex min-h-14 items-center gap-2 py-3">
+          <TextInput
+            aria-label="Name the app reports"
+            value={m.from}
+            onChange={(e) => change(m.id, "from", e.target.value)}
+            placeholder="com.google.Chrome"
+            className="flex-1"
+          />
+          <ArrowRight className="size-3.5 shrink-0 text-white/30" aria-hidden />
+          <TextInput
+            aria-label="Name to show"
+            value={m.to}
+            onChange={(e) => change(m.id, "to", e.target.value)}
+            placeholder="Chrome"
+            className="flex-1"
+          />
+          <IconButton
+            destructive
+            onClick={() => remove(m.id)}
+            title="Remove mapping"
+          >
+            <X />
+          </IconButton>
+        </div>
+      ))}
+    </SettingsSection>
   );
 }

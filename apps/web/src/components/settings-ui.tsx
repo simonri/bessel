@@ -1,7 +1,7 @@
 import { Spinner } from "@bessel/ui/components/spinner";
 import { Switch } from "@bessel/ui/components/switch";
 import type { ReactNode } from "react";
-import { PanelRow, PrimaryButton } from "@/components/ui-kit";
+import { PrimaryButton } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
 /** A settings page's title, with the page's own controls on the right. */
@@ -28,6 +28,57 @@ export function SettingsPageHeader({
   );
 }
 
+/** A titled group of settings rows, separated by thin lines. */
+export function SettingsSection({
+  title,
+  description,
+  children,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section>
+      <h3 className="text-15 font-semibold text-white/90">{title}</h3>
+      {description && (
+        <p className="mt-1 text-12 text-white/45">{description}</p>
+      )}
+      <div className="mt-2 divide-y divide-white/[0.07]">{children}</div>
+    </section>
+  );
+}
+
+/** One setting: what it is on the left, its control on the right. */
+export function SettingsRow({
+  label,
+  description,
+  htmlFor,
+  children,
+}: {
+  label: ReactNode;
+  description?: ReactNode;
+  /** The id of the control, so the label focuses it. */
+  htmlFor?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-14 items-center justify-between gap-6 py-3">
+      <div className="min-w-0">
+        <label htmlFor={htmlFor} className="block text-13 text-white/85">
+          {label}
+        </label>
+        {description && (
+          <p className="mt-0.5 text-12 text-white/45">{description}</p>
+        )}
+      </div>
+      {children && (
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
+      )}
+    </div>
+  );
+}
+
 export function SettingsToggleRow({
   label,
   description,
@@ -42,14 +93,14 @@ export function SettingsToggleRow({
   disabled?: boolean;
 }) {
   return (
-    <PanelRow label={label} description={description}>
+    <SettingsRow label={label} description={description}>
       <Switch
         size="sm"
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
       />
-    </PanelRow>
+    </SettingsRow>
   );
 }
 

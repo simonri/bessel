@@ -4,7 +4,7 @@ import { TopBarPage } from "@/components/settings-topbar-page";
 
 export function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <TopBarPage />
       <GridGapPage />
       <ActivityPage />

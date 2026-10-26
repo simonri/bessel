@@ -8,13 +8,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import {
-  EmptyState,
-  IconButton,
-  Panel,
-  SectionLabel,
-  TextInput,
-} from "@/components/ui-kit";
+import { SettingsRow, SettingsSection } from "@/components/settings-ui";
+import { IconButton, TextInput } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 
 function formatLastSeen(value: string | Date): string {
@@ -70,59 +65,53 @@ export function DevicesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <SectionLabel>Devices</SectionLabel>
-        <p className="mb-3 text-12 text-white/45">
-          Each device keeps its own project paths and SSH hosts. Remove a device
-          to forget its saved locations.
-        </p>
-
-        {devices.length === 0 && <EmptyState>No devices yet</EmptyState>}
-
-        {devices.length > 0 && (
-          <Panel>
-            {devices.map((d) => (
-              <div
-                key={d.id}
-                className="flex items-center justify-between gap-3 px-4 py-3"
-              >
-                {editingId === d.id ? (
-                  <TextInput
-                    autoFocus
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                    onBlur={saveEdit}
-                    className="h-7 flex-1"
-                  />
-                ) : (
-                  <div className="min-w-0">
-                    <p className="truncate text-13 text-white/80">{d.name}</p>
-                    <p className="text-11 text-white/40">
-                      Last active {formatLastSeen(d.last_seen_at)}
-                    </p>
-                  </div>
-                )}
-                <div className="flex shrink-0 items-center gap-1">
-                  <IconButton onClick={() => startEdit(d)} title="Rename">
-                    <Pencil />
-                  </IconButton>
-                  <IconButton
-                    destructive
-                    title="Remove device"
-                    onClick={() =>
-                      deleteMutation.mutate({
-                        client,
-                        path: { device_id: d.id },
-                      })
-                    }
-                  >
-                    <Trash2 />
-                  </IconButton>
+        <SettingsSection
+          title="Devices"
+          description="Each device keeps its own project paths and SSH hosts. Remove a device to forget its saved locations."
+        >
+          {devices.length === 0 && <SettingsRow label="No devices yet" />}
+          {devices.map((d) => (
+            <div
+              key={d.id}
+              className="flex min-h-14 items-center justify-between gap-3 py-3"
+            >
+              {editingId === d.id ? (
+                <TextInput
+                  autoFocus
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                  onBlur={saveEdit}
+                  className="h-7 flex-1"
+                />
+              ) : (
+                <div className="min-w-0">
+                  <p className="truncate text-13 text-white/85">{d.name}</p>
+                  <p className="mt-0.5 text-12 text-white/45">
+                    Last active {formatLastSeen(d.last_seen_at)}
+                  </p>
                 </div>
+              )}
+              <div className="flex shrink-0 items-center gap-1">
+                <IconButton onClick={() => startEdit(d)} title="Rename">
+                  <Pencil />
+                </IconButton>
+                <IconButton
+                  destructive
+                  title="Remove device"
+                  onClick={() =>
+                    deleteMutation.mutate({
+                      client,
+                      path: { device_id: d.id },
+                    })
+                  }
+                >
+                  <Trash2 />
+                </IconButton>
               </div>
-            ))}
-          </Panel>
-        )}
+            </div>
+          ))}
+        </SettingsSection>
       </div>
     </div>
   );

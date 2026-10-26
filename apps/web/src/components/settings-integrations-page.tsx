@@ -126,7 +126,9 @@ function Row({ item }: { item: Item }) {
       data-integration={item.key}
       className={cn(
         COLUMNS,
-        "h-14 border-b border-white/[0.06] px-2 transition-colors duration-150 hover:bg-white/[0.02]",
+        // A hovered row becomes one rounded highlight: its own divider and the
+        // one above it (the previous row's) step aside.
+        "h-14 rounded-lg border-b border-white/[0.06] px-2 transition-colors duration-150 hover:border-transparent hover:bg-white/[0.06] [&:has(+tr:hover)]:border-transparent",
       )}
     >
       <td className="flex min-w-0 items-center gap-3">

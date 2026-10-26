@@ -3,10 +3,12 @@ import {
   SettingsError,
   SettingsInstallCta,
   SettingsLoading,
+  SettingsRow,
+  SettingsSection,
   SettingsToggleRow,
   StatusDot,
 } from "@/components/settings-ui";
-import { Panel, PanelRow, SectionLabel, SoftButton } from "@/components/ui-kit";
+import { SoftButton } from "@/components/ui-kit";
 import { mintIngestToken } from "@/lib/ingest-token";
 
 type MonitorStatusResult = {
@@ -98,25 +100,24 @@ export function MonitorPage() {
   return (
     <div className="space-y-5">
       <div>
-        <SectionLabel>Background service</SectionLabel>
-        <Panel>
-          <PanelRow label="Status">
+        <SettingsSection title="Background service">
+          <SettingsRow label="Status">
             <StatusDot tone={dotTone} />
             <span className="text-13 text-white/80">{stateLabel}</span>
-          </PanelRow>
+          </SettingsRow>
 
           {status.active && (
-            <PanelRow label="Idle detection">
+            <SettingsRow label="Idle detection">
               <StatusDot tone={status.idleSource ? "active" : "warning"} />
               <span className="text-13 text-white/80">
                 {status.idleSource ?? "Not working"}
               </span>
-            </PanelRow>
+            </SettingsRow>
           )}
 
           {status.installed && (
             <>
-              <PanelRow label="Control">
+              <SettingsRow label="Control">
                 <SoftButton
                   onClick={() =>
                     run(
@@ -129,7 +130,7 @@ export function MonitorPage() {
                 >
                   {status.active ? "Stop" : "Start"}
                 </SoftButton>
-              </PanelRow>
+              </SettingsRow>
               <SettingsToggleRow
                 label="Start on login"
                 checked={status.enabled}
@@ -140,7 +141,7 @@ export function MonitorPage() {
               />
             </>
           )}
-        </Panel>
+        </SettingsSection>
         {status.needsConfig && (
           <p className="mt-2.5 text-12 text-amber-300/80">
             This machine isn't connected to your account yet. Reinstall to
