@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Bot,
-  Command,
+  CalendarDays,
+  ChefHat,
   Download as DownloadIcon,
-  GitBranch,
-  LayoutGrid,
-  Map as MapIcon,
+  ListChecks,
   Menu,
+  MessageSquare,
+  Moon,
   SquareTerminal,
+  Sun,
+  Users,
   Wallet,
   X,
 } from "lucide-react";
@@ -91,7 +93,7 @@ function LandingPage() {
 
 const NAV_LINKS = [
   { href: "#why", label: "Why" },
-  { href: "#features", label: "Features" },
+  { href: "#features", label: "What's in it" },
   { href: "#download", label: "Download" },
 ];
 
@@ -196,15 +198,15 @@ function Hero() {
             className="rise max-w-2xl text-balance font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl md:text-7xl"
             style={riseDelay(0.05)}
           >
-            Your life, <span className="font-normal italic">measured</span>.
+            Your life, in <span className="font-normal italic">one</span> place.
           </h1>
           <p
             className="rise mt-5 max-w-xl text-balance text-base font-medium leading-relaxed text-ink sm:text-lg"
             style={riseDelay(0.15)}
           >
-            Money, health, places, and projects, all on one
-            <br className="hidden sm:block" /> desktop canvas that&rsquo;s
-            entirely yours.
+            Calendar, tasks, money, health, recipes and the people you know,
+            <br className="hidden sm:block" /> in one app. And Claude can look
+            at it when you ask.
           </p>
           <div
             className="rise mt-8 flex flex-col items-center gap-3"
@@ -227,7 +229,7 @@ function Hero() {
               </a>
             </div>
             <span className="text-xs text-[#211d17] [text-shadow:0_1px_14px_rgba(255,255,255,0.7)]">
-              Free &amp; open source
+              Free, and the code is on GitHub
             </span>
           </div>
         </div>
@@ -245,17 +247,17 @@ function Thesis() {
       className="mx-auto w-full max-w-3xl scroll-mt-20 px-6 pt-28 sm:pt-36"
     >
       <div className="reveal flex flex-col items-center text-center">
-        <span className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
-          Why Bessel
-        </span>
+        <span className="text-sm font-medium text-accent">Why Bessel</span>
         <p className="mt-5 text-balance font-serif text-3xl font-medium leading-[1.2] tracking-tight sm:text-4xl">
-          AI keeps getting smarter. It still only knows what you{" "}
-          <span className="font-normal italic">tell</span> it.
+          Your days are spread over a{" "}
+          <span className="font-normal italic">dozen</span> apps.
         </p>
         <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
-          The missing piece was never intelligence, it&rsquo;s context. Bessel
-          pulls your finances, health, travel, and habits into one place, so the
-          full picture of your life finally exists somewhere AI can use it.
+          The bank app knows your money, the calendar knows your time, and the
+          rest lives in notes and screenshots. Bessel puts it in one place you
+          can take in at a glance. Claude gets the same view, so asking
+          &ldquo;what&rsquo;s on this week?&rdquo; or &ldquo;what did we spend
+          on food?&rdquo; gets a real answer.
         </p>
       </div>
     </section>
@@ -266,51 +268,63 @@ const FEATURES: {
   icon: ReactNode;
   title: string;
   description: string;
-  wide?: boolean;
+  span?: 2 | 3;
 }[] = [
   {
-    icon: <LayoutGrid className="size-4.5" />,
-    title: "A canvas, not a feed",
+    icon: <Sun className="size-4.5" />,
+    title: "Your day in one look",
     description:
-      "Widgets live in windows you drag, resize, and snap to a grid. Save layouts as workspaces and flip between them like desktops.",
-    wide: true,
+      "What's next on the calendar, what's due, how you slept and whose birthday is coming up. Before a meeting it shows who's coming and what you noted last time.",
+    span: 2,
   },
   {
-    icon: <SquareTerminal className="size-4.5" />,
-    title: "A real terminal",
+    icon: <CalendarDays className="size-4.5" />,
+    title: "Calendars you can edit",
     description:
-      "Full PTY terminals in a widget, run your dev servers and scripts without leaving the dashboard.",
+      "Google and iCloud side by side. Add, move and change events without switching apps.",
   },
   {
-    icon: <GitBranch className="size-4.5" />,
-    title: "Git at a glance",
+    icon: <ListChecks className="size-4.5" />,
+    title: "Tasks, without the scoreboard",
     description:
-      "Branches, staged files, and diffs for every repo you care about, always one glance away.",
-  },
-  {
-    icon: <Bot className="size-4.5" />,
-    title: "Agents on board",
-    description:
-      "Run Claude Code and Codex in their own widgets, working beside everything else in your day.",
+      "Projects, due dates and chores that come back every week. No streaks and no daily targets.",
   },
   {
     icon: <Wallet className="size-4.5" />,
-    title: "Money, honestly",
+    title: "Where the money went",
     description:
-      "Accounts, transactions, holdings, and trades in one ledger, with imports, categories, and charts.",
+      "Bank accounts, card bills and investments in one place, sorted into categories as they come in.",
   },
   {
-    icon: <MapIcon className="size-4.5" />,
-    title: "Life, logged",
+    icon: <Users className="size-4.5" />,
+    title: "Remember people",
     description:
-      "A travel timeline on a real map, places you love, recipes, workouts, and a task board for the rest.",
+      "Your Google contacts, kept in sync both ways, plus a private log of what you talked about. After a meeting it asks if there's anything to note.",
   },
   {
-    icon: <Command className="size-4.5" />,
-    title: "Everything is a keystroke away",
+    icon: <ChefHat className="size-4.5" />,
+    title: "Recipes you actually cook",
     description:
-      "A command palette opens widgets, switches workspaces, and jumps anywhere. Your hands never leave the keyboard.",
-    wide: true,
+      "Save a recipe once, scale it, follow it step by step at the stove, and see when you last made it.",
+  },
+  {
+    icon: <Moon className="size-4.5" />,
+    title: "Sleep, workouts and places",
+    description:
+      "From Apple Health and your location history, so you can see where a week actually went.",
+  },
+  {
+    icon: <SquareTerminal className="size-4.5" />,
+    title: "Room for your work",
+    description:
+      "Terminals, git and Claude Code in windows next to everything else, arranged the way you like.",
+  },
+  {
+    icon: <MessageSquare className="size-4.5" />,
+    title: "Ask Claude about your life",
+    description:
+      "Connect Bessel to Claude and it can read your calendar, money, recipes and contacts, add tasks and events, and note down a coffee with a friend. It can't delete anything.",
+    span: 3,
   },
 ];
 
@@ -321,16 +335,20 @@ function Features() {
       className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
     >
       <SectionHeading
-        eyebrow="Features"
-        title="One window for your whole day"
-        subtitle="Not another app to check, the surface everything else lands on."
+        eyebrow="What's in it"
+        title="The everyday, all together"
+        subtitle="Use the parts you need and leave the rest closed."
       />
       <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature) => (
           <div
             key={feature.title}
             className={`group reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition-colors duration-200 pointer-fine:hover:border-white/[0.14] pointer-fine:hover:bg-white/[0.04] ${
-              feature.wide ? "lg:col-span-2" : ""
+              feature.span === 3
+                ? "sm:col-span-2 lg:col-span-3"
+                : feature.span === 2
+                  ? "lg:col-span-2"
+                  : ""
             }`}
           >
             <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-accent transition-colors duration-200 pointer-fine:group-hover:border-accent/25 pointer-fine:group-hover:bg-accent/[0.06]">
@@ -382,8 +400,8 @@ function Download() {
     >
       <SectionHeading
         eyebrow="Download"
-        title="Runs where you work"
-        subtitle="One app, three platforms, auto-updates included."
+        title="On your computer"
+        subtitle="For macOS, Windows and Linux, and it updates itself."
       />
       <div className="reveal mt-12 flex flex-col gap-3 sm:grid sm:grid-cols-3">
         {PLATFORMS.map((p) => {
@@ -420,15 +438,16 @@ function Download() {
           );
         })}
       </div>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Latest release on{" "}
+      <p className="mt-6 text-balance text-center text-sm text-muted-foreground">
+        Or use it in the browser at{" "}
         <a
-          href={DOWNLOAD_URL}
+          href={APP_URL}
           className="text-foreground underline decoration-white/25 underline-offset-2 pointer-fine:hover:decoration-white/50"
           {...EXTERNAL_LINK_PROPS}
         >
-          GitHub Releases
+          app.getbessel.com
         </a>
+        . An iPhone app is on the way.
       </p>
     </section>
   );
@@ -441,10 +460,10 @@ function FinalCta() {
       <div className="reveal flex flex-col items-center text-center">
         <BesselMark className="size-8 text-accent" />
         <h2 className="mt-6 text-balance font-serif text-4xl font-medium tracking-tight sm:text-5xl">
-          Measure your <span className="font-normal italic">life</span>.
+          Bring it all <span className="font-normal italic">together</span>.
         </h2>
         <p className="mt-4 max-w-sm text-balance text-base text-muted-foreground">
-          Signal, without the noise. Free, open source, and yours.
+          Free to use. Connect what you already have and it fills itself in.
         </p>
         <a
           href={platformDownloadUrl(platform)}
@@ -466,7 +485,7 @@ function Footer() {
         <div className="flex flex-col gap-3">
           <Wordmark />
           <p className="max-w-xs text-sm text-faint-foreground">
-            A personal dashboard for one. Built in the open.
+            Your calendar, tasks, money and people in one place.
           </p>
         </div>
         <FooterColumn
@@ -474,7 +493,7 @@ function Footer() {
           links={[
             { label: "Features", href: "#features" },
             { label: "Download", href: "#download" },
-            { label: "Changelog", href: DOWNLOAD_URL },
+            { label: "Releases", href: DOWNLOAD_URL },
           ]}
         />
         <FooterColumn
@@ -490,7 +509,7 @@ function Footer() {
           © {new Date().getFullYear()} Bessel
         </span>
         <span className="text-xs text-faint-foreground">
-          A dashboard for one.
+          Built in the open.
         </span>
       </div>
     </footer>
@@ -532,9 +551,7 @@ function SectionHeading({
 }) {
   return (
     <div className="reveal flex flex-col items-center text-center">
-      <span className="text-xs font-medium uppercase tracking-[0.2em] text-accent">
-        {eyebrow}
-      </span>
+      <span className="text-sm font-medium text-accent">{eyebrow}</span>
       <h2 className="mt-4 text-balance font-serif text-3xl font-medium tracking-tight sm:text-4xl">
         {title}
       </h2>

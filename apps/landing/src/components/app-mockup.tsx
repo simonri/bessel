@@ -24,141 +24,36 @@ function MiniWindow({
   );
 }
 
-function NetWorthWidget() {
+function NextUpWidget() {
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-baseline gap-2">
-        <span className="text-lg font-medium tracking-tight text-white/90">
-          $128,410
-        </span>
-        <span className="text-[10px] font-medium text-emerald-400/90">
-          +2.4%
-        </span>
-      </div>
-      <svg
-        viewBox="0 0 200 56"
-        preserveAspectRatio="none"
-        className="mt-2 w-full flex-1"
-      >
-        <defs>
-          <linearGradient id="nw-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f97316" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M0 44 C18 41 28 46 44 39 C60 32 70 36 86 29 C102 22 114 30 130 21 C146 13 160 19 176 11 L200 8 L200 56 L0 56 Z"
-          fill="url(#nw-fill)"
-        />
-        <path
-          d="M0 44 C18 41 28 46 44 39 C60 32 70 36 86 29 C102 22 114 30 130 21 C146 13 160 19 176 11 L200 8"
-          fill="none"
-          stroke="#f97316"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-  );
-}
-
-const TRANSACTIONS = [
-  {
-    name: "Blue Bottle",
-    category: "Coffee",
-    amount: "−$6.40",
-    positive: false,
-  },
-  {
-    name: "ICA Kvantum",
-    category: "Groceries",
-    amount: "−$54.20",
-    positive: false,
-  },
-  { name: "Salary", category: "Income", amount: "+$4,850", positive: true },
-  {
-    name: "Vanguard",
-    category: "Transfer",
-    amount: "−$500.00",
-    positive: false,
-  },
-];
-
-function TransactionsWidget() {
-  return (
-    <div className="flex h-full flex-col justify-between py-0.5">
-      {TRANSACTIONS.map((tx) => (
-        <div key={tx.name} className="flex items-center gap-2">
-          <span className="flex size-4 items-center justify-center rounded-full bg-white/[0.07] text-[7px] font-semibold text-white/60">
-            {tx.name[0]}
+    <div className="flex h-full flex-col justify-between">
+      <div>
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-[12px] font-medium text-white/90">
+            Lunch with Anna
           </span>
-          <span className="flex-1 truncate text-[10px] text-white/70">
-            {tx.name}
-          </span>
-          <span className="hidden text-[9px] text-white/30 lg:block">
-            {tx.category}
-          </span>
-          <span
-            className={`text-[10px] tabular-nums ${tx.positive ? "text-emerald-400/90" : "text-white/60"}`}
-          >
-            {tx.amount}
+          <span className="shrink-0 text-[10px] tabular-nums text-[#f97316]">
+            in 40 min
           </span>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function TerminalWidget() {
-  return (
-    <div className="flex h-full flex-col gap-1 font-mono text-[10px] leading-relaxed">
-      <span className="text-white/30">~/dev/metron on master</span>
-      <span className="text-white/70">
-        <span className="text-[#f97316]">❯</span> uv run task api
-      </span>
-      <span className="text-white/40">
-        INFO Uvicorn running on 127.0.0.1:8100
-      </span>
-      <span className="text-white/70">
-        <span className="text-[#f97316]">❯</span>
-        <span className="ml-1 inline-block h-3 w-[7px] translate-y-0.5 animate-pulse bg-[#f97316]" />
-      </span>
-    </div>
-  );
-}
-
-const GIT_FILES = [
-  { status: "M", color: "text-amber-400/90", path: "src/api/service.py" },
-  { status: "A", color: "text-emerald-400/90", path: "widgets/terminal.tsx" },
-  { status: "M", color: "text-amber-400/90", path: "canvas/layout.ts" },
-];
-
-function GitWidget() {
-  return (
-    <div className="flex h-full flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-[10px]">
-        <span className="text-white/70">master</span>
-        <span className="text-white/30">↑2</span>
-        <span className="ml-auto text-emerald-400/80">+12</span>
-        <span className="text-red-400/80">−4</span>
+        <span className="text-[10px] text-white/40">12:00 - Pelikan</span>
       </div>
-      {GIT_FILES.map((file) => (
-        <div
-          key={file.path}
-          className="flex items-center gap-2 font-mono text-[9.5px]"
-        >
-          <span className={file.color}>{file.status}</span>
-          <span className="truncate text-white/50">{file.path}</span>
-        </div>
-      ))}
+      <div className="flex flex-col gap-0.5 border-t border-white/[0.05] pt-1.5">
+        <span className="text-[10px] text-white/60">
+          Last seen 3 weeks ago - climbing
+        </span>
+        <span className="truncate text-[10px] text-white/35">
+          &ldquo;Starting the new job in May&rdquo;
+        </span>
+      </div>
     </div>
   );
 }
 
 const TASKS = [
-  { done: true, label: "Ship landing page" },
-  { done: false, label: "Import Q3 statements" },
-  { done: false, label: "Plan Lisbon trip" },
+  { label: "Book dentist", due: "Today" },
+  { label: "Renew passport", due: "Fri" },
+  { label: "Water the plants", due: "Weekly" },
 ];
 
 function TasksWidget() {
@@ -166,19 +61,12 @@ function TasksWidget() {
     <div className="flex h-full flex-col justify-evenly">
       {TASKS.map((task) => (
         <div key={task.label} className="flex items-center gap-2">
-          <span
-            className={`flex size-3 items-center justify-center rounded-[4px] border text-[7px] ${
-              task.done
-                ? "border-[#f97316]/60 bg-[#f97316]/20 text-[#f97316]"
-                : "border-white/20"
-            }`}
-          >
-            {task.done ? "✓" : ""}
-          </span>
-          <span
-            className={`text-[10px] ${task.done ? "text-white/35 line-through" : "text-white/70"}`}
-          >
+          <span className="size-3 shrink-0 rounded-full border border-white/20" />
+          <span className="flex-1 truncate text-[10px] text-white/70">
             {task.label}
+          </span>
+          <span className="text-[9px] text-white/30 max-sm:hidden">
+            {task.due}
           </span>
         </div>
       ))}
@@ -186,31 +74,102 @@ function TasksWidget() {
   );
 }
 
-// Deterministic pseudo-random intensity for the activity heatmap
-function cellAlpha(i: number) {
-  const v = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
-  return v < 0.6 ? 0 : (v - 0.6) * 1.4;
+function MoneyWidget() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] text-white/45">Spent in October</span>
+        <span className="text-[13px] font-medium tabular-nums tracking-tight text-white/90">
+          18 240 kr
+        </span>
+      </div>
+      <div className="mt-2 flex flex-1 flex-col justify-evenly">
+        {[
+          ["Food", 0.62, "6 410 kr"],
+          ["Home", 0.45, "4 650 kr"],
+          ["Transport", 0.2, "2 080 kr"],
+        ].map(([label, share, amount]) => (
+          <div key={label as string} className="flex items-center gap-2">
+            <span className="w-16 truncate text-[9.5px] text-white/55">
+              {label}
+            </span>
+            <span className="h-1 flex-1 rounded-full bg-white/[0.06]">
+              <span
+                className="block h-1 rounded-full bg-[#f97316]/70"
+                style={{ width: `${(share as number) * 100}%` }}
+              />
+            </span>
+            <span className="text-[9.5px] tabular-nums text-white/50">
+              {amount}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function ActivityWidget() {
+const PEOPLE = [
+  { name: "Erik", note: "Turns 40 on Saturday" },
+  { name: "Maja", note: "Anything to note from the retro?" },
+  { name: "Jonas", note: "Moving to Berlin in May" },
+];
+
+function PeopleWidget() {
   return (
-    <div className="grid h-full grid-cols-14 content-center gap-[3px]">
-      {Array.from({ length: 70 }, (_, i) => {
-        const alpha = cellAlpha(i);
-        return (
+    <div className="flex h-full flex-col justify-evenly">
+      {PEOPLE.map((person) => (
+        <div key={person.name} className="flex items-center gap-2">
+          <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-white/[0.07] text-[7px] font-semibold text-white/60">
+            {person.name[0]}
+          </span>
+          <span className="text-[10px] text-white/75">{person.name}</span>
+          <span className="truncate text-[9.5px] text-white/35 max-sm:hidden">
+            {person.note}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const NIGHTS = [6.9, 7.4, 6.2, 7.8, 7.1, 8.3, 7.5];
+
+function SleepWidget() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-[13px] font-medium tabular-nums text-white/90">
+          7 h 30 min
+        </span>
+        <span className="text-[10px] text-white/40">last night</span>
+      </div>
+      <div className="mt-2 flex flex-1 items-end gap-1">
+        {NIGHTS.map((hours, i) => (
           <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: a fixed decorative grid; each cell is its position
+            // biome-ignore lint/suspicious/noArrayIndexKey: a fixed week of bars; each is its day
             key={i}
-            className="aspect-square rounded-[2px]"
-            style={{
-              backgroundColor:
-                alpha === 0
-                  ? "rgba(255,255,255,0.04)"
-                  : `rgba(249,115,22,${(0.15 + alpha * 0.6).toFixed(2)})`,
-            }}
+            className={`flex-1 rounded-sm ${i === NIGHTS.length - 1 ? "bg-[#f97316]/70" : "bg-white/[0.1]"}`}
+            style={{ height: `${((hours - 5) / 4) * 100}%` }}
           />
-        );
-      })}
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TerminalWidget() {
+  return (
+    <div className="flex h-full flex-col gap-1 font-mono text-[10px] leading-relaxed">
+      <span className="text-white/30">~/dev/side-project</span>
+      <span className="text-white/70">
+        <span className="text-[#f97316]">❯</span> claude
+      </span>
+      <span className="text-white/40">Reading the failing test…</span>
+      <span className="text-white/70">
+        <span className="text-[#f97316]">❯</span>
+        <span className="ml-1 inline-block h-3 w-[7px] translate-y-0.5 animate-pulse bg-[#f97316]" />
+      </span>
     </div>
   );
 }
@@ -249,40 +208,34 @@ export function AppMockup({ className }: { className?: string }) {
 
           <div className="grid grid-cols-12 gap-2 p-2 sm:gap-2.5 sm:p-3">
             <MiniWindow
-              title="Net worth"
+              title="Next up"
               className="col-span-7 h-36 sm:col-span-5"
             >
-              <NetWorthWidget />
+              <NextUpWidget />
             </MiniWindow>
-            <MiniWindow
-              title="Terminal"
-              className="col-span-5 h-36 sm:col-span-4"
-            >
-              <TerminalWidget />
-            </MiniWindow>
-            <MiniWindow
-              title="Tasks"
-              className="col-span-6 h-36 max-sm:hidden sm:col-span-3"
-            >
+            <MiniWindow title="Tasks" className="col-span-5 h-36 sm:col-span-4">
               <TasksWidget />
             </MiniWindow>
             <MiniWindow
-              title="Transactions"
-              className="col-span-7 h-32 sm:col-span-4"
+              title="Sleep"
+              className="col-span-6 h-36 max-sm:hidden sm:col-span-3"
             >
-              <TransactionsWidget />
+              <SleepWidget />
+            </MiniWindow>
+            <MiniWindow title="Money" className="col-span-7 h-32 sm:col-span-4">
+              <MoneyWidget />
             </MiniWindow>
             <MiniWindow
-              title="bessel.git"
+              title="People"
               className="col-span-5 h-32 sm:col-span-4"
             >
-              <GitWidget />
+              <PeopleWidget />
             </MiniWindow>
             <MiniWindow
-              title="Activity"
+              title="Terminal"
               className="col-span-12 h-32 max-sm:hidden sm:col-span-4"
             >
-              <ActivityWidget />
+              <TerminalWidget />
             </MiniWindow>
           </div>
         </div>

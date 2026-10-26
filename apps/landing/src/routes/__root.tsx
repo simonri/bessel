@@ -8,9 +8,9 @@ import {
 import appCss from "../styles.css?url";
 
 const SITE_URL = "https://getbessel.com";
-const TITLE = "Bessel — Personal Life Dashboard for Finances, Health & More";
+const TITLE = "Bessel - your calendar, tasks, money and people in one place";
 const DESCRIPTION =
-  "Bessel is a free, open-source personal life dashboard: money, health, travel, and projects on one desktop canvas that's entirely yours. Download for macOS, Windows, and Linux.";
+  "Bessel puts your calendar, tasks, money, health, recipes and contacts in one app, and lets Claude read it when you ask. Free for macOS, Windows and Linux, or in the browser.";
 const OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
 const STRUCTURED_DATA = {
@@ -54,7 +54,7 @@ export const Route = createRootRoute({
       {
         name: "keywords",
         content:
-          "Bessel, personal life dashboard, personal dashboard app, finance tracker, life tracking app, self-hosted dashboard",
+          "Bessel, personal dashboard, calendar, tasks, budget, personal CRM, recipes, Claude",
       },
       {
         property: "og:type",
