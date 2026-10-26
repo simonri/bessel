@@ -179,10 +179,10 @@ function Nav() {
 
 function SkyActions({ platform }: { platform: Platform }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="mx-auto flex w-full max-w-64 flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center">
       <a
         href={platformDownloadUrl(platform)}
-        className="flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-sm font-medium text-cream [text-shadow:none] transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-[#141210]"
+        className="flex items-center justify-center gap-2.5 rounded-full bg-ink px-6 py-3 text-sm font-medium text-cream [text-shadow:none] transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-[#141210]"
         download
       >
         {PLATFORM_ICON[platform]}
@@ -190,7 +190,7 @@ function SkyActions({ platform }: { platform: Platform }) {
       </a>
       <a
         href={APP_URL}
-        className="rounded-full border border-ink/25 bg-white/10 px-6 py-3 text-sm text-ink backdrop-blur-[2px] transition-[transform,color,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:border-ink/45 pointer-fine:hover:bg-white/25"
+        className="rounded-full border border-ink/25 bg-white/10 px-6 py-3 text-center text-sm text-ink backdrop-blur-[2px] transition-[transform,color,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:border-ink/45 pointer-fine:hover:bg-white/25"
         {...EXTERNAL_LINK_PROPS}
       >
         Use in the browser
@@ -202,38 +202,38 @@ function SkyActions({ platform }: { platform: Platform }) {
 function Hero() {
   const platform = usePlatform() ?? "mac";
   return (
-    <section className="relative isolate w-full overflow-hidden">
-      <div className="relative">
-        <img
-          src={heroSky}
-          alt=""
-          aria-hidden
-          className="hero-zoom absolute inset-0 h-full w-full object-cover object-[center_82%] [mask-image:linear-gradient(to_bottom,#000_82%,transparent_99%)]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/8 via-black/0 to-black/5 [mask-image:linear-gradient(to_bottom,#000_82%,transparent_99%)]" />
+    // The scene runs under the chat cards and fades out below them, so the
+    // cards sit in the meadow rather than on the picture's bottom edge.
+    <section className="relative isolate w-full overflow-hidden pb-20 sm:pb-32">
+      <img
+        src={heroSky}
+        alt=""
+        aria-hidden
+        className="hero-zoom absolute inset-0 -z-10 h-full w-full object-cover object-[center_88%] [mask-image:linear-gradient(to_bottom,#000_72%,transparent_100%)]"
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/8 via-black/0 to-black/5 [mask-image:linear-gradient(to_bottom,#000_72%,transparent_100%)]" />
 
-        <div className="relative flex min-h-[720px] flex-col items-center justify-center px-6 py-14 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[820px] md:min-h-[900px]">
-          <h1
-            className="rise text-balance font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl md:whitespace-nowrap md:text-7xl"
-            style={riseDelay(0.05)}
-          >
-            Your life, in <span className="font-normal italic">one</span> place.
-          </h1>
-          <p
-            className="rise mt-6 max-w-3xl text-balance text-base font-medium leading-relaxed text-ink sm:text-lg md:text-wrap"
-            style={riseDelay(0.15)}
-          >
-            Calendar, money, health, tasks and the people you know, connected
-            once. <br className="hidden md:block" />
-            So Claude can finally help with your actual life.
-          </p>
-          <div className="rise mt-8" style={riseDelay(0.25)}>
-            <SkyActions platform={platform} />
-          </div>
+      <div className="flex flex-col items-center px-6 pt-44 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:pt-60 md:pt-72">
+        <h1
+          className="rise text-balance font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl md:whitespace-nowrap md:text-7xl"
+          style={riseDelay(0.05)}
+        >
+          Your life, in <span className="font-normal italic">one</span> place.
+        </h1>
+        <p
+          className="rise mt-6 max-w-3xl text-balance text-base font-medium leading-relaxed text-ink sm:text-lg md:text-wrap"
+          style={riseDelay(0.15)}
+        >
+          Calendar, money, health, tasks and the people you know, connected
+          once. <br className="hidden md:block" />
+          So Claude can finally help with your actual life.
+        </p>
+        <div className="rise mt-8 w-full" style={riseDelay(0.25)}>
+          <SkyActions platform={platform} />
         </div>
       </div>
 
-      <div className="relative mx-auto -mt-[138px] max-w-5xl px-5 sm:-mt-52 sm:px-6 md:-mt-[254px]">
+      <div className="mx-auto mt-16 max-w-5xl px-5 sm:mt-24 sm:px-6">
         <CompareChat className="rise" />
       </div>
     </section>
@@ -268,7 +268,8 @@ function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pt-32 sm:pt-44"
+      // The hero's faded scene is the rest of the 128/176px gap.
+      className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pt-12"
     >
       <SectionHeading
         eyebrow="How it works"
@@ -348,7 +349,7 @@ const PROMISES = [
     icon: <ShieldCheck className="size-4.5" />,
     title: "Claude can't delete anything",
     description:
-      "It can read, and add tasks, events and notes when you ask. Removing things is up to you.",
+      "It reads, and adds tasks, events and notes when you ask. Removing is up to you.",
   },
   {
     icon: <FileCode className="size-4.5" />,
@@ -374,17 +375,14 @@ function Privacy() {
         }
         subtitle="Bessel only knows what you connect, and Claude only looks when you ask it something."
       />
-      <div className="mt-12 grid gap-8 sm:mt-14 sm:grid-cols-3 sm:gap-6">
+      <div className="reveal mt-12 grid divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-surface sm:mt-14 md:grid-cols-3 md:divide-x md:divide-y-0">
         {PROMISES.map((promise) => (
-          <div
-            key={promise.title}
-            className="reveal flex flex-col items-center text-center"
-          >
-            <span className="flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-surface text-accent">
+          <div key={promise.title} className="flex flex-col p-6">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-white/[0.04] text-accent">
               {promise.icon}
             </span>
             <h3 className="mt-4 text-[15px] font-medium">{promise.title}</h3>
-            <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
               {promise.description}
             </p>
           </div>
@@ -459,9 +457,9 @@ function Closing() {
         src={heroSky}
         alt=""
         aria-hidden
-        className="absolute inset-0 h-full w-full object-cover object-[center_30%] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_30%,#000_75%,transparent_100%)]"
+        className="absolute inset-0 h-full w-full object-cover object-[center_30%] [mask-image:linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.06)_10%,rgba(0,0,0,0.35)_22%,#000_42%,#000_60%,rgba(0,0,0,0.35)_80%,rgba(0,0,0,0.06)_92%,transparent_100%)]"
       />
-      <div className="relative flex min-h-[480px] flex-col items-center justify-center px-6 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[532px]">
+      <div className="relative flex min-h-[560px] flex-col items-center justify-center px-6 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[680px]">
         <h2 className="reveal max-w-2xl text-balance font-serif text-4xl font-medium tracking-tight text-ink sm:text-6xl">
           Give your AI the <span className="font-normal italic">context</span>.
         </h2>
@@ -478,7 +476,7 @@ function Closing() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/[0.06] bg-background">
+    <footer>
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-14 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
         <div className="flex flex-col gap-3">
           <Wordmark />
