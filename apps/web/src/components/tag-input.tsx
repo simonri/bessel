@@ -144,7 +144,7 @@ export function TagInput({ tags, onChange }: TagInputProps) {
               <button
                 key={suggestion}
                 type="button"
-                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-13 hover:bg-accent transition-colors text-left"
+                className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-13 text-white/75 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/95"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addTag(suggestion)}
               >

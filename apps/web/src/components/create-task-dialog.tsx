@@ -110,7 +110,7 @@ function ProjectInput({ value, onChange, projects }: ProjectInputProps) {
               onChange(p);
               setOpen(false);
             }}
-            className="flex w-full cursor-default items-center rounded-sm px-2 py-1.5 text-13 hover:bg-accent hover:text-accent-foreground"
+            className="flex w-full cursor-default items-center rounded-lg px-2.5 py-1.5 text-13 text-white/75 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white/95"
           >
             {p}
           </button>
